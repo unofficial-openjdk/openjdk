@@ -4370,7 +4370,7 @@ static void check_super_class_access(const InstanceKlass* this_klass, TRAPS) {
           vmSymbols::java_lang_IllegalAccessError(),
           "class %s cannot access its superclass %s",
           this_klass->external_name(),
-          InstanceKlass::cast(super)->external_name());
+          super->external_name());
       } else {
         // Add additional message content.
         Exceptions::fthrow(
@@ -5170,7 +5170,7 @@ static void check_methods_for_intrinsics(const InstanceKlass* ik,
   }
 }
 
-InstanceKlass* ClassFileParser::create_instance_klass(bool cf_changed_in_CFLH, TRAPS) {
+InstanceKlass* ClassFileParser::create_instance_klass(bool changed_by_loadhook, TRAPS) {
   if (_klass != NULL) {
     return _klass;
   }
@@ -5178,14 +5178,14 @@ InstanceKlass* ClassFileParser::create_instance_klass(bool cf_changed_in_CFLH, T
   InstanceKlass* const ik =
     InstanceKlass::allocate_instance_klass(*this, CHECK_NULL);
 
-  fill_instance_klass(ik, cf_changed_in_CFLH, CHECK_NULL);
+  fill_instance_klass(ik, changed_by_loadhook, CHECK_NULL);
 
   assert(_klass == ik, "invariant");
 
   return ik;
 }
 
-void ClassFileParser::fill_instance_klass(InstanceKlass* ik, bool cf_changed_in_CFLH, TRAPS) {
+void ClassFileParser::fill_instance_klass(InstanceKlass* ik, bool changed_by_loadhook, TRAPS) {
   assert(ik != NULL, "invariant");
 
   set_klass_to_deallocate(ik);
@@ -5254,7 +5254,7 @@ void ClassFileParser::fill_instance_klass(InstanceKlass* ik, bool cf_changed_in_
   oop cl = ik->class_loader();
   Handle clh = Handle(THREAD, java_lang_ClassLoader::non_reflection_class_loader(cl));
   ClassLoaderData* cld = ClassLoaderData::class_loader_data_or_null(clh());
-  ik->set_package(ik->name(), cld, CHECK);
+  ik->set_package(cld, CHECK);
 
   const Array<Method*>* const methods = ik->methods();
   assert(methods != NULL, "invariant");
@@ -5315,18 +5315,14 @@ void ClassFileParser::fill_instance_klass(InstanceKlass* ik, bool cf_changed_in_
   ModuleEntry* module_entry = ik->module();
   assert(module_entry != NULL, "module_entry should always be set");
 
-  // Obtain j.l.r.Module
-  oop module_jlrM = (oop)NULL;
-  if (module_entry->jlrM_module() != NULL) {
-    module_jlrM = JNIHandles::resolve(module_entry->jlrM_module());
-  }
-  Handle jlrM_handle(THREAD, module_jlrM);
+  // Obtain java.lang.reflect.Module
+  Handle module_handle(THREAD, JNIHandles::resolve(module_entry->jlrM_module()));
 
   // Allocate mirror and initialize static fields
   // The create_mirror() call will also call compute_modifiers()
   java_lang_Class::create_mirror(ik,
                                  _loader_data->class_loader(),
-                                 jlrM_handle,
+                                 module_handle,
                                  _protection_domain,
                                  CHECK);
 
@@ -5341,11 +5337,11 @@ void ClassFileParser::fill_instance_klass(InstanceKlass* ik, bool cf_changed_in_
   }
 
   // Add read edges to the unnamed modules of the bootstrap and app class loaders.
-  if (cf_changed_in_CFLH && !jlrM_handle.is_null() && module_entry->is_named() &&
+  if (changed_by_loadhook && !module_handle.is_null() && module_entry->is_named() &&
       !module_entry->has_default_read_edges()) {
     if (!module_entry->set_has_default_read_edges()) {
       // We won a potential race
-      JvmtiExport::add_default_read_edges(jlrM_handle, THREAD);
+      JvmtiExport::add_default_read_edges(module_handle, THREAD);
     }
   }
 

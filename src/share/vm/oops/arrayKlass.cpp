@@ -105,12 +105,8 @@ void ArrayKlass::complete_create_array_klass(ArrayKlass* k, KlassHandle super_kl
   // java.base is defined.
   assert((module_entry != NULL) || ((module_entry == NULL) && !ModuleEntryTable::javabase_defined()),
          "module entry not available post java.base definition");
-  oop module = (oop)NULL;
-  if ((module_entry != NULL) && (module_entry->jlrM_module() != NULL)) {
-    module = JNIHandles::resolve(module_entry->jlrM_module());
-  }
-
-  java_lang_Class::create_mirror(k, Handle(THREAD, k->class_loader()), Handle(module), Handle(NULL), CHECK);
+  oop module = (module_entry != NULL) ? JNIHandles::resolve(module_entry->jlrM_module()) : (oop)NULL;
+  java_lang_Class::create_mirror(k, Handle(THREAD, k->class_loader()), Handle(THREAD, module), Handle(NULL), CHECK);
 }
 
 GrowableArray<Klass*>* ArrayKlass::compute_secondary_supers(int num_extra_slots) {

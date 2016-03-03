@@ -1037,12 +1037,11 @@ jshort ClassLoader::classloader_type(Symbol* class_name, ClassPathEntry* e,
   // jimage, it is determined by the class path entry.
   jshort loader_type = ClassLoader::APP;
   if (e->is_jrt()) {
-    int length;
+    int length = 0;
     const jbyte* pkg_string = InstanceKlass::package_from_name(class_name, length);
-    TempNewSymbol pkg_name = NULL;
     if (pkg_string != NULL) {
       ResourceMark rm;
-      pkg_name = SymbolTable::new_symbol((const char*)pkg_string, length, THREAD);
+      TempNewSymbol pkg_name = SymbolTable::new_symbol((const char*)pkg_string, length, THREAD);
       const char* pkg_name_C_string = (const char*)(pkg_name->as_C_string());
       ClassPathImageEntry* cpie = (ClassPathImageEntry*)e;
       JImageFile* jimage = cpie->jimage();

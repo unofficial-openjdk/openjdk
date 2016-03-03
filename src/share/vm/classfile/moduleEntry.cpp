@@ -341,18 +341,18 @@ void ModuleEntryTable::patch_javabase_entries(Handle jlrM_handle) {
   java_lang_Class::set_module(Universe::void_mirror(), jlrM_handle());
 
   // Do the fixups for classes that have already been created.
-  GrowableArray <Klass*>* list = java_lang_Class::fixup_modulefield_list();
+  GrowableArray <Klass*>* list = java_lang_Class::fixup_module_field_list();
   int list_length = list->length();
   for (int i = 0; i < list_length; i++) {
     Klass* k = list->at(i);
     assert(k->is_klass(), "List should only hold classes");
     Thread* THREAD = Thread::current();
     KlassHandle kh(THREAD, k);
-    java_lang_Class::fixup_modulefield(kh, jlrM_handle);
+    java_lang_Class::fixup_module_field(kh, jlrM_handle);
   }
 
-  delete java_lang_Class::fixup_modulefield_list();
-  java_lang_Class::set_fixup_modulefield_list(NULL);
+  delete java_lang_Class::fixup_module_field_list();
+  java_lang_Class::set_fixup_module_field_list(NULL);
 }
 
 #ifndef PRODUCT

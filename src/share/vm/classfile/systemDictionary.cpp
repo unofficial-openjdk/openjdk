@@ -1267,7 +1267,7 @@ bool SystemDictionary::is_shared_class_visible(Symbol* class_name,
   TempNewSymbol pkg_name = NULL;
   PackageEntry* pkg_entry = NULL;
   ModuleEntry* mod_entry = NULL;
-  int length;
+  int length = 0;
   ClassLoaderData* loader_data = class_loader_data(class_loader);
   const jbyte* pkg_string = InstanceKlass::package_from_name(class_name, length);
   if (pkg_string != NULL) {
@@ -1422,8 +1422,7 @@ instanceKlassHandle SystemDictionary::load_instance_class(Symbol* class_name, Ha
   instanceKlassHandle nh = instanceKlassHandle(); // null Handle
 
   if (class_loader.is_null()) {
-    int length;
-    TempNewSymbol pkg_name = NULL;
+    int length = 0;
     PackageEntry* pkg_entry = NULL;
     bool search_only_bootloader_append = false;
     ClassLoaderData *loader_data = class_loader_data(class_loader);
@@ -1431,7 +1430,7 @@ instanceKlassHandle SystemDictionary::load_instance_class(Symbol* class_name, Ha
     // Find the package in the boot loader's package entry table.
     const jbyte* pkg_string = InstanceKlass::package_from_name(class_name, length);
     if (pkg_string != NULL) {
-      pkg_name = SymbolTable::new_symbol((const char*)pkg_string, length, CHECK_(nh));
+      TempNewSymbol pkg_name = SymbolTable::new_symbol((const char*)pkg_string, length, CHECK_(nh));
       pkg_entry = loader_data->packages()->lookup_only(pkg_name);
     }
 

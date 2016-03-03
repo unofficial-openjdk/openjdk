@@ -443,7 +443,7 @@ class InstanceKlass: public Klass {
   ModuleEntry* module() const;
   bool in_unnamed_package() const   { return (_package_entry == NULL); }
   void set_package(PackageEntry* p) { _package_entry = p; }
-  void set_package(Symbol* name, ClassLoaderData* loader, TRAPS);
+  void set_package(ClassLoaderData* loader_data, TRAPS);
   bool is_same_class_package(const Klass* class2) const;
   bool is_same_class_package(oop classloader2, const Symbol* classname2) const;
   static bool is_same_class_package(oop class_loader1,

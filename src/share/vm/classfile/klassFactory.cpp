@@ -102,7 +102,7 @@ instanceKlassHandle KlassFactory::create_from_stream(ClassFileStream* stream,
   assert(loader_data != NULL, "invariant");
   assert(THREAD->is_Java_thread(), "must be a JavaThread");
 
-  bool cf_changed_in_CFLH = false;
+  bool changed_by_loadhook = false;
 
   ResourceMark rm;
   HandleMark hm;

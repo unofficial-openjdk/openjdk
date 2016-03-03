@@ -1973,7 +1973,7 @@ static void restore_unshareable_in_class(Klass* k, TRAPS) {
 
 void InstanceKlass::restore_unshareable_info(ClassLoaderData* loader_data, Handle protection_domain, TRAPS) {
   instanceKlassHandle ik(THREAD, this);
-  ik->set_package(ik->name(), loader_data, CHECK);
+  ik->set_package(loader_data, CHECK);
   Klass::restore_unshareable_info(loader_data, protection_domain, CHECK);
 
   Array<Method*>* methods = ik->methods();
@@ -2226,15 +2226,15 @@ ModuleEntry* InstanceKlass::module() const {
   return host->class_loader_data()->modules()->unnamed_module();
 }
 
-void InstanceKlass::set_package(Symbol* name, ClassLoaderData* loader, TRAPS) {
-  int length;
-  const jbyte* base_name = package_from_name(name, length);
+void InstanceKlass::set_package(ClassLoaderData* loader_data, TRAPS) {
+  int length = 0;
+  const jbyte* base_name = package_from_name(name(), length);
 
-  if (base_name != NULL && loader != NULL) {
+  if (base_name != NULL && loader_data != NULL) {
     TempNewSymbol pkg_name = SymbolTable::new_symbol((const char*)base_name, length, CHECK);
 
     // Find in class loader's package entry table.
-    _package_entry = loader->packages()->lookup_only(pkg_name);
+    _package_entry = loader_data->packages()->lookup_only(pkg_name);
 
     // If the package name is not found in the loader's package
     // entry table, it is an indication that the package has not
@@ -2248,16 +2248,16 @@ void InstanceKlass::set_package(Symbol* name, ClassLoaderData* loader, TRAPS) {
         // in the java.base module it will be caught later when java.base
         // is defined by ModuleEntryTable::verify_javabase_packages check.
         assert(ModuleEntryTable::javabase_module() != NULL, "java.base module is NULL");
-        _package_entry = loader->packages()->lookup(pkg_name, ModuleEntryTable::javabase_module());
+        _package_entry = loader_data->packages()->lookup(pkg_name, ModuleEntryTable::javabase_module());
       } else {
-        assert(loader->modules()->unnamed_module() != NULL, "unnamed module is NULL");
-        _package_entry = loader->packages()->lookup(pkg_name,
-                                                    loader->modules()->unnamed_module());
+        assert(loader_data->modules()->unnamed_module() != NULL, "unnamed module is NULL");
+        _package_entry = loader_data->packages()->lookup(pkg_name,
+                                                         loader_data->modules()->unnamed_module());
       }
 
       // A package should have been successfully created
       assert(_package_entry != NULL, "Package entry for class %s not found, loader %s",
-             name->as_C_string(), loader->loader_name());
+             name()->as_C_string(), loader_data->loader_name());
     }
 
     if (log_is_enabled(Debug, modules)) {
@@ -2266,14 +2266,14 @@ void InstanceKlass::set_package(Symbol* name, ClassLoaderData* loader, TRAPS) {
       log_trace(modules)("Setting package: class: %s, package: %s, loader: %s, module: %s",
                          external_name(),
                          pkg_name->as_C_string(),
-                         loader->loader_name(),
+                         loader_data->loader_name(),
                          (m->is_named() ? m->name()->as_C_string() : UNNAMED_MODULE));
     }
   } else {
     ResourceMark rm;
     log_trace(modules)("Setting package: class: %s, package: unnamed, loader: %s, module: %s",
                        external_name(),
-                       (loader != NULL) ? loader->loader_name() : "NULL",
+                       (loader_data != NULL) ? loader_data->loader_name() : "NULL",
                        UNNAMED_MODULE);
   }
 }
@@ -2335,8 +2335,8 @@ bool InstanceKlass::is_same_class_package(oop class_loader1, const Symbol* class
     // The Symbol*'s are in UTF8 encoding. Since we only need to check explicitly
     // for ASCII characters ('/', 'L', '['), we can keep them in UTF8 encoding.
     // Otherwise, we just compare jbyte values between the strings.
-    int length1;
-    int length2;
+    int length1 = 0;
+    int length2 = 0;
     const jbyte *name1 = package_from_name(class_name1, length1);
     const jbyte *name2 = package_from_name(class_name2, length2);
 
@@ -2391,7 +2391,7 @@ bool InstanceKlass::is_same_package_member_impl(const InstanceKlass* class1,
   if (!class2->is_instance_klass())  return false;
 
   // must be in same package before we try anything else
-  if (!class1->is_same_class_package(InstanceKlass::cast(class2)))
+  if (!class1->is_same_class_package(class2))
     return false;
 
   // As long as there is an outer1.getEnclosingClass,
