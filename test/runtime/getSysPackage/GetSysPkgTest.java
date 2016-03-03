@@ -23,13 +23,11 @@
 
 /*
  * @test
- * @modules java.base/jdk.internal.misc
+ * @modules java.base/jdk.internal.loader
  *          java.desktop
  * @library /testlibrary
  * @run main/othervm GetSysPkgTest
  */
-
-// package GetSysPkg_package;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
@@ -48,7 +46,7 @@ public class GetSysPkgTest {
     }
 
     private static Method findMethod(String name) {
-        for (Method m : jdk.internal.misc.BootLoader.class.getDeclaredMethods()) {
+        for (Method m : jdk.internal.loader.BootLoader.class.getDeclaredMethods()) {
             if (m.getName().equals(name)) {
                 m.setAccessible(true);
                 return m;
@@ -99,7 +97,7 @@ public class GetSysPkgTest {
             ClassFileInstaller.writeClassToDisk("GetSysPkg_package/GetSysClass", klassbuf);
 
             ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-Xbootclasspath/a:bl_dir",
-                "-XaddExports:java.base/jdk.internal.misc=ALL-UNNAMED", "-cp", "." + File.pathSeparator +
+                "-XaddExports:java.base/jdk.internal.loader=ALL-UNNAMED", "-cp", "." + File.pathSeparator +
                 System.getProperty("test.classes"), "GetSysPkgTest", "do_tests");
             OutputAnalyzer output = new OutputAnalyzer(pb.start());
             output.shouldHaveExitValue(0);
