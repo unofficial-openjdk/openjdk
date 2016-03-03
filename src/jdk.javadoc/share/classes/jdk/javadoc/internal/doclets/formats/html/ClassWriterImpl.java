@@ -30,6 +30,7 @@ import java.util.*;
 
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ModuleElement;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
@@ -194,6 +195,17 @@ public class ClassWriterImpl extends SubWriterHolderWriter implements ClassWrite
         bodyTree.addContent(HtmlConstants.START_OF_CLASS_DATA);
         HtmlTree div = new HtmlTree(HtmlTag.DIV);
         div.addStyle(HtmlStyle.header);
+        ModuleElement mdle = configuration.root.getElementUtils().getModuleOf(typeElement);
+        if (mdle != null && !mdle.isUnnamed()) {
+            Content moduleNameContent = new HtmlTree(HtmlTag.P);
+            Content classModuleLabel = HtmlTree.SPAN(HtmlStyle.moduleLabelInClass, moduleLabel);
+            moduleNameContent.addContent(classModuleLabel);
+            moduleNameContent.addContent(getSpace());
+            moduleNameContent.addContent(getTargetModuleLink("classFrame",
+                    new StringContent(mdle.getQualifiedName().toString()), mdle));
+            Content moduleNameDiv = HtmlTree.DIV(HtmlStyle.subTitle, moduleNameContent);
+            div.addContent(moduleNameDiv);
+        }
         PackageElement pkg = utils.containingPackage(typeElement);
         if (!pkg.isUnnamed()) {
             Content pkgNameContent = new StringContent(utils.getPackageName(pkg));

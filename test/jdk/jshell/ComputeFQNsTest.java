@@ -27,6 +27,8 @@
  * @summary Test Get FQNs
  * @library /tools/lib
  * @build KullaTesting TestingInputStream ToolBox Compiler
+ * @modules jdk.compiler/com.sun.tools.javac.api
+ *          jdk.compiler/com.sun.tools.javac.main
  * @run testng ComputeFQNsTest
  */
 
