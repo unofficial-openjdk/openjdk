@@ -36,6 +36,7 @@ BOOT_MODULES += \
     java.base \
     java.datatransfer \
     java.desktop \
+    java.httpclient \
     java.instrument \
     java.logging \
     java.management \
@@ -47,7 +48,6 @@ BOOT_MODULES += \
     java.sql \
     java.xml \
     java.xml.crypto \
-    jdk.httpclient \
     jdk.httpserver \
     jdk.management \
     jdk.sctp \
