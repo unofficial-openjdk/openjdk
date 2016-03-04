@@ -365,10 +365,10 @@ class ClassLoader: AllStatic {
   static bool  check_shared_paths_misc_info(void* info, int size);
   static void  exit_with_path_failure(const char* error, const char* message);
 
-  static jshort module_to_classloader(const char* module_name);
+  static s2 module_to_classloader(const char* module_name);
   static void initialize_module_loader_map(JImageFile* jimage);
 #endif
-  static jshort classloader_type(Symbol* class_name, ClassPathEntry* e,
+  static s2 classloader_type(Symbol* class_name, ClassPathEntry* e,
                                  int classpath_index, TRAPS);
 
   static void  trace_class_path(outputStream* out, const char* msg, const char* name = NULL);

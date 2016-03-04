@@ -1004,7 +1004,7 @@ objArrayOop ClassLoader::get_system_packages(TRAPS) {
 }
 
 #if INCLUDE_CDS
-jshort ClassLoader::module_to_classloader(const char* module_name) {
+s2 ClassLoader::module_to_classloader(const char* module_name) {
 
   assert(_boot_modules_array != NULL, "_boot_modules_array is NULL");
   assert(_ext_modules_array != NULL, "_ext_modules_array is NULL");
@@ -1027,7 +1027,7 @@ jshort ClassLoader::module_to_classloader(const char* module_name) {
 }
 #endif
 
-jshort ClassLoader::classloader_type(Symbol* class_name, ClassPathEntry* e,
+s2 ClassLoader::classloader_type(Symbol* class_name, ClassPathEntry* e,
                                      int classpath_index, TRAPS) {
 #if INCLUDE_CDS
   // obtain the classloader type based on the class name.

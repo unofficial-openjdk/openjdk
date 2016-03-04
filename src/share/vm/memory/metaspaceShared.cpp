@@ -708,8 +708,7 @@ void VM_PopulateDumpSharedSpace::doit() {
 }
 
 
-void MetaspaceShared::link_one_shared_class(Klass* obj, TRAPS) {
-  Klass* k = obj;
+void MetaspaceShared::link_one_shared_class(Klass* k, TRAPS) {
   if (k->is_instance_klass()) {
     InstanceKlass* ik = InstanceKlass::cast(k);
     // Link the class to cause the bytecodes to be rewritten and the
@@ -726,18 +725,12 @@ void MetaspaceShared::check_one_shared_class(Klass* k) {
   }
 }
 
-void MetaspaceShared::check_shared_class_loader_type(Klass* obj) {
-  InstanceKlass* ik = (InstanceKlass*)obj;
-  u2 loader_type = ik->loader_type();
-  if (loader_type == 0) {
-    tty->print_cr("Class loader type is not set for this class %s",
-      ik->name()->as_C_string());
-    exit(1);
-  }
-  if ((loader_type && !(loader_type & (loader_type - 1))) == 0) {
-    tty->print_cr("More than one loader type is set for this class %s",
-      ik->name()->as_C_string());
-    exit(1);
+void MetaspaceShared::check_shared_class_loader_type(Klass* k) {
+  if (k->is_instance_klass()) {
+    InstanceKlass* ik = InstanceKlass::cast(k);
+    u2 loader_type = ik->loader_type();
+    guarantee(loader_type != 0,
+              "Class loader type is not set for this class %s", ik->name()->as_C_string());
   }
 }
 
