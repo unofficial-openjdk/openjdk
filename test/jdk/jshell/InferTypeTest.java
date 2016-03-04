@@ -26,6 +26,8 @@
  * @bug 8131027
  * @summary Test Type Inference
  * @library /tools/lib
+ * @modules jdk.compiler/com.sun.tools.javac.api
+ *          jdk.compiler/com.sun.tools.javac.main
  * @build KullaTesting TestingInputStream ToolBox Compiler
  * @run testng InferTypeTest
  */
