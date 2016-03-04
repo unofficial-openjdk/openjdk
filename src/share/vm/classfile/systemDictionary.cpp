@@ -1386,12 +1386,12 @@ instanceKlassHandle SystemDictionary::load_shared_class(instanceKlassHandle ik,
     }
 
     if (log_is_enabled(Info, classload)) {
-      ik()->print_loading_log(LogLevel::Info, loader_data, NULL);
+      ik()->print_loading_log(LogLevel::Info, loader_data, NULL, NULL);
     }
     // No 'else' here as logging levels are not mutually exclusive
 
     if (log_is_enabled(Debug, classload)) {
-      ik()->print_loading_log(LogLevel::Debug, loader_data, NULL);
+      ik()->print_loading_log(LogLevel::Debug, loader_data, NULL, NULL);
     }
 
     // For boot loader, ensure that GetSystemPackage knows that a class in this

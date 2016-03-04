@@ -5351,27 +5351,25 @@ void ClassFileParser::fill_instance_klass(InstanceKlass* ik, bool changed_by_loa
   ClassLoadingService::notify_class_loaded(ik, false /* not shared class */);
 
   if (!is_internal()) {
-/* Need VM to add this logging
-        static const size_t modules_image_name_len = strlen(MODULES_IMAGE_NAME);
-        size_t stream_len = strlen(_stream->source());
-        // See if _stream->source() ends in "modules"
-        if (module_entry->is_named() && modules_image_name_len < stream_len &&
-          (strncmp(_stream->source() + stream_len - modules_image_name_len,
-                   MODULES_IMAGE_NAME, modules_image_name_len) == 0)) {
-          tty->print_cr("[Loaded %s from jrt:/%s]", ik->external_name(),
-                     module_entry->name()->as_C_string());
-        } else {
-          tty->print("[Loaded %s from %s]\n",
-                     ik->external_name(),
-                     _stream->source());
-        }
-*/
     if (log_is_enabled(Info, classload)) {
-      ik->print_loading_log(LogLevel::Info, _loader_data, _stream);
-    }
-    // No 'else' here as logging levels are not mutually exclusive
-    if (log_is_enabled(Debug, classload)) {
-      ik->print_loading_log(LogLevel::Debug, _loader_data, _stream);
+      ResourceMark rm;
+      const char* module_name = NULL;
+      static const size_t modules_image_name_len = strlen(MODULES_IMAGE_NAME);
+      size_t stream_len = strlen(_stream->source());
+      // See if _stream->source() ends in "modules"
+      if (module_entry->is_named() && modules_image_name_len < stream_len &&
+        (strncmp(_stream->source() + stream_len - modules_image_name_len,
+                 MODULES_IMAGE_NAME, modules_image_name_len) == 0)) {
+        module_name = module_entry->name()->as_C_string();
+      }
+
+      if (log_is_enabled(Info, classload)) {
+        ik->print_loading_log(LogLevel::Info, _loader_data, module_name, _stream);
+      }
+      // No 'else' here as logging levels are not mutually exclusive
+      if (log_is_enabled(Debug, classload)) {
+        ik->print_loading_log(LogLevel::Debug, _loader_data, module_name, _stream);
+      }
     }
 
     if (log_is_enabled(Info, classresolve))  {

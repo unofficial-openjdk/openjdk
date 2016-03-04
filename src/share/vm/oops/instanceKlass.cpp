@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -2999,6 +2999,7 @@ const char* InstanceKlass::internal_name() const {
 
 void InstanceKlass::print_loading_log(LogLevel::type type,
                                       ClassLoaderData* loader_data,
+                                      const char* module_name,
                                       const ClassFileStream* cfs) const {
   ResourceMark rm;
   outputStream* log;
@@ -3019,7 +3020,11 @@ void InstanceKlass::print_loading_log(LogLevel::type type,
   // Source
   if (cfs != NULL) {
     if (cfs->source() != NULL) {
-      log->print(" source: %s", cfs->source());
+      if (module_name != NULL) {
+        log->print(" source: jrt:/%s", module_name);
+      } else {
+        log->print(" source: %s", cfs->source());
+      }
     } else if (loader_data == ClassLoaderData::the_null_class_loader_data()) {
       Thread* THREAD = Thread::current();
       Klass* caller =
