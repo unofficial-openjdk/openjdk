@@ -41,6 +41,10 @@ BUILD_TOOLS_JDK := $(call SetupJavaCompilationCompileTarget, \
 TOOL_ADDJSUM = $(JAVA_SMALL) -cp $(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes \
     build.tools.addjsum.AddJsum
 
+ifeq ($(BOOT_JDK_MODULAR), true)
+  COMPILEFONTCONFIG_ADD_EXPORTS := -XaddExports:java.desktop/sun.awt=ALL-UNNAMED
+endif
+
 TOOL_COMPILEFONTCONFIG = $(JAVA_SMALL) -cp $(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes \
     $(COMPILEFONTCONFIG_ADD_EXPORTS) \
     build.tools.compilefontconfig.CompileFontConfig
