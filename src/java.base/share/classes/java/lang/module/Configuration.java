@@ -191,8 +191,8 @@ public final class Configuration {
      * returning the resulting configuration.
      *
      * <p> Each root module is located using the given {@code beforeFinder}.
-     * If a module is not found then it located in parent configurations as
-     * if by invoking the {@link #findDescriptor(String) findDescriptor}
+     * If a module is not found then it is located in the parent configurations
+     * as if by invoking the {@link #findDescriptor(String) findDescriptor}
      * method on the parent. If not found then the module is located using
      * the given {@code afterFinder}. The same search order is used to locate
      * transitive dependences. Root modules or dependences that are located in
