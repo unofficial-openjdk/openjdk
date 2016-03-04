@@ -546,8 +546,11 @@ NEW_JAVAC   = $(INTERIM_LANGTOOLS_ARGS) $(JAVAC_MAIN_CLASS)
 NEW_JAVADOC = $(INTERIM_LANGTOOLS_ARGS) $(JAVADOC_MAIN_CLASS)
 
 # JLink/Jmod are run using the BUILD_JDK, which is normally the jdk output dir.
+JLINK_KEEP_PACKAGED_MODULES:=@JLINK_KEEP_PACKAGED_MODULES@
+
 JLINK = @FIXPATH@ $(BUILD_JDK)/bin/jlink $(JAVA_TOOL_FLAGS_SMALL)
 JMOD = @FIXPATH@ $(BUILD_JDK)/bin/jmod $(JAVA_TOOL_FLAGS_SMALL)
+
 # Base flags for RC
 # Guarding this against resetting value. Legacy make files include spec multiple
 # times.

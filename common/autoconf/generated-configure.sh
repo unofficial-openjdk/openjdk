@@ -880,6 +880,7 @@ PRODUCT_SUFFIX
 PRODUCT_NAME
 LAUNCHER_NAME
 TEST_IN_BUILD
+JLINK_KEEP_PACKAGED_MODULES
 COPYRIGHT_YEAR
 COMPRESS_JARS
 INCLUDE_SA
@@ -1102,6 +1103,7 @@ enable_headful
 with_cacerts_file
 enable_unlimited_crypto
 with_copyright_year
+enable_keep_packaged_modules
 enable_hotspot_test_in_build
 with_milestone
 with_update_version
@@ -1916,6 +1918,8 @@ Optional Features:
                           support) [enabled]
   --enable-unlimited-crypto
                           Enable unlimited crypto policy [disabled]
+  --disable-keep-packaged-modules
+                          Do not keep packaged modules in jdk image [enable]
   --enable-hotspot-test-in-build
                           run the Queens test after Hotspot build [disabled]
   --enable-static-build   enable static library build [disabled]
@@ -4241,6 +4245,13 @@ pkgadd_help() {
 #
 
 
+################################################################################
+#
+# jlink options.
+# We always keep packaged modules in JDK image.
+#
+
+
 #
 # Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -4917,7 +4928,7 @@ VS_SDK_PLATFORM_NAME_2013=
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1456979952
+DATE_WHEN_GENERATED=1457130575
 
 ###############################################################################
 #
@@ -23404,6 +23415,35 @@ fi
   else
     COPYRIGHT_YEAR=`date +'%Y'`
   fi
+
+
+
+  # Check whether --enable-keep-packaged-modules was given.
+if test "${enable_keep_packaged_modules+set}" = set; then :
+  enableval=$enable_keep_packaged_modules;
+fi
+
+
+  if test "x$enable_keep_packaged_modules" = "xyes"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking if packaged modules are kept" >&5
+$as_echo_n "checking if packaged modules are kept... " >&6; }
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+    JLINK_KEEP_PACKAGED_MODULES=true
+  elif test "x$enable_keep_packaged_modules" = "xno"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking if packaged modules are kept" >&5
+$as_echo_n "checking if packaged modules are kept... " >&6; }
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+    JLINK_KEEP_PACKAGED_MODULES=false
+  elif test "x$enable_keep_packaged_modules" = "x"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes (default)" >&5
+$as_echo "yes (default)" >&6; }
+    JLINK_KEEP_PACKAGED_MODULES=true
+  else
+    as_fn_error $? "--enable-keep-packaged-modules accepts no argument" "$LINENO" 5
+  fi
+
 
 
 
