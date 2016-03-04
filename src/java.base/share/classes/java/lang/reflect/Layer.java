@@ -188,7 +188,7 @@ public final class Layer {
      *         The parent layer
      * @param  parentLoader
      *         The parent class loader for the class loader created by this
-     *         method
+     *         method; may be {@code null} for the bootstrap class loader
      *
      * @return The newly created layer
      *
@@ -253,8 +253,8 @@ public final class Layer {
      * @param  parentLayer
      *         The parent layer
      * @param  parentLoader
-     *         The parent class loader for each of the class loaders created
-     *         by this method
+     *         The parent class loader for each of the class loaders created by
+     *         this method; may be {@code null} for the bootstrap class loader
      *
      * @return The newly created layer
      *

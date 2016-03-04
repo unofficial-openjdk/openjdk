@@ -704,7 +704,7 @@ public class ModuleDescriptor
 
     /**
      * <p> Returns {@code true} if this module descriptor was not generated
-     * from an explicit module declaration ({@code module-info.class})
+     * from an explicit module declaration ({@code module-info.java})
      * or an implicit module declaration (an {@link #isAutomatic() automatic}
      * module). </p>
      *
