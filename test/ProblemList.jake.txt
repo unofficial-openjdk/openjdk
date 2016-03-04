@@ -3,7 +3,3 @@
 tools/javac/Paths/MineField.sh                                                  8149599	generic-all   needs rewrite
 
 tools/javac/diags/CheckExamples.java                                            8149602 generic-all   need to update resource files
-
-jdk/jshell/CompletionSuggestionTest.java                                        8151202 generic-all
-
-jdk/jshell/ComputeFQNsTest.java                                                 8151202 generic-all

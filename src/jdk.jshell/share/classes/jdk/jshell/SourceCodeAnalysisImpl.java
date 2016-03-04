@@ -1297,7 +1297,7 @@ class SourceCodeAnalysisImpl extends SourceCodeAnalysis {
     }
 
     static boolean isJRTMarkerFile(Path path) {
-        return path.equals(Paths.get("JRT_MARKER_FILE"));
+        return path.equals(Paths.get(System.getProperty("java.home"), "lib", "modules"));
     }
 
     //create an index based on the content of the given dirs; the original JavaFileManager entry is originalPath.
