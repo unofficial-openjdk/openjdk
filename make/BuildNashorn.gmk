@@ -70,9 +70,6 @@ $(eval $(call SetupJavaCompilation,BUILD_NASGEN, \
     SRC := $(NASGEN_SRC) $(ASM_SRC), \
     BIN := $(BUILDTOOLS_OUTPUTDIR)/nasgen_classes))
 
-# Nasgen needs nashorn classes
-$(BUILD_NASGEN): $(jdk.scripting.nashorn)
-
 NASHORN_CLASSES_DIR := $(JDK_OUTPUTDIR)/modules/jdk.scripting.nashorn
 NASGEN_RUN_FILE := $(NASHORN_CLASSES_DIR)/_the.nasgen.run
 
@@ -89,7 +86,7 @@ else
 endif
 
 # Copy classes to final classes dir and run nasgen to modify classes in jdk.nashorn.internal.objects package
-$(NASGEN_RUN_FILE): $(BUILD_NASGEN)
+$(NASGEN_RUN_FILE): $(BUILD_NASGEN) $(jdk.scripting.nashorn)
 	$(ECHO) Running nasgen
 	$(MKDIR) -p $(@D)
 	$(RM) -rf $(@D)/jdk $(@D)/netscape
