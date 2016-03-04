@@ -189,6 +189,9 @@
             <different targetdir="${build.prevsrc}" ignoreFileTimes="false" ignoreContents="true"/>
             <compilerarg line="${javac.opts} -modulesourcepath ${src.dir}/*/share/classes:${build.gensrc}" />
         </javac>
+        <delete>
+            <fileset dir="${build.modules}" includes="**/module-info.class"/>
+        </delete>
         <!-- workaround for incremental compilation -->
         <copy todir="${build.prevsrc}" preservelastmodified="true">
             <fileset dir="${src.dir}">
