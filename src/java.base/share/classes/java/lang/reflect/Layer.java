@@ -211,6 +211,7 @@ public final class Layer {
     {
         checkConfiguration(cf, parentLayer);
         checkCreateClassLoaderPermission();
+        checkGetClassLoaderPermission();
 
         Loader loader;
         try {
@@ -274,6 +275,7 @@ public final class Layer {
     {
         checkConfiguration(cf, parentLayer);
         checkCreateClassLoaderPermission();
+        checkGetClassLoaderPermission();
 
         LoaderPool pool = new LoaderPool(cf, parentLayer, parentLoader);
         return new Layer(cf, parentLayer, pool::loaderFor);
@@ -332,13 +334,9 @@ public final class Layer {
                                Layer parentLayer,
                                Function<String, ClassLoader> clf)
     {
-        checkConfiguration(cf, parentLayer);
         Objects.requireNonNull(clf);
-
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            sm.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
-        }
+        checkConfiguration(cf, parentLayer);
+        checkGetClassLoaderPermission();
 
         // For now, no two modules in the boot Layer may contain the same
         // package so we use a simple check for the boot Layer to keep
@@ -373,6 +371,12 @@ public final class Layer {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null)
             sm.checkPermission(SecurityConstants.CREATE_CLASSLOADER_PERMISSION);
+    }
+
+    private static void checkGetClassLoaderPermission() {
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null)
+            sm.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
     }
 
     /**
