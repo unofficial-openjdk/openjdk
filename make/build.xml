@@ -188,9 +188,10 @@
       <compilerarg value="-parameters"/>
       <compilerarg value="${nashorn.override.option}"/>
     </javac>
-    <copy todir="${nashorn.module.classes.dir}/META-INF/services">
-       <fileset dir="${meta.inf.dir}/services/"/>
-    </copy>
+    <!-- -Xpatch does not like module-info.class files! -->
+    <delete>
+      <fileset dir="${build.classes.dir}" includes="**/module-info.class"/>
+    </delete>
      <copy todir="${nashorn.module.classes.dir}/jdk/nashorn/api/scripting/resources">
        <fileset dir="${nashorn.module.src.dir}/jdk/nashorn/api/scripting/resources/"/>
     </copy>
@@ -212,7 +213,7 @@
     <jar jarfile="${dynalink.jar}">
       <fileset dir="${dynalink.module.classes.dir}"/>
     </jar>
-    <jar jarfile="${nashorn.jar}" manifest="${meta.inf.dir}/MANIFEST.MF" index="true" filesetmanifest="merge">
+    <jar jarfile="${nashorn.jar}" index="true" filesetmanifest="merge">
       <fileset dir="${nashorn.module.classes.dir}"/>
       <manifest>
         <attribute name="Archiver-Version" value="n/a"/>
