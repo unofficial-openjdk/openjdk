@@ -122,7 +122,7 @@ public class ModulePaths {
             builder.require(req.name(), req.modifiers().contains(PUBLIC));
         }
         for (ModuleDescriptor.Exports exp : md.exports()) {
-            builder.export(exp.source(), exp.targets().orElse(Collections.emptySet()));
+            builder.export(exp.source(), exp.targets());
         }
         builder.packages(md.packages());
 

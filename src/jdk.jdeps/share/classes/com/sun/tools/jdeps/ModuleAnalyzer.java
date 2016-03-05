@@ -124,7 +124,7 @@ class ModuleAnalyzer {
         JdepsFilter.Builder builder = new JdepsFilter.Builder();
         // only analyze exported API
         root.descriptor.exports().stream()
-                .filter(exp -> !exp.targets().isPresent())
+                .filter(exp -> !exp.isQualified())
                 .map(ModuleDescriptor.Exports::source)
                 .forEach(builder::includePackage);
 
