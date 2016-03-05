@@ -941,8 +941,11 @@ public enum LauncherHelper {
                 exports.addAll(md.exports());
                 for (Exports e : exports) {
                     ostream.format("  exports %s", e.source());
-                    e.targets().ifPresentOrElse(ts -> formatCommaList(ostream, " to", ts),
-                                                () -> ostream.println());
+                    if (e.isQualified()) {
+                        formatCommaList(ostream, " to", e.targets());
+                    } else {
+                        ostream.println();
+                    }
                 }
 
                 // concealed packages

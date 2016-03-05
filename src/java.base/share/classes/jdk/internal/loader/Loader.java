@@ -242,13 +242,12 @@ public final class Loader extends SecureClassLoader {
                 // find the packages that are exported to the target module
                 String target = mref.descriptor().name();
                 for (ModuleDescriptor.Exports e : rd.descriptor().exports()) {
-                    Optional<Set<String>> targets = e.targets();
 
                     boolean delegate;
-                    if (targets.isPresent()) {
+                    if (e.isQualified()) {
                         // qualified export in same configuration
                         delegate = (rd.configuration() == cf)
-                                && targets.get().contains(target);
+                                && e.targets().contains(target);
                     } else {
                         // unqualified
                         delegate = true;

@@ -78,7 +78,7 @@ public class BasicLayerTest {
         Configuration cf = bootLayer.configuration();
         assertTrue(cf.findDescriptor("java.base").get().exports()
                    .stream().anyMatch(e -> (e.source().equals("java.lang")
-                                            && !e.targets().isPresent())));
+                                            && !e.isQualified())));
 
         // modules
         Set<Module> modules = bootLayer.modules();

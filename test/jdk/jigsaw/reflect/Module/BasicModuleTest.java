@@ -64,8 +64,7 @@ public class BasicModuleTest {
      * Returns a {@code Predicate} to test if a package is exported.
      */
     private Predicate<Exports> doesExport(String pn) {
-        return e -> (e.source().equals(pn)
-                && !e.targets().isPresent());
+        return e -> (e.source().equals(pn) && !e.isQualified());
     }
 
 

@@ -846,9 +846,8 @@ final class Resolver {
 
                 for (ModuleDescriptor.Exports export : descriptor2.exports()) {
 
-                    Optional<Set<String>> otargets = export.targets();
-                    if (otargets.isPresent()) {
-                        if (!otargets.get().contains(descriptor1.name()))
+                    if (export.isQualified()) {
+                        if (!export.targets().contains(descriptor1.name()))
                             continue;
                     }
 

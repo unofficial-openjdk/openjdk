@@ -165,7 +165,8 @@ public class ModuleDescriptorTest {
                 .next();
         assertEquals(e, e);
         assertEquals(e.source(), "p");
-        assertFalse(e.targets().isPresent());
+        assertFalse(e.isQualified());
+        assertTrue(e.targets().isEmpty());
     }
 
     public void testExportsToTarget() {
@@ -178,9 +179,9 @@ public class ModuleDescriptorTest {
                 .next();
         assertEquals(e, e);
         assertEquals(e.source(), "p");
-        assertTrue(e.targets().isPresent());
-        assertTrue(e.targets().get().size() == 1);
-        assertTrue(e.targets().get().contains("bar"));
+        assertTrue(e.isQualified());
+        assertTrue(e.targets().size() == 1);
+        assertTrue(e.targets().contains("bar"));
     }
 
     public void testExportsToTargets() {
@@ -196,10 +197,10 @@ public class ModuleDescriptorTest {
                 .next();
         assertEquals(e, e);
         assertEquals(e.source(), "p");
-        assertTrue(e.targets().isPresent());
-        assertTrue(e.targets().get().size() == 2);
-        assertTrue(e.targets().get().contains("bar"));
-        assertTrue(e.targets().get().contains("gus"));
+        assertTrue(e.isQualified());
+        assertTrue(e.targets().size() == 2);
+        assertTrue(e.targets().contains("bar"));
+        assertTrue(e.targets().contains("gus"));
     }
 
 

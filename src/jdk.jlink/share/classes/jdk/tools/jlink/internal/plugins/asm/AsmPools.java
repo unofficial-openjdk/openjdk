@@ -272,10 +272,10 @@ public final class AsmPools {
             for (String readable : modules) {
                 AsmModulePool mp = pools.get(readable);
                 if (mp != null) {
-                    for (Exports ex : mp.getDescriptor().exports()) {
+                    for (Exports e : mp.getDescriptor().exports()) {
                         // exported to all or to the targeted module
-                        if (!ex.targets().isPresent() || ex.targets().get().contains(module)) {
-                            packages.add(ex.source().replaceAll("\\.", "/"));
+                        if (e.targets().isEmpty() || e.targets().contains(module)) {
+                            packages.add(e.source().replaceAll("\\.", "/"));
                         }
                     }
 

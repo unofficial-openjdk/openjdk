@@ -205,8 +205,11 @@ public class ModuleDescriptor
     public final static class Exports {
 
         private final String source;
-        private final Set<String> targets;
+        private final Set<String> targets;  // empty if unqualified export
 
+        /**
+         * Constructs a qualified export.
+         */
         private Exports(String source, Set<String> targets) {
             this(source, targets, true);
         }
@@ -223,15 +226,23 @@ public class ModuleDescriptor
         }
 
         /**
-         * Constructs an {@code Exports} to represent the exporting of package
-         * {@code source}.
+         * Constructs an unqualified export.
          */
         private Exports(String source) {
             this(source, true);
         }
         private Exports(String source, boolean check) {
             this.source = check ? requirePackageName(source) : source;
-            this.targets = null;
+            this.targets = Collections.emptySet();
+        }
+
+        /**
+         * Returns {@code true} if this is a qualified export.
+         *
+         * @return {@code true} if this is a qualified export
+         */
+        public boolean isQualified() {
+            return !targets.isEmpty();
         }
 
         /**
@@ -246,16 +257,13 @@ public class ModuleDescriptor
         /**
          * For a qualified export, returns the non-empty and immutable set
          * of the module names to which the package is exported. For an
-         * unqualified export, returns an empty {@code Optional}.
-         *
-         * @apiNote An alternative is to introduce {@code isQualified()} and
-         * change this method to an empty set when an exported is unqualified
+         * unqualified export, returns an empty set.
          *
          * @return The set of target module names or for an unqualified
-         *         export, an empty {@code Optional}
+         *         export, an empty set
          */
-        public Optional<Set<String>> targets() {
-            return Optional.ofNullable(targets);
+        public Set<String> targets() {
+            return targets;
         }
 
         public int hashCode() {
@@ -271,9 +279,10 @@ public class ModuleDescriptor
         }
 
         public String toString() {
-            if (targets != null)
+            if (targets.isEmpty())
+                return source;
+            else
                 return source + " to " + targets;
-            return source;
         }
 
     }

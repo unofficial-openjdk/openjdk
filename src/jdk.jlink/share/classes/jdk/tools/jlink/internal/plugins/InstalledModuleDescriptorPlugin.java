@@ -177,10 +177,10 @@ public final class InstalledModuleDescriptorPlugin implements TransformerPlugin 
         for (Requires req : md.requires()) {
             Checks.requireModuleName(req.name());
         }
-        for (Exports exp : md.exports()) {
-            Checks.requirePackageName(exp.source());
-            exp.targets()
-               .ifPresent(targets -> targets.forEach(Checks::requireModuleName));
+        for (Exports e : md.exports()) {
+            Checks.requirePackageName(e.source());
+            if (e.isQualified())
+               e.targets().forEach(Checks::requireModuleName);
         }
         for (Map.Entry<String, Provides> e : md.provides().entrySet()) {
             String service = e.getKey();
@@ -303,9 +303,9 @@ public final class InstalledModuleDescriptorPlugin implements TransformerPlugin 
             builders.add(builder);
 
             // exports
-            for (ModuleDescriptor.Exports exp : md.exports()) {
-                if (exp.targets().isPresent()) {
-                    stringSets.computeIfAbsent(exp.targets().get(), s -> new StringSetBuilder(s))
+            for (ModuleDescriptor.Exports e : md.exports()) {
+                if (e.isQualified()) {
+                    stringSets.computeIfAbsent(e.targets(), s -> new StringSetBuilder(s))
                               .increment();
                 }
             }
@@ -456,11 +456,11 @@ public final class InstalledModuleDescriptorPlugin implements TransformerPlugin 
                 }
 
                 // exports
-                for (ModuleDescriptor.Exports exp : md.exports()) {
-                    if (exp.targets().isPresent()) {
-                        exports(exp.source(), exp.targets().get());
+                for (ModuleDescriptor.Exports e : md.exports()) {
+                    if (e.isQualified()) {
+                        exports(e.source(), e.targets());
                     } else {
-                        exports(exp.source());
+                        exports(e.source());
                     }
                 }
 

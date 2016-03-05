@@ -995,17 +995,11 @@ public final class Module {
                 String source = export.source();
                 String sourceInternalForm = source.replace('.', '/');
 
-                if (!export.targets().isPresent()) {
-
-                    // unqualified export
-                    exports.put(source, EVERYONE);
-                    addExportsToAll0(m, sourceInternalForm);
-
-                } else {
+                if (export.isQualified()) {
 
                     // qualified export
                     Set<Module> targets = new HashSet<>();
-                    for (String target : export.targets().get()) {
+                    for (String target : export.targets()) {
                         // only export to modules that are in this configuration
                         Module m2 = modules.get(target);
                         if (m2 != null) {
@@ -1017,6 +1011,11 @@ public final class Module {
                         exports.put(source, targets);
                     }
 
+                } else {
+
+                    // unqualified export
+                    exports.put(source, EVERYONE);
+                    addExportsToAll0(m, sourceInternalForm);
                 }
             }
             m.exports = exports;

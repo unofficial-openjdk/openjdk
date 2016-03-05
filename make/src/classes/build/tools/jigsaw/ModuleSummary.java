@@ -538,7 +538,7 @@ public class ModuleSummary {
                 sb.append(String.format("  <td class=\"%s\">", CODE));
                 ms.descriptor().exports().stream()
                         .sorted(Comparator.comparing(Exports::source))
-                        .filter(e -> !e.targets().isPresent())
+                        .filter(e -> !e.isQualified())
                         .forEach(e -> sb.append(e.source()).append("<br>").append("\n"));
                 sb.append("</td>");
                 return sb.toString();
