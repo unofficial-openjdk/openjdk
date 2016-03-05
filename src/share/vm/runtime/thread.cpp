@@ -3635,6 +3635,13 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
     ShouldNotReachHere();
   }
 
+  // Always call even when there are not JVMTI environments yet, since environments
+  // may be attached late and JVMTI must track phases of VM execution
+  JvmtiExport::enter_early_start_phase();
+
+  // Notify JVMTI agents that VM has started (JNI is up) - nop if no agents.
+  JvmtiExport::post_early_vm_start();
+
   initialize_java_lang_classes(main_thread, CHECK_JNI_ERR);
 
   // We need this for ClassDataSharing - the initial vm.info property is set

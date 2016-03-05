@@ -577,7 +577,7 @@ JvmtiEnv::AddToSystemClassLoaderSearch(const char* segment) {
 // phase_ptr - pre-checked for NULL
 jvmtiError
 JvmtiEnv::GetPhase(jvmtiPhase* phase_ptr) {
-  *phase_ptr = get_phase();
+  *phase_ptr = phase();
   return JVMTI_ERROR_NONE;
 } /* end GetPhase */
 
