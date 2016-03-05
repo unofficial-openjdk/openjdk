@@ -132,8 +132,9 @@ public interface ModuleFinder {
     Set<ModuleReference> findAll();
 
     /**
-     * Returns a module finder for modules that are linked into the run-time
-     * image.
+     * Returns a module finder that locates the <em>system modules</em>. The
+     * system modules are typically linked into the Java run-time image.
+     * The module finder will always find {@code java.base}.
      *
      * <p> If there is a security manager set then its {@link
      * SecurityManager#checkPermission(Permission) checkPermission} method is
@@ -141,19 +142,12 @@ public interface ModuleFinder {
      * to recursively read the directory that is the value of the system
      * property {@code java.home}. </p>
      *
-     * @implNote For now, this method returns a module finder that finds all
-     * modules in the run-time image. In the future then there may be modules
-     * in the run-time image that aren't candidates for the boot Layer. In
-     * that case then the module finder returned by this method may only find
-     * a subset of the observable modules.
-     *
-     * @return A {@code ModuleFinder} that locates all modules in the
-     *         run-time image
+     * @return A {@code ModuleFinder} that locates the system modules
      *
      * @throws SecurityException
      *         If denied by the security manager
      */
-    static ModuleFinder ofInstalled() {
+    static ModuleFinder ofSystem() {
         String home;
 
         SecurityManager sm = System.getSecurityManager();
@@ -180,7 +174,7 @@ public interface ModuleFinder {
     }
 
     /**
-     * Creates a module finder that locates modules on the file system by
+     * Returns a module finder that locates modules on the file system by
      * searching a sequence of directories and/or packaged modules.
      *
      * Each element in the given array is one of:
@@ -228,9 +222,10 @@ public interface ModuleFinder {
      *
      *         <li><p> If the name matches the regular expression {@code
      *         "-(\\d+(\\.|$))"} then the module name will be derived from the
-     *         subsequence proceeding the hyphen. The subsequence after the
-     *         hyphen is parsed as a {@link ModuleDescriptor.Version} and
-     *         ignored if it cannot be parsed as a {@code Version}. </p></li>
+     *         subsequence proceeding the hyphen of the first occurrence. The
+     *         subsequence after the hyphen is parsed as a {@link
+     *         ModuleDescriptor.Version} and ignored if it cannot be parsed as
+     *         a {@code Version}. </p></li>
      *
      *         <li><p> For the module name, then all non-alphanumeric
      *         characters ({@code [^A-Za-z0-9])} are replaced with a dot

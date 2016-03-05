@@ -60,7 +60,7 @@ public class GenGraphs {
         Path dir = Paths.get(args[0]);
         Files.createDirectories(dir);
 
-        ModuleFinder finder = ModuleFinder.ofInstalled();
+        ModuleFinder finder = ModuleFinder.ofSystem();
 
         Set<ModuleDescriptor> javaSEModules
             = new TreeSet<>(finder.findAll().stream()

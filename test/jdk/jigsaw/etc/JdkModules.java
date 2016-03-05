@@ -41,7 +41,7 @@ import static org.testng.Assert.*;
 
 public class JdkModules {
     private static Set<ModuleReference> mrefs
-        = ModuleFinder.ofInstalled().findAll();
+        = ModuleFinder.ofSystem().findAll();
 
     private static ModuleDescriptor base
         = new ModuleDescriptor.Builder("java.base").build();

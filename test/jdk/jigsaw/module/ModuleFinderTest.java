@@ -29,7 +29,6 @@
  * @summary Basic tests for java.lang.module.ModuleFinder
  */
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.module.FindException;
 import java.lang.module.InvalidModuleDescriptorException;
@@ -57,10 +56,10 @@ public class ModuleFinderTest {
 
 
     /**
-     * Test ModuleFinder.ofInstalled
+     * Test ModuleFinder.ofSystem
      */
-    public void testOfInstalled() {
-        ModuleFinder finder = ModuleFinder.ofInstalled();
+    public void testOfSystem() {
+        ModuleFinder finder = ModuleFinder.ofSystem();
 
         assertTrue(finder.find("java.se").isPresent());
         assertTrue(finder.find("java.base").isPresent());
@@ -463,7 +462,7 @@ public class ModuleFinderTest {
     public void testNulls() {
 
         try {
-            ModuleFinder.ofInstalled().find(null);
+            ModuleFinder.ofSystem().find(null);
             assertTrue(false);
         } catch (NullPointerException expected) { }
 

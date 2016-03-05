@@ -82,7 +82,7 @@ public class ModuleSummary {
         Files.createDirectories(dir);
 
         Map<String, ModuleSummary> modules = new HashMap<>();
-        Set<ModuleReference> mrefs = ModuleFinder.ofInstalled().findAll();
+        Set<ModuleReference> mrefs = ModuleFinder.ofSystem().findAll();
         for (ModuleReference mref : mrefs) {
             String mn = mref.descriptor().name();
             Path jmod = modpath.resolve(mn + ".jmod");
@@ -286,7 +286,7 @@ public class ModuleSummary {
     }
 
     static Configuration resolve(Set<String> roots) {
-        return Configuration.resolve(ModuleFinder.ofInstalled(),
+        return Configuration.resolve(ModuleFinder.ofSystem(),
                                      Configuration.empty(),
                                      ModuleFinder.empty(),
                                      roots);

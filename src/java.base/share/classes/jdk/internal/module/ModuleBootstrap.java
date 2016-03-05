@@ -90,8 +90,8 @@ public final class ModuleBootstrap {
 
         long t0 = System.nanoTime();
 
-        // system module path, aka the installed modules
-        ModuleFinder systemModulePath = ModuleFinder.ofInstalled();
+        // system module path
+        ModuleFinder systemModulePath = ModuleFinder.ofSystem();
 
         // Once we have the system module path then we define the base module.
         // We do this here so that java.base is defined to the VM as early as

@@ -51,7 +51,7 @@ public class InstalledModulesTest {
      */
     @Test
     public void testUnmodifableDescriptors() throws Exception {
-        ModuleFinder.ofInstalled().findAll()
+        ModuleFinder.ofSystem().findAll()
                     .stream()
                     .map(ModuleReference::descriptor)
                     .forEach(this::testModuleDescriptor);
