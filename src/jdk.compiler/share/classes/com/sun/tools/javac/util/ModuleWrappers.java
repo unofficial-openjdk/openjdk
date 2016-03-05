@@ -254,7 +254,6 @@ public class ModuleWrappers {
 
     private static class LayerHelper {
         static Class<?> layerClass;
-        static Class<?> classLoaderFinderInterface;
         static Method bootMethod = null;
         static Method createMethod = null;
         static Method createWithOneLoader = null;
@@ -269,17 +268,6 @@ public class ModuleWrappers {
                 }
             }
             return layerClass;
-        }
-
-        static Class<?> getClassLoaderFinderInterface() {
-            if (classLoaderFinderInterface == null) {
-                try {
-                    classLoaderFinderInterface = Class.forName("java.lang.reflect.Layer$ClassLoaderFinder", false, ClassLoader.getSystemClassLoader());
-                } catch (ClassNotFoundException ex) {
-                    throw new Abort(ex);
-                }
-            }
-            return classLoaderFinderInterface;
         }
 
         static Method getBootMethod() {
@@ -299,7 +287,7 @@ public class ModuleWrappers {
                     createMethod = getLayerClass().getDeclaredMethod("create",
                                 ConfigurationHelper.getConfigurationClass(),
                                 LayerHelper.getLayerClass(),
-                                getClassLoaderFinderInterface()
+                                java.util.function.Function.class
                     );
                 } catch (NoSuchMethodException | SecurityException ex) {
                     throw new Abort(ex);

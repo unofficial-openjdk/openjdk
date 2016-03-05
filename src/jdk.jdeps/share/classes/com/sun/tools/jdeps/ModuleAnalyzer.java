@@ -589,7 +589,7 @@ class ModuleAnalyzer {
                         name.startsWith("javafx.")) && !javaModules.contains(name));
 
         private static Set<String> modules(Predicate<String> predicate) {
-            return ModuleFinder.ofInstalled().findAll()
+            return ModuleFinder.ofSystem().findAll()
                                .stream()
                                .map(ModuleReference::descriptor)
                                .map(ModuleDescriptor::name)

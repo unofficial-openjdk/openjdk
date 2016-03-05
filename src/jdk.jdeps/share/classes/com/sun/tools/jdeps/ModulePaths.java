@@ -55,7 +55,7 @@ public class ModulePaths {
     }
 
     public ModulePaths(String upgradeModulePath, String modulePath, List<Path> jars) {
-        ModuleFinder finder = ModuleFinder.ofInstalled();
+        ModuleFinder finder = ModuleFinder.ofSystem();
         if (upgradeModulePath != null) {
             finder = ModuleFinder.concat(createModulePathFinder(upgradeModulePath), finder);
         }
@@ -155,7 +155,7 @@ public class ModulePaths {
                 root = Paths.get(javahome, "modules");
             }
 
-            ModuleFinder.ofInstalled().findAll().stream()
+            ModuleFinder.ofSystem().findAll().stream()
                  .forEach(mref ->
                      installed.computeIfAbsent(mref.descriptor().name(),
                                                mn -> toModule(new Module.Builder(mn, true), mref))
