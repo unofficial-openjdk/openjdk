@@ -180,6 +180,7 @@ public final class ModulePatcher {
                         jf.stream()
                           .filter(e -> e.getName().endsWith(".class"))
                           .map(e -> toPackageName(file, e))
+                          .filter(pn -> pn.length() > 0)
                           .forEach(packages::add);
                     }
 
@@ -191,6 +192,7 @@ public final class ModulePatcher {
                             ((path, attrs) -> attrs.isRegularFile() &&
                                     path.toString().endsWith(".class")))
                             .map(path -> toPackageName(top, path))
+                            .filter(pn -> pn.length() > 0)
                             .forEach(packages::add);
 
                 }
@@ -552,9 +554,11 @@ public final class ModulePatcher {
     private static String toPackageName(Path top, Path file) {
         Path entry = top.relativize(file);
         Path parent = entry.getParent();
-        if (parent == null)
-            failUnnamedPackage(file, entry.toString());
-        return parent.toString().replace(File.separatorChar, '.');
+        if (parent == null) {
+            return warnUnnamedPackage(top, entry.toString());
+        } else {
+            return parent.toString().replace(File.separatorChar, '.');
+        }
     }
 
     /**
@@ -563,22 +567,16 @@ public final class ModulePatcher {
     private static String toPackageName(Path file, JarEntry entry) {
         String name = entry.getName();
         int index = name.lastIndexOf("/");
-        if (index == -1)
-            failUnnamedPackage(file, name);
-        return name.substring(0, index).replace('/', '.');
+        if (index == -1) {
+            return warnUnnamedPackage(file, name);
+        } else {
+            return name.substring(0, index).replace('/', '.');
+        }
     }
 
-    private static final String MODULE_INFO = "module-info.class";
-
-    private static void failUnnamedPackage(Path file, String e) {
-        String msg;
-        if (e.equals(MODULE_INFO)) {
-            msg = MODULE_INFO;
-        } else {
-            msg = "Type " + e  + " in unnamed package";
-        }
-        msg += " not allowed in patch: " + file;
-        throw new RuntimeException(msg);
+    private static String warnUnnamedPackage(Path file, String e) {
+        System.err.println("WARNING: " + e + " not allowed in patch: " + file);
+        return "";
     }
 
     private static void throwIAE(String msg) {
