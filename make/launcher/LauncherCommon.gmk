@@ -63,7 +63,7 @@ JAVA_MANIFEST := $(JDK_TOPDIR)/src/java.base/windows/native/launcher/java.manife
 # used as the name of the executable.
 #
 # Remaining parameters are named arguments. These include:
-# MAIN_MODULE  The module of the main class to launch if different from the 
+# MAIN_MODULE  The module of the main class to launch if different from the
 #     current module
 # MAIN_CLASS   The Java main class to launch
 # JAVA_ARGS   Processed into a -DJAVA_ARGS C flag
