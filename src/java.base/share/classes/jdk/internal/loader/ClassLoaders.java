@@ -37,6 +37,7 @@ import java.util.jar.Manifest;
 
 import jdk.internal.misc.JavaLangAccess;
 import jdk.internal.misc.SharedSecrets;
+import jdk.internal.misc.VM;
 import sun.misc.URLClassPath;
 
 
@@ -64,7 +65,7 @@ public class ClassLoaders {
 
         // -Xbootclasspth/a or -javaagent Boot-Class-Path
         URLClassPath bcp = null;
-        String s = System.getProperty("jdk.boot.class.path.append");
+        String s = VM.getSavedProperty("jdk.boot.class.path.append");
         if (s != null && s.length() > 0)
             bcp = toURLClassPath(s);
 
