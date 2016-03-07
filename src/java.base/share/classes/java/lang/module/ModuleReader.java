@@ -188,7 +188,7 @@ public interface ModuleReader extends Closeable {
 
     /**
      * Release a byte buffer. This method should be invoked after consuming
-     * the contents of the buffer returned by the {@code readResource} method.
+     * the contents of the buffer returned by the {@code read} method.
      * The behavior of this method when invoked to release a buffer that has
      * already been released, or the behavior when invoked to release a buffer
      * after a {@code ModuleReader} is closed is implementation specific and
