@@ -512,11 +512,6 @@ else
   # virtual target.
   jdk.jdwp.agent-libs: jdk.jdwp.agent-gensrc
 
-  # Until the classes in the hotspot agent is compiled along with the other
-  # modules, compiling the module-info.java for that module needs to wait
-  # for hotspot to be imported.
-  jdk.hotspot.agent-java: import-hotspot
-
   # The swing beans need to have java base properly generated to avoid errors
   # in javadoc.
   java.desktop-gensrc-jdk: java.base-gensrc

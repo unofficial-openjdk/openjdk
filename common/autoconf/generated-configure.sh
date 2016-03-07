@@ -3820,14 +3820,15 @@ ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
 #   used after the launchers are built.
 #
 
-# Execute the check given as argument, and verify the result
-# If the JDK was previously found, do nothing
+# Execute the check given as argument, and verify the result.
+# If the JDK was previously found, do nothing.
 # $1 A command line (typically autoconf macro) to execute
 
 
-# By default, it is the JDK_OUTPUTDIR.  If the target architecture
+# By default the BUILD_JDK is the JDK_OUTPUTDIR.  If the target architecture
 # is different than the host system doing the build (e.g. cross-compilation),
-# it needs to be set properly but will try to fall back on the BOOT_JDK.
+# a special BUILD_JDK is built as part of the build process.  An external
+# prebuilt BUILD_JDK can also be supplied.
 
 
 #
@@ -4928,7 +4929,7 @@ VS_SDK_PLATFORM_NAME_2013=
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1457130575
+DATE_WHEN_GENERATED=1457344309
 
 ###############################################################################
 #
@@ -29798,7 +29799,7 @@ fi
   if test "x$with_build_jdk" != "x"; then
 
   if test "x$BUILD_JDK_FOUND" = xno; then
-    # Now execute the test
+    # Execute the test
 
        if test "x$with_build_jdk" != x; then
          BUILD_JDK=$with_build_jdk
@@ -29983,7 +29984,7 @@ $as_echo_n "checking Build JDK version... " >&6; }
 $as_echo "$BUILD_JDK_VERSION" >&6; }
         fi # end check jdk version
       fi # end check java
-    fi # end check boot jdk found
+    fi # end check build jdk found
   fi
 
   else

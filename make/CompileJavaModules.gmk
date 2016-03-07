@@ -362,7 +362,10 @@ jdk.charsets_COPY := .dat
 
 ################################################################################
 
-jdk.compiler_ADD_JAVAC_FLAGS := -Xdoclint:all/protected '-Xdoclint/package:-com.sun.tools.*' -XDstringConcat=inline
+# There are currently warnings in jdk.compiler preventing this from being
+# enabled.
+#jdk.compiler_ADD_JAVAC_FLAGS := -Xdoclint:all/protected '-Xdoclint/package:-com.sun.tools.*' \
+    -XDstringConcat=inline
 jdk.compiler_ADD_JAVAC_FLAGS := -XDstringConcat=inline
 jdk.compiler_COPY := javax.tools.JavaCompilerTool
 jdk.compiler_CLEAN_FILES := $(wildcard \
@@ -526,9 +529,6 @@ MODULE_SRC_DIRS := $(strip \
 # be recompiled. If multiple paths are separated by comma, convert that into a
 # space separated list.
 JDK_USER_DEFINED_FILTER := $(strip $(subst $(COMMA),$(SPACE), $(JDK_FILTER)))
-
-# Use transitive deps for setting the classpath
-DEPS := $(call FindTransitiveDepsForModule, $(MODULE))
 
 # Rewrite the MODULE_SRC_DIRS with a wildcard for the module so that all module
 # source dirs are available on the path.
