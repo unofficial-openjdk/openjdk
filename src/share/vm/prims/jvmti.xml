@@ -12547,7 +12547,7 @@ myInit() {
       <code>java.base</code> or the VM has completed its initialization.
       Agents that create more than one JVM TI environment, where the
       capability is added to some but not all environments, may observe the
-      start phase beginning earilier in the JVM TI environments that possess
+      start phase beginning earlier in the JVM TI environments that possess
       the capabilty.
       <p/>
       In the case of VM start-up failure, this event will not be sent.
