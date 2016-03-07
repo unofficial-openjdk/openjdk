@@ -1001,7 +1001,7 @@ public abstract class ResourceBundle {
      *         if {@code baseName} or {@code module} is {@code null}
      * @throws SecurityException
      *         if a security manager exists and the caller is not the specified
-     *         module and doesn't have {@code RuntimePermission("getBundle")}
+     *         module and doesn't have {@code RuntimePermission("getClassLoader")}
      * @throws MissingResourceException
      *         if no resource bundle for the specified base name can be found in the
      *         specified module
@@ -1043,7 +1043,7 @@ public abstract class ResourceBundle {
      *         {@code null}
      * @throws SecurityException
      *         if a security manager exists and the caller is not the specified
-     *         module and doesn't have {@code RuntimePermission("getBundle")}
+     *         module and doesn't have {@code RuntimePermission("getClassLoader")}
      * @throws MissingResourceException
      *         if no resource bundle for the specified base name and locale can
      *         be found in the specified {@code module}
@@ -1591,8 +1591,8 @@ public abstract class ResourceBundle {
         return getBundleImpl(baseName, locale, loader, module, control);
     }
 
-    private static final RuntimePermission GET_BUNDLE_PERMISSION
-        = new RuntimePermission("getBundle");
+    private static final RuntimePermission GET_CLASS_LOADER_PERMISSION
+        = new RuntimePermission("getClassLoader");
     private static ResourceBundle getBundleFromModule(Class<?> caller,
                                                       Module module,
                                                       String baseName,
@@ -1602,7 +1602,7 @@ public abstract class ResourceBundle {
         if (caller.getModule() != module) {
             SecurityManager sm = System.getSecurityManager();
             if (sm != null) {
-                sm.checkPermission(GET_BUNDLE_PERMISSION);
+                sm.checkPermission(GET_CLASS_LOADER_PERMISSION);
             }
         }
         return getBundleImpl(baseName, locale, getLoader(module), module, control);
@@ -3102,10 +3102,6 @@ public abstract class ResourceBundle {
             ResourceBundle bundle = null;
             if (format.equals("java.class")) {
                 try {
-                    // FIXME: find bundle in unnamed module only?
-                    // To find bundles in named module, it should load ResourceBundleProvider
-                    // Class<?> c = Class.forName(loader.getUnnamedModule(), bundleName);
-
                     Class<?> c = loader.loadClass(bundleName);
                     // If the class isn't a ResourceBundle subclass, throw a
                     // ClassCastException.
