@@ -134,7 +134,7 @@ public final class JavaAdapterServices {
      * @throws Throwable if anything goes wrong.
      */
     public static void invokeNoPermissions(final MethodHandle method, final Object arg) throws Throwable {
-        // NO_PERMISSIONS_INVOKER.invokeExact(method, arg);
+        NO_PERMISSIONS_INVOKER.invokeExact(method, arg);
     }
 
     /**
