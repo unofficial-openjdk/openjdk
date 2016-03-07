@@ -12528,8 +12528,27 @@ myInit() {
       The VM initialization event signals the start of the VM.
       At this time JNI is live but the VM is not yet fully initialized.
       Once this event is generated, the agent is free to call any JNI function.
-      This event signals the beginning of the start phase, 
+      This event signals the beginning of the start phase,
       <jvmti/> functions permitted in the start phase may be called.
+      <p/>
+      The timing of this event may depend on whether the agent has added the
+      <internallink id="jvmtiCapabilities.can_generate_early_vmstart">
+      <code>can_generate_early_vmstart</code></internallink> capability or not.
+      If the capability has been added then the VM posts the event as early
+      as possible. The VM is capable of executing bytecode but it may not have
+      initialized to the point where it can load classes in modules other than
+      <code>java.base</code>. Agents that do load-time instrumentation in this
+      phase must take great care when instrumenting code that potentially
+      executes in this phase. Care should also be taken with JNI
+      <code>FindClass</code> as it may not be possible to load classes that are
+      not in the <code>java.base</code> module.
+      If the capability has not been added then the VM delays posting this
+      event until it is capable of loading classes in modules other than
+      <code>java.base</code> or the VM has completed its initialization.
+      Agents that create more than one JVM TI environment, where the
+      capability is added to some but not all environments, may observe the
+      start phase beginning earilier in the JVM TI environments that possess
+      the capabilty.
       <p/>
       In the case of VM start-up failure, this event will not be sent.
     </description>
