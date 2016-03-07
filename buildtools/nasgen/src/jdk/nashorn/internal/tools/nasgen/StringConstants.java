@@ -41,6 +41,7 @@ public interface StringConstants {
     static final String OBJ_PKG = NASHORN_INTERNAL + "objects/";
     static final String OBJ_ANNO_PKG = OBJ_PKG + "annotations/";
     static final String RUNTIME_PKG = NASHORN_INTERNAL + "runtime/";
+    static final String SCRIPTS_PKG = NASHORN_INTERNAL + "scripts/";
 
     // standard jdk types, methods
     static final Type TYPE_METHODHANDLE         = Type.getType(MethodHandle.class);

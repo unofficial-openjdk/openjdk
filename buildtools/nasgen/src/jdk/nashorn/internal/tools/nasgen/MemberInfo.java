@@ -28,6 +28,7 @@ import static jdk.nashorn.internal.tools.nasgen.StringConstants.OBJECT_ARRAY_DES
 import static jdk.nashorn.internal.tools.nasgen.StringConstants.OBJECT_DESC;
 import static jdk.nashorn.internal.tools.nasgen.StringConstants.OBJ_PKG;
 import static jdk.nashorn.internal.tools.nasgen.StringConstants.RUNTIME_PKG;
+import static jdk.nashorn.internal.tools.nasgen.StringConstants.SCRIPTS_PKG;
 import static jdk.nashorn.internal.tools.nasgen.StringConstants.SCRIPTOBJECT_DESC;
 import static jdk.nashorn.internal.tools.nasgen.StringConstants.STRING_DESC;
 import static jdk.nashorn.internal.tools.nasgen.StringConstants.TYPE_SYMBOL;
@@ -460,6 +461,40 @@ public final class MemberInfo implements Cloneable {
         }
     }
 
+    /**
+     * Returns if the given (internal) name of a class represents a ScriptObject subtype.
+     */
+    public static boolean isScriptObject(final String name) {
+        // very crude check for ScriptObject subtype!
+        if (name.startsWith(OBJ_PKG + "Native") ||
+            name.equals(OBJ_PKG + "Global") ||
+            name.equals(OBJ_PKG + "ArrayBufferView")) {
+            return true;
+        }
+
+        if (name.startsWith(RUNTIME_PKG)) {
+            final String simpleName = name.substring(name.lastIndexOf('/') + 1);
+            switch (simpleName) {
+                case "ScriptObject":
+                case "ScriptFunction":
+                case "NativeJavaPackage":
+                case "Scope":
+                    return true;
+            }
+        }
+
+        if (name.startsWith(SCRIPTS_PKG)) {
+            final String simpleName = name.substring(name.lastIndexOf('/') + 1);
+            switch (simpleName) {
+                case "JD":
+                case "JO":
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
     private static boolean isValidJSType(final Type type) {
         return isJSPrimitiveType(type) || isJSObjectType(type);
     }
@@ -492,26 +527,7 @@ public final class MemberInfo implements Cloneable {
             return false;
         }
 
-        final String name = type.getInternalName();
-        // very crude check for ScriptObject subtype!
-        if (name.startsWith(OBJ_PKG + "Native") ||
-            name.equals(OBJ_PKG + "Global") ||
-            name.equals(OBJ_PKG + "ArrayBufferView")) {
-            return true;
-        }
-
-        if (name.startsWith(RUNTIME_PKG)) {
-            final String simpleName = name.substring(name.lastIndexOf('/') + 1);
-            switch (simpleName) {
-                case "ScriptObject":
-                case "ScriptFunction":
-                case "NativeJavaPackage":
-                case "Scope":
-                    return true;
-            }
-        }
-
-        return false;
+        return isScriptObject(type.getInternalName());
     }
 
     private void error(final String msg) {
