@@ -304,6 +304,9 @@ public class VM {
 
         // used by sun.launcher.LauncherHelper
         props.remove("sun.java.launcher.diag");
+
+        // used by jdk.internal.loader.ClassLoaders
+        props.remove("jdk.boot.class.path.append");
     }
 
     // Initialize any miscellaneous operating system settings that need to be

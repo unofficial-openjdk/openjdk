@@ -421,7 +421,10 @@ public final class Class<T> implements java.io.Serializable,
      *         <ul>
      *         <li> if the caller is not the specified module and
      *         {@code RuntimePermission("getClassLoader")} permission is denied; or</li>
-     *         <li> access to {@link ModuleReader read the module's content} is denied.</li>
+     *         <li> access to the module content is denied. For example,
+     *         permission check will be performed when a class loader calls
+     *         {@link ModuleReader#open(String)} to read the bytes of a class file
+     *         in a module.</li>
      *         </ul>
      *
      * @since 9
