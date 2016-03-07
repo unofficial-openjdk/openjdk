@@ -89,9 +89,7 @@ public class JdkModules {
                      ClassLoader loader1 = boot.findLoader(md.name());
                      ClassLoader loader2 = boot.findLoader(d.name());
                      if (loader1 != loader2 && !isAncestor(loader2, loader1)) {
-                         // JDK-8130664: jdk.plugin will be refactored
-                         if (!(md.name().equals("jdk.plugin") && d.name().equals("jdk.xml.dom")))
-                             throw new Error(md.name() + " can't delegate to find classes from " + d.name());
+                         throw new Error(md.name() + " can't delegate to find classes from " + d.name());
                      }
                  }));
     }
