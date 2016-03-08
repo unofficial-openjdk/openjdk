@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -78,6 +78,13 @@ public class ModuleDescriptorTest {
             .next();
     }
 
+    public void testRequiresWithRequires() {
+        Requires r1 = requires(null, "foo");
+        ModuleDescriptor descriptor = new Builder("m").requires(r1).build();
+        Requires r2 = descriptor.requires().iterator().next();
+        assertEquals(r1, r2);
+    }
+
     public void testRequiresWithNullModifiers() {
         Requires r = requires(null, "foo");
         assertEquals(r, r);
@@ -118,6 +125,18 @@ public class ModuleDescriptorTest {
         assertEquals(r.name(), "foo");
     }
 
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testRequiresWithDuplicatesRequires() {
+        Requires r = requires(null, "foo");
+        new Builder("m").requires(r).requires(r);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testRequiresSelfWithRequires() {
+        Requires r = requires(null, "m");
+        new Builder("m").requires(r);
+    }
+
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testRequiresSelfWithNoModifier() {
         new Builder("m").requires("m");
@@ -139,6 +158,11 @@ public class ModuleDescriptorTest {
         requires(EnumSet.noneOf(Modifier.class), mn);
     }
 
+    @Test(expectedExceptions = NullPointerException.class)
+    public void testRequiresWithNullRequires() {
+        new Builder("m").requires((Requires) null);
+    }
+
     public void testRequiresCompare() {
         Requires r1 = requires(EnumSet.noneOf(Modifier.class), "foo");
         Requires r2 = requires(EnumSet.noneOf(Modifier.class), "bar");
@@ -155,14 +179,33 @@ public class ModuleDescriptorTest {
 
     // exports
 
+    private Exports exports(String pn) {
+        return new Builder("foo")
+            .exports(pn)
+            .build()
+            .exports()
+            .iterator()
+            .next();
+    }
+
+    private Exports exports(String pn, String target) {
+        return new Builder("foo")
+            .exports(pn, target)
+            .build()
+            .exports()
+            .iterator()
+            .next();
+    }
+
+    public void testExportsExports() {
+        Exports e1 = exports("p");
+        ModuleDescriptor descriptor = new Builder("m").exports(e1).build();
+        Exports e2 = descriptor.exports().iterator().next();
+        assertEquals(e1, e2);
+    }
+
     public void testExportsToAll() {
-        Exports e
-            = new Builder("foo")
-                .exports("p")
-                .build()
-                .exports()
-                .iterator()
-                .next();
+        Exports e = exports("p");
         assertEquals(e, e);
         assertEquals(e.source(), "p");
         assertFalse(e.isQualified());
@@ -170,13 +213,7 @@ public class ModuleDescriptorTest {
     }
 
     public void testExportsToTarget() {
-        Exports e
-            = new Builder("foo")
-                .exports("p", "bar")
-                .build()
-                .exports()
-                .iterator()
-                .next();
+        Exports e = exports("p", "bar");
         assertEquals(e, e);
         assertEquals(e.source(), "p");
         assertTrue(e.isQualified());
@@ -203,9 +240,14 @@ public class ModuleDescriptorTest {
         assertTrue(e.targets().contains("gus"));
     }
 
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testExportsWithDuplicate1() {
+        Exports e = exports("p");
+        new Builder("foo").exports(e).exports(e);
+    }
 
     @Test(expectedExceptions = IllegalStateException.class)
-    public void testExportsWithDuplicate() {
+    public void testExportsWithDuplicate2() {
         new Builder("foo").exports("p").exports("p");
     }
 
@@ -228,6 +270,11 @@ public class ModuleDescriptorTest {
           expectedExceptions = IllegalArgumentException.class )
     public void testExportsWithBadName(String pn, String ignore) {
         new Builder("foo").exports(pn);
+    }
+
+    @Test(expectedExceptions = NullPointerException.class )
+    public void testExportsWithNullExports() {
+        new Builder("foo").exports((Exports)null);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class )
@@ -281,6 +328,23 @@ public class ModuleDescriptorTest {
 
     // provides
 
+    private Provides provides(String st, String pc) {
+        return new Builder("foo")
+            .provides("p.S", pc)
+            .build()
+            .provides()
+            .values()
+            .iterator()
+            .next();
+    }
+
+    public void testProvidesWithProvides() {
+        Provides p1 = provides("p.S", "q.S1");
+        ModuleDescriptor descriptor = new Builder("m").provides(p1).build();
+        Provides p2 = descriptor.provides().get("p.S");
+        assertEquals(p1, p2);
+    }
+
     public void testProvides() {
         Set<String> pns = new HashSet<>();
         pns.add("q.P1");
@@ -300,6 +364,12 @@ public class ModuleDescriptorTest {
         assertTrue(p.providers().contains("q.P2"));
     }
 
+    @Test(expectedExceptions = IllegalStateException.class )
+    public void testProvidesWithDuplicateProvides() {
+        Provides p = provides("p.S", "q.S2");
+        new Builder("m").provides("p.S", "q.S1").provides(p);
+    }
+
     @Test(expectedExceptions = IllegalArgumentException.class )
     public void testProvidesWithEmptySet() {
         new Builder("foo").provides("p.Service", Collections.emptySet());
@@ -315,6 +385,11 @@ public class ModuleDescriptorTest {
           expectedExceptions = IllegalArgumentException.class )
     public void testProvidesWithBadProvider(String provider, String ignore) {
         new Builder("foo").provides("p.Service", provider);
+    }
+
+    @Test(expectedExceptions = NullPointerException.class )
+    public void testProvidesWithNullProvides() {
+        new Builder("foo").provides((Provides)null);
     }
 
     @Test(expectedExceptions = NullPointerException.class )
@@ -383,14 +458,27 @@ public class ModuleDescriptorTest {
 
     // version
 
-    public void testVersion() {
-        Version v = new Builder("foo").version("1.0").build().version().get();
-        assertEquals(v, Version.parse("1.0"));
+    public void testVersion1() {
+        Version v1 = Version.parse("1.0");
+        Version v2 = new Builder("foo").version(v1).build().version().get();
+        assertEquals(v1, v2);
+    }
+
+    public void testVersion2() {
+        String vs = "1.0";
+        Version v1 = new Builder("foo").version(vs).build().version().get();
+        Version v2 = Version.parse(vs);
+        assertEquals(v1, v2);
+    }
+
+    @Test(expectedExceptions = NullPointerException.class )
+    public void testNullVersion1() {
+        new Builder("foo").version((Version)null);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class )
-    public void testNullVersion() {
-        new Builder("foo").version(null);
+    public void testNullVersion2() {
+        new Builder("foo").version((String)null);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class )
@@ -399,7 +487,13 @@ public class ModuleDescriptorTest {
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
-    public void testDuplicateVersion() {
+    public void testDuplicateVersion1() {
+        Version v = Version.parse("2.0");
+        new Builder("foo").version("1.0").version(v);
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testDuplicateVersion2() {
         new Builder("foo").version("1.0").version("2.0");
     }
 

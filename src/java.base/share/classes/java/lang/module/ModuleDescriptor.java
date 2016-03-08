@@ -909,8 +909,33 @@ public class ModuleDescriptor
         }
 
         /**
-         * Adds a module dependence with the given (and possibly empty) set
-         * of modifiers.
+         * Adds a dependence on a module.
+         *
+         * @param  req
+         *         The dependence
+         *
+         * @return This builder
+         *
+         * @throws IllegalArgumentException
+         *         If the dependence is on the module that this builder was
+         *         initialized to build
+         * @throws IllegalStateException
+         *         If the dependence on the module has already been declared
+         */
+        public Builder requires(Requires req) {
+            String mn = req.name();
+            if (name.equals(mn))
+                throw new IllegalArgumentException("Dependence on self");
+            if (requires.containsKey(mn))
+                throw new IllegalStateException("Dependence upon " + mn
+                                                + " already declared");
+            requires.put(mn, req);
+            return this;
+        }
+
+        /**
+         * Adds a dependence on a module with the given (and possibly empty)
+         * set of modifiers.
          *
          * @param  mods
          *         The set of modifiers
@@ -924,7 +949,7 @@ public class ModuleDescriptor
          *         identifier, or is equal to the module name that this builder
          *         was initialized to build
          * @throws IllegalStateException
-         *         If a dependency on the module has already been declared
+         *         If the dependence on the module has already been declared
          */
         public Builder requires(Set<Requires.Modifier> mods, String mn) {
             if (name.equals(mn))
@@ -937,7 +962,7 @@ public class ModuleDescriptor
         }
 
         /**
-         * Adds a module dependence with an empty set of modifiers.
+         * Adds a dependence on a module with an empty set of modifiers.
          *
          * @param  mn
          *         The module name
@@ -949,14 +974,14 @@ public class ModuleDescriptor
          *         identifier, or is equal to the module name that this builder
          *         was initialized to build
          * @throws IllegalStateException
-         *         If a dependency on the module has already been declared
+         *         If the dependence on the module has already been declared
          */
         public Builder requires(String mn) {
             return requires(EnumSet.noneOf(Requires.Modifier.class), mn);
         }
 
         /**
-         * Adds a module dependence with the given modifier.
+         * Adds a dependence on a module with the given modifier.
          *
          * @param  mod
          *         The modifier
@@ -970,7 +995,7 @@ public class ModuleDescriptor
          *         identifier, or is equal to the module name that this builder
          *         was initialized to build
          * @throws IllegalStateException
-         *         If a dependency on the module has already been declared
+         *         If the dependence on the module has already been declared
          */
         public Builder requires(Requires.Modifier mod, String mn) {
             return requires(EnumSet.of(mod), mn);
@@ -1009,6 +1034,25 @@ public class ModuleDescriptor
             if (conceals.contains(pn))
                 throw new IllegalStateException("Concealed package "
                                                 + pn + " already declared");
+        }
+
+        /**
+         * Adds an export.
+         *
+         * @param  e
+         *         The export
+         *
+         * @return This builder
+         *
+         * @throws IllegalStateException
+         *         If the package is already declared as an exported or
+         *         concealed package
+         */
+        public Builder exports(Exports e) {
+            String pn = e.source();
+            ensureNotExportedOrConcealed(pn);
+            exports.put(pn, e);
+            return this;
         }
 
         /**
@@ -1080,6 +1124,27 @@ public class ModuleDescriptor
         // Used by ModuleInfo, after a packageFinder is invoked
         /* package */ Set<String> exportedPackages() {
             return exports.keySet();
+        }
+
+        /**
+         * Provides a service with one or more implementations.
+         *
+         * @param  p
+         *         The provides
+         *
+         * @return This builder
+         *
+         * @throws IllegalStateException
+         *         If the providers for the service type have already been
+         *         declared
+         */
+        public Builder provides(Provides p) {
+            String st = p.service();
+            if (provides.containsKey(st))
+                throw new IllegalStateException("Providers of service "
+                                                + st + " already declared");
+            provides.put(st, p);
+            return this;
         }
 
         /**
@@ -1170,6 +1235,24 @@ public class ModuleDescriptor
             if (conceals.isEmpty())
                 conceals = new HashSet<>();
             conceals.add(pn);
+            return this;
+        }
+
+        /**
+         * Sets the module version.
+         *
+         * @param  v
+         *         The version
+         *
+         * @return This builder
+         *
+         * @throws IllegalStateException
+         *         If the module version is already set
+         */
+        public Builder version(Version v) {
+            if (version != null)
+                throw new IllegalStateException("module version already set");
+            version = requireNonNull(v);
             return this;
         }
 
