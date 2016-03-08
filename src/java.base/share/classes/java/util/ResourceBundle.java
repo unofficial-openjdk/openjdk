@@ -1874,7 +1874,12 @@ public abstract class ResourceBundle {
             });
 
         if (service != null && Reflection.verifyModuleAccess(module, service)) {
-            return ServiceLoader.load(service, loader, module);
+            try {
+                return ServiceLoader.load(service, loader, module);
+            } catch (ServiceConfigurationError e) {
+                // "uses" not declared: load bundle local in the module
+                return null;
+            }
         }
         return null;
     }

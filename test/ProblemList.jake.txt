@@ -11,12 +11,6 @@ jdk/jigsaw/tools/jimage/JImageTest.java                         windows-all
 
 ############################################################################
 
-# jdk_util
-
-java/util/ResourceBundle/modules/visibility/visibility.sh	generic-all
-
-############################################################################
-
 # jdk_security
 
 # 8038079
