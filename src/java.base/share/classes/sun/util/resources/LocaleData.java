@@ -230,7 +230,6 @@ public class LocaleData {
     public static abstract class SupplementaryResourceBundleProvider extends LocaleDataResourceBundleProvider {
         @Override
         protected boolean isSupportedInModule(String baseName, Locale locale) {
-            // TODO: avoid hard-coded Locales
             return SupplementaryStrategy.INSTANCE.inJavaBaseModule(baseName, locale);
         }
     }

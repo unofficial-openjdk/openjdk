@@ -208,20 +208,20 @@ import sun.util.locale.provider.ResourceBundleProviderSupport;
  * <ul>
  * <li>Code in a named module that calls {@link #getBundle(String, Locale)}
  * will locate resource bundles in the caller's module (<em>caller module</em>).</li>
- * <li>If you want to deploy resource bundles in separate named modules from
- * the caller module, those resource bundles need to be loaded using service
+ * <li>If resource bundles are deployed in named modules separate from
+ * the caller module, those resource bundles need to be loaded from service
  * providers of {@link ResourceBundleProvider}. The caller module must declare
  * "{@code uses}" and the service interface name is the concatenation of the
  * base name of the bundles and the string "{@code Provider}". The
  * <em>bundle provider modules</em> containing resource bundles must
  * declare "{@code provides}" with the service interface name and
  * its implementation class name. For example, if the base name is
- * "{@code p.MyResources}", the caller module must declare
- * "{@code uses p.MyResourcesProvider;}" and a module containing resource
- * bundles must declare
- * "{@code provides p.MyResourcesProvider with p.internal.MyResourcesProviderImpl;}"
- * where {@code p.internal.MyResourcesProviderImpl} is an implementation class of
- * {@code p.MyResourcesProvider}.</li>
+ * "{@code com.example.app.MyResources}", the caller module must declare
+ * "{@code uses com.example.app.MyResourcesProvider;}" and a module containing resource
+ * bundles must declare "{@code provides com.example.app.MyResourcesProvider
+ * with com.example.app.internal.MyResourcesProviderImpl;}"
+ * where {@code com.example.app.internal.MyResourcesProviderImpl} is an
+ * implementation class of {@code com.example.app.MyResourcesProvider}.</li>
  * <li>If you want to use non-standard formats in named modules, such as XML,
  * {@link ResourceBundleProvider} needs to be used.</li>
  * <li>The {@code getBundle} method with a {@code ClassLoader} may not be able to
@@ -239,12 +239,12 @@ import sun.util.locale.provider.ResourceBundleProviderSupport;
  *
  * The {@code getBundle} factory methods load service providers of
  * {@link ResourceBundleProvider}, if available, using {@link ServiceLoader}.
- * The service provider type is designated by {@code basename+"Provider"}. For
+ * The service type is designated by {@code basename+"Provider"}. For
  * example, if the base name is "{@code com.example.app.MyResources}", the service
- * provider type is {@code com.example.app.MyResourcesProvider}.
+ * type is {@code com.example.app.MyResourcesProvider}.
  * <p>
  * In named modules, the loaded service providers for the given base name are
- * used to load resource bundles. If no service providers are available, or if
+ * used to load resource bundles. If no service provider is available, or if
  * none of the service providers returns a resource bundle and the caller module
  * doesn't have its own service provider, the {@code getBundle} factory method
  * searches for resource bundles local to the caller module. The resource bundle
@@ -624,10 +624,10 @@ public abstract class ResourceBundle {
 
     /**
      * Key used for cached resource bundles.  The key checks the base
-     * name, the locale, and the class loader to determine if the
-     * resource is a match to the requested one. The loader may be
-     * null, but the base name and the locale must have a non-null
-     * value.
+     * name, the locale, the class loader, and the caller module
+     * to determine if the resource is a match to the requested one.
+     * The loader may be null, but the base name, the locale and
+     * module must have a non-null value.
      */
     private static class CacheKey implements Cloneable {
         // These four are the actual keys for lookup in Map.
@@ -1617,8 +1617,8 @@ public abstract class ResourceBundle {
             throw new NullPointerException();
         }
 
-        // We create a CacheKey here for use by this call. The base
-        // name and loader will never change during the bundle loading
+        // We create a CacheKey here for use by this call. The base name
+        // loader, and module will never change during the bundle loading
         // process. We have to make sure that the locale is set before
         // using it as a cache key.
         CacheKey cacheKey = new CacheKey(baseName, locale, loader, module);
@@ -2207,7 +2207,7 @@ public abstract class ResourceBundle {
      *
      * @param module the module
      * @throws NullPointerException
-     *         if {@code module} is null
+     *         if {@code module} is {@code null}
      * @throws SecurityException
      *         if the caller doesn't have the permission to
      *         {@linkplain Module#getClassLoader() get the class loader}
