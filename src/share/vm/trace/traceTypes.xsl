@@ -32,6 +32,7 @@
 #ifndef TRACEFILES_TRACETYPES_HPP
 #define TRACEFILES_TRACETYPES_HPP
 
+#include "oops/symbol.hpp"
 #include "trace/traceDataTypes.hpp"
 #include "utilities/globalDefinitions.hpp"
 #include "utilities/ticks.hpp"
