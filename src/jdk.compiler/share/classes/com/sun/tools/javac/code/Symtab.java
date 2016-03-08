@@ -451,7 +451,7 @@ public class Symtab {
             java_base = enterModule(names.java_base);
             //avoid completing java.base during the Symtab initialization
             java_base.completer = Completer.NULL_COMPLETER;
-            java_base.visiblePackages = Collections.emptySet();
+            java_base.visiblePackages = Collections.emptyMap();
         } else {
             java_base = noModule;
         }
@@ -617,13 +617,14 @@ public class Symtab {
 
         msym.complete();
 
-        for (PackageSymbol pack : msym.visiblePackages) {
-            if (pack.fullname == flatName) {
-                return pack;
-            }
-        }
+        PackageSymbol pack;
 
-        PackageSymbol pack = getPackage(msym, flatName);
+        pack = msym.visiblePackages.get(flatName);
+
+        if (pack != null)
+            return pack;
+
+        pack = getPackage(msym, flatName);
 
         if (pack != null && pack.exists())
             return pack;
@@ -640,7 +641,7 @@ public class Symtab {
             PackageSymbol unnamedPack = getPackage(unnamedModule, flatName);
 
             if (unnamedPack != null && unnamedPack.exists()) {
-                msym.visiblePackages.add(unnamedPack);
+                msym.visiblePackages.put(unnamedPack.fullname, unnamedPack);
                 return unnamedPack;
             }
 
@@ -652,7 +653,7 @@ public class Symtab {
             unnamedPack = enterPackage(unnamedModule, flatName);
             unnamedPack.complete();
             if (unnamedPack.exists()) {
-                msym.visiblePackages.add(unnamedPack);
+                msym.visiblePackages.put(unnamedPack.fullname, unnamedPack);
                 return unnamedPack;
             }
 

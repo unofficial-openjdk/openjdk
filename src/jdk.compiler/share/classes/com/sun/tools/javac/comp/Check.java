@@ -3597,7 +3597,7 @@ public class Check {
                     //(as javax is not an exported package from any module). And as javax in the current
                     //module typically does not contain any classes or subpackages, we need to go through
                     //the visible packages to find a sub-package:
-                    for (PackageSymbol known : toplevel.modle.visiblePackages) {
+                    for (PackageSymbol known : toplevel.modle.visiblePackages.values()) {
                         if (Convert.packagePart(known.fullname) == tsym.flatName())
                             continue OUTER;
                     }

@@ -28,7 +28,7 @@ package com.sun.tools.javac.code;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Inherited;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -882,7 +882,7 @@ public abstract class Symbol extends AnnoConstruct implements Element {
         public ClassSymbol module_info;
 
         public PackageSymbol unnamedPackage;
-        public Set<PackageSymbol> visiblePackages;
+        public Map<Name, PackageSymbol> visiblePackages;
         public List<Symbol> enclosedPackages = List.nil();
 
         public Completer usesProvidesCompleter = Completer.NULL_COMPLETER;

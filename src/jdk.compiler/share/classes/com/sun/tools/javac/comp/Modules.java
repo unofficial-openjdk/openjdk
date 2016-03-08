@@ -763,7 +763,8 @@ public class Modules extends JCTree.Visitor {
                  */
                 PackageSymbol interfaceDeclaringPackage = provides.service.packge();
                 boolean isInterfaceDeclaredInCurrentModule = interfaceDeclaringPackage.modle == msym;
-                boolean isInterfaceExportedFromAReadableModule = msym.visiblePackages.contains(interfaceDeclaringPackage);
+                boolean isInterfaceExportedFromAReadableModule =
+                        msym.visiblePackages.get(interfaceDeclaringPackage.fullname) == interfaceDeclaringPackage;
                 if (isInterfaceDeclaredInCurrentModule && !isInterfaceExportedFromAReadableModule) {
                     // ok the interface is declared in this module. Let's check if it's exported
                     boolean warn = true;
@@ -1015,8 +1016,7 @@ public class Modules extends JCTree.Visitor {
     private void initVisiblePackages(ModuleSymbol msym, Collection<ModuleSymbol> readable) {
         initAddExports();
 
-        msym.visiblePackages = new LinkedHashSet<>();
-        msym.visiblePackages.add(syms.rootPackage);
+        msym.visiblePackages = new LinkedHashMap<>();
 
         Map<Name, ModuleSymbol> seen = new HashMap<>();
 
@@ -1055,7 +1055,7 @@ public class Modules extends JCTree.Visitor {
                 }
 
                 seenPackages.put(packageName, exportsFrom);
-                msym.visiblePackages.add(d.packge);
+                msym.visiblePackages.put(d.packge.fullname, d.packge);
             }
         }
     }
