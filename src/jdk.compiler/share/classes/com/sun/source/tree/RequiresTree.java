@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,27 @@
 
 package com.sun.source.tree;
 
+/**
+ * A tree node for a 'requires' directive in a module declaration.
+ *
+ * For example:
+ * <pre>
+ *    requires <em>module-name</em>;
+ *    requires public <em>module-name</em>;
+ * </pre>
+ *
+ * @since 9
+ */
 public interface RequiresTree extends DirectiveTree {
+    /**
+     * Returns true if this is a "requires public" directive.
+     * @return true if this is a "requires public" directive
+     */
     boolean isPublic();
+
+    /**
+     * Returns the name of the module that is required.
+     * @return the name of the module that is required
+     */
     ExpressionTree getModuleName();
 }
