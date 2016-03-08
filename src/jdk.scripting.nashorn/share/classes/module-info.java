@@ -38,7 +38,6 @@ module jdk.scripting.nashorn {
     exports jdk.nashorn.tools to
         jdk.scripting.nashorn.shell;
 
-    uses jdk.nashorn.internal.runtime.CodeStore;
     provides javax.script.ScriptEngineFactory with jdk.nashorn.api.scripting.NashornScriptEngineFactory;
 }
 
