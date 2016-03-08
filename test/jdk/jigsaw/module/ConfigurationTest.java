@@ -441,11 +441,13 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor1
             = new ModuleDescriptor.Builder("m1")
+                .exports("p")
                 .uses("p.Service")
                 .build();
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
+                .requires("m1")
                 .provides("p.Service", "q.ServiceImpl")
                 .build();
 
@@ -491,17 +493,20 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor1
             = new ModuleDescriptor.Builder("m1")
+                .exports("p")
                 .uses("p.Service1")
                 .build();
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
+                .requires("m1")
                 .uses("p.Service2")
                 .provides("p.Service1", "q.Service1Impl")
                 .build();
 
         ModuleDescriptor descriptor3
             = new ModuleDescriptor.Builder("m3")
+                .requires("m1")
                 .provides("p.Service2", "q.Service2Impl")
                 .build();
 
@@ -548,6 +553,7 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor1
             = new ModuleDescriptor.Builder("m1")
+                .exports("p")
                 .uses("p.Service")
                 .build();
 
@@ -561,6 +567,7 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
+                .requires("m1")
                 .provides("p.Service", "q.ServiceImpl")
                 .build();
 
@@ -595,12 +602,14 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor1
             = new ModuleDescriptor.Builder("m1")
+                .exports("p")
                 .uses("p.Service")
                 .provides("p.Service", "m1.ServiceImpl")
                 .build();
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
+                .requires("m1")
                 .provides("p.Service", "m2.ServiceImpl")
                 .build();
 
@@ -628,11 +637,13 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor3
             = new ModuleDescriptor.Builder("m3")
+                .requires("m1")
                 .provides("p.Service", "m3.ServiceImpl")
                 .build();
 
         ModuleDescriptor descriptor4
             = new ModuleDescriptor.Builder("m4")
+                .requires("m1")
                 .provides("p.Service", "m4.ServiceImpl")
                 .build();
 
@@ -665,13 +676,19 @@ public class ConfigurationTest {
      */
     public void testServiceBindingWithConfigurations3() {
 
+        ModuleDescriptor service
+            = new ModuleDescriptor.Builder("s")
+                .exports("p")
+                .build();
+
         ModuleDescriptor provider_v1
             = new ModuleDescriptor.Builder("p")
                 .version("1.0")
+                .requires("s")
                 .provides("p.Service", "q.ServiceImpl")
                 .build();
 
-        ModuleFinder finder1 = ModuleUtils.finderOf(provider_v1);
+        ModuleFinder finder1 = ModuleUtils.finderOf(service, provider_v1);
 
         Configuration cf1
             = Configuration.resolve(finder1,
@@ -679,19 +696,22 @@ public class ConfigurationTest {
                                     ModuleFinder.empty(),
                                     "p");
 
-        assertTrue(cf1.descriptors().size() == 1);
+        assertTrue(cf1.descriptors().size() == 2);
+        assertTrue(cf1.descriptors().contains(service));
         assertTrue(cf1.descriptors().contains(provider_v1));
         assertTrue(cf1.provides("p.Service").contains(provider_v1));
 
 
         ModuleDescriptor descriptor1
             = new ModuleDescriptor.Builder("m1")
+                .requires("s")
                 .uses("p.Service")
                 .build();
 
         ModuleDescriptor provider_v2
             = new ModuleDescriptor.Builder("p")
                 .version("2.0")
+                .requires("s")
                 .provides("p.Service", "q.ServiceImpl")
                 .build();
 
@@ -774,16 +794,19 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor1
             = new ModuleDescriptor.Builder("m1")
+                .exports("p")
                 .uses("p.Service")
                 .build();
 
         ModuleDescriptor descriptor2_v1
             = new ModuleDescriptor.Builder("m2")
+                .requires("m1")
                 .provides("p.Service", "q.ServiceImpl")
                 .build();
 
         ModuleDescriptor descriptor2_v2
             = new ModuleDescriptor.Builder("m2")
+                .requires("m1")
                 .provides("p.Service", "q.ServiceImpl")
                 .build();
 
@@ -1009,11 +1032,13 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor1
             = new ModuleDescriptor.Builder("m1")
+                .exports("p")
                 .uses("p.Service")
                 .build();
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
+                .requires("m1")
                 .requires("m3")
                 .provides("p.Service", "q.ServiceImpl")
                 .build();
@@ -1059,10 +1084,12 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor1
             = new ModuleDescriptor.Builder("m1")
+                .exports("p")
                 .uses("p.Service")
                 .build();
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
+                .requires("m1")
                 .requires("m3")
                 .provides("p.Service", "q.ServiceImpl")
                 .build();
@@ -1192,6 +1219,124 @@ public class ConfigurationTest {
         Configuration bootConfiguration = Layer.boot().configuration();
 
         Configuration.resolve(finder, bootConfiguration, ModuleFinder.empty(), "m1");
+    }
+
+
+    /**
+     * Test "uses p.S" where p is a concealed package in the same module.
+     */
+    public void testConcealedService1() {
+        ModuleDescriptor descriptor1
+            = new ModuleDescriptor.Builder("m1")
+                .conceals("p")
+                .uses("p.S")
+                .build();
+
+        ModuleFinder finder = ModuleUtils.finderOf(descriptor1);
+
+        Configuration cf
+            = Configuration.resolve(finder, empty(), ModuleFinder.empty(), "m1");
+
+        assertTrue(cf.descriptors().size() == 1);
+        assertTrue(cf.descriptors().contains(descriptor1));
+    }
+
+
+    /**
+     * Test "uses p.S" where p is a concealed package in a different module.
+     */
+    @Test(expectedExceptions = { ResolutionException.class })
+    public void testConcealedService2() {
+        ModuleDescriptor descriptor1
+            = new ModuleDescriptor.Builder("m1")
+                .conceals("p")
+                .build();
+
+        ModuleDescriptor descriptor2
+            = new ModuleDescriptor.Builder("m2")
+                .requires("m1")
+                .uses("p.S")
+                .build();
+
+        ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);
+
+        Configuration.resolve(finder, empty(), ModuleFinder.empty(), "m2");
+    }
+
+
+    /**
+     * Test "provides p.S" where p is a concealed package in the same module.
+     */
+    public void testConcealedService3() {
+        ModuleDescriptor descriptor1
+            = new ModuleDescriptor.Builder("m1")
+                .conceals("p")
+                .provides("p.S", "q.S1")
+                .build();
+
+        ModuleFinder finder = ModuleUtils.finderOf(descriptor1);
+
+        Configuration cf
+            = Configuration.resolve(finder, empty(), ModuleFinder.empty(), "m1");
+
+        assertTrue(cf.descriptors().size() == 1);
+        assertTrue(cf.descriptors().contains(descriptor1));
+        assertTrue(cf.provides("p.S").size() == 1);
+        assertTrue(cf.provides("p.S").contains(descriptor1));
+    }
+
+
+    /**
+     * Test "provides p.S" where p is a concealed package in a different module.
+     */
+    @Test(expectedExceptions = { ResolutionException.class })
+    public void testConcealedService4() {
+        ModuleDescriptor descriptor1
+            = new ModuleDescriptor.Builder("m1")
+                .conceals("p")
+                .build();
+
+        ModuleDescriptor descriptor2
+            = new ModuleDescriptor.Builder("m2")
+                .requires("m1")
+                .provides("p.S", "q.S1")
+                .build();
+
+        ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);
+
+        Configuration.resolve(finder, empty(), ModuleFinder.empty(), "m2");
+    }
+
+
+    /**
+     * Test "uses p.S" where p is not exported to the module.
+     */
+    @Test(expectedExceptions = { ResolutionException.class })
+    public void testServiceTypePackageNotExported1() {
+        ModuleDescriptor descriptor1
+            = new ModuleDescriptor.Builder("m1")
+                .uses("p.S")
+                .build();
+
+        ModuleFinder finder = ModuleUtils.finderOf(descriptor1);
+
+        Configuration.resolve(finder, empty(), ModuleFinder.empty(), "m1");
+    }
+
+
+    /**
+     * Test "provides p.S" where p is not exported to the module.
+     */
+    @Test(expectedExceptions = { ResolutionException.class })
+    public void testServiceTypePackageNotExported2() {
+        ModuleDescriptor descriptor1
+            = new ModuleDescriptor.Builder("m1")
+                .provides("p.S", "q.ServiceImpl")
+                .build();
+
+        ModuleFinder finder = ModuleUtils.finderOf(descriptor1);
+
+        Configuration.resolve(finder, empty(), ModuleFinder.empty(), "m1");
     }
 
 

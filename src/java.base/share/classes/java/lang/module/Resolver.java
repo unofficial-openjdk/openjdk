@@ -825,6 +825,8 @@ final class Resolver {
      * Checks the readability graph to ensure that no two modules export the
      * same package to a module. This includes the case where module M has
      * a local package P and M reads another module that exports P to M.
+     * Also checks the uses/provides of module M to ensure that it reads a
+     * module that exports the package of the service type to M.
      */
     private void checkExportSuppliers(Map<ReadDependence, Set<ReadDependence>> graph) {
 
@@ -854,7 +856,7 @@ final class Resolver {
                     // source is exported to descriptor2
                     String source = export.source();
                     ModuleDescriptor other
-                            = packageToExporter.put(source, descriptor2);
+                        = packageToExporter.put(source, descriptor2);
 
                     if (other != null && other != descriptor2) {
                         // package might be local to descriptor1
@@ -875,6 +877,26 @@ final class Resolver {
                         }
 
                     }
+                }
+            }
+
+            // uses S
+            for (String service : descriptor1.uses()) {
+                int index = service.lastIndexOf(".");
+                String pn = service.substring(0, index);
+                if (!packageToExporter.containsKey(pn)) {
+                    fail("Module %s does not read a module that exports %s",
+                            descriptor1.name(), pn);
+                }
+            }
+
+            // provides S
+            for (String service : descriptor1.provides().keySet()) {
+                int index = service.lastIndexOf(".");
+                String pn = service.substring(0, index);
+                if (!packageToExporter.containsKey(pn)) {
+                    fail("Module %s does not read a module that exports %s",
+                            descriptor1.name(), pn);
                 }
             }
 

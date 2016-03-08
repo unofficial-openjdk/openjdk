@@ -223,8 +223,12 @@ public final class Configuration {
      *
      *     <li><p> Two or more modules in the configuration export the same
      *     package to a module that reads both. This includes the case where a
-     *     module {@code M} containing package {@code P} reads another module
-     *     that exports {@code P} to {@code M}. </p></li>
+     *     module {@code M} containing package {@code p} reads another module
+     *     that exports {@code p} to {@code M}. </p></li>
+     *
+     *     <li><p> A module {@code M} declares that it "{@code uses p.S}" or
+     *     "{@code provides p.S}" but does not read a module that exports
+     *     package {@code p} to {@code M}. </p></li>
      *
      *     <li><p> Two or more modules in the configuration are specific to
      *     different {@link ModuleDescriptor#osName() operating systems},
