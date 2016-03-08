@@ -1680,7 +1680,7 @@ ListModules(JNIEnv *env, char *optString)
     NULL_CHECK(cls);
     NULL_CHECK(listModulesID = (*env)->GetStaticMethodID(env, cls,
             "listModules", "(ZLjava/lang/String;)V"));
-    joptString = (*env)->NewStringUTF(env, optString);
+    NULL_CHECK(joptString = (*env)->NewStringUTF(env, optString));
     (*env)->CallStaticVoidMethod(env, cls, listModulesID,
                                  USE_STDERR,
                                  joptString);
