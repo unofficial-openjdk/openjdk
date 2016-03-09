@@ -131,8 +131,8 @@ public class Modules extends JCTree.Visitor {
     private Map<ModuleSymbol, Set<ExportsDirective>> addExports;
     private final String addReadsOpt;
     private Map<ModuleSymbol, Set<RequiresDirective>> addReads;
-    private String addModsOpt;
-    private String limitModsOpt;
+    private final String addModsOpt;
+    private final String limitModsOpt;
 
     private Set<ModuleSymbol> rootModules = Collections.emptySet();
 
@@ -194,15 +194,15 @@ public class Modules extends JCTree.Visitor {
         depth++;
         try {
             // scan trees for module defs
-            Set<ModuleSymbol> rootModules = enterModules(trees, c);
+            Set<ModuleSymbol> roots = enterModules(trees, c);
 
-            setCompilationUnitModules(trees, rootModules);
+            setCompilationUnitModules(trees, roots);
 
-            if (!rootModules.isEmpty() && this.rootModules.isEmpty()) {
-                this.rootModules = rootModules;
+            if (!roots.isEmpty() && this.rootModules.isEmpty()) {
+                this.rootModules = roots;
             }
 
-            for (ModuleSymbol msym: rootModules) {
+            for (ModuleSymbol msym: roots) {
                 msym.complete();
             }
         } finally {
@@ -650,7 +650,6 @@ public class Modules extends JCTree.Visitor {
         private final Env<AttrContext> env;
 
         private final Set<Directive.UsesDirective> allUses = new HashSet<>();
-        private final Set<PackageSymbol> allExportedPackages = new HashSet<>();
         private final Set<Directive.ProvidesDirective> allProvides = new HashSet<>();
 
         public UsesProvidesVisitor(ModuleSymbol msym, Env<AttrContext> env) {
@@ -663,7 +662,7 @@ public class Modules extends JCTree.Visitor {
                 l.head.accept(this);
         }
 
-        @SuppressWarnings("unchecked")
+        @Override @SuppressWarnings("unchecked")
         public void visitModuleDef(JCModuleDecl tree) {
             msym.directives = List.nil();
             msym.provides = List.nil();
@@ -681,11 +680,11 @@ public class Modules extends JCTree.Visitor {
             msym.directives = msym.directives.appendList(List.from(addReads.getOrDefault(msym, Collections.emptySet())));
         }
 
+        @Override
         public void visitExports(JCExports tree) {
             if (tree.directive.packge.members().isEmpty()) {
                 log.error(tree.qualid.pos(), Errors.PackageEmptyOrNotFound(tree.directive.packge));
             }
-            allExportedPackages.add(tree.directive.packge);
             msym.directives = msym.directives.prepend(tree.directive);
         }
 
@@ -701,6 +700,7 @@ public class Modules extends JCTree.Visitor {
 
         Map<Directive.ProvidesDirective, JCProvides> directiveToTreeMap = new HashMap<>();
 
+        @Override
         public void visitProvides(JCProvides tree) {
             Type st = attr.attribType(tree.serviceName, env, syms.objectType);
             Type it = attr.attribType(tree.implName, env, st);
@@ -731,10 +731,12 @@ public class Modules extends JCTree.Visitor {
             }
         }
 
+        @Override
         public void visitRequires(JCRequires tree) {
             msym.directives = msym.directives.prepend(tree.directive);
         }
 
+        @Override
         public void visitUses(JCUses tree) {
             Type st = attr.attribType(tree.qualid, env, syms.objectType);
             if (st.hasTag(CLASS)) {
