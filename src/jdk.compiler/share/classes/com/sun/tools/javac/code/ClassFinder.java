@@ -520,32 +520,12 @@ public class ClassFinder {
             p.members_field = WriteableScope.create(p);
 
         ModuleSymbol msym = p.modle;
-        if (msym != null) { // TODO: This needs to become an assert
-            msym.complete();
-            // new code
-            if (msym == syms.noModule) {
-                preferCurrent = false;
-                if (userPathsFirst) {
-                    scanUserPaths(p);
-                    preferCurrent = true;
-                    scanPlatformPath(p);
-                } else {
-                    scanPlatformPath(p);
-                    scanUserPaths(p);
-                }
-            } else if (msym.classLocation == StandardLocation.CLASS_PATH) {
-                // assert p.modle.sourceLocation == StandardLocation.SOURCE_PATH);
-                scanUserPaths(p);
-            } else {
-                scanModulePaths(p, msym);
-            }
-            return;
-        }
 
-        // old code, to go away
-        if (p.modle != null && p.modle.classLocation != null) {
-            scanModulePaths(p, p.modle);
-        } else {
+        Assert.checkNonNull(msym, () -> p.toString());
+
+        msym.complete();
+
+        if (msym == syms.noModule) {
             preferCurrent = false;
             if (userPathsFirst) {
                 scanUserPaths(p);
@@ -555,8 +535,12 @@ public class ClassFinder {
                 scanPlatformPath(p);
                 scanUserPaths(p);
             }
+        } else if (msym.classLocation == StandardLocation.CLASS_PATH) {
+            // assert p.modle.sourceLocation == StandardLocation.SOURCE_PATH);
+            scanUserPaths(p);
+        } else {
+            scanModulePaths(p, msym);
         }
-        verbosePath = false;
     }
 
     // TODO: for now, this is a much simplified form of scanUserPaths

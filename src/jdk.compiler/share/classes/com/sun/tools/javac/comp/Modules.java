@@ -528,20 +528,13 @@ public class Modules extends JCTree.Visitor {
         private final Set<ModuleSymbol> allRequires = new HashSet<>();
         private final Set<PackageSymbol> allExports = new HashSet<>();
 
-        private <T extends JCTree> void acceptAll(List<T> trees) {
-            for (List<T> l = trees; l.nonEmpty(); l = l.tail)
-                l.head.accept(this);
-        }
-
         @Override
         public void visitModuleDef(JCModuleDecl tree) {
             sym = Assert.checkNonNull(tree.sym);
-            allRequires.clear();
-            allExports.clear();
 
             sym.requires = List.nil();
             sym.exports = List.nil();
-            acceptAll(tree.directives);
+            tree.directives.forEach(t -> t.accept(this));
             sym.requires = sym.requires.reverse();
             sym.exports = sym.exports.reverse();
             ensureJavaBase();
@@ -638,7 +631,6 @@ public class Modules extends JCTree.Visitor {
             JavaFileObject prev = log.useSource(env.toplevel.sourcefile);
             try {
                 env.toplevel.defs.head.accept(v);
-                v.checkForCorrectness();
             } finally {
                 log.useSource(prev);
             }
@@ -657,19 +649,12 @@ public class Modules extends JCTree.Visitor {
             this.env = env;
         }
 
-        private <T extends JCTree> void acceptAll(List<T> trees) {
-            for (List<T> l = trees; l.nonEmpty(); l = l.tail)
-                l.head.accept(this);
-        }
-
         @Override @SuppressWarnings("unchecked")
         public void visitModuleDef(JCModuleDecl tree) {
             msym.directives = List.nil();
             msym.provides = List.nil();
             msym.uses = List.nil();
-            allUses.clear();
-            allProvides.clear();
-            acceptAll(tree.directives);
+            tree.directives.forEach(t -> t.accept(this));
             msym.directives = msym.directives.reverse();
             msym.provides = msym.provides.reverse();
             msym.uses = msym.uses.reverse();
@@ -678,6 +663,8 @@ public class Modules extends JCTree.Visitor {
                 msym.directives = msym.directives.prepend(msym.requires.head);
 
             msym.directives = msym.directives.appendList(List.from(addReads.getOrDefault(msym, Collections.emptySet())));
+
+            checkForCorrectness();
         }
 
         @Override
@@ -750,8 +737,7 @@ public class Modules extends JCTree.Visitor {
             }
         }
 
-        public void checkForCorrectness() {
-
+        private void checkForCorrectness() {
             for (Directive.ProvidesDirective provides : allProvides) {
                 JCProvides tree = directiveToTreeMap.get(provides);
                 /** The implementation must be defined in the same module as the provides directive
