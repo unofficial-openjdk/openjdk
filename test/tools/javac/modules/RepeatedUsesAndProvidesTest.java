@@ -57,7 +57,7 @@ public class RepeatedUsesAndProvidesTest extends ModuleTestBase {
                 .run(ToolBox.Expect.FAIL)
                 .writeAll()
                 .getOutput(ToolBox.OutputKind.DIRECT);
-        if (!log.contains("module-info.java:1:24: compiler.err.duplicate.uses: Uses[p1.C1]"))
+        if (!log.contains("module-info.java:1:24: compiler.err.duplicate.uses: p1.C1"))
             throw new Exception("expected output not found");
     }
 

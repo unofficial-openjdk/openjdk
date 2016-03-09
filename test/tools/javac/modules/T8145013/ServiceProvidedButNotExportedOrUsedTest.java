@@ -62,7 +62,7 @@ public class ServiceProvidedButNotExportedOrUsedTest extends ModuleTestBase {
                 .writeAll()
                 .getOutputLines(ToolBox.OutputKind.DIRECT);
         List<String> expected = Arrays.asList(
-                "module-info.java:1:12: compiler.warn.service.provided.but.not.exported.or.used",
+                "module-info.java:1:12: compiler.warn.service.provided.but.not.exported.or.used: p1.C1",
                 "- compiler.err.warnings.and.werror",
                 "1 error",
                 "1 warning");
@@ -93,7 +93,7 @@ public class ServiceProvidedButNotExportedOrUsedTest extends ModuleTestBase {
                 .writeAll()
                 .getOutputLines(ToolBox.OutputKind.DIRECT);
         List<String> expected = Arrays.asList(
-                "module-info.java:1:39: compiler.err.service.implementation.not.in.right.module",
+                "module-info.java:1:39: compiler.err.service.implementation.not.in.right.module: m3",
                 "1 error");
         if (!output.containsAll(expected)) {
             throw new Exception("Expected output not found");

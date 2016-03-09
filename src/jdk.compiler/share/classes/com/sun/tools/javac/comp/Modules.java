@@ -68,6 +68,8 @@ import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.jvm.ClassWriter;
 import com.sun.tools.javac.jvm.JNIWriter;
 import com.sun.tools.javac.main.Option;
+import com.sun.tools.javac.resources.CompilerProperties.Errors;
+import com.sun.tools.javac.resources.CompilerProperties.Warnings;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.JCCompilationUnit;
 import com.sun.tools.javac.tree.JCTree.JCExports;
@@ -80,6 +82,7 @@ import com.sun.tools.javac.tree.JCTree.JCUses;
 import com.sun.tools.javac.tree.TreeInfo;
 import com.sun.tools.javac.util.Assert;
 import com.sun.tools.javac.util.Context;
+import com.sun.tools.javac.util.JCDiagnostic;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
@@ -248,7 +251,7 @@ public class Modules extends JCTree.Visitor {
             } else {
                 sym = syms.enterModule(name);
                 if (sym.module_info.sourcefile != null && sym.module_info.sourcefile != toplevel.sourcefile) {
-                    log.error(decl.pos(), "duplicate.module", name);
+                    log.error(decl.pos(), Errors.DuplicateModule(sym));
                     return;
                 }
             }
@@ -259,7 +262,7 @@ public class Modules extends JCTree.Visitor {
             if (multiModuleMode || modules.isEmpty()) {
                 modules.add(sym);
             } else {
-                log.error(toplevel.pos(), "too.many.modules");
+                log.error(toplevel.pos(), Errors.TooManyModules);
             }
 
             Env<AttrContext> provisionalEnv = new Env<>(decl, null);
@@ -269,11 +272,11 @@ public class Modules extends JCTree.Visitor {
         } else if (isModuleInfo) {
             if (multiModuleMode) {
                 JCTree tree = toplevel.defs.isEmpty() ? toplevel : toplevel.defs.head;
-                log.error(tree.pos(), "expected.module");
+                log.error(tree.pos(), Errors.ExpectedModule);
             }
         } else if (isModuleDecl) {
             JCTree tree = toplevel.defs.head;
-            log.error(tree.pos(), "module.decl.sb.in.module-info.java");
+            log.error(tree.pos(), Errors.ModuleDeclSbInModuleInfoJava);
         }
     }
 
@@ -296,7 +299,7 @@ public class Modules extends JCTree.Visitor {
                             JCModuleDecl decl = (JCModuleDecl) tree.defs.head;
                             msym = decl.sym;
                             if (msym.name != name) {
-                                log.error(decl.qualId, "module.name.mismatch", msym.name, name);
+                                log.error(decl.qualId, Errors.ModuleNameMismatch(msym.name, name));
                             }
                         } else {
                             msym = syms.enterModule(name);
@@ -311,7 +314,7 @@ public class Modules extends JCTree.Visitor {
                         tree.modle = msym;
                         rootModules.add(msym);
                     } else {
-                        log.error(tree.pos(), "unnamed.pkg.not.allowed.named.modules");
+                        log.error(tree.pos(), Errors.UnnamedPkgNotAllowedNamedModules);
                         tree.modle = syms.errModule;
                     }
                 } catch (IOException e) {
@@ -341,7 +344,7 @@ public class Modules extends JCTree.Visitor {
                                 defaultModule.classLocation = StandardLocation.CLASS_PATH;
                             }
                         } else {
-                            checkSpecifiedModule(trees, "module-info.with.xmodule.classpath");
+                            checkSpecifiedModule(trees, Errors.ModuleInfoWithXmoduleClasspath);
                             // Question: why not do completeModule here?
                             defaultModule.completer = new Completer() {
                                 @Override
@@ -353,7 +356,7 @@ public class Modules extends JCTree.Visitor {
                         rootModules.add(defaultModule);
                         break;
                     case 1:
-                        checkSpecifiedModule(trees, "module-info.with.xmodule.sourcepath");
+                        checkSpecifiedModule(trees, Errors.ModuleInfoWithXmoduleSourcepath);
                         defaultModule = rootModules.iterator().next();
                         defaultModule.classLocation = StandardLocation.CLASS_OUTPUT;
                         break;
@@ -402,11 +405,11 @@ public class Modules extends JCTree.Visitor {
                 fo, (pkgName == null) ? null : pkgName.toString());
     }
 
-    private void checkSpecifiedModule(List<JCCompilationUnit> trees, String key) {
+    private void checkSpecifiedModule(List<JCCompilationUnit> trees, JCDiagnostic.Error error) {
         if (moduleOverride != null) {
             JavaFileObject prev = log.useSource(trees.head.sourcefile);
             try {
-                log.error(trees.head.pos(), key);
+                log.error(trees.head.pos(), error);
             } finally {
                 log.useSource(prev);
             }
@@ -419,7 +422,7 @@ public class Modules extends JCTree.Visitor {
             ModuleSymbol msym = moduleFinder.findModule((ModuleSymbol) sym);
 
             if (msym.kind == Kinds.Kind.ERR) {
-                log.error("cant.find.module", msym);
+                log.error(Errors.CantFindModule(msym));
                 //make sure the module is initialized:
                 msym.directives = List.nil();
                 msym.exports = List.nil();
@@ -548,9 +551,9 @@ public class Modules extends JCTree.Visitor {
         public void visitRequires(JCRequires tree) {
             ModuleSymbol msym = lookupModule(tree.moduleName);
             if (msym.kind != MDL) {
-                log.error(tree.moduleName.pos(), "module.not.found", msym);
+                log.error(tree.moduleName.pos(), Errors.ModuleNotFound(msym));
             } else if (allRequires.contains(msym)) {
-                log.error(tree.moduleName.pos(), "duplicate.requires", msym);
+                log.error(tree.moduleName.pos(), Errors.DuplicateRequires(msym));
             } else {
                 allRequires.add(msym);
                 Set<RequiresFlag> flags = EnumSet.noneOf(RequiresFlag.class);
@@ -568,7 +571,7 @@ public class Modules extends JCTree.Visitor {
             PackageSymbol packge = syms.enterPackage(sym, name);
             attr.setPackageSymbols(tree.qualid, packge);
             if (!allExports.add(packge)) {
-                log.error(tree.qualid.pos(), "duplicate.exports", packge);
+                log.error(tree.qualid.pos(), Errors.DuplicateExports(packge));
             }
 
             List<ModuleSymbol> toModules = null;
@@ -577,9 +580,9 @@ public class Modules extends JCTree.Visitor {
                 for (JCExpression n: tree.moduleNames) {
                     ModuleSymbol msym = lookupModule(n);
                     if (msym.kind != MDL) {
-                        log.error(n.pos(), "module.not.found", msym);
+                        log.error(n.pos(), Errors.ModuleNotFound(msym));
                     } else if (!to.add(msym)) {
-                        log.error(n.pos(), "duplicate.exports", msym);
+                        log.error(n.pos(), Errors.DuplicateExports(msym));
                     }
                 }
                 toModules = List.from(to);
@@ -680,7 +683,7 @@ public class Modules extends JCTree.Visitor {
 
         public void visitExports(JCExports tree) {
             if (tree.directive.packge.members().isEmpty()) {
-                log.error(tree.qualid.pos(), "package.empty.or.not.found", tree.directive.packge);
+                log.error(tree.qualid.pos(), Errors.PackageEmptyOrNotFound(tree.directive.packge));
             }
             allExportedPackages.add(tree.directive.packge);
             msym.directives = msym.directives.prepend(tree.directive);
@@ -704,23 +707,23 @@ public class Modules extends JCTree.Visitor {
             ClassSymbol service = (ClassSymbol) st.tsym;
             ClassSymbol impl = (ClassSymbol) it.tsym;
             if ((impl.flags() & ABSTRACT) != 0) {
-                log.error(tree.implName.pos(), "service.implementation.is.abstract", impl);
+                log.error(tree.implName.pos(), Errors.ServiceImplementationIsAbstract(impl));
             } else if (impl.isInner()) {
-                log.error(tree.implName.pos(), "service.implementation.is.inner", impl);
+                log.error(tree.implName.pos(), Errors.ServiceImplementationIsInner(impl));
             } else if (service.isInner()) {
-                log.error(tree.serviceName.pos(), "service.definition.is.inner", service);
+                log.error(tree.serviceName.pos(), Errors.ServiceDefinitionIsInner(service));
             } else {
                 MethodSymbol constr = noArgsConstructor(impl);
                 if (constr == null) {
-                    log.error(tree.implName.pos(), "service.implementation.doesnt.have.a.no.args.constructor", impl);
+                    log.error(tree.implName.pos(), Errors.ServiceImplementationDoesntHaveANoArgsConstructor(impl));
                 } else if ((constr.flags() & PUBLIC) == 0) {
-                    log.error(tree.implName.pos(), "service.implementation.no.args.constructor.not.public", impl);
+                    log.error(tree.implName.pos(), Errors.ServiceImplementationNoArgsConstructorNotPublic(impl));
                 }
             }
             if (st.hasTag(CLASS) && it.hasTag(CLASS)) {
                 Directive.ProvidesDirective d = new Directive.ProvidesDirective(service, impl);
                 if (!allProvides.add(d)) {
-                    log.error(tree.pos(), "duplicate.provides", d);
+                    log.error(tree.pos(), Errors.DuplicateProvides(service, impl));
                 }
                 msym.provides = msym.provides.prepend(d);
                 msym.directives = msym.directives.prepend(d);
@@ -738,7 +741,7 @@ public class Modules extends JCTree.Visitor {
                 ClassSymbol service = (ClassSymbol) st.tsym;
                 Directive.UsesDirective d = new Directive.UsesDirective(service);
                 if (!allUses.add(d)) {
-                    log.error(tree.pos(), "duplicate.uses", d);
+                    log.error(tree.pos(), Errors.DuplicateUses(service));
                 }
                 msym.uses = msym.uses.prepend(d);
                 msym.directives = msym.directives.prepend(d);
@@ -754,7 +757,7 @@ public class Modules extends JCTree.Visitor {
                  */
                 PackageSymbol implementationDefiningPackage = provides.impl.packge();
                 if (implementationDefiningPackage.modle != msym) {
-                    log.error(tree.pos(), "service.implementation.not.in.right.module");
+                    log.error(tree.pos(), Errors.ServiceImplementationNotInRightModule(implementationDefiningPackage.modle));
                 }
 
                 /** There is no inherent requirement that module that provides a service should actually
@@ -783,7 +786,7 @@ public class Modules extends JCTree.Visitor {
                         }
                     }
                     if (warn) {
-                        log.warning(tree.pos(), "service.provided.but.not.exported.or.used");
+                        log.warning(tree.pos(), Warnings.ServiceProvidedButNotExportedOrUsed(provides.service));
                     }
                 }
             }
@@ -924,7 +927,7 @@ public class Modules extends JCTree.Visitor {
                 if (env != null) {
                     JavaFileObject origSource = log.useSource(env.toplevel.sourcefile);
                     try {
-                        log.error(/*XXX*/env.tree, "module.not.found", requires.head.module);
+                        log.error(/*XXX*/env.tree, Errors.ModuleNotFound(requires.head.module));
                     } finally {
                         log.useSource(origSource);
                     }
@@ -1045,8 +1048,8 @@ public class Modules extends JCTree.Visitor {
                                                             : null;
                     DiagnosticPosition pos = env != null ? env.tree.pos() : null;
                     try {
-                        log.error(pos, "package.clash.from.requires", msym, packageName,
-                                                                      previousModule, exportsFrom);
+                        log.error(pos, Errors.PackageClashFromRequires(msym, packageName,
+                                                                      previousModule, exportsFrom));
                     } finally {
                         if (env != null)
                             log.useSource(origSource);
@@ -1180,7 +1183,7 @@ public class Modules extends JCTree.Visitor {
                 }
             }
             if (nonSyntheticDeps.contains(mod.sym)) {
-                log.error(rd.moduleName.pos(), "cyclic.requires", rd.directive.module);
+                log.error(rd.moduleName.pos(), Errors.CyclicRequires(rd.directive.module));
             }
             mod.sym.flags_field |= Flags.ACYCLIC;
         }

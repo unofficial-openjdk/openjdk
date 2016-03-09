@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -189,7 +189,7 @@ public class UsesTest extends ModuleTestBase {
                 .getOutputLines(ToolBox.OutputKind.DIRECT);
 
         if (!output.containsAll(Arrays.asList(
-                "module-info.java:1:22: compiler.err.duplicate.uses: Uses[p.C]"))) {
+                "module-info.java:1:22: compiler.err.duplicate.uses: p.C"))) {
             throw new Exception("Expected output not found");
         }
     }

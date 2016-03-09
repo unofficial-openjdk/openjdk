@@ -28,6 +28,7 @@
  * @modules
  *      jdk.compiler/com.sun.tools.javac.api
  *      jdk.compiler/com.sun.tools.javac.main
+ *      jdk.jdeps/com.sun.tools.javap
  * @build ToolBox ModuleTestBase
  * @run main ProvidesTest
  */
@@ -164,7 +165,7 @@ public class ProvidesTest extends ModuleTestBase {
                 .writeAll()
                 .getOutputLines(ToolBox.OutputKind.DIRECT);
         List<String> expected = Arrays.asList(
-                "module-info.java:1:24: compiler.err.service.implementation.not.in.right.module",
+                "module-info.java:1:24: compiler.err.service.implementation.not.in.right.module: M",
                 "1 error");
         if (!output.containsAll(expected)) {
             throw new Exception("Expected output not found");
@@ -421,7 +422,7 @@ public class ProvidesTest extends ModuleTestBase {
 
         List<String> expected = Arrays.asList(
                 "module-info.java:1:26: compiler.err.service.definition.is.inner: p1.C1.InnerDefinition",
-                "module-info.java:1:12: compiler.warn.service.provided.but.not.exported.or.used",
+                "module-info.java:1:12: compiler.warn.service.provided.but.not.exported.or.used: p1.C1.InnerDefinition",
                 "C2.java:1:20: compiler.err.encl.class.required: p1.C1.InnerDefinition",
                 "2 errors",
                 "1 warning");
