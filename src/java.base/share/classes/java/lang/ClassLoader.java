@@ -789,7 +789,6 @@ public abstract class ClassLoader {
         - not define java.* class,
         - signer of this class matches signers for the rest of the classes in
           package.
-        - define a package if not present
     */
     private ProtectionDomain preDefineClass(String name,
                                             ProtectionDomain pd)
@@ -823,7 +822,7 @@ public abstract class ClassLoader {
     }
 
     private void postDefineClass(Class<?> c, ProtectionDomain pd) {
-        // define a named package
+        // define a named package, if not present
         getNamedPackage(c.getPackageName(), c.getModule());
 
         if (pd.getCodeSource() != null) {
@@ -1823,7 +1822,9 @@ public abstract class ClassLoader {
      * package {@code 'p'}.
      *
      * <p> It is strongly recommended that a class loader does not call this
-     * method to explicitly define packages in <em>named modules</em>.
+     * method to explicitly define packages in <em>named modules</em>; instead,
+     * the package will be automatically defined when a class is {@linkplain
+     * #defineClass(String, byte[], int, int, ProtectionDomain) being defined}.
      * If it is desirable to define {@code Package} explicitly, it should ensure
      * that all packages in a named module are defined with the properties
      * specified by {@link Package}.  Otherwise, some {@code Package} objects
