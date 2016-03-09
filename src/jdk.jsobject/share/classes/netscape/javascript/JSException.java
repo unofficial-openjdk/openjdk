@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2006, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,26 +23,38 @@
  * questions.
  */
 
-package com.apple.concurrent;
+package netscape.javascript;
 
-final class LibDispatchNative {
-    static {
-        java.security.AccessController.doPrivileged(
-            new java.security.PrivilegedAction<Void>() {
-                public Void run() {
-                    System.loadLibrary("osx");
-                    return null;
-                }
-            });
+/**
+ * Thrown when an exception is raised in the JavaScript engine. This is merely
+ * a marker class to indicate an exception relating to the JavaScript
+ * interface.
+ */
+public class JSException extends RuntimeException {
+    private static final long serialVersionUID = 2778103758223661489L;
+
+    /**
+     * Constructs a new JavaScript exception with null as it's detail message.
+     */
+    public JSException() {
+        super();
     }
 
-    static native boolean nativeIsDispatchSupported();
-    static native long nativeGetMainQueue();
-    static native long nativeCreateConcurrentQueue(int priority);
-    static native long nativeCreateSerialQueue(String name);
-    static native void nativeReleaseQueue(long nativeQueue);
-    static native void nativeExecuteAsync(long nativeQueue, Runnable task);
-    static native void nativeExecuteSync(long nativeQueue, Runnable task);
+    /**
+     * Construct a new JavaScript exception with the specified detail message.
+     *
+     * @param s The detail message
+     */
+    public JSException(String s) {
+        super(s);
+    }
 
-    private LibDispatchNative() { }
+    /**
+     * Construct a new JavaScript exception with the specified cause.
+     *
+     * @param t Throwable cause
+     */
+    public JSException(Throwable t) {
+        super(t);
+    }
 }

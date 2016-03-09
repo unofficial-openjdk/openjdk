@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,31 +23,22 @@
  * questions.
  */
 
-package com.apple.concurrent;
+package jdk.internal.netscape.javascript.spi;
 
-import java.util.concurrent.Executor;
+import java.applet.Applet;
+import netscape.javascript.JSException;
+import netscape.javascript.JSObject;
 
-abstract class LibDispatchMainQueue extends LibDispatchQueue implements Executor {
-        public LibDispatchMainQueue() {
-                super(LibDispatchNative.nativeGetMainQueue());
-        }
-
-        @Override
-        protected synchronized void dispose() {
-                // should not dispose the main queue
-        }
-
-        static class Sync extends LibDispatchMainQueue {
-                @Override
-                public void execute(final Runnable task) {
-                        LibDispatchNative.nativeExecuteSync(ptr, task);
-                }
-        }
-
-        static class ASync extends LibDispatchMainQueue {
-                @Override
-                public void execute(final Runnable task) {
-                        LibDispatchNative.nativeExecuteAsync(ptr, task);
-                }
-        }
+public interface JSObjectProvider {
+    /**
+     * Return a JSObject for the window containing the given applet.
+     * Implementations of this class should return null if not connected to a
+     * browser, for example, when running in AppletViewer.
+     *
+     * @param applet The applet.
+     * @return JSObject for the window containing the given applet or null if we
+     * are not connected to a browser.
+     * @throws JSException when an error is encountered.
+     */
+    public JSObject getWindow(Applet applet) throws JSException;
 }
