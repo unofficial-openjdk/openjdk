@@ -157,11 +157,6 @@ class JdepsTask {
                 }
             }
         },
-        new Option(true, "-cp", "-classpath") {
-            void process(JdepsTask task, String opt, String arg) {
-                task.options.classpath = arg;
-            }
-        },
         new Option(true, "-p", "-package") {
             void process(JdepsTask task, String opt, String arg) {
                 task.options.packageNames.add(arg);
@@ -259,15 +254,20 @@ class JdepsTask {
                 }
             }
         },
-        new Option(true, "-upgrademodulepath") {
-            void process(JdepsTask task, String opt, String arg) throws BadArgs {
-                task.options.upgradeModulePath = arg;
-                task.options.showModule = true;
-            }
+        new Option(true, "-cp", "-classpath") {
+            void process(JdepsTask task, String opt, String arg) {
+                    task.options.classpath = arg;
+                }
         },
         new Option(true, "-mp", "-modulepath") {
             void process(JdepsTask task, String opt, String arg) throws BadArgs {
                 task.options.modulePath = arg;
+                task.options.showModule = true;
+            }
+        },
+        new Option(true, "-upgrademodulepath") {
+            void process(JdepsTask task, String opt, String arg) throws BadArgs {
+                task.options.upgradeModulePath = arg;
                 task.options.showModule = true;
             }
         },
@@ -278,9 +278,9 @@ class JdepsTask {
                 task.options.showModule = true;
             }
         },
-        new HiddenOption(false, "-sanitize") {
+        new Option(false, "-check") {
             void process(JdepsTask task, String opt, String arg) throws BadArgs {
-                task.options.sanitize = true;
+                task.options.checkModuleDeps = true;
             }
         },
         new HiddenOption(true, "-include-modules") {
@@ -364,7 +364,7 @@ class JdepsTask {
                 reportError("err.invalid.module.option", options.rootModule, classes);
                 return EXIT_CMDERR;
             }
-            if (options.sanitize && options.rootModule == null) {
+            if (options.checkModuleDeps && options.rootModule == null) {
                 reportError("err.root.module.not.set");
                 return EXIT_CMDERR;
             }
@@ -433,10 +433,10 @@ class JdepsTask {
         buildArchive(dependencyFinder);
 
         if (options.rootModule != null &&
-                (options.sanitize || (options.dotOutputDir != null &&
+                (options.checkModuleDeps || (options.dotOutputDir != null &&
                                       options.verbose == SUMMARY))) {
             // -dotfile -s prints the configuration of the given root
-            // -sanitize prints the suggested module-info.java
+            // -checkModuleDeps prints the suggested module-info.java
             return analyzeModules(dependencyFinder);
         }
 
@@ -629,9 +629,9 @@ class JdepsTask {
             throws IOException
     {
         ModuleAnalyzer analyzer = new ModuleAnalyzer(modulePaths,
-                                  dependencyFinder,
-                                  options.rootModule);
-        if (options.sanitize) {
+                                                     dependencyFinder,
+                                                     options.rootModule);
+        if (options.checkModuleDeps) {
             return analyzer.run();
         }
         if (options.dotOutputDir != null && options.verbose == SUMMARY) {
@@ -770,7 +770,7 @@ class JdepsTask {
         Pattern regex;             // apply to the dependences
         Pattern includePattern;    // apply to classes
         boolean compileTimeView = false;
-        boolean sanitize = false;
+        boolean checkModuleDeps = false;
         String upgradeModulePath;
         String modulePath;
         String rootModule;
