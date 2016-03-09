@@ -28,6 +28,7 @@
  *  @modules jdk.compiler/com.sun.tools.javac.api
  *           jdk.compiler/com.sun.tools.javac.file
  *           jdk.compiler/com.sun.tools.javac.main
+ *          jdk.jdeps/com.sun.tools.javap
  *  @build ToolBox
  *  @run main Test
  *  @summary Provide a simple light-weight "plug-in" mechanism for javac

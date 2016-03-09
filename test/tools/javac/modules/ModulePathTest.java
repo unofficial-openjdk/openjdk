@@ -28,6 +28,7 @@
  * @modules
  *      jdk.compiler/com.sun.tools.javac.api
  *      jdk.compiler/com.sun.tools.javac.main
+ *      jdk.jdeps/com.sun.tools.javap
  *      jdk.jlink/jdk.tools.jmod
  * @build ToolBox ModuleTestBase
  * @run main ModulePathTest

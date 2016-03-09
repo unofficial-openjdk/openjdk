@@ -27,6 +27,7 @@
  * @summary Verify that boxed postfix operator works properly when referring to super class' field.
  * @modules jdk.compiler/com.sun.tools.javac.api
  *          jdk.compiler/com.sun.tools.javac.main
+ *          jdk.jdeps/com.sun.tools.javap
  * @library /tools/lib
  */
 
