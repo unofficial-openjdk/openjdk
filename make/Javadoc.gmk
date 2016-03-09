@@ -395,7 +395,7 @@ COREAPI_OPTIONS_FILE = $(DOCSTMPDIR)/coredocs.options
 COREAPI_PACKAGES_FILE = $(DOCSTMPDIR)/coredocs.packages
 
 # The modules required to be documented
-COREAPI_MODULES = java.se
+COREAPI_MODULES = java.se.ee
 
 coredocs: $(COREAPI_INDEX_FILE)
 
