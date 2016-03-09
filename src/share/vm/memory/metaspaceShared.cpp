@@ -729,6 +729,7 @@ void MetaspaceShared::check_shared_class_loader_type(Klass* k) {
   if (k->is_instance_klass()) {
     InstanceKlass* ik = InstanceKlass::cast(k);
     u2 loader_type = ik->loader_type();
+    ResourceMark rm;
     guarantee(loader_type != 0,
               "Class loader type is not set for this class %s", ik->name()->as_C_string());
   }
