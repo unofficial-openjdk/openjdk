@@ -973,7 +973,7 @@ final class Resolver {
 
 
     /**
-     * ??
+     * Returns the package name
      */
     private static String packageName(String cn) {
         int index = cn.lastIndexOf(".");
