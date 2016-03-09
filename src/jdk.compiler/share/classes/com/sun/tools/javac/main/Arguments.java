@@ -60,6 +60,8 @@ import com.sun.tools.javac.jvm.Target;
 import com.sun.tools.javac.main.OptionHelper.GrumpyHelper;
 import com.sun.tools.javac.platform.PlatformDescription;
 import com.sun.tools.javac.platform.PlatformUtils;
+import com.sun.tools.javac.resources.CompilerProperties.Errors;
+import com.sun.tools.javac.resources.CompilerProperties.Warnings;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
@@ -407,16 +409,16 @@ public class Arguments {
         JavaFileManager fm = getFileManager();
         if (options.isSet(Option.M)) {
             if (!fm.hasLocation(StandardLocation.CLASS_OUTPUT)) {
-                log.error("output.dir.must.be.specified.with.dash.m.option");
+                log.error(Errors.OutputDirMustBeSpecifiedWithDashMOption);
             } else if (!fm.hasLocation(StandardLocation.MODULE_SOURCE_PATH)) {
-                log.error("modulesourcepath.must.be.specified.with.dash.m.option");
+                log.error(Errors.ModulesourcepathMustBeSpecifiedWithDashMOption);
             } else {
                 java.util.List<String> modules = Arrays.asList(options.get(Option.M).split(","));
                 try {
                     for (String module : modules) {
                         Location sourceLoc = fm.getModuleLocation(StandardLocation.MODULE_SOURCE_PATH, module);
                         if (sourceLoc == null) {
-                            log.error("module.not.found.in.module.source.path", module);
+                            log.error(Errors.ModuleNotFoundInModuleSourcePath(module));
                         } else {
                             Location classLoc = fm.getModuleLocation(StandardLocation.CLASS_OUTPUT, module);
 
@@ -480,7 +482,7 @@ public class Arguments {
                 if (sfm.hasLocation(StandardLocation.MODULE_SOURCE_PATH)) {
                     // multi-module mode
                     if (Files.exists(outDir.resolve("module-info.class"))) {
-                        log.error("multi-module.outdir.cannot.be.exploded.module", outDir);
+                        log.error(Errors.MultiModuleOutdirCannotBeExplodedModule(outDir));
                     }
                 } else {
                     // single-module or legacy mode
@@ -489,7 +491,7 @@ public class Arguments {
                     if (lintPaths) {
                         Path outDirParent = outDir.getParent();
                         if (outDirParent != null && Files.exists(outDirParent.resolve("module-info.class"))) {
-                            log.warning(LintCategory.PATH, "outdir.is.in.exploded.module", outDir);
+                            log.warning(LintCategory.PATH, Warnings.OutdirIsInExplodedModule(outDir));
                         }
                     }
                 }
@@ -557,16 +559,16 @@ public class Arguments {
         boolean obsoleteOptionFound = false;
 
         if (source.compareTo(Source.MIN) < 0) {
-            log.error("option.removed.source", source.name, Source.MIN.name);
+            log.error(Errors.OptionRemovedSource(source.name, Source.MIN.name));
         } else if (source == Source.MIN && lintOptions) {
-            log.warning(LintCategory.OPTIONS, "option.obsolete.source", source.name);
+            log.warning(LintCategory.OPTIONS, Warnings.OptionObsoleteSource(source.name));
             obsoleteOptionFound = true;
         }
 
         if (target.compareTo(Target.MIN) < 0) {
-            log.error("option.removed.target", target.name, Target.MIN.name);
+            log.error(Errors.OptionRemovedTarget(target.name, Target.MIN.name));
         } else if (target == Target.MIN && lintOptions) {
-            log.warning(LintCategory.OPTIONS, "option.obsolete.target", target.name);
+            log.warning(LintCategory.OPTIONS, Warnings.OptionObsoleteTarget(target.name));
             obsoleteOptionFound = true;
         }
 
@@ -587,16 +589,16 @@ public class Arguments {
         if (fm.hasLocation(StandardLocation.MODULE_SOURCE_PATH)) {
             if (!options.isSet(Option.PROC, "only")
                     && !fm.hasLocation(StandardLocation.CLASS_OUTPUT)) {
-                log.error("no.output.dir");
+                log.error(Errors.NoOutputDir);
             }
             if (options.isSet(Option.XMODULE)) {
-                log.error("xmodule.no.module.sourcepath");
+                log.error(Errors.XmoduleNoModuleSourcepath);
             }
         }
 
         if (fm.hasLocation(StandardLocation.ANNOTATION_PROCESSOR_MODULE_PATH) &&
             fm.hasLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH)) {
-            log.error("processorpath.no.procesormodulepath");
+            log.error(Errors.ProcessorpathNoProcessormodulepath);
         }
 
         if (obsoleteOptionFound)
@@ -612,7 +614,7 @@ public class Arguments {
             for (String e: addExports.split("\0")) {
                 Matcher m = p.matcher(e);
                 if (!m.matches()) {
-                    log.error("xaddexports.malformed.entry", e);
+                    log.error(Errors.XaddexportsMalformedEntry(e));
                     continue;
                 }
                 String eModule = m.group(1);  // TODO: check a valid dotted identifier
@@ -624,7 +626,7 @@ public class Arguments {
             }
             map.forEach((key, value) -> {
                 if (value.size() > 1) {
-                    log.error("xaddexports.too.many", key);
+                    log.error(Errors.XaddexportsTooMany(key));
                     // TODO: consider adding diag fragments for the entries
                 }
             });
@@ -640,7 +642,7 @@ public class Arguments {
             for (String e: addReads.split("\0")) {
                 Matcher m = p.matcher(e);
                 if (!m.matches()) {
-                    log.error("xaddreads.malformed.entry", e);
+                    log.error(Errors.XaddreadsMalformedEntry(e));
                     continue;
                 }
                 String eModule = m.group(1);  // TODO: check a valid dotted identifier
@@ -650,7 +652,7 @@ public class Arguments {
             }
             map.forEach((key, value) -> {
                 if (value.size() > 1) {
-                    log.error("xaddreads.too.many", key);
+                    log.error(Errors.XaddreadsTooMany(key));
                     // TODO: consider adding diag fragments for the entries
                 }
             });

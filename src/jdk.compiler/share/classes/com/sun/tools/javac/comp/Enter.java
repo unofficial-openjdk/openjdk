@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,7 @@ import com.sun.tools.javac.code.Scope.*;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.*;
 import com.sun.tools.javac.main.Option.PkgInfo;
+import com.sun.tools.javac.resources.CompilerProperties.Errors;
 import com.sun.tools.javac.tree.*;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.util.*;
@@ -338,7 +339,7 @@ public class Enter extends JCTree.Visitor {
                     .findAny();
 
             if (dependencyWithPackage.isPresent()) {
-                log.error(pd, "package.in.other.module", dependencyWithPackage.get());
+                log.error(pd, Errors.PackageInOtherModule(dependencyWithPackage.get()));
             }
 
             tree.packge.complete(); // Find all classes in package.

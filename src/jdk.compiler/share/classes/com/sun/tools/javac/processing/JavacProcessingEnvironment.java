@@ -66,6 +66,7 @@ import com.sun.tools.javac.model.JavacElements;
 import com.sun.tools.javac.model.JavacTypes;
 import com.sun.tools.javac.platform.PlatformDescription;
 import com.sun.tools.javac.platform.PlatformDescription.PluginInfo;
+import com.sun.tools.javac.resources.CompilerProperties.Errors;
 import com.sun.tools.javac.tree.*;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.util.Abort;
@@ -504,7 +505,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
                         namedProcessorsMap.put(name, theProcessor);
                     }
                 }
-                log.error("proc.processor.not.found", processorName);
+                log.error(Errors.ProcProcessorNotFound(processorName));
                 return false;
             }
         }

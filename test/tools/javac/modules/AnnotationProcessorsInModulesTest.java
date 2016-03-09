@@ -226,7 +226,7 @@ public class AnnotationProcessorsInModulesTest extends ModuleTestBase {
                 .run(ToolBox.Expect.FAIL)
                 .writeAll()
                 .getOutput(ToolBox.OutputKind.DIRECT);
-        if (!log.trim().equals("- compiler.err.processorpath.no.procesormodulepath\n" +
+        if (!log.trim().equals("- compiler.err.processorpath.no.processormodulepath\n" +
                                "1 error")) {
             throw new AssertionError("Unexpected output: " + log);
         }

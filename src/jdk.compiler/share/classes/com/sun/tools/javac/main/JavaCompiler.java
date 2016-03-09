@@ -73,7 +73,11 @@ import com.sun.tools.javac.util.JCDiagnostic.Factory;
 import com.sun.tools.javac.util.Log.WriterKind;
 
 import static com.sun.tools.javac.code.Kinds.Kind.*;
+
 import com.sun.tools.javac.code.Symbol.ModuleSymbol;
+import com.sun.tools.javac.resources.CompilerProperties.Errors;
+import com.sun.tools.javac.resources.CompilerProperties.Warnings;
+
 import static com.sun.tools.javac.code.TypeTag.CLASS;
 import static com.sun.tools.javac.main.Option.*;
 import static com.sun.tools.javac.util.JCDiagnostic.DiagnosticFlag.*;
@@ -672,7 +676,7 @@ public class JavaCompiler {
             msym = mf.findModule(modName);
             typeName = name.substring(sep + 1);
         } else {
-            log.error("invalid.module.specifier", name);
+            log.error(Errors.InvalidModuleSpecifier(name));
             return silentFail;
         }
 
@@ -1190,7 +1194,7 @@ public class JavaCompiler {
                             (sym.kind == PCK && !processPcks) ||
                             sym.kind == ABSENT_TYP) {
                             if (sym != silentFail)
-                                log.error("proc.cant.find.class", nameStr);
+                                log.error(Errors.ProcCantFindClass(nameStr));
                             errors = true;
                             continue;
                         }
@@ -1205,10 +1209,10 @@ public class JavaCompiler {
                                 continue;
                             }
                             Assert.check(sym.kind == PCK);
-                            log.warning("proc.package.does.not.exist", nameStr);
+                            log.warning(Warnings.ProcPackageDoesNotExist(nameStr));
                             pckSymbols = pckSymbols.prepend((PackageSymbol)sym);
                         } catch (CompletionFailure e) {
-                            log.error("proc.cant.find.class", nameStr);
+                            log.error(Errors.ProcCantFindClass(nameStr));
                             errors = true;
                             continue;
                         }

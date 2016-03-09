@@ -60,6 +60,7 @@ import com.sun.tools.javac.code.Source;
 import com.sun.tools.javac.main.Option;
 import com.sun.tools.javac.main.OptionHelper;
 import com.sun.tools.javac.main.OptionHelper.GrumpyHelper;
+import com.sun.tools.javac.resources.CompilerProperties.Errors;
 import com.sun.tools.javac.util.Abort;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.DefinedBy;
@@ -313,7 +314,7 @@ public abstract class BaseFileManager implements JavaFileManager {
             try {
                 ok = ok & handleOption(e.getKey(), e.getValue());
             } catch (IllegalArgumentException ex) {
-                log.error("illegal.argument.for.option", e.getKey().getText(), ex.getMessage());
+                log.error(Errors.IllegalArgumentForOption(e.getKey().getText(), ex.getMessage()));
                 ok = false;
             }
         }
