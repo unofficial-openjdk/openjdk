@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,12 +23,24 @@
  * questions.
  */
 
-module jdk.jcmd {
-    requires jdk.attach;
-    requires jdk.jvmstat;
+package jdk.internal.vm.agent.spi;
 
-    exports jdk.internal.vm.agent.spi to jdk.hotspot.agent;
+import java.lang.reflect.Layer;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.ServiceLoader;
 
-    uses jdk.internal.vm.agent.spi.ToolProvider;
+public final class ToolProviderFinder {
+    private static final Map<String, ToolProvider> providers = init();
+
+    public static ToolProvider find(String name) {
+        return providers.get(name);
+    }
+
+    private static Map<String, ToolProvider> init() {
+        Map<String, ToolProvider> providers = new HashMap<>();
+        ServiceLoader.load(Layer.boot(), ToolProvider.class)
+                     .forEach(p -> providers.putIfAbsent(p.getName(), p));
+        return providers;
+    }
 }
-

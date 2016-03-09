@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,12 +23,20 @@
  * questions.
  */
 
-module jdk.jcmd {
-    requires jdk.attach;
-    requires jdk.jvmstat;
+package jdk.internal.vm.agent.spi;
 
-    exports jdk.internal.vm.agent.spi to jdk.hotspot.agent;
+/**
+ * Service interface for jdk.hotspot.agent to provide the tools that
+ * jstack, jmap, jinfo will invoke, if present.
+ */
+public interface ToolProvider {
+    /**
+     * Returns the name of the tool provider
+     */
+    String getName();
 
-    uses jdk.internal.vm.agent.spi.ToolProvider;
+    /**
+     * Invoke the tool provider with the given arguments
+     */
+    void run(String... arguments);
 }
-
