@@ -142,22 +142,24 @@ public class GenGraphs {
 
             Map<String,ModuleDescriptor> nameToModule = cf.descriptors().stream()
                     .collect(Collectors.toMap(ModuleDescriptor::name, Function.identity()));
+            Set<ModuleDescriptor> descriptors = new TreeSet<>(cf.descriptors());
 
             out.format("digraph \"%s\" {%n", name);
             out.format("size=\"25,25\";");
             out.format("nodesep=.5;%n");
             out.format("ranksep=1.5;%n");
-            out.format("node [shape=plaintext, fontname=\"DejaVuSans\", fontsize=36, margin=\".2,.2\"];");
-            out.format("edge [penwidth=4, color=\"#999999\", arrowhead=open, arrowsize=2];");
+            out.format("pencolor=transparent;%n");
+            out.format("node [shape=plaintext, fontname=\"DejaVuSans\", fontsize=36, margin=\".2,.2\"];%n");
+            out.format("edge [penwidth=4, color=\"#999999\", arrowhead=open, arrowsize=2];%n");
 
-            out.format("subgraph se {%n");
-            cf.descriptors().stream()
+            out.format("subgraph %sse {%n", name.equals("jdk") ? "cluster_" : "");
+            descriptors.stream()
                 .filter(javaGroup::contains)
                 .map(ModuleDescriptor::name)
                 .forEach(mn -> out.format("  \"%s\" [fontcolor=\"%s\", group=%s];%n",
                                           mn, ORANGE, "java"));
             out.format("}%n");
-            cf.descriptors().stream()
+            descriptors.stream()
                 .filter(jdkGroup::contains)
                 .map(ModuleDescriptor::name)
                 .forEach(mn -> out.format("  \"%s\" [fontcolor=\"%s\", group=%s];%n",
@@ -165,7 +167,7 @@ public class GenGraphs {
 
             // transitive reduction
             Graph<String> graph = gengraph(cf);
-            cf.descriptors().forEach(md -> {
+            descriptors.forEach(md -> {
                 String mn = md.name();
                 Set<String> requiresPublic = md.requires().stream()
                         .filter(d -> d.modifiers().contains(PUBLIC))
