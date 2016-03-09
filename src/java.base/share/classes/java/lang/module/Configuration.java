@@ -227,8 +227,13 @@ public final class Configuration {
      *     that exports {@code p} to {@code M}. </p></li>
      *
      *     <li><p> A module {@code M} declares that it "{@code uses p.S}" or
-     *     "{@code provides p.S}" but does not read a module that exports
-     *     package {@code p} to {@code M}. </p></li>
+     *     "{@code provides p.S with ...}" but package {@code p} is neither in
+     *     module {@code M} nor exported to {@code M} by any module that
+     *     {@code M} reads. </p></li>
+     *
+     *     <li><p> A module {@code M} declares that it
+     *     "{@code provides ... with q.T}" but package {@code q} is not in
+     *     module {@code M}. </p></li>
      *
      *     <li><p> Two or more modules in the configuration are specific to
      *     different {@link ModuleDescriptor#osName() operating systems},

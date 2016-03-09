@@ -837,7 +837,8 @@ final class Resolver {
             Map<String, ModuleDescriptor> packageToExporter = new HashMap<>();
 
             // local packages
-            for (String pn : descriptor1.packages()) {
+            Set<String> packages = descriptor1.packages();
+            for (String pn : packages) {
                 packageToExporter.put(pn, descriptor1);
             }
 
@@ -882,8 +883,7 @@ final class Resolver {
 
             // uses S
             for (String service : descriptor1.uses()) {
-                int index = service.lastIndexOf(".");
-                String pn = service.substring(0, index);
+                String pn = packageName(service);
                 if (!packageToExporter.containsKey(pn)) {
                     fail("Module %s does not read a module that exports %s",
                             descriptor1.name(), pn);
@@ -891,12 +891,22 @@ final class Resolver {
             }
 
             // provides S
-            for (String service : descriptor1.provides().keySet()) {
-                int index = service.lastIndexOf(".");
-                String pn = service.substring(0, index);
+            for (Map.Entry<String, Provides> entry :
+                    descriptor1.provides().entrySet()) {
+                String service = entry.getKey();
+                Provides provides = entry.getValue();
+
+                String pn = packageName(service);
                 if (!packageToExporter.containsKey(pn)) {
                     fail("Module %s does not read a module that exports %s",
                             descriptor1.name(), pn);
+                }
+
+                for (String provider : provides.providers()) {
+                    if (!packages.contains(packageName(provider))) {
+                        fail("Provider %s not in module %s",
+                                provider, descriptor1.name());
+                    }
                 }
             }
 
@@ -961,6 +971,14 @@ final class Resolver {
         }
     }
 
+
+    /**
+     * ??
+     */
+    private static String packageName(String cn) {
+        int index = cn.lastIndexOf(".");
+        return (index == -1) ? "" : cn.substring(0, index);
+    }
 
     /**
      * Throw ResolutionException with the given format string and arguments
