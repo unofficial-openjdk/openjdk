@@ -115,9 +115,9 @@ public final class ModuleBootstrap {
         // The module finder: [-upgrademodulepath] system-module-path [-modulepath]
         ModuleFinder finder = systemModulePath;
         if (upgradeModulePath != null)
-            finder = ModuleFinder.concat(upgradeModulePath, finder);
+            finder = ModuleFinder.compose(upgradeModulePath, finder);
         if (appModulePath != null)
-            finder = ModuleFinder.concat(finder, appModulePath);
+            finder = ModuleFinder.compose(finder, appModulePath);
 
         // launcher -m option to specify the initial module
         String mainModule = System.getProperty("jdk.module.main");

@@ -212,7 +212,7 @@ public class AutomaticModulesTest {
 
         // module finder locates m1 and the modules in the directory
         ModuleFinder finder
-            = ModuleFinder.concat(ModuleUtils.finderOf(m1),
+            = ModuleFinder.compose(ModuleUtils.finderOf(m1),
                 ModuleFinder.of(dir));
 
         Configuration cf
@@ -282,7 +282,7 @@ public class AutomaticModulesTest {
 
         // module finder locates m1 and the modules in the directory
         ModuleFinder finder
-            = ModuleFinder.concat(ModuleUtils.finderOf(m1, m2),
+            = ModuleFinder.compose(ModuleUtils.finderOf(m1, m2),
                                   ModuleFinder.of(dir));
 
         Configuration cf
@@ -356,7 +356,7 @@ public class AutomaticModulesTest {
 
         // module finder locates m1 and the modules in the directory
         ModuleFinder finder
-                = ModuleFinder.concat(ModuleUtils.finderOf(m1, m2),
+            = ModuleFinder.compose(ModuleUtils.finderOf(m1, m2),
                 ModuleFinder.of(dir));
 
         Configuration cf
@@ -420,7 +420,7 @@ public class AutomaticModulesTest {
 
         // module finder locates m1 and the modules in the directory
         ModuleFinder finder
-            = ModuleFinder.concat(ModuleUtils.finderOf(descriptor),
+            = ModuleFinder.compose(ModuleUtils.finderOf(descriptor),
                 ModuleFinder.of(dir));
 
         Configuration cf

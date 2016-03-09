@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -412,9 +412,9 @@ public class ModuleFinderTest {
 
 
     /**
-     * Test ModuleFinder.concat
+     * Test ModuleFinder.compose
      */
-    public void testConcat() throws Exception {
+    public void testCompose() throws Exception {
         Path dir1 = Files.createTempDirectory(USER_DIR, "mods1");
         createExplodedModule(dir1.resolve("m1"), "m1@1.0");
         createExplodedModule(dir1.resolve("m2"), "m2@1.0");
@@ -428,7 +428,7 @@ public class ModuleFinderTest {
         ModuleFinder finder1 = ModuleFinder.of(dir1);
         ModuleFinder finder2 = ModuleFinder.of(dir2);
 
-        ModuleFinder finder = ModuleFinder.concat(finder1, finder2);
+        ModuleFinder finder = ModuleFinder.compose(finder1, finder2);
         assertTrue(finder.findAll().size() == 4);
         assertTrue(finder.find("m1").isPresent());
         assertTrue(finder.find("m2").isPresent());
@@ -486,14 +486,14 @@ public class ModuleFinderTest {
             assertTrue(false);
         } catch (NullPointerException expected) { }
 
-        // concat
+        // compose
         ModuleFinder finder = ModuleFinder.of();
         try {
-            ModuleFinder.concat(finder, null);
+            ModuleFinder.compose(finder, null);
             assertTrue(false);
         } catch (NullPointerException expected) { }
         try {
-            ModuleFinder.concat(null, finder);
+            ModuleFinder.compose(null, finder);
             assertTrue(false);
         } catch (NullPointerException expected) { }
 

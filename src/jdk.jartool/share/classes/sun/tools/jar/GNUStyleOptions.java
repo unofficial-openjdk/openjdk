@@ -152,8 +152,8 @@ class GNUStyleOptions {
                     for (String dir : dirs) {
                         paths[i++] = Paths.get(dir);
                     }
-                    jartool.moduleFinder = ModuleFinder.concat(jartool.moduleFinder,
-                                                               ModuleFinder.of(paths));
+                    jartool.moduleFinder = ModuleFinder.compose(jartool.moduleFinder,
+                                                                ModuleFinder.of(paths));
                 }
             },
             new Option(false, OptionType.CREATE_UPDATE_INDEX, "--no-compress", "-0") {

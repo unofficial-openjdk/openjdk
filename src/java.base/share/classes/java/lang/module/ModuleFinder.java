@@ -275,8 +275,6 @@ public interface ModuleFinder {
      * packaged module and an error is encountered. Paths to files that do not
      * exist are ignored. </p>
      *
-     * @apiNote This method is not required to be thread safe.
-     *
      * @param entries
      *        A possibly-empty array of paths to directories of modules
      *        or paths to packaged or exploded modules
@@ -288,7 +286,7 @@ public interface ModuleFinder {
     }
 
     /**
-     * Returns a module finder that is the equivalent to concatenating two
+     * Returns a module finder that is the equivalent to composing two
      * module finders. The resulting finder will locate modules references
      * using {@code first}; if not found then it will attempt to locate module
      * references using {@code second}.
@@ -298,14 +296,17 @@ public interface ModuleFinder {
      * also locate all modules located by the second module finder that are not
      * located by the first module finder. </p>
      *
+     * @apiNote This method will eventually be changed to take a sequence of
+     *          module finders.
+     *
      * @param first
      *        The first module finder
      * @param second
      *        The second module finder
      *
-     * @return A {@code ModuleFinder} that concatenates two module finders
+     * @return A {@code ModuleFinder} that composes two module finders
      */
-    static ModuleFinder concat(ModuleFinder first, ModuleFinder second) {
+    static ModuleFinder compose(ModuleFinder first, ModuleFinder second) {
         Objects.requireNonNull(first);
         Objects.requireNonNull(second);
 
