@@ -57,13 +57,13 @@ public class ModulePaths {
     public ModulePaths(String upgradeModulePath, String modulePath, List<Path> jars) {
         ModuleFinder finder = ModuleFinder.ofSystem();
         if (upgradeModulePath != null) {
-            finder = ModuleFinder.concat(createModulePathFinder(upgradeModulePath), finder);
+            finder = ModuleFinder.compose(createModulePathFinder(upgradeModulePath), finder);
         }
         if (jars.size() > 0) {
-            finder = ModuleFinder.concat(finder, ModuleFinder.of(jars.toArray(new Path[0])));
+            finder = ModuleFinder.compose(finder, ModuleFinder.of(jars.toArray(new Path[0])));
         }
         if (modulePath != null) {
-            finder = ModuleFinder.concat(finder, createModulePathFinder(modulePath));
+            finder = ModuleFinder.compose(finder, createModulePathFinder(modulePath));
         }
         this.finder = finder;
 
