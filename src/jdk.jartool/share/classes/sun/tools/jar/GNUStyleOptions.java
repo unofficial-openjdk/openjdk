@@ -270,7 +270,8 @@ class GNUStyleOptions {
     static void printHelp(PrintStream out) {
         out.format("%s%n", Main.getMsg("main.help.preopt"));
         for (OptionType type : OptionType.values()) {
-            out.format("%n%s%n", Main.getMsg("main.help.opt." + type.name));
+            boolean typeHeadingWritten = false;
+
             for (Option o : recognizedOptions) {
                 if (!o.type.equals(type))
                     continue;
@@ -278,6 +279,10 @@ class GNUStyleOptions {
                 name = name.charAt(0) == '-' ? name.substring(1) : name;
                 if (o.isHidden() || name.equals("h")) {
                     continue;
+                }
+                if (!typeHeadingWritten) {
+                    out.format("%n%s%n", Main.getMsg("main.help.opt." + type.name));
+                    typeHeadingWritten = true;
                 }
                 out.format("%s%n", Main.getMsg("main.help.opt." + type.name + "." + name));
             }
