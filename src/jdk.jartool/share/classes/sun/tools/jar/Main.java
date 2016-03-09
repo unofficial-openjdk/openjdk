@@ -105,6 +105,7 @@ class Main {
     /* To support additional GNU Style informational options */
     enum Info {
         HELP(GNUStyleOptions::printHelp),
+        COMPAT_HELP(GNUStyleOptions::printCompatHelp),
         USAGE_SUMMARY(GNUStyleOptions::printUsageSummary),
         VERSION(GNUStyleOptions::printVersion);
 
