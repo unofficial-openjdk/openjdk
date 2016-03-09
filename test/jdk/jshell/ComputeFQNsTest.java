@@ -29,6 +29,7 @@
  * @build KullaTesting TestingInputStream ToolBox Compiler
  * @modules jdk.compiler/com.sun.tools.javac.api
  *          jdk.compiler/com.sun.tools.javac.main
+ *          jdk.jdeps/com.sun.tools.javap
  * @run testng ComputeFQNsTest
  */
 
