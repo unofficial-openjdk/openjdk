@@ -391,6 +391,47 @@ public class CLICompatibility {
         FileUtils.deleteFileTreeWithRetry(path);
     }
 
+    // Basic help
+
+    @Test
+    public void helpBadOptionalArg() {
+        if (legacyOnly)
+            return;
+
+        jar("--help:")
+            .assertFailure();
+
+        jar("--help:blah")
+            .assertFailure();
+    }
+
+    @Test
+    public void help() {
+        if (legacyOnly)
+            return;
+
+        jar("-h")
+            .assertSuccess()
+            .resultChecker(r ->
+                assertTrue(r.output.startsWith("Usage: jar [OPTION...] [-C dir] files"),
+                           "Failed, got [" + r.output + "]")
+            );
+
+        jar("--help")
+            .assertSuccess()
+            .resultChecker(r ->
+                assertTrue(r.output.startsWith("Usage: jar [OPTION...] [-C dir] files"),
+                           "Failed, got [" + r.output + "]")
+            );
+
+        jar("--help:compat")
+            .assertSuccess()
+            .resultChecker(r ->
+                assertTrue(r.output.startsWith("Compatibility Interface:"),
+                           "Failed, got [" + r.output + "]")
+            );
+    }
+
     // -- Infrastructure
 
     static boolean jarContains(JarInputStream jis, String entryName)

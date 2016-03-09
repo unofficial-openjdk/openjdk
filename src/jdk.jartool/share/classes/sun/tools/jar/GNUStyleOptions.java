@@ -172,10 +172,19 @@ class GNUStyleOptions {
             },
 
             // Other options
-            new Option(false, OptionType.OTHER, "--help", "-?") {
-                void process(Main jartool, String opt, String arg) {
-                    if (jartool.info == null)
-                        jartool.info = Main.Info.HELP;
+            new Option(true, true, OptionType.OTHER, "--help", "-h") {
+                void process(Main jartool, String opt, String arg) throws BadArgs {
+                    if (jartool.info == null) {
+                        if (arg == null) {
+                            jartool.info = Main.Info.HELP;
+                            return;
+                        }
+
+                        if (!arg.equals("compat"))
+                            throw new BadArgs("error.illegal.option", arg).showUsage(true);
+
+                        jartool.info = Main.Info.COMPAT_HELP;
+                    }
                 }
             },
             new Option(false, OptionType.OTHER, "--version") {
@@ -202,11 +211,17 @@ class GNUStyleOptions {
 
     static abstract class Option {
         final boolean hasArg;
+        final boolean argIsOptional;
         final String[] aliases;
         final OptionType type;
 
         Option(boolean hasArg, OptionType type, String... aliases) {
+            this(hasArg, false, type, aliases);
+        }
+
+        Option(boolean hasArg, boolean argIsOptional, OptionType type, String... aliases) {
             this.hasArg = hasArg;
+            this.argIsOptional = argIsOptional;
             this.type = type;
             this.aliases = aliases;
         }
@@ -218,6 +233,8 @@ class GNUStyleOptions {
                 if (a.equals(opt)) {
                     return true;
                 } else if (opt.startsWith("--") && hasArg && opt.startsWith(a + "=")) {
+                    return true;
+                } else if (opt.startsWith("--help") && opt.startsWith(a + ":")) {
                     return true;
                 }
             }
@@ -243,12 +260,17 @@ class GNUStyleOptions {
             Option option = getOption(name);
             String param = null;
             if (option.hasArg) {
-                if (name.startsWith("--") && name.indexOf('=') > 0) {
+                if (name.startsWith("--help")) {  // "special" optional separator
+                    if (name.indexOf(':') > 0) {
+                        param = name.substring(name.indexOf(':') + 1, name.length());
+                    }
+                } else if (name.startsWith("--") && name.indexOf('=') > 0) {
                     param = name.substring(name.indexOf('=') + 1, name.length());
                 } else if (count + 1 < args.length) {
                     param = args[++count];
                 }
-                if (param == null || param.isEmpty() || param.charAt(0) == '-') {
+                if (!option.argIsOptional &&
+                    (param == null || param.isEmpty() || param.charAt(0) == '-')) {
                     throw new BadArgs("error.missing.arg", name).showUsage(true);
                 }
             }
@@ -288,6 +310,9 @@ class GNUStyleOptions {
             }
         }
         out.format("%n%s%n%n", Main.getMsg("main.help.postopt"));
+    }
+
+    static void printCompatHelp(PrintStream out) {
         out.format("%s%n", Main.getMsg("usage.compat"));
     }
 
