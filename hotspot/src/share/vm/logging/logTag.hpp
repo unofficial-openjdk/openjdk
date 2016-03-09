@@ -73,6 +73,7 @@
   LOG_TAG(region) \
   LOG_TAG(remset) \
   LOG_TAG(safepoint) \
+  LOG_TAG(safepointcleanup) \
   LOG_TAG(scavenge) \
   LOG_TAG(scrub) \
   LOG_TAG(start) \
@@ -86,6 +87,7 @@
   LOG_TAG(thread) \
   LOG_TAG(tlab) \
   LOG_TAG(time) \
+  LOG_TAG(verboseverification) \
   LOG_TAG(verify) \
   LOG_TAG(vmoperation) \
   LOG_TAG(vtables)
