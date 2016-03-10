@@ -78,10 +78,10 @@ public class AccessibleObject implements AnnotatedElement {
      * Convenience method to set the {@code accessible} flag for an
      * array of objects with a single security check (for efficiency).
      *
-     * <p>This method can not be used to enable access to an object that is a
+     * <p>This method cannot be used to enable access to an object that is a
      * {@link Member member} of a class in a different module to the caller and
      * where the class is in a package that is not exported to the caller's
-     * module. Additionally, this method can not be used to enable access to
+     * module. Additionally, this method cannot be used to enable access to
      * non-public members of {@code AccessibleObject} or {@link Module}.
      *
      * <p>First, if there is a security manager, its
@@ -123,10 +123,10 @@ public class AccessibleObject implements AnnotatedElement {
      * that the reflected object should enforce Java language access checks
      * while assuming readability (as noted in the class description).
      *
-     * <p>This method can not be used to enable access to an object that is a
+     * <p>This method cannot be used to enable access to an object that is a
      * {@link Member member} of a class in a different module to the caller and
      * where the class is in a package that is not exported to the caller's
-     * module. Additionally, this method can not be used to enable access to
+     * module. Additionally, this method cannot be used to enable access to
      * non-public members of {@code AccessibleObject} or {@link Module}.
      *
      * <p>First, if there is a security manager, its
