@@ -36,6 +36,7 @@
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -43,7 +44,6 @@ import java.util.Objects;
 import java.util.Set;
 
 import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
@@ -131,9 +131,9 @@ public class EdgeCases extends ModuleTestBase {
             }
 
             Set<String> expected = new HashSet<>(
-                    Arrays.asList("testParseEnterAnalyze/classes/p/package-info.class",
-                                  "testParseEnterAnalyze/classes/module-info.class",
-                                  "testParseEnterAnalyze/classes/p/T.class")
+                    Arrays.asList(Paths.get("testParseEnterAnalyze", "classes", "p", "package-info.class").toString(),
+                                  Paths.get("testParseEnterAnalyze", "classes", "module-info.class").toString(),
+                                  Paths.get("testParseEnterAnalyze", "classes", "p", "T.class").toString())
             );
 
             if (!Objects.equals(expected, generated))

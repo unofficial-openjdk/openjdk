@@ -37,6 +37,7 @@
  * @run main AddLimitMods
  */
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -273,7 +274,7 @@ public class AddLimitMods extends ModuleTestBase {
                     output = tb.new JavaTask()
                        .vmOptions(augmentOptions(options,
                                                  Collections.emptyList(),
-                                                 "-modulepath", modulePath.toString() + ":" + out.getParent().toString(),
+                                                 "-modulepath", modulePath.toString() + File.pathSeparator + out.getParent().toString(),
                                                  "-classpath", classpathOut.toString(),
                                                  "-XaddReads:m2=ALL-UNNAMED,m2=automatic",
                                                  "-m", "m2/test.Test"))
@@ -353,7 +354,7 @@ public class AddLimitMods extends ModuleTestBase {
         @Override
         public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             String expected = processingEnv.getOptions().get("output");
-            Set<String> expectedElements = new HashSet<>(Arrays.asList(expected.split("\n")));
+            Set<String> expectedElements = new HashSet<>(Arrays.asList(expected.split(System.getProperty("line.separator"))));
             Context context = ((JavacProcessingEnvironment) processingEnv).getContext();
             Symtab syms = Symtab.instance(context);
 

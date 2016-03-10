@@ -35,6 +35,8 @@
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 
 public class PluginsInModulesTest extends ModuleTestBase {
 
@@ -124,16 +126,16 @@ public class PluginsInModulesTest extends ModuleTestBase {
     @Test
     void testUseOnlyOneProcessor(Path base) throws Exception {
         initialization(base);
-        String log = tb.new JavacTask()
+        List<String> log = tb.new JavacTask()
                 .options("-processormodulepath", processorCompiledModules.toString(),
                         "-Xplugin:simpleplugin1")
                 .outdir(classes)
                 .sources(testClass)
                 .run()
                 .writeAll()
-                .getOutput(ToolBox.OutputKind.STDOUT);
-        if (!log.trim().equals("simpleplugin1 started for event COMPILATION\n" +
-                               "simpleplugin1 finished for event COMPILATION")) {
+                .getOutputLines(ToolBox.OutputKind.STDOUT);
+        if (!log.equals(Arrays.asList("simpleplugin1 started for event COMPILATION",
+                                      "simpleplugin1 finished for event COMPILATION"))) {
             throw new AssertionError("Unexpected output: " + log);
         }
     }

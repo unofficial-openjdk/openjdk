@@ -152,7 +152,7 @@ public class ModulePathTest extends ModuleTestBase {
                 .writeAll()
                 .getOutput(ToolBox.OutputKind.DIRECT);
 
-        if (!log.contains("- compiler.err.locn.bad.module-info: testBadExplodedModuleOnPath/modClasses"))
+        if (!log.contains("- compiler.err.locn.bad.module-info: " + modClasses.toString()))
             throw new Exception("expected output not found");
     }
 
