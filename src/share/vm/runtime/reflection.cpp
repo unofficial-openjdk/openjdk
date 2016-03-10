@@ -515,15 +515,17 @@ Reflection::VerifyClassAccessResults Reflection::verify_class_access(
     ModuleEntry* module_to = InstanceKlass::cast(new_class)->module();
 
     // both in same (possibly unnamed) module
-    if (module_from == module_to)
+    if (module_from == module_to) {
       return ACCESS_OK;
+    }
 
     // Acceptable access to a type in an unamed module.  Note that since
     // unnamed modules can read all unnamed modules, this also handles the
     // case where module_from is also unnamed but in a different class loader.
     if (!module_to->is_named() &&
-        (module_from->can_read_all_unnamed() || module_from->can_read(module_to)))
+        (module_from->can_read_all_unnamed() || module_from->can_read(module_to))) {
       return ACCESS_OK;
+    }
 
     // Establish readability, check if module_from is allowed to read module_to.
     if (!module_from->can_read(module_to)) {
