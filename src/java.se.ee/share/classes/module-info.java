@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,8 +23,16 @@
  * questions.
  */
 
-module java.se {
-    requires public java.compact3;
-    requires public java.datatransfer;
-    requires public java.desktop;
+module java.se.ee {
+
+    requires public java.se;
+
+    // Upgradeable modules for Java EE technologies
+    requires public java.activation;
+    requires public java.annotations.common;
+    requires public java.corba;
+    requires public java.transaction;
+    requires public java.xml.bind;
+    requires public java.xml.ws;
+
 }

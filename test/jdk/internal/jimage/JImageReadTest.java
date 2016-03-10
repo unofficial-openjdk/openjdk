@@ -28,16 +28,17 @@
  */
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 
 import jdk.internal.jimage.BasicImageReader;
+import jdk.internal.jimage.ImageReader;
 import jdk.internal.jimage.ImageLocation;
 
 import org.testng.annotations.DataProvider;
@@ -76,7 +77,6 @@ public class JImageReadTest {
     @Test(dataProvider="classes")
     public static void test1_ReadClasses(String moduleName, String className) throws Exception {
         final int classMagic = 0xCAFEBABE;
-        final long NOT_FOUND = 0L;
 
         if (!Files.exists(imageFile)) {
             System.out.printf("Test skipped; no jimage file");
@@ -326,6 +326,35 @@ public class JImageReadTest {
         reader.close();
     }
 
+    /**
+     * Verify that the ImageReader returned by ImageReader.open has the
+     * the requested endianness or fails with an IOException if not.
+     */
+    @Test
+    static void test5_imageReaderEndianness() throws IOException {
+        ImageReader nativeReader = ImageReader.open(imageFile);
+        Assert.assertEquals(nativeReader.getByteOrder(), ByteOrder.nativeOrder());
+
+        try {
+            ImageReader leReader = ImageReader.open(imageFile, ByteOrder.LITTLE_ENDIAN);
+            Assert.assertEquals(leReader.getByteOrder(), ByteOrder.LITTLE_ENDIAN);
+            leReader.close();
+        } catch (IOException io) {
+            // IOException expected if LITTLE_ENDIAN not the nativeOrder()
+            Assert.assertNotEquals(ByteOrder.nativeOrder(), ByteOrder.LITTLE_ENDIAN);
+        }
+
+        try {
+            ImageReader beReader = ImageReader.open(imageFile, ByteOrder.BIG_ENDIAN);
+            Assert.assertEquals(beReader.getByteOrder(), ByteOrder.BIG_ENDIAN);
+            beReader.close();
+        } catch (IOException io) {
+            // IOException expected if LITTLE_ENDIAN not the nativeOrder()
+            Assert.assertNotEquals(ByteOrder.nativeOrder(), ByteOrder.BIG_ENDIAN);
+        }
+
+        nativeReader.close();
+    }
     // main method to run standalone from jtreg
 
     @Test(enabled=false)
