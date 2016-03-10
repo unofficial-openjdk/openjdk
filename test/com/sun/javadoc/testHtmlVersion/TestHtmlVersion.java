@@ -42,7 +42,6 @@ public class TestHtmlVersion extends JavadocTester {
     @Test
     void test1() {
         javadoc("-d", "out-1", "-private", "-linksource", "-html5",
-                "-Xprofilespath", testSrc("profile-rtjar-includes.txt"),
                 "-sourcepath", testSrc,
                 "-use",
                 "pkg", "pkg1", "pkg2", "pkg3");
@@ -55,7 +54,6 @@ public class TestHtmlVersion extends JavadocTester {
     @Test
     void test2() {
         javadoc("-d", "out-2", "-private", "-linksource", "-html4",
-                "-Xprofilespath", testSrc("profile-rtjar-includes.txt"),
                 "-sourcepath", testSrc,
                 "-use",
                 "pkg", "pkg1", "pkg2", "pkg3");
@@ -68,7 +66,6 @@ public class TestHtmlVersion extends JavadocTester {
     @Test
     void test3() {
         javadoc("-d", "out-3", "-private", "-linksource",
-                "-Xprofilespath", testSrc("profile-rtjar-includes.txt"),
                 "-sourcepath", testSrc,
                 "-use",
                 "pkg", "pkg1", "pkg2", "pkg3");
@@ -114,26 +111,6 @@ public class TestHtmlVersion extends JavadocTester {
                 + "<ul>\n"
                 + "<li>");
 
-        // Test for profile-overview-frame page
-        checkOutput("profile-overview-frame.html", true,
-                "<!DOCTYPE HTML>",
-                "<meta name=\"dc.created\"",
-                "<nav role=\"navigation\" class=\"indexNav\">\n"
-                + "<ul>\n"
-                + "<li><a href=\"allclasses-frame.html\" target=\"packageFrame\">All&nbsp;Classes</a></li>",
-                "<main role=\"main\" class=\"indexContainer\">\n"
-                + "<h2 title=\"Profiles\">Profiles</h2>");
-
-        // Test for <profile-name>-frame page
-        checkOutput("compact1-frame.html", true,
-                "<!DOCTYPE HTML>",
-                "<meta name=\"dc.created\"",
-                "<nav role=\"navigation\" class=\"indexNav\">\n"
-                + "<ul>\n"
-                + "<li><a href=\"allclasses-frame.html\" target=\"packageFrame\">All&nbsp;Classes</a></li>",
-                "<main role=\"main\" class=\"indexContainer\">\n"
-                + "<h2 title=\"compact1\"><a href=\"compact1-summary.html\" target=\"classFrame\">compact1</a>&nbsp;Packages</h2>");
-
         // Test for overview-summary page
         checkOutput("overview-summary.html", true,
                 "<!DOCTYPE HTML>",
@@ -147,10 +124,6 @@ public class TestHtmlVersion extends JavadocTester {
                 + "<nav role=\"navigation\">\n"
                 + "<div class=\"fixedNav\">\n"
                 + "<!-- ========= START OF TOP NAVBAR ======= -->",
-                "<main role=\"main\">\n"
-                + "<div class=\"contentContainer\">\n"
-                + "<div>\n"
-                + "<h2>Profiles</h2>",
                 "<footer role=\"contentinfo\">\n"
                 + "<nav role=\"navigation\">\n"
                 + "<!-- ======= START OF BOTTOM NAVBAR ====== -->");
@@ -234,68 +207,6 @@ public class TestHtmlVersion extends JavadocTester {
                 + "<!-- ========= START OF TOP NAVBAR ======= -->",
                 "<main role=\"main\">\n"
                 + "<div class=\"header\">",
-                "<footer role=\"contentinfo\">\n"
-                + "<nav role=\"navigation\">\n"
-                + "<!-- ======= START OF BOTTOM NAVBAR ====== -->");
-
-        // Test for <profile-name>-package-frame page
-        checkOutput("pkg/compact1-package-frame.html", true,
-                "<!DOCTYPE HTML>",
-                "<meta name=\"dc.created\"",
-                "<main role=\"main\">\n"
-                + "<h1 class=\"bar\"><a href=\"../compact1-summary.html\" target=\"classFrame\">"
-                + "compact1</a> - <a href=\"../pkg/compact1-package-summary.html\" target=\"classFrame\">pkg</a></h1>",
-                "<section role=\"region\">\n"
-                + "<h2 title=\"Interfaces\">Interfaces</h2>",
-                "<section role=\"region\">\n"
-                + "<h2 title=\"Classes\">Classes</h2>",
-                "<section role=\"region\">\n"
-                + "<h2 title=\"Enums\">Enums</h2>",
-                "<section role=\"region\">\n"
-                + "<h2 title=\"Exceptions\">Exceptions</h2>",
-                "<section role=\"region\">\n"
-                + "<h2 title=\"Errors\">Errors</h2>",
-                "<section role=\"region\">\n"
-                + "<h2 title=\"Annotation Types\">Annotation Types</h2>");
-
-        // Test for <profile-name>-package-summary page
-        checkOutput("pkg/compact1-package-summary.html", true,
-                "<!DOCTYPE HTML>",
-                "<meta name=\"dc.created\"",
-                "<a id=\"navbar.top.firstrow\">\n"
-                + "<!--   -->\n"
-                + "</a>",
-                "<table class=\"typeSummary\">",
-                "<header role=\"banner\">\n"
-                + "<nav role=\"navigation\">\n"
-                + "<div class=\"fixedNav\">\n"
-                + "<!-- ========= START OF TOP NAVBAR ======= -->",
-                "<main role=\"main\">\n"
-                + "<div class=\"header\">",
-                "<section role=\"region\">\n"
-                + "<h2 title=\"Package pkg Description\">Package pkg Description</h2>\n",
-                "<footer role=\"contentinfo\">\n"
-                + "<nav role=\"navigation\">\n"
-                + "<!-- ======= START OF BOTTOM NAVBAR ====== -->");
-
-        // Test for <profile-name>-summary page
-        checkOutput("compact1-summary.html", true,
-                "<!DOCTYPE HTML>",
-                "<meta name=\"dc.created\"",
-                "<a id=\"navbar.top.firstrow\">\n"
-                + "<!--   -->\n"
-                + "</a>",
-                "<table class=\"typeSummary\">",
-                "<header role=\"banner\">\n"
-                + "<nav role=\"navigation\">\n"
-                + "<div class=\"fixedNav\">\n"
-                + "<!-- ========= START OF TOP NAVBAR ======= -->",
-                "<main role=\"main\">\n"
-                + "<div class=\"header\">",
-                "<ul class=\"blockList\">\n"
-                + "<li class=\"blockList\">\n"
-                + "<section role=\"region\">\n"
-                + "<h3><a href=\"pkg/compact1-package-summary.html\" target=\"classFrame\">pkg</a></h3>\n",
                 "<footer role=\"contentinfo\">\n"
                 + "<nav role=\"navigation\">\n"
                 + "<!-- ======= START OF BOTTOM NAVBAR ====== -->");
@@ -724,26 +635,6 @@ public class TestHtmlVersion extends JavadocTester {
                 + "<ul>\n"
                 + "<li>");
 
-        // Negated test for profile-overview-frame page
-        checkOutput("profile-overview-frame.html", false,
-                "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">",
-                "<meta name=\"date\"",
-                "<div class=\"indexNav\">\n"
-                + "<ul>\n"
-                + "<li><a href=\"allclasses-frame.html\" target=\"packageFrame\">All&nbsp;Classes</a></li>",
-                "<div class=\"indexContainer\">\n"
-                + "<h2 title=\"Profiles\">Profiles</h2>");
-
-        // Negated test for <profile-name>-frame page
-        checkOutput("compact1-frame.html", false,
-                "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">",
-                "<meta name=\"date\"",
-                "<div class=\"indexNav\">\n"
-                + "<ul>\n"
-                + "<li><a href=\"allclasses-frame.html\" target=\"packageFrame\">All&nbsp;Classes</a></li>",
-                "<div class=\"indexContainer\">\n"
-                + "<h2 title=\"compact1\"><a href=\"compact1-summary.html\" target=\"classFrame\">compact1</a>&nbsp;Packages</h2>");
-
         // Negated test for overview-summary page
         checkOutput("overview-summary.html", false,
                 "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">",
@@ -755,11 +646,7 @@ public class TestHtmlVersion extends JavadocTester {
                 + "<caption>",
                 "</noscript>\n"
                 + "<div class=\"fixedNav\">\n"
-                + "<!-- ========= START OF TOP NAVBAR ======= -->",
-                "<!-- ========= END OF TOP NAVBAR ========= -->\n"
-                + "<div class=\"contentContainer\">\n"
-                + "<div>\n"
-                + "<h2>Profiles</h2>");
+                + "<!-- ========= START OF TOP NAVBAR ======= -->");
 
         // Negated test for package-frame page
         checkOutput("pkg/package-frame.html", false,
@@ -798,42 +685,6 @@ public class TestHtmlVersion extends JavadocTester {
                 + "<!--   -->\n"
                 + "</a>",
                 "<table class=\"useSummary\" summary=\"Use table, listing packages, and an explanation\">");
-
-        // Negated test for <profile-name>-package-frame page
-        checkOutput("pkg/compact1-package-frame.html", false,
-                "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">",
-                "<meta name=\"date\"",
-                "<body>\n"
-                + "<h1 class=\"bar\"><a href=\"../compact1-summary.html\" target=\"classFrame\">"
-                + "compact1</a> - <a href=\"../pkg/compact1-package-summary.html\" target=\"classFrame\">pkg</a></h1>");
-
-        // Negated test for <profile-name>-package-summary page
-        checkOutput("pkg/compact1-package-summary.html", false,
-                "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">",
-                "<meta name=\"date\"",
-                "<a name=\"navbar.top.firstrow\">\n"
-                + "<!--   -->\n"
-                + "</a>",
-                "<table class=\"typeSummary\" summary=\"Interface Summary table, listing interfaces, and an explanation\">",
-                "<table class=\"typeSummary\" summary=\"Class Summary table, listing classes, and an explanation\">",
-                "<table class=\"typeSummary\" summary=\"Enum Summary table, listing enums, and an explanation\">",
-                "<table class=\"typeSummary\" summary=\"Exception Summary table, listing exceptions, and an explanation\">",
-                "<table class=\"typeSummary\" summary=\"Error Summary table, listing errors, and an explanation\">",
-                "<table class=\"typeSummary\" summary=\"Annotation Types Summary table, listing annotation types, and an explanation\">");
-
-        // Negated test for <profile-name>-summary page
-        checkOutput("compact1-summary.html", false,
-                "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">",
-                "<meta name=\"date\"",
-                "<a name=\"navbar.top.firstrow\">\n"
-                + "<!--   -->\n"
-                + "</a>",
-                "<table class=\"typeSummary\" summary=\"Interface Summary table, listing interfaces, and an explanation\">",
-                "<table class=\"typeSummary\" summary=\"Class Summary table, listing classes, and an explanation\">",
-                "<table class=\"typeSummary\" summary=\"Enum Summary table, listing enums, and an explanation\">",
-                "<table class=\"typeSummary\" summary=\"Exception Summary table, listing exceptions, and an explanation\">",
-                "<table class=\"typeSummary\" summary=\"Error Summary table, listing errors, and an explanation\">",
-                "<table class=\"typeSummary\" summary=\"Annotation Types Summary table, listing annotation types, and an explanation\">");
 
         // Negated test for constant-values page
         checkOutput("constant-values.html", false,
@@ -1175,26 +1026,6 @@ public class TestHtmlVersion extends JavadocTester {
                 + "<ul>\n"
                 + "<li>");
 
-        // Test for profile-overview-frame page
-        checkOutput("profile-overview-frame.html", true,
-                "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">",
-                "<meta name=\"date\"",
-                "<div class=\"indexNav\">\n"
-                + "<ul>\n"
-                + "<li><a href=\"allclasses-frame.html\" target=\"packageFrame\">All&nbsp;Classes</a></li>",
-                "<div class=\"indexContainer\">\n"
-                + "<h2 title=\"Profiles\">Profiles</h2>");
-
-        // Test for <profile-name>-frame page
-        checkOutput("compact1-frame.html", true,
-                "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">",
-                "<meta name=\"date\"",
-                "<div class=\"indexNav\">\n"
-                + "<ul>\n"
-                + "<li><a href=\"allclasses-frame.html\" target=\"packageFrame\">All&nbsp;Classes</a></li>",
-                "<div class=\"indexContainer\">\n"
-                + "<h2 title=\"compact1\"><a href=\"compact1-summary.html\" target=\"classFrame\">compact1</a>&nbsp;Packages</h2>");
-
         // Test for overview-summary page
         checkOutput("overview-summary.html", true,
                 "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">",
@@ -1206,10 +1037,7 @@ public class TestHtmlVersion extends JavadocTester {
                 + "<caption>",
                 "</noscript>\n"
                 + "<div class=\"fixedNav\">\n"
-                + "<!-- ========= START OF TOP NAVBAR ======= -->",
-                "<div class=\"contentContainer\">\n"
-                + "<div>\n"
-                + "<h2>Profiles</h2>");
+                + "<!-- ========= START OF TOP NAVBAR ======= -->");
 
         // Test for package-frame page
         checkOutput("pkg/package-frame.html", true,
@@ -1249,42 +1077,6 @@ public class TestHtmlVersion extends JavadocTester {
                 + "<!--   -->\n"
                 + "</a>",
                 "<table class=\"useSummary\" summary=\"Use table, listing packages, and an explanation\">");
-
-        // Test for <profile-name>-package-frame page
-        checkOutput("pkg/compact1-package-frame.html", true,
-                "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">",
-                "<meta name=\"date\"",
-                "<body>\n"
-                + "<h1 class=\"bar\"><a href=\"../compact1-summary.html\" target=\"classFrame\">"
-                + "compact1</a> - <a href=\"../pkg/compact1-package-summary.html\" target=\"classFrame\">pkg</a></h1>");
-
-        // Test for <profile-name>-package-summary page
-        checkOutput("pkg/compact1-package-summary.html", true,
-                "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">",
-                "<meta name=\"date\"",
-                "<a name=\"navbar.top.firstrow\">\n"
-                + "<!--   -->\n"
-                + "</a>",
-                "<table class=\"typeSummary\" summary=\"Interface Summary table, listing interfaces, and an explanation\">",
-                "<table class=\"typeSummary\" summary=\"Class Summary table, listing classes, and an explanation\">",
-                "<table class=\"typeSummary\" summary=\"Enum Summary table, listing enums, and an explanation\">",
-                "<table class=\"typeSummary\" summary=\"Exception Summary table, listing exceptions, and an explanation\">",
-                "<table class=\"typeSummary\" summary=\"Error Summary table, listing errors, and an explanation\">",
-                "<table class=\"typeSummary\" summary=\"Annotation Types Summary table, listing annotation types, and an explanation\">");
-
-        // Test for <profile-name>-summary page
-        checkOutput("compact1-summary.html", true,
-                "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">",
-                "<meta name=\"date\"",
-                "<a name=\"navbar.top.firstrow\">\n"
-                + "<!--   -->\n"
-                + "</a>",
-                "<table class=\"typeSummary\" summary=\"Interface Summary table, listing interfaces, and an explanation\">",
-                "<table class=\"typeSummary\" summary=\"Class Summary table, listing classes, and an explanation\">",
-                "<table class=\"typeSummary\" summary=\"Enum Summary table, listing enums, and an explanation\">",
-                "<table class=\"typeSummary\" summary=\"Exception Summary table, listing exceptions, and an explanation\">",
-                "<table class=\"typeSummary\" summary=\"Error Summary table, listing errors, and an explanation\">",
-                "<table class=\"typeSummary\" summary=\"Annotation Types Summary table, listing annotation types, and an explanation\">");
 
         // Test for constant-values page
         checkOutput("constant-values.html", true,
@@ -1634,26 +1426,6 @@ public class TestHtmlVersion extends JavadocTester {
                 + "<ul>\n"
                 + "<li>");
 
-        // Negated test for profile-overview-frame page
-        checkOutput("profile-overview-frame.html", false,
-                "<!DOCTYPE HTML>",
-                "<meta name=\"dc.created\"",
-                "<nav role=\"navigation\" class=\"indexNav\">\n"
-                + "<ul>\n"
-                + "<li><a href=\"allclasses-frame.html\" target=\"packageFrame\">All&nbsp;Classes</a></li>",
-                "<main role=\"main\" class=\"indexContainer\">\n"
-                + "<h2 title=\"Profiles\">Profiles</h2>");
-
-        // Negated test for <profile-name>-frame page
-        checkOutput("compact1-frame.html", false,
-                "<!DOCTYPE HTML>",
-                "<meta name=\"dc.created\"",
-                "<nav role=\"navigation\" class=\"indexNav\">\n"
-                + "<ul>\n"
-                + "<li><a href=\"allclasses-frame.html\" target=\"packageFrame\">All&nbsp;Classes</a></li>",
-                "<main role=\"main\" class=\"indexContainer\">\n"
-                + "<h2 title=\"compact1\"><a href=\"compact1-summary.html\" target=\"classFrame\">compact1</a>&nbsp;Packages</h2>");
-
         // Negated test for overview-summary page
         checkOutput("overview-summary.html", false,
                 "<!DOCTYPE HTML>",
@@ -1665,14 +1437,7 @@ public class TestHtmlVersion extends JavadocTester {
                 + "<caption>",
                 "<header role=\"banner\">\n"
                 + "<nav role=\"navigation\">\n"
-                + "<!-- ========= START OF TOP NAVBAR ======= -->",
-                "<main role=\"main\">\n"
-                + "<div class=\"contentContainer\">\n"
-                + "<div>\n"
-                + "<h2>Profiles</h2>",
-                "<footer role=\"contentinfo\">\n"
-                + "<nav role=\"navigation\">\n"
-                + "<!-- ======= START OF BOTTOM NAVBAR ====== -->");
+                + "<!-- ========= START OF TOP NAVBAR ======= -->");
 
         // Negated test for package-frame page
         checkOutput("pkg/package-frame.html", false,
@@ -1749,66 +1514,6 @@ public class TestHtmlVersion extends JavadocTester {
                 + "<!-- ========= START OF TOP NAVBAR ======= -->",
                 "<main role=\"main\">\n"
                 + "<div class=\"header\">",
-                "<footer role=\"contentinfo\">\n"
-                + "<nav role=\"navigation\">\n"
-                + "<!-- ======= START OF BOTTOM NAVBAR ====== -->");
-
-        // Negated test for <profile-name>-package-frame page
-        checkOutput("pkg/compact1-package-frame.html", false,
-                "<!DOCTYPE HTML>",
-                "<meta name=\"dc.created\"",
-                "<main role=\"main\">\n"
-                + "<h1 class=\"bar\"><a href=\"../compact1-summary.html\" target=\"classFrame\">"
-                + "compact1</a> - <a href=\"../pkg/compact1-package-summary.html\" target=\"classFrame\">pkg</a></h1>",
-                "<section role=\"region\">\n"
-                + "<h2 title=\"Interfaces\">Interfaces</h2>",
-                "<section role=\"region\">\n"
-                + "<h2 title=\"Classes\">Classes</h2>",
-                "<section role=\"region\">\n"
-                + "<h2 title=\"Enums\">Enums</h2>",
-                "<section role=\"region\">\n"
-                + "<h2 title=\"Exceptions\">Exceptions</h2>",
-                "<section role=\"region\">\n"
-                + "<h2 title=\"Errors\">Errors</h2>",
-                "<section role=\"region\">\n"
-                + "<h2 title=\"Annotation Types\">Annotation Types</h2>");
-
-        // Negated test for <profile-name>-package-summary page
-        checkOutput("pkg/compact1-package-summary.html", false,
-                "<!DOCTYPE HTML>",
-                "<meta name=\"dc.created\"",
-                "<a id=\"navbar.top.firstrow\">\n"
-                + "<!--   -->\n"
-                + "</a>",
-                "<table class=\"typeSummary\">",
-                "<header role=\"banner\">\n"
-                + "<nav role=\"navigation\">\n"
-                + "<!-- ========= START OF TOP NAVBAR ======= -->",
-                "<main role=\"main\">\n"
-                + "<div class=\"header\">",
-                "<section role=\"region\">\n"
-                + "<h2 title=\"Package pkg Description\">Package pkg Description</h2>\n",
-                "<footer role=\"contentinfo\">\n"
-                + "<nav role=\"navigation\">\n"
-                + "<!-- ======= START OF BOTTOM NAVBAR ====== -->");
-
-        // Negated test for <profile-name>-summary page
-        checkOutput("compact1-summary.html", false,
-                "<!DOCTYPE HTML>",
-                "<meta name=\"dc.created\"",
-                "<a id=\"navbar.top.firstrow\">\n"
-                + "<!--   -->\n"
-                + "</a>",
-                "<table class=\"typeSummary\">",
-                "<header role=\"banner\">\n"
-                + "<nav role=\"navigation\">\n"
-                + "<!-- ========= START OF TOP NAVBAR ======= -->",
-                "<main role=\"main\">\n"
-                + "<div class=\"header\">",
-                "<ul class=\"blockList\">\n"
-                + "<li class=\"blockList\">\n"
-                + "<section role=\"region\">\n"
-                + "<h3><a href=\"pkg/compact1-package-summary.html\" target=\"classFrame\">pkg</a></h3>\n",
                 "<footer role=\"contentinfo\">\n"
                 + "<nav role=\"navigation\">\n"
                 + "<!-- ======= START OF BOTTOM NAVBAR ====== -->");
