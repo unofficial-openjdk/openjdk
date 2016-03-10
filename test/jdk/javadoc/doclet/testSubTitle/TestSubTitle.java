@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug 7010342
+ * @bug 7010342 8150000
  * @summary Test for correct sub title generation.
  * @author Bhavesh Patel
  * @library ../lib
@@ -50,8 +50,8 @@ public class TestSubTitle extends JavadocTester {
             "<div class=\"block\">This is the description of package pkg.</div>");
 
         checkOutput("pkg/C.html", true,
-            "<div class=\"subTitle\"><span class=\"packageLabelInClass\">" +
-            "Package</span>&nbsp;<a href=\"../pkg/package-summary.html\">pkg</a></div>");
+                "<div class=\"subTitle\"><span class=\"packageLabelInClass\">" +
+                "Package</span>&nbsp;<a href=\"../pkg/package-summary.html\">pkg</a></div>");
 
         checkOutput("pkg/package-summary.html", false,
             "<p class=\"subTitle\">\n" +

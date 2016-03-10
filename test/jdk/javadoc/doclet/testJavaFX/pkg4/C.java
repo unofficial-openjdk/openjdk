@@ -21,35 +21,25 @@
  * questions.
  */
 
-/*
- * @test
- * @bug      8149842
- * @summary  Verify that non included classes are not inspected.
- * @library  ../lib
- * @modules  jdk.javadoc/jdk.javadoc.internal.tool
- * @build    JavadocTester
- * @run main TestIncluded
- */
+package pkg4;
 
-public class TestIncluded extends JavadocTester {
+public class C {
 
-    public static void main(String... args) throws Exception {
-        TestIncluded tester = new TestIncluded();
-        tester.runTests();
-    }
-
-    /*
-     * The arguments specify only "pkg" but "parent" sources are on the path.
-     * The class parent.A utilizes a non existent taglet, that will trigger
-     * an error, if doc comments are inspected.
+    /**
+     * Defines the number of cycles in this animation. The {@code cycleCount}
+     * may be {@code INDEFINITE} for animations that repeat indefinitely.
+     * Now we add a > to deliberately cause an Html error.
+     * @defaultValue 11
+     * @since JavaFX 8.0
      */
-    @Test
-    void test() {
-        javadoc("-d", "out",
-                "-Xdoclint:all",
-                "-sourcepath", testSrc,
-                "pkg");
-        checkExit(Exit.OK);
-        checkFiles(false, "parent/A.html");
-    }
+    public DoubleProperty rate;
+
+    public final void setRate(double value) {}
+
+    public final double getRate() {return 2.0d;}
+
+    public final DoubleProperty rateProperty() {return new DoubleProperty();}
+
+    class DoubleProperty {}
+
 }
