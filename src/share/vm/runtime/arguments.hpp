@@ -105,19 +105,25 @@ class PathString : public CHeapObj<mtInternal> {
 };
 
 // Element describing System and User (-Dkey=value flags) defined property.
+//
+// An internal SystemProperty is one that has been removed in
+// jdk.internal.VM.saveAndRemoveProperties, like jdk.boot.class.path.append.
+//
 class SystemProperty : public PathString {
  private:
   char*           _key;
   SystemProperty* _next;
+  bool            _internal;
   bool            _writeable;
   bool writeable()   { return _writeable; }
 
  public:
   // Accessors
-  char* value() const                       { return PathString::value(); }
-  const char* key() const                   { return _key; }
-  SystemProperty* next() const              { return _next; }
-  void set_next(SystemProperty* next)       { _next = next; }
+  char* value() const                 { return PathString::value(); }
+  const char* key() const             { return _key; }
+  bool internal() const               { return _internal; }
+  SystemProperty* next() const        { return _next; }
+  void set_next(SystemProperty* next) { _next = next; }
 
   // A system property should only have its value set
   // via an external interface if it is a writeable property.
@@ -134,7 +140,7 @@ class SystemProperty : public PathString {
   }
 
   // Constructor
-  SystemProperty(const char* key, const char* value, bool writeable) : PathString(value) {
+  SystemProperty(const char* key, const char* value, bool writeable, bool internal = false) : PathString(value) {
     if (key == NULL) {
       _key = NULL;
     } else {
@@ -142,6 +148,7 @@ class SystemProperty : public PathString {
       strcpy(_key, key);
     }
     _next = NULL;
+    _internal = internal;
     _writeable = writeable;
   }
 };

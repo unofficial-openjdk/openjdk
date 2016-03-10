@@ -42,6 +42,8 @@ ModuleEntry* ModuleEntryTable::_javabase_module = NULL;
 
 void ModuleEntry::set_location(Symbol* location) {
   if (_location != NULL) {
+    // _location symbol's refcounts are managed by ModuleEntry,
+    // must decrement the old one before updating.
     _location->decrement_refcount();
   }
 
@@ -54,6 +56,8 @@ void ModuleEntry::set_location(Symbol* location) {
 
 void ModuleEntry::set_version(Symbol* version) {
   if (_version != NULL) {
+    // _version symbol's refcounts are managed by ModuleEntry,
+    // must decrement the old one before updating.
     _version->decrement_refcount();
   }
 
