@@ -213,12 +213,13 @@ public class GenModuleInfo {
             throws IOException {
         try (JarOutputStream target = new JarOutputStream(
                 Files.newOutputStream(jarfile))) {
-           files.forEach(file -> add(root.relativize(file).toString(), file, target));
+           files.forEach(file -> add(root.relativize(file), file, target));
         }
     }
 
-    private static void add(String name, Path source, JarOutputStream target) {
+    private static void add(Path path, Path source, JarOutputStream target) {
         try {
+            String name = path.toString().replace(File.separatorChar, '/');
             JarEntry entry = new JarEntry(name);
             entry.setTime(source.toFile().lastModified());
             target.putNextEntry(entry);
