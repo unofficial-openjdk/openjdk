@@ -25,14 +25,14 @@
 
 /*
  * @test
- * @summary Test if package p6 in module m2 is not exported, then class c5
- *          in an unnamed module can not access p6.c2 in module m2.
+ * @summary Test that if module m1 can not read module m2, then class p1.c1
+ *          in module m1 can not access p2.c2 in module m2.
  * @library /testlibrary /test/lib
- * @compile myloaders/MySameClassLoader.java
- * @compile p6/c6.java
- * @compile c5.java
- * @build UmodUpkg_PkgNotExp
- * @run main/othervm -Xbootclasspath/a:. UmodUpkg_PkgNotExp
+ * @compile myloaders/MyDiffClassLoader.java
+ * @compile p2/c2.java
+ * @compile p1/c1.java
+ * @build DiffCL_CheckRead
+ * @run main/othervm -Xbootclasspath/a:. DiffCL_CheckRead
  */
 
 import static jdk.test.lib.Asserts.*;
@@ -43,46 +43,60 @@ import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.util.HashMap;
 import java.util.Map;
-import myloaders.MySameClassLoader;
+import myloaders.MyDiffClassLoader;
 
-// ClassLoader1 --> defines m1 --> no packages
-//                  defines m2 --> packages p6
 //
-// m1 can read m2
-// package p6 in m2 is not exported
+// ClassLoader1 --> defines m1 --> packages p1
+// ClassLoader2 --> defines m2 --> packages p2
+//                  defines m3 --> packages p3
 //
-// class c5 defined in an unnamed module tries to access p6.c2 defined in m2
-// Access denied since p6 is not exported.
+// m1 can not read m2
+// package p2 in m2 is exported to m1
 //
-public class UmodUpkg_PkgNotExp {
+// class p1.c1 defined in m1 tries to access p2.c2 defined in m2.
+// Access denied since m1 can not read m2.
+//
+public class DiffCL_CheckRead {
 
     // Create a Layer over the boot layer.
     // Define modules within this layer to test access between
-    // publically defined classes within packages of those modules.
+    // publicly defined classes within packages of those modules.
     public void createLayerOnBoot() throws Throwable {
 
         // Define module:     m1
-        // Can read:          java.base, m2
-        // Packages:          none
-        // Packages exported: none
+        // Can read:          java.base, m3
+        // Packages:          p1
+        // Packages exported: p1 is exported unqualifiedly
         ModuleDescriptor descriptor_m1 =
                 new ModuleDescriptor.Builder("m1")
                         .requires("java.base")
-                        .requires("m2")
+                        .requires("m3")
+                        .exports("p1")
                         .build();
 
         // Define module:     m2
         // Can read:          java.base
-        // Packages:          p6
-        // Packages exported: none
+        // Packages:          p2
+        // Packages exported: p2 is exported to m1
         ModuleDescriptor descriptor_m2 =
                 new ModuleDescriptor.Builder("m2")
                         .requires("java.base")
-                        .conceals("p6")
+                        .exports("p2", "m1")
+                        .build();
+
+        // Define module:     m3
+        // Can read:          java.base, m2
+        // Packages:          p3
+        // Packages exported: none
+        ModuleDescriptor descriptor_m3 =
+                new ModuleDescriptor.Builder("m3")
+                        .requires("java.base")
+                        .requires("m2")
+                        .conceals("p3")
                         .build();
 
         // Set up a ModuleFinder containing all modules for this layer.
-        ModuleFinder finder = ModuleLibrary.of(descriptor_m1, descriptor_m2);
+        ModuleFinder finder = ModuleLibrary.of(descriptor_m1, descriptor_m2, descriptor_m3);
 
         // Resolves a module named "m1" that results in a configuration.  It
         // then augments that configuration with additional modules (and edges) induced
@@ -92,33 +106,35 @@ public class UmodUpkg_PkgNotExp {
                                                  ModuleFinder.empty(),
                                                  "m1");
 
-        // map each module to the same class loader for this test
+        // map each module to differing class loaders for this test
         Map<String, ClassLoader> map = new HashMap<>();
-        map.put("m1", MySameClassLoader.loader1);
-        map.put("m2", MySameClassLoader.loader1);
+        map.put("m1", MyDiffClassLoader.loader1);
+        map.put("m2", MyDiffClassLoader.loader2);
+        map.put("m3", MyDiffClassLoader.loader2);
 
-        // Create Layer that contains m1 and m2
+        // Create Layer that contains m1, m2 and m3
         Layer layer = Layer.create(cf, Layer.boot(), map::get);
 
-        assertTrue(layer.findLoader("m1") == MySameClassLoader.loader1);
-        assertTrue(layer.findLoader("m2") == MySameClassLoader.loader1);
+        assertTrue(layer.findLoader("m1") == MyDiffClassLoader.loader1);
+        assertTrue(layer.findLoader("m2") == MyDiffClassLoader.loader2);
+        assertTrue(layer.findLoader("m3") == MyDiffClassLoader.loader2);
         assertTrue(layer.findLoader("java.base") == null);
 
-        // now use the same loader to load class c5
-        Class c5_class = MySameClassLoader.loader1.loadClass("c5");
+        // now use the same loader to load class p1.c1
+        Class p1_c1_class = MyDiffClassLoader.loader1.loadClass("p1.c1");
         try {
-            c5_class.newInstance();
-            throw new RuntimeException("Failed to get IAE (p6 in m2 is not exported)");
+            p1_c1_class.newInstance();
+            throw new RuntimeException("Failed to get IAE (p2 in m2 is exported to m1 but m2 is not readable from m1)");
         } catch (IllegalAccessError e) {
-          System.out.println(e.getMessage());
-          if (!e.getMessage().contains("does not export")) {
-              throw new RuntimeException("Wrong message: " + e.getMessage());
-          }
+            System.out.println(e.getMessage());
+            if (!e.getMessage().contains("cannot access")) {
+                throw new RuntimeException("Wrong message: " + e.getMessage());
+            }
         }
     }
 
     public static void main(String args[]) throws Throwable {
-      UmodUpkg_PkgNotExp test = new UmodUpkg_PkgNotExp();
+      DiffCL_CheckRead test = new DiffCL_CheckRead();
       test.createLayerOnBoot();
     }
 }

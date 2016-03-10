@@ -25,15 +25,15 @@
 
 /*
  * @test
- * @summary class p1.c1 defined in m1 tries to access p2.c2 defined in unnamed module.
+ * @summary class p3.c3 defined in module m1 tries to access c4 defined in unnamed module.
  * @library /testlibrary /test/lib
- * @compile myloaders/MyDiffClassLoader.java
- * @compile p2/c2.java
- * @compile p1/c1.java
- * @compile p1/c1ReadEdgeDiffLoader.java
- * @compile p1/c1Loose.java
- * @build NmodNpkgDiffCL_UmodNpkg
- * @run main/othervm -Xbootclasspath/a:. NmodNpkgDiffCL_UmodNpkg
+ * @compile myloaders/MySameClassLoader.java
+ * @compile c4.java
+ * @compile p3/c3.jcod
+ * @compile p3/c3ReadEdge.jcod
+ * @compile p3/c3Loose.jcod
+ * @build UmodUPkg
+ * @run main/othervm -Xbootclasspath/a:. UmodUPkg
  */
 
 import static jdk.test.lib.Asserts.*;
@@ -45,13 +45,13 @@ import java.lang.reflect.Layer;
 import java.lang.reflect.Module;
 import java.util.HashMap;
 import java.util.Map;
-import myloaders.MyDiffClassLoader;
+import myloaders.MySameClassLoader;
 
 //
-// ClassLoader1 --> defines m1 --> packages p1
-//                  package p1 in m1 is exported unqualifiedly
+// ClassLoader1 --> defines m1 --> packages p3
+//                  package p3 in m1 is exported unqualifiedly
 //
-// class p1.c1 defined in m1 tries to access p2.c2 defined in
+// class p3.c3 defined in m1 tries to access c4 defined in
 // in unnamed module.
 //
 // Three access attempts occur in this test:
@@ -64,23 +64,23 @@ import myloaders.MyDiffClassLoader;
 //      is transitioned to a loose module, access
 //      to all unnamed modules is allowed.
 //
-public class NmodNpkgDiffCL_UmodNpkg {
+public class UmodUPkg {
 
  // Create Layers over the boot layer to test different
  // accessing scenarios of a named module to an unnamed module.
 
  // Module m1 is a strict module and has not established
- // readability to an unnamed module that p2.c2 is defined in.
+ // readability to an unnamed module that c4 is defined in.
  public void test_strictModuleLayer() throws Throwable {
 
      // Define module:     m1
      // Can read:          java.base
-     // Packages:          p1
-     // Packages exported: p1 is exported unqualifiedly
+     // Packages:          p3
+     // Packages exported: p3 is exported unqualifiedly
      ModuleDescriptor descriptor_m1 =
              new ModuleDescriptor.Builder("m1")
                      .requires("java.base")
-                     .exports("p1")
+                     .exports("p3")
                      .build();
 
      // Set up a ModuleFinder containing all modules for this layer.
@@ -94,45 +94,42 @@ public class NmodNpkgDiffCL_UmodNpkg {
                                               ModuleFinder.empty(),
                                               "m1");
 
-     MyDiffClassLoader.loader1 = new MyDiffClassLoader();
-     MyDiffClassLoader.loader2 = new MyDiffClassLoader();
-
      // map module m1 to class loader.
-     // class c2 will be loaded in an unnamed module/loader2
-     // to achieve differing class loaders.
+     // class c4 will be loaded in an unnamed module/loader.
+     MySameClassLoader loader = new MySameClassLoader();
      Map<String, ClassLoader> map = new HashMap<>();
-     map.put("m1", MyDiffClassLoader.loader1);
+     map.put("m1", loader);
 
      // Create Layer that contains m1
      Layer layer = Layer.create(cf, Layer.boot(), map::get);
 
-     assertTrue(layer.findLoader("m1") == MyDiffClassLoader.loader1);
+     assertTrue(layer.findLoader("m1") == loader);
      assertTrue(layer.findLoader("java.base") == null);
 
-     // now use the same loader to load class p1.c1
-     Class p1_c1_class = MyDiffClassLoader.loader1.loadClass("p1.c1");
+     // now use the same loader to load class p3.c3
+     Class p3_c3_class = loader.loadClass("p3.c3");
 
      // Attempt access
      try {
-         p1_c1_class.newInstance();
-         throw new RuntimeException("Test Failed, strict module m1 should not be able " +
-                                    "to access public type p2.c2 defined in unnamed module");
+         p3_c3_class.newInstance();
+         throw new RuntimeException("Test Failed, strict module m1, type p3.c3, should not be able to access " +
+                                    "public type c4 defined in unnamed module");
      } catch (IllegalAccessError e) {
      }
-}
+ }
 
  // Module m1 is a strict module and has established
- // readability to an unnamed module that p2.c2 is defined in.
+ // readability to an unnamed module that c4 is defined in.
  public void test_strictModuleUnnamedReadableLayer() throws Throwable {
 
      // Define module:     m1
      // Can read:          java.base
-     // Packages:          p1
-     // Packages exported: p1 is exported unqualifiedly
+     // Packages:          p3
+     // Packages exported: p3 is exported unqualifiedly
      ModuleDescriptor descriptor_m1 =
              new ModuleDescriptor.Builder("m1")
                      .requires("java.base")
-                     .exports("p1")
+                     .exports("p3")
                      .build();
 
      // Set up a ModuleFinder containing all modules for this layer.
@@ -146,31 +143,28 @@ public class NmodNpkgDiffCL_UmodNpkg {
                                               ModuleFinder.empty(),
                                               "m1");
 
-     MyDiffClassLoader.loader1 = new MyDiffClassLoader();
-     MyDiffClassLoader.loader2 = new MyDiffClassLoader();
-
+     MySameClassLoader loader = new MySameClassLoader();
      // map module m1 to class loader.
-     // class c2 will be loaded in an unnamed module/loader2
-     // to achieve differing class loaders.
+     // class c4 will be loaded in an unnamed module/loader.
      Map<String, ClassLoader> map = new HashMap<>();
-     map.put("m1", MyDiffClassLoader.loader1);
+     map.put("m1", loader);
 
      // Create Layer that contains m1
      Layer layer = Layer.create(cf, Layer.boot(), map::get);
 
-     assertTrue(layer.findLoader("m1") == MyDiffClassLoader.loader1);
+     assertTrue(layer.findLoader("m1") == loader);
      assertTrue(layer.findLoader("java.base") == null);
 
-     // now use the same loader to load class p1.c1ReadEdgeDiffLoader
-     Class p1_c1_class = MyDiffClassLoader.loader1.loadClass("p1.c1ReadEdgeDiffLoader");
+     // now use the same loader to load class p3.c3ReadEdge
+     Class p3_c3_class = loader.loadClass("p3.c3ReadEdge");
 
      try {
-        // Read edge between m1 and the unnamed module that loads p2.c2 is established in
-        // c1ReadEdgeDiffLoader's ctor before attempting access.
-        p1_c1_class.newInstance();
+        // Read edge between m1 and the unnamed module that loads c4 is established in
+        // c3ReadEdge's ctor before attempting access.
+        p3_c3_class.newInstance();
      } catch (IllegalAccessError e) {
-         throw new RuntimeException("Test Failed, module m1 has established readability to p2/c2 loader's " +
-                                    "unnamed module, access should be allowed: " + e.getMessage());
+         throw new RuntimeException("Test Failed, module m1, type p3.c3ReadEdge, has established readability to " +
+                                    "c4 loader's unnamed module, access should be allowed: " + e.getMessage());
      }
  }
 
@@ -179,12 +173,12 @@ public class NmodNpkgDiffCL_UmodNpkg {
 
      // Define module:     m1
      // Can read:          java.base
-     // Packages:          p1
-     // Packages exported: p1 is exported unqualifiedly
+     // Packages:          p3
+     // Packages exported: p3 is exported unqualifiedly
      ModuleDescriptor descriptor_m1 =
              new ModuleDescriptor.Builder("m1")
                      .requires("java.base")
-                     .exports("p1")
+                     .exports("p3")
                      .build();
 
      // Set up a ModuleFinder containing all modules for this layer.
@@ -198,36 +192,33 @@ public class NmodNpkgDiffCL_UmodNpkg {
                                               ModuleFinder.empty(),
                                               "m1");
 
-     MyDiffClassLoader.loader1 = new MyDiffClassLoader();
-     MyDiffClassLoader.loader2 = new MyDiffClassLoader();
-
+     MySameClassLoader loader = new MySameClassLoader();
      // map module m1 to class loader.
-     // class c2 will be loaded in an unnamed module/loader2
-     // to achieve differing class loaders.
+     // class c4 will be loaded in an unnamed module/loader.
      Map<String, ClassLoader> map = new HashMap<>();
-     map.put("m1", MyDiffClassLoader.loader1);
+     map.put("m1", loader);
 
      // Create Layer that contains m1
      Layer layer = Layer.create(cf, Layer.boot(), map::get);
 
-     assertTrue(layer.findLoader("m1") == MyDiffClassLoader.loader1);
+     assertTrue(layer.findLoader("m1") == loader);
      assertTrue(layer.findLoader("java.base") == null);
 
-     // now use the same loader to load class p1.c1Loose
-     Class p1_c1_class = MyDiffClassLoader.loader1.loadClass("p1.c1Loose");
+     // now use the same loader to load class p3.c3Loose
+     Class p3_c3_class = loader.loadClass("p3.c3Loose");
 
      try {
         // Module m1 is transitioned to a loose module before attempting access
-        // to p2.c2 in c1Loose's ctor.
-        p1_c1_class.newInstance();
+        // to c4 in c3Loose's ctor.
+        p3_c3_class.newInstance();
      } catch (IllegalAccessError e) {
-         throw new RuntimeException("Test Failed, loose module m1 should be able to access " +
-                                    "public type p2.c2 defined in unnamed module: " + e.getMessage());
+         throw new RuntimeException("Test Failed, loose module m1, type p3.c3Loose, should be able to acccess public type " +
+                                    "c4 defined in unnamed module: " + e.getMessage());
      }
  }
 
  public static void main(String args[]) throws Throwable {
-   NmodNpkgDiffCL_UmodNpkg test = new NmodNpkgDiffCL_UmodNpkg();
+   UmodUPkg test = new UmodUPkg();
    test.test_strictModuleLayer();                // access denied
    test.test_strictModuleUnnamedReadableLayer(); // access allowed
    test.test_looseModuleLayer();                 // access allowed

@@ -25,15 +25,14 @@
 
 /*
  * @test
- * @summary class p1.c1 defined in an unnamed module tries to access p2.c2 defined in m2.
- *          Access allowed, an unnamed module can read all modules and p2 in module m2
- *          which is exported unqualifiedly.
+ * @summary Test that if module m1 can read module m2, and package p2 in m2 is
+ *          exported unqualifiedly, then class p1.c1 in m1 can read p2.c2 in m2.
  * @library /testlibrary /test/lib
  * @compile myloaders/MyDiffClassLoader.java
  * @compile p2/c2.java
  * @compile p1/c1.java
- * @build UmodNpkgDiffCL_PkgExpUnqual
- * @run main/othervm -Xbootclasspath/a:. UmodNpkgDiffCL_PkgExpUnqual
+ * @build DiffCL_ExpUnqual
+ * @run main/othervm -Xbootclasspath/a:. DiffCL_ExpUnqual
  */
 
 import static jdk.test.lib.Asserts.*;
@@ -47,17 +46,17 @@ import java.util.Map;
 import myloaders.MyDiffClassLoader;
 
 //
-// ClassLoader1 --> defines m1 --> no packages
+// ClassLoader1 --> defines m1 --> packages p1
 // ClassLoader2 --> defines m2 --> packages p2
 //
 // m1 can read m2
-// package p2 in m2 is exported unqualifiedly.
+// package p2 in m2 is exported to m1
 //
-// class p1.c1 defined in an unnamed module tries to access p2.c2 defined in m2
-// Access allowed, an unnamed module can read all modules and p2 in module
-//              m2 which is exported unqualifiedly.
+// class p1.c1 defined in m1 tries to access p2.c2 defined in m2
+// Access allowed since m1 can read m2 and package p2 is exported
+// unqualifiedly.
 //
-public class UmodNpkgDiffCL_PkgExpUnqual {
+public class DiffCL_ExpUnqual {
 
     // Create a Layer over the boot layer.
     // Define modules within this layer to test access between
@@ -66,18 +65,19 @@ public class UmodNpkgDiffCL_PkgExpUnqual {
 
         // Define module:     m1
         // Can read:          java.base, m2
-        // Packages:          none
-        // Packages exported: none
+        // Packages:          p1
+        // Packages exported: p1 is exported unqualifiedly
         ModuleDescriptor descriptor_m1 =
                 new ModuleDescriptor.Builder("m1")
                         .requires("java.base")
                         .requires("m2")
+                        .exports("p1")
                         .build();
 
         // Define module:     m2
         // Can read:          java.base
         // Packages:          p2
-        // Packages exported: none
+        // Packages exported: package p2 is exported to m1
         ModuleDescriptor descriptor_m2 =
                 new ModuleDescriptor.Builder("m2")
                         .requires("java.base")
@@ -107,18 +107,17 @@ public class UmodNpkgDiffCL_PkgExpUnqual {
         assertTrue(layer.findLoader("m2") == MyDiffClassLoader.loader2);
         assertTrue(layer.findLoader("java.base") == null);
 
-        // NOTE: module m1 does not define a package named p1.
-        //       p1 will be loaded in an unnamed module.
+        // now use the same loader to load class p1.c1
         Class p1_c1_class = MyDiffClassLoader.loader1.loadClass("p1.c1");
         try {
             p1_c1_class.newInstance();
         } catch (IllegalAccessError e) {
-            throw new RuntimeException("Test Failed, p1.c1 defined in unnamed module can access p2.c2 in module m2");
+            throw new RuntimeException("Test Failed, an IAE should not be thrown since p2 is exported qualifiedly to m1");
         }
     }
 
     public static void main(String args[]) throws Throwable {
-      UmodNpkgDiffCL_PkgExpUnqual test = new UmodNpkgDiffCL_PkgExpUnqual();
+      DiffCL_ExpUnqual test = new DiffCL_ExpUnqual();
       test.createLayerOnBoot();
     }
 }

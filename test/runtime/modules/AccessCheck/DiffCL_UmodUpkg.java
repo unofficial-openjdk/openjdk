@@ -33,8 +33,8 @@
  * @compile p3/c3.jcod
  * @compile p3/c3ReadEdgeDiffLoader.jcod
  * @compile p3/c3Loose.jcod
- * @build NmodNpkgDiffCL_UmodUpkg
- * @run main/othervm -Xbootclasspath/a:. NmodNpkgDiffCL_UmodUpkg
+ * @build DiffCL_UmodUpkg
+ * @run main/othervm -Xbootclasspath/a:. DiffCL_UmodUpkg
  */
 
 import static jdk.test.lib.Asserts.*;
@@ -64,7 +64,7 @@ import myloaders.MyDiffClassLoader;
 //      is transitioned to a loose module, access
 //      to all unnamed modules is allowed.
 //
-public class NmodNpkgDiffCL_UmodUpkg {
+public class DiffCL_UmodUpkg {
 
  // Create Layers over the boot layer to test different
  // accessing scenarios of a named module to an unnamed module.
@@ -227,7 +227,7 @@ public class NmodNpkgDiffCL_UmodUpkg {
  }
 
  public static void main(String args[]) throws Throwable {
-   NmodNpkgDiffCL_UmodUpkg test = new NmodNpkgDiffCL_UmodUpkg();
+   DiffCL_UmodUpkg test = new DiffCL_UmodUpkg();
    test.test_strictModuleLayer();                // access denied
    test.test_strictModuleUnnamedReadableLayer(); // access allowed
    test.test_looseModuleLayer();                 // access allowed

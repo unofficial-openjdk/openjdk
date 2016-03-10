@@ -25,14 +25,14 @@
 
 /*
  * @test
- * @summary Test if package p2 in module m2 is not exported, then class p1.c1
- *          in an unnamed module can not access p2.c2 in module m2.
+ * @summary class p1.c1 defined in unnamed module tries to access p2.c2 defined in m2.
+ *          Access is denied since even though unnamed module can read all modules, p2
+ *          in module m2 is not exported at all.
  * @library /testlibrary /test/lib
- * @compile myloaders/MySameClassLoader.java
- * @compile p2/c2.java
+ * @compile myloaders/MyDiffClassLoader.java
  * @compile p1/c1.java
- * @build UmodNpkg_PkgNotExp
- * @run main/othervm -Xbootclasspath/a:. UmodNpkg_PkgNotExp
+ * @build UmodDiffCL_PkgNotExp
+ * @run main/othervm -Xbootclasspath/a:. UmodDiffCL_PkgNotExp
  */
 
 import static jdk.test.lib.Asserts.*;
@@ -43,18 +43,20 @@ import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.util.HashMap;
 import java.util.Map;
-import myloaders.MySameClassLoader;
+import myloaders.MyDiffClassLoader;
 
+//
 // ClassLoader1 --> defines m1 --> no packages
-//                  defines m2 --> packages p2
+// ClassLoader2 --> defines m2 --> packages p2
 //
 // m1 can read m2
 // package p2 in m2 is not exported
 //
-// class p1.c1 defined in an unnamed module tries to access p2.c2 defined in m2
-// Access denied since p2 is not exported.
+// class p1.c1 defined in unnamed module tries to access p2.c2 defined in m2
+// Access denied since even though unnamed module can read all modules, p2
+// in module m2 is not exported at all.
 //
-public class UmodNpkg_PkgNotExp {
+public class UmodDiffCL_PkgNotExp {
 
     // Create a Layer over the boot layer.
     // Define modules within this layer to test access between
@@ -92,23 +94,25 @@ public class UmodNpkg_PkgNotExp {
                                                  ModuleFinder.empty(),
                                                  "m1");
 
-        // map each module to the same class loader for this test
+        // map each module to differing class loaders for this test
         Map<String, ClassLoader> map = new HashMap<>();
-        map.put("m1", MySameClassLoader.loader1);
-        map.put("m2", MySameClassLoader.loader1);
+        map.put("m1", MyDiffClassLoader.loader1);
+        map.put("m2", MyDiffClassLoader.loader2);
 
-        // Create Layer that contains m1 and m2
+        // Create Layer that contains m1 & m2
         Layer layer = Layer.create(cf, Layer.boot(), map::get);
 
-        assertTrue(layer.findLoader("m1") == MySameClassLoader.loader1);
-        assertTrue(layer.findLoader("m2") == MySameClassLoader.loader1);
+        assertTrue(layer.findLoader("m1") == MyDiffClassLoader.loader1);
+        assertTrue(layer.findLoader("m2") == MyDiffClassLoader.loader2);
         assertTrue(layer.findLoader("java.base") == null);
 
         // now use the same loader to load class p1.c1
-        Class p1_c1_class = MySameClassLoader.loader1.loadClass("p1.c1");
+        // NOTE: module m1 does not define a package named p1.
+        //       p1 will be loaded in an unnamed module.
+        Class p1_c1_class = MyDiffClassLoader.loader1.loadClass("p1.c1");
         try {
             p1_c1_class.newInstance();
-            throw new RuntimeException("Failed to get IAE (p2 in m2 is not exported)");
+            throw new RuntimeException("Failed to get IAE (p2 in m2 is not exported to an unnamed module)");
         } catch (IllegalAccessError e) {
           System.out.println(e.getMessage());
           if (!e.getMessage().contains("does not export")) {
@@ -118,7 +122,7 @@ public class UmodNpkg_PkgNotExp {
     }
 
     public static void main(String args[]) throws Throwable {
-      UmodNpkg_PkgNotExp test = new UmodNpkg_PkgNotExp();
+      UmodDiffCL_PkgNotExp test = new UmodDiffCL_PkgNotExp();
       test.createLayerOnBoot();
     }
 }

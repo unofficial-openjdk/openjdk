@@ -32,8 +32,8 @@
  * @compile p1/c1.java
  * @compile p1/c1ReadEdge.java
  * @compile p1/c1Loose.java
- * @build NmodNpkg_UmodNpkg
- * @run main/othervm -Xbootclasspath/a:. NmodNpkg_UmodNpkg
+ * @build Umod
+ * @run main/othervm -Xbootclasspath/a:. Umod
  */
 
 import static jdk.test.lib.Asserts.*;
@@ -64,7 +64,7 @@ import myloaders.MySameClassLoader;
 //      is transitioned to a loose module, access
 //      to all unnamed modules is allowed.
 //
-public class NmodNpkg_UmodNpkg {
+public class Umod {
 
  // Create Layers over the boot layer to test different
  // accessing scenarios of a named module to an unnamed module.
@@ -218,7 +218,7 @@ public class NmodNpkg_UmodNpkg {
  }
 
  public static void main(String args[]) throws Throwable {
-   NmodNpkg_UmodNpkg test = new NmodNpkg_UmodNpkg();
+   Umod test = new Umod();
    test.test_strictModuleLayer();                // access denied
    test.test_strictModuleUnnamedReadableLayer(); // access allowed
    test.test_looseModuleLayer();                 // access allowed

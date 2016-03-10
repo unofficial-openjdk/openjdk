@@ -25,14 +25,14 @@
 
 /*
  * @test
- * @summary Test that if module m1 can not read module m2, then class p1.c1
- *          in module m1 can not access p2.c2 in module m2.
+ * @summary class p1.c1 defined in m1 tries to access p2.c2 defined in m2.
+ *          Access allowed since m1 can read m2 and package p2 is exported to m1.
  * @library /testlibrary /test/lib
  * @compile myloaders/MyDiffClassLoader.java
  * @compile p2/c2.java
  * @compile p1/c1.java
- * @build NmodNpkgDiffCL_CheckRead
- * @run main/othervm -Xbootclasspath/a:. NmodNpkgDiffCL_CheckRead
+ * @build DiffCL_ExpQualToM1
+ * @run main/othervm -Xbootclasspath/a:. DiffCL_ExpQualToM1
  */
 
 import static jdk.test.lib.Asserts.*;
@@ -48,55 +48,43 @@ import myloaders.MyDiffClassLoader;
 //
 // ClassLoader1 --> defines m1 --> packages p1
 // ClassLoader2 --> defines m2 --> packages p2
-//                  defines m3 --> packages p3
 //
-// m1 can not read m2
+// m1 can read m2
 // package p2 in m2 is exported to m1
 //
-// class p1.c1 defined in m1 tries to access p2.c2 defined in m2.
-// Access denied since m1 can not read m2.
+// class p1.c1 defined in m1 tries to access p2.c2 defined in m2
+// Access allowed since m1 can read m2 and package p2 is exported to m1.
 //
-public class NmodNpkgDiffCL_CheckRead {
+public class DiffCL_ExpQualToM1 {
 
     // Create a Layer over the boot layer.
     // Define modules within this layer to test access between
-    // publicly defined classes within packages of those modules.
+    // publically defined classes within packages of those modules.
     public void createLayerOnBoot() throws Throwable {
 
         // Define module:     m1
-        // Can read:          java.base, m3
+        // Can read:          java.base, m2
         // Packages:          p1
-        // Packages exported: p1 is exported unqualifiedly
+        // Packages exported: p1 is exported to unqualifiedly
         ModuleDescriptor descriptor_m1 =
                 new ModuleDescriptor.Builder("m1")
                         .requires("java.base")
-                        .requires("m3")
+                        .requires("m2")
                         .exports("p1")
                         .build();
 
         // Define module:     m2
         // Can read:          java.base
         // Packages:          p2
-        // Packages exported: p2 is exported to m1
+        // Packages exported: package p2 is exported to m1
         ModuleDescriptor descriptor_m2 =
                 new ModuleDescriptor.Builder("m2")
                         .requires("java.base")
                         .exports("p2", "m1")
                         .build();
 
-        // Define module:     m3
-        // Can read:          java.base, m2
-        // Packages:          p3
-        // Packages exported: none
-        ModuleDescriptor descriptor_m3 =
-                new ModuleDescriptor.Builder("m3")
-                        .requires("java.base")
-                        .requires("m2")
-                        .conceals("p3")
-                        .build();
-
         // Set up a ModuleFinder containing all modules for this layer.
-        ModuleFinder finder = ModuleLibrary.of(descriptor_m1, descriptor_m2, descriptor_m3);
+        ModuleFinder finder = ModuleLibrary.of(descriptor_m1, descriptor_m2);
 
         // Resolves a module named "m1" that results in a configuration.  It
         // then augments that configuration with additional modules (and edges) induced
@@ -110,31 +98,25 @@ public class NmodNpkgDiffCL_CheckRead {
         Map<String, ClassLoader> map = new HashMap<>();
         map.put("m1", MyDiffClassLoader.loader1);
         map.put("m2", MyDiffClassLoader.loader2);
-        map.put("m3", MyDiffClassLoader.loader2);
 
-        // Create Layer that contains m1, m2 and m3
+        // Create Layer that contains m1 & m2
         Layer layer = Layer.create(cf, Layer.boot(), map::get);
 
         assertTrue(layer.findLoader("m1") == MyDiffClassLoader.loader1);
         assertTrue(layer.findLoader("m2") == MyDiffClassLoader.loader2);
-        assertTrue(layer.findLoader("m3") == MyDiffClassLoader.loader2);
         assertTrue(layer.findLoader("java.base") == null);
 
         // now use the same loader to load class p1.c1
         Class p1_c1_class = MyDiffClassLoader.loader1.loadClass("p1.c1");
         try {
             p1_c1_class.newInstance();
-            throw new RuntimeException("Failed to get IAE (p2 in m2 is exported to m1 but m2 is not readable from m1)");
         } catch (IllegalAccessError e) {
-            System.out.println(e.getMessage());
-            if (!e.getMessage().contains("cannot access")) {
-                throw new RuntimeException("Wrong message: " + e.getMessage());
-            }
+            throw new RuntimeException("Test Failed, an IAE should not be thrown since p2 is exported qualifiedly to m1");
         }
     }
 
     public static void main(String args[]) throws Throwable {
-      NmodNpkgDiffCL_CheckRead test = new NmodNpkgDiffCL_CheckRead();
+      DiffCL_ExpQualToM1 test = new DiffCL_ExpQualToM1();
       test.createLayerOnBoot();
     }
 }

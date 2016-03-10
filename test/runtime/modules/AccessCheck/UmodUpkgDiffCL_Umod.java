@@ -27,31 +27,31 @@
  * @test
  * @summary Test public type c5 defined in an unnamed package and unnamed module can
  *          access public type p6.c6 defined in an unnamed module.
- * @compile myloaders/MySameClassLoader.java
+ * @compile myloaders/MyDiffClassLoader.java
  * @compile p6/c6.java
  * @compile c5.java
- * @build UmodUpkg_UmodNpkg
- * @run main/othervm -Xbootclasspath/a:. UmodUpkg_UmodNpkg
+ * @build UmodUpkgDiffCL_Umod
+ * @run main/othervm -Xbootclasspath/a:. UmodUpkgDiffCL_Umod
  */
 
-import myloaders.MySameClassLoader;
+import myloaders.MyDiffClassLoader;
 
-public class UmodUpkg_UmodNpkg {
+public class UmodUpkgDiffCL_Umod {
 
     public void testAccess() throws Throwable {
 
-        Class c5_class = MySameClassLoader.loader1.loadClass("c5");
+        Class c5_class = MyDiffClassLoader.loader1.loadClass("c5");
         try {
             c5_class.newInstance();
         } catch (IllegalAccessError e) {
           System.out.println(e.getMessage());
               throw new RuntimeException("Test Failed, public type c5 defined in an unnamed package and unnamed "
-                      + "module should be able to access public type c6 defined in an unnamed module");
+                      + "module should be able to access public type p6.c6 defined in an unnamed module");
         }
     }
 
     public static void main(String args[]) throws Throwable {
-      UmodUpkg_UmodNpkg test = new UmodUpkg_UmodNpkg();
+      UmodUpkgDiffCL_Umod test = new UmodUpkgDiffCL_Umod();
       test.testAccess();
     }
 }

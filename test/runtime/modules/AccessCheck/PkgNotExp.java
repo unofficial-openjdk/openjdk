@@ -25,15 +25,14 @@
 
 /*
  * @test
- * @summary class c5 defined in an unnamed module tries to access p6.c6 defined in m2.
- *          Access is denied, since an unnamed module can read all modules but p6 in module
- *          m2 is exported specifically to module m1, not to all modules.
+ * @summary Test that if module m1 can read module m2, but package p2 in m2 is not
+ *          exported, then class p1.c1 in m1 can not read p2.c2 in m2.
  * @library /testlibrary /test/lib
- * @compile myloaders/MyDiffClassLoader.java
- * @compile p6/c6.java
- * @compile c5.java
- * @build UmodUpkgDiffCL_PkgExpQualOther
- * @run main/othervm -Xbootclasspath/a:. UmodUpkgDiffCL_PkgExpQualOther
+ * @compile myloaders/MySameClassLoader.java
+ * @compile p2/c2.java
+ * @compile p1/c1.java
+ * @build PkgNotExp
+ * @run main/othervm -Xbootclasspath/a:. PkgNotExp
  */
 
 import static jdk.test.lib.Asserts.*;
@@ -44,20 +43,19 @@ import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.util.HashMap;
 import java.util.Map;
-import myloaders.MyDiffClassLoader;
+import myloaders.MySameClassLoader;
 
 //
-// ClassLoader1 --> defines m1 --> no packages
-// ClassLoader2 --> defines m2 --> packages p6
+// ClassLoader1 --> defines m1 --> packages p1
+//                  defines m2 --> packages p2
 //
 // m1 can read m2
-// package p6 in m2 is not exported
+// package p2 in m2 is not exported
 //
-// class c5 defined in an unnamed module tries to access p6.c6 defined in m2
-// Access denied, an unnamed module can read all modules but p6 in module
-//             m2 is exported specifically to module m1 not to all modules.
+// class p1.c1 defined in m1 tries to access p2.c2 defined in m2
+// Access denied since p2 is not exported.
 //
-public class UmodUpkgDiffCL_PkgExpQualOther {
+public class PkgNotExp {
 
     // Create a Layer over the boot layer.
     // Define modules within this layer to test access between
@@ -66,22 +64,23 @@ public class UmodUpkgDiffCL_PkgExpQualOther {
 
         // Define module:     m1
         // Can read:          java.base, m2
-        // Packages:          none
-        // Packages exported: none
+        // Packages:          p1
+        // Packages exported: p1 is exported unqualifiedly
         ModuleDescriptor descriptor_m1 =
                 new ModuleDescriptor.Builder("m1")
                         .requires("java.base")
                         .requires("m2")
+                        .exports("p1")
                         .build();
 
         // Define module:     m2
         // Can read:          java.base
-        // Packages:          p6
-        // Packages exported: p6 exported to m1
+        // Packages:          p2
+        // Packages exported: none
         ModuleDescriptor descriptor_m2 =
                 new ModuleDescriptor.Builder("m2")
                         .requires("java.base")
-                        .exports("p6", "m1")
+                        .conceals("p2")
                         .build();
 
         // Set up a ModuleFinder containing all modules for this layer.
@@ -95,33 +94,32 @@ public class UmodUpkgDiffCL_PkgExpQualOther {
                                                  ModuleFinder.empty(),
                                                  "m1");
 
-        // map each module to differing class loaders for this test
+        // map each module to the same class loader for this test
         Map<String, ClassLoader> map = new HashMap<>();
-        map.put("m1", MyDiffClassLoader.loader1);
-        map.put("m2", MyDiffClassLoader.loader2);
+        map.put("m1", MySameClassLoader.loader1);
+        map.put("m2", MySameClassLoader.loader1);
 
-        // Create Layer that contains m1 & m2
+        // Create Layer that contains m1 and m2
         Layer layer = Layer.create(cf, Layer.boot(), map::get);
 
-        assertTrue(layer.findLoader("m1") == MyDiffClassLoader.loader1);
-        assertTrue(layer.findLoader("m2") == MyDiffClassLoader.loader2);
-        assertTrue(layer.findLoader("java.base") == null);
+        assertTrue(layer.findLoader("m1") == MySameClassLoader.loader1);
+        assertTrue(layer.findLoader("m2") == MySameClassLoader.loader1);
 
-        // now use the same loader to load class c5
-        Class c5_class = MyDiffClassLoader.loader1.loadClass("c5");
+        // now use the same loader to load class p1.c1
+        Class p1_c1_class = MySameClassLoader.loader1.loadClass("p1.c1");
         try {
-            c5_class.newInstance();
-            throw new RuntimeException("Failed to get IAE (p6 in m2 is exported to m1, not unqualifiedly");
+            p1_c1_class.newInstance();
+            throw new RuntimeException("Failed to get IAE (p2 in m2 is not exported)");
         } catch (IllegalAccessError e) {
-            System.out.println(e.getMessage());
-            if (!e.getMessage().contains("does not export")) {
-                throw new RuntimeException("Wrong message: " + e.getMessage());
-            }
+          System.out.println(e.getMessage());
+          if (!e.getMessage().contains("does not export")) {
+              throw new RuntimeException("Wrong message: " + e.getMessage());
+          }
         }
     }
 
     public static void main(String args[]) throws Throwable {
-      UmodUpkgDiffCL_PkgExpQualOther test = new UmodUpkgDiffCL_PkgExpQualOther();
+      PkgNotExp test = new PkgNotExp();
       test.createLayerOnBoot();
     }
 }

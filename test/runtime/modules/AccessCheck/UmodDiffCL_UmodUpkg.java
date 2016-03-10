@@ -25,33 +25,34 @@
 
 /*
  * @test
- * @summary Test public type c5 defined in an unnamed package and unnamed module can
- *          access public type p6.c6 defined in an unnamed module.
+ * @summary class p3.c3 defined in a named package in an unnamed module tries to access c4
+ *          defined in an unnamed package in an unnamed module.  Access allowed since
+ *          any class in an unnamed module can read an unnamed module.
  * @compile myloaders/MyDiffClassLoader.java
- * @compile p6/c6.java
- * @compile c5.java
- * @build UmodUpkgDiffCL_UmodNpkg
- * @run main/othervm -Xbootclasspath/a:. UmodUpkgDiffCL_UmodNpkg
+ * @compile c4.java
+ * @compile p3/c3.jcod
+ * @build UmodDiffCL_UmodUpkg
+ * @run main/othervm -Xbootclasspath/a:. UmodDiffCL_UmodUpkg
  */
 
 import myloaders.MyDiffClassLoader;
 
-public class UmodUpkgDiffCL_UmodNpkg {
+public class UmodDiffCL_UmodUpkg {
 
     public void testAccess() throws Throwable {
 
-        Class c5_class = MyDiffClassLoader.loader1.loadClass("c5");
+        Class p3_c3_class = MyDiffClassLoader.loader1.loadClass("p3.c3");
         try {
-            c5_class.newInstance();
+            p3_c3_class.newInstance();
         } catch (IllegalAccessError e) {
           System.out.println(e.getMessage());
-              throw new RuntimeException("Test Failed, public type c5 defined in an unnamed package and unnamed "
-                      + "module should be able to access public type p6.c6 defined in an unnamed module");
+              throw new RuntimeException("Test Failed, public type c3 defined in an unnamed module " +
+                                         "should be able to access public type c4 defined in an unnamed module");
         }
     }
 
     public static void main(String args[]) throws Throwable {
-      UmodUpkgDiffCL_UmodNpkg test = new UmodUpkgDiffCL_UmodNpkg();
+      UmodDiffCL_UmodUpkg test = new UmodDiffCL_UmodUpkg();
       test.testAccess();
     }
 }

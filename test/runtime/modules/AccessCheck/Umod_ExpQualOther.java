@@ -25,15 +25,14 @@
 
 /*
  * @test
- * @summary Test that if module m1 can read module m2, but package p2 in m2
- *          is exported specifically to module m3, then class p1.c1 in m1 can not
- *          access p2.c2 in m2.
+ * @summary Test that if package p2 in module m2 is exported to module m3,
+ *          then class p1.c1 in an unnamed module can not read p2.c2 in module m2.
  * @library /testlibrary /test/lib
  * @compile myloaders/MySameClassLoader.java
  * @compile p2/c2.java
  * @compile p1/c1.java
- * @build NmodNpkg_PkgExpQualOther
- * @run main/othervm -Xbootclasspath/a:. NmodNpkg_PkgExpQualOther
+ * @build Umod_ExpQualOther
+ * @run main/othervm -Xbootclasspath/a:. Umod_ExpQualOther
  */
 
 import static jdk.test.lib.Asserts.*;
@@ -47,7 +46,7 @@ import java.util.Map;
 import myloaders.MySameClassLoader;
 
 //
-// ClassLoader1 --> defines m1 --> packages p1
+// ClassLoader1 --> defines m1 --> no packages
 //                  defines m2 --> packages p2
 //                  defines m3 --> packages p3
 //
@@ -57,23 +56,22 @@ import myloaders.MySameClassLoader;
 // class p1.c1 defined in m1 tries to access p2.c2 defined in m2
 // Access denied since although m1 can read m2, p2 is exported only to m3.
 //
-public class NmodNpkg_PkgExpQualOther {
+public class Umod_ExpQualOther {
 
     // Create a Layer over the boot layer.
     // Define modules within this layer to test access between
     // publically defined classes within packages of those modules.
     public void createLayerOnBoot() throws Throwable {
 
-        // Define module:     m1
+        // Define module:     m1 (need to define m1 to establish the Layer successfully)
         // Can read:          java.base, m2, m3
-        // Packages:          p1
-        // Packages exported: p1 is exported unqualifiedly
+        // Packages:          none
+        // Packages exported: none
         ModuleDescriptor descriptor_m1 =
                 new ModuleDescriptor.Builder("m1")
                         .requires("java.base")
                         .requires("m2")
                         .requires("m3")
-                        .exports("p1")
                         .build();
 
         // Define module:     m2
@@ -87,14 +85,12 @@ public class NmodNpkg_PkgExpQualOther {
                         .build();
 
         // Define module:     m3
-        // Can read:          java.base, m2
+        // Can read:          java.base
         // Packages:          p3
         // Packages exported: none
         ModuleDescriptor descriptor_m3 =
                 new ModuleDescriptor.Builder("m3")
                         .requires("java.base")
-                        .requires("m2")
-                        .conceals("p3")
                         .build();
 
         // Set up a ModuleFinder containing all modules for this layer.
@@ -114,7 +110,7 @@ public class NmodNpkg_PkgExpQualOther {
         map.put("m2", MySameClassLoader.loader1);
         map.put("m3", MySameClassLoader.loader1);
 
-        // Create Layer that contains m1 & m2
+        // Create Layer that contains m1, m2 and m3
         Layer layer = Layer.create(cf, Layer.boot(), map::get);
 
         assertTrue(layer.findLoader("m1") == MySameClassLoader.loader1);
@@ -126,7 +122,7 @@ public class NmodNpkg_PkgExpQualOther {
         Class p1_c1_class = MySameClassLoader.loader1.loadClass("p1.c1");
         try {
             p1_c1_class.newInstance();
-            throw new RuntimeException("Failed to get IAE (p2 in m2 is exported to m3 not to m1)");
+            throw new RuntimeException("Failed to get IAE (p2 in m2 is exported to m3, not unqualifiedly to everyone)");
         } catch (IllegalAccessError e) {
             System.out.println(e.getMessage());
             if (!e.getMessage().contains("does not export")) {
@@ -136,7 +132,7 @@ public class NmodNpkg_PkgExpQualOther {
     }
 
     public static void main(String args[]) throws Throwable {
-      NmodNpkg_PkgExpQualOther test = new NmodNpkg_PkgExpQualOther();
+      Umod_ExpQualOther test = new Umod_ExpQualOther();
       test.createLayerOnBoot();
     }
 }

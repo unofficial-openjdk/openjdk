@@ -25,14 +25,14 @@
 
 /*
  * @test
- * @summary Test that if module m1 can read module m2, AND package p2 in module2 is
- *          exported unqualifiedly, then class p1.c1 in m1 can read p2.c2 in m2.
+ * @summary Test that if module m1 can read module m2, but package p2 in m2 is not
+ *          exported, then class p1.c1 in m1 can not read p2.c2 in m2.
  * @library /testlibrary /test/lib
- * @compile myloaders/MySameClassLoader.java
+ * @compile myloaders/MyDiffClassLoader.java
  * @compile p2/c2.java
  * @compile p1/c1.java
- * @build NmodNpkg_PkgExpUnqual
- * @run main/othervm -Xbootclasspath/a:. NmodNpkg_PkgExpUnqual
+ * @build DiffCL_PkgNotExp
+ * @run main/othervm -Xbootclasspath/a:. DiffCL_PkgNotExp
  */
 
 import static jdk.test.lib.Asserts.*;
@@ -43,9 +43,19 @@ import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.util.HashMap;
 import java.util.Map;
-import myloaders.MySameClassLoader;
+import myloaders.MyDiffClassLoader;
 
-public class NmodNpkg_PkgExpUnqual {
+//
+// ClassLoader1 --> defines m1 --> packages p1
+// ClassLoader2 --> defines m2 --> packages p2
+//
+// m1 can read m2
+// package p2 in m2 is not exported
+//
+// class p1.c1 defined in m1 tries to access p2.c2 defined in m2
+// Access denied since p2 is not exported.
+//
+public class DiffCL_PkgNotExp {
 
     // Create a Layer over the boot layer.
     // Define modules within this layer to test access between
@@ -66,11 +76,11 @@ public class NmodNpkg_PkgExpUnqual {
         // Define module:     m2
         // Can read:          java.base
         // Packages:          p2
-        // Packages exported: p2 is exported unqualifiedly
+        // Packages exported: none
         ModuleDescriptor descriptor_m2 =
                 new ModuleDescriptor.Builder("m2")
                         .requires("java.base")
-                        .exports("p2")
+                        .conceals("p2")
                         .build();
 
         // Set up a ModuleFinder containing all modules for this layer.
@@ -84,28 +94,34 @@ public class NmodNpkg_PkgExpUnqual {
                                                  ModuleFinder.empty(),
                                                  "m1");
 
-        // map each module to the same class loader for this test
+        // map each module to differing class loaders for this test
         Map<String, ClassLoader> map = new HashMap<>();
-        map.put("m1", MySameClassLoader.loader1);
-        map.put("m2", MySameClassLoader.loader1);
+        map.put("m1", MyDiffClassLoader.loader1);
+        map.put("m2", MyDiffClassLoader.loader2);
 
         // Create Layer that contains m1 & m2
         Layer layer = Layer.create(cf, Layer.boot(), map::get);
 
-        assertTrue(layer.findLoader("m1") == MySameClassLoader.loader1);
-        assertTrue(layer.findLoader("m2") == MySameClassLoader.loader1);
+        assertTrue(layer.findLoader("m1") == MyDiffClassLoader.loader1);
+        assertTrue(layer.findLoader("m2") == MyDiffClassLoader.loader2);
+        assertTrue(layer.findLoader("java.base") == null);
 
         // now use the same loader to load class p1.c1
-        Class p1_c1_class = MySameClassLoader.loader1.loadClass("p1.c1");
+        Class p1_c1_class = MyDiffClassLoader.loader1.loadClass("p1.c1");
         try {
             p1_c1_class.newInstance();
+            throw new RuntimeException("Failed to get IAE (p2 in m2 is not exported)");
         } catch (IllegalAccessError e) {
-            throw new RuntimeException("Test Failed, an IAE should not be thrown since p2 is exported unqualifiedly.");
+          System.out.println(e.getMessage());
+          if (!e.getMessage().contains("does not export")) {
+              throw new RuntimeException("Wrong message: " + e.getMessage());
+          }
         }
     }
 
     public static void main(String args[]) throws Throwable {
-      NmodNpkg_PkgExpUnqual test = new NmodNpkg_PkgExpUnqual();
+      DiffCL_PkgNotExp test = new DiffCL_PkgNotExp();
       test.createLayerOnBoot();
     }
 }
+
