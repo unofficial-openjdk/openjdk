@@ -267,6 +267,23 @@ ignored. Similarly, if the agent is started sometime after the VM has started, t
 the <code>Agent-Class</code> attribute specifies the name of the agent class
 (the value of <code>Premain-Class</code> attribute is ignored).
 
+
+<h3>Instrumenting code in modules</h3>
+
+Agents that instrument code in named modules may need to arrange for those modules
+to read other modules. If code is instrumented to invoke a method in a <em>support
+class</em> in another module for example, then it needs to arrange for the
+module of the instrumented code to read the module of the supporting class.
+In addition, the supporting class will only be accessible if it is
+<code>public</code> and in a package that is exported by its module.
+
+<p>
+As an aid to agents that deploy supporting classes on the search path of the
+bootstrap class loader, or the search path of the class loader that loads
+the main agent class, the Java virtual machine arranges for the module of
+transformed classes to read the unnamed module of both class loaders.
+
+
 <h2>Related Documentation</h2>
 
 For tool documentation, please see:

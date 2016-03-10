@@ -31,7 +31,7 @@ import java.util.Properties;
 
 /**
  *
- * JImage Decompressors. All decompressors must be registered in the static
+ * JLink Decompressors. All decompressors must be registered in the static
  * initializer of this class.
  */
 public final class ResourceDecompressorRepository {
@@ -43,6 +43,7 @@ public final class ResourceDecompressorRepository {
 
     static {
         registerReaderProvider(new ZipDecompressorFactory());
+        registerReaderProvider(new StringSharingDecompressorFactory());
     }
 
     /**
