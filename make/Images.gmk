@@ -38,7 +38,7 @@ $(eval $(call IncludeCustomExtension, , Images-pre.gmk))
 
 ############################################################################
 
-MAIN_MODULES += java.se java.smartcardio jdk.httpserver jdk.sctp \
+MAIN_MODULES += java.se.ee java.smartcardio jdk.httpserver jdk.sctp \
                jdk.security.auth jdk.security.jgss jdk.pack200 jdk.xml.dom \
                jdk.accessibility jdk.internal.le jdk.dynalink \
                jdk.scripting.nashorn jdk.scripting.nashorn.shell \
