@@ -27,6 +27,7 @@ include Modules.gmk
 
 BOOT_MODULES :=
 UPGRADEABLE_MDOULES :=
+AGGREGATOR_MDOULES :=
 EXT_MODULES :=
 
 # Hook to include the corresponding custom file, if present.
@@ -72,6 +73,14 @@ UPGRADEABLE_MODULES += \
     java.transaction \
     java.xml.bind \
     java.xml.ws \
+    #
+
+AGGREGATOR_MODULES += \
+    java.compact1 \
+    java.compact2 \
+    java.compact3 \
+    java.se \
+    java.se.ee \
     #
 
 EXT_MODULES += \
@@ -122,7 +131,7 @@ $(strip \
 )
 endef
 BOOT_MODULES_LIST := $(call SubstComma, $(BOOT_MODULES))
-EXT_MODULES_LIST := $(call SubstComma, $(UPGRADEABLE_MODULES) $(EXT_MODULES))
+EXT_MODULES_LIST := $(call SubstComma, $(UPGRADEABLE_MODULES) $(AGGREGATOR_MODULES) $(EXT_MODULES))
 
 VARDEPS_VALUE := $(BOOT_MODULES_LIST) $(EXT_MODULES_LIST)
 VARDEPS_FILE := $(call DependOnVariable, VARDEPS_VALUE)
