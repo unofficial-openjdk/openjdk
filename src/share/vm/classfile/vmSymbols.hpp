@@ -127,7 +127,7 @@
   template(jdk_internal_loader_ClassLoaders_ExtClassLoader,      "jdk/internal/loader/ClassLoaders$ExtClassLoader")     \
                                                                                                   \
   /* Java runtime version access */                                                               \
-  template(sun_misc_Version,                          "sun/misc/Version")                         \
+  template(java_lang_VersionProps,                    "java/lang/VersionProps")                   \
   template(java_runtime_name_name,                    "java_runtime_name")                        \
   template(java_runtime_version_name,                 "java_runtime_version")                     \
                                                                                                   \
