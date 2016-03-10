@@ -43,7 +43,6 @@ import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import jdk.internal.loader.BootLoader;
@@ -522,7 +521,8 @@ public class Proxy implements java.io.Serializable {
      * Class objects representing interfaces are weakly referenced.
      */
     private static final class KeyFactory<T>
-        implements BiFunction<T, List<Class<?>>, Object> {
+        implements BiFunction<T, List<Class<?>>, Object>
+    {
         @Override
         public Object apply(T t, List<Class<?>> interfaces) {
             switch (interfaces.size()) {
@@ -572,8 +572,8 @@ public class Proxy implements java.io.Serializable {
 
             if (proxyPkg == null) {
                 // all proxy interfaces are public
-                proxyPkg = m.isNamed() ? PROXY_PACKAGE_NAME + "." + m.getName()
-                                       : PROXY_PACKAGE_NAME;
+                proxyPkg = m.isNamed() ? PROXY_PACKAGE_PREFIX + "." + m.getName()
+                                       : PROXY_PACKAGE_PREFIX;
             } else if (proxyPkg.isEmpty() && m.isNamed()) {
                 throw new IllegalArgumentException(
                         "Unnamed package cannot be added to " + m);
@@ -634,14 +634,14 @@ public class Proxy implements java.io.Serializable {
          * a cache of proxy classes in the named and unnamed module
          */
         private static final WeakCache<Module, List<Class<?>>, Class<?>> proxyCache =
-                new WeakCache<>(new KeyFactory<Module>(),
-                        new BiFunction<Module, List<Class<?>>, Class<?>>()  {
-                            @Override
-                            public Class<?> apply(Module m, List<Class<?>> interfaces) {
-                                Objects.requireNonNull(m);
-                                return defineProxyClass(m, interfaces);
-                            }
-                        });
+            new WeakCache<>(new KeyFactory<Module>(),
+                new BiFunction<Module, List<Class<?>>, Class<?>>()  {
+                    @Override
+                    public Class<?> apply(Module m, List<Class<?>> interfaces) {
+                        Objects.requireNonNull(m);
+                        return defineProxyClass(m, interfaces);
+                    }
+            });
 
 
         private static boolean isExportedType(Class<?> c) {
@@ -678,11 +678,11 @@ public class Proxy implements java.io.Serializable {
         }
 
         private static final String DEBUG =
-                AccessController.doPrivileged(new PrivilegedAction<>() {
-                    public String run() {
-                        return System.getProperty("jdk.proxy.debug", "");
-                    }
-                });
+            AccessController.doPrivileged(new PrivilegedAction<>() {
+                public String run() {
+                    return System.getProperty("jdk.proxy.debug", "");
+                }
+            });
 
         private static final boolean isDebug() {
             return !DEBUG.isEmpty();
@@ -949,7 +949,7 @@ public class Proxy implements java.io.Serializable {
             Module m = dynProxyModules.get(loader);
             if (m == null) {
                 String mn = "jdk.proxy" + counter.incrementAndGet();
-                String pn = PROXY_PACKAGE_NAME + "." + mn;
+                String pn = PROXY_PACKAGE_PREFIX + "." + mn;
                 m = Modules.defineModule(loader, mn, Collections.singleton(pn));
                 Modules.addReads(m, Proxy.class.getModule());
                 // java.base to create proxy instance
@@ -1103,7 +1103,6 @@ public class Proxy implements java.io.Serializable {
         }
     }
 
-    // ## this permission check may need to extend for module-private types
     private static void checkNewProxyPermission(Class<?> caller, Class<?> proxyClass) {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
@@ -1190,6 +1189,6 @@ public class Proxy implements java.io.Serializable {
         return ih;
     }
 
-    private static Class<?>[] EMPTY_CLASS_ARRAY = new Class<?>[0];
-    private static final String PROXY_PACKAGE_NAME = ReflectUtil.PROXY_PACKAGE;
+    private static final Class<?>[] EMPTY_CLASS_ARRAY = new Class<?>[0];
+    private static final String PROXY_PACKAGE_PREFIX = ReflectUtil.PROXY_PACKAGE;
 }
