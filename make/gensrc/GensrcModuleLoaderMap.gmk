@@ -79,6 +79,7 @@ EXT_MODULES += \
     jdk.crypto.ec \
     jdk.crypto.pkcs11 \
     jdk.dynalink \
+    jdk.jsobject \
     jdk.xml.dom \
     jdk.localedata \
     jdk.naming.dns \

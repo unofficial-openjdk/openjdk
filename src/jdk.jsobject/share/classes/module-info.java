@@ -24,6 +24,6 @@
  */
 
 module jdk.jsobject {
-    requires public java.desktop;
+    requires java.desktop;
     exports netscape.javascript;
 }
