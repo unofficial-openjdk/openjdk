@@ -186,7 +186,7 @@
     </target>
 
     <target name="build-all-classes" depends="generate-sources">
-        <exec executable="${langtools.jdk.home}/bin/javac">
+        <exec executable="${langtools.jdk.home}/bin/javac" failonerror="true">
             <arg line="-source ${javac.source} -target ${javac.target}" />
             <arg value="-d" />
             <arg value="${build.modules}" />
