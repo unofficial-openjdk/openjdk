@@ -1252,39 +1252,39 @@ WB_END
 
 WB_ENTRY(void, WB_DefineModule(JNIEnv* env, jobject o, jobject module, jstring version, jstring location,
                                 jobjectArray packages))
-  Modules::define_module(env, module, version, location, packages);
+  Modules::define_module(module, version, location, packages, CHECK);
 WB_END
 
 WB_ENTRY(void, WB_AddModuleExports(JNIEnv* env, jobject o, jobject from_module, jstring package, jobject to_module))
-  Modules::add_module_exports_qualified(env, from_module, package, to_module);
+  Modules::add_module_exports_qualified(from_module, package, to_module, CHECK);
 WB_END
 
 WB_ENTRY(void, WB_AddModuleExportsToAllUnnamed(JNIEnv* env, jobject o, jclass module, jstring package))
-  Modules::add_module_exports_to_all_unnamed(env, module, package);
+  Modules::add_module_exports_to_all_unnamed(module, package, CHECK);
 WB_END
 
 WB_ENTRY(void, WB_AddModuleExportsToAll(JNIEnv* env, jobject o, jclass module, jstring package))
-  Modules::add_module_exports(env, module, package, NULL);
+  Modules::add_module_exports(module, package, NULL, CHECK);
 WB_END
 
 WB_ENTRY(void, WB_AddReadsModule(JNIEnv* env, jobject o, jobject from_module, jobject source_module))
-  Modules::add_reads_module(env, from_module, source_module);
+  Modules::add_reads_module(from_module, source_module, CHECK);
 WB_END
 
 WB_ENTRY(jboolean, WB_CanReadModule(JNIEnv* env, jobject o, jobject asking_module, jobject source_module))
-  return Modules::can_read_module(env, asking_module, source_module);
+  return Modules::can_read_module(asking_module, source_module, CHECK_false);
 WB_END
 
 WB_ENTRY(jboolean, WB_IsExportedToModule(JNIEnv* env, jobject o, jobject from_module, jstring package, jobject to_module))
-  return Modules::is_exported_to_module(env, from_module, package, to_module);
+  return Modules::is_exported_to_module(from_module, package, to_module, CHECK_false);
 WB_END
 
 WB_ENTRY(void, WB_AddModulePackage(JNIEnv* env, jobject o, jclass module, jstring package))
-  Modules::add_module_package(env, module, package);
+  Modules::add_module_package(module, package, CHECK);
 WB_END
 
 WB_ENTRY(jobject, WB_GetModuleByPackageName(JNIEnv* env, jobject o, jobject loader, jstring package))
-  return Modules::get_module_by_package_name(env, loader, package);
+  return Modules::get_module_by_package_name(loader, package, CHECK_NULL);
 WB_END
 
 WB_ENTRY(jlong, WB_IncMetaspaceCapacityUntilGC(JNIEnv* env, jobject wb, jlong inc))

@@ -49,8 +49,8 @@ public:
   // * A package already exists in another module for this class loader
   // * Module is an unnamed module
   //  NullPointerExceptions are thrown if module is null.
-  static void define_module(JNIEnv *env, jobject module, jstring version,
-                             jstring location, jobjectArray packages);
+  static void define_module(jobject module, jstring version,
+                            jstring location, jobjectArray packages, TRAPS);
 
   // Provides the java.lang.reflect.Module for the unnamed module defined
   // to the boot loader.
@@ -60,7 +60,7 @@ public:
   //  * Module is not a subclass of java.lang.reflect.Module
   //  * Module's class loader is not the boot loader
   //  NullPointerExceptions are thrown if module is null.
-  static void set_bootloader_unnamed_module(JNIEnv *env, jobject module);
+  static void set_bootloader_unnamed_module(jobject module, TRAPS);
 
   // This either does a qualified export of package in module from_module to module
   // to_module or, if to_module is null, does an unqualified export of package.
@@ -72,7 +72,7 @@ public:
   // * Package is not syntactically correct
   // * Package is not defined for from_module's class loader
   // * Package is not in module from_module.
-  static void add_module_exports(JNIEnv *env, jobject from_module, jstring package, jobject to_module);
+  static void add_module_exports(jobject from_module, jstring package, jobject to_module, TRAPS);
 
   // This does a qualified export of package in module from_module to module
   // to_module.  The format for the package name must use "/' not ".".
@@ -83,7 +83,7 @@ public:
   // * Package is not syntactically correct
   // * Package is not defined for from_module's class loader
   // * Package is not in module from_module.
-  static void add_module_exports_qualified(JNIEnv *env, jobject from_module, jstring package, jobject to_module);
+  static void add_module_exports_qualified(jobject from_module, jstring package, jobject to_module, TRAPS);
 
   // add_reads_module adds module to_module to the list of modules that from_module
   // can read.  If from_module is the same as to_module then this is a no-op.
@@ -91,7 +91,7 @@ public:
   // from_module can read all current and future unnamed  modules).
   // An IllegalArgumentException is thrown if from_module is null or either (non-null)
   // module does not exist.
-  static void add_reads_module(JNIEnv *env, jobject from_module, jobject to_module);
+  static void add_reads_module(jobject from_module, jobject to_module, TRAPS);
 
   // can_read_module returns TRUE if module asking_module can read module target_module,
   // or if they are the same module, or if the asking_module is loose and target_module
@@ -99,7 +99,7 @@ public:
   //
   // Throws IllegalArgumentException if:
   // * either asking_module or target_module is not a java.lang.reflect.Module
-  static jboolean can_read_module(JNIEnv *env, jobject asking_module, jobject target_module);
+  static jboolean can_read_module(jobject asking_module, jobject target_module, TRAPS);
 
   // If package is valid then this returns TRUE if module from_module exports
   // package to module to_module, if from_module and to_module are the same
@@ -109,10 +109,10 @@ public:
   // * Either to_module or from_module does not exist
   // * package is syntactically incorrect
   // * package is not in from_module
-  static jboolean is_exported_to_module(JNIEnv *env, jobject from_module, jstring package, jobject to_module);
+  static jboolean is_exported_to_module(jobject from_module, jstring package, jobject to_module, TRAPS);
 
   // Return the java.lang.reflect.Module object for this class object.
-  static jobject get_module(JNIEnv *env, jclass clazz);
+  static jobject get_module(jclass clazz, TRAPS);
 
   // Return the java.lang.reflect.Module object for this class loader and package.
   // Returns NULL if the class loader has not loaded any classes in the package.
@@ -120,7 +120,7 @@ public:
   // NullPointerException is thrown if package is null.
   // IllegalArgumentException is thrown if loader is neither null nor a subtype of
   // java/lang/ClassLoader.
-  static jobject get_module_by_package_name(JNIEnv *env, jobject loader, jstring package);
+  static jobject get_module_by_package_name(jobject loader, jstring package, TRAPS);
 
   // If package is defined by loader, return the
   // java.lang.reflect.Module object for the module in which the package is defined.
@@ -133,13 +133,13 @@ public:
   // * Module is unnamed
   // * Package is not syntactically correct
   // * Package is already defined for module's class loader.
-  static void add_module_package(JNIEnv *env, jobject module, jstring package);
+  static void add_module_package(jobject module, jstring package, TRAPS);
 
   // Marks the specified package as exported to all unnamed modules.
   // If either module or package is null then NullPointerException is thrown.
   // If module or package is bad, or module is unnamed, or package is not in
   // module then IllegalArgumentException is thrown.
-  static void add_module_exports_to_all_unnamed(JNIEnv *env, jobject module, jstring package);
+  static void add_module_exports_to_all_unnamed(jobject module, jstring package, TRAPS);
 
   // Return TRUE if package_name is syntactically valid, false otherwise.
   static bool verify_package_name(char *package_name);

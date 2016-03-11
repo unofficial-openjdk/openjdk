@@ -3452,7 +3452,7 @@ JNI_ENTRY(jobject, jni_GetModule(JNIEnv* env, jclass clazz))
   HOTSPOT_JNI_GETMODULE_ENTRY(env, clazz);
   jobject res;
   DT_RETURN_MARK(GetModule, jobject, (const jobject&)res);
-  res = Modules::get_module(env, clazz);
+  res = Modules::get_module(clazz, CHECK_NULL);
   return res;
 JNI_END
 
@@ -3480,7 +3480,7 @@ JNI_END
 
 JNI_ENTRY(jboolean, jni_CanReadModule(JNIEnv* env, jobject askingModule, jobject targetModule))
   JNIWrapper("CanReadModule");
-  jboolean res = Modules::can_read_module(env, askingModule, targetModule);
+  jboolean res = Modules::can_read_module(askingModule, targetModule, CHECK_false);
   return res;
 JNI_END
 
