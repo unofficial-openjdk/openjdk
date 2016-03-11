@@ -197,13 +197,11 @@ public class ClassWriterImpl extends SubWriterHolderWriter implements ClassWrite
         div.addStyle(HtmlStyle.header);
         ModuleElement mdle = configuration.root.getElementUtils().getModuleOf(typeElement);
         if (mdle != null && !mdle.isUnnamed()) {
-            Content moduleNameContent = new HtmlTree(HtmlTag.P);
             Content classModuleLabel = HtmlTree.SPAN(HtmlStyle.moduleLabelInClass, moduleLabel);
-            moduleNameContent.addContent(classModuleLabel);
-            moduleNameContent.addContent(getSpace());
-            moduleNameContent.addContent(getModuleLink(mdle,
+            Content moduleNameDiv = HtmlTree.DIV(HtmlStyle.subTitle, classModuleLabel);
+            moduleNameDiv.addContent(getSpace());
+            moduleNameDiv.addContent(getModuleLink(mdle,
                     new StringContent(mdle.getQualifiedName().toString())));
-            Content moduleNameDiv = HtmlTree.DIV(HtmlStyle.subTitle, moduleNameContent);
             div.addContent(moduleNameDiv);
         }
         PackageElement pkg = utils.containingPackage(typeElement);

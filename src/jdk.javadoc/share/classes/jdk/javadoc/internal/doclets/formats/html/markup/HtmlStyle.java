@@ -82,6 +82,7 @@ public enum HtmlStyle {
     navBarCell1Rev,
     navList,
     navListSearch,
+    navPadding,
     overrideSpecifyLabel,
     overviewSummary,
     packageHierarchyLabel,
