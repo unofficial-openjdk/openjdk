@@ -863,6 +863,23 @@ Agent_OnUnload_L(JavaVM *vm)</example>
     to be instrumented by the use of wrapper methods.
   </intro>
 
+<intro id="bcimodules" label="Bytecode Instrumentation of code in modules">
+  Agents that instrument code in named modules may need to arrange for those
+  modules to read other modules. If code is instrumented to invoke a method
+  in a support class in another module, then the module of the instrumented
+  code should read the module of the supporting class. Furthermore, the
+  supporting class will only be accessible to the instrumented code if
+  it is <code>public</code> and in a package that is exported by its module.
+  Agents can use the JNI functions <code>CanReadModule</code> and
+  <code>AddModuleReads</code> to test and update a module to read another.
+  <p/>
+  As an aid to agents that deploy supporting classes on the search path of
+  the bootstrap class loader, or the search path of the class loader that
+  loads the main class, the Java virtual machine arranges for the module
+  of classes transformed by the <eventlink id="ClassFileLoadHook"/> event to
+  read the unnamed module of both class loaders.
+</intro>
+
   <intro id="mUTF" label="Modified UTF-8 String Encoding">
     <jvmti/> uses modified UTF-8 to encode character strings.
     This is the same encoding used by JNI.
