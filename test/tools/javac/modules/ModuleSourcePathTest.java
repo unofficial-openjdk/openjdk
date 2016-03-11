@@ -53,6 +53,24 @@ public class ModuleSourcePathTest extends ModuleTestBase {
     }
 
     @Test
+    void testSourcePathConflict(Path base) throws Exception {
+        Path sp = base.resolve("src");
+        Path msp = base.resolve("srcmodules");
+
+        String log = tb.new JavacTask(ToolBox.Mode.CMDLINE)
+                .options("-XDrawDiagnostics",
+                        "-sourcepath", sp.toString().replace('/', File.separatorChar),
+                        "-modulesourcepath", msp.toString().replace('/', File.separatorChar),
+                        "dummyClass")
+                .run(ToolBox.Expect.FAIL)
+                .writeAll()
+                .getOutput(ToolBox.OutputKind.DIRECT);
+
+        if (!log.contains("cannot specify both -sourcepath and -modulesourcepath"))
+            throw new Exception("expected diagnostic not found");
+    }
+
+    @Test
     void testUnnormalizedPath1(Path base) throws Exception {
         Path src = base.resolve("src");
         Path src_m1 = src.resolve("m1");

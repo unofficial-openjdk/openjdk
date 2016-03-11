@@ -547,6 +547,10 @@ public class Arguments {
             }
         }
 
+        if (options.isSet(Option.SOURCEPATH) && options.isSet(Option.MODULESOURCEPATH)) {
+            error("err.sourcepath.modulesourcepath.conflict");
+        }
+
         boolean lintOptions = options.isUnset(Option.XLINT_CUSTOM, "-" + LintCategory.OPTIONS.option);
 
         if (lintOptions && source.compareTo(Source.DEFAULT) < 0 && !options.isSet(Option.RELEASE)) {
