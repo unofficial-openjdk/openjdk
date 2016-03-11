@@ -5316,7 +5316,7 @@ void ClassFileParser::fill_instance_klass(InstanceKlass* ik, bool changed_by_loa
   assert(module_entry != NULL, "module_entry should always be set");
 
   // Obtain java.lang.reflect.Module
-  Handle module_handle(THREAD, JNIHandles::resolve(module_entry->jlrM_module()));
+  Handle module_handle(THREAD, JNIHandles::resolve(module_entry->module()));
 
   // Allocate mirror and initialize static fields
   // The create_mirror() call will also call compute_modifiers()

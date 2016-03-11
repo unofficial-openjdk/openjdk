@@ -703,7 +703,7 @@ private:
 
   static void do_module(ModuleEntry* entry) {
     assert_locked_or_safepoint(Module_lock);
-    jobject module = entry->jlrM_module();
+    jobject module = entry->module();
     guarantee(module != NULL, "module object is NULL");
     _tbl->push(module);
   }

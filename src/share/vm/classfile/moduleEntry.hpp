@@ -46,9 +46,11 @@ class ModuleClosure;
 //   - a growable array containg other module entries that this module can read.
 //   - a flag indicating if this module can read all unnamed modules.
 //
+// The Mutex Module_lock is shared between ModuleEntry and PackageEntry, to lock either
+// data structure.
 class ModuleEntry : public HashtableEntry<Symbol*, mtClass> {
 private:
-  jobject _jlrM;                       // java.lang.reflect.Module
+  jobject _module;                     // java.lang.reflect.Module
   jobject _pd;                         // java.security.ProtectionDomain, cached
                                        // for shared classes from this module
   ClassLoaderData* _loader;
@@ -62,7 +64,7 @@ private:
 
 public:
   void init() {
-    _jlrM = NULL;
+    _module = NULL;
     _loader = NULL;
     _pd = NULL;
     _reads = NULL;
@@ -72,11 +74,11 @@ public:
     _has_default_read_edges = false;
   }
 
-  Symbol*            name() const                   { return literal(); }
-  void               set_name(Symbol* n)            { set_literal(n); }
+  Symbol*            name() const          { return literal(); }
+  void               set_name(Symbol* n)   { set_literal(n); }
 
-  jobject            jlrM_module() const            { return _jlrM; }
-  void               set_jlrM_module(jobject j)     { _jlrM = j; }
+  jobject            module() const        { return _module; }
+  void               set_module(jobject j) { _module = j; }
 
   // The shared ProtectionDomain reference is set once the VM loads a shared class
   // originated from the current Module. The referenced ProtectionDomain object is
@@ -174,19 +176,30 @@ private:
   static ModuleEntry* _javabase_module;
   ModuleEntry* _unnamed_module;
 
-  ModuleEntry* new_entry(unsigned int hash, Handle jlrM_handle, Symbol* name, Symbol* version,
+  ModuleEntry* new_entry(unsigned int hash, Handle module_handle, Symbol* name, Symbol* version,
                          Symbol* location, ClassLoaderData* class_loader);
   void add_entry(int index, ModuleEntry* new_entry);
+
+  int entry_size() const { return BasicHashtable<mtClass>::entry_size(); }
+
+  ModuleEntry** bucket_addr(int i) {
+    return (ModuleEntry**)Hashtable<Symbol*, mtClass>::bucket_addr(i);
+  }
+
+  static unsigned int compute_hash(Symbol* name) { return ((name == NULL) ? 0 : (unsigned int)(name->identity_hash())); }
+  int index_for(Symbol* name) const              { return hash_to_index(compute_hash(name)); }
 
 public:
   ModuleEntryTable(int table_size);
   ~ModuleEntryTable();
 
-  int entry_size() const { return BasicHashtable<mtClass>::entry_size(); }
+  ModuleEntry* bucket(int i) {
+    return (ModuleEntry*)Hashtable<Symbol*, mtClass>::bucket(i);
+  }
 
   // Create module in loader's module entry table, if already exists then
   // return null.  Assume Module_lock has been locked by caller.
-  ModuleEntry* locked_create_entry_or_null(Handle jlrM_handle,
+  ModuleEntry* locked_create_entry_or_null(Handle module_handle,
                                            Symbol* module_name,
                                            Symbol* module_version,
                                            Symbol* module_location,
@@ -195,30 +208,20 @@ public:
   // Only lookup module within loader's module entry table.  The table read is lock-free.
   ModuleEntry* lookup_only(Symbol* name);
 
-  ModuleEntry* bucket(int i) {
-    return (ModuleEntry*)Hashtable<Symbol*, mtClass>::bucket(i);
-  }
-  ModuleEntry** bucket_addr(int i) {
-    return (ModuleEntry**)Hashtable<Symbol*, mtClass>::bucket_addr(i);
-  }
-
-  static unsigned int compute_hash(Symbol* name) { return ((name == NULL) ? 0 : (unsigned int)(name->identity_hash())); }
-  int index_for(Symbol* name) const              { return hash_to_index(compute_hash(name)); }
-
   // purge dead weak references out of reads list
   void purge_all_module_reads();
 
   // Special handling for unnamed module, one per class loader's ModuleEntryTable
   void create_unnamed_module(ClassLoaderData* loader_data);
-  ModuleEntry* unnamed_module() { return _unnamed_module; }
+  ModuleEntry* unnamed_module()                           { return _unnamed_module; }
 
   // Special handling for java.base
   static ModuleEntry* javabase_module()                   { return _javabase_module; }
   static void set_javabase_module(ModuleEntry* java_base) { _javabase_module = java_base; }
   static bool javabase_defined()                          { return ((_javabase_module != NULL) &&
-                                                                    (_javabase_module->jlrM_module() != NULL)); }
-  static void finalize_javabase(Handle jlrM_module, Symbol* version, Symbol* location);
-  static void patch_javabase_entries(Handle jlrM_handle);
+                                                                    (_javabase_module->module() != NULL)); }
+  static void finalize_javabase(Handle module_handle, Symbol* version, Symbol* location);
+  static void patch_javabase_entries(Handle module_handle);
 
   void print() PRODUCT_RETURN;
   void verify();
