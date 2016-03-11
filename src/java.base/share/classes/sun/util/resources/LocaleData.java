@@ -74,7 +74,7 @@ public class LocaleData {
     private static final String DOTCLDR      = ".cldr";
 
     // Map of key (base name + locale) to candidates
-    private static final Map<String, List<Locale>> candidatesMap = new ConcurrentHashMap<>();
+    private static final Map<String, List<Locale>> CANDIDATES_MAP = new ConcurrentHashMap<>();
 
     private final LocaleProviderAdapter.Type type;
 
@@ -255,7 +255,7 @@ public class LocaleData {
         @Override
         public List<Locale> getCandidateLocales(String baseName, Locale locale) {
             String key = baseName + '-' + locale.toLanguageTag();
-            List<Locale> candidates = candidatesMap.get(key);
+            List<Locale> candidates = CANDIDATES_MAP.get(key);
             if (candidates == null) {
                 LocaleProviderAdapter.Type type = baseName.contains(DOTCLDR) ? CLDR : JRE;
                 LocaleProviderAdapter adapter = LocaleProviderAdapter.forType(type);
@@ -279,7 +279,7 @@ public class LocaleData {
                         && type == CLDR && category.equals("TimeZoneNames")) {
                     candidates.add(candidates.size() - 1, Locale.ENGLISH);
                 }
-                candidatesMap.putIfAbsent(key, candidates);
+                CANDIDATES_MAP.putIfAbsent(key, candidates);
             }
             return candidates;
         }

@@ -64,7 +64,6 @@ import java.util.spi.ResourceBundleProvider;
 
 import jdk.internal.misc.JavaUtilResourceBundleAccess;
 import jdk.internal.misc.SharedSecrets;
-import sun.misc.Unsafe;
 import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;
 import sun.util.locale.BaseLocale;
@@ -3138,7 +3137,7 @@ public abstract class ResourceBundle {
                             AccessController.doPrivileged(pa1);
                             bundle = ctor.newInstance((Object[]) null);
                         } catch (InvocationTargetException e) {
-                            Unsafe.getUnsafe().throwException(e.getTargetException());
+                            uncheckedThrow(e);
                         }
                     } else {
                         throw new ClassCastException(c.getName()
@@ -3446,6 +3445,14 @@ public abstract class ResourceBundle {
                 return toResourceName(bundleName, suffix);
             }
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T extends Throwable> void uncheckedThrow(Throwable t) throws T {
+        if (t != null)
+            throw (T)t;
+        else
+            throw new Error("Unknown Exception");
     }
 
     private static class SingleFormatControl extends Control {

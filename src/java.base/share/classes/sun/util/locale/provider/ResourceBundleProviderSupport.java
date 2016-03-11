@@ -37,10 +37,6 @@ import java.security.PrivilegedAction;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 
-import jdk.internal.loader.BootLoader;
-import jdk.internal.misc.Unsafe;
-
-
 /**
  * ResourceBundleProviderSupport provides convenience methods for loading
  * resource bundles.
@@ -68,14 +64,13 @@ public class ResourceBundleProviderSupport {
                 if (!Modifier.isPublic(ctor.getModifiers())) {
                     return null;
                 }
-
                 // java.base may not be able to read the bundleClass's module.
                 PrivilegedAction<Void> pa1 = () -> { ctor.setAccessible(true); return null; };
                 AccessController.doPrivileged(pa1);
                 try {
                     return ctor.newInstance((Object[]) null);
                 } catch (InvocationTargetException e) {
-                    Unsafe.getUnsafe().throwException(e.getTargetException());
+                    uncheckedThrow(e);
                 } catch (InstantiationException | IllegalAccessException e) {
                     throw new InternalError(e);
                 }
@@ -83,6 +78,14 @@ public class ResourceBundleProviderSupport {
             }
         }
         return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T extends Throwable> void uncheckedThrow(Throwable t) throws T {
+       if (t != null)
+            throw (T)t;
+       else
+            throw new Error("Unknown Exception");
     }
 
     /**
@@ -97,7 +100,7 @@ public class ResourceBundleProviderSupport {
      *                   such as "com.example.app.MyResources_de"
      * @return the {@code ResourceBundle} produced from the loaded properties,
      *         or null if no properties are found
-     * @see PropertiesResourceBundle
+     * @see PropertyResourceBundle
      */
     public static ResourceBundle loadPropertyResourceBundle(Module module, String bundleName)
             throws IOException

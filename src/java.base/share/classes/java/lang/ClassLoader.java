@@ -1774,20 +1774,18 @@ public abstract class ClassLoader {
             throw new InternalError("unnamed package in  " + m);
         }
 
-        // define Package object if the named package is not yet defined
-        NamedPackage p = packages.computeIfAbsent(name,
-                                                  k -> NamedPackage.toPackage(name, m));
-        if (p instanceof Package)
-            return (Package)p;
-
-        // otherwise, replace the NamedPackage object with Package object
-        return (Package)packages.compute(name, this::toPackage);
+        return (Package)packages.compute(name, (n, p) -> toPackage(n, p, m));
     }
 
     /*
      * Returns a Package object for the named package
      */
-    private Package toPackage(String name, NamedPackage p) {
+    private Package toPackage(String name, NamedPackage p, Module m) {
+        // define Package object if the named package is not yet defined
+        if (p == null)
+            return NamedPackage.toPackage(name, m);
+
+        // otherwise, replace the NamedPackage object with Package object
         if (p instanceof Package)
             return (Package)p;
 

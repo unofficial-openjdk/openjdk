@@ -43,6 +43,7 @@ import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import jdk.internal.loader.BootLoader;
@@ -360,7 +361,7 @@ public class Proxy implements java.io.Serializable {
                                          Class<?>... interfaces)
         throws IllegalArgumentException
     {
-        final List<Class<?>> intfs = Arrays.asList(interfaces.clone());
+        final List<Class<?>> intfs = List.of(interfaces);  // interfaces cloned
         final SecurityManager sm = System.getSecurityManager();
         final Class<?> caller = Reflection.getCallerClass();
         if (sm != null) {
@@ -779,19 +780,23 @@ public class Proxy implements java.io.Serializable {
          * the proxy interfaces
          */
         static Set<Class<?>> referencedTypes(ClassLoader loader, List<Class<?>> interfaces) {
-            Set<Class<?>> types = new HashSet<>();
-            for (Class<?> intf : interfaces) {
-                for (Method m : intf.getMethods()) {
-                    // return type, parameter types, and exception types
-                    Stream.concat(Stream.concat(Stream.of(m.getReturnType()),
-                                                Arrays.stream(m.getParameterTypes())),
-                                  Arrays.stream(m.getExceptionTypes()))
-                          .map(ProxyBuilder::getElementType)
-                          .filter(t -> !t.isPrimitive())
-                          .forEach(types::add);
-                }
-            }
-            return types;
+            return interfaces.stream()
+                 .flatMap(intf -> Stream.of(intf.getMethods())
+                                        .flatMap(m -> methodRefTypes(m))
+                                        .map(ProxyBuilder::getElementType)
+                                        .filter(t -> !t.isPrimitive()))
+                 .collect(Collectors.toSet());
+        }
+
+        /*
+         * Extracts all types referenced on a method signature including
+         * its return type, parameter types, and exception types.
+         */
+        static Stream<Class<?>> methodRefTypes(Method m) {
+            return Stream.of(new Class<?>[] { m.getReturnType() },
+                             m.getParameterTypes(),
+                             m.getExceptionTypes())
+                         .flatMap(a -> Stream.of(a));
         }
 
         /**
@@ -945,18 +950,17 @@ public class Proxy implements java.io.Serializable {
          *
          * Each class loader will have one dynamic module.
          */
-        static synchronized Module getDynamicModule(ClassLoader loader) {
-            Module m = dynProxyModules.get(loader);
-            if (m == null) {
+        static Module getDynamicModule(ClassLoader loader) {
+            return dynProxyModules.computeIfAbsent(loader, ld -> {
+                // create a dynamic module and setup module access
                 String mn = "jdk.proxy" + counter.incrementAndGet();
                 String pn = PROXY_PACKAGE_PREFIX + "." + mn;
-                m = Modules.defineModule(loader, mn, Collections.singleton(pn));
+                Module m = Modules.defineModule(loader, mn, Collections.singleton(pn));
                 Modules.addReads(m, Proxy.class.getModule());
                 // java.base to create proxy instance
                 Modules.addExports(m, pn, Object.class.getModule());
-                dynProxyModules.put(loader, m);
-            }
-            return m;
+                return m;
+            });
         }
     }
 
@@ -1058,7 +1062,7 @@ public class Proxy implements java.io.Serializable {
                                           InvocationHandler h) {
         Objects.requireNonNull(h);
 
-        final List<Class<?>> intfs = Arrays.asList(interfaces.clone());
+        final List<Class<?>> intfs = List.of(interfaces);  // interfaces cloned
         final SecurityManager sm = System.getSecurityManager();
         final Class<?> caller = Reflection.getCallerClass();
         if (sm != null) {
