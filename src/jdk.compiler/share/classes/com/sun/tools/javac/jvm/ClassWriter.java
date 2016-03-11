@@ -950,7 +950,7 @@ public class ClassWriter extends ClassFile {
      *  Returns the number of attributes written (0 or 1).
      */
     int writeModuleAttribute(ClassSymbol c) {
-        ModuleSymbol m = c.modle;
+        ModuleSymbol m = (ModuleSymbol) c.owner;
 
         int alenIdx = writeAttr(names.Module);
         ListBuffer<RequiresDirective> requires = new ListBuffer<>();
@@ -1627,7 +1627,7 @@ public class ClassWriter extends ClassFile {
         String name = (c.owner.kind == MDL ? c.name : c.flatname).toString();
         Location outLocn;
         if (multiModuleMode) {
-            ModuleSymbol msym = (c.modle != null) ? c.modle : c.packge().modle;
+            ModuleSymbol msym = c.owner.kind == MDL ? (ModuleSymbol) c.owner : c.packge().modle;
             outLocn = fileManager.getModuleLocation(CLASS_OUTPUT, msym.name.toString());
         } else {
             outLocn = CLASS_OUTPUT;

@@ -203,8 +203,7 @@ public class ModuleFinder {
 //                msym.module_info = info;
                 msym = ModuleSymbol.create(null, names.module_info);
                 msym.module_info.classfile = fo;
-                // TODO: defer with completer?
-                classFinder.fillIn(msym.module_info);
+                msym.completer = sym -> classFinder.fillIn(msym.module_info);
 //                // TODO: should we do the following here, or as soon as we find the name in
 //                // the source or class file?
 //                // Consider the case when the class/source path module shadows one on the

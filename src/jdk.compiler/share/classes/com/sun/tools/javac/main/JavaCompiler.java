@@ -289,6 +289,10 @@ public class JavaCompiler {
      */
     protected Modules modules;
 
+    /** The module finder
+     */
+    protected ModuleFinder moduleFinder;
+
     /** The diagnostics factory
      */
     protected JCDiagnostic.Factory diags;
@@ -402,6 +406,7 @@ public class JavaCompiler {
         types = Types.instance(context);
         taskListener = MultiTaskListener.instance(context);
         modules = Modules.instance(context);
+        moduleFinder = ModuleFinder.instance(context);
         diags = Factory.instance(context);
 
         finder.sourceCompleter = sourceCompleter;
@@ -671,9 +676,8 @@ public class JavaCompiler {
             typeName = name;
         } else if (source.allowModules() && !options.isSet("noModules")) {
             Name modName = names.fromString(name.substring(0, sep));
-            ModuleFinder mf = ModuleFinder.instance(context); //TODO
 
-            msym = mf.findModule(modName);
+            msym = moduleFinder.findModule(modName);
             typeName = name.substring(sep + 1);
         } else {
             log.error(Errors.InvalidModuleSpecifier(name));
@@ -695,14 +699,6 @@ public class JavaCompiler {
         } catch (CompletionFailure ignore) {
             return resolveIdent(msym, name);
         }
-    }
-
-    /** Resolve an identifier.
-     * @param name      The identifier to resolve
-     */
-    public Symbol resolveIdent(String name) {
-        //TODO:
-        return resolveIdent(modules.getDefaultModule(), name);
     }
 
     /** Resolve an identifier.
@@ -836,7 +832,11 @@ public class JavaCompiler {
                 tree.sourcefile.isNameCompatible("module-info",
                                                  JavaFileObject.Kind.SOURCE);
             if (isModuleInfo) {
-                // TODO: INSERT CHECK HERE
+                if (enter.getEnv(tree.modle) == null) {
+                    JCDiagnostic diag =
+                        diagFactory.fragment("file.does.not.contain.module");
+                    throw new ClassFinder.BadClassFile(c, filename, diag, diagFactory);
+                }
             } else if (isPkgInfo) {
                 if (enter.getEnv(tree.packge) == null) {
                     JCDiagnostic diag =

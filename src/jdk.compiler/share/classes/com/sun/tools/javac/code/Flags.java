@@ -287,7 +287,6 @@ public class Flags {
     /**
      * Flag to indicate the given ModuleSymbol is an automatic module.
      */
-    //TODO: can this be 1L << 0 or alike?
     public static final long AUTOMATIC_MODULE = 1L<<52;
 
     /**

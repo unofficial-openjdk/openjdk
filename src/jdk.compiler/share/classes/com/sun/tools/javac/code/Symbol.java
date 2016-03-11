@@ -894,7 +894,6 @@ public abstract class Symbol extends AnnoConstruct implements Element {
         public static ModuleSymbol create(Name name, Name module_info) {
             ModuleSymbol msym = new ModuleSymbol(name, null);
             ClassSymbol info = new ClassSymbol(Flags.MODULE, module_info, msym);
-            info.modle = msym;
             info.fullname = formFullName(module_info, msym);
             info.flatname = info.fullname;
             info.members_field = WriteableScope.create(info);
@@ -1080,12 +1079,6 @@ public abstract class Symbol extends AnnoConstruct implements Element {
     /** A class for class symbols
      */
     public static class ClassSymbol extends TypeSymbol implements TypeElement {
-        /**
-         * The module for the class.
-         */
-        // TODO: is this required? the value can be obtained from the enclosing package
-        // Only read access is currently for module-info.class in ClassWriter
-        public ModuleSymbol modle;
 
         /** a scope for all class members; variables, methods and inner classes
          *  type parameters are not part of this scope

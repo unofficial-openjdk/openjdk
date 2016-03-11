@@ -345,6 +345,7 @@ public class Modules extends JCTree.Visitor {
                             }
                         } else {
                             checkSpecifiedModule(trees, Errors.ModuleInfoWithXmoduleClasspath);
+                            defaultModule.complete();
                             // Question: why not do completeModule here?
                             defaultModule.completer = new Completer() {
                                 @Override

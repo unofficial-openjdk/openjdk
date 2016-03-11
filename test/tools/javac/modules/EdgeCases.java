@@ -34,6 +34,7 @@
  * @run main EdgeCases
  */
 
+import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -230,6 +231,37 @@ public class EdgeCases extends ModuleTestBase {
                 .files(findJavaFiles(src_m3))
                 .run()
                 .writeAll();
+    }
+
+    @Test
+    void testEmptyImplicitModuleInfo(Path base) throws Exception {
+        Path src = base.resolve("src");
+        Path src_m1 = src.resolve("m1");
+        Files.createDirectories(src_m1);
+        try (Writer w = Files.newBufferedWriter(src_m1.resolve("module-info.java"))) {}
+        tb.writeJavaFiles(src_m1,
+                          "package test; public class Test {}");
+        Path classes = base.resolve("classes");
+        tb.createDirectories(classes);
+
+        tb.new JavacTask()
+                .options("-sourcepath", src_m1.toString(),
+                         "-XDrawDiagnostics")
+                .outdir(classes)
+                .files(findJavaFiles(src_m1.resolve("test")))
+                .run(ToolBox.Expect.FAIL)
+                .writeAll();
+
+        tb.writeJavaFiles(src_m1,
+                          "module m1 {}");
+
+        tb.new JavacTask()
+                .options("-sourcepath", src_m1.toString())
+                .outdir(classes)
+                .files(findJavaFiles(src_m1.resolve("test")))
+                .run()
+                .writeAll();
+
     }
 
 }

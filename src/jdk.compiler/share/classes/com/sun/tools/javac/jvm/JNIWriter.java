@@ -178,7 +178,7 @@ public class JNIWriter {
         String className = c.flatName().toString();
         Location outLocn;
         if (multiModuleMode) {
-            ModuleSymbol msym = (c.modle != null) ? c.modle : c.packge().modle;
+            ModuleSymbol msym = c.owner.kind == MDL ? (ModuleSymbol) c.owner : c.packge().modle;
             outLocn = fileManager.getModuleLocation(StandardLocation.NATIVE_HEADER_OUTPUT, msym.name.toString());
         } else {
             outLocn = StandardLocation.NATIVE_HEADER_OUTPUT;

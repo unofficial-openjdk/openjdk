@@ -4288,7 +4288,6 @@ public class Attr extends JCTree.Visitor {
     void attribModule(ModuleSymbol m) {
         // Get environment current at the point of module definition.
         Env<AttrContext> env = enter.typeEnvs.get(m);
-//        System.err.println("Attr.attribModule: " + env + " " + env.tree);
         attribStat(env.tree, env);
     }
 

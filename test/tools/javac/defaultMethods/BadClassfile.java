@@ -72,12 +72,13 @@ public class BadClassfile {
 
         JavaCompiler c = ToolProvider.getSystemJavaCompiler();
         JavacTaskImpl task = (JavacTaskImpl) c.getTask(null, null, null, Arrays.asList("-classpath", System.getProperty("test.classes", ".")), null, null);
+        Symtab syms = Symtab.instance(task.getContext());
 
         //initialize unnamed module:
-        Modules.instance(task.getContext()).enter(List.nil(), Symtab.instance(task.getContext()).errSymbol);
+        Modules.instance(task.getContext()).enter(List.nil(), syms.errSymbol);
 
         try {
-            Symbol clazz = com.sun.tools.javac.main.JavaCompiler.instance(task.getContext()).resolveIdent(classname);
+            Symbol clazz = com.sun.tools.javac.main.JavaCompiler.instance(task.getContext()).resolveIdent(syms.unnamedModule, classname);
 
             clazz.complete();
         } catch (BadClassFile f) {
