@@ -50,7 +50,7 @@
 
     <!-- Compile a single file. (action: compile.single; F9) -->
 
-    <target name="compile-single" depends="-get-tool-if-set,-check-jdk.home">
+    <target name="compile-single" depends="-get-tool-if-set,-check-langtools.jdk.home">
         <fail unless="includes">Must set property 'includes'</fail>
         <mkdir dir="${build.dir}/${module.name}/classes" />
         <javac fork="true" executable="${java.home}/bin/javac"
@@ -72,7 +72,7 @@
         the user.
     -->
 
-    <target name="run" depends="-check-jdk.home,-build-classes,-def-run,-get-tool-and-args,-def-resolve-main-class"
+    <target name="run" depends="-check-langtools.jdk.home,-build-classes,-def-run,-get-tool-and-args,-def-resolve-main-class"
             description="run tool">
         <echo level="info" message="Run ${langtools.tool.name} with args ${langtools.tool.args}"/>
         <resolve-main-class tool.name="${langtools.tool.name}" />
@@ -99,7 +99,7 @@
 
     <!-- Run a selected class. (action: run.single;  shift-F6) -->
 
-    <target name="run-single" depends="-check-jdk.home,-def-run">
+    <target name="run-single" depends="-check-langtools.jdk.home,-def-run">
         <fail unless="run.classname">Must set property 'run.classname' </fail>
         <echo level="info" message="run ${run.classname}"/>
         <run mainclass="${run.classname}" args=""/>
@@ -150,7 +150,7 @@
 
     <!-- Debug tool in NetBeans. -->
 
-    <target name="debug" depends="-check-jdk.home,-def-run,-def-start-debugger,-get-tool-and-args,-build-classes,-def-resolve-main-class" if="netbeans.home">
+    <target name="debug" depends="-check-langtools.jdk.home,-def-run,-def-start-debugger,-get-tool-and-args,-build-classes,-def-resolve-main-class" if="netbeans.home">
         <echo level="info" message="Debug ${langtools.tool.name} with args ${langtools.tool.args}"/>
         <start-debugger/>
         <resolve-main-class tool.name="${langtools.tool.name}" />
@@ -158,14 +158,14 @@
     </target>
 
     <!-- Debug a selected class . -->
-    <target name="debug-single" depends="-check-jdk.home,-def-start-debugger,-def-run">
+    <target name="debug-single" depends="-check-langtools.jdk.home,-def-start-debugger,-def-run">
         <fail unless="debug.classname">Must set property 'debug.classname'</fail>
         <start-debugger/>
         <run mainclass="${debug.classname}" args="" jpda.jvmargs="${jpda.jvmargs}"/>
     </target>
 
     <!-- Debug a jtreg test. -->
-    <target name="debug-jtreg" depends="-check-jdk.home,-def-start-debugger,-def-jtreg,-get-tool-if-set">
+    <target name="debug-jtreg" depends="-check-langtools.jdk.home,-def-start-debugger,-def-jtreg,-get-tool-if-set">
         <fail unless="jtreg.tests">Must set property 'jtreg.tests'</fail>
         <start-debugger/>
         <jtreg-tool name="debug"
@@ -217,7 +217,7 @@
             <attribute name="jpda.jvmargs" default=""/>
 
             <sequential>
-                <java fork="true" jvm="${jdk.home}/bin/java" classname="@{mainclass}">
+                <java fork="true" jvm="${langtools.jdk.home}/bin/java" classname="@{mainclass}">
                     <jvmarg line="-Xpatch:@{build.modules}"/>
                     <jvmarg line="@{jpda.jvmargs}"/>
                     <arg line="@{args}"/>
