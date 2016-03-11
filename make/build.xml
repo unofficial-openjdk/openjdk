@@ -183,7 +183,9 @@
 
     <target name="build-all-classes" depends="generate-sources">
         <javac createMissingPackageInfoClass="false" includeantruntime="false" fork="yes" executable="${jdk.home}/bin/javac"
-            source="${javac.source}" target="${javac.target}" srcdir="${src.dir}" destdir="${build.modules}">
+            source="${javac.source}" target="${javac.target}" 
+            sourcepath=""
+            srcdir="${src.dir}" destdir="${build.modules}">
             <include name="**/*.java"/>
             <exclude name="sample/**/*.java"/>
             <different targetdir="${build.prevsrc}" ignoreFileTimes="false" ignoreContents="true"/>
