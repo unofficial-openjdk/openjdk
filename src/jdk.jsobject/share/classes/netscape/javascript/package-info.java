@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,21 +23,16 @@
  * questions.
  */
 
-package com.apple.concurrent;
+/**
+ * <p>
+ * Provides Java code the ability to access the JavaScript engine and the
+ * HTML DOM in the web browser.
+ * </p>
+ *
+ * <p>
+ * The classes in this package were initially specified by Netscape, and are the
+ * de facto standard mechanism for calling JavaScript from the Java runtime.
+ * </p>
+ */
 
-class LibDispatchRetainedResource {
-        protected long ptr;
-
-        protected LibDispatchRetainedResource(final long ptr) {
-                this.ptr = ptr;
-        }
-
-        protected synchronized void dispose() {
-                if (ptr != 0) LibDispatchNative.nativeReleaseQueue(ptr);
-                ptr = 0;
-        }
-
-        protected void finalize() throws Throwable {
-                dispose();
-        }
-}
+package netscape.javascript;
