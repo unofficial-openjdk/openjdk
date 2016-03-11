@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -93,20 +93,6 @@ public class BuilderFactory {
             PackageDoc nextPkg) throws Exception {
         return PackageSummaryBuilder.getInstance(context, pkg,
             writerFactory.getPackageSummaryWriter(pkg, prevPkg, nextPkg));
-    }
-
-    /**
-     * Return the builder that builds the module summary.
-     *
-     * @param module the module being documented.
-     * @param prevModule the previous module being documented.
-     * @param nextModule the next module being documented.
-     * @return the builder that builds the module summary.
-     */
-    public AbstractBuilder getModuleSummaryBuilder(String moduleName, String prevModuleName,
-            String nextModuleName) throws Exception {
-        return ModuleSummaryBuilder.getInstance(context, moduleName,
-            writerFactory.getModuleSummaryWriter(moduleName, prevModuleName, nextModuleName));
     }
 
     /**

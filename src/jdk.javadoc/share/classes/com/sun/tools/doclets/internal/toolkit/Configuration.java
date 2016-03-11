@@ -210,10 +210,6 @@ public abstract class Configuration {
      * used.Default is don't show version information.
      */
     public boolean showversion = false;
-    /**
-     * Generate modules documentation if more than one module is present.
-     */
-    public boolean showModules = false;
 
     /**
      * Don't generate deprecated API information at all, if -nodeprecated
@@ -280,11 +276,6 @@ public abstract class Configuration {
      * command-line.
      */
     public SortedSet<PackageDoc> packages;
-
-    /**
-     * A sorted set of modules containing the packages.
-     */
-    public Map<String, Set<PackageDoc>> modulePackages;
 
     public boolean exportInternalAPI;
 
@@ -373,22 +364,6 @@ public abstract class Configuration {
      */
     public abstract boolean validOptions(String options[][],
         DocErrorReporter reporter);
-
-    private void initModules() {
-        // Build the modules structure used by the doclet
-        modulePackages = new TreeMap<String, Set<PackageDoc>>();
-        for (PackageDoc p: packages) {
-            String moduleName = getModule(p);
-            if (moduleName != null && !moduleName.isEmpty()) {
-                Set<PackageDoc> s = modulePackages.get(moduleName);
-                if (s == null)
-                    modulePackages.put(moduleName, s = new TreeSet<>());
-                s.add(p);
-            }
-        }
-
-        showModules = (modulePackages.size() > 1);
-    }
 
     private void initPackages() {
         packages = new TreeSet<>(Arrays.asList(root.specifiedPackages()));
@@ -494,7 +469,6 @@ public abstract class Configuration {
      */
     public void setOptions() throws Fault {
         initPackages();
-        initModules();
         setOptions(root.options());
         setSpecificDocletOptions(root.options());
     }
@@ -914,7 +888,4 @@ public abstract class Configuration {
     public abstract boolean showMessage(SourcePosition pos, String key);
 
     public abstract Location getLocationForPackage(PackageDoc pd);
-
-    public abstract String getModule(ClassDoc classDoc);
-    public abstract String getModule(PackageDoc packageDoc);
 }

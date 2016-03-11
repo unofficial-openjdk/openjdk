@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -111,15 +111,6 @@ public class PackageWriterImpl extends HtmlDocletWriter
         }
         HtmlTree div = new HtmlTree(HtmlTag.DIV);
         div.addStyle(HtmlStyle.header);
-        String moduleName = configuration.getModule(packageDoc);
-        if (moduleName != null && !moduleName.isEmpty()) {
-            Content moduleNameContent = new HtmlTree(HtmlTag.P);
-            moduleNameContent.addContent(moduleLabel);
-            moduleNameContent.addContent(getSpace());
-            moduleNameContent.addContent(getTargetModuleLink("classFrame",
-                    new StringContent(moduleName), moduleName));
-            div.addContent(moduleNameContent);
-        }
         Content annotationContent = new HtmlTree(HtmlTag.P);
         addAnnotationInfo(packageDoc, annotationContent);
         div.addContent(annotationContent);

@@ -77,7 +77,6 @@ public enum HtmlStyle {
     memberNameLabel,
     memberNameLink,
     memberSummary,
-    moduleLabelInClass,
     nameValue,
     navBarCell1Rev,
     navList,
