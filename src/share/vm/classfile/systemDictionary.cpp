@@ -1146,6 +1146,7 @@ Klass* SystemDictionary::resolve_from_stream(Symbol* class_name,
   const char* pkg = "java/";
   if (!HAS_PENDING_EXCEPTION &&
       !class_loader.is_null() &&
+      !SystemDictionary::is_ext_class_loader(class_loader) &&
       parsed_name != NULL &&
       !strncmp((const char*)parsed_name->bytes(), pkg, strlen(pkg))) {
     // It is illegal to define classes in the "java." package from
