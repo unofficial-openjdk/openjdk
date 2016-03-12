@@ -1036,17 +1036,12 @@ public final class ServiceLoader<S>
 
     /**
      * Creates a new service loader for the given service type, using the
-     * extension class loader.
+     * {@linkplain ClassLoader#getPlatformClassLoader() platform class loader}.
      *
-     * <p> This convenience method simply locates the extension class loader,
-     * call it <tt><i>extClassLoader</i></tt>, and then returns
+     * <p> This convenience method simply returns
      *
      * <blockquote><pre>
-     * ServiceLoader.load(<i>service</i>, <i>extClassLoader</i>)</pre></blockquote>
-     *
-     * <p> If the extension class loader cannot be found then the system class
-     * loader is used; if there is no system class loader then the bootstrap
-     * class loader is used.
+     * ServiceLoader.load(<i>service</i>, {@link ClassLoader#getPlatformClassLoader()})</pre></blockquote>
      *
      * <p> This method is intended for use when only installed providers are
      * desired.  The resulting service will only find and load providers that
