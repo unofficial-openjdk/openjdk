@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016 Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -54,6 +54,10 @@ public class VersionTest {
             { "1.0-SNAPSHOT",   null },
             { "1.0.0-SNAPSHOT", null },
 
+            { "9-ea",           null },
+            { "9-ea+110",       null },
+            { "9.3.2.1+42-8839942", null}
+
         };
     }
 
@@ -70,27 +74,21 @@ public class VersionTest {
         };
     }
 
-    /**
-     * Test parsing a valid version string.
-     */
+    // Test parsing valid version strings
     @Test(dataProvider = "validVersions")
     public void testParseValidVersions(String vs, String ignore) {
         Version v = Version.parse(vs);
         assertEquals(v.toString(), vs);
     }
 
-    /**
-     * Test parsing an invalid version string.
-     */
+    // Test parsing an invalid version strings
     @Test(dataProvider = "invalidVersions",
           expectedExceptions = IllegalArgumentException.class )
     public void testParseInvalidVersions(String vs, String ignore) {
         Version.parse(vs);
     }
 
-    /**
-     * Test equals and hashCode
-     */
+    // Test equals and hashCode
     @Test(dataProvider = "validVersions")
     public void testEqualsAndHashCode(String vs, String ignore) {
 
@@ -108,15 +106,19 @@ public class VersionTest {
 
     }
 
-
     // ordered version strings
     @DataProvider(name = "orderedVersions")
     public Object[][] orderedVersions() {
         return new Object[][]{
 
             { "1.0",     "2.0" },
-            { "1.0",     "1.0-SNAPSHOT" },
-            { "1.0",     "1.0-SNAPSHOT2" },
+            { "1.0-SNAPSHOT", "1.0" },
+            { "1.0-SNAPSHOT2", "1.0" },
+            { "1.2.3-ea", "1.2.3" },
+            { "1.2.3-ea+104", "1.2.3-ea+105" },
+            { "1.2.3-ea+104-4084552", "1.2.3-ea+104-4084552+8849330" },
+            { "1+104", "1+105" },
+            { "1.0-alpha1", "1.0-alpha2" }
 
         };
     }
@@ -139,12 +141,12 @@ public class VersionTest {
 
     }
 
-
     // equal version strings
     @DataProvider(name = "equalVersions")
     public Object[][] equalVersions() {
         return new Object[][]{
 
+            { "1",             "1.0.0" },
             { "1.0",           "1.0.0" },
             { "1.0-beta",      "1.0.0-beta" },
 
@@ -169,4 +171,5 @@ public class VersionTest {
         assertEquals(v2, v1);
 
     }
+
 }

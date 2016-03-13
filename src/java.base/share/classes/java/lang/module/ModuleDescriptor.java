@@ -345,14 +345,51 @@ public class ModuleDescriptor
 
     }
 
-
+
 
     /**
-     * Vaguely Debian-like version strings, for now.
-     * This will, eventually, change.
+     * A module's version string.
      *
-     * @see <a href="http://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Version">Debian
-     * Policy Manual, Chapter 5: Control files and their fields</a>
+     * <p> A version string has three components: The version number itself, an
+     * optional pre-release version, and an optional build version.  Each
+     * component is sequence of tokens; each token is either a non-negative
+     * integer or a string.  Tokens are separated by the punctuation characters
+     * {@code '.'}, {@code '-'}, or {@code '+'}, or by transitions from a
+     * sequence of digits to a sequence of characters that are neither digits
+     * nor punctuation characters, or vice versa.
+     *
+     * <ul>
+     *
+     *   <li> The <i>version number</i> is a sequence of tokens separated by
+     *   {@code '.'} characters, terminated by the first {@code '-'} or {@code
+     *   '+'} character. </li>
+     *
+     *   <li> The <i>pre-release version</i> is a sequence of tokens separated
+     *   by {@code '.'} or {@code '-'} characters, terminated by the first
+     *   {@code '+'} character. </li>
+     *
+     *   <li> The <i>build version</i> is a sequence of tokens separated by
+     *   {@code '.'}, {@code '-'}, or {@code '+'} characters.
+     *
+     * </ul>
+     *
+     * <p> When comparing two version strings, the elements of their
+     * corresponding components are compared in pointwise fashion.  If one
+     * component is longer than the other, but otherwise equal to it, then the
+     * first component is considered the greater of the two; otherwise, if two
+     * corresponding elements are integers then they are compared as such;
+     * otherwise, at least one of the elements is a string, so the other is
+     * converted into a string if it is an integer and the two are compared
+     * lexicographically.  Trailing integer elements with the value zero are
+     * ignored.
+     *
+     * <p> Given two version strings, if their version numbers differ then the
+     * result of comparing them is the result of comparing their version
+     * numbers; otherwise, if one of them has a pre-release version but the
+     * other does not then the first is considered to precede the second,
+     * otherwise the result of comparing them is the result of comparing their
+     * pre-release versions; otherwise, the result of comparing them is the
+     * result of comparing their build versions.
      *
      * @see ModuleDescriptor#version()
      * @since 9
@@ -367,7 +404,8 @@ public class ModuleDescriptor
         // If Java had disjunctive types then we'd write List<Integer|String> here
         //
         private final List<Object> sequence;
-        private final List<Object> branch;
+        private final List<Object> pre;
+        private final List<Object> build;
 
         // Take a numeric token starting at position i
         // Append it to the given list
@@ -400,7 +438,7 @@ public class ModuleDescriptor
             int n = s.length();
             while (++i < n) {
                 char c = s.charAt(i);
-                if (c != '.' && c != '-' && !(c >= '0' && c <= '9'))
+                if (c != '.' && c != '-' && c != '+' && !(c >= '0' && c <= '9'))
                     continue;
                 break;
             }
@@ -408,13 +446,13 @@ public class ModuleDescriptor
             return i;
         }
 
-        // Version syntax, for now: tok+ ( '-' tok+)?
-        // First token string is sequence, second is branch
-        // Tokens are delimited by '.', or by changes between alpha & numeric
-        // chars
-        // Numeric tokens are compared as decimal numbers
+        // Syntax: tok+ ( '-' tok+)? ( '+' tok+)?
+        // First token string is sequence, second is pre, third is build
+        // Tokens are separated by '.' or '-', or by changes between alpha & numeric
+        // Numeric tokens are compared as decimal integers
         // Non-numeric tokens are compared lexicographically
-        // Tokens in branch may contain '-'
+        // A version with a non-empty pre is less than a version with same seq but no pre
+        // Tokens in build may contain '-' and '+'
         //
         private Version(String v) {
 
@@ -427,13 +465,13 @@ public class ModuleDescriptor
             int i = 0;
             char c = v.charAt(i);
             if (!(c >= '0' && c <= '9'))
-                throw new
-                        IllegalArgumentException(v
-                        + ": Version does not start"
-                        + " with a number");
+                throw new IllegalArgumentException(v
+                                                   + ": Version string does not start"
+                                                   + " with a number");
 
             List<Object> sequence = new ArrayList<>(4);
-            List<Object> branch = new ArrayList<>(2);
+            List<Object> pre = new ArrayList<>(2);
+            List<Object> build = new ArrayList<>(2);
 
             i = takeNumber(v, i, sequence);
 
@@ -443,7 +481,7 @@ public class ModuleDescriptor
                     i++;
                     continue;
                 }
-                if (c == '-') {
+                if (c == '-' || c == '+') {
                     i++;
                     break;
                 }
@@ -454,18 +492,40 @@ public class ModuleDescriptor
             }
 
             if (c == '-' && i >= n)
-                throw new IllegalArgumentException(v + ": Empty branch");
+                throw new IllegalArgumentException(v + ": Empty pre-release");
 
             while (i < n) {
                 c = v.charAt(i);
                 if (c >= '0' && c <= '9')
-                    i = takeNumber(v, i, branch);
+                    i = takeNumber(v, i, pre);
                 else
-                    i = takeString(v, i, branch);
+                    i = takeString(v, i, pre);
                 if (i >= n)
                     break;
                 c = v.charAt(i);
-                if (c == '.') {
+                if (c == '.' || c == '-') {
+                    i++;
+                    continue;
+                }
+                if (c == '+') {
+                    i++;
+                    break;
+                }
+            }
+
+            if (c == '+' && i >= n)
+                throw new IllegalArgumentException(v + ": Empty pre-release");
+
+            while (i < n) {
+                c = v.charAt(i);
+                if (c >= '0' && c <= '9')
+                    i = takeNumber(v, i, build);
+                else
+                    i = takeString(v, i, build);
+                if (i >= n)
+                    break;
+                c = v.charAt(i);
+                if (c == '.' || c == '-' || c == '+') {
                     i++;
                     continue;
                 }
@@ -473,14 +533,15 @@ public class ModuleDescriptor
 
             this.version = v;
             this.sequence = sequence;
-            this.branch = branch;
+            this.pre = pre;
+            this.build = build;
         }
 
         /**
          * Parses the given string as a version string.
          *
          * @param  v
-         *         The string to parse as a version string
+         *         The string to parse
          *
          * @return The resulting {@code Version}
          *
@@ -502,8 +563,9 @@ public class ModuleDescriptor
             for (int i = 0; i < n; i++) {
                 Object o1 = ts1.get(i);
                 Object o2 = ts2.get(i);
-                if (   (o1 instanceof Integer && o2 instanceof Integer)
-                        || (o1 instanceof String && o2 instanceof String)) {
+                if ((o1 instanceof Integer && o2 instanceof Integer)
+                    || (o1 instanceof String && o2 instanceof String))
+                {
                     int c = cmp(o1, o2);
                     if (c == 0)
                         continue;
@@ -529,9 +591,15 @@ public class ModuleDescriptor
         @Override
         public int compareTo(Version that) {
             int c = compareTokens(this.sequence, that.sequence);
-            if (c != 0)
-                return c;
-            return compareTokens(this.branch, that.branch);
+            if (c != 0) return c;
+            if (this.pre.isEmpty()) {
+                if (!that.pre.isEmpty()) return +1;
+            } else {
+                if (that.pre.isEmpty()) return -1;
+            }
+            c = compareTokens(this.pre, that.pre);
+            if (c != 0) return c;
+            return compareTokens(this.build, that.build);
         }
 
         @Override
