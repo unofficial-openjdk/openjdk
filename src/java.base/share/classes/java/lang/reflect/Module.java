@@ -548,7 +548,7 @@ public final class Module {
      *
      * <p> This method has no effect if the package is already exported to the
      * given module. If also has no effect if invoked on an unnamed module (as
-     * unnamed modules export all packages. </p>
+     * unnamed modules export all packages). </p>
      *
      * @param  pn
      *         The package name
