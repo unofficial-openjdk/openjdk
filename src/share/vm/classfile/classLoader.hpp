@@ -37,7 +37,7 @@
 #define  MODULES_IMAGE_NAME "modules"
 
 // Name of the resource containing mapping from module names to defining class loader type
-#define MODULE_LOADER_MAP "jdk/internal/module/ModuleLoaderMap.dat"
+#define MODULE_LOADER_MAP "jdk/internal/vm/cds/resources/ModuleLoaderMap.dat"
 
 // Initial sizes of the following arrays are based on the generated ModuleLoaderMap.dat
 #define INITIAL_BOOT_MODULES_ARRAY_SIZE 30
@@ -210,8 +210,8 @@ class ClassLoader: AllStatic {
   // Array of module names associated with the boot class loader
   CDS_ONLY(static GrowableArray<char*>* _boot_modules_array;)
 
-  // Array of module names associated with the ext class loader
-  CDS_ONLY(static GrowableArray<char*>* _ext_modules_array;)
+  // Array of module names associated with the platform class loader
+  CDS_ONLY(static GrowableArray<char*>* _platform_modules_array;)
 
   // Info used by CDS
   CDS_ONLY(static SharedPathsMiscInfo * _shared_paths_misc_info;)

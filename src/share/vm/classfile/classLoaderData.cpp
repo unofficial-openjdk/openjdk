@@ -31,7 +31,7 @@
 //
 // Class loaders that implement a deterministic name resolution strategy
 // (including with respect to their delegation behavior), such as the boot, the
-// extension, and the system loaders of the JDK's built-in class loader
+// platform, and the system loaders of the JDK's built-in class loader
 // hierarchy, always produce the same linkset for a given configuration.
 //
 // ClassLoaderData carries information related to a linkset (e.g.,
@@ -470,10 +470,10 @@ ClassLoaderData::~ClassLoaderData() {
 }
 
 /**
- * Returns true if this class loader data is for the extension class loader.
+ * Returns true if this class loader data is for the platform class loader.
  */
-bool ClassLoaderData::is_ext_class_loader_data() const {
-  return SystemDictionary::is_ext_class_loader(class_loader());
+bool ClassLoaderData::is_platform_class_loader_data() const {
+  return SystemDictionary::is_platform_class_loader(class_loader());
 }
 
 Metaspace* ClassLoaderData::metaspace_non_null() {

@@ -123,8 +123,8 @@
   template(sun_misc_PostVMInitHook,                   "sun/misc/PostVMInitHook")                  \
   template(sun_net_www_ParseUtil,                     "sun/net/www/ParseUtil")                    \
                                                                                                   \
-  template(jdk_internal_loader_ClassLoaders_AppClassLoader,      "jdk/internal/loader/ClassLoaders$AppClassLoader")     \
-  template(jdk_internal_loader_ClassLoaders_ExtClassLoader,      "jdk/internal/loader/ClassLoaders$ExtClassLoader")     \
+  template(jdk_internal_loader_ClassLoaders_AppClassLoader,      "jdk/internal/loader/ClassLoaders$AppClassLoader")      \
+  template(jdk_internal_loader_ClassLoaders_PlatformClassLoader, "jdk/internal/loader/ClassLoaders$PlatformClassLoader") \
                                                                                                   \
   /* Java runtime version access */                                                               \
   template(java_lang_VersionProps,                    "java/lang/VersionProps")                   \
