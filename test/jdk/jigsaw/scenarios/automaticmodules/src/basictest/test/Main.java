@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,6 @@
 
 package test;
 
-import java.lang.module.ModuleDescriptor;
 import java.lang.reflect.Layer;
 import java.lang.reflect.Module;
 
@@ -41,15 +40,16 @@ public class Main {
         // automatic modules are named
         assertTrue(httpModule.isNamed());
 
-        // and loose
-        assertTrue(httpModule.canRead(null));
+        // and read all unnamed modules
+        ClassLoader cl;
+        cl = ClassLoader.getPlatformClassLoader();
+        assertTrue(httpModule.canRead(cl.getUnnamedModule()));
+        cl = ClassLoader.getSystemClassLoader();
+        assertTrue(httpModule.canRead(cl.getUnnamedModule()));
 
         // and read all modules in the boot Layer
         Layer layer = Layer.boot();
-        layer.configuration().descriptors().stream()
-                .map(ModuleDescriptor::name)
-                .map(layer::findModule)
-                .forEach(om -> assertTrue(httpModule.canRead(om.get())));
+        layer.modules().forEach(m -> assertTrue(httpModule.canRead(m)));
 
         // run code in the automatic modue, ensures access is allowed
         HttpServer http = HttpServer.create(80);

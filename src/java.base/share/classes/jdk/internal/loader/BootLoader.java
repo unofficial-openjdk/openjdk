@@ -169,7 +169,6 @@ public class BootLoader {
      */
     static class PackageHelper {
         private static final JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
-        private static final Layer BOOT_LAYER = getBootLayer();
 
         /**
          * Define the {@code Package} with the given name. The specified
@@ -207,24 +206,24 @@ public class BootLoader {
          * Otherwise this method returns null.
          */
         private static Module findModule(String location) {
-            String moduleName = null;
+            String mn = null;
             if (location.startsWith("jrt:/")) {
                 // named module in runtime image ("jrt:/".length() == 5)
-                moduleName = location.substring(5, location.length());
+                mn = location.substring(5, location.length());
             } else {
                 // named module in exploded image
                 Path path = Paths.get(location);
                 Path modulesDir = Paths.get(JAVA_HOME, "modules");
                 if (path.startsWith(modulesDir)) {
-                    moduleName = path.getFileName().toString();
+                    mn = path.getFileName().toString();
                 }
             }
 
-            if (moduleName != null) {
+            if (mn != null) {
                 // named module from runtime image or exploded module
-                Optional<Module> om = BOOT_LAYER.findModule(moduleName);
+                Optional<Module> om = Layer.boot().findModule(mn);
                 if (!om.isPresent())
-                    throw new InternalError();
+                    throw new InternalError(mn + " not in boot layer");
                 return om.get();
             }
 
@@ -265,12 +264,7 @@ public class BootLoader {
                 }
             });
         }
-
-        private static Layer getBootLayer() {
-            PrivilegedAction<Layer> pa = () -> Layer.boot();
-            return AccessController.doPrivileged(pa);
-        }
-    };
+    }
 
     /**
      * Returns an array of the binary name of the packages defined by

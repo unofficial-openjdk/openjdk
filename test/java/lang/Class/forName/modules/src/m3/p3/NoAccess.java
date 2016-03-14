@@ -32,6 +32,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.AccessControlException;
 import java.security.Permission;
+import java.util.Set;
 
 public class NoAccess {
     private static final Module M3 = NoAccess.class.getModule();
@@ -44,22 +45,25 @@ public class NoAccess {
             System.setSecurityManager(null);
         }
 
-        Layer boot = Layer.boot();
         ModuleFinder finder = ModuleFinder.of(Paths.get("mods1"), Paths.get("mods2"));
-        Configuration cf = Configuration
-                .resolve(finder, boot.configuration(), ModuleFinder.empty(), "m1", "m2")
-                .bind();
+
+        Layer bootLayer = Layer.boot();
+        Configuration parent = bootLayer.configuration();
+
+        Configuration cf = parent.resolveRequiresAndUses(finder,
+                                                         ModuleFinder.empty(),
+                                                         Set.of("m1", "m2"));
 
         ClassLoader scl = ClassLoader.getSystemClassLoader();
-        Layer layer = Layer.createWithManyLoaders(cf, boot, scl);
+        Layer layer = bootLayer.defineModulesWithManyLoaders(cf, scl);
 
         if (sm != null) {
             System.setSecurityManager(sm);
         }
 
-        Module m1 = boot.findModule("m1").get();
-        Module m2 = boot.findModule("m2").get();
-        Module m3 = boot.findModule("m3").get();
+        Module m1 = bootLayer.findModule("m1").get();
+        Module m2 = bootLayer.findModule("m2").get();
+        Module m3 = bootLayer.findModule("m3").get();
 
         findClass(m1, "p1.internal.B");
         findClass(m2, "p2.C");

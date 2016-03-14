@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,10 +21,8 @@
  * questions.
  */
 
-import java.io.File;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleFinder;
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Layer;
 import java.lang.reflect.Proxy;
 import java.nio.file.Path;
@@ -90,11 +88,13 @@ public class ProxyClassAccessTest {
     @Test
     public void testNoReadAccess() throws Exception {
         ModuleFinder finder = ModuleFinder.of(MODS_DIR);
-        Configuration cf = Configuration
-                .resolve(ModuleFinder.empty(), Layer.boot().configuration(), finder, modules).bind();
+        Layer bootLayer = Layer.boot();
+        Configuration cf = bootLayer
+                .configuration()
+                .resolveRequiresAndUses(ModuleFinder.empty(), finder, modules);
+        ClassLoader parentLoader = this.getClass().getClassLoader();
+        Layer layer = bootLayer.defineModulesWithOneLoader(cf, parentLoader);
 
-        ClassLoader parent = this.getClass().getClassLoader();
-        Layer layer = Layer.createWithOneLoader(cf, Layer.boot(), parent);
         ClassLoader loader = layer.findLoader("m1");
         Class<?>[] interfaces = new Class<?>[] {
                 Class.forName("p.one.I", false, loader),

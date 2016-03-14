@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,7 @@
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
+import static java.lang.module.ModuleFinder.empty;
 import java.lang.reflect.Layer;
 import java.lang.reflect.LayerInstantiationException;
 import java.lang.reflect.Module;
@@ -76,9 +77,12 @@ public class BasicLayerTest {
 
         // configuration
         Configuration cf = bootLayer.configuration();
-        assertTrue(cf.findDescriptor("java.base").get().exports()
-                   .stream().anyMatch(e -> (e.source().equals("java.lang")
-                                            && !e.isQualified())));
+        assertTrue(cf.findModule("java.base").get()
+                .reference()
+                .descriptor()
+                .exports()
+                .stream().anyMatch(e -> (e.source().equals("java.lang")
+                                         && !e.isQualified())));
 
         // modules
         Set<Module> modules = bootLayer.modules();
@@ -121,11 +125,7 @@ public class BasicLayerTest {
         ModuleFinder finder
             = ModuleUtils.finderOf(descriptor1, descriptor2, descriptor3);
 
-        Configuration cf
-            = Configuration.resolve(finder,
-                                    Configuration.empty(),
-                                    ModuleFinder.empty(),
-                                    "m1");
+        Configuration cf = resolveRequires(finder, "m1");
 
         // map each module to its own class loader for this test
         ClassLoader loader1 = new ClassLoader() { };
@@ -136,11 +136,11 @@ public class BasicLayerTest {
         map.put("m2", loader2);
         map.put("m3", loader3);
 
-        Layer layer = Layer.create(cf, Layer.empty(), map::get);
+        Layer layer = Layer.empty().defineModules(cf, map::get);
 
         // configuration
         assertTrue(layer.configuration() == cf);
-        assertTrue(layer.configuration().descriptors().size() == 3);
+        assertTrue(layer.configuration().modules().size() == 3);
 
         // modules
         Set<Module> modules = layer.modules();
@@ -203,19 +203,16 @@ public class BasicLayerTest {
         ModuleFinder finder
             = ModuleUtils.finderOf(descriptor1, descriptor2);
 
-        Configuration cf
-            = Configuration.resolve(finder,
-                                    Layer.boot().configuration(),
-                                    ModuleFinder.empty(),
-                                    "m1");
+        Configuration parent = Layer.boot().configuration();
+        Configuration cf = resolveRequires(parent, finder, "m1");
 
         ClassLoader loader = new ClassLoader() { };
 
-        Layer layer = Layer.create(cf, Layer.boot(), mn -> loader);
+        Layer layer = Layer.boot().defineModules(cf, mn -> loader);
 
         // configuration
         assertTrue(layer.configuration() == cf);
-        assertTrue(layer.configuration().descriptors().size() == 2);
+        assertTrue(layer.configuration().modules().size() == 2);
 
         // modules
         Set<Module> modules = layer.modules();
@@ -269,20 +266,16 @@ public class BasicLayerTest {
         ModuleFinder finder
             = ModuleUtils.finderOf(descriptor1, descriptor2);
 
-        Configuration cf
-            = Configuration.resolve(finder,
-                                    Configuration.empty(),
-                                    ModuleFinder.empty(),
-                                    "m1");
-        assertTrue(cf.descriptors().size() == 2);
+        Configuration cf = resolveRequires(finder, "m1");
+        assertTrue(cf.modules().size() == 2);
 
         // one loader per module, should be okay
-        Layer.create(cf, Layer.empty(), mn -> new ClassLoader() { });
+        Layer.empty().defineModules(cf, mn -> new ClassLoader() { });
 
         // same class loader
         try {
             ClassLoader loader = new ClassLoader() { };
-            Layer.create(cf, Layer.empty(), mn -> loader);
+            Layer.empty().defineModules(cf, mn -> loader);
             assertTrue(false);
         } catch (LayerInstantiationException expected) { }
     }
@@ -320,15 +313,11 @@ public class BasicLayerTest {
                                    descriptor3,
                                    descriptor4);
 
-        Configuration cf
-            = Configuration.resolve(finder,
-                                    Configuration.empty(),
-                                    ModuleFinder.empty(),
-                                    "m1", "m3");
-        assertTrue(cf.descriptors().size() == 4);
+        Configuration cf = resolveRequires(finder, "m1", "m3");
+        assertTrue(cf.modules().size() == 4);
 
         // one loader per module
-        Layer.create(cf, Layer.empty(), mn -> new ClassLoader() {} );
+        Layer.empty().defineModules(cf, mn -> new ClassLoader() { });
 
         // m1 & m2 in one loader, m3 & m4 in another loader
         ClassLoader loader1 = new ClassLoader() { };
@@ -338,12 +327,12 @@ public class BasicLayerTest {
         map.put("m2", loader1);
         map.put("m3", loader2);
         map.put("m3", loader2);
-        Layer.create(cf, Layer.empty(), map::get);
+        Layer.empty().defineModules(cf, map::get);
 
         // same loader
         try {
             ClassLoader loader = new ClassLoader() { };
-            Layer.create(cf, Layer.empty(), mn -> loader);
+            Layer.empty().defineModules(cf, mn -> loader);
             assertTrue(false);
         } catch (LayerInstantiationException expected) { }
     }
@@ -360,7 +349,6 @@ public class BasicLayerTest {
         ModuleDescriptor base = Object.class.getModule().getDescriptor();
         assertTrue(base.conceals().contains("sun.launcher"));
 
-
         ModuleDescriptor descriptor
             = new ModuleDescriptor.Builder("m1")
                .requires("java.base")
@@ -370,13 +358,11 @@ public class BasicLayerTest {
         ModuleFinder finder = ModuleUtils.finderOf(descriptor);
 
         Configuration parent = Layer.boot().configuration();
-
-        Configuration cf
-            = Configuration.resolve(finder, parent, ModuleFinder.empty(), "m1");
-        assertTrue(cf.descriptors().size() == 1);
+        Configuration cf = parent.resolveRequires(finder, empty(), Set.of("m1"));
+        assertTrue(cf.modules().size() == 1);
 
         ClassLoader loader = new ClassLoader() { };
-        Layer layer = Layer.create(cf, Layer.boot(), mn -> loader);
+        Layer layer = Layer.boot().defineModules(cf, mn -> loader);
         assertTrue(layer.modules().size() == 1);
    }
 
@@ -403,14 +389,10 @@ public class BasicLayerTest {
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
 
-        Configuration cf1
-            = Configuration.resolve(finder1,
-                                    Configuration.empty(),
-                                    ModuleFinder.empty(),
-                                    "m2");
+        Configuration cf1 = resolveRequires(finder1, "m2");
 
         ClassLoader cl1 = new ClassLoader() { };
-        Layer layer1 = Layer.create(cf1, Layer.empty(), mn -> cl1);
+        Layer layer1 = Layer.empty().defineModules(cf1, mn -> cl1);
 
 
         // cf2: m3, m3 requires m2
@@ -422,11 +404,10 @@ public class BasicLayerTest {
 
         ModuleFinder finder2 = ModuleUtils.finderOf(descriptor3);
 
-        Configuration cf2
-            = Configuration.resolve(finder2, cf1, ModuleFinder.empty(), "m3");
+        Configuration cf2 = resolveRequires(cf1, finder2, "m3");
 
         ClassLoader cl2 = new ClassLoader() { };
-        Layer layer2 = Layer.create(cf2, layer1, mn -> cl2);
+        Layer layer2 = layer1.defineModules(cf2, mn -> cl2);
 
         assertTrue(layer1.parent().get() == Layer.empty());
         assertTrue(layer2.parent().get() == layer1);
@@ -474,14 +455,10 @@ public class BasicLayerTest {
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1);
 
-        Configuration cf1
-            = Configuration.resolve(finder1,
-                                    Configuration.empty(),
-                                    ModuleFinder.empty(),
-                                    "m1");
+        Configuration cf1 = resolveRequires(finder1, "m1");
 
         ClassLoader cl1 = new ClassLoader() { };
-        Layer layer1 = Layer.create(cf1, Layer.empty(), mn -> cl1);
+        Layer layer1 = Layer.empty().defineModules(cf1, mn -> cl1);
 
 
         // cf2: m2, m3: m2 requires public m1, m3 requires m2
@@ -498,11 +475,10 @@ public class BasicLayerTest {
 
         ModuleFinder finder2 = ModuleUtils.finderOf(descriptor2, descriptor3);
 
-        Configuration cf2
-            = Configuration.resolve(finder2, cf1, ModuleFinder.empty(), "m3");
+        Configuration cf2 = resolveRequires(cf1, finder2, "m3");
 
         ClassLoader cl2 = new ClassLoader() { };
-        Layer layer2 = Layer.create(cf2, layer1, mn -> cl2);
+        Layer layer2 = layer1.defineModules(cf2, mn -> cl2);
 
         assertTrue(layer1.parent().get() == Layer.empty());
         assertTrue(layer2.parent().get() == layer1);
@@ -547,14 +523,10 @@ public class BasicLayerTest {
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1);
 
-        Configuration cf1
-            = Configuration.resolve(finder1,
-                                    Configuration.empty(),
-                                    ModuleFinder.empty(),
-                                    "m1");
+        Configuration cf1 = resolveRequires(finder1, "m1");
 
         ClassLoader cl1 = new ClassLoader() { };
-        Layer layer1 = Layer.create(cf1, Layer.empty(), mn -> cl1);
+        Layer layer1 = Layer.empty().defineModules(cf1, mn -> cl1);
 
 
         // cf2: m2 requires public m1
@@ -566,11 +538,10 @@ public class BasicLayerTest {
 
         ModuleFinder finder2 = ModuleUtils.finderOf(descriptor2);
 
-        Configuration cf2
-            = Configuration.resolve(finder2, cf1, ModuleFinder.empty(), "m2");
+        Configuration cf2 = resolveRequires(cf1, finder2, "m2");
 
         ClassLoader cl2 = new ClassLoader() { };
-        Layer layer2 = Layer.create(cf2, layer1, mn -> cl2);
+        Layer layer2 = layer1.defineModules(cf2, mn -> cl2);
 
 
         // cf3: m3 requires m2
@@ -582,11 +553,10 @@ public class BasicLayerTest {
 
         ModuleFinder finder3 = ModuleUtils.finderOf(descriptor3);
 
-        Configuration cf3
-            = Configuration.resolve(finder3, cf2, ModuleFinder.empty(), "m3");
+        Configuration cf3 = resolveRequires(cf2, finder3, "m3");
 
         ClassLoader cl3 = new ClassLoader() { };
-        Layer layer3 = Layer.create(cf3, layer2, mn -> cl3);
+        Layer layer3 = layer2.defineModules(cf3, mn -> cl3);
 
         assertTrue(layer1.parent().get() == Layer.empty());
         assertTrue(layer2.parent().get() == layer1);
@@ -636,14 +606,10 @@ public class BasicLayerTest {
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
 
-        Configuration cf1
-            = Configuration.resolve(finder1,
-                                    Configuration.empty(),
-                                    ModuleFinder.empty(),
-                                    "m2");
+        Configuration cf1 = resolveRequires(finder1, "m2");
 
         ClassLoader cl1 = new ClassLoader() { };
-        Layer layer1 = Layer.create(cf1, Layer.empty(), mn -> cl1);
+        Layer layer1 = Layer.empty().defineModules(cf1, mn -> cl1);
 
 
         // cf2: m3 requires public m2, m4 requires m3
@@ -661,11 +627,10 @@ public class BasicLayerTest {
 
         ModuleFinder finder2 = ModuleUtils.finderOf(descriptor3, descriptor4);
 
-        Configuration cf2
-            = Configuration.resolve(finder2, cf1, ModuleFinder.empty(),  "m3", "m4");
+        Configuration cf2 = resolveRequires(cf1, finder2, "m3", "m4");
 
         ClassLoader cl2 = new ClassLoader() { };
-        Layer layer2 = Layer.create(cf2, layer1, mn -> cl2);
+        Layer layer2 = layer1.defineModules(cf2, mn -> cl2);
 
         assertTrue(layer1.parent().get() == Layer.empty());
         assertTrue(layer2.parent().get() == layer1);
@@ -719,15 +684,14 @@ public class BasicLayerTest {
 
         Configuration parent = Layer.boot().configuration();
 
-        Configuration cf
-            = Configuration.resolve(finder, parent, ModuleFinder.empty(), "m");
+        Configuration cf = parent.resolveRequires(finder, empty(), Set.of("m"));
 
         ClassLoader loader = new ClassLoader() { };
 
-        Layer.create(cf, Layer.boot(), mn -> loader);
+        Layer.boot().defineModules(cf, mn -> loader);
 
         // should throw LayerInstantiationException as m1 already defined to loader
-        Layer.create(cf, Layer.boot(), mn -> loader);
+        Layer.boot().defineModules(cf, mn -> loader);
 
     }
 
@@ -760,18 +724,16 @@ public class BasicLayerTest {
 
         Configuration parent = Layer.boot().configuration();
 
-        Configuration cf1
-            = Configuration.resolve(finder, parent, ModuleFinder.empty(), "m1");
+        Configuration cf1 = parent.resolveRequires(finder, empty(), Set.of("m1"));
 
-        Layer layer1 = Layer.create(cf1, Layer.boot(), mn -> loader);
+        Layer layer1 = Layer.boot().defineModules(cf1, mn -> loader);
 
         // attempt to define m2 containing package p to class loader
 
-        Configuration cf2
-            = Configuration.resolve(finder, parent, ModuleFinder.empty(), "m2");
+        Configuration cf2 = parent.resolveRequires(finder, empty(), Set.of("m2"));
 
         // should throw exception because p already in m1
-        Layer layer2 = Layer.create(cf2, Layer.boot(), mn -> loader);
+        Layer layer2 = Layer.boot().defineModules(cf2, mn -> loader);
 
     }
 
@@ -794,13 +756,10 @@ public class BasicLayerTest {
 
         ModuleFinder finder = ModuleUtils.finderOf(md);
 
-        Configuration cf
-            = Configuration.resolve(finder,
-                                    Layer.boot().configuration(),
-                                    ModuleFinder.empty(),
-                                    "m");
+        Configuration parent = Layer.boot().configuration();
+        Configuration cf = parent.resolveRequires(finder, empty(), Set.of("m"));
 
-        Layer.create(cf, Layer.boot(), mn -> c.getClassLoader());
+        Layer.boot().defineModules(cf, mn -> c.getClassLoader());
     }
 
 
@@ -817,14 +776,11 @@ public class BasicLayerTest {
 
         ModuleFinder finder = ModuleUtils.finderOf(descriptor1);
 
-        Configuration cf
-            = Configuration.resolve(finder,
-                                    Layer.boot().configuration(),
-                                    ModuleFinder.empty(),
-                                    "m1");
+        Configuration parent = Layer.boot().configuration();
+        Configuration cf = parent.resolveRequires(finder, empty(), Set.of("m1"));
 
         ClassLoader loader = new ClassLoader() { };
-        Layer.create(cf, Layer.empty(), mn -> loader);
+        Layer.empty().defineModules(cf, mn -> loader);
     }
 
 
@@ -840,14 +796,10 @@ public class BasicLayerTest {
 
         ModuleFinder finder = ModuleUtils.finderOf(descriptor1);
 
-        Configuration cf
-            = Configuration.resolve(finder,
-                                    Configuration.empty(),
-                                    ModuleFinder.empty(),
-                                    "m1");
+        Configuration cf = resolveRequires(finder, "m1");
 
         ClassLoader loader = new ClassLoader() { };
-        Layer.create(cf, Layer.boot(), mn -> loader);
+        Layer.boot().defineModules(cf, mn -> loader);
     }
 
 
@@ -856,46 +808,26 @@ public class BasicLayerTest {
     @Test(expectedExceptions = { NullPointerException.class })
     public void testCreateWithNull1() {
         ClassLoader loader = new ClassLoader() { };
-        Layer.create(null, Layer.empty(), mn -> loader);
+        Layer.empty().defineModules(null, mn -> loader);
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
     public void testCreateWithNull2() {
         ClassLoader loader = new ClassLoader() { };
-        Layer.create(Configuration.empty(), null, mn -> loader);
+        Configuration cf = resolveRequires(Layer.boot().configuration(), empty());
+        Layer.boot().defineModules(cf, null);
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
     public void testCreateWithNull3() {
-        Configuration cf
-            = Configuration.resolve(ModuleFinder.empty(),
-                                    Layer.boot().configuration(),
-                                    ModuleFinder.empty());
-        Layer.create(cf, Layer.boot(), null);
+        ClassLoader scl = ClassLoader.getSystemClassLoader();
+        Layer.empty().defineModulesWithOneLoader(null, scl);
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
     public void testCreateWithNull4() {
         ClassLoader scl = ClassLoader.getSystemClassLoader();
-        Layer.createWithOneLoader(null, Layer.empty(), scl);
-    }
-
-    @Test(expectedExceptions = { NullPointerException.class })
-    public void testCreateWithNull5() {
-        ClassLoader scl = ClassLoader.getSystemClassLoader();
-        Layer.createWithOneLoader(Configuration.empty(), null, scl);
-    }
-
-    @Test(expectedExceptions = { NullPointerException.class })
-    public void testCreateWithNull6() {
-        ClassLoader scl = ClassLoader.getSystemClassLoader();
-        Layer.createWithManyLoaders(null, Layer.empty(), scl);
-    }
-
-    @Test(expectedExceptions = { NullPointerException.class })
-    public void testCreateWithNull7() {
-        ClassLoader scl = ClassLoader.getSystemClassLoader();
-        Layer.createWithManyLoaders(Configuration.empty(), null, scl);
+        Layer.empty().defineModulesWithManyLoaders(null, scl);
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
@@ -917,4 +849,19 @@ public class BasicLayerTest {
         Layer.boot().modules().add(base);
     }
 
+
+    /**
+     * Resolve the given modules, by name, and returns the resulting
+     * Configuration.
+     */
+    private static Configuration resolveRequires(Configuration cf,
+                                                 ModuleFinder finder,
+                                                 String... roots) {
+        return cf.resolveRequires(finder, empty(), Set.of(roots));
+    }
+
+    private static Configuration resolveRequires(ModuleFinder finder,
+                                                 String... roots) {
+        return resolveRequires(Configuration.empty(), finder, roots);
+    }
 }

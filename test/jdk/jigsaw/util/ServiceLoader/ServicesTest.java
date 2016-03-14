@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ServiceLoader;
+import java.util.Set;
 import javax.script.ScriptEngineFactory;
 
 import static jdk.testlibrary.ProcessTools.executeTestJava;
@@ -153,9 +154,13 @@ public class ServicesTest {
 
         // create a custom Layer
         ModuleFinder finder = ModuleFinder.of(MODS_DIR);
-        Configuration cf = Configuration
-            .resolve(finder, Layer.boot().configuration(), ModuleFinder.empty()).bind();
-        Layer layer = Layer.createWithOneLoader(cf, Layer.boot(), ClassLoader.getSystemClassLoader());
+        Layer bootLayer = Layer.boot();
+        Configuration parent = bootLayer.configuration();
+        Configuration cf
+            = parent.resolveRequiresAndUses(finder, ModuleFinder.empty(), Set.of());
+        ClassLoader scl = ClassLoader.getSystemClassLoader();
+        Layer layer = bootLayer.defineModulesWithOneLoader(cf, scl);
+
         assertTrue(layer.findModule("bananascript").isPresent());
         ClassLoader loader = layer.findLoader("bananascript");
 

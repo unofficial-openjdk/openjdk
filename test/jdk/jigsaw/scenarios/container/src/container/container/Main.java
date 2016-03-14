@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,11 +26,13 @@ package container;
 import java.io.File;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleFinder;
-import java.lang.module.ModuleDescriptor;
+import java.lang.module.ResolvedModule;
 import java.lang.reflect.Layer;
 import java.lang.reflect.Method;
+import java.lang.reflect.Module;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Set;
 
 /**
  * Exercises dynamic configuration.
@@ -42,10 +44,10 @@ public class Main {
 
         System.out.println("Boot layer");
         Layer.boot()
-             .configuration()
-             .descriptors()
+             .modules()
              .stream()
-             .map(ModuleDescriptor::name)
+             .map(Module::getName)
+             .sorted()
              .forEach(System.out::println);
 
         // "start" two applications in their own layers
@@ -68,19 +70,20 @@ public class Main {
 
         ModuleFinder finder = ModuleFinder.of(paths);
 
-        Configuration cf = Configuration.resolve(finder,
-                Layer.boot().configuration(),
-                ModuleFinder.empty(),
-                appModuleName);
-        cf = cf.bind();
+        Configuration cf = Layer.boot().configuration()
+            .resolveRequiresAndUses(finder,
+                                    ModuleFinder.empty(),
+                                    Set.of(appModuleName));
 
         System.out.println("Resolved");
-        cf.descriptors()
-          .forEach(md -> System.out.format("  %s%n", md.name()));
+        cf.modules().stream()
+          .map(ResolvedModule::name)
+          .sorted()
+          .forEach(mn -> System.out.format("  %s%n", mn));
 
         // reify the configuration as a Layer
-        Layer layer = Layer.createWithManyLoaders(cf, Layer.boot(),
-                ClassLoader.getSystemClassLoader());
+        ClassLoader scl = ClassLoader.getSystemClassLoader();
+        Layer layer = Layer.boot().defineModulesWithManyLoaders(cf, scl);
 
         // invoke application main method
         ClassLoader loader = layer.findLoader(appModuleName);

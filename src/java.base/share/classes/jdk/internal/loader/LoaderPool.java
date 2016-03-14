@@ -27,6 +27,7 @@ package jdk.internal.loader;
 
 import java.lang.module.Configuration;
 import java.lang.module.ModuleReference;
+import java.lang.module.ResolvedModule;
 import java.lang.reflect.Layer;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,7 +36,7 @@ import java.util.stream.Stream;
 /**
  * A pool of class loaders.
  *
- * @see Layer#createWithManyLoaders
+ * @see Layer#defineModulesWithManyLoaders
  */
 
 public final class LoaderPool {
@@ -54,9 +55,10 @@ public final class LoaderPool {
                       ClassLoader parentLoader)
     {
         Map<String, Loader> loaders = new HashMap<>();
-        for (ModuleReference mref : cf.modules()) {
-            Loader loader = new Loader(mref, this, parentLoader);
-            loaders.put(mref.descriptor().name(), loader);
+        for (ResolvedModule resolvedModule : cf.modules()) {
+            Loader loader = new Loader(resolvedModule, this, parentLoader);
+            String mn = resolvedModule.name();
+            loaders.put(mn, loader);
         }
         this.loaders = loaders;
 

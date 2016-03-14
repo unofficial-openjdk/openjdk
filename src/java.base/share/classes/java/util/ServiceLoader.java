@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.reflect.Constructor;
@@ -572,8 +571,14 @@ public final class ServiceLoader<S>
             currentLayer = layer;
 
             // need to get us started
-            Configuration cf = layer.configuration();
-            descriptorIterator = cf.provides(serviceName).iterator();
+            descriptorIterator = descriptors(layer, serviceName);
+        }
+
+        Iterator<ModuleDescriptor> descriptors(Layer layer, String service) {
+            return layer.modules().stream()
+                    .map(Module::getDescriptor)
+                    .filter(d -> d.provides().get(service) != null)
+                    .iterator();
         }
 
         @Override
@@ -609,8 +614,7 @@ public final class ServiceLoader<S>
                     return false;
 
                 currentLayer = parent;
-                Configuration cf = currentLayer.configuration();
-                descriptorIterator = cf.provides(service.getName()).iterator();
+                descriptorIterator = descriptors(currentLayer, serviceName);
             }
         }
 
@@ -1038,10 +1042,11 @@ public final class ServiceLoader<S>
      * Creates a new service loader for the given service type, using the
      * {@linkplain ClassLoader#getPlatformClassLoader() platform class loader}.
      *
-     * <p> This convenience method simply returns
+     * <p> This convenience method is equivalent to: </p>
      *
      * <blockquote><pre>
-     * ServiceLoader.load(<i>service</i>, {@link ClassLoader#getPlatformClassLoader()})</pre></blockquote>
+     * ServiceLoader.load(<i>service</i>, <i>ClassLoader.getPlatformClassLoader())</i>
+     * </pre></blockquote>
      *
      * <p> This method is intended for use when only installed providers are
      * desired.  The resulting service will only find and load providers that

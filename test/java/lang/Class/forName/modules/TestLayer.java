@@ -30,10 +30,11 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Set;
 
 public class TestLayer {
     private static final Path MODS_DIR = Paths.get("mods");
-    private static final String[] modules = new String[] {"m1", "m2"};
+    private static final Set<String> modules = Set.of("m1", "m2");
 
     public static void main(String[] args) throws Exception {
         // disable security manager until Class.forName is called.
@@ -42,14 +43,15 @@ public class TestLayer {
             System.setSecurityManager(null);
         }
 
-        Layer boot = Layer.boot();
         ModuleFinder finder = ModuleFinder.of(MODS_DIR);
-        Configuration cf = Configuration
-                .resolve(ModuleFinder.empty(), boot.configuration(), finder, modules)
-                .bind();
+
+        Configuration parent = Layer.boot().configuration();
+        Configuration cf = parent.resolveRequiresAndUses(ModuleFinder.empty(),
+                                                         finder,
+                                                         modules);
 
         ClassLoader scl = ClassLoader.getSystemClassLoader();
-        Layer layer = Layer.createWithManyLoaders(cf, boot, scl);
+        Layer layer = Layer.boot().defineModulesWithManyLoaders(cf, scl);
 
         Module m1 = layer.findModule("m1").get();
         Module m2 = layer.findModule("m2").get();

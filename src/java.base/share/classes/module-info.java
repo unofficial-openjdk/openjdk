@@ -154,6 +154,7 @@ module java.base {
     exports jdk.internal.math to
         java.desktop;
     exports jdk.internal.module to
+        java.instrument,
         java.management,
         java.xml,
         jdk.dynalink,

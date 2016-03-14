@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,7 @@
  */
 
 import java.lang.module.Configuration;
-import java.lang.module.ModuleReference;
+import java.lang.module.ResolvedModule;
 import java.lang.reflect.Layer;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -92,10 +92,10 @@ public class Main {
      */
     static Path directoryFor(String mn) {
         Configuration cf = Layer.boot().configuration();
-        ModuleReference mref = cf.findModule(mn).orElse(null);
-        if (mref == null)
+        ResolvedModule resolvedModule = cf.findModule(mn).orElse(null);
+        if (resolvedModule == null)
             throw new RuntimeException("not found: " + mn);
-        Path dir = Paths.get(mref.location().get());
+        Path dir = Paths.get(resolvedModule.reference().location().get());
         if (!Files.isDirectory(dir))
             throw new RuntimeException("not a directory: " + dir);
         return dir;

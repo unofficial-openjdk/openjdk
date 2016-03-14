@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,8 @@
 
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
+import java.lang.module.ModuleReference;
+import java.lang.module.ResolvedModule;
 import java.lang.reflect.Layer;
 import java.lang.reflect.Module;
 import java.util.function.Predicate;
@@ -46,9 +48,9 @@ public class BasicModuleTest {
     private void testReadsAllBootModules(Module m) {
         Layer bootLayer = Layer.boot();
         bootLayer.configuration()
-            .descriptors()
+            .modules()
             .stream()
-            .map(ModuleDescriptor::name)
+            .map(ResolvedModule::name)
             .map(bootLayer::findModule)
             .forEach(target -> assertTrue(m.canRead(target.get())));
     }
@@ -84,7 +86,11 @@ public class BasicModuleTest {
         assertTrue(thisLoader.getUnnamedModule() == thisModule);
 
         // unnamed modules read all other modules
-        assertTrue(thisModule.canRead(null));
+        ClassLoader cl;
+        cl = ClassLoader.getPlatformClassLoader();
+        assertTrue(thisModule.canRead(cl.getUnnamedModule()));
+        cl = ClassLoader.getSystemClassLoader();
+        assertTrue(thisModule.canRead(cl.getUnnamedModule()));
         testReadsAllBootModules(thisModule);
 
         // unnamed modules export all packages

@@ -118,8 +118,8 @@ public interface ModuleFinder {
      * ModuleReference} if invoked with the module name. </p>
      *
      * @apiNote This is important to have for methods such as {@link
-     * Configuration#bind} that need to scan the module path to find
-     * modules that provide a specific service.
+     * Configuration#resolveRequiresAndUses resolveRequiresAndUses} that need
+     * to scan the module path to find modules that provide a specific service.
      *
      * @return The set of all module references that this finder locates
      *
@@ -341,7 +341,8 @@ public interface ModuleFinder {
      * modules.
      *
      * @apiNote This is useful when using methods such as {@link
-     * Configuration#resolve resolve} where two finders are specified.
+     * Configuration#resolveRequires resolveRequires} where two finders are
+     * specified. An alternative is {@code ModuleFinder.of()}.
      *
      * @return A {@code ModuleFinder} that does not find any modules
      */

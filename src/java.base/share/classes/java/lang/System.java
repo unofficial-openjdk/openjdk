@@ -1915,10 +1915,8 @@ public final class System {
         // initialize the module system
         System.bootLayer = ModuleBootstrap.boot();
 
-        // base module needs to be loose
+        // base module needs to be loose (CODETOOLS-7901619)
         Module base = Object.class.getModule();
-        if (base == null)
-            throw new InternalError();
         Modules.addReads(base, null);
 
         // module system initialized

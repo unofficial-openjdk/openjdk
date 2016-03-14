@@ -658,4 +658,21 @@ public interface Instrumentation {
      */
     void
     setNativeMethodPrefix(ClassFileTransformer transformer, String prefix);
+
+    /**
+     * Updates a module to read another module.
+     *
+     * Agents that instrument code in named modules may need to arrange for the
+     * modules to read other modules. This method is equivalent to code in {@code
+     * module} calling {@link Module#addReads(Module) addReads} to read {@code
+     * other}.
+     *
+     * @param module the module to update
+     * @param other the module to read
+     * @throws NullPointerException if either module is {@code null}
+     *
+     * @since 9
+     * @see Module#canRead(Module)
+     */
+    void addModuleReads(Module module, Module other);
 }

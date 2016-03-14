@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,12 +25,10 @@ import java.lang.module.Configuration;
 import java.lang.module.ModuleFinder;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Layer;
-import java.lang.reflect.Module;
 import java.lang.reflect.Proxy;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.List;
 
 import static jdk.testlibrary.ProcessTools.executeTestJava;
 
@@ -48,8 +46,6 @@ import static org.testng.Assert.*;
  */
 
 public class ProxyLayerTest {
-
-    private final Configuration BOOT_CONFIGURATION = Layer.boot().configuration();
 
     private static final String TEST_SRC = System.getProperty("test.src");
     private static final String TEST_CLASSES = System.getProperty("test.classes");
@@ -80,11 +76,12 @@ public class ProxyLayerTest {
     @Test
     public void testProxyInUnnamed() throws Exception {
         ModuleFinder finder = ModuleFinder.of(MODS_DIR);
-        Configuration cf = Configuration
-                .resolve(ModuleFinder.empty(), BOOT_CONFIGURATION, finder, modules)
-                .bind();
-
-        Layer layer = Layer.createWithOneLoader(cf, Layer.boot(), ClassLoader.getSystemClassLoader());
+        Layer bootLayer = Layer.boot();
+        Configuration cf = bootLayer
+                .configuration()
+                .resolveRequiresAndUses(ModuleFinder.empty(), finder, Arrays.asList(modules));
+        ClassLoader scl = ClassLoader.getSystemClassLoader();
+        Layer layer = bootLayer.defineModulesWithOneLoader(cf, scl);
 
         ClassLoader loader = layer.findLoader("m1");
 
@@ -113,10 +110,12 @@ public class ProxyLayerTest {
     @Test
     public void testProxyInDynamicModule() throws Exception {
         ModuleFinder finder = ModuleFinder.of(MODS_DIR);
-        Configuration cf = Configuration
-                .resolve(ModuleFinder.empty(), BOOT_CONFIGURATION, finder, modules).bind();
-
-        Layer layer = Layer.createWithOneLoader(cf, Layer.boot(), ClassLoader.getSystemClassLoader());
+        Layer bootLayer = Layer.boot();
+        Configuration cf = bootLayer
+                .configuration()
+                .resolveRequiresAndUses(ModuleFinder.empty(), finder, Arrays.asList(modules));
+        ClassLoader scl = ClassLoader.getSystemClassLoader();
+        Layer layer = bootLayer.defineModulesWithOneLoader(cf, scl);
 
         ClassLoader loader = layer.findLoader("m1");
 
@@ -141,10 +140,12 @@ public class ProxyLayerTest {
     @Test
     public void testNoReadAccess() throws Exception {
         ModuleFinder finder = ModuleFinder.of(MODS_DIR);
-        Configuration cf = Configuration
-                .resolve(ModuleFinder.empty(), BOOT_CONFIGURATION, finder, modules).bind();
-
-        Layer layer = Layer.createWithOneLoader(cf, Layer.boot(), ClassLoader.getSystemClassLoader());
+        Layer bootLayer = Layer.boot();
+        Configuration cf = bootLayer
+                .configuration()
+                .resolveRequiresAndUses(ModuleFinder.empty(), finder, Arrays.asList(modules));
+        ClassLoader scl = ClassLoader.getSystemClassLoader();
+        Layer layer = bootLayer.defineModulesWithOneLoader(cf, scl);
 
         ClassLoader loader = layer.findLoader("m1");
 

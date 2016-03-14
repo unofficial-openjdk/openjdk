@@ -26,7 +26,7 @@
 package jdk.internal.module;
 
 import java.lang.module.Configuration;
-import java.lang.module.ModuleDescriptor;
+import java.lang.module.ResolvedModule;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -70,8 +70,8 @@ final class ModuleLoaderMap {
 
         Map<String, ClassLoader> map = new HashMap<>();
 
-        for (ModuleDescriptor descriptor : cf.descriptors()) {
-            String mn = descriptor.name();
+        for (ResolvedModule resolvedModule : cf.modules()) {
+            String mn = resolvedModule.name();
             if (!bootModules.contains(mn)) {
                 if (extModules.contains(mn)) {
                     map.put(mn, extClassLoader);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@ import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
+import java.lang.module.ResolvedModule;
 import java.lang.reflect.Layer;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -48,11 +49,9 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.security.SecureClassLoader;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 
@@ -114,7 +113,7 @@ public final class Loader extends SecureClassLoader {
         private final URL url;          // may be null
         private final CodeSource cs;
 
-        LoadedModule( ModuleReference mref) {
+        LoadedModule(ModuleReference mref) {
             URL url = null;
             if (mref.location().isPresent()) {
                 try {
@@ -137,15 +136,19 @@ public final class Loader extends SecureClassLoader {
      * Creates a {@code Loader} in a loader pool that loads classes/resources
      * from one module.
      */
-    public Loader(ModuleReference mref, LoaderPool pool, ClassLoader parent) {
+    public Loader(ResolvedModule resolvedModule,
+                  LoaderPool pool,
+                  ClassLoader parent)
+    {
         super(parent);
 
         this.pool = pool;
         this.parent = parent;
 
+        ModuleReference mref = resolvedModule.reference();
         ModuleDescriptor descriptor = mref.descriptor();
-        String name = descriptor.name();
-        this.nameToModule = Collections.singletonMap(name, mref);
+        String mn = descriptor.name();
+        this.nameToModule = Map.of(mn, mref);
 
         Map<String, LoadedModule> localPackageToModule = new HashMap<>();
         LoadedModule lm = new LoadedModule(mref);
@@ -162,7 +165,7 @@ public final class Loader extends SecureClassLoader {
      * @throws IllegalArgumentException
      *         If two or more modules have the same package
      */
-    public Loader(Collection<ModuleReference> mrefs, ClassLoader parent) {
+    public Loader(Collection<ResolvedModule> modules, ClassLoader parent) {
         super(parent);
 
         this.pool = null;
@@ -170,7 +173,8 @@ public final class Loader extends SecureClassLoader {
 
         Map<String, ModuleReference> nameToModule = new HashMap<>();
         Map<String, LoadedModule> localPackageToModule = new HashMap<>();
-        for (ModuleReference mref : mrefs) {
+        for (ResolvedModule resolvedModule : modules) {
+            ModuleReference mref = resolvedModule.reference();
             ModuleDescriptor descriptor = mref.descriptor();
             nameToModule.put(descriptor.name(), mref);
             descriptor.packages().forEach(pn -> {
@@ -192,20 +196,23 @@ public final class Loader extends SecureClassLoader {
      * remotePackageToLoader with the packages of the remote modules, where
      * "remote modules" are the modules read by modules defined to this loader.
      *
-     * @param cf the Configuration containing the modules to be defined to
+     * @param cf the Configuration containing at least modules to be defined to
      *           this class loader
      *
      * @param parentLayer the parent Layer
      */
     public Loader initRemotePackageMap(Configuration cf, Layer parentLayer) {
 
-        for (ModuleReference mref : nameToModule.values()) {
+        for (String name : nameToModule.keySet()) {
 
-            for (Configuration.ReadDependence rd : cf.reads(mref.descriptor())) {
-                String mn = rd.descriptor().name();
+            ResolvedModule resolvedModule = cf.findModule(name).get();
+            assert resolvedModule.configuration() == cf;
+
+            for (ResolvedModule other : resolvedModule.reads()) {
+                String mn = other.name();
                 ClassLoader loader;
 
-                if (rd.configuration() == cf) {
+                if (other.configuration() == cf) {
 
                     // The module reads another module in the newly created
                     // layer. If all modules are defined to the same class
@@ -223,7 +230,7 @@ public final class Loader extends SecureClassLoader {
                     // find the layer contains the module that is read
                     Layer layer = parentLayer;
                     while (layer != null) {
-                        if (layer.configuration() == rd.configuration()) {
+                        if (layer.configuration() == other.configuration()) {
                             break;
                         }
                         layer = layer.parent().orElse(null);
@@ -240,13 +247,13 @@ public final class Loader extends SecureClassLoader {
                 }
 
                 // find the packages that are exported to the target module
-                String target = mref.descriptor().name();
-                for (ModuleDescriptor.Exports e : rd.descriptor().exports()) {
-
+                String target = resolvedModule.name();
+                ModuleDescriptor descriptor = other.reference().descriptor();
+                for (ModuleDescriptor.Exports e : descriptor.exports()) {
                     boolean delegate;
                     if (e.isQualified()) {
                         // qualified export in same configuration
-                        delegate = (rd.configuration() == cf)
+                        delegate = (other.configuration() == cf)
                                 && e.targets().contains(target);
                     } else {
                         // unqualified

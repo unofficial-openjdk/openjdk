@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -230,7 +230,7 @@ public class AccessControlTest {
 
             // if the lookup class is in a loose module with PUBLIC access then
             // public members of public types in all unnamed modules can be accessed
-            if (c1.getModule().canRead(null)
+            if (isLooseModule(c1.getModule())
                 && (lookupModes & PUBLIC) != 0
                 && (!c2.getModule().isNamed())
                 && Modifier.isPublic(c2.getModifiers())
@@ -271,7 +271,7 @@ public class AccessControlTest {
 
             // if the lookup class is in a loose module with PUBLIC access then
             // public types in all unnamed modules can be accessed
-            if (c1.getModule().canRead(null)
+            if (isLooseModule(c1.getModule())
                 && (lookupModes & PUBLIC) != 0
                 && (!c2.getModule().isNamed())
                 && Modifier.isPublic(c2.getModifiers()))
@@ -294,6 +294,11 @@ public class AccessControlTest {
                 System.out.println(this+" willAccessClass "+lc+" c1="+c1+" c2="+c2+" => "+r);
             }
             return r;
+        }
+
+        private boolean isLooseModule(Module m) {
+            ClassLoader cl = new ClassLoader() { };
+            return m.canRead(cl.getUnnamedModule());
         }
     }
 
