@@ -199,14 +199,6 @@ public enum Option {
 
     SYSTEM("-system", "opt.arg.jdk", "opt.system", STANDARD, FILEMANAGER),
 
-    // Temporary alias until old usages are eliminated
-    _SYSTEMMODULEPATH("-systemmodulepath", "opt.arg.jdk", "opt.system", STANDARD, FILEMANAGER) {
-        @Override
-        public boolean process(OptionHelper helper, String option, String arg) {
-            return SYSTEM.process(helper, "-system", arg);
-        }
-    },
-
     XPATCH("-Xpatch:", "opt.arg.path", "opt.Xpatch", EXTENDED, FILEMANAGER),
 
     BOOTCLASSPATH("-bootclasspath", "opt.arg.path", "opt.bootclasspath", STANDARD, FILEMANAGER) {
