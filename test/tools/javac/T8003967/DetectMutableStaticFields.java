@@ -109,10 +109,9 @@ public class DetectMutableStaticFields {
         ignore("com/sun/tools/javac/util/ModuleHelper",
                 "addExportsMethod", "getModuleMethod", "getUnnamedModuleMethod");
         ignore("com/sun/tools/javac/util/ModuleWrappers$ConfigurationHelper",
-                "bindMethod", "configurationClass", "resolveMethod");
+                "resolveRequiresAndUsesMethod", "configurationClass");
         ignore("com/sun/tools/javac/util/ModuleWrappers$LayerHelper",
-                "bootMethod", "classLoaderFinderInterface", "createMethod",
-                "createWithOneLoader", "configurationMethod", "layerClass");
+                "bootMethod", "defineModulesWithOneLoaderMethod", "configurationMethod", "layerClass");
         ignore("com/sun/tools/javac/util/ModuleWrappers$ModuleFinderHelper",
                 "emptyMethod", "moduleFinderInterface", "ofMethod");
 

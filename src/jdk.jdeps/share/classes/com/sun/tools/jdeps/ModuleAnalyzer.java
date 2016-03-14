@@ -27,12 +27,14 @@ package com.sun.tools.jdeps;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UncheckedIOException;
-import java.lang.module.Configuration;
-import java.lang.module.ModuleDescriptor;
+
 import static java.lang.module.ModuleDescriptor.Requires.Modifier.*;
 
+import java.lang.module.Configuration;
+import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
+import java.lang.module.ResolvedModule;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
@@ -645,7 +647,10 @@ class ModuleAnalyzer {
             DotGraph.printAttributes(out);
             DotGraph.printNodes(out, graph);
 
-            cf.descriptors().forEach(md -> {
+            cf.modules().stream()
+                    .map(ResolvedModule::reference)
+                    .map(ModuleReference::descriptor)
+                    .forEach(md -> {
                 String mn = md.name();
                 Set<String> requiresPublic = md.requires().stream()
                         .filter(d -> d.modifiers().contains(PUBLIC))
@@ -672,26 +677,27 @@ class ModuleAnalyzer {
         // build a Graph containing only requires public edges
         // with transitive reduction.
         Graph.Builder<String> rpgbuilder = new Graph.Builder<>();
-        cf.descriptors().forEach(md -> {
+        for (ResolvedModule resolvedModule : cf.modules()) {
+            ModuleDescriptor md = resolvedModule.reference().descriptor();
             String mn = md.name();
             md.requires().stream()
                     .filter(d -> d.modifiers().contains(PUBLIC))
                     .map(d -> d.name())
                     .forEach(d -> rpgbuilder.addEdge(mn, d));
-        });
+        }
 
         Graph<String> rpg = rpgbuilder.build().reduce();
 
         // build the readability graph
         Graph.Builder<String> builder = new Graph.Builder<>();
-        cf.descriptors().forEach(md -> {
+        for (ResolvedModule resolvedModule : cf.modules()) {
+            ModuleDescriptor md = resolvedModule.reference().descriptor();
             String mn = md.name();
             builder.addNode(mn);
-            cf.reads(md).stream()
-                    .map(Configuration.ReadDependence::descriptor)
-                    .map(ModuleDescriptor::name)
+            resolvedModule.reads().stream()
+                    .map(ResolvedModule::name)
                     .forEach(d -> builder.addEdge(mn, d));
-        });
+        }
 
         // transitive reduction of requires edges
         return builder.build().reduce(rpg);

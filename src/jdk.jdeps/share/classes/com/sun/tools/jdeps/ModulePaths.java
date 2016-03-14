@@ -33,6 +33,7 @@ import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
+import java.lang.module.ResolvedModule;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystemNotFoundException;
@@ -82,18 +83,15 @@ public class ModulePaths {
     }
 
     Set<Module> dependences(String... roots) {
-        Configuration config = configuration(roots);
-        return config.descriptors().stream()
-                     .map(ModuleDescriptor::name)
-                     .map(modules::get)
-                     .collect(Collectors.toSet());
+        Configuration cf = configuration(roots);
+        return cf.modules().stream()
+                .map(ResolvedModule::name)
+                .map(modules::get)
+                .collect(Collectors.toSet());
     }
 
     Configuration configuration(String... roots) {
-        return Configuration.resolve(finder,
-                                     Configuration.empty(),
-                                     ModuleFinder.empty(),
-                                     roots);
+        return Configuration.empty().resolveRequires(finder, ModuleFinder.empty(), Set.of(roots));
     }
 
     private static ModuleFinder createModulePathFinder(String mpaths) {
