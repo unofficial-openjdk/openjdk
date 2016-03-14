@@ -25,6 +25,7 @@
 
 /*
  * @test
+ * @ignore
  * @summary class p3.c3 defined in module m1 tries to access c4 defined in an unnamed package
  *          and an unnamed module.
  * @library /testlibrary /test/lib
@@ -45,6 +46,7 @@ import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import myloaders.MyDiffClassLoader;
 
 //
@@ -86,13 +88,10 @@ public class DiffCL_UmodUpkg {
      // Set up a ModuleFinder containing all modules for this layer.
      ModuleFinder finder = ModuleLibrary.of(descriptor_m1);
 
-     // Resolves a module named "m1" that results in a configuration.  It
-     // then augments that configuration with additional modules (and edges) induced
-     // by service-use relationships.
-     Configuration cf = Configuration.resolve(finder,
-                                              Layer.boot().configuration(),
-                                              ModuleFinder.empty(),
-                                              "m1");
+     // Resolves "m1"
+     Configuration cf = Layer.boot()
+             .configuration()
+             .resolveRequires(finder, ModuleFinder.empty(), Set.of("m1"));
 
      MyDiffClassLoader.loader1 = new MyDiffClassLoader();
      MyDiffClassLoader.loader2 = new MyDiffClassLoader();
@@ -104,7 +103,7 @@ public class DiffCL_UmodUpkg {
      map.put("m1", MyDiffClassLoader.loader1);
 
      // Create Layer that contains m1
-     Layer layer = Layer.create(cf, Layer.boot(), map::get);
+     Layer layer = Layer.boot().defineModules(cf, map::get);
 
      assertTrue(layer.findLoader("m1") == MyDiffClassLoader.loader1);
      assertTrue(layer.findLoader("java.base") == null);
@@ -138,13 +137,10 @@ public class DiffCL_UmodUpkg {
      // Set up a ModuleFinder containing all modules for this layer.
      ModuleFinder finder = ModuleLibrary.of(descriptor_m1);
 
-     // Resolves a module named "m1" that results in a configuration.  It
-     // then augments that configuration with additional modules (and edges) induced
-     // by service-use relationships.
-     Configuration cf = Configuration.resolve(finder,
-                                              Layer.boot().configuration(),
-                                              ModuleFinder.empty(),
-                                              "m1");
+     // Resolves "m1"
+     Configuration cf = Layer.boot()
+             .configuration()
+             .resolveRequires(finder, ModuleFinder.empty(), Set.of("m1"));
 
      MyDiffClassLoader.loader1 = new MyDiffClassLoader();
      MyDiffClassLoader.loader2 = new MyDiffClassLoader();
@@ -156,7 +152,7 @@ public class DiffCL_UmodUpkg {
      map.put("m1", MyDiffClassLoader.loader1);
 
      // Create Layer that contains m1
-     Layer layer = Layer.create(cf, Layer.boot(), map::get);
+     Layer layer = Layer.boot().defineModules(cf, map::get);
 
      assertTrue(layer.findLoader("m1") == MyDiffClassLoader.loader1);
      assertTrue(layer.findLoader("java.base") == null);
@@ -190,13 +186,10 @@ public class DiffCL_UmodUpkg {
      // Set up a ModuleFinder containing all modules for this layer.
      ModuleFinder finder = ModuleLibrary.of(descriptor_m1);
 
-     // Resolves a module named "m1" that results in a configuration.  It
-     // then augments that configuration with additional modules (and edges) induced
-     // by service-use relationships.
-     Configuration cf = Configuration.resolve(finder,
-                                              Layer.boot().configuration(),
-                                              ModuleFinder.empty(),
-                                              "m1");
+     // Resolves "m1"
+     Configuration cf = Layer.boot()
+             .configuration()
+             .resolveRequires(finder, ModuleFinder.empty(), Set.of("m1"));
 
      MyDiffClassLoader.loader1 = new MyDiffClassLoader();
      MyDiffClassLoader.loader2 = new MyDiffClassLoader();
@@ -208,7 +201,7 @@ public class DiffCL_UmodUpkg {
      map.put("m1", MyDiffClassLoader.loader1);
 
      // Create Layer that contains m1
-     Layer layer = Layer.create(cf, Layer.boot(), map::get);
+     Layer layer = Layer.boot().defineModules(cf, map::get);
 
      assertTrue(layer.findLoader("m1") == MyDiffClassLoader.loader1);
      assertTrue(layer.findLoader("java.base") == null);

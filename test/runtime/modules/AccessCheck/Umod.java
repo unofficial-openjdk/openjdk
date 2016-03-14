@@ -27,6 +27,7 @@
  * @test
  * @summary class p1.c1 defined in m1 tries to access p2.c2 defined in unnamed module.
  * @library /testlibrary /test/lib
+ * @modules java.base/jdk.internal.module
  * @compile myloaders/MySameClassLoader.java
  * @compile p2/c2.java
  * @compile p1/c1.java
@@ -45,6 +46,7 @@ import java.lang.module.ModuleFinder;
 import java.lang.reflect.Module;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import myloaders.MySameClassLoader;
 
 //
@@ -86,13 +88,10 @@ public class Umod {
      // Set up a ModuleFinder containing all modules for this layer.
      ModuleFinder finder = ModuleLibrary.of(descriptor_m1);
 
-     // Resolves a module named "m1" that results in a configuration.  It
-     // then augments that configuration with additional modules (and edges) induced
-     // by service-use relationships.
-     Configuration cf = Configuration.resolve(finder,
-                                              Layer.boot().configuration(),
-                                              ModuleFinder.empty(),
-                                              "m1");
+     // Resolves "m1"
+     Configuration cf = Layer.boot()
+             .configuration()
+             .resolveRequires(finder, ModuleFinder.empty(), Set.of("m1"));
 
      // map module m1 to class loader.
      // class c2 will be loaded in an unnamed module/loader.
@@ -101,7 +100,7 @@ public class Umod {
      map.put("m1", loader);
 
      // Create Layer that contains m1
-     Layer layer = Layer.create(cf, Layer.boot(), map::get);
+     Layer layer = Layer.boot().defineModules(cf, map::get);
 
      assertTrue(layer.findLoader("m1") == loader);
      assertTrue(layer.findLoader("java.base") == null);
@@ -135,13 +134,10 @@ public class Umod {
      // Set up a ModuleFinder containing all modules for this layer.
      ModuleFinder finder = ModuleLibrary.of(descriptor_m1);
 
-     // Resolves a module named "m1" that results in a configuration.  It
-     // then augments that configuration with additional modules (and edges) induced
-     // by service-use relationships.
-     Configuration cf = Configuration.resolve(finder,
-                                              Layer.boot().configuration(),
-                                              ModuleFinder.empty(),
-                                              "m1");
+     // Resolves "m1"
+     Configuration cf = Layer.boot()
+             .configuration()
+             .resolveRequires(finder, ModuleFinder.empty(), Set.of("m1"));
 
      MySameClassLoader loader = new MySameClassLoader();
      // map module m1 to class loader.
@@ -150,7 +146,7 @@ public class Umod {
      map.put("m1", loader);
 
      // Create Layer that contains m1
-     Layer layer = Layer.create(cf, Layer.boot(), map::get);
+     Layer layer = Layer.boot().defineModules(cf, map::get);
 
      assertTrue(layer.findLoader("m1") == loader);
      assertTrue(layer.findLoader("java.base") == null);
@@ -184,13 +180,10 @@ public class Umod {
      // Set up a ModuleFinder containing all modules for this layer.
      ModuleFinder finder = ModuleLibrary.of(descriptor_m1);
 
-     // Resolves a module named "m1" that results in a configuration.  It
-     // then augments that configuration with additional modules (and edges) induced
-     // by service-use relationships.
-     Configuration cf = Configuration.resolve(finder,
-                                              Layer.boot().configuration(),
-                                              ModuleFinder.empty(),
-                                              "m1");
+     // Resolves "m1"
+     Configuration cf = Layer.boot()
+             .configuration()
+             .resolveRequires(finder, ModuleFinder.empty(), Set.of("m1"));
 
      MySameClassLoader loader = new MySameClassLoader();
      // map module m1 to class loader.
@@ -199,7 +192,7 @@ public class Umod {
      map.put("m1", loader);
 
      // Create Layer that contains m1
-     Layer layer = Layer.create(cf, Layer.boot(), map::get);
+     Layer layer = Layer.boot().defineModules(cf, map::get);
 
      assertTrue(layer.findLoader("m1") == loader);
      assertTrue(layer.findLoader("java.base") == null);
@@ -207,10 +200,12 @@ public class Umod {
      // now use the same loader to load class p1.c1Loose
      Class p1_c1_class = loader.loadClass("p1.c1Loose");
 
+     // change m1 to be a loose module
+     Module m1 = layer.findModule("m1").get();
+     jdk.internal.module.Modules.addReads(m1, null);
+
      try {
-       // Module m1 is transitioned to a loose module before attempting access
-       // to p2.c2 in c1Loose's ctor.
-       p1_c1_class.newInstance();
+         p1_c1_class.newInstance();
      } catch (IllegalAccessError e) {
          throw new RuntimeException("Test Failed, strict module m1, type p1.c1Loose, should be able to acccess public type " +
                                     "p2.c2 defined in unnamed module: " + e.getMessage());

@@ -22,16 +22,11 @@
  */
 package p1;
 
-import java.lang.reflect.*;
 import p2.c2;
 
 public class c1Loose {
     public c1Loose() {
-        // Change c1Loose's module, m1, from strict to loose
-        Module m1 = c1Loose.class.getModule();
-        m1.addReads(null);
-
-        // Attempt access - access should succeed since m1 is now a loose module
+        // Attempt access - access should succeed since m1 is a loose module
         p2.c2 c2_obj = new p2.c2();
         c2_obj.method2();
     }

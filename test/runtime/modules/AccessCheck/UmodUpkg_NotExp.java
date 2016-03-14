@@ -43,6 +43,7 @@ import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import myloaders.MySameClassLoader;
 
 // ClassLoader1 --> defines m1 --> no packages
@@ -84,13 +85,10 @@ public class UmodUpkg_NotExp {
         // Set up a ModuleFinder containing all modules for this layer.
         ModuleFinder finder = ModuleLibrary.of(descriptor_m1, descriptor_m2);
 
-        // Resolves a module named "m1" that results in a configuration.  It
-        // then augments that configuration with additional modules (and edges) induced
-        // by service-use relationships.
-        Configuration cf = Configuration.resolve(finder,
-                                                 Layer.boot().configuration(),
-                                                 ModuleFinder.empty(),
-                                                 "m1");
+        // Resolves "m1"
+        Configuration cf = Layer.boot()
+                .configuration()
+                .resolveRequires(finder, ModuleFinder.empty(), Set.of("m1"));
 
         // map each module to the same class loader for this test
         Map<String, ClassLoader> map = new HashMap<>();
@@ -98,7 +96,7 @@ public class UmodUpkg_NotExp {
         map.put("m2", MySameClassLoader.loader1);
 
         // Create Layer that contains m1 and m2
-        Layer layer = Layer.create(cf, Layer.boot(), map::get);
+        Layer layer = Layer.boot().defineModules(cf, map::get);
 
         assertTrue(layer.findLoader("m1") == MySameClassLoader.loader1);
         assertTrue(layer.findLoader("m2") == MySameClassLoader.loader1);

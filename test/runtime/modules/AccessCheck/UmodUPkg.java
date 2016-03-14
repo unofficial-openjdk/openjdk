@@ -25,6 +25,7 @@
 
 /*
  * @test
+ * @ignore
  * @summary class p3.c3 defined in module m1 tries to access c4 defined in unnamed module.
  * @library /testlibrary /test/lib
  * @compile myloaders/MySameClassLoader.java
@@ -45,6 +46,7 @@ import java.lang.reflect.Layer;
 import java.lang.reflect.Module;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import myloaders.MySameClassLoader;
 
 //
@@ -86,13 +88,10 @@ public class UmodUPkg {
      // Set up a ModuleFinder containing all modules for this layer.
      ModuleFinder finder = ModuleLibrary.of(descriptor_m1);
 
-     // Resolves a module named "m1" that results in a configuration.  It
-     // then augments that configuration with additional modules (and edges) induced
-     // by service-use relationships.
-     Configuration cf = Configuration.resolve(finder,
-                                              Layer.boot().configuration(),
-                                              ModuleFinder.empty(),
-                                              "m1");
+     // Resolves "m1"
+     Configuration cf = Layer.boot()
+             .configuration()
+             .resolveRequires(finder, ModuleFinder.empty(), Set.of("m1"));
 
      // map module m1 to class loader.
      // class c4 will be loaded in an unnamed module/loader.
@@ -101,7 +100,7 @@ public class UmodUPkg {
      map.put("m1", loader);
 
      // Create Layer that contains m1
-     Layer layer = Layer.create(cf, Layer.boot(), map::get);
+     Layer layer = Layer.boot().defineModules(cf, map::get);
 
      assertTrue(layer.findLoader("m1") == loader);
      assertTrue(layer.findLoader("java.base") == null);
@@ -135,13 +134,10 @@ public class UmodUPkg {
      // Set up a ModuleFinder containing all modules for this layer.
      ModuleFinder finder = ModuleLibrary.of(descriptor_m1);
 
-     // Resolves a module named "m1" that results in a configuration.  It
-     // then augments that configuration with additional modules (and edges) induced
-     // by service-use relationships.
-     Configuration cf = Configuration.resolve(finder,
-                                              Layer.boot().configuration(),
-                                              ModuleFinder.empty(),
-                                              "m1");
+     // Resolves "m1"
+     Configuration cf = Layer.boot()
+             .configuration()
+             .resolveRequires(finder, ModuleFinder.empty(), Set.of("m1"));
 
      MySameClassLoader loader = new MySameClassLoader();
      // map module m1 to class loader.
@@ -150,7 +146,7 @@ public class UmodUPkg {
      map.put("m1", loader);
 
      // Create Layer that contains m1
-     Layer layer = Layer.create(cf, Layer.boot(), map::get);
+     Layer layer = Layer.boot().defineModules(cf, map::get);
 
      assertTrue(layer.findLoader("m1") == loader);
      assertTrue(layer.findLoader("java.base") == null);
@@ -184,13 +180,10 @@ public class UmodUPkg {
      // Set up a ModuleFinder containing all modules for this layer.
      ModuleFinder finder = ModuleLibrary.of(descriptor_m1);
 
-     // Resolves a module named "m1" that results in a configuration.  It
-     // then augments that configuration with additional modules (and edges) induced
-     // by service-use relationships.
-     Configuration cf = Configuration.resolve(finder,
-                                              Layer.boot().configuration(),
-                                              ModuleFinder.empty(),
-                                              "m1");
+     // Resolves "m1"
+     Configuration cf = Layer.boot()
+             .configuration()
+             .resolveRequires(finder, ModuleFinder.empty(), Set.of("m1"));
 
      MySameClassLoader loader = new MySameClassLoader();
      // map module m1 to class loader.
@@ -199,7 +192,7 @@ public class UmodUPkg {
      map.put("m1", loader);
 
      // Create Layer that contains m1
-     Layer layer = Layer.create(cf, Layer.boot(), map::get);
+     Layer layer = Layer.boot().defineModules(cf, map::get);
 
      assertTrue(layer.findLoader("m1") == loader);
      assertTrue(layer.findLoader("java.base") == null);
