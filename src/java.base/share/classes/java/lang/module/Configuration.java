@@ -92,7 +92,7 @@ import java.util.stream.Collectors;
  * {@code java.base} module.
  *
  * <a name="automaticmoduleresolution"></a>
- * <p> {@link ModuleDescriptor#isAutomatic() Automatic} modules receive
+ * <p> {@link ModuleDescriptor#isAutomatic() Automatic} modules receive special
  * treatment during resolution. Each automatic module is resolved so that it
  * reads all other modules in the configuration and all parent configurations.
  * Each automatic module is also resolved as if it {@code requires public} all
