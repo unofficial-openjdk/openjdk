@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -73,10 +73,10 @@ public class JmodNegativeTest {
 
     @Test
     public void testNoArgs() {
-        jmod("")
+        jmod()
             .assertFailure()
             .resultChecker(r ->
-                assertContains(r.output, "Error: One of options -ctp must be specified.")
+                assertContains(r.output, "Error: one of create, list, or describe must be specified")
             );
     }
 
@@ -85,7 +85,7 @@ public class JmodNegativeTest {
         jmod("badAction")
             .assertFailure()
             .resultChecker(r ->
-                assertContains(r.output, "Error: One of options -ctp must be specified.")
+                assertContains(r.output, "Error: mode must be one of create, list, or describe")
             );
 
         jmod("--badOption")
@@ -100,7 +100,7 @@ public class JmodNegativeTest {
         Path jmod = MODS_DIR.resolve("doesNotExist.jmod");
         FileUtils.deleteFileIfExistsWithRetry(jmod);
 
-        jmod("--create",
+        jmod("create",
              jmod.toString(),
              "AAA")
             .assertFailure()
@@ -111,7 +111,7 @@ public class JmodNegativeTest {
 
     @Test
     public void testCreateNoArgs() {
-        jmod("--create")
+        jmod("create")
             .assertFailure()
             .resultChecker(r ->
                 assertContains(r.output, "Error: jmod-file must be specified")
@@ -120,7 +120,7 @@ public class JmodNegativeTest {
 
     @Test
     public void testListNoArgs() {
-        jmod("--list")
+        jmod("list")
             .assertFailure()
             .resultChecker(r ->
                 assertContains(r.output, "Error: jmod-file must be specified")
@@ -132,7 +132,7 @@ public class JmodNegativeTest {
         Path jmod = MODS_DIR.resolve("doesNotExist.jmod");
         FileUtils.deleteFileIfExistsWithRetry(jmod);
 
-        jmod("--list",
+        jmod("list",
              jmod.toString())
             .assertFailure()
             .resultChecker(r ->
@@ -147,7 +147,7 @@ public class JmodNegativeTest {
         if (Files.notExists(jmod))
             Files.createDirectory(jmod);
 
-        jmod("--list",
+        jmod("list",
              jmod.toString())
             .assertFailure()
             .resultChecker(r ->
@@ -161,7 +161,7 @@ public class JmodNegativeTest {
         if (Files.notExists(jmod))
             Files.createFile(jmod);
 
-        jmod("--list",
+        jmod("list",
              jmod.toString())
             .assertFailure()
             .resultChecker(r ->
@@ -171,7 +171,7 @@ public class JmodNegativeTest {
 
     @Test
     public void testHashDependenciesModulePathNotSpecified() {
-        jmod("--create",
+        jmod("create",
              "--hash-dependencies", "anyPattern.*",
              "output.jmod")
             .assertFailure()
@@ -187,7 +187,7 @@ public class JmodNegativeTest {
         if (Files.notExists(jmod))
             Files.createFile(jmod);
 
-        jmod("--create",
+        jmod("create",
              "--class-path", Paths.get(".").toString(), // anything that exists
              jmod.toString())
             .assertFailure()
@@ -202,7 +202,7 @@ public class JmodNegativeTest {
         if (Files.notExists(jmod))
             Files.createDirectory(jmod);
 
-        jmod("--create",
+        jmod("create",
              "--class-path", Paths.get(".").toString(), // anything that exists
              jmod.toString())
             .assertFailure()
@@ -218,7 +218,7 @@ public class JmodNegativeTest {
         String cp = EXPLODED_DIR.resolve("foo").resolve("classes").toString();
 
         for (String version : new String[] { "", "NOT_A_VALID_VERSION" }) {
-            jmod("--create",
+            jmod("create",
                  "--class-path", cp,
                  "--module-version", version,
                  jmod.toString())
@@ -235,9 +235,9 @@ public class JmodNegativeTest {
         FileUtils.deleteFileIfExistsWithRetry(jmod);
         String cp = EXPLODED_DIR.resolve("foo").resolve("classes").toString();
 
-        jmod("--create",
-              "--class-path", cp + pathSeparator + cp,
-              jmod.toString())
+        jmod("create",
+             "--class-path", cp + pathSeparator + cp,
+             jmod.toString())
             .assertFailure()
             .resultChecker(r ->
                 assertContains(r.output, "Error: duplicate resource found, etc..")
@@ -252,7 +252,7 @@ public class JmodNegativeTest {
         FileUtils.deleteFileIfExistsWithRetry(jar);
         Files.createFile(jar);
 
-        jmod("--create",
+        jmod("create",
              "--class-path", jar.toString(),
              jmod.toString())
             .assertFailure()
@@ -272,7 +272,7 @@ public class JmodNegativeTest {
             // empty
         }
 
-        jmod("--create",
+        jmod("create",
              "--class-path", jar.toString(),
              jmod.toString())
             .assertFailure()
@@ -289,7 +289,7 @@ public class JmodNegativeTest {
         FileUtils.deleteFileIfExistsWithRetry(jar);
         Files.createDirectory(jar);
 
-        jmod("--create",
+        jmod("create",
              "--class-path", jar.toString(),
              jmod.toString())
             .assertFailure()
@@ -307,7 +307,7 @@ public class JmodNegativeTest {
         Files.createDirectory(cp);
         Files.createFile(cp.resolve("nada.txt"));
 
-        jmod("--create",
+        jmod("create",
              "--class-path", cp.toString(),
              jmod.toString())
             .assertFailure()
@@ -326,7 +326,7 @@ public class JmodNegativeTest {
         Files.createDirectory(emptyDir);
         String cp = EXPLODED_DIR.resolve("foo").resolve("classes").toString();
 
-        jmod("--create",
+        jmod("create",
              "--class-path", cp,
              "--hash-dependencies", ".*",
              "--modulepath", emptyDir.toString(),
@@ -348,7 +348,7 @@ public class JmodNegativeTest {
         try {
             String cp = EXPLODED_DIR.resolve("foo").resolve("classes").toString();
 
-            jmod("--create",
+            jmod("create",
                  "--class-path", cp,
                  "--hash-dependencies", ".*",
                  "--modulepath", MODS_DIR.toString(),
@@ -370,7 +370,7 @@ public class JmodNegativeTest {
         FileUtils.deleteFileIfExistsWithRetry(file);
         Files.createFile(file);
 
-        jmod("--create",
+        jmod("create",
              "--hash-dependencies", ".*",
              "--modulepath", file.toString(),
              jmod.toString())
@@ -387,23 +387,23 @@ public class JmodNegativeTest {
         FileUtils.deleteFileIfExistsWithRetry(Paths.get("doesNotExist"));
 
         List<Supplier<JmodResult>> tasks = Arrays.asList(
-                () -> jmod("--create",
+                () -> jmod("create",
                            "--hash-dependencies", "anyPattern",
                            "--modulepath", "doesNotExist",
                            "output.jmod"),
-                () -> jmod("--create",
+                () -> jmod("create",
                            "--class-path", "doesNotExist",
                            "output.jmod"),
-                () -> jmod("--create",
+                () -> jmod("create",
                            "--class-path", "doesNotExist.jar",
                            "output.jmod"),
-                () -> jmod("--create",
+                () -> jmod("create",
                            "--cmds", "doesNotExist",
                            "output.jmod"),
-                () -> jmod("--create",
+                () -> jmod("create",
                            "--config", "doesNotExist",
                            "output.jmod"),
-                () -> jmod("--create",
+                () -> jmod("create",
                            "--libs", "doesNotExist",
                            "output.jmod") );
 
@@ -435,23 +435,23 @@ public class JmodNegativeTest {
         Files.createDirectory(emptyDir);
 
         List<Supplier<JmodResult>> tasks = Arrays.asList(
-            () -> jmod("--create",
+            () -> jmod("create",
                        "--hash-dependencies", "anyPattern",
                        "--modulepath","empty" + pathSeparator + "doesNotExist",
                        "output.jmod"),
-            () -> jmod("--create",
+            () -> jmod("create",
                        "--class-path", "empty" + pathSeparator + "doesNotExist",
                        "output.jmod"),
-            () -> jmod("--create",
+            () -> jmod("create",
                        "--class-path", "empty" + pathSeparator + "doesNotExist.jar",
                        "output.jmod"),
-            () -> jmod("--create",
+            () -> jmod("create",
                        "--cmds", "empty" + pathSeparator + "doesNotExist",
                        "output.jmod"),
-            () -> jmod("--create",
+            () -> jmod("create",
                        "--config", "empty" + pathSeparator + "doesNotExist",
                        "output.jmod"),
-            () -> jmod("--create",
+            () -> jmod("create",
                        "--libs", "empty" + pathSeparator + "doesNotExist",
                        "output.jmod") );
 
@@ -482,19 +482,19 @@ public class JmodNegativeTest {
             Files.createFile(aFile);
 
         List<Supplier<JmodResult>> tasks = Arrays.asList(
-                () -> jmod("--create",
+                () -> jmod("create",
                            "--class-path", "aFile.txt",
                            "output.jmod"),
-                () -> jmod("--create",
+                () -> jmod("create",
                            "--modulepath", "aFile.txt",
                            "output.jmod"),
-                () -> jmod("--create",
+                () -> jmod("create",
                            "--cmds", "aFile.txt",
                            "output.jmod"),
-                () -> jmod("--create",
+                () -> jmod("create",
                            "--config", "aFile.txt",
                            "output.jmod"),
-                () -> jmod("--create",
+                () -> jmod("create",
                            "--libs", "aFile.txt",
                            "output.jmod") );
 
