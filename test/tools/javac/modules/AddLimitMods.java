@@ -48,6 +48,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -166,6 +167,114 @@ public class AddLimitMods extends ModuleTestBase {
                 .files(findJavaFiles(m1))
                 .run()
                 .writeAll();
+    }
+
+    @Test
+    void testAllModulePath(Path base) throws Exception {
+        if (Files.isDirectory(base))
+            tb.cleanDirectory(base);
+
+        Path moduleSrc = base.resolve("module-src");
+        Path m1 = moduleSrc.resolve("m1");
+
+        tb.writeJavaFiles(m1,
+                          "module m1 { exports api; }",
+                          "package api; public class Api { }");
+
+        Path modulePath = base.resolve("module-path");
+
+        Files.createDirectories(modulePath);
+
+        tb.new JavacTask()
+                .options("-modulesourcepath", moduleSrc.toString())
+                .outdir(modulePath)
+                .files(findJavaFiles(moduleSrc))
+                .run()
+                .writeAll();
+
+        Path cpSrc = base.resolve("cp-src");
+        tb.writeJavaFiles(cpSrc, "package test; public class Test { api.Api api; }");
+
+        Path cpOut = base.resolve("cp-out");
+
+        Files.createDirectories(cpOut);
+
+        tb.new JavacTask()
+                .options("-modulepath", modulePath.toString())
+                .outdir(cpOut)
+                .files(findJavaFiles(cpSrc))
+                .run(ToolBox.Expect.FAIL)
+                .writeAll();
+
+        tb.new JavacTask()
+                .options("-modulepath", modulePath.toString(),
+                         "-addmods", "ALL-MODULE-PATH")
+                .outdir(cpOut)
+                .files(findJavaFiles(cpSrc))
+                .run()
+                .writeAll();
+
+        List<String> actual;
+        List<String> expected = Arrays.asList(
+                "- compiler.err.addmods.all.module.path.invalid",
+                "1 error");
+
+        actual = tb.new JavacTask()
+                   .options("-modulesourcepath", moduleSrc.toString(),
+                            "-XDrawDiagnostics",
+                            "-addmods", "ALL-MODULE-PATH")
+                   .outdir(modulePath)
+                   .files(findJavaFiles(moduleSrc))
+                   .run(ToolBox.Expect.FAIL)
+                   .writeAll()
+                   .getOutputLines(ToolBox.OutputKind.DIRECT);
+
+        if (!Objects.equals(actual, expected)) {
+            throw new IllegalStateException("incorrect errors; actual=" + actual + "; expected=" + expected);
+        }
+
+        actual = tb.new JavacTask()
+                   .options("-Xmodule:java.base",
+                            "-XDrawDiagnostics",
+                            "-addmods", "ALL-MODULE-PATH")
+                   .outdir(cpOut)
+                   .files(findJavaFiles(cpSrc))
+                   .run(ToolBox.Expect.FAIL)
+                   .writeAll()
+                   .getOutputLines(ToolBox.OutputKind.DIRECT);
+
+        if (!Objects.equals(actual, expected)) {
+            throw new IllegalStateException("incorrect errors; actual=" + actual + "; expected=" + expected);
+        }
+
+        actual = tb.new JavacTask(ToolBox.Mode.CMDLINE)
+                   .options("-source", "8", "-target", "8",
+                            "-XDrawDiagnostics",
+                            "-addmods", "ALL-MODULE-PATH")
+                   .outdir(cpOut)
+                   .files(findJavaFiles(cpSrc))
+                   .run(ToolBox.Expect.FAIL)
+                   .writeAll()
+                   .getOutputLines(ToolBox.OutputKind.DIRECT);
+
+        if (!actual.contains("javac: option -addmods not allowed with target 1.8")) {
+            throw new IllegalStateException("incorrect errors; actual=" + actual);
+        }
+
+        tb.writeJavaFiles(cpSrc, "module m1 {}");
+
+        actual = tb.new JavacTask()
+                   .options("-XDrawDiagnostics",
+                            "-addmods", "ALL-MODULE-PATH")
+                   .outdir(cpOut)
+                   .files(findJavaFiles(cpSrc))
+                   .run(ToolBox.Expect.FAIL)
+                   .writeAll()
+                   .getOutputLines(ToolBox.OutputKind.DIRECT);
+
+        if (!Objects.equals(actual, expected)) {
+            throw new IllegalStateException("incorrect errors; actual=" + actual + "; expected=" + expected);
+        }
     }
 
     @Test
@@ -415,7 +524,9 @@ public class AddLimitMods extends ModuleTestBase {
         {"-addmods", "m1,automatic"},
         {"-addmods", "jdk.compiler,automatic"},
         {"-addmods", "m1,jdk.compiler,automatic"},
+        {"-addmods", "ALL-SYSTEM,automatic"},
         {"-limitmods", "java.base", "-addmods", "automatic"},
+        {"-limitmods", "java.base", "-addmods", "ALL-SYSTEM,automatic"},
         {"-limitmods", "m2", "-addmods", "automatic"},
         {"-limitmods", "jdk.compiler", "-addmods", "automatic"},
     };

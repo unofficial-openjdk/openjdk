@@ -27,6 +27,7 @@
 package com.sun.tools.javac.comp;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -37,8 +38,10 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import javax.lang.model.SourceVersion;
 import javax.tools.JavaFileManager;
@@ -111,6 +114,9 @@ import static com.sun.tools.javac.tree.JCTree.Tag.MODULEDEF;
  *  deletion without notice.</b>
  */
 public class Modules extends JCTree.Visitor {
+    private static final String ALL_SYSTEM = "ALL-SYSTEM";
+    private static final String ALL_MODULE_PATH = "ALL-MODULE-PATH";
+
     private final Log log;
     private final Names names;
     private final Symtab syms;
@@ -200,6 +206,7 @@ public class Modules extends JCTree.Visitor {
 
             if (!roots.isEmpty() && this.rootModules.isEmpty()) {
                 this.rootModules = roots;
+                allModules(); //ensure errors reported
             }
 
             for (ModuleSymbol msym: roots) {
@@ -283,6 +290,7 @@ public class Modules extends JCTree.Visitor {
     private void setCompilationUnitModules(List<JCCompilationUnit> trees, Set<ModuleSymbol> rootModules) {
         // update the module for each compilation unit
         if (multiModuleMode) {
+            checkNoAllModulePath();
             for (JCCompilationUnit tree: trees) {
                 if (tree.defs.isEmpty()) {
                     tree.modle = syms.unnamedModule;
@@ -336,6 +344,7 @@ public class Modules extends JCTree.Visitor {
                         defaultModule = moduleFinder.findSingleModule();
                         if (defaultModule == syms.unnamedModule) {
                             if (moduleOverride != null) {
+                                checkNoAllModulePath();
                                 defaultModule = moduleFinder.findModule(names.fromString(moduleOverride));
                             } else {
                                 // Question: why not do findAllModules and initVisiblePackages here?
@@ -345,6 +354,7 @@ public class Modules extends JCTree.Visitor {
                             }
                         } else {
                             checkSpecifiedModule(trees, Errors.ModuleInfoWithXmoduleClasspath);
+                            checkNoAllModulePath();
                             defaultModule.complete();
                             // Question: why not do completeModule here?
                             defaultModule.completer = new Completer() {
@@ -358,6 +368,7 @@ public class Modules extends JCTree.Visitor {
                         break;
                     case 1:
                         checkSpecifiedModule(trees, Errors.ModuleInfoWithXmoduleSourcepath);
+                        checkNoAllModulePath();
                         defaultModule = rootModules.iterator().next();
                         defaultModule.classLocation = StandardLocation.CLASS_OUTPUT;
                         break;
@@ -414,6 +425,12 @@ public class Modules extends JCTree.Visitor {
             } finally {
                 log.useSource(prev);
             }
+        }
+    }
+
+    private void checkNoAllModulePath() {
+        if (addModsOpt != null && Arrays.asList(addModsOpt.split(",")).contains(ALL_MODULE_PATH)) {
+            log.error(Errors.AddmodsAllModulePathInvalid);
         }
     }
 
@@ -801,11 +818,13 @@ public class Modules extends JCTree.Visitor {
             observable.addAll(rootModules);
         }
 
+        Predicate<ModuleSymbol> observablePred = sym -> observable == null || observable.contains(sym);
+        Predicate<ModuleSymbol> systemModulePred = sym -> (sym.flags() & Flags.SYSTEM_MODULE) != 0;
         Set<ModuleSymbol> enabledRoot = new LinkedHashSet<>();
 
         if (rootModules.contains(syms.unnamedModule)) {
             for (ModuleSymbol sym : syms.getAllModules()) {
-                if ((sym.flags() & Flags.SYSTEM_MODULE) != 0 && (observable == null || observable.contains(sym))) {
+                if (systemModulePred.test(sym) && observablePred.test(sym)) {
                     enabledRoot.add(sym);
                 }
             }
@@ -815,10 +834,27 @@ public class Modules extends JCTree.Visitor {
 
         if (addModsOpt != null) {
             for (String added : addModsOpt.split(",")) {
-                ModuleSymbol sym = syms.enterModule(names.fromString(added));
-                enabledRoot.add(sym);
-                if (observable != null)
-                    observable.add(sym);
+                Stream<ModuleSymbol> modules;
+                switch (added) {
+                    case ALL_SYSTEM:
+                        modules = syms.getAllModules()
+                                      .stream()
+                                      .filter(systemModulePred.and(observablePred));
+                        break;
+                    case ALL_MODULE_PATH:
+                        modules = syms.getAllModules()
+                                      .stream()
+                                      .filter(systemModulePred.negate().and(observablePred));
+                        break;
+                    default:
+                        modules = Stream.of(syms.enterModule(names.fromString(added)));
+                        break;
+                }
+                modules.forEach(sym -> {
+                    enabledRoot.add(sym);
+                    if (observable != null)
+                        observable.add(sym);
+                });
             }
         }
 

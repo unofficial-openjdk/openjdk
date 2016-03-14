@@ -587,7 +587,7 @@ public class Arguments {
         checkOptionAllowed(t.compareTo(Target.JDK1_9) >= 0,
                 option -> error("err.option.not.allowed.with.target", option.getText(), t.name),
                 Option.MODULESOURCEPATH, Option.UPGRADEMODULEPATH,
-                Option.SYSTEM, Option.MODULEPATH,
+                Option.SYSTEM, Option.MODULEPATH, Option.ADDMODS, Option.LIMITMODS,
                 Option.XPATCH);
 
         if (fm.hasLocation(StandardLocation.MODULE_SOURCE_PATH)) {
