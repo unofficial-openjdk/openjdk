@@ -145,10 +145,10 @@ public class ModulesTest extends TestScaffold {
                 }
                 appUnnamedModule = module;
             }
-            if (classloaderName.contains("ExtClassLoader") && name == null) {
+            if (classloaderName.contains("PlatformClassLoader") && name == null) {
                 if (extUnnamedModule != null) {
                     testFailed = true;
-                    println(FailPrefix + "multiple unnamed modules in ExtClassLoader");
+                    println(FailPrefix + "multiple unnamed modules in PlatformClassLoader");
                 }
                 extUnnamedModule = module;
             }
@@ -184,7 +184,7 @@ public class ModulesTest extends TestScaffold {
     }
 
     // Check that the unnamed modules of the bootsrtap, application
-    // and extension class loaders were observed.
+    // and platform class loaders were observed.
     private void checkUnnamedModules() {
         if (bootUnnamedModule == null) {
             testFailed = true;
@@ -196,7 +196,7 @@ public class ModulesTest extends TestScaffold {
         }
         if (extUnnamedModule == null) {
             testFailed = true;
-            println(FailPrefix + "unnamed module of ExtClassLoader was not observed");
+            println(FailPrefix + "unnamed module of PlatformClassLoader was not observed");
         }
 
         for (ModuleReference module : modules) {

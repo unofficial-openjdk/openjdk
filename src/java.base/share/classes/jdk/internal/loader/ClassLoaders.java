@@ -42,7 +42,7 @@ import sun.misc.URLClassPath;
 
 
 /**
- * Creates and provides access to the built-in extension and application class
+ * Creates and provides access to the built-in platform and application class
  * loaders. It also creates the class loader that is used to locate resources
  * in modules defined to the boot class loader.
  */
@@ -55,7 +55,7 @@ public class ClassLoaders {
 
     // the built-in class loaders
     private static final BootClassLoader BOOT_LOADER;
-    private static final ExtClassLoader EXT_LOADER;
+    private static final PlatformClassLoader PLATFORM_LOADER;
     private static final AppClassLoader APP_LOADER;
 
     /**
@@ -81,8 +81,8 @@ public class ClassLoaders {
 
         // create the class loaders
         BOOT_LOADER = new BootClassLoader(bcp);
-        EXT_LOADER = new ExtClassLoader(BOOT_LOADER);
-        APP_LOADER = new AppClassLoader(EXT_LOADER, ucp);
+        PLATFORM_LOADER = new PlatformClassLoader(BOOT_LOADER);
+        APP_LOADER = new AppClassLoader(PLATFORM_LOADER, ucp);
     }
 
     /**
@@ -98,10 +98,10 @@ public class ClassLoaders {
     }
 
     /**
-     * Returns the extension class loader.
+     * Returns the platform class loader.
      */
-    public static ClassLoader extClassLoader() {
-        return EXT_LOADER;
+    public static ClassLoader platformClassLoader() {
+        return PLATFORM_LOADER;
     }
 
     /**
@@ -127,16 +127,16 @@ public class ClassLoaders {
     };
 
     /**
-     * The extension class loader, a unique type to make it easier to distinguish
+     * The platform class loader, a unique type to make it easier to distinguish
      * from the application class loader.
      */
-    private static class ExtClassLoader extends BuiltinClassLoader {
+    private static class PlatformClassLoader extends BuiltinClassLoader {
         static {
             if (!ClassLoader.registerAsParallelCapable())
                 throw new InternalError();
         }
 
-        ExtClassLoader(BootClassLoader parent) {
+        PlatformClassLoader(BootClassLoader parent) {
             super(parent, null);
         }
 
@@ -163,7 +163,7 @@ public class ClassLoaders {
 
         final URLClassPath ucp;
 
-        AppClassLoader(ExtClassLoader parent, URLClassPath ucp) {
+        AppClassLoader(PlatformClassLoader parent, URLClassPath ucp) {
             super(parent, ucp);
             this.ucp = ucp;
         }

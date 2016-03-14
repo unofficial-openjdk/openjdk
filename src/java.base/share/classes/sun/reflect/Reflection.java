@@ -314,7 +314,7 @@ public class Reflection {
 
     /**
      * Tests if the given method is caller-sensitive and the declaring class
-     * is defined by either the bootstrap class loader or extension class loader.
+     * is defined by either the bootstrap class loader or platform class loader.
      */
     public static boolean isCallerSensitive(Method m) {
         final ClassLoader loader = m.getDeclaringClass().getClassLoader();

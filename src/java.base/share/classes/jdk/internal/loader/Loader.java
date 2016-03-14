@@ -238,12 +238,12 @@ public final class Loader extends SecureClassLoader {
                     assert layer != null;
 
                     // find the class loader for the module in the layer
-                    // For now we use the ext loader for modules defined to the
+                    // For now we use the platform loader for modules defined to the
                     // boot loader
                     assert layer.findModule(mn).isPresent();
                     loader = layer.findLoader(mn);
                     if (loader == null)
-                        loader = ClassLoaders.extClassLoader();
+                        loader = ClassLoaders.platformClassLoader();
                 }
 
                 // find the packages that are exported to the target module
