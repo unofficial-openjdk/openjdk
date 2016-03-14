@@ -75,7 +75,7 @@ $(IMAGES_OUTPUTDIR)/jmods/$(MODULE).jmod: $(DEPS)
 	$(call LogWarn, Creating $(notdir $@))
 	$(call MakeDir, $(@D) $(SUPPORT_OUTPUTDIR)/jmods)
 	$(RM) $@ $(SUPPORT_OUTPUTDIR)/jmods/$(notdir $@)
-	$(JMOD) --create \
+	$(JMOD) create \
             --module-version $(VERSION_SHORT) \
             --os-name $(REQUIRED_OS_NAME) \
             --os-arch $(OPENJDK_TARGET_CPU_LEGACY) \
