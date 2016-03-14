@@ -835,6 +835,9 @@ public:
 
 void JvmtiExport::post_compiled_method_unload(
        jmethodID method, const void *code_begin) {
+  if (JvmtiEnv::get_phase() < JVMTI_PHASE_PRIMORDIAL) {
+    return;
+  }
   JavaThread* thread = JavaThread::current();
   EVT_TRIG_TRACE(JVMTI_EVENT_COMPILED_METHOD_UNLOAD,
                  ("JVMTI [%s] method compile unload event triggered",
@@ -844,7 +847,9 @@ void JvmtiExport::post_compiled_method_unload(
   JvmtiEnvIterator it;
   for (JvmtiEnv* env = it.first(); env != NULL; env = it.next(env)) {
     if (env->is_enabled(JVMTI_EVENT_COMPILED_METHOD_UNLOAD)) {
-
+      if (env->phase() == JVMTI_PHASE_PRIMORDIAL) {
+        continue;
+      }
       EVT_TRACE(JVMTI_EVENT_COMPILED_METHOD_UNLOAD,
                 ("JVMTI [%s] class compile method unload event sent jmethodID " PTR_FORMAT,
                  JvmtiTrace::safe_get_thread_name(thread), p2i(method)));
@@ -1867,6 +1872,9 @@ jvmtiCompiledMethodLoadInlineRecord* create_inline_record(nmethod* nm) {
 }
 
 void JvmtiExport::post_compiled_method_load(nmethod *nm) {
+  if (JvmtiEnv::get_phase() < JVMTI_PHASE_PRIMORDIAL) {
+    return;
+  }
   JavaThread* thread = JavaThread::current();
 
   EVT_TRIG_TRACE(JVMTI_EVENT_COMPILED_METHOD_LOAD,
@@ -1876,7 +1884,9 @@ void JvmtiExport::post_compiled_method_load(nmethod *nm) {
   JvmtiEnvIterator it;
   for (JvmtiEnv* env = it.first(); env != NULL; env = it.next(env)) {
     if (env->is_enabled(JVMTI_EVENT_COMPILED_METHOD_LOAD)) {
-
+      if (env->phase() == JVMTI_PHASE_PRIMORDIAL) {
+        continue;
+      }
       EVT_TRACE(JVMTI_EVENT_COMPILED_METHOD_LOAD,
                 ("JVMTI [%s] class compile method load event sent %s.%s  ",
                 JvmtiTrace::safe_get_thread_name(thread),
@@ -1906,6 +1916,9 @@ void JvmtiExport::post_compiled_method_load(JvmtiEnv* env, const jmethodID metho
                                             const void *code_begin, const jint map_length,
                                             const jvmtiAddrLocationMap* map)
 {
+  if (env->phase() <= JVMTI_PHASE_PRIMORDIAL) {
+    return;
+  }
   JavaThread* thread = JavaThread::current();
   EVT_TRIG_TRACE(JVMTI_EVENT_COMPILED_METHOD_LOAD,
                  ("JVMTI [%s] method compile load event triggered (by GenerateEvents)",
