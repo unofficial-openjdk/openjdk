@@ -23,14 +23,16 @@
 
 /**
  * @test
- * @run testng JdkModules
+ * @summary Verify the defining class loader of each module never delegates
+ *          to its child class loader. Also sanity check java.compact2
+ *          requires.
+ * @run testng VerifyModuleDelegation
  */
 
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
 import java.lang.reflect.Layer;
-import java.lang.reflect.Module;
 import java.util.Set;
 
 import static java.lang.module.ModuleDescriptor.Requires.Modifier.*;
@@ -39,21 +41,25 @@ import org.testng.annotations.*;
 
 import static org.testng.Assert.*;
 
-public class JdkModules {
-    private static Set<ModuleReference> mrefs
-        = ModuleFinder.ofSystem().findAll();
+public class VerifyModuleDelegation {
+    private static final String JAVA_BASE = "java.base";
+    private static final String JAVA_COMPACT1 = "java.compact1";
+    private static final String JAVA_COMPACT2 = "java.compact2";
 
-    private static ModuleDescriptor base
-        = new ModuleDescriptor.Builder("java.base").build();
+    private static final ModuleDescriptor BASE
+        = new ModuleDescriptor.Builder(JAVA_BASE).build();
 
-    private static ModuleDescriptor compact2
-        = new ModuleDescriptor.Builder("java.compact2")
-            .requires(MANDATED, "java.base")
-            .requires(PUBLIC, "java.compact1")
+    private static final ModuleDescriptor COMPACT2
+        = new ModuleDescriptor.Builder(JAVA_COMPACT2)
+            .requires(MANDATED, JAVA_BASE)
+            .requires(PUBLIC, JAVA_COMPACT1)
             .requires(PUBLIC, "java.rmi")
             .requires(PUBLIC, "java.sql")
             .requires(PUBLIC, "java.xml")
             .build();
+
+    private static final Set<ModuleReference> MREFS
+            = ModuleFinder.ofSystem().findAll();
 
     private void check(ModuleDescriptor md, ModuleDescriptor ref) {
         assertTrue(md.requires().size() == ref.requires().size());
@@ -63,33 +69,34 @@ public class JdkModules {
     @Test
     public void checkJavaBase() {
         ModuleDescriptor md =
-                mrefs.stream().map(ModuleReference::descriptor)
-                     .filter(d -> d.name().equals("java.base"))
+                MREFS.stream().map(ModuleReference::descriptor)
+                     .filter(d -> d.name().equals(JAVA_BASE))
                      .findFirst().orElseThrow(Error::new);
 
-        check(md, base);
+        check(md, BASE);
     }
     @Test
     public void checkCompact2() {
         ModuleDescriptor md =
-                mrefs.stream().map(ModuleReference::descriptor)
-                     .filter(d -> d.name().equals("java.compact2"))
+                MREFS.stream().map(ModuleReference::descriptor)
+                     .filter(d -> d.name().equals(JAVA_COMPACT2))
                      .findFirst().orElseThrow(Error::new);
-        check(md, compact2);
+        check(md, COMPACT2);
     }
 
     @Test
     public void checkLoaderDelegation() {
         Layer boot = Layer.boot();
-        mrefs.stream().map(ModuleReference::descriptor)
-             .forEach(md -> md.requires().stream().forEach(d ->
+        MREFS.stream().map(ModuleReference::descriptor)
+             .forEach(md -> md.requires().stream().forEach(req ->
                  {
                      // check if M requires D and D's loader must be either the
                      // same or an ancestor of M's loader
                      ClassLoader loader1 = boot.findLoader(md.name());
-                     ClassLoader loader2 = boot.findLoader(d.name());
+                     ClassLoader loader2 = boot.findLoader(req.name());
                      if (loader1 != loader2 && !isAncestor(loader2, loader1)) {
-                         throw new Error(md.name() + " can't delegate to find classes from " + d.name());
+                         throw new Error(md.name() + " can't delegate to " +
+                                         "find classes from " + req.name());
                      }
                  }));
     }
