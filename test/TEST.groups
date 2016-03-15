@@ -76,7 +76,7 @@ jdk_lang = \
     jdk/lambda \
     jdk/internal/misc \
     jdk/internal/ref \
-    jdk/jigsaw \
+    jdk/modules \
     vm
 
 # All of the java.util package

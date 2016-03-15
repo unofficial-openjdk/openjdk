@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,7 +40,7 @@ import static org.testng.Assert.assertTrue;
  * @test
  * @bug 8087335
  * @summary Tests for Class.forName(Module,String)
- * @library /lib/testlibrary /jdk/jigsaw/lib
+ * @library /lib/testlibrary
  * @modules jdk.compiler
  * @build TestDriver CompilerUtils jdk.testlibrary.ProcessTools jdk.testlibrary.FileUtils TestMain TestLayer
  * @run testng TestDriver

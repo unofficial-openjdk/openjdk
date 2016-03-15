@@ -23,6 +23,8 @@
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 
 import static jdk.testlibrary.ProcessTools.executeTestJava;
 
@@ -33,63 +35,51 @@ import static org.testng.Assert.*;
 /**
  * @test
  * @library /lib/testlibrary
- * @modules jdk.compiler
- * @build ResourcesTest CompilerUtils jdk.testlibrary.*
- * @run testng ResourcesTest
- * @summary Driver for basic test of Class getResource and getResourceAsStream
+ * @modules java.compiler
+ * @build AccessTest CompilerUtils jdk.testlibrary.*
+ * @run testng AccessTest
+ * @summary Driver for test that checks access to public members in exported
+ *          and non-exported packages.
  */
 
 @Test
-public class ResourcesTest {
+public class AccessTest {
 
     private static final String TEST_SRC = System.getProperty("test.src");
 
     private static final Path SRC_DIR = Paths.get(TEST_SRC, "src");
-    private static final Path CLASSES_DIR = Paths.get("classes");
     private static final Path MODS_DIR = Paths.get("mods");
 
 
+    // the names of the modules in this test
+    private static List<String> modules = Arrays.asList("test", "target");
+
+
     /**
-     * Compiles the modules used by the test and the test Main
+     * Compiles all modules used by the test
      */
     @BeforeTest
     public void compileAll() throws Exception {
-        boolean compiled;
-
-        // javac -modulesource mods -d mods src/**
-        compiled = CompilerUtils
-            .compile(SRC_DIR,
-                     MODS_DIR,
-                     "-modulesourcepath", SRC_DIR.toString());
-        assertTrue(compiled);
-
-        // javac -mp mods -d classes Main.java
-        compiled = CompilerUtils
-            .compile(Paths.get(TEST_SRC, "Main.java"),
-                     CLASSES_DIR,
-                     "-mp", MODS_DIR.toString(),
-                     "-addmods", "m1,m2,m3");
-        assertTrue(compiled);
-
+        for (String mn : modules) {
+            Path src = SRC_DIR.resolve(mn);
+            Path mods = MODS_DIR.resolve(mn);
+            assertTrue(CompilerUtils.compile(src, mods));
+        }
     }
 
     /**
      * Run the test
      */
     public void runTest() throws Exception {
-
         int exitValue
             = executeTestJava("-mp", MODS_DIR.toString(),
-                              "-addmods", "m1,m2,m3",
-                               "-cp", CLASSES_DIR.toString(),
-                              "Main")
+                              "-addmods", "target",
+                              "-m", "test/test.Main")
                 .outputTo(System.out)
                 .errorTo(System.out)
                 .getExitValue();
 
         assertTrue(exitValue == 0);
-
     }
 
 }
-

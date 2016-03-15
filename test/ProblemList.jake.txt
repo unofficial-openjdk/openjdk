@@ -7,7 +7,7 @@
 # jdk_lang
 
 # 8150195 
-jdk/jigsaw/tools/jimage/JImageTest.java                         windows-all
+tools/jimage/JImageTest.java                         		windows-all
 
 ############################################################################
 
@@ -25,6 +25,13 @@ sun/security/tools/keytool/autotest.sh                         generic-all
 
 # 8048100
 tools/pack200/Pack200Test.java					generic-all
+
+############################################################################
+
+# svc_tools
+
+# 8151899
+demo/jvmti/compiledMethodLoad/CompiledMethodLoadTest.java	generic-all
 
 ############################################################################
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,8 @@
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 
 import static jdk.testlibrary.ProcessTools.executeTestJava;
 
@@ -34,62 +36,47 @@ import static org.testng.Assert.*;
  * @test
  * @library /lib/testlibrary
  * @modules jdk.compiler
- * @build ResourcesTest CompilerUtils jdk.testlibrary.*
- * @run testng ResourcesTest
- * @summary Driver for basic test of Class getResource and getResourceAsStream
+ * @build ProxyTest q.U CompilerUtils jdk.testlibrary.*
+ * @run testng ProxyTest
+ * @summary Driver for testing proxies accessing interfaces in named modules
  */
 
-@Test
-public class ResourcesTest {
+public class ProxyTest {
 
     private static final String TEST_SRC = System.getProperty("test.src");
+    private static final String TEST_CLASSES = System.getProperty("test.classes");
 
     private static final Path SRC_DIR = Paths.get(TEST_SRC, "src");
-    private static final Path CLASSES_DIR = Paths.get("classes");
     private static final Path MODS_DIR = Paths.get("mods");
+    private static final Path CPATH_DIR = Paths.get(TEST_CLASSES);
+
+    // the names of the modules in this test
+    private static List<String> modules = Arrays.asList("test", "m1", "m2", "m3");
 
 
     /**
-     * Compiles the modules used by the test and the test Main
+     * Compiles all modules used by the test
      */
     @BeforeTest
     public void compileAll() throws Exception {
-        boolean compiled;
-
-        // javac -modulesource mods -d mods src/**
-        compiled = CompilerUtils
-            .compile(SRC_DIR,
-                     MODS_DIR,
-                     "-modulesourcepath", SRC_DIR.toString());
-        assertTrue(compiled);
-
-        // javac -mp mods -d classes Main.java
-        compiled = CompilerUtils
-            .compile(Paths.get(TEST_SRC, "Main.java"),
-                     CLASSES_DIR,
-                     "-mp", MODS_DIR.toString(),
-                     "-addmods", "m1,m2,m3");
-        assertTrue(compiled);
-
+        for (String mn : modules) {
+            Path msrc = SRC_DIR.resolve(mn);
+            assertTrue(CompilerUtils.compile(msrc, MODS_DIR, "-modulesourcepath", SRC_DIR.toString()));
+        }
     }
 
     /**
-     * Run the test
+     * Run the modular test
      */
+    @Test
     public void runTest() throws Exception {
-
-        int exitValue
-            = executeTestJava("-mp", MODS_DIR.toString(),
-                              "-addmods", "m1,m2,m3",
-                               "-cp", CLASSES_DIR.toString(),
-                              "Main")
-                .outputTo(System.out)
-                .errorTo(System.out)
-                .getExitValue();
+        int exitValue = executeTestJava("-cp", CPATH_DIR.toString(),
+                                        "-mp", MODS_DIR.toString(),
+                                        "-m", "test/jdk.test.Main")
+                            .outputTo(System.out)
+                            .errorTo(System.out)
+                            .getExitValue();
 
         assertTrue(exitValue == 0);
-
     }
-
 }
-
