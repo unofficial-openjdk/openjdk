@@ -878,7 +878,7 @@ void ClassLoader::initialize_module_loader_map(JImageFile* jimage) {
   _boot_modules_array = new (ResourceObj::C_HEAP, mtInternal)
     GrowableArray<char*>(INITIAL_BOOT_MODULES_ARRAY_SIZE, true);
   _platform_modules_array = new (ResourceObj::C_HEAP, mtInternal)
-    GrowableArray<char*>(INITIAL_EXT_MODULES_ARRAY_SIZE, true);
+    GrowableArray<char*>(INITIAL_PLATFORM_MODULES_ARRAY_SIZE, true);
   while (end_ptr != NULL && (end_ptr - char_buf) < buflen) {
     // Allocate a buffer from the C heap to be appended to the _boot_modules_array
     // or the _platform_modules_array.
@@ -1008,18 +1008,18 @@ s2 ClassLoader::module_to_classloader(const char* module_name) {
   int array_size = _boot_modules_array->length();
   for (int i = 0; i < array_size; i++) {
     if (strcmp(module_name, _boot_modules_array->at(i)) == 0) {
-      return BOOT;
+      return BOOT_LOADER;
     }
   }
 
   array_size = _platform_modules_array->length();
   for (int i = 0; i < array_size; i++) {
     if (strcmp(module_name, _platform_modules_array->at(i)) == 0) {
-      return EXT;
+      return PLATFORM_LOADER;
     }
   }
 
-  return APP;
+  return APP_LOADER;
 }
 #endif
 
@@ -1031,7 +1031,7 @@ s2 ClassLoader::classloader_type(Symbol* class_name, ClassPathEntry* e,
   // the classloader type based on the package name from the jimage using
   // a jimage API. If the classloader type cannot be found from the
   // jimage, it is determined by the class path entry.
-  jshort loader_type = ClassLoader::APP;
+  jshort loader_type = ClassLoader::APP_LOADER;
   if (e->is_jrt()) {
     int length = 0;
     const jbyte* pkg_string = InstanceKlass::package_from_name(class_name, length);
@@ -1047,11 +1047,11 @@ s2 ClassLoader::classloader_type(Symbol* class_name, ClassPathEntry* e,
       }
     }
   } else if (ClassLoaderExt::is_boot_classpath(classpath_index)) {
-    loader_type = ClassLoader::BOOT;
+    loader_type = ClassLoader::BOOT_LOADER;
   }
   return loader_type;
 #endif
-  return ClassLoader::BOOT; // the classloader type is ignored in non-CDS cases
+  return ClassLoader::BOOT_LOADER; // the classloader type is ignored in non-CDS cases
 }
 
 

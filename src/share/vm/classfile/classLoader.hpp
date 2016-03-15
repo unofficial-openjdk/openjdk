@@ -41,7 +41,7 @@
 
 // Initial sizes of the following arrays are based on the generated ModuleLoaderMap.dat
 #define INITIAL_BOOT_MODULES_ARRAY_SIZE 30
-#define INITIAL_EXT_MODULES_ARRAY_SIZE  15
+#define INITIAL_PLATFORM_MODULES_ARRAY_SIZE  15
 
 // Class path entry (directory or zip file)
 
@@ -144,9 +144,9 @@ class SharedPathsMiscInfo;
 class ClassLoader: AllStatic {
  public:
   enum ClassLoaderType {
-    BOOT = 1,
-    EXT  = 2,
-    APP  = 3
+    BOOT_LOADER = 1,      /* boot loader */
+    PLATFORM_LOADER  = 2, /* PlatformClassLoader */
+    APP_LOADER  = 3       /* AppClassLoader */
   };
  protected:
 

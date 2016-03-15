@@ -214,11 +214,11 @@ class InstanceKlass: public Klass {
     _misc_has_been_redefined       = 1 << 9,  // class has been redefined
     _misc_is_scratch_class         = 1 << 10, // class is the redefined scratch class
     _misc_is_shared_boot_class     = 1 << 11, // defining class loader is boot class loader
-    _misc_is_shared_ext_class      = 1 << 12, // defining class loader is ext class loader
+    _misc_is_shared_platform_class = 1 << 12, // defining class loader is platform class loader
     _misc_is_shared_app_class      = 1 << 13  // defining class loader is app class loader
   };
   u2 loader_type_bits() {
-    return _misc_is_shared_boot_class|_misc_is_shared_ext_class|_misc_is_shared_app_class;
+    return _misc_is_shared_boot_class|_misc_is_shared_platform_class|_misc_is_shared_app_class;
   }
   u2              _misc_flags;
   u2              _minor_version;        // minor version number of class file
@@ -308,8 +308,8 @@ class InstanceKlass: public Klass {
   bool is_shared_boot_class() const {
     return (_misc_flags & _misc_is_shared_boot_class) != 0;
   }
-  bool is_shared_ext_class() const {
-    return (_misc_flags & _misc_is_shared_ext_class) != 0;
+  bool is_shared_platform_class() const {
+    return (_misc_flags & _misc_is_shared_platform_class) != 0;
   }
   bool is_shared_app_class() const {
     return (_misc_flags & _misc_is_shared_app_class) != 0;
@@ -319,13 +319,13 @@ class InstanceKlass: public Klass {
     assert(( _misc_flags & loader_type_bits()) == 0,
            "Should only be called once for each class.");
     switch (loader_type) {
-    case ClassLoader::BOOT:
+    case ClassLoader::BOOT_LOADER:
       _misc_flags |= _misc_is_shared_boot_class;
        break;
-    case ClassLoader::EXT:
-      _misc_flags |= _misc_is_shared_ext_class;
+    case ClassLoader::PLATFORM_LOADER:
+      _misc_flags |= _misc_is_shared_platform_class;
       break;
-    case ClassLoader::APP:
+    case ClassLoader::APP_LOADER:
       _misc_flags |= _misc_is_shared_app_class;
       break;
     default:
