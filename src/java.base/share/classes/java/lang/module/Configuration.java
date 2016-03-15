@@ -111,18 +111,20 @@ import java.util.stream.Collectors;
  *
  * <p> Suppose we have the following observable modules: </p>
  * <pre> {@code
- *     module m1 { uses p.S; }
- *     module m2 { provides p.S with p2.S2; }
- *     module m3 { requires m4; provides p.S with p3.S3; }
+ *     module m1 { exports p; uses p.S; }
+ *     module m2 { requires m1; provides p.S with p2.S2; }
+ *     module m3 { requires m1; requires m4; provides p.S with p3.S3; }
  *     module m4 { }
  * } </pre>
  *
- * <p> If the module {@code m1} is resolved then the resulting configuration
- * contains one module ({@code m1}). If service binding is then performed then
- * it results in a new configuration that contains four modules ({@code m1},
- * {@code m2}, {@code m3}, {@code m4}). The edges in its readability graph
- * are:</p>
+ * <p> If the module {@code m1} is resolved then the resulting graph of modules
+ * has one module ({@code m1}). If the graph is augmented with modules induced
+ * by the service-use dependence relation then the configuration will contain
+ * four modules ({@code m1}, {@code m2}, {@code m3}, {@code m4}). The edges in
+ * its readability graph are: </p>
  * <pre> {@code
+ *     m2 --> m1
+ *     m3 --> m1
  *     m3 --> m4
  * } </pre>
  * <p> The edges in the conceptual service-use graph are: </p>
