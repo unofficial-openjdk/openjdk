@@ -133,10 +133,6 @@ public class AccessibleObject implements AnnotatedElement {
      * {@code checkPermission} method is called with a
      * {@code ReflectPermission("suppressAccessChecks")} permission.
      *
-     * <p>A {@code SecurityException} is also thrown if this object is a {@link
-     * java.lang.reflect.Constructor} object for the class
-     * {@code java.lang.Class} and {@code flag} is true.
-     *
      * @param flag the new value for the {@code accessible} flag
      * @throws InaccessibleObjectException if access cannot be enabled
      * @throws SecurityException if the request is denied

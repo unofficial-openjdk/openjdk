@@ -159,6 +159,15 @@ public final class Constructor<T> extends Executable {
         return res;
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p> A {@code SecurityException} is also thrown if this object is a
+     * {@code Constructor} object for the class {@code Class} and {@code flag}
+     * is true. </p>
+     *
+     * @param flag {@inheritDoc}
+     */
     @Override
     @CallerSensitive
     public void setAccessible(boolean flag) {
