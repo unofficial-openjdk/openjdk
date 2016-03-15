@@ -26,6 +26,7 @@
  * @bug 8148316 8148317
  * @summary Tests for output customization
  * @library /tools/lib
+ * @modules jdk.jshell/jdk.internal.jshell.tool
  * @build KullaTesting TestingInputStream ToolBox Compiler
  * @run testng ToolFormatTest
  */
