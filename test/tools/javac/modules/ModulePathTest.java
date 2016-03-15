@@ -408,7 +408,7 @@ public class ModulePathTest extends ModuleTestBase {
 
     private void jmod(Path dir, Path jmod) throws Exception {
         String[] args = {
-                "--create",
+                "create",
                 "--class-path", dir.toString(),
                 jmod.toString()
         };

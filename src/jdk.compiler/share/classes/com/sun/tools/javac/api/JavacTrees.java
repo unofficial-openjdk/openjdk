@@ -450,6 +450,10 @@ public class JavacTrees extends DocTrees {
                     if ((sym.kind == PCK || sym.kind == TYP) && sym.exists()) {
                         tsym = (TypeSymbol) sym;
                         memberName = (Name) ref.memberName;
+                        if (sym.kind == PCK && memberName != null) {
+                            //cannot refer to a package "member"
+                            return null;
+                        }
                     } else {
                         if (ref.qualifierExpression.hasTag(JCTree.Tag.IDENT)) {
                             // fixup:  allow "identifier" instead of "#identifier"

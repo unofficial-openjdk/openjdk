@@ -25,13 +25,13 @@
 
 package com.sun.tools.javac.code;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import javax.lang.model.element.ElementVisitor;
-import javax.tools.JavaFileObject;
 
 import com.sun.tools.javac.code.Scope.WriteableScope;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
@@ -50,7 +50,6 @@ import com.sun.tools.javac.code.Type.JCVoidType;
 import com.sun.tools.javac.code.Type.MethodType;
 import com.sun.tools.javac.code.Type.UnknownType;
 import com.sun.tools.javac.comp.Modules;
-import com.sun.tools.javac.jvm.Target;
 import com.sun.tools.javac.util.Assert;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.Convert;
@@ -59,7 +58,6 @@ import com.sun.tools.javac.util.DefinedBy.Api;
 import com.sun.tools.javac.util.Iterators;
 import com.sun.tools.javac.util.JavacMessages;
 import com.sun.tools.javac.util.List;
-import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
 import com.sun.tools.javac.util.Options;
@@ -803,7 +801,7 @@ public class Symtab {
         return result;
     }
 
-    public Iterable<ModuleSymbol> getAllModules() {
+    public Collection<ModuleSymbol> getAllModules() {
         return modules.values();
     }
 }
