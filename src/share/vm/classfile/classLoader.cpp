@@ -145,7 +145,7 @@ ClassPathEntry* ClassLoader::_first_append_entry = NULL;
 bool            ClassLoader::_has_jimage = false;
 #if INCLUDE_CDS
 GrowableArray<char*>* ClassLoader::_boot_modules_array = NULL;
-GrowableArray<char*>* ClassLoader::_ext_modules_array = NULL;
+GrowableArray<char*>* ClassLoader::_platform_modules_array = NULL;
 SharedPathsMiscInfo* ClassLoader::_shared_paths_misc_info = NULL;
 #endif
 
@@ -877,18 +877,18 @@ void ClassLoader::initialize_module_loader_map(JImageFile* jimage) {
   bool process_boot_modules = false;
   _boot_modules_array = new (ResourceObj::C_HEAP, mtInternal)
     GrowableArray<char*>(INITIAL_BOOT_MODULES_ARRAY_SIZE, true);
-  _ext_modules_array = new (ResourceObj::C_HEAP, mtInternal)
+  _platform_modules_array = new (ResourceObj::C_HEAP, mtInternal)
     GrowableArray<char*>(INITIAL_EXT_MODULES_ARRAY_SIZE, true);
   while (end_ptr != NULL && (end_ptr - char_buf) < buflen) {
     // Allocate a buffer from the C heap to be appended to the _boot_modules_array
-    // or the _ext_modules_array.
+    // or the _platform_modules_array.
     char* temp_name = NEW_C_HEAP_ARRAY(char, (size_t)(end_ptr - begin_ptr + 1), mtInternal);
     strncpy(temp_name, begin_ptr, end_ptr - begin_ptr);
     temp_name[end_ptr - begin_ptr] = '\0';
     if (strncmp(temp_name, "BOOT", 4) == 0) {
       process_boot_modules = true;
       FREE_C_HEAP_ARRAY(char, temp_name);
-    } else if (strncmp(temp_name, "EXT", 3) == 0) {
+    } else if (strncmp(temp_name, "PLATFORM", 8) == 0) {
       process_boot_modules = false;
       FREE_C_HEAP_ARRAY(char, temp_name);
     } else {
@@ -896,7 +896,7 @@ void ClassLoader::initialize_module_loader_map(JImageFile* jimage) {
       if (process_boot_modules) {
         _boot_modules_array->append(temp_name);
       } else {
-        _ext_modules_array->append(temp_name);
+        _platform_modules_array->append(temp_name);
       }
     }
     begin_ptr = ++end_ptr;
@@ -1003,7 +1003,7 @@ objArrayOop ClassLoader::get_system_packages(TRAPS) {
 s2 ClassLoader::module_to_classloader(const char* module_name) {
 
   assert(_boot_modules_array != NULL, "_boot_modules_array is NULL");
-  assert(_ext_modules_array != NULL, "_ext_modules_array is NULL");
+  assert(_platform_modules_array != NULL, "_platform_modules_array is NULL");
 
   int array_size = _boot_modules_array->length();
   for (int i = 0; i < array_size; i++) {
@@ -1012,9 +1012,9 @@ s2 ClassLoader::module_to_classloader(const char* module_name) {
     }
   }
 
-  array_size = _ext_modules_array->length();
+  array_size = _platform_modules_array->length();
   for (int i = 0; i < array_size; i++) {
-    if (strcmp(module_name, _ext_modules_array->at(i)) == 0) {
+    if (strcmp(module_name, _platform_modules_array->at(i)) == 0) {
       return EXT;
     }
   }

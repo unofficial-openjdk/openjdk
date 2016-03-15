@@ -173,13 +173,13 @@ bool SystemDictionary::is_parallelDefine(Handle class_loader) {
 }
 
 /**
- * Returns true if the passed class loader is the extension class loader.
+ * Returns true if the passed class loader is the platform class loader.
  */
-bool SystemDictionary::is_ext_class_loader(Handle class_loader) {
+bool SystemDictionary::is_platform_class_loader(Handle class_loader) {
   if (class_loader.is_null()) {
     return false;
   }
-  return (class_loader->klass()->name() == vmSymbols::jdk_internal_loader_ClassLoaders_ExtClassLoader());
+  return (class_loader->klass() == SystemDictionary::jdk_internal_loader_ClassLoaders_PlatformClassLoader_klass());
 }
 
 // ----------------------------------------------------------------------------
@@ -1146,7 +1146,7 @@ Klass* SystemDictionary::resolve_from_stream(Symbol* class_name,
   const char* pkg = "java/";
   if (!HAS_PENDING_EXCEPTION &&
       !class_loader.is_null() &&
-      !SystemDictionary::is_ext_class_loader(class_loader) &&
+      !SystemDictionary::is_platform_class_loader(class_loader) &&
       parsed_name != NULL &&
       !strncmp((const char*)parsed_name->bytes(), pkg, strlen(pkg))) {
     // It is illegal to define classes in the "java." package from
