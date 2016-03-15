@@ -105,11 +105,37 @@ public final class ResolvedModule {
         return cf.reads(this);
     }
 
+    /**
+     * Computes a hash code for this resolved module.
+     *
+     * <p> The hash code is based upon the components of the resolved module
+     * and satisfies the general contract of the {@link Object#hashCode
+     * Object.hashCode} method. </p>
+     *
+     * @return The hash-code value for this resolved module
+     */
     @Override
     public int hashCode() {
         return cf.hashCode() ^ mref.hashCode();
     }
 
+    /**
+     * Tests this resolved module for equality with the given object.
+     *
+     * <p> If the given object is not a {@code ResolvedModule} then this
+     * method returns {@code false}. Two {@code ResolvedModule} objects are
+     * equal if they are in the same configuration and have equal references
+     * to the module content. </p>
+     *
+     * <p> This method satisfies the general contract of the {@link
+     * java.lang.Object#equals(Object) Object.equals} method. </p>
+     *
+     * @param   ob
+     *          the object to which this object is to be compared
+     *
+     * @return  {@code true} if, and only if, the given object is a module
+     *          reference that is equal to this module reference
+     */
     @Override
     public boolean equals(Object ob) {
         if (!(ob instanceof ResolvedModule))
@@ -120,6 +146,11 @@ public final class ResolvedModule {
                 && Objects.equals(this.mref, that.mref);
     }
 
+    /**
+     * Returns a string describing this resolved module.
+     *
+     * @return A string describing this resolved module
+     */
     @Override
     public String toString() {
         return System.identityHashCode(cf) + "/" + name();

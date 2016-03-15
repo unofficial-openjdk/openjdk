@@ -145,7 +145,8 @@ public class ModuleDescriptor
          *
          * <p> Two {@code Requires} objects are compared by comparing their
          * module name lexicographically.  Where the module names are equal then
-         * the sets of modifiers are compared.
+         * the sets of modifiers are compared based a value computed from the
+         * ordinal of each modifier. </p>
          *
          * @return A negative integer, zero, or a positive integer if this module
          *         dependence is less than, equal to, or greater than the given
@@ -172,7 +173,22 @@ public class ModuleDescriptor
             return value;
         }
 
-
+        /**
+         * Tests this module dependence for equality with the given object.
+         *
+         * <p> If the given object is not a {@code Requires} then this method
+         * returns {@code false}. Two module dependence objects are equal if
+         * the module names are equal and set of modifiers are equal. </p>
+         *
+         * <p> This method satisfies the general contract of the {@link
+         * java.lang.Object#equals(Object) Object.equals} method. </p>
+         *
+         * @param   ob
+         *          the object to which this object is to be compared
+         *
+         * @return  {@code true} if, and only if, the given object is a module
+         *          dependence that is equal to this module dependence
+         */
         @Override
         public boolean equals(Object ob) {
             if (!(ob instanceof Requires))
@@ -181,11 +197,25 @@ public class ModuleDescriptor
             return (name.equals(that.name) && mods.equals(that.mods));
         }
 
+        /**
+         * Computes a hash code for this module dependence.
+         *
+         * <p> The hash code is based upon the module name and modifiers. It
+         * satisfies the general contract of the {@link Object#hashCode
+         * Object.hashCode} method. </p>
+         *
+         * @return The hash-code value for this module dependence
+         */
         @Override
         public int hashCode() {
             return name.hashCode() * 43 + mods.hashCode();
         }
 
+        /**
+         * Returns a string describing module dependence.
+         *
+         * @return A string describing module dependence
+         */
         @Override
         public String toString() {
             return Dependence.toString(mods, name);
@@ -266,18 +296,53 @@ public class ModuleDescriptor
             return targets;
         }
 
+        /**
+         * Computes a hash code for this module export.
+         *
+         * <p> The hash code is based upon the package name, and for a
+         * qualified export, the set of modules names to which the package
+         * is exported. It satisfies the general contract of the {@link
+         * Object#hashCode Object.hashCode} method.
+         *
+         * @return The hash-code value for this module export
+         */
+        @Override
         public int hashCode() {
             return hash(source, targets);
         }
 
-        public boolean equals(Object obj) {
-            if (!(obj instanceof Exports))
+        /**
+         * Tests this module export for equality with the given object.
+         *
+         * <p> If the given object is not a {@code Exports} then this method
+         * returns {@code false}. Two module exports objects are equal if the
+         * package names are equal and the set of target module names is equal.
+         * </p>
+         *
+         * <p> This method satisfies the general contract of the {@link
+         * java.lang.Object#equals(Object) Object.equals} method. </p>
+         *
+         * @param   ob
+         *          the object to which this object is to be compared
+         *
+         * @return  {@code true} if, and only if, the given object is a module
+         *          dependence that is equal to this module dependence
+         */
+        @Override
+        public boolean equals(Object ob) {
+            if (!(ob instanceof Exports))
                 return false;
-            Exports other = (Exports)obj;
+            Exports other = (Exports)ob;
             return Objects.equals(this.source, other.source) &&
                 Objects.equals(this.targets, other.targets);
         }
 
+        /**
+         * Returns a string describing module export.
+         *
+         * @return A string describing module export
+         */
+        @Override
         public String toString() {
             if (targets.isEmpty())
                 return source;
@@ -331,16 +396,53 @@ public class ModuleDescriptor
          */
         public Set<String> providers() { return providers; }
 
+        /**
+         * Computes a hash code for this provides.
+         *
+         * <p> The hash code is based upon the service type and the set of
+         * providers. It satisfies the general contract of the {@link
+         * Object#hashCode Object.hashCode} method. </p>
+         *
+         * @return The hash-code value for this module provides
+         */
+        @Override
         public int hashCode() {
             return hash(service, providers);
         }
 
-        public boolean equals(Object obj) {
-            if (!(obj instanceof Provides))
+        /**
+         * Tests this provides for equality with the given object.
+         *
+         * <p> If the given object is not a {@code Provides} then this method
+         * returns {@code false}. Two {@code Provides} objects are equal if the
+         * service type is equal and the set of providers is equal. </p>
+         *
+         * <p> This method satisfies the general contract of the {@link
+         * java.lang.Object#equals(Object) Object.equals} method. </p>
+         *
+         * @param   ob
+         *          the object to which this object is to be compared
+         *
+         * @return  {@code true} if, and only if, the given object is a
+         *          {@code Provides} that is equal to this {@code Provides}
+         */
+        @Override
+        public boolean equals(Object ob) {
+            if (!(ob instanceof Provides))
                 return false;
-            Provides other = (Provides)obj;
+            Provides other = (Provides)ob;
             return Objects.equals(this.service, other.service) &&
                     Objects.equals(this.providers, other.providers);
+        }
+
+        /**
+         * Returns a string describing this provides.
+         *
+         * @return A string describing this provides
+         */
+        @Override
+        public String toString() {
+            return service + " with " + providers;
         }
 
     }
@@ -588,6 +690,17 @@ public class ModuleDescriptor
             return 0;
         }
 
+        /**
+         * Compares this module version to another module version. Module
+         * versions are compared as described in the class description.
+         *
+         * @param that
+         *        The module version to compare
+         *
+         * @return A negative integer, zero, or a positive integer as this
+         *         module version is less than, equal to, or greater than the
+         *         given module version
+         */
         @Override
         public int compareTo(Version that) {
             int c = compareTokens(this.sequence, that.sequence);
@@ -602,6 +715,22 @@ public class ModuleDescriptor
             return compareTokens(this.build, that.build);
         }
 
+        /**
+         * Tests this module version for equality with the given object.
+         *
+         * <p> If the given object is not a {@code Version} then this method
+         * returns {@code false}. Two module version are equal if their
+         * corresponding components are equal. </p>
+         *
+         * <p> This method satisfies the general contract of the {@link
+         * java.lang.Object#equals(Object) Object.equals} method. </p>
+         *
+         * @param   ob
+         *          the object to which this object is to be compared
+         *
+         * @return  {@code true} if, and only if, the given object is a module
+         *          reference that is equal to this module reference
+         */
         @Override
         public boolean equals(Object ob) {
             if (!(ob instanceof Version))
@@ -609,11 +738,25 @@ public class ModuleDescriptor
             return compareTo((Version)ob) == 0;
         }
 
+        /**
+         * Computes a hash code for this module version.
+         *
+         * <p> The hash code is based upon the components of the version and
+         * satisfies the general contract of the {@link Object#hashCode
+         * Object.hashCode} method. </p>
+         *
+         * @return The hash-code value for this module version
+         */
         @Override
         public int hashCode() {
             return version.hashCode();
         }
 
+        /**
+         * Returns the string from which this version was parsed.
+         *
+         * @return The string from which this version was parsed.
+         */
         @Override
         public String toString() {
             return version;
@@ -1475,7 +1618,12 @@ public class ModuleDescriptor
      *
      * <p> Two {@code ModuleDescriptor} objects are compared by comparing their
      * module name lexicographically.  Where the module names are equal then
-     * the versions, if present, are compared.
+     * the versions, if present, are compared. </p>
+     *
+     * @apiNote For now, the natural ordering is not consistent with equals.
+     * If two module descriptors have equal module names, equal versions, but
+     * other corresponding components are not equal, then they will be
+     * considered equal by this method.
      *
      * @param  that
      *         The object to which this module descriptor is to be compared
@@ -1498,6 +1646,22 @@ public class ModuleDescriptor
         return version.compareTo(that.version);
     }
 
+    /**
+     * Tests this module descriptor for equality with the given object.
+     *
+     * <p> If the given object is not a {@code ModuleDescriptor} then this
+     * method returns {@code false}. Two module descriptors are equal if each
+     * of their corresponding components is equal. </p>
+     *
+     * <p> This method satisfies the general contract of the {@link
+     * java.lang.Object#equals(Object) Object.equals} method. </p>
+     *
+     * @param   ob
+     *          the object to which this object is to be compared
+     *
+     * @return  {@code true} if, and only if, the given object is a module
+     *          descriptor that is equal to this module descriptor
+     */
     @Override
     public boolean equals(Object ob) {
         if (ob == this)
@@ -1523,6 +1687,15 @@ public class ModuleDescriptor
 
     private transient int hash;  // cached hash code
 
+    /**
+     * Computes a hash code for this module descriptor.
+     *
+     * <p> The hash code is based upon the components of the module descriptor,
+     * and satisfies the general contract of the {@link Object#hashCode
+     * Object.hashCode} method. </p>
+     *
+     * @return The hash-code value for this module descriptor
+     */
     @Override
     public int hashCode() {
         int hc = hash;
@@ -1546,6 +1719,11 @@ public class ModuleDescriptor
         return hc;
     }
 
+    /**
+     * Returns a string describing this descriptor.
+     *
+     * @return A string describing this descriptor
+     */
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

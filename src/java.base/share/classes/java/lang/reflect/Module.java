@@ -1087,6 +1087,15 @@ public final class Module {
         return null;
     }
 
+    /**
+     * Returns the string representation of this module. For a named module,
+     * the representation is the string {@code "module"}, followed by a space,
+     * and then the module name. For an unnamed module, the representation is
+     * the string {@code "unnamed module"}, followed by a space, and then an
+     * implementation specific identifier for the unnamed module.
+     *
+     * @return The string representation of this module
+     */
     @Override
     public String toString() {
         if (isNamed()) {

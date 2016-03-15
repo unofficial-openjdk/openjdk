@@ -415,7 +415,11 @@ public final class Configuration {
         return Collections.unmodifiableSet(graph.get(m));
     }
 
-
+    /**
+     * Returns a string describing this configuration.
+     *
+     * @return A string describing this configuration
+     */
     @Override
     public String toString() {
         return modules().stream()
