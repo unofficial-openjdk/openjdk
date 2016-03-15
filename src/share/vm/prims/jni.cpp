@@ -3446,15 +3446,9 @@ JNI_LEAF(jint, jni_GetJavaVM(JNIEnv *env, JavaVM **vm))
 JNI_END
 
 
-DT_RETURN_MARK_DECL(GetModule, jobject, HOTSPOT_JNI_GETMODULE_RETURN(_ret_ref));
-
 JNI_ENTRY(jobject, jni_GetModule(JNIEnv* env, jclass clazz))
   JNIWrapper("GetModule");
-  HOTSPOT_JNI_GETMODULE_ENTRY(env, clazz);
-  jobject res;
-  DT_RETURN_MARK(GetModule, jobject, (const jobject&)res);
-  res = Modules::get_module(clazz, CHECK_NULL);
-  return res;
+  return Modules::get_module(clazz, THREAD);
 JNI_END
 
 
