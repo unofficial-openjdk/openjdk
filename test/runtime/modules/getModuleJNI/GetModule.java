@@ -116,13 +116,20 @@ public class GetModule {
 
         callAddModuleReads(javaLoggingModule, javaScriptingModule);
         callAddModuleReads(javaScriptingModule, GetModule.class.getModule()); // unnamed module
-        callAddModuleReads(javaLoggingModule, null);
 
         try {
             callAddModuleReads(null, javaLoggingModule);
             throw new RuntimeException(
-                "Expected IllegalArgumentException for bad from_module not thrown");
-        } catch(IllegalArgumentException e) {
+                "Expected NullPointerException for bad from_module not thrown");
+        } catch(NullPointerException e) {
+            // expected
+        }
+
+        try {
+          callAddModuleReads(javaLoggingModule, null);
+          throw new RuntimeException(
+                "Expected NullPointerException for bad source_module not thrown");
+        } catch(NullPointerException e) {
             // expected
         }
 
@@ -139,9 +146,12 @@ public class GetModule {
                 "Expected FALSE because javaBaseModule cannnot read javaScriptingModule");
         }
 
-        if (!callCanReadModule(javaLoggingModule, null)) {
+        try {
+            callCanReadModule(javaLoggingModule, null);
             throw new RuntimeException(
-                "Expected TRUE because javaLoggingModule can read all unnamed modules");
+                "Expected NullPointerException for bad sourceModule not thrown");
+        } catch(NullPointerException e) {
+            // expected
         }
 
         try {

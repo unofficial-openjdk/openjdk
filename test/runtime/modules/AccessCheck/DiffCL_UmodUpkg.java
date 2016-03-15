@@ -25,7 +25,6 @@
 
 /*
  * @test
- * @ignore
  * @summary class p3.c3 defined in module m1 tries to access c4 defined in an unnamed package
  *          and an unnamed module.
  * @library /testlibrary /test/lib
@@ -33,7 +32,6 @@
  * @compile c4.java
  * @compile p3/c3.jcod
  * @compile p3/c3ReadEdgeDiffLoader.jcod
- * @compile p3/c3Loose.jcod
  * @build DiffCL_UmodUpkg
  * @run main/othervm -Xbootclasspath/a:. DiffCL_UmodUpkg
  */
@@ -56,15 +54,12 @@ import myloaders.MyDiffClassLoader;
 // class p3.c3 defined in m1 tries to access c4 defined in
 // in unnamed module.
 //
-// Three access attempts occur in this test:
+// Two access attempts occur in this test:
 //   1. The first access is not allowed because a strict module
 //      cannot read an unnamed module.
 //   2. In this scenario a strict module establishes readability
 //      to the particular unnamed module it is trying to access.
 //      Access is allowed.
-//   3. Module m1 in the test_looseModuleLayer() method
-//      is transitioned to a loose module, access
-//      to all unnamed modules is allowed.
 //
 public class DiffCL_UmodUpkg {
 
@@ -170,59 +165,9 @@ public class DiffCL_UmodUpkg {
      }
  }
 
- // Module m1 is a loose module and thus can read all unnamed modules.
- public void test_looseModuleLayer() throws Throwable {
-
-     // Define module:     m1
-     // Can read:          java.base
-     // Packages:          p3
-     // Packages exported: p3 is exported unqualifiedly
-     ModuleDescriptor descriptor_m1 =
-             new ModuleDescriptor.Builder("m1")
-                     .requires("java.base")
-                     .exports("p3")
-                     .build();
-
-     // Set up a ModuleFinder containing all modules for this layer.
-     ModuleFinder finder = ModuleLibrary.of(descriptor_m1);
-
-     // Resolves "m1"
-     Configuration cf = Layer.boot()
-             .configuration()
-             .resolveRequires(finder, ModuleFinder.empty(), Set.of("m1"));
-
-     MyDiffClassLoader.loader1 = new MyDiffClassLoader();
-     MyDiffClassLoader.loader2 = new MyDiffClassLoader();
-
-     // map module m1 to class loader.
-     // class c2 will be loaded in an unnamed module/loader2
-     // to achieve differing class loaders.
-     Map<String, ClassLoader> map = new HashMap<>();
-     map.put("m1", MyDiffClassLoader.loader1);
-
-     // Create Layer that contains m1
-     Layer layer = Layer.boot().defineModules(cf, map::get);
-
-     assertTrue(layer.findLoader("m1") == MyDiffClassLoader.loader1);
-     assertTrue(layer.findLoader("java.base") == null);
-
-     // now use the same loader to load class p3.c3Loose
-     Class p3_c3_class = MyDiffClassLoader.loader1.loadClass("p3.c3Loose");
-
-     try {
-        // Module m1 transitioned to a loose module before attempting access
-        // to c4 in c3Loose's ctor.
-        p3_c3_class.newInstance();
-     } catch (IllegalAccessError e) {
-         throw new RuntimeException("Test Failed, loose module m1 should be able to access " +
-                                    "public type c4 defined in unnamed module: " + e.getMessage());
-     }
- }
-
  public static void main(String args[]) throws Throwable {
    DiffCL_UmodUpkg test = new DiffCL_UmodUpkg();
    test.test_strictModuleLayer();                // access denied
    test.test_strictModuleUnnamedReadableLayer(); // access allowed
-   test.test_looseModuleLayer();                 // access allowed
  }
 }

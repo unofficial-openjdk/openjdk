@@ -3458,30 +3458,36 @@ JNI_ENTRY(jobject, jni_GetModule(JNIEnv* env, jclass clazz))
 JNI_END
 
 
-JNI_ENTRY(void, jni_AddModuleReads(JNIEnv* env, jobject fromModule, jobject sourceModule))
+JNI_ENTRY(void, jni_AddModuleReads(JNIEnv* env, jobject m1, jobject m2))
   JNIWrapper("AddModuleReads");
-  JavaValue result(T_VOID);
-  Handle from_module_h(THREAD, JNIHandles::resolve(fromModule));
-  if (!java_lang_reflect_Module::is_instance(from_module_h())) {
-    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(), "Bad fromModule object");
+  if (m1 == NULL || m2 == NULL) {
+    THROW(vmSymbols::java_lang_NullPointerException());
   }
-  Handle source_module_h(THREAD, JNIHandles::resolve(sourceModule));
-  if (sourceModule != NULL && !java_lang_reflect_Module::is_instance(source_module_h())) {
-    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(), "Bad sourceModule object");
+  JavaValue result(T_VOID);
+  Handle m1_h(THREAD, JNIHandles::resolve(m1));
+  if (!java_lang_reflect_Module::is_instance(m1_h())) {
+    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(), "Bad m1 object");
+  }
+  Handle m2_h(THREAD, JNIHandles::resolve(m2));
+  if (!java_lang_reflect_Module::is_instance(m2_h())) {
+    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(), "Bad m2 object");
   }
   JavaCalls::call_static(&result,
                          KlassHandle(THREAD, SystemDictionary::module_Modules_klass()),
                          vmSymbols::addReads_name(),
                          vmSymbols::addReads_signature(),
-                         from_module_h,
-                         source_module_h,
+                         m1_h,
+                         m2_h,
                          THREAD);
 JNI_END
 
 
-JNI_ENTRY(jboolean, jni_CanReadModule(JNIEnv* env, jobject askingModule, jobject targetModule))
+JNI_ENTRY(jboolean, jni_CanReadModule(JNIEnv* env, jobject m1, jobject m2))
   JNIWrapper("CanReadModule");
-  jboolean res = Modules::can_read_module(askingModule, targetModule, CHECK_false);
+  if (m1 == NULL || m2 == NULL) {
+    THROW_(vmSymbols::java_lang_NullPointerException(), JNI_FALSE);
+  }
+  jboolean res = Modules::can_read_module(m1, m2, CHECK_false);
   return res;
 JNI_END
 

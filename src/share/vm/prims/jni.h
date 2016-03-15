@@ -772,10 +772,10 @@ struct JNINativeInterface_ {
        (JNIEnv* env, jclass clazz);
 
     void (JNICALL *AddModuleReads)
-       (JNIEnv* env, jobject fromModule, jobject sourceModule);
+       (JNIEnv* env, jobject m1, jobject m2);
 
     jboolean (JNICALL *CanReadModule)
-       (JNIEnv* env, jobject askingModule, jobject sourceModule);
+       (JNIEnv* env, jobject m1, jobject m2);
 };
 
 /*
