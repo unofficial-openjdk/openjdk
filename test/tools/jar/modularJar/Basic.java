@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -554,15 +554,48 @@ public class Basic {
         }
     }
 
+    @Test
+    public void printModuleDescriptorFooFromStdin() throws IOException {
+        Path mp = Paths.get("printModuleDescriptorFooFromStdin");
+        createTestDir(mp);
+        Path modClasses = MODULE_CLASSES.resolve(FOO.moduleName);
+        Path modularJar = mp.resolve(FOO.moduleName + ".jar");
+
+        jar("--create",
+            "--file=" + modularJar.toString(),
+            "--main-class=" + FOO.mainClass,
+            "--module-version=" + FOO.version,
+            "--no-manifest",
+            "-C", modClasses.toString(), ".")
+            .assertSuccess();
+
+        for (String option : new String[]  {"--print-module-descriptor", "-p" }) {
+            jarWithStdin(modularJar.toFile(),
+                         option)
+                         .assertSuccess()
+                         .resultChecker(r ->
+                             assertTrue(r.output.contains(FOO.moduleName + "@" + FOO.version),
+                                "Expected to find ", FOO.moduleName + "@" + FOO.version,
+                                " in [", r.output, "]")
+                );
+        }
+    }
+
     // -- Infrastructure
 
-    static Result jar(String... args) {
+    static Result jarWithStdin(File stdinSource, String... args) {
         String jar = getJDKTool("jar");
         List<String> commands = new ArrayList<>();
         commands.add(jar);
         Stream.of(args).forEach(x -> commands.add(x));
         ProcessBuilder p = new ProcessBuilder(commands);
+        if (stdinSource != null)
+            p.redirectInput(stdinSource);
         return run(p);
+    }
+
+    static Result jar(String... args) {
+        return jarWithStdin(null, args);
     }
 
     static Path compileModule(String mn) throws IOException {
