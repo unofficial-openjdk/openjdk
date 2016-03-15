@@ -498,7 +498,7 @@ public class HtmlWriter {
         addStyles(HtmlStyle.rowColor, vars);
         addStyles(HtmlStyle.tableTab, vars);
         addStyles(HtmlStyle.activeTableTab, vars);
-        script.addContent(new RawHtml(vars.toString()));
+        script.addContent(new RawHtml(vars));
     }
 
     /**

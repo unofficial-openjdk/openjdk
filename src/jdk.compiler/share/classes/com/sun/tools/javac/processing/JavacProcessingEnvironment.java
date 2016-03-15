@@ -33,6 +33,7 @@ import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.*;
 import java.util.stream.Collectors;
@@ -360,9 +361,9 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
     private Iterator<Processor> handleServiceLoaderUnavailability(String key, Exception e) {
         if (fileManager instanceof JavacFileManager) {
             StandardJavaFileManager standardFileManager = (JavacFileManager) fileManager;
-            Iterable<? extends File> workingPath = fileManager.hasLocation(ANNOTATION_PROCESSOR_PATH)
-                ? standardFileManager.getLocation(ANNOTATION_PROCESSOR_PATH)
-                : standardFileManager.getLocation(CLASS_PATH);
+            Iterable<? extends Path> workingPath = fileManager.hasLocation(ANNOTATION_PROCESSOR_PATH)
+                ? standardFileManager.getLocationAsPaths(ANNOTATION_PROCESSOR_PATH)
+                : standardFileManager.getLocationAsPaths(CLASS_PATH);
 
             if (needClassLoader(options.get(PROCESSOR), workingPath) )
                 handleException(key, e);
@@ -1436,14 +1437,14 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
      * Called retroactively to determine if a class loader was required,
      * after we have failed to create one.
      */
-    private boolean needClassLoader(String procNames, Iterable<? extends File> workingpath) {
+    private boolean needClassLoader(String procNames, Iterable<? extends Path> workingpath) {
         if (procNames != null)
             return true;
 
         URL[] urls = new URL[1];
-        for(File pathElement : workingpath) {
+        for(Path pathElement : workingpath) {
             try {
-                urls[0] = pathElement.toURI().toURL();
+                urls[0] = pathElement.toUri().toURL();
                 if (ServiceProxy.hasService(Processor.class, urls))
                     return true;
             } catch (MalformedURLException ex) {
