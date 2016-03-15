@@ -197,18 +197,20 @@ public class JLinkNegativeTest {
         }
     }
 
-    public void testAddDefaultPackage() throws IOException {
-        String moduleName = "hacked1";
-        Path module = helper.generateModuleCompiledClasses(helper.getJmodSrcDir(), helper.getJmodClassesDir(),
-                moduleName, Arrays.asList("hacked1.Main", "A", "B"), "leaf1");
-        JImageGenerator
-                .getJModTask()
-                .addClassPath(module)
-                .jmod(helper.getJmodDir().resolve(moduleName + ".jmod"))
-                .create().assertSuccess();
-        Path image = helper.generateDefaultImage(moduleName).assertSuccess();
-        helper.checkImage(image, moduleName, null, null);
-    }
+    // Temporarily exclude; the jmod tool can no longer be used to create a jmod
+    // with a class in the unnamed package. Find another way, or remove.
+//    public void testAddDefaultPackage() throws IOException {
+//        String moduleName = "hacked1";
+//        Path module = helper.generateModuleCompiledClasses(helper.getJmodSrcDir(), helper.getJmodClassesDir(),
+//                moduleName, Arrays.asList("hacked1.Main", "A", "B"), "leaf1");
+//        JImageGenerator
+//                .getJModTask()
+//                .addClassPath(module)
+//                .jmod(helper.getJmodDir().resolve(moduleName + ".jmod"))
+//                .create().assertSuccess();
+//        Path image = helper.generateDefaultImage(moduleName).assertSuccess();
+//        helper.checkImage(image, moduleName, null, null);
+//    }
 
     public void testAddSomeTopLevelFiles() throws IOException {
         String moduleName = "hacked2";

@@ -95,7 +95,10 @@ import jdk.internal.module.Hasher;
 import jdk.internal.module.Hasher.DependencyHashes;
 import jdk.internal.module.ModuleInfoExtender;
 
+import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 
 /**
  * Implementation for the jmod tool.
@@ -288,12 +291,10 @@ public class JmodTask {
         }
     }
 
-    static <T> String toString(Set<T> set,
-                               CharSequence prefix,
-                               CharSequence suffix ) {
+    static <T> String toString(Set<T> set) {
         if (set.isEmpty()) { return ""; }
-        return set.stream().map(e -> e.toString())
-                  .collect(joining(", ", prefix, suffix));
+        return set.stream().map(e -> e.toString().toLowerCase(Locale.ROOT))
+                  .collect(joining(" "));
     }
 
     private boolean printModuleDescriptor(InputStream in)
@@ -308,58 +309,58 @@ public class JmodTask {
                 if (e.getName().equals(mi)) {
                     ModuleDescriptor md = ModuleDescriptor.read(zis);
                     StringBuilder sb = new StringBuilder();
-                    sb.append("\nName:\n  " + md.toNameAndVersion());
+                    sb.append("\n").append(md.toNameAndVersion());
 
-                    Set<Requires> requires = md.requires();
+                    List<Requires> requires = md.requires().stream().sorted().collect(toList());
                     if (!requires.isEmpty()) {
-                        sb.append("\nRequires:");
-                        requires.forEach(r ->
-                                sb.append("\n  ").append(r.name())
-                                  .append(toString(r.modifiers(), " [ ", " ]")));
+                        requires.forEach(r -> {
+                                sb.append("\n  requires ");
+                                if (!r.modifiers().isEmpty())
+                                  sb.append(toString(r.modifiers())).append(" ");
+                                sb.append(r.name());
+                            });
                     }
 
-                    Set<String> s = md.uses();
-                    if (!s.isEmpty()) {
-                        sb.append("\nUses: ");
-                        s.forEach(sv -> sb.append("\n  ").append(sv));
+                    List<String> l = md.uses().stream().sorted().collect(toList());
+                    if (!l.isEmpty()) {
+                        l.forEach(sv -> sb.append("\n  uses ").append(sv));
                     }
 
-                    Set<ModuleDescriptor.Exports> exports = md.exports();
+                    List<ModuleDescriptor.Exports> exports = sortExports(md.exports());
                     if (!exports.isEmpty()) {
-                        sb.append("\nExports:");
-                        exports.forEach(sv -> sb.append("\n  ").append(sv));
+                        exports.forEach(ex -> sb.append("\n  exports ").append(ex));
+                    }
+
+                    l = md.conceals().stream().sorted().collect(toList());
+                    if (!l.isEmpty()) {
+                        l.forEach(p -> sb.append("\n  conceals ").append(p));
                     }
 
                     Map<String, ModuleDescriptor.Provides> provides = md.provides();
                     if (!provides.isEmpty()) {
-                        sb.append("\nProvides: ");
                         provides.values().forEach(p ->
-                                sb.append("\n  ").append(p.service())
+                                sb.append("\n  provides ").append(p.service())
                                   .append(" with ")
-                                  .append(toString(p.providers(), "", "")));
+                                  .append(toString(p.providers())));
                     }
 
                     Optional<String> mc = md.mainClass();
                     if (mc.isPresent())
-                        sb.append("\nMain class:\n  " + mc.get());
+                        sb.append("\n  main-class " + mc.get());
 
-                    s = md.conceals();
-                    if (!s.isEmpty()) {
-                        sb.append("\nConceals:");
-                        s.forEach(p -> sb.append("\n  ").append(p));
-                    }
+
 
                     Optional<String> osname = md.osName();
                     if (osname.isPresent())
-                        sb.append("\nOperating system name:\n  " + osname.get());
+                        sb.append("\n  operating-system-name " + osname.get());
 
                     Optional<String> osarch = md.osArch();
                     if (osarch.isPresent())
-                        sb.append("\nOperating system architecture:\n  " + osarch.get());
+                        sb.append("\n  operating-system-architecture " + osarch.get());
 
                     Optional<String> osversion = md.osVersion();
                     if (osversion.isPresent())
-                        sb.append("\nOperating system version:\n  " + osversion.get());
+                        sb.append("\n  operating-system-version " + osversion.get());
 
                     try {
                         Method m = ModuleDescriptor.class.getDeclaredMethod("hashes");
@@ -370,11 +371,10 @@ public class JmodTask {
 
                         if (optHashes.isPresent()) {
                             Hasher.DependencyHashes hashes = optHashes.get();
-                            sb.append("\nHashes:");
-                            sb.append("\n  Algorithm: " + hashes.algorithm());
                             hashes.names().stream().forEach(mod ->
-                                    sb.append("\n  ").append(mod)
-                                      .append(": ").append(hashes.hashFor(mod)));
+                                    sb.append("\n  hashes ").append(mod).append(" ")
+                                      .append(hashes.algorithm()).append(" ")
+                                      .append(hashes.hashFor(mod)));
                         }
                     } catch (ReflectiveOperationException x) {
                         throw new InternalError(x);
@@ -387,6 +387,21 @@ public class JmodTask {
         return false;
     }
 
+    static List<ModuleDescriptor.Exports> sortExports(Set<ModuleDescriptor.Exports> exports) {
+        Map<String,ModuleDescriptor.Exports> map =
+                exports.stream()
+                       .collect(toMap(ModuleDescriptor.Exports::source,
+                                      identity()));
+        List<String> sources = exports.stream()
+                                      .map(ModuleDescriptor.Exports::source)
+                                      .sorted()
+                                      .collect(toList());
+
+        List<ModuleDescriptor.Exports> l = new ArrayList<>();
+        sources.forEach(e -> l.add(map.get(e)));
+        return l;
+    }
+
     private boolean create() throws IOException {
         JmodFileWriter jmod = new JmodFileWriter();
 
@@ -394,10 +409,21 @@ public class JmodTask {
         // when scanning the module path
         Path target = options.jmodFile;
         Path tempTarget = target.resolveSibling(target.getFileName() + ".tmp");
-        try (OutputStream out = Files.newOutputStream(tempTarget)) {
-            jmod.write(out);
+        try {
+            try (OutputStream out = Files.newOutputStream(tempTarget)) {
+                jmod.write(out);
+            }
+            Files.move(tempTarget, target);
+        } catch (Exception e) {
+            if (Files.exists(tempTarget)) {
+                try {
+                    Files.delete(tempTarget);
+                } catch (IOException ioe) {
+                    e.addSuppressed(ioe);
+                }
+            }
+            throw e;
         }
-        Files.move(tempTarget, target);
         return true;
     }
 
@@ -626,8 +652,12 @@ public class JmodTask {
             int index = name.lastIndexOf(File.separatorChar);
             if (index != -1)
                 return name.substring(0, index).replace(File.separatorChar, '.');
-            else
-                return "";
+
+            if (!name.equals(MODULE_INFO)) {
+                IOException e = new IOException(name  + " in the unnamed package");
+                throw new UncheckedIOException(e);
+            }
+            return "";
         }
 
         String toPackageName(ZipEntry entry) {

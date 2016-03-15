@@ -268,16 +268,16 @@ public class JmodTest {
              MODS_DIR.resolve("describeFoo.jmod").toString())
              .assertSuccess()
              .resultChecker(r -> {
-                 // Expect similar output: "Name:foo,  Requires: java.base
-                 // Exports: jdk.test.foo,  Conceals: jdk.test.foo.internal"
-                 Pattern p = Pattern.compile("\\s+Name:\\s+foo\\s+Requires:\\s+java.base");
+                 // Expect similar output: "foo,  requires mandated java.base
+                 // exports jdk.test.foo,  conceals jdk.test.foo.internal"
+                 Pattern p = Pattern.compile("\\s+foo\\s+requires\\s+mandated\\s+java.base");
                  assertTrue(p.matcher(r.output).find(),
-                           "Expecting to find \"Name: foo, Requires: java.base\"" +
+                           "Expecting to find \"foo, requires java.base\"" +
                                 "in output, but did not: [" + r.output + "]");
                  p = Pattern.compile(
-                        "Exports:\\s+jdk.test.foo\\s+Conceals:\\s+jdk.test.foo.internal");
+                        "exports\\s+jdk.test.foo\\s+conceals\\s+jdk.test.foo.internal");
                  assertTrue(p.matcher(r.output).find(),
-                           "Expecting to find \"Exports: ..., Conceals: ...\"" +
+                           "Expecting to find \"exports ..., conceals ...\"" +
                                 "in output, but did not: [" + r.output + "]");
              });
     }
@@ -319,6 +319,30 @@ public class JmodTest {
             .resultChecker(r ->
                 assertTrue(Files.notExists(tmp), "Unexpected tmp file:" + tmp)
             );
+    }
+
+    @Test
+    public void testTmpFileRemoved() throws IOException {
+        // Implementation detail: jmod tool creates <jmod-file>.tmp
+        // Ensure that it is removed in the event of a failure.
+        // The failure in this case is a class in the unnamed package.
+
+        Path jmod = MODS_DIR.resolve("testTmpFileRemoved.jmod");
+        Path tmp = MODS_DIR.resolve("testTmpFileRemoved.jmod.tmp");
+        FileUtils.deleteFileIfExistsWithRetry(jmod);
+        FileUtils.deleteFileIfExistsWithRetry(tmp);
+        String cp = EXPLODED_DIR.resolve("foo").resolve("classes") + File.pathSeparator +
+                    EXPLODED_DIR.resolve("foo").resolve("classes")
+                                .resolve("jdk").resolve("test").resolve("foo").toString();
+
+        jmod("create",
+             "--class-path", cp,
+             jmod.toString())
+             .assertFailure()
+             .resultChecker(r -> {
+                 assertContains(r.output, "unnamed package");
+                 assertTrue(Files.notExists(tmp), "Unexpected tmp file:" + tmp);
+             });
     }
 
     // ---
@@ -414,6 +438,7 @@ public class JmodTest {
             this.output = output;
         }
         JmodResult assertSuccess() { assertTrue(exitCode == 0, output); return this; }
+        JmodResult assertFailure() { assertTrue(exitCode != 0, output); return this; }
         JmodResult resultChecker(Consumer<JmodResult> r) { r.accept(this); return this; }
     }
 
