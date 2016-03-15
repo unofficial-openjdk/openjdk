@@ -41,10 +41,3 @@ sun/tools/jstat/jstatClassloadOutput1.sh                        generic-all
 sun/rmi/rmic/newrmic/equivalence/run.sh				generic-all
 
 ############################################################################
-
-# jdk_jmx
-
-# 8147610
-javax/management/mxbean/MXBeanLoadingTest1.java                 generic-all
-
-############################################################################
