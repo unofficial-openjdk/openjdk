@@ -34,7 +34,7 @@ import java.util.Properties;
 public final class ZipDecompressorFactory extends ResourceDecompressorFactory {
     public static final String NAME = "zip";
     public ZipDecompressorFactory() {
-        super(NAME, "ZIP Decompression", null);
+        super(NAME);
     }
 
     @Override

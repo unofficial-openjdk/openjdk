@@ -22,11 +22,11 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
 package jdk.internal.jrtfs;
 
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
@@ -38,19 +38,42 @@ import java.security.PrivilegedAction;
 final class SystemImages {
     private SystemImages() {}
 
+
     static final String RUNTIME_HOME;
-    static final Path bootImagePath;
-    static final Path extImagePath;
-    static final Path appImagePath;
+    // "modules" jimage file Path
+    private static final Path moduleImageFile;
+    // "modules" jimage exists or not?
+    private static final boolean modulesImageExists;
+    // <JAVA_HOME>/modules directory Path
+    private static final Path explodedModulesDir;
 
     static {
         PrivilegedAction<String> pa = SystemImages::findHome;
         RUNTIME_HOME = AccessController.doPrivileged(pa);
 
         FileSystem fs = FileSystems.getDefault();
-        bootImagePath = fs.getPath(RUNTIME_HOME, "lib", "modules", "bootmodules.jimage");
-        extImagePath = fs.getPath(RUNTIME_HOME, "lib", "modules", "extmodules.jimage");
-        appImagePath = fs.getPath(RUNTIME_HOME, "lib", "modules", "appmodules.jimage");
+        moduleImageFile = fs.getPath(RUNTIME_HOME, "lib", "modules");
+        explodedModulesDir = fs.getPath(RUNTIME_HOME, "modules");
+
+        modulesImageExists = AccessController.doPrivileged(
+            new PrivilegedAction<Boolean>() {
+                @Override
+                public Boolean run() {
+                    return Files.isRegularFile(moduleImageFile);
+                }
+            });
+    }
+
+    static boolean hasModulesImage() {
+        return modulesImageExists;
+    }
+
+    static Path moduleImageFile() {
+        return moduleImageFile;
+    }
+
+    static Path explodedModulesDir() {
+        return explodedModulesDir;
     }
 
     /**
