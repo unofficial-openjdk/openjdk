@@ -21,11 +21,6 @@
  * questions.
  */
 
-/**
- * @test
- * @bug 8151299
- * @summary Http client SelectorManager overwriting read and write events
- */
 package java.net.http;
 
 import java.net.*;
