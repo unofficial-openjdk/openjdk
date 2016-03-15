@@ -202,7 +202,7 @@ public class VerifyStackTrace {
             // out before comparing. We also erase the hash-like names of
             // synthetic frames introduced by lambdas & method handles
             return produced.replaceAll(":[1-9][0-9]*\\)", ":00)")
-                    .replaceAll("-internal/", "/")
+                    .replaceAll("-internal/", "/").replaceAll("-ea/", "/")
                     .replaceAll("java.base@[0-9]+/", "java.base/")
                     .replaceAll("/[0-9]+\\.run", "/xxxxxxxx.run")
                     .replaceAll("/[0-9]+\\.invoke", "/xxxxxxxx.invoke")
