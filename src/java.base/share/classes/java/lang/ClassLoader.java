@@ -1695,7 +1695,7 @@ public abstract class ClassLoader {
     }
 
     static ClassLoader getBuiltinPlatformClassLoader() {
-        return ClassLoaders.extClassLoader();
+        return ClassLoaders.platformClassLoader();
     }
 
     static ClassLoader getBuiltinAppClassLoader() {

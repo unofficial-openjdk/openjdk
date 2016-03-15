@@ -48,8 +48,8 @@ import java.util.stream.Stream;
  * <p> A {@code ModuleFinder} can only find one module with a given name. A
  * {@code ModuleFinder} that finds modules in a sequence of directories, for
  * example, will locate the first occurrence of a module of a given name and
- * will ignore other modules of that name that appear directories later in the
- * sequence. </p>
+ * will ignore other modules of that name that appear in directories later in
+ * the sequence. </p>
  *
  * <p> Example usage: </p>
  *
@@ -110,12 +110,12 @@ public interface ModuleFinder {
     /**
      * Returns the set of all module references that this finder can locate.
      *
-     * <p> A {@code ModuleFinder} provides a consistent view of the
-     * modules that it locates. If {@link #findAll() findAll} is invoked
-     * several times then it will return the same (equals) result each time.
-     * For each {@code ModuleReference} element of the returned set then it is
-     * guaranteed that that {@link #find find} will locate that {@code
-     * ModuleReference} if invoked with the module name. </p>
+     * <p> A {@code ModuleFinder} provides a consistent view of the modules
+     * that it locates. If {@link #findAll() findAll} is invoked several times
+     * then it will return the same (equals) result each time. For each {@code
+     * ModuleReference} element in the returned set then it is guaranteed that
+     * {@link #find find} will locate the {@code ModuleReference} if invoked
+     * to find that module. </p>
      *
      * @apiNote This is important to have for methods such as {@link
      * Configuration#resolveRequiresAndUses resolveRequiresAndUses} that need

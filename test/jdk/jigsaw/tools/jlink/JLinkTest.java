@@ -63,7 +63,7 @@ public class JLinkTest {
             return;
         }
         helper.generateDefaultModules();
-        int numPlugins = 11;
+        int numPlugins = 12;
         {
             // number of built-in plugins
             List<Plugin> builtInPlugins = new ArrayList<>();

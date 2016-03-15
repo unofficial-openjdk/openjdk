@@ -81,7 +81,7 @@ public class PatchTest {
         "java.base/java.text.AnnotationBuddy",      // add class to package
         "java.base/java.lang2.Object",              // new package
 
-        // jdk.naming.dns = extension class loader
+        // jdk.naming.dns = platform class loader
         "jdk.naming.dns/com.sun.jndi.dns.DnsClient",
         "jdk.naming.dns/com.sun.jndi.dns.DnsClientBuddy",
         "jdk.naming.dns/com.sun.jndi.dns2.Zone",

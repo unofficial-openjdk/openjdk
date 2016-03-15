@@ -37,17 +37,17 @@ import jdk.internal.loader.ClassLoaders;
 
 
 /**
- * The module to class loader map.  The list of boot modules and ext modules
+ * The module to class loader map.  The list of boot modules and platform modules
  * are generated at build time.
  */
 final class ModuleLoaderMap {
     /*
-     * The list of boot modules and ext modules are generated at build time.
+     * The list of boot modules and platform modules are generated at build time.
      */
     private static final String[] BOOT_MODULES
         = new String[] { "@@BOOT_MODULE_NAMES@@" };
-    private static final String[] EXT_MODULES
-        = new String[] { "@@EXT_MODULE_NAMES@@" };
+    private static final String[] PLATFORM_MODULES
+        = new String[] { "@@PLATFORM_MODULE_NAMES@@" };
 
     /**
      * Returns the function to map modules in the given configuration to the
@@ -60,12 +60,12 @@ final class ModuleLoaderMap {
             bootModules.add(mn);
         }
 
-        Set<String> extModules = new HashSet<>(EXT_MODULES.length);
-        for (String mn : EXT_MODULES) {
-            extModules.add(mn);
+        Set<String> platformModules = new HashSet<>(PLATFORM_MODULES.length);
+        for (String mn : PLATFORM_MODULES) {
+            platformModules.add(mn);
         }
 
-        ClassLoader extClassLoader = ClassLoaders.extClassLoader();
+        ClassLoader platformClassLoader = ClassLoaders.platformClassLoader();
         ClassLoader appClassLoader = ClassLoaders.appClassLoader();
 
         Map<String, ClassLoader> map = new HashMap<>();
@@ -73,8 +73,8 @@ final class ModuleLoaderMap {
         for (ResolvedModule resolvedModule : cf.modules()) {
             String mn = resolvedModule.name();
             if (!bootModules.contains(mn)) {
-                if (extModules.contains(mn)) {
-                    map.put(mn, extClassLoader);
+                if (platformModules.contains(mn)) {
+                    map.put(mn, platformClassLoader);
                 } else {
                     map.put(mn, appClassLoader);
                 }

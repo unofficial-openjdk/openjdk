@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,7 +37,10 @@ class ImageBufferCache {
     private boolean isUsed;
 
     static ByteBuffer getBuffer(long size) {
-        assert size < Integer.MAX_VALUE;
+        if (size < 0 || Integer.MAX_VALUE < size) {
+            throw new IndexOutOfBoundsException("size");
+        }
+
         ByteBuffer buffer = null;
 
         if (size > LARGE_BUFFER) {

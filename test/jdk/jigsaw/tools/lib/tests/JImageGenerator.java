@@ -109,7 +109,7 @@ public class JImageGenerator {
     private static final String MODULE_PATH_OPTION = "--modulepath";
     private static final String ADD_MODS_OPTION = "--addmods";
     private static final String LIMIT_MODS_OPTION = "--limitmods";
-    private static final String PLUGINS_MODULE_PATH = "--plugins-modulepath";
+    private static final String PLUGINS_MODULE_PATH = "--plugin-module-path";
 
     private static final String CMDS_OPTION = "--cmds";
     private static final String CONFIG_OPTION = "--config";
@@ -462,11 +462,11 @@ public class JImageGenerator {
         }
 
         public Result create() {
-            return cmd("--create");
+            return cmd("create");
         }
 
         public Result list() {
-            return cmd("--list");
+            return cmd("list");
         }
 
         public Result call() {

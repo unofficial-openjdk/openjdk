@@ -35,16 +35,16 @@ public class Main {
     public static void main(String[] args) {
 
         ClassLoader scl = ClassLoader.getSystemClassLoader();
-        ClassLoader ecl = scl.getParent();
-        assertTrue(ecl.getParent() == null);
+        ClassLoader pcl = ClassLoader.getPlatformClassLoader();
+        assertTrue(pcl.getParent() == null);
 
         Transaction transaction = new Transaction();
         Scope scope = transaction.getScope();
 
         // javax.transaction.Transaction should be in module java.transaction
-        // and defined by the extension class loader
+        // and defined by the platform class loader
         assertTrue(Transaction.class.getModule().getName().equals("java.transaction"));
-        assertTrue(Transaction.class.getClassLoader() == ecl);
+        assertTrue(Transaction.class.getClassLoader() == pcl);
 
         // javax.enterprise.context.Scope should be in module java.enterprise
         // and defined by the application class loader

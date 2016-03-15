@@ -149,7 +149,7 @@ public class BasicTest {
         String cp = MODS_DIR.resolve(TEST_MODULE).toString();
         String jmod = dir.resolve("m.jmod").toString();
         String[] args = {
-            "--create",
+            "create",
             "--class-path", cp,
             "--main-class", MAIN_CLASS,
             jmod

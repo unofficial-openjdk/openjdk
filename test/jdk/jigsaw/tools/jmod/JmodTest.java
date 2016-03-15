@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -80,13 +80,13 @@ public class JmodTest {
     @Test
     public void testList() throws IOException {
         String cp = EXPLODED_DIR.resolve("foo").resolve("classes").toString();
-        jmod("--create",
+        jmod("create",
              "--class-path", cp,
              MODS_DIR.resolve("foo.jmod").toString())
             .assertSuccess();
 
-        jmod("--list",
-              MODS_DIR.resolve("foo.jmod").toString())
+        jmod("list",
+             MODS_DIR.resolve("foo.jmod").toString())
             .assertSuccess()
             .resultChecker(r -> {
                 // asserts dependent on the exact contents of foo
@@ -102,7 +102,7 @@ public class JmodTest {
         FileUtils.deleteFileIfExistsWithRetry(jmod);
         String cp = EXPLODED_DIR.resolve("foo").resolve("classes").toString();
 
-        jmod("--create",
+        jmod("create",
              "--class-path", cp,
              "--main-class", "jdk.test.foo.Foo",
              jmod.toString())
@@ -120,7 +120,7 @@ public class JmodTest {
         FileUtils.deleteFileIfExistsWithRetry(jmod);
         String cp = EXPLODED_DIR.resolve("foo").resolve("classes").toString();
 
-        jmod("--create",
+        jmod("create",
              "--class-path", cp,
              "--module-version", "5.4.3",
              jmod.toString())
@@ -139,7 +139,7 @@ public class JmodTest {
         Path cp = EXPLODED_DIR.resolve("foo").resolve("classes");
         Path cf = EXPLODED_DIR.resolve("foo").resolve("conf");
 
-        jmod("--create",
+        jmod("create",
              "--class-path", cp.toString(),
              "--config", cf.toString(),
              jmod.toString())
@@ -161,7 +161,7 @@ public class JmodTest {
         Path cp = EXPLODED_DIR.resolve("foo").resolve("classes");
         Path bp = EXPLODED_DIR.resolve("foo").resolve("bin");
 
-        jmod("--create",
+        jmod("create",
              "--cmds", bp.toString(),
              "--class-path", cp.toString(),
              jmod.toString())
@@ -183,7 +183,7 @@ public class JmodTest {
         Path cp = EXPLODED_DIR.resolve("foo").resolve("classes");
         Path lp = EXPLODED_DIR.resolve("foo").resolve("lib");
 
-        jmod("--create",
+        jmod("create",
              "--libs=", lp.toString(),
              "--class-path", cp.toString(),
              jmod.toString())
@@ -207,7 +207,7 @@ public class JmodTest {
         Path lp = EXPLODED_DIR.resolve("foo").resolve("lib");
         Path cf = EXPLODED_DIR.resolve("foo").resolve("conf");
 
-        jmod("--create",
+        jmod("create",
              "--conf", cf.toString(),
              "--cmds=", bp.toString(),
              "--libs=", lp.toString(),
@@ -234,7 +234,7 @@ public class JmodTest {
         Path cp = EXPLODED_DIR.resolve("foo").resolve("classes");
         Path lp = EXPLODED_DIR.resolve("foo").resolve("lib");
 
-        jmod("--create",
+        jmod("create",
              "--libs=", lp.toString(),
              "--class-path", cp.toString(),
              "--exclude", "**internal**",
@@ -257,31 +257,29 @@ public class JmodTest {
     }
 
     @Test
-    public void printModuleDescriptorFoo() throws IOException {
+    public void describe() throws IOException {
         String cp = EXPLODED_DIR.resolve("foo").resolve("classes").toString();
-        jmod("--create",
+        jmod("create",
              "--class-path", cp,
-              MODS_DIR.resolve("printModuleDescriptorFoo.jmod").toString())
+              MODS_DIR.resolve("describeFoo.jmod").toString())
              .assertSuccess();
 
-        for (String opt : new String[]  {"--print-module-descriptor", "-p" }) {
-            jmod(opt,
-                 MODS_DIR.resolve("printModuleDescriptorFoo.jmod").toString())
-                 .assertSuccess()
-                 .resultChecker(r -> {
-                     // Expect similar output: "Name:foo,  Requires: java.base
-                     // Exports: jdk.test.foo,  Conceals: jdk.test.foo.internal"
-                     Pattern p = Pattern.compile("\\s+Name:\\s+foo\\s+Requires:\\s+java.base");
-                     assertTrue(p.matcher(r.output).find(),
-                               "Expecting to find \"Name: foo, Requires: java.base\"" +
-                                    "in output, but did not: [" + r.output + "]");
-                     p = Pattern.compile(
-                            "Exports:\\s+jdk.test.foo\\s+Conceals:\\s+jdk.test.foo.internal");
-                     assertTrue(p.matcher(r.output).find(),
-                               "Expecting to find \"Exports: ..., Conceals: ...\"" +
-                                    "in output, but did not: [" + r.output + "]");
-                 });
-        }
+        jmod("describe",
+             MODS_DIR.resolve("describeFoo.jmod").toString())
+             .assertSuccess()
+             .resultChecker(r -> {
+                 // Expect similar output: "Name:foo,  Requires: java.base
+                 // Exports: jdk.test.foo,  Conceals: jdk.test.foo.internal"
+                 Pattern p = Pattern.compile("\\s+Name:\\s+foo\\s+Requires:\\s+java.base");
+                 assertTrue(p.matcher(r.output).find(),
+                           "Expecting to find \"Name: foo, Requires: java.base\"" +
+                                "in output, but did not: [" + r.output + "]");
+                 p = Pattern.compile(
+                        "Exports:\\s+jdk.test.foo\\s+Conceals:\\s+jdk.test.foo.internal");
+                 assertTrue(p.matcher(r.output).find(),
+                           "Expecting to find \"Exports: ..., Conceals: ...\"" +
+                                "in output, but did not: [" + r.output + "]");
+             });
     }
 
     @Test
@@ -314,7 +312,7 @@ public class JmodTest {
         Files.createFile(tmp);
         String cp = EXPLODED_DIR.resolve("foo").resolve("classes").toString();
 
-        jmod("--create",
+        jmod("create",
              "--class-path", cp,
              jmod.toString())
             .assertSuccess()
@@ -361,7 +359,7 @@ public class JmodTest {
     }
 
     static Set<String> getJmodContent(Path jmod) {
-        JmodResult r = jmod("--list", jmod.toString()).assertSuccess();
+        JmodResult r = jmod("list", jmod.toString()).assertSuccess();
         return Stream.of(r.output.split("\r?\n")).collect(toSet());
     }
 

@@ -425,7 +425,9 @@ public final class InstalledModuleDescriptorPlugin implements TransformerPlugin 
                                        .collect(Collectors.toSet());
                 }
 
-                if (conceals.size() + md.exports().size() != packages.size()) {
+                if (conceals.size() + md.exports().size() != packages.size() &&
+                    // jdk.localedata may have concealed packages that don't exist
+                    !md.name().equals("jdk.localedata")) {
                     throw new AssertionError(md.name() + ": conceals=" + conceals.size() +
                             ", exports=" + md.exports().size() + ", packages=" + packages.size());
                 }

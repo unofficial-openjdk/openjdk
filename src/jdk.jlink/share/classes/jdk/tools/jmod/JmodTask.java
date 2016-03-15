@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -158,7 +158,7 @@ public class JmodTask {
     enum Mode {
         CREATE,
         LIST,
-        PRINT_DESCRIPTOR
+        DESCRIBE
     };
 
     static class Options {
@@ -205,8 +205,8 @@ public class JmodTask {
                 case LIST:
                     ok = list();
                     break;
-                case PRINT_DESCRIPTOR:
-                    ok = printModuleDescriptor();
+                case DESCRIBE:
+                    ok = describe();
                     break;
                 default:
                     throw new AssertionError("Unknown mode: " + options.mode.name());
@@ -267,7 +267,7 @@ public class JmodTask {
         return modPaths;
     }
 
-    private boolean printModuleDescriptor() throws IOException {
+    private boolean describe() throws IOException {
         ZipFile zip = null;
         try {
             try {
@@ -886,29 +886,21 @@ public class JmodTask {
                 public boolean representsNonOptions() { return false; }
             });
             String content = super.format(all);
-            String[] lines = content.split("\n");
             StringBuilder builder = new StringBuilder();
 
-            String modes = ".*--create.*|.*--list.*|.*--print-module-descriptor.*";
-            boolean first = true;
-            for (String line : lines) {
-                if (line.matches(modes)) {
-                    if (first) {
-                        builder.append("\n").append(" Main operation modes:\n");
-                        first = false;
-                    }
-                    builder.append("  ").append(line).append("\n");
-                }
-            }
-            builder.append("\n");
+            builder.append("\n").append(" Main operation modes:\n  ");
+            builder.append(getMessage("main.opt.mode.create")).append("\n  ");
+            builder.append(getMessage("main.opt.mode.list")).append("\n  ");
+            builder.append(getMessage("main.opt.mode.describe")).append("\n\n");
 
             String cmdfile = null;
+            String[] lines = content.split("\n");
             for (String line : lines) {
                 if (line.startsWith("--@")) {
                     cmdfile = line.replace("--" + CMD_FILENAME, CMD_FILENAME + "  ");
                 } else if (line.startsWith("Option") || line.startsWith("------")) {
                     builder.append(" ").append(line).append("\n");
-                } else if (!line.matches(modes)){
+                } else if (!line.matches("Non-option arguments")){
                     builder.append("  ").append(line).append("\n");
                 }
             }
@@ -923,21 +915,6 @@ public class JmodTask {
 
     private void handleOptions(String[] args) {
         parser.formatHelpWith(new JmodHelpFormatter());
-
-        // Main operation modes
-        OptionSpec<Void> create
-                = parser.acceptsAll(Arrays.asList("c", "create"),
-                                    getMessage("main.opt.mode.create"));
-
-        OptionSpec<Void> list
-                = parser.acceptsAll(Arrays.asList("t", "list"),
-                                    getMessage("main.opt.mode.list"));
-
-        OptionSpec<Void> printDescriptor
-                = parser.acceptsAll(Arrays.asList("p", "print-module-descriptor"),
-                                    getMessage("main.opt.mode.pmd"));
-
-        // options
 
         OptionSpec<Path> classPath
                 = parser.accepts("class-path", getMessage("main.opt.class-path"))
@@ -1025,24 +1002,15 @@ public class JmodTask {
                 return;  // informational message will be shown
             }
 
-            if (opts.specs().isEmpty() ||
-                !(opts.has(create) || opts.has(list) || opts.has(printDescriptor)))
-                throw new CommandException("err.bad.main.mode").showUsage(true);
-
+            List<String> words = opts.valuesOf(nonOptions);
+            if (words.isEmpty())
+                throw new CommandException("err.missing.mode").showUsage(true);
+            String verb = words.get(0);
             options = new Options();
-
-            if (opts.has(create)) {
-                if (opts.has(list) || opts.has(printDescriptor))
-                    throw new CommandException("err.multiple.main.modes").showUsage(true);
-                options.mode = Mode.CREATE;
-            } else if (opts.has(list)) {
-                if (opts.has(create) || opts.has(printDescriptor))
-                    throw new CommandException("err.multiple.main.modes").showUsage(true);
-                options.mode = Mode.LIST;
-            } else if (opts.has(printDescriptor)) {
-                if (opts.has(create) || opts.has(list))
-                    throw new CommandException("err.multiple.main.modes").showUsage(true);
-                options.mode = Mode.PRINT_DESCRIPTOR;
+            try {
+                options.mode = Enum.valueOf(Mode.class, verb.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new CommandException("err.invalid.mode", verb).showUsage(true);
             }
 
             if (opts.has(classPath))
@@ -1078,21 +1046,20 @@ public class JmodTask {
                     throw new CommandException("err.modulepath.must.be.specified").showUsage(true);
             }
 
-            List<String> words = opts.valuesOf(nonOptions);
-            if (words.isEmpty())
+            if (words.size() <= 1)
                 throw new CommandException("err.jmod.must.be.specified").showUsage(true);
-            Path path = Paths.get(words.get(0));
+            Path path = Paths.get(words.get(1));
             if (options.mode.equals(Mode.CREATE) && Files.exists(path))
                 throw new CommandException("err.file.already.exists", path);
             else if ((options.mode.equals(Mode.LIST) ||
-                          options.mode.equals(Mode.PRINT_DESCRIPTOR))
+                          options.mode.equals(Mode.DESCRIBE))
                       && Files.notExists(path))
                 throw new CommandException("err.jmod.not.found", path);
             options.jmodFile = path;
 
-            if (words.size() > 1)
+            if (words.size() > 2)
                 throw new CommandException("err.unknown.option",
-                        words.subList(1, words.size())).showUsage(true);
+                        words.subList(2, words.size())).showUsage(true);
 
             if (options.mode.equals(Mode.CREATE) && options.classpath == null)
                 throw new CommandException("err.classpath.must.be.specified").showUsage(true);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public class ImageReader extends BasicImageReader {
@@ -69,10 +70,6 @@ public class ImageReader extends BasicImageReader {
     private ImageReader(Path imagePath, ByteOrder byteOrder) throws IOException {
         super(imagePath, byteOrder);
         this.nodes = new HashMap<>();
-    }
-
-    private ImageReader(Path imagePath) throws IOException {
-        this(imagePath, ByteOrder.nativeOrder());
     }
 
     public static ImageReader open(Path imagePath, ByteOrder byteOrder) throws IOException {
@@ -133,10 +130,8 @@ public class ImageReader extends BasicImageReader {
         private boolean completed;
 
         Node(String name, BasicFileAttributes fileAttrs) {
-            assert name != null;
-            assert fileAttrs != null;
-            this.name = name;
-            this.fileAttrs = fileAttrs;
+            this.name = Objects.requireNonNull(name);
+            this.fileAttrs = Objects.requireNonNull(fileAttrs);
         }
 
         /**
@@ -318,24 +313,13 @@ public class ImageReader extends BasicImageReader {
     static class Resource extends Node {
         private final ImageLocation loc;
 
-        private Resource(Directory parent, ImageLocation loc, BasicFileAttributes fileAttrs) {
-            this(parent, loc.getFullName(true), loc, fileAttrs);
-        }
-
-        private Resource(Directory parent, String name, ImageLocation loc,
-                BasicFileAttributes fileAttrs) {
-            super(name, fileAttrs);
+        private Resource(ImageLocation loc, BasicFileAttributes fileAttrs) {
+            super(loc.getFullName(true), fileAttrs);
             this.loc = loc;
         }
 
         static Resource create(Directory parent, ImageLocation loc, BasicFileAttributes fileAttrs) {
-            Resource rs = new Resource(parent, loc, fileAttrs);
-            parent.addChild(rs);
-            return rs;
-        }
-
-        static Resource create(Directory parent, String name, ImageLocation loc, BasicFileAttributes fileAttrs) {
-            Resource rs = new Resource(parent, name, loc, fileAttrs);
+            Resource rs = new Resource(loc, fileAttrs);
             parent.addChild(rs);
             return rs;
         }
@@ -380,13 +364,13 @@ public class ImageReader extends BasicImageReader {
     static class LinkNode extends Node {
         private final Node link;
 
-        private LinkNode(Directory parent, String name, Node link) {
+        private LinkNode(String name, Node link) {
             super(name, link.getFileAttributes());
             this.link = link;
         }
 
         static LinkNode create(Directory parent, String name, Node link) {
-            LinkNode ln = new LinkNode(parent, name, link);
+            LinkNode ln = new LinkNode(name, link);
             parent.addChild(ln);
             return ln;
         }

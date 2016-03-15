@@ -153,7 +153,7 @@ public final class TaskHelper {
 
     private final class PluginsOptions {
 
-        private static final String PLUGINS_PATH = "--plugins-modulepath";
+        private static final String PLUGINS_PATH = "--plugin-module-path";
         private static final String POST_PROCESS = "--post-process-path";
 
         private Layer pluginsLayer = Layer.boot();

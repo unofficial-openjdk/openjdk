@@ -61,7 +61,7 @@ import sun.misc.Resource;
 
 
 /**
- * The extension or application class loader. Resources loaded from modules
+ * The platform or application class loader. Resources loaded from modules
  * defined to the boot class loader are also loaded via an instance of this
  * ClassLoader type.
  *
@@ -82,9 +82,9 @@ import sun.misc.Resource;
  * directly to that class loader. If there isn't a module containing the
  * package then it delegates the search to the parent class loader and if not
  * found in the parent then it searches the class path. The main difference
- * between this and the usual delegation model is that it allows the extension
+ * between this and the usual delegation model is that it allows the platform
  * class loader to delegate to the application class loader, important with
- * upgraded modules defined to the extension class loader.
+ * upgraded modules defined to the platform class loader.
  */
 
 public class BuiltinClassLoader

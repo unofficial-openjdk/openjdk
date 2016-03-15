@@ -50,7 +50,7 @@ import static org.testng.Assert.assertTrue;
  * @library /lib/testlibrary
  * @build jdk.testlibrary.FileUtils jdk.testlibrary.JDKToolFinder
  * @run testng CLICompatibility
- * @summary Basic test for CLI options compatibility
+ * @summary Basic test for compatibility of CLI options
  */
 
 public class CLICompatibility {

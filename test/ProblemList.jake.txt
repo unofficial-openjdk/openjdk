@@ -28,23 +28,9 @@ tools/pack200/Pack200Test.java					generic-all
 
 ############################################################################
 
-# svc_tools
-
-# 8073141
-sun/tools/jstat/jstatClassloadOutput1.sh                        generic-all
-
-############################################################################
-
 # jdk_rmi
 
-# 8078484
+# 8145980
 sun/rmi/rmic/newrmic/equivalence/run.sh				generic-all
-
-############################################################################
-
-# jdk_jmx
-
-# 8147610
-javax/management/mxbean/MXBeanLoadingTest1.java                 generic-all
 
 ############################################################################

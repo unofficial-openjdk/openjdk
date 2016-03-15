@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -73,7 +73,9 @@ public class ImageStream {
     }
 
     public void ensure(int needs) {
-        assert 0 <= needs : "Negative needs";
+        if (needs < 0) {
+            throw new IndexOutOfBoundsException("needs");
+        }
 
         if (needs > buffer.remaining()) {
             byte[] bytes = buffer.array();
@@ -95,7 +97,10 @@ public class ImageStream {
     }
 
     public void skip(int n) {
-        assert 0 <= n : "Negative offset";
+        if (n < 0) {
+            throw new IndexOutOfBoundsException("n");
+        }
+
         buffer.position(buffer.position() + n);
     }
 
