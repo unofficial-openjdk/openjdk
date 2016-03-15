@@ -21,9 +21,7 @@
  * questions.
  */
 
-import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
-import java.lang.module.ModuleReference;
 import java.lang.module.ResolvedModule;
 import java.lang.reflect.Layer;
 import java.lang.reflect.Module;
@@ -80,6 +78,7 @@ public class BasicModuleTest {
         assertTrue(thisModule.getName() == null);
         assertTrue(thisModule.getDescriptor() == null);
         assertTrue(thisModule.getLayer() == null);
+        assertTrue(thisModule.toString().startsWith("unnamed module "));
 
         ClassLoader thisLoader = BasicModuleTest.class.getClassLoader();
         assertTrue(thisLoader == thisModule.getClassLoader());
@@ -125,6 +124,9 @@ public class BasicModuleTest {
         assertTrue(m1.getLayer() == null);
         assertTrue(m2.getLayer() == null);
 
+        assertTrue(m1.toString().startsWith("unnamed module "));
+        assertTrue(m2.toString().startsWith("unnamed module "));
+
         // unnamed module reads all modules
         assertTrue(m1.canRead(m2));
         assertTrue(m2.canRead(m1));
@@ -160,6 +162,9 @@ public class BasicModuleTest {
         // getLayer
         assertTrue(base.getLayer() == Layer.boot());
 
+        // toString
+        assertEquals(base.toString(), "module java.base");
+
         // getPackages
         assertTrue(contains(base.getPackages(), "java.lang"));
 
@@ -192,7 +197,10 @@ public class BasicModuleTest {
         assertTrue(desktop.getClassLoader() == null);
 
         // getLayer
-        assertTrue(base.getLayer() == Layer.boot());
+        assertTrue(desktop.getLayer() == Layer.boot());
+
+        // toString
+        assertEquals(desktop.toString(), "module java.desktop");
 
         // getPackages
         assertTrue(contains(desktop.getPackages(), "java.awt"));
