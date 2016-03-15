@@ -569,15 +569,23 @@ char* Reflection::verify_class_access_msg(const Klass* current_class,
   assert(result != ACCESS_OK, "must be failure result");
   char * msg = NULL;
   if (result != OTHER_PROBLEM && new_class != NULL && current_class != NULL) {
-    ModuleEntry* module_to = InstanceKlass::cast(new_class)->module();
-    const char * new_class_name = new_class->external_name();
-    const char * current_class_name = current_class->external_name();
-    const char * module_to_name = module_to->is_named() ?
-      module_to->name()->as_C_string() : UNNAMED_MODULE;
-
+    // Find the module entry for current_class, the accessor
     ModuleEntry* module_from = InstanceKlass::cast(current_class)->module();
-    const char * module_from_name = module_from->is_named() ?
-      module_from->name()->as_C_string() : UNNAMED_MODULE;
+    const char * module_from_name = module_from->is_named() ? module_from->name()->as_C_string() : UNNAMED_MODULE;
+    const char * current_class_name = current_class->external_name();
+
+    // Find the module entry for new_class, the accessee
+    ModuleEntry* module_to = NULL;
+    if (new_class->is_objArray_klass()) {
+      new_class = ObjArrayKlass::cast(new_class)->bottom_klass();
+    }
+    if (new_class->is_instance_klass()) {
+      module_to = InstanceKlass::cast(new_class)->module();
+    } else {
+      module_to = ModuleEntryTable::javabase_module();
+    }
+    const char * module_to_name = module_to->is_named() ? module_to->name()->as_C_string() : UNNAMED_MODULE;
+    const char * new_class_name = new_class->external_name();
 
     if (result == MODULE_NOT_READABLE) {
       assert(module_from->is_named(), "Unnamed modules can read all modules");
