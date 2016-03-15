@@ -49,9 +49,9 @@ import java.awt.event.WindowAdapter;
 import java.awt.print.PrinterJob;
 import java.io.File;
 import java.io.FilePermission;
-import java.io.InputStream;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -551,27 +551,24 @@ public class ServiceDialog extends JDialog implements ActionListener {
     }
 
     /**
-     * Returns byte[] for image resource
+     * Returns URL for image resource
      */
-    private static byte[] getImageResource(final String key) {
-        InputStream in = java.security.AccessController.doPrivileged(
-            new java.security.PrivilegedAction<InputStream>() {
-                public InputStream run() {
-                    return ServiceDialog.class.getResourceAsStream(
+    private static URL getImageResource(final String key) {
+        URL url = java.security.AccessController.doPrivileged(
+                       new java.security.PrivilegedAction<URL>() {
+                public URL run() {
+                    URL url = ServiceDialog.class.getResource(
                                                   "resources/" + key);
+                    return url;
                 }
         });
 
-        if (in == null) {
+        if (url == null) {
             throw new Error("Fatal: Resource for ServiceUI is broken; " +
                             "there is no " + key + " key in resource");
         }
 
-        try (in) {
-            return in.readAllBytes();
-        } catch (IOException ioe) {
-            throw new Error(ioe);
-        }
+        return url;
     }
 
     /**
@@ -2819,11 +2816,11 @@ public class ServiceDialog extends JDialog implements ActionListener {
                                ButtonGroup bg, ActionListener al)
         {
             super(new FlowLayout(FlowLayout.LEADING));
-            final byte[] bytes = getImageResource(img);
+            final URL imgURL = getImageResource(img);
             Icon icon = java.security.AccessController.doPrivileged(
                                  new java.security.PrivilegedAction<Icon>() {
                 public Icon run() {
-                    Icon icon = new ImageIcon(bytes);
+                    Icon icon = new ImageIcon(imgURL);
                     return icon;
                 }
             });
