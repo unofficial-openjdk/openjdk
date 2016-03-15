@@ -23,5 +23,6 @@
 */
 
 #include "precompiled.hpp"
+#include "prims/jni.h"
 
 extern "C" void JNICALL trace_register_natives(JNIEnv*, jclass) {}
