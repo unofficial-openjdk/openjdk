@@ -234,9 +234,7 @@ clean:
 
 # Expect JT_HOME to be set for jtreg tests. (home for jtreg)
 ifndef JT_HOME
-  ## JT_HOME = $(SLASH_JAVA)/re/jtreg/4.1/promoted/latest/binaries/jtreg
-  ## Use jtreg with @modules support
-  JT_HOME = $(SLASH_JAVA)/re/jtreg/4.1/nightly/binaries/jtreg/
+  JT_HOME = $(SLASH_JAVA)/re/jtreg/4.2/promoted/latest/binaries/jtreg
   ifdef JPRT_JTREG_HOME
     JT_HOME = $(JPRT_JTREG_HOME)
   endif
