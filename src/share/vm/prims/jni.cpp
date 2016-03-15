@@ -75,6 +75,7 @@
 #include "runtime/vm_operations.hpp"
 #include "services/memTracker.hpp"
 #include "services/runtimeService.hpp"
+#include "trace/traceMacros.hpp"
 #include "trace/tracing.hpp"
 #include "utilities/defaultStream.hpp"
 #include "utilities/dtrace.hpp"
@@ -90,7 +91,7 @@
 #include "jvmci/jvmciRuntime.hpp"
 #endif
 
-static jint CurrentVersion = JNI_VERSION_1_8;
+static jint CurrentVersion = JNI_VERSION_9;
 
 #ifdef _WIN32
 extern LONG WINAPI topLevelExceptionFilter(_EXCEPTION_POINTERS* );
@@ -3978,7 +3979,7 @@ static jint JNI_CreateJavaVM_inner(JavaVM **vm, void **penv, void *args) {
 
     EventThreadStart event;
     if (event.should_commit()) {
-      event.set_javalangthread(java_lang_Thread::thread_id(thread->threadObj()));
+      event.set_thread(THREAD_TRACE_ID(thread));
       event.commit();
     }
 
@@ -4198,7 +4199,7 @@ static jint attach_current_thread(JavaVM *vm, void **penv, void *_args, bool dae
 
   EventThreadStart event;
   if (event.should_commit()) {
-    event.set_javalangthread(java_lang_Thread::thread_id(thread->threadObj()));
+    event.set_thread(THREAD_TRACE_ID(thread));
     event.commit();
   }
 

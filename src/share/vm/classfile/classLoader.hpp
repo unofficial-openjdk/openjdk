@@ -371,7 +371,7 @@ class ClassLoader: AllStatic {
   static s2 classloader_type(Symbol* class_name, ClassPathEntry* e,
                                  int classpath_index, TRAPS);
 
-  static void  trace_class_path(outputStream* out, const char* msg, const char* name = NULL);
+  static void  trace_class_path(const char* msg, const char* name = NULL);
 
   // VM monitoring and management support
   static jlong classloader_time_ms();
