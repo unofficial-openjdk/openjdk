@@ -76,13 +76,14 @@ NASGEN_RUN_FILE := $(NASHORN_CLASSES_DIR)/_the.nasgen.run
 ifeq ($(BOOT_JDK_MODULAR), true)
   NASGEN_OPTIONS := \
       -cp $(BUILDTOOLS_OUTPUTDIR)/nasgen_classes \
+      -Xpatch:$(BUILDTOOLS_OUTPUTDIR)/nasgen_classes \
       -XaddExports:$(subst $(SPACE),$(COMMA),$(strip \
           java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED \
           java.base/jdk.internal.org.objectweb.asm.util=ALL-UNNAMED \
       ))
 else
   NASGEN_OPTIONS := \
-      -cp $(BUILDTOOLS_OUTPUTDIR)/nasgen_classes
+      -Xbootclasspath/p:$(BUILDTOOLS_OUTPUTDIR)/nasgen_classes
 endif
 
 # Copy classes to final classes dir and run nasgen to modify classes in jdk.nashorn.internal.objects package
