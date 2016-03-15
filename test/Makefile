@@ -243,8 +243,7 @@ ifndef JT_HOME
 endif
 
 # Problematic tests to be excluded
-PROBLEM_LISTS=$(call MixedDirs,$(wildcard ProblemList.txt ProblemList.jake.txt \
-                     closed/ProblemList.txt closed/ProblemList.jake.txt))
+PROBLEM_LISTS=$(call MixedDirs,$(wildcard ProblemList.txt closed/ProblemList.txt))
 
 # Create exclude list for this platform and arch
 ifdef NO_EXCLUDES
