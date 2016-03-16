@@ -98,7 +98,6 @@ static const jlong  NEED_THREAD_LIFE_EVENTS = THREAD_FILTERED_EVENT_BITS | THREA
 static const jlong  EARLY_EVENT_BITS = CLASS_FILE_LOAD_HOOK_BIT |
                                VM_START_BIT | VM_INIT_BIT | VM_DEATH_BIT | NATIVE_METHOD_BIND_BIT |
                                THREAD_START_BIT | THREAD_END_BIT |
-                               CLASS_LOAD_BIT | CLASS_PREPARE_BIT |
                                COMPILED_METHOD_LOAD_BIT | COMPILED_METHOD_UNLOAD_BIT |
                                DYNAMIC_CODE_GENERATED_BIT;
 static const jlong  GLOBAL_EVENT_BITS = ~THREAD_FILTERED_EVENT_BITS;

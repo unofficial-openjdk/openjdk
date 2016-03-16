@@ -75,7 +75,7 @@ class JvmtiEnvBase : public CHeapObj<mtInternal> {
   };
 
   static jvmtiPhase  get_phase()                    { return _phase; }
-  static jvmtiPhase  get_phase(jvmtiEnv* env)       { return ((JvmtiEnvBase*)env)->phase(); }
+  static jvmtiPhase  get_phase(jvmtiEnv* env)       { return ((JvmtiEnvBase*)JvmtiEnv_from_jvmti_env(env))->phase(); }
   static void  set_phase(jvmtiPhase phase)          { _phase = phase; }
   static bool is_vm_live()                          { return _phase == JVMTI_PHASE_LIVE; }
 
