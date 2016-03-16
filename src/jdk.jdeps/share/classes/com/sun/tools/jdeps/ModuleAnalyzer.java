@@ -603,6 +603,7 @@ class ModuleAnalyzer {
             out.format("  size=\"25,25\";%n");
             out.format("  nodesep=.5;%n");
             out.format("  ranksep=1.5;%n");
+            out.format("  pencolor=transparent;%n");
             out.format("  node [shape=plaintext, fontname=\"DejaVuSans\", fontsize=36, margin=\".2,.2\"];%n");
             out.format("  edge [penwidth=4, color=\"#999999\", arrowhead=open, arrowsize=2];%n");
         }
@@ -650,6 +651,7 @@ class ModuleAnalyzer {
             cf.modules().stream()
                     .map(ResolvedModule::reference)
                     .map(ModuleReference::descriptor)
+                    .sorted(Comparator.comparing(ModuleDescriptor::name))
                     .forEach(md -> {
                 String mn = md.name();
                 Set<String> requiresPublic = md.requires().stream()
