@@ -581,7 +581,7 @@ public class Proxy implements java.io.Serializable {
             }
 
             // add the package to the runtime module if not exists
-            if (m.isNamed() && !Stream.of(m.getPackages()).anyMatch(proxyPkg::equals)) {
+            if (m.isNamed()) {
                 m.addPackage(proxyPkg);
             }
 

@@ -846,14 +846,19 @@ public final class Module {
         if (pn.length() == 0)
             throw new IllegalArgumentException("<unnamed> package not allowed");
 
+        if (descriptor.packages().contains(pn)) {
+            // already in module
+            return;
+        }
+
+        Set<String> extraPackages = this.extraPackages;
+        if (extraPackages != null && extraPackages.contains(pn)) {
+            // already added
+            return;
+        }
         synchronized (this) {
-
-            if (descriptor.packages().contains(pn)) {
-                // already in module
-                return;
-            }
-
-            Set<String> extraPackages = this.extraPackages;
+            // recheck under lock
+            extraPackages = this.extraPackages;
             if (extraPackages != null) {
                 if (extraPackages.contains(pn)) {
                     // already added
