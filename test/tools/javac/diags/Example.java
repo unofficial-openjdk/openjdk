@@ -537,7 +537,7 @@ class Example implements Comparable<Example> {
                 throw new IllegalArgumentException();
 
             if (verbose)
-                System.err.println("run_exec: " + opts + " " + files);
+                System.err.println("run_exec: " + vmOpts + " " + opts + " " + files);
 
             List<String> args = new ArrayList<String>();
 
