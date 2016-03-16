@@ -29,6 +29,7 @@
  *          java.management
  *          jdk.jartool/sun.tools.jar
  *          jdk.jvmstat/sun.jvmstat.monitor
+ * @ignore 8150683
  * @compile javax/sound/sampled/MyClass.jasm
  * @compile org/omg/CORBA/Context.jasm
  * @compile nonjdk/myPackage/MyClass.java
