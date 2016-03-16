@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,10 +28,12 @@ package java.util.spi;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.reflect.Module;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Locale;
 import java.util.ResourceBundle;
-
 import sun.util.locale.provider.ResourceBundleProviderSupport;
+import static sun.security.util.SecurityConstants.GET_CLASSLOADER_PERMISSION;
 
 
 /**
@@ -126,8 +128,10 @@ public abstract class AbstractResourceBundleProvider implements ResourceBundlePr
         for (String format : formats) {
             try {
                 if (FORMAT_CLASS.equals(format)) {
-                    bundle = ResourceBundleProviderSupport
-                                 .loadResourceBundle(module, bundleName);
+                    PrivilegedAction<ResourceBundle> pa = () ->
+                                    ResourceBundleProviderSupport
+                                         .loadResourceBundle(module, bundleName);
+                    bundle = AccessController.doPrivileged(pa, null, GET_CLASSLOADER_PERMISSION);
                 } else if (FORMAT_PROPERTIES.equals(format)) {
                     bundle = ResourceBundleProviderSupport
                                  .loadPropertyResourceBundle(module, bundleName);

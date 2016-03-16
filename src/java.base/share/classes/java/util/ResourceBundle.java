@@ -69,6 +69,7 @@ import sun.reflect.Reflection;
 import sun.util.locale.BaseLocale;
 import sun.util.locale.LocaleObjectCache;
 import sun.util.locale.provider.ResourceBundleProviderSupport;
+import static sun.security.util.SecurityConstants.GET_CLASSLOADER_PERMISSION;
 
 
 /**
@@ -1590,8 +1591,6 @@ public abstract class ResourceBundle {
         return getBundleImpl(baseName, locale, loader, module, control);
     }
 
-    private static final RuntimePermission GET_CLASS_LOADER_PERMISSION
-        = new RuntimePermission("getClassLoader");
     private static ResourceBundle getBundleFromModule(Class<?> caller,
                                                       Module module,
                                                       String baseName,
@@ -1601,7 +1600,7 @@ public abstract class ResourceBundle {
         if (caller.getModule() != module) {
             SecurityManager sm = System.getSecurityManager();
             if (sm != null) {
-                sm.checkPermission(GET_CLASS_LOADER_PERMISSION);
+                sm.checkPermission(GET_CLASSLOADER_PERMISSION);
             }
         }
         return getBundleImpl(baseName, locale, getLoader(module), module, control);
@@ -1816,7 +1815,10 @@ public abstract class ResourceBundle {
                 try {
                     switch (format) {
                     case "java.class":
-                        bundle = ResourceBundleProviderSupport.loadResourceBundle(module, bundleName);
+                        PrivilegedAction<ResourceBundle> pa = ()
+                                -> ResourceBundleProviderSupport
+                                    .loadResourceBundle(module, bundleName);
+                        bundle = AccessController.doPrivileged(pa, null, GET_CLASSLOADER_PERMISSION);
                         break;
                     case "java.properties":
                         bundle = ResourceBundleProviderSupport.loadPropertyResourceBundle(module, bundleName);
