@@ -331,7 +331,6 @@
                     agentvm="@{agentvm}" verbose="@{verbose}"
                     failonerror="false" resultproperty="jtreg.@{name}.result"
                     vmoptions="${coverage.options} @{extra.jvmargs} -Xpatch:@{build.modules}">
-                    <arg line="-exclude:${basedir}/test/ProblemList.jake.txt"/>
                     <arg value="-debug:@{jpda.jvmargs}"/>
                     <arg line="@{keywords}"/>
                     <arg line="@{options}"/>

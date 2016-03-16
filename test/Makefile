@@ -93,7 +93,7 @@ JTREG = $(JTREG_HOME)/bin/jtreg
 JTDIFF = $(JTREG_HOME)/bin/jtdiff
 
 # Problematic tests to be excluded
-PROBLEM_LISTS=ProblemList.txt ProblemList.jake.txt
+PROBLEM_LISTS=ProblemList.txt
 
 # Create exclude list for this platform and arch
 ifdef NO_EXCLUDES
