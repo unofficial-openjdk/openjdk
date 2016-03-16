@@ -222,27 +222,36 @@ void Canonicalizer::do_StoreField     (StoreField*      x) {
 }
 
 void Canonicalizer::do_ArrayLength    (ArrayLength*     x) {
-  NewArray* array = x->array()->as_NewArray();
-  if (array != NULL && array->length() != NULL) {
-    Constant* length = array->length()->as_Constant();
-    if (length != NULL) {
-      // do not use the Constant itself, but create a new Constant
-      // with same value Otherwise a Constant is live over multiple
-      // blocks without being registered in a state array.
+  NewArray*  na;
+  Constant*  ct;
+  LoadField* lf;
+
+  if ((na = x->array()->as_NewArray()) != NULL) {
+    // New arrays might have the known length.
+    // Do not use the Constant itself, but create a new Constant
+    // with same value Otherwise a Constant is live over multiple
+    // blocks without being registered in a state array.
+    Constant* length;
+    if (na->length() != NULL &&
+        (length = na->length()->as_Constant()) != NULL) {
       assert(length->type()->as_IntConstant() != NULL, "array length must be integer");
       set_constant(length->type()->as_IntConstant()->value());
     }
-  } else {
-    LoadField* lf = x->array()->as_LoadField();
-    if (lf != NULL) {
-      ciField* field = lf->field();
-      if (field->is_constant() && field->is_static()) {
-        // final static field
-        ciObject* c = field->constant_value().as_object();
-        if (c->is_array()) {
-          ciArray* array = (ciArray*) c;
-          set_constant(array->length());
-        }
+
+  } else if ((ct = x->array()->as_Constant()) != NULL) {
+    // Constant arrays have constant lengths.
+    ArrayConstant* cnst = ct->type()->as_ArrayConstant();
+    if (cnst != NULL) {
+      set_constant(cnst->value()->length());
+    }
+
+  } else if ((lf = x->array()->as_LoadField()) != NULL) {
+    ciField* field = lf->field();
+    if (field->is_constant() && field->is_static()) {
+      assert(PatchALot || ScavengeRootsInCode < 2, "Constant field loads are folded during parsing");
+      ciObject* c = field->constant_value().as_object();
+      if (!c->is_null_object()) {
+        set_constant(c->as_array()->length());
       }
     }
   }
@@ -462,7 +471,7 @@ void Canonicalizer::do_Intrinsic      (Intrinsic*       x) {
     InstanceConstant* c = x->argument_at(0)->type()->as_InstanceConstant();
     if (c != NULL && !c->value()->is_null_object()) {
       // ciInstance::java_mirror_type() returns non-NULL only for Java mirrors
-      ciType* t = c->value()->as_instance()->java_mirror_type();
+      ciType* t = c->value()->java_mirror_type();
       if (t->is_klass()) {
         // substitute cls.isInstance(obj) of a constant Class into
         // an InstantOf instruction
@@ -475,6 +484,17 @@ void Canonicalizer::do_Intrinsic      (Intrinsic*       x) {
         // cls.isInstance(obj) always returns false for primitive classes
         set_constant(0);
       }
+    }
+    break;
+  }
+  case vmIntrinsics::_isPrimitive        : {
+    assert(x->number_of_arguments() == 1, "wrong type");
+
+    // Class.isPrimitive is known on constant classes:
+    InstanceConstant* c = x->argument_at(0)->type()->as_InstanceConstant();
+    if (c != NULL && !c->value()->is_null_object()) {
+      ciType* t = c->value()->java_mirror_type();
+      set_constant(t->is_primitive_type());
     }
     break;
   }
