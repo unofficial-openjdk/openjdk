@@ -333,12 +333,10 @@ public class Analyzer {
 
         @Override
         public int hashCode() {
-            int hash = 7;
-            hash = 67*hash + Objects.hashCode(this.origin)
-                           + Objects.hashCode(this.originArchive)
-                           + Objects.hashCode(this.target)
-                           + Objects.hashCode(this.targetArchive);
-            return hash;
+            return Objects.hash(this.origin,
+                                this.originArchive,
+                                this.target,
+                                this.targetArchive);
         }
 
         public String toString() {

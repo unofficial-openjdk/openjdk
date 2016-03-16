@@ -440,7 +440,7 @@ class JdepsTask {
             return analyzeModules(dependencyFinder);
         }
 
-        // otherwise analyze the depednencies
+        // otherwise analyze the dependencies
         if (options.genModuleInfo != null) {
             return genModuleInfo(dependencyFinder);
         } else {

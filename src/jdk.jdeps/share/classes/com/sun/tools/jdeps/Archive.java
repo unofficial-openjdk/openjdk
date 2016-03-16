@@ -119,10 +119,7 @@ public class Archive {
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 67*hash + Objects.hashCode(this.filename) +
-                         Objects.hashCode(this.path);
-        return hash;
+        return Objects.hash(this.filename, this.path);
     }
 
     @Override
