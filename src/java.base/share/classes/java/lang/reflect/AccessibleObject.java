@@ -84,8 +84,8 @@ public class AccessibleObject implements AnnotatedElement {
      * module. Additionally, this method cannot be used to enable access to
      * non-public members of {@code AccessibleObject} or {@link Module}.
      *
-     * <p>First, if there is a security manager, its
-     * {@code checkPermission} method is called with a
+     * <p>If there is a security manager, its
+     * {@code checkPermission} method is first called with a
      * {@code ReflectPermission("suppressAccessChecks")} permission.
      *
      * <p>A {@code SecurityException} is also thrown if any of the elements of
@@ -98,7 +98,7 @@ public class AccessibleObject implements AnnotatedElement {
      * @throws InaccessibleObjectException if access cannot be enabled
      * @throws SecurityException if the request is denied.
      * @see SecurityManager#checkPermission
-     * @see java.lang.RuntimePermission
+     * @see ReflectPermission
      */
     @CallerSensitive
     public static void setAccessible(AccessibleObject[] array, boolean flag) {
@@ -129,15 +129,15 @@ public class AccessibleObject implements AnnotatedElement {
      * module. Additionally, this method cannot be used to enable access to
      * non-public members of {@code AccessibleObject} or {@link Module}.
      *
-     * <p>First, if there is a security manager, its
-     * {@code checkPermission} method is called with a
+     * <p>If there is a security manager, its
+     * {@code checkPermission} method is first called with a
      * {@code ReflectPermission("suppressAccessChecks")} permission.
      *
      * @param flag the new value for the {@code accessible} flag
      * @throws InaccessibleObjectException if access cannot be enabled
      * @throws SecurityException if the request is denied
      * @see SecurityManager#checkPermission
-     * @see java.lang.RuntimePermission
+     * @see ReflectPermission
      */
     public void setAccessible(boolean flag) {
         AccessibleObject.checkPermission();

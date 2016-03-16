@@ -145,7 +145,7 @@ public class ModuleDescriptor
          *
          * <p> Two {@code Requires} objects are compared by comparing their
          * module name lexicographically.  Where the module names are equal then
-         * the sets of modifiers are compared based a value computed from the
+         * the sets of modifiers are compared based on a value computed from the
          * ordinal of each modifier. </p>
          *
          * @return A negative integer, zero, or a positive integer if this module
@@ -1081,6 +1081,7 @@ public class ModuleDescriptor
      *         .exports("p")
      *         .build();
      * }</pre>
+     *
      * @since 9
      */
     public static final class Builder {
@@ -1621,9 +1622,9 @@ public class ModuleDescriptor
      * the versions, if present, are compared. </p>
      *
      * @apiNote For now, the natural ordering is not consistent with equals.
-     * If two module descriptors have equal module names, equal versions, but
-     * other corresponding components are not equal, then they will be
-     * considered equal by this method.
+     * If two module descriptors have equal module names, equal versions if
+     * present, but their corresponding components are not equal, then they
+     * will be considered equal by this method.
      *
      * @param  that
      *         The object to which this module descriptor is to be compared
