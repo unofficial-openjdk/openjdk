@@ -1829,6 +1829,11 @@ public abstract class ClassLoader {
             throw new InternalError("unnamed package in  " + m);
         }
 
+        // check if Package object is already defined
+        NamedPackage pkg = packages.get(name);
+        if (pkg != null && pkg instanceof Package)
+            return (Package)pkg;
+
         return (Package)packages.compute(name, (n, p) -> toPackage(n, p, m));
     }
 
@@ -1958,9 +1963,6 @@ public abstract class ClassLoader {
         NamedPackage p = packages.get(name);
         if (p == null)
             return null;
-
-        if (p instanceof Package)
-            return (Package)p;
 
         return definePackage(name, p.module());
     }
