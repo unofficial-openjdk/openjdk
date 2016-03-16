@@ -1118,7 +1118,11 @@ class Compile : public Phase {
   bool           in_scratch_emit_size() const   { return _in_scratch_emit_size;     }
 
   enum ScratchBufferBlob {
+#if defined(PPC64)
+    MAX_inst_size       = 2048,
+#else
     MAX_inst_size       = 1024,
+#endif
     MAX_locs_size       = 128, // number of relocInfo elements
     MAX_const_size      = 128,
     MAX_stubs_size      = 128
@@ -1250,7 +1254,7 @@ class Compile : public Phase {
   // Intrinsic setup.
   void           register_library_intrinsics();                            // initializer
   CallGenerator* make_vm_intrinsic(ciMethod* m, bool is_virtual);          // constructor
-  int            intrinsic_insertion_index(ciMethod* m, bool is_virtual);  // helper
+  int            intrinsic_insertion_index(ciMethod* m, bool is_virtual, bool& found);  // helper
   CallGenerator* find_intrinsic(ciMethod* m, bool is_virtual);             // query fn
   void           register_intrinsic(CallGenerator* cg);                    // update fn
 
