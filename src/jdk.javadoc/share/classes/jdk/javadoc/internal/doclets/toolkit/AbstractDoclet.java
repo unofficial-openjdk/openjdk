@@ -106,9 +106,7 @@ public abstract class AbstractDoclet {
             configuration.reporter.print(ERROR, f.getMessage());
             return false;
         } catch (DocletAbortException e) {
-            e.printStackTrace();
             Throwable cause = e.getCause();
-                e.printStackTrace();
             if (cause != null) {
                 if (cause.getLocalizedMessage() != null) {
                     configuration.reporter.print(ERROR, cause.getLocalizedMessage());
@@ -118,7 +116,6 @@ public abstract class AbstractDoclet {
             }
             return false;
         } catch (Exception exc) {
-            //exc.printStackTrace();
             return false;
         }
         return true;

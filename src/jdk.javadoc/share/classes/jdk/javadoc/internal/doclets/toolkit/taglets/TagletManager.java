@@ -245,7 +245,6 @@ public class TagletManager {
                 }
             }
             tagClassLoader = fileManager.getClassLoader(TAGLET_PATH);
-            addExports(tagClassLoader);
             Class<?> customTagClass = tagClassLoader.loadClass(classname);
             ensureReadable(customTagClass);
             Object instance = customTagClass.newInstance();
@@ -265,6 +264,7 @@ public class TagletManager {
     /**
      * Ensures that the module of the given class is readable to this
      * module.
+     * @param targetClass class in module to be made readable
      */
     private void ensureReadable(Class<?> targetClass) {
         try {
@@ -275,23 +275,6 @@ public class TagletManager {
             Class<?> moduleClass = getModuleMethod.getReturnType();
             Method addReadsMethod = moduleClass.getMethod("addReads", moduleClass);
             addReadsMethod.invoke(thisModule, targetModule);
-        } catch (NoSuchMethodException e) {
-            // ignore
-        } catch (Exception e) {
-            throw new InternalError(e.toString());
-        }
-    }
-
-    private void addExports(ClassLoader targetLoader) {
-        try {
-            Method getModuleMethod = Class.class.getMethod("getModule");
-            Object thisModule = getModuleMethod.invoke(this.getClass());
-            Method getUnnamedModuleMethod = ClassLoader.class.getMethod("getUnnamedModule");
-            Object targetModule = getUnnamedModuleMethod.invoke(targetLoader);
-
-            Class<?> moduleClass = getModuleMethod.getReturnType();
-            Method addExportsMethod = moduleClass.getMethod("addExports", String.class, moduleClass);
-            addExportsMethod.invoke(thisModule, "com.sun.tools.doclets.internal.toolkit.taglets", targetModule);
         } catch (NoSuchMethodException e) {
             // ignore
         } catch (Exception e) {

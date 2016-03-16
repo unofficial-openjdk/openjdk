@@ -91,16 +91,6 @@ public class WriterFactoryImpl implements WriterFactory {
             prevModule, nextModule);
     }
 
-//    /**
-//     * {@inheritDoc}
-//     */
-//    public ModulePackageSummaryWriter getModulePackageSummaryWriter(PackageDoc packageDoc,
-//        PackageDoc prevPkg, PackageDoc nextPkg, String moduleName) throws Exception {
-//        System.err.println("WriterFactoryImpl.getModulePackageSummaryWriter");
-//        return new ModulePackageWriterImpl(configuration, packageDoc,
-//            prevPkg, nextPkg, moduleName);
-//    }
-
     /**
      * {@inheritDoc}
      */

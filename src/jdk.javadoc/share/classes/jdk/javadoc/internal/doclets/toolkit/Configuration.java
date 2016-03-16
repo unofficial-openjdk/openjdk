@@ -395,7 +395,6 @@ public abstract class Configuration {
                 s.add(p);
             }
         }
-
         showModules = (modulePackages.size() > 1);
     }
 
@@ -651,7 +650,7 @@ public abstract class Configuration {
     /**
      * Set the command line options supported by this configuration.
      *
-     * @return
+     * @return true if the options are set successfully
      * @throws DocletAbortException
      */
     public boolean setOptions() throws Fault {

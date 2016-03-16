@@ -519,7 +519,7 @@ public class ConfigurationImpl extends Configuration {
         JavaFileManager fm = getFileManager();
         if (fm.hasLocation(StandardLocation.MODULE_SOURCE_PATH) && (pd instanceof PackageSymbol)) {
             try {
-                ModuleSymbol msym = ((ModuleSymbol) pd);
+                ModuleSymbol msym = ((PackageSymbol) pd).modle;
                 return fm.getModuleLocation(StandardLocation.MODULE_SOURCE_PATH, msym.name.toString());
             } catch (IOException e) {
                 throw new DocletAbortException(e);
