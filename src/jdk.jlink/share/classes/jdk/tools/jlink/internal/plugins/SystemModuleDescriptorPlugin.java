@@ -41,6 +41,7 @@ import java.util.stream.Collectors;
 
 import jdk.internal.module.Checks;
 import jdk.internal.module.ModuleInfoExtender;
+import jdk.internal.module.SystemModules;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.MethodVisitor;
 import jdk.internal.org.objectweb.asm.Opcodes;
@@ -56,17 +57,21 @@ import jdk.tools.jlink.plugin.TransformerPlugin;
  * if not present. It also determines the number of packages of
  * the boot layer at link time.
  *
- * This plugin will override jdk.internal.module.InstalledModules class
+ * This plugin will override jdk.internal.module.SystemModules class
  *
- * @see java.lang.module.InstalledModuleFinder
- * @see jdk.internal.module.InstalledModules
+ * @see java.lang.module.SystemModuleFinder
+ * @see SystemModules
  */
-public final class InstalledModuleDescriptorPlugin implements TransformerPlugin {
+public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
+    // TODO: packager has the dependency on the plugin name
+    // Keep it as "--installed-modules" until packager removes such
+    // dependency (should not need to specify this plugin since it
+    // is enabled by default)
     private static final String NAME = "installed-modules";
     private static final String DESCRIPTION = PluginsResourceBundle.getDescription(NAME);
     private boolean enabled;
 
-    public InstalledModuleDescriptorPlugin() {
+    public SystemModuleDescriptorPlugin() {
         this.enabled = true;
     }
 
@@ -212,18 +217,18 @@ public final class InstalledModuleDescriptorPlugin implements TransformerPlugin 
     }
 
     /**
-     * Builder of a new jdk.internal.module.InstalledModules class
+     * Builder of a new jdk.internal.module.SystemModules class
      * to reconstitute ModuleDescriptor of the installed modules.
      */
     static class Builder {
         private static final String CLASSNAME =
-            "jdk/internal/module/InstalledModules";
+            "jdk/internal/module/SystemModules";
         private static final String MODULE_DESCRIPTOR_BUILDER =
             "jdk/internal/module/Builder";
         private static final String MODULE_DESCRIPTOR_ARRAY_SIGNATURE =
             "[Ljava/lang/module/ModuleDescriptor;";
 
-        // static variables in InstalledModules class
+        // static variables in SystemModules class
         private static final String MODULE_NAMES = "MODULE_NAMES";
         private static final String PACKAGE_COUNT = "PACKAGES_IN_BOOT_LAYER";
 
@@ -323,7 +328,7 @@ public final class InstalledModuleDescriptorPlugin implements TransformerPlugin 
         }
 
         /*
-         * Generate bytecode for InstalledModules
+         * Generate bytecode for SystemModules
          */
         public ClassWriter build() {
             int numModules = builders.size();

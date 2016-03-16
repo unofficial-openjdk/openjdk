@@ -47,7 +47,7 @@ import jdk.internal.misc.SharedSecrets;
  * 3. ModuleDescriptor skips the defensive copy and directly uses the
  *    sets/maps created in this Builder.
  *
- * InstalledModules should contain modules for the boot layer.
+ * SystemModules should contain modules for the boot layer.
  */
 final class Builder {
     private static final JavaLangModuleAccess jlma =

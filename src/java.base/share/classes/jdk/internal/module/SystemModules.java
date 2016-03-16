@@ -28,7 +28,7 @@ package jdk.internal.module;
 import java.lang.module.ModuleDescriptor;
 
 /*
- * InstalledModules class will be generated at link time to create
+ * SystemModules class will be generated at link time to create
  * ModuleDescriptor for the installed modules directly to improve
  * the module descriptor reconstitution time.
  *
@@ -36,9 +36,9 @@ import java.lang.module.ModuleDescriptor;
  * names such as module name, package name, service and provider type names.
  * It also avoids taking a defensive copy of any collection.
  *
- * @see jdk.tools.jlink.internal.plugins.InstalledModuleDescriptorPlugin
+ * @see jdk.tools.jlink.internal.plugins.SystemModuleDescriptorPlugin
  */
-public final class InstalledModules {
+public final class SystemModules {
     /**
      * Name of the installed modules.
      *

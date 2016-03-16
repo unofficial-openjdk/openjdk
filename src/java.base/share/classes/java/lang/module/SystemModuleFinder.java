@@ -44,7 +44,7 @@ import java.util.function.Supplier;
 import jdk.internal.jimage.ImageLocation;
 import jdk.internal.jimage.ImageReader;
 import jdk.internal.jimage.ImageReaderFactory;
-import jdk.internal.module.InstalledModules;
+import jdk.internal.module.SystemModules;
 import jdk.internal.module.ModulePatcher;
 import jdk.internal.perf.PerfCounter;
 
@@ -56,7 +56,7 @@ import jdk.internal.perf.PerfCounter;
  * ConcealedPackages attribute.
  */
 
-class InstalledModuleFinder implements ModuleFinder {
+class SystemModuleFinder implements ModuleFinder {
 
     private static final PerfCounter initTime
         = PerfCounter.newPerfCounter("jdk.module.finder.jimage.initTime");
@@ -83,13 +83,13 @@ class InstalledModuleFinder implements ModuleFinder {
         long t0 = System.nanoTime();
         imageReader = ImageReaderFactory.getImageReader();
 
-        String[] moduleNames = InstalledModules.MODULE_NAMES;
+        String[] moduleNames = SystemModules.MODULE_NAMES;
         ModuleDescriptor[] descriptors = null;
 
         boolean fastLoad = System.getProperty("jdk.installed.modules.disable") == null;
         if (fastLoad) {
             // fast loading of ModuleDescriptor of installed modules
-            descriptors = InstalledModules.modules();
+            descriptors = SystemModules.modules();
         }
 
         int n = moduleNames.length;
@@ -142,7 +142,7 @@ class InstalledModuleFinder implements ModuleFinder {
         initTime.addElapsedTimeFrom(t0);
     }
 
-    InstalledModuleFinder() { }
+    SystemModuleFinder() { }
 
     @Override
     public Optional<ModuleReference> find(String name) {
