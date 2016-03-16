@@ -587,22 +587,6 @@ public class CopySwap {
             }
 
             try {
-                // Check that a NULL source throws NPE
-                UNSAFE.copySwapMemory(null, 0, null, buf, 16, 2);
-                throw new RuntimeException("copySwapMemory failed to throw NPE");
-            } catch (NullPointerException e) {
-                // good
-            }
-
-            try {
-                // Check that a NULL destination throws NPE
-                UNSAFE.copySwapMemory(null, buf, null, 0, 16, 2);
-                throw new RuntimeException("copySwapMemory failed to throw NPE");
-            } catch (NullPointerException e) {
-                // good
-            }
-
-            try {
                 // Check that a reference array destination throws IAE
                 UNSAFE.copySwapMemory(null, buf, new Object[16], UNSAFE.arrayBaseOffset(Object[].class), 16, 8);
                 throw new RuntimeException("copySwapMemory failed to throw NPE");

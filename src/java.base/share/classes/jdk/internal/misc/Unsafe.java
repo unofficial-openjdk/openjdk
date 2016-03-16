@@ -40,6 +40,15 @@ import jdk.internal.HotSpotIntrinsicCandidate;
  * Although the class and all methods are public, use of this class is
  * limited because only trusted code can obtain instances of it.
  *
+ * <em>Note:</em> It is the resposibility of the caller to make sure
+ * arguments are checked before methods of this class are
+ * called. While some rudimentary checks are performed on the input,
+ * the checks are best effort and when performance is an overriding
+ * priority, as when methods of this class are optimized by the
+ * runtime compiler, some or all checks (if any) may be elided. Hence,
+ * the caller must not rely on the checks and corresponding
+ * exceptions!
+ *
  * @author John R. Rose
  * @see #getUnsafe
  */
@@ -358,6 +367,169 @@ public final class Unsafe {
     @HotSpotIntrinsicCandidate
     public native void putAddress(long address, long x);
 
+
+
+    /// helper methods for validating various types of objects/values
+
+    /**
+     * Create an exception reflecting that some of the input was invalid
+     *
+     * <em>Note:</em> It is the resposibility of the caller to make
+     * sure arguments are checked before the methods are called. While
+     * some rudimentary checks are performed on the input, the checks
+     * are best effort and when performance is an overriding priority,
+     * as when methods of this class are optimized by the runtime
+     * compiler, some or all checks (if any) may be elided. Hence, the
+     * caller must not rely on the checks and corresponding
+     * exceptions!
+     *
+     * @return an exception object
+     */
+    private RuntimeException invalidInput() {
+        return new IllegalArgumentException();
+    }
+
+    /**
+     * Check if a value is 32-bit clean (32 MSB are all zero)
+     *
+     * @param value the 64-bit value to check
+     *
+     * @return true if the value is 32-bit clean
+     */
+    private boolean is32BitClean(long value) {
+        return value >>> 32 == 0;
+    }
+
+    /**
+     * Check the validity of a size (the equivalent of a size_t)
+     *
+     * @throws RuntimeException if the size is invalid
+     *         (<em>Note:</em> after optimization, invalid inputs may
+     *         go undetected, which will lead to unpredictable
+     *         behavior)
+     */
+    private void checkSize(long size) {
+        if (ADDRESS_SIZE == 4) {
+            // Note: this will also check for negative sizes
+            if (!is32BitClean(size)) {
+                throw invalidInput();
+            }
+        } else if (size < 0) {
+            throw invalidInput();
+        }
+    }
+
+    /**
+     * Check the validity of a native address (the equivalent of void*)
+     *
+     * @throws RuntimeException if the address is invalid
+     *         (<em>Note:</em> after optimization, invalid inputs may
+     *         go undetected, which will lead to unpredictable
+     *         behavior)
+     */
+    private void checkNativeAddress(long address) {
+        if (ADDRESS_SIZE == 4) {
+            // Accept both zero and sign extended pointers. A valid
+            // pointer will, after the +1 below, either have produced
+            // the value 0x0 or 0x1. Masking off the low bit allows
+            // for testing against 0.
+            if ((((address >> 32) + 1) & ~1) != 0) {
+                throw invalidInput();
+            }
+        }
+    }
+
+    /**
+     * Check the validity of an offset, relative to a base object
+     *
+     * @param o the base object
+     * @param offset the offset to check
+     *
+     * @throws RuntimeException if the size is invalid
+     *         (<em>Note:</em> after optimization, invalid inputs may
+     *         go undetected, which will lead to unpredictable
+     *         behavior)
+     */
+    private void checkOffset(Object o, long offset) {
+        if (ADDRESS_SIZE == 4) {
+            // Note: this will also check for negative offsets
+            if (!is32BitClean(offset)) {
+                throw invalidInput();
+            }
+        } else if (offset < 0) {
+            throw invalidInput();
+        }
+    }
+
+    /**
+     * Check the validity of a double-register pointer
+     *
+     * Note: This code deliberately does *not* check for NPE for (at
+     * least) three reasons:
+     *
+     * 1) NPE is not just NULL/0 - there is a range of values all
+     * resulting in an NPE, which is not trivial to check for
+     *
+     * 2) It is the responsibility of the callers of Unsafe methods
+     * to verify the input, so throwing an exception here is not really
+     * useful - passing in a NULL pointer is a critical error and the
+     * must not expect an exception to be thrown anyway.
+     *
+     * 3) the actual operations will detect NULL pointers anyway by
+     * means of traps and signals (like SIGSEGV).
+     *
+     * @param o Java heap object, or null
+     * @param offset indication of where the variable resides in a Java heap
+     *        object, if any, else a memory address locating the variable
+     *        statically
+     *
+     * @throws RuntimeException if the pointer is invalid
+     *         (<em>Note:</em> after optimization, invalid inputs may
+     *         go undetected, which will lead to unpredictable
+     *         behavior)
+     */
+    private void checkPointer(Object o, long offset) {
+        if (o == null) {
+            checkNativeAddress(offset);
+        } else {
+            checkOffset(o, offset);
+        }
+    }
+
+    /**
+     * Check if a type is a primitive array type
+     *
+     * @param c the type to check
+     *
+     * @return true if the type is a primitive array type
+     */
+    private void checkPrimitiveArray(Class<?> c) {
+        Class<?> componentType = c.getComponentType();
+        if (componentType == null || !componentType.isPrimitive()) {
+            throw invalidInput();
+        }
+    }
+
+    /**
+     * Check that a pointer is a valid primitive array type pointer
+     *
+     * Note: pointers off-heap are considered to be primitive arrays
+     *
+     * @throws RuntimeException if the pointer is invalid
+     *         (<em>Note:</em> after optimization, invalid inputs may
+     *         go undetected, which will lead to unpredictable
+     *         behavior)
+     */
+    private void checkPrimitivePointer(Object o, long offset) {
+        checkPointer(o, offset);
+
+        if (o != null) {
+            // If on heap, it it must be a primitive array
+            checkPrimitiveArray(o.getClass());
+        }
+    }
+
+
     /// wrappers for malloc, realloc, free:
 
     /**
@@ -367,7 +539,16 @@ public final class Unsafe {
      * aligned for all value types.  Dispose of this memory by calling {@link
      * #freeMemory}, or resize it with {@link #reallocateMemory}.
      *
-     * @throws IllegalArgumentException if the size is negative or too large
+     * <em>Note:</em> It is the resposibility of the caller to make
+     * sure arguments are checked before the methods are called. While
+     * some rudimentary checks are performed on the input, the checks
+     * are best effort and when performance is an overriding priority,
+     * as when methods of this class are optimized by the runtime
+     * compiler, some or all checks (if any) may be elided. Hence, the
+     * caller must not rely on the checks and corresponding
+     * exceptions!
+     *
+     * @throws RuntimeException if the size is negative or too large
      *         for the native size_t type
      *
      * @throws OutOfMemoryError if the allocation is refused by the system
@@ -375,7 +556,32 @@ public final class Unsafe {
      * @see #getByte(long)
      * @see #putByte(long, byte)
      */
-    public native long allocateMemory(long bytes);
+    public long allocateMemory(long bytes) {
+        allocateMemoryChecks(bytes);
+
+        if (bytes == 0) {
+            return 0;
+        }
+
+        long p = allocateMemory0(bytes);
+        if (p == 0) {
+            throw new OutOfMemoryError();
+        }
+
+        return p;
+    }
+
+    /**
+     * Validate the arguments to allocateMemory
+     *
+     * @throws RuntimeException if the arguments are invalid
+     *         (<em>Note:</em> after optimization, invalid inputs may
+     *         go undetected, which will lead to unpredictable
+     *         behavior)
+     */
+    private void allocateMemoryChecks(long bytes) {
+        checkSize(bytes);
+    }
 
     /**
      * Resizes a new block of native memory, to the given size in bytes.  The
@@ -387,14 +593,50 @@ public final class Unsafe {
      * #reallocateMemory}.  The address passed to this method may be null, in
      * which case an allocation will be performed.
      *
-     * @throws IllegalArgumentException if the size is negative or too large
+     * <em>Note:</em> It is the resposibility of the caller to make
+     * sure arguments are checked before the methods are called. While
+     * some rudimentary checks are performed on the input, the checks
+     * are best effort and when performance is an overriding priority,
+     * as when methods of this class are optimized by the runtime
+     * compiler, some or all checks (if any) may be elided. Hence, the
+     * caller must not rely on the checks and corresponding
+     * exceptions!
+     *
+     * @throws RuntimeException if the size is negative or too large
      *         for the native size_t type
      *
      * @throws OutOfMemoryError if the allocation is refused by the system
      *
      * @see #allocateMemory
      */
-    public native long reallocateMemory(long address, long bytes);
+    public long reallocateMemory(long address, long bytes) {
+        reallocateMemoryChecks(address, bytes);
+
+        if (bytes == 0) {
+            freeMemory(address);
+            return 0;
+        }
+
+        long p = (address == 0) ? allocateMemory0(bytes) : reallocateMemory0(address, bytes);
+        if (p == 0) {
+            throw new OutOfMemoryError();
+        }
+
+        return p;
+    }
+
+    /**
+     * Validate the arguments to reallocateMemory
+     *
+     * @throws RuntimeException if the arguments are invalid
+     *         (<em>Note:</em> after optimization, invalid inputs may
+     *         go undetected, which will lead to unpredictable
+     *         behavior)
+     */
+    private void reallocateMemoryChecks(long address, long bytes) {
+        checkPointer(null, address);
+        checkSize(bytes);
+    }
 
     /**
      * Sets all bytes in a given block of memory to a fixed value
@@ -411,9 +653,28 @@ public final class Unsafe {
      * If the effective address and length are (resp.) even modulo 4 or 2,
      * the stores take place in units of 'int' or 'short'.
      *
+     * <em>Note:</em> It is the resposibility of the caller to make
+     * sure arguments are checked before the methods are called. While
+     * some rudimentary checks are performed on the input, the checks
+     * are best effort and when performance is an overriding priority,
+     * as when methods of this class are optimized by the runtime
+     * compiler, some or all checks (if any) may be elided. Hence, the
+     * caller must not rely on the checks and corresponding
+     * exceptions!
+     *
+     * @throws RuntimeException if any of the arguments is invalid
+     *
      * @since 1.7
      */
-    public native void setMemory(Object o, long offset, long bytes, byte value);
+    public void setMemory(Object o, long offset, long bytes, byte value) {
+        setMemoryChecks(o, offset, bytes, value);
+
+        if (bytes == 0) {
+            return;
+        }
+
+        setMemory0(o, offset, bytes, value);
+    }
 
     /**
      * Sets all bytes in a given block of memory to a fixed value
@@ -424,6 +685,19 @@ public final class Unsafe {
      */
     public void setMemory(long address, long bytes, byte value) {
         setMemory(null, address, bytes, value);
+    }
+
+    /**
+     * Validate the arguments to setMemory
+     *
+     * @throws RuntimeException if the arguments are invalid
+     *         (<em>Note:</em> after optimization, invalid inputs may
+     *         go undetected, which will lead to unpredictable
+     *         behavior)
+     */
+    private void setMemoryChecks(Object o, long offset, long bytes, byte value) {
+        checkPrimitivePointer(o, offset);
+        checkSize(bytes);
     }
 
     /**
@@ -441,12 +715,31 @@ public final class Unsafe {
      * If the effective addresses and length are (resp.) even modulo 4 or 2,
      * the transfer takes place in units of 'int' or 'short'.
      *
+     * <em>Note:</em> It is the resposibility of the caller to make
+     * sure arguments are checked before the methods are called. While
+     * some rudimentary checks are performed on the input, the checks
+     * are best effort and when performance is an overriding priority,
+     * as when methods of this class are optimized by the runtime
+     * compiler, some or all checks (if any) may be elided. Hence, the
+     * caller must not rely on the checks and corresponding
+     * exceptions!
+     *
+     * @throws RuntimeException if any of the arguments is invalid
+     *
      * @since 1.7
      */
-    @HotSpotIntrinsicCandidate
-    public native void copyMemory(Object srcBase, long srcOffset,
-                                  Object destBase, long destOffset,
-                                  long bytes);
+    public void copyMemory(Object srcBase, long srcOffset,
+                           Object destBase, long destOffset,
+                           long bytes) {
+        copyMemoryChecks(srcBase, srcOffset, destBase, destOffset, bytes);
+
+        if (bytes == 0) {
+            return;
+        }
+
+        copyMemory0(srcBase, srcOffset, destBase, destOffset, bytes);
+    }
+
     /**
      * Sets all bytes in a given block of memory to a copy of another
      * block.  This provides a <em>single-register</em> addressing mode,
@@ -458,14 +751,21 @@ public final class Unsafe {
         copyMemory(null, srcAddress, null, destAddress, bytes);
     }
 
-    private boolean isPrimitiveArray(Class<?> c) {
-        Class<?> componentType = c.getComponentType();
-        return componentType != null && componentType.isPrimitive();
+    /**
+     * Validate the arguments to copyMemory
+     *
+     * @throws RuntimeException if any of the arguments is invalid
+     *         (<em>Note:</em> after optimization, invalid inputs may
+     *         go undetected, which will lead to unpredictable
+     *         behavior)
+     */
+    private void copyMemoryChecks(Object srcBase, long srcOffset,
+                                  Object destBase, long destOffset,
+                                  long bytes) {
+        checkSize(bytes);
+        checkPrimitivePointer(srcBase, srcOffset);
+        checkPrimitivePointer(destBase, destOffset);
     }
-
-    private native void copySwapMemory0(Object srcBase, long srcOffset,
-                                        Object destBase, long destOffset,
-                                        long bytes, long elemSize);
 
     /**
      * Copies all elements from one block of memory to another block,
@@ -476,45 +776,45 @@ public final class Unsafe {
      * as discussed in {@link #getInt(Object,long)}.  When the object reference is null,
      * the offset supplies an absolute base address.
      *
+     * <em>Note:</em> It is the resposibility of the caller to make
+     * sure arguments are checked before the methods are called. While
+     * some rudimentary checks are performed on the input, the checks
+     * are best effort and when performance is an overriding priority,
+     * as when methods of this class are optimized by the runtime
+     * compiler, some or all checks (if any) may be elided. Hence, the
+     * caller must not rely on the checks and corresponding
+     * exceptions!
+     *
+     * @throws RuntimeException if any of the arguments is invalid
+     *
      * @since 9
      */
     public void copySwapMemory(Object srcBase, long srcOffset,
                                Object destBase, long destOffset,
                                long bytes, long elemSize) {
-        if (bytes < 0) {
-            throw new IllegalArgumentException();
-        }
-        if (elemSize != 2 && elemSize != 4 && elemSize != 8) {
-            throw new IllegalArgumentException();
-        }
-        if (bytes % elemSize != 0) {
-            throw new IllegalArgumentException();
-        }
-        if ((srcBase == null && srcOffset == 0) ||
-            (destBase == null && destOffset == 0)) {
-            throw new NullPointerException();
-        }
-
-        // Must be off-heap, or primitive heap arrays
-        if (srcBase != null && (srcOffset < 0 || !isPrimitiveArray(srcBase.getClass()))) {
-            throw new IllegalArgumentException();
-        }
-        if (destBase != null && (destOffset < 0 || !isPrimitiveArray(destBase.getClass()))) {
-            throw new IllegalArgumentException();
-        }
-
-        // Sanity check size and offsets on 32-bit platforms. Most
-        // significant 32 bits must be zero.
-        if (ADDRESS_SIZE == 4 &&
-            (bytes >>> 32 != 0 || srcOffset >>> 32 != 0 || destOffset >>> 32 != 0)) {
-            throw new IllegalArgumentException();
-        }
+        copySwapMemoryChecks(srcBase, srcOffset, destBase, destOffset, bytes, elemSize);
 
         if (bytes == 0) {
             return;
         }
 
         copySwapMemory0(srcBase, srcOffset, destBase, destOffset, bytes, elemSize);
+    }
+
+    private void copySwapMemoryChecks(Object srcBase, long srcOffset,
+                                      Object destBase, long destOffset,
+                                      long bytes, long elemSize) {
+        checkSize(bytes);
+
+        if (elemSize != 2 && elemSize != 4 && elemSize != 8) {
+            throw invalidInput();
+        }
+        if (bytes % elemSize != 0) {
+            throw invalidInput();
+        }
+
+        checkPrimitivePointer(srcBase, srcOffset);
+        checkPrimitivePointer(destBase, destOffset);
     }
 
    /**
@@ -535,9 +835,40 @@ public final class Unsafe {
      * #allocateMemory} or {@link #reallocateMemory}.  The address passed to
      * this method may be null, in which case no action is taken.
      *
+     * <em>Note:</em> It is the resposibility of the caller to make
+     * sure arguments are checked before the methods are called. While
+     * some rudimentary checks are performed on the input, the checks
+     * are best effort and when performance is an overriding priority,
+     * as when methods of this class are optimized by the runtime
+     * compiler, some or all checks (if any) may be elided. Hence, the
+     * caller must not rely on the checks and corresponding
+     * exceptions!
+     *
+     * @throws RuntimeException if any of the arguments is invalid
+     *
      * @see #allocateMemory
      */
-    public native void freeMemory(long address);
+    public void freeMemory(long address) {
+        freeMemoryChecks(address);
+
+        if (address == 0) {
+            return;
+        }
+
+        freeMemory0(address);
+    }
+
+    /**
+     * Validate the arguments to freeMemory
+     *
+     * @throws RuntimeException if the arguments are invalid
+     *         (<em>Note:</em> after optimization, invalid inputs may
+     *         go undetected, which will lead to unpredictable
+     *         behavior)
+     */
+    private void freeMemoryChecks(long address) {
+        checkPointer(null, address);
+    }
 
     /// random queries
 
@@ -546,7 +877,7 @@ public final class Unsafe {
      * {@link #staticFieldOffset}, {@link #objectFieldOffset},
      * or {@link #arrayBaseOffset}.
      */
-    public static final int INVALID_FIELD_OFFSET   = -1;
+    public static final int INVALID_FIELD_OFFSET = -1;
 
     /**
      * Reports the location of a given field in the storage allocation of its
@@ -566,7 +897,13 @@ public final class Unsafe {
      * must preserve all bits of static field offsets.
      * @see #getInt(Object, long)
      */
-    public native long objectFieldOffset(Field f);
+    public long objectFieldOffset(Field f) {
+        if (f == null) {
+            throw new NullPointerException();
+        }
+
+        return objectFieldOffset0(f);
+    }
 
     /**
      * Reports the location of a given static field, in conjunction with {@link
@@ -585,7 +922,13 @@ public final class Unsafe {
      * this method reports its result as a long value.
      * @see #getInt(Object, long)
      */
-    public native long staticFieldOffset(Field f);
+    public long staticFieldOffset(Field f) {
+        if (f == null) {
+            throw new NullPointerException();
+        }
+
+        return staticFieldOffset0(f);
+    }
 
     /**
      * Reports the location of a given static field, in conjunction with {@link
@@ -597,7 +940,13 @@ public final class Unsafe {
      * not be used in any way except as argument to the get and put routines in
      * this class.
      */
-    public native Object staticFieldBase(Field f);
+    public Object staticFieldBase(Field f) {
+        if (f == null) {
+            throw new NullPointerException();
+        }
+
+        return staticFieldBase0(f);
+    }
 
     /**
      * Detects if the given class may need to be initialized. This is often
@@ -605,14 +954,26 @@ public final class Unsafe {
      * class.
      * @return false only if a call to {@code ensureClassInitialized} would have no effect
      */
-    public native boolean shouldBeInitialized(Class<?> c);
+    public boolean shouldBeInitialized(Class<?> c) {
+        if (c == null) {
+            throw new NullPointerException();
+        }
+
+        return shouldBeInitialized0(c);
+    }
 
     /**
      * Ensures the given class has been initialized. This is often
      * needed in conjunction with obtaining the static field base of a
      * class.
      */
-    public native void ensureClassInitialized(Class<?> c);
+    public void ensureClassInitialized(Class<?> c) {
+        if (c == null) {
+            throw new NullPointerException();
+        }
+
+        ensureClassInitialized0(c);
+    }
 
     /**
      * Reports the offset of the first element in the storage allocation of a
@@ -624,7 +985,14 @@ public final class Unsafe {
      * @see #getInt(Object, long)
      * @see #putInt(Object, long, int)
      */
-    public native int arrayBaseOffset(Class<?> arrayClass);
+    public int arrayBaseOffset(Class<?> arrayClass) {
+        if (arrayClass == null) {
+            throw new NullPointerException();
+        }
+
+        return arrayBaseOffset0(arrayClass);
+    }
+
 
     /** The value of {@code arrayBaseOffset(boolean[].class)} */
     public static final int ARRAY_BOOLEAN_BASE_OFFSET
@@ -673,7 +1041,14 @@ public final class Unsafe {
      * @see #getInt(Object, long)
      * @see #putInt(Object, long, int)
      */
-    public native int arrayIndexScale(Class<?> arrayClass);
+    public int arrayIndexScale(Class<?> arrayClass) {
+        if (arrayClass == null) {
+            throw new NullPointerException();
+        }
+
+        return arrayIndexScale0(arrayClass);
+    }
+
 
     /** The value of {@code arrayIndexScale(boolean[].class)} */
     public static final int ARRAY_BOOLEAN_INDEX_SCALE
@@ -717,10 +1092,12 @@ public final class Unsafe {
      * other primitive types (as stored in native memory blocks) is determined
      * fully by their information content.
      */
-    public native int addressSize();
+    public int addressSize() {
+        return ADDRESS_SIZE;
+    }
 
     /** The value of {@code addressSize()} */
-    public static final int ADDRESS_SIZE = theUnsafe.addressSize();
+    public static final int ADDRESS_SIZE = theUnsafe.addressSize0();
 
     /**
      * Reports the size in bytes of a native memory page (whatever that is).
@@ -735,9 +1112,22 @@ public final class Unsafe {
      * Tells the VM to define a class, without security checks.  By default, the
      * class loader and protection domain come from the caller's class.
      */
-    public native Class<?> defineClass(String name, byte[] b, int off, int len,
-                                       ClassLoader loader,
-                                       ProtectionDomain protectionDomain);
+    public Class<?> defineClass(String name, byte[] b, int off, int len,
+                                ClassLoader loader,
+                                ProtectionDomain protectionDomain) {
+        if (b == null) {
+            throw new NullPointerException();
+        }
+        if (len < 0) {
+            throw new ArrayIndexOutOfBoundsException();
+        }
+
+        return defineClass0(name, b, off, len, loader, protectionDomain);
+    }
+
+    public native Class<?> defineClass0(String name, byte[] b, int off, int len,
+                                        ClassLoader loader,
+                                        ProtectionDomain protectionDomain);
 
     /**
      * Defines a class but does not make it known to the class loader or system dictionary.
@@ -755,7 +1145,13 @@ public final class Unsafe {
      * @param data      bytes of a class file
      * @param cpPatches where non-null entries exist, they replace corresponding CP entries in data
      */
-    public native Class<?> defineAnonymousClass(Class<?> hostClass, byte[] data, Object[] cpPatches);
+    public Class<?> defineAnonymousClass(Class<?> hostClass, byte[] data, Object[] cpPatches) {
+        if (hostClass == null || data == null) {
+            throw new NullPointerException();
+        }
+
+        return defineAnonymousClass0(hostClass, data, cpPatches);
+    }
 
     /**
      * Allocates an instance but does not run any constructor.
@@ -764,6 +1160,59 @@ public final class Unsafe {
     @HotSpotIntrinsicCandidate
     public native Object allocateInstance(Class<?> cls)
         throws InstantiationException;
+
+    /**
+     * Allocates an array of a given type, but does not do zeroing.
+     * <p>
+     * This method should only be used in the very rare cases where a high-performance code
+     * overwrites the destination array completely, and compilers cannot assist in zeroing elimination.
+     * In an overwhelming majority of cases, a normal Java allocation should be used instead.
+     * <p>
+     * Users of this method are <b>required</b> to overwrite the initial (garbage) array contents
+     * before allowing untrusted code, or code in other threads, to observe the reference
+     * to the newly allocated array. In addition, the publication of the array reference must be
+     * safe according to the Java Memory Model requirements.
+     * <p>
+     * The safest approach to deal with an uninitialized array is to keep the reference to it in local
+     * variable at least until the initialization is complete, and then publish it <b>once</b>, either
+     * by writing it to a <em>volatile</em> field, or storing it into a <em>final</em> field in constructor,
+     * or issuing a {@link #storeFence} before publishing the reference.
+     * <p>
+     * @implnote This method can only allocate primitive arrays, to avoid garbage reference
+     * elements that could break heap integrity.
+     *
+     * @param componentType array component type to allocate
+     * @param length array size to allocate
+     * @throws IllegalArgumentException if component type is null, or not a primitive class;
+     *                                  or the length is negative
+     */
+    public Object allocateUninitializedArray(Class<?> componentType, int length) {
+       if (componentType == null) {
+           throw new IllegalArgumentException("Component type is null");
+       }
+       if (!componentType.isPrimitive()) {
+           throw new IllegalArgumentException("Component type is not primitive");
+       }
+       if (length < 0) {
+           throw new IllegalArgumentException("Negative length");
+       }
+       return allocateUninitializedArray0(componentType, length);
+    }
+
+    @HotSpotIntrinsicCandidate
+    private Object allocateUninitializedArray0(Class<?> componentType, int length) {
+       // These fallbacks provide zeroed arrays, but intrinsic is not required to
+       // return the zeroed arrays.
+       if (componentType == byte.class)    return new byte[length];
+       if (componentType == boolean.class) return new boolean[length];
+       if (componentType == short.class)   return new short[length];
+       if (componentType == char.class)    return new char[length];
+       if (componentType == int.class)     return new int[length];
+       if (componentType == float.class)   return new float[length];
+       if (componentType == long.class)    return new long[length];
+       if (componentType == double.class)  return new double[length];
+       return null;
+    }
 
     /** Throws the exception without telling the verifier. */
     public native void throwException(Throwable ee);
@@ -782,6 +1231,46 @@ public final class Unsafe {
                                                      Object expected,
                                                      Object x);
 
+    @HotSpotIntrinsicCandidate
+    public final native Object compareAndExchangeObjectVolatile(Object o, long offset,
+                                                                Object expected,
+                                                                Object x);
+
+    @HotSpotIntrinsicCandidate
+    public final Object compareAndExchangeObjectAcquire(Object o, long offset,
+                                                               Object expected,
+                                                               Object x) {
+        return compareAndExchangeObjectVolatile(o, offset, expected, x);
+    }
+
+    @HotSpotIntrinsicCandidate
+    public final Object compareAndExchangeObjectRelease(Object o, long offset,
+                                                               Object expected,
+                                                               Object x) {
+        return compareAndExchangeObjectVolatile(o, offset, expected, x);
+    }
+
+    @HotSpotIntrinsicCandidate
+    public final boolean weakCompareAndSwapObject(Object o, long offset,
+                                                         Object expected,
+                                                         Object x) {
+        return compareAndSwapObject(o, offset, expected, x);
+    }
+
+    @HotSpotIntrinsicCandidate
+    public final boolean weakCompareAndSwapObjectAcquire(Object o, long offset,
+                                                                Object expected,
+                                                                Object x) {
+        return compareAndSwapObject(o, offset, expected, x);
+    }
+
+    @HotSpotIntrinsicCandidate
+    public final boolean weakCompareAndSwapObjectRelease(Object o, long offset,
+                                                                Object expected,
+                                                                Object x) {
+        return compareAndSwapObject(o, offset, expected, x);
+    }
+
     /**
      * Atomically updates Java variable to {@code x} if it is currently
      * holding {@code expected}.
@@ -796,6 +1285,46 @@ public final class Unsafe {
                                                   int expected,
                                                   int x);
 
+    @HotSpotIntrinsicCandidate
+    public final native int compareAndExchangeIntVolatile(Object o, long offset,
+                                                          int expected,
+                                                          int x);
+
+    @HotSpotIntrinsicCandidate
+    public final int compareAndExchangeIntAcquire(Object o, long offset,
+                                                         int expected,
+                                                         int x) {
+        return compareAndExchangeIntVolatile(o, offset, expected, x);
+    }
+
+    @HotSpotIntrinsicCandidate
+    public final int compareAndExchangeIntRelease(Object o, long offset,
+                                                         int expected,
+                                                         int x) {
+        return compareAndExchangeIntVolatile(o, offset, expected, x);
+    }
+
+    @HotSpotIntrinsicCandidate
+    public final boolean weakCompareAndSwapInt(Object o, long offset,
+                                                      int expected,
+                                                      int x) {
+        return compareAndSwapInt(o, offset, expected, x);
+    }
+
+    @HotSpotIntrinsicCandidate
+    public final boolean weakCompareAndSwapIntAcquire(Object o, long offset,
+                                                             int expected,
+                                                             int x) {
+        return compareAndSwapInt(o, offset, expected, x);
+    }
+
+    @HotSpotIntrinsicCandidate
+    public final boolean weakCompareAndSwapIntRelease(Object o, long offset,
+                                                             int expected,
+                                                             int x) {
+        return compareAndSwapInt(o, offset, expected, x);
+    }
+
     /**
      * Atomically updates Java variable to {@code x} if it is currently
      * holding {@code expected}.
@@ -809,6 +1338,46 @@ public final class Unsafe {
     public final native boolean compareAndSwapLong(Object o, long offset,
                                                    long expected,
                                                    long x);
+
+    @HotSpotIntrinsicCandidate
+    public final native long compareAndExchangeLongVolatile(Object o, long offset,
+                                                            long expected,
+                                                            long x);
+
+    @HotSpotIntrinsicCandidate
+    public final long compareAndExchangeLongAcquire(Object o, long offset,
+                                                           long expected,
+                                                           long x) {
+        return compareAndExchangeLongVolatile(o, offset, expected, x);
+    }
+
+    @HotSpotIntrinsicCandidate
+    public final long compareAndExchangeLongRelease(Object o, long offset,
+                                                           long expected,
+                                                           long x) {
+        return compareAndExchangeLongVolatile(o, offset, expected, x);
+    }
+
+    @HotSpotIntrinsicCandidate
+    public final boolean weakCompareAndSwapLong(Object o, long offset,
+                                                       long expected,
+                                                       long x) {
+        return compareAndSwapLong(o, offset, expected, x);
+    }
+
+    @HotSpotIntrinsicCandidate
+    public final boolean weakCompareAndSwapLongAcquire(Object o, long offset,
+                                                              long expected,
+                                                              long x) {
+        return compareAndSwapLong(o, offset, expected, x);
+    }
+
+    @HotSpotIntrinsicCandidate
+    public final boolean weakCompareAndSwapLongRelease(Object o, long offset,
+                                                              long expected,
+                                                              long x) {
+        return compareAndSwapLong(o, offset, expected, x);
+    }
 
     /**
      * Fetches a reference value from a given Java variable, with volatile
@@ -908,6 +1477,224 @@ public final class Unsafe {
     @HotSpotIntrinsicCandidate
     public native void    putOrderedLong(Object o, long offset, long x);
 
+    /** Acquire version of {@link #getObjectVolatile(Object, long)} */
+    @HotSpotIntrinsicCandidate
+    public final Object getObjectAcquire(Object o, long offset) {
+        return getObjectVolatile(o, offset);
+    }
+
+    /** Acquire version of {@link #getBooleanVolatile(Object, long)} */
+    @HotSpotIntrinsicCandidate
+    public final boolean getBooleanAcquire(Object o, long offset) {
+        return getBooleanVolatile(o, offset);
+    }
+
+    /** Acquire version of {@link #getByteVolatile(Object, long)} */
+    @HotSpotIntrinsicCandidate
+    public final byte getByteAcquire(Object o, long offset) {
+        return getByteVolatile(o, offset);
+    }
+
+    /** Acquire version of {@link #getShortVolatile(Object, long)} */
+    @HotSpotIntrinsicCandidate
+    public final short getShortAcquire(Object o, long offset) {
+        return getShortVolatile(o, offset);
+    }
+
+    /** Acquire version of {@link #getCharVolatile(Object, long)} */
+    @HotSpotIntrinsicCandidate
+    public final char getCharAcquire(Object o, long offset) {
+        return getCharVolatile(o, offset);
+    }
+
+    /** Acquire version of {@link #getIntVolatile(Object, long)} */
+    @HotSpotIntrinsicCandidate
+    public final int getIntAcquire(Object o, long offset) {
+        return getIntVolatile(o, offset);
+    }
+
+    /** Acquire version of {@link #getFloatVolatile(Object, long)} */
+    @HotSpotIntrinsicCandidate
+    public final float getFloatAcquire(Object o, long offset) {
+        return getFloatVolatile(o, offset);
+    }
+
+    /** Acquire version of {@link #getLongVolatile(Object, long)} */
+    @HotSpotIntrinsicCandidate
+    public final long getLongAcquire(Object o, long offset) {
+        return getLongVolatile(o, offset);
+    }
+
+    /** Acquire version of {@link #getDoubleVolatile(Object, long)} */
+    @HotSpotIntrinsicCandidate
+    public final double getDoubleAcquire(Object o, long offset) {
+        return getDoubleVolatile(o, offset);
+    }
+
+    /** Release version of {@link #putObjectVolatile(Object, long, Object)} */
+    @HotSpotIntrinsicCandidate
+    public final void putObjectRelease(Object o, long offset, Object x) {
+        putObjectVolatile(o, offset, x);
+    }
+
+    /** Release version of {@link #putBooleanVolatile(Object, long, boolean)} */
+    @HotSpotIntrinsicCandidate
+    public final void putBooleanRelease(Object o, long offset, boolean x) {
+        putBooleanVolatile(o, offset, x);
+    }
+
+    /** Release version of {@link #putByteVolatile(Object, long, byte)} */
+    @HotSpotIntrinsicCandidate
+    public final void putByteRelease(Object o, long offset, byte x) {
+        putByteVolatile(o, offset, x);
+    }
+
+    /** Release version of {@link #putShortVolatile(Object, long, short)} */
+    @HotSpotIntrinsicCandidate
+    public final void putShortRelease(Object o, long offset, short x) {
+        putShortVolatile(o, offset, x);
+    }
+
+    /** Release version of {@link #putCharVolatile(Object, long, char)} */
+    @HotSpotIntrinsicCandidate
+    public final void putCharRelease(Object o, long offset, char x) {
+        putCharVolatile(o, offset, x);
+    }
+
+    /** Release version of {@link #putIntVolatile(Object, long, int)} */
+    @HotSpotIntrinsicCandidate
+    public final void putIntRelease(Object o, long offset, int x) {
+        putIntVolatile(o, offset, x);
+    }
+
+    /** Release version of {@link #putFloatVolatile(Object, long, float)} */
+    @HotSpotIntrinsicCandidate
+    public final void putFloatRelease(Object o, long offset, float x) {
+        putFloatVolatile(o, offset, x);
+    }
+
+    /** Release version of {@link #putLongVolatile(Object, long, long)} */
+    @HotSpotIntrinsicCandidate
+    public final void putLongRelease(Object o, long offset, long x) {
+        putLongVolatile(o, offset, x);
+    }
+
+    /** Release version of {@link #putDoubleVolatile(Object, long, double)} */
+    @HotSpotIntrinsicCandidate
+    public final void putDoubleRelease(Object o, long offset, double x) {
+        putDoubleVolatile(o, offset, x);
+    }
+
+    // ------------------------------ Opaque --------------------------------------
+
+    /** Opaque version of {@link #getObjectVolatile(Object, long)} */
+    @HotSpotIntrinsicCandidate
+    public final Object getObjectOpaque(Object o, long offset) {
+        return getObjectVolatile(o, offset);
+    }
+
+    /** Opaque version of {@link #getBooleanVolatile(Object, long)} */
+    @HotSpotIntrinsicCandidate
+    public final boolean getBooleanOpaque(Object o, long offset) {
+        return getBooleanVolatile(o, offset);
+    }
+
+    /** Opaque version of {@link #getByteVolatile(Object, long)} */
+    @HotSpotIntrinsicCandidate
+    public final byte getByteOpaque(Object o, long offset) {
+        return getByteVolatile(o, offset);
+    }
+
+    /** Opaque version of {@link #getShortVolatile(Object, long)} */
+    @HotSpotIntrinsicCandidate
+    public final short getShortOpaque(Object o, long offset) {
+        return getShortVolatile(o, offset);
+    }
+
+    /** Opaque version of {@link #getCharVolatile(Object, long)} */
+    @HotSpotIntrinsicCandidate
+    public final char getCharOpaque(Object o, long offset) {
+        return getCharVolatile(o, offset);
+    }
+
+    /** Opaque version of {@link #getIntVolatile(Object, long)} */
+    @HotSpotIntrinsicCandidate
+    public final int getIntOpaque(Object o, long offset) {
+        return getIntVolatile(o, offset);
+    }
+
+    /** Opaque version of {@link #getFloatVolatile(Object, long)} */
+    @HotSpotIntrinsicCandidate
+    public final float getFloatOpaque(Object o, long offset) {
+        return getFloatVolatile(o, offset);
+    }
+
+    /** Opaque version of {@link #getLongVolatile(Object, long)} */
+    @HotSpotIntrinsicCandidate
+    public final long getLongOpaque(Object o, long offset) {
+        return getLongVolatile(o, offset);
+    }
+
+    /** Opaque version of {@link #getDoubleVolatile(Object, long)} */
+    @HotSpotIntrinsicCandidate
+    public final double getDoubleOpaque(Object o, long offset) {
+        return getDoubleVolatile(o, offset);
+    }
+
+    /** Opaque version of {@link #putObjectVolatile(Object, long, Object)} */
+    @HotSpotIntrinsicCandidate
+    public final void putObjectOpaque(Object o, long offset, Object x) {
+        putObjectVolatile(o, offset, x);
+    }
+
+    /** Opaque version of {@link #putBooleanVolatile(Object, long, boolean)} */
+    @HotSpotIntrinsicCandidate
+    public final void putBooleanOpaque(Object o, long offset, boolean x) {
+        putBooleanVolatile(o, offset, x);
+    }
+
+    /** Opaque version of {@link #putByteVolatile(Object, long, byte)} */
+    @HotSpotIntrinsicCandidate
+    public final void putByteOpaque(Object o, long offset, byte x) {
+        putByteVolatile(o, offset, x);
+    }
+
+    /** Opaque version of {@link #putShortVolatile(Object, long, short)} */
+    @HotSpotIntrinsicCandidate
+    public final void putShortOpaque(Object o, long offset, short x) {
+        putShortVolatile(o, offset, x);
+    }
+
+    /** Opaque version of {@link #putCharVolatile(Object, long, char)} */
+    @HotSpotIntrinsicCandidate
+    public final void putCharOpaque(Object o, long offset, char x) {
+        putCharVolatile(o, offset, x);
+    }
+
+    /** Opaque version of {@link #putIntVolatile(Object, long, int)} */
+    @HotSpotIntrinsicCandidate
+    public final void putIntOpaque(Object o, long offset, int x) {
+        putIntVolatile(o, offset, x);
+    }
+
+    /** Opaque version of {@link #putFloatVolatile(Object, long, float)} */
+    @HotSpotIntrinsicCandidate
+    public final void putFloatOpaque(Object o, long offset, float x) {
+        putFloatVolatile(o, offset, x);
+    }
+
+    /** Opaque version of {@link #putLongVolatile(Object, long, long)} */
+    @HotSpotIntrinsicCandidate
+    public final void putLongOpaque(Object o, long offset, long x) {
+        putLongVolatile(o, offset, x);
+    }
+
+    /** Opaque version of {@link #putDoubleVolatile(Object, long, double)} */
+    @HotSpotIntrinsicCandidate
+    public final void putDoubleOpaque(Object o, long offset, double x) {
+        putDoubleVolatile(o, offset, x);
+    }
+
     /**
      * Unblocks the given thread blocked on {@code park}, or, if it is
      * not blocked, causes the subsequent call to {@code park} not to
@@ -952,7 +1739,13 @@ public final class Unsafe {
      * @return the number of samples actually retrieved; or -1
      *         if the load average is unobtainable.
      */
-    public native int getLoadAverage(double[] loadavg, int nelems);
+    public int getLoadAverage(double[] loadavg, int nelems) {
+        if (nelems < 0 || nelems > 3 || nelems > loadavg.length) {
+            throw new ArrayIndexOutOfBoundsException();
+        }
+
+        return getLoadAverage0(loadavg, nelems);
+    }
 
     // The following contain CAS-based Java implementations used on
     // platforms not supporting native instructions
@@ -1099,6 +1892,23 @@ public final class Unsafe {
      */
     @HotSpotIntrinsicCandidate
     public native void fullFence();
+
+    /**
+     * Ensures that loads before the fence will not be reordered with
+     * loads after the fence.
+     */
+    public final void loadLoadFence() {
+        loadFence();
+    }
+
+    /**
+     * Ensures that stores before the fence will not be reordered with
+     * stores after the fence.
+     */
+    public final void storeStoreFence() {
+        storeFence();
+    }
+
 
     /**
      * Throws IllegalAccessError; for use by the VM for access control
@@ -1363,9 +2173,6 @@ public final class Unsafe {
     }
 
     // JVM interface methods
-    private native boolean unalignedAccess0();
-    private native boolean isBigEndian0();
-
     // BE is true iff the native endianness of this platform is big.
     private static final boolean BE = theUnsafe.isBigEndian0();
 
@@ -1465,4 +2272,26 @@ public final class Unsafe {
     private static short convEndian(boolean big, short n) { return big == BE ? n : Short.reverseBytes(n)    ; }
     private static int convEndian(boolean big, int n)     { return big == BE ? n : Integer.reverseBytes(n)  ; }
     private static long convEndian(boolean big, long n)   { return big == BE ? n : Long.reverseBytes(n)     ; }
+
+
+
+    private native long allocateMemory0(long bytes);
+    private native long reallocateMemory0(long address, long bytes);
+    private native void freeMemory0(long address);
+    private native void setMemory0(Object o, long offset, long bytes, byte value);
+    @HotSpotIntrinsicCandidate
+    private native void copyMemory0(Object srcBase, long srcOffset, Object destBase, long destOffset, long bytes);
+    private native void copySwapMemory0(Object srcBase, long srcOffset, Object destBase, long destOffset, long bytes, long elemSize);
+    private native long objectFieldOffset0(Field f);
+    private native long staticFieldOffset0(Field f);
+    private native Object staticFieldBase0(Field f);
+    private native boolean shouldBeInitialized0(Class<?> c);
+    private native void ensureClassInitialized0(Class<?> c);
+    private native int arrayBaseOffset0(Class<?> arrayClass);
+    private native int arrayIndexScale0(Class<?> arrayClass);
+    private native int addressSize0();
+    private native Class<?> defineAnonymousClass0(Class<?> hostClass, byte[] data, Object[] cpPatches);
+    private native int getLoadAverage0(double[] loadavg, int nelems);
+    private native boolean unalignedAccess0();
+    private native boolean isBigEndian0();
 }
