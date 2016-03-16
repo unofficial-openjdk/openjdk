@@ -1273,11 +1273,11 @@ WB_ENTRY(void, WB_AddReadsModule(JNIEnv* env, jobject o, jobject from_module, jo
 WB_END
 
 WB_ENTRY(jboolean, WB_CanReadModule(JNIEnv* env, jobject o, jobject asking_module, jobject source_module))
-  return Modules::can_read_module(asking_module, source_module, CHECK_false);
+  return Modules::can_read_module(asking_module, source_module, THREAD);
 WB_END
 
 WB_ENTRY(jboolean, WB_IsExportedToModule(JNIEnv* env, jobject o, jobject from_module, jstring package, jobject to_module))
-  return Modules::is_exported_to_module(from_module, package, to_module, CHECK_false);
+  return Modules::is_exported_to_module(from_module, package, to_module, THREAD);
 WB_END
 
 WB_ENTRY(void, WB_AddModulePackage(JNIEnv* env, jobject o, jclass module, jstring package))
@@ -1285,7 +1285,7 @@ WB_ENTRY(void, WB_AddModulePackage(JNIEnv* env, jobject o, jclass module, jstrin
 WB_END
 
 WB_ENTRY(jobject, WB_GetModuleByPackageName(JNIEnv* env, jobject o, jobject loader, jstring package))
-  return Modules::get_module_by_package_name(loader, package, CHECK_NULL);
+  return Modules::get_module_by_package_name(loader, package, THREAD);
 WB_END
 
 WB_ENTRY(jlong, WB_IncMetaspaceCapacityUntilGC(JNIEnv* env, jobject wb, jlong inc))

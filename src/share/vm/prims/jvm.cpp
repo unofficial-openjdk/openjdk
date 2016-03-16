@@ -1086,12 +1086,12 @@ JVM_END
 
 JVM_ENTRY(jboolean, JVM_CanReadModule(JNIEnv *env, jobject asking_module, jobject source_module))
   JVMWrapper("JVM_CanReadModule");
-  return Modules::can_read_module(asking_module, source_module, CHECK_false);
+  return Modules::can_read_module(asking_module, source_module, THREAD);
 JVM_END
 
 JVM_ENTRY(jboolean, JVM_IsExportedToModule(JNIEnv *env, jobject from_module, jstring package, jobject to_module))
   JVMWrapper("JVM_IsExportedToModule");
-  return Modules::is_exported_to_module(from_module, package, to_module, CHECK_false);
+  return Modules::is_exported_to_module(from_module, package, to_module, THREAD);
 JVM_END
 
 JVM_ENTRY (void, JVM_AddModulePackage(JNIEnv *env, jobject module, jstring package))
@@ -1101,7 +1101,7 @@ JVM_END
 
 JVM_ENTRY (jobject, JVM_GetModuleByPackageName(JNIEnv *env, jobject loader, jstring package))
   JVMWrapper("JVM_GetModuleByPackageName");
-  return Modules::get_module_by_package_name(loader, package, CHECK_NULL);
+  return Modules::get_module_by_package_name(loader, package, THREAD);
 JVM_END
 
 // Reflection support //////////////////////////////////////////////////////////////////////////////
