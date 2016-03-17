@@ -1082,6 +1082,10 @@ public class ModuleDescriptor
      *         .build();
      * }</pre>
      *
+     * @apiNote A {@code Builder} cannot be used to create an {@link
+     * ModuleDescriptor#isAutomatic() automatic} or a {@link
+     * ModuleDescriptor#isSynthetic() synthetic} module.
+     *
      * @since 9
      */
     public static final class Builder {
