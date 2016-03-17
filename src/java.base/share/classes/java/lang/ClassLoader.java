@@ -1831,7 +1831,7 @@ public abstract class ClassLoader {
 
         // check if Package object is already defined
         NamedPackage pkg = packages.get(name);
-        if (pkg != null && pkg instanceof Package)
+        if (pkg instanceof Package)
             return (Package)pkg;
 
         return (Package)packages.compute(name, (n, p) -> toPackage(n, p, m));
