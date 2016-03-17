@@ -1590,7 +1590,7 @@ public abstract class ClassLoader {
      *          If a security manager exists and the caller's class loader is
      *          not {@code null} and the caller's class loader is not the same
      *          as or an ancestor of the platform class loader,
-     *          its {@link SecurityManager#checkPermission(java.security.Permission)
+     *          and the {@link SecurityManager#checkPermission(java.security.Permission)
      *          checkPermission} method denies {@code RuntimePermission("getClassLoader")}
      *          to access the platform class loader.
      *
