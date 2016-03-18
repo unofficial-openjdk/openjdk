@@ -1,5 +1,5 @@
 <!--
- Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 
  This code is free software; you can redistribute it and/or modify it
@@ -19,25 +19,25 @@
  Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  or visit www.oracle.com if you need additional information or have any
  questions.
+
+
+  @test
+  @bug 8139227
+  @summary Text fields in JPopupMenu structure do not receive focus in hosted
+           Applets
+  @author Semyon Sadetsky
+  @run applet FindOwnerTest.html
 -->
 
 <html>
-<!--  
-  @test
-  @bug 4118621
-  @summary tests that selected text isn't scrolled if there is enough room.
-  @author prs: area=TextField
-  @run applet/manual=yesno ScrollSelectionTest.html
-  -->
 <head>
-<title> ScrollSelectionTest </title>
+    <title>Testing Menus</title>
 </head>
 <body>
-
-<h1>ScrollSelectionTest<br>4118621: </h1>
-
-<p> See the dialog box (usually in upper left corner) for instructions</p>
-
-<APPLET CODE="ScrollSelectionTest.class" WIDTH=300 HEIGHT=300></APPLET>
+<applet id="ownerTester"
+        name="Testing Owner"
+        code="FindOwnerTest.class"
+        width="250" height="150">
+</applet>
 </body>
-</html>
+</html> 
