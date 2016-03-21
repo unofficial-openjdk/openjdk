@@ -68,38 +68,31 @@ ASM_SRC := $(JDK_TOPDIR)/src/java.base/share/classes/jdk/internal/org/objectweb/
 $(eval $(call SetupJavaCompilation,BUILD_NASGEN, \
     SETUP := GENERATE_OLDBYTECODE, \
     SRC := $(NASGEN_SRC) $(ASM_SRC), \
-    BIN := $(BUILDTOOLS_OUTPUTDIR)/nasgen_classes, \
-    ADD_JAVAC_FLAGS := -Xbootclasspath/p:"$(SUPPORT_OUTPUTDIR)/special_classes/jdk.scripting.nashorn"))
-
-# Nasgen needs nashorn classes
-$(BUILD_NASGEN): $(jdk.scripting.nashorn)
+    BIN := $(BUILDTOOLS_OUTPUTDIR)/nasgen_classes))
 
 NASHORN_CLASSES_DIR := $(JDK_OUTPUTDIR)/modules/jdk.scripting.nashorn
 NASGEN_RUN_FILE := $(NASHORN_CLASSES_DIR)/_the.nasgen.run
 
 ifeq ($(BOOT_JDK_MODULAR), true)
-  NASGEN_BOOTCLASSPATH := \
-      -Xpatch:$(SUPPORT_OUTPUTDIR)/special_classes \
+  NASGEN_OPTIONS := \
       -cp $(BUILDTOOLS_OUTPUTDIR)/nasgen_classes \
+      -Xpatch:$(BUILDTOOLS_OUTPUTDIR)/nasgen_classes \
       -XaddExports:$(subst $(SPACE),$(COMMA),$(strip \
           java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED \
-          jdk.scripting.nashorn/jdk.nashorn.internal.objects.annotations=ALL-UNNAMED \
-          jdk.scripting.nashorn/jdk.nashorn.internal.runtime=ALL-UNNAMED \
-          jdk.scripting.nashorn/jdk.nashorn.internal.objects=ALL-UNNAMED \
+          java.base/jdk.internal.org.objectweb.asm.util=ALL-UNNAMED \
       ))
 else
-  NASGEN_BOOTCLASSPATH := -Xbootclasspath/p:$(call PathList, \
-      $(BUILDTOOLS_OUTPUTDIR)/nasgen_classes \
-      $(SUPPORT_OUTPUTDIR)/special_classes/jdk.scripting.nashorn)
+  NASGEN_OPTIONS := \
+      -Xbootclasspath/p:$(BUILDTOOLS_OUTPUTDIR)/nasgen_classes
 endif
 
 # Copy classes to final classes dir and run nasgen to modify classes in jdk.nashorn.internal.objects package
-$(NASGEN_RUN_FILE): $(BUILD_NASGEN)
+$(NASGEN_RUN_FILE): $(BUILD_NASGEN) $(jdk.scripting.nashorn)
 	$(ECHO) Running nasgen
 	$(MKDIR) -p $(@D)
 	$(RM) -rf $(@D)/jdk $(@D)/netscape
 	$(CP) -R -p $(SUPPORT_OUTPUTDIR)/special_classes/jdk.scripting.nashorn/* $(@D)/
-	$(JAVA) $(NASGEN_BOOTCLASSPATH) \
+	$(JAVA) $(NASGEN_OPTIONS) \
 	    jdk.nashorn.internal.tools.nasgen.Main $(@D) jdk.nashorn.internal.objects $(@D)
 	$(TOUCH) $@
 

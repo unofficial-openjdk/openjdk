@@ -37,7 +37,6 @@
                 <pathelement location="${basedir}/buildtools/nasgen/dist/nasgen.jar"/>
             </classpath>
             <jvmarg value="-XaddExports:${nasgen.module.imports}"/>
-            <jvmarg value="${nashorn.override.option}"/>
             <arg value="${nashorn.module.classes.dir}"/>
             <arg value="jdk.nashorn.internal.objects"/>
             <arg value="${nashorn.module.classes.dir}"/>

@@ -188,9 +188,10 @@
       <compilerarg value="-parameters"/>
       <compilerarg value="${nashorn.override.option}"/>
     </javac>
-    <copy todir="${nashorn.module.classes.dir}/META-INF/services">
-       <fileset dir="${meta.inf.dir}/services/"/>
-    </copy>
+    <!-- -Xpatch does not like module-info.class files! -->
+    <delete>
+      <fileset dir="${build.classes.dir}" includes="**/module-info.class"/>
+    </delete>
      <copy todir="${nashorn.module.classes.dir}/jdk/nashorn/api/scripting/resources">
        <fileset dir="${nashorn.module.src.dir}/jdk/nashorn/api/scripting/resources/"/>
     </copy>
@@ -212,7 +213,7 @@
     <jar jarfile="${dynalink.jar}">
       <fileset dir="${dynalink.module.classes.dir}"/>
     </jar>
-    <jar jarfile="${nashorn.jar}" manifest="${meta.inf.dir}/MANIFEST.MF" index="true" filesetmanifest="merge">
+    <jar jarfile="${nashorn.jar}" index="true" filesetmanifest="merge">
       <fileset dir="${nashorn.module.classes.dir}"/>
       <manifest>
         <attribute name="Archiver-Version" value="n/a"/>
@@ -241,6 +242,7 @@
     <javadoc destdir="${dist.javadoc.dir}" use="yes" overview="${nashorn.module.src.dir}/overview.html"
         windowtitle="${nashorn.product.name} ${nashorn.version}"
         additionalparam="-quiet" failonerror="true" useexternalfile="true">
+      <arg value="${javadoc.option}"/>
       <classpath>
         <pathelement location="${build.classes.dir}"/>
       </classpath>
@@ -260,6 +262,7 @@
     <javadoc destdir="${dist.javadoc.dir}" use="yes" overview="${nashorn.module.src.dir}/overview.html"
         windowtitle="${nashorn.product.name} ${nashorn.version}"
         additionalparam="-quiet" failonerror="true" useexternalfile="true">
+      <arg value="${javadoc.option}"/>
       <classpath>
         <pathelement location="${build.classes.dir}"/>
       </classpath>
@@ -275,6 +278,7 @@
     <javadoc destdir="${dist.javadoc.dir}" use="yes" overview="${nashorn.module.src.dir}/overview.html"
         extdirs="${nashorn.ext.path}" windowtitle="${nashorn.product.name} ${nashorn.version}"
         additionalparam="-quiet" failonerror="true" useexternalfile="true">
+      <arg value="${javadoc.option}"/>
       <classpath>
         <pathelement location="${build.classes.dir}"/>
       </classpath>
@@ -288,6 +292,7 @@
     <javadoc destdir="${dist.javadoc.dir}" use="yes"
         windowtitle="Dynalink"
         additionalparam="-quiet" failonerror="true" useexternalfile="true">
+      <arg value="${javadoc.option}"/>
       <classpath>
         <pathelement location="${build.classes.dir}"/>
       </classpath>

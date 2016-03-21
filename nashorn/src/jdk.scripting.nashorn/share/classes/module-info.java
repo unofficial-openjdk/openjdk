@@ -28,9 +28,6 @@ module jdk.scripting.nashorn {
     requires public java.scripting;
     requires jdk.dynalink;
 
-    uses jdk.nashorn.internal.runtime.CodeStore;
-    provides javax.script.ScriptEngineFactory with jdk.nashorn.api.scripting.NashornScriptEngineFactory;
-
     exports jdk.nashorn.api.scripting;
     exports jdk.nashorn.api.tree;
 
@@ -40,5 +37,7 @@ module jdk.scripting.nashorn {
         jdk.scripting.nashorn.shell;
     exports jdk.nashorn.tools to
         jdk.scripting.nashorn.shell;
+
+    provides javax.script.ScriptEngineFactory with jdk.nashorn.api.scripting.NashornScriptEngineFactory;
 }
 
