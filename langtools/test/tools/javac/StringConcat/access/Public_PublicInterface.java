@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,14 +21,10 @@
  * questions.
  */
 
-// key: compiler.warn.synthetic.name.conflict
-// options: -XDwarnOnSyntheticConflicts
+package p1;
 
-class WarnSyntheticNameConflict {
-
-    static class Outer {
-        WarnSyntheticNameConflict this$0 = null;
+public class Public_PublicInterface implements PublicInterface {
+    public String toString() {
+        return "passed";
     }
-
-    public class Inner extends Outer { }
 }
