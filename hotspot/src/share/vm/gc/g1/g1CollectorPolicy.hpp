@@ -91,10 +91,6 @@ class G1CollectorPolicy: public CollectorPolicy {
   bool verify_young_ages(HeapRegion* head, SurvRateGroup *surv_rate_group);
 #endif // PRODUCT
 
-  void adjust_concurrent_refinement(double update_rs_time,
-                                    double update_rs_processed_buffers,
-                                    double goal_ms);
-
   double _pause_time_target_ms;
 
   size_t _pending_cards;
@@ -422,22 +418,6 @@ public:
 
   uint max_survivor_regions() {
     return _max_survivor_regions;
-  }
-
-  static const uint REGIONS_UNLIMITED = (uint) -1;
-
-  uint max_regions(InCSetState dest) const {
-    switch (dest.value()) {
-      case InCSetState::Young:
-        return _max_survivor_regions;
-      case InCSetState::Old:
-        return REGIONS_UNLIMITED;
-      default:
-        assert(false, "Unknown dest state: " CSETSTATE_FORMAT, dest.value());
-        break;
-    }
-    // keep some compilers happy
-    return 0;
   }
 
   void note_start_adding_survivor_regions() {
