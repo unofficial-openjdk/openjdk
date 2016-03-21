@@ -36,16 +36,22 @@ import java.rmi.RemoteException;
 import org.omg.CORBA.ORB;
 import org.omg.CORBA.INITIALIZE;
 import org.omg.CORBA.SystemException;
+import org.omg.CORBA.Any;
 import org.omg.CORBA.portable.InputStream;
 import org.omg.CORBA.portable.OutputStream;
+import org.omg.CORBA.portable.ObjectImpl;
+
+import javax.rmi.CORBA.Tie;
 import java.rmi.Remote;
+import java.io.File;
+import java.io.FileInputStream;
 import java.net.MalformedURLException ;
 import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Properties;
 import java.rmi.server.RMIClassLoader;
 
 import com.sun.corba.se.impl.orbutil.GetPropertyAction;
-import com.sun.corba.se.impl.util.Modules;
 
 /**
  * Provides utility methods that can be used by stubs and ties to
@@ -345,9 +351,7 @@ public class Util {
         }
 
         try {
-            Class<?> delegateClass = loadDelegateClass(className);
-            Modules.ensureReadable(delegateClass);
-            return delegateClass.newInstance();
+            return loadDelegateClass(className).newInstance();
         } catch (ClassNotFoundException ex) {
             INITIALIZE exc = new INITIALIZE( "Cannot instantiate " + className);
             exc.initCause( ex ) ;

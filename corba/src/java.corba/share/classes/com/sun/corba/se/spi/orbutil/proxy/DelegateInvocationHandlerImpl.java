@@ -25,11 +25,16 @@
 
 package com.sun.corba.se.spi.orbutil.proxy ;
 
+import java.io.Serializable ;
+
+import java.util.Map ;
+import java.util.LinkedHashMap ;
+
+import java.lang.reflect.Proxy ;
 import java.lang.reflect.Method ;
 import java.lang.reflect.InvocationHandler ;
 import java.lang.reflect.InvocationTargetException ;
 import com.sun.corba.se.impl.presentation.rmi.DynamicAccessPermission ;
-import com.sun.corba.se.impl.util.Modules;
 
 public abstract class DelegateInvocationHandlerImpl
 {
@@ -48,7 +53,6 @@ public abstract class DelegateInvocationHandlerImpl
                 // This throws an IllegalArgument exception if the delegate
                 // is not assignable from method.getDeclaring class.
                 try {
-                    Modules.ensureReadable(method.getDeclaringClass());
                     return method.invoke( delegate, args ) ;
                 } catch (InvocationTargetException ite) {
                     // Propagate the underlying exception as the

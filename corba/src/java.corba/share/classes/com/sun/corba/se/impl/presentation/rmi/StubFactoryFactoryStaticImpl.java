@@ -33,10 +33,7 @@ import org.omg.CORBA.CompletionStatus;
 import com.sun.corba.se.spi.presentation.rmi.PresentationManager;
 
 import com.sun.corba.se.impl.util.PackagePrefixChecker;
-import com.sun.corba.se.impl.util.Modules;
 import com.sun.corba.se.impl.util.Utility;
-
-
 
 import com.sun.corba.se.spi.logging.CORBALogDomains ;
 
@@ -131,14 +128,12 @@ public class StubFactoryFactoryStaticImpl extends
                 //_REVISIT_ The spec does not specify a loadingContext parameter for
                 //the following call.  Would it be useful to pass one?
                 tieClass = Utility.loadClassForClass(className, Util.getCodebase(cls),
-                        null, cls, cls.getClassLoader());
-                Modules.ensureReadable(tieClass);
+                    null, cls, cls.getClassLoader());
                 return (Tie) tieClass.newInstance();
             } catch (Exception err) {
                 tieClass = Utility.loadClassForClass(
                     PackagePrefixChecker.packagePrefix() + className,
                     Util.getCodebase(cls), null, cls, cls.getClassLoader());
-                Modules.ensureReadable(tieClass);
                 return (Tie) tieClass.newInstance();
             }
         } catch (Exception err) {

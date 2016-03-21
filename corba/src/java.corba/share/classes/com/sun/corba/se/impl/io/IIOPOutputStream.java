@@ -50,10 +50,7 @@ import java.io.NotActiveException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Field;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Stack;
-import java.util.StringJoiner;
 
 import javax.rmi.CORBA.Util;
 import javax.rmi.CORBA.ValueHandlerMultiFormat;
@@ -106,27 +103,10 @@ public class IIOPOutputStream
     // Used when calling an object's writeObject method
     private Object[] writeObjectArgList = {this};
 
-    /** custom storage for debug trace info */
-    private final DebugTraceInfoStack debugInfoStack;
-
-    /**
-     * value of "com.sun.corba.serialization.extendedDebugInfo" property,
-     * as true or false for extended information about exception's place
-     */
-    private static final boolean extendedDebugInfo =
-            java.security.AccessController.doPrivileged(
-                (PrivilegedAction<Boolean>) () ->
-                    Boolean.getBoolean("com.sun.corba.serialization.extendedDebugInfo"));
-
     public IIOPOutputStream()
         throws java.io.IOException
    {
         super();
-        if (extendedDebugInfo) {
-            debugInfoStack = new DebugTraceInfoStack();
-        } else {
-            debugInfoStack = null;
-        }
     }
 
     // If using RMI-IIOP stream format version 2, this tells
@@ -189,12 +169,6 @@ public class IIOPOutputStream
         ObjectStreamClass prevClassDesc = currentClassDesc;
         simpleWriteDepth++;
 
-        if (extendedDebugInfo) {
-            debugInfoStack.push(
-                    (simpleWriteDepth == 1 ? "root " : "") + "object (class \"" +
-                            obj.getClass().getName() + "\", " + obj.toString() + ")");
-        }
-
         try {
             // if (!checkSpecialClasses(obj) && !checkSubstitutableSpecialClasses(obj))
             outputObject(obj);
@@ -202,27 +176,12 @@ public class IIOPOutputStream
         } catch (IOException ee) {
             if (abortIOException == null)
                 abortIOException = ee;
-        } catch (RuntimeException x) {
-            if (extendedDebugInfo && simpleWriteDepth == 1) {
-                // Revisit: cannot catch InaccessibleObjectException, bootstrapping issue.
-                // possible change of exception type, from an RE subtype to RE!
-
-                // Only add debugging info when at the graph root.
-                throw new RuntimeException(x.getMessage() + "\n"
-                                           + debugInfoStack.toString(), x);
-            } else {
-                throw x;
-            }
         } finally {
             /* Restore state of previous call incase this is a nested call */
             streamFormatVersion = oldStreamFormatVersion;
             simpleWriteDepth--;
             currentObject = prevObject;
             currentClassDesc = prevClassDesc;
-        }
-
-        if (extendedDebugInfo) {
-            debugInfoStack.pop();
         }
 
         /* If the recursion depth is 0, test for and clear the pending exception.
@@ -628,15 +587,7 @@ public class IIOPOutputStream
                         setState(NOT_IN_WRITE_OBJECT);
 
                         if (currentClassDesc.hasWriteObject()) {
-                            if (extendedDebugInfo) {
-                                debugInfoStack.push(
-                                        "custom writeObject data (class \"" +
-                                                currentClassDesc.getName() + "\")");
-                            }
-                            invokeObjectWriter(currentClassDesc, obj);
-                            if (extendedDebugInfo) {
-                                debugInfoStack.pop();
-                            }
+                            invokeObjectWriter(currentClassDesc, obj );
                         } else {
                             defaultWriteObjectDelegate();
                         }
@@ -813,12 +764,6 @@ public class IIOPOutputStream
         throws IOException, InvalidClassException {
 
         for (int i = 0; i < fields.length; i++) {
-            if (extendedDebugInfo) {
-                debugInfoStack.push(
-                        "field (class \"" + cl.getName() + "\", name: \"" +
-                                fields[i].getName() + "\", type: \"" +
-                                fields[ i].getType() + "\")");
-            }
             if (fields[i].getField() == null)
                 // XXX I18N, Logging needed.
                 throw new InvalidClassException(cl.getName(),
@@ -870,49 +815,6 @@ public class IIOPOutputStream
             } catch (IllegalAccessException exc) {
                 throw wrapper.illegalFieldAccess( exc, fields[i].getName() ) ;
             }
-            if (extendedDebugInfo) {
-                debugInfoStack.pop();
-            }
-        }
-    }
-
-    /**
-     * Stack to keep debug information about the state of the
-     * serialization process, for embedding in exception messages.
-     */
-    private static class DebugTraceInfoStack {
-        private final List<String> stack;
-
-        DebugTraceInfoStack() {
-            stack = new ArrayList<>();
-        }
-
-        /**
-         * Removes all of the elements from enclosed list.
-         */
-        void clear() {
-            stack.clear();
-        }
-
-        /**
-         * Removes the object at the top of enclosed list.
-         */
-        void pop() { stack.remove(stack.size()-1); }
-
-        /**
-         * Pushes a String onto the top of enclosed list.
-         */
-        void push(String entry) { stack.add("\t- " + entry); }
-
-        /**
-         * Returns a string representation of this object
-         */
-        public String toString() {
-            StringJoiner sj = new StringJoiner("\n");
-            for (int i = stack.size() - 1; i >= 0; i--) {
-                sj.add(stack.get(i));
-            }
-            return sj.toString();
         }
     }
 }

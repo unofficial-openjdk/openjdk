@@ -35,7 +35,6 @@ import org.omg.CORBA.ORB ;
 import com.sun.corba.se.spi.activation.Activator ;
 import com.sun.corba.se.spi.activation.ActivatorHelper ;
 import com.sun.corba.se.impl.orbutil.ORBConstants ;
-import com.sun.corba.se.impl.util.Modules;
 
 /**
  * @author      Ken Cavanaugh
@@ -260,7 +259,6 @@ public class ServerMain
             // build args to the main and call it
             Object params [] = new Object [1];
             params[0] = args;
-            Modules.ensureReadable(mainMethod.getDeclaringClass());
             mainMethod.invoke(null, params);
 
         } catch (ClassNotFoundException e) {
@@ -346,7 +344,6 @@ class ServerCallback extends
     {
         if (method != null)
             try {
-                Modules.ensureReadable(method.getDeclaringClass());
                 method.invoke( null, methodArgs ) ;
             } catch (Exception exc) {
                 ServerMain.logError( "could not invoke " + method.getName() +

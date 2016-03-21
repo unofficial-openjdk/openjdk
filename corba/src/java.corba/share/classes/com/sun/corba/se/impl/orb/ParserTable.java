@@ -84,7 +84,6 @@ import com.sun.corba.se.impl.protocol.giopmsgheaders.ProfileAddr ;
 import com.sun.corba.se.impl.protocol.giopmsgheaders.ReferenceAddr ;
 import com.sun.corba.se.impl.transport.DefaultIORToSocketInfoImpl;
 import com.sun.corba.se.impl.transport.DefaultSocketFactoryImpl;
-import com.sun.corba.se.impl.util.Modules;
 
 import sun.corba.SharedSecrets;
 
@@ -664,7 +663,6 @@ public class ParserTable {
                 try {
                     Class<?> legacySocketFactoryClass =
                         SharedSecrets.getJavaCorbaAccess().loadClass(param);
-                    Modules.ensureReadable(legacySocketFactoryClass);
                     // For security reasons avoid creating an instance if
                     // this socket factory class is not one that would fail
                     // the class cast anyway.
@@ -695,7 +693,6 @@ public class ParserTable {
                 try {
                     Class<?> socketFactoryClass =
                         SharedSecrets.getJavaCorbaAccess().loadClass(param);
-                    Modules.ensureReadable(socketFactoryClass);
                     // For security reasons avoid creating an instance if
                     // this socket factory class is not one that would fail
                     // the class cast anyway.
@@ -726,7 +723,6 @@ public class ParserTable {
                 try {
                     Class<?> iorToSocketInfoClass =
                         SharedSecrets.getJavaCorbaAccess().loadClass(param);
-                    Modules.ensureReadable(iorToSocketInfoClass);
                     // For security reasons avoid creating an instance if
                     // this socket factory class is not one that would fail
                     // the class cast anyway.
@@ -757,7 +753,6 @@ public class ParserTable {
                 try {
                     Class<?> iiopPrimaryToContactInfoClass =
                         SharedSecrets.getJavaCorbaAccess().loadClass(param);
-                    Modules.ensureReadable(iiopPrimaryToContactInfoClass);
                     // For security reasons avoid creating an instance if
                     // this socket factory class is not one that would fail
                     // the class cast anyway.
@@ -788,7 +783,6 @@ public class ParserTable {
                 try {
                     Class<?> contactInfoListFactoryClass =
                         SharedSecrets.getJavaCorbaAccess().loadClass(param);
-                    Modules.ensureReadable(contactInfoListFactoryClass);
                     // For security reasons avoid creating an instance if
                     // this socket factory class is not one that would fail
                     // the class cast anyway.
@@ -957,7 +951,6 @@ public class ParserTable {
                                 public Object run()
                                     throws InstantiationException, IllegalAccessException
                                 {
-                                    Modules.ensureReadable(initClass);
                                     return initClass.newInstance() ;
                                 }
                             }
@@ -1075,7 +1068,6 @@ public class ParserTable {
                                 public Object run()
                                     throws InstantiationException, IllegalAccessException
                                 {
-                                    Modules.ensureReadable(initClass);
                                     return initClass.newInstance() ;
                                 }
                             }

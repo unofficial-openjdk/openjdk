@@ -38,13 +38,15 @@ import org.omg.CORBA_2_3.portable.ObjectImpl;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.io.File;
+import java.io.FileInputStream;
 import java.net.MalformedURLException ;
 import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Properties;
 import java.rmi.server.RMIClassLoader;
 
 import com.sun.corba.se.impl.orbutil.GetPropertyAction;
-import com.sun.corba.se.impl.util.Modules;
 
 
 /**
@@ -190,8 +192,6 @@ public abstract class Stub extends ObjectImpl
     private void setDefaultDelegate() {
         if (stubDelegateClass != null) {
             try {
-                 // Modules.ensureReadable has already been called in createDelegate
-                 // below.
                  stubDelegate = (javax.rmi.CORBA.StubDelegate) stubDelegateClass.newInstance();
             } catch (Exception ex) {
             // what kind of exception to throw
@@ -220,9 +220,7 @@ public abstract class Stub extends ObjectImpl
         }
 
         try {
-            Class<?> delegateClass = loadDelegateClass(className);
-            Modules.ensureReadable(delegateClass);
-            return delegateClass.newInstance();
+            return loadDelegateClass(className).newInstance();
         } catch (ClassNotFoundException ex) {
             INITIALIZE exc = new INITIALIZE( "Cannot instantiate " + className);
             exc.initCause( ex ) ;

@@ -70,8 +70,6 @@ import org.omg.PortableServer.POA;
 
 import com.sun.org.omg.SendingContext.CodeBase;
 
-import com.sun.corba.se.impl.util.Modules;
-
 import com.sun.corba.se.spi.logging.CORBALogDomains ;
 import com.sun.corba.se.spi.presentation.rmi.PresentationManager;
 import com.sun.corba.se.spi.presentation.rmi.StubAdapter ;
@@ -227,9 +225,7 @@ public final class Utility {
 
                 if (it != CACHE_MISS) {
                     try {
-                        Class<?> tc = it.getClass();
-                        Modules.ensureReadable(tc);
-                        result = (Tie) tc.newInstance();
+                        result = (Tie) it.getClass().newInstance();
                     } catch (Exception e) {
                     }
                 }
@@ -411,7 +407,6 @@ public final class Utility {
             Class helperClass =
                 loadClassForClass(className+"Helper", codebase, clazzLoader,
                 clazz, clazzLoader);
-            Modules.ensureReadable(helperClass);
             return (BoxedValueHelper)helperClass.newInstance();
 
         } catch (ClassNotFoundException cnfe) {
@@ -473,7 +468,6 @@ public final class Utility {
             Class factoryClass =
                 loadClassForClass(className+"DefaultFactory", codebase,
                 clazzLoader, clazz, clazzLoader);
-            Modules.ensureReadable(factoryClass);
             return (ValueFactory)factoryClass.newInstance();
 
         } catch (ClassNotFoundException cnfe) {

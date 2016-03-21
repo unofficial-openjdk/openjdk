@@ -26,6 +26,7 @@
 package com.sun.corba.se.impl.presentation.rmi ;
 
 import java.rmi.Remote;
+import java.rmi.RemoteException;
 
 import javax.rmi.CORBA.Tie;
 
@@ -38,15 +39,18 @@ import org.omg.CORBA_2_3.portable.OutputStream;
 import org.omg.CORBA.portable.ResponseHandler;
 import org.omg.CORBA.portable.UnknownException;
 import org.omg.PortableServer.Servant;
+import org.omg.PortableServer.POA;
+import org.omg.PortableServer.POAManager;
 
 import com.sun.corba.se.spi.presentation.rmi.PresentationManager ;
+import com.sun.corba.se.spi.presentation.rmi.IDLNameTranslator ;
 import com.sun.corba.se.spi.presentation.rmi.DynamicMethodMarshaller ;
 
 import com.sun.corba.se.spi.orb.ORB ;
 
 import com.sun.corba.se.impl.logging.ORBUtilSystemException ;
 
-import com.sun.corba.se.impl.util.Modules;
+import com.sun.corba.se.impl.oa.poa.POAManagerImpl ;
 
 public final class ReflectiveTie extends Servant implements Tie
 {
@@ -138,7 +142,6 @@ public final class ReflectiveTie extends Servant implements Tie
 
             Object[] args = dmm.readArguments( in ) ;
 
-            Modules.ensureReadable(javaMethod.getDeclaringClass());
             Object result = javaMethod.invoke( target, args ) ;
 
             OutputStream os = (OutputStream)reply.createReply() ;

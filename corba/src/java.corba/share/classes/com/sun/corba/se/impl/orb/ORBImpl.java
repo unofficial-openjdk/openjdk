@@ -162,7 +162,6 @@ import com.sun.corba.se.impl.protocol.CorbaInvocationInfo;
 import com.sun.corba.se.impl.transport.CorbaTransportManagerImpl;
 import com.sun.corba.se.impl.legacy.connection.LegacyServerSocketManagerImpl;
 import com.sun.corba.se.impl.util.Utility;
-import com.sun.corba.se.impl.util.Modules;
 import com.sun.corba.se.impl.logging.ORBUtilSystemException;
 import com.sun.corba.se.impl.copyobject.CopierManagerImpl;
 import com.sun.corba.se.impl.presentation.rmi.PresentationManagerImpl;
@@ -471,7 +470,6 @@ public class ORBImpl extends com.sun.corba.se.spi.orb.ORB
 
         ORBConfigurator configurator =  null ;
         try {
-            Modules.ensureReadable(parser.configurator);
             configurator =
                 (ORBConfigurator)(parser.configurator.newInstance()) ;
         } catch (Exception iexc) {
@@ -1570,7 +1568,6 @@ public class ORBImpl extends com.sun.corba.se.spi.orb.ORB
             Class cls = configData.getBadServerIdHandler() ;
             if (cls != null) {
                 try {
-                    Modules.ensureReadable(cls);
                     Class[] params = new Class[] { org.omg.CORBA.ORB.class };
                     java.lang.Object[] args = new java.lang.Object[]{this};
                     Constructor cons = cls.getConstructor(params);
