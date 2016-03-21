@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -372,6 +372,16 @@ HeapRegion* G1CMRootRegions::claim_next() {
   return res;
 }
 
+void G1CMRootRegions::notify_scan_done() {
+  MutexLockerEx x(RootRegionScan_lock, Mutex::_no_safepoint_check_flag);
+  _scan_in_progress = false;
+  RootRegionScan_lock->notify_all();
+}
+
+void G1CMRootRegions::cancel_scan() {
+  notify_scan_done();
+}
+
 void G1CMRootRegions::scan_finished() {
   assert(scan_in_progress(), "pre-condition");
 
@@ -381,11 +391,7 @@ void G1CMRootRegions::scan_finished() {
   }
   _next_survivor = NULL;
 
-  {
-    MutexLockerEx x(RootRegionScan_lock, Mutex::_no_safepoint_check_flag);
-    _scan_in_progress = false;
-    RootRegionScan_lock->notify_all();
-  }
+  notify_scan_done();
 }
 
 bool G1CMRootRegions::wait_until_scan_finished() {
@@ -978,13 +984,11 @@ public:
 };
 
 void G1ConcurrentMark::scanRootRegions() {
-  // Start of concurrent marking.
-  ClassLoaderDataGraph::clear_claimed_marks();
-
   // scan_in_progress() will have been set to true only if there was
   // at least one root region to scan. So, if it's false, we
   // should not attempt to do any further work.
   if (root_regions()->scan_in_progress()) {
+    assert(!has_aborted(), "Aborting before root region scanning is finished not supported.");
     GCTraceConcTime(Info, gc) tt("Concurrent Root Region Scan");
 
     _parallel_marking_threads = calc_parallel_marking_threads();
@@ -1093,7 +1097,7 @@ void G1ConcurrentMark::checkpointRootsFinal(bool clear_all_soft_refs) {
     reset_marking_state();
   } else {
     {
-      GCTraceTime(Debug, gc) trace("GC Aggregate Data", g1h->gc_timer_cm());
+      GCTraceTime(Debug, gc) trace("Aggregate Data", g1h->gc_timer_cm());
 
       // Aggregate the per-task counting data that we have accumulated
       // while marking.
@@ -2014,7 +2018,7 @@ void G1ConcurrentMark::weakRefsWork(bool clear_all_soft_refs) {
   // Inner scope to exclude the cleaning of the string and symbol
   // tables from the displayed time.
   {
-    GCTraceTime(Debug, gc) trace("GC Ref Proc", g1h->gc_timer_cm());
+    GCTraceTime(Debug, gc) trace("Reference Processing", g1h->gc_timer_cm());
 
     ReferenceProcessor* rp = g1h->ref_processor_cm();
 
@@ -2267,7 +2271,7 @@ void G1ConcurrentMark::checkpointRootsFinalWork() {
   SATBMarkQueueSet& satb_mq_set = JavaThread::satb_mark_queue_set();
   guarantee(has_overflown() ||
             satb_mq_set.completed_buffers_num() == 0,
-            "Invariant: has_overflown = %s, num buffers = %d",
+            "Invariant: has_overflown = %s, num buffers = " SIZE_FORMAT,
             BOOL_TO_STR(has_overflown()),
             satb_mq_set.completed_buffers_num());
 
@@ -2658,9 +2662,6 @@ void G1ConcurrentMark::print_on_error(outputStream* st) const {
 // We take a break if someone is trying to stop the world.
 bool G1ConcurrentMark::do_yield_check(uint worker_id) {
   if (SuspendibleThreadSet::should_yield()) {
-    if (worker_id == 0) {
-      _g1h->g1_policy()->record_concurrent_pause();
-    }
     SuspendibleThreadSet::yield();
     return true;
   } else {
@@ -2701,11 +2702,8 @@ public:
 };
 
 static ReferenceProcessor* get_cm_oop_closure_ref_processor(G1CollectedHeap* g1h) {
-  ReferenceProcessor* result = NULL;
-  if (G1UseConcMarkReferenceProcessing) {
-    result = g1h->ref_processor_cm();
-    assert(result != NULL, "should not be NULL");
-  }
+  ReferenceProcessor* result = g1h->ref_processor_cm();
+  assert(result != NULL, "CM reference processor should not be NULL");
   return result;
 }
 

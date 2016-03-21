@@ -1055,10 +1055,6 @@ public:
           "directory) of the dump file (defaults to java_pid<pid>.hprof "   \
           "in the working directory)")                                      \
                                                                             \
-  develop(size_t, SegmentedHeapDumpThreshold, 2*G,                          \
-          "Generate a segmented heap dump (JAVA PROFILE 1.0.2 format) "     \
-          "when the heap usage is larger than this")                        \
-                                                                            \
   develop(size_t, HeapDumpSegmentSize, 1*G,                                 \
           "Approximate segment size when generating a segmented heap dump") \
                                                                             \
@@ -1239,9 +1235,8 @@ public:
   product_pd(bool, DontYieldALot,                                           \
           "Throw away obvious excess yield calls")                          \
                                                                             \
-  product_pd(bool, ConvertSleepToYield,                                     \
-          "Convert sleep(0) to thread yield "                               \
-          "(may be off for Solaris to improve GUI)")                        \
+  product(bool, ConvertSleepToYield, true,                                  \
+          "Convert sleep(0) to thread yield ")                              \
                                                                             \
   product(bool, ConvertYieldToSleep, false,                                 \
           "Convert yield to a sleep of MinSleepInterval to simulate Win32 " \
@@ -1278,10 +1273,6 @@ public:
                                                                             \
   experimental(intx, hashCode, 5,                                           \
                "(Unstable) select hashCode generation algorithm")           \
-                                                                            \
-  experimental(intx, WorkAroundNPTLTimedWaitHang, 0,                        \
-               "(Unstable, Linux-specific) "                                \
-               "avoid NPTL-FUTEX hang pthread_cond_timedwait")              \
                                                                             \
   product(bool, FilterSpuriousWakeups, true,                                \
           "When true prevents OS-level spurious, or premature, wakeups "    \
@@ -1442,9 +1433,6 @@ public:
   product(bool, VerifyMergedCPBytecodes, true,                              \
           "Verify bytecodes after RedefineClasses constant pool merging")   \
                                                                             \
-  develop(bool, TraceJNIHandleAllocation, false,                            \
-          "Trace allocation/deallocation of JNI handle blocks")             \
-                                                                            \
   develop(bool, TraceBytecodes, false,                                      \
           "Trace bytecode execution")                                       \
                                                                             \
@@ -1487,17 +1475,8 @@ public:
   develop(bool, TraceCompiledIC, false,                                     \
           "Trace changes of compiled IC")                                   \
                                                                             \
-  develop(bool, TraceStartupTime, false,                                    \
-          "Trace setup time")                                               \
-                                                                            \
-  develop(bool, TraceProtectionDomainVerification, false,                   \
-          "Trace protection domain verification")                           \
-                                                                            \
   develop(bool, TraceClearedExceptions, false,                              \
           "Print when an exception is forcibly cleared")                    \
-                                                                            \
-  product(bool, TraceBiasedLocking, false,                                  \
-          "Trace biased locking in JVM")                                    \
                                                                             \
   /* gc */                                                                  \
                                                                             \
@@ -2012,11 +1991,15 @@ public:
           range(min_intx, 100)                                              \
                                                                             \
   product(uintx, InitiatingHeapOccupancyPercent, 45,                        \
-          "Percentage of the (entire) heap occupancy to start a "           \
-          "concurrent GC cycle. It is used by GCs that trigger a "          \
-          "concurrent GC cycle based on the occupancy of the entire heap, " \
-          "not just one of the generations (e.g., G1). A value of 0 "       \
-          "denotes 'do constant GC cycles'.")                               \
+          "The percent occupancy (IHOP) of the current old generation "     \
+          "capacity above which a concurrent mark cycle will be initiated " \
+          "Its value may change over time if adaptive IHOP is enabled, "    \
+          "otherwise the value remains constant. "                          \
+          "In the latter case a value of 0 will result as frequent as "     \
+          "possible concurrent marking cycles. A value of 100 disables "    \
+          "concurrent marking. "                                            \
+          "Fragmentation waste in the old generation is not considered "    \
+          "free space in this calculation. (G1 collector only)")            \
           range(0, 100)                                                     \
                                                                             \
   manageable(intx, CMSTriggerInterval, -1,                                  \
@@ -2409,9 +2392,6 @@ public:
                                                                             \
   product(bool, IgnoreEmptyClassPaths, false,                               \
           "Ignore empty path elements in -classpath")                       \
-                                                                            \
-  product(bool, TraceClassPaths, false,                                     \
-          "Trace processing of class paths")                                \
                                                                             \
   product(bool, TraceClassLoadingPreorder, false,                           \
           "Trace all classes loaded in order referenced (not loaded)")      \

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,30 +22,27 @@
  *
  */
 
-#include "precompiled.hpp"
-#include "jvmci/commandLineFlagConstraintsJVMCI.hpp"
-#include "runtime/arguments.hpp"
-#include "runtime/globals.hpp"
-#include "utilities/defaultStream.hpp"
+#include "gc/shared/preservedMarks.hpp"
+#include "oops/markOop.inline.hpp"
+#include "utilities/stack.inline.hpp"
 
-Flag::Error EnableJVMCIMustBeEnabledConstraintFunc(bool value, bool verbose) {
-  if (!EnableJVMCI) {
-    if (verbose == true) {
-      jio_fprintf(defaultStream::error_stream(), "EnableJVMCI must be enabled\n");
-    }
-    return Flag::VIOLATES_CONSTRAINT;
-  } else {
-    return Flag::SUCCESS;
+#ifndef SHARE_VM_GC_SHARED_PRESERVEDMARKS_INLINE_HPP
+#define SHARE_VM_GC_SHARED_PRESERVEDMARKS_INLINE_HPP
+
+inline bool PreservedMarks::should_preserve_mark(oop obj, markOop m) const {
+  return m->must_be_preserved_for_promotion_failure(obj);
+}
+
+inline void PreservedMarks::push(oop obj, markOop m) {
+  assert(should_preserve_mark(obj, m), "pre-condition");
+  OopAndMarkOop elem(obj, m);
+  _stack.push(elem);
+}
+
+inline void PreservedMarks::push_if_necessary(oop obj, markOop m) {
+  if (should_preserve_mark(obj, m)) {
+    push(obj, m);
   }
 }
 
-Flag::Error EnableJVMCIMustBeEnabledConstraintFunc(intx value, bool verbose) {
-  if (!EnableJVMCI) {
-    if (verbose == true) {
-      jio_fprintf(defaultStream::error_stream(), "EnableJVMCI must be enabled\n");
-    }
-    return Flag::VIOLATES_CONSTRAINT;
-  } else {
-    return Flag::SUCCESS;
-  }
-}
+#endif // SHARE_VM_GC_SHARED_PRESERVEDMARKS_INLINE_HPP

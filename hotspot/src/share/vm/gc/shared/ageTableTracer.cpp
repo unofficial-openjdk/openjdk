@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,19 +22,21 @@
  *
  */
 
-#ifndef SHARE_VM_JVMCI_COMMANDLINEFLAGCONSTRAINTSJVMCI_HPP
-#define SHARE_VM_JVMCI_COMMANDLINEFLAGCONSTRAINTSJVMCI_HPP
+#include "precompiled.hpp"
+#include "gc/shared/ageTableTracer.hpp"
+#include "gc/shared/gcId.hpp"
+#include "trace/tracing.hpp"
 
-#include "runtime/globals.hpp"
-#include "utilities/globalDefinitions.hpp"
+void AgeTableTracer::send_tenuring_distribution_event(uint age, size_t size) {
+  EventTenuringDistribution e;
+  if (e.should_commit()) {
+    e.set_gcId(GCId::current());
+    e.set_age(age);
+    e.set_size(size);
+    e.commit();
+  }
+}
 
-/*
- * Here we have JVMCI arguments constraints functions, which are called automatically
- * whenever flag's value changes. If the constraint fails the function should return
- * an appropriate error value.
- */
-
-Flag::Error EnableJVMCIMustBeEnabledConstraintFunc(bool value, bool verbose);
-Flag::Error EnableJVMCIMustBeEnabledConstraintFunc(intx value, bool verbose);
-
-#endif /* SHARE_VM_JVMCI_COMMANDLINEFLAGCONSTRAINTSJVMCI_HPP */
+bool AgeTableTracer::is_tenuring_distribution_event_enabled() {
+  return EventTenuringDistribution::is_enabled();
+}

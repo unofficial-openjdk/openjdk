@@ -33,9 +33,9 @@
 #include "utilities/ostream.hpp"
 
 YoungList::YoungList(G1CollectedHeap* g1h) :
-    _g1h(g1h), _head(NULL), _length(0), _last_sampled_rs_lengths(0),
+    _g1h(g1h), _head(NULL), _length(0),
     _survivor_head(NULL), _survivor_tail(NULL), _survivor_length(0) {
-  guarantee(check_list_empty(false), "just making sure...");
+  guarantee(check_list_empty(), "just making sure...");
 }
 
 void YoungList::push_region(HeapRegion *hr) {
@@ -86,9 +86,7 @@ void YoungList::empty_list() {
   _survivor_tail = NULL;
   _survivor_length = 0;
 
-  _last_sampled_rs_lengths = 0;
-
-  assert(check_list_empty(false), "just making sure...");
+  assert(check_list_empty(), "just making sure...");
 }
 
 bool YoungList::check_list_well_formed() {
@@ -99,10 +97,10 @@ bool YoungList::check_list_well_formed() {
   HeapRegion* last = NULL;
   while (curr != NULL) {
     if (!curr->is_young()) {
-      log_info(gc, verify)("### YOUNG REGION " PTR_FORMAT "-" PTR_FORMAT " "
-                           "incorrectly tagged (y: %d, surv: %d)",
-                           p2i(curr->bottom()), p2i(curr->end()),
-                           curr->is_young(), curr->is_survivor());
+      log_error(gc, verify)("### YOUNG REGION " PTR_FORMAT "-" PTR_FORMAT " "
+                            "incorrectly tagged (y: %d, surv: %d)",
+                            p2i(curr->bottom()), p2i(curr->end()),
+                            curr->is_young(), curr->is_survivor());
       ret = false;
     }
     ++length;
@@ -112,65 +110,29 @@ bool YoungList::check_list_well_formed() {
   ret = ret && (length == _length);
 
   if (!ret) {
-    log_info(gc, verify)("### YOUNG LIST seems not well formed!");
-    log_info(gc, verify)("###   list has %u entries, _length is %u", length, _length);
+    log_error(gc, verify)("### YOUNG LIST seems not well formed!");
+    log_error(gc, verify)("###   list has %u entries, _length is %u", length, _length);
   }
 
   return ret;
 }
 
-bool YoungList::check_list_empty(bool check_sample) {
+bool YoungList::check_list_empty() {
   bool ret = true;
 
   if (_length != 0) {
-    log_info(gc, verify)("### YOUNG LIST should have 0 length, not %u", _length);
-    ret = false;
-  }
-  if (check_sample && _last_sampled_rs_lengths != 0) {
-    log_info(gc, verify)("### YOUNG LIST has non-zero last sampled RS lengths");
+    log_error(gc, verify)("### YOUNG LIST should have 0 length, not %u", _length);
     ret = false;
   }
   if (_head != NULL) {
-    log_info(gc, verify)("### YOUNG LIST does not have a NULL head");
+    log_error(gc, verify)("### YOUNG LIST does not have a NULL head");
     ret = false;
   }
   if (!ret) {
-    log_info(gc, verify)("### YOUNG LIST does not seem empty");
+    log_error(gc, verify)("### YOUNG LIST does not seem empty");
   }
 
   return ret;
-}
-
-void
-YoungList::rs_length_sampling_init() {
-  _sampled_rs_lengths = 0;
-  _curr               = _head;
-}
-
-bool
-YoungList::rs_length_sampling_more() {
-  return _curr != NULL;
-}
-
-void
-YoungList::rs_length_sampling_next() {
-  assert( _curr != NULL, "invariant" );
-  size_t rs_length = _curr->rem_set()->occupied();
-
-  _sampled_rs_lengths += rs_length;
-
-  // The current region may not yet have been added to the
-  // incremental collection set (it gets added when it is
-  // retired as the current allocation region).
-  if (_curr->in_collection_set()) {
-    // Update the collection set policy information for this region
-    _g1h->g1_policy()->update_incremental_cset_info(_curr, rs_length);
-  }
-
-  _curr = _curr->get_next_young_region();
-  if (_curr == NULL) {
-    _last_sampled_rs_lengths = _sampled_rs_lengths;
-  }
 }
 
 void

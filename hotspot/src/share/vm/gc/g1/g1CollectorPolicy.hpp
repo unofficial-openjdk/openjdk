@@ -43,127 +43,7 @@
 class HeapRegion;
 class CollectionSetChooser;
 class G1IHOPControl;
-
-// TraceYoungGenTime collects data on _both_ young and mixed evacuation pauses
-// (the latter may contain non-young regions - i.e. regions that are
-// technically in old) while TraceOldGenTime collects data about full GCs.
-class TraceYoungGenTimeData : public CHeapObj<mtGC> {
- private:
-  unsigned  _young_pause_num;
-  unsigned  _mixed_pause_num;
-
-  NumberSeq _all_stop_world_times_ms;
-  NumberSeq _all_yield_times_ms;
-
-  NumberSeq _total;
-  NumberSeq _other;
-  NumberSeq _root_region_scan_wait;
-  NumberSeq _parallel;
-  NumberSeq _ext_root_scan;
-  NumberSeq _satb_filtering;
-  NumberSeq _update_rs;
-  NumberSeq _scan_rs;
-  NumberSeq _obj_copy;
-  NumberSeq _termination;
-  NumberSeq _parallel_other;
-  NumberSeq _clear_ct;
-
-  void print_summary(const char* str, const NumberSeq* seq) const;
-  void print_summary_sd(const char* str, const NumberSeq* seq) const;
-
-public:
-   TraceYoungGenTimeData() : _young_pause_num(0), _mixed_pause_num(0) {};
-  void record_start_collection(double time_to_stop_the_world_ms);
-  void record_yield_time(double yield_time_ms);
-  void record_end_collection(double pause_time_ms, G1GCPhaseTimes* phase_times);
-  void increment_young_collection_count();
-  void increment_mixed_collection_count();
-  void print() const;
-};
-
-class TraceOldGenTimeData : public CHeapObj<mtGC> {
- private:
-  NumberSeq _all_full_gc_times;
-
- public:
-  void record_full_collection(double full_gc_time_ms);
-  void print() const;
-};
-
-// There are three command line options related to the young gen size:
-// NewSize, MaxNewSize and NewRatio (There is also -Xmn, but that is
-// just a short form for NewSize==MaxNewSize). G1 will use its internal
-// heuristics to calculate the actual young gen size, so these options
-// basically only limit the range within which G1 can pick a young gen
-// size. Also, these are general options taking byte sizes. G1 will
-// internally work with a number of regions instead. So, some rounding
-// will occur.
-//
-// If nothing related to the the young gen size is set on the command
-// line we should allow the young gen to be between G1NewSizePercent
-// and G1MaxNewSizePercent of the heap size. This means that every time
-// the heap size changes, the limits for the young gen size will be
-// recalculated.
-//
-// If only -XX:NewSize is set we should use the specified value as the
-// minimum size for young gen. Still using G1MaxNewSizePercent of the
-// heap as maximum.
-//
-// If only -XX:MaxNewSize is set we should use the specified value as the
-// maximum size for young gen. Still using G1NewSizePercent of the heap
-// as minimum.
-//
-// If -XX:NewSize and -XX:MaxNewSize are both specified we use these values.
-// No updates when the heap size changes. There is a special case when
-// NewSize==MaxNewSize. This is interpreted as "fixed" and will use a
-// different heuristic for calculating the collection set when we do mixed
-// collection.
-//
-// If only -XX:NewRatio is set we should use the specified ratio of the heap
-// as both min and max. This will be interpreted as "fixed" just like the
-// NewSize==MaxNewSize case above. But we will update the min and max
-// every time the heap size changes.
-//
-// NewSize and MaxNewSize override NewRatio. So, NewRatio is ignored if it is
-// combined with either NewSize or MaxNewSize. (A warning message is printed.)
-class G1YoungGenSizer : public CHeapObj<mtGC> {
-private:
-  enum SizerKind {
-    SizerDefaults,
-    SizerNewSizeOnly,
-    SizerMaxNewSizeOnly,
-    SizerMaxAndNewSize,
-    SizerNewRatio
-  };
-  SizerKind _sizer_kind;
-  uint _min_desired_young_length;
-  uint _max_desired_young_length;
-  bool _adaptive_size;
-  uint calculate_default_min_length(uint new_number_of_heap_regions);
-  uint calculate_default_max_length(uint new_number_of_heap_regions);
-
-  // Update the given values for minimum and maximum young gen length in regions
-  // given the number of heap regions depending on the kind of sizing algorithm.
-  void recalculate_min_max_young_length(uint number_of_heap_regions, uint* min_young_length, uint* max_young_length);
-
-public:
-  G1YoungGenSizer();
-  // Calculate the maximum length of the young gen given the number of regions
-  // depending on the sizing algorithm.
-  uint max_young_length(uint number_of_heap_regions);
-
-  void heap_size_changed(uint new_number_of_heap_regions);
-  uint min_desired_young_length() {
-    return _min_desired_young_length;
-  }
-  uint max_desired_young_length() {
-    return _max_desired_young_length;
-  }
-
-  bool adaptive_young_list_length() const {
-    return _adaptive_size;
-  }
-};
+class G1YoungGenSizer;
 
 class G1CollectorPolicy: public CollectorPolicy {
  private:
@@ -180,13 +60,6 @@ class G1CollectorPolicy: public CollectorPolicy {
 
   double get_new_prediction(TruncatedSeq const* seq) const;
   size_t get_new_size_prediction(TruncatedSeq const* seq) const;
-
-  // either equal to the number of parallel threads, if ParallelGCThreads
-  // has been set, or 1 otherwise
-  int _parallel_gc_threads;
-
-  // The number of GC threads currently active.
-  uintx _no_of_gc_threads;
 
   G1MMUTracker* _mmu_tracker;
 
@@ -207,11 +80,6 @@ class G1CollectorPolicy: public CollectorPolicy {
   uint _ratio_over_threshold_count;
   double _ratio_over_threshold_sum;
   uint _pauses_since_start;
-
-  TraceYoungGenTimeData _trace_young_gen_time_data;
-  TraceOldGenTimeData   _trace_old_gen_time_data;
-
-  double _stop_world_start;
 
   uint _young_list_target_length;
   uint _young_list_fixed_length;
@@ -285,9 +153,6 @@ class G1CollectorPolicy: public CollectorPolicy {
   void adjust_concurrent_refinement(double update_rs_time,
                                     double update_rs_processed_buffers,
                                     double goal_ms);
-
-  uintx no_of_gc_threads() { return _no_of_gc_threads; }
-  void set_no_of_gc_threads(uintx v) { _no_of_gc_threads = v; }
 
   double _pause_time_target_ms;
 
@@ -463,9 +328,6 @@ private:
   // an evacuation pause.
   size_t _inc_cset_bytes_used_before;
 
-  // Used to record the highest end of heap region in collection set
-  HeapWord* _inc_cset_max_finger;
-
   // The RSet lengths recorded for regions in the CSet. It is updated
   // by the thread that adds a new region to the CSet. We assume that
   // only one thread can be allocating a new CSet region (currently,
@@ -609,7 +471,7 @@ public:
   // Check the current value of the young list RSet lengths and
   // compare it against the last prediction. If the current value is
   // higher, recalculate the young list target length prediction.
-  void revise_young_list_target_length_if_necessary();
+  void revise_young_list_target_length_if_necessary(size_t rs_lengths);
 
   // This should be called after the heap is resized.
   void record_new_heap_size(uint new_number_of_regions);
@@ -646,9 +508,6 @@ public:
   void record_concurrent_mark_cleanup_completed();
 
   virtual void print_phases();
-
-  void record_stop_world_start();
-  void record_concurrent_pause();
 
   // Record how much space we copied during a GC. This is typically
   // called when a GC alloc region is being retired.
@@ -759,9 +618,6 @@ public:
   // Clear ratio tracking data used by expansion_amount().
   void clear_ratio_check_data();
 
-  // Print tracing information.
-  void print_tracing_info() const;
-
   // Print stats on young survival ratio
   void print_yg_surv_rate_info() const;
 
@@ -784,9 +640,7 @@ public:
     return _young_list_max_length;
   }
 
-  bool adaptive_young_list_length() const {
-    return _young_gen_sizer->adaptive_young_list_length();
-  }
+  bool adaptive_young_list_length() const;
 
   virtual bool should_process_references() const {
     return true;
