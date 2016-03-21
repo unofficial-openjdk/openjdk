@@ -300,7 +300,6 @@ class SchemaFactoryFinder  {
                     schemaFactory = newInstanceNoServiceLoader(clazz);
                 }
                 if (schemaFactory == null) {
-                    this.getClass().getModule().addReads(clazz.getModule());
                     schemaFactory = (SchemaFactory) clazz.newInstance();
                 }
         } catch (ClassCastException classCastException) {
@@ -353,8 +352,6 @@ class SchemaFactoryFinder  {
             // declared to return an instance of SchemaFactory.
             final Class<?> returnType = creationMethod.getReturnType();
             if (SERVICE_CLASS.isAssignableFrom(returnType)) {
-                // We actually only need to support that on our own
-                // implementation classes: XMLSchemaFactory.java
                 return SERVICE_CLASS.cast(creationMethod.invoke(null, (Object[])null));
             } else {
                 // Should not happen since
