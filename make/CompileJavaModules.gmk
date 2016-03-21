@@ -362,9 +362,8 @@ jdk.charsets_COPY := .dat
 
 ################################################################################
 
-jdk.compiler_ADD_JAVAC_FLAGS := -Xdoclint:all/protected '-Xdoclint/package:-com.sun.tools.*' -XDstringConcat=inline
-jdk.compiler_ADD_JAVAC_FLAGS := -XDstringConcat=inline
-jdk.compiler_COPY := javax.tools.JavaCompilerTool
+jdk.compiler_ADD_JAVAC_FLAGS := -Xdoclint:all/protected '-Xdoclint/package:-com.sun.tools.*' \
+    -XDstringConcat=inline
 jdk.compiler_CLEAN_FILES := $(wildcard \
     $(patsubst %, $(JDK_TOPDIR)/src/jdk.compiler/share/classes/%/*.properties, \
         sun/tools/serialver/resources))
@@ -372,21 +371,7 @@ jdk.compiler_CLEAN_FILES := $(wildcard \
 ################################################################################
 
 jdk.hotspot.agent_ADD_JAVAC_FLAGS := $(DISABLE_WARNINGS),-overrides
-jdk.hotspot.agent_COPY := .png sa.js .properties
-
-ifeq ($(MODULE), jdk.hotspot.agent)
-  ### Copy gif files
-  # Special handling to copy gif files in images/toolbarButtonGraphics \
-  #   -> classes/toolbarButtonGraphics.
-  # These can't be handled by COPY to SetupJavaCompilation since they chop off
-  # one directory level.
-  $(eval $(call SetupCopyFiles, COPY_SA_IMAGES, \
-      SRC := $(HOTSPOT_TOPDIR)/src/jdk.hotspot.agent/share/classes/images, \
-      DEST := $(JDK_OUTPUTDIR)/modules/$(MODULE), \
-      FILES := $(wildcard $(HOTSPOT_TOPDIR)/src/jdk.hotspot.agent/share/classes/images/*/*/*.gif), \
-  ))
-  jdk.hotspot.agent: $(COPY_SA_IMAGES)
-endif
+jdk.hotspot.agent_COPY := .gif .png sa.js .properties
 
 ################################################################################
 
@@ -526,9 +511,6 @@ MODULE_SRC_DIRS := $(strip \
 # be recompiled. If multiple paths are separated by comma, convert that into a
 # space separated list.
 JDK_USER_DEFINED_FILTER := $(strip $(subst $(COMMA),$(SPACE), $(JDK_FILTER)))
-
-# Use transitive deps for setting the classpath
-DEPS := $(call FindTransitiveDepsForModule, $(MODULE))
 
 # Rewrite the MODULE_SRC_DIRS with a wildcard for the module so that all module
 # source dirs are available on the path.

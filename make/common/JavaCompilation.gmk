@@ -154,6 +154,7 @@ endef
 #   SRC:=one or more directories to search for sources. The order of the source roots
 #        is significant. The first found file of a certain name has priority.
 #   BIN:=store classes here
+#   MODULE:=Name of module being compiled. If set, classes are put in BIN/MODULE.
 #   CLASSPATH:=a list of additional entries to set as classpath to javac
 #   INCLUDES:=myapp.foo means will only compile java files in myapp.foo or any of its sub-packages.
 #   EXCLUDES:=myapp.foo means will do not compile java files in myapp.foo or any of its sub-packages.
@@ -350,7 +351,7 @@ define SetupJavaCompilationBody
 	  $$(eval $$(call ListPathsSafely,$1_SJAVAC_ARGS_STRING, $$($1_SJAVAC_ARGS_FILE)))
         endif
 	$$(call LogWarn, Compiling $1)
-	$$(call ExecuteWithLog, $$($1_BIN)/_the.$$($1_SAFE_NAME)_batch, \
+	$$(call ExecuteWithLog, $$($1_BIN)$$($1_MODULE_SUBDIR)/_the.$$($1_SAFE_NAME)_batch, \
 	    $$($1_JVM) $$($1_SJAVAC) \
 	        $$($1_REMOTE) \
 	        -j 1 \
@@ -418,7 +419,7 @@ define SetupJavaCompilationBody
 	$$(call MakeDir, $$(@D))
 	$$(eval $$(call ListPathsSafely,$1_SRCS, $$@.tmp))
 	$$(call LogWarn, Compiling $$(words $$($1_SRCS)) files for $1)
-	$$(call ExecuteWithLog, $$($1_BIN)/_the.$$($1_SAFE_NAME)_batch, \
+	$$(call ExecuteWithLog, $$($1_BIN)$$($1_MODULE_SUBDIR)/_the.$$($1_SAFE_NAME)_batch, \
 	    $$($1_JVM) $$($1_JAVAC_CMD) $$($1_FLAGS) \
 	        -implicit:none \
 		-d $$($1_BIN) $$($1_HEADERS_ARG) @$$@.tmp) && \

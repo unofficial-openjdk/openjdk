@@ -311,6 +311,16 @@ var getJibProfilesProfiles = function (input, common) {
             labels: [ "open" ]
         },
 
+        "linux-x86-open": {
+            target_os: mainProfiles["linux-x86"].target_os,
+            target_cpu: mainProfiles["linux-x86"].target_cpu,
+            dependencies: mainProfiles["linux-x86"].dependencies,
+            configure_args: concat(mainProfiles["linux-x86"].configure_args,
+                "--enable-openjdk-only"),
+            make_args: mainProfiles["linux-x86"].make_args,
+            labels: [ "open" ]
+        },
+
         "solaris-x64-open": {
             target_os: mainProfiles["solaris-x64"].target_os,
             target_cpu: mainProfiles["solaris-x64"].target_cpu,
@@ -318,6 +328,16 @@ var getJibProfilesProfiles = function (input, common) {
             configure_args: concat(mainProfiles["solaris-x64"].configure_args,
                 "--enable-openjdk-only"),
             make_args: mainProfiles["solaris-x64"].make_args,
+            labels: [ "open" ]
+        },
+
+        "windows-x86-open": {
+            target_os: mainProfiles["windows-x86"].target_os,
+            target_cpu: mainProfiles["windows-x86"].target_cpu,
+            dependencies: mainProfiles["windows-x86"].dependencies,
+            configure_args: concat(mainProfiles["windows-x86"].configure_args,
+                "--enable-openjdk-only"),
+            make_args: mainProfiles["windows-x86"].make_args,
             labels: [ "open" ]
         }
     };
@@ -399,11 +419,12 @@ var getJibProfilesDependencies = function (input, common) {
             revision: "1.0118+1.0"
         },
 
-        // Depending on nightly build of jtreg for now.
         jtreg: {
             server: "javare",
-            path: "java/re/jtreg/4.1/nightly/bundles/jtreg_bin-4.1.zip",
-            checksum_path: "java/re/jtreg/4.1/nightly/bundles/MD5_VALUES",
+            revision: "4.2",
+            build_number: "b01",
+            checksum_file: "MD5_VALUES",
+            file: "jtreg_bin-4.2.zip",
             environment_name: "JT_HOME"
         },
 

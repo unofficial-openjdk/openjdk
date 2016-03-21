@@ -69,11 +69,13 @@ DEPS += $(patsubst %, $(IMAGES_OUTPUTDIR)/jmods/%.jmod, \
     $(call FindDepsForModule, $(MODULE)))
 
 # TODO: What about headers?
+# Create jmods in a temp dir and then move them into place to keep the
+# module path in $(IMAGES_OUTPUTDIR)/jmods valid at all times.
 $(IMAGES_OUTPUTDIR)/jmods/$(MODULE).jmod: $(DEPS)
-	$(ECHO) Creating $(notdir $@)
-	$(MKDIR) -p $(@D)
-	$(RM) $@.tmp
-	$(JMOD) --create \
+	$(call LogWarn, Creating $(notdir $@))
+	$(call MakeDir, $(@D) $(SUPPORT_OUTPUTDIR)/jmods)
+	$(RM) $@ $(SUPPORT_OUTPUTDIR)/jmods/$(notdir $@)
+	$(JMOD) create \
             --module-version $(VERSION_SHORT) \
             --os-name $(REQUIRED_OS_NAME) \
             --os-arch $(OPENJDK_TARGET_CPU_LEGACY) \
@@ -81,8 +83,8 @@ $(IMAGES_OUTPUTDIR)/jmods/$(MODULE).jmod: $(DEPS)
 	    --modulepath $(IMAGES_OUTPUTDIR)/jmods\
             --hash-dependencies '.*' \
             --exclude '**_the.*' \
-	    $(JMOD_FLAGS) $@.tmp
-	$(MV) $@.tmp $@
+	    $(JMOD_FLAGS) $(SUPPORT_OUTPUTDIR)/jmods/$(notdir $@)
+	$(MV) $(SUPPORT_OUTPUTDIR)/jmods/$(notdir $@) $@
 
 TARGETS += $(IMAGES_OUTPUTDIR)/jmods/$(MODULE).jmod
 

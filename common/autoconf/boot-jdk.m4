@@ -416,13 +416,13 @@ AC_DEFUN_ONCE([BOOTJDK_SETUP_BOOT_JDK_ARGUMENTS],
 #   used after the launchers are built.
 #
 
-# Execute the check given as argument, and verify the result
-# If the JDK was previously found, do nothing
+# Execute the check given as argument, and verify the result.
+# If the JDK was previously found, do nothing.
 # $1 A command line (typically autoconf macro) to execute
 AC_DEFUN([BOOTJDK_CHECK_BUILD_JDK],
 [
   if test "x$BUILD_JDK_FOUND" = xno; then
-    # Now execute the test
+    # Execute the test
     $1
 
     # If previous step claimed to have found a JDK, check it to see if it seems to be valid.
@@ -460,13 +460,14 @@ AC_DEFUN([BOOTJDK_CHECK_BUILD_JDK],
           AC_MSG_RESULT([$BUILD_JDK_VERSION])
         fi # end check jdk version
       fi # end check java
-    fi # end check boot jdk found
+    fi # end check build jdk found
   fi
 ])
 
-# By default, it is the JDK_OUTPUTDIR.  If the target architecture
+# By default the BUILD_JDK is the JDK_OUTPUTDIR.  If the target architecture
 # is different than the host system doing the build (e.g. cross-compilation),
-# it needs to be set properly but will try to fall back on the BOOT_JDK.
+# a special BUILD_JDK is built as part of the build process.  An external
+# prebuilt BUILD_JDK can also be supplied.
 AC_DEFUN([BOOTJDK_SETUP_BUILD_JDK],
 [
   AC_ARG_WITH(build-jdk, [AS_HELP_STRING([--with-build-jdk],

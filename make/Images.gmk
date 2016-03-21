@@ -38,11 +38,11 @@ $(eval $(call IncludeCustomExtension, , Images-pre.gmk))
 
 ############################################################################
 
-MAIN_MODULES += java.se java.smartcardio jdk.httpserver jdk.sctp \
+MAIN_MODULES += java.se.ee java.smartcardio jdk.httpserver jdk.sctp \
                jdk.security.auth jdk.security.jgss jdk.pack200 jdk.xml.dom \
                jdk.accessibility jdk.internal.le jdk.dynalink \
                jdk.scripting.nashorn jdk.scripting.nashorn.shell \
-               jdk.vm.ci jdk.management
+               jdk.vm.ci jdk.management jdk.jsobject
 
 # providers
 PROVIDER_MODULES += jdk.charsets jdk.crypto.ec jdk.crypto.pkcs11 jdk.jvmstat jdk.jvmstat.rmi \
@@ -60,10 +60,6 @@ endif
 
 ifeq ($(OPENJDK_TARGET_OS), solaris)
   PROVIDER_MODULES += jdk.crypto.ucrypto
-endif
-
-ifeq ($(OPENJDK_TARGET_OS), macosx)
-  MAIN_MODULES += jdk.deploy.osx
 endif
 
 JRE_MODULES := $(filter-out $(MODULES_FILTER), $(MAIN_MODULES) $(PROVIDER_MODULES))
@@ -168,13 +164,16 @@ JLINK_TOOL := $(JLINK) --modulepath $(IMAGES_OUTPUTDIR)/jmods \
               --endian $(OPENJDK_BUILD_CPU_ENDIAN) \
               --release-info $(BASE_RELEASE_FILE)
 
+ifeq ($(JLINK_KEEP_PACKAGED_MODULES), true)
+  JLINK_EXTRA_OPTS := --keep-packaged-modules $(JDK_IMAGE_DIR)/jmods
+endif
+
 $(JDK_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS) \
     $(call DependOnVariable, JDK_MODULES_LIST) $(BASE_RELEASE_FILE)
 	$(ECHO) Creating jdk jimage
 	$(RM) -r $(JDK_IMAGE_DIR)
 	$(JLINK_TOOL) --output $(JDK_IMAGE_DIR) \
-	    --addmods $(JDK_MODULES_LIST) \
-            --keep-packaged-modules $(JDK_IMAGE_DIR)/jmods
+	    --addmods $(JDK_MODULES_LIST) $(JLINK_EXTRA_OPTS)
 	$(TOUCH) $@
 
 $(JRE_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS) \

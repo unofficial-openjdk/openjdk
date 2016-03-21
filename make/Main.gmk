@@ -500,9 +500,6 @@ else
   # Declare dependencies from all other <module>-lib to java.base-lib
   $(foreach t, $(filter-out java.base-libs, $(LIBS_TARGETS)), \
       $(eval $t: java.base-libs))
-  # Declare the special case dependency for jdk.deploy.osx where libosx
-  # links against libosxapp.
-  jdk.deploy.osx-libs: java.desktop-libs
 
   # jdk.accessibility depends on java.desktop
   jdk.accessibility-libs: java.desktop-libs
@@ -511,11 +508,6 @@ else
   # header file used by jdk.jdwp.agent-libs. The jdk.jdwp.agent-gensrc is a
   # virtual target.
   jdk.jdwp.agent-libs: jdk.jdwp.agent-gensrc
-
-  # Until the classes in the hotspot agent is compiled along with the other
-  # modules, compiling the module-info.java for that module needs to wait
-  # for hotspot to be imported.
-  jdk.hotspot.agent-java: import-hotspot
 
   # The swing beans need to have java base properly generated to avoid errors
   # in javadoc.
