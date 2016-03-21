@@ -48,8 +48,8 @@ import java.util.stream.Stream;
  * <p> A {@code ModuleFinder} can only find one module with a given name. A
  * {@code ModuleFinder} that finds modules in a sequence of directories, for
  * example, will locate the first occurrence of a module of a given name and
- * will ignore other modules of that name that appear directories later in the
- * sequence. </p>
+ * will ignore other modules of that name that appear in directories later in
+ * the sequence. </p>
  *
  * <p> Example usage: </p>
  *
@@ -110,16 +110,16 @@ public interface ModuleFinder {
     /**
      * Returns the set of all module references that this finder can locate.
      *
-     * <p> A {@code ModuleFinder} provides a consistent view of the
-     * modules that it locates. If {@link #findAll() findAll} is invoked
-     * several times then it will return the same (equals) result each time.
-     * For each {@code ModuleReference} element of the returned set then it is
-     * guaranteed that that {@link #find find} will locate that {@code
-     * ModuleReference} if invoked with the module name. </p>
+     * <p> A {@code ModuleFinder} provides a consistent view of the modules
+     * that it locates. If {@link #findAll() findAll} is invoked several times
+     * then it will return the same (equals) result each time. For each {@code
+     * ModuleReference} element in the returned set then it is guaranteed that
+     * {@link #find find} will locate the {@code ModuleReference} if invoked
+     * to find that module. </p>
      *
      * @apiNote This is important to have for methods such as {@link
-     * Configuration#bind} that need to scan the module path to find
-     * modules that provide a specific service.
+     * Configuration#resolveRequiresAndUses resolveRequiresAndUses} that need
+     * to scan the module path to find modules that provide a specific service.
      *
      * @return The set of all module references that this finder locates
      *
@@ -132,8 +132,9 @@ public interface ModuleFinder {
     Set<ModuleReference> findAll();
 
     /**
-     * Returns a module finder for modules that are linked into the run-time
-     * image.
+     * Returns a module finder that locates the <em>system modules</em>. The
+     * system modules are typically linked into the Java run-time image.
+     * The module finder will always find {@code java.base}.
      *
      * <p> If there is a security manager set then its {@link
      * SecurityManager#checkPermission(Permission) checkPermission} method is
@@ -141,19 +142,12 @@ public interface ModuleFinder {
      * to recursively read the directory that is the value of the system
      * property {@code java.home}. </p>
      *
-     * @implNote For now, this method returns a module finder that finds all
-     * modules in the run-time image. In the future then there may be modules
-     * in the run-time image that aren't candidates for the boot Layer. In
-     * that case then the module finder returned by this method may only find
-     * a subset of the observable modules.
-     *
-     * @return A {@code ModuleFinder} that locates all modules in the
-     *         run-time image
+     * @return A {@code ModuleFinder} that locates the system modules
      *
      * @throws SecurityException
      *         If denied by the security manager
      */
-    static ModuleFinder ofInstalled() {
+    static ModuleFinder ofSystem() {
         String home;
 
         SecurityManager sm = System.getSecurityManager();
@@ -168,7 +162,7 @@ public interface ModuleFinder {
 
         Path modules = Paths.get(home, "lib", "modules");
         if (Files.isRegularFile(modules)) {
-            return new InstalledModuleFinder();
+            return new SystemModuleFinder();
         } else {
             Path mlib = Paths.get(home, "modules");
             if (Files.isDirectory(mlib)) {
@@ -180,7 +174,7 @@ public interface ModuleFinder {
     }
 
     /**
-     * Creates a module finder that locates modules on the file system by
+     * Returns a module finder that locates modules on the file system by
      * searching a sequence of directories and/or packaged modules.
      *
      * Each element in the given array is one of:
@@ -228,9 +222,10 @@ public interface ModuleFinder {
      *
      *         <li><p> If the name matches the regular expression {@code
      *         "-(\\d+(\\.|$))"} then the module name will be derived from the
-     *         subsequence proceeding the hyphen. The subsequence after the
-     *         hyphen is parsed as a {@link ModuleDescriptor.Version} and
-     *         ignored if it cannot be parsed as a {@code Version}. </p></li>
+     *         subsequence proceeding the hyphen of the first occurrence. The
+     *         subsequence after the hyphen is parsed as a {@link
+     *         ModuleDescriptor.Version} and ignored if it cannot be parsed as
+     *         a {@code Version}. </p></li>
      *
      *         <li><p> For the module name, then all non-alphanumeric
      *         characters ({@code [^A-Za-z0-9])} are replaced with a dot
@@ -280,8 +275,6 @@ public interface ModuleFinder {
      * packaged module and an error is encountered. Paths to files that do not
      * exist are ignored. </p>
      *
-     * @apiNote This method is not required to be thread safe.
-     *
      * @param entries
      *        A possibly-empty array of paths to directories of modules
      *        or paths to packaged or exploded modules
@@ -293,7 +286,7 @@ public interface ModuleFinder {
     }
 
     /**
-     * Returns a module finder that is the equivalent to concatenating two
+     * Returns a module finder that is the equivalent to composing two
      * module finders. The resulting finder will locate modules references
      * using {@code first}; if not found then it will attempt to locate module
      * references using {@code second}.
@@ -303,14 +296,17 @@ public interface ModuleFinder {
      * also locate all modules located by the second module finder that are not
      * located by the first module finder. </p>
      *
+     * @apiNote This method will eventually be changed to take a sequence of
+     *          module finders.
+     *
      * @param first
      *        The first module finder
      * @param second
      *        The second module finder
      *
-     * @return A {@code ModuleFinder} that concatenates two module finders
+     * @return A {@code ModuleFinder} that composes two module finders
      */
-    static ModuleFinder concat(ModuleFinder first, ModuleFinder second) {
+    static ModuleFinder compose(ModuleFinder first, ModuleFinder second) {
         Objects.requireNonNull(first);
         Objects.requireNonNull(second);
 
@@ -345,7 +341,8 @@ public interface ModuleFinder {
      * modules.
      *
      * @apiNote This is useful when using methods such as {@link
-     * Configuration#resolve resolve} where two finders are specified.
+     * Configuration#resolveRequires resolveRequires} where two finders are
+     * specified. An alternative is {@code ModuleFinder.of()}.
      *
      * @return A {@code ModuleFinder} that does not find any modules
      */

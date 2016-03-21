@@ -37,7 +37,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.UIResource;
 
-import jdk.internal.misc.ClassLoaders;
+import jdk.internal.loader.ClassLoaders;
 
 import sun.awt.AppContext;
 

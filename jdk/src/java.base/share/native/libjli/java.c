@@ -1635,7 +1635,7 @@ PrintJavaVersion(JNIEnv *env, jboolean extraLF)
     jclass ver;
     jmethodID print;
 
-    NULL_CHECK(ver = FindBootStrapClass(env, "sun/misc/Version"));
+    NULL_CHECK(ver = FindBootStrapClass(env, "java/lang/VersionProps"));
     NULL_CHECK(print = (*env)->GetStaticMethodID(env,
                                                  ver,
                                                  (extraLF == JNI_TRUE) ? "println" : "print",
@@ -1680,7 +1680,7 @@ ListModules(JNIEnv *env, char *optString)
     NULL_CHECK(cls);
     NULL_CHECK(listModulesID = (*env)->GetStaticMethodID(env, cls,
             "listModules", "(ZLjava/lang/String;)V"));
-    joptString = (*env)->NewStringUTF(env, optString);
+    NULL_CHECK(joptString = (*env)->NewStringUTF(env, optString));
     (*env)->CallStaticVoidMethod(env, cls, listModulesID,
                                  USE_STDERR,
                                  joptString);

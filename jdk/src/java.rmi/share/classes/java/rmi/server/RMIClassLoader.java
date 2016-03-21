@@ -681,7 +681,6 @@ public class RMIClassLoader {
                     Class.forName(providerClassName, false,
                                   ClassLoader.getSystemClassLoader())
                     .asSubclass(RMIClassLoaderSpi.class);
-                RMIClassLoader.class.getModule().addReads(providerClass.getModule());
                 return providerClass.newInstance();
 
             } catch (ClassNotFoundException e) {

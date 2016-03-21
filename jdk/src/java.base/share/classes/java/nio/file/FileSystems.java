@@ -54,8 +54,7 @@ import java.util.ServiceLoader;
  * installed file system providers. Installed providers are loaded using the
  * service-provider loading facility defined by the {@link ServiceLoader} class.
  * Installed providers are loaded using the system class loader. If the
- * system class loader cannot be found then the extension class loader is used;
- * if there is no extension class loader then the bootstrap class loader is used.
+ * system class loader cannot be found then the platform class loader is used.
  * Providers are typically installed by placing them in a JAR file on the
  * application class path, the JAR file contains a
  * provider-configuration file named {@code java.nio.file.spi.FileSystemProvider}

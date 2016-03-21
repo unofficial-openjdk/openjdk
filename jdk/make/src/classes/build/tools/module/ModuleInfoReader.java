@@ -28,7 +28,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import build.tools.module.Module.Builder;
 
@@ -38,17 +40,23 @@ import build.tools.module.Module.Builder;
 public class ModuleInfoReader {
     private final Path sourcefile;
     private final Builder builder;
-    public ModuleInfoReader(Path file) {
-        this(file, new Builder());
-    }
-    public ModuleInfoReader(Path file, Builder builder) {
+    private ModuleInfoReader(Path file) {
         this.sourcefile = file;
-        this.builder = builder;
+        this.builder = new Builder();
     }
 
-    public Module get() throws IOException {
+    public static Builder builder(Path file) throws IOException {
+        ModuleInfoReader reader = new ModuleInfoReader(file);
+        reader.readFile();
+        return reader.builder;
+    }
+
+    /**
+     * Reads the source file.
+     */
+    void readFile() throws IOException {
         List<String> lines = Files.readAllLines(sourcefile);
-        Module module = null;
+        boolean done = false;
         int lineNumber = 0;
         boolean inBlockComment = false;
         boolean inRequires = false;
@@ -56,10 +64,12 @@ public class ModuleInfoReader {
         boolean inProvides = false;
         boolean inWith = false;
         String serviceIntf = null;
+        String providerClass = null;
         boolean inUses = false;
         boolean inExports = false;
         boolean inExportsTo = false;
         String qualifiedExports = null;
+        Counter counter = new Counter();
 
         for (String line : lines) {
             lineNumber++;
@@ -81,7 +91,7 @@ public class ModuleInfoReader {
                 continue;
             }
             String values;
-            if (inRequires || inExports | inUses | inProvides) {
+            if (inRequires || inExports | inUses | (inWith && providerClass == null)) {
                 values = line;
             } else {
                 String[] s = line.split("\\s+");
@@ -97,6 +107,7 @@ public class ModuleInfoReader {
                         continue;  // next line
                     case "requires":
                         inRequires = true;
+                        counter.numRequires++;
                         if (s.length >= 2) {
                             String ss = s[1].trim();
                             if (ss.equals("public")) {
@@ -108,6 +119,7 @@ public class ModuleInfoReader {
                     case "exports":
                         inExports = true;
                         inExportsTo = false;
+                        counter.numExports++;
                         qualifiedExports = null;
                         if (s.length >= 3) {
                             qualifiedExports = s[1].trim();
@@ -131,11 +143,14 @@ public class ModuleInfoReader {
                         break;
                     case "uses":
                         inUses = true;
+                        counter.numUses++;
                         break;
                     case "provides":
                         inProvides = true;
                         inWith = false;
+                        counter.numProvides++;
                         serviceIntf = null;
+                        providerClass = null;
                         if (s.length >= 2) {
                             serviceIntf = s[1].trim();
                             nextIndex = line.indexOf(serviceIntf) + serviceIntf.length();
@@ -156,9 +171,11 @@ public class ModuleInfoReader {
                                     lineNumber + ", is malformed");
                         }
                         inWith = true;
+                        nextIndex = line.indexOf("with") + "with".length();
                         break;
                     case "}":
-                        module = builder.build();
+                        counter.validate(builder);
+                        done = true;
                         continue;  // next line
                     default:
                         throw new RuntimeException(sourcefile + ", \"" +
@@ -202,7 +219,8 @@ public class ModuleInfoReader {
                         if (!inWith) {
                             serviceIntf = s;
                         } else {
-                            builder.provide(serviceIntf, s);
+                            providerClass = s;
+                            builder.provide(serviceIntf, providerClass);
                         }
                     }
                 }
@@ -222,12 +240,12 @@ public class ModuleInfoReader {
             throw new RuntimeException(sourcefile + ", line " +
                     lineNumber + ", missing \"*/\" to end a block comment");
         }
-        if (module == null) {
+        if (!done) {
             throw new RuntimeException(sourcefile + ", line " +
                     lineNumber + ", missing \"}\" to end module definition" +
                     " for \"" + builder + "\"");
         }
-        return module;
+        return;
     }
 
     // the naming convention for the module names without dashes
@@ -298,5 +316,42 @@ public class ModuleInfoReader {
             pos = n;
         }
         return sb.toString();
+    }
+
+
+    static class Counter {
+        int numRequires;
+        int numExports;
+        int numUses;
+        int numProvides;
+
+        void validate(Builder builder) {
+            assertEquals("requires", numRequires, builder.requires.size(),
+                         () -> builder.requires.stream()
+                                      .map(Module.Dependence::toString));
+            assertEquals("exports", numExports, builder.exports.size(),
+                         () -> builder.exports.entrySet().stream()
+                                      .map(e -> "exports " + e.getKey() + " to " + e.getValue()));
+            assertEquals("uses", numUses, builder.uses.size(),
+                         () -> builder.uses.stream());
+            assertEquals("provides", numProvides,
+                         (int)builder.provides.values().stream()
+                                     .flatMap(s -> s.stream())
+                                     .count(),
+                         () -> builder.provides.entrySet().stream()
+                                      .map(e -> "provides " + e.getKey() + " with " + e.getValue()));
+        }
+
+        private static void assertEquals(String msg, int expected, int got,
+                                         Supplier<Stream<String>> supplier) {
+            if (expected != got){
+                System.err.println("ERROR: mismatched " + msg +
+                        " expected: " + expected + " got: " + got );
+                supplier.get().sorted()
+                        .forEach(System.err::println);
+                throw new AssertionError("mismatched " + msg +
+                        " expected: " + expected + " got: " + got + " ");
+            }
+        }
     }
 }

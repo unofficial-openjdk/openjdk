@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +34,12 @@ import java.util.List;
  *
  * Index compressor. Use the minimal amount of bytes required to store
  * an integer.
+ *
+ * @implNote This class needs to maintain JDK 8 source compatibility.
+ *
+ * It is used internally in the JDK to implement jimage/jrtfs access,
+ * but also compiled and delivered as part of the jrtfs.jar to support access
+ * to the jimage file provided by the shipped JDK by tools running on JDK 8.
  */
 public class CompressIndexes {
     private static final int INTEGER_SIZE = 4;

@@ -145,7 +145,8 @@ public class ModuleDescriptor
          *
          * <p> Two {@code Requires} objects are compared by comparing their
          * module name lexicographically.  Where the module names are equal then
-         * the sets of modifiers are compared.
+         * the sets of modifiers are compared based on a value computed from the
+         * ordinal of each modifier. </p>
          *
          * @return A negative integer, zero, or a positive integer if this module
          *         dependence is less than, equal to, or greater than the given
@@ -172,7 +173,22 @@ public class ModuleDescriptor
             return value;
         }
 
-
+        /**
+         * Tests this module dependence for equality with the given object.
+         *
+         * <p> If the given object is not a {@code Requires} then this method
+         * returns {@code false}. Two module dependence objects are equal if
+         * the module names are equal and set of modifiers are equal. </p>
+         *
+         * <p> This method satisfies the general contract of the {@link
+         * java.lang.Object#equals(Object) Object.equals} method. </p>
+         *
+         * @param   ob
+         *          the object to which this object is to be compared
+         *
+         * @return  {@code true} if, and only if, the given object is a module
+         *          dependence that is equal to this module dependence
+         */
         @Override
         public boolean equals(Object ob) {
             if (!(ob instanceof Requires))
@@ -181,11 +197,25 @@ public class ModuleDescriptor
             return (name.equals(that.name) && mods.equals(that.mods));
         }
 
+        /**
+         * Computes a hash code for this module dependence.
+         *
+         * <p> The hash code is based upon the module name and modifiers. It
+         * satisfies the general contract of the {@link Object#hashCode
+         * Object.hashCode} method. </p>
+         *
+         * @return The hash-code value for this module dependence
+         */
         @Override
         public int hashCode() {
             return name.hashCode() * 43 + mods.hashCode();
         }
 
+        /**
+         * Returns a string describing module dependence.
+         *
+         * @return A string describing module dependence
+         */
         @Override
         public String toString() {
             return Dependence.toString(mods, name);
@@ -205,8 +235,11 @@ public class ModuleDescriptor
     public final static class Exports {
 
         private final String source;
-        private final Set<String> targets;
+        private final Set<String> targets;  // empty if unqualified export
 
+        /**
+         * Constructs a qualified export.
+         */
         private Exports(String source, Set<String> targets) {
             this(source, targets, true);
         }
@@ -223,15 +256,23 @@ public class ModuleDescriptor
         }
 
         /**
-         * Constructs an {@code Exports} to represent the exporting of package
-         * {@code source}.
+         * Constructs an unqualified export.
          */
         private Exports(String source) {
             this(source, true);
         }
         private Exports(String source, boolean check) {
             this.source = check ? requirePackageName(source) : source;
-            this.targets = null;
+            this.targets = Collections.emptySet();
+        }
+
+        /**
+         * Returns {@code true} if this is a qualified export.
+         *
+         * @return {@code true} if this is a qualified export
+         */
+        public boolean isQualified() {
+            return !targets.isEmpty();
         }
 
         /**
@@ -246,34 +287,67 @@ public class ModuleDescriptor
         /**
          * For a qualified export, returns the non-empty and immutable set
          * of the module names to which the package is exported. For an
-         * unqualified export, returns an empty {@code Optional}.
-         *
-         * @apiNote An alternative is to introduce {@code isQualified()} and
-         * change this method to an empty set when an exported is unqualified
+         * unqualified export, returns an empty set.
          *
          * @return The set of target module names or for an unqualified
-         *         export, an empty {@code Optional}
+         *         export, an empty set
          */
-        public Optional<Set<String>> targets() {
-            return Optional.ofNullable(targets);
+        public Set<String> targets() {
+            return targets;
         }
 
+        /**
+         * Computes a hash code for this module export.
+         *
+         * <p> The hash code is based upon the package name, and for a
+         * qualified export, the set of modules names to which the package
+         * is exported. It satisfies the general contract of the {@link
+         * Object#hashCode Object.hashCode} method.
+         *
+         * @return The hash-code value for this module export
+         */
+        @Override
         public int hashCode() {
             return hash(source, targets);
         }
 
-        public boolean equals(Object obj) {
-            if (!(obj instanceof Exports))
+        /**
+         * Tests this module export for equality with the given object.
+         *
+         * <p> If the given object is not a {@code Exports} then this method
+         * returns {@code false}. Two module exports objects are equal if the
+         * package names are equal and the set of target module names is equal.
+         * </p>
+         *
+         * <p> This method satisfies the general contract of the {@link
+         * java.lang.Object#equals(Object) Object.equals} method. </p>
+         *
+         * @param   ob
+         *          the object to which this object is to be compared
+         *
+         * @return  {@code true} if, and only if, the given object is a module
+         *          dependence that is equal to this module dependence
+         */
+        @Override
+        public boolean equals(Object ob) {
+            if (!(ob instanceof Exports))
                 return false;
-            Exports other = (Exports)obj;
+            Exports other = (Exports)ob;
             return Objects.equals(this.source, other.source) &&
                 Objects.equals(this.targets, other.targets);
         }
 
+        /**
+         * Returns a string describing module export.
+         *
+         * @return A string describing module export
+         */
+        @Override
         public String toString() {
-            if (targets != null)
+            if (targets.isEmpty())
+                return source;
+            else
                 return source + " to " + targets;
-            return source;
         }
 
     }
@@ -322,28 +396,102 @@ public class ModuleDescriptor
          */
         public Set<String> providers() { return providers; }
 
+        /**
+         * Computes a hash code for this provides.
+         *
+         * <p> The hash code is based upon the service type and the set of
+         * providers. It satisfies the general contract of the {@link
+         * Object#hashCode Object.hashCode} method. </p>
+         *
+         * @return The hash-code value for this module provides
+         */
+        @Override
         public int hashCode() {
             return hash(service, providers);
         }
 
-        public boolean equals(Object obj) {
-            if (!(obj instanceof Provides))
+        /**
+         * Tests this provides for equality with the given object.
+         *
+         * <p> If the given object is not a {@code Provides} then this method
+         * returns {@code false}. Two {@code Provides} objects are equal if the
+         * service type is equal and the set of providers is equal. </p>
+         *
+         * <p> This method satisfies the general contract of the {@link
+         * java.lang.Object#equals(Object) Object.equals} method. </p>
+         *
+         * @param   ob
+         *          the object to which this object is to be compared
+         *
+         * @return  {@code true} if, and only if, the given object is a
+         *          {@code Provides} that is equal to this {@code Provides}
+         */
+        @Override
+        public boolean equals(Object ob) {
+            if (!(ob instanceof Provides))
                 return false;
-            Provides other = (Provides)obj;
+            Provides other = (Provides)ob;
             return Objects.equals(this.service, other.service) &&
                     Objects.equals(this.providers, other.providers);
         }
 
+        /**
+         * Returns a string describing this provides.
+         *
+         * @return A string describing this provides
+         */
+        @Override
+        public String toString() {
+            return service + " with " + providers;
+        }
+
     }
 
-
+
 
     /**
-     * Vaguely Debian-like version strings, for now.
-     * This will, eventually, change.
+     * A module's version string.
      *
-     * @see <a href="http://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Version">Debian
-     * Policy Manual, Chapter 5: Control files and their fields</a>
+     * <p> A version string has three components: The version number itself, an
+     * optional pre-release version, and an optional build version.  Each
+     * component is sequence of tokens; each token is either a non-negative
+     * integer or a string.  Tokens are separated by the punctuation characters
+     * {@code '.'}, {@code '-'}, or {@code '+'}, or by transitions from a
+     * sequence of digits to a sequence of characters that are neither digits
+     * nor punctuation characters, or vice versa.
+     *
+     * <ul>
+     *
+     *   <li> The <i>version number</i> is a sequence of tokens separated by
+     *   {@code '.'} characters, terminated by the first {@code '-'} or {@code
+     *   '+'} character. </li>
+     *
+     *   <li> The <i>pre-release version</i> is a sequence of tokens separated
+     *   by {@code '.'} or {@code '-'} characters, terminated by the first
+     *   {@code '+'} character. </li>
+     *
+     *   <li> The <i>build version</i> is a sequence of tokens separated by
+     *   {@code '.'}, {@code '-'}, or {@code '+'} characters.
+     *
+     * </ul>
+     *
+     * <p> When comparing two version strings, the elements of their
+     * corresponding components are compared in pointwise fashion.  If one
+     * component is longer than the other, but otherwise equal to it, then the
+     * first component is considered the greater of the two; otherwise, if two
+     * corresponding elements are integers then they are compared as such;
+     * otherwise, at least one of the elements is a string, so the other is
+     * converted into a string if it is an integer and the two are compared
+     * lexicographically.  Trailing integer elements with the value zero are
+     * ignored.
+     *
+     * <p> Given two version strings, if their version numbers differ then the
+     * result of comparing them is the result of comparing their version
+     * numbers; otherwise, if one of them has a pre-release version but the
+     * other does not then the first is considered to precede the second,
+     * otherwise the result of comparing them is the result of comparing their
+     * pre-release versions; otherwise, the result of comparing them is the
+     * result of comparing their build versions.
      *
      * @see ModuleDescriptor#version()
      * @since 9
@@ -358,7 +506,8 @@ public class ModuleDescriptor
         // If Java had disjunctive types then we'd write List<Integer|String> here
         //
         private final List<Object> sequence;
-        private final List<Object> branch;
+        private final List<Object> pre;
+        private final List<Object> build;
 
         // Take a numeric token starting at position i
         // Append it to the given list
@@ -391,7 +540,7 @@ public class ModuleDescriptor
             int n = s.length();
             while (++i < n) {
                 char c = s.charAt(i);
-                if (c != '.' && c != '-' && !(c >= '0' && c <= '9'))
+                if (c != '.' && c != '-' && c != '+' && !(c >= '0' && c <= '9'))
                     continue;
                 break;
             }
@@ -399,13 +548,13 @@ public class ModuleDescriptor
             return i;
         }
 
-        // Version syntax, for now: tok+ ( '-' tok+)?
-        // First token string is sequence, second is branch
-        // Tokens are delimited by '.', or by changes between alpha & numeric
-        // chars
-        // Numeric tokens are compared as decimal numbers
+        // Syntax: tok+ ( '-' tok+)? ( '+' tok+)?
+        // First token string is sequence, second is pre, third is build
+        // Tokens are separated by '.' or '-', or by changes between alpha & numeric
+        // Numeric tokens are compared as decimal integers
         // Non-numeric tokens are compared lexicographically
-        // Tokens in branch may contain '-'
+        // A version with a non-empty pre is less than a version with same seq but no pre
+        // Tokens in build may contain '-' and '+'
         //
         private Version(String v) {
 
@@ -418,13 +567,13 @@ public class ModuleDescriptor
             int i = 0;
             char c = v.charAt(i);
             if (!(c >= '0' && c <= '9'))
-                throw new
-                        IllegalArgumentException(v
-                        + ": Version does not start"
-                        + " with a number");
+                throw new IllegalArgumentException(v
+                                                   + ": Version string does not start"
+                                                   + " with a number");
 
             List<Object> sequence = new ArrayList<>(4);
-            List<Object> branch = new ArrayList<>(2);
+            List<Object> pre = new ArrayList<>(2);
+            List<Object> build = new ArrayList<>(2);
 
             i = takeNumber(v, i, sequence);
 
@@ -434,7 +583,7 @@ public class ModuleDescriptor
                     i++;
                     continue;
                 }
-                if (c == '-') {
+                if (c == '-' || c == '+') {
                     i++;
                     break;
                 }
@@ -445,18 +594,40 @@ public class ModuleDescriptor
             }
 
             if (c == '-' && i >= n)
-                throw new IllegalArgumentException(v + ": Empty branch");
+                throw new IllegalArgumentException(v + ": Empty pre-release");
 
             while (i < n) {
                 c = v.charAt(i);
                 if (c >= '0' && c <= '9')
-                    i = takeNumber(v, i, branch);
+                    i = takeNumber(v, i, pre);
                 else
-                    i = takeString(v, i, branch);
+                    i = takeString(v, i, pre);
                 if (i >= n)
                     break;
                 c = v.charAt(i);
-                if (c == '.') {
+                if (c == '.' || c == '-') {
+                    i++;
+                    continue;
+                }
+                if (c == '+') {
+                    i++;
+                    break;
+                }
+            }
+
+            if (c == '+' && i >= n)
+                throw new IllegalArgumentException(v + ": Empty pre-release");
+
+            while (i < n) {
+                c = v.charAt(i);
+                if (c >= '0' && c <= '9')
+                    i = takeNumber(v, i, build);
+                else
+                    i = takeString(v, i, build);
+                if (i >= n)
+                    break;
+                c = v.charAt(i);
+                if (c == '.' || c == '-' || c == '+') {
                     i++;
                     continue;
                 }
@@ -464,14 +635,15 @@ public class ModuleDescriptor
 
             this.version = v;
             this.sequence = sequence;
-            this.branch = branch;
+            this.pre = pre;
+            this.build = build;
         }
 
         /**
          * Parses the given string as a version string.
          *
          * @param  v
-         *         The string to parse as a version string
+         *         The string to parse
          *
          * @return The resulting {@code Version}
          *
@@ -493,8 +665,9 @@ public class ModuleDescriptor
             for (int i = 0; i < n; i++) {
                 Object o1 = ts1.get(i);
                 Object o2 = ts2.get(i);
-                if (   (o1 instanceof Integer && o2 instanceof Integer)
-                        || (o1 instanceof String && o2 instanceof String)) {
+                if ((o1 instanceof Integer && o2 instanceof Integer)
+                    || (o1 instanceof String && o2 instanceof String))
+                {
                     int c = cmp(o1, o2);
                     if (c == 0)
                         continue;
@@ -517,14 +690,47 @@ public class ModuleDescriptor
             return 0;
         }
 
+        /**
+         * Compares this module version to another module version. Module
+         * versions are compared as described in the class description.
+         *
+         * @param that
+         *        The module version to compare
+         *
+         * @return A negative integer, zero, or a positive integer as this
+         *         module version is less than, equal to, or greater than the
+         *         given module version
+         */
         @Override
         public int compareTo(Version that) {
             int c = compareTokens(this.sequence, that.sequence);
-            if (c != 0)
-                return c;
-            return compareTokens(this.branch, that.branch);
+            if (c != 0) return c;
+            if (this.pre.isEmpty()) {
+                if (!that.pre.isEmpty()) return +1;
+            } else {
+                if (that.pre.isEmpty()) return -1;
+            }
+            c = compareTokens(this.pre, that.pre);
+            if (c != 0) return c;
+            return compareTokens(this.build, that.build);
         }
 
+        /**
+         * Tests this module version for equality with the given object.
+         *
+         * <p> If the given object is not a {@code Version} then this method
+         * returns {@code false}. Two module version are equal if their
+         * corresponding components are equal. </p>
+         *
+         * <p> This method satisfies the general contract of the {@link
+         * java.lang.Object#equals(Object) Object.equals} method. </p>
+         *
+         * @param   ob
+         *          the object to which this object is to be compared
+         *
+         * @return  {@code true} if, and only if, the given object is a module
+         *          reference that is equal to this module reference
+         */
         @Override
         public boolean equals(Object ob) {
             if (!(ob instanceof Version))
@@ -532,11 +738,25 @@ public class ModuleDescriptor
             return compareTo((Version)ob) == 0;
         }
 
+        /**
+         * Computes a hash code for this module version.
+         *
+         * <p> The hash code is based upon the components of the version and
+         * satisfies the general contract of the {@link Object#hashCode
+         * Object.hashCode} method. </p>
+         *
+         * @return The hash-code value for this module version
+         */
         @Override
         public int hashCode() {
             return version.hashCode();
         }
 
+        /**
+         * Returns the string from which this version was parsed.
+         *
+         * @return The string from which this version was parsed.
+         */
         @Override
         public String toString() {
             return version;
@@ -703,15 +923,13 @@ public class ModuleDescriptor
     }
 
     /**
-     * <p> Returns {@code true} if this module descriptor was not originally
-     * compiled from source code. </p>
+     * <p> Returns {@code true} if this module descriptor was not generated
+     * from an explicit module declaration ({@code module-info.java})
+     * or an implicit module declaration (an {@link #isAutomatic() automatic}
+     * module). </p>
      *
-     * <p> This method always returns {@code true} for {@link #isAutomatic()
-     * automatic} modules or {@code ModuleDescriptor} objects created
-     * programmatically using a {@link Builder}. </p>
-     *
-     * @return  {@code true} if this module descriptor was not originally
-     *          compiled from source code.
+     * @return  {@code true} if this module descriptor was not generated by
+     *          an explicit or implicit module declaration
      *
      * @jvms 4.7.8 The {@code Synthetic} Attribute
      */
@@ -863,6 +1081,11 @@ public class ModuleDescriptor
      *         .exports("p")
      *         .build();
      * }</pre>
+     *
+     * @apiNote A {@code Builder} cannot be used to create an {@link
+     * ModuleDescriptor#isAutomatic() automatic} or a {@link
+     * ModuleDescriptor#isSynthetic() synthetic} module.
+     *
      * @since 9
      */
     public static final class Builder {
@@ -870,7 +1093,6 @@ public class ModuleDescriptor
         final String name;
         final boolean automatic;
         boolean synthetic;
-        boolean syntheticSet;
         final Map<String, Requires> requires = new HashMap<>();
         final Set<String> uses = new HashSet<>();
         final Map<String, Exports> exports = new HashMap<>();
@@ -903,8 +1125,33 @@ public class ModuleDescriptor
         }
 
         /**
-         * Adds a module dependence with the given (and possibly empty) set
-         * of modifiers.
+         * Adds a dependence on a module.
+         *
+         * @param  req
+         *         The dependence
+         *
+         * @return This builder
+         *
+         * @throws IllegalArgumentException
+         *         If the dependence is on the module that this builder was
+         *         initialized to build
+         * @throws IllegalStateException
+         *         If the dependence on the module has already been declared
+         */
+        public Builder requires(Requires req) {
+            String mn = req.name();
+            if (name.equals(mn))
+                throw new IllegalArgumentException("Dependence on self");
+            if (requires.containsKey(mn))
+                throw new IllegalStateException("Dependence upon " + mn
+                                                + " already declared");
+            requires.put(mn, req);
+            return this;
+        }
+
+        /**
+         * Adds a dependence on a module with the given (and possibly empty)
+         * set of modifiers.
          *
          * @param  mods
          *         The set of modifiers
@@ -918,7 +1165,7 @@ public class ModuleDescriptor
          *         identifier, or is equal to the module name that this builder
          *         was initialized to build
          * @throws IllegalStateException
-         *         If a dependency on the module has already been declared
+         *         If the dependence on the module has already been declared
          */
         public Builder requires(Set<Requires.Modifier> mods, String mn) {
             if (name.equals(mn))
@@ -931,7 +1178,7 @@ public class ModuleDescriptor
         }
 
         /**
-         * Adds a module dependence with an empty set of modifiers.
+         * Adds a dependence on a module with an empty set of modifiers.
          *
          * @param  mn
          *         The module name
@@ -943,14 +1190,14 @@ public class ModuleDescriptor
          *         identifier, or is equal to the module name that this builder
          *         was initialized to build
          * @throws IllegalStateException
-         *         If a dependency on the module has already been declared
+         *         If the dependence on the module has already been declared
          */
         public Builder requires(String mn) {
             return requires(EnumSet.noneOf(Requires.Modifier.class), mn);
         }
 
         /**
-         * Adds a module dependence with the given modifier.
+         * Adds a dependence on a module with the given modifier.
          *
          * @param  mod
          *         The modifier
@@ -964,7 +1211,7 @@ public class ModuleDescriptor
          *         identifier, or is equal to the module name that this builder
          *         was initialized to build
          * @throws IllegalStateException
-         *         If a dependency on the module has already been declared
+         *         If the dependence on the module has already been declared
          */
         public Builder requires(Requires.Modifier mod, String mn) {
             return requires(EnumSet.of(mod), mn);
@@ -1003,6 +1250,25 @@ public class ModuleDescriptor
             if (conceals.contains(pn))
                 throw new IllegalStateException("Concealed package "
                                                 + pn + " already declared");
+        }
+
+        /**
+         * Adds an export.
+         *
+         * @param  e
+         *         The export
+         *
+         * @return This builder
+         *
+         * @throws IllegalStateException
+         *         If the package is already declared as an exported or
+         *         concealed package
+         */
+        public Builder exports(Exports e) {
+            String pn = e.source();
+            ensureNotExportedOrConcealed(pn);
+            exports.put(pn, e);
+            return this;
         }
 
         /**
@@ -1074,6 +1340,27 @@ public class ModuleDescriptor
         // Used by ModuleInfo, after a packageFinder is invoked
         /* package */ Set<String> exportedPackages() {
             return exports.keySet();
+        }
+
+        /**
+         * Provides a service with one or more implementations.
+         *
+         * @param  p
+         *         The provides
+         *
+         * @return This builder
+         *
+         * @throws IllegalStateException
+         *         If the providers for the service type have already been
+         *         declared
+         */
+        public Builder provides(Provides p) {
+            String st = p.service();
+            if (provides.containsKey(st))
+                throw new IllegalStateException("Providers of service "
+                                                + st + " already declared");
+            provides.put(st, p);
+            return this;
         }
 
         /**
@@ -1164,6 +1451,24 @@ public class ModuleDescriptor
             if (conceals.isEmpty())
                 conceals = new HashSet<>();
             conceals.add(pn);
+            return this;
+        }
+
+        /**
+         * Sets the module version.
+         *
+         * @param  v
+         *         The version
+         *
+         * @return This builder
+         *
+         * @throws IllegalStateException
+         *         If the module version is already set
+         */
+        public Builder version(Version v) {
+            if (version != null)
+                throw new IllegalStateException("module version already set");
+            version = requireNonNull(v);
             return this;
         }
 
@@ -1283,7 +1588,6 @@ public class ModuleDescriptor
 
         /* package */ Builder synthetic(boolean v) {
             this.synthetic = v;
-            this.syntheticSet = true;
             return this;
         }
 
@@ -1295,12 +1599,9 @@ public class ModuleDescriptor
         public ModuleDescriptor build() {
             assert name != null;
 
-            // assume synthetic if not set
-            boolean isSynthetic = (syntheticSet) ? synthetic : true;
-
             return new ModuleDescriptor(name,
                                         automatic,
-                                        isSynthetic,
+                                        synthetic,
                                         requires,
                                         uses,
                                         exports,
@@ -1322,7 +1623,12 @@ public class ModuleDescriptor
      *
      * <p> Two {@code ModuleDescriptor} objects are compared by comparing their
      * module name lexicographically.  Where the module names are equal then
-     * the versions, if present, are compared.
+     * the versions, if present, are compared. </p>
+     *
+     * @apiNote For now, the natural ordering is not consistent with equals.
+     * If two module descriptors have equal module names, equal versions if
+     * present, but their corresponding components are not equal, then they
+     * will be considered equal by this method.
      *
      * @param  that
      *         The object to which this module descriptor is to be compared
@@ -1345,6 +1651,22 @@ public class ModuleDescriptor
         return version.compareTo(that.version);
     }
 
+    /**
+     * Tests this module descriptor for equality with the given object.
+     *
+     * <p> If the given object is not a {@code ModuleDescriptor} then this
+     * method returns {@code false}. Two module descriptors are equal if each
+     * of their corresponding components is equal. </p>
+     *
+     * <p> This method satisfies the general contract of the {@link
+     * java.lang.Object#equals(Object) Object.equals} method. </p>
+     *
+     * @param   ob
+     *          the object to which this object is to be compared
+     *
+     * @return  {@code true} if, and only if, the given object is a module
+     *          descriptor that is equal to this module descriptor
+     */
     @Override
     public boolean equals(Object ob) {
         if (ob == this)
@@ -1370,6 +1692,15 @@ public class ModuleDescriptor
 
     private transient int hash;  // cached hash code
 
+    /**
+     * Computes a hash code for this module descriptor.
+     *
+     * <p> The hash code is based upon the components of the module descriptor,
+     * and satisfies the general contract of the {@link Object#hashCode
+     * Object.hashCode} method. </p>
+     *
+     * @return The hash-code value for this module descriptor
+     */
     @Override
     public int hashCode() {
         int hc = hash;
@@ -1393,6 +1724,11 @@ public class ModuleDescriptor
         return hc;
     }
 
+    /**
+     * Returns a string describing this descriptor.
+     *
+     * @return A string describing this descriptor
+     */
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

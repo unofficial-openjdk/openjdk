@@ -1,5 +1,5 @@
 #
-# Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -224,14 +224,8 @@ SUNWprivate_1.1 {
 		Java_java_lang_System_setOut0;
 		Java_java_lang_Thread_registerNatives;
 		Java_java_lang_Throwable_fillInStackTrace;
-		Java_java_lang_Throwable_getStackTraceDepth;
-		Java_java_lang_Throwable_getStackTraceElement;
-		Java_java_nio_Bits_copyFromShortArray;
-		Java_java_nio_Bits_copyToShortArray;
-		Java_java_nio_Bits_copyFromIntArray;
-		Java_java_nio_Bits_copyToIntArray;
-		Java_java_nio_Bits_copyFromLongArray;
-		Java_java_nio_Bits_copyToLongArray;
+                Java_java_lang_Throwable_getStackTraceDepth;
+                Java_java_lang_Throwable_getStackTraceElement;
 		Java_java_security_AccessController_doPrivileged__Ljava_security_PrivilegedAction_2;
 		Java_java_security_AccessController_doPrivileged__Ljava_security_PrivilegedAction_2Ljava_security_AccessControlContext_2;
 		Java_java_security_AccessController_doPrivileged__Ljava_security_PrivilegedExceptionAction_2;
@@ -241,28 +235,27 @@ SUNWprivate_1.1 {
 		Java_java_util_TimeZone_getSystemTimeZoneID;
 		Java_java_util_TimeZone_getSystemGMTOffsetID;
 		Java_java_util_concurrent_atomic_AtomicLong_VMSupportsCS8;
-		Java_sun_misc_NativeSignalHandler_handle0;
-		Java_sun_misc_Signal_findSignal;
-		Java_sun_misc_Signal_handle0;
-		Java_sun_misc_Signal_raise0;
-                Java_sun_reflect_ConstantPool_getClassAt0;
-                Java_sun_reflect_ConstantPool_getClassAtIfLoaded0;
-                Java_sun_reflect_ConstantPool_getClassRefIndexAt0;
-                Java_sun_reflect_ConstantPool_getDoubleAt0;
-                Java_sun_reflect_ConstantPool_getFieldAt0;
-                Java_sun_reflect_ConstantPool_getFieldAtIfLoaded0;
-                Java_sun_reflect_ConstantPool_getFloatAt0;
-                Java_sun_reflect_ConstantPool_getIntAt0;
-                Java_sun_reflect_ConstantPool_getLongAt0;
-                Java_sun_reflect_ConstantPool_getMemberRefInfoAt0;
-                Java_sun_reflect_ConstantPool_getMethodAt0;
-                Java_sun_reflect_ConstantPool_getMethodAtIfLoaded0;
-                Java_sun_reflect_ConstantPool_getNameAndTypeRefIndexAt0;
-                Java_sun_reflect_ConstantPool_getNameAndTypeRefInfoAt0;
-                Java_sun_reflect_ConstantPool_getSize0;
-                Java_sun_reflect_ConstantPool_getStringAt0;
-                Java_sun_reflect_ConstantPool_getTagAt0;
-                Java_sun_reflect_ConstantPool_getUTF8At0;
+		Java_jdk_internal_misc_Signal_findSignal0;
+		Java_jdk_internal_misc_Signal_handle0;
+		Java_jdk_internal_misc_Signal_raise0;
+              Java_sun_reflect_ConstantPool_getClassAt0;
+              Java_sun_reflect_ConstantPool_getClassAtIfLoaded0;
+              Java_sun_reflect_ConstantPool_getClassRefIndexAt0;
+              Java_sun_reflect_ConstantPool_getDoubleAt0;
+              Java_sun_reflect_ConstantPool_getFieldAt0;
+              Java_sun_reflect_ConstantPool_getFieldAtIfLoaded0;
+              Java_sun_reflect_ConstantPool_getFloatAt0;
+              Java_sun_reflect_ConstantPool_getIntAt0;
+              Java_sun_reflect_ConstantPool_getLongAt0;
+              Java_sun_reflect_ConstantPool_getMemberRefInfoAt0;
+              Java_sun_reflect_ConstantPool_getMethodAt0;
+              Java_sun_reflect_ConstantPool_getMethodAtIfLoaded0;
+              Java_sun_reflect_ConstantPool_getNameAndTypeRefIndexAt0;
+              Java_sun_reflect_ConstantPool_getNameAndTypeRefInfoAt0;
+              Java_sun_reflect_ConstantPool_getSize0;
+              Java_sun_reflect_ConstantPool_getStringAt0;
+              Java_sun_reflect_ConstantPool_getTagAt0;
+              Java_sun_reflect_ConstantPool_getUTF8At0;
 		Java_java_io_Console_istty;
 		Java_java_io_Console_encoding;
                 Java_java_io_Console_echo;
@@ -272,8 +265,6 @@ SUNWprivate_1.1 {
 		Java_sun_reflect_Reflection_getCallerClass__;
 		Java_sun_reflect_Reflection_getCallerClass__I;
 		Java_sun_reflect_Reflection_getClassAccessFlags;
-                Java_sun_misc_Version_getJdkVersionInfo;
-                Java_sun_misc_Version_getJvmVersionInfo;
 		Java_jdk_internal_misc_VM_latestUserDefinedLoader;
                 Java_jdk_internal_misc_VM_getuid;
                 Java_jdk_internal_misc_VM_geteuid;
@@ -288,9 +279,9 @@ SUNWprivate_1.1 {
                 Java_java_lang_reflect_Module_addExportsToAllUnnamed0;
                 Java_java_lang_reflect_Module_addPackage0;
 
-		Java_jdk_internal_misc_BootLoader_getSystemPackageLocation;
-		Java_jdk_internal_misc_BootLoader_getSystemPackageNames;
-                Java_jdk_internal_misc_BootLoader_setBootLoaderUnnamedModule0;
+		Java_jdk_internal_loader_BootLoader_getSystemPackageLocation;
+		Java_jdk_internal_loader_BootLoader_getSystemPackageNames;
+                Java_jdk_internal_loader_BootLoader_setBootLoaderUnnamedModule0;
 
 		Java_sun_misc_VMSupport_initAgentProperties;
 		Java_sun_misc_VMSupport_getVMTemporaryDirectory;

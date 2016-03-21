@@ -28,7 +28,6 @@ package com.sun.naming.internal;
 import java.io.InputStream;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Module;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
@@ -399,10 +398,8 @@ public final class ResourceManager {
             while (factory == null && parser.hasMoreTokens()) {
                 className = parser.nextToken() + classSuffix;
                 try {
-                    Class<?> clazz = helper.loadClass(className, loader);
-                    Module me = ResourceManager.class.getModule();
-                    me.addReads(clazz.getModule());
-                    factory = clazz.newInstance();
+                    // System.out.println("loading " + className);
+                    factory = helper.loadClass(className, loader).newInstance();
                 } catch (InstantiationException e) {
                     NamingException ne =
                         new NamingException("Cannot instantiate " + className);

@@ -85,7 +85,8 @@ final class TypeVersionMapper {
      * @throws OpenDataException
      */
     CompositeType getVersionedCompositeType(CompositeType type, String version)
-    throws OpenDataException {
+        throws OpenDataException
+    {
         Predicate<String> filter = getFilter(type.getTypeName(), version);
         if (filter == null) {
             return type;
@@ -115,7 +116,8 @@ final class TypeVersionMapper {
     }
 
     private OpenType<?> getVersionedType(OpenType<?> type, String version)
-    throws OpenDataException{
+        throws OpenDataException
+    {
         if (type instanceof ArrayType) {
             return getVersionedArrayType((ArrayType)type, version);
         }
@@ -129,7 +131,8 @@ final class TypeVersionMapper {
     }
 
     private ArrayType<?> getVersionedArrayType(ArrayType<?> type, String version)
-    throws OpenDataException {
+        throws OpenDataException
+    {
         if (type.isPrimitiveArray()) {
             return type;
         }
@@ -144,9 +147,9 @@ final class TypeVersionMapper {
         }
     }
 
-    private TabularType getVersionedTabularType(
-        TabularType type, String version)
-    throws OpenDataException {
+    private TabularType getVersionedTabularType(TabularType type, String version)
+        throws OpenDataException
+    {
         CompositeType ct = getVersionedCompositeType(
             type.getRowType(),
             version

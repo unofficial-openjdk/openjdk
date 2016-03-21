@@ -23,6 +23,7 @@
 
 import java.io.FilePermission;
 import java.io.IOException;
+import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Field;
 import java.lang.reflect.Module;
 import java.lang.reflect.Modifier;
@@ -83,7 +84,8 @@ public class FieldSetAccessibleTest {
         for (Field f : c.getDeclaredFields()) {
             fieldCount.incrementAndGet();
             boolean expect = expectException;
-            if (c == Module.class && !Modifier.isPublic(f.getModifiers())) {
+            if ((c == Module.class || c == AccessibleObject.class) &&
+                !Modifier.isPublic(f.getModifiers())) {
                 expect = true;
             }
             try {

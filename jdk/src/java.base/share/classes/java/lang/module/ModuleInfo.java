@@ -40,8 +40,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import jdk.internal.module.Hasher.DependencyHashes;
 
@@ -264,8 +262,8 @@ final class ModuleInfo {
         }
 
         // Was the Synthetic attribute present?
-        boolean isSynthetic = attributes.contains(SYNTHETIC);
-        builder.synthetic(isSynthetic);
+        if (attributes.contains(SYNTHETIC))
+            builder.synthetic(true);
 
         return builder.build();
     }
@@ -460,7 +458,7 @@ final class ModuleInfo {
     private static boolean isAttributeDisallowed(String name) {
         Set<String> notAllowed = predefinedNotAllowed;
         if (notAllowed == null) {
-            notAllowed = Stream.of(
+            notAllowed = Set.of(
                     "ConstantValue",
                     "Code",
                     "StackMapTable",
@@ -478,16 +476,10 @@ final class ModuleInfo {
                     "RuntimeInvisibleTypeAnnotations",
                     "AnnotationDefault",
                     "BootstrapMethods",
-                    "MethodParameters")
-                    .collect(Collectors.toSet());
+                    "MethodParameters");
             predefinedNotAllowed = notAllowed;
         }
-
-        if (notAllowed.contains(name)) {
-            return true;
-        } else {
-            return false;
-        }
+        return notAllowed.contains(name);
     }
 
     // lazily created set the pre-defined attributes that are not allowed

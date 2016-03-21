@@ -69,10 +69,10 @@ public interface ModuleReference extends ObjectReference {
     ClassLoaderReference classLoader();
 
     /**
-     * Determines if the module reads the source module.
+     * Indicates if this module reads another module.
      *
-     * @return {@code true} if the source {@link ModuleReference}
-     * module is readable, {@code false} otherwise.
+     * @return {@code true} if this module reads {@code other},
+     *         {@code false} otherwise
      */
-    boolean canRead(ModuleReference source);
+    boolean canRead(ModuleReference other);
 }

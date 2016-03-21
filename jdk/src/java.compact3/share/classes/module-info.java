@@ -26,6 +26,7 @@
 module java.compact3 {
     requires public java.compact2;
     requires public java.compiler;
+    requires public java.httpclient;
     requires public java.instrument;
     requires public java.management;
     requires public java.naming;

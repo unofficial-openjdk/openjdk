@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,10 +37,6 @@ import java.security.PrivilegedAction;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 
-import jdk.internal.misc.BootLoader;
-import sun.misc.Unsafe;
-
-
 /**
  * ResourceBundleProviderSupport provides convenience methods for loading
  * resource bundles.
@@ -50,16 +46,26 @@ public class ResourceBundleProviderSupport {
      * Loads a {@code ResourceBundle} of the given {@code bundleName} local to
      * the given {@code module}.
      *
+     * @apiNote
+     * {@link Class#forName(Module, String)} does a stack-based permission check.
+     * Caller of this method is responsible for doing an appropriate permission
+     * on behalf of the caller before calling this method.
+     *
      * @param module     the module from which the {@code ResourceBundle} is loaded
      * @param bundleName the bundle name for the {@code ResourceBundle} class,
      *                   such as "com.example.app.MyResources_fr"
      * @return the {@code ResourceBundle}, or null if no {@code ResourceBundle} is found
+     * @throws SecurityException
+     *         if a security manager exists, it denies loading the class given by
+     *         {@code bundleName} from the given {@code module}.
+     *         If the given module is "java.base", this method will not do security check.
+     * @throws NullPointerException
+     *         if {@code module} or {@code bundleName) is null
+     * @see Class#forName(Module, String)
      */
     public static ResourceBundle loadResourceBundle(Module module, String bundleName)
     {
-        // TODO: security permission check to access a bundle in another module?
-        PrivilegedAction<Class<?>> pa = () -> Class.forName(module, bundleName);
-        Class<?> c = AccessController.doPrivileged(pa);
+        Class<?> c = Class.forName(module, bundleName);
         if (c != null && ResourceBundle.class.isAssignableFrom(c)) {
             try {
                 @SuppressWarnings("unchecked")
@@ -68,14 +74,13 @@ public class ResourceBundleProviderSupport {
                 if (!Modifier.isPublic(ctor.getModifiers())) {
                     return null;
                 }
-
                 // java.base may not be able to read the bundleClass's module.
                 PrivilegedAction<Void> pa1 = () -> { ctor.setAccessible(true); return null; };
                 AccessController.doPrivileged(pa1);
                 try {
                     return ctor.newInstance((Object[]) null);
                 } catch (InvocationTargetException e) {
-                    Unsafe.getUnsafe().throwException(e.getTargetException());
+                    uncheckedThrow(e);
                 } catch (InstantiationException | IllegalAccessException e) {
                     throw new InternalError(e);
                 }
@@ -83,6 +88,14 @@ public class ResourceBundleProviderSupport {
             }
         }
         return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T extends Throwable> void uncheckedThrow(Throwable t) throws T {
+       if (t != null)
+            throw (T)t;
+       else
+            throw new Error("Unknown Exception");
     }
 
     /**
@@ -97,7 +110,7 @@ public class ResourceBundleProviderSupport {
      *                   such as "com.example.app.MyResources_de"
      * @return the {@code ResourceBundle} produced from the loaded properties,
      *         or null if no properties are found
-     * @see PropertiesResourceBundle
+     * @see PropertyResourceBundle
      */
     public static ResourceBundle loadPropertyResourceBundle(Module module, String bundleName)
             throws IOException

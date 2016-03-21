@@ -758,13 +758,12 @@ public class MBeanInstantiator {
     }
 
     private static void ensureClassAccess(Class<?> clazz)
-        throws IllegalAccessException
+            throws IllegalAccessException
     {
         int mod = clazz.getModifiers();
         if (!Modifier.isPublic(mod)) {
             throw new IllegalAccessException("Class is not public and can't be instantiated");
         }
-        MBeanInstantiator.class.getModule().addReads(clazz.getModule());
     }
 
     private ClassLoader getClassLoader(final ObjectName name) {

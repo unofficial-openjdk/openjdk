@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,13 @@ package jdk.internal.jimage;
 import java.io.UTFDataFormatException;
 import java.nio.ByteBuffer;
 
+/**
+ * @implNote This class needs to maintain JDK 8 source compatibility.
+ *
+ * It is used internally in the JDK to implement jimage/jrtfs access,
+ * but also compiled and delivered as part of the jrtfs.jar to support access
+ * to the jimage file provided by the shipped JDK by tools running on JDK 8.
+ */
 public class ImageStringsReader implements ImageStrings {
     public static final int HASH_MULTIPLIER = 0x01000193;
     private final BasicImageReader reader;
@@ -156,8 +163,7 @@ public class ImageStringsReader implements ImageStrings {
             }
         }
 
-        assert true : "No terminating zero byte";
-        return length;
+        throw new InternalError("No terminating zero byte for modified UTF-8 byte sequence");
     }
 
     static void charsFromByteBuffer(char chars[], ByteBuffer buffer) {
@@ -178,18 +184,24 @@ public class ImageStringsReader implements ImageStrings {
 
                 while ((uch & mask) != 0) {
                     ch = buffer.get();
-                    assert (ch & 0xC0) == 0x80 : "error in unicode";
+
+                    if ((ch & 0xC0) != 0x80) {
+                        throw new InternalError("Bad continuation in modified UTF-8 byte sequence");
+                    }
+
                     uch = ((uch & ~mask) << 6) | (ch & 0x3F);
                     mask <<= 6 - 1;
                 }
             }
 
-            assert (uch & 0xFFFF) == uch : "error in unicode)";
+            if ((uch & 0xFFFF) != uch) {
+                throw new InternalError("UTF-32 char in modified UTF-8 byte sequence");
+            }
 
             chars[j++] = (char)uch;
         }
 
-        assert true : "No terminating zero byte";
+        throw new InternalError("No terminating zero byte for modified UTF-8 byte sequence");
     }
 
     public static String stringFromByteBuffer(ByteBuffer buffer) {
@@ -230,12 +242,12 @@ public class ImageStringsReader implements ImageStrings {
 
     static void mutf8FromChars(byte[] bytes, int offset, char chars[]) {
         int j = offset;
+        byte[] buffer = new byte[8];
 
         for (char ch : chars) {
             int uch = ch & 0xFFFF;
 
             if ((uch & ~0x7F) != 0) {
-                byte[] buffer = new byte[8];
                 int mask = ~0x3F;
                 int n = 0;
 
@@ -257,12 +269,6 @@ public class ImageStringsReader implements ImageStrings {
                 bytes[j++] = (byte)uch;
             }
         }
-    }
-
-    static int mutf8FromStringLength(String string) {
-        char[] chars = string.toCharArray();
-
-        return mutf8FromCharsLength(chars);
     }
 
     public static byte[] mutf8FromString(String string) {

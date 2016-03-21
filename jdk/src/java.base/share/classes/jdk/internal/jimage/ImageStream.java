@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,13 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 
+/**
+ * @implNote This class needs to maintain JDK 8 source compatibility.
+ *
+ * It is used internally in the JDK to implement jimage/jrtfs access,
+ * but also compiled and delivered as part of the jrtfs.jar to support access
+ * to the jimage file provided by the shipped JDK by tools running on JDK 8.
+ */
 public class ImageStream {
     private ByteBuffer buffer;
 
@@ -73,7 +80,9 @@ public class ImageStream {
     }
 
     public void ensure(int needs) {
-        assert 0 <= needs : "Negative needs";
+        if (needs < 0) {
+            throw new IndexOutOfBoundsException("needs");
+        }
 
         if (needs > buffer.remaining()) {
             byte[] bytes = buffer.array();
@@ -95,7 +104,10 @@ public class ImageStream {
     }
 
     public void skip(int n) {
-        assert 0 <= n : "Negative offset";
+        if (n < 0) {
+            throw new IndexOutOfBoundsException("n");
+        }
+
         buffer.position(buffer.position() + n);
     }
 

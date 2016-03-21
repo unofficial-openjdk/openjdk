@@ -41,7 +41,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.Module;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
@@ -655,7 +654,6 @@ public class DefaultMXBeanMappingFactory extends MXBeanMappingFactory {
                 throws InvalidObjectException {
             final Object[] openArray = (Object[]) openValue;
             final Collection<Object> valueCollection;
-            ensureReadable(collectionClass.getModule());
             try {
                 valueCollection = cast(collectionClass.newInstance());
             } catch (Exception e) {
@@ -1116,7 +1114,6 @@ public class DefaultMXBeanMappingFactory extends MXBeanMappingFactory {
             try {
                 final Class<?> targetClass = getTargetClass();
                 ReflectUtil.checkPackageAccess(targetClass);
-                ensureReadable(targetClass.getModule());
                 o = targetClass.newInstance();
                 for (int i = 0; i < itemNames.length; i++) {
                     if (cd.containsKey(itemNames[i])) {
@@ -1347,7 +1344,6 @@ public class DefaultMXBeanMappingFactory extends MXBeanMappingFactory {
                     params[index] = javaItem;
             }
 
-            ensureReadable(max.constructor.getDeclaringClass().getModule());
             try {
                 ReflectUtil.checkPackageAccess(max.constructor.getDeclaringClass());
                 return max.constructor.newInstance(params);
@@ -1514,10 +1510,6 @@ public class DefaultMXBeanMappingFactory extends MXBeanMappingFactory {
             || name.equals("getClass"))
             return null;
         return rest;
-    }
-
-    private static void ensureReadable(Module m) {
-        DefaultMXBeanMappingFactory.class.getModule().addReads(m);
     }
 
     private final static Map<Type, Type> inProgress = newIdentityHashMap();

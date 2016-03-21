@@ -26,11 +26,10 @@
 package jdk.tools.jlink.internal;
 
 import jdk.internal.jimage.ImageLocation;
-import jdk.internal.jimage.ImageLocationBase;
 import jdk.internal.jimage.ImageStream;
 import jdk.internal.jimage.ImageStringsReader;
 
-public final class ImageLocationWriter extends ImageLocationBase {
+public final class ImageLocationWriter extends ImageLocation {
     private int locationOffset;
 
     private ImageLocationWriter(ImageStringsWriter strings) {

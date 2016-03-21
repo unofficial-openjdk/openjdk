@@ -35,11 +35,21 @@ package com.sun.jdi;
 public class InvalidModuleException extends RuntimeException {
     private static final long serialVersionUID = 7907359387320658039L;
 
+    /**
+     * Constructs a {@code InvalidModuleException} with no detail message.
+     */
     public InvalidModuleException() {
         super();
     }
 
-    public InvalidModuleException(String s) {
-        super(s);
+    /**
+     * Constructs a {@code InvalidModuleException} with the given detail
+     * message.
+     *
+     * @param msg
+     *        The detail message; can be {@code null}
+     */
+    public InvalidModuleException(String msg) {
+        super(msg);
     }
 }

@@ -31,7 +31,6 @@ import java.util.List;
  * @summary test the new Module attributes
  * @compile -XDignore.symbol.file Utils.java ModuleAttributes.java
  * @run main ModuleAttributes
- * @author ksrini
  */
 public class ModuleAttributes {
 

@@ -219,30 +219,32 @@ public final class SplittableRandom {
         return seed += gamma;
     }
 
-    /**
-     * The seed generator for default constructors.
-     */
-    private static final AtomicLong defaultGen = new AtomicLong(initialSeed());
-
-    private static long initialSeed() {
-        String pp = java.security.AccessController.doPrivileged(
-                new sun.security.action.GetPropertyAction(
-                        "java.util.secureRandomSeed"));
-        if (pp != null && pp.equalsIgnoreCase("true")) {
-            byte[] seedBytes = java.security.SecureRandom.getSeed(8);
-            long s = (long)(seedBytes[0]) & 0xffL;
-            for (int i = 1; i < 8; ++i)
-                s = (s << 8) | ((long)(seedBytes[i]) & 0xffL);
-            return s;
-        }
-        return (mix64(System.currentTimeMillis()) ^
-                mix64(System.nanoTime()));
-    }
-
     // IllegalArgumentException messages
     static final String BAD_BOUND = "bound must be positive";
     static final String BAD_RANGE = "bound must be greater than origin";
     static final String BAD_SIZE  = "size must be non-negative";
+
+    /**
+     * The seed generator for default constructors.
+     */
+    private static final AtomicLong defaultGen
+        = new AtomicLong(mix64(System.currentTimeMillis()) ^
+                         mix64(System.nanoTime()));
+
+    // at end of <clinit> to survive static initialization circularity
+    static {
+        if (java.security.AccessController.doPrivileged(
+            new java.security.PrivilegedAction<Boolean>() {
+                public Boolean run() {
+                    return Boolean.getBoolean("java.util.secureRandomSeed");
+                }})) {
+            byte[] seedBytes = java.security.SecureRandom.getSeed(8);
+            long s = (long)seedBytes[0] & 0xffL;
+            for (int i = 1; i < 8; ++i)
+                s = (s << 8) | ((long)seedBytes[i] & 0xffL);
+            defaultGen.set(s);
+        }
+    }
 
     /*
      * Internal versions of nextX methods used by streams, as well as

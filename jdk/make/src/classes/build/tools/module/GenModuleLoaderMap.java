@@ -42,12 +42,12 @@ import java.util.stream.Stream;
 
 public class GenModuleLoaderMap {
     private static final String USAGE =
-        "GenModuleLoaderMap -o <output-file> -boot m1[,m2]* -ext m3[,m4]* <original-source>";
+        "GenModuleLoaderMap -o <output-file> -boot m1[,m2]* -platform m3[,m4]* <original-source>";
 
     public static void main(String... args) throws Exception {
         // default set of boot modules and ext modules
         Stream<String> bootModules = Stream.empty();
-        Stream<String> extModules = Stream.empty();
+        Stream<String> platformModules = Stream.empty();
         Path outfile = null;
         Path source = null;
         for (int i=0; i < args.length; i++) {
@@ -57,9 +57,9 @@ public class GenModuleLoaderMap {
                 if (option.equals("-boot")) {
                     String[] mns = arg.split(",");
                     bootModules = Stream.concat(bootModules, Arrays.stream(mns));
-                } else if (option.equals("-ext")) {
+                } else if (option.equals("-platform")) {
                     String[] mns = arg.split(",");
-                    extModules = Stream.concat(extModules, Arrays.stream(mns));
+                    platformModules = Stream.concat(platformModules, Arrays.stream(mns));
                 } else if (option.equals("-o")) {
                     outfile = Paths.get(arg);
                 } else {
@@ -84,8 +84,8 @@ public class GenModuleLoaderMap {
             for (String line : Files.readAllLines(source)) {
                 if (line.contains("@@BOOT_MODULE_NAMES@@")) {
                     line = patch(line, "@@BOOT_MODULE_NAMES@@", bootModules, needsQuotes);
-                } else if (line.contains("@@EXT_MODULE_NAMES@@")) {
-                    line = patch(line, "@@EXT_MODULE_NAMES@@", extModules, needsQuotes);
+                } else if (line.contains("@@PLATFORM_MODULE_NAMES@@")) {
+                    line = patch(line, "@@PLATFORM_MODULE_NAMES@@", platformModules, needsQuotes);
                 }
                 writer.println(line);
             }

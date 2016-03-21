@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,11 +27,15 @@ package build.tools.jigsaw;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.lang.module.Configuration;
+import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleReference;
+import java.lang.module.ResolvedModule;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Enumeration;
@@ -42,10 +46,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import java.lang.module.Configuration;
-import java.lang.module.ModuleReference;
-import java.lang.module.ModuleFinder;
-import java.lang.module.ModuleDescriptor;
 import static java.lang.module.ModuleDescriptor.*;
 import static build.tools.jigsaw.ModuleSummary.HtmlDocument.Selector.*;
 import static build.tools.jigsaw.ModuleSummary.HtmlDocument.Division.*;
@@ -82,7 +82,7 @@ public class ModuleSummary {
         Files.createDirectories(dir);
 
         Map<String, ModuleSummary> modules = new HashMap<>();
-        Set<ModuleReference> mrefs = ModuleFinder.ofInstalled().findAll();
+        Set<ModuleReference> mrefs = ModuleFinder.ofSystem().findAll();
         for (ModuleReference mref : mrefs) {
             String mn = mref.descriptor().name();
             Path jmod = modpath.resolve(mn + ".jmod");
@@ -101,7 +101,11 @@ public class ModuleSummary {
         Configuration cf = resolve(roots);
         try (PrintStream out = new PrintStream(Files.newOutputStream(outfile))) {
             HtmlDocument doc = new HtmlDocument(title, modules);
-            doc.writeTo(out, cf.descriptors());
+            Set<ModuleDescriptor> descriptors = cf.modules().stream()
+                    .map(ResolvedModule::reference)
+                    .map(ModuleReference::descriptor)
+                    .collect(Collectors.toSet());
+            doc.writeTo(out, descriptors);
         }
     }
 
@@ -286,10 +290,10 @@ public class ModuleSummary {
     }
 
     static Configuration resolve(Set<String> roots) {
-        return Configuration.resolve(ModuleFinder.ofInstalled(),
-                                     Configuration.empty(),
-                                     ModuleFinder.empty(),
-                                     roots);
+        return Configuration.empty()
+            .resolveRequires(ModuleFinder.ofSystem(),
+                             ModuleFinder.empty(),
+                             roots);
     }
 
     static class HtmlDocument {
@@ -401,7 +405,11 @@ public class ModuleSummary {
             private final boolean aggregator;
             ModuleTableRow(ModuleSummary ms) {
                 this.ms = ms;
-                this.deps = resolve(Collections.singleton(ms.name())).descriptors();
+                Configuration cf = resolve(Set.of(ms.name()));
+                this.deps = cf.modules().stream()
+                        .map(ResolvedModule::reference)
+                        .map(ModuleReference::descriptor)
+                        .collect(Collectors.toSet());
                 int count = (ms.numClasses() > 0 ? 1 : 0) +
                             (ms.numResources() > 0 ? 1 : 0) +
                             (ms.numConfigs() > 0 ? 1 : 0) +
@@ -538,7 +546,7 @@ public class ModuleSummary {
                 sb.append(String.format("  <td class=\"%s\">", CODE));
                 ms.descriptor().exports().stream()
                         .sorted(Comparator.comparing(Exports::source))
-                        .filter(e -> !e.targets().isPresent())
+                        .filter(e -> !e.isQualified())
                         .forEach(e -> sb.append(e.source()).append("<br>").append("\n"));
                 sb.append("</td>");
                 return sb.toString();

@@ -24,8 +24,6 @@
  */
 
 module jdk.crypto.ec {
-    exports sun.security.ec to
-        jdk.crypto.pkcs11;
     provides java.security.Provider with sun.security.ec.SunEC;
 }
 

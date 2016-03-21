@@ -248,10 +248,7 @@ class ResourceBundleGenerator implements BundleGenerator {
             dir.mkdirs();
         }
         String className =
-            (CLDRConverter.isBaseModule ? "CLDRBaseLocaleDataMetaInfo" :
-                "CLDRLocaleDataMetaInfo_" +
-                CLDRConverter.DESTINATION_DIR.substring(CLDRConverter.DESTINATION_DIR.lastIndexOf('/')+1)
-                    .replaceAll("\\.", "_"));
+            (CLDRConverter.isBaseModule ? "CLDRBaseLocaleDataMetaInfo" : "CLDRLocaleDataMetaInfo");
         File file = new File(dir, className + ".java");
         if (!file.exists()) {
             file.createNewFile();
@@ -346,9 +343,7 @@ class ResourceBundleGenerator implements BundleGenerator {
                 if (!all && CLDRConverter.isBaseModule ^ isBaseLocale(id)) {
                     continue;
                 }
-                if (sb.length() > 0) {
-                    sb.append(' ');
-                }
+                sb.append(' ');
                 sb.append(id);
             }
         }

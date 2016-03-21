@@ -761,11 +761,11 @@ public interface VirtualMachine extends Mirror {
 
     /**
      * Determines if the target VM supports getting information about modules.
-     * @implSpec
-     * The default implementation throws {@code UnsupportedOperationException}.
      *
-     * @return <code>true</code> if the feature is supported,
-     * <code>false</code> otherwise.
+     * @return {@code true} if the feature is supported, {@code false} otherwise
+     *
+     * @implSpec
+     * The default implementation returns {@code false}.
      *
      * @see VirtualMachine#allModules()
      * @see ReferenceType#module()
@@ -774,8 +774,7 @@ public interface VirtualMachine extends Mirror {
      * @since 9
      */
     default boolean canGetModuleInfo() {
-        throw new java.lang.UnsupportedOperationException(
-            "The method canGetModuleInfo() must be implemented");
+        return false;
     }
 
     /**

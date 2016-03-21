@@ -165,9 +165,6 @@ javax/management/remote/mandatory/notif/NotifReconnectDeadlockTest.java			generi
 # 8147985
 sun/management/jmxremote/bootstrap/JMXInterfaceBindingTest.java generic-all
 
-# 8145919
-sun/management/jmxremote/bootstrap/RmiSslBootstrapTest.sh       generic-all
-
 ############################################################################
 
 # jdk_net
@@ -203,6 +200,9 @@ java/nio/channels/Selector/OutOfBand.java                       macosx-all
 java/nio/file/WatchService/Basic.java				solaris-all
 java/nio/file/WatchService/LotsOfEvents.java			solaris-all
 
+# 8149712
+java/nio/charset/coders/BashStreams.java                        generic-all
+
 ############################################################################
 
 # jdk_rmi
@@ -221,6 +221,9 @@ sun/rmi/transport/proxy/EagerHttpFallback.java                  generic-all
 
 # 8062724
 java/rmi/activation/Activatable/extLoadedImpl/ext.sh            generic-all
+
+# 8145980
+sun/rmi/rmic/newrmic/equivalence/run.sh                         generic-all
 
 ############################################################################
 
@@ -308,8 +311,11 @@ sun/security/provider/SecureRandom/StrongSecureRandom.java      macosx-10.10
 # 8074580
 sun/security/pkcs11/rsa/TestKeyPairGenerator.java               generic-all
 
-# 8146387
-javax/net/ssl/SSLSession/SessionCacheSizeTests.java windows-all,solaris-all
+# 8038079
+sun/security/krb5/auto/HttpNegotiateServer.java                 generic-all
+
+# 8130302
+sun/security/tools/keytool/autotest.sh                          generic-all
 
 ############################################################################
 
@@ -337,9 +343,6 @@ javax/imageio/plugins/tiff/WriteToSequenceAfterAbort.java       generic-all
 
 # jdk_time
 
-# 8134979
-java/time/tck/java/time/chrono/TCKJapaneseChronology.java       generic-all
-
 ############################################################################
 
 # jdk_tools
@@ -347,10 +350,12 @@ java/time/tck/java/time/chrono/TCKJapaneseChronology.java       generic-all
 # Tests take too long, on sparcs see 7143279
 # also see 8059906
 tools/pack200/CommandLineTests.java                             generic-all
-tools/pack200/Pack200Test.java                                  solaris-all,macosx-all
 
-# 8007410
-tools/launcher/FXLauncherTest.java                              linux-all
+# 8059906 fails on solaris and macosx, 8151901 
+tools/pack200/Pack200Test.java                                  generic-all
+
+# 8068049 
+tools/launcher/FXLauncherTest.java                              linux-all,macosx-all
 
 ############################################################################
 
@@ -419,11 +424,22 @@ sun/jvmstat/monitor/MonitoredVm/MonitorVmStartTerminate.java    generic-all
 # 8059035
 sun/tools/jinfo/JInfoSanityTest.java                           generic-all
 
+# 8151899
+demo/jvmti/compiledMethodLoad/CompiledMethodLoadTest.java       generic-all
+
 ############################################################################
 
 # jdk_other
 
-############################################################################
-
 # 8141370
 com/sun/jndi/ldap/DeadSSLLdapTimeoutTest.java			linux-i586,macosx-all
+
+############################################################################
+
+# core_tools
+
+# 8150975
+# tools/jimage/JImageTest.java                                    linux-i586,windows-i586
+
+############################################################################
+

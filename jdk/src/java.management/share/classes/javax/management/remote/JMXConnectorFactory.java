@@ -530,7 +530,6 @@ public class JMXConnectorFactory {
 
             // We have just proved that this cast is correct
             Class<? extends T> providerClassT = Util.cast(providerClass);
-            JMXConnectorFactory.class.getModule().addReads(providerClass.getModule());
             try {
                 return providerClassT.newInstance();
             } catch (Exception e) {

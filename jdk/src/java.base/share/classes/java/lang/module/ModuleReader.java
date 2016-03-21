@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,7 +30,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.Optional;
 
 
@@ -38,7 +37,7 @@ import java.util.Optional;
  * Provides access to the content of a module.
  *
  * <p> A module reader is intended for cases where access to the resources in a
- * module are required, regardless of whether the module has been loaded.
+ * module is required, regardless of whether the module has been loaded.
  * A framework that scans a collection of packaged modules on the file system,
  * for example, may use a module reader to access a specific resource in each
  * module. A module reader is also intended to be used by {@code ClassLoader}
@@ -62,7 +61,7 @@ import java.util.Optional;
 public interface ModuleReader extends Closeable {
 
     /**
-     * Returns a URI to a resource in the module.
+     * Finds a resource, returning a URI to the resource in the module.
      *
      * @param  name
      *         The name of the resource to open for reading
@@ -81,7 +80,8 @@ public interface ModuleReader extends Closeable {
     Optional<URI> find(String name) throws IOException;
 
     /**
-     * Returns an input stream for reading a resource in the module.
+     * Opens a resource, returning an input stream to read the resource in
+     * the module.
      *
      * @implSpec The default implementation invokes the {@link #find(String)
      * find} method to get a URI to the resource. If found, then it attempts
@@ -109,18 +109,20 @@ public interface ModuleReader extends Closeable {
     }
 
     /**
-     * Returns a byte buffer with the contents of a resource.  The element at
-     * the returned buffer's position is the first byte of the resource, the
-     * element at the buffer's limit is the last byte of the resource.
+     * Reads a resource, returning a byte buffer with the contents of the
+     * resource.
      *
-     * <p> The {@code release} method should be invoked after consuming the
-     * contents of the buffer. This will ensure, for example, that direct
-     * buffers are returned to a buffer pool in implementations that use a
-     * pool of direct buffers.
+     * The element at the returned buffer's position is the first byte of the
+     * resource, the element at the buffer's limit is the last byte of the
+     * resource. Once consumed, the {@link #release(ByteBuffer) release} method
+     * must be invoked. Failure to invoke the {@code release} method may result
+     * in a resource leak.
      *
      * @apiNote This method is intended for high-performance class loading. It
      * is not capable (or intended) to read arbitrary large resources that
-     * could potentially be 2GB or larger.
+     * could potentially be 2GB or larger. The rational for using this method
+     * in conjunction with the {@code release} method is to allow module reader
+     * implementations manage buffers in an efficient manner.
      *
      * @implSpec The default implementation invokes the {@link #open(String)
      * open} method and reads all bytes from the input stream into a byte
@@ -140,60 +142,25 @@ public interface ModuleReader extends Closeable {
      * @see ClassLoader#defineClass(String, ByteBuffer, java.security.ProtectionDomain)
      */
     default Optional<ByteBuffer> read(String name) throws IOException {
-        final int BUFFER_SIZE = 8192;
-        final int MAX_BUFFER_SIZE = Integer.MAX_VALUE - 8;
-
-        InputStream in = open(name).orElse(null);
-        if (in == null) {
-            // not found
+        Optional<InputStream> in = open(name);
+        if (in.isPresent()) {
+            byte[] bytes = in.get().readAllBytes();
+            return Optional.of(ByteBuffer.wrap(bytes));
+        } else {
             return Optional.empty();
-        }
-
-        try (in) {
-            int capacity = in.available();
-            if (capacity == 0)
-                capacity = BUFFER_SIZE;
-
-            byte[] buf = new byte[capacity];
-            int nread = 0;
-            int n;
-            for (;;) {
-                // read to EOF
-                while ((n = in.read(buf, nread, capacity - nread)) > 0)
-                    nread += n;
-
-                // if last call to source.read() returned -1, we are done
-                // otherwise, try to read one more byte; if that failed we're done too
-                if (n < 0 || (n = in.read()) < 0)
-                    break;
-
-                // one more byte was read; need to allocate a larger buffer
-                if (capacity <= MAX_BUFFER_SIZE - capacity) {
-                    capacity = Math.max(capacity << 1, BUFFER_SIZE);
-                } else {
-                    if (capacity == MAX_BUFFER_SIZE)
-                        throw new OutOfMemoryError("Required array size too large");
-                    capacity = MAX_BUFFER_SIZE;
-                }
-                buf = Arrays.copyOf(buf, capacity);
-                buf[nread++] = (byte) n;
-            }
-
-            return Optional.of(ByteBuffer.wrap(buf, 0, nread));
         }
     }
 
     /**
-     * Returns a byte buffer to the buffer pool. This method should be
-     * invoked after consuming the contents of the buffer returned by
-     * the {@code readResource} method. The behavior of this method when
-     * invoked to release a buffer that has already been released, or
-     * the behavior when invoked to release a buffer after a {@code
-     * ModuleReader} is closed is implementation specific and therefore
-     * not specified.
+     * Release a byte buffer. This method should be invoked after consuming
+     * the contents of the buffer returned by the {@code read} method.
+     * The behavior of this method when invoked to release a buffer that has
+     * already been released, or the behavior when invoked to release a buffer
+     * after a {@code ModuleReader} is closed is implementation specific and
+     * therefore not specified.
      *
      * @param  bb
-     *         The byte buffer to return to the buffer pool
+     *         The byte buffer to release
      *
      * @implSpec The default implementation does nothing.
      */

@@ -163,8 +163,6 @@ public class ThreadInfoCompositeData extends LazyCompositeData {
     private static final String PRIORITY        = "priority";
     private static final String LOCKED_MONITORS = "lockedMonitors";
     private static final String LOCKED_SYNCS    = "lockedSynchronizers";
-    private static final String MODULE_NAME     = "stackTrace.moduleName";
-    private static final String MODULE_VERSION  = "stackTrace.moduleVersion";
 
     private static final String[] threadInfoItemNames = {
         THREAD_ID,
@@ -197,8 +195,6 @@ public class ThreadInfoCompositeData extends LazyCompositeData {
     private static final String[] threadInfoV9Attributes = {
         DAEMON,
         PRIORITY,
-        MODULE_NAME,
-        MODULE_VERSION,
     };
 
     // Current version of ThreadInfo

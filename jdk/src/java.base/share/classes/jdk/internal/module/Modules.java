@@ -30,8 +30,8 @@ import java.lang.reflect.Module;
 import java.net.URI;
 import java.util.Set;
 
-import jdk.internal.misc.BootLoader;
-import jdk.internal.misc.ClassLoaders;
+import jdk.internal.loader.BootLoader;
+import jdk.internal.loader.ClassLoaders;
 import jdk.internal.misc.JavaLangReflectModuleAccess;
 import jdk.internal.misc.SharedSecrets;
 

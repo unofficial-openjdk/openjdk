@@ -25,15 +25,6 @@
 
 module java.se {
     requires public java.compact3;
-    requires public java.corba;
     requires public java.datatransfer;
     requires public java.desktop;
-
-    // Upgradeable modules for Java EE technologies
-    requires public java.activation;
-    requires public java.annotations.common;
-    requires public java.transaction;
-    requires public java.xml.bind;
-    requires public java.xml.ws;
 }
-

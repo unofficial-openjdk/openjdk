@@ -255,8 +255,8 @@ public class Logger {
     private static final LoggerBundle NO_RESOURCE_BUNDLE =
             new LoggerBundle(null, null);
 
-    private static final RuntimePermission GET_BUNDLE_PERMISSION =
-            new RuntimePermission("getBundle");
+    private static final RuntimePermission GET_CLASS_LOADER_PERMISSION =
+            new RuntimePermission("getClassLoader");
 
     private volatile LogManager manager;
     private String name;
@@ -844,6 +844,7 @@ public class Logger {
      * @param   level   One of the message level identifiers, e.g., SEVERE
      * @param   msgSupplier   A function, which when called, produces the
      *                        desired log message
+     * @since 1.8
      */
     public void log(Level level, Supplier<String> msgSupplier) {
         if (!isLoggable(level)) {
@@ -1989,7 +1990,7 @@ public class Logger {
                 Module mod = cl.getUnnamedModule();
                 PrivilegedAction<ResourceBundle> pa = () ->
                     ResourceBundle.getBundle(name, currentLocale, mod);
-                catalog = AccessController.doPrivileged(pa, null, GET_BUNDLE_PERMISSION);
+                catalog = AccessController.doPrivileged(pa, null, GET_CLASS_LOADER_PERMISSION);
                 catalogName = name;
                 catalogLocale = currentLocale;
                 return catalog;
@@ -2035,7 +2036,7 @@ public class Logger {
                 // Use the caller's module
                 PrivilegedAction<ResourceBundle> pa = () ->
                     ResourceBundle.getBundle(name, currentLocale, callerModule);
-                catalog = AccessController.doPrivileged(pa, null, GET_BUNDLE_PERMISSION);
+                catalog = AccessController.doPrivileged(pa, null, GET_CLASS_LOADER_PERMISSION);
                 catalogName = name;
                 catalogLocale = currentLocale;
                 return catalog;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.reflect.Constructor;
@@ -43,10 +42,10 @@ import java.security.AccessController;
 import java.security.AccessControlContext;
 import java.security.PrivilegedAction;
 
-import jdk.internal.misc.BootLoader;
+import jdk.internal.loader.BootLoader;
+import jdk.internal.loader.Loader;
+import jdk.internal.loader.LoaderPool;
 import jdk.internal.misc.JavaLangAccess;
-import jdk.internal.misc.Loader;
-import jdk.internal.misc.LoaderPool;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.misc.VM;
 import jdk.internal.module.ServicesCatalog;
@@ -362,8 +361,7 @@ public final class ServiceLoader<S>
      */
     private static void checkModule(Module module, Class<?> svc) {
 
-        // Check that the service type is defined in a module that is readable
-        // to the caller and that the service type is in a package that is
+        // Check that the service type is in a package that is
         // exported to the caller.
         if (!Reflection.verifyModuleAccess(module, svc)) {
             fail(svc, "not accessible to " + module);
@@ -573,8 +571,14 @@ public final class ServiceLoader<S>
             currentLayer = layer;
 
             // need to get us started
-            Configuration cf = layer.configuration();
-            descriptorIterator = cf.provides(serviceName).iterator();
+            descriptorIterator = descriptors(layer, serviceName);
+        }
+
+        Iterator<ModuleDescriptor> descriptors(Layer layer, String service) {
+            return layer.modules().stream()
+                    .map(Module::getDescriptor)
+                    .filter(d -> d.provides().get(service) != null)
+                    .iterator();
         }
 
         @Override
@@ -610,8 +614,7 @@ public final class ServiceLoader<S>
                     return false;
 
                 currentLayer = parent;
-                Configuration cf = currentLayer.configuration();
-                descriptorIterator = cf.provides(service.getName()).iterator();
+                descriptorIterator = descriptors(currentLayer, serviceName);
             }
         }
 
@@ -1037,17 +1040,13 @@ public final class ServiceLoader<S>
 
     /**
      * Creates a new service loader for the given service type, using the
-     * extension class loader.
+     * {@linkplain ClassLoader#getPlatformClassLoader() platform class loader}.
      *
-     * <p> This convenience method simply locates the extension class loader,
-     * call it <tt><i>extClassLoader</i></tt>, and then returns
+     * <p> This convenience method is equivalent to: </p>
      *
      * <blockquote><pre>
-     * ServiceLoader.load(<i>service</i>, <i>extClassLoader</i>)</pre></blockquote>
-     *
-     * <p> If the extension class loader cannot be found then the system class
-     * loader is used; if there is no system class loader then the bootstrap
-     * class loader is used.
+     * ServiceLoader.load(<i>service</i>, <i>ClassLoader.getPlatformClassLoader())</i>
+     * </pre></blockquote>
      *
      * <p> This method is intended for use when only installed providers are
      * desired.  The resulting service will only find and load providers that

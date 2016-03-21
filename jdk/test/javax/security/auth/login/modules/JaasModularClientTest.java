@@ -37,7 +37,6 @@ import org.testng.annotations.BeforeTest;
 /**
  * @test
  * @bug 8078813
- * @library /jdk/jigsaw/lib
  * @library /lib/testlibrary
  * @library /java/security/modules
  * @build CompilerUtils JarUtils

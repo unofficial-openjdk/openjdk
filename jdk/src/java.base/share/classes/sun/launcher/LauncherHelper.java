@@ -493,12 +493,8 @@ public enum LauncherHelper {
                                             String what) {
         initOutput(printToStderr);
 
-        Class<?> mainClass;
-        if (mode == LM_MODULE) {
-            mainClass = loadModuleMainClass(what);
-        } else {
-            mainClass = loadMainClass(mode, what);
-        }
+        Class<?> mainClass = (mode == LM_MODULE) ? loadModuleMainClass(what)
+                                                 : loadMainClass(mode, what);
 
         validateMainClass(mainClass);
 
@@ -866,10 +862,6 @@ public enum LauncherHelper {
                     || fxLaunchName == null) {
                 throw new RuntimeException("Invalid JavaFX launch parameters");
             }
-            AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
-                fxLauncherMethod.setAccessible(true);
-                return null;
-            });
             // launch appClass via fxLauncherMethod
             fxLauncherMethod.invoke(null,
                     new Object[] {fxLaunchName, fxLaunchMode, args});
@@ -941,8 +933,11 @@ public enum LauncherHelper {
                 exports.addAll(md.exports());
                 for (Exports e : exports) {
                     ostream.format("  exports %s", e.source());
-                    e.targets().ifPresentOrElse(ts -> formatCommaList(ostream, " to", ts),
-                                                () -> ostream.println());
+                    if (e.isQualified()) {
+                        formatCommaList(ostream, " to", e.targets());
+                    } else {
+                        ostream.println();
+                    }
                 }
 
                 // concealed packages
@@ -954,7 +949,6 @@ public enum LauncherHelper {
                     for (String impl : ps.providers())
                         ostream.format("  provides %s with %s%n", ps.service(), impl);
                 }
-
             }
         }
     }
@@ -966,5 +960,4 @@ public enum LauncherHelper {
         else
             return md.toNameAndVersion() + " (" + loc + ")";
     }
-
 }

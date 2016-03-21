@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -153,7 +153,7 @@ public final class TaskHelper {
 
     private final class PluginsOptions {
 
-        private static final String PLUGINS_PATH = "--plugins-modulepath";
+        private static final String PLUGINS_PATH = "--plugin-module-path";
         private static final String POST_PROCESS = "--post-process-path";
 
         private Layer pluginsLayer = Layer.boot();
@@ -705,13 +705,12 @@ public final class TaskHelper {
 
         Configuration bootConfiguration = Layer.boot().configuration();
         try {
-            Configuration cf
-                    = Configuration.resolve(ModuleFinder.empty(), bootConfiguration, finder);
-
-            cf = cf.bind();
-
+            Configuration cf = bootConfiguration
+                .resolveRequiresAndUses(ModuleFinder.empty(),
+                                        finder,
+                                        Collections.emptySet());
             ClassLoader scl = ClassLoader.getSystemClassLoader();
-            return Layer.createWithOneLoader(cf, Layer.boot(), scl);
+            return Layer.boot().defineModulesWithOneLoader(cf, scl);
         } catch (Exception ex) {
             // Malformed plugin modules (e.g.: same package in multiple modules).
             throw new PluginException("Invalid modules in the plugins path: " + ex);

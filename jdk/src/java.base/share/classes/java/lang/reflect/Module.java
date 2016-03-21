@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,12 +28,12 @@ package java.lang.reflect;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.module.Configuration;
-import java.lang.module.Configuration.ReadDependence;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Version;
+import java.lang.module.ResolvedModule;
 import java.net.URI;
 import java.net.URL;
 import java.util.Collections;
@@ -51,8 +51,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import jdk.internal.misc.BuiltinClassLoader;
-import jdk.internal.misc.BootLoader;
+import jdk.internal.loader.BuiltinClassLoader;
+import jdk.internal.loader.BootLoader;
 import jdk.internal.misc.JavaLangReflectModuleAccess;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.module.ServicesCatalog;
@@ -64,20 +64,24 @@ import sun.security.util.SecurityConstants;
  * Represents a run-time module, either {@link #isNamed() named} or unnamed.
  *
  * <p> Named modules have a {@link #getName() name} and are constructed by the
- * Java Virtual Machine when a {@link java.lang.module.Configuration
- * Configuration} is reified by creating a module {@link Layer Layer}. </p>
+ * Java Virtual Machine when a graph of modules is defined to the Java virtual
+ * machine to create a module {@link Layer Layer}. </p>
  *
  * <p> An unnamed module does not have a name. There is an unnamed module
  * per {@link ClassLoader ClassLoader} that is obtained by invoking the class
  * loader's {@link ClassLoader#getUnnamedModule() getUnnamedModule} method. The
  * {@link Class#getModule() getModule} method of all types defined by a class
  * loader that are not in a named module return the class loader's unnamed
- * module. An unnamed module reads all other run-time modules. </p>
+ * module. </p>
  *
  * <p> The package names that are parameters or returned by methods defined in
  * this class are the fully-qualified names of the packages as defined in
  * section 6.5.3 of <cite>The Java&trade; Language Specification </cite>, for
  * example, {@code "java.lang"}. </p>
+ *
+ * <p> Unless otherwise specified, passing a {@code null} argument to a method
+ * in this class causes a {@link NullPointerException NullPointerException} to
+ * be thrown. </p>
  *
  * @since 9
  * @see java.lang.Class#getModule
@@ -170,10 +174,8 @@ public final class Module {
     }
 
     /**
-     * Returns the module name.
-     *
-     * For now, this method returns {@code null} if this module is an
-     * unnamed module.
+     * Returns the module name or {@code null} if this module is an unnamed
+     * module.
      *
      * @return The module name
      */
@@ -203,10 +205,8 @@ public final class Module {
     }
 
     /**
-     * Returns the module descriptor for this module.
-     *
-     * For now, this method returns {@code null} if this module is an
-     * unnamed module.
+     * Returns the module descriptor for this module or {@code null} if this
+     * module is an unnamed module.
      *
      * @return The module descriptor for this module
      */
@@ -219,8 +219,7 @@ public final class Module {
      * module is not in a layer.
      *
      * A module {@code Layer} contains named modules and therefore this
-     * method always returns {@code null} when invoked on an unnamed {@code
-     * Module}.
+     * method always returns {@code null} when invoked on an unnamed module.
      *
      * <p> <a href="Proxy.html#dynamicmodule">Dynamic modules</a> are named
      * modules that are generated at runtime. A dynamic module may or may
@@ -228,7 +227,6 @@ public final class Module {
      *
      * @return The layer that contains this module
      *
-     * @see Layer#create
      * @see Proxy
      */
     public Layer getLayer() {
@@ -261,39 +259,34 @@ public final class Module {
 
 
     /**
-     * Indicates if this module reads the given {@code Module}.
-     * Unnamed modules read all modules and therefore this method always
-     * returns {@code true} when invoked on an unnamed module.
+     * Indicates if this module reads the given module. This method returns
+     * {@code true} if invoked to test if this module reads itself. It also
+     * returns {@code true} if invoked on an unnamed module (as unnamed
+     * modules read all modules).
      *
-     * <p> If {@code source} is {@code null} then this method tests if this
-     * module reads all unnamed modules. </p>
+     * @param  other
+     *         The other module
      *
-     * @param  source
-     *         The source module
-     *
-     * @return {@code true} if this module reads {@code source}
+     * @return {@code true} if this module reads {@code other}
      *
      * @see #addReads(Module)
      */
-    public boolean canRead(Module source) {
+    public boolean canRead(Module other) {
+        Objects.requireNonNull(other);
 
         // an unnamed module reads all modules
         if (!this.isNamed())
             return true;
 
         // all modules read themselves
-        if (source == this)
+        if (other == this)
             return true;
 
-        // test if this module is loose
-        if (source == null)
-            return this.loose;
-
-        // check if module reads source
-        if (source.isNamed()) {
+        // check if this module reads other
+        if (other.isNamed()) {
 
             Set<Module> reads = this.reads; // volatile read
-            if (reads != null && reads.contains(source))
+            if (reads != null && reads.contains(other))
                 return true;
 
         } else {
@@ -304,9 +297,9 @@ public final class Module {
 
         }
 
-        // check if this module reads the source module reflectively
+        // check if this module reads the other module reflectively
         WeakSet<Module> tr = this.transientReads; // volatile read
-        if (tr != null && tr.contains(source))
+        if (tr != null && tr.contains(other))
             return true;
 
         return false;
@@ -314,23 +307,14 @@ public final class Module {
 
     /**
      * If the caller's module is this module then update this module to read
-     * the given source {@code Module}.
+     * the given module.
      *
-     * This method is a no-op if {@code source} is {@code this} module (all
-     * modules can read themselves) or this module is not a {@link #isNamed()
-     * named} module (an unnamed module reads all other modules).
+     * This method is a no-op if {@code other} is this module (all modules can
+     * read themselves) or this module is an unnamed module (as unnamed modules
+     * read all modules).
      *
-     * <p> If {@code source} is {@code null}, and this module does not read
-     * all unnamed modules, then this method changes this module so that it
-     * reads all unnamed modules (both present and future) in the Java
-     * virtual machine. </p>
-     *
-     * @apiNote As this method can only be used to update the caller's module
-     * then this method could be static and the IllegalStateException would
-     * not be needed.
-     *
-     * @param  source
-     *         The source module
+     * @param  other
+     *         The other module
      *
      * @return this module
      *
@@ -340,24 +324,25 @@ public final class Module {
      * @see #canRead
      */
     @CallerSensitive
-    public Module addReads(Module source) {
+    public Module addReads(Module other) {
+        Objects.requireNonNull(other);
         if (this.isNamed()) {
             Module caller = Reflection.getCallerClass().getModule();
             if (caller != this) {
                 throw new IllegalStateException(caller + " != " + this);
             }
-            implAddReads(source, true);
+            implAddReads(other, true);
         }
         return this;
     }
 
     /**
-     * Updates this module to read the source module.
+     * Updates this module to read another module.
      *
      * @apiNote This method is for Proxy use and white-box testing.
      */
-    void implAddReads(Module source) {
-        implAddReads(source, true);
+    void implAddReads(Module other) {
+        implAddReads(other, true);
     }
 
     /**
@@ -366,8 +351,8 @@ public final class Module {
      *
      * @apiNote This method is for VM white-box testing.
      */
-    void implAddReadsNoSync(Module source) {
-        implAddReads(source, false);
+    void implAddReadsNoSync(Module other) {
+        implAddReads(other, false);
     }
 
     /**
@@ -375,14 +360,14 @@ public final class Module {
      *
      * If {@code syncVM} is {@code true} then the VM is notified.
      */
-    private void implAddReads(Module source, boolean syncVM) {
+    private void implAddReads(Module other, boolean syncVM) {
 
         // nothing to do
-        if (source == this || !this.isNamed())
+        if (other == this || !this.isNamed())
             return;
 
-        // if the source is null then change this module to be loose.
-        if (source == null) {
+        // if the other is null then change this module to be loose.
+        if (other == null) {
             if (syncVM)
                 addReads0(this, null);
             this.loose = true;
@@ -391,12 +376,12 @@ public final class Module {
 
         // check if we already read this module
         Set<Module> reads = this.reads;
-        if (reads != null && reads.contains(source))
+        if (reads != null && reads.contains(other))
             return;
 
         // update VM first, just in case it fails
         if (syncVM)
-            addReads0(this, source);
+            addReads0(this, other);
 
         // add reflective read
         WeakSet<Module> tr = this.transientReads;
@@ -409,7 +394,7 @@ public final class Module {
                 }
             }
         }
-        tr.add(source);
+        tr.add(other);
     }
 
 
@@ -431,39 +416,36 @@ public final class Module {
 
 
     /**
-     * Returns {@code true} if this module exports the given package to the
-     * given target module.
+     * Returns {@code true} if this module exports the given package to at
+     * least the given module.
      *
-     * If invoked on an unnamed module then this method always returns {@code
-     * true} (for any non-{@code null} package name).
+     * <p> This method always return {@code true} when invoked on an unnamed
+     * module. </p>
      *
-     * This method does not check if the given module reads this module.
-     *
-     * @apiNote This method returns {@code false} if invoked on a module to
-     * test if one of its non-exported packages is exported to itself.
+     * <p> This method does not check if the given module reads this module </p>
      *
      * @param  pn
      *         The package name
-     * @param  target
-     *         The target module
+     * @param  other
+     *         The other module
      *
-     * @return {@code true} if this module exports the package to the target
-     *         module
+     * @return {@code true} if this module exports the package to at least the
+     *         given module
      */
-    public boolean isExported(String pn, Module target) {
+    public boolean isExported(String pn, Module other) {
         Objects.requireNonNull(pn);
-        Objects.requireNonNull(target);
-        return implIsExported(pn, target);
+        Objects.requireNonNull(other);
+        return implIsExported(pn, other);
     }
 
     /**
      * Returns {@code true} if this module exports the given package
      * unconditionally.
      *
-     * If invoked on an unnamed module then this method always returns {@code
-     * true} (for any non-{@code null} package name).
+     * <p> This method always return {@code true} when invoked on an unnamed
+     * module. </p>
      *
-     * This method does not check if the given module reads this module.
+     * <p> This method does not check if the given module reads this module </p>
      *
      * @param  pn
      *         The package name
@@ -477,32 +459,32 @@ public final class Module {
 
     /**
      * Returns {@code true} if this module exports the given package to the
-     * given module. If the target module is {@code EVERYONE_MODULE} then
+     * given module. If the other module is {@code EVERYONE_MODULE} then
      * this method tests if the package is exported unconditionally.
      */
-    private boolean implIsExported(String pn, Module target) {
+    private boolean implIsExported(String pn, Module other) {
 
         // all packages are exported by unnamed modules
         if (!isNamed())
             return true;
 
         // exported via module declaration/descriptor
-        if (isExportedPermanently(pn, target))
+        if (isExportedPermanently(pn, other))
             return true;
 
         // exported via addExports
-        if (isExportedReflectively(pn, target))
+        if (isExportedReflectively(pn, other))
             return true;
 
-        // not exported or not exported to target
+        // not exported or not exported to other
         return false;
     }
 
     /**
      * Returns {@code true} if this module permanently exports the given
-     * package package to the given module.
+     * package to the given module.
      */
-    private boolean isExportedPermanently(String pn, Module target) {
+    private boolean isExportedPermanently(String pn, Module other) {
         Map<String, Set<Module>> exports = this.exports;
         if (exports != null) {
             Set<Module> targets = exports.get(pn);
@@ -513,13 +495,13 @@ public final class Module {
                 if (targets.contains(EVERYONE_MODULE))
                     return true;
 
-                if (target != EVERYONE_MODULE) {
-                    // exported to target
-                    if (targets.contains(target))
+                if (other != EVERYONE_MODULE) {
+                    // exported to other
+                    if (targets.contains(other))
                         return true;
 
-                    // target is an unnamed module && exported to all unnamed
-                    if (!target.isNamed() && targets.contains(ALL_UNNAMED_MODULE))
+                    // other is an unnamed module && exported to all unnamed
+                    if (!other.isNamed() && targets.contains(ALL_UNNAMED_MODULE))
                         return true;
                 }
 
@@ -532,7 +514,7 @@ public final class Module {
      * Returns {@code true} if this module reflectively exports the given
      * package package to the given module.
      */
-    private boolean isExportedReflectively(String pn, Module target) {
+    private boolean isExportedReflectively(String pn, Module other) {
         Map<String, WeakSet<Module>> te = this.transientExports;
         if (te != null) {
             WeakSet<Module> targets = te.get(pn);
@@ -543,14 +525,14 @@ public final class Module {
                 if (targets.contains(EVERYONE_MODULE))
                     return true;
 
-                if (target != EVERYONE_MODULE) {
+                if (other != EVERYONE_MODULE) {
 
-                    // exported to target
-                    if (targets.contains(target))
+                    // exported to other
+                    if (targets.contains(other))
                         return true;
 
-                    // target is an unnamed module && exported to all unnamed
-                    if (!target.isNamed() && targets.contains(ALL_UNNAMED_MODULE))
+                    // other is an unnamed module && exported to all unnamed
+                    if (!other.isNamed() && targets.contains(ALL_UNNAMED_MODULE))
                         return true;
                 }
             }
@@ -562,20 +544,16 @@ public final class Module {
 
     /**
      * If the caller's module is this module then update this module to export
-     * package {@code pn} to the given {@code target} module.
+     * package {@code pn} to the given module.
      *
      * <p> This method has no effect if the package is already exported to the
-     * target module. If also has no effect if invoked on an unnamed module.
-     * </p>
-     *
-     * @apiNote As this method can only be used to update the caller's module
-     * then this method could be static and the IllegalStateException would
-     * not be needed.
+     * given module. If also has no effect if invoked on an unnamed module (as
+     * unnamed modules export all packages). </p>
      *
      * @param  pn
      *         The package name
-     * @param  target
-     *         The target module
+     * @param  other
+     *         The module
      *
      * @return this module
      *
@@ -586,17 +564,17 @@ public final class Module {
      *         If this is a named module and the caller is not this module
      */
     @CallerSensitive
-    public Module addExports(String pn, Module target) {
+    public Module addExports(String pn, Module other) {
         if (pn == null)
             throw new IllegalArgumentException("package is null");
-        Objects.requireNonNull(target);
+        Objects.requireNonNull(other);
 
         if (isNamed()) {
             Module caller = Reflection.getCallerClass().getModule();
             if (caller != this) {
                 throw new IllegalStateException(caller + " != " + this);
             }
-            implAddExports(pn, target, true);
+            implAddExports(pn, other, true);
         }
 
         return this;
@@ -604,42 +582,42 @@ public final class Module {
 
     /**
      * Updates the exports so that package {@code pn} is exported to module
-     * {@code target} but without notifying the VM.
+     * {@code other} but without notifying the VM.
      *
      * @apiNote This method is for VM white-box testing.
      */
-    void implAddExportsNoSync(String pn, Module target) {
-        if (target == null)
-            target = EVERYONE_MODULE;
-        implAddExports(pn.replace('/', '.'), target, false);
+    void implAddExportsNoSync(String pn, Module other) {
+        if (other == null)
+            other = EVERYONE_MODULE;
+        implAddExports(pn.replace('/', '.'), other, false);
     }
 
     /**
      * Updates the exports so that package {@code pn} is exported to module
-     * {@code target}.
+     * {@code other}.
      *
      * @apiNote This method is for white-box testing.
      */
-    void implAddExports(String pn, Module target) {
-        implAddExports(pn, target, true);
+    void implAddExports(String pn, Module other) {
+        implAddExports(pn, other, true);
     }
 
     /**
      * Updates the exports so that package {@code pn} is exported to module
-     * {@code target}.
+     * {@code other}.
      *
      * If {@code syncVM} is {@code true} then the VM is notified.
      */
-    private void implAddExports(String pn, Module target, boolean syncVM) {
-        Objects.requireNonNull(target);
+    private void implAddExports(String pn, Module other, boolean syncVM) {
+        Objects.requireNonNull(other);
         Objects.requireNonNull(pn);
 
         // unnamed modules export all packages
         if (!isNamed())
             return;
 
-        // nothing to do if already exported to target
-        if (implIsExported(pn, target))
+        // nothing to do if already exported to other
+        if (implIsExported(pn, other))
             return;
 
         // can only export a package in the module
@@ -651,12 +629,12 @@ public final class Module {
         // update VM first, just in case it fails
         if (syncVM) {
             String pkgInternalForm = pn.replace('.', '/');
-            if (target == EVERYONE_MODULE) {
+            if (other == EVERYONE_MODULE) {
                 addExportsToAll0(this, pkgInternalForm);
-            } else if (target == ALL_UNNAMED_MODULE) {
+            } else if (other == ALL_UNNAMED_MODULE) {
                 addExportsToAllUnnamed0(this, pkgInternalForm);
             } else {
-                addExports0(this, pkgInternalForm, target);
+                addExports0(this, pkgInternalForm, other);
             }
         }
 
@@ -680,7 +658,7 @@ public final class Module {
             if (prev != null)
                 s = prev;
         }
-        s.add(target);
+        s.add(other);
     }
 
 
@@ -697,12 +675,9 @@ public final class Module {
      * passed a reference to the service type by other code. This method is
      * a no-op when invoked on an unnamed module.
      *
-     * <p> This method does not trigger {@link java.lang.module.Configuration#bind
-     * service-binding}. </p>
-     *
-     * @apiNote As this method can only be used to update the caller's module
-     * then this method could be static and the IllegalStateException would
-     * not be needed.
+     * <p> This method does not cause {@link
+     * Configuration#resolveRequiresAndUses resolveRequiresAndUses} to be
+     * re-run. </p>
      *
      * @param  st
      *         The service type
@@ -871,14 +846,19 @@ public final class Module {
         if (pn.length() == 0)
             throw new IllegalArgumentException("<unnamed> package not allowed");
 
+        if (descriptor.packages().contains(pn)) {
+            // already in module
+            return;
+        }
+
+        Set<String> extraPackages = this.extraPackages;
+        if (extraPackages != null && extraPackages.contains(pn)) {
+            // already added
+            return;
+        }
         synchronized (this) {
-
-            if (descriptor.packages().contains(pn)) {
-                // already in module
-                return;
-            }
-
-            Set<String> extraPackages = this.extraPackages;
+            // recheck under lock
+            extraPackages = this.extraPackages;
             if (extraPackages != null) {
                 if (extraPackages.contains(pn)) {
                     // already added
@@ -908,9 +888,9 @@ public final class Module {
      * Find the runtime Module corresponding to the given ReadDependence
      * in the given parent Layer (or its parents).
      */
-    private static Module find(ReadDependence d, Layer layer) {
-        Configuration cf = d.configuration();
-        String dn = d.descriptor().name();
+    private static Module find(ResolvedModule resolvedModule, Layer layer) {
+        Configuration cf = resolvedModule.configuration();
+        String dn = resolvedModule.name();
 
         Module m = null;
         while (layer != null) {
@@ -941,7 +921,8 @@ public final class Module {
         Map<String, ClassLoader> loaders = new HashMap<>();
 
         // define each module in the configuration to the VM
-        for (ModuleReference mref : cf.modules()) {
+        for (ResolvedModule resolvedModule : cf.modules()) {
+            ModuleReference mref = resolvedModule.reference();
             ModuleDescriptor descriptor = mref.descriptor();
             String name = descriptor.name();
             ClassLoader loader = clf.apply(name);
@@ -959,18 +940,20 @@ public final class Module {
         }
 
         // setup readability and exports
-        for (ModuleDescriptor descriptor : cf.descriptors()) {
+        for (ResolvedModule resolvedModule : cf.modules()) {
+            ModuleReference mref = resolvedModule.reference();
+            ModuleDescriptor descriptor = mref.descriptor();
+
             String mn = descriptor.name();
             Module m = modules.get(mn);
             assert m != null;
 
             // reads
             Set<Module> reads = new HashSet<>();
-            for (ReadDependence d : cf.reads(descriptor)) {
-
+            for (ResolvedModule d : resolvedModule.reads()) {
                 Module m2;
                 if (d.configuration() == cf) {
-                    String dn = d.descriptor().name();
+                    String dn = d.reference().descriptor().name();
                     m2 = modules.get(dn);
                     assert m2 != null;
                 } else {
@@ -995,17 +978,11 @@ public final class Module {
                 String source = export.source();
                 String sourceInternalForm = source.replace('.', '/');
 
-                if (!export.targets().isPresent()) {
-
-                    // unqualified export
-                    exports.put(source, EVERYONE);
-                    addExportsToAll0(m, sourceInternalForm);
-
-                } else {
+                if (export.isQualified()) {
 
                     // qualified export
                     Set<Module> targets = new HashSet<>();
-                    for (String target : export.targets().get()) {
+                    for (String target : export.targets()) {
                         // only export to modules that are in this configuration
                         Module m2 = modules.get(target);
                         if (m2 != null) {
@@ -1017,13 +994,20 @@ public final class Module {
                         exports.put(source, targets);
                     }
 
+                } else {
+
+                    // unqualified export
+                    exports.put(source, EVERYONE);
+                    addExportsToAll0(m, sourceInternalForm);
                 }
             }
             m.exports = exports;
         }
 
         // register the modules in the service catalog if they provide services
-        for (ModuleDescriptor descriptor : cf.descriptors()) {
+        for (ResolvedModule resolvedModule : cf.modules()) {
+            ModuleReference mref = resolvedModule.reference();
+            ModuleDescriptor descriptor = mref.descriptor();
             Map<String, Provides> services = descriptor.provides();
             if (!services.isEmpty()) {
                 String name = descriptor.name();
@@ -1108,11 +1092,14 @@ public final class Module {
         return null;
     }
 
-
     /**
-     * Returns the string representation.
+     * Returns the string representation of this module. For a named module,
+     * the representation is the string {@code "module"}, followed by a space,
+     * and then the module name. For an unnamed module, the representation is
+     * the string {@code "unnamed module"}, followed by a space, and then an
+     * implementation specific identifier for the unnamed module.
      *
-     * @apiNote Would it be useful to specify the  string representation?
+     * @return The string representation of this module
      */
     @Override
     public String toString() {
@@ -1209,8 +1196,8 @@ public final class Module {
                     m1.implAddReads(m2, true);
                 }
                 @Override
-                public void addExports(Module m, String pn, Module target) {
-                    m.implAddExports(pn, Objects.requireNonNull(target), true);
+                public void addExports(Module m, String pn, Module other) {
+                    m.implAddExports(pn, Objects.requireNonNull(other), true);
                 }
                 @Override
                 public void addExportsToAll(Module m, String pn) {

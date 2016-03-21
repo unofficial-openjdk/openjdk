@@ -35,7 +35,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Objects;
 
-import jdk.internal.misc.BootLoader;
+import jdk.internal.loader.BootLoader;
 import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;
 

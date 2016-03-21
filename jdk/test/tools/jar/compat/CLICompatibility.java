@@ -50,7 +50,7 @@ import static org.testng.Assert.assertTrue;
  * @library /lib/testlibrary
  * @build jdk.testlibrary.FileUtils jdk.testlibrary.JDKToolFinder
  * @run testng CLICompatibility
- * @summary Basic test for CLI options compatibility
+ * @summary Basic test for compatibility of CLI options
  */
 
 public class CLICompatibility {
@@ -389,6 +389,47 @@ public class CLICompatibility {
             FileUtils.deleteFileIfExistsWithRetry(path.resolve(RES1));
         }
         FileUtils.deleteFileTreeWithRetry(path);
+    }
+
+    // Basic help
+
+    @Test
+    public void helpBadOptionalArg() {
+        if (legacyOnly)
+            return;
+
+        jar("--help:")
+            .assertFailure();
+
+        jar("--help:blah")
+            .assertFailure();
+    }
+
+    @Test
+    public void help() {
+        if (legacyOnly)
+            return;
+
+        jar("-h")
+            .assertSuccess()
+            .resultChecker(r ->
+                assertTrue(r.output.startsWith("Usage: jar [OPTION...] [-C dir] files"),
+                           "Failed, got [" + r.output + "]")
+            );
+
+        jar("--help")
+            .assertSuccess()
+            .resultChecker(r ->
+                assertTrue(r.output.startsWith("Usage: jar [OPTION...] [-C dir] files"),
+                           "Failed, got [" + r.output + "]")
+            );
+
+        jar("--help:compat")
+            .assertSuccess()
+            .resultChecker(r ->
+                assertTrue(r.output.startsWith("Compatibility Interface:"),
+                           "Failed, got [" + r.output + "]")
+            );
     }
 
     // -- Infrastructure

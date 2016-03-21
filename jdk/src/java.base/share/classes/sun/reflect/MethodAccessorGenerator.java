@@ -25,7 +25,6 @@
 
 package sun.reflect;
 
-import java.lang.reflect.Constructor;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
@@ -395,23 +394,18 @@ class MethodAccessorGenerator extends AccessorGenerator {
             new PrivilegedAction<MagicAccessorImpl>() {
                 public MagicAccessorImpl run() {
                         try {
-                            Class<?> c = ClassDefiner.defineClass
-                                    (generatedName,
-                                     bytes,
-                                     0,
-                                     bytes.length,
-                                     declaringClass.getClassLoader());
-                            Constructor<?> ctor = c.getConstructor();
-                            // Use setAccessible to avoid needing a read edge from
-                            // the base module during startup.
-                            ctor.setAccessible(true);
-                            return (MagicAccessorImpl) ctor.newInstance();
-
-                        } catch (Exception e) {
+                        return (MagicAccessorImpl)
+                        ClassDefiner.defineClass
+                                (generatedName,
+                                 bytes,
+                                 0,
+                                 bytes.length,
+                                 declaringClass.getClassLoader()).newInstance();
+                        } catch (InstantiationException | IllegalAccessException e) {
                             throw new InternalError(e);
                         }
-                }
-            });
+                    }
+                });
     }
 
     /** This emits the code for either invoke() or newInstance() */

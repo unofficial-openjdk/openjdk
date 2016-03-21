@@ -26,6 +26,7 @@
 package java.lang;
 
 import java.lang.annotation.Annotation;
+import java.lang.module.ModuleReader;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Array;
 import java.lang.reflect.GenericArrayType;
@@ -60,11 +61,11 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.StringJoiner;
-import jdk.internal.misc.BootLoader;
-import jdk.internal.misc.VM;
 import jdk.internal.HotSpotIntrinsicCandidate;
-import jdk.internal.misc.BuiltinClassLoader;
+import jdk.internal.loader.BootLoader;
+import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.misc.Unsafe;
+import jdk.internal.misc.VM;
 import sun.reflect.CallerSensitive;
 import sun.reflect.ConstantPool;
 import sun.reflect.Reflection;
@@ -416,9 +417,15 @@ public final class Class<T> implements java.io.Serializable,
      *
      * @throws LinkageError if the linkage fails
      *
-     * @throws SecurityException if access to the module's content is denied; or
-     *         if the caller requests to load a class in another module,
-     *         it denies the {@code RuntimePermission("getClassLoader")} permission.
+     * @throws SecurityException
+     *         <ul>
+     *         <li> if the caller is not the specified module and
+     *         {@code RuntimePermission("getClassLoader")} permission is denied; or</li>
+     *         <li> access to the module content is denied. For example,
+     *         permission check will be performed when a class loader calls
+     *         {@link ModuleReader#open(String)} to read the bytes of a class file
+     *         in a module.</li>
+     *         </ul>
      *
      * @since 9
      */
@@ -927,21 +934,21 @@ public final class Class<T> implements java.io.Serializable,
     /**
      * Returns the fully qualified package name.
      *
-     * If this class is a top level class, then this method returns the fully
+     * <p> If this class is a top level class, then this method returns the fully
      * qualified name of the package that the class is a member of, or the
      * empty string if the class is in an unnamed package.
      *
-     * If this class is a member class, then this method is equivalent to
+     * <p> If this class is a member class, then this method is equivalent to
      * invoking {@code getPackageName()} on the {@link #getEnclosingClass
      * enclosing class}.
      *
-     * If this class is a {@link #isLocalClass local class} or an {@link
+     * <p> If this class is a {@link #isLocalClass local class} or an {@link
      * #isAnonymousClass() anonymous class}, then this method is equivalent to
      * invoking {@code getPackageName()} on the {@link #getDeclaringClass
      * declaring class} of the {@link #getEnclosingMethod enclosing method} or
      * {@link #getEnclosingConstructor enclosing constructor}.
      *
-     * This method returns {@code null} if this class represents an array type,
+     * <p> This method returns {@code null} if this class represents an array type,
      * a primitive type or void.
      *
      * @return the fully qualified package name
@@ -2419,7 +2426,7 @@ public final class Class<T> implements java.io.Serializable,
             }
         }
 
-        // this Caller and caller not in the same named module
+        // this Class and caller not in the same named module
         ClassLoader cl = getClassLoader0();
         if (cl == null) {
             return ClassLoader.getSystemResourceAsStream(name);

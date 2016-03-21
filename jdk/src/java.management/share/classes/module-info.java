@@ -45,7 +45,7 @@ module java.management {
     uses javax.management.remote.JMXConnectorServerProvider;
     uses sun.management.spi.PlatformMBeanProvider;
 
-    provides javax.security.auth.spi.LoginModule with
-        com.sun.jmx.remote.security.FileLoginModule;
+    provides javax.security.auth.spi.LoginModule
+        with com.sun.jmx.remote.security.FileLoginModule;
 }
 

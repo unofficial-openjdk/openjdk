@@ -55,8 +55,8 @@ import java.util.stream.Stream;
 
 import jdk.internal.perf.PerfCounter;
 import jdk.internal.module.ServicesCatalog;
-import jdk.internal.misc.BootLoader;
-import jdk.internal.misc.ClassLoaders;
+import jdk.internal.loader.BootLoader;
+import jdk.internal.loader.ClassLoaders;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.misc.VM;
@@ -96,9 +96,7 @@ import sun.security.util.SecurityConstants;
  * associated parent class loader.  When requested to find a class or
  * resource, a <tt>ClassLoader</tt> instance will delegate the search for the
  * class or resource to its parent class loader before attempting to find the
- * class or resource itself.  The virtual machine's built-in class loader,
- * called the "bootstrap class loader", does not itself have a parent but may
- * serve as the parent of a <tt>ClassLoader</tt> instance.
+ * class or resource itself.
  *
  * <p> Class loaders that support concurrent loading of classes are known as
  * <em>parallel capable</em> class loaders and are required to register
@@ -107,12 +105,35 @@ import sun.security.util.SecurityConstants;
  * #registerAsParallelCapable <tt>ClassLoader.registerAsParallelCapable</tt>}
  * method. Note that the <tt>ClassLoader</tt> class is registered as parallel
  * capable by default. However, its subclasses still need to register themselves
- * if they are parallel capable. <br>
+ * if they are parallel capable.
  * In environments in which the delegation model is not strictly
  * hierarchical, class loaders need to be parallel capable, otherwise class
  * loading can lead to deadlocks because the loader lock is held for the
  * duration of the class loading process (see {@link #loadClass
  * <tt>loadClass</tt>} methods).
+ *
+ * <h3> <a name="builtinLoaders">Run-time Built-in Class Loaders</a></h3>
+ *
+ * The Java run-time has the following built-in class loaders:
+ *
+ * <ul>
+ * <li>Bootstrap class loader.
+ *     It is the virtual machine's built-in class loader, typically represented
+ *     as {@code null}, and does not have a parent.</li>
+ * <li>{@linkplain #getPlatformClassLoader() Platform class loader}.
+ *     All <em>platform classes</em> are visible to the platform class loader
+ *     that can be used as the parent of a {@code ClassLoader} instance.
+ *     Platform classes include Java SE platform APIs, their implementation
+ *     classes and JDK-specific run-time classes that are defined by the
+ *     platform class loader or its ancestors.</li>
+ * <li>{@linkplain #getSystemClassLoader() System class loader}.
+ *     It is also known as <em>application class
+ *     loader</em> and is distinct from the platform class loader.
+ *     The system class loader is typically used to define classes on the
+ *     application class path, module path, and JDK-specific tools.
+ *     The platform class loader is a parent or an ancestor of the system class
+ *     loader that all platform classes are visible to it.</li>
+ * </ul>
  *
  * <p> Normally, the Java virtual machine loads classes from the local file
  * system in a platform-dependent manner.
@@ -789,7 +810,6 @@ public abstract class ClassLoader {
         - not define java.* class,
         - signer of this class matches signers for the rest of the classes in
           package.
-        - define a package if not present
     */
     private ProtectionDomain preDefineClass(String name,
                                             ProtectionDomain pd)
@@ -797,7 +817,8 @@ public abstract class ClassLoader {
         if (!checkName(name))
             throw new NoClassDefFoundError("IllegalName: " + name);
 
-        if ((name != null) && name.startsWith("java.")) {
+        if ((name != null) && name.startsWith("java.")
+                && this != getBuiltinPlatformClassLoader()) {
             throw new SecurityException
                 ("Prohibited package name: " +
                  name.substring(0, name.lastIndexOf('.')));
@@ -823,7 +844,7 @@ public abstract class ClassLoader {
     }
 
     private void postDefineClass(Class<?> c, ProtectionDomain pd) {
-        // define a named package
+        // define a named package, if not present
         getNamedPackage(c.getPackageName(), c.getModule());
 
         if (pd.getCodeSource() != null) {
@@ -854,10 +875,11 @@ public abstract class ClassLoader {
      * class you are defining as well as the bytes.  This ensures that the
      * class you are defining is indeed the class you think it is.
      *
-     * <p> The specified {@code name} cannot begin with "{@code java.}", since
-     * all classes in the {@code java.*} packages can only be defined by the
-     * bootstrap class loader.  If {@code name} is not {@code null}, it
-     * must be equal to the <a href="#name">binary name</a> of the class
+     * <p> If the specified {@code name} begins with "{@code java.}", it can
+     * only be defined by the {@linkplain #getPlatformClassLoader()
+     * platform class loader} or its ancestors; otherwise {@code SecurityException}
+     * will be thrown.  If {@code name} is not {@code null}, it must be equal to
+     * the <a href="#name">binary name</a> of the class
      * specified by the byte array {@code b}, otherwise a {@link
      * NoClassDefFoundError NoClassDefFoundError} will be thrown.
      *
@@ -905,7 +927,8 @@ public abstract class ClassLoader {
      *          If an attempt is made to add this class to a package that
      *          contains classes that were signed by a different set of
      *          certificates than this class, or if {@code name} begins with
-     *          "{@code java.}".
+     *          "{@code java.}" and this class loader is not the platform
+     *          class loader or its ancestor.
      */
     protected final Class<?> defineClass(String name, byte[] b, int off, int len,
                                          ProtectionDomain protectionDomain)
@@ -1557,6 +1580,33 @@ public abstract class ClassLoader {
     }
 
     /**
+     * Returns the platform class loader for delegation.  All
+     * <a href="#builtinLoaders">platform classes</a> are visible to
+     * the platform class loader.
+     *
+     * @return  The platform {@code ClassLoader}.
+     *
+     * @throws  SecurityException
+     *          If a security manager exists and the caller's class loader is
+     *          not {@code null} and the caller's class loader is not the same
+     *          as or an ancestor of the platform class loader,
+     *          and the {@link SecurityManager#checkPermission(java.security.Permission)
+     *          checkPermission} method denies {@code RuntimePermission("getClassLoader")}
+     *          to access the platform class loader.
+     *
+     * @since 9
+     */
+    @CallerSensitive
+    public static ClassLoader getPlatformClassLoader() {
+        SecurityManager sm = System.getSecurityManager();
+        ClassLoader loader = getBuiltinPlatformClassLoader();
+        if (sm != null) {
+            checkClassLoaderPermission(loader, Reflection.getCallerClass());
+        }
+        return loader;
+    }
+
+    /**
      * Returns the system class loader for delegation.  This is the default
      * delegation parent for new <tt>ClassLoader</tt> instances, and is
      * typically the class loader used to start the application.
@@ -1642,6 +1692,10 @@ public abstract class ClassLoader {
             default:
                 throw new InternalError("should not reach here");
         }
+    }
+
+    static ClassLoader getBuiltinPlatformClassLoader() {
+        return ClassLoaders.platformClassLoader();
     }
 
     static ClassLoader getBuiltinAppClassLoader() {
@@ -1775,20 +1829,23 @@ public abstract class ClassLoader {
             throw new InternalError("unnamed package in  " + m);
         }
 
-        // define Package object if the named package is not yet defined
-        NamedPackage p = packages.computeIfAbsent(name,
-                                                  k -> NamedPackage.toPackage(name, m));
-        if (p instanceof Package)
-            return (Package)p;
+        // check if Package object is already defined
+        NamedPackage pkg = packages.get(name);
+        if (pkg instanceof Package)
+            return (Package)pkg;
 
-        // otherwise, replace the NamedPackage object with Package object
-        return (Package)packages.compute(name, this::toPackage);
+        return (Package)packages.compute(name, (n, p) -> toPackage(n, p, m));
     }
 
     /*
      * Returns a Package object for the named package
      */
-    private Package toPackage(String name, NamedPackage p) {
+    private Package toPackage(String name, NamedPackage p, Module m) {
+        // define Package object if the named package is not yet defined
+        if (p == null)
+            return NamedPackage.toPackage(name, m);
+
+        // otherwise, replace the NamedPackage object with Package object
         if (p instanceof Package)
             return (Package)p;
 
@@ -1823,7 +1880,9 @@ public abstract class ClassLoader {
      * package {@code 'p'}.
      *
      * <p> It is strongly recommended that a class loader does not call this
-     * method to explicitly define packages in <em>named modules</em>.
+     * method to explicitly define packages in <em>named modules</em>; instead,
+     * the package will be automatically defined when a class is {@linkplain
+     * #defineClass(String, byte[], int, int, ProtectionDomain) being defined}.
      * If it is desirable to define {@code Package} explicitly, it should ensure
      * that all packages in a named module are defined with the properties
      * specified by {@link Package}.  Otherwise, some {@code Package} objects
@@ -1904,9 +1963,6 @@ public abstract class ClassLoader {
         NamedPackage p = packages.get(name);
         if (p == null)
             return null;
-
-        if (p instanceof Package)
-            return (Package)p;
 
         return definePackage(name, p.module());
     }

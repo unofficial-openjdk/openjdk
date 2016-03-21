@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -183,9 +183,8 @@ public class Reflection {
     }
 
     /**
-     * Returns {@code true} if memberClass's module is readable by currentClass's
-     * module and memberClass's's module exports memberClass's package to
-     * currentClass's module.
+     * Returns {@code true} if memberClass's's module exports memberClass's
+     * package to currentClass's module.
      */
     public static boolean verifyModuleAccess(Class<?> currentClass,
                                              Class<?> memberClass) {
@@ -198,10 +197,6 @@ public class Reflection {
         // module may be null during startup (initLevel 0)
         if (currentModule == memberModule)
            return true;  // same module (named or unnamed)
-
-        // check readability
-        if (!currentModule.canRead(memberModule))
-            return false;
 
         // memberClass may be primitive or array class
         Class<?> c = memberClass;
@@ -319,7 +314,7 @@ public class Reflection {
 
     /**
      * Tests if the given method is caller-sensitive and the declaring class
-     * is defined by either the bootstrap class loader or extension class loader.
+     * is defined by either the bootstrap class loader or platform class loader.
      */
     public static boolean isCallerSensitive(Method m) {
         final ClassLoader loader = m.getDeclaringClass().getClassLoader();
@@ -390,26 +385,18 @@ public class Reflection {
         }
         String memberPackageName = c.getPackageName();
 
-        boolean canRead = m1.canRead(m2);
-
         String msg = currentClass + currentSuffix + " cannot access ";
-        if (canRead && m2.isExported(memberPackageName, m1)) {
+        if (m2.isExported(memberPackageName, m1)) {
 
             // module access okay so include the modifiers in the message
             msg += "a member of " + memberClass + memberSuffix +
                     " with modifiers \"" + Modifier.toString(modifiers) + "\"";
 
         } else {
-
             // module access failed
-            msg += memberClass + memberSuffix + " because ";
-            if (!canRead) {
-                msg += m1 + " does not read " + m2;
-            } else {
-                msg += m2 + " does not export " + memberPackageName;
-                if (m2.isNamed()) msg += " to " + m1;
-            }
-
+            msg += memberClass + memberSuffix+ " because "
+                   + m2 + " does not export " + memberPackageName;
+            if (m2.isNamed()) msg += " to " + m1;
         }
 
         throwIllegalAccessException(msg);

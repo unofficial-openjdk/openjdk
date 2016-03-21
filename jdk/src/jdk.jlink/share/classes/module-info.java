@@ -38,11 +38,12 @@ module jdk.jlink {
     provides jdk.tools.jlink.plugin.TransformerPlugin with jdk.tools.jlink.internal.plugins.StripDebugPlugin;
     provides jdk.tools.jlink.plugin.TransformerPlugin with jdk.tools.jlink.internal.plugins.ExcludePlugin;
     provides jdk.tools.jlink.plugin.TransformerPlugin with jdk.tools.jlink.internal.plugins.ExcludeFilesPlugin;
-    provides jdk.tools.jlink.plugin.TransformerPlugin with jdk.tools.jlink.internal.plugins.InstalledModuleDescriptorPlugin;
+    provides jdk.tools.jlink.plugin.TransformerPlugin with jdk.tools.jlink.internal.plugins.SystemModuleDescriptorPlugin;
     provides jdk.tools.jlink.plugin.TransformerPlugin with jdk.tools.jlink.internal.plugins.StripNativeCommandsPlugin;
     provides jdk.tools.jlink.plugin.TransformerPlugin with jdk.tools.jlink.internal.plugins.SortResourcesPlugin;
     provides jdk.tools.jlink.plugin.TransformerPlugin with jdk.tools.jlink.internal.plugins.DefaultCompressPlugin;
     provides jdk.tools.jlink.plugin.TransformerPlugin with jdk.tools.jlink.internal.plugins.OptimizationPlugin;
     provides jdk.tools.jlink.plugin.TransformerPlugin with jdk.tools.jlink.internal.plugins.ExcludeVMPlugin;
+    provides jdk.tools.jlink.plugin.TransformerPlugin with jdk.tools.jlink.internal.plugins.IncludeLocalesPlugin;
     provides jdk.tools.jlink.plugin.PostProcessorPlugin with jdk.tools.jlink.internal.plugins.ReleaseInfoPlugin;
 }

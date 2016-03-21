@@ -454,17 +454,16 @@ final class AsmPoolImpl implements AsmModulePool {
      * @return The reader or null if not found
      */
     @Override
-    public ClassReader getExportedClassReader(String callerModule,
-            String binaryName) {
+    public ClassReader getExportedClassReader(String callerModule, String binaryName) {
         Objects.requireNonNull(callerModule);
         Objects.requireNonNull(binaryName);
         boolean exported = false;
         ClassReader clazz = null;
-        for (Exports exports : descriptor.exports()) {
-            String pkg = exports.source();
-            Optional<Set<String>> targets = exports.targets();
+        for (Exports e : descriptor.exports()) {
+            String pkg = e.source();
+            Set<String> targets = e.targets();
             System.out.println("PKG " + pkg);
-            if (!targets.isPresent() || targets.get().contains(callerModule)) {
+            if (targets.isEmpty() || targets.contains(callerModule)) {
                 if (binaryName.startsWith(pkg)) {
                     String className = binaryName.substring(pkg.length());
                     System.out.println("CLASS " + className);

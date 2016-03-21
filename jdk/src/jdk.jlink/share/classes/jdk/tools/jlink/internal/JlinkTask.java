@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,10 +29,10 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
 import java.lang.module.Configuration;
-import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
-import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleReference;
 import java.lang.module.ResolutionException;
+import java.lang.module.ResolvedModule;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.nio.ByteOrder;
@@ -197,7 +197,7 @@ public class JlinkTask {
                 optionsHelper.showHelp(PROGNAME);
                 return EXIT_OK;
             }
-            if(optionsHelper.listPlugins()) {
+            if (optionsHelper.listPlugins()) {
                 optionsHelper.listPlugins(true);
                 return EXIT_OK;
             }
@@ -238,22 +238,12 @@ public class JlinkTask {
         }
     }
 
-    private static Map<String, Path> modulesToPath(ModuleFinder finder,
-            Set<ModuleDescriptor> modules) {
+    private static Map<String, Path> modulesToPath(Configuration cf) {
         Map<String, Path> modPaths = new HashMap<>();
-        for (ModuleDescriptor m : modules) {
-            String name = m.name();
-
-            Optional<ModuleReference> omref = finder.find(name);
-            if (!omref.isPresent()) {
-                // this should not happen, module path bug?
-                fail(InternalError.class,
-                        "Selected module %s not on module path",
-                        name);
-            }
-
-            URI uri = omref.get().location().get();
-            modPaths.put(name, Paths.get(uri));
+        for (ResolvedModule resolvedModule : cf.modules()) {
+            ModuleReference mref = resolvedModule.reference();
+            URI uri = mref.location().get();
+            modPaths.put(mref.descriptor().name(), Paths.get(uri));
         }
         return modPaths;
     }
@@ -378,11 +368,13 @@ public class JlinkTask {
         if (addMods.isEmpty()) {
             throw new IllegalArgumentException("empty modules and limitmods");
         }
-        Configuration cf = Configuration.resolve(finder,
-                Configuration.empty(),
-                ModuleFinder.empty(),
-                addMods);
-        Map<String, Path> mods = modulesToPath(finder, cf.descriptors());
+
+        Configuration cf = Configuration.empty()
+                .resolveRequires(finder,
+                                 ModuleFinder.empty(),
+                                 addMods);
+
+        Map<String, Path> mods = modulesToPath(cf);
         return new ImageHelper(cf, mods, order, retainModulesPath);
     }
 
@@ -393,17 +385,18 @@ public class JlinkTask {
     private static ModuleFinder limitFinder(ModuleFinder finder,
             Set<String> roots,
             Set<String> otherMods) {
+
         // resolve all root modules
-        Configuration cf = Configuration.resolve(finder,
-                Configuration.empty(),
-                ModuleFinder.empty(),
-                roots);
+        Configuration cf = Configuration.empty()
+                .resolveRequires(finder,
+                                 ModuleFinder.empty(),
+                                 roots);
 
         // module name -> reference
         Map<String, ModuleReference> map = new HashMap<>();
-        cf.descriptors().forEach(md -> {
-            String name = md.name();
-            map.put(name, finder.find(name).get());
+        cf.modules().forEach(m -> {
+            ModuleReference mref = m.reference();
+            map.put(mref.descriptor().name(), mref);
         });
 
         // set of modules that are observable

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,10 +35,17 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.Comparator;
+import java.util.Objects;
 import java.util.stream.IntStream;
 import jdk.internal.jimage.decompressor.Decompressor;
 
+/**
+ * @implNote This class needs to maintain JDK 8 source compatibility.
+ *
+ * It is used internally in the JDK to implement jimage/jrtfs access,
+ * but also compiled and delivered as part of the jrtfs.jar to support access
+ * to the jimage file provided by the shipped JDK by tools running on JDK 8.
+ */
 public class BasicImageReader implements AutoCloseable {
     private static boolean isSystemProperty(String key, String value, String def) {
         // No lambdas during bootstrap
@@ -51,12 +58,12 @@ public class BasicImageReader implements AutoCloseable {
             });
     }
 
-    static private final boolean is64Bit =
+    static private final boolean IS_64_BIT =
             isSystemProperty("sun.arch.data.model", "64", "32");
-    static private final boolean useJVMMap =
+    static private final boolean USE_JVM_MAP =
             isSystemProperty("jdk.image.use.jvm.map", "true", "true");
-    static private final boolean mapAll =
-            isSystemProperty("jdk.image.map.all", "true", is64Bit ? "true" : "false");
+    static private final boolean MAP_ALL =
+            isSystemProperty("jdk.image.map.all", "true", IS_64_BIT ? "true" : "false");
 
     private final String name;
     private final ByteOrder byteOrder;
@@ -74,26 +81,28 @@ public class BasicImageReader implements AutoCloseable {
 
     protected BasicImageReader(Path path, ByteOrder byteOrder)
             throws IOException {
+        Objects.requireNonNull(path);
+        Objects.requireNonNull(byteOrder);
         this.name = path.toString();
         this.byteOrder = byteOrder;
         imagePath = path;
 
         ByteBuffer map;
 
-        if (useJVMMap && BasicImageReader.class.getClassLoader() == null) {
+        if (USE_JVM_MAP && BasicImageReader.class.getClassLoader() == null) {
             // Check to see if the jvm has opened the file using libjimage
             // native entry when loading the image for this runtime
             map = NativeImageBuffer.getNativeMap(name);
-        } else {
+         } else {
             map = null;
         }
 
         // Open the file only if no memory map yet or is 32 bit jvm
-        channel = map != null && mapAll ? null :
+        channel = map != null && MAP_ALL ? null :
                   FileChannel.open(imagePath, StandardOpenOption.READ);
 
         // If no memory map yet and 64 bit jvm then memory map entire file
-        if (mapAll && map == null) {
+        if (MAP_ALL && map == null) {
             map = channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size());
         }
 
@@ -118,13 +127,13 @@ public class BasicImageReader implements AutoCloseable {
             map = channel.map(FileChannel.MapMode.READ_ONLY, 0, indexSize);
         }
 
-        memoryMap = map;
+        memoryMap = map.asReadOnlyBuffer();
 
         // Interpret the image index
-        redirect = intBuffer(map, header.getRedirectOffset(), header.getRedirectSize());
-        offsets = intBuffer(map, header.getOffsetsOffset(), header.getOffsetsSize());
-        locations = slice(map, header.getLocationsOffset(), header.getLocationsSize());
-        strings = slice(map, header.getStringsOffset(), header.getStringsSize());
+        redirect = intBuffer(memoryMap, header.getRedirectOffset(), header.getRedirectSize());
+        offsets = intBuffer(memoryMap, header.getOffsetsOffset(), header.getOffsetsSize());
+        locations = slice(memoryMap, header.getLocationsOffset(), header.getLocationsSize());
+        strings = slice(memoryMap, header.getStringsOffset(), header.getStringsSize());
 
         stringsReader = new ImageStringsReader(this);
         decompressor = new Decompressor();
@@ -145,16 +154,23 @@ public class BasicImageReader implements AutoCloseable {
     private ImageHeader readHeader(IntBuffer buffer) throws IOException {
         ImageHeader result = ImageHeader.readFrom(buffer);
 
-        if (result.getMagic() != ImageHeader.MAGIC ||
-                result.getMajorVersion() != ImageHeader.MAJOR_VERSION ||
-                result.getMinorVersion() != ImageHeader.MINOR_VERSION) {
-            throw new IOException("Image not found \"" + name + "\"");
+        if (result.getMagic() != ImageHeader.MAGIC) {
+            throw new IOException("\"" + name + "\" is not an image file");
+        }
+
+        if (result.getMajorVersion() != ImageHeader.MAJOR_VERSION ||
+            result.getMinorVersion() != ImageHeader.MINOR_VERSION) {
+            throw new IOException("The image file \"" + name + "\" is not the correct version");
         }
 
         return result;
     }
 
-    private ByteBuffer slice(ByteBuffer buffer, int position, int capacity) {
+    private static ByteBuffer slice(ByteBuffer buffer, int position, int capacity) {
+        // Note that this is the only limit and position manipulation of
+        // BasicImageReader private ByteBuffers.  The synchronize could be avoided
+        // by cloning the buffer to make a local copy, but at the cost of creating
+        // a new object.
         synchronized(buffer) {
             buffer.limit(position + capacity);
             buffer.position(position);
@@ -198,14 +214,21 @@ public class BasicImageReader implements AutoCloseable {
     }
 
     public synchronized ImageLocation findLocation(String name) {
+        // Details of the algorithm used here can be found in
+        // jdk.tools.jlink.internal.PerfectHashBuilder.
         byte[] bytes = ImageStringsReader.mutf8FromString(name);
         int count = header.getTableLength();
         int index = redirect.get(ImageStringsReader.hashCode(bytes) % count);
 
         if (index < 0) {
+            // index is twos complement of location attributes index.
             index = -index - 1;
-        } else {
+        } else if (index > 0) {
+            // index is hash seed needed to compute location attributes index.
             index = ImageStringsReader.hashCode(bytes, index) % count;
+        } else {
+            // No entry.
+            return null;
         }
 
         long[] attributes = getAttributes(offsets.get(index));
@@ -229,23 +252,13 @@ public class BasicImageReader implements AutoCloseable {
                         .toArray(String[]::new);
     }
 
-    protected ImageLocation[] getAllLocations(boolean sorted) {
-        int[] attributeOffsets = new int[offsets.capacity()];
-        offsets.get(attributeOffsets);
-        return IntStream.of(attributeOffsets)
-                        .filter(o -> o != 0)
-                        .mapToObj(o -> ImageLocation.readFrom(this, o))
-                        .sorted(Comparator.comparing(ImageLocation::getFullName))
-                        .toArray(ImageLocation[]::new);
-    }
-
     ImageLocation getLocation(int offset) {
         return ImageLocation.readFrom(this, offset);
     }
 
     public long[] getAttributes(int offset) {
         ByteBuffer buffer = slice(locations, offset, locations.limit() - offset);
-        return ImageLocationBase.decompress(buffer);
+        return ImageLocation.decompress(buffer);
     }
 
     public String getString(int offset) {
@@ -261,10 +274,15 @@ public class BasicImageReader implements AutoCloseable {
     }
 
     private ByteBuffer readBuffer(long offset, long size) {
-        assert offset < Integer.MAX_VALUE;
-        assert size < Integer.MAX_VALUE;
+        if (offset < 0 || Integer.MAX_VALUE <= offset) {
+            throw new IndexOutOfBoundsException("offset");
+        }
 
-        if (mapAll) {
+        if (size < 0 || Integer.MAX_VALUE <= size) {
+            throw new IndexOutOfBoundsException("size");
+        }
+
+        if (MAP_ALL) {
             ByteBuffer buffer = slice(memoryMap, (int)offset, (int)size);
             buffer.order(ByteOrder.BIG_ENDIAN);
 
@@ -274,7 +292,10 @@ public class BasicImageReader implements AutoCloseable {
             int read = 0;
 
             try {
-                assert channel != null: "Image file channel not open";
+                if (channel == null) {
+                    throw new InternalError("Image file channel not open");
+                }
+
                 read = channel.read(buffer, offset);
                 buffer.rewind();
             } catch (IOException ex) {
@@ -312,8 +333,14 @@ public class BasicImageReader implements AutoCloseable {
         long offset = loc.getContentOffset() + indexSize;
         long compressedSize = loc.getCompressedSize();
         long uncompressedSize = loc.getUncompressedSize();
-        assert compressedSize < Integer.MAX_VALUE;
-        assert uncompressedSize < Integer.MAX_VALUE;
+
+        if (compressedSize < 0 || Integer.MAX_VALUE < compressedSize) {
+            throw new IndexOutOfBoundsException("Compressed size");
+        }
+
+        if (uncompressedSize < 0 || Integer.MAX_VALUE < uncompressedSize) {
+            throw new IndexOutOfBoundsException("Uncompressed size");
+        }
 
         if (compressedSize == 0) {
             return readBuffer(offset, uncompressedSize);
@@ -339,21 +366,9 @@ public class BasicImageReader implements AutoCloseable {
         return null;
     }
 
-    public ByteBuffer getResourceBuffer(String name) {
-        ImageLocation location = findLocation(name);
-
-        return location != null ? getResourceBuffer(location) : null;
-    }
-
     public InputStream getResourceStream(ImageLocation loc) {
         byte[] bytes = getResource(loc);
 
         return new ByteArrayInputStream(bytes);
-    }
-
-    public InputStream getResourceStream(String name) {
-        ImageLocation location = findLocation(name);
-
-        return location != null ? getResourceStream(location) : null;
     }
 }

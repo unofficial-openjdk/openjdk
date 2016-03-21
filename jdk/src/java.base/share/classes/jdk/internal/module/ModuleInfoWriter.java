@@ -56,9 +56,6 @@ public final class ModuleInfoWriter {
         String name = descriptor.name().replace('.', '/') + "/module-info";
         cw.visit(Opcodes.V1_8, ACC_MODULE, name, null, null, null);
 
-        // assume not generated from module-info.java source
-        cw.visitAttribute(new SyntheticAttribute());
-
         cw.visitAttribute(new ModuleAttribute(descriptor));
         cw.visitAttribute(new ConcealedPackagesAttribute(descriptor.conceals()));
 

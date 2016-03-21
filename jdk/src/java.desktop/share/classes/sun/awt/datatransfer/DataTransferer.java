@@ -1448,8 +1448,6 @@ search:
                             new IOException("can't find <init>(L"+ clazz + ";)V for class: " + dfrc.getName()));
 
             try {
-                DataTransferer.class.getModule().addReads(
-                        constructor.getDeclaringClass().getModule());
                 return constructor.newInstance(arg);
             } catch (Exception e) {
                 throw new IOException(e.getMessage());

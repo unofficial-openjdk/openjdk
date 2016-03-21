@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1994, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1455,8 +1455,7 @@ public final class System {
          * for the given {@code caller}.
          *
          * @param name the name of the logger.
-         * @param caller the class for which the logger is being requested;
-         *               can be {@code null}.
+         * @param caller the class for which the logger is being requested.
          *
          * @return a {@link Logger logger} suitable for the given caller's
          *         use.
@@ -1866,7 +1865,7 @@ public final class System {
         VM.saveAndRemoveProperties(props);
 
         lineSeparator = props.getProperty("line.separator");
-        sun.misc.Version.init();
+        VersionProps.init();
 
         FileInputStream fdIn = new FileInputStream(FileDescriptor.in);
         FileOutputStream fdOut = new FileOutputStream(FileDescriptor.out);
@@ -1916,10 +1915,8 @@ public final class System {
         // initialize the module system
         System.bootLayer = ModuleBootstrap.boot();
 
-        // base module needs to be loose
+        // base module needs to be loose (CODETOOLS-7901619)
         Module base = Object.class.getModule();
-        if (base == null)
-            throw new InternalError();
         Modules.addReads(base, null);
 
         // module system initialized

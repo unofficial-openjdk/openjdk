@@ -153,7 +153,6 @@ class NewElementHandler extends ElementHandler {
         if (constructor.isVarArgs()) {
             args = getArguments(args, constructor.getParameterTypes());
         }
-        this.getClass().getModule().addReads(constructor.getDeclaringClass().getModule());
         return ValueObjectImpl.create(constructor.newInstance(args));
     }
 

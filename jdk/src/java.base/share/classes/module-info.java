@@ -154,6 +154,7 @@ module java.base {
     exports jdk.internal.math to
         java.desktop;
     exports jdk.internal.module to
+        java.instrument,
         java.management,
         java.xml,
         jdk.dynalink,
@@ -179,6 +180,8 @@ module java.base {
         jdk.jvmstat;
     exports jdk.internal.ref to
         java.desktop;
+    exports sun.net to
+        java.httpclient;
     exports sun.net.dns to
         java.security.jgss,
         jdk.naming.dns;
@@ -216,7 +219,6 @@ module java.base {
     exports sun.security.action to
         java.desktop,
         java.security.jgss,
-        jdk.crypto.ec,
         jdk.crypto.pkcs11;
     exports sun.security.internal.interfaces to
         jdk.crypto.pkcs11;
@@ -235,7 +237,6 @@ module java.base {
         java.rmi,
         java.security.jgss,
         jdk.crypto.pkcs11,
-        jdk.jartool,
         jdk.policytool,
         jdk.security.auth;
     exports sun.security.provider.certpath to
@@ -260,31 +261,22 @@ module java.base {
         jdk.security.auth,
         jdk.security.jgss;
     exports sun.security.x509 to
-        java.naming,
         jdk.crypto.ec,
         jdk.crypto.pkcs11,
         jdk.jartool,
         jdk.security.auth;
     exports sun.text.resources to
         jdk.localedata;
-    exports sun.text.resources.cldr to
+    exports sun.util.resources to
         jdk.localedata;
-    exports sun.util to
-        java.desktop;
     exports sun.util.locale.provider to
         java.desktop,
         jdk.localedata;
     exports sun.util.logging to
         java.desktop,
+        java.httpclient,
         java.logging,
-        java.management,
-        java.prefs,
-        jdk.jlink;
-    exports sun.util.resources to
-        jdk.localedata;
-    exports sun.util.resources.cldr to
-        jdk.localedata;
-
+        java.prefs;
 
     // JDK-internal service types
     uses jdk.internal.logger.DefaultLoggerFinder;

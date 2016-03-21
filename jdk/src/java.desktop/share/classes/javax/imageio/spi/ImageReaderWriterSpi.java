@@ -611,10 +611,6 @@ public abstract class ImageReaderWriterSpi extends IIOServiceProvider {
         if (thisModule.equals(targetModule) || c == null) {
             return c;
         }
-        if (!thisModule.canRead(targetModule)) {
-            thisModule.addReads(targetModule);
-        }
-
         if (thisModule.isNamed()) {
             int i = formatClassName.lastIndexOf(".");
             String pn = i > 0 ? formatClassName.substring(0, i) : "";

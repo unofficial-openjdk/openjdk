@@ -700,7 +700,6 @@ public class PolicyTool {
             break;
         }
         Object parameters[] = objects.toArray();
-        PolicyTool.class.getModule().addReads(pc.getModule());
         Permission p = (Permission)c.newInstance(parameters);
     }
 

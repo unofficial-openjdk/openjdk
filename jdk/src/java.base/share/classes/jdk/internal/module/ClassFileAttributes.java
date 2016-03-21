@@ -195,8 +195,8 @@ class ClassFileAttributes {
                 for (Exports e : descriptor.exports()) {
                     String pkg = e.source().replace('.', '/');
                     attr.putShort(cw.newUTF8(pkg));
-                    if (e.targets().isPresent()) {
-                        Set<String> ts = e.targets().get();
+                    if (e.isQualified()) {
+                        Set<String> ts = e.targets();
                         attr.putShort(ts.size());
                         ts.forEach(t -> attr.putShort(cw.newUTF8(t)));
                     } else {

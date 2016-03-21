@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,11 +49,11 @@ import org.testng.annotations.Test;
  * @test
  * @bug 8077350 8081566 8081567 8098852 8136597
  * @library /test/lib/share/classes
+ * @modules jdk.management
  * @build jdk.test.lib.Platform jdk.test.lib.Utils
  * @run testng InfoTest
  * @summary Functions of ProcessHandle.Info
  * @author Roger Riggs
- * @key intermittent
  */
 
 public class InfoTest {
@@ -115,9 +115,13 @@ public class InfoTest {
             long cpuLoopTime = 100;             // 100 ms
             String[] extraArgs = {"pid", "parent", "stdin"};
             JavaChild p1 = JavaChild.spawnJavaChild((Object[])extraArgs);
-            Instant afterStart = Instant.now();
+            Instant afterStart = null;
 
             try (BufferedReader lines = p1.outputReader()) {
+                // Read the args line to know the subprocess has started
+                lines.readLine();
+                afterStart = Instant.now();
+
                 Duration lastCpu = Duration.ofMillis(0L);
                 for (int j = 0; j < 10; j++) {
 
@@ -127,8 +131,7 @@ public class InfoTest {
                     // Read cputime from child
                     Duration childCpuTime = null;
                     // Read lines from the child until the result from cputime is returned
-                    String s;
-                    while ((s = lines.readLine()) != null) {
+                    for (String s; (s = lines.readLine()) != null;) {
                         String[] split = s.trim().split(" ");
                         if (split.length == 3 && split[1].equals("cputime")) {
                             long nanos = Long.valueOf(split[2]);

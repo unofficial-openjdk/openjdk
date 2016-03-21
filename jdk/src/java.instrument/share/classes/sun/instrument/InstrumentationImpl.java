@@ -38,6 +38,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 
+import java.util.Objects;
 import java.util.jar.JarFile;
 
 /*
@@ -226,6 +227,14 @@ public class InstrumentationImpl implements Instrumentation {
         setNativeMethodPrefixes(mNativeAgent, prefixes, mgr.isRetransformable());
     }
 
+    @Override
+    public void addModuleReads(Module module, Module other) {
+        Objects.requireNonNull(module);
+        Objects.requireNonNull(other);
+        jdk.internal.module.Modules.addReads(module, other);
+    }
+
+
     private TransformerManager
     findTransformerManager(ClassFileTransformer transformer) {
         if (mTransformerManager.includesTransformer(transformer)) {
@@ -375,8 +384,6 @@ public class InstrumentationImpl implements Instrumentation {
                 throw firstExc;
             }
         }
-
-        this.getClass().getModule().addReads(javaAgentClass.getModule());
 
         // the premain method should not be required to be public,
         // make it accessible so we can call it

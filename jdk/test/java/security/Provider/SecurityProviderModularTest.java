@@ -38,7 +38,6 @@ import org.testng.annotations.BeforeTest;
 /**
  * @test
  * @bug 8130360
- * @library /jdk/jigsaw/lib
  * @library /lib/testlibrary
  * @library /java/security/modules
  * @modules java.base/jdk.internal.module

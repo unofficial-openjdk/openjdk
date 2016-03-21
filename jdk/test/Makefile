@@ -234,17 +234,14 @@ clean:
 
 # Expect JT_HOME to be set for jtreg tests. (home for jtreg)
 ifndef JT_HOME
-  ## JT_HOME = $(SLASH_JAVA)/re/jtreg/4.1/promoted/latest/binaries/jtreg
-  ## Use jtreg with @modules support
-  JT_HOME = $(SLASH_JAVA)/re/jtreg/4.1/nightly/binaries/jtreg/
+  JT_HOME = $(SLASH_JAVA)/re/jtreg/4.2/promoted/latest/binaries/jtreg
   ifdef JPRT_JTREG_HOME
     JT_HOME = $(JPRT_JTREG_HOME)
   endif
 endif
 
 # Problematic tests to be excluded
-PROBLEM_LISTS=$(call MixedDirs,$(wildcard ProblemList.txt ProblemList.jake.txt \
-                     closed/ProblemList.txt closed/ProblemList.jake.txt))
+PROBLEM_LISTS=$(call MixedDirs,$(wildcard ProblemList.txt closed/ProblemList.txt))
 
 # Create exclude list for this platform and arch
 ifdef NO_EXCLUDES

@@ -177,7 +177,8 @@ public class DefaultImageBuilder implements ImageBuilder {
                 Path lib = root.resolve("lib");
                 if (Files.isDirectory(lib)) {
                     Files.find(lib, 2, (path, attrs) -> {
-                        return path.getFileName().toString().equals("jspawnhelper");
+                        return path.getFileName().toString().equals("jspawnhelper") ||
+                               path.getFileName().toString().equals("jexec");
                     }).forEach(this::setExecutable);
                 }
             }

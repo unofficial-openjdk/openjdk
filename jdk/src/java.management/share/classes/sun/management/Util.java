@@ -26,18 +26,9 @@
 package sun.management;
 
 import java.lang.management.ManagementPermission;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Predicate;
 import javax.management.ObjectName;
 import javax.management.MalformedObjectNameException;
-import javax.management.openmbean.ArrayType;
-import javax.management.openmbean.CompositeType;
-import javax.management.openmbean.OpenDataException;
-import javax.management.openmbean.OpenType;
-import javax.management.openmbean.SimpleType;
-import javax.management.openmbean.TabularType;
 
 
 public class Util {

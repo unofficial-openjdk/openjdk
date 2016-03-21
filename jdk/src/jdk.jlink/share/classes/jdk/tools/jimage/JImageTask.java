@@ -344,23 +344,23 @@ class JImageTask {
                 throw taskHelper.newBadArgs("err.not.a.jimage", file.getName());
             }
 
-            BasicImageReader reader = BasicImageReader.open(file.toPath());
+            try (BasicImageReader reader = BasicImageReader.open(file.toPath())) {
+                if (jimageAction != null) {
+                    jimageAction.apply(file, reader);
+                }
 
-            if (jimageAction != null) {
-                jimageAction.apply(file, reader);
-            }
+                if (resourceAction != null) {
+                    String[] entryNames = reader.getEntryNames();
 
-            if (resourceAction != null) {
-                String[] entryNames = reader.getEntryNames();
-
-                for (String name : entryNames) {
-                    if (!ImageResourcesTree.isTreeInfoResource(name)) {
-                        ImageLocation location = reader.findLocation(name);
-                        resourceAction.apply(reader, name, location);
+                    for (String name : entryNames) {
+                        if (!ImageResourcesTree.isTreeInfoResource(name)) {
+                            ImageLocation location = reader.findLocation(name);
+                            resourceAction.apply(reader, name, location);
+                        }
                     }
                 }
             }
-       }
+        }
     }
 
     private boolean run() throws Exception, BadArgs {

@@ -74,8 +74,9 @@ class NamedPackage {
     URI location() {
         if (module.isNamed() && module.getLayer() != null) {
             Configuration cf = module.getLayer().configuration();
-            ModuleReference mref = cf.findModule(module.getName()).get();
-            return mref != null ? mref.location().orElse(null) : null;
+            ModuleReference mref
+                = cf.findModule(module.getName()).get().reference();
+            return mref.location().orElse(null);
         }
         return null;
     }

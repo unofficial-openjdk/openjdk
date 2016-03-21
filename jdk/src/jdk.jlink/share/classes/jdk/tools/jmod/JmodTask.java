@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -95,7 +95,10 @@ import jdk.internal.module.Hasher;
 import jdk.internal.module.Hasher.DependencyHashes;
 import jdk.internal.module.ModuleInfoExtender;
 
+import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 
 /**
  * Implementation for the jmod tool.
@@ -158,7 +161,7 @@ public class JmodTask {
     enum Mode {
         CREATE,
         LIST,
-        PRINT_DESCRIPTOR
+        DESCRIBE
     };
 
     static class Options {
@@ -205,8 +208,8 @@ public class JmodTask {
                 case LIST:
                     ok = list();
                     break;
-                case PRINT_DESCRIPTOR:
-                    ok = printModuleDescriptor();
+                case DESCRIBE:
+                    ok = describe();
                     break;
                 default:
                     throw new AssertionError("Unknown mode: " + options.mode.name());
@@ -267,7 +270,7 @@ public class JmodTask {
         return modPaths;
     }
 
-    private boolean printModuleDescriptor() throws IOException {
+    private boolean describe() throws IOException {
         ZipFile zip = null;
         try {
             try {
@@ -288,12 +291,10 @@ public class JmodTask {
         }
     }
 
-    static <T> String toString(Set<T> set,
-                               CharSequence prefix,
-                               CharSequence suffix ) {
+    static <T> String toString(Set<T> set) {
         if (set.isEmpty()) { return ""; }
-        return set.stream().map(e -> e.toString())
-                  .collect(joining(", ", prefix, suffix));
+        return set.stream().map(e -> e.toString().toLowerCase(Locale.ROOT))
+                  .collect(joining(" "));
     }
 
     private boolean printModuleDescriptor(InputStream in)
@@ -308,58 +309,58 @@ public class JmodTask {
                 if (e.getName().equals(mi)) {
                     ModuleDescriptor md = ModuleDescriptor.read(zis);
                     StringBuilder sb = new StringBuilder();
-                    sb.append("\nName:\n  " + md.toNameAndVersion());
+                    sb.append("\n").append(md.toNameAndVersion());
 
-                    Set<Requires> requires = md.requires();
+                    List<Requires> requires = md.requires().stream().sorted().collect(toList());
                     if (!requires.isEmpty()) {
-                        sb.append("\nRequires:");
-                        requires.forEach(r ->
-                                sb.append("\n  ").append(r.name())
-                                  .append(toString(r.modifiers(), " [ ", " ]")));
+                        requires.forEach(r -> {
+                                sb.append("\n  requires ");
+                                if (!r.modifiers().isEmpty())
+                                  sb.append(toString(r.modifiers())).append(" ");
+                                sb.append(r.name());
+                            });
                     }
 
-                    Set<String> s = md.uses();
-                    if (!s.isEmpty()) {
-                        sb.append("\nUses: ");
-                        s.forEach(sv -> sb.append("\n  ").append(sv));
+                    List<String> l = md.uses().stream().sorted().collect(toList());
+                    if (!l.isEmpty()) {
+                        l.forEach(sv -> sb.append("\n  uses ").append(sv));
                     }
 
-                    Set<ModuleDescriptor.Exports> exports = md.exports();
+                    List<ModuleDescriptor.Exports> exports = sortExports(md.exports());
                     if (!exports.isEmpty()) {
-                        sb.append("\nExports:");
-                        exports.forEach(sv -> sb.append("\n  ").append(sv));
+                        exports.forEach(ex -> sb.append("\n  exports ").append(ex));
+                    }
+
+                    l = md.conceals().stream().sorted().collect(toList());
+                    if (!l.isEmpty()) {
+                        l.forEach(p -> sb.append("\n  conceals ").append(p));
                     }
 
                     Map<String, ModuleDescriptor.Provides> provides = md.provides();
                     if (!provides.isEmpty()) {
-                        sb.append("\nProvides: ");
                         provides.values().forEach(p ->
-                                sb.append("\n  ").append(p.service())
+                                sb.append("\n  provides ").append(p.service())
                                   .append(" with ")
-                                  .append(toString(p.providers(), "", "")));
+                                  .append(toString(p.providers())));
                     }
 
                     Optional<String> mc = md.mainClass();
                     if (mc.isPresent())
-                        sb.append("\nMain class:\n  " + mc.get());
+                        sb.append("\n  main-class " + mc.get());
 
-                    s = md.conceals();
-                    if (!s.isEmpty()) {
-                        sb.append("\nConceals:");
-                        s.forEach(p -> sb.append("\n  ").append(p));
-                    }
+
 
                     Optional<String> osname = md.osName();
                     if (osname.isPresent())
-                        sb.append("\nOperating system name:\n  " + osname.get());
+                        sb.append("\n  operating-system-name " + osname.get());
 
                     Optional<String> osarch = md.osArch();
                     if (osarch.isPresent())
-                        sb.append("\nOperating system architecture:\n  " + osarch.get());
+                        sb.append("\n  operating-system-architecture " + osarch.get());
 
                     Optional<String> osversion = md.osVersion();
                     if (osversion.isPresent())
-                        sb.append("\nOperating system version:\n  " + osversion.get());
+                        sb.append("\n  operating-system-version " + osversion.get());
 
                     try {
                         Method m = ModuleDescriptor.class.getDeclaredMethod("hashes");
@@ -370,11 +371,10 @@ public class JmodTask {
 
                         if (optHashes.isPresent()) {
                             Hasher.DependencyHashes hashes = optHashes.get();
-                            sb.append("\nHashes:");
-                            sb.append("\n  Algorithm: " + hashes.algorithm());
                             hashes.names().stream().forEach(mod ->
-                                    sb.append("\n  ").append(mod)
-                                      .append(": ").append(hashes.hashFor(mod)));
+                                    sb.append("\n  hashes ").append(mod).append(" ")
+                                      .append(hashes.algorithm()).append(" ")
+                                      .append(hashes.hashFor(mod)));
                         }
                     } catch (ReflectiveOperationException x) {
                         throw new InternalError(x);
@@ -387,6 +387,21 @@ public class JmodTask {
         return false;
     }
 
+    static List<ModuleDescriptor.Exports> sortExports(Set<ModuleDescriptor.Exports> exports) {
+        Map<String,ModuleDescriptor.Exports> map =
+                exports.stream()
+                       .collect(toMap(ModuleDescriptor.Exports::source,
+                                      identity()));
+        List<String> sources = exports.stream()
+                                      .map(ModuleDescriptor.Exports::source)
+                                      .sorted()
+                                      .collect(toList());
+
+        List<ModuleDescriptor.Exports> l = new ArrayList<>();
+        sources.forEach(e -> l.add(map.get(e)));
+        return l;
+    }
+
     private boolean create() throws IOException {
         JmodFileWriter jmod = new JmodFileWriter();
 
@@ -394,10 +409,21 @@ public class JmodTask {
         // when scanning the module path
         Path target = options.jmodFile;
         Path tempTarget = target.resolveSibling(target.getFileName() + ".tmp");
-        try (OutputStream out = Files.newOutputStream(tempTarget)) {
-            jmod.write(out);
+        try {
+            try (OutputStream out = Files.newOutputStream(tempTarget)) {
+                jmod.write(out);
+            }
+            Files.move(tempTarget, target);
+        } catch (Exception e) {
+            if (Files.exists(tempTarget)) {
+                try {
+                    Files.delete(tempTarget);
+                } catch (IOException ioe) {
+                    e.addSuppressed(ioe);
+                }
+            }
+            throw e;
         }
-        Files.move(tempTarget, target);
         return true;
     }
 
@@ -626,8 +652,12 @@ public class JmodTask {
             int index = name.lastIndexOf(File.separatorChar);
             if (index != -1)
                 return name.substring(0, index).replace(File.separatorChar, '.');
-            else
-                return "";
+
+            if (!name.equals(MODULE_INFO)) {
+                IOException e = new IOException(name  + " in the unnamed package");
+                throw new UncheckedIOException(e);
+            }
+            return "";
         }
 
         String toPackageName(ZipEntry entry) {
@@ -886,29 +916,21 @@ public class JmodTask {
                 public boolean representsNonOptions() { return false; }
             });
             String content = super.format(all);
-            String[] lines = content.split("\n");
             StringBuilder builder = new StringBuilder();
 
-            String modes = ".*--create.*|.*--list.*|.*--print-module-descriptor.*";
-            boolean first = true;
-            for (String line : lines) {
-                if (line.matches(modes)) {
-                    if (first) {
-                        builder.append("\n").append(" Main operation modes:\n");
-                        first = false;
-                    }
-                    builder.append("  ").append(line).append("\n");
-                }
-            }
-            builder.append("\n");
+            builder.append("\n").append(" Main operation modes:\n  ");
+            builder.append(getMessage("main.opt.mode.create")).append("\n  ");
+            builder.append(getMessage("main.opt.mode.list")).append("\n  ");
+            builder.append(getMessage("main.opt.mode.describe")).append("\n\n");
 
             String cmdfile = null;
+            String[] lines = content.split("\n");
             for (String line : lines) {
                 if (line.startsWith("--@")) {
                     cmdfile = line.replace("--" + CMD_FILENAME, CMD_FILENAME + "  ");
                 } else if (line.startsWith("Option") || line.startsWith("------")) {
                     builder.append(" ").append(line).append("\n");
-                } else if (!line.matches(modes)){
+                } else if (!line.matches("Non-option arguments")){
                     builder.append("  ").append(line).append("\n");
                 }
             }
@@ -923,21 +945,6 @@ public class JmodTask {
 
     private void handleOptions(String[] args) {
         parser.formatHelpWith(new JmodHelpFormatter());
-
-        // Main operation modes
-        OptionSpec<Void> create
-                = parser.acceptsAll(Arrays.asList("c", "create"),
-                                    getMessage("main.opt.mode.create"));
-
-        OptionSpec<Void> list
-                = parser.acceptsAll(Arrays.asList("t", "list"),
-                                    getMessage("main.opt.mode.list"));
-
-        OptionSpec<Void> printDescriptor
-                = parser.acceptsAll(Arrays.asList("p", "print-module-descriptor"),
-                                    getMessage("main.opt.mode.pmd"));
-
-        // options
 
         OptionSpec<Path> classPath
                 = parser.accepts("class-path", getMessage("main.opt.class-path"))
@@ -1025,24 +1032,15 @@ public class JmodTask {
                 return;  // informational message will be shown
             }
 
-            if (opts.specs().isEmpty() ||
-                !(opts.has(create) || opts.has(list) || opts.has(printDescriptor)))
-                throw new CommandException("err.bad.main.mode").showUsage(true);
-
+            List<String> words = opts.valuesOf(nonOptions);
+            if (words.isEmpty())
+                throw new CommandException("err.missing.mode").showUsage(true);
+            String verb = words.get(0);
             options = new Options();
-
-            if (opts.has(create)) {
-                if (opts.has(list) || opts.has(printDescriptor))
-                    throw new CommandException("err.multiple.main.modes").showUsage(true);
-                options.mode = Mode.CREATE;
-            } else if (opts.has(list)) {
-                if (opts.has(create) || opts.has(printDescriptor))
-                    throw new CommandException("err.multiple.main.modes").showUsage(true);
-                options.mode = Mode.LIST;
-            } else if (opts.has(printDescriptor)) {
-                if (opts.has(create) || opts.has(list))
-                    throw new CommandException("err.multiple.main.modes").showUsage(true);
-                options.mode = Mode.PRINT_DESCRIPTOR;
+            try {
+                options.mode = Enum.valueOf(Mode.class, verb.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new CommandException("err.invalid.mode", verb).showUsage(true);
             }
 
             if (opts.has(classPath))
@@ -1078,21 +1076,20 @@ public class JmodTask {
                     throw new CommandException("err.modulepath.must.be.specified").showUsage(true);
             }
 
-            List<String> words = opts.valuesOf(nonOptions);
-            if (words.isEmpty())
+            if (words.size() <= 1)
                 throw new CommandException("err.jmod.must.be.specified").showUsage(true);
-            Path path = Paths.get(words.get(0));
+            Path path = Paths.get(words.get(1));
             if (options.mode.equals(Mode.CREATE) && Files.exists(path))
                 throw new CommandException("err.file.already.exists", path);
             else if ((options.mode.equals(Mode.LIST) ||
-                          options.mode.equals(Mode.PRINT_DESCRIPTOR))
+                          options.mode.equals(Mode.DESCRIBE))
                       && Files.notExists(path))
                 throw new CommandException("err.jmod.not.found", path);
             options.jmodFile = path;
 
-            if (words.size() > 1)
+            if (words.size() > 2)
                 throw new CommandException("err.unknown.option",
-                        words.subList(1, words.size())).showUsage(true);
+                        words.subList(2, words.size())).showUsage(true);
 
             if (options.mode.equals(Mode.CREATE) && options.classpath == null)
                 throw new CommandException("err.classpath.must.be.specified").showUsage(true);

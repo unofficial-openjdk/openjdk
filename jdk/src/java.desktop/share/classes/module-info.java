@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,8 +26,6 @@
 module java.desktop {
     requires public java.datatransfer;
     requires public java.xml;
-    // ## revisit the dependence to java.logging was brought back by 8144526
-    requires java.logging;
     requires java.prefs;
 
     exports java.applet;
@@ -122,9 +120,11 @@ module java.desktop {
     provides javax.sound.sampled.spi.AudioFileReader with com.sun.media.sound.SoftMidiAudioFileReader;
     provides javax.sound.sampled.spi.AudioFileReader with com.sun.media.sound.WaveFileReader;
     provides javax.sound.sampled.spi.AudioFileReader with com.sun.media.sound.WaveFloatFileReader;
+    provides javax.sound.sampled.spi.AudioFileReader with com.sun.media.sound.WaveExtensibleFileReader;
     provides javax.sound.sampled.spi.AudioFileWriter with com.sun.media.sound.AiffFileWriter;
     provides javax.sound.sampled.spi.AudioFileWriter with com.sun.media.sound.AuFileWriter;
     provides javax.sound.sampled.spi.AudioFileWriter with com.sun.media.sound.WaveFileWriter;
+    provides javax.sound.sampled.spi.AudioFileWriter with com.sun.media.sound.WaveFloatFileWriter;
     provides javax.sound.sampled.spi.FormatConversionProvider with com.sun.media.sound.AlawCodec;
     provides javax.sound.sampled.spi.FormatConversionProvider with com.sun.media.sound.AudioFloatFormatConverter;
     provides javax.sound.sampled.spi.FormatConversionProvider with com.sun.media.sound.PCMtoPCMCodec;

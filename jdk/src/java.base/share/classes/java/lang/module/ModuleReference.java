@@ -168,6 +168,15 @@ public final class ModuleReference {
 
     private int hash;
 
+    /**
+     * Computes a hash code for this module reference.
+     *
+     * <p> The hash code is based upon the components of the reference, and
+     * satisfies the general contract of the {@link Object#hashCode
+     * Object.hashCode} method. </p>
+     *
+     * @return The hash-code value for this module reference
+     */
     @Override
     public int hashCode() {
         int hc = hash;
@@ -178,11 +187,29 @@ public final class ModuleReference {
         return hc;
     }
 
+    /**
+     * Tests this module reference for equality with the given object.
+     *
+     * <p> If the given object is not a {@code ModuleReference} then this
+     * method returns {@code false}. Two module references are equal if their
+     * module descriptors are equal, their locations are equal or both unknown,
+     * and were created with equal supplier objects to access the module
+     * content. </p>
+     *
+     * <p> This method satisfies the general contract of the {@link
+     * java.lang.Object#equals(Object) Object.equals} method. </p>
+     *
+     * @param   ob
+     *          the object to which this object is to be compared
+     *
+     * @return  {@code true} if, and only if, the given object is a module
+     *          reference that is equal to this module reference
+     */
     @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof ModuleReference))
+    public boolean equals(Object ob) {
+        if (!(ob instanceof ModuleReference))
             return false;
-        ModuleReference that = (ModuleReference)obj;
+        ModuleReference that = (ModuleReference)ob;
 
         return Objects.equals(this.descriptor, that.descriptor)
                 && Objects.equals(this.location, that.location)
@@ -190,6 +217,11 @@ public final class ModuleReference {
                 && Objects.equals(this.hasher, that.hasher);
     }
 
+    /**
+     * Returns a string describing this module reference.
+     *
+     * @return A string describing this module reference
+     */
     @Override
     public String toString() {
         return ("[module " + descriptor().name()

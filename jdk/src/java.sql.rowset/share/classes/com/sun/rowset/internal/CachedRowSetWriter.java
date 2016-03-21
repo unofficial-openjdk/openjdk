@@ -574,7 +574,6 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
                         SQLData obj = null;
                         try {
                             ReflectUtil.checkPackageAccess(c);
-                            CachedRowSetImpl.class.getModule().addReads(c.getModule());
                             obj = (SQLData)c.newInstance();
                         } catch (Exception ex) {
                             throw new SQLException("Unable to Instantiate: ", ex);

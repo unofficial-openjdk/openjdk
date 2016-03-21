@@ -304,7 +304,6 @@ public class LoginContext {
                     Class<? extends CallbackHandler> c = Class.forName(
                             defaultHandler, true,
                             finalLoader).asSubclass(CallbackHandler.class);
-                    this.getClass().getModule().addReads(c.getModule());
                     return c.newInstance();
                 }
             });

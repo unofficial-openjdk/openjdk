@@ -175,13 +175,7 @@ public class VerifyAccess {
                (allowedModes & ~(ALL_ACCESS_MODES|PACKAGE_ALLOWED|MODULE_ALLOWED)) == 0);
         int mods = getClassModifiers(refc);
         if (isPublic(mods)) {
-            // module access
-            if ((allowedModes & MODULE_ALLOWED) != 0)
-                return Reflection.verifyModuleAccess(lookupClass, refc);
 
-            // no module access, need to check:
-            // 1. lookupClass in module that reads module contain refc
-            // 2. refc is in an exported package
             Module lookupModule = lookupClass.getModule();
             Module refModule = refc.getModule();
 
@@ -191,24 +185,38 @@ public class VerifyAccess {
                 return true;
             }
 
-            if (!lookupModule.canRead(refModule))
-                return false;
-
-            // check the package is exported unconditionally
-            Class<?> c = refc;
-            while (c.isArray()) {
-                c = c.getComponentType();
-            }
-            if (c.isPrimitive() || refModule.isExported(c.getPackageName()))
+            // trivially allow
+            if ((allowedModes & MODULE_ALLOWED) != 0 &&
+                (lookupModule == refModule))
                 return true;
 
-            // not exported but allow access during VM initialization
-            // because java.base does not have its exports setup
-            if (jdk.internal.misc.VM.isModuleSystemInited()) {
-                return false;
-            } else {
-                return true;
+            // check readability
+            if (lookupModule.canRead(refModule)) {
+
+                // check that refc is in an exported package
+                Class<?> c = refc;
+                while (c.isArray()) {
+                    c = c.getComponentType();
+                }
+                if (c.isPrimitive())
+                    return true;
+                if ((allowedModes & MODULE_ALLOWED) != 0) {
+                    if (refModule.isExported(c.getPackageName(), lookupModule))
+                        return true;
+                } else {
+                    // exported unconditionally
+                    if (refModule.isExported(c.getPackageName()))
+                        return true;
+                }
+
+                // not exported but allow access during VM initialization
+                // because java.base does not have its exports setup
+                if (!jdk.internal.misc.VM.isModuleSystemInited())
+                    return true;
             }
+
+            // public class not accessible to lookupClass
+            return false;
         }
         if ((allowedModes & PACKAGE_ALLOWED) != 0 &&
             isSamePackage(lookupClass, refc))

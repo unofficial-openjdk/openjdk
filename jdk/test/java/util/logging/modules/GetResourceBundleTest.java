@@ -35,7 +35,7 @@ import static org.testng.Assert.*;
 /**
  * @test
  * @bug 8129126 8136802 8137316 8137317 8136804 8139350
- * @library /lib/testlibrary /jdk/jigsaw/lib
+ * @library /lib/testlibrary
  * @modules jdk.compiler
  * @build GetResourceBundleTest CompilerUtils jdk.testlibrary.ProcessTools
  * @run testng GetResourceBundleTest

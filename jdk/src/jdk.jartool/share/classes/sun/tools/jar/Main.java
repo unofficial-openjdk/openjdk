@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,10 +40,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.zip.*;
 import java.util.jar.*;
 import java.util.jar.Pack200.*;
@@ -105,6 +104,7 @@ class Main {
     /* To support additional GNU Style informational options */
     enum Info {
         HELP(GNUStyleOptions::printHelp),
+        COMPAT_HELP(GNUStyleOptions::printCompatHelp),
         USAGE_SUMMARY(GNUStyleOptions::printUsageSummary),
         VERSION(GNUStyleOptions::printVersion);
 
@@ -240,7 +240,7 @@ class Main {
                 byte[] moduleInfoBytes = null;
                 if (isModularJar()) {
                     moduleInfoBytes = addExtendedModuleAttributes(
-                            new InputStreamSupplier(moduleInfo));
+                            readModuleInfo(moduleInfo));
                 } else if (moduleVersion != null || dependenciesToHash != null) {
                     error(getMsg("error.module.options.without.info"));
                     return false;
@@ -271,7 +271,7 @@ class Main {
 
                 // Consistency checks for modular jars.
                 if (isModularJar()) {
-                    if(!checkServices(new InputStreamSupplier(moduleInfo)))
+                    if (!checkServices(moduleInfoBytes))
                         return false;
                 }
 
@@ -332,17 +332,17 @@ class Main {
                     (new FileInputStream(mname)) : null;
                 expand(null, files, true);
 
-                InputStreamSupplier moduleInfoSupplier = null;
+                byte[] moduleInfoBytes = null;
                 if (isModularJar()) {
-                    moduleInfoSupplier = (new InputStreamSupplier(moduleInfo));
+                    moduleInfoBytes = readModuleInfo(moduleInfo);
                 }
 
                 boolean updateOk = update(in, new BufferedOutputStream(out),
-                                          manifest, moduleInfoSupplier, null);
+                                          manifest, moduleInfoBytes, null);
 
                 // Consistency checks for modular jars.
                 if (isModularJar()) {
-                    if(!checkServices(new InputStreamSupplier(moduleInfo)))
+                    if(!checkServices(moduleInfoBytes))
                         return false;
                 }
 
@@ -406,17 +406,16 @@ class Main {
             } else if (iflag) {
                 genIndex(rootjar, files);
             } else if (printModuleDescriptor) {
-                FileInputStream fis;
+                boolean found;
                 if (fname != null) {
-                    fis = new FileInputStream(fname);
+                    found = printModuleDescriptor(new ZipFile(fname));
                 } else {
-                    fis = new FileInputStream(FileDescriptor.in);
+                    try (FileInputStream fin = new FileInputStream(FileDescriptor.in)) {
+                        found = printModuleDescriptor(fin);
+                    }
                 }
-                try (FileInputStream fin = fis) {
-                    boolean found = printModuleDescriptor(fin);
-                    if (!found)
-                        error(getMsg("error.module.descriptor.not.found"));
-                }
+                if (!found)
+                    error(getMsg("error.module.descriptor.not.found"));
             }
         } catch (IOException e) {
             fatalError(e);
@@ -753,7 +752,7 @@ class Main {
      */
     boolean update(InputStream in, OutputStream out,
                    InputStream newManifest,
-                   InputStreamSupplier newModuleInfo,
+                   byte[] newModuleInfoBytes,
                    JarIndex jarIndex) throws IOException
     {
         ZipInputStream zis = new ZipInputStream(in);
@@ -801,11 +800,11 @@ class Main {
                     return false;
                 }
             } else if (isModuleInfoEntry
-                       && ((newModuleInfo != null) || (ename != null)
+                       && ((newModuleInfoBytes != null) || (ename != null)
                            || moduleVersion != null || dependenciesToHash != null)) {
-                if (newModuleInfo == null) {
+                if (newModuleInfoBytes == null) {
                     // Update existing module-info.class
-                    newModuleInfo = (new InputStreamSupplier(zis));
+                    newModuleInfoBytes = readModuleInfo(zis);
                 }
             } else {
                 if (!entryMap.containsKey(name)) { // copy the old stuff
@@ -855,11 +854,11 @@ class Main {
         }
 
         // write the module-info.class
-        if (newModuleInfo != null) {
-            byte[] moduleInfoBytes = addExtendedModuleAttributes(newModuleInfo);
+        if (newModuleInfoBytes != null) {
+            newModuleInfoBytes = addExtendedModuleAttributes(newModuleInfoBytes);
 
             // TODO: check manifest main classes, etc
-            if (!updateModuleInfo(moduleInfoBytes, zos)) {
+            if (!updateModuleInfo(newModuleInfoBytes, zos)) {
                 updateOk = false;
             }
         } else if (moduleVersion != null || dependenciesToHash != null) {
@@ -1591,24 +1590,13 @@ class Main {
         return tmpfile;
     }
 
+    private static byte[] readModuleInfo(InputStream zis) throws IOException {
+        return zis.readAllBytes();
+    }
 
-    static class InputStreamSupplier implements Supplier<InputStream> {
-        private final byte[] bytes;
-        InputStreamSupplier(InputStream zis) throws IOException {
-            try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-                zis.transferTo(baos);
-                bytes = baos.toByteArray();
-            }
-        }
-        InputStreamSupplier(Path path) throws IOException {
-            try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                 InputStream is = Files.newInputStream(path)) {
-                is.transferTo(baos);
-                bytes = baos.toByteArray();
-            }
-        }
-        @Override public InputStream get() {
-            return new ByteArrayInputStream(bytes);
+    private static byte[] readModuleInfo(Path path) throws IOException {
+        try (InputStream is = Files.newInputStream(path)) {
+            return is.readAllBytes();
         }
     }
 
@@ -1624,7 +1612,19 @@ class Main {
                            .collect(joining(", ", prefix, suffix));
     }
 
-    @SuppressWarnings("unchecked")
+    private boolean printModuleDescriptor(ZipFile zipFile)
+        throws IOException
+    {
+        ZipEntry entry = zipFile.getEntry(MODULE_INFO);
+        if (entry ==  null)
+            return false;
+
+        try (InputStream is = zipFile.getInputStream(entry)) {
+            printModuleDescriptor(is);
+        }
+        return true;
+    }
+
     private boolean printModuleDescriptor(FileInputStream fis)
         throws IOException
     {
@@ -1634,67 +1634,7 @@ class Main {
             ZipEntry e;
             while ((e = zis.getNextEntry()) != null) {
                 if (e.getName().equals(MODULE_INFO)) {
-                    ModuleDescriptor md = ModuleDescriptor.read(zis);
-                    StringBuilder sb = new StringBuilder();
-                    sb.append("\nName:\n  " + md.toNameAndVersion());
-
-                    Set<Requires> requires = md.requires();
-                    if (!requires.isEmpty()) {
-                        sb.append("\nRequires:");
-                        requires.forEach(r ->
-                                sb.append("\n  ").append(r.name())
-                                        .append(toString(r.modifiers(), " [ ", " ]")));
-                    }
-
-                    Set<String> s = md.uses();
-                    if (!s.isEmpty()) {
-                        sb.append("\nUses: ");
-                        s.forEach(sv -> sb.append("\n  ").append(sv));
-                    }
-
-                    Set<Exports> exports = md.exports();
-                    if (!exports.isEmpty()) {
-                        sb.append("\nExports:");
-                        exports.forEach(sv -> sb.append("\n  ").append(sv));
-                    }
-
-                    Map<String,Provides> provides = md.provides();
-                    if (!provides.isEmpty()) {
-                        sb.append("\nProvides: ");
-                        provides.values().forEach(p ->
-                                sb.append("\n  ").append(p.service())
-                                  .append(" with ")
-                                  .append(toString(p.providers(), "", "")));
-                    }
-
-                    Optional<String> mc = md.mainClass();
-                    if (mc.isPresent())
-                        sb.append("\nMain class:\n  " + mc.get());
-
-                    s = md.conceals();
-                    if (!s.isEmpty()) {
-                        sb.append("\nConceals:");
-                        s.forEach(p -> sb.append("\n  ").append(p));
-                    }
-
-                    try {
-                        Method m = ModuleDescriptor.class.getDeclaredMethod("hashes");
-                        m.setAccessible(true);
-                        Optional<Hasher.DependencyHashes> optHashes =
-                                (Optional<Hasher.DependencyHashes>) m.invoke(md);
-
-                        if (optHashes.isPresent()) {
-                            Hasher.DependencyHashes hashes = optHashes.get();
-                            sb.append("\nHashes:");
-                            sb.append("\n  Algorithm: " + hashes.algorithm());
-                            hashes.names().stream().forEach(mod ->
-                                    sb.append("\n  ").append(mod)
-                                      .append(": ").append(hashes.hashFor(mod)));
-                        }
-                    } catch (ReflectiveOperationException x) {
-                        throw new InternalError(x);
-                    }
-                    output(sb.toString());
+                    printModuleDescriptor(zis);
                     return true;
                 }
             }
@@ -1702,15 +1642,82 @@ class Main {
         return false;
     }
 
+    @SuppressWarnings("unchecked")
+    private void printModuleDescriptor(InputStream entryInputStream)
+        throws IOException
+    {
+        ModuleDescriptor md = ModuleDescriptor.read(entryInputStream);
+        StringBuilder sb = new StringBuilder();
+        sb.append("\nName:\n  " + md.toNameAndVersion());
+
+        Set<Requires> requires = md.requires();
+        if (!requires.isEmpty()) {
+            sb.append("\nRequires:");
+            requires.forEach(r ->
+                    sb.append("\n  ").append(r.name())
+                            .append(toString(r.modifiers(), " [ ", " ]")));
+        }
+
+        Set<String> s = md.uses();
+        if (!s.isEmpty()) {
+            sb.append("\nUses: ");
+            s.forEach(sv -> sb.append("\n  ").append(sv));
+        }
+
+        Set<Exports> exports = md.exports();
+        if (!exports.isEmpty()) {
+            sb.append("\nExports:");
+            exports.forEach(sv -> sb.append("\n  ").append(sv));
+        }
+
+        Map<String,Provides> provides = md.provides();
+        if (!provides.isEmpty()) {
+            sb.append("\nProvides: ");
+            provides.values().forEach(p ->
+                    sb.append("\n  ").append(p.service())
+                      .append(" with ")
+                      .append(toString(p.providers(), "", "")));
+        }
+
+        Optional<String> mc = md.mainClass();
+        if (mc.isPresent())
+            sb.append("\nMain class:\n  " + mc.get());
+
+        s = md.conceals();
+        if (!s.isEmpty()) {
+            sb.append("\nConceals:");
+            s.forEach(p -> sb.append("\n  ").append(p));
+        }
+
+        try {
+            Method m = ModuleDescriptor.class.getDeclaredMethod("hashes");
+            m.setAccessible(true);
+            Optional<Hasher.DependencyHashes> optHashes =
+                    (Optional<Hasher.DependencyHashes>) m.invoke(md);
+
+            if (optHashes.isPresent()) {
+                Hasher.DependencyHashes hashes = optHashes.get();
+                sb.append("\nHashes:");
+                sb.append("\n  Algorithm: " + hashes.algorithm());
+                hashes.names().stream().forEach(mod ->
+                        sb.append("\n  ").append(mod)
+                          .append(": ").append(hashes.hashFor(mod)));
+            }
+        } catch (ReflectiveOperationException x) {
+            throw new InternalError(x);
+        }
+        output(sb.toString());
+    }
+
     private static String toBinaryName(String classname) {
         return (classname.replace('.', '/')) + ".class";
     }
 
-    private boolean checkServices(Supplier<InputStream> miSupplier)
+    private boolean checkServices(byte[] moduleInfoBytes)
         throws IOException
     {
-        ModuleDescriptor md = null;
-        try (InputStream in = miSupplier.get()) {
+        ModuleDescriptor md;
+        try (InputStream in = new ByteArrayInputStream(moduleInfoBytes)) {
             md = ModuleDescriptor.read(in);
         }
         Set<String> missing = md.provides()
@@ -1728,19 +1735,19 @@ class Main {
     }
 
     /**
-     * Returns a byte array containin the module-info.class.
+     * Returns a byte array containing the module-info.class.
      *
      * If --module-version, --main-class, or other options were provided
      * then the corresponding class file attributes are added to the
      * module-info here.
      */
-    private byte[] addExtendedModuleAttributes(Supplier<InputStream> miSupplier)
+    private byte[] addExtendedModuleAttributes(byte[] moduleInfoBytes)
         throws IOException
     {
         assert isModularJar();
 
-        ModuleDescriptor md = null;
-        try (InputStream in = miSupplier.get()) {
+        ModuleDescriptor md;
+        try (InputStream in = new ByteArrayInputStream(moduleInfoBytes)) {
             md = ModuleDescriptor.read(in);
         }
         String name = md.name();
@@ -1752,7 +1759,7 @@ class Main {
 
         // copy the module-info.class into the jmod with the additional
         // attributes for the version, main class and other meta data
-        try (InputStream in = miSupplier.get();
+        try (InputStream in = new ByteArrayInputStream(moduleInfoBytes);
              ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             ModuleInfoExtender extender = ModuleInfoExtender.newExtender(in);
 
@@ -1790,9 +1797,10 @@ class Main {
         throws IOException
     {
         Map<String, Path> map = new HashMap<>();
+        Matcher matcher = dependenciesToHash.matcher("");
         for (ModuleDescriptor.Requires md: moduleDependences) {
             String dn = md.name();
-            if (dependenciesToHash.matcher(dn).find()) {
+            if (matcher.reset(dn).find()) {
                 Optional<ModuleReference> omref = moduleFinder.find(dn);
                 if (!omref.isPresent()) {
                     throw new IOException(formatMsg2("error.hash.dep", name , dn));
