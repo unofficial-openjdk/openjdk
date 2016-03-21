@@ -1582,6 +1582,21 @@ LoadNode::load_array_final_field(const TypeKlassPtr *tkls,
   return NULL;
 }
 
+static bool is_mismatched_access(ciConstant con, BasicType loadbt) {
+  BasicType conbt = con.basic_type();
+  switch (conbt) {
+    case T_BOOLEAN: conbt = T_BYTE;   break;
+    case T_ARRAY:   conbt = T_OBJECT; break;
+  }
+  switch (loadbt) {
+    case T_BOOLEAN:   loadbt = T_BYTE;   break;
+    case T_NARROWOOP: loadbt = T_OBJECT; break;
+    case T_ARRAY:     loadbt = T_OBJECT; break;
+    case T_ADDRESS:   loadbt = T_OBJECT; break;
+  }
+  return (conbt != loadbt);
+}
+
 // Try to constant-fold a stable array element.
 static const Type* fold_stable_ary_elem(const TypeAryPtr* ary, int off, BasicType loadbt) {
   assert(ary->const_oop(), "array should be constant");
@@ -1590,10 +1605,12 @@ static const Type* fold_stable_ary_elem(const TypeAryPtr* ary, int off, BasicTyp
   // Decode the results of GraphKit::array_element_address.
   ciArray* aobj = ary->const_oop()->as_array();
   ciConstant con = aobj->element_value_by_offset(off);
-
   if (con.basic_type() != T_ILLEGAL && !con.is_null_or_zero()) {
+    bool is_mismatched = is_mismatched_access(con, loadbt);
+    assert(!is_mismatched, "conbt=%s; loadbt=%s", type2name(con.basic_type()), type2name(loadbt));
     const Type* con_type = Type::make_from_constant(con);
-    if (con_type != NULL) {
+    // Guard against erroneous constant folding.
+    if (!is_mismatched && con_type != NULL) {
       if (con_type->isa_aryptr()) {
         // Join with the array element type, in case it is also stable.
         int dim = ary->stable_dimension();
@@ -1642,7 +1659,7 @@ const Type* LoadNode::Value(PhaseGVN* phase) const {
     const bool off_beyond_header = ((uint)off >= (uint)min_base_off);
 
     // Try to constant-fold a stable array element.
-    if (FoldStableValues && ary->is_stable() && ary->const_oop() != NULL) {
+    if (FoldStableValues && !is_mismatched_access() && ary->is_stable() && ary->const_oop() != NULL) {
       // Make sure the reference is not into the header and the offset is constant
       if (off_beyond_header && adr->is_AddP() && off != Type::OffsetBot) {
         const Type* con_type = fold_stable_ary_elem(ary, off, memory_type());
@@ -1709,38 +1726,10 @@ const Type* LoadNode::Value(PhaseGVN* phase) const {
             // unsafe field access may not have a constant offset
             C->has_unsafe_access(),
             "Field accesses must be precise" );
-    // For oop loads, we expect the _type to be precise
-    if (klass == env->String_klass() &&
-        adr->is_AddP() && off != Type::OffsetBot) {
-      // For constant Strings treat the final fields as compile time constants.
-      // While we can list what field types java.lang.String has, it is more
-      // future-proof to handle all possible field types, anticipating future
-      // changes and experiments in String code.
-      Node* base = adr->in(AddPNode::Base);
-      const TypeOopPtr* t = phase->type(base)->isa_oopptr();
-      if (t != NULL && t->singleton()) {
-        ciField* field = env->String_klass()->get_field_by_offset(off, false);
-        if (field != NULL && field->is_final()) {
-          ciObject* string = t->const_oop();
-          ciConstant constant = string->as_instance()->field_value(field);
-          // Type::make_from_constant does not handle narrow oops, so handle it here.
-          // Everything else can use the factory method.
-          if ((constant.basic_type() == T_ARRAY || constant.basic_type() == T_OBJECT)
-                  && adr->bottom_type()->is_ptr_to_narrowoop()) {
-            return TypeNarrowOop::make_from_constant(constant.as_object(), true);
-          } else {
-            return Type::make_from_constant(constant, true);
-          }
-        }
-      }
-    }
+    // For oop loads, we expect the _type to be precise.
     // Optimizations for constant objects
     ciObject* const_oop = tinst->const_oop();
     if (const_oop != NULL) {
-      // For constant Boxed value treat the target field as a compile time constant.
-      if (tinst->is_ptr_to_boxed_value()) {
-        return tinst->get_const_boxed_value();
-      } else
       // For constant CallSites treat the target field as a compile time constant.
       if (const_oop->is_call_site()) {
         ciCallSite* call_site = const_oop->as_call_site();

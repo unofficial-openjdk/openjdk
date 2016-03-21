@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -791,7 +791,6 @@ Mutex* const SpaceManager::_expand_lock =
 void VirtualSpaceNode::inc_container_count() {
   assert_lock_strong(SpaceManager::expand_lock());
   _container_count++;
-  DEBUG_ONLY(verify_container_count();)
 }
 
 void VirtualSpaceNode::dec_container_count() {
@@ -1073,6 +1072,7 @@ void VirtualSpaceList::purge(ChunkManager* chunk_manager) {
   VirtualSpaceNode* next_vsl = prev_vsl;
   while (next_vsl != NULL) {
     VirtualSpaceNode* vsl = next_vsl;
+    DEBUG_ONLY(vsl->verify_container_count();)
     next_vsl = vsl->next();
     // Don't free the current virtual space since it will likely
     // be needed soon.
@@ -1137,19 +1137,19 @@ void VirtualSpaceList::retire_current_virtual_space() {
 }
 
 void VirtualSpaceNode::retire(ChunkManager* chunk_manager) {
+  DEBUG_ONLY(verify_container_count();)
   for (int i = (int)MediumIndex; i >= (int)ZeroIndex; --i) {
     ChunkIndex index = (ChunkIndex)i;
     size_t chunk_size = chunk_manager->free_chunks(index)->size();
 
     while (free_words_in_vs() >= chunk_size) {
-      DEBUG_ONLY(verify_container_count();)
       Metachunk* chunk = get_chunk_vs(chunk_size);
       assert(chunk != NULL, "allocation should have been successful");
 
       chunk_manager->return_chunks(index, chunk);
       chunk_manager->inc_free_chunks_total(chunk_size);
-      DEBUG_ONLY(verify_container_count();)
     }
+    DEBUG_ONLY(verify_container_count();)
   }
   assert(free_words_in_vs() == 0, "should be empty now");
 }
@@ -1234,7 +1234,7 @@ void VirtualSpaceList::link_vs(VirtualSpaceNode* new_entry) {
 #ifdef ASSERT
   new_entry->mangle();
 #endif
-  if (develop_log_is_enabled(Trace, gc, metaspace)) {
+  if (log_is_enabled(Trace, gc, metaspace)) {
     LogHandle(gc, metaspace) log;
     VirtualSpaceNode* vsl = current_virtual_space();
     ResourceMark rm;
@@ -3051,7 +3051,7 @@ void Metaspace::allocate_metaspace_compressed_klass_ptrs(char* requested_addr, a
 
   initialize_class_space(metaspace_rs);
 
-  if (develop_log_is_enabled(Trace, gc, metaspace)) {
+  if (log_is_enabled(Trace, gc, metaspace)) {
     LogHandle(gc, metaspace) log;
     ResourceMark rm;
     print_compressed_class_space(log.trace_stream(), requested_addr);
@@ -3474,7 +3474,7 @@ MetaWord* Metaspace::allocate(ClassLoaderData* loader_data, size_t word_size,
     }
 
     // Zero initialize.
-    Copy::fill_to_aligned_words((HeapWord*)result, word_size, 0);
+    Copy::fill_to_words((HeapWord*)result, word_size, 0);
 
     return result;
   }
@@ -3513,7 +3513,7 @@ MetaWord* Metaspace::allocate(ClassLoaderData* loader_data, size_t word_size,
   }
 
   // Zero initialize.
-  Copy::fill_to_aligned_words((HeapWord*)result, word_size, 0);
+  Copy::fill_to_words((HeapWord*)result, word_size, 0);
 
   return result;
 }
@@ -3583,7 +3583,7 @@ const char* Metaspace::metadata_type_name(Metaspace::MetadataType mdtype) {
 void Metaspace::record_allocation(void* ptr, MetaspaceObj::Type type, size_t word_size) {
   assert(DumpSharedSpaces, "sanity");
 
-  int byte_size = (int)word_size * HeapWordSize;
+  int byte_size = (int)word_size * wordSize;
   AllocRecord *rec = new AllocRecord((address)ptr, type, byte_size);
 
   if (_alloc_record_head == NULL) {
@@ -3623,7 +3623,7 @@ void Metaspace::record_deallocation(void* ptr, size_t word_size) {
 
   for (AllocRecord *rec = _alloc_record_head; rec; rec = rec->_next) {
     if (rec->_ptr == ptr) {
-      assert(rec->_byte_size == (int)word_size * HeapWordSize, "sanity");
+      assert(rec->_byte_size == (int)word_size * wordSize, "sanity");
       rec->_type = MetaspaceObj::DeallocatedType;
       return;
     }

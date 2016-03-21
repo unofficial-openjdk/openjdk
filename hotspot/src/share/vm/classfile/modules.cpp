@@ -107,7 +107,7 @@ static ModuleEntry* get_module_entry(jobject module, TRAPS) {
 }
 
 static PackageEntry* get_package_entry(ModuleEntry* module_entry, jstring package, TRAPS) {
-  ResourceMark rm;
+  ResourceMark rm(THREAD);
   if (package == NULL) return NULL;
   const char *package_name = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(package));
   if (package_name == NULL) return NULL;
@@ -121,10 +121,10 @@ static PackageEntry* get_package_entry_by_name(Symbol* package,
                                                Handle h_loader,
                                                TRAPS) {
   if (package != NULL) {
-    ResourceMark rm;
+    ResourceMark rm(THREAD);
     if (Modules::verify_package_name(package->as_C_string())) {
       PackageEntryTable* const package_entry_table =
-        get_package_entry_table(h_loader, THREAD);
+        get_package_entry_table(h_loader, CHECK_NULL);
       assert(package_entry_table != NULL, "Unexpected null package entry table");
       return package_entry_table->lookup_only(package);
     }
@@ -166,7 +166,7 @@ static void add_to_boot_loader_list(char *module_name, TRAPS) {
               ObjectLocker ol(loader_lock, THREAD);
               ClassLoader::prepend_to_list(prefix_path);
             }
-            if (TraceClassLoading) tty->print_cr("[Opened -Xpatch %s]", prefix_path);
+            log_info(classload)("opened: -Xpatch %s", prefix_path);
           }
         }
       }
@@ -194,21 +194,21 @@ static void add_to_boot_loader_list(char *module_name, TRAPS) {
     Handle loader_lock = Handle(THREAD, SystemDictionary::system_loader_lock());
     ObjectLocker ol(loader_lock, THREAD);
 
-    if (TraceClassLoading) tty->print_cr("[Opened %s]", path);
+    log_info(classload)("opened: %s", path);
     ClassLoader::add_to_list(path);
   }
 }
 
 bool Modules::is_package_defined(Symbol* package, Handle h_loader, TRAPS) {
-  return get_package_entry_by_name(package, h_loader, THREAD) != NULL;
+  PackageEntry* res = get_package_entry_by_name(package, h_loader, CHECK_false);
+  return res != NULL;
 }
 
-static void define_javabase_module(JNIEnv *env, jobject module, jstring version,
-                                   jstring location, jobjectArray packages) {
-  JavaThread *THREAD = JavaThread::thread_from_jni_environment(env);
+static void define_javabase_module(jobject module, jstring version,
+                                   jstring location, jobjectArray packages, TRAPS) {
   ResourceMark rm(THREAD);
 
-  Handle jlrM_handle(THREAD, JNIHandles::resolve(module));
+  Handle module_handle(THREAD, JNIHandles::resolve(module));
 
   // Obtain java.base's module version
   const char* module_version = get_module_version(version);
@@ -259,7 +259,7 @@ static void define_javabase_module(JNIEnv *env, jobject module, jstring version,
   }
 
   // Validate java_base's loader is the boot loader.
-  oop loader = java_lang_reflect_Module::loader(jlrM_handle());
+  oop loader = java_lang_reflect_Module::loader(module_handle());
   if (loader != NULL) {
     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
               "Class loader must be the boot class loader");
@@ -296,7 +296,7 @@ static void define_javabase_module(JNIEnv *env, jobject module, jstring version,
     }
 
     // Finish defining java.base's ModuleEntry
-    ModuleEntryTable::finalize_javabase(jlrM_handle, version_symbol, location_symbol);
+    ModuleEntryTable::finalize_javabase(module_handle, version_symbol, location_symbol);
   }
 
   log_debug(modules)("define_javabase_module(): Definition of module: java.base,"
@@ -312,24 +312,23 @@ static void define_javabase_module(JNIEnv *env, jobject module, jstring version,
   }
 
   // Patch any previously loaded classes' module field with java.base's jlr.Module.
-  ModuleEntryTable::patch_javabase_entries(jlrM_handle);
+  ModuleEntryTable::patch_javabase_entries(module_handle);
 }
 
-void Modules::define_module(JNIEnv *env, jobject module, jstring version,
-                            jstring location, jobjectArray packages) {
-  JavaThread *THREAD = JavaThread::thread_from_jni_environment(env);
+void Modules::define_module(jobject module, jstring version,
+                            jstring location, jobjectArray packages, TRAPS) {
   ResourceMark rm(THREAD);
 
   if (module == NULL) {
     THROW_MSG(vmSymbols::java_lang_NullPointerException(), "Null module object");
   }
-  Handle jlrM_handle(THREAD, JNIHandles::resolve(module));
-  if (!java_lang_reflect_Module::is_subclass(jlrM_handle->klass())) {
+  Handle module_handle(THREAD, JNIHandles::resolve(module));
+  if (!java_lang_reflect_Module::is_subclass(module_handle->klass())) {
     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
               "module is not a subclass of java.lang.reflect.Module");
   }
 
-  char* module_name = get_module_name(jlrM_handle(), CHECK);
+  char* module_name = get_module_name(module_handle(), CHECK);
   if (module_name == NULL) {
     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
               "Module name cannot be null");
@@ -337,7 +336,7 @@ void Modules::define_module(JNIEnv *env, jobject module, jstring version,
 
   // Special handling of java.base definition
   if (strcmp(module_name, "java.base") == 0) {
-    define_javabase_module(env, module, version, location, packages);
+    define_javabase_module(module, version, location, packages, CHECK);
     return;
   }
 
@@ -372,7 +371,7 @@ void Modules::define_module(JNIEnv *env, jobject module, jstring version,
     }
   }
 
-  oop loader = java_lang_reflect_Module::loader(jlrM_handle());
+  oop loader = java_lang_reflect_Module::loader(module_handle());
   // Make sure loader is not the sun.reflect.DelegatingClassLoader.
   if (loader != java_lang_ClassLoader::non_reflection_class_loader(loader)) {
     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
@@ -444,7 +443,7 @@ void Modules::define_module(JNIEnv *env, jobject module, jstring version,
     if (!dupl_modules && dupl_pkg_index == -1) {
       // Create the entry for this module in the class loader's module entry table.
 
-      ModuleEntry* module_entry = module_table->locked_create_entry_or_null(jlrM_handle, module_symbol,
+      ModuleEntry* module_entry = module_table->locked_create_entry_or_null(module_handle, module_symbol,
                                     version_symbol, location_symbol, loader_data);
 
       if (module_entry == NULL) {
@@ -464,7 +463,7 @@ void Modules::define_module(JNIEnv *env, jobject module, jstring version,
         }
 
         // Store pointer to ModuleEntry record in java.lang.reflect.Module object.
-        java_lang_reflect_Module::set_module_entry(jlrM_handle(), module_entry);
+        java_lang_reflect_Module::set_module_entry(module_handle(), module_entry);
       }
     }
   }  // Release the lock
@@ -503,28 +502,27 @@ void Modules::define_module(JNIEnv *env, jobject module, jstring version,
   }
 }
 
-void Modules::set_bootloader_unnamed_module(JNIEnv *env, jobject module) {
-  JavaThread *THREAD = JavaThread::thread_from_jni_environment(env);
+void Modules::set_bootloader_unnamed_module(jobject module, TRAPS) {
   ResourceMark rm(THREAD);
 
   if (module == NULL) {
     THROW_MSG(vmSymbols::java_lang_NullPointerException(), "Null module object");
   }
-  Handle jlrM_handle(THREAD, JNIHandles::resolve(module));
-  if (!java_lang_reflect_Module::is_subclass(jlrM_handle->klass())) {
+  Handle module_handle(THREAD, JNIHandles::resolve(module));
+  if (!java_lang_reflect_Module::is_subclass(module_handle->klass())) {
     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
               "module is not a subclass of java.lang.reflect.Module");
   }
 
   // Ensure that this is an unnamed module
-  oop name = java_lang_reflect_Module::name(jlrM_handle());
+  oop name = java_lang_reflect_Module::name(module_handle());
   if (name != NULL) {
     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
               "boot loader's unnamed module's java.lang.reflect.Module has a name");
   }
 
   // Validate java_base's loader is the boot loader.
-  oop loader = java_lang_reflect_Module::loader(jlrM_handle());
+  oop loader = java_lang_reflect_Module::loader(module_handle());
   if (loader != NULL) {
     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
               "Class loader must be the boot class loader");
@@ -539,14 +537,12 @@ void Modules::set_bootloader_unnamed_module(JNIEnv *env, jobject module) {
   // Set java.lang.reflect.Module for the boot loader's unnamed module
   ModuleEntry* unnamed_module = module_table->unnamed_module();
   assert(unnamed_module != NULL, "boot loader's unnamed ModuleEntry not defined");
-  unnamed_module->set_jlrM_module(ClassLoaderData::the_null_class_loader_data()->add_handle(jlrM_handle));
+  unnamed_module->set_module(ClassLoaderData::the_null_class_loader_data()->add_handle(module_handle));
   // Store pointer to the ModuleEntry in the unnamed module's java.lang.reflect.Module object.
-  java_lang_reflect_Module::set_module_entry(jlrM_handle(), unnamed_module);
+  java_lang_reflect_Module::set_module_entry(module_handle(), unnamed_module);
 }
 
-void Modules::add_module_exports(JNIEnv *env, jobject from_module, jstring package, jobject to_module) {
-  JavaThread *THREAD = JavaThread::thread_from_jni_environment(env);
-
+void Modules::add_module_exports(jobject from_module, jstring package, jobject to_module, TRAPS) {
   if (package == NULL) {
     THROW_MSG(vmSymbols::java_lang_NullPointerException(),
               "package is null");
@@ -576,7 +572,7 @@ void Modules::add_module_exports(JNIEnv *env, jobject from_module, jstring packa
   }
 
   PackageEntry *package_entry = get_package_entry(from_module_entry, package, CHECK);
-  ResourceMark rm;
+  ResourceMark rm(THREAD);
   if (package_entry == NULL) {
     const char *package_name = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(package));
     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
@@ -606,18 +602,16 @@ void Modules::add_module_exports(JNIEnv *env, jobject from_module, jstring packa
 }
 
 
-void Modules::add_module_exports_qualified(JNIEnv *env, jobject from_module, jstring package, jobject to_module) {
-  JavaThread *THREAD = JavaThread::thread_from_jni_environment(env);
+void Modules::add_module_exports_qualified(jobject from_module, jstring package,
+                                           jobject to_module, TRAPS) {
   if (to_module == NULL) {
     THROW_MSG(vmSymbols::java_lang_NullPointerException(),
               "to_module is null");
   }
-  add_module_exports(env, from_module, package, to_module);
+  add_module_exports(from_module, package, to_module, CHECK);
 }
 
-void Modules::add_reads_module(JNIEnv *env, jobject from_module, jobject to_module) {
-  JavaThread *THREAD = JavaThread::thread_from_jni_environment(env);
-
+void Modules::add_reads_module(jobject from_module, jobject to_module, TRAPS) {
   if (from_module == NULL) {
     THROW_MSG(vmSymbols::java_lang_NullPointerException(),
               "from_module is null");
@@ -640,7 +634,7 @@ void Modules::add_reads_module(JNIEnv *env, jobject from_module, jobject to_modu
     to_module_entry = NULL;
   }
 
-  ResourceMark rm;
+  ResourceMark rm(THREAD);
   log_debug(modules)("add_reads_module(): Adding read from module %s to module %s",
                      from_module_entry->is_named() ?
                      from_module_entry->name()->as_C_string() : UNNAMED_MODULE,
@@ -654,9 +648,7 @@ void Modules::add_reads_module(JNIEnv *env, jobject from_module, jobject to_modu
   }
 }
 
-jboolean Modules::can_read_module(JNIEnv *env, jobject asking_module, jobject target_module) {
-  JavaThread *THREAD = JavaThread::thread_from_jni_environment(env);
-
+jboolean Modules::can_read_module(jobject asking_module, jobject target_module, TRAPS) {
   if (asking_module == NULL) {
     THROW_MSG_(vmSymbols::java_lang_NullPointerException(),
                "asking_module is null", JNI_FALSE);
@@ -679,7 +671,7 @@ jboolean Modules::can_read_module(JNIEnv *env, jobject asking_module, jobject ta
                "target_module is invalid", JNI_FALSE);
   }
 
-  ResourceMark rm;
+  ResourceMark rm(THREAD);
   log_debug(modules)("can_read_module(): module %s trying to read module %s, allowed = %s",
                      asking_module_entry->is_named() ?
                        asking_module_entry->name()->as_C_string() : UNNAMED_MODULE,
@@ -702,9 +694,8 @@ jboolean Modules::can_read_module(JNIEnv *env, jobject asking_module, jobject ta
   return asking_module_entry->can_read(target_module_entry);
 }
 
-jboolean Modules::is_exported_to_module(JNIEnv *env, jobject from_module, jstring package, jobject to_module) {
-  JavaThread *THREAD = JavaThread::thread_from_jni_environment(env);
-
+jboolean Modules::is_exported_to_module(jobject from_module, jstring package,
+                                        jobject to_module, TRAPS) {
   if (package == NULL) {
     THROW_MSG_(vmSymbols::java_lang_NullPointerException(),
                "package is null", JNI_FALSE);
@@ -731,7 +722,7 @@ jboolean Modules::is_exported_to_module(JNIEnv *env, jobject from_module, jstrin
 
   PackageEntry *package_entry = get_package_entry(from_module_entry, package,
                                                   CHECK_false);
-  ResourceMark rm;
+  ResourceMark rm(THREAD);
   if (package_entry == NULL) {
     THROW_MSG_(vmSymbols::java_lang_IllegalArgumentException(),
                err_msg("Package not found in from_module: %s",
@@ -774,10 +765,9 @@ jboolean Modules::is_exported_to_module(JNIEnv *env, jobject from_module, jstrin
 }
 
 // This method is called by JFR and JNI.
-jobject Modules::get_module(JNIEnv *env, jclass clazz) {
+jobject Modules::get_module(jclass clazz, TRAPS) {
   assert(ModuleEntryTable::javabase_defined(), "Attempt to call get_module before java.base is defined");
 
-  JavaThread *THREAD = JavaThread::thread_from_jni_environment(env);
   if (clazz == NULL) {
     THROW_MSG_(vmSymbols::java_lang_NullPointerException(),
                "class is null", JNI_FALSE);
@@ -798,7 +788,7 @@ jobject Modules::get_module(JNIEnv *env, jclass clazz) {
   assert(java_lang_reflect_Module::is_subclass(module->klass()), "Module is not a java.lang.reflect.Module");
 
   if (log_is_enabled(Debug, modules)) {
-    ResourceMark rm;
+    ResourceMark rm(THREAD);
     outputStream* logst = LogHandle(modules)::debug_stream();
     Klass* klass = java_lang_Class::as_Klass(mirror);
     oop module_name = java_lang_reflect_Module::name(module);
@@ -815,15 +805,14 @@ jobject Modules::get_module(JNIEnv *env, jclass clazz) {
     }
   }
 
-  return JNIHandles::make_local(env, module);
+  return JNIHandles::make_local(THREAD, module);
 }
 
 
-jobject Modules::get_module_by_package_name(JNIEnv *env, jobject loader, jstring package) {
-  ResourceMark rm;
+jobject Modules::get_module_by_package_name(jobject loader, jstring package, TRAPS) {
+  ResourceMark rm(THREAD);
   assert(ModuleEntryTable::javabase_defined(),
          "Attempt to call get_module_from_pkg before java.base is defined");
-  JavaThread *THREAD = JavaThread::thread_from_jni_environment(env);
 
   if (NULL == package) {
     THROW_MSG_(vmSymbols::java_lang_NullPointerException(),
@@ -848,32 +837,32 @@ jobject Modules::get_module_by_package_name(JNIEnv *env, jobject loader, jstring
     ModuleEntryTable* module_table = get_module_entry_table(h_loader, CHECK_NULL);
     if (NULL == module_table) return NULL;
     const ModuleEntry* const unnamed_module = module_table->unnamed_module();
-    return JNIHandles::make_local(THREAD, JNIHandles::resolve(unnamed_module->jlrM_module()));
+    return JNIHandles::make_local(THREAD, JNIHandles::resolve(unnamed_module->module()));
 
   } else {
     TempNewSymbol package_sym = SymbolTable::new_symbol(package_str, CHECK_NULL);
     return get_module(package_sym, h_loader, CHECK_NULL);
   }
+  return NULL;
 }
 
 
-// This method is called by JFR and the above method.
+// This method is called by JFR and by the above method.
 jobject Modules::get_module(Symbol* package_name, Handle h_loader, TRAPS) {
   const PackageEntry* const pkg_entry =
     get_package_entry_by_name(package_name, h_loader, THREAD);
   const ModuleEntry* const module_entry = (pkg_entry != NULL ? pkg_entry->module() : NULL);
 
   if (module_entry != NULL &&
-      module_entry->jlrM_module() != NULL) {
-    return JNIHandles::make_local(THREAD, JNIHandles::resolve(module_entry->jlrM_module()));
+      module_entry->module() != NULL) {
+    return JNIHandles::make_local(THREAD, JNIHandles::resolve(module_entry->module()));
   }
 
   return NULL;
 }
 
-void Modules::add_module_package(JNIEnv *env, jobject module, jstring package) {
-  JavaThread *THREAD = JavaThread::thread_from_jni_environment(env);
-  ResourceMark rm;
+void Modules::add_module_package(jobject module, jstring package, TRAPS) {
+  ResourceMark rm(THREAD);
 
   if (module == NULL) {
     THROW_MSG(vmSymbols::java_lang_NullPointerException(),
@@ -928,9 +917,7 @@ void Modules::add_module_package(JNIEnv *env, jobject module, jstring package) {
 }
 
 // Export package in module to all unnamed modules.
-void Modules::add_module_exports_to_all_unnamed(JNIEnv *env, jobject module, jstring package) {
-  JavaThread *THREAD = JavaThread::thread_from_jni_environment(env);
-
+void Modules::add_module_exports_to_all_unnamed(jobject module, jstring package, TRAPS) {
   if (module == NULL) {
     THROW_MSG(vmSymbols::java_lang_NullPointerException(),
               "module is null");
@@ -944,36 +931,34 @@ void Modules::add_module_exports_to_all_unnamed(JNIEnv *env, jobject module, jst
     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
               "module is invalid");
   }
-  if (!module_entry->is_named()) {  // TBD: Should this be a no-op instead of an IAE ?
-    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
-              "module cannot be unnamed");
-  }
 
-  PackageEntry *package_entry = get_package_entry(module_entry, package, CHECK);
-  ResourceMark rm;
-  if (package_entry == NULL) {
-    const char *package_name = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(package));
-    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
-              err_msg("Package %s not found in module %s",
-                      package_name != NULL ? package_name : "",
-                      module_entry->name()->as_C_string()));
-  }
-  if (package_entry->module() != module_entry) {
-    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
-              err_msg("Package: %s found in module %s, not in module: %s",
-                      package_entry->name()->as_C_string(),
-                      package_entry->module()->name()->as_C_string(),
-                      module_entry->name()->as_C_string()));
-  }
+  if (module_entry->is_named()) { // No-op for unnamed module.
+    PackageEntry *package_entry = get_package_entry(module_entry, package, CHECK);
+    ResourceMark rm(THREAD);
+    if (package_entry == NULL) {
+      const char *package_name = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(package));
+      THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
+                err_msg("Package %s not found in module %s",
+                        package_name != NULL ? package_name : "",
+                        module_entry->name()->as_C_string()));
+    }
+    if (package_entry->module() != module_entry) {
+      THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
+                err_msg("Package: %s found in module %s, not in module: %s",
+                        package_entry->name()->as_C_string(),
+                        package_entry->module()->name()->as_C_string(),
+                        module_entry->name()->as_C_string()));
+    }
 
-  log_debug(modules)("add_module_exports_to_all_unnamed(): package %s in module"
-                     " %s is exported to all unnamed modules",
-                     package_entry->name()->as_C_string(),
-                     module_entry->name()->as_C_string());
+    log_debug(modules)("add_module_exports_to_all_unnamed(): package %s in module"
+                       " %s is exported to all unnamed modules",
+                       package_entry->name()->as_C_string(),
+                       module_entry->name()->as_C_string());
 
-  // Mark package as exported to all unnamed modules, unless already
-  // unqualifiedly exported.
-  if (!package_entry->is_unqual_exported()) {
-    package_entry->set_is_exported_allUnnamed();
+    // Mark package as exported to all unnamed modules, unless already
+    // unqualifiedly exported.
+    if (!package_entry->is_unqual_exported()) {
+      package_entry->set_is_exported_allUnnamed();
+    }
   }
 }

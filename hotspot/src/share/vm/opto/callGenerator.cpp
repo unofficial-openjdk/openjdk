@@ -825,10 +825,12 @@ CallGenerator* CallGenerator::for_method_handle_inline(JVMState* jvms, ciMethod*
         input_not_const = false;
         const TypeOopPtr* oop_ptr = receiver->bottom_type()->is_oopptr();
         ciMethod* target = oop_ptr->const_oop()->as_method_handle()->get_vmtarget();
-        guarantee(!target->is_method_handle_intrinsic(), "should not happen");  // XXX remove
         const int vtable_index = Method::invalid_vtable_index;
-        CallGenerator* cg = C->call_generator(target, vtable_index, false, jvms, true, PROB_ALWAYS, NULL, true, true);
-        assert(cg == NULL || !cg->is_late_inline() || cg->is_mh_late_inline(), "no late inline here");
+        CallGenerator* cg = C->call_generator(target, vtable_index,
+                                              false /* call_does_dispatch */,
+                                              jvms,
+                                              true /* allow_inline */,
+                                              PROB_ALWAYS);
         return cg;
       } else {
         const char* msg = "receiver not constant";
@@ -867,17 +869,18 @@ CallGenerator* CallGenerator::for_method_handle_inline(JVMState* jvms, ciMethod*
           }
         }
         // Cast reference arguments to its type.
-        for (int i = 0; i < signature->count(); i++) {
+        for (int i = 0, j = 0; i < signature->count(); i++) {
           ciType* t = signature->type_at(i);
           if (t->is_klass()) {
-            Node* arg = kit.argument(receiver_skip + i);
+            Node* arg = kit.argument(receiver_skip + j);
             const TypeOopPtr* arg_type = arg->bottom_type()->isa_oopptr();
             const Type*       sig_type = TypeOopPtr::make_from_klass(t->as_klass());
             if (arg_type != NULL && !arg_type->higher_equal(sig_type)) {
               Node* cast_obj = gvn.transform(new CheckCastPPNode(kit.control(), arg, sig_type));
-              kit.set_argument(receiver_skip + i, cast_obj);
+              kit.set_argument(receiver_skip + j, cast_obj);
             }
           }
+          j += t->size();  // long and double take two slots
         }
 
         // Try to get the most accurate receiver type
@@ -898,13 +901,15 @@ CallGenerator* CallGenerator::for_method_handle_inline(JVMState* jvms, ciMethod*
           target = C->optimize_virtual_call(caller, jvms->bci(), klass, klass,
                                             target, receiver_type, is_virtual,
                                             call_does_dispatch, vtable_index, // out-parameters
-                                            /*check_access=*/false);
+                                            false /* check_access */);
           // We lack profiling at this call but type speculation may
           // provide us with a type
           speculative_receiver_type = (receiver_type != NULL) ? receiver_type->speculative_type() : NULL;
         }
-        CallGenerator* cg = C->call_generator(target, vtable_index, call_does_dispatch, jvms, /*allow_inline=*/true, PROB_ALWAYS, speculative_receiver_type, true, true);
-        assert(cg == NULL || !cg->is_late_inline() || cg->is_mh_late_inline(), "no late inline here");
+        CallGenerator* cg = C->call_generator(target, vtable_index, call_does_dispatch, jvms,
+                                              true /* allow_inline */,
+                                              PROB_ALWAYS,
+                                              speculative_receiver_type);
         return cg;
       } else {
         const char* msg = "member_name not constant";

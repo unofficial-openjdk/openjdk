@@ -466,9 +466,15 @@ CompileQueue* CompileBroker::compile_queue(int comp_level) {
   return NULL;
 }
 
-
 void CompileBroker::print_compile_queues(outputStream* st) {
+  st->print_cr("Current compiles: ");
   MutexLocker locker(MethodCompileQueue_lock);
+
+  char buf[2000];
+  int buflen = sizeof(buf);
+  Threads::print_threads_compiling(st, buf, buflen);
+
+  st->cr();
   if (_c1_compile_queue != NULL) {
     _c1_compile_queue->print(st);
   }
@@ -479,8 +485,7 @@ void CompileBroker::print_compile_queues(outputStream* st) {
 
 void CompileQueue::print(outputStream* st) {
   assert(MethodCompileQueue_lock->owned_by_self(), "must own lock");
-  st->print_cr("Contents of %s", name());
-  st->print_cr("----------------------------");
+  st->print_cr("%s:", name());
   CompileTask* task = _first;
   if (task == NULL) {
     st->print_cr("Empty");
@@ -490,7 +495,7 @@ void CompileQueue::print(outputStream* st) {
       task = task->next();
     }
   }
-  st->print_cr("----------------------------");
+  st->cr();
 }
 
 void CompileQueue::print_tty() {
@@ -539,7 +544,7 @@ void CompileBroker::compilation_init(TRAPS) {
         c1_count = JVMCIHostThreads;
       }
 
-      if (!UseInterpreter) {
+      if (!UseInterpreter || !BackgroundCompilation) {
         // Force initialization of JVMCI compiler otherwise JVMCI
         // compilations will not block until JVMCI is initialized
         ResourceMark rm;
@@ -1340,49 +1345,55 @@ CompileTask* CompileBroker::create_compile_task(CompileQueue*       queue,
 }
 
 #if INCLUDE_JVMCI
-// The number of milliseconds to wait before checking if the
-// JVMCI compiler thread is blocked.
-static const long BLOCKING_JVMCI_COMPILATION_WAIT_TIMESLICE = 500;
+// The number of milliseconds to wait before checking if
+// JVMCI compilation has made progress.
+static const long JVMCI_COMPILATION_PROGRESS_WAIT_TIMESLICE = 500;
 
-// The number of successive times the above check is allowed to
-// see a blocked JVMCI compiler thread before unblocking the
-// thread waiting for the compilation to finish.
-static const int BLOCKING_JVMCI_COMPILATION_WAIT_TO_UNBLOCK_ATTEMPTS = 5;
+// The number of JVMCI compilation progress checks that must fail
+// before unblocking a thread waiting for a blocking compilation.
+static const int JVMCI_COMPILATION_PROGRESS_WAIT_ATTEMPTS = 5;
 
 /**
  * Waits for a JVMCI compiler to complete a given task. This thread
- * waits until either the task completes or it sees the JVMCI compiler
- * thread is blocked for N consecutive milliseconds where N is
- * BLOCKING_JVMCI_COMPILATION_WAIT_TIMESLICE *
- * BLOCKING_JVMCI_COMPILATION_WAIT_TO_UNBLOCK_ATTEMPTS.
+ * waits until either the task completes or it sees no JVMCI compilation
+ * progress for N consecutive milliseconds where N is
+ * JVMCI_COMPILATION_PROGRESS_WAIT_TIMESLICE *
+ * JVMCI_COMPILATION_PROGRESS_WAIT_ATTEMPTS.
  *
  * @return true if this thread needs to free/recycle the task
  */
-bool CompileBroker::wait_for_jvmci_completion(CompileTask* task, JavaThread* thread) {
+bool CompileBroker::wait_for_jvmci_completion(JVMCICompiler* jvmci, CompileTask* task, JavaThread* thread) {
   MutexLocker waiter(task->lock(), thread);
-  int consecutively_blocked = 0;
-  while (task->lock()->wait(!Mutex::_no_safepoint_check_flag, BLOCKING_JVMCI_COMPILATION_WAIT_TIMESLICE)) {
+  int progress_wait_attempts = 0;
+  int methods_compiled = jvmci->methods_compiled();
+  while (!task->is_complete() && !is_compilation_disabled_forever() &&
+         task->lock()->wait(!Mutex::_no_safepoint_check_flag, JVMCI_COMPILATION_PROGRESS_WAIT_TIMESLICE)) {
     CompilerThread* jvmci_compiler_thread = task->jvmci_compiler_thread();
+
+    bool progress;
     if (jvmci_compiler_thread != NULL) {
-      JavaThreadState state;
-      {
-        // A JVMCI compiler thread should not disappear at this point
-        // but let's be extra safe.
-        MutexLocker mu(Threads_lock, thread);
-        state = jvmci_compiler_thread->thread_state();
-      }
-      if (state == _thread_blocked) {
-        if (++consecutively_blocked == BLOCKING_JVMCI_COMPILATION_WAIT_TO_UNBLOCK_ATTEMPTS) {
-          if (PrintCompilation) {
-            task->print(tty, "wait for blocking compilation timed out");
-          }
-          break;
+      // If the JVMCI compiler thread is not blocked, we deem it to be making progress.
+      progress = jvmci_compiler_thread->thread_state() != _thread_blocked;
+    } else {
+      // Still waiting on JVMCI compiler queue. This thread may be holding a lock
+      // that all JVMCI compiler threads are blocked on. We use the counter for
+      // successful JVMCI compilations to determine whether JVMCI compilation
+      // is still making progress through the JVMCI compiler queue.
+      progress = jvmci->methods_compiled() != methods_compiled;
+    }
+
+    if (!progress) {
+      if (++progress_wait_attempts == JVMCI_COMPILATION_PROGRESS_WAIT_ATTEMPTS) {
+        if (PrintCompilation) {
+          task->print(tty, "wait for blocking compilation timed out");
         }
-      } else {
-        consecutively_blocked = 0;
+        break;
       }
     } else {
-      // Still waiting on JVMCI compiler queue
+      progress_wait_attempts = 0;
+      if (jvmci_compiler_thread == NULL) {
+        methods_compiled = jvmci->methods_compiled();
+      }
     }
   }
   task->clear_waiter();
@@ -1407,8 +1418,9 @@ void CompileBroker::wait_for_completion(CompileTask* task) {
   methodHandle method(thread, task->method());
   bool free_task;
 #if INCLUDE_JVMCI
-  if (compiler(task->comp_level())->is_jvmci()) {
-    free_task = wait_for_jvmci_completion(task, thread);
+  AbstractCompiler* comp = compiler(task->comp_level());
+  if (comp->is_jvmci()) {
+    free_task = wait_for_jvmci_completion((JVMCICompiler*) comp, task, thread);
   } else
 #endif
   {
@@ -1906,12 +1918,9 @@ void CompileBroker::invoke_compiler_on_method(CompileTask* task) {
 
   collect_statistics(thread, time, task);
 
-  bool printnmethods = directive->PrintAssemblyOption || directive->PrintNMethodsOption;
-  if (printnmethods || PrintDebugInfo || PrintRelocations || PrintDependencies || PrintExceptionHandlers) {
-    nmethod* nm = task->code();
-    if (nm != NULL) {
-      nm->print_nmethod(printnmethods);
-    }
+  nmethod* nm = task->code();
+  if (nm != NULL) {
+    nm->maybe_print_nmethod(directive);
   }
   DirectivesStack::release(directive);
 
@@ -2142,18 +2151,33 @@ void CompileBroker::collect_statistics(CompilerThread* thread, elapsedTimer time
 
     if (CITime) {
       int bytes_compiled = method->code_size() + task->num_inlined_bytecodes();
-      JVMCI_ONLY(CompilerStatistics* stats = compiler(task->comp_level())->stats();)
       if (is_osr) {
         _t_osr_compilation.add(time);
         _sum_osr_bytes_compiled += bytes_compiled;
-        JVMCI_ONLY(stats->_osr.update(time, bytes_compiled);)
       } else {
         _t_standard_compilation.add(time);
         _sum_standard_bytes_compiled += method->code_size() + task->num_inlined_bytecodes();
-        JVMCI_ONLY(stats->_standard.update(time, bytes_compiled);)
       }
-      JVMCI_ONLY(stats->_nmethods_size += code->total_size();)
-      JVMCI_ONLY(stats->_nmethods_code_size += code->insts_size();)
+
+#if INCLUDE_JVMCI
+      AbstractCompiler* comp = compiler(task->comp_level());
+      if (comp) {
+        CompilerStatistics* stats = comp->stats();
+        if (stats) {
+          if (is_osr) {
+            stats->_osr.update(time, bytes_compiled);
+          } else {
+            stats->_standard.update(time, bytes_compiled);
+          }
+          stats->_nmethods_size += code->total_size();
+          stats->_nmethods_code_size += code->insts_size();
+        } else { // if (!stats)
+          assert(false, "Compiler statistics object must exist");
+        }
+      } else { // if (!comp)
+        assert(false, "Compiler object must exist");
+      }
+#endif // INCLUDE_JVMCI
     }
 
     if (UsePerfData) {
@@ -2212,11 +2236,15 @@ const char* CompileBroker::compiler_name(int comp_level) {
 #if INCLUDE_JVMCI
 void CompileBroker::print_times(AbstractCompiler* comp) {
   CompilerStatistics* stats = comp->stats();
-  tty->print_cr("  %s {speed: %d bytes/s; standard: %6.3f s, %d bytes, %d methods; osr: %6.3f s, %d bytes, %d methods; nmethods_size: %d bytes; nmethods_code_size: %d bytes}",
+  if (stats) {
+    tty->print_cr("  %s {speed: %d bytes/s; standard: %6.3f s, %d bytes, %d methods; osr: %6.3f s, %d bytes, %d methods; nmethods_size: %d bytes; nmethods_code_size: %d bytes}",
                 comp->name(), stats->bytes_per_second(),
                 stats->_standard._time.seconds(), stats->_standard._bytes, stats->_standard._count,
                 stats->_osr._time.seconds(), stats->_osr._bytes, stats->_osr._count,
                 stats->_nmethods_size, stats->_nmethods_code_size);
+  } else { // if (!stats)
+    assert(false, "Compiler statistics object must exist");
+  }
   comp->print_timers();
 }
 #endif // INCLUDE_JVMCI
@@ -2250,17 +2278,21 @@ void CompileBroker::print_times(bool per_compiler, bool aggregate) {
       }
       CompilerStatistics* stats = comp->stats();
 
-      standard_compilation.add(stats->_standard._time);
-      osr_compilation.add(stats->_osr._time);
+      if (stats) {
+        standard_compilation.add(stats->_standard._time);
+        osr_compilation.add(stats->_osr._time);
 
-      standard_bytes_compiled += stats->_standard._bytes;
-      osr_bytes_compiled += stats->_osr._bytes;
+        standard_bytes_compiled += stats->_standard._bytes;
+        osr_bytes_compiled += stats->_osr._bytes;
 
-      standard_compile_count += stats->_standard._count;
-      osr_compile_count += stats->_osr._count;
+        standard_compile_count += stats->_standard._count;
+        osr_compile_count += stats->_osr._count;
 
-      nmethods_size += stats->_nmethods_size;
-      nmethods_code_size += stats->_nmethods_code_size;
+        nmethods_size += stats->_nmethods_size;
+        nmethods_code_size += stats->_nmethods_code_size;
+      } else { // if (!stats)
+        assert(false, "Compiler statistics object must exist");
+      }
 
       if (per_compiler) {
         print_times(comp);
@@ -2355,10 +2387,3 @@ void CompileBroker::print_last_compile() {
   }
 }
 
-
-void CompileBroker::print_compiler_threads_on(outputStream* st) {
-#ifndef PRODUCT
-  st->print_cr("Compiler thread printing unimplemented.");
-  st->cr();
-#endif
-}

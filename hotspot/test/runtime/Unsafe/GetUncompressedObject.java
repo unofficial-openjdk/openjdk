@@ -25,7 +25,6 @@
  * @bug 8022853
  * @library /testlibrary
  * @modules java.base/sun.misc
- *          jdk.jvmstat/sun.jvmstat.monitor
  * @build jdk.test.lib.*
  * @run main GetUncompressedObject
  */

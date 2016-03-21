@@ -67,7 +67,9 @@ protected:
          HasReductions=128,
          WasSlpAnalyzed=256,
          PassedSlpAnalysis=512,
-         DoUnrollOnly=1024 };
+         DoUnrollOnly=1024,
+         VectorizedLoop=2048,
+         HasAtomicPostLoop=4096 };
   char _unswitch_count;
   enum { _unswitch_max=3 };
 
@@ -86,6 +88,8 @@ public:
   void mark_was_slp() { _loop_flags |= WasSlpAnalyzed; }
   void mark_passed_slp() { _loop_flags |= PassedSlpAnalysis; }
   void mark_do_unroll_only() { _loop_flags |= DoUnrollOnly; }
+  void mark_loop_vectorized() { _loop_flags |= VectorizedLoop; }
+  void mark_has_atomic_post_loop() { _loop_flags |= HasAtomicPostLoop; }
 
   int unswitch_max() { return _unswitch_max; }
   int unswitch_count() { return _unswitch_count; }
@@ -221,6 +225,8 @@ public:
   int has_passed_slp   () const { return (_loop_flags&PassedSlpAnalysis) == PassedSlpAnalysis; }
   int do_unroll_only      () const { return (_loop_flags&DoUnrollOnly) == DoUnrollOnly; }
   int is_main_no_pre_loop() const { return _loop_flags & MainHasNoPreLoop; }
+  int is_vectorized_loop    () const { return (_loop_flags & VectorizedLoop) == VectorizedLoop; }
+  int has_atomic_post_loop  () const { return (_loop_flags & HasAtomicPostLoop) == HasAtomicPostLoop; }
   void set_main_no_pre_loop() { _loop_flags |= MainHasNoPreLoop; }
 
   int main_idx() const { return _main_idx; }
@@ -279,20 +285,29 @@ public:
   Node *incr() const                { Node *tmp = cmp_node(); return (tmp && tmp->req()==3) ? tmp->in(1) : NULL; }
   Node *limit() const               { Node *tmp = cmp_node(); return (tmp && tmp->req()==3) ? tmp->in(2) : NULL; }
   Node *stride() const              { Node *tmp = incr    (); return (tmp && tmp->req()==3) ? tmp->in(2) : NULL; }
-  Node *phi() const                 { Node *tmp = incr    (); return (tmp && tmp->req()==3) ? tmp->in(1) : NULL; }
   Node *init_trip() const           { Node *tmp = phi     (); return (tmp && tmp->req()==3) ? tmp->in(1) : NULL; }
   int stride_con() const;
   bool stride_is_con() const        { Node *tmp = stride  (); return (tmp != NULL && tmp->is_Con()); }
   BoolTest::mask test_trip() const  { return in(TestValue)->as_Bool()->_test._test; }
+  PhiNode *phi() const {
+    Node *tmp = incr();
+    if (tmp && tmp->req() == 3) {
+      Node* phi = tmp->in(1);
+      if (phi->is_Phi()) {
+        return phi->as_Phi();
+      }
+    }
+    return NULL;
+  }
   CountedLoopNode *loopnode() const {
     // The CountedLoopNode that goes with this CountedLoopEndNode may
     // have been optimized out by the IGVN so be cautious with the
     // pattern matching on the graph
-    if (phi() == NULL) {
+    PhiNode* iv_phi = phi();
+    if (iv_phi == NULL) {
       return NULL;
     }
-    assert(phi()->is_Phi(), "should be PhiNode");
-    Node *ln = phi()->in(0);
+    Node *ln = iv_phi->in(0);
     if (ln->is_CountedLoop() && ln->as_CountedLoop()->loopexit() == this) {
       return (CountedLoopNode*)ln;
     }
@@ -893,6 +908,8 @@ public:
   // Add pre and post loops around the given loop.  These loops are used
   // during RCE, unrolling and aligning loops.
   void insert_pre_post_loops( IdealLoopTree *loop, Node_List &old_new, bool peel_only );
+  // Add a vector post loop between a vector main loop and the current post loop
+  void insert_vector_post_loop(IdealLoopTree *loop, Node_List &old_new);
   // If Node n lives in the back_ctrl block, we clone a private version of n
   // in preheader_ctrl block and return that, otherwise return n.
   Node *clone_up_backedge_goo( Node *back_ctrl, Node *preheader_ctrl, Node *n, VectorSet &visited, Node_Stack &clones );
@@ -1105,6 +1122,8 @@ private:
   Node *place_near_use( Node *useblock ) const;
   Node* try_move_store_before_loop(Node* n, Node *n_ctrl);
   void try_move_store_after_loop(Node* n);
+  bool identical_backtoback_ifs(Node *n);
+  bool can_split_if(Node *n_ctrl);
 
   bool _created_loop_node;
 public:

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -217,6 +217,10 @@ void CompactibleFreeListSpace::initializeIndexedFreeListArray() {
     assert(_indexedFreeList[i].tail() == NULL, "reset check failed");
     assert(_indexedFreeList[i].hint() == IndexSetSize, "reset check failed");
   }
+}
+
+size_t CompactibleFreeListSpace::obj_size(const HeapWord* addr) const {
+  return adjustObjectSize(oop(addr)->size());
 }
 
 void CompactibleFreeListSpace::resetIndexedFreeListArray() {
@@ -2202,13 +2206,13 @@ class VerifyAllBlksClosure: public BlkClosure {
     }
     if (res == 0) {
       LogHandle(gc, verify) log;
-      log.info("Livelock: no rank reduction!");
-      log.info(" Current:  addr = " PTR_FORMAT ", size = " SIZE_FORMAT ", obj = %s, live = %s \n"
-               " Previous: addr = " PTR_FORMAT ", size = " SIZE_FORMAT ", obj = %s, live = %s \n",
+      log.error("Livelock: no rank reduction!");
+      log.error(" Current:  addr = " PTR_FORMAT ", size = " SIZE_FORMAT ", obj = %s, live = %s \n"
+                " Previous: addr = " PTR_FORMAT ", size = " SIZE_FORMAT ", obj = %s, live = %s \n",
         p2i(addr),       res,        was_obj      ?"true":"false", was_live      ?"true":"false",
         p2i(_last_addr), _last_size, _last_was_obj?"true":"false", _last_was_live?"true":"false");
       ResourceMark rm;
-      _sp->print_on(log.info_stream());
+      _sp->print_on(log.error_stream());
       guarantee(false, "Verification failed.");
     }
     _last_addr = addr;

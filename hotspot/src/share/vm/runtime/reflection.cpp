@@ -515,15 +515,17 @@ Reflection::VerifyClassAccessResults Reflection::verify_class_access(
     ModuleEntry* module_to = InstanceKlass::cast(new_class)->module();
 
     // both in same (possibly unnamed) module
-    if (module_from == module_to)
+    if (module_from == module_to) {
       return ACCESS_OK;
+    }
 
     // Acceptable access to a type in an unamed module.  Note that since
     // unnamed modules can read all unnamed modules, this also handles the
     // case where module_from is also unnamed but in a different class loader.
     if (!module_to->is_named() &&
-        (module_from->can_read_all_unnamed() || module_from->can_read(module_to)))
+        (module_from->can_read_all_unnamed() || module_from->can_read(module_to))) {
       return ACCESS_OK;
+    }
 
     // Establish readability, check if module_from is allowed to read module_to.
     if (!module_from->can_read(module_to)) {
@@ -567,15 +569,23 @@ char* Reflection::verify_class_access_msg(const Klass* current_class,
   assert(result != ACCESS_OK, "must be failure result");
   char * msg = NULL;
   if (result != OTHER_PROBLEM && new_class != NULL && current_class != NULL) {
-    ModuleEntry* module_to = InstanceKlass::cast(new_class)->module();
-    const char * new_class_name = new_class->external_name();
-    const char * current_class_name = current_class->external_name();
-    const char * module_to_name = module_to->is_named() ?
-      module_to->name()->as_C_string() : UNNAMED_MODULE;
-
+    // Find the module entry for current_class, the accessor
     ModuleEntry* module_from = InstanceKlass::cast(current_class)->module();
-    const char * module_from_name = module_from->is_named() ?
-      module_from->name()->as_C_string() : UNNAMED_MODULE;
+    const char * module_from_name = module_from->is_named() ? module_from->name()->as_C_string() : UNNAMED_MODULE;
+    const char * current_class_name = current_class->external_name();
+
+    // Find the module entry for new_class, the accessee
+    ModuleEntry* module_to = NULL;
+    if (new_class->is_objArray_klass()) {
+      new_class = ObjArrayKlass::cast(new_class)->bottom_klass();
+    }
+    if (new_class->is_instance_klass()) {
+      module_to = InstanceKlass::cast(new_class)->module();
+    } else {
+      module_to = ModuleEntryTable::javabase_module();
+    }
+    const char * module_to_name = module_to->is_named() ? module_to->name()->as_C_string() : UNNAMED_MODULE;
+    const char * new_class_name = new_class->external_name();
 
     if (result == MODULE_NOT_READABLE) {
       assert(module_from->is_named(), "Unnamed modules can read all modules");
@@ -588,7 +598,7 @@ char* Reflection::verify_class_access_msg(const Klass* current_class,
           current_class_name, module_from_name, new_class_name,
           module_to_name, module_from_name, module_to_name);
       } else {
-        jobject jlrm = module_to->jlrM_module();
+        jobject jlrm = module_to->module();
         assert(jlrm != NULL, "Null jlrm in module_to ModuleEntry");
         intptr_t identity_hash = JNIHandles::resolve(jlrm)->identity_hash();
         size_t len = 160 + strlen(current_class_name) + 2*strlen(module_from_name) +
@@ -615,7 +625,7 @@ char* Reflection::verify_class_access_msg(const Klass* current_class,
           current_class_name, module_from_name, new_class_name,
           module_to_name, module_to_name, package_name, module_from_name);
       } else {
-        jobject jlrm = module_from->jlrM_module();
+        jobject jlrm = module_from->module();
         assert(jlrm != NULL, "Null jlrm in module_from ModuleEntry");
         intptr_t identity_hash = JNIHandles::resolve(jlrm)->identity_hash();
         size_t len = 170 + strlen(current_class_name) + strlen(new_class_name) +
@@ -1099,10 +1109,7 @@ static oop invoke(instanceKlassHandle klass,
         int index = reflected_method->vtable_index();
         method = reflected_method;
         if (index != Method::nonvirtual_vtable_index) {
-          // target_klass might be an arrayKlassOop but all vtables start at
-          // the same place. The cast is to avoid virtual call and assertion.
-          InstanceKlass* inst = (InstanceKlass*)target_klass();
-          method = methodHandle(THREAD, inst->method_at_vtable(index));
+          method = methodHandle(THREAD, target_klass->method_at_vtable(index));
         }
         if (!method.is_null()) {
           // Check for abstract methods as well

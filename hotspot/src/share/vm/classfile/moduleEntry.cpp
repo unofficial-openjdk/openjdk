@@ -42,6 +42,8 @@ ModuleEntry* ModuleEntryTable::_javabase_module = NULL;
 
 void ModuleEntry::set_location(Symbol* location) {
   if (_location != NULL) {
+    // _location symbol's refcounts are managed by ModuleEntry,
+    // must decrement the old one before updating.
     _location->decrement_refcount();
   }
 
@@ -54,6 +56,8 @@ void ModuleEntry::set_location(Symbol* location) {
 
 void ModuleEntry::set_version(Symbol* version) {
   if (_version != NULL) {
+    // _version symbol's refcounts are managed by ModuleEntry,
+    // must decrement the old one before updating.
     _version->decrement_refcount();
   }
 
@@ -219,7 +223,7 @@ void ModuleEntryTable::create_unnamed_module(ClassLoaderData* loader_data) {
   add_entry(0, _unnamed_module);
 }
 
-ModuleEntry* ModuleEntryTable::new_entry(unsigned int hash, Handle jlrM_handle, Symbol* name,
+ModuleEntry* ModuleEntryTable::new_entry(unsigned int hash, Handle module_handle, Symbol* name,
                                          Symbol* version, Symbol* location,
                                          ClassLoaderData* loader_data) {
   assert_locked_or_safepoint(Module_lock);
@@ -239,8 +243,8 @@ ModuleEntry* ModuleEntryTable::new_entry(unsigned int hash, Handle jlrM_handle, 
     entry->set_can_read_all_unnamed();
   }
 
-  if (!jlrM_handle.is_null()) {
-    entry->set_jlrM_module(loader_data->add_handle(jlrM_handle));
+  if (!module_handle.is_null()) {
+    entry->set_module(loader_data->add_handle(module_handle));
   }
 
   entry->set_loader(loader_data);
@@ -257,7 +261,7 @@ void ModuleEntryTable::add_entry(int index, ModuleEntry* new_entry) {
   Hashtable<Symbol*, mtClass>::add_entry(index, (HashtableEntry<Symbol*, mtClass>*)new_entry);
 }
 
-ModuleEntry* ModuleEntryTable::locked_create_entry_or_null(Handle jlrM_handle,
+ModuleEntry* ModuleEntryTable::locked_create_entry_or_null(Handle module_handle,
                                                            Symbol* module_name,
                                                            Symbol* module_version,
                                                            Symbol* module_location,
@@ -268,7 +272,7 @@ ModuleEntry* ModuleEntryTable::locked_create_entry_or_null(Handle jlrM_handle,
   if (lookup_only(module_name) != NULL) {
     return NULL;
   } else {
-    ModuleEntry* entry = new_entry(compute_hash(module_name), jlrM_handle, module_name,
+    ModuleEntry* entry = new_entry(compute_hash(module_name), module_handle, module_name,
                                    module_version, module_location, loader_data);
     add_entry(index_for(module_name), entry);
     return entry;
@@ -303,56 +307,56 @@ void ModuleEntryTable::purge_all_module_reads() {
   }
 }
 
-void ModuleEntryTable::finalize_javabase(Handle jlrM_module, Symbol* version, Symbol* location) {
+void ModuleEntryTable::finalize_javabase(Handle module_handle, Symbol* version, Symbol* location) {
   assert_locked_or_safepoint(Module_lock);
   ClassLoaderData* boot_loader_data = ClassLoaderData::the_null_class_loader_data();
   ModuleEntryTable* module_table = boot_loader_data->modules();
 
   assert(module_table != NULL, "boot loader's ModuleEntryTable not defined");
 
-  if (jlrM_module.is_null()) {
+  if (module_handle.is_null()) {
     fatal("Unable to finalize module definition for java.base");
   }
 
   // Set java.lang.reflect.Module, version and location for java.base
   ModuleEntry* jb_module = javabase_module();
   assert(jb_module != NULL, "java.base ModuleEntry not defined");
-  jb_module->set_jlrM_module(boot_loader_data->add_handle(jlrM_module));
+  jb_module->set_module(boot_loader_data->add_handle(module_handle));
   jb_module->set_version(version);
   jb_module->set_location(location);
   // Store pointer to the ModuleEntry for java.base in the java.lang.reflect.Module object.
-  java_lang_reflect_Module::set_module_entry(jlrM_module(), jb_module);
+  java_lang_reflect_Module::set_module_entry(module_handle(), jb_module);
 }
 
-void ModuleEntryTable::patch_javabase_entries(Handle jlrM_handle) {
-  if (jlrM_handle.is_null()) {
+void ModuleEntryTable::patch_javabase_entries(Handle module_handle) {
+  if (module_handle.is_null()) {
     fatal("Unable to patch the module field of classes loaded prior to java.base's definition, invalid java.lang.reflect.Module");
   }
 
   // Do the fixups for the basic primitive types
-  java_lang_Class::set_module(Universe::int_mirror(), jlrM_handle());
-  java_lang_Class::set_module(Universe::float_mirror(), jlrM_handle());
-  java_lang_Class::set_module(Universe::double_mirror(), jlrM_handle());
-  java_lang_Class::set_module(Universe::byte_mirror(), jlrM_handle());
-  java_lang_Class::set_module(Universe::bool_mirror(), jlrM_handle());
-  java_lang_Class::set_module(Universe::char_mirror(), jlrM_handle());
-  java_lang_Class::set_module(Universe::long_mirror(), jlrM_handle());
-  java_lang_Class::set_module(Universe::short_mirror(), jlrM_handle());
-  java_lang_Class::set_module(Universe::void_mirror(), jlrM_handle());
+  java_lang_Class::set_module(Universe::int_mirror(), module_handle());
+  java_lang_Class::set_module(Universe::float_mirror(), module_handle());
+  java_lang_Class::set_module(Universe::double_mirror(), module_handle());
+  java_lang_Class::set_module(Universe::byte_mirror(), module_handle());
+  java_lang_Class::set_module(Universe::bool_mirror(), module_handle());
+  java_lang_Class::set_module(Universe::char_mirror(), module_handle());
+  java_lang_Class::set_module(Universe::long_mirror(), module_handle());
+  java_lang_Class::set_module(Universe::short_mirror(), module_handle());
+  java_lang_Class::set_module(Universe::void_mirror(), module_handle());
 
   // Do the fixups for classes that have already been created.
-  GrowableArray <Klass*>* list = java_lang_Class::fixup_modulefield_list();
+  GrowableArray <Klass*>* list = java_lang_Class::fixup_module_field_list();
   int list_length = list->length();
   for (int i = 0; i < list_length; i++) {
     Klass* k = list->at(i);
     assert(k->is_klass(), "List should only hold classes");
     Thread* THREAD = Thread::current();
     KlassHandle kh(THREAD, k);
-    java_lang_Class::fixup_modulefield(kh, jlrM_handle);
+    java_lang_Class::fixup_module_field(kh, module_handle);
   }
 
-  delete java_lang_Class::fixup_modulefield_list();
-  java_lang_Class::set_fixup_modulefield_list(NULL);
+  delete java_lang_Class::fixup_module_field_list();
+  java_lang_Class::set_fixup_module_field_list(NULL);
 }
 
 #ifndef PRODUCT
@@ -370,10 +374,10 @@ void ModuleEntryTable::print() {
 
 void ModuleEntry::print() {
   ResourceMark rm;
-  tty->print_cr("entry "PTR_FORMAT" name %s jlrM "PTR_FORMAT" loader %s version %s location %s strict %s next "PTR_FORMAT,
+  tty->print_cr("entry "PTR_FORMAT" name %s module "PTR_FORMAT" loader %s version %s location %s strict %s next "PTR_FORMAT,
                 p2i(this),
                 name() == NULL ? UNNAMED_MODULE : name()->as_C_string(),
-                p2i(jlrM_module()),
+                p2i(module()),
                 loader()->loader_name(),
                 version() != NULL ? version()->as_C_string() : "NULL",
                 location() != NULL ? location()->as_C_string() : "NULL",

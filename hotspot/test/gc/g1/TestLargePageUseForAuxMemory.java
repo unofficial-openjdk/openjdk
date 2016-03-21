@@ -27,7 +27,6 @@
  * @bug 8058354 8079208
  * @key gc
  * @library /testlibrary /test/lib
- * @modules jdk.jvmstat/sun.jvmstat.monitor
  * @requires (vm.gc=="G1" | vm.gc=="null")
  * @build jdk.test.lib.* sun.hotspot.WhiteBox
  * @build TestLargePageUseForAuxMemory

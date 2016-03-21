@@ -37,11 +37,11 @@
 #define  MODULES_IMAGE_NAME "modules"
 
 // Name of the resource containing mapping from module names to defining class loader type
-#define MODULE_LOADER_MAP "jdk/internal/module/ModuleLoaderMap.dat"
+#define MODULE_LOADER_MAP "jdk/internal/vm/cds/resources/ModuleLoaderMap.dat"
 
 // Initial sizes of the following arrays are based on the generated ModuleLoaderMap.dat
 #define INITIAL_BOOT_MODULES_ARRAY_SIZE 30
-#define INITIAL_EXT_MODULES_ARRAY_SIZE  15
+#define INITIAL_PLATFORM_MODULES_ARRAY_SIZE  15
 
 // Class path entry (directory or zip file)
 
@@ -144,9 +144,9 @@ class SharedPathsMiscInfo;
 class ClassLoader: AllStatic {
  public:
   enum ClassLoaderType {
-    BOOT = 1,
-    EXT  = 2,
-    APP  = 3
+    BOOT_LOADER = 1,      /* boot loader */
+    PLATFORM_LOADER  = 2, /* PlatformClassLoader */
+    APP_LOADER  = 3       /* AppClassLoader */
   };
  protected:
 
@@ -210,8 +210,8 @@ class ClassLoader: AllStatic {
   // Array of module names associated with the boot class loader
   CDS_ONLY(static GrowableArray<char*>* _boot_modules_array;)
 
-  // Array of module names associated with the ext class loader
-  CDS_ONLY(static GrowableArray<char*>* _ext_modules_array;)
+  // Array of module names associated with the platform class loader
+  CDS_ONLY(static GrowableArray<char*>* _platform_modules_array;)
 
   // Info used by CDS
   CDS_ONLY(static SharedPathsMiscInfo * _shared_paths_misc_info;)
@@ -365,13 +365,13 @@ class ClassLoader: AllStatic {
   static bool  check_shared_paths_misc_info(void* info, int size);
   static void  exit_with_path_failure(const char* error, const char* message);
 
-  static jshort module_to_classloader(const char* module_name);
+  static s2 module_to_classloader(const char* module_name);
   static void initialize_module_loader_map(JImageFile* jimage);
 #endif
-  static jshort classloader_type(Symbol* class_name, ClassPathEntry* e,
+  static s2 classloader_type(Symbol* class_name, ClassPathEntry* e,
                                  int classpath_index, TRAPS);
 
-  static void  trace_class_path(outputStream* out, const char* msg, const char* name = NULL);
+  static void  trace_class_path(const char* msg, const char* name = NULL);
 
   // VM monitoring and management support
   static jlong classloader_time_ms();

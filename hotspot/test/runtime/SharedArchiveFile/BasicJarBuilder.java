@@ -40,6 +40,16 @@ import sun.tools.jar.Main;
 public class BasicJarBuilder {
     private static final String classDir = System.getProperty("test.classes");
 
+    public static void build(boolean classesInWorkDir, String jarName,
+        String ...classNames) throws Exception {
+
+        if (classesInWorkDir) {
+            createSimpleJar(".", classDir + File.separator + jarName + ".jar", classNames);
+        } else {
+            build(jarName, classNames);
+        }
+    }
+
     public static void build(String jarName, String ...classNames) throws Exception {
         createSimpleJar(classDir, classDir + File.separator + jarName + ".jar",
             classNames);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,7 +40,6 @@ public class MySameClassLoader extends ClassLoader
             !name.equals("p2.c2") &&
             !name.equals("p3.c3") &&
             !name.equals("p3.c3ReadEdge") &&
-            !name.equals("p3.c3Loose") &&
             !name.equals("c4") &&
             !name.equals("c5") &&
             !name.equals("p6.c6")) {

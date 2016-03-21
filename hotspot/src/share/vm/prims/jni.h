@@ -772,10 +772,10 @@ struct JNINativeInterface_ {
        (JNIEnv* env, jclass clazz);
 
     void (JNICALL *AddModuleReads)
-       (JNIEnv* env, jobject fromModule, jobject sourceModule);
+       (JNIEnv* env, jobject m1, jobject m2);
 
     jboolean (JNICALL *CanReadModule)
-       (JNIEnv* env, jobject askingModule, jobject sourceModule);
+       (JNIEnv* env, jobject m1, jobject m2);
 };
 
 /*
@@ -1977,6 +1977,7 @@ JNI_OnUnload(JavaVM *vm, void *reserved);
 #define JNI_VERSION_1_4 0x00010004
 #define JNI_VERSION_1_6 0x00010006
 #define JNI_VERSION_1_8 0x00010008
+#define JNI_VERSION_9   0x00090000
 
 #ifdef __cplusplus
 } /* extern "C" */

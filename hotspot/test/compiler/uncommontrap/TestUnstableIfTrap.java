@@ -53,7 +53,7 @@ import uncommontrap.Verifier;
  *                   -XX:+WhiteBoxAPI -XX:+LogCompilation
  *                   -XX:CompileCommand=compileonly,UnstableIfExecutable.test
  *                   -XX:LogFile=always_taken_not_fired.xml
-  *                   TestUnstableIfTrap ALWAYS_TAKEN false
+ *                   TestUnstableIfTrap ALWAYS_TAKEN false
  * @run main/othervm -Xbatch -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
  *                   -XX:+WhiteBoxAPI -XX:+LogCompilation
  *                   -XX:CompileCommand=compileonly,UnstableIfExecutable.test

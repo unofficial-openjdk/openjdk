@@ -29,8 +29,7 @@
  * @requires vm.gc=="G1" | vm.gc=="null"
  * @library /testlibrary /test/lib
  * @modules java.base/sun.misc
- *          java.management
- *          jdk.jvmstat/sun.jvmstat.monitor
+  *          java.management
  * @build jdk.test.lib.* sun.hotspot.WhiteBox
  * @build TestShrinkAuxiliaryData TestShrinkAuxiliaryData20
  * @run main ClassFileInstaller sun.hotspot.WhiteBox

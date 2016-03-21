@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,32 +26,23 @@ import java.io.File;
 /*
  * @test
  * @build BootClassPathAppendProp
- * @run main/othervm -Xbootclasspath/a:/usr/lib -showversion -Xbootclasspath/a:/i/dont/exist BootClassPathAppendProp set
- * @run main/othervm -Xpatch:/not/here -Xbootclasspath/a:/i/may/exist BootClassPathAppendProp override
- * @run main/othervm BootClassPathAppendProp empty
+ * @run main/othervm -Xbootclasspath/a:/usr/lib -showversion -Xbootclasspath/a:/i/dont/exist BootClassPathAppendProp
+ * @run main/othervm -Xpatch:/not/here -Xbootclasspath/a:/i/may/exist BootClassPathAppendProp
+ * @run main/othervm -Djdk.boot.class.path.append=newdir BootClassPathAppendProp
+ * @run main/othervm BootClassPathAppendProp
  */
 
 // Test that property jdk.boot.class.path.append contains only the bootclasspath
 // info following the "modules" jimage file.
 public class BootClassPathAppendProp {
-
-    public static void test_prop(String expected_val) {
-        String propVal = System.getProperty("jdk.boot.class.path.append");
-        if (!propVal.equals(expected_val)) {
-            throw new RuntimeException(
-                 "Bad jdk.boot.class.path.append property value: " + propVal);
-        }
-    }
-
-    public static void main(String[] args) {
-        if (args[0].equals("set")) {
-            test_prop("/usr/lib" + File.pathSeparator + "/i/dont/exist");
-        } else if (args[0].equals("override")) {
-            test_prop("/i/may/exist");
-        } else if (args[0].equals("empty")) {
-            test_prop("");
+    public static void main(String[] args) throws Exception {
+        // jdk.boot.class.path.append is a non-writeable, internal property.
+        // The call to System.getProperty should return null.
+        if (System.getProperty("jdk.boot.class.path.append") != null) {
+            throw new RuntimeException("Test failed, jdk.boot.class.path.append has value: " +
+                System.getProperty("jdk.boot.class.path.append"));
         } else {
-            throw new RuntimeException("Unexpected arg to main: " + args[0]);
+            System.out.println("Test BootClassPathAppendProp passed");
         }
     }
 }

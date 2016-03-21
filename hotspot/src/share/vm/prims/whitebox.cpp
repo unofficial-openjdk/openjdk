@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,7 @@
 #include "memory/metadataFactory.hpp"
 #include "memory/metaspaceShared.hpp"
 #include "memory/universe.hpp"
+#include "oops/constantPool.hpp"
 #include "oops/oop.inline.hpp"
 #include "prims/wbtestmethods/parserTests.hpp"
 #include "prims/whitebox.hpp"
@@ -52,9 +53,9 @@
 #include "utilities/exceptions.hpp"
 #include "utilities/macros.hpp"
 #if INCLUDE_ALL_GCS
-#include "gc/g1/concurrentMark.hpp"
 #include "gc/g1/concurrentMarkThread.hpp"
 #include "gc/g1/g1CollectedHeap.inline.hpp"
+#include "gc/g1/g1ConcurrentMark.hpp"
 #include "gc/g1/heapRegionRemSet.hpp"
 #include "gc/parallel/parallelScavengeHeap.inline.hpp"
 #include "gc/parallel/adjoiningGenerations.hpp"
@@ -644,12 +645,12 @@ WB_ENTRY(jboolean, WB_EnqueueMethodForCompilation(JNIEnv* env, jobject o, jobjec
   return (mh->queued_for_compilation() || nm != NULL);
 WB_END
 
-WB_ENTRY(jboolean, WB_ShouldPrintAssembly(JNIEnv* env, jobject o, jobject method))
+WB_ENTRY(jboolean, WB_ShouldPrintAssembly(JNIEnv* env, jobject o, jobject method, jint comp_level))
   jmethodID jmid = reflected_method_to_jmid(thread, env, method);
   CHECK_JNI_EXCEPTION_(env, JNI_FALSE);
 
   methodHandle mh(THREAD, Method::checked_resolve_jmethod_id(jmid));
-  DirectiveSet* directive = DirectivesStack::getMatchingDirective(mh, CompileBroker::compiler(CompLevel_simple));
+  DirectiveSet* directive = DirectivesStack::getMatchingDirective(mh, CompileBroker::compiler(comp_level));
   bool result = directive->PrintAssemblyOption;
   DirectivesStack::release(directive);
 
@@ -1252,39 +1253,39 @@ WB_END
 
 WB_ENTRY(void, WB_DefineModule(JNIEnv* env, jobject o, jobject module, jstring version, jstring location,
                                 jobjectArray packages))
-  Modules::define_module(env, module, version, location, packages);
+  Modules::define_module(module, version, location, packages, CHECK);
 WB_END
 
 WB_ENTRY(void, WB_AddModuleExports(JNIEnv* env, jobject o, jobject from_module, jstring package, jobject to_module))
-  Modules::add_module_exports_qualified(env, from_module, package, to_module);
+  Modules::add_module_exports_qualified(from_module, package, to_module, CHECK);
 WB_END
 
 WB_ENTRY(void, WB_AddModuleExportsToAllUnnamed(JNIEnv* env, jobject o, jclass module, jstring package))
-  Modules::add_module_exports_to_all_unnamed(env, module, package);
+  Modules::add_module_exports_to_all_unnamed(module, package, CHECK);
 WB_END
 
 WB_ENTRY(void, WB_AddModuleExportsToAll(JNIEnv* env, jobject o, jclass module, jstring package))
-  Modules::add_module_exports(env, module, package, NULL);
+  Modules::add_module_exports(module, package, NULL, CHECK);
 WB_END
 
 WB_ENTRY(void, WB_AddReadsModule(JNIEnv* env, jobject o, jobject from_module, jobject source_module))
-  Modules::add_reads_module(env, from_module, source_module);
+  Modules::add_reads_module(from_module, source_module, CHECK);
 WB_END
 
 WB_ENTRY(jboolean, WB_CanReadModule(JNIEnv* env, jobject o, jobject asking_module, jobject source_module))
-  return Modules::can_read_module(env, asking_module, source_module);
+  return Modules::can_read_module(asking_module, source_module, THREAD);
 WB_END
 
 WB_ENTRY(jboolean, WB_IsExportedToModule(JNIEnv* env, jobject o, jobject from_module, jstring package, jobject to_module))
-  return Modules::is_exported_to_module(env, from_module, package, to_module);
+  return Modules::is_exported_to_module(from_module, package, to_module, THREAD);
 WB_END
 
 WB_ENTRY(void, WB_AddModulePackage(JNIEnv* env, jobject o, jclass module, jstring package))
-  Modules::add_module_package(env, module, package);
+  Modules::add_module_package(module, package, CHECK);
 WB_END
 
 WB_ENTRY(jobject, WB_GetModuleByPackageName(JNIEnv* env, jobject o, jobject loader, jstring package))
-  return Modules::get_module_by_package_name(env, loader, package);
+  return Modules::get_module_by_package_name(loader, package, THREAD);
 WB_END
 
 WB_ENTRY(jlong, WB_IncMetaspaceCapacityUntilGC(JNIEnv* env, jobject wb, jlong inc))
@@ -1336,6 +1337,38 @@ WB_END
 WB_ENTRY(jlong, WB_GetConstantPool(JNIEnv* env, jobject wb, jclass klass))
   instanceKlassHandle ikh(java_lang_Class::as_Klass(JNIHandles::resolve(klass)));
   return (jlong) ikh->constants();
+WB_END
+
+WB_ENTRY(jint, WB_GetConstantPoolCacheIndexTag(JNIEnv* env, jobject wb))
+  return ConstantPool::CPCACHE_INDEX_TAG;
+WB_END
+
+WB_ENTRY(jint, WB_GetConstantPoolCacheLength(JNIEnv* env, jobject wb, jclass klass))
+  instanceKlassHandle ikh(java_lang_Class::as_Klass(JNIHandles::resolve(klass)));
+  ConstantPool* cp = ikh->constants();
+  if (cp->cache() == NULL) {
+      return -1;
+  }
+  return cp->cache()->length();
+WB_END
+
+WB_ENTRY(jint, WB_ConstantPoolRemapInstructionOperandFromCache(JNIEnv* env, jobject wb, jclass klass, jint index))
+  instanceKlassHandle ikh(java_lang_Class::as_Klass(JNIHandles::resolve(klass)));
+  ConstantPool* cp = ikh->constants();
+  if (cp->cache() == NULL) {
+    THROW_MSG_0(vmSymbols::java_lang_IllegalStateException(), "Constant pool does not have a cache");
+  }
+  jint cpci = index;
+  jint cpciTag = ConstantPool::CPCACHE_INDEX_TAG;
+  if (cpciTag > cpci || cpci >= cp->cache()->length() + cpciTag) {
+    THROW_MSG_0(vmSymbols::java_lang_IllegalArgumentException(), "Constant pool cache index is out of range");
+  }
+  jint cpi = cp->remap_instruction_operand_from_cache(cpci);
+  return cpi;
+WB_END
+
+WB_ENTRY(jint, WB_ConstantPoolEncodeIndyIndex(JNIEnv* env, jobject wb, jint index))
+  return ConstantPool::encode_invokedynamic_index(index);
 WB_END
 
 WB_ENTRY(void, WB_ClearInlineCaches(JNIEnv* env, jobject wb))
@@ -1447,7 +1480,7 @@ int WhiteBox::offset_for_field(const char* field_name, oop object,
   if (res == NULL) {
     tty->print_cr("Invalid layout of %s at %s", ik->external_name(),
         name_symbol->as_C_string());
-    vm_exit_during_initialization("Invalid layout of preloaded class: use -XX:+TraceClassLoading to see the origin of the problem class");
+    vm_exit_during_initialization("Invalid layout of preloaded class: use -Xlog:classload=info to see the origin of the problem class");
   }
 
   //fetch the field at the offset we've found
@@ -1559,8 +1592,8 @@ static JNINativeMethod methods[] = {
 #endif // INCLUDE_NMT
   {CC"deoptimizeFrames",   CC"(Z)I",                  (void*)&WB_DeoptimizeFrames  },
   {CC"deoptimizeAll",      CC"()V",                   (void*)&WB_DeoptimizeAll     },
-    {CC"deoptimizeMethod0",   CC"(Ljava/lang/reflect/Executable;Z)I",
-                                                        (void*)&WB_DeoptimizeMethod  },
+  {CC"deoptimizeMethod0",   CC"(Ljava/lang/reflect/Executable;Z)I",
+                                                      (void*)&WB_DeoptimizeMethod  },
   {CC"isMethodCompiled0",   CC"(Ljava/lang/reflect/Executable;Z)Z",
                                                       (void*)&WB_IsMethodCompiled  },
   {CC"isMethodCompilable0", CC"(Ljava/lang/reflect/Executable;IZ)Z",
@@ -1595,7 +1628,7 @@ static JNINativeMethod methods[] = {
       CC"(Ljava/lang/reflect/Executable;Ljava/lang/String;)I",
                                                       (void*)&WB_MatchesInline},
   {CC"shouldPrintAssembly",
-        CC"(Ljava/lang/reflect/Executable;)Z",
+        CC"(Ljava/lang/reflect/Executable;I)Z",
                                                         (void*)&WB_ShouldPrintAssembly},
 
   {CC"isConstantVMFlag",   CC"(Ljava/lang/String;)Z", (void*)&WB_IsConstantVMFlag},
@@ -1674,6 +1707,12 @@ static JNINativeMethod methods[] = {
   {CC"isMonitorInflated0", CC"(Ljava/lang/Object;)Z", (void*)&WB_IsMonitorInflated  },
   {CC"forceSafepoint",     CC"()V",                   (void*)&WB_ForceSafepoint     },
   {CC"getConstantPool0",   CC"(Ljava/lang/Class;)J",  (void*)&WB_GetConstantPool    },
+  {CC"getConstantPoolCacheIndexTag0", CC"()I",  (void*)&WB_GetConstantPoolCacheIndexTag},
+  {CC"getConstantPoolCacheLength0", CC"(Ljava/lang/Class;)I",  (void*)&WB_GetConstantPoolCacheLength},
+  {CC"remapInstructionOperandFromCPCache0",
+      CC"(Ljava/lang/Class;I)I",                      (void*)&WB_ConstantPoolRemapInstructionOperandFromCache},
+  {CC"encodeConstantPoolIndyIndex0",
+      CC"(I)I",                      (void*)&WB_ConstantPoolEncodeIndyIndex},
   {CC"getMethodBooleanOption",
       CC"(Ljava/lang/reflect/Executable;Ljava/lang/String;)Ljava/lang/Boolean;",
                                                       (void*)&WB_GetMethodBooleaneOption},

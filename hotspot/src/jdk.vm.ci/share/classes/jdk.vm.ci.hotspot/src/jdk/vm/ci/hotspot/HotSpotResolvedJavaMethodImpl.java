@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -309,6 +309,15 @@ final class HotSpotResolvedJavaMethodImpl extends HotSpotMethod implements HotSp
     }
 
     /**
+     * Returns true if this method has a {@code ReservedStackAccess} annotation.
+     *
+     * @return true if ReservedStackAccess annotation present, false otherwise
+     */
+    public boolean hasReservedStackAccess() {
+        return (getFlags() & config().methodFlagsReservedStackAccess) != 0;
+    }
+
+    /**
      * Manually adds a DontInline annotation to this method.
      */
     public void setNotInlineable() {
@@ -597,7 +606,7 @@ final class HotSpotResolvedJavaMethodImpl extends HotSpotMethod implements HotSp
         }
         HotSpotVMConfig config = config();
         final int vtableIndex = getVtableIndex((HotSpotResolvedObjectTypeImpl) resolved);
-        return config.instanceKlassVtableStartOffset() + vtableIndex * config.vtableEntrySize + config.vtableEntryMethodOffset;
+        return config.klassVtableStartOffset + vtableIndex * config.vtableEntrySize + config.vtableEntryMethodOffset;
     }
 
     @Override

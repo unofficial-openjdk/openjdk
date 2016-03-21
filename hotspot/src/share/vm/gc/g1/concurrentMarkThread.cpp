@@ -1,5 +1,5 @@
  /*
- * Copyright (c) 2001, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
  */
 
 #include "precompiled.hpp"
+#include "classfile/classLoaderData.hpp"
 #include "gc/g1/concurrentMarkThread.inline.hpp"
 #include "gc/g1/g1CollectedHeap.inline.hpp"
 #include "gc/g1/g1CollectorPolicy.hpp"
@@ -43,7 +44,7 @@
 SurrogateLockerThread*
      ConcurrentMarkThread::_slt = NULL;
 
-ConcurrentMarkThread::ConcurrentMarkThread(ConcurrentMark* cm) :
+ConcurrentMarkThread::ConcurrentMarkThread(G1ConcurrentMark* cm) :
   ConcurrentGCThread(),
   _cm(cm),
   _state(Idle),
@@ -56,10 +57,10 @@ ConcurrentMarkThread::ConcurrentMarkThread(ConcurrentMark* cm) :
 
 class CMCheckpointRootsFinalClosure: public VoidClosure {
 
-  ConcurrentMark* _cm;
+  G1ConcurrentMark* _cm;
 public:
 
-  CMCheckpointRootsFinalClosure(ConcurrentMark* cm) :
+  CMCheckpointRootsFinalClosure(G1ConcurrentMark* cm) :
     _cm(cm) {}
 
   void do_void(){
@@ -68,10 +69,10 @@ public:
 };
 
 class CMCleanUp: public VoidClosure {
-  ConcurrentMark* _cm;
+  G1ConcurrentMark* _cm;
 public:
 
-  CMCleanUp(ConcurrentMark* cm) :
+  CMCleanUp(G1ConcurrentMark* cm) :
     _cm(cm) {}
 
   void do_void(){
@@ -92,10 +93,10 @@ void ConcurrentMarkThread::delay_to_keep_mmu(G1CollectorPolicy* g1_policy, bool 
 }
 
 class GCConcPhaseTimer : StackObj {
-  ConcurrentMark* _cm;
+  G1ConcurrentMark* _cm;
 
  public:
-  GCConcPhaseTimer(ConcurrentMark* cm, const char* title) : _cm(cm) {
+  GCConcPhaseTimer(G1ConcurrentMark* cm, const char* title) : _cm(cm) {
     _cm->register_concurrent_phase_start(title);
   }
 
@@ -123,6 +124,7 @@ void ConcurrentMarkThread::run_service() {
     // wait until started is set.
     sleepBeforeNextCycle();
     if (_should_terminate) {
+      _cm->root_regions()->cancel_scan();
       break;
     }
 
@@ -132,6 +134,11 @@ void ConcurrentMarkThread::run_service() {
       HandleMark   hm;
       double cycle_start = os::elapsedVTime();
 
+      {
+        GCConcPhaseTimer(_cm, "Concurrent Clearing of Claimed Marks");
+        ClassLoaderDataGraph::clear_claimed_marks();
+      }
+
       // We have to ensure that we finish scanning the root regions
       // before the next GC takes place. To ensure this we have to
       // make sure that we do not join the STS until the root regions
@@ -140,7 +147,7 @@ void ConcurrentMarkThread::run_service() {
       // without the root regions have been scanned which would be a
       // correctness issue.
 
-      if (!cm()->has_aborted()) {
+      {
         GCConcPhaseTimer(_cm, "Concurrent Root Region Scanning");
         _cm->scanRootRegions();
       }

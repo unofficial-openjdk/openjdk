@@ -28,13 +28,22 @@ module jdk.hotspot.agent {
     requires java.desktop;
     requires java.rmi;
     requires java.scripting;
+    requires jdk.jcmd;
     requires jdk.jdi;
 
-    exports sun.jvm.hotspot.tools to jdk.jcmd;  // until JDK-8059035 is complete
     // RMI needs to serialize types in this package
     exports sun.jvm.hotspot.debugger.remote to java.rmi;
     provides com.sun.jdi.connect.Connector with sun.jvm.hotspot.jdi.SACoreAttachingConnector;
     provides com.sun.jdi.connect.Connector with sun.jvm.hotspot.jdi.SADebugServerAttachingConnector;
     provides com.sun.jdi.connect.Connector with sun.jvm.hotspot.jdi.SAPIDAttachingConnector;
+
+    provides jdk.internal.vm.agent.spi.ToolProvider with sun.jvm.hotspot.tools.JStack;
+    provides jdk.internal.vm.agent.spi.ToolProvider with sun.jvm.hotspot.tools.JInfo;
+    provides jdk.internal.vm.agent.spi.ToolProvider with sun.jvm.hotspot.tools.ClassLoaderStats;
+    provides jdk.internal.vm.agent.spi.ToolProvider with sun.jvm.hotspot.tools.FinalizerInfo;
+    provides jdk.internal.vm.agent.spi.ToolProvider with sun.jvm.hotspot.tools.HeapDumper;
+    provides jdk.internal.vm.agent.spi.ToolProvider with sun.jvm.hotspot.tools.HeapSummary;
+    provides jdk.internal.vm.agent.spi.ToolProvider with sun.jvm.hotspot.tools.ObjectHistogram;
+    provides jdk.internal.vm.agent.spi.ToolProvider with sun.jvm.hotspot.tools.PMap;
 }
 

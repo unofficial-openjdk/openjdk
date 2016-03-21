@@ -298,7 +298,6 @@ typedef CompactHashtable<Symbol*, char>       SymbolCompactHashTable;
   nonstatic_field(ArrayKlass,                  _dimension,                                    int)                                   \
   volatile_nonstatic_field(ArrayKlass,         _higher_dimension,                             Klass*)                                \
   volatile_nonstatic_field(ArrayKlass,         _lower_dimension,                              Klass*)                                \
-  nonstatic_field(ArrayKlass,                  _vtable_len,                                   int)                                   \
   nonstatic_field(CompiledICHolder,            _holder_method,                                Method*)                               \
   nonstatic_field(CompiledICHolder,            _holder_klass,                                 Klass*)                                \
   nonstatic_field(ConstantPool,                _tags,                                         Array<u1>*)                            \
@@ -332,7 +331,6 @@ typedef CompactHashtable<Symbol*, char>       SymbolCompactHashTable;
   nonstatic_field(InstanceKlass,               _major_version,                                u2)                                    \
   nonstatic_field(InstanceKlass,               _init_state,                                   u1)                                    \
   nonstatic_field(InstanceKlass,               _init_thread,                                  Thread*)                               \
-  nonstatic_field(InstanceKlass,               _vtable_len,                                   int)                                   \
   nonstatic_field(InstanceKlass,               _itable_len,                                   int)                                   \
   nonstatic_field(InstanceKlass,               _reference_type,                               u1)                                    \
   volatile_nonstatic_field(InstanceKlass,      _oop_map_cache,                                OopMapCache*)                          \
@@ -358,6 +356,7 @@ typedef CompactHashtable<Symbol*, char>       SymbolCompactHashTable;
   nonstatic_field(Klass,                       _access_flags,                                 AccessFlags)                           \
   nonstatic_field(Klass,                       _prototype_header,                             markOop)                               \
   nonstatic_field(Klass,                       _next_sibling,                                 Klass*)                                \
+  nonstatic_field(Klass,                       _vtable_len,                                   int)                                \
   nonstatic_field(vtableEntry,                 _method,                                       Method*)                               \
   nonstatic_field(MethodData,                  _size,                                         int)                                   \
   nonstatic_field(MethodData,                  _method,                                       Method*)                               \
@@ -961,7 +960,6 @@ typedef CompactHashtable<Symbol*, char>       SymbolCompactHashTable;
   nonstatic_field(nmethod,                     _compile_id,                                   int)                                   \
   nonstatic_field(nmethod,                     _comp_level,                                   int)                                   \
   nonstatic_field(nmethod,                     _exception_cache,                              ExceptionCache*)                       \
-  nonstatic_field(nmethod,                     _marked_for_deoptimization,                    bool)                                  \
                                                                                                                                      \
   unchecked_c2_static_field(Deoptimization,    _trap_reason_name,                             void*)                                 \
                                                                                                                                      \
@@ -1354,11 +1352,10 @@ typedef CompactHashtable<Symbol*, char>       SymbolCompactHashTable;
   /* java_lang_Class fields        */                                                                                                \
   /*********************************/                                                                                                \
                                                                                                                                      \
-  static_field(java_lang_Class,                _klass_offset,                                 int)                                   \
-  static_field(java_lang_Class,                _array_klass_offset,                           int)                                   \
-  static_field(java_lang_Class,                _oop_size_offset,                              int)                                   \
-  static_field(java_lang_Class,                _static_oop_field_count_offset,                int)                                   \
-  static_field(java_lang_Class,                _module_offset,                                int)                                   \
+     static_field(java_lang_Class,             _klass_offset,                                 int)                                   \
+     static_field(java_lang_Class,             _array_klass_offset,                           int)                                   \
+     static_field(java_lang_Class,             _oop_size_offset,                              int)                                   \
+     static_field(java_lang_Class,             _static_oop_field_count_offset,                int)                                   \
                                                                                                                                      \
   /************************/                                                                                                         \
   /* Miscellaneous fields */                                                                                                         \
@@ -2008,10 +2005,20 @@ typedef CompactHashtable<Symbol*, char>       SymbolCompactHashTable;
   declare_c2_type(LoadStoreNode, Node)                                    \
   declare_c2_type(StorePConditionalNode, LoadStoreNode)                   \
   declare_c2_type(StoreLConditionalNode, LoadStoreNode)                   \
-  declare_c2_type(CompareAndSwapLNode, LoadStoreNode)                     \
-  declare_c2_type(CompareAndSwapINode, LoadStoreNode)                     \
-  declare_c2_type(CompareAndSwapPNode, LoadStoreNode)                     \
-  declare_c2_type(CompareAndSwapNNode, LoadStoreNode)                     \
+  declare_c2_type(CompareAndSwapNode, LoadStoreConditionalNode)           \
+  declare_c2_type(CompareAndSwapLNode, CompareAndSwapNode)                \
+  declare_c2_type(CompareAndSwapINode, CompareAndSwapNode)                \
+  declare_c2_type(CompareAndSwapPNode, CompareAndSwapNode)                \
+  declare_c2_type(CompareAndSwapNNode, CompareAndSwapNode)                \
+  declare_c2_type(WeakCompareAndSwapLNode, CompareAndSwapNode)            \
+  declare_c2_type(WeakCompareAndSwapINode, CompareAndSwapNode)            \
+  declare_c2_type(WeakCompareAndSwapPNode, CompareAndSwapNode)            \
+  declare_c2_type(WeakCompareAndSwapNNode, CompareAndSwapNode)            \
+  declare_c2_type(CompareAndExchangeNode, LoadStoreNode)                  \
+  declare_c2_type(CompareAndExchangeLNode, CompareAndExchangeNode)        \
+  declare_c2_type(CompareAndExchangeINode, CompareAndExchangeNode)        \
+  declare_c2_type(CompareAndExchangePNode, CompareAndExchangeNode)        \
+  declare_c2_type(CompareAndExchangeNNode, CompareAndExchangeNode)        \
   declare_c2_type(MulNode, Node)                                          \
   declare_c2_type(MulINode, MulNode)                                      \
   declare_c2_type(MulLNode, MulNode)                                      \

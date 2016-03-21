@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1517,6 +1517,8 @@ void CMSCollector::do_compaction_work(bool clear_all_soft_refs) {
   SerialOldTracer* gc_tracer = GenMarkSweep::gc_tracer();
   gc_tracer->report_gc_start(gch->gc_cause(), gc_timer->gc_start());
 
+  gch->pre_full_gc_dump(gc_timer);
+
   GCTraceTime(Trace, gc) t("CMS:MSC");
 
   // Temporarily widen the span of the weak reference processing to
@@ -1592,6 +1594,8 @@ void CMSCollector::do_compaction_work(bool clear_all_soft_refs) {
   // Restart the "inter sweep timer" for the next epoch.
   _inter_sweep_timer.reset();
   _inter_sweep_timer.start();
+
+  gch->post_full_gc_dump(gc_timer);
 
   gc_timer->register_gc_end();
 
@@ -2220,8 +2224,8 @@ class VerifyMarkedClosure: public BitMapClosure {
     if (!_marks->isMarked(addr)) {
       LogHandle(gc, verify) log;
       ResourceMark rm;
-      oop(addr)->print_on(log.info_stream());
-      log.info(" (" INTPTR_FORMAT " should have been marked)", p2i(addr));
+      oop(addr)->print_on(log.error_stream());
+      log.error(" (" INTPTR_FORMAT " should have been marked)", p2i(addr));
       _failed = true;
     }
     return true;
@@ -2346,9 +2350,9 @@ void CMSCollector::verify_after_remark_work_1() {
   verification_mark_bm()->iterate(&vcl);
   if (vcl.failed()) {
     LogHandle(gc, verify) log;
-    log.info("Verification failed");
+    log.error("Failed marking verification after remark");
     ResourceMark rm;
-    gch->print_on(log.info_stream());
+    gch->print_on(log.error_stream());
     fatal("CMS: failed marking verification after remark");
   }
 }
@@ -2919,7 +2923,7 @@ bool CMSCollector::markFromRoots() {
 
   CMSTokenSyncWithLocks ts(true, bitMapLock());
   GCTraceCPUTime tcpu;
-  CMSPhaseAccounting pa(this, "Concrurrent Mark");
+  CMSPhaseAccounting pa(this, "Concurrent Mark");
   bool res = markFromRootsWork();
   if (res) {
     _collectorState = Precleaning;
@@ -3323,6 +3327,8 @@ class ParConcMarkingClosure: public MetadataAwareOopClosure {
     }
   }
 };
+
+DO_OOP_WORK_IMPL(ParConcMarkingClosure)
 
 // Grey object scanning during work stealing phase --
 // the salient assumption here is that any references
@@ -5874,8 +5880,8 @@ void MarkRefsIntoVerifyClosure::do_oop(oop obj) {
     if (!_cms_bm->isMarked(addr)) {
       LogHandle(gc, verify) log;
       ResourceMark rm;
-      oop(addr)->print_on(log.info_stream());
-      log.info(" (" INTPTR_FORMAT " should have been marked)", p2i(addr));
+      oop(addr)->print_on(log.error_stream());
+      log.error(" (" INTPTR_FORMAT " should have been marked)", p2i(addr));
       fatal("... aborting");
     }
   }
@@ -6655,8 +6661,8 @@ void PushAndMarkVerifyClosure::do_oop(oop obj) {
     if (!_cms_bm->isMarked(addr)) {
       LogHandle(gc, verify) log;
       ResourceMark rm;
-      oop(addr)->print_on(log.info_stream());
-      log.info(" (" INTPTR_FORMAT " should have been marked)", p2i(addr));
+      oop(addr)->print_on(log.error_stream());
+      log.error(" (" INTPTR_FORMAT " should have been marked)", p2i(addr));
       fatal("... aborting");
     }
 

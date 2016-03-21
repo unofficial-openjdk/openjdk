@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,15 +23,17 @@
  */
 
 #include "precompiled.hpp"
-#include "gc/shared/ageTable.hpp"
+#include "gc/shared/ageTable.inline.hpp"
+#include "gc/shared/ageTableTracer.hpp"
 #include "gc/shared/collectedHeap.hpp"
 #include "gc/shared/collectorPolicy.hpp"
 #include "gc/shared/gcPolicyCounters.hpp"
 #include "memory/resourceArea.hpp"
 #include "logging/log.hpp"
+#include "oops/oop.inline.hpp"
 #include "utilities/copy.hpp"
 
-/* Copyright (c) 1992, 2015, Oracle and/or its affiliates, and Stanford University.
+/* Copyright (c) 1992, 2016, Oracle and/or its affiliates, and Stanford University.
    See the LICENSE file for license information. */
 
 AgeTable::AgeTable(bool global) {
@@ -99,17 +101,19 @@ uint AgeTable::compute_tenuring_threshold(size_t survivor_capacity, GCPolicyCoun
   log_debug(gc, age)("Desired survivor size " SIZE_FORMAT " bytes, new threshold " UINTX_FORMAT " (max threshold " UINTX_FORMAT ")",
                      desired_survivor_size*oopSize, (uintx) result, MaxTenuringThreshold);
 
-  if (log_is_enabled(Trace, gc, age) || UsePerfData) {
+  if (log_is_enabled(Trace, gc, age) || UsePerfData || AgeTableTracer::is_tenuring_distribution_event_enabled()) {
     size_t total = 0;
     uint age = 1;
     while (age < table_size) {
-      total += sizes[age];
-      if (sizes[age] > 0) {
+      size_t wordSize = sizes[age];
+      total += wordSize;
+      if (wordSize > 0) {
         log_trace(gc, age)("- age %3u: " SIZE_FORMAT_W(10) " bytes, " SIZE_FORMAT_W(10) " total",
-                            age, sizes[age]*oopSize, total*oopSize);
+                            age, wordSize*oopSize, total*oopSize);
       }
+      AgeTableTracer::send_tenuring_distribution_event(age, wordSize*oopSize);
       if (UsePerfData) {
-        _perf_sizes[age]->set_value(sizes[age]*oopSize);
+        _perf_sizes[age]->set_value(wordSize*oopSize);
       }
       age++;
     }

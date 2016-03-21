@@ -43,6 +43,7 @@
   LOG_PREFIX(GCId::print_prefix, LOG_TAGS(gc, age)) \
   LOG_PREFIX(GCId::print_prefix, LOG_TAGS(gc, alloc)) \
   LOG_PREFIX(GCId::print_prefix, LOG_TAGS(gc, barrier)) \
+  LOG_PREFIX(GCId::print_prefix, LOG_TAGS(gc, classhisto)) \
   LOG_PREFIX(GCId::print_prefix, LOG_TAGS(gc, compaction)) \
   LOG_PREFIX(GCId::print_prefix, LOG_TAGS(gc, compaction, phases)) \
   LOG_PREFIX(GCId::print_prefix, LOG_TAGS(gc, cpu)) \
@@ -57,6 +58,7 @@
   LOG_PREFIX(GCId::print_prefix, LOG_TAGS(gc, metaspace)) \
   LOG_PREFIX(GCId::print_prefix, LOG_TAGS(gc, phases)) \
   LOG_PREFIX(GCId::print_prefix, LOG_TAGS(gc, phases, start)) \
+  LOG_PREFIX(GCId::print_prefix, LOG_TAGS(gc, phases, task)) \
   LOG_PREFIX(GCId::print_prefix, LOG_TAGS(gc, plab)) \
   LOG_PREFIX(GCId::print_prefix, LOG_TAGS(gc, region)) \
   LOG_PREFIX(GCId::print_prefix, LOG_TAGS(gc, remset)) \

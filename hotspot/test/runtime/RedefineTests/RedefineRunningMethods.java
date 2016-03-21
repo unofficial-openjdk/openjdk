@@ -30,7 +30,7 @@
  *          java.instrument
  *          jdk.jartool/sun.tools.jar
  * @build RedefineClassHelper
- * @run main/othervm RedefineClassHelper
+ * @run main RedefineClassHelper
  * @run main/othervm -javaagent:redefineagent.jar -XX:TraceRedefineClasses=0x600 RedefineRunningMethods
  */
 public class RedefineRunningMethods {

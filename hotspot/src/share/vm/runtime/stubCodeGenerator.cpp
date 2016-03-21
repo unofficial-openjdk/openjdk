@@ -36,29 +36,26 @@
 // Implementation of StubCodeDesc
 
 StubCodeDesc* StubCodeDesc::_list = NULL;
-int           StubCodeDesc::_count = 0;
-
+bool          StubCodeDesc::_frozen = false;
 
 StubCodeDesc* StubCodeDesc::desc_for(address pc) {
   StubCodeDesc* p = _list;
-  while (p != NULL && !p->contains(pc)) p = p->_next;
-  // p == NULL || p->contains(pc)
+  while (p != NULL && !p->contains(pc)) {
+    p = p->_next;
+  }
   return p;
 }
-
-
-StubCodeDesc* StubCodeDesc::desc_for_index(int index) {
-  StubCodeDesc* p = _list;
-  while (p != NULL && p->index() != index) p = p->_next;
-  return p;
-}
-
 
 const char* StubCodeDesc::name_for(address pc) {
   StubCodeDesc* p = desc_for(pc);
   return p == NULL ? NULL : p->name();
 }
 
+
+void StubCodeDesc::freeze() {
+  assert(!_frozen, "repeated freeze operation");
+  _frozen = true;
+}
 
 void StubCodeDesc::print_on(outputStream* st) const {
   st->print("%s", group());
@@ -70,56 +67,31 @@ void StubCodeDesc::print_on(outputStream* st) const {
 // Implementation of StubCodeGenerator
 
 StubCodeGenerator::StubCodeGenerator(CodeBuffer* code, bool print_code) {
-  _masm = new MacroAssembler(code);
-  _first_stub = _last_stub = NULL;
-  _print_code = print_code;
-}
-
-extern "C" {
-  static int compare_cdesc(const void* void_a, const void* void_b) {
-    int ai = (*((StubCodeDesc**) void_a))->index();
-    int bi = (*((StubCodeDesc**) void_b))->index();
-    return ai - bi;
-  }
+  _masm = new MacroAssembler(code );
+  _print_code = PrintStubCode || print_code;
 }
 
 StubCodeGenerator::~StubCodeGenerator() {
-  if (PrintStubCode || _print_code) {
+  if (_print_code) {
     CodeBuffer* cbuf = _masm->code();
     CodeBlob*   blob = CodeCache::find_blob_unsafe(cbuf->insts()->start());
     if (blob != NULL) {
       blob->set_strings(cbuf->strings());
     }
-    bool saw_first = false;
-    StubCodeDesc* toprint[1000];
-    int toprint_len = 0;
-    for (StubCodeDesc* cdesc = _last_stub; cdesc != NULL; cdesc = cdesc->_next) {
-      toprint[toprint_len++] = cdesc;
-      if (cdesc == _first_stub) { saw_first = true; break; }
-    }
-    assert(toprint_len == 0 || saw_first, "must get both first & last");
-    // Print in reverse order:
-    qsort(toprint, toprint_len, sizeof(toprint[0]), compare_cdesc);
-    for (int i = 0; i < toprint_len; i++) {
-      StubCodeDesc* cdesc = toprint[i];
-      cdesc->print();
-      tty->cr();
-      Disassembler::decode(cdesc->begin(), cdesc->end());
-      tty->cr();
-    }
   }
 }
-
 
 void StubCodeGenerator::stub_prolog(StubCodeDesc* cdesc) {
   // default implementation - do nothing
 }
 
-
 void StubCodeGenerator::stub_epilog(StubCodeDesc* cdesc) {
-  // default implementation - record the cdesc
-  if (_first_stub == NULL)  _first_stub = cdesc;
-  _last_stub = cdesc;
+  if (_print_code) {
+    cdesc->print();
+    tty->cr();
+    Disassembler::decode(cdesc->begin(), cdesc->end());
+    tty->cr();
+  }
 }
 
 

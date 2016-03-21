@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@
 
 #include "precompiled.hpp"
 #include "classfile/classFileParser.hpp"
+#include "classfile/classFileStream.hpp"
 #include "classfile/javaClasses.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "classfile/verifier.hpp"
@@ -35,6 +36,7 @@
 #include "interpreter/oopMapCache.hpp"
 #include "interpreter/rewriter.hpp"
 #include "jvmtifiles/jvmti.h"
+#include "logging/log.hpp"
 #include "memory/heapInspection.hpp"
 #include "memory/iterator.inline.hpp"
 #include "memory/metadataFactory.hpp"
@@ -211,9 +213,9 @@ Array<int>* InstanceKlass::create_new_default_vtable_indices(int len, TRAPS) {
 InstanceKlass::InstanceKlass(const ClassFileParser& parser, unsigned kind) :
   _static_field_size(parser.static_field_size()),
   _nonstatic_oop_map_size(nonstatic_oop_map_size(parser.total_oop_map_count())),
-  _vtable_len(parser.vtable_size()),
   _itable_len(parser.itable_size()),
   _reference_type(parser.reference_type()) {
+    set_vtable_length(parser.vtable_size());
     set_kind(kind);
     set_access_flags(parser.access_flags());
     set_is_anonymous(parser.is_anonymous());
@@ -362,10 +364,6 @@ void InstanceKlass::deallocate_contents(ClassLoaderData* loader_data) {
 
 bool InstanceKlass::should_be_initialized() const {
   return !is_initialized();
-}
-
-klassVtable* InstanceKlass::vtable() const {
-  return new klassVtable(this, start_of_vtable(), vtable_length() / vtableEntry::size());
 }
 
 klassItable* InstanceKlass::itable() const {
@@ -1881,7 +1879,7 @@ inline DependencyContext InstanceKlass::dependencies() {
   return dep_context;
 }
 
-int InstanceKlass::mark_dependent_nmethods(DepChange& changes) {
+int InstanceKlass::mark_dependent_nmethods(KlassDepChange& changes) {
   return dependencies().mark_dependent_nmethods(changes);
 }
 
@@ -1975,7 +1973,7 @@ static void restore_unshareable_in_class(Klass* k, TRAPS) {
 
 void InstanceKlass::restore_unshareable_info(ClassLoaderData* loader_data, Handle protection_domain, TRAPS) {
   instanceKlassHandle ik(THREAD, this);
-  ik->set_package(ik->name(), loader_data, CHECK);
+  ik->set_package(loader_data, CHECK);
   Klass::restore_unshareable_info(loader_data, protection_domain, CHECK);
 
   Array<Method*>* methods = ik->methods();
@@ -2228,15 +2226,15 @@ ModuleEntry* InstanceKlass::module() const {
   return host->class_loader_data()->modules()->unnamed_module();
 }
 
-void InstanceKlass::set_package(Symbol* name, ClassLoaderData* loader, TRAPS) {
-  int length;
-  const jbyte* base_name = package_from_name(name, length);
+void InstanceKlass::set_package(ClassLoaderData* loader_data, TRAPS) {
+  int length = 0;
+  const jbyte* base_name = package_from_name(name(), length);
 
-  if (base_name != NULL && loader != NULL) {
+  if (base_name != NULL && loader_data != NULL) {
     TempNewSymbol pkg_name = SymbolTable::new_symbol((const char*)base_name, length, CHECK);
 
     // Find in class loader's package entry table.
-    _package_entry = loader->packages()->lookup_only(pkg_name);
+    _package_entry = loader_data->packages()->lookup_only(pkg_name);
 
     // If the package name is not found in the loader's package
     // entry table, it is an indication that the package has not
@@ -2250,16 +2248,16 @@ void InstanceKlass::set_package(Symbol* name, ClassLoaderData* loader, TRAPS) {
         // in the java.base module it will be caught later when java.base
         // is defined by ModuleEntryTable::verify_javabase_packages check.
         assert(ModuleEntryTable::javabase_module() != NULL, "java.base module is NULL");
-        _package_entry = loader->packages()->lookup(pkg_name, ModuleEntryTable::javabase_module());
+        _package_entry = loader_data->packages()->lookup(pkg_name, ModuleEntryTable::javabase_module());
       } else {
-        assert(loader->modules()->unnamed_module() != NULL, "unnamed module is NULL");
-        _package_entry = loader->packages()->lookup(pkg_name,
-                                                    loader->modules()->unnamed_module());
+        assert(loader_data->modules()->unnamed_module() != NULL, "unnamed module is NULL");
+        _package_entry = loader_data->packages()->lookup(pkg_name,
+                                                         loader_data->modules()->unnamed_module());
       }
 
       // A package should have been successfully created
       assert(_package_entry != NULL, "Package entry for class %s not found, loader %s",
-             name->as_C_string(), loader->loader_name());
+             name()->as_C_string(), loader_data->loader_name());
     }
 
     if (log_is_enabled(Debug, modules)) {
@@ -2268,14 +2266,14 @@ void InstanceKlass::set_package(Symbol* name, ClassLoaderData* loader, TRAPS) {
       log_trace(modules)("Setting package: class: %s, package: %s, loader: %s, module: %s",
                          external_name(),
                          pkg_name->as_C_string(),
-                         loader->loader_name(),
+                         loader_data->loader_name(),
                          (m->is_named() ? m->name()->as_C_string() : UNNAMED_MODULE));
     }
   } else {
     ResourceMark rm;
     log_trace(modules)("Setting package: class: %s, package: unnamed, loader: %s, module: %s",
                        external_name(),
-                       (loader != NULL) ? loader->loader_name() : "NULL",
+                       (loader_data != NULL) ? loader_data->loader_name() : "NULL",
                        UNNAMED_MODULE);
   }
 }
@@ -2337,8 +2335,8 @@ bool InstanceKlass::is_same_class_package(oop class_loader1, const Symbol* class
     // The Symbol*'s are in UTF8 encoding. Since we only need to check explicitly
     // for ASCII characters ('/', 'L', '['), we can keep them in UTF8 encoding.
     // Otherwise, we just compare jbyte values between the strings.
-    int length1;
-    int length2;
+    int length1 = 0;
+    int length2 = 0;
     const jbyte *name1 = package_from_name(class_name1, length1);
     const jbyte *name2 = package_from_name(class_name2, length2);
 
@@ -2393,7 +2391,7 @@ bool InstanceKlass::is_same_package_member_impl(const InstanceKlass* class1,
   if (!class2->is_instance_klass())  return false;
 
   // must be in same package before we try anything else
-  if (!class1->is_same_class_package(InstanceKlass::cast(class2)))
+  if (!class1->is_same_class_package(class2))
     return false;
 
   // As long as there is an outer1.getEnclosingClass,
@@ -2758,6 +2756,10 @@ static void print_vtable(intptr_t* start, int len, outputStream* st) {
   }
 }
 
+static void print_vtable(vtableEntry* start, int len, outputStream* st) {
+  return print_vtable(reinterpret_cast<intptr_t*>(start), len, st);
+}
+
 void InstanceKlass::print_on(outputStream* st) const {
   assert(is_klass(), "must be klass");
   Klass::print_on(st);
@@ -2995,18 +2997,93 @@ const char* InstanceKlass::internal_name() const {
   return external_name();
 }
 
+void InstanceKlass::print_loading_log(LogLevel::type type,
+                                      ClassLoaderData* loader_data,
+                                      const char* module_name,
+                                      const ClassFileStream* cfs) const {
+  ResourceMark rm;
+  outputStream* log;
+
+  assert(type == LogLevel::Info || type == LogLevel::Debug, "sanity");
+
+  if (type == LogLevel::Info) {
+    log = LogHandle(classload)::info_stream();
+  } else {
+    assert(type == LogLevel::Debug,
+           "print_loading_log supports only Debug and Info levels");
+    log = LogHandle(classload)::debug_stream();
+  }
+
+  // Name and class hierarchy info
+  log->print("%s", external_name());
+
+  // Source
+  if (cfs != NULL) {
+    if (cfs->source() != NULL) {
+      if (module_name != NULL) {
+        log->print(" source: jrt:/%s", module_name);
+      } else {
+        log->print(" source: %s", cfs->source());
+      }
+    } else if (loader_data == ClassLoaderData::the_null_class_loader_data()) {
+      Thread* THREAD = Thread::current();
+      Klass* caller =
+            THREAD->is_Java_thread()
+                ? ((JavaThread*)THREAD)->security_get_caller_class(1)
+                : NULL;
+      // caller can be NULL, for example, during a JVMTI VM_Init hook
+      if (caller != NULL) {
+        log->print(" source: instance of %s", caller->external_name());
+      } else {
+        // source is unknown
+      }
+    } else {
+      Handle class_loader(loader_data->class_loader());
+      log->print(" source: %s", class_loader->klass()->external_name());
+    }
+  } else {
+    log->print(" source: shared objects file");
+  }
+
+  if (type == LogLevel::Debug) {
+    // Class hierarchy info
+    log->print(" klass: " INTPTR_FORMAT " super: " INTPTR_FORMAT,
+               p2i(this),  p2i(superklass()));
+
+    if (local_interfaces() != NULL && local_interfaces()->length() > 0) {
+      log->print(" interfaces:");
+      int length = local_interfaces()->length();
+      for (int i = 0; i < length; i++) {
+        log->print(" " INTPTR_FORMAT,
+                   p2i(InstanceKlass::cast(local_interfaces()->at(i))));
+      }
+    }
+
+    // Class loader
+    log->print(" loader: [");
+    loader_data->print_value_on(log);
+    log->print("]");
+
+    // Classfile checksum
+    if (cfs) {
+      log->print(" bytes: %d checksum: %08x",
+                 cfs->length(),
+                 ClassLoader::crc32(0, (const char*)cfs->buffer(),
+                 cfs->length()));
+    }
+  }
+  log->cr();
+}
+
 #if INCLUDE_SERVICES
 // Size Statistics
 void InstanceKlass::collect_statistics(KlassSizeStats *sz) const {
   Klass::collect_statistics(sz);
 
-  sz->_inst_size  = HeapWordSize * size_helper();
-  sz->_vtab_bytes = HeapWordSize * align_object_offset(vtable_length());
-  sz->_itab_bytes = HeapWordSize * align_object_offset(itable_length());
-  sz->_nonstatic_oopmap_bytes = HeapWordSize *
-        ((is_interface() || is_anonymous()) ?
-         align_object_offset(nonstatic_oop_map_size()) :
-         nonstatic_oop_map_size());
+  sz->_inst_size  = wordSize * size_helper();
+  sz->_vtab_bytes = wordSize * vtable_length();
+  sz->_itab_bytes = wordSize * itable_length();
+  sz->_nonstatic_oopmap_bytes = wordSize * nonstatic_oop_map_size();
 
   int n = 0;
   n += (sz->_methods_array_bytes         = sz->count_array(methods()));

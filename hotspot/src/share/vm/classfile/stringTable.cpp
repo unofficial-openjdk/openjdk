@@ -200,7 +200,6 @@ oop StringTable::lookup(jchar* name, int len) {
   return string;
 }
 
-
 oop StringTable::intern(Handle string_or_null, jchar* name,
                         int len, TRAPS) {
   oop found_string = lookup_shared(name, len);
@@ -214,7 +213,9 @@ oop StringTable::intern(Handle string_or_null, jchar* name,
 
   // Found
   if (found_string != NULL) {
-    ensure_string_alive(found_string);
+    if (found_string != string_or_null()) {
+      ensure_string_alive(found_string);
+    }
     return found_string;
   }
 
@@ -249,7 +250,9 @@ oop StringTable::intern(Handle string_or_null, jchar* name,
                                   hashValue, CHECK_NULL);
   }
 
-  ensure_string_alive(added_or_found);
+  if (added_or_found != string()) {
+    ensure_string_alive(added_or_found);
+  }
 
   return added_or_found;
 }
@@ -737,7 +740,7 @@ bool StringTable::copy_compact_table(char** top, char *end, GrowableArray<MemReg
     return false;
   }
   ch_table.dump(top, end);
-  *top = (char*)align_pointer_up(*top, sizeof(void*));
+  *top = (char*)align_ptr_up(*top, sizeof(void*));
 
 #endif
   return true;
@@ -760,7 +763,7 @@ const char* StringTable::init_shared_table(FileMapInfo *mapinfo, char *buffer) {
   juint *p = (juint*)buffer;
   const char* end = _shared_table.init(
           CompactHashtable<oop, char>::_string_table, (char*)p);
-  const char* aligned_end = (const char*)align_pointer_up(end, sizeof(void*));
+  const char* aligned_end = (const char*)align_ptr_up(end, sizeof(void*));
 
   if (_ignore_shared_strings) {
     _shared_table.reset();

@@ -44,6 +44,8 @@
 //   - qualified exports:   (_qualified_exports != NULL || _is_exported_allUnnamed is true) && _is_exported is true
 //   - unqualified exports: (_qualified_exports = NULL && _is_exported_allUnnamed is false) && _is_exported is true
 //
+// The Mutex Module_lock is shared between ModuleEntry and PackageEntry, to lock either
+// data structure.
 class PackageEntry : public HashtableEntry<Symbol*, mtClass> {
 private:
   ModuleEntry* _module;
@@ -161,11 +163,22 @@ private:
   PackageEntry* new_entry(unsigned int hash, Symbol* name, ModuleEntry* module);
   void add_entry(int index, PackageEntry* new_entry);
 
+  int entry_size() const { return BasicHashtable<mtClass>::entry_size(); }
+
+  PackageEntry** bucket_addr(int i) {
+    return (PackageEntry**)Hashtable<Symbol*, mtClass>::bucket_addr(i);
+  }
+
+  static unsigned int compute_hash(Symbol* name) { return (unsigned int)(name->identity_hash()); }
+  int index_for(Symbol* name) const { return hash_to_index(compute_hash(name)); }
+
 public:
   PackageEntryTable(int table_size);
   ~PackageEntryTable();
 
-  int entry_size() const { return BasicHashtable<mtClass>::entry_size(); }
+  PackageEntry* bucket(int i) {
+    return (PackageEntry*)Hashtable<Symbol*, mtClass>::bucket(i);
+  }
 
   // Create package in loader's package entry table and return the entry.
   // If entry already exists, return null.  Assume Module lock was taken by caller.
@@ -176,22 +189,6 @@ public:
 
   // Only lookup Package within loader's package entry table.  The table read is lock-free.
   PackageEntry* lookup_only(Symbol* Package);
-
-  PackageEntry* bucket(int i) {
-    return (PackageEntry*)Hashtable<Symbol*, mtClass>::bucket(i);
-  }
-
-  PackageEntry** bucket_addr(int i) {
-    return (PackageEntry**)Hashtable<Symbol*, mtClass>::bucket_addr(i);
-  }
-
-  static unsigned int compute_hash(Symbol* name) {
-    return (unsigned int)(name->identity_hash());
-  }
-
-  int index_for(Symbol* name) const {
-    return hash_to_index(compute_hash(name));
-  }
 
   void verify_javabase_packages(GrowableArray<Symbol*> *pkg_list);
 

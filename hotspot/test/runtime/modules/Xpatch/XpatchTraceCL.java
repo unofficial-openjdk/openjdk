@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -54,12 +54,12 @@ public class XpatchTraceCL {
 
         OutputAnalyzer output = new OutputAnalyzer(pb.start());
         // "modules" jimage case.
-        output.shouldContain("Loaded java.lang.Thread from jrt:/java.base");
+        output.shouldContain("[classload] java.lang.Thread source: jrt:/java.base");
         // -Xpatch case.
-        output.shouldContain("Loaded javax.naming.spi.NamingManager from mods" +
+        output.shouldContain("[classload] javax.naming.spi.NamingManager source: mods" +
             File.separator + "java.naming");
         // -cp case.
-        output.shouldContain("Loaded XpatchMain from file");
+        output.shouldContain("[classload] XpatchMain source: file");
 
         // Test -XX:+TraceClassLoading output for -Xbootclasspath/a
         source = "package XpatchTraceCL_pkg; "                 +
@@ -77,7 +77,7 @@ public class XpatchTraceCL {
              "-XX:+TraceClassLoading", "XpatchMain", "XpatchTraceCL_pkg.ItIsI");
         output = new OutputAnalyzer(pb.start());
         // -Xbootclasspath/a case.
-        output.shouldContain("Loaded XpatchTraceCL_pkg.ItIsI from xbcp");
+        output.shouldContain("[classload] XpatchTraceCL_pkg.ItIsI source: xbcp");
         output.shouldHaveExitValue(0);
     }
 }

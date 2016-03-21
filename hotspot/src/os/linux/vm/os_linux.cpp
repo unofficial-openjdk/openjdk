@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@
 #include "compiler/disassembler.hpp"
 #include "interpreter/interpreter.hpp"
 #include "jvm_linux.h"
+#include "logging/log.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/filemap.hpp"
 #include "mutex_linux.inline.hpp"
@@ -105,6 +106,14 @@
 # include <stdint.h>
 # include <inttypes.h>
 # include <sys/ioctl.h>
+
+#ifndef _GNU_SOURCE
+  #define _GNU_SOURCE
+  #include <sched.h>
+  #undef _GNU_SOURCE
+#else
+  #include <sched.h>
+#endif
 
 // if RUSAGE_THREAD for getrusage() has not been defined, do it here. The code calling
 // getrusage() is prepared to handle the associated failure.
@@ -653,6 +662,9 @@ static void *java_start(Thread *thread) {
 
   osthread->set_thread_id(os::current_thread_id());
 
+  log_info(os, thread)("Thread is alive (tid: " UINTX_FORMAT ", pthread id: " UINTX_FORMAT ").",
+    os::current_thread_id(), (uintx) pthread_self());
+
   if (UseNUMA) {
     int lgrp_id = os::numa_get_group_id();
     if (lgrp_id != -1) {
@@ -681,6 +693,9 @@ static void *java_start(Thread *thread) {
 
   // call one more level start routine
   thread->run();
+
+  log_info(os, thread)("Thread finished (tid: " UINTX_FORMAT ", pthread id: " UINTX_FORMAT ").",
+    os::current_thread_id(), (uintx) pthread_self());
 
   return 0;
 }
@@ -747,12 +762,18 @@ bool os::create_thread(Thread* thread, ThreadType thr_type,
     pthread_t tid;
     int ret = pthread_create(&tid, &attr, (void* (*)(void*)) java_start, thread);
 
+    char buf[64];
+    if (ret == 0) {
+      log_info(os, thread)("Thread started (pthread id: " UINTX_FORMAT ", attributes: %s). ",
+        (uintx) tid, os::Posix::describe_pthread_attr(buf, sizeof(buf), &attr));
+    } else {
+      log_warning(os, thread)("Failed to start thread - pthread_create failed (%s) for attributes: %s.",
+        strerror(ret), os::Posix::describe_pthread_attr(buf, sizeof(buf), &attr));
+    }
+
     pthread_attr_destroy(&attr);
 
     if (ret != 0) {
-      if (PrintMiscellaneous && (Verbose || WizardMode)) {
-        perror("pthread_create()");
-      }
       // Need to clean up stuff we've allocated so far
       thread->set_osthread(NULL);
       delete osthread;
@@ -848,6 +869,9 @@ bool os::create_attached_thread(JavaThread* thread) {
   // initialize signal mask for this thread
   // and save the caller's signal mask
   os::Linux::hotspot_sigmask(thread);
+
+  log_info(os, thread)("Thread attached (tid: " UINTX_FORMAT ", pthread id: " UINTX_FORMAT ").",
+    os::current_thread_id(), (uintx) pthread_self());
 
   return true;
 }
@@ -4762,12 +4786,102 @@ void os::make_polling_page_readable(void) {
   }
 }
 
+// older glibc versions don't have this macro (which expands to
+// an optimized bit-counting function) so we have to roll our own
+#ifndef CPU_COUNT
+
+static int _cpu_count(const cpu_set_t* cpus) {
+  int count = 0;
+  // only look up to the number of configured processors
+  for (int i = 0; i < os::processor_count(); i++) {
+    if (CPU_ISSET(i, cpus)) {
+      count++;
+    }
+  }
+  return count;
+}
+
+#define CPU_COUNT(cpus) _cpu_count(cpus)
+
+#endif // CPU_COUNT
+
+// Get the current number of available processors for this process.
+// This value can change at any time during a process's lifetime.
+// sched_getaffinity gives an accurate answer as it accounts for cpusets.
+// If it appears there may be more than 1024 processors then we do a
+// dynamic check - see 6515172 for details.
+// If anything goes wrong we fallback to returning the number of online
+// processors - which can be greater than the number available to the process.
 int os::active_processor_count() {
-  // Linux doesn't yet have a (official) notion of processor sets,
-  // so just return the number of online processors.
-  int online_cpus = ::sysconf(_SC_NPROCESSORS_ONLN);
-  assert(online_cpus > 0 && online_cpus <= processor_count(), "sanity check");
-  return online_cpus;
+  cpu_set_t cpus;  // can represent at most 1024 (CPU_SETSIZE) processors
+  cpu_set_t* cpus_p = &cpus;
+  int cpus_size = sizeof(cpu_set_t);
+
+  int configured_cpus = processor_count();  // upper bound on available cpus
+  int cpu_count = 0;
+
+// old build platforms may not support dynamic cpu sets
+#ifdef CPU_ALLOC
+
+  // To enable easy testing of the dynamic path on different platforms we
+  // introduce a diagnostic flag: UseCpuAllocPath
+  if (configured_cpus >= CPU_SETSIZE || UseCpuAllocPath) {
+    // kernel may use a mask bigger than cpu_set_t
+    log_trace(os)("active_processor_count: using dynamic path %s"
+                  "- configured processors: %d",
+                  UseCpuAllocPath ? "(forced) " : "",
+                  configured_cpus);
+    cpus_p = CPU_ALLOC(configured_cpus);
+    if (cpus_p != NULL) {
+      cpus_size = CPU_ALLOC_SIZE(configured_cpus);
+      // zero it just to be safe
+      CPU_ZERO_S(cpus_size, cpus_p);
+    }
+    else {
+       // failed to allocate so fallback to online cpus
+       int online_cpus = ::sysconf(_SC_NPROCESSORS_ONLN);
+       log_trace(os)("active_processor_count: "
+                     "CPU_ALLOC failed (%s) - using "
+                     "online processor count: %d",
+                     strerror(errno), online_cpus);
+       return online_cpus;
+    }
+  }
+  else {
+    log_trace(os)("active_processor_count: using static path - configured processors: %d",
+                  configured_cpus);
+  }
+#else // CPU_ALLOC
+// these stubs won't be executed
+#define CPU_COUNT_S(size, cpus) -1
+#define CPU_FREE(cpus)
+
+  log_trace(os)("active_processor_count: only static path available - configured processors: %d",
+                configured_cpus);
+#endif // CPU_ALLOC
+
+  // pid 0 means the current thread - which we have to assume represents the process
+  if (sched_getaffinity(0, cpus_size, cpus_p) == 0) {
+    if (cpus_p != &cpus) { // can only be true when CPU_ALLOC used
+      cpu_count = CPU_COUNT_S(cpus_size, cpus_p);
+    }
+    else {
+      cpu_count = CPU_COUNT(cpus_p);
+    }
+    log_trace(os)("active_processor_count: sched_getaffinity processor count: %d", cpu_count);
+  }
+  else {
+    cpu_count = ::sysconf(_SC_NPROCESSORS_ONLN);
+    warning("sched_getaffinity failed (%s)- using online processor count (%d) "
+            "which may exceed available processors", strerror(errno), cpu_count);
+  }
+
+  if (cpus_p != &cpus) { // can only be true when CPU_ALLOC used
+    CPU_FREE(cpus_p);
+  }
+
+  assert(cpu_count > 0 && cpu_count <= processor_count(), "sanity check");
+  return cpu_count;
 }
 
 void os::set_native_thread_name(const char *name) {
@@ -5280,61 +5394,6 @@ void os::pause() {
 //        could have been signaled after a wait started
 //    1 : signaled - thread is running or ready
 //
-// Beware -- Some versions of NPTL embody a flaw where pthread_cond_timedwait() can
-// hang indefinitely.  For instance NPTL 0.60 on 2.4.21-4ELsmp is vulnerable.
-// For specifics regarding the bug see GLIBC BUGID 261237 :
-//    http://www.mail-archive.com/debian-glibc@lists.debian.org/msg10837.html.
-// Briefly, pthread_cond_timedwait() calls with an expiry time that's not in the future
-// will either hang or corrupt the condvar, resulting in subsequent hangs if the condvar
-// is used.  (The simple C test-case provided in the GLIBC bug report manifests the
-// hang).  The JVM is vulernable via sleep(), Object.wait(timo), LockSupport.parkNanos()
-// and monitorenter when we're using 1-0 locking.  All those operations may result in
-// calls to pthread_cond_timedwait().  Using LD_ASSUME_KERNEL to use an older version
-// of libpthread avoids the problem, but isn't practical.
-//
-// Possible remedies:
-//
-// 1.   Establish a minimum relative wait time.  50 to 100 msecs seems to work.
-//      This is palliative and probabilistic, however.  If the thread is preempted
-//      between the call to compute_abstime() and pthread_cond_timedwait(), more
-//      than the minimum period may have passed, and the abstime may be stale (in the
-//      past) resultin in a hang.   Using this technique reduces the odds of a hang
-//      but the JVM is still vulnerable, particularly on heavily loaded systems.
-//
-// 2.   Modify park-unpark to use per-thread (per ParkEvent) pipe-pairs instead
-//      of the usual flag-condvar-mutex idiom.  The write side of the pipe is set
-//      NDELAY. unpark() reduces to write(), park() reduces to read() and park(timo)
-//      reduces to poll()+read().  This works well, but consumes 2 FDs per extant
-//      thread.
-//
-// 3.   Embargo pthread_cond_timedwait() and implement a native "chron" thread
-//      that manages timeouts.  We'd emulate pthread_cond_timedwait() by enqueuing
-//      a timeout request to the chron thread and then blocking via pthread_cond_wait().
-//      This also works well.  In fact it avoids kernel-level scalability impediments
-//      on certain platforms that don't handle lots of active pthread_cond_timedwait()
-//      timers in a graceful fashion.
-//
-// 4.   When the abstime value is in the past it appears that control returns
-//      correctly from pthread_cond_timedwait(), but the condvar is left corrupt.
-//      Subsequent timedwait/wait calls may hang indefinitely.  Given that, we
-//      can avoid the problem by reinitializing the condvar -- by cond_destroy()
-//      followed by cond_init() -- after all calls to pthread_cond_timedwait().
-//      It may be possible to avoid reinitialization by checking the return
-//      value from pthread_cond_timedwait().  In addition to reinitializing the
-//      condvar we must establish the invariant that cond_signal() is only called
-//      within critical sections protected by the adjunct mutex.  This prevents
-//      cond_signal() from "seeing" a condvar that's in the midst of being
-//      reinitialized or that is corrupt.  Sadly, this invariant obviates the
-//      desirable signal-after-unlock optimization that avoids futile context switching.
-//
-//      I'm also concerned that some versions of NTPL might allocate an auxilliary
-//      structure when a condvar is used or initialized.  cond_destroy()  would
-//      release the helper structure.  Our reinitialize-after-timedwait fix
-//      put excessive stress on malloc/free and locks protecting the c-heap.
-//
-// We currently use (4).  See the WorkAroundNTPLTimedWaitHang flag.
-// It may be possible to refine (4) by checking the kernel and NTPL verisons
-// and only enabling the work-around for vulnerable environments.
 
 // utility to compute the abstime argument to timedwait:
 // millis is the relative timeout time
@@ -5460,10 +5519,6 @@ int os::PlatformEvent::park(jlong millis) {
 
   while (_Event < 0) {
     status = pthread_cond_timedwait(_cond, _mutex, &abst);
-    if (status != 0 && WorkAroundNPTLTimedWaitHang) {
-      pthread_cond_destroy(_cond);
-      pthread_cond_init(_cond, os::Linux::condAttr());
-    }
     assert_status(status == 0 || status == EINTR ||
                   status == ETIME || status == ETIMEDOUT,
                   status, "cond_timedwait");
@@ -5507,10 +5562,6 @@ void os::PlatformEvent::unpark() {
   assert_status(status == 0, status, "mutex_lock");
   int AnyWaiters = _nParked;
   assert(AnyWaiters == 0 || AnyWaiters == 1, "invariant");
-  if (AnyWaiters != 0 && WorkAroundNPTLTimedWaitHang) {
-    AnyWaiters = 0;
-    pthread_cond_signal(_cond);
-  }
   status = pthread_mutex_unlock(_mutex);
   assert_status(status == 0, status, "mutex_unlock");
   if (AnyWaiters != 0) {
@@ -5662,7 +5713,7 @@ void Parker::park(bool isAbsolute, jlong time) {
   if (_counter > 0)  { // no wait needed
     _counter = 0;
     status = pthread_mutex_unlock(_mutex);
-    assert(status == 0, "invariant");
+    assert_status(status == 0, status, "invariant");
     // Paranoia to ensure our locked and lock-free paths interact
     // correctly with each other and Java-level accesses.
     OrderAccess::fence();
@@ -5688,10 +5739,6 @@ void Parker::park(bool isAbsolute, jlong time) {
   } else {
     _cur_index = isAbsolute ? ABS_INDEX : REL_INDEX;
     status = pthread_cond_timedwait(&_cond[_cur_index], _mutex, &absTime);
-    if (status != 0 && WorkAroundNPTLTimedWaitHang) {
-      pthread_cond_destroy(&_cond[_cur_index]);
-      pthread_cond_init(&_cond[_cur_index], isAbsolute ? NULL : os::Linux::condAttr());
-    }
   }
   _cur_index = -1;
   assert_status(status == 0 || status == EINTR ||
@@ -5717,33 +5764,17 @@ void Parker::park(bool isAbsolute, jlong time) {
 
 void Parker::unpark() {
   int status = pthread_mutex_lock(_mutex);
-  assert(status == 0, "invariant");
+  assert_status(status == 0, status, "invariant");
   const int s = _counter;
   _counter = 1;
-  if (s < 1) {
-    // thread might be parked
-    if (_cur_index != -1) {
-      // thread is definitely parked
-      if (WorkAroundNPTLTimedWaitHang) {
-        status = pthread_cond_signal(&_cond[_cur_index]);
-        assert(status == 0, "invariant");
-        status = pthread_mutex_unlock(_mutex);
-        assert(status == 0, "invariant");
-      } else {
-        // must capture correct index before unlocking
-        int index = _cur_index;
-        status = pthread_mutex_unlock(_mutex);
-        assert(status == 0, "invariant");
-        status = pthread_cond_signal(&_cond[index]);
-        assert(status == 0, "invariant");
-      }
-    } else {
-      pthread_mutex_unlock(_mutex);
-      assert(status == 0, "invariant");
-    }
-  } else {
-    pthread_mutex_unlock(_mutex);
-    assert(status == 0, "invariant");
+  // must capture correct index before unlocking
+  int index = _cur_index;
+  status = pthread_mutex_unlock(_mutex);
+  assert_status(status == 0, status, "invariant");
+  if (s < 1 && index != -1) {
+    // thread is definitely parked
+    status = pthread_cond_signal(&_cond[index]);
+    assert_status(status == 0, status, "invariant");
   }
 }
 

@@ -293,13 +293,11 @@ JRT_ENTRY_NO_ASYNC(static address, exception_handler_for_pc_helper(JavaThread* t
     // tracing
     if (log_is_enabled(Info, exceptions)) {
       ResourceMark rm;
-      log_info(exceptions)("Exception <%s> (" INTPTR_FORMAT ") thrown in"
-                           " compiled method <%s> at PC " INTPTR_FORMAT
-                           " for thread " INTPTR_FORMAT,
-                           exception->print_value_string(),
-                           p2i((address)exception()),
-                           nm->method()->print_value_string(), p2i(pc),
-                           p2i(thread));
+      stringStream tempst;
+      tempst.print("compiled method <%s>\n"
+                   " at PC" INTPTR_FORMAT " for thread " INTPTR_FORMAT,
+                   nm->method()->print_value_string(), p2i(pc), p2i(thread));
+      Exceptions::log_exception(exception, tempst);
     }
     // for AbortVMOnException flag
     NOT_PRODUCT(Exceptions::debug_check_abort(exception));
@@ -634,6 +632,7 @@ Handle JVMCIRuntime::callStatic(const char* className, const char* methodName, c
 
 void JVMCIRuntime::initialize_HotSpotJVMCIRuntime(TRAPS) {
   if (JNIHandles::resolve(_HotSpotJVMCIRuntime_instance) == NULL) {
+    ResourceMark rm;
 #ifdef ASSERT
     // This should only be called in the context of the JVMCI class being initialized
     TempNewSymbol name = SymbolTable::new_symbol("jdk/vm/ci/runtime/JVMCI", CHECK);

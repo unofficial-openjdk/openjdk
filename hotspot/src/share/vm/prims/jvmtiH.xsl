@@ -138,21 +138,21 @@ enum {
   <xsl:text> */
 };
 
-JNIEXPORT jint JNICALL 
+JNIEXPORT jint JNICALL
 Agent_OnLoad(JavaVM *vm, char *options, void *reserved);
 
 JNIEXPORT jint JNICALL
 Agent_OnAttach(JavaVM* vm, char* options, void* reserved);
 
-JNIEXPORT void JNICALL 
+JNIEXPORT void JNICALL
 Agent_OnUnload(JavaVM *vm);
 
     /* Forward declaration of the environment */
-        
+
 struct _jvmtiEnv;
 
 struct jvmtiInterface_1_;
-  
+
 #ifdef __cplusplus
 typedef _jvmtiEnv jvmtiEnv;
 #else
@@ -170,7 +170,6 @@ typedef const struct jvmtiInterface_1_ *jvmtiEnv;
 #endif /* __cplusplus */
 
 #endif /* !_JAVA_JVMTI_H_ */
-
 </xsl:text>
 </xsl:template>
 
@@ -239,7 +238,7 @@ typedef void (JNICALL *jvmtiEvent</xsl:text>
     (jvmtiEnv *jvmti_env</xsl:text>
   <xsl:apply-templates select="parameters" mode="signature">
     <xsl:with-param name="comma">
-      <xsl:text>, 
+      <xsl:text>,
      </xsl:text>
     </xsl:with-param>
    </xsl:apply-templates>
@@ -251,7 +250,7 @@ typedef void (JNICALL *jvmtiEvent</xsl:text>
    <xsl:text>
 
     /* Function Interface */
-    
+
 typedef struct jvmtiInterface_1_ {
 
 </xsl:text>
@@ -291,7 +290,7 @@ struct _jvmtiEnv {
       <xsl:text>) (jvmtiEnv* env</xsl:text>
       <xsl:apply-templates select="$thisFunction/parameters" mode="signature">
         <xsl:with-param name="comma">
-          <xsl:text>, 
+          <xsl:text>,
     </xsl:text>
         </xsl:with-param>
       </xsl:apply-templates>
@@ -366,7 +365,7 @@ struct _jvmtiEnv {
 
     /* </xsl:text>
     <xsl:value-of select="@label"/>
-    <xsl:text> */ 
+    <xsl:text> */
 </xsl:text>
     <xsl:choose>
       <xsl:when test="@kind='enum'">

@@ -29,11 +29,13 @@
  *          java.management
  *          jdk.jartool/sun.tools.jar
  *          jdk.jvmstat/sun.jvmstat.monitor
+ * @ignore 8150683
  * @compile javax/sound/sampled/MyClass.jasm
  * @compile org/omg/CORBA/Context.jasm
  * @compile nonjdk/myPackage/MyClass.java
  * @build jdk.test.lib.* LoadClass
- * @run testng BootAppendTests
+ * @run main ClassFileInstaller LoadClass
+ * @run main/othervm BootAppendTests
  */
 
 import java.io.File;
@@ -47,10 +49,6 @@ import java.nio.file.Paths;
 import jdk.test.lib.ProcessTools;
 import jdk.test.lib.OutputAnalyzer;
 
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
-
-@Test
 public class BootAppendTests {
     private static final String APP_CLASS = "LoadClass";
     private static final String BOOT_APPEND_MODULE_CLASS = "javax/sound/sampled/MyClass";
@@ -70,8 +68,16 @@ public class BootAppendTests {
     private static String appJar;
     private static String bootAppendJar;
 
-    @BeforeTest
-    void dumpArchive() throws Exception {
+    public static void main(String... args) throws Exception {
+        dumpArchive();
+        testBootAppendModuleClass();
+        testBootAppendDuplicateModuleClass();
+        testBootAppendExcludedModuleClass();
+        testBootAppendDuplicateExcludedModuleClass();
+        testBootAppendClass();
+    }
+
+    static void dumpArchive() throws Exception {
         // create the classlist
         File classlist = new File(new File(System.getProperty("test.classes", ".")),
                                   "BootAppendTest.classlist");
@@ -84,7 +90,7 @@ public class BootAppendTests {
         fos.close();
 
         // build jar files
-        BasicJarBuilder.build("app", APP_CLASS);
+        BasicJarBuilder.build(true, "app", APP_CLASS);
         appJar = BasicJarBuilder.getTestJar("app.jar");
         BasicJarBuilder.build("bootAppend",
             BOOT_APPEND_MODULE_CLASS, BOOT_APPEND_DUPLICATE_MODULE_CLASS, BOOT_APPEND_CLASS);
@@ -116,7 +122,7 @@ public class BootAppendTests {
     //          The javax.sound.sampled package is defined in the java.desktop module.
     //          The archived javax.sound.sampled.MyClass from the -Xbootclasspath/a
     //          should not be loaded at runtime.
-    public void testBootAppendModuleClass() throws Exception {
+    public static void testBootAppendModuleClass() throws Exception {
         for (String mode : modes) {
             ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
                 "-XX:+UnlockDiagnosticVMOptions",
@@ -140,7 +146,7 @@ public class BootAppendTests {
     //          the -Xbootclasspath/a path that has the same fully-qualified name
     //          should not be loaded at runtime when CDS is enabled.
     //          The one from the boot modules should be loaded instead.
-    public void testBootAppendDuplicateModuleClass() throws Exception {
+    public static void testBootAppendDuplicateModuleClass() throws Exception {
         for (String mode : modes) {
             ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
                 "-XX:+UnlockDiagnosticVMOptions",
@@ -152,7 +158,7 @@ public class BootAppendTests {
                 APP_CLASS,
                 BOOT_APPEND_DUPLICATE_MODULE_CLASS_NAME);
             OutputAnalyzer output = new OutputAnalyzer(pb.start());
-            output.shouldContain("Loaded org.omg.CORBA.Context from jrt:/java.corba");
+            output.shouldContain("[classload] org.omg.CORBA.Context source: jrt:/java.corba");
         }
     }
 
@@ -164,7 +170,7 @@ public class BootAppendTests {
     //          The java.desktop module is excluded using -limitmods at runtime,
     //          javax.sound.sampled.MyClass is archived from -Xbootclasspath/a. It can be
     //          loaded from the archive at runtime.
-    public void testBootAppendExcludedModuleClass() throws Exception {
+    public static void testBootAppendExcludedModuleClass() throws Exception {
         for (String mode : modes) {
             ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
                 "-XX:+UnlockDiagnosticVMOptions",
@@ -177,11 +183,11 @@ public class BootAppendTests {
                 APP_CLASS,
                 BOOT_APPEND_MODULE_CLASS_NAME);
             OutputAnalyzer output = new OutputAnalyzer(pb.start());
-            output.shouldContain("class javax.sound.sampled.MyClass loaded");
+            output.shouldContain("[classload] javax.sound.sampled.MyClass");
 
             // When CDS is enabled, the shared class should be loaded from the archive.
             if (mode.equals("on")) {
-                output.shouldContain("[Loaded javax.sound.sampled.MyClass from shared objects file]");
+                output.shouldContain("[classload] javax.sound.sampled.MyClass source: shared objects file");
             }
         }
     }
@@ -196,7 +202,7 @@ public class BootAppendTests {
     //          on -Xbootclasspath/a that has the same fully-qualified name
     //          as org.omg.CORBA.Context can be loaded at runtime when
     //          java.corba is excluded.
-    public void testBootAppendDuplicateExcludedModuleClass() throws Exception {
+    public static void testBootAppendDuplicateExcludedModuleClass() throws Exception {
         for (String mode : modes) {
             ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
                 "-XX:+UnlockDiagnosticVMOptions",
@@ -209,8 +215,8 @@ public class BootAppendTests {
                 APP_CLASS,
                 BOOT_APPEND_DUPLICATE_MODULE_CLASS_NAME);
             OutputAnalyzer output = new OutputAnalyzer(pb.start());
-            output.shouldContain("class org.omg.CORBA.Context loaded");
-            output.shouldMatch("[Loaded org.omg.CORBA.Context from .*bootAppend.jar]");
+            output.shouldContain("[classload] org.omg.CORBA.Context");
+            output.shouldMatch(".*\\[classload\\] org.omg.CORBA.Context source:.*bootAppend.jar");
         }
     }
 
@@ -221,7 +227,7 @@ public class BootAppendTests {
     //          The nonjdk.myPackage is not defined in named modules. The
     //          archived nonjdk.myPackage.MyClass from -Xbootclasspath/a
     //          can be loaded at runtime when CDS is enabled.
-    public void testBootAppendClass() throws Exception {
+    public static void testBootAppendClass() throws Exception {
         for (String mode : modes) {
             ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
                 "-XX:+UnlockDiagnosticVMOptions",
@@ -233,13 +239,13 @@ public class BootAppendTests {
                 APP_CLASS,
                 BOOT_APPEND_CLASS_NAME);
             OutputAnalyzer output = new OutputAnalyzer(pb.start());
-            output.shouldContain("class nonjdk.myPackage.MyClass loaded");
+            output.shouldContain("[classload] nonjdk.myPackage.MyClass");
 
             // If CDS is enabled, the nonjdk.myPackage.MyClass should be loaded
             // from the shared archive.
             if (mode.equals("on")) {
                 output.shouldContain(
-                    "[Loaded nonjdk.myPackage.MyClass from shared objects file]");
+                    "[classload] nonjdk.myPackage.MyClass source: shared objects file");
             }
         }
     }

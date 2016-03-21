@@ -131,7 +131,7 @@ compute_offset(int &dest_offset,
       tty->print_cr("  name: %s, sig: %s, flags: %08x", fs.name()->as_C_string(), fs.signature()->as_C_string(), fs.access_flags().as_int());
     }
 #endif //PRODUCT
-    vm_exit_during_initialization("Invalid layout of preloaded class: use -XX:+TraceClassLoading to see the origin of the problem class");
+    vm_exit_during_initialization("Invalid layout of preloaded class: use -Xlog:classload=info to see the origin of the problem class");
   }
   dest_offset = fd.offset();
 }
@@ -863,12 +863,12 @@ void java_lang_Class::create_mirror(KlassHandle k, Handle class_loader,
 
     // Keep list of classes needing java.base module fixup.
     if (!ModuleEntryTable::javabase_defined()) {
-      if (fixup_modulefield_list() == NULL) {
+      if (fixup_module_field_list() == NULL) {
         GrowableArray<Klass*>* list =
           new (ResourceObj::C_HEAP, mtClass) GrowableArray<Klass*>(500, true);
-        set_fixup_modulefield_list(list);
+        set_fixup_module_field_list(list);
       }
-      fixup_modulefield_list()->push(k());
+      fixup_module_field_list()->push(k());
     }
   } else {
     if (fixup_mirror_list() == NULL) {
@@ -880,7 +880,7 @@ void java_lang_Class::create_mirror(KlassHandle k, Handle class_loader,
   }
 }
 
-void java_lang_Class::fixup_modulefield(KlassHandle k, Handle module) {
+void java_lang_Class::fixup_module_field(KlassHandle k, Handle module) {
   assert(_module_offset != 0, "must have been computed already");
   java_lang_Class::set_module(k->java_mirror(), module());
 }
@@ -3626,7 +3626,7 @@ int java_lang_Class::_component_mirror_offset;
 int java_lang_Class::_init_lock_offset;
 int java_lang_Class::_signers_offset;
 GrowableArray<Klass*>* java_lang_Class::_fixup_mirror_list = NULL;
-GrowableArray<Klass*>* java_lang_Class::_fixup_modulefield_list = NULL;
+GrowableArray<Klass*>* java_lang_Class::_fixup_module_field_list = NULL;
 int java_lang_Throwable::backtrace_offset;
 int java_lang_Throwable::detailMessage_offset;
 int java_lang_Throwable::cause_offset;
@@ -4137,7 +4137,7 @@ int InjectedField::compute_offset() {
     tty->print_cr("  name: %s, sig: %s, flags: %08x", fs.name()->as_C_string(), fs.signature()->as_C_string(), fs.access_flags().as_int());
   }
 #endif //PRODUCT
-  vm_exit_during_initialization("Invalid layout of preloaded class: use -XX:+TraceClassLoading to see the origin of the problem class");
+  vm_exit_during_initialization("Invalid layout of preloaded class: use -Xlog:classload=info to see the origin of the problem class");
   return -1;
 }
 

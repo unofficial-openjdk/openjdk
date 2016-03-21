@@ -295,7 +295,7 @@ int Method::size(bool is_native) {
   // If native, then include pointers for native_function and signature_handler
   int extra_bytes = (is_native) ? 2*sizeof(address*) : 0;
   int extra_words = align_size_up(extra_bytes, BytesPerWord) / BytesPerWord;
-  return align_object_size(header_size() + extra_words);
+  return align_metadata_size(header_size() + extra_words);
 }
 
 
@@ -1329,7 +1329,7 @@ vmSymbols::SID Method::klass_id_for_intrinsics(const Klass* holder) {
   // exception: the AES intrinsics come from lib/ext/sunjce_provider.jar
   // which does not use the class default class loader so we check for its loader here
   const InstanceKlass* ik = InstanceKlass::cast(holder);
-  if ((ik->class_loader() != NULL) && !SystemDictionary::is_ext_class_loader(ik->class_loader())) {
+  if ((ik->class_loader() != NULL) && !SystemDictionary::is_platform_class_loader(ik->class_loader())) {
     return vmSymbols::NO_SID;   // regardless of name, no intrinsics here
   }
 
@@ -2101,14 +2101,15 @@ bool Method::has_method_vptr(const void* ptr) {
   Method m;
   // This assumes that the vtbl pointer is the first word of a C++ object.
   // This assumption is also in universe.cpp patch_klass_vtble
-  void* vtbl2 = dereference_vptr((const void*)&m);
-  void* this_vtbl = dereference_vptr(ptr);
-  return vtbl2 == this_vtbl;
+  return dereference_vptr(&m) == dereference_vptr(ptr);
 }
 
 // Check that this pointer is valid by checking that the vtbl pointer matches
 bool Method::is_valid_method() const {
   if (this == NULL) {
+    return false;
+  } else if ((intptr_t(this) & (wordSize-1)) != 0) {
+    // Quick sanity check on pointer.
     return false;
   } else if (!is_metaspace_object()) {
     return false;

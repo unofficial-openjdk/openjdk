@@ -40,6 +40,7 @@
 #include "gc/shared/generation.hpp"
 #include "interpreter/bytecodeStream.hpp"
 #include "interpreter/oopMapCache.hpp"
+#include "logging/logTag.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/filemap.hpp"
 #include "memory/oopFactory.hpp"
@@ -144,7 +145,7 @@ ClassPathEntry* ClassLoader::_first_append_entry = NULL;
 bool            ClassLoader::_has_jimage = false;
 #if INCLUDE_CDS
 GrowableArray<char*>* ClassLoader::_boot_modules_array = NULL;
-GrowableArray<char*>* ClassLoader::_ext_modules_array = NULL;
+GrowableArray<char*>* ClassLoader::_platform_modules_array = NULL;
 SharedPathsMiscInfo* ClassLoader::_shared_paths_misc_info = NULL;
 #endif
 
@@ -457,34 +458,30 @@ bool ClassPathImageEntry::is_jrt() {
 #if INCLUDE_CDS
 void ClassLoader::exit_with_path_failure(const char* error, const char* message) {
   assert(DumpSharedSpaces, "only called at dump time");
-  tty->print_cr("Hint: enable -XX:+TraceClassPaths to diagnose the failure");
+  tty->print_cr("Hint: enable -Xlog:classpath=info to diagnose the failure");
   vm_exit_during_initialization(error, message);
 }
 #endif
 
-void ClassLoader::trace_class_path(outputStream* out, const char* msg, const char* name) {
-  if (!TraceClassPaths) {
-    return;
-  }
-
-  if (msg) {
-    out->print("%s", msg);
-  }
-  if (name) {
-    if (strlen(name) < 256) {
-      out->print("%s", name);
-    } else {
-      // For very long paths, we need to print each character separately,
-      // as print_cr() has a length limit
-      while (name[0] != '\0') {
-        out->print("%c", name[0]);
-        name++;
+void ClassLoader::trace_class_path(const char* msg, const char* name) {
+  if (log_is_enabled(Info, classpath)) {
+    ResourceMark rm;
+    outputStream* out = LogHandle(classpath)::info_stream();
+    if (msg) {
+      out->print("%s", msg);
+    }
+    if (name) {
+      if (strlen(name) < 256) {
+        out->print("%s", name);
+      } else {
+        // For very long paths, we need to print each character separately,
+        // as print_cr() has a length limit
+        while (name[0] != '\0') {
+          out->print("%c", name[0]);
+          name++;
+        }
       }
     }
-  }
-  if (msg && msg[0] == '[') {
-    out->print_cr("]");
-  } else {
     out->cr();
   }
 }
@@ -510,12 +507,13 @@ void ClassLoader::check_shared_classpath(const char *path) {
 void ClassLoader::setup_bootstrap_search_path() {
   assert(_first_entry == NULL, "should not setup bootstrap class search path twice");
   const char* sys_class_path = Arguments::get_sysclasspath();
+  const char* java_class_path = Arguments::get_appclasspath();
   if (PrintSharedArchiveAndExit) {
     // Don't print sys_class_path - this is the bootcp of this current VM process, not necessarily
     // the same as the bootcp of the shared archive.
   } else {
-    trace_class_path(tty, "[Bootstrap loader class path=",
-                     Arguments::get_property("jdk.boot.class.path.append"));
+    trace_class_path("bootstrap loader class path=", sys_class_path);
+    trace_class_path("classpath: ", java_class_path);
   }
 #if INCLUDE_CDS
   if (DumpSharedSpaces) {
@@ -633,15 +631,12 @@ ClassPathEntry* ClassLoader::create_class_path_entry(const char *path, const str
         }
       }
     }
-    if (TraceClassLoading || TraceClassPaths) {
-      tty->print_cr("[Opened %s]", path);
-    }
+    log_info(classpath)("opened: %s", path);
+    log_info(classload)("opened: %s", path);
   } else {
     // Directory
     new_entry = new ClassPathDirEntry(path);
-    if (TraceClassLoading) {
-      tty->print_cr("[Path %s]", path);
-    }
+    log_info(classload)("path: %s", path);
   }
   return new_entry;
 }
@@ -882,18 +877,18 @@ void ClassLoader::initialize_module_loader_map(JImageFile* jimage) {
   bool process_boot_modules = false;
   _boot_modules_array = new (ResourceObj::C_HEAP, mtInternal)
     GrowableArray<char*>(INITIAL_BOOT_MODULES_ARRAY_SIZE, true);
-  _ext_modules_array = new (ResourceObj::C_HEAP, mtInternal)
-    GrowableArray<char*>(INITIAL_EXT_MODULES_ARRAY_SIZE, true);
+  _platform_modules_array = new (ResourceObj::C_HEAP, mtInternal)
+    GrowableArray<char*>(INITIAL_PLATFORM_MODULES_ARRAY_SIZE, true);
   while (end_ptr != NULL && (end_ptr - char_buf) < buflen) {
     // Allocate a buffer from the C heap to be appended to the _boot_modules_array
-    // or the _ext_modules_array.
+    // or the _platform_modules_array.
     char* temp_name = NEW_C_HEAP_ARRAY(char, (size_t)(end_ptr - begin_ptr + 1), mtInternal);
     strncpy(temp_name, begin_ptr, end_ptr - begin_ptr);
     temp_name[end_ptr - begin_ptr] = '\0';
     if (strncmp(temp_name, "BOOT", 4) == 0) {
       process_boot_modules = true;
       FREE_C_HEAP_ARRAY(char, temp_name);
-    } else if (strncmp(temp_name, "EXT", 3) == 0) {
+    } else if (strncmp(temp_name, "PLATFORM", 8) == 0) {
       process_boot_modules = false;
       FREE_C_HEAP_ARRAY(char, temp_name);
     } else {
@@ -901,7 +896,7 @@ void ClassLoader::initialize_module_loader_map(JImageFile* jimage) {
       if (process_boot_modules) {
         _boot_modules_array->append(temp_name);
       } else {
-        _ext_modules_array->append(temp_name);
+        _platform_modules_array->append(temp_name);
       }
     }
     begin_ptr = ++end_ptr;
@@ -1005,30 +1000,30 @@ objArrayOop ClassLoader::get_system_packages(TRAPS) {
 }
 
 #if INCLUDE_CDS
-jshort ClassLoader::module_to_classloader(const char* module_name) {
+s2 ClassLoader::module_to_classloader(const char* module_name) {
 
   assert(_boot_modules_array != NULL, "_boot_modules_array is NULL");
-  assert(_ext_modules_array != NULL, "_ext_modules_array is NULL");
+  assert(_platform_modules_array != NULL, "_platform_modules_array is NULL");
 
   int array_size = _boot_modules_array->length();
   for (int i = 0; i < array_size; i++) {
     if (strcmp(module_name, _boot_modules_array->at(i)) == 0) {
-      return BOOT;
+      return BOOT_LOADER;
     }
   }
 
-  array_size = _ext_modules_array->length();
+  array_size = _platform_modules_array->length();
   for (int i = 0; i < array_size; i++) {
-    if (strcmp(module_name, _ext_modules_array->at(i)) == 0) {
-      return EXT;
+    if (strcmp(module_name, _platform_modules_array->at(i)) == 0) {
+      return PLATFORM_LOADER;
     }
   }
 
-  return APP;
+  return APP_LOADER;
 }
 #endif
 
-jshort ClassLoader::classloader_type(Symbol* class_name, ClassPathEntry* e,
+s2 ClassLoader::classloader_type(Symbol* class_name, ClassPathEntry* e,
                                      int classpath_index, TRAPS) {
 #if INCLUDE_CDS
   // obtain the classloader type based on the class name.
@@ -1036,14 +1031,13 @@ jshort ClassLoader::classloader_type(Symbol* class_name, ClassPathEntry* e,
   // the classloader type based on the package name from the jimage using
   // a jimage API. If the classloader type cannot be found from the
   // jimage, it is determined by the class path entry.
-  jshort loader_type = ClassLoader::APP;
+  jshort loader_type = ClassLoader::APP_LOADER;
   if (e->is_jrt()) {
-    int length;
+    int length = 0;
     const jbyte* pkg_string = InstanceKlass::package_from_name(class_name, length);
-    TempNewSymbol pkg_name = NULL;
     if (pkg_string != NULL) {
       ResourceMark rm;
-      pkg_name = SymbolTable::new_symbol((const char*)pkg_string, length, THREAD);
+      TempNewSymbol pkg_name = SymbolTable::new_symbol((const char*)pkg_string, length, THREAD);
       const char* pkg_name_C_string = (const char*)(pkg_name->as_C_string());
       ClassPathImageEntry* cpie = (ClassPathImageEntry*)e;
       JImageFile* jimage = cpie->jimage();
@@ -1053,11 +1047,11 @@ jshort ClassLoader::classloader_type(Symbol* class_name, ClassPathEntry* e,
       }
     }
   } else if (ClassLoaderExt::is_boot_classpath(classpath_index)) {
-    loader_type = ClassLoader::BOOT;
+    loader_type = ClassLoader::BOOT_LOADER;
   }
   return loader_type;
 #endif
-  return ClassLoader::BOOT; // the classloader type is ignored in non-CDS cases
+  return ClassLoader::BOOT_LOADER; // the classloader type is ignored in non-CDS cases
 }
 
 

@@ -24,7 +24,7 @@
 /* @test
  * @bug 8022853
  * @library /testlibrary
- * @modules jdk.jvmstat/sun.jvmstat.monitor
+ * @modules java.base/sun.misc
  * @build jdk.test.lib.*
  * @run main GetKlassPointerGetJavaMirror
  */

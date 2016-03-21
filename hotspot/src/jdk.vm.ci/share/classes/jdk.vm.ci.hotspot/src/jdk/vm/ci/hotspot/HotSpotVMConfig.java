@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -360,7 +360,7 @@ public class HotSpotVMConfig {
 
         private final long address;
 
-        public VMFields(long address) {
+        VMFields(long address) {
             this.address = address;
         }
 
@@ -477,7 +477,7 @@ public class HotSpotVMConfig {
 
         private final long address;
 
-        public VMTypes(long address) {
+        VMTypes(long address) {
             this.address = address;
         }
 
@@ -580,7 +580,7 @@ public class HotSpotVMConfig {
 
         private final long address;
 
-        public VMIntConstants(long address) {
+        VMIntConstants(long address) {
             this.address = address;
         }
 
@@ -639,7 +639,7 @@ public class HotSpotVMConfig {
 
         private final long address;
 
-        public VMLongConstants(long address) {
+        VMLongConstants(long address) {
             this.address = address;
         }
 
@@ -698,7 +698,7 @@ public class HotSpotVMConfig {
 
         private final long address;
 
-        public VMAddresses(long address) {
+        VMAddresses(long address) {
             this.address = address;
         }
 
@@ -753,7 +753,7 @@ public class HotSpotVMConfig {
         private final long nameOffset;
         private final long addrOffset;
 
-        public Flags(HashMap<String, VMFields.Field> vmStructs, HashMap<String, VMTypes.Type> vmTypes) {
+        Flags(HashMap<String, VMFields.Field> vmStructs, HashMap<String, VMTypes.Type> vmTypes) {
             address = vmStructs.get("Flag::flags").getValue();
             entrySize = vmTypes.get("Flag").getSize();
             typeOffset = vmStructs.get("Flag::_type").getOffset();
@@ -850,6 +850,7 @@ public class HotSpotVMConfig {
     @HotSpotVMFlag(name = "DontCompileHugeMethods") @Stable public boolean dontCompileHugeMethods;
     @HotSpotVMFlag(name = "HugeMethodLimit") @Stable public int hugeMethodLimit;
     @HotSpotVMFlag(name = "PrintInlining") @Stable public boolean printInlining;
+    @HotSpotVMFlag(name = "Inline") @Stable public boolean inline;
     @HotSpotVMFlag(name = "JVMCIUseFastLocking") @Stable public boolean useFastLocking;
     @HotSpotVMFlag(name = "ForceUnreachable") @Stable public boolean forceUnreachable;
     @HotSpotVMFlag(name = "CodeCacheSegmentSize") @Stable public int codeSegmentSize;
@@ -974,6 +975,7 @@ public class HotSpotVMConfig {
     @HotSpotVMFlag(name = "BlockZeroingLowLimit", archs = {"sparc"}) @Stable public int blockZeroingLowLimit;
 
     @HotSpotVMFlag(name = "StackShadowPages") @Stable public int stackShadowPages;
+    @HotSpotVMFlag(name = "StackReservedPages") @Stable public int stackReservedPages;
     @HotSpotVMFlag(name = "UseStackBanging") @Stable public boolean useStackBanging;
     @HotSpotVMConstant(name = "STACK_BIAS") @Stable public int stackBias;
     @HotSpotVMField(name = "CompilerToVM::Data::vm_page_size", type = "int", get = HotSpotVMField.Type.VALUE) @Stable public int vmPageSize;
@@ -1031,18 +1033,11 @@ public class HotSpotVMConfig {
     @HotSpotVMField(name = "InstanceKlass::_init_state", type = "u1", get = HotSpotVMField.Type.OFFSET) @Stable public int instanceKlassInitStateOffset;
     @HotSpotVMField(name = "InstanceKlass::_constants", type = "ConstantPool*", get = HotSpotVMField.Type.OFFSET) @Stable public int instanceKlassConstantsOffset;
     @HotSpotVMField(name = "InstanceKlass::_fields", type = "Array<u2>*", get = HotSpotVMField.Type.OFFSET) @Stable public int instanceKlassFieldsOffset;
-    @HotSpotVMField(name = "CompilerToVM::Data::InstanceKlass_vtable_start_offset", type = "int", get = HotSpotVMField.Type.VALUE) @Stable public int instanceKlassVtableStartOffset;
-    @HotSpotVMField(name = "CompilerToVM::Data::InstanceKlass_vtable_length_offset", type = "int", get = HotSpotVMField.Type.VALUE) @Stable public int instanceKlassVtableLengthOffset;
+    @HotSpotVMField(name = "CompilerToVM::Data::Klass_vtable_start_offset", type = "int", get = HotSpotVMField.Type.VALUE) @Stable public int klassVtableStartOffset;
+    @HotSpotVMField(name = "CompilerToVM::Data::Klass_vtable_length_offset", type = "int", get = HotSpotVMField.Type.VALUE) @Stable public int klassVtableLengthOffset;
 
     @HotSpotVMConstant(name = "InstanceKlass::linked") @Stable public int instanceKlassStateLinked;
     @HotSpotVMConstant(name = "InstanceKlass::fully_initialized") @Stable public int instanceKlassStateFullyInitialized;
-
-    /**
-     * See {@code InstanceKlass::vtable_start_offset()}.
-     */
-    public final int instanceKlassVtableStartOffset() {
-        return instanceKlassVtableStartOffset * heapWordSize;
-    }
 
     @HotSpotVMType(name = "arrayOopDesc", get = HotSpotVMType.Type.SIZE) @Stable public int arrayOopDescSize;
 
@@ -1099,6 +1094,7 @@ public class HotSpotVMConfig {
     @HotSpotVMField(name = "JavaThread::_satb_mark_queue", type = "SATBMarkQueue", get = HotSpotVMField.Type.OFFSET) @Stable public int javaThreadSatbMarkQueueOffset;
     @HotSpotVMField(name = "JavaThread::_vm_result", type = "oop", get = HotSpotVMField.Type.OFFSET) @Stable public int threadObjectResultOffset;
     @HotSpotVMField(name = "JavaThread::_jvmci_counters", type = "jlong*", get = HotSpotVMField.Type.OFFSET) @Stable public int jvmciCountersThreadOffset;
+    @HotSpotVMField(name = "JavaThread::_reserved_stack_activation", type = "address", get = HotSpotVMField.Type.OFFSET) @Stable public int javaThreadReservedStackActivationOffset;
 
     /**
      * An invalid value for {@link #rtldDefault}.
@@ -1145,7 +1141,7 @@ public class HotSpotVMConfig {
 
     @HotSpotVMField(name = "JavaFrameAnchor::_last_Java_sp", type = "intptr_t*", get = HotSpotVMField.Type.OFFSET) @Stable private int javaFrameAnchorLastJavaSpOffset;
     @HotSpotVMField(name = "JavaFrameAnchor::_last_Java_pc", type = "address", get = HotSpotVMField.Type.OFFSET) @Stable private int javaFrameAnchorLastJavaPcOffset;
-    @HotSpotVMField(name = "JavaFrameAnchor::_last_Java_fp", type = "intptr_t*", get = HotSpotVMField.Type.OFFSET, archs = {"amd64"}) @Stable private int javaFrameAnchorLastJavaFpOffset;
+    @HotSpotVMField(name = "JavaFrameAnchor::_last_Java_fp", type = "intptr_t*", get = HotSpotVMField.Type.OFFSET, archs = {"aarch64, amd64"}) @Stable private int javaFrameAnchorLastJavaFpOffset;
     @HotSpotVMField(name = "JavaFrameAnchor::_flags", type = "int", get = HotSpotVMField.Type.OFFSET, archs = {"sparc"}) @Stable private int javaFrameAnchorFlagsOffset;
 
     public int threadLastJavaSpOffset() {
@@ -1156,11 +1152,8 @@ public class HotSpotVMConfig {
         return javaThreadAnchorOffset + javaFrameAnchorLastJavaPcOffset;
     }
 
-    /**
-     * This value is only valid on AMD64.
-     */
     public int threadLastJavaFpOffset() {
-        // TODO add an assert for AMD64
+        assert getHostArchitectureName().equals("aarch64") || getHostArchitectureName().equals("amd64");
         return javaThreadAnchorOffset + javaFrameAnchorLastJavaFpOffset;
     }
 
@@ -1242,6 +1235,7 @@ public class HotSpotVMConfig {
     @HotSpotVMConstant(name = "Method::_force_inline") @Stable public int methodFlagsForceInline;
     @HotSpotVMConstant(name = "Method::_dont_inline") @Stable public int methodFlagsDontInline;
     @HotSpotVMConstant(name = "Method::_hidden") @Stable public int methodFlagsHidden;
+    @HotSpotVMConstant(name = "Method::_reserved_stack_access") @Stable public int methodFlagsReservedStackAccess;
     @HotSpotVMConstant(name = "Method::nonvirtual_vtable_index") @Stable public int nonvirtualVtableIndex;
     @HotSpotVMConstant(name = "Method::invalid_vtable_index") @Stable public int invalidVtableIndex;
 
@@ -1498,6 +1492,8 @@ public class HotSpotVMConfig {
     @HotSpotVMField(name = "StubRoutines::_updateBytesCRC32", type = "address", get = HotSpotVMField.Type.VALUE) @Stable public long updateBytesCRC32Stub;
     @HotSpotVMField(name = "StubRoutines::_crc_table_adr", type = "address", get = HotSpotVMField.Type.VALUE) @Stable public long crcTableAddress;
 
+    @HotSpotVMField(name = "StubRoutines::_throw_delayed_StackOverflowError_entry", type = "address", get = HotSpotVMField.Type.VALUE) @Stable public long throwDelayedStackOverflowErrorEntry;
+
     @HotSpotVMField(name = "StubRoutines::_jbyte_arraycopy", type = "address", get = HotSpotVMField.Type.VALUE) @Stable public long jbyteArraycopy;
     @HotSpotVMField(name = "StubRoutines::_jshort_arraycopy", type = "address", get = HotSpotVMField.Type.VALUE) @Stable public long jshortArraycopy;
     @HotSpotVMField(name = "StubRoutines::_jint_arraycopy", type = "address", get = HotSpotVMField.Type.VALUE) @Stable public long jintArraycopy;
@@ -1555,6 +1551,7 @@ public class HotSpotVMConfig {
     @HotSpotVMAddress(name = "SharedRuntime::register_finalizer") @Stable public long registerFinalizerAddress;
     @HotSpotVMAddress(name = "SharedRuntime::exception_handler_for_return_address") @Stable public long exceptionHandlerForReturnAddressAddress;
     @HotSpotVMAddress(name = "SharedRuntime::OSR_migration_end") @Stable public long osrMigrationEndAddress;
+    @HotSpotVMAddress(name = "SharedRuntime::enable_stack_reserved_zone") @Stable public long enableStackReservedZoneAddress;
 
     @HotSpotVMAddress(name = "os::javaTimeMillis") @Stable public long javaTimeMillisAddress;
     @HotSpotVMAddress(name = "os::javaTimeNanos") @Stable public long javaTimeNanosAddress;

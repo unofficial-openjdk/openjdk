@@ -173,13 +173,13 @@ bool SystemDictionary::is_parallelDefine(Handle class_loader) {
 }
 
 /**
- * Returns true if the passed class loader is the extension class loader.
+ * Returns true if the passed class loader is the platform class loader.
  */
-bool SystemDictionary::is_ext_class_loader(Handle class_loader) {
+bool SystemDictionary::is_platform_class_loader(Handle class_loader) {
   if (class_loader.is_null()) {
     return false;
   }
-  return (class_loader->klass()->name() == vmSymbols::jdk_internal_misc_ClassLoaders_ExtClassLoader());
+  return (class_loader->klass() == SystemDictionary::jdk_internal_loader_ClassLoaders_PlatformClassLoader_klass());
 }
 
 // ----------------------------------------------------------------------------
@@ -432,12 +432,15 @@ void SystemDictionary::validate_protection_domain(instanceKlassHandle klass,
 
   // Now we have to call back to java to check if the initating class has access
   JavaValue result(T_VOID);
-  if (TraceProtectionDomainVerification) {
+  if (log_is_enabled(Debug, protectiondomain)) {
+    ResourceMark rm;
     // Print out trace information
-    tty->print_cr("Checking package access");
-    tty->print(" - class loader:      "); class_loader()->print_value_on(tty);      tty->cr();
-    tty->print(" - protection domain: "); protection_domain()->print_value_on(tty); tty->cr();
-    tty->print(" - loading:           "); klass()->print_value_on(tty);             tty->cr();
+    outputStream* log = LogHandle(protectiondomain)::debug_stream();
+    log->print_cr("Checking package access");
+    log->print("class loader: "); class_loader()->print_value_on(log);
+    log->print(" protection domain: "); protection_domain()->print_value_on(log);
+    log->print(" loading: "); klass()->print_value_on(log);
+    log->cr();
   }
 
   KlassHandle system_loader(THREAD, SystemDictionary::ClassLoader_klass());
@@ -450,13 +453,10 @@ void SystemDictionary::validate_protection_domain(instanceKlassHandle klass,
                          protection_domain,
                          THREAD);
 
-  if (TraceProtectionDomainVerification) {
-    if (HAS_PENDING_EXCEPTION) {
-      tty->print_cr(" -> DENIED !!!!!!!!!!!!!!!!!!!!!");
-    } else {
-     tty->print_cr(" -> granted");
-    }
-    tty->cr();
+  if (HAS_PENDING_EXCEPTION) {
+    log_debug(protectiondomain)("DENIED !!!!!!!!!!!!!!!!!!!!!");
+  } else {
+   log_debug(protectiondomain)("granted");
   }
 
   if (HAS_PENDING_EXCEPTION) return;
@@ -1146,6 +1146,7 @@ Klass* SystemDictionary::resolve_from_stream(Symbol* class_name,
   const char* pkg = "java/";
   if (!HAS_PENDING_EXCEPTION &&
       !class_loader.is_null() &&
+      !SystemDictionary::is_platform_class_loader(class_loader) &&
       parsed_name != NULL &&
       !strncmp((const char*)parsed_name->bytes(), pkg, strlen(pkg))) {
     // It is illegal to define classes in the "java." package from
@@ -1267,7 +1268,7 @@ bool SystemDictionary::is_shared_class_visible(Symbol* class_name,
   TempNewSymbol pkg_name = NULL;
   PackageEntry* pkg_entry = NULL;
   ModuleEntry* mod_entry = NULL;
-  int length;
+  int length = 0;
   ClassLoaderData* loader_data = class_loader_data(class_loader);
   const jbyte* pkg_string = InstanceKlass::package_from_name(class_name, length);
   if (pkg_string != NULL) {
@@ -1385,14 +1386,13 @@ instanceKlassHandle SystemDictionary::load_shared_class(instanceKlassHandle ik,
       ik->restore_unshareable_info(loader_data, protection_domain, CHECK_(nh));
     }
 
-    if (TraceClassLoading) {
-      ResourceMark rm;
-      tty->print("[Loaded %s", ik->external_name());
-      tty->print(" from shared objects file");
-      if (class_loader.not_null()) {
-        tty->print(" by %s", loader_data->loader_name());
-      }
-      tty->print_cr("]");
+    if (log_is_enabled(Info, classload)) {
+      ik()->print_loading_log(LogLevel::Info, loader_data, NULL, NULL);
+    }
+    // No 'else' here as logging levels are not mutually exclusive
+
+    if (log_is_enabled(Debug, classload)) {
+      ik()->print_loading_log(LogLevel::Debug, loader_data, NULL, NULL);
     }
 
     // For boot loader, ensure that GetSystemPackage knows that a class in this
@@ -1423,8 +1423,7 @@ instanceKlassHandle SystemDictionary::load_instance_class(Symbol* class_name, Ha
   instanceKlassHandle nh = instanceKlassHandle(); // null Handle
 
   if (class_loader.is_null()) {
-    int length;
-    TempNewSymbol pkg_name = NULL;
+    int length = 0;
     PackageEntry* pkg_entry = NULL;
     bool search_only_bootloader_append = false;
     ClassLoaderData *loader_data = class_loader_data(class_loader);
@@ -1432,7 +1431,7 @@ instanceKlassHandle SystemDictionary::load_instance_class(Symbol* class_name, Ha
     // Find the package in the boot loader's package entry table.
     const jbyte* pkg_string = InstanceKlass::package_from_name(class_name, length);
     if (pkg_string != NULL) {
-      pkg_name = SymbolTable::new_symbol((const char*)pkg_string, length, CHECK_(nh));
+      TempNewSymbol pkg_name = SymbolTable::new_symbol((const char*)pkg_string, length, CHECK_(nh));
       pkg_entry = loader_data->packages()->lookup_only(pkg_name);
     }
 

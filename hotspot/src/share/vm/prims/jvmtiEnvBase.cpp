@@ -114,6 +114,17 @@ JvmtiEnvBase::initialize() {
   }
 }
 
+jvmtiPhase
+JvmtiEnvBase::phase() {
+  // For the JVMTI environments possessed the can_generate_early_vmstart:
+  //   replace JVMTI_PHASE_PRIMORDIAL with JVMTI_PHASE_START
+  if (_phase == JVMTI_PHASE_PRIMORDIAL &&
+      JvmtiExport::early_vmstart_recorded() &&
+      early_vmstart_env()) {
+    return JVMTI_PHASE_START;
+  }
+  return _phase; // Normal case
+}
 
 bool
 JvmtiEnvBase::is_valid() {

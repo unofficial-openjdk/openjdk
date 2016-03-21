@@ -54,11 +54,22 @@ class NativeInstruction VALUE_OBJ_CLASS_SPEC {
   friend class Relocation;
   friend bool is_NativeCallTrampolineStub_at(address);
  public:
-  enum { instruction_size = 4 };
+  enum {
+    instruction_size = 4
+  };
+
+  juint encoding() const {
+    return uint_at(0);
+  }
+
+  bool is_blr()                      const { return (encoding() & 0xfffffc1f) == 0xd63f0000; }
+  bool is_adr_aligned()              const { return (encoding() & 0xff000000) == 0x10000000; } // adr Xn, <label>, where label is aligned to 4 bytes (address of instruction).
+
   inline bool is_nop();
   inline bool is_illegal();
   inline bool is_return();
   bool is_jump();
+  bool is_general_jump();
   inline bool is_jump_or_nop();
   inline bool is_cond_jump();
   bool is_safepoint_poll();
@@ -94,13 +105,20 @@ class NativeInstruction VALUE_OBJ_CLASS_SPEC {
   inline friend NativeInstruction* nativeInstruction_at(address address);
 
   static bool is_adrp_at(address instr);
+
   static bool is_ldr_literal_at(address instr);
+
+  bool is_ldr_literal() {
+    return is_ldr_literal_at(addr_at(0));
+  }
+
   static bool is_ldrw_to_zr(address instr);
 
   static bool is_call_at(address instr) {
     const uint32_t insn = (*(uint32_t*)instr);
     return (insn >> 26) == 0b100101;
   }
+
   bool is_call() {
     return is_call_at(addr_at(0));
   }
@@ -341,11 +359,15 @@ class NativeMovRegMemPatching: public NativeMovRegMem {
 // An interface for accessing/manipulating native leal instruction of form:
 //        leal reg, [reg + offset]
 
-class NativeLoadAddress: public NativeMovRegMem {
-  static const bool has_rex = true;
-  static const int rex_size = 1;
- public:
+class NativeLoadAddress: public NativeInstruction {
+  enum AArch64_specific_constants {
+    instruction_size            =    4,
+    instruction_offset          =    0,
+    data_offset                 =    0,
+    next_instruction_offset     =    4
+  };
 
+ public:
   void verify();
   void print ();
 
@@ -398,6 +420,10 @@ public:
     data_offset                 =    0,
     next_instruction_offset     =    4 * 4
   };
+
+  address jump_destination() const;
+  void set_jump_destination(address dest);
+
   static void insert_unconditional(address code_pos, address entry);
   static void replace_mt_safe(address instr_addr, address code_buffer);
   static void verify();

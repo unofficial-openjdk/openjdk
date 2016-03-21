@@ -125,7 +125,7 @@ private:
   jobject       _code_handle;
   jint          _code_size;
   jint          _total_frame_size;
-  jint          _custom_stack_area_offset;
+  jint          _orig_pc_offset;
   jint          _parameter_count;
   jint          _constants_size;
 #ifndef PRODUCT
@@ -156,7 +156,7 @@ private:
   jint pd_next_offset(NativeInstruction* inst, jint pc_offset, Handle method, TRAPS);
   void pd_patch_OopConstant(int pc_offset, Handle constant, TRAPS);
   void pd_patch_MetaspaceConstant(int pc_offset, Handle constant, TRAPS);
-  void pd_patch_DataSectionReference(int pc_offset, int data_offset);
+  void pd_patch_DataSectionReference(int pc_offset, int data_offset, TRAPS);
   void pd_relocate_ForeignCall(NativeInstruction* inst, jlong foreign_call_destination, TRAPS);
   void pd_relocate_JavaMethod(Handle method, jint pc_offset, TRAPS);
   void pd_relocate_poll(address pc, jint mark, TRAPS);

@@ -27,6 +27,9 @@
  * @test
  * @summary tests on constant folding of unsafe get operations
  * @library /testlibrary
+ *
+ * @requires vm.flavor != "client"
+ *
  * @modules java.base/jdk.internal.org.objectweb.asm
  *          java.base/jdk.internal.vm.annotation
  *          java.base/jdk.internal.misc

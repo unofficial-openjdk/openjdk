@@ -75,6 +75,7 @@
 #include "runtime/vm_operations.hpp"
 #include "services/memTracker.hpp"
 #include "services/runtimeService.hpp"
+#include "trace/traceMacros.hpp"
 #include "trace/tracing.hpp"
 #include "utilities/defaultStream.hpp"
 #include "utilities/dtrace.hpp"
@@ -90,7 +91,7 @@
 #include "jvmci/jvmciRuntime.hpp"
 #endif
 
-static jint CurrentVersion = JNI_VERSION_1_8;
+static jint CurrentVersion = JNI_VERSION_9;
 
 #ifdef _WIN32
 extern LONG WINAPI topLevelExceptionFilter(_EXCEPTION_POINTERS* );
@@ -932,13 +933,7 @@ class JNI_ArgumentPusherVaArg : public JNI_ArgumentPusher {
                              _arguments->push_oop(Handle((oop *)l, false)); }
 
   inline void set_ap(va_list rap) {
-#ifdef va_copy
     va_copy(_ap, rap);
-#elif defined (__va_copy)
-    __va_copy(_ap, rap);
-#else
-    _ap = rap;
-#endif
   }
 
  public:
@@ -1133,11 +1128,7 @@ static void jni_invoke_nonstatic(JNIEnv *env, JavaValue* result, jobject receive
       assert(m->valid_vtable_index(), "no valid vtable index");
       int vtbl_index = m->vtable_index();
       if (vtbl_index != Method::nonvirtual_vtable_index) {
-        Klass* k = h_recv->klass();
-        // k might be an arrayKlassOop but all vtables start at
-        // the same place. The cast is to avoid virtual call and assertion.
-        InstanceKlass *ik = (InstanceKlass*)k;
-        selected_method = ik->method_at_vtable(vtbl_index);
+        selected_method = h_recv->klass()->method_at_vtable(vtbl_index);
       } else {
         // final method
         selected_method = m;
@@ -3455,42 +3446,42 @@ JNI_LEAF(jint, jni_GetJavaVM(JNIEnv *env, JavaVM **vm))
 JNI_END
 
 
-DT_RETURN_MARK_DECL(GetModule, jobject, HOTSPOT_JNI_GETMODULE_RETURN(_ret_ref));
-
 JNI_ENTRY(jobject, jni_GetModule(JNIEnv* env, jclass clazz))
   JNIWrapper("GetModule");
-  HOTSPOT_JNI_GETMODULE_ENTRY(env, clazz);
-  jobject res;
-  DT_RETURN_MARK(GetModule, jobject, (const jobject&)res);
-  res = Modules::get_module(env, clazz);
-  return res;
+  return Modules::get_module(clazz, THREAD);
 JNI_END
 
 
-JNI_ENTRY(void, jni_AddModuleReads(JNIEnv* env, jobject fromModule, jobject sourceModule))
+JNI_ENTRY(void, jni_AddModuleReads(JNIEnv* env, jobject m1, jobject m2))
   JNIWrapper("AddModuleReads");
-  JavaValue result(T_VOID);
-  Handle from_module_h(THREAD, JNIHandles::resolve(fromModule));
-  if (!java_lang_reflect_Module::is_instance(from_module_h())) {
-    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(), "Bad fromModule object");
+  if (m1 == NULL || m2 == NULL) {
+    THROW(vmSymbols::java_lang_NullPointerException());
   }
-  Handle source_module_h(THREAD, JNIHandles::resolve(sourceModule));
-  if (sourceModule != NULL && !java_lang_reflect_Module::is_instance(source_module_h())) {
-    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(), "Bad sourceModule object");
+  JavaValue result(T_VOID);
+  Handle m1_h(THREAD, JNIHandles::resolve(m1));
+  if (!java_lang_reflect_Module::is_instance(m1_h())) {
+    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(), "Bad m1 object");
+  }
+  Handle m2_h(THREAD, JNIHandles::resolve(m2));
+  if (!java_lang_reflect_Module::is_instance(m2_h())) {
+    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(), "Bad m2 object");
   }
   JavaCalls::call_static(&result,
                          KlassHandle(THREAD, SystemDictionary::module_Modules_klass()),
                          vmSymbols::addReads_name(),
                          vmSymbols::addReads_signature(),
-                         from_module_h,
-                         source_module_h,
+                         m1_h,
+                         m2_h,
                          THREAD);
 JNI_END
 
 
-JNI_ENTRY(jboolean, jni_CanReadModule(JNIEnv* env, jobject askingModule, jobject targetModule))
+JNI_ENTRY(jboolean, jni_CanReadModule(JNIEnv* env, jobject m1, jobject m2))
   JNIWrapper("CanReadModule");
-  jboolean res = Modules::can_read_module(env, askingModule, targetModule);
+  if (m1 == NULL || m2 == NULL) {
+    THROW_(vmSymbols::java_lang_NullPointerException(), JNI_FALSE);
+  }
+  jboolean res = Modules::can_read_module(m1, m2, CHECK_false);
   return res;
 JNI_END
 
@@ -3988,7 +3979,7 @@ static jint JNI_CreateJavaVM_inner(JavaVM **vm, void **penv, void *args) {
 
     EventThreadStart event;
     if (event.should_commit()) {
-      event.set_javalangthread(java_lang_Thread::thread_id(thread->threadObj()));
+      event.set_thread(THREAD_TRACE_ID(thread));
       event.commit();
     }
 
@@ -4208,7 +4199,7 @@ static jint attach_current_thread(JavaVM *vm, void **penv, void *_args, bool dae
 
   EventThreadStart event;
   if (event.should_commit()) {
-    event.set_javalangthread(java_lang_Thread::thread_id(thread->threadObj()));
+    event.set_thread(THREAD_TRACE_ID(thread));
     event.commit();
   }
 

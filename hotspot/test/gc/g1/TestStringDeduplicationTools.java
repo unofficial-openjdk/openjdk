@@ -189,8 +189,7 @@ class TestStringDeduplicationTools {
             "-Xmx" + Xmx + "m",
             "-XX:+UseG1GC",
             "-XX:+UnlockDiagnosticVMOptions",
-            "-XX:+VerifyAfterGC", // Always verify after GC
-            "-XaddExports:java.base/sun.misc=ALL-UNNAMED"
+            "-XX:+VerifyAfterGC" // Always verify after GC
         };
 
         ArrayList<String> args = new ArrayList<String>();

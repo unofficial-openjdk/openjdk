@@ -35,6 +35,7 @@
 #include "classfile/verifier.hpp"
 #include "classfile/vmSymbols.hpp"
 #include "gc/shared/gcLocker.hpp"
+#include "logging/log.hpp"
 #include "memory/allocation.hpp"
 #include "memory/metadataFactory.hpp"
 #include "memory/oopFactory.hpp"
@@ -80,7 +81,7 @@
 
 #define JAVA_CLASSFILE_MAGIC              0xCAFEBABE
 #define JAVA_MIN_SUPPORTED_VERSION        45
-#define JAVA_MAX_SUPPORTED_VERSION        52
+#define JAVA_MAX_SUPPORTED_VERSION        53
 #define JAVA_MAX_SUPPORTED_MINOR_VERSION  0
 
 // Used for two backward compatibility reasons:
@@ -100,6 +101,8 @@
 
 // Extension method support.
 #define JAVA_8_VERSION                    52
+
+#define JAVA_9_VERSION                    53
 
 void ClassFileParser::parse_constant_pool_entries(const ClassFileStream* const stream,
                                                   ConstantPool* cp,
@@ -1961,7 +1964,7 @@ AnnotationCollector::annotation_index(const ClassLoaderData* loader_data,
   const vmSymbols::SID sid = vmSymbols::find_sid(name);
   // Privileged code can use all annotations.  Other code silently drops some.
   const bool privileged = loader_data->is_the_null_class_loader_data() ||
-                          loader_data->is_ext_class_loader_data() ||
+                          loader_data->is_platform_class_loader_data() ||
                           loader_data->is_anonymous();
   switch (sid) {
     case vmSymbols::VM_SYMBOL_ENUM_NAME(sun_reflect_CallerSensitive_signature): {
@@ -2704,7 +2707,7 @@ Method* ClassFileParser::parse_method(const ClassFileStream* const cfs,
                                      ConstMethod::NORMAL,
                                      CHECK_NULL);
 
-  ClassLoadingService::add_class_method_size(m->size()*HeapWordSize);
+  ClassLoadingService::add_class_method_size(m->size()*wordSize);
 
   // Fill in information from fixed part (access_flags already set)
   m->set_constants(_cp);
@@ -4367,7 +4370,7 @@ static void check_super_class_access(const InstanceKlass* this_klass, TRAPS) {
           vmSymbols::java_lang_IllegalAccessError(),
           "class %s cannot access its superclass %s",
           this_klass->external_name(),
-          InstanceKlass::cast(super)->external_name());
+          super->external_name());
       } else {
         // Add additional message content.
         Exceptions::fthrow(
@@ -4625,8 +4628,8 @@ void ClassFileParser::verify_legal_method_modifiers(jint flags,
       }
     } else if (major_gte_15) {
       // Class file version in the interval [JAVA_1_5_VERSION, JAVA_8_VERSION)
-      if (!is_public || is_static || is_final || is_synchronized ||
-          is_native || !is_abstract || is_strict) {
+      if (!is_public || is_private || is_protected || is_static || is_final ||
+          is_synchronized || is_native || !is_abstract || is_strict) {
         is_illegal = true;
       }
     } else {
@@ -5167,7 +5170,7 @@ static void check_methods_for_intrinsics(const InstanceKlass* ik,
   }
 }
 
-InstanceKlass* ClassFileParser::create_instance_klass(bool cf_changed_in_CFLH, TRAPS) {
+InstanceKlass* ClassFileParser::create_instance_klass(bool changed_by_loadhook, TRAPS) {
   if (_klass != NULL) {
     return _klass;
   }
@@ -5175,14 +5178,14 @@ InstanceKlass* ClassFileParser::create_instance_klass(bool cf_changed_in_CFLH, T
   InstanceKlass* const ik =
     InstanceKlass::allocate_instance_klass(*this, CHECK_NULL);
 
-  fill_instance_klass(ik, cf_changed_in_CFLH, CHECK_NULL);
+  fill_instance_klass(ik, changed_by_loadhook, CHECK_NULL);
 
   assert(_klass == ik, "invariant");
 
   return ik;
 }
 
-void ClassFileParser::fill_instance_klass(InstanceKlass* ik, bool cf_changed_in_CFLH, TRAPS) {
+void ClassFileParser::fill_instance_klass(InstanceKlass* ik, bool changed_by_loadhook, TRAPS) {
   assert(ik != NULL, "invariant");
 
   set_klass_to_deallocate(ik);
@@ -5251,7 +5254,7 @@ void ClassFileParser::fill_instance_klass(InstanceKlass* ik, bool cf_changed_in_
   oop cl = ik->class_loader();
   Handle clh = Handle(THREAD, java_lang_ClassLoader::non_reflection_class_loader(cl));
   ClassLoaderData* cld = ClassLoaderData::class_loader_data_or_null(clh());
-  ik->set_package(ik->name(), cld, CHECK);
+  ik->set_package(cld, CHECK);
 
   const Array<Method*>* const methods = ik->methods();
   assert(methods != NULL, "invariant");
@@ -5312,18 +5315,14 @@ void ClassFileParser::fill_instance_klass(InstanceKlass* ik, bool cf_changed_in_
   ModuleEntry* module_entry = ik->module();
   assert(module_entry != NULL, "module_entry should always be set");
 
-  // Obtain j.l.r.Module
-  oop module_jlrM = (oop)NULL;
-  if (module_entry->jlrM_module() != NULL) {
-    module_jlrM = JNIHandles::resolve(module_entry->jlrM_module());
-  }
-  Handle jlrM_handle(THREAD, module_jlrM);
+  // Obtain java.lang.reflect.Module
+  Handle module_handle(THREAD, JNIHandles::resolve(module_entry->module()));
 
   // Allocate mirror and initialize static fields
   // The create_mirror() call will also call compute_modifiers()
   java_lang_Class::create_mirror(ik,
                                  _loader_data->class_loader(),
-                                 jlrM_handle,
+                                 module_handle,
                                  _protection_domain,
                                  CHECK);
 
@@ -5338,11 +5337,11 @@ void ClassFileParser::fill_instance_klass(InstanceKlass* ik, bool cf_changed_in_
   }
 
   // Add read edges to the unnamed modules of the bootstrap and app class loaders.
-  if (cf_changed_in_CFLH && !jlrM_handle.is_null() && module_entry->is_named() &&
+  if (changed_by_loadhook && !module_handle.is_null() && module_entry->is_named() &&
       !module_entry->has_default_read_edges()) {
     if (!module_entry->set_has_default_read_edges()) {
       // We won a potential race
-      JvmtiExport::add_default_read_edges(jlrM_handle, THREAD);
+      JvmtiExport::add_default_read_edges(module_handle, THREAD);
     }
   }
 
@@ -5352,39 +5351,24 @@ void ClassFileParser::fill_instance_klass(InstanceKlass* ik, bool cf_changed_in_
   ClassLoadingService::notify_class_loaded(ik, false /* not shared class */);
 
   if (!is_internal()) {
-    if (TraceClassLoading) {
+    if (log_is_enabled(Info, classload)) {
       ResourceMark rm;
-      // print in a single call to reduce interleaving of output
-      if (_stream->source() != NULL) {
-        static const size_t modules_image_name_len = strlen(MODULES_IMAGE_NAME);
-        size_t stream_len = strlen(_stream->source());
-        // See if _stream->source() ends in "modules"
-        if (module_entry->is_named() && modules_image_name_len < stream_len &&
-          (strncmp(_stream->source() + stream_len - modules_image_name_len,
-                   MODULES_IMAGE_NAME, modules_image_name_len) == 0)) {
-          tty->print_cr("[Loaded %s from jrt:/%s]", ik->external_name(),
-                     module_entry->name()->as_C_string());
-        } else {
-          tty->print("[Loaded %s from %s]\n",
-                     ik->external_name(),
-                     _stream->source());
-        }
-      } else if (_loader_data->class_loader() == NULL) {
-        const Klass* const caller =
-          THREAD->is_Java_thread()
-                ? ((JavaThread*)THREAD)->security_get_caller_class(1)
-                : NULL;
-        // caller can be NULL, for example, during a JVMTI VM_Init hook
-        if (caller != NULL) {
-          tty->print("[Loaded %s by instance of %s]\n",
-                     ik->external_name(),
-                     caller->external_name());
-        } else {
-          tty->print("[Loaded %s]\n", ik->external_name());
-        }
-      } else {
-        tty->print("[Loaded %s from %s]\n", ik->external_name(),
-                   _loader_data->class_loader()->klass()->external_name());
+      const char* module_name = NULL;
+      static const size_t modules_image_name_len = strlen(MODULES_IMAGE_NAME);
+      size_t stream_len = strlen(_stream->source());
+      // See if _stream->source() ends in "modules"
+      if (module_entry->is_named() && modules_image_name_len < stream_len &&
+        (strncmp(_stream->source() + stream_len - modules_image_name_len,
+                 MODULES_IMAGE_NAME, modules_image_name_len) == 0)) {
+        module_name = module_entry->name()->as_C_string();
+      }
+
+      if (log_is_enabled(Info, classload)) {
+        ik->print_loading_log(LogLevel::Info, _loader_data, module_name, _stream);
+      }
+      // No 'else' here as logging levels are not mutually exclusive
+      if (log_is_enabled(Debug, classload)) {
+        ik->print_loading_log(LogLevel::Debug, _loader_data, module_name, _stream);
       }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -448,7 +448,8 @@ class Thread: public ThreadShadow {
   void incr_allocated_bytes(jlong size) { _allocated_bytes += size; }
   inline jlong cooked_allocated_bytes();
 
-  TRACE_DATA* trace_data()              { return &_trace_data; }
+  TRACE_DEFINE_THREAD_TRACE_DATA_OFFSET;
+  TRACE_DATA* trace_data() const        { return &_trace_data; }
 
   const ThreadExt& ext() const          { return _ext; }
   ThreadExt& ext()                      { return _ext; }
@@ -1660,6 +1661,7 @@ class JavaThread: public Thread {
   void print_thread_state_on(outputStream*) const      PRODUCT_RETURN;
   void print_thread_state() const                      PRODUCT_RETURN;
   void print_on_error(outputStream* st, char* buf, int buflen) const;
+  void print_name_on_error(outputStream* st, char* buf, int buflen) const;
   void verify();
   const char* get_thread_name() const;
  private:
@@ -2158,6 +2160,7 @@ class Threads: AllStatic {
     print_on(tty, print_stacks, internal_format, false /* no concurrent lock printed */);
   }
   static void print_on_error(outputStream* st, Thread* current, char* buf, int buflen);
+  static void print_threads_compiling(outputStream* st, char* buf, int buflen);
 
   // Get Java threads that are waiting to enter a monitor. If doLock
   // is true, then Threads_lock is grabbed as needed. Otherwise, the

@@ -124,6 +124,7 @@ class ClassLoaderDataGraph : public AllStatic {
   static void dump_on(outputStream * const out) PRODUCT_RETURN;
   static void dump() { dump_on(tty); }
   static void verify();
+  static void log_creation(Handle loader, ClassLoaderData* cld, TRAPS);
 
   static bool unload_list_contains(const void* x);
 #ifndef PRODUCT
@@ -268,7 +269,7 @@ class ClassLoaderData : public CHeapObj<mtClass> {
   bool is_the_null_class_loader_data() const {
     return this == _the_null_class_loader_data;
   }
-  bool is_ext_class_loader_data() const;
+  bool is_platform_class_loader_data() const;
 
   // The Metaspace is created lazily so may be NULL.  This
   // method will allocate a Metaspace if needed.

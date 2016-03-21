@@ -106,8 +106,6 @@
   template(DumpTouchedMethods)                    \
   template(MarkActiveNMethods)                    \
   template(PrintCompileQueue)                     \
-  template(PrintCodeList)                         \
-  template(PrintCodeCache)                        \
   template(PrintClassHierarchy)                   \
 
 class VM_Operation: public CHeapObj<mtInternal> {
@@ -431,27 +429,7 @@ class VM_PrintCompileQueue: public VM_Operation {
  public:
   VM_PrintCompileQueue(outputStream* st) : _out(st) {}
   VMOp_Type type() const { return VMOp_PrintCompileQueue; }
-  Mode evaluation_mode() const { return _no_safepoint; }
-  void doit();
-};
-
-class VM_PrintCodeList: public VM_Operation {
- private:
-  outputStream* _out;
-
- public:
-  VM_PrintCodeList(outputStream* st) : _out(st) {}
-  VMOp_Type type() const { return VMOp_PrintCodeList; }
-  void doit();
-};
-
-class VM_PrintCodeCache: public VM_Operation {
- private:
-  outputStream* _out;
-
- public:
-  VM_PrintCodeCache(outputStream* st) : _out(st) {}
-  VMOp_Type type() const { return VMOp_PrintCodeCache; }
+  Mode evaluation_mode() const { return _safepoint; }
   void doit();
 };
 
