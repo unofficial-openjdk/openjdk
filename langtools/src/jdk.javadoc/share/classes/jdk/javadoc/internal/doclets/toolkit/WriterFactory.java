@@ -71,7 +71,7 @@ public interface WriterFactory {
     /**
      * Return the writer for the module summary.
      *
-     * @param module the module being documented.
+     * @param mdle the module being documented.
      * @param prevModule the previous module that was documented.
      * @param nextModule the next module being documented.
      * @return the writer for the module summary.  Return null if this

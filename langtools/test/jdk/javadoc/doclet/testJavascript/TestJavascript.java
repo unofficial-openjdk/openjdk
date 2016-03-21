@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug      4665566 4855876 7025314 8012375 8015997 8016328 8024756
+ * @bug      4665566 4855876 7025314 8012375 8015997 8016328 8024756 8148985
  * @summary  Verify that the output has the right javascript.
  * @author   jamieh
  * @library  ../lib
@@ -100,7 +100,14 @@ public class TestJavascript extends JavadocTester {
                 + "        }\n"
                 + "        return true;\n"
                 + "    }\n"
+                + "    function loadFrames() {\n"
+                + "        if (targetPage != \"\" && targetPage != \"undefined\")\n"
+                + "             top.classFrame.location = top.targetPage;\n"
+                + "    }\n"
                 + "</script>");
+
+        checkOutput("index.html", true,
+                "<body onload=\"loadFrames()\"");
 
         //Make sure title javascript only runs if is-external is not true
         checkOutput("pkg/C.html", true,

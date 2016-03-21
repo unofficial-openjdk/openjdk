@@ -65,8 +65,6 @@ public class SmartFileManager extends ForwardingJavaFileManager<JavaFileManager>
     Set<URI> visibleSources = new HashSet<>();
     // Map from modulename:packagename to artifacts.
     Map<String,Set<URI>> packageArtifacts = new HashMap<>();
-    // Where to print informational messages.
-    PrintWriter stdout;
 
     public SmartFileManager(JavaFileManager fileManager) {
         super(fileManager);
@@ -78,10 +76,6 @@ public class SmartFileManager extends ForwardingJavaFileManager<JavaFileManager>
 
     public void cleanArtifacts() {
         packageArtifacts = new HashMap<>();
-    }
-
-    public void setLog(PrintWriter pw) {
-        stdout = pw;
     }
 
     /**
@@ -199,7 +193,7 @@ public class SmartFileManager extends ForwardingJavaFileManager<JavaFileManager>
         if (file == null) return file;
 
         if (location.equals(StandardLocation.NATIVE_HEADER_OUTPUT) && superFile instanceof JavaFileObject) {
-           file = new SmartFileObject((JavaFileObject) file, stdout);
+           file = new SmartFileObject((JavaFileObject) file);
            packageName = ":" + packageNameFromFileName(relativeName);
         }
         if (packageName.equals("")) {

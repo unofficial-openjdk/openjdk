@@ -327,7 +327,7 @@ public class Resolve {
                     currModule.complete();
                     PackageSymbol p = c.packge();
                     isAccessible =
-                        (currModule == p.modle) || currModule.visiblePackages.contains(p);
+                        (currModule == p.modle) || currModule.visiblePackages.get(p.fullname) == p || p == syms.rootPackage;
                 } else {
                     isAccessible = true;
                 }
@@ -4092,7 +4092,12 @@ public class Resolve {
                         found = false;
                         break;
                     }
-                    allThrown = chk.intersect(allThrown, mt2.getThrownTypes());
+                    List<Type> thrownTypes2 = mt2.getThrownTypes();
+                    if (mt.hasTag(FORALL) && mt2.hasTag(FORALL)) {
+                        // if both are generic methods, adjust thrown types ahead of intersection computation
+                        thrownTypes2 = types.subst(thrownTypes2, mt2.getTypeArguments(), mt.getTypeArguments());
+                    }
+                    allThrown = chk.intersect(allThrown, thrownTypes2);
                 }
                 if (found) {
                     //all ambiguous methods were abstract and one method had

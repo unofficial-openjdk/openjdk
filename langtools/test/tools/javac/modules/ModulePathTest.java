@@ -28,6 +28,7 @@
  * @modules
  *      jdk.compiler/com.sun.tools.javac.api
  *      jdk.compiler/com.sun.tools.javac.main
+ *      jdk.jdeps/com.sun.tools.javap
  *      jdk.jlink/jdk.tools.jmod
  * @build ToolBox ModuleTestBase
  * @run main ModulePathTest
@@ -151,7 +152,7 @@ public class ModulePathTest extends ModuleTestBase {
                 .writeAll()
                 .getOutput(ToolBox.OutputKind.DIRECT);
 
-        if (!log.contains("- compiler.err.locn.bad.module-info: testBadExplodedModuleOnPath/modClasses"))
+        if (!log.contains("- compiler.err.locn.bad.module-info: " + modClasses.toString()))
             throw new Exception("expected output not found");
     }
 
@@ -407,7 +408,7 @@ public class ModulePathTest extends ModuleTestBase {
 
     private void jmod(Path dir, Path jmod) throws Exception {
         String[] args = {
-                "--create",
+                "create",
                 "--class-path", dir.toString(),
                 jmod.toString()
         };

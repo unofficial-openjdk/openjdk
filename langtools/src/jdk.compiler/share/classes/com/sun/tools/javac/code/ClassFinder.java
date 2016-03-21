@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,7 @@
 package com.sun.tools.javac.code;
 
 import java.io.IOException;
-import java.io.File;
+import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -520,32 +520,12 @@ public class ClassFinder {
             p.members_field = WriteableScope.create(p);
 
         ModuleSymbol msym = p.modle;
-        if (msym != null) { // TODO: This needs to become an assert
-            msym.complete();
-            // new code
-            if (msym == syms.noModule) {
-                preferCurrent = false;
-                if (userPathsFirst) {
-                    scanUserPaths(p);
-                    preferCurrent = true;
-                    scanPlatformPath(p);
-                } else {
-                    scanPlatformPath(p);
-                    scanUserPaths(p);
-                }
-            } else if (msym.classLocation == StandardLocation.CLASS_PATH) {
-                // assert p.modle.sourceLocation == StandardLocation.SOURCE_PATH);
-                scanUserPaths(p);
-            } else {
-                scanModulePaths(p, msym);
-            }
-            return;
-        }
 
-        // old code, to go away
-        if (p.modle != null && p.modle.classLocation != null) {
-            scanModulePaths(p, p.modle);
-        } else {
+        Assert.checkNonNull(msym, () -> p.toString());
+
+        msym.complete();
+
+        if (msym == syms.noModule) {
             preferCurrent = false;
             if (userPathsFirst) {
                 scanUserPaths(p);
@@ -555,8 +535,12 @@ public class ClassFinder {
                 scanPlatformPath(p);
                 scanUserPaths(p);
             }
+        } else if (msym.classLocation == StandardLocation.CLASS_PATH) {
+            // assert p.modle.sourceLocation == StandardLocation.SOURCE_PATH);
+            scanUserPaths(p);
+        } else {
+            scanModulePaths(p, msym);
         }
-        verbosePath = false;
     }
 
     // TODO: for now, this is a much simplified form of scanUserPaths
@@ -634,25 +618,25 @@ public class ClassFinder {
             if (fileManager instanceof StandardJavaFileManager) {
                 StandardJavaFileManager fm = (StandardJavaFileManager)fileManager;
                 if (haveSourcePath && wantSourceFiles) {
-                    List<File> path = List.nil();
-                    for (File file : fm.getLocation(SOURCE_PATH)) {
-                        path = path.prepend(file);
+                    List<Path> path = List.nil();
+                    for (Path sourcePath : fm.getLocationAsPaths(SOURCE_PATH)) {
+                        path = path.prepend(sourcePath);
                     }
                     log.printVerbose("sourcepath", path.reverse().toString());
                 } else if (wantSourceFiles) {
-                    List<File> path = List.nil();
-                    for (File file : fm.getLocation(CLASS_PATH)) {
-                        path = path.prepend(file);
+                    List<Path> path = List.nil();
+                    for (Path classPath : fm.getLocationAsPaths(CLASS_PATH)) {
+                        path = path.prepend(classPath);
                     }
                     log.printVerbose("sourcepath", path.reverse().toString());
                 }
                 if (wantClassFiles) {
-                    List<File> path = List.nil();
-                    for (File file : fm.getLocation(PLATFORM_CLASS_PATH)) {
-                        path = path.prepend(file);
+                    List<Path> path = List.nil();
+                    for (Path platformPath : fm.getLocationAsPaths(PLATFORM_CLASS_PATH)) {
+                        path = path.prepend(platformPath);
                     }
-                    for (File file : fm.getLocation(CLASS_PATH)) {
-                        path = path.prepend(file);
+                    for (Path classPath : fm.getLocationAsPaths(CLASS_PATH)) {
+                        path = path.prepend(classPath);
                     }
                     log.printVerbose("classpath",  path.reverse().toString());
                 }

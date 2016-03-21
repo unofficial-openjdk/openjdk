@@ -15,7 +15,7 @@
             <java classname="org.apache.tools.ant.Main" fork="true" spawn="true">
                 <arg value="-f"/>
                 <arg value="@{antfile}"/>
-                <arg value="-Djdk.home=${jdk.home}"/>
+                <arg value="-Dlangtools.jdk.home=${langtools.jdk.home}"/>
                 <arg value="-Djtreg.home=${jtreg.home}"/>
                 <arg value="-Djtreg.tests=${jtreg.tests}"/>
                 <arg value="-Djtreg.jpda.jvmargs=${jtreg.jpda.jvmargs}"/>

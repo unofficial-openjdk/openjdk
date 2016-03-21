@@ -60,6 +60,7 @@ import com.sun.tools.javac.code.Source;
 import com.sun.tools.javac.main.Option;
 import com.sun.tools.javac.main.OptionHelper;
 import com.sun.tools.javac.main.OptionHelper.GrumpyHelper;
+import com.sun.tools.javac.resources.CompilerProperties.Errors;
 import com.sun.tools.javac.util.Abort;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.DefinedBy;
@@ -294,7 +295,7 @@ public abstract class BaseFileManager implements JavaFileManager {
     public boolean handleOption(Option option, String value) {
         switch (option) {
             case ENCODING:
-                options.put(option, value);
+                encodingName = value;
                 return true;
 
             default:
@@ -313,7 +314,7 @@ public abstract class BaseFileManager implements JavaFileManager {
             try {
                 ok = ok & handleOption(e.getKey(), e.getValue());
             } catch (IllegalArgumentException ex) {
-                log.error("illegal.argument.for.option", e.getKey().getText(), ex.getMessage());
+                log.error(Errors.IllegalArgumentForOption(e.getKey().getText(), ex.getMessage()));
                 ok = false;
             }
         }
@@ -323,6 +324,7 @@ public abstract class BaseFileManager implements JavaFileManager {
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="Encoding">
+    private String encodingName;
     private String defaultEncodingName;
     private String getDefaultEncodingName() {
         if (defaultEncodingName == null) {
@@ -333,11 +335,7 @@ public abstract class BaseFileManager implements JavaFileManager {
     }
 
     public String getEncodingName() {
-        String encName = options.get(Option.ENCODING);
-        if (encName == null)
-            return getDefaultEncodingName();
-        else
-            return encName;
+        return (encodingName != null) ? encodingName : getDefaultEncodingName();
     }
 
     @SuppressWarnings("cast")

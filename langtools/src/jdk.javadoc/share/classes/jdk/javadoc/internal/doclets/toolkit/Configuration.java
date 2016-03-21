@@ -395,7 +395,6 @@ public abstract class Configuration {
                 s.add(p);
             }
         }
-
         showModules = (modulePackages.size() > 1);
     }
 
@@ -414,26 +413,6 @@ public abstract class Configuration {
                 public boolean process(String opt, ListIterator<String> args) {
                     optionsProcessed.add(this);
                     showauthor = true;
-                    return true;
-                }
-            },
-            new Hidden(this, "classpath", 1) {
-                @Override
-                public boolean process(String opt, ListIterator<String> args) {
-                    if (sourcepath.length() == 0) {
-                        optionsProcessed.add(this);
-                        sourcepath = args.next();
-                    }
-                    return true;
-                }
-            },
-            new Hidden(this, "cp", 1) {
-                @Override
-                public boolean process(String opt, ListIterator<String> args) {
-                    if (sourcepath.length() == 0) {
-                        optionsProcessed.add(this);
-                        sourcepath = args.next();
-                    }
                     return true;
                 }
             },
@@ -583,14 +562,6 @@ public abstract class Configuration {
                     return true;
                 }
             },
-            new Hidden(this, "sourcepath", 1) {
-                @Override
-                public boolean process(String opt, ListIterator<String> args) {
-                    optionsProcessed.add(this);
-                    sourcepath = args.next();
-                    return true;
-                }
-            },
             new Option(this, "sourcetab", 1) {
                 @Override
                 public boolean process(String opt, ListIterator<String> args) {
@@ -666,9 +637,6 @@ public abstract class Configuration {
             extern.link(urlForLink, pkglistUrlForLink, reporter, false);
         if (urlForLinkOffline != null && pkglistUrlForLinkOffline != null)
             extern.link(urlForLinkOffline, pkglistUrlForLinkOffline, reporter, true);
-        if (sourcepath.length() == 0) {
-            sourcepath = System.getProperty("env.class.path", "");
-        }
         if (docencoding == null) {
             docencoding = encoding;
         }
@@ -682,7 +650,7 @@ public abstract class Configuration {
     /**
      * Set the command line options supported by this configuration.
      *
-     * @return
+     * @return true if the options are set successfully
      * @throws DocletAbortException
      */
     public boolean setOptions() throws Fault {

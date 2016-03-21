@@ -312,6 +312,7 @@ public class Start extends ToolOption.Helper {
     /**
      * Ensures that the module of the given class is readable to this
      * module.
+     * @param targetClass class in module to be made readable
      */
     private void ensureReadable(Class<?> targetClass) {
         try {

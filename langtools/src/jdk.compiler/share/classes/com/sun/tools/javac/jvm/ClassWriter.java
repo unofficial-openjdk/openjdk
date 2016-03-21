@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -73,18 +73,6 @@ public class ClassWriter extends ClassFile {
     /** Switch: verbose output.
      */
     private boolean verbose;
-
-    /** Switch: scramble private field names.
-     */
-    private boolean scramble;
-
-    /** Switch: scramble all field names.
-     */
-    private boolean scrambleAll;
-
-    /** Switch: retrofit mode.
-     */
-    private boolean retrofit;
 
     /** Switch: emit source file attribute.
      */
@@ -192,9 +180,6 @@ public class ClassWriter extends ClassFile {
         signatureGen = new CWSignatureGenerator(types);
 
         verbose        = options.isSet(VERBOSE);
-        scramble       = options.isSet("-scramble");
-        scrambleAll    = options.isSet("-scrambleAll");
-        retrofit       = options.isSet("-retrofit");
         genCrt         = options.isSet(XJCOV);
         debugstackmap  = options.isSet("debugstackmap");
 
@@ -499,26 +484,11 @@ public class ClassWriter extends ClassFile {
         putChar(poolbuf, poolCountIdx, pool.pp);
     }
 
-    /** Given a field, return its name.
-     */
-    Name fieldName(Symbol sym) {
-        if (scramble && (sym.flags() & PRIVATE) != 0 ||
-            scrambleAll && (sym.flags() & (PROTECTED | PUBLIC)) == 0)
-            return names.fromString("_$" + sym.name.getIndex());
-        else
-            return sym.name;
-    }
-
     /** Given a symbol, return its name-and-type.
      */
     NameAndType nameType(Symbol sym) {
-        return new NameAndType(fieldName(sym),
-                               retrofit
-                               ? sym.erasure(types)
-                               : sym.externalType(types), types);
-        // if we retrofit, then the NameAndType has been read in as is
-        // and no change is necessary. If we compile normally, the
-        // NameAndType is generated from a symbol reference, and the
+        return new NameAndType(sym.name, sym.externalType(types), types);
+        // the NameAndType is generated from a symbol reference, and the
         // adjustment of adding an additional this$n parameter needs to be made.
     }
 
@@ -980,7 +950,7 @@ public class ClassWriter extends ClassFile {
      *  Returns the number of attributes written (0 or 1).
      */
     int writeModuleAttribute(ClassSymbol c) {
-        ModuleSymbol m = c.modle;
+        ModuleSymbol m = (ModuleSymbol) c.owner;
 
         int alenIdx = writeAttr(names.Module);
         ListBuffer<RequiresDirective> requires = new ListBuffer<>();
@@ -1115,10 +1085,10 @@ public class ClassWriter extends ClassFile {
         databuf.appendChar(flags);
         if (dumpFieldModifiers) {
             PrintWriter pw = log.getWriter(Log.WriterKind.ERROR);
-            pw.println("FIELD  " + fieldName(v));
+            pw.println("FIELD  " + v.name);
             pw.println("---" + flagNames(v.flags()));
         }
-        databuf.appendChar(pool.put(fieldName(v)));
+        databuf.appendChar(pool.put(v.name));
         databuf.appendChar(pool.put(typeSig(v.erasure(types))));
         int acountIdx = beginAttrs();
         int acount = 0;
@@ -1139,10 +1109,10 @@ public class ClassWriter extends ClassFile {
         databuf.appendChar(flags);
         if (dumpMethodModifiers) {
             PrintWriter pw = log.getWriter(Log.WriterKind.ERROR);
-            pw.println("METHOD  " + fieldName(m));
+            pw.println("METHOD  " + m.name);
             pw.println("---" + flagNames(m.flags()));
         }
-        databuf.appendChar(pool.put(fieldName(m)));
+        databuf.appendChar(pool.put(m.name));
         databuf.appendChar(pool.put(typeSig(m.externalType(types))));
         int acountIdx = beginAttrs();
         int acount = 0;
@@ -1657,7 +1627,7 @@ public class ClassWriter extends ClassFile {
         String name = (c.owner.kind == MDL ? c.name : c.flatname).toString();
         Location outLocn;
         if (multiModuleMode) {
-            ModuleSymbol msym = (c.modle != null) ? c.modle : c.packge().modle;
+            ModuleSymbol msym = c.owner.kind == MDL ? (ModuleSymbol) c.owner : c.packge().modle;
             outLocn = fileManager.getModuleLocation(CLASS_OUTPUT, msym.name.toString());
         } else {
             outLocn = CLASS_OUTPUT;

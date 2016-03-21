@@ -223,26 +223,6 @@ public abstract class AbstractMemberWriter {
         htmltree.addContent(name);
     }
 
-    protected String typeString(Element member) {
-        return new SimpleElementVisitor9<String, Void>() {
-
-            @Override @DefinedBy(Api.LANGUAGE_MODEL)
-            public String visitExecutable(ExecutableElement e, Void p) {
-               return utils.isMethod(e) ? e.getReturnType().toString() : "";
-            }
-
-            @Override @DefinedBy(Api.LANGUAGE_MODEL)
-            public String visitVariable(VariableElement e, Void p) {
-                return e.toString();
-            }
-
-            @Override @DefinedBy(Api.LANGUAGE_MODEL)
-            protected String defaultAction(Element e, Void p) {
-                return "";
-            }
-        }.visit(member);
-    }
-
     /**
      * Add the modifier for the member. The modifiers are ordered as specified
      * by <em>The Java Language Specification</em>.
@@ -261,10 +241,13 @@ public abstract class AbstractMemberWriter {
         // According to JLS, we should not be showing public modifier for
         // interface methods.
         if ((utils.isField(member) || utils.isMethod(member))
-                && writer instanceof ClassWriterImpl
-                && utils.isInterface(((ClassWriterImpl) writer).getTypeElement())) {
+            && ((writer instanceof ClassWriterImpl
+                 && utils.isInterface(((ClassWriterImpl) writer).getTypeElement())  ||
+                 writer instanceof AnnotationTypeWriterImpl) )) {
             // Remove the implicit abstract and public modifiers
-            if (utils.isMethod(member) && utils.isInterface(member.getEnclosingElement())) {
+            if (utils.isMethod(member) &&
+                (utils.isInterface(member.getEnclosingElement()) ||
+                 utils.isAnnotationType(member.getEnclosingElement()))) {
                 set.remove(ABSTRACT);
                 set.remove(PUBLIC);
             }
@@ -279,7 +262,7 @@ public abstract class AbstractMemberWriter {
         }
     }
 
-    protected String makeSpace(int len) {
+    protected CharSequence makeSpace(int len) {
         if (len <= 0) {
             return "";
         }
@@ -287,7 +270,7 @@ public abstract class AbstractMemberWriter {
         for (int i = 0; i < len; i++) {
             sb.append(' ');
         }
-        return sb.toString();
+        return sb;
     }
 
     /**

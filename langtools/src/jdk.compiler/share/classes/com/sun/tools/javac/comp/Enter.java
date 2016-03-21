@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,8 +25,8 @@
 
 package com.sun.tools.javac.comp;
 
+import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import javax.tools.JavaFileObject;
 import javax.tools.JavaFileManager;
@@ -37,6 +37,7 @@ import com.sun.tools.javac.code.Scope.*;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.*;
 import com.sun.tools.javac.main.Option.PkgInfo;
+import com.sun.tools.javac.resources.CompilerProperties.Errors;
 import com.sun.tools.javac.tree.*;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.util.*;
@@ -329,16 +330,16 @@ public class Enter extends JCTree.Visitor {
                 tree.packge = tree.modle.unnamedPackage;
             }
 
-            Set<PackageSymbol> visiblePackages = tree.modle.visiblePackages;
+            Map<Name, PackageSymbol> visiblePackages = tree.modle.visiblePackages;
             Optional<ModuleSymbol> dependencyWithPackage =
                 syms.listPackageModules(tree.packge.fullname)
                     .stream()
                     .filter(m -> m != tree.modle)
-                    .filter(cand -> visiblePackages.contains(syms.getPackage(cand, tree.packge.fullname)))
+                    .filter(cand -> visiblePackages.get(tree.packge.fullname) == syms.getPackage(cand, tree.packge.fullname))
                     .findAny();
 
             if (dependencyWithPackage.isPresent()) {
-                log.error(pd, "package.in.other.module", dependencyWithPackage.get());
+                log.error(pd, Errors.PackageInOtherModule(dependencyWithPackage.get()));
             }
 
             tree.packge.complete(); // Find all classes in package.
@@ -437,7 +438,6 @@ public class Enter extends JCTree.Visitor {
         c.flags_field = chk.checkFlags(tree.pos(), tree.mods.flags, c, tree);
         c.sourcefile = env.toplevel.sourcefile;
         c.members_field = WriteableScope.create(c);
-        c.modle = env.toplevel.modle;
 
         ClassType ct = (ClassType)c.type;
         if (owner.kind != PCK && (c.flags_field & STATIC) == 0) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@
  * @modules
  *      jdk.compiler/com.sun.tools.javac.api
  *      jdk.compiler/com.sun.tools.javac.main
+ *      jdk.jdeps/com.sun.tools.javap
  * @build ToolBox ModuleTestBase
  * @run main ModuleSourcePathTest
  */
@@ -49,6 +50,24 @@ public class ModuleSourcePathTest extends ModuleTestBase {
     public static void main(String... args) throws Exception {
         ModuleSourcePathTest t = new ModuleSourcePathTest();
         t.runTests();
+    }
+
+    @Test
+    void testSourcePathConflict(Path base) throws Exception {
+        Path sp = base.resolve("src");
+        Path msp = base.resolve("srcmodules");
+
+        String log = tb.new JavacTask(ToolBox.Mode.CMDLINE)
+                .options("-XDrawDiagnostics",
+                        "-sourcepath", sp.toString().replace('/', File.separatorChar),
+                        "-modulesourcepath", msp.toString().replace('/', File.separatorChar),
+                        "dummyClass")
+                .run(ToolBox.Expect.FAIL)
+                .writeAll()
+                .getOutput(ToolBox.OutputKind.DIRECT);
+
+        if (!log.contains("cannot specify both -sourcepath and -modulesourcepath"))
+            throw new Exception("expected diagnostic not found");
     }
 
     @Test

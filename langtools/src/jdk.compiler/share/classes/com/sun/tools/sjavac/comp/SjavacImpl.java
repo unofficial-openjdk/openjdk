@@ -27,7 +27,7 @@ package com.sun.tools.sjavac.comp;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.Writer;
+import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -69,7 +69,7 @@ import javax.tools.JavaFileManager;
 public class SjavacImpl implements Sjavac {
 
     @Override
-    public int compile(String[] args, Writer out, Writer err) {
+    public int compile(String[] args) {
         Options options;
         try {
             options = Options.parseArgs(args);
@@ -78,10 +78,12 @@ public class SjavacImpl implements Sjavac {
             return RC_FATAL;
         }
 
-        Log.setLogLevel(options.getLogLevel());
-
         if (!validateOptions(options))
             return RC_FATAL;
+
+        if (srcDstOverlap(options.getSources(), options.getDestDir())) {
+            return RC_FATAL;
+        }
 
         if (!createIfMissing(options.getDestDir()))
             return RC_FATAL;
@@ -101,18 +103,21 @@ public class SjavacImpl implements Sjavac {
         if (stateDir == null) {
             // Prepare context. Direct logging to our byte array stream.
             Context context = new Context();
-            PrintWriter writer = new PrintWriter(err);
-            com.sun.tools.javac.util.Log.preRegister(context, writer);
+            StringWriter strWriter = new StringWriter();
+            PrintWriter printWriter = new PrintWriter(strWriter);
+            com.sun.tools.javac.util.Log.preRegister(context, printWriter);
             JavacFileManager.preRegister(context);
 
             // Prepare arguments
             String[] passThroughArgs = Stream.of(args)
                                              .filter(arg -> !arg.startsWith(Option.SERVER.arg))
                                              .toArray(String[]::new);
-
             // Compile
-            com.sun.tools.javac.main.Main compiler = new com.sun.tools.javac.main.Main("javac", writer);
-            Main.Result result = compiler.compile(passThroughArgs, context);
+            Main.Result result = new Main("javac", printWriter).compile(passThroughArgs, context);
+
+            // Process compiler output (which is always errors)
+            printWriter.flush();
+            Util.getLines(strWriter.toString()).forEach(Log::error);
 
             // Clean up
             JavaFileManager fileManager = context.get(JavaFileManager.class);
@@ -127,7 +132,7 @@ public class SjavacImpl implements Sjavac {
 
         } else {
             // Load the prev build state database.
-            JavacState javac_state = JavacState.load(options, out, err);
+            JavacState javac_state = JavacState.load(options);
 
             // Setup the suffix rules from the command line.
             Map<String, Transformer> suffixRules = new HashMap<>();
@@ -289,10 +294,12 @@ public class SjavacImpl implements Sjavac {
 
                 return rc[0] ? RC_OK : RC_FATAL;
             } catch (ProblemException e) {
+                // For instance make file list mismatch.
                 Log.error(e.getMessage());
+                Log.debug(e);
                 return RC_FATAL;
             } catch (Exception e) {
-                e.printStackTrace(new PrintWriter(err));
+                Log.error(e);
                 return RC_FATAL;
             }
         }
@@ -325,6 +332,22 @@ public class SjavacImpl implements Sjavac {
 
         return err == null;
 
+    }
+
+    private static boolean srcDstOverlap(List<SourceLocation> locs, Path dest) {
+        for (SourceLocation loc : locs) {
+            if (isOverlapping(loc.getPath(), dest)) {
+                Log.error("Source location " + loc.getPath() + " overlaps with destination " + dest);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isOverlapping(Path p1, Path p2) {
+        p1 = p1.toAbsolutePath().normalize();
+        p2 = p2.toAbsolutePath().normalize();
+        return p1.startsWith(p2) || p2.startsWith(p1);
     }
 
     private static boolean createIfMissing(Path dir) {

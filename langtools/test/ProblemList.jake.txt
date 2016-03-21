@@ -1,6 +1,0 @@
-##### javac ####################################################################
-
-tools/javac/Paths/MineField.sh                                                  8149599	generic-all   needs rewrite
-
-tools/javac/diags/CheckExamples.java                                            8149602 generic-all   need to update resource files
-

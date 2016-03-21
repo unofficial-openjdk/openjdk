@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -242,28 +242,6 @@ public class HtmlDoclet extends AbstractDoclet {
             } catch (Exception e) {
                 e.printStackTrace();
                 throw new DocletAbortException(e);
-            }
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void generateModuleFiles() throws Exception {
-        if (configuration.showModules) {
-            ModuleIndexFrameWriter.generate(configuration);
-            String prevModuleName = null, nextModuleName;
-            List<String> moduleNames = new ArrayList<>(configuration.modulePackages.keySet());
-            int i = 0;
-            for (String moduleName: moduleNames) {
-                ModulePackageIndexFrameWriter.generate(configuration, moduleName);
-                nextModuleName = (i + 1 < moduleNames.size()) ? moduleNames.get(i + 1) : null;
-                AbstractBuilder moduleSummaryBuilder =
-                        configuration.getBuilderFactory().getModuleSummaryBuilder(
-                        moduleName, prevModuleName, nextModuleName);
-                moduleSummaryBuilder.build();
-                prevModuleName = moduleName;
-                i++;
             }
         }
     }

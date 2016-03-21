@@ -28,6 +28,7 @@
  * @modules
  *      jdk.compiler/com.sun.tools.javac.api
  *      jdk.compiler/com.sun.tools.javac.main
+ *      jdk.jdeps/com.sun.tools.javap
  * @build ToolBox ModuleTestBase
  * @run main ProvidesTest
  */
@@ -164,7 +165,7 @@ public class ProvidesTest extends ModuleTestBase {
                 .writeAll()
                 .getOutputLines(ToolBox.OutputKind.DIRECT);
         List<String> expected = Arrays.asList(
-                "module-info.java:1:24: compiler.err.service.implementation.not.in.right.module",
+                "module-info.java:1:24: compiler.err.service.implementation.not.in.right.module: M",
                 "1 error");
         if (!output.containsAll(expected)) {
             throw new Exception("Expected output not found");
@@ -327,6 +328,7 @@ public class ProvidesTest extends ModuleTestBase {
                 "package p2; public class C2 extends p1.C1 { public C2(String str) { } }");
 
         List<String> output = tb.new JavacTask()
+                .options("-XDrawDiagnostics")
                 .outdir(Files.createDirectories(base.resolve("classes")))
                 .files(findJavaFiles(src))
                 .run(ToolBox.Expect.FAIL)
@@ -334,14 +336,13 @@ public class ProvidesTest extends ModuleTestBase {
                 .getOutputLines(ToolBox.OutputKind.DIRECT);
 
         List<String> expected = Arrays.asList(
-                "testNoNoArgConstructor/src/module-info.java:1: error: the service implementation does not have a default constructor: C2");
+                "module-info.java:1:46: compiler.err.service.implementation.doesnt.have.a.no.args.constructor: p2.C2");
         if (!output.containsAll(expected)) {
             throw new Exception("Expected output not found");
         }
     }
 
-    //@ignore JDK-8145016
-    //@Test
+    @Test
     void testPrivateNoArgConstructor(Path base) throws Exception {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
@@ -350,13 +351,15 @@ public class ProvidesTest extends ModuleTestBase {
                 "package p2; public class C2 extends p1.C1 { private C2() { } }");
 
         List<String> output = tb.new JavacTask()
+                .options("-XDrawDiagnostics")
                 .outdir(Files.createDirectories(base.resolve("classes")))
                 .files(findJavaFiles(src))
                 .run(ToolBox.Expect.FAIL)
                 .writeAll()
                 .getOutputLines(ToolBox.OutputKind.DIRECT);
 
-        List<String> expected = Arrays.asList("#");
+        List<String> expected = Arrays.asList(
+                "module-info.java:1:46: compiler.err.service.implementation.no.args.constructor.not.public: p2.C2");
         if (!output.containsAll(expected)) {
             throw new Exception("Expected output not found");
         }
@@ -419,7 +422,7 @@ public class ProvidesTest extends ModuleTestBase {
 
         List<String> expected = Arrays.asList(
                 "module-info.java:1:26: compiler.err.service.definition.is.inner: p1.C1.InnerDefinition",
-                "module-info.java:1:12: compiler.warn.service.provided.but.not.exported.or.used",
+                "module-info.java:1:12: compiler.warn.service.provided.but.not.exported.or.used: p1.C1.InnerDefinition",
                 "C2.java:1:20: compiler.err.encl.class.required: p1.C1.InnerDefinition",
                 "2 errors",
                 "1 warning");

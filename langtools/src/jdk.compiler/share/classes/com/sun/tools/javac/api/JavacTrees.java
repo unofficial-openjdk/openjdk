@@ -111,6 +111,7 @@ import com.sun.tools.javac.tree.DCTree.DCIdentifier;
 import com.sun.tools.javac.tree.DCTree.DCParam;
 import com.sun.tools.javac.tree.DCTree.DCReference;
 import com.sun.tools.javac.tree.DCTree.DCText;
+import com.sun.tools.javac.tree.DocCommentTable;
 import com.sun.tools.javac.tree.DocTreeMaker;
 import com.sun.tools.javac.tree.EndPosTable;
 import com.sun.tools.javac.tree.JCTree;
@@ -449,6 +450,10 @@ public class JavacTrees extends DocTrees {
                     if ((sym.kind == PCK || sym.kind == TYP) && sym.exists()) {
                         tsym = (TypeSymbol) sym;
                         memberName = (Name) ref.memberName;
+                        if (sym.kind == PCK && memberName != null) {
+                            //cannot refer to a package "member"
+                            return null;
+                        }
                     } else {
                         if (ref.qualifierExpression.hasTag(JCTree.Tag.IDENT)) {
                             // fixup:  allow "identifier" instead of "#identifier"
@@ -1038,7 +1043,8 @@ public class JavacTrees extends DocTrees {
     @Override @DefinedBy(Api.COMPILER_TREE)
     public DocTreePath getDocTreePath(FileObject fileObject) {
         JavaFileObject jfo = asJavaFileObject(fileObject);
-        return new DocTreePath(makeTreePath(jfo), getDocCommentTree(jfo));
+        DocCommentTree docCommentTree = getDocCommentTree(jfo);
+        return new DocTreePath(makeTreePath(jfo, docCommentTree), docCommentTree);
     }
 
     @Override @DefinedBy(Api.COMPILER_TREE)
@@ -1156,11 +1162,17 @@ public class JavacTrees extends DocTrees {
         }
     }
 
+    /**
+     * Register a file object, such as for a package.html, that provides
+     * doc comments for a package.
+     * @param psym the PackageSymbol representing the package.
+     * @param jfo  the JavaFileObject for the given package.
+     */
     public void putJavaFileObject(PackageSymbol psym, JavaFileObject jfo) {
         javaFileObjectToPackageMap.putIfAbsent(jfo, psym);
     }
 
-    private TreePath makeTreePath(final JavaFileObject jfo) {
+    private TreePath makeTreePath(final JavaFileObject jfo, DocCommentTree dcTree) {
         JCCompilationUnit jcCompilationUnit = new JCCompilationUnit(List.nil()) {
             public int getPos() {
                 return Position.FIRSTPOS;
@@ -1180,14 +1192,42 @@ public class JavacTrees extends DocTrees {
                 return null;
             }
         };
-        jcCompilationUnit.sourcefile = jfo;
+
         PackageSymbol psym = javaFileObjectToPackageMap.getOrDefault(jfo,
                 syms.unnamedModule.unnamedPackage);
+
+        jcCompilationUnit.docComments = new DocCommentTable() {
+            @Override
+            public boolean hasComment(JCTree tree) {
+                return false;
+            }
+
+            @Override
+            public Comment getComment(JCTree tree) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public String getCommentText(JCTree tree) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public DCDocComment getCommentTree(JCTree tree) {
+                return (DCDocComment)dcTree;
+            }
+
+            @Override
+            public void putComment(JCTree tree, Comment c) {
+                throw new UnsupportedOperationException();
+            }
+
+        };
         jcCompilationUnit.lineMap = jcCompilationUnit.getLineMap();
-        modules.enter(List.of(jcCompilationUnit), null);
+        jcCompilationUnit.modle = psym.modle;
+        jcCompilationUnit.sourcefile = jfo;
         jcCompilationUnit.namedImportScope = new NamedImportScope(psym, jcCompilationUnit.toplevelScope);
         jcCompilationUnit.packge = psym;
-        jcCompilationUnit.sourcefile = jfo;
         jcCompilationUnit.starImportScope = new StarImportScope(psym);
         jcCompilationUnit.toplevelScope = WriteableScope.create(psym);
         return new TreePath(jcCompilationUnit);

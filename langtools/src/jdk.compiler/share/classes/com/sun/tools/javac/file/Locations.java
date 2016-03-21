@@ -72,6 +72,8 @@ import javax.tools.StandardLocation;
 
 import com.sun.tools.javac.code.Lint;
 import com.sun.tools.javac.main.Option;
+import com.sun.tools.javac.resources.CompilerProperties.Errors;
+import com.sun.tools.javac.resources.CompilerProperties.Warnings;
 import com.sun.tools.javac.util.ListBuffer;
 import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Pair;
@@ -998,7 +1000,7 @@ public class Locations {
                         paths.add(entry);
                     }
                 } catch (DirectoryIteratorException | IOException ignore) {
-                    log.error("locn.cant.read.directory", path);
+                    log.error(Errors.LocnCantReadDirectory(path));
                     return Collections.emptySet();
                 }
 
@@ -1014,10 +1016,10 @@ public class Locations {
                                 Collections.singleton(path), false, true);
                         return Collections.singleton(l);
                     } catch (ModuleNameReader.BadClassFile e) {
-                        log.error("locn.bad.module-info", path);
+                        log.error(Errors.LocnBadModuleInfo(path));
                         return Collections.emptySet();
                     } catch (IOException e) {
-                        log.error("locn.cant.read.file", path);
+                        log.error(Errors.LocnCantReadFile(path));
                         return Collections.emptySet();
                     }
                 }
@@ -1075,10 +1077,10 @@ public class Locations {
                             return new Pair<>(moduleName, p);
                         }
                     } catch (ModuleNameReader.BadClassFile e) {
-                        log.error("locn.bad.module-info", p);
+                        log.error(Errors.LocnBadModuleInfo(p));
                         return null;
                     } catch (IOException e) {
-                        log.error("locn.cant.read.file", p);
+                        log.error(Errors.LocnCantReadFile(p));
                         return null;
                     }
 
@@ -1108,7 +1110,7 @@ public class Locations {
                         return new Pair<>(mn, p);
                     }
 
-                    log.error("locn.cant.get.module.name.for.jar", p);
+                    log.error(Errors.LocnCantGetModuleNameForJar(p));
                     return null;
                 }
 
@@ -1133,19 +1135,18 @@ public class Locations {
                         }
                     } catch (ProviderNotFoundException e) {
                         // will be thrown if the file is not a valid zip file
-                        log.error("locn.cant.read.file", p);
+                        log.error(Errors.LocnCantReadFile(p));
                         return null;
                     } catch (ModuleNameReader.BadClassFile e) {
-                        log.error("locn.bad.module-info", p);
-                        return null;
+                        log.error(Errors.LocnBadModuleInfo(p));
                     } catch (IOException e) {
-                        log.error("locn.cant.read.file", p);
+                        log.error(Errors.LocnCantReadFile(p));
                         return null;
                     }
                 }
 
                 if (warn && false) {  // temp disable
-                    log.warning("locn.unknown.file.on.module.path", p);
+                    log.warning(Warnings.LocnUnknownFileOnModulePath(p));
                 }
                 return null;
             }
@@ -1539,7 +1540,7 @@ public class Locations {
                             for (Path p: mPatchPath) {
                                 Path mi = p.resolve("module-info.class");
                                 if (Files.exists(mi)) {
-                                    log.error("locn.module-info.not.allowed.on.patch.path", mi);
+                                    log.error(Errors.LocnModuleInfoNotAllowedOnPatchPath(mi));
                                     ok = false;
                                 }
                             }
@@ -1548,7 +1549,7 @@ public class Locations {
                                         .addAll(mPatchPath);
                             }
                         } else {
-                            log.error("locn.invalid.arg.for.xpatch", entry);
+                            log.error(Errors.LocnInvalidArgForXpatch(entry));
                         }
                     }
                     patchMap = map;

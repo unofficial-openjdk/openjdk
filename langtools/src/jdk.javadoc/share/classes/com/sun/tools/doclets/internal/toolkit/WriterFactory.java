@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -62,19 +62,6 @@ public interface WriterFactory {
      */
     public abstract PackageSummaryWriter getPackageSummaryWriter(PackageDoc
         packageDoc, PackageDoc prevPkg, PackageDoc nextPkg)
-    throws Exception;
-
-    /**
-     * Return the writer for the module summary.
-     *
-     * @param module the module being documented.
-     * @param prevModule the previous module that was documented.
-     * @param nextModule the next module being documented.
-     * @return the writer for the module summary.  Return null if this
-     * writer is not supported by the doclet.
-     */
-    public abstract ModuleSummaryWriter getModuleSummaryWriter(
-        String moduleName, String prevModuleName, String nextModuleName)
     throws Exception;
 
     /**

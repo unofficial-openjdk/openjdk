@@ -212,17 +212,6 @@ public abstract class Configuration {
     public boolean showversion = false;
 
     /**
-     * Sourcepath from where to read the source files. Default is classpath.
-     *
-     */
-    public String sourcepath = "";
-
-    /**
-     * Generate modules documentation if more than one module is present.
-     */
-    public boolean showModules = false;
-
-    /**
      * Don't generate deprecated API information at all, if -nodeprecated
      * option is used. <code>nodepracted</code> is set to true if
      * -nodeprecated option is used. Default is generate deprected API
@@ -287,11 +276,6 @@ public abstract class Configuration {
      * command-line.
      */
     public SortedSet<PackageDoc> packages;
-
-    /**
-     * A sorted set of modules containing the packages.
-     */
-    public Map<String, Set<PackageDoc>> modulePackages;
 
     public boolean exportInternalAPI;
 
@@ -381,22 +365,6 @@ public abstract class Configuration {
     public abstract boolean validOptions(String options[][],
         DocErrorReporter reporter);
 
-    private void initModules() {
-        // Build the modules structure used by the doclet
-        modulePackages = new TreeMap<String, Set<PackageDoc>>();
-        for (PackageDoc p: packages) {
-            String moduleName = getModule(p);
-            if (moduleName != null && !moduleName.isEmpty()) {
-                Set<PackageDoc> s = modulePackages.get(moduleName);
-                if (s == null)
-                    modulePackages.put(moduleName, s = new TreeSet<>());
-                s.add(p);
-            }
-        }
-
-        showModules = (modulePackages.size() > 1);
-    }
-
     private void initPackages() {
         packages = new TreeSet<>(Arrays.asList(root.specifiedPackages()));
         for (ClassDoc aClass : root.specifiedClasses()) {
@@ -442,11 +410,6 @@ public abstract class Configuration {
                 showversion = true;
             } else if (opt.equals("-nodeprecated")) {
                 nodeprecated = true;
-            } else if (opt.equals("-sourcepath")) {
-                sourcepath = os[1];
-            } else if ((opt.equals("-classpath") || opt.equals("-cp")) &&
-                       sourcepath.length() == 0) {
-                sourcepath = os[1];
             } else if (opt.equals("-excludedocfilessubdir")) {
                 addToSet(excludedDocFileDirs, os[1]);
             } else if (opt.equals("-noqualifier")) {
@@ -491,10 +454,6 @@ public abstract class Configuration {
                 exportInternalAPI = true;
             }
         }
-        if (sourcepath.length() == 0) {
-            sourcepath = System.getProperty("env.class.path") == null ? "" :
-                System.getProperty("env.class.path");
-        }
         if (docencoding == null) {
             docencoding = encoding;
         }
@@ -510,7 +469,6 @@ public abstract class Configuration {
      */
     public void setOptions() throws Fault {
         initPackages();
-        initModules();
         setOptions(root.options());
         setSpecificDocletOptions(root.options());
     }
@@ -930,7 +888,4 @@ public abstract class Configuration {
     public abstract boolean showMessage(SourcePosition pos, String key);
 
     public abstract Location getLocationForPackage(PackageDoc pd);
-
-    public abstract String getModule(ClassDoc classDoc);
-    public abstract String getModule(PackageDoc packageDoc);
 }

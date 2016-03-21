@@ -61,11 +61,6 @@ public class TestWarnings extends JavadocTester {
         checkOutput(Output.OUT, true,
                 "X.java:26: error: self-closing element not allowed");
 
-        /* DCErroneous
-        checkOutput(Output.OUT, true,
-                "package.html: error - Body tag missing from HTML");
-        */
-
         checkOutput("pkg/X.html", false,
                 "can't find m()");
         checkOutput("pkg/X.html", false,

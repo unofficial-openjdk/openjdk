@@ -28,6 +28,7 @@
  * @modules
  *      jdk.compiler/com.sun.tools.javac.api
  *      jdk.compiler/com.sun.tools.javac.main
+ *      jdk.jdeps/com.sun.tools.javap
  * @build ToolBox ModuleTestBase
  * @run main OutputDirTest
  */
@@ -122,7 +123,7 @@ public class OutputDirTest extends ModuleTestBase {
                 .writeAll()
                 .getOutput(ToolBox.OutputKind.DIRECT);
 
-        if (!log.contains("- compiler.err.multi-module.outdir.cannot.be.exploded.module: testExplodedOutDir/modClasses"))
+        if (!log.contains("- compiler.err.multi-module.outdir.cannot.be.exploded.module: " + modClasses.toString()))
             throw new Exception("expected output not found");
     }
 
@@ -159,7 +160,7 @@ public class OutputDirTest extends ModuleTestBase {
                 .writeAll()
                 .getOutput(ToolBox.OutputKind.DIRECT);
 
-        if (!log.contains("- compiler.warn.outdir.is.in.exploded.module: testInExplodedOutDir/modClasses/m"))
+        if (!log.contains("- compiler.warn.outdir.is.in.exploded.module: " + classes.toString()))
             throw new Exception("expected output not found");
     }
 }

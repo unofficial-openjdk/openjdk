@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -63,11 +63,6 @@ public class HtmlWriter {
     protected boolean memberDetailsListPrinted;
 
     /**
-     * Header for table displaying modules and description..
-     */
-    protected final String[] moduleTableHeader;
-
-    /**
      * Header for tables displaying packages and description..
      */
     protected final String[] packageTableHeader;
@@ -87,8 +82,6 @@ public class HtmlWriter {
     public final Content defaultPackageLabel;
 
     public final Content packageLabel;
-
-    public final Content moduleLabel;
 
     public final Content useLabel;
 
@@ -120,8 +113,6 @@ public class HtmlWriter {
 
     public final Content allpackagesLabel;
 
-    public final Content allmodulesLabel;
-
     public final Content indexLabel;
 
     public final Content helpLabel;
@@ -134,13 +125,7 @@ public class HtmlWriter {
 
     public final Content nextpackageLabel;
 
-    public final Content prevmoduleLabel;
-
-    public final Content nextmoduleLabel;
-
     public final Content packagesLabel;
-
-    public final Content modulesLabel;
 
     public final Content methodDetailsLabel;
 
@@ -181,10 +166,6 @@ public class HtmlWriter {
         writer = DocFile.createFileForOutput(configuration, path).openWriter();
         this.configuration = configuration;
         this.memberDetailsListPrinted = false;
-        moduleTableHeader = new String[] {
-            configuration.getText("doclet.Module"),
-            configuration.getText("doclet.Description")
-        };
         packageTableHeader = new String[] {
             configuration.getText("doclet.Package"),
             configuration.getText("doclet.Description")
@@ -197,7 +178,6 @@ public class HtmlWriter {
         overviewLabel = getResource("doclet.Overview");
         defaultPackageLabel = new StringContent(DocletConstants.DEFAULT_PACKAGE_NAME);
         packageLabel = getResource("doclet.Package");
-        moduleLabel = getResource("doclet.Module");
         useLabel = getResource("doclet.navClassUse");
         prevLabel = getResource("doclet.Prev");
         nextLabel = getResource("doclet.Next");
@@ -213,17 +193,13 @@ public class HtmlWriter {
         deprecatedPhrase = getResource("doclet.Deprecated");
         allclassesLabel = getNonBreakResource("doclet.All_Classes");
         allpackagesLabel = getNonBreakResource("doclet.All_Packages");
-        allmodulesLabel = getNonBreakResource("doclet.All_Modules");
         indexLabel = getResource("doclet.Index");
         helpLabel = getResource("doclet.Help");
         seeLabel = getResource("doclet.See");
         descriptionLabel = getResource("doclet.Description");
         prevpackageLabel = getNonBreakResource("doclet.Prev_Package");
         nextpackageLabel = getNonBreakResource("doclet.Next_Package");
-        prevmoduleLabel = getNonBreakResource("doclet.Prev_Module");
-        nextmoduleLabel = getNonBreakResource("doclet.Next_Module");
         packagesLabel = getResource("doclet.Packages");
-        modulesLabel = getResource("doclet.Modules");
         methodDetailsLabel = getResource("doclet.Method_Detail");
         annotationTypeDetailsLabel = getResource("doclet.Annotation_Type_Member_Detail");
         fieldDetailsLabel = getResource("doclet.Field_Detail");
@@ -421,6 +397,10 @@ public class HtmlWriter {
                 "            }" + DocletConstants.NL +
                 "        }" + DocletConstants.NL +
                 "        return true;" + DocletConstants.NL +
+                "    }" + DocletConstants.NL +
+                "    function loadFrames() {" + DocletConstants.NL +
+                "        if (targetPage != \"\" && targetPage != \"undefined\")" + DocletConstants.NL +
+                "             top.classFrame.location = top.targetPage;" + DocletConstants.NL +
                 "    }" + DocletConstants.NL;
         RawHtml scriptContent = new RawHtml(scriptCode);
         script.addContent(scriptContent);

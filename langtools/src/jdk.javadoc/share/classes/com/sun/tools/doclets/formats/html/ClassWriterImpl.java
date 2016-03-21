@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -172,17 +172,6 @@ public class ClassWriterImpl extends SubWriterHolderWriter
         bodyTree.addContent(HtmlConstants.START_OF_CLASS_DATA);
         HtmlTree div = new HtmlTree(HtmlTag.DIV);
         div.addStyle(HtmlStyle.header);
-        String moduleName = configuration.getModule(classDoc);
-        if (moduleName != null && !moduleName.isEmpty()) {
-            Content moduleNameContent = new HtmlTree(HtmlTag.P);
-            Content classModuleLabel = HtmlTree.SPAN(HtmlStyle.moduleLabelInClass, moduleLabel);
-            moduleNameContent.addContent(classModuleLabel);
-            moduleNameContent.addContent(getSpace());
-            moduleNameContent.addContent(getTargetModuleLink("classFrame",
-                    new StringContent(moduleName), moduleName));
-            Content moduleNameDiv = HtmlTree.DIV(HtmlStyle.subTitle, moduleNameContent);
-            div.addContent(moduleNameDiv);
-        }
         if (pkgname.length() > 0) {
             Content classPackageLabel = HtmlTree.SPAN(HtmlStyle.packageLabelInClass, packageLabel);
             Content pkgNameDiv = HtmlTree.DIV(HtmlStyle.subTitle, classPackageLabel);

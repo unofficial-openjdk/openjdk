@@ -33,7 +33,7 @@
  External dependencies are specified via properties. These can be given
  on the command line, or by providing a local build.properties file.
  (They can also be edited into make/build.properties, although that is not
- recommended.)  At a minimum, jdk.home must be set to the installed
+ recommended.)  At a minimum, langtools.jdk.home must be set to the installed
  location of the version of JDK used to build this repository. Additional
  properties may be required, depending on the targets that are built.
  For example, to run any of the jtreg tests you must set jtreg.home.
@@ -97,13 +97,17 @@
     <!-- Standard property values, if not overriden by earlier settings. -->
     <property file="${make.dir}/build.properties"/>
 
+    <condition property="langtools.jdk.home" value="${jdk.home}">
+        <isset property="jdk.home" />
+    </condition>
+
     <!-- launcher.java is used in the launcher scripts provided to run
         the tools' jar files.  If it has not already been set, then
-        default it to use ${jdk.home}, if available, otherwise
+        default it to use ${langtools.jdk.home}, if available, otherwise
         quietly default to simply use "java". -->
     <condition property="launcher.java"
-        value="${jdk.home}/bin/java" else="java">
-        <isset property="jdk.home"/>
+        value="${langtools.jdk.home}/bin/java" else="java">
+        <isset property="langtools.jdk.home"/>
     </condition>
 
     <!--
@@ -139,8 +143,8 @@
         </macrodef>
     </target>
 
-    <target name="-check-jdk.home" depends="-def-check">
-        <check name="target java" property="jdk.home" marker="${java.marker}"/>
+    <target name="-check-langtools.jdk.home" depends="-def-check">
+        <check name="target java" property="langtools.jdk.home" marker="${java.marker}"/>
     </target>
 
     <target name="-check-jtreg.home" depends="-def-check">
@@ -157,7 +161,7 @@
 
     <target name="build" depends="build-all-tools"/>
 
-    <target name="-prepare-build" depends="-check-jdk.home">
+    <target name="-prepare-build" depends="-check-langtools.jdk.home">
         <mkdir dir="${build.modules}"/>
         <mkdir dir="${build.tools}"/>
         <mkdir dir="${build.gensrc}"/>
@@ -182,21 +186,15 @@
     </target>
 
     <target name="build-all-classes" depends="generate-sources">
-        <javac createMissingPackageInfoClass="false" includeantruntime="false" fork="yes" executable="${jdk.home}/bin/javac"
-            source="${javac.source}" target="${javac.target}" srcdir="${src.dir}" destdir="${build.modules}">
-            <include name="**/*.java"/>
-            <exclude name="sample/**/*.java"/>
-            <different targetdir="${build.prevsrc}" ignoreFileTimes="false" ignoreContents="true"/>
-            <compilerarg line="${javac.opts} -modulesourcepath ${src.dir}/*/share/classes:${build.gensrc}" />
-        </javac>
-        <!-- workaround for incremental compilation -->
-        <copy todir="${build.prevsrc}" preservelastmodified="true">
-            <fileset dir="${src.dir}">
-                <different targetdir="${build.prevsrc}" ignoreFileTimes="false" ignoreContents="true"/>
-                <exclude name="sample/**/*.java"/>
-                <include name="**/*.java"/>
-            </fileset>
-        </copy>
+        <exec executable="${langtools.jdk.home}/bin/javac" failonerror="true">
+            <arg line="-source ${javac.source} -target ${javac.target}" />
+            <arg value="-d" />
+            <arg value="${build.modules}" />
+            <arg line="${javac.opts} -modulesourcepath ${src.dir}${file.separator}*${file.separator}share${file.separator}classes:${build.gensrc} -m java.compiler,jdk.compiler,jdk.javadoc,jdk.jdeps,jdk.jshell" />
+        </exec>
+        <delete>
+            <fileset dir="${build.modules}" includes="**/module-info.class"/>
+        </delete>
     </target>
 
     <target name="build-all-tools" depends="build-all-classes, -def-build-tool">
@@ -217,7 +215,7 @@
     **** IDE support
     -->
 
-    <target name="idea" depends="-check-jdk.home">
+    <target name="idea" depends="-check-langtools.jdk.home">
         <mkdir dir=".idea"/>
         <copy todir=".idea" >
             <fileset dir="make/intellij" excludes="**/src/**"/>
@@ -225,8 +223,8 @@
         <condition property="idea.jtreg.home" value="${jtreg.home}" else = "[jtreg.home]">
             <isset property="jtreg.home"/>
         </condition>
-        <condition property="idea.target.jdk" value="${jdk.home}" else = "$JDKPath$">
-            <isset property="jdk.home"/>
+        <condition property="idea.target.jdk" value="${langtools.jdk.home}" else = "$JDKPath$">
+            <isset property="langtools.jdk.home"/>
         </condition>
         <replace file=".idea/ant.xml" token="@IDEA_JTREG_HOME@" value="${idea.jtreg.home}"/>
         <replace file=".idea/ant.xml" token="@IDEA_TARGET_JDK@" value="${idea.target.jdk}"/>
@@ -249,12 +247,12 @@
         <javac fork="true"
                source="${javac.source}"
                target="${javac.target}"
-               executable="${jdk.home}/bin/javac"
+               executable="${langtools.jdk.home}/bin/javac"
                srcdir="${make.tools.dir}"
                includes="propertiesparser/* anttasks/PropertiesParser* anttasks/PathFileSet*"
                destdir="${build.tools}"
                classpath="${ant.core.lib}"
-               bootclasspath="${jdk.home}/jre/lib/rt.jar"
+               bootclasspath="${langtools.jdk.home}/jre/lib/rt.jar"
                includeantruntime="false">
             <compilerarg line="${javac.opts} -XDstringConcat=inline"/>
         </javac>
@@ -267,7 +265,7 @@
         <javac fork="true"
                source="${javac.source}"
                target="${javac.target}"
-               executable="${jdk.home}/bin/javac"
+               executable="${langtools.jdk.home}/bin/javac"
                srcdir="${make.tools.dir}"
                includes="compileproperties/* anttasks/CompileProperties* anttasks/PathFileSet*"
                destdir="${build.dir}/toolclasses/"
@@ -301,7 +299,7 @@
         </macrodef>
     </target>
 
-    <target name="-def-jtreg" unless="jtreg.defined" depends="-check-jtreg.home,-check-jdk.home">
+    <target name="-def-jtreg" unless="jtreg.defined" depends="-check-jtreg.home,-check-langtools.jdk.home">
         <taskdef name="jtreg" classname="com.sun.javatest.regtest.Main$$Ant">
             <classpath>
                 <pathelement location="${jtreg.home}/lib/jtreg.jar"/>
@@ -311,7 +309,7 @@
         <macrodef name="jtreg-tool">
             <attribute name="name"/>
             <attribute name="tests"/>
-            <attribute name="jdk" default="${jdk.home}"/>
+            <attribute name="jdk" default="${langtools.jdk.home}"/>
             <attribute name="agentvm" default="true"/>
             <attribute name="verbose" default="${default.jtreg.verbose}"/>
             <attribute name="options" default="${other.jtreg.options}"/>
@@ -333,7 +331,6 @@
                     agentvm="@{agentvm}" verbose="@{verbose}"
                     failonerror="false" resultproperty="jtreg.@{name}.result"
                     vmoptions="${coverage.options} @{extra.jvmargs} -Xpatch:@{build.modules}">
-                    <arg line="-exclude:${basedir}/test/ProblemList.jake.txt"/>
                     <arg value="-debug:@{jpda.jvmargs}"/>
                     <arg line="@{keywords}"/>
                     <arg line="@{options}"/>

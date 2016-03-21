@@ -26,9 +26,17 @@ package com.sun.tools.jdeps;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.lang.module.ModuleDescriptor;
+import java.io.UncheckedIOException;
+
 import static java.lang.module.ModuleDescriptor.Requires.Modifier.*;
 
+import java.lang.module.Configuration;
+import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleReference;
+import java.lang.module.ResolvedModule;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
@@ -38,6 +46,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -49,14 +58,15 @@ import static com.sun.tools.jdeps.ModulePaths.SystemModulePath.JAVA_BASE;
  * Also identify any qualified exports not used by the target module.
  */
 class ModuleAnalyzer {
-    final ModulePaths modulePaths;
-    final DependencyFinder dependencyFinder;
-    final Module root;
-    final Set<Module> modules;
-    final Set<String> requiresPublic = new HashSet<>();
-    final Set<String> requires = new HashSet<>();
-    final Set<Module> exportTargets = new HashSet<>();
-    final JdepsFilter filter;
+    private final ModulePaths modulePaths;
+    private final DependencyFinder dependencyFinder;
+    private final Module root;
+    private final Set<Module> modules;
+    private final Set<String> requiresPublic = new HashSet<>();
+    private final Set<String> requires = new HashSet<>();
+    private final Set<Module> exportTargets = new HashSet<>();
+    private final JdepsFilter filter;
+    private Graph<Module> graph;
     ModuleAnalyzer(ModulePaths modulePaths, DependencyFinder finder,
                    String moduleName) {
         this.modulePaths = modulePaths;
@@ -95,13 +105,17 @@ class ModuleAnalyzer {
     /**
      * Do the analysis
      */
-    public boolean run() throws IOException {
-        computeRequiresPublic();
-        computeRequires();
-        // apply transitive reduction and reports recommended requires.
-        analyzeDeps();
-        // detect any qualiifed exports not used by the target module
-        checkQualifiedExports();
+    public boolean run() {
+        try {
+            computeRequiresPublic();
+            computeRequires();
+            // apply transitive reduction and reports recommended requires.
+            analyzeDeps();
+            // detect any qualiifed exports not used by the target module
+            checkQualifiedExports();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
         return true;
     }
 
@@ -112,7 +126,7 @@ class ModuleAnalyzer {
         JdepsFilter.Builder builder = new JdepsFilter.Builder();
         // only analyze exported API
         root.descriptor.exports().stream()
-                .filter(exp -> !exp.targets().isPresent())
+                .filter(exp -> !exp.isQualified())
                 .map(ModuleDescriptor.Exports::source)
                 .forEach(builder::includePackage);
 
@@ -142,11 +156,17 @@ class ModuleAnalyzer {
         Analyzer analyzer = new Analyzer(Analyzer.Type.CLASS, filter);
         analyzer.run(modules);
 
-        transitiveClosure(analyzer, root).stream()
+        // record requires
+        analyzer.requires(root)
                 .filter(m -> m != JAVA_BASE && m != root)
-                .map(Module::name)
+                .map(Archive::getName)
                 .forEach(requires::add);
-        trace("dependences: %s%n", requires);
+
+        this.graph = buildGraph(analyzer, root);
+        if (traceOn) {
+            trace("dependences: %s%n", graph.nodes());
+            graph.printGraph(System.out);
+        }
     }
 
     /**
@@ -157,31 +177,49 @@ class ModuleAnalyzer {
         String moduleName = root.name();
 
         Graph.Builder<String> builder = new Graph.Builder<>();
-        requires.stream()
+        requiresPublic.stream()
                 .forEach(mn -> {
                     builder.addNode(mn);
                     builder.addEdge(moduleName, mn);
                 });
+        // requires public graph
+        Graph<String> rbg = builder.build().reduce();
 
-        Graph.Builder<String> builder1 = new Graph.Builder<>();
-        requiresPublic.stream()
-                .forEach(mn -> {
-                    builder1.addNode(mn);
-                    builder1.addEdge(moduleName, mn);
+        // convert the dependence graph from Module to name
+        Set<String> nodes = this.graph.nodes().stream()
+                .map(Module::name)
+                .collect(Collectors.toSet());
+        Map<String, Set<String>> edges = new HashMap<>();
+        this.graph.edges().keySet().stream()
+                .forEach(m -> {
+                    String mn = m.name();
+                    Set<String> es = edges.computeIfAbsent(mn, _k -> new HashSet<String>());
+                    this.graph.edges().get(m).stream()
+                            .map(Module::name)
+                            .forEach(es::add);
                 });
-        Graph<String> rbg = builder1.build().reduce();
-        Graph<String> graph = builder.build().reduce(rbg);
+
+        // transitive reduction
+        Graph<String> newGraph = new Graph<>(nodes, edges).reduce(rbg);
         if (traceOn) {
-            graph.printGraph(System.out);
+            System.out.println("after transitive reduction");
+            newGraph.printGraph(System.out);
         };
 
-        if (matches(root.descriptor(), requires, requiresPublic)) {
+        Set<String> reducedRequires = newGraph.adjacentNodes(moduleName);
+        if (matches(root.descriptor(), requires, requiresPublic) &&
+                matches(root.descriptor(), reducedRequires, requiresPublic)) {
             System.out.println("--- Analysis result: no change for " + root.name());
         } else {
-            System.out.println("--- Analysis result: new requires for " + root.name());
+            System.out.println("--- Analysis result: suggested requires for " + root.name());
             System.out.format("module %s%n", root.name());
-            if (!requires.isEmpty()) {
-                graph.adjacentNodes(moduleName)
+                requires.stream()
+                        .sorted()
+                        .forEach(dn -> System.out.format("  requires %s%s;%n",
+                                requiresPublic.contains(dn) ? "public " : "", dn));
+            if (!requires.equals(reducedRequires) && !reducedRequires.isEmpty()) {
+                System.out.format("%nmodule %s (reduced)%n", root.name());
+                newGraph.adjacentNodes(moduleName)
                      .stream()
                      .sorted()
                      .forEach(dn -> System.out.format("  requires %s%s;%n",
@@ -242,16 +280,26 @@ class ModuleAnalyzer {
                 .filter(req -> req.modifiers().contains(PUBLIC))
                 .map(ModuleDescriptor.Requires::name)
                 .collect(Collectors.toSet());
-        if (!requiresPublic.equals(reqPublic))
+        if (!requiresPublic.equals(reqPublic)) {
+            trace("mismatch requires public: %s%n", reqPublic);
             return false;
-
-        if (requires.size() != md.requires().size())
+        }
+        // java.base is not in requires
+        int javaBase = md.name().equals(JAVA_BASE.name()) ? 0 : 1;
+        if (requires.size()+javaBase != md.requires().size()) {
+            trace("mismatch requires: %d != %d%n", requires.size()+1, md.requires().size());
             return false;
+        }
 
-        return md.requires().stream()
+        Set<String> unused = md.requires().stream()
                  .map(ModuleDescriptor.Requires::name)
-                 .filter(req -> !requires.contains(req))
-                 .findAny().isPresent() == false;
+                 .filter(req -> !requires.contains(req) && !req.equals(JAVA_BASE.name()))
+                 .collect(Collectors.toSet());
+        if (!unused.isEmpty()) {
+            trace("mismatch requires: %s%n", unused);
+            return false;
+        }
+        return true;
     }
 
     private void printModuleDescriptor(PrintStream out, ModuleDescriptor descriptor) {
@@ -265,24 +313,44 @@ class ModuleAnalyzer {
                 .forEach(req -> out.format("  requires %s;%n", req));
     }
 
-    private Set<Module> transitiveClosure(Analyzer analyzer, Module module) {
-        Set<Module> transitiveDeps = new HashSet<>();
-        transitiveDeps.add(module);
+    /**
+     * Returns a graph of modules required by the specified module.
+     *
+     * Requires public edges of the dependences are added to the graph.
+     */
+    private Graph<Module> buildGraph(Analyzer analyzer, Module module) {
+        Graph.Builder<Module> builder = new Graph.Builder<>();
+        builder.addNode(module);
+        Set<Module> visited = new HashSet<>();
+        visited.add(module);
         Deque<Module> deque = new LinkedList<>();
         analyzer.requires(module)
                 .map(Archive::getModule)
-                .forEach(deque::add);
+                .filter(m -> m != JAVA_BASE)
+                .forEach(m -> {
+                    deque.add(m);
+                    builder.addEdge(module, m);
+                });
 
+        // read requires public from ModuleDescription
         Module source;
         while ((source = deque.poll()) != null) {
-            if (transitiveDeps.contains(source))
+            if (visited.contains(source))
                 continue;
-            transitiveDeps.add(source);
-            analyzer.requires(source)
-                    .map(Archive::getModule)
-                    .forEach(deque::add);
+            visited.add(source);
+            builder.addNode(source);
+            Module from = source;
+            source.descriptor().requires().stream()
+                    .filter(req -> req.modifiers().contains(PUBLIC))
+                    .map(ModuleDescriptor.Requires::name)
+                    .map(req -> modulePaths.getModules().get(req))
+                    .filter(m -> m != JAVA_BASE)
+                    .forEach(m -> {
+                        deque.add(m);
+                        builder.addEdge(from, m);
+                    });
         }
-        return transitiveDeps;
+        return builder.build();
     }
 
     static class Graph<T> {
@@ -348,8 +416,8 @@ class ModuleAnalyzer {
             // add the overlapped edges from this graph and the given g
             g.edges().keySet().stream()
                     .forEach(u -> g.adjacentNodes(u).stream()
-                            .filter(v -> isAdjacent(u, v))
-                            .forEach(v -> builder.addEdge(u, v)));
+                                    .filter(v -> isAdjacent(u, v))
+                                    .forEach(v -> builder.addEdge(u, v)));
             return builder.build();
         }
 
@@ -422,7 +490,7 @@ class ModuleAnalyzer {
             out.println("graph for " + nodes);
             nodes.stream()
                  .forEach(u -> adjacentNodes(u).stream()
-                            .forEach(v -> out.format("%s -> %s%n", u, v)));
+                                   .forEach(v -> out.format("%s -> %s%n", u, v)));
         }
 
         @Override
@@ -450,6 +518,13 @@ class ModuleAnalyzer {
 
             public Graph<T> build() {
                 return new Graph<>(nodes, edges);
+            }
+
+            void print(PrintStream out) {
+                out.println(nodes);
+                nodes.stream()
+                        .forEach(u -> edges.get(u).stream()
+                                        .forEach(v -> out.format("%s -> %s%n", u, v)));
             }
         }
     }
@@ -498,4 +573,136 @@ class ModuleAnalyzer {
             result.addLast(node);
         }
     }
+
+    static class DotGraph {
+        static final String ORANGE = "#e76f00";
+        static final String BLUE = "#437291";
+        static final String GRAY = "#dddddd";
+
+        static final String REEXPORTS = "";
+        static final String REQUIRES = "style=\"dashed\"";
+        static final String REQUIRES_BASE = "color=\"" + GRAY + "\"";
+
+        static final Set<String> javaModules = modules(name ->
+                (name.startsWith("java.") && !name.equals("java.smartcardio")));
+        static final Set<String> jdkModules = modules(name ->
+                (name.startsWith("java.") ||
+                        name.startsWith("jdk.") ||
+                        name.startsWith("javafx.")) && !javaModules.contains(name));
+
+        private static Set<String> modules(Predicate<String> predicate) {
+            return ModuleFinder.ofSystem().findAll()
+                               .stream()
+                               .map(ModuleReference::descriptor)
+                               .map(ModuleDescriptor::name)
+                               .filter(predicate)
+                               .collect(Collectors.toSet());
+        }
+
+        static void printAttributes(PrintStream out) {
+            out.format("  size=\"25,25\";%n");
+            out.format("  nodesep=.5;%n");
+            out.format("  ranksep=1.5;%n");
+            out.format("  pencolor=transparent;%n");
+            out.format("  node [shape=plaintext, fontname=\"DejaVuSans\", fontsize=36, margin=\".2,.2\"];%n");
+            out.format("  edge [penwidth=4, color=\"#999999\", arrowhead=open, arrowsize=2];%n");
+        }
+
+        static void printNodes(PrintStream out, Graph<String> graph) {
+            out.format("  subgraph se {%n");
+            graph.nodes().stream()
+                 .filter(javaModules::contains)
+                 .forEach(mn -> out.format("  \"%s\" [fontcolor=\"%s\", group=%s];%n",
+                                           mn, ORANGE, "java"));
+            out.format("  }%n");
+            graph.nodes().stream()
+                 .filter(jdkModules::contains)
+                 .forEach(mn -> out.format("    \"%s\" [fontcolor=\"%s\", group=%s];%n",
+                                              mn, BLUE, "jdk"));
+
+            graph.nodes().stream()
+                    .filter(mn -> !javaModules.contains(mn) && !jdkModules.contains(mn))
+                    .forEach(mn -> out.format("  \"%s\";%n", mn));
+        }
+
+        static void printEdges(PrintStream out, Graph<String> graph,
+                               String node, Set<String> requiresPublic) {
+            graph.adjacentNodes(node).forEach(dn -> {
+                String attr = dn.equals("java.base") ? REQUIRES_BASE
+                        : (requiresPublic.contains(dn) ? REEXPORTS : REQUIRES);
+                out.format("  \"%s\" -> \"%s\" [%s];%n", node, dn, attr);
+            });
+        }
+    }
+
+    public void genDotFile(Path dir) throws IOException {
+        String name = root.name();
+        try (PrintStream out
+                     = new PrintStream(Files.newOutputStream(dir.resolve(name + ".dot")))) {
+            Configuration cf = modulePaths.configuration(name);
+
+            // transitive reduction
+            Graph<String> graph = gengraph(cf);
+
+            out.format("digraph \"%s\" {%n", name);
+            DotGraph.printAttributes(out);
+            DotGraph.printNodes(out, graph);
+
+            cf.modules().stream()
+                    .map(ResolvedModule::reference)
+                    .map(ModuleReference::descriptor)
+                    .sorted(Comparator.comparing(ModuleDescriptor::name))
+                    .forEach(md -> {
+                String mn = md.name();
+                Set<String> requiresPublic = md.requires().stream()
+                        .filter(d -> d.modifiers().contains(PUBLIC))
+                        .map(d -> d.name())
+                        .collect(Collectors.toSet());
+
+                DotGraph.printEdges(out, graph, mn, requiresPublic);
+            });
+
+            out.println("}");
+        }
+    }
+
+
+    /**
+     * Returns a Graph of the given Configuration after transitive reduction.
+     *
+     * Transitive reduction of requires public edge and requires edge have
+     * to be applied separately to prevent the requires public edges
+     * (e.g. U -> V) from being reduced by a path (U -> X -> Y -> V)
+     * in which  V would not be re-exported from U.
+     */
+    private Graph<String> gengraph(Configuration cf) {
+        // build a Graph containing only requires public edges
+        // with transitive reduction.
+        Graph.Builder<String> rpgbuilder = new Graph.Builder<>();
+        for (ResolvedModule resolvedModule : cf.modules()) {
+            ModuleDescriptor md = resolvedModule.reference().descriptor();
+            String mn = md.name();
+            md.requires().stream()
+                    .filter(d -> d.modifiers().contains(PUBLIC))
+                    .map(d -> d.name())
+                    .forEach(d -> rpgbuilder.addEdge(mn, d));
+        }
+
+        Graph<String> rpg = rpgbuilder.build().reduce();
+
+        // build the readability graph
+        Graph.Builder<String> builder = new Graph.Builder<>();
+        for (ResolvedModule resolvedModule : cf.modules()) {
+            ModuleDescriptor md = resolvedModule.reference().descriptor();
+            String mn = md.name();
+            builder.addNode(mn);
+            resolvedModule.reads().stream()
+                    .map(ResolvedModule::name)
+                    .forEach(d -> builder.addEdge(mn, d));
+        }
+
+        // transitive reduction of requires edges
+        return builder.build().reduce(rpg);
+    }
+
 }

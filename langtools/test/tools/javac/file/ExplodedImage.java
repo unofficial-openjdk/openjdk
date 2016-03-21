@@ -53,6 +53,7 @@ import javax.tools.ToolProvider;
  *          jdk.compiler/com.sun.tools.javac.code
  *          jdk.compiler/com.sun.tools.javac.file
  *          jdk.compiler/com.sun.tools.javac.main
+ *          jdk.jdeps/com.sun.tools.javap
  * @build ToolBox ExplodedImage
  * @run main/othervm ExplodedImage modules/* testDirectoryStreamClosed
  * @run main/othervm ExplodedImage modules/* testCanCompileAgainstExplodedImage

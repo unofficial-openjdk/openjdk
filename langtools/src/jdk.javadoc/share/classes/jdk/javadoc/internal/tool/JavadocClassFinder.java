@@ -68,11 +68,13 @@ public class JavadocClassFinder extends ClassFinder {
                                                                JavaFileObject.Kind.HTML);
     private JavacTrees jctrees;
 
+    private final JavacTrees trees;
+
     public JavadocClassFinder(Context context) {
         super(context);
         docenv = DocEnv.instance(context);
         preferSource = true;
-        jctrees = JavacTrees.instance(context);
+        trees = JavacTrees.instance(context);
     }
 
     /**
@@ -90,7 +92,7 @@ public class JavadocClassFinder extends ClassFinder {
     protected void extraFileActions(PackageSymbol pack, JavaFileObject fo) {
         if (fo.isNameCompatible("package", JavaFileObject.Kind.HTML)) {
             docenv.pkgToJavaFOMap.put(pack, fo);
-            jctrees.putJavaFileObject(pack, fo);
+            trees.putJavaFileObject(pack, fo);
         }
     }
 }

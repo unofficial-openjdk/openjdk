@@ -47,6 +47,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -448,7 +449,7 @@ public class JavacFileManager extends BaseFileManager implements StandardJavaFil
             return;
         }
 
-        if (Files.exists(container)) {
+        if (Files.isRegularFile(container)) {
             listArchive(container,
                     subdirectory,
                     fileKinds,
@@ -658,7 +659,7 @@ public class JavacFileManager extends BaseFileManager implements StandardJavaFil
                                 fsInfo.getCanonicalFile(f), f);
                 } catch (InvalidPathException ignore) {
                 }
-            } else if (Files.exists(file)) {
+            } else if (Files.isRegularFile(file)) {
                 FileSystem fs = getFileSystem(file);
                 if (fs != null) {
                     Path fsRoot = fs.getRootDirectories().iterator().next();
@@ -841,9 +842,9 @@ public class JavacFileManager extends BaseFileManager implements StandardJavaFil
         if (location.isModuleLocation()) {
             Collection<Path> paths = locations.getLocation(location);
             ModuleFinder finder = ModuleFinder.of(paths.toArray(new Path[paths.size()]));
-            Configuration cf = Configuration.resolve(ModuleFinder.empty(), Layer.boot().configuration(), finder);
-            cf = cf.bind();
-            Layer layer = Layer.createWithOneLoader(cf, Layer.boot(), ClassLoader.getSystemClassLoader());
+            Layer bootLayer = Layer.boot();
+            Configuration cf = bootLayer.configuration().resolveRequiresAndUses(ModuleFinder.empty(), finder, Collections.emptySet());
+            Layer layer = bootLayer.defineModulesWithOneLoader(cf, ClassLoader.getSystemClassLoader());
             return ServiceLoaderHelper.load(layer, service);
         } else {
             return ServiceLoader.load(service, getClassLoader(location));

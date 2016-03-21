@@ -178,7 +178,7 @@ public class Utils {
         List<Element> excludeList = members.stream()
                 .filter((member) -> (!isDeprecated(member)))
                 .sorted(makeGeneralPurposeComparator())
-                .collect(Collectors.toCollection(ArrayList::new));
+                .collect(Collectors.<Element, List<Element>>toCollection(ArrayList::new));
         return excludeList;
     }
 
@@ -1358,7 +1358,7 @@ public class Utils {
         return result.toString();
     }
 
-    public String normalizeNewlines(String text) {
+    public CharSequence normalizeNewlines(CharSequence text) {
         StringBuilder sb = new StringBuilder();
         final int textLength = text.length();
         final String NL = DocletConstants.NL;
@@ -1381,7 +1381,7 @@ public class Utils {
             }
         }
         sb.append(text, pos, textLength);
-        return sb.toString();
+        return sb;
     }
 
     /**
@@ -1799,6 +1799,8 @@ public class Utils {
      * A generic utility which returns the fully qualified names of an entity,
      * if the entity is not qualifiable then its enclosing entity, it is upto
      * the caller to add the elements name as required.
+     * @param e the element to get FQN for.
+     * @return the name
      */
     public String getFullyQualifiedName(Element e) {
         return getFullyQualifiedName(e, true);

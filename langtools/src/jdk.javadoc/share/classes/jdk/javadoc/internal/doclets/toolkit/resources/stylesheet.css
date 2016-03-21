@@ -143,6 +143,9 @@ Navigation bar styles
     font-size:11px;
     margin:0;
 }
+.navPadding {
+    padding-top: 100px;
+}
 .fixedNav {
     position:fixed;
     width:100%;
@@ -265,7 +268,6 @@ Page header and footer styles
 .title {
     color:#2c4557;
     margin:10px 0;
-    padding-top:5.4em;
 }
 .subTitle {
     margin:5px 0 0 0;
@@ -609,9 +611,10 @@ h1.hidden {
     margin:3px 10px 2px 0px;
     color:#474747;
 }
-.deprecatedLabel, .descfrmTypeLabel, .memberNameLabel, .memberNameLink, .moduleLabelInClass,
-.overrideSpecifyLabel, .packageHierarchyLabel, .packageLabelInClass, .paramLabel, .returnLabel,
-.seeLabel, .simpleTagLabel, .throwsLabel, .typeNameLabel, .typeNameLink, .searchTagLink {
+.deprecatedLabel, .descfrmTypeLabel, .memberNameLabel, .memberNameLink,
+.moduleLabelInClass, .overrideSpecifyLabel, .packageLabelInClass,
+.packageHierarchyLabel, .paramLabel, .returnLabel, .seeLabel, .simpleTagLabel,
+.throwsLabel, .typeNameLabel, .typeNameLink, .searchTagLink {
     font-weight:bold;
 }
 .deprecationComment, .emphasizedPhrase, .interfaceName {

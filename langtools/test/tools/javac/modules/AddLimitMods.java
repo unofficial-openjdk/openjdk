@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,7 @@
 
 /**
  * @test
- * @summary Verify modules can contain packages of the same name, unless these meet.
+ * @summary Test -addmods and -limitmods; also test the "enabled" modules.
  * @library /tools/lib
  * @modules
  *      jdk.compiler/com.sun.tools.javac.api
@@ -32,10 +32,12 @@
  *      jdk.compiler/com.sun.tools.javac.model
  *      jdk.compiler/com.sun.tools.javac.processing
  *      jdk.compiler/com.sun.tools.javac.util
+ *      jdk.jdeps/com.sun.tools.javap
  * @build ToolBox ModuleTestBase
  * @run main AddLimitMods
  */
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -46,6 +48,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -167,6 +170,114 @@ public class AddLimitMods extends ModuleTestBase {
     }
 
     @Test
+    void testAllModulePath(Path base) throws Exception {
+        if (Files.isDirectory(base))
+            tb.cleanDirectory(base);
+
+        Path moduleSrc = base.resolve("module-src");
+        Path m1 = moduleSrc.resolve("m1");
+
+        tb.writeJavaFiles(m1,
+                          "module m1 { exports api; }",
+                          "package api; public class Api { }");
+
+        Path modulePath = base.resolve("module-path");
+
+        Files.createDirectories(modulePath);
+
+        tb.new JavacTask()
+                .options("-modulesourcepath", moduleSrc.toString())
+                .outdir(modulePath)
+                .files(findJavaFiles(moduleSrc))
+                .run()
+                .writeAll();
+
+        Path cpSrc = base.resolve("cp-src");
+        tb.writeJavaFiles(cpSrc, "package test; public class Test { api.Api api; }");
+
+        Path cpOut = base.resolve("cp-out");
+
+        Files.createDirectories(cpOut);
+
+        tb.new JavacTask()
+                .options("-modulepath", modulePath.toString())
+                .outdir(cpOut)
+                .files(findJavaFiles(cpSrc))
+                .run(ToolBox.Expect.FAIL)
+                .writeAll();
+
+        tb.new JavacTask()
+                .options("-modulepath", modulePath.toString(),
+                         "-addmods", "ALL-MODULE-PATH")
+                .outdir(cpOut)
+                .files(findJavaFiles(cpSrc))
+                .run()
+                .writeAll();
+
+        List<String> actual;
+        List<String> expected = Arrays.asList(
+                "- compiler.err.addmods.all.module.path.invalid",
+                "1 error");
+
+        actual = tb.new JavacTask()
+                   .options("-modulesourcepath", moduleSrc.toString(),
+                            "-XDrawDiagnostics",
+                            "-addmods", "ALL-MODULE-PATH")
+                   .outdir(modulePath)
+                   .files(findJavaFiles(moduleSrc))
+                   .run(ToolBox.Expect.FAIL)
+                   .writeAll()
+                   .getOutputLines(ToolBox.OutputKind.DIRECT);
+
+        if (!Objects.equals(actual, expected)) {
+            throw new IllegalStateException("incorrect errors; actual=" + actual + "; expected=" + expected);
+        }
+
+        actual = tb.new JavacTask()
+                   .options("-Xmodule:java.base",
+                            "-XDrawDiagnostics",
+                            "-addmods", "ALL-MODULE-PATH")
+                   .outdir(cpOut)
+                   .files(findJavaFiles(cpSrc))
+                   .run(ToolBox.Expect.FAIL)
+                   .writeAll()
+                   .getOutputLines(ToolBox.OutputKind.DIRECT);
+
+        if (!Objects.equals(actual, expected)) {
+            throw new IllegalStateException("incorrect errors; actual=" + actual + "; expected=" + expected);
+        }
+
+        actual = tb.new JavacTask(ToolBox.Mode.CMDLINE)
+                   .options("-source", "8", "-target", "8",
+                            "-XDrawDiagnostics",
+                            "-addmods", "ALL-MODULE-PATH")
+                   .outdir(cpOut)
+                   .files(findJavaFiles(cpSrc))
+                   .run(ToolBox.Expect.FAIL)
+                   .writeAll()
+                   .getOutputLines(ToolBox.OutputKind.DIRECT);
+
+        if (!actual.contains("javac: option -addmods not allowed with target 1.8")) {
+            throw new IllegalStateException("incorrect errors; actual=" + actual);
+        }
+
+        tb.writeJavaFiles(cpSrc, "module m1 {}");
+
+        actual = tb.new JavacTask()
+                   .options("-XDrawDiagnostics",
+                            "-addmods", "ALL-MODULE-PATH")
+                   .outdir(cpOut)
+                   .files(findJavaFiles(cpSrc))
+                   .run(ToolBox.Expect.FAIL)
+                   .writeAll()
+                   .getOutputLines(ToolBox.OutputKind.DIRECT);
+
+        if (!Objects.equals(actual, expected)) {
+            throw new IllegalStateException("incorrect errors; actual=" + actual + "; expected=" + expected);
+        }
+    }
+
+    @Test
     void testRuntime2Compile(Path base) throws Exception {
         Path classpathSrc = base.resolve("classpath-src");
         Path classpathOut = base.resolve("classpath-out");
@@ -272,7 +383,7 @@ public class AddLimitMods extends ModuleTestBase {
                     output = tb.new JavaTask()
                        .vmOptions(augmentOptions(options,
                                                  Collections.emptyList(),
-                                                 "-modulepath", modulePath.toString() + ":" + out.getParent().toString(),
+                                                 "-modulepath", modulePath.toString() + File.pathSeparator + out.getParent().toString(),
                                                  "-classpath", classpathOut.toString(),
                                                  "-XaddReads:m2=ALL-UNNAMED,m2=automatic",
                                                  "-m", "m2/test.Test"))
@@ -352,7 +463,7 @@ public class AddLimitMods extends ModuleTestBase {
         @Override
         public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             String expected = processingEnv.getOptions().get("output");
-            Set<String> expectedElements = new HashSet<>(Arrays.asList(expected.split("\n")));
+            Set<String> expectedElements = new HashSet<>(Arrays.asList(expected.split(System.getProperty("line.separator"))));
             Context context = ((JavacProcessingEnvironment) processingEnv).getContext();
             Symtab syms = Symtab.instance(context);
 
@@ -413,7 +524,9 @@ public class AddLimitMods extends ModuleTestBase {
         {"-addmods", "m1,automatic"},
         {"-addmods", "jdk.compiler,automatic"},
         {"-addmods", "m1,jdk.compiler,automatic"},
+        {"-addmods", "ALL-SYSTEM,automatic"},
         {"-limitmods", "java.base", "-addmods", "automatic"},
+        {"-limitmods", "java.base", "-addmods", "ALL-SYSTEM,automatic"},
         {"-limitmods", "m2", "-addmods", "automatic"},
         {"-limitmods", "jdk.compiler", "-addmods", "automatic"},
     };

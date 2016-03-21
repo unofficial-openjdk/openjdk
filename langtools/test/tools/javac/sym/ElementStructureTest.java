@@ -33,6 +33,7 @@
  *          jdk.compiler/com.sun.tools.javac.platform
  *          jdk.compiler/com.sun.tools.javac.util
  *          jdk.jdeps/com.sun.tools.classfile
+ *          jdk.jdeps/com.sun.tools.javap
  * @run main ElementStructureTest
  */
 

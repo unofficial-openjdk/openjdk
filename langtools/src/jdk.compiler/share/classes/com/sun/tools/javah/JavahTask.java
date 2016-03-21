@@ -170,12 +170,6 @@ public class JavahTask implements NativeHeaderTool.NativeHeaderTask {
             }
         },
 
-        new HiddenOption(false, "-stubs") {
-            void process(JavahTask task, String opt, String arg) {
-                 // ignored; for backwards compatibility
-            }
-        },
-
         new Option(false, "-v", "-verbose") {
             void process(JavahTask task, String opt, String arg) {
                 task.verbose = true;
@@ -454,8 +448,6 @@ public class JavahTask implements NativeHeaderTool.NativeHeaderTask {
         if (llni)
             g = new LLNI(doubleAlign, util);
         else {
-//            if (stubs)
-//                throw new BadArgs("jni.no.stubs");
             g = new JNI(util);
         }
 

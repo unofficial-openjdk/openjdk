@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,11 +23,12 @@
 
 /**
  * @test
- * @summary Verify modules can contain packages of the same name, unless these meet.
+ * @summary Test automatic modules
  * @library /tools/lib
  * @modules
  *      jdk.compiler/com.sun.tools.javac.api
  *      jdk.compiler/com.sun.tools.javac.main
+ *      jdk.jdeps/com.sun.tools.javap
  * @build ToolBox ModuleTestBase
  * @run main AutomaticModules
  */
@@ -89,8 +90,7 @@ public class AutomaticModules extends ModuleTestBase {
                 .outdir(classes)
                 .files(findJavaFiles(moduleSrc))
                 .run()
-                .writeAll()
-                .getOutput(ToolBox.OutputKind.DIRECT);
+                .writeAll();
     }
 
     @Test
@@ -148,8 +148,7 @@ public class AutomaticModules extends ModuleTestBase {
                 .outdir(classes)
                 .files(findJavaFiles(moduleSrc))
                 .run()
-                .writeAll()
-                .getOutput(ToolBox.OutputKind.DIRECT);
+                .writeAll();
     }
 
     @Test
@@ -195,8 +194,7 @@ public class AutomaticModules extends ModuleTestBase {
                 .outdir(depClasses)
                 .files(findJavaFiles(depSrc))
                 .run()
-                .writeAll()
-                .getOutput(ToolBox.OutputKind.DIRECT);
+                .writeAll();
 
         Path moduleJar = modulePath.resolve("m1.jar");
 
@@ -220,7 +218,6 @@ public class AutomaticModules extends ModuleTestBase {
                 .outdir(testClasses)
                 .files(findJavaFiles(testSrc))
                 .run()
-                .writeAll()
-                .getOutput(ToolBox.OutputKind.DIRECT);
+                .writeAll();
     }
 }

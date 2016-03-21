@@ -155,7 +155,7 @@ public class DocPaths {
         return DocPath.create(mdle.getQualifiedName() + "-summary.html");
     }
 
-    /** The name of the file for the overview frame. */
+    /** The name of the file for the module overview frame. */
     public static final DocPath MODULE_OVERVIEW_FRAME = DocPath.create("module-overview-frame.html");
 
     /** The name of the sub-package from which resources are read. */

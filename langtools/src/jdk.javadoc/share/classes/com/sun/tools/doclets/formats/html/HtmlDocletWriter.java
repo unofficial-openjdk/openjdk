@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -287,35 +287,6 @@ public class HtmlDocletWriter extends HtmlDocWriter {
     }
 
     /**
-     * Get Module Package link, with target frame.
-     *
-     * @param pd the packageDoc object
-     * @param target name of the target frame
-     * @param label tag for the link
-     * @param moduleName the name of the module being documented
-     * @return a content for the target module packages link
-     */
-    public Content getTargetModulePackageLink(PackageDoc pd, String target,
-            Content label, String moduleName) {
-        return getHyperLink(pathString(pd, DocPaths.PACKAGE_SUMMARY),
-                label, "", target);
-    }
-
-    /**
-     * Get Module link, with target frame.
-     *
-     * @param target name of the target frame
-     * @param label tag for the link
-     * @param moduleName the name of the module being documented
-     * @return a content for the target module link
-     */
-    public Content getTargetModuleLink(String target, Content label,
-            String moduleName) {
-        return getHyperLink(pathToRoot.resolve(
-                DocPaths.moduleSummary(moduleName)), label, "", target);
-    }
-
-    /**
      * Generates the HTML document tree and prints it out.
      *
      * @param metakeywords Array of String keywords for META tag. Each element
@@ -522,6 +493,8 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                 fixedNavDiv.addContent(subDiv);
                 fixedNavDiv.addContent(HtmlConstants.END_OF_TOP_NAVBAR);
                 tree.addContent(fixedNavDiv);
+                HtmlTree paddingDiv = HtmlTree.DIV(HtmlStyle.navPadding, getSpace());
+                tree.addContent(paddingDiv);
             } else {
                 subDiv.addContent(getMarkerAnchor(SectionName.SKIP_NAVBAR_BOTTOM));
                 tree.addContent(subDiv);

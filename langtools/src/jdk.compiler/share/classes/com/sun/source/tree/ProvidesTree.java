@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,10 +25,26 @@
 
 package com.sun.source.tree;
 
-/*
+/**
+ * A tree node for a 'provides' directive in a module declaration.
  *
+ * For example:
+ * <pre>
+ *    provides <em>service-name</em> with <em>implementation-name</em>;
+ * </pre>
+
+ * @since 9
  */
 public interface ProvidesTree extends DirectiveTree {
+    /**
+     * Returns the name of the service type being provided.
+     * @return the name of the service type being provided
+     */
     ExpressionTree getServiceName();
+
+    /**
+     * Returns the name of the implementation type being provided.
+     * @return the name of the implementation type being provided
+     */
     ExpressionTree getImplementationName();
 }

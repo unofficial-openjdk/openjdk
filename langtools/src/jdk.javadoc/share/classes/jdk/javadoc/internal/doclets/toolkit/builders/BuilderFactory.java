@@ -105,7 +105,7 @@ public class BuilderFactory {
     /**
      * Return the builder that builds the module summary.
      *
-     * @param module the module being documented.
+     * @param mdle the module being documented.
      * @param prevModule the previous module being documented.
      * @param nextModule the next module being documented.
      * @return the builder that builds the module summary.

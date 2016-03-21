@@ -29,12 +29,15 @@
  *      jdk.compiler/com.sun.tools.javac.api
  *      jdk.compiler/com.sun.tools.javac.code
  *      jdk.compiler/com.sun.tools.javac.main
+ *      jdk.jdeps/com.sun.tools.javap
  * @build ToolBox ModuleTestBase
  * @run main EdgeCases
  */
 
+import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -42,7 +45,6 @@ import java.util.Objects;
 import java.util.Set;
 
 import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
@@ -130,9 +132,9 @@ public class EdgeCases extends ModuleTestBase {
             }
 
             Set<String> expected = new HashSet<>(
-                    Arrays.asList("testParseEnterAnalyze/classes/p/package-info.class",
-                                  "testParseEnterAnalyze/classes/module-info.class",
-                                  "testParseEnterAnalyze/classes/p/T.class")
+                    Arrays.asList(Paths.get("testParseEnterAnalyze", "classes", "p", "package-info.class").toString(),
+                                  Paths.get("testParseEnterAnalyze", "classes", "module-info.class").toString(),
+                                  Paths.get("testParseEnterAnalyze", "classes", "p", "T.class").toString())
             );
 
             if (!Objects.equals(expected, generated))
@@ -229,6 +231,37 @@ public class EdgeCases extends ModuleTestBase {
                 .files(findJavaFiles(src_m3))
                 .run()
                 .writeAll();
+    }
+
+    @Test
+    void testEmptyImplicitModuleInfo(Path base) throws Exception {
+        Path src = base.resolve("src");
+        Path src_m1 = src.resolve("m1");
+        Files.createDirectories(src_m1);
+        try (Writer w = Files.newBufferedWriter(src_m1.resolve("module-info.java"))) {}
+        tb.writeJavaFiles(src_m1,
+                          "package test; public class Test {}");
+        Path classes = base.resolve("classes");
+        tb.createDirectories(classes);
+
+        tb.new JavacTask()
+                .options("-sourcepath", src_m1.toString(),
+                         "-XDrawDiagnostics")
+                .outdir(classes)
+                .files(findJavaFiles(src_m1.resolve("test")))
+                .run(ToolBox.Expect.FAIL)
+                .writeAll();
+
+        tb.writeJavaFiles(src_m1,
+                          "module m1 {}");
+
+        tb.new JavacTask()
+                .options("-sourcepath", src_m1.toString())
+                .outdir(classes)
+                .files(findJavaFiles(src_m1.resolve("test")))
+                .run()
+                .writeAll();
+
     }
 
 }

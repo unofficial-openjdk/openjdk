@@ -33,6 +33,7 @@ import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
+import java.lang.module.ResolvedModule;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystemNotFoundException;
@@ -55,15 +56,15 @@ public class ModulePaths {
     }
 
     public ModulePaths(String upgradeModulePath, String modulePath, List<Path> jars) {
-        ModuleFinder finder = ModuleFinder.ofInstalled();
+        ModuleFinder finder = ModuleFinder.ofSystem();
         if (upgradeModulePath != null) {
-            finder = ModuleFinder.concat(createModulePathFinder(upgradeModulePath), finder);
+            finder = ModuleFinder.compose(createModulePathFinder(upgradeModulePath), finder);
         }
         if (jars.size() > 0) {
-            finder = ModuleFinder.concat(finder, ModuleFinder.of(jars.toArray(new Path[0])));
+            finder = ModuleFinder.compose(finder, ModuleFinder.of(jars.toArray(new Path[0])));
         }
         if (modulePath != null) {
-            finder = ModuleFinder.concat(finder, createModulePathFinder(modulePath));
+            finder = ModuleFinder.compose(finder, createModulePathFinder(modulePath));
         }
         this.finder = finder;
 
@@ -82,14 +83,15 @@ public class ModulePaths {
     }
 
     Set<Module> dependences(String... roots) {
-        Configuration config = Configuration.resolve(finder,
-                                                     Configuration.empty(),
-                                                     ModuleFinder.empty(),
-                                                     roots);
-        return config.descriptors().stream()
-                .map(ModuleDescriptor::name)
+        Configuration cf = configuration(roots);
+        return cf.modules().stream()
+                .map(ResolvedModule::name)
                 .map(modules::get)
                 .collect(Collectors.toSet());
+    }
+
+    Configuration configuration(String... roots) {
+        return Configuration.empty().resolveRequires(finder, ModuleFinder.empty(), Set.of(roots));
     }
 
     private static ModuleFinder createModulePathFinder(String mpaths) {
@@ -118,7 +120,7 @@ public class ModulePaths {
             builder.require(req.name(), req.modifiers().contains(PUBLIC));
         }
         for (ModuleDescriptor.Exports exp : md.exports()) {
-            builder.export(exp.source(), exp.targets().orElse(Collections.emptySet()));
+            builder.export(exp.source(), exp.targets());
         }
         builder.packages(md.packages());
 
@@ -139,7 +141,6 @@ public class ModulePaths {
         private final static FileSystem fs;
         private final static Path root;
         private final static Map<String, Module> installed = new HashMap<>();
-
         static {
             if (isJrtAvailable()) {
                 // jrt file system
@@ -152,7 +153,7 @@ public class ModulePaths {
                 root = Paths.get(javahome, "modules");
             }
 
-            ModuleFinder.ofInstalled().findAll().stream()
+            ModuleFinder.ofSystem().findAll().stream()
                  .forEach(mref ->
                      installed.computeIfAbsent(mref.descriptor().name(),
                                                mn -> toModule(new Module.Builder(mn, true), mref))

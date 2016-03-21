@@ -49,11 +49,12 @@ public class T6400303 {
     public static void main(String... args) {
         javax.tools.JavaCompiler tool = ToolProvider.getSystemJavaCompiler();
         JavacTaskImpl task = (JavacTaskImpl)tool.getTask(null, null, null, null, null, null);
+        Symtab syms = Symtab.instance(task.getContext());
         //initialize unnamed module:
-        Modules.instance(task.getContext()).enter(List.nil(), Symtab.instance(task.getContext()).errSymbol);
+        Modules.instance(task.getContext()).enter(List.nil(), syms.errSymbol);
         JavaCompiler compiler = JavaCompiler.instance(task.getContext());
         try {
-            compiler.resolveIdent("Test$1").complete();
+            compiler.resolveIdent(syms.unnamedModule, "Test$1").complete();
         } catch (CompletionFailure ex) {
             System.err.println("Got expected completion failure: " + ex.getLocalizedMessage());
             return;

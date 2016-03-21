@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,14 +28,15 @@
  * @modules
  *      jdk.compiler/com.sun.tools.javac.api
  *      jdk.compiler/com.sun.tools.javac.main
+ *      jdk.jdeps/com.sun.tools.javap
  * @build ToolBox ModuleTestBase
  * @run main PluginsInModulesTest
  */
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-
-import com.sun.source.util.JavacTask;
+import java.util.Arrays;
+import java.util.List;
 
 public class PluginsInModulesTest extends ModuleTestBase {
 
@@ -87,7 +88,7 @@ public class PluginsInModulesTest extends ModuleTestBase {
             "    }\n" +
             "}";
 
-    private static final String testClass = "class Test{}";
+    private static final String testClass = "class Test { }";
 
     void initialization(Path base) throws Exception {
         moduleSrc = base.resolve("plugin_mods_src");
@@ -125,16 +126,16 @@ public class PluginsInModulesTest extends ModuleTestBase {
     @Test
     void testUseOnlyOneProcessor(Path base) throws Exception {
         initialization(base);
-        String log = tb.new JavacTask()
+        List<String> log = tb.new JavacTask()
                 .options("-processormodulepath", processorCompiledModules.toString(),
                         "-Xplugin:simpleplugin1")
                 .outdir(classes)
                 .sources(testClass)
                 .run()
                 .writeAll()
-                .getOutput(ToolBox.OutputKind.STDOUT);
-        if (!log.trim().equals("simpleplugin1 started for event COMPILATION\n" +
-                               "simpleplugin1 finished for event COMPILATION")) {
+                .getOutputLines(ToolBox.OutputKind.STDOUT);
+        if (!log.equals(Arrays.asList("simpleplugin1 started for event COMPILATION",
+                                      "simpleplugin1 finished for event COMPILATION"))) {
             throw new AssertionError("Unexpected output: " + log);
         }
     }

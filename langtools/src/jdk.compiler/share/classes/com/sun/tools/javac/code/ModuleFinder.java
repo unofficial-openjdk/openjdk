@@ -40,8 +40,11 @@ import javax.tools.StandardLocation;
 
 import com.sun.tools.javac.code.Symbol.CompletionFailure;
 import com.sun.tools.javac.code.Symbol.ModuleSymbol;
+import com.sun.tools.javac.resources.CompilerProperties.Errors;
+import com.sun.tools.javac.resources.CompilerProperties.Fragments;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.JCDiagnostic;
+import com.sun.tools.javac.util.JCDiagnostic.Fragment;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
 import com.sun.tools.javac.util.Log;
@@ -200,8 +203,7 @@ public class ModuleFinder {
 //                msym.module_info = info;
                 msym = ModuleSymbol.create(null, names.module_info);
                 msym.module_info.classfile = fo;
-                // TODO: defer with completer?
-                classFinder.fillIn(msym.module_info);
+                msym.completer = sym -> classFinder.fillIn(msym.module_info);
 //                // TODO: should we do the following here, or as soon as we find the name in
 //                // the source or class file?
 //                // Consider the case when the class/source path module shadows one on the
@@ -264,8 +266,8 @@ public class ModuleFinder {
                             results.add(msym);
                         }
                     } else {
-                        log.error("duplicate.module.on.path",
-                                getDescription(moduleLocationIterator.outer), n);
+                        log.error(Errors.DuplicateModuleOnPath(
+                                getDescription(moduleLocationIterator.outer), n));
                     }
                 } catch (IOException e) {
                     // skip location for now?  log error?
@@ -319,8 +321,15 @@ public class ModuleFinder {
         }
     }
 
-    JCDiagnostic getDescription(StandardLocation l) {
-        return diags.fragment("locn." + StringUtils.toLowerCase(l.getName()));
+    Fragment getDescription(StandardLocation l) {
+        switch (l) {
+            case MODULE_PATH: return Fragments.LocnModule_path;
+            case MODULE_SOURCE_PATH: return Fragments.LocnModule_source_path;
+            case SYSTEM_MODULES: return Fragments.LocnSystem_modules;
+            case UPGRADE_MODULE_PATH: return Fragments.LocnUpgrade_module_path;
+            default:
+                throw new AssertionError();
+        }
     }
 
 }

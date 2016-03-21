@@ -364,6 +364,7 @@ public class DocletInvoker {
     /**
      * Ensures that the module of the given class is readable to this
      * module.
+     * @param targetClass class in module to be made readable
      */
     private void ensureReadable(Class<?> targetClass) {
         try {
@@ -381,6 +382,12 @@ public class DocletInvoker {
         }
     }
 
+    /**
+     * Export javadoc internal API to the unnamed module for a classloader.
+     * This is to support continued use of existing non-standard doclets that
+     * use the internal toolkit API and related classes.
+     * @param cl the classloader
+     */
     private void exportInternalAPI(ClassLoader cl) {
         String[] packages = {
             "com.sun.tools.doclets",

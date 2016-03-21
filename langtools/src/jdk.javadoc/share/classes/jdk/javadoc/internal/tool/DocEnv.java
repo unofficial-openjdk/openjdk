@@ -717,7 +717,7 @@ public class DocEnv {
 
                 @Override @DefinedBy(Api.LANGUAGE_MODEL)
                 public Boolean visitUnknown(Element e, Void p) {
-                    throw new AssertionError("got element: " + e);
+                    throw new AssertionError("unknown element: " + e);
                 }
 
                 @Override @DefinedBy(Api.LANGUAGE_MODEL)

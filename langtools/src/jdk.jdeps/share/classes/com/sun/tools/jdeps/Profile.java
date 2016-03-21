@@ -42,7 +42,11 @@ enum Profile {
                             "jdk.naming.dns", "jdk.naming.rmi",
                             "jdk.management"),
     // need a way to determine JRE modules
-    FULL_JRE("Full JRE", 4, "java.se", "jdk.charsets",
+    SE_JRE("Java SE JRE", 4, "java.se", "jdk.charsets",
+                            "jdk.crypto.ec", "jdk.crypto.pkcs11",
+                            "jdk.crypto.mscapi", "jdk.crypto.ucrypto", "jdk.jvmstat",
+                            "jdk.localedata", "jdk.scripting.nashorn", "jdk.zipfs"),
+    FULL_JRE("Full JRE", 5, "java.se.ee", "jdk.charsets",
                             "jdk.crypto.ec", "jdk.crypto.pkcs11",
                             "jdk.crypto.mscapi", "jdk.crypto.ucrypto", "jdk.jvmstat",
                             "jdk.localedata", "jdk.scripting.nashorn", "jdk.zipfs");

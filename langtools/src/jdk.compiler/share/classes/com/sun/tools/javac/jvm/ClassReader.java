@@ -1000,7 +1000,7 @@ public class ClassReader {
                 protected void read(Symbol sym, int attrLen) {
                     ClassSymbol c = (ClassSymbol) sym;
                     if (currentModule.module_info == c) {
-                        //XXX prevent entering the classes too soon.
+                        //prevent entering the classes too soon:
                         skipInnerClasses();
                     } else {
                         readInnerClasses(c);

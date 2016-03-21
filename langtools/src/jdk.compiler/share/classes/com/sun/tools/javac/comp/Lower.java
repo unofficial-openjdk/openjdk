@@ -2350,7 +2350,6 @@ public class Lower extends TreeTranslator {
         flags = flags | Flags.SYNTHETIC;
         ClassSymbol c = tree.packge.package_info;
         c.setAttributes(tree.packge);
-        c.modle = attrEnv.toplevel.modle;
         c.flags_field |= flags;
         ClassType ctype = (ClassType) c.type;
         ctype.supertype_field = syms.objectType;

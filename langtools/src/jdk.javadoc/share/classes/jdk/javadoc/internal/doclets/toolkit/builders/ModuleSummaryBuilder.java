@@ -77,7 +77,7 @@ public class ModuleSummaryBuilder extends AbstractBuilder {
      * Construct a new ModuleSummaryBuilder.
      *
      * @param context  the build context.
-     * @param module the module being documented.
+     * @param mdle the module being documented.
      * @param moduleWriter the doclet specific writer that will output the
      *        result.
      */
@@ -92,7 +92,7 @@ public class ModuleSummaryBuilder extends AbstractBuilder {
      * Construct a new ModuleSummaryBuilder.
      *
      * @param context  the build context.
-     * @param module the module being documented.
+     * @param mdle the module being documented.
      * @param moduleWriter the doclet specific writer that will output the
      *        result.
      *

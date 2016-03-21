@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -101,19 +101,6 @@ public class MetaKeywords {
         if( configuration.keywords ) {
             String pkgName = utils.getPackageName(packageDoc);
             return new String[] { pkgName + " " + "package" };
-        } else {
-            return new String[] {};
-        }
-    }
-
-    /**
-     * Get the module keywords.
-     *
-     * @param module the module being documented
-     */
-    public String[] getMetaKeywordsForModule(String moduleName) {
-        if( configuration.keywords ) {
-            return new String[] { moduleName + " " + "module" };
         } else {
             return new String[] {};
         }

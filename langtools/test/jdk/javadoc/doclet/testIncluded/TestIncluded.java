@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,35 +21,35 @@
  * questions.
  */
 
-/**
+/*
  * @test
- * @summary NPE while compiling empty javafile with -modulesourcepath option
- * @library /tools/lib
- * @modules
- *      jdk.compiler/com.sun.tools.javac.api
- *      jdk.compiler/com.sun.tools.javac.main
- * @build ToolBox ModuleTestBase
- * @run main NPEEmptyFileTest
+ * @bug      8149842
+ * @summary  Verify that non included classes are not inspected.
+ * @library  ../lib
+ * @modules  jdk.javadoc/jdk.javadoc.internal.tool
+ * @build    JavadocTester
+ * @run main TestIncluded
  */
 
-import java.nio.file.Files;
-import java.nio.file.Path;
+public class TestIncluded extends JavadocTester {
 
-public class NPEEmptyFileTest extends ModuleTestBase {
     public static void main(String... args) throws Exception {
-        new NPEEmptyFileTest().runTests();
+        TestIncluded tester = new TestIncluded();
+        tester.runTests();
     }
 
+    /*
+     * The arguments specify only "pkg" but "parent" sources are on the path.
+     * The class parent.A utilizes a non existent taglet, that will trigger
+     * an error, if doc comments are inspected.
+     */
     @Test
-    void compileEmptyFile(Path base) throws Exception {
-        Path modules = base.resolve("modules");
-        Files.createDirectories(modules);
-        Path emptyJavaFile = base.resolve("Test.java");
-        tb.writeFile(emptyJavaFile, "");
-        tb.new JavacTask(ToolBox.Mode.EXEC)
-                .options("-modulesourcepath", modules.toString(),
-                        "-d", modules.toString(), emptyJavaFile.toString())
-                .run()
-                .writeAll();
+    void test() {
+        javadoc("-d", "out",
+                "-Xdoclint:all",
+                "-sourcepath", testSrc,
+                "pkg");
+        checkExit(Exit.OK);
+        checkFiles(false, "parent/A.html");
     }
 }

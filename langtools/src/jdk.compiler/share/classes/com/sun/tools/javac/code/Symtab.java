@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,13 +25,13 @@
 
 package com.sun.tools.javac.code;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import javax.lang.model.element.ElementVisitor;
-import javax.tools.JavaFileObject;
 
 import com.sun.tools.javac.code.Scope.WriteableScope;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
@@ -50,7 +50,6 @@ import com.sun.tools.javac.code.Type.JCVoidType;
 import com.sun.tools.javac.code.Type.MethodType;
 import com.sun.tools.javac.code.Type.UnknownType;
 import com.sun.tools.javac.comp.Modules;
-import com.sun.tools.javac.jvm.Target;
 import com.sun.tools.javac.util.Assert;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.Convert;
@@ -59,7 +58,6 @@ import com.sun.tools.javac.util.DefinedBy.Api;
 import com.sun.tools.javac.util.Iterators;
 import com.sun.tools.javac.util.JavacMessages;
 import com.sun.tools.javac.util.List;
-import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
 import com.sun.tools.javac.util.Options;
@@ -451,7 +449,7 @@ public class Symtab {
             java_base = enterModule(names.java_base);
             //avoid completing java.base during the Symtab initialization
             java_base.completer = Completer.NULL_COMPLETER;
-            java_base.visiblePackages = Collections.emptySet();
+            java_base.visiblePackages = Collections.emptyMap();
         } else {
             java_base = noModule;
         }
@@ -617,13 +615,14 @@ public class Symtab {
 
         msym.complete();
 
-        for (PackageSymbol pack : msym.visiblePackages) {
-            if (pack.fullname == flatName) {
-                return pack;
-            }
-        }
+        PackageSymbol pack;
 
-        PackageSymbol pack = getPackage(msym, flatName);
+        pack = msym.visiblePackages.get(flatName);
+
+        if (pack != null)
+            return pack;
+
+        pack = getPackage(msym, flatName);
 
         if (pack != null && pack.exists())
             return pack;
@@ -640,7 +639,7 @@ public class Symtab {
             PackageSymbol unnamedPack = getPackage(unnamedModule, flatName);
 
             if (unnamedPack != null && unnamedPack.exists()) {
-                msym.visiblePackages.add(unnamedPack);
+                msym.visiblePackages.put(unnamedPack.fullname, unnamedPack);
                 return unnamedPack;
             }
 
@@ -652,7 +651,7 @@ public class Symtab {
             unnamedPack = enterPackage(unnamedModule, flatName);
             unnamedPack.complete();
             if (unnamedPack.exists()) {
-                msym.visiblePackages.add(unnamedPack);
+                msym.visiblePackages.put(unnamedPack.fullname, unnamedPack);
                 return unnamedPack;
             }
 
@@ -706,7 +705,7 @@ public class Symtab {
         Assert.checkNonNull(currModule);
         PackageSymbol p = getPackage(currModule, fullname);
         if (p == null) {
-            Assert.check(!fullname.isEmpty(), "rootPackage missing!; currModule: " + currModule);
+            Assert.check(!fullname.isEmpty(), () -> "rootPackage missing!; currModule: " + currModule);
             p = new PackageSymbol(
                     Convert.shortName(fullname),
                     enterPackage(currModule, Convert.packagePart(fullname)));
@@ -802,7 +801,7 @@ public class Symtab {
         return result;
     }
 
-    public Iterable<ModuleSymbol> getAllModules() {
+    public Collection<ModuleSymbol> getAllModules() {
         return modules.values();
     }
 }
