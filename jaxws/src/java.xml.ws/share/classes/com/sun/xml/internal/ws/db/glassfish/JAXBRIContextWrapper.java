@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,6 @@ import javax.xml.namespace.QName;
 import com.sun.xml.internal.bind.api.JAXBRIContext;
 import com.sun.xml.internal.bind.api.TypeReference;
 import com.sun.xml.internal.bind.v2.model.runtime.RuntimeTypeInfoSet;
-import com.sun.xml.internal.ws.Modules;
 import com.sun.xml.internal.ws.spi.db.BindingContext;
 import com.sun.xml.internal.ws.spi.db.XMLBridge;
 import com.sun.xml.internal.ws.spi.db.TypeInfo;
@@ -178,8 +177,6 @@ class JAXBRIContextWrapper implements BindingContext {
     @Override
     public Object newWrapperInstace(Class<?> wrapperType)
             throws InstantiationException, IllegalAccessException {
-
-        Modules.ensureReadable(JAXBRIContextWrapper.class, wrapperType);
         return wrapperType.newInstance();
     }
 }

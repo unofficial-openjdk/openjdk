@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,6 @@ import java.util.List;
 
 import javax.jws.soap.SOAPBinding.Style;
 
-import com.sun.xml.internal.ws.Modules;
 import com.sun.xml.internal.ws.api.message.MessageContextFactory;
 import com.sun.xml.internal.ws.model.JavaMethodImpl;
 import com.sun.xml.internal.ws.model.ParameterImpl;
@@ -102,10 +101,9 @@ public class StubAsyncHandler extends StubHandler {
     }
 
         protected void initArgs(Object[] args) throws Exception {
-            if (asyncBeanClass != null) {
-                Modules.ensureReadable(this.getClass(), asyncBeanClass);
-                args[0] = asyncBeanClass.newInstance();
-            }
+        if (asyncBeanClass != null) {
+            args[0] = asyncBeanClass.newInstance();
+        }
         }
 
     ValueGetterFactory getValueGetterFactory() {

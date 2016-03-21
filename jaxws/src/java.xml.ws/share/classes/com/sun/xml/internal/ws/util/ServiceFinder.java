@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,6 @@ package com.sun.xml.internal.ws.util;
 
 import com.sun.istack.internal.NotNull;
 import com.sun.istack.internal.Nullable;
-import com.sun.xml.internal.ws.Modules;
 import com.sun.xml.internal.ws.api.Component;
 import com.sun.xml.internal.ws.api.ComponentEx;
 import com.sun.xml.internal.ws.api.server.ContainerResolver;
@@ -339,13 +338,13 @@ public final class ServiceFinder<T> implements Iterable<T> {
             int lc = 1;
             while ((lc = parseLine(service, u, r, lc, names, returned)) >= 0) ;
         } catch (IOException x) {
-            fail(service, ": " + x);
+            fail(service, ": " + x +";URL is :"+u.toString());
         } finally {
             try {
                 if (r != null) r.close();
                 if (in != null) in.close();
             } catch (IOException y) {
-                fail(service, ": " + y);
+                fail(service, ": " + y +";URL is :"+u.toString());
             }
         }
         return names.iterator();
@@ -506,9 +505,7 @@ public final class ServiceFinder<T> implements Iterable<T> {
             String cn = sn.className;
             URL currentConfig = sn.config;
             try {
-                Class<?> clazz = Class.forName(cn, true, loader);
-                Modules.ensureReadable(ServiceFinder.class, clazz);
-                return (T) service.cast(clazz.newInstance());
+                return service.cast(Class.forName(cn, true, loader).newInstance());
             } catch (ClassNotFoundException x) {
                 fail(service, "Provider " + cn + " is specified in "+currentConfig+" but not found");
             } catch (Exception x) {

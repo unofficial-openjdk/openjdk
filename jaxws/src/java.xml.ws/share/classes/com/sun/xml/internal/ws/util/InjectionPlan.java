@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,8 +24,6 @@
  */
 
 package com.sun.xml.internal.ws.util;
-
-import com.sun.xml.internal.ws.Modules;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -86,7 +84,6 @@ public abstract class InjectionPlan<T, R> {
             AccessController.doPrivileged(new PrivilegedAction<Object>() {
                 public Object run() {
                     try {
-                        Modules.ensureReadable(getClass(), field.getDeclaringClass());
                         if (!field.isAccessible()) {
                             field.setAccessible(true);
                         }
@@ -124,7 +121,6 @@ public abstract class InjectionPlan<T, R> {
         AccessController.doPrivileged(new PrivilegedAction<Void>() {
             public Void run() {
                 try {
-                    Modules.ensureReadable(InjectionPlan.class, method.getDeclaringClass());
                     if (!method.isAccessible()) {
                         method.setAccessible(true);
                     }

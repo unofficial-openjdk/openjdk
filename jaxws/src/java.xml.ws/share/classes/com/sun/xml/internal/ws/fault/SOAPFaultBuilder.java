@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,6 @@ package com.sun.xml.internal.ws.fault;
 
 import com.sun.istack.internal.NotNull;
 import com.sun.istack.internal.Nullable;
-import com.sun.xml.internal.ws.Modules;
 import com.sun.xml.internal.ws.api.SOAPVersion;
 import com.sun.xml.internal.ws.api.message.Message;
 import com.sun.xml.internal.ws.api.model.ExceptionType;
@@ -38,6 +37,7 @@ import com.sun.xml.internal.ws.message.jaxb.JAXBMessage;
 import com.sun.xml.internal.ws.message.FaultMessage;
 import com.sun.xml.internal.ws.model.CheckedExceptionImpl;
 import com.sun.xml.internal.ws.model.JavaMethodImpl;
+import com.sun.xml.internal.ws.spi.db.WrapperComposite;
 import com.sun.xml.internal.ws.spi.db.XMLBridge;
 import com.sun.xml.internal.ws.util.DOMUtil;
 import com.sun.xml.internal.ws.util.StringUtils;
@@ -127,7 +127,6 @@ public abstract class SOAPFaultBuilder {
 
         }
         Class exceptionClass = ce.getExceptionClass();
-        Modules.ensureReadable(SOAPFaultBuilder.class, exceptionClass);
         try {
             Constructor constructor = exceptionClass.getConstructor(String.class, (Class) ce.getDetailType().type);
             Exception exception = (Exception) constructor.newInstance(getFaultString(), getJAXBObject(detail, ce));
@@ -329,7 +328,6 @@ public abstract class SOAPFaultBuilder {
     private static Object getFaultDetail(CheckedExceptionImpl ce, Throwable exception) {
         if (ce == null)
             return null;
-        Modules.ensureReadable(SOAPFaultBuilder.class, exception.getClass());
         if (ce.getExceptionType().equals(ExceptionType.UserDefined)) {
             return createDetailFromUserDefinedException(ce, exception);
         }
