@@ -311,6 +311,10 @@ ifeq ($(findstring $(OPENJDK_TARGET_OS),windows macosx),)
         $(JDK_TOPDIR)/src/java.desktop/$(OPENJDK_TARGET_OS_TYPE)/native/common/awt \
         #
 
+    ifneq ($(filter $(OPENJDK_TARGET_OS),linux solaris), )
+      LIBAWT_XAWT_DIRS += $(JDK_TOPDIR)/src/java.desktop/unix/native/common/awt/systemscale
+    endif
+
     LIBAWT_XAWT_EXCLUDES := medialib
 
     LIBAWT_XAWT_CFLAGS := $(addprefix -I, $(shell $(FIND) $(LIBAWT_XAWT_DIRS) -type d)) \
@@ -881,6 +885,10 @@ ifndef BUILD_HEADLESS_ONLY
     LIBSPLASHSCREEN_DIRS += $(JDK_TOPDIR)/src/java.desktop/$(OPENJDK_TARGET_OS_TYPE)/native/libsplashscreen
   else
     LIBSPLASHSCREEN_DIRS += $(JDK_TOPDIR)/src/java.desktop/macosx/native/libsplashscreen
+  endif
+
+  ifneq ($(filter $(OPENJDK_TARGET_OS),linux solaris), )
+    LIBSPLASHSCREEN_DIRS += $(JDK_TOPDIR)/src/java.desktop/unix/native/common/awt/systemscale
   endif
 
   LIBSPLASHSCREEN_CFLAGS += -DSPLASHSCREEN -DPNG_NO_MMX_CODE -DPNG_ARM_NEON_OPT=0 \
