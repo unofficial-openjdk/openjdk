@@ -2331,6 +2331,7 @@ bool G1CollectedHeap::should_do_concurrent_full_gc(GCCause::Cause cause) {
     case GCCause::_java_lang_system_gc:     return ExplicitGCInvokesConcurrent;
     case GCCause::_g1_humongous_allocation: return true;
     case GCCause::_update_allocation_context_stats_inc: return true;
+    case GCCause::_wb_conc_mark:            return true;
     default:                                return false;
   }
 }
@@ -3766,6 +3767,9 @@ class RegisterHumongousWithInCSetFastTestClosure : public HeapRegionClosure {
             _dcq.enqueue(card_ptr);
           }
         }
+        assert(hrrs.n_yielded() == r->rem_set()->occupied(),
+               err_msg("Remembered set hash maps out of sync, cur: " SIZE_FORMAT " entries, next: " SIZE_FORMAT " entries",
+               hrrs.n_yielded(), r->rem_set()->occupied()));
         r->rem_set()->clear_locked();
       }
       assert(r->rem_set()->is_empty(), "At this point any humongous candidate remembered set must be empty.");
@@ -3834,6 +3838,16 @@ G1CollectedHeap::cleanup_surviving_young_words() {
   FREE_C_HEAP_ARRAY(size_t, _surviving_young_words, mtGC);
   _surviving_young_words = NULL;
 }
+
+class VerifyRegionRemSetClosure : public HeapRegionClosure {
+  public:
+    bool doHeapRegion(HeapRegion* hr) {
+      if (!hr->continuesHumongous()) {
+        hr->verify_rem_set();
+      }
+      return false;
+    }
+};
 
 #ifdef ASSERT
 class VerifyCSetClosure: public HeapRegionClosure {
@@ -3977,8 +3991,15 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
 
     TraceCPUTime tcpu(G1Log::finer(), true, gclog_or_tty);
 
-    uint active_workers = (G1CollectedHeap::use_parallel_gc_threads() ?
-                                workers()->active_workers() : 1);
+    uint active_workers = AdaptiveSizePolicy::calc_active_workers(workers()->total_workers(),
+                                                                  workers()->active_workers(),
+                                                                  Threads::number_of_non_daemon_threads());
+    assert(UseDynamicNumberOfGCThreads ||
+           active_workers == workers()->total_workers(),
+           "If not dynamic should be using all the  workers");
+    workers()->set_active_workers(active_workers);
+
+
     double pause_start_sec = os::elapsedTime();
     g1_policy()->phase_times()->note_gc_start(active_workers, mark_in_progress());
     log_gc_header();
@@ -4010,6 +4031,14 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
       gc_prologue(false);
       increment_total_collections(false /* full gc */);
       increment_gc_time_stamp();
+
+      if (VerifyRememberedSets) {
+        if (!VerifySilently) {
+          gclog_or_tty->print_cr("[Verifying RemSets before GC]");
+        }
+        VerifyRegionRemSetClosure v_cl;
+        heap_region_iterate(&v_cl);
+      }
 
       verify_before_gc();
       check_bitmaps("GC Start");
@@ -4087,6 +4116,13 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
 #endif // YOUNG_LIST_VERBOSE
 
         g1_policy()->finalize_cset(target_pause_time_ms, evacuation_info);
+
+        // Make sure the remembered sets are up to date. This needs to be
+        // done before register_humongous_regions_with_cset(), because the
+        // remembered sets are used there to choose eager reclaim candidates.
+        // If the remembered sets are not up to date we might miss some
+        // entries that need to be handled.
+        g1_rem_set()->cleanupHRRS();
 
         register_humongous_regions_with_in_cset_fast_test();
 
@@ -4234,6 +4270,14 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
         // is_gc_active() check to decided which top to use when
         // scanning cards (see CR 7039627).
         increment_gc_time_stamp();
+
+        if (VerifyRememberedSets) {
+          if (!VerifySilently) {
+            gclog_or_tty->print_cr("[Verifying RemSets after GC]");
+          }
+          VerifyRegionRemSetClosure v_cl;
+          heap_region_iterate(&v_cl);
+        }
 
         verify_after_gc();
         check_bitmaps("GC End");
@@ -5045,12 +5089,8 @@ class G1KlassCleaningTask : public StackObj {
 public:
 
   void clean_klass(InstanceKlass* ik) {
-    ik->clean_implementors_list(_is_alive);
-    ik->clean_method_data(_is_alive);
+    ik->clean_weak_instanceklass_links(_is_alive);
 
-    // G1 specific cleanup work that has
-    // been moved here to be done in parallel.
-    ik->clean_dependent_nmethods();
     if (JvmtiExport::has_redefined_a_class()) {
       InstanceKlass::purge_previous_versions(ik);
     }
@@ -5728,23 +5768,11 @@ void G1CollectedHeap::evacuate_collection_set(EvacuationInfo& evacuation_info) {
   hot_card_cache->reset_hot_cache_claimed_index();
   hot_card_cache->set_use_cache(false);
 
-  uint n_workers;
-  if (G1CollectedHeap::use_parallel_gc_threads()) {
-    n_workers =
-      AdaptiveSizePolicy::calc_active_workers(workers()->total_workers(),
-                                     workers()->active_workers(),
-                                     Threads::number_of_non_daemon_threads());
+  const uint n_workers = workers()->active_workers();
     assert(UseDynamicNumberOfGCThreads ||
            n_workers == workers()->total_workers(),
            "If not dynamic should be using all the  workers");
-    workers()->set_active_workers(n_workers);
     set_par_threads(n_workers);
-  } else {
-    assert(n_par_threads() == 0,
-           "Should be the original non-parallel value");
-    n_workers = 1;
-  }
-
 
   init_for_evac_failure(NULL);
 

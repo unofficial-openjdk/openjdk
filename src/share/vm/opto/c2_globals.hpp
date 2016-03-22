@@ -205,6 +205,9 @@
   notproduct(bool, TraceProfileTripCount, false,                            \
           "Trace profile loop trip count information")                      \
                                                                             \
+  product(bool, UseCountedLoopSafepoints, false,                            \
+          "Force counted loops to keep a safepoint")                        \
+                                                                            \
   product(bool, UseLoopPredicate, true,                                     \
           "Generate a predicate to select fast/slow loop versions")         \
                                                                             \
@@ -659,6 +662,18 @@
   product(bool, UseMultiplyToLenIntrinsic, false,                           \
           "Enables intrinsification of BigInteger.multiplyToLen()")         \
                                                                             \
+  product(bool, UseSquareToLenIntrinsic, false,                             \
+          "Enables intrinsification of BigInteger.squareToLen()")           \
+                                                                            \
+  product(bool, UseMulAddIntrinsic, false,                                  \
+          "Enables intrinsification of BigInteger.mulAdd()")                \
+                                                                            \
+  product(bool, UseMontgomeryMultiplyIntrinsic, false,                      \
+          "Enables intrinsification of BigInteger.montgomeryMultiply()")    \
+                                                                            \
+  product(bool, UseMontgomerySquareIntrinsic, false,                        \
+          "Enables intrinsification of BigInteger.montgomerySquare()")      \
+                                                                            \
   product(bool, UseTypeSpeculation, true,                                   \
           "Speculatively propagate types from profiles")                    \
                                                                             \
@@ -669,6 +684,9 @@
   product_pd(bool, TrapBasedRangeChecks,                                    \
           "Generate code for range checks that uses a cmp and trap "        \
           "instruction raising SIGTRAP. Used on PPC64.")                    \
+                                                                            \
+  develop(bool, RenumberLiveNodes, true,                                    \
+          "Renumber live nodes")                                            \
 
 C2_FLAGS(DECLARE_DEVELOPER_FLAG, DECLARE_PD_DEVELOPER_FLAG, DECLARE_PRODUCT_FLAG, DECLARE_PD_PRODUCT_FLAG, DECLARE_DIAGNOSTIC_FLAG, DECLARE_EXPERIMENTAL_FLAG, DECLARE_NOTPRODUCT_FLAG)
 

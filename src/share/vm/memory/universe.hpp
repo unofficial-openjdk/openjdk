@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -148,8 +148,7 @@ class Universe: AllStatic {
   static LatestMethodCache* _finalizer_register_cache; // static method for registering finalizable objects
   static LatestMethodCache* _loader_addClass_cache;    // method for registering loaded classes in class loader vector
   static LatestMethodCache* _pd_implies_cache;         // method for checking protection domain attributes
-
-  static Method* _throw_illegal_access_error;
+  static LatestMethodCache* _throw_illegal_access_error_cache; // Unsafe.throwIllegalAccessError() method
 
   // preallocated error objects (no backtrace)
   static oop          _out_of_memory_error_java_heap;
@@ -248,6 +247,7 @@ class Universe: AllStatic {
   static int _verify_count;                           // number of verifies done
   // True during call to verify().  Should only be set/cleared in verify().
   static bool _verify_in_progress;
+  static long verify_flags;
 
   static void compute_verify_oop_data();
 
@@ -305,6 +305,7 @@ class Universe: AllStatic {
   static Method*      loader_addClass_method()        { return _loader_addClass_cache->get_method(); }
 
   static Method*      protection_domain_implies_method() { return _pd_implies_cache->get_method(); }
+  static Method*      throw_illegal_access_error()    { return _throw_illegal_access_error_cache->get_method(); }
 
   static oop          null_ptr_exception_instance()   { return _null_ptr_exception_instance;   }
   static oop          arithmetic_exception_instance() { return _arithmetic_exception_instance; }
@@ -313,8 +314,6 @@ class Universe: AllStatic {
 
   static inline oop   allocation_context_notification_obj();
   static inline void  set_allocation_context_notification_obj(oop obj);
-
-  static Method*      throw_illegal_access_error()    { return _throw_illegal_access_error; }
 
   static Array<int>*       the_empty_int_array()    { return _the_empty_int_array; }
   static Array<u2>*        the_empty_short_array()  { return _the_empty_short_array; }
@@ -376,6 +375,8 @@ class Universe: AllStatic {
   static void     set_narrow_ptrs_base(address a)         { _narrow_ptrs_base = a; }
   static address  narrow_ptrs_base()                      { return _narrow_ptrs_base; }
 
+  static void     print_compressed_oops_mode();
+
   // this is set in vm_version on sparc (and then reset in universe afaict)
   static void     set_narrow_oop_shift(int shift)         {
     _narrow_oop._shift   = shift;
@@ -425,6 +426,22 @@ class Universe: AllStatic {
   static void init_self_patching_vtbl_list(void** list, int count);
 
   // Debugging
+  enum VERIFY_FLAGS {
+    Verify_Threads = 1,
+    Verify_Heap = 2,
+    Verify_SymbolTable = 4,
+    Verify_StringTable = 8,
+    Verify_CodeCache = 16,
+    Verify_SystemDictionary = 32,
+    Verify_ClassLoaderDataGraph = 64,
+    Verify_MetaspaceAux = 128,
+    Verify_JNIHandles = 256,
+    Verify_CHeap = 512,
+    Verify_CodeCacheOops = 1024,
+    Verify_All = -1
+  };
+  static void initialize_verify_flags();
+  static bool should_verify_subset(uint subset);
   static bool verify_in_progress() { return _verify_in_progress; }
   static void verify(VerifyOption option, const char* prefix, bool silent = VerifySilently);
   static void verify(const char* prefix, bool silent = VerifySilently) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1279,6 +1279,13 @@ class CommandLineFlags {
           "Decay time (in milliseconds) to re-enable bulk rebiasing of a "  \
           "type after previous bulk rebias")                                \
                                                                             \
+  product(bool, ExitOnOutOfMemoryError, false,                              \
+          "JVM exits on the first occurrence of an out-of-memory error")    \
+                                                                            \
+  product(bool, CrashOnOutOfMemoryError, false,                             \
+          "JVM aborts, producing an error log and core/mini dump, on the "  \
+          "first occurrence of an out-of-memory error")                     \
+                                                                            \
   /* tracing */                                                             \
                                                                             \
   notproduct(bool, TraceRuntimeCalls, false,                                \
@@ -2251,6 +2258,14 @@ class CommandLineFlags {
                                                                             \
   diagnostic(bool, VerifyDuringGC, false,                                   \
           "Verify memory system during GC (between phases)")                \
+                                                                            \
+  diagnostic(ccstrlist, VerifySubSet, "",                                   \
+          "Memory sub-systems to verify when Verify*GC flag(s) "            \
+          "are enabled. One or more sub-systems can be specified "          \
+          "in a comma separated string. Sub-systems are: "                  \
+          "threads, heap, symbol_table, string_table, codecache, "          \
+          "dictionary, classloader_data_graph, metaspace, jni_handles, "    \
+          "c-heap, codecache_oops")                                         \
                                                                             \
   diagnostic(bool, GCParallelVerificationEnabled, true,                     \
           "Enable parallel memory system verification")                     \
