@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -57,11 +57,15 @@ void Parse::array_load(BasicType elem_type) {
 
 //--------------------------------array_store----------------------------------
 void Parse::array_store(BasicType elem_type) {
-  Node* adr = array_addressing(elem_type, 1);
+  const Type* elem = Type::TOP;
+  Node* adr = array_addressing(elem_type, 1, &elem);
   if (stopped())  return;     // guaranteed null or range check
   Node* val = pop();
   dec_sp(2);                  // Pop array and index
   const TypeAryPtr* adr_type = TypeAryPtr::get_array_body_type(elem_type);
+  if (elem == TypeInt::BOOL) {
+    elem_type = T_BOOLEAN;
+  }
   store_to_memory(control(), adr, val, elem_type, adr_type, StoreNode::release_if_reference(elem_type));
 }
 
@@ -154,7 +158,9 @@ Node* Parse::array_addressing(BasicType type, int vals, const Type* *result2) {
   // Check for always knowing you are throwing a range-check exception
   if (stopped())  return top();
 
-  Node* ptr = array_element_address(ary, idx, type, sizetype);
+  // Make array address computation control dependent to prevent it
+  // from floating above the range check during loop optimizations.
+  Node* ptr = array_element_address(ary, idx, type, sizetype, control());
 
   if (result2 != NULL)  *result2 = elemtype;
 
@@ -457,9 +463,12 @@ bool Parse::create_jump_tables(Node* key_val, SwitchRange* lo, SwitchRange* hi) 
 #ifdef _LP64
   // Clean the 32-bit int into a real 64-bit offset.
   // Otherwise, the jint value 0 might turn into an offset of 0x0800000000.
-  const TypeLong* lkeytype = TypeLong::make(CONST64(0), num_cases-1, Type::WidenMin);
-  key_val       = _gvn.transform( new (C) ConvI2LNode(key_val, lkeytype) );
+  const TypeInt* ikeytype = TypeInt::make(0, num_cases-1, Type::WidenMin);
+  // Make I2L conversion control dependent to prevent it from
+  // floating above the range check during loop optimizations.
+  key_val = C->constrained_convI2L(&_gvn, key_val, ikeytype, control());
 #endif
+
   // Shift the value by wordsize so we have an index into the table, rather
   // than a switch value
   Node *shiftWord = _gvn.MakeConX(wordSize);
