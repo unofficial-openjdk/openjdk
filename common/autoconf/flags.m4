@@ -427,6 +427,9 @@ AC_DEFUN_ONCE([FLAGS_SETUP_COMPILER_FLAGS_FOR_OPTIMIZATION],
   elif test "x$TOOLCHAIN_TYPE" = xxlc; then
     CFLAGS_DEBUG_SYMBOLS="-g"
     CXXFLAGS_DEBUG_SYMBOLS="-g"
+  elif test "x$TOOLCHAIN_TYPE" = xmicrosoft; then
+    CFLAGS_DEBUG_SYMBOLS="-Zi"
+    CXXFLAGS_DEBUG_SYMBOLS="-Zi"
   fi
   AC_SUBST(CFLAGS_DEBUG_SYMBOLS)
   AC_SUBST(CXXFLAGS_DEBUG_SYMBOLS)
@@ -585,6 +588,12 @@ AC_DEFUN_ONCE([FLAGS_SETUP_COMPILER_FLAGS_FOR_JDK],
   elif test "x$TOOLCHAIN_TYPE" = xxlc; then
     CFLAGS_JDK="${CFLAGS_JDK} -qchars=signed -qfullpath -qsaveopt"
     CXXFLAGS_JDK="${CXXFLAGS_JDK} -qchars=signed -qfullpath -qsaveopt"
+  elif test "x$TOOLCHAIN_TYPE" = xgcc; then
+    CXXSTD_CXXFLAG="-std=gnu++98"
+    FLAGS_CXX_COMPILER_CHECK_ARGUMENTS(ARGUMENT: [$CXXSTD_CXXFLAG -Werror],
+    						 IF_FALSE: [CXXSTD_CXXFLAG=""])
+    CXXFLAGS_JDK="${CXXFLAGS_JDK} ${CXXSTD_CXXFLAG}"
+    AC_SUBST([CXXSTD_CXXFLAG])
   fi
 
   CFLAGS_JDK="${CFLAGS_JDK} $EXTRA_CFLAGS"
@@ -622,6 +631,7 @@ AC_DEFUN_ONCE([FLAGS_SETUP_COMPILER_FLAGS_FOR_JDK],
         CFLAGS_JDK="${CFLAGS_JDK} -fno-strict-aliasing"
         ;;
     esac
+    TOOLCHAIN_CHECK_COMPILER_VERSION(VERSION: 6, IF_AT_LEAST: FLAGS_SETUP_GCC6_COMPILER_FLAGS)
   elif test "x$TOOLCHAIN_TYPE" = xclang; then
     if test "x$OPENJDK_TARGET_OS" = xlinux; then
       if test "x$OPENJDK_TARGET_CPU" = xx86; then
@@ -654,7 +664,7 @@ AC_DEFUN_ONCE([FLAGS_SETUP_COMPILER_FLAGS_FOR_JDK],
     CXXFLAGS_JDK="$CXXFLAGS_JDK -D_GNU_SOURCE -D_REENTRANT -D_LARGEFILE64_SOURCE -DSTDC"
   elif test "x$TOOLCHAIN_TYPE" = xmicrosoft; then
     COMMON_CCXXFLAGS_JDK="$COMMON_CCXXFLAGS $COMMON_CCXXFLAGS_JDK \
-        -Zi -MD -Zc:wchar_t- -W3 -wd4800 \
+        -MD -Zc:wchar_t- -W3 -wd4800 \
         -DWIN32_LEAN_AND_MEAN \
         -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE \
         -D_WINSOCK_DEPRECATED_NO_WARNINGS \
@@ -689,9 +699,6 @@ AC_DEFUN_ONCE([FLAGS_SETUP_COMPILER_FLAGS_FOR_JDK],
       ;;
   esac
 
-  # Setup LP64
-  COMMON_CCXXFLAGS_JDK="$COMMON_CCXXFLAGS_JDK $ADD_LP64"
-
   # Set some common defines. These works for all compilers, but assume
   # -D is universally accepted.
 
@@ -722,7 +729,12 @@ AC_DEFUN_ONCE([FLAGS_SETUP_COMPILER_FLAGS_FOR_JDK],
   COMMON_CCXXFLAGS_JDK="$COMMON_CCXXFLAGS_JDK -D$OPENJDK_TARGET_OS_UPPERCASE"
 
   # Setup target CPU
-  COMMON_CCXXFLAGS_JDK="$COMMON_CCXXFLAGS_JDK -DARCH='\"$OPENJDK_TARGET_CPU_LEGACY\"' -D$OPENJDK_TARGET_CPU_LEGACY"
+  OPENJDK_TARGET_CCXXFLAGS_JDK="$OPENJDK_TARGET_CCXXFLAGS_JDK \
+      $ADD_LP64 \
+      -DARCH='\"$OPENJDK_TARGET_CPU_LEGACY\"' -D$OPENJDK_TARGET_CPU_LEGACY"
+  OPENJDK_BUILD_CCXXFLAGS_JDK="$OPENJDK_BUILD_CCXXFLAGS_JDK \
+      $OPENJDK_BUILD_ADD_LP64 \
+      -DARCH='\"$OPENJDK_BUILD_CPU_LEGACY\"' -D$OPENJDK_BUILD_CPU_LEGACY"
 
   # Setup debug/release defines
   if test "x$DEBUG_LEVEL" = xrelease; then
@@ -766,17 +778,35 @@ AC_DEFUN_ONCE([FLAGS_SETUP_COMPILER_FLAGS_FOR_JDK],
       -I${JDK_TOPDIR}/src/java.base/$OPENJDK_TARGET_OS_TYPE/native/libjava"
 
   # The shared libraries are compiled using the picflag.
-  CFLAGS_JDKLIB="$COMMON_CCXXFLAGS_JDK $CFLAGS_JDK $PICFLAG $CFLAGS_JDKLIB_EXTRA"
-  CXXFLAGS_JDKLIB="$COMMON_CCXXFLAGS_JDK $CXXFLAGS_JDK $PICFLAG $CXXFLAGS_JDKLIB_EXTRA"
+  CFLAGS_JDKLIB="$COMMON_CCXXFLAGS_JDK $OPENJDK_TARGET_CCXXFLAGS_JDK \
+      $CFLAGS_JDK $EXTRA_CFLAGS_JDK $PICFLAG $CFLAGS_JDKLIB_EXTRA"
+  CXXFLAGS_JDKLIB="$COMMON_CCXXFLAGS_JDK $OPENJDK_TARGET_CCXXFLAGS_JDK \
+      $CXXFLAGS_JDK $EXTRA_CXXFLAGS_JDK $PICFLAG $CXXFLAGS_JDKLIB_EXTRA"
 
   # Executable flags
-  CFLAGS_JDKEXE="$COMMON_CCXXFLAGS_JDK $CFLAGS_JDK"
-  CXXFLAGS_JDKEXE="$COMMON_CCXXFLAGS_JDK $CXXFLAGS_JDK"
+  CFLAGS_JDKEXE="$COMMON_CCXXFLAGS_JDK $OPENJDK_TARGET_CCXXFLAGS_JDK \
+      $CFLAGS_JDK $EXTRA_CFLAGS_JDK"
+  CXXFLAGS_JDKEXE="$COMMON_CCXXFLAGS_JDK $OPENJDK_TARGET_CCXXFLAGS_JDK \
+      $CXXFLAGS_JDK $EXTRA_CXXFLAGS_JDK"
+
+  # The corresponding flags for building for the build platform. This is still an
+  # approximation, we only need something that runs on this machine when cross
+  # compiling the product.
+  OPENJDK_BUILD_CFLAGS_JDKLIB="$COMMON_CCXXFLAGS_JDK $OPENJDK_BUILD_CCXXFLAGS_JDK \
+      $PICFLAG $CFLAGS_JDKLIB_EXTRA"
+  OPENJDK_BUILD_CXXFLAGS_JDKLIB="$COMMON_CCXXFLAGS_JDK $OPENJDK_BUILD_CCXXFLAGS_JDK \
+      $PICFLAG $CXXFLAGS_JDKLIB_EXTRA"
+  OPENJDK_BUILD_CFLAGS_JDKEXE="$COMMON_CCXXFLAGS_JDK $OPENJDK_BUILD_CCXXFLAGS_JDK"
+  OPENJDK_BUILD_CXXFLAGS_JDKEXE="$COMMON_CCXXFLAGS_JDK $OPENJDK_BUILD_CCXXFLAGS_JDK"
 
   AC_SUBST(CFLAGS_JDKLIB)
   AC_SUBST(CFLAGS_JDKEXE)
   AC_SUBST(CXXFLAGS_JDKLIB)
   AC_SUBST(CXXFLAGS_JDKEXE)
+  AC_SUBST(OPENJDK_BUILD_CFLAGS_JDKLIB)
+  AC_SUBST(OPENJDK_BUILD_CFLAGS_JDKEXE)
+  AC_SUBST(OPENJDK_BUILD_CXXFLAGS_JDKLIB)
+  AC_SUBST(OPENJDK_BUILD_CXXFLAGS_JDKEXE)
 
   # Flags for compiling test libraries
   CFLAGS_TESTLIB="$COMMON_CCXXFLAGS_JDK $CFLAGS_JDK $PICFLAG $CFLAGS_JDKLIB_EXTRA"
@@ -801,9 +831,6 @@ AC_DEFUN_ONCE([FLAGS_SETUP_COMPILER_FLAGS_FOR_JDK],
       LDFLAGS_SAFESH="-safeseh"
       LDFLAGS_JDK="$LDFLAGS_JDK $LDFLAGS_SAFESH"
     fi
-    # TODO: make -debug optional "--disable-full-debug-symbols"
-    LDFLAGS_MICROSOFT_DEBUG="-debug"
-    LDFLAGS_JDK="$LDFLAGS_JDK $LDFLAGS_MICROSOFT_DEBUG"
   elif test "x$TOOLCHAIN_TYPE" = xgcc; then
     # If this is a --hash-style=gnu system, use --hash-style=both, why?
     # We have previously set HAS_GNU_HASH if this is the case
@@ -872,6 +899,9 @@ AC_DEFUN_ONCE([FLAGS_SETUP_COMPILER_FLAGS_FOR_JDK],
     LDFLAGS_JDKEXE="$LDFLAGS_JDKEXE -Wl,--allow-shlib-undefined"
   fi
 
+  OPENJDK_BUILD_LDFLAGS_JDKEXE="${LDFLAGS_JDKEXE}"
+  LDFLAGS_JDKEXE="${LDFLAGS_JDKEXE} ${EXTRA_LDFLAGS_JDK}"
+
   # Customize LDFLAGS for libs
   LDFLAGS_JDKLIB="${LDFLAGS_JDK}"
 
@@ -882,30 +912,39 @@ AC_DEFUN_ONCE([FLAGS_SETUP_COMPILER_FLAGS_FOR_JDK],
     JDKLIB_LIBS=""
   else
     LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} \
-        -L${OUTPUT_ROOT}/support/modules_libs/java.base${OPENJDK_TARGET_CPU_LIBDIR}"
+        -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)"
 
     # On some platforms (mac) the linker warns about non existing -L dirs.
     # Add server first if available. Linking aginst client does not always produce the same results.
     # Only add client dir if client is being built. Add minimal (note not minimal1) if only building minimal1.
     # Default to server for other variants.
     if test "x$JVM_VARIANT_SERVER" = xtrue; then
-      LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} -L${OUTPUT_ROOT}/support/modules_libs/java.base${OPENJDK_TARGET_CPU_LIBDIR}/server"
+      LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/server"
     elif test "x$JVM_VARIANT_CLIENT" = xtrue; then
-      LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} -L${OUTPUT_ROOT}/support/modules_libs/java.base${OPENJDK_TARGET_CPU_LIBDIR}/client"
+      LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/client"
     elif test "x$JVM_VARIANT_MINIMAL1" = xtrue; then
-      LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} -L${OUTPUT_ROOT}/support/modules_libs/java.base${OPENJDK_TARGET_CPU_LIBDIR}/minimal"
+      LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/minimal"
     else
-      LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} -L${OUTPUT_ROOT}/support/modules_libs/java.base${OPENJDK_TARGET_CPU_LIBDIR}/server"
+      LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/server"
     fi
 
     JDKLIB_LIBS="-ljava -ljvm"
     if test "x$TOOLCHAIN_TYPE" = xsolstudio; then
       JDKLIB_LIBS="$JDKLIB_LIBS -lc"
     fi
+
+    # When building a buildjdk, it's always only the server variant
+    OPENJDK_BUILD_LDFLAGS_JDKLIB="${OPENJDK_BUILD_LDFLAGS_JDKLIB} \
+        -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/server"
   fi
+
+  OPENJDK_BUILD_LDFLAGS_JDKLIB="${OPENJDK_BUILD_LDFLAGS_JDKLIB} ${LDFLAGS_JDKLIB}"
+  LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} ${EXTRA_LDFLAGS_JDK}"
 
   AC_SUBST(LDFLAGS_JDKLIB)
   AC_SUBST(LDFLAGS_JDKEXE)
+  AC_SUBST(OPENJDK_BUILD_LDFLAGS_JDKLIB)
+  AC_SUBST(OPENJDK_BUILD_LDFLAGS_JDKEXE)
   AC_SUBST(JDKLIB_LIBS)
   AC_SUBST(JDKEXE_LIBS)
   AC_SUBST(LDFLAGS_CXX_JDK)
@@ -918,14 +957,14 @@ AC_DEFUN_ONCE([FLAGS_SETUP_COMPILER_FLAGS_FOR_JDK],
   AC_SUBST(LDFLAGS_TESTEXE)
 ])
 
-# FLAGS_COMPILER_CHECK_ARGUMENTS(ARGUMENT: [ARGUMENT], IF_TRUE: [RUN-IF-TRUE],
-#                                   IF_FALSE: [RUN-IF-FALSE])
+# FLAGS_C_COMPILER_CHECK_ARGUMENTS(ARGUMENT: [ARGUMENT], IF_TRUE: [RUN-IF-TRUE],
+#                                  IF_FALSE: [RUN-IF-FALSE])
 # ------------------------------------------------------------
-# Check that the c and c++ compilers support an argument
-BASIC_DEFUN_NAMED([FLAGS_COMPILER_CHECK_ARGUMENTS],
+# Check that the C compiler supports an argument
+BASIC_DEFUN_NAMED([FLAGS_C_COMPILER_CHECK_ARGUMENTS],
     [*ARGUMENT IF_TRUE IF_FALSE], [$@],
 [
-  AC_MSG_CHECKING([if compiler supports "ARG_ARGUMENT"])
+  AC_MSG_CHECKING([if the C compiler supports "ARG_ARGUMENT"])
   supports=yes
 
   saved_cflags="$CFLAGS"
@@ -936,6 +975,26 @@ BASIC_DEFUN_NAMED([FLAGS_COMPILER_CHECK_ARGUMENTS],
   AC_LANG_POP([C])
   CFLAGS="$saved_cflags"
 
+  AC_MSG_RESULT([$supports])
+  if test "x$supports" = "xyes" ; then
+    :
+    ARG_IF_TRUE
+  else
+    :
+    ARG_IF_FALSE
+  fi
+])
+
+# FLAGS_CXX_COMPILER_CHECK_ARGUMENTS(ARGUMENT: [ARGUMENT], IF_TRUE: [RUN-IF-TRUE],
+#                                    IF_FALSE: [RUN-IF-FALSE])
+# ------------------------------------------------------------
+# Check that the C++ compiler supports an argument
+BASIC_DEFUN_NAMED([FLAGS_CXX_COMPILER_CHECK_ARGUMENTS],
+    [*ARGUMENT IF_TRUE IF_FALSE], [$@],
+[
+  AC_MSG_CHECKING([if the C++ compiler supports "ARG_ARGUMENT"])
+  supports=yes
+
   saved_cxxflags="$CXXFLAGS"
   CXXFLAGS="$CXXFLAG ARG_ARGUMENT"
   AC_LANG_PUSH([C++])
@@ -944,6 +1003,34 @@ BASIC_DEFUN_NAMED([FLAGS_COMPILER_CHECK_ARGUMENTS],
   AC_LANG_POP([C++])
   CXXFLAGS="$saved_cxxflags"
 
+  AC_MSG_RESULT([$supports])
+  if test "x$supports" = "xyes" ; then
+    :
+    ARG_IF_TRUE
+  else
+    :
+    ARG_IF_FALSE
+  fi
+])
+
+# FLAGS_COMPILER_CHECK_ARGUMENTS(ARGUMENT: [ARGUMENT], IF_TRUE: [RUN-IF-TRUE],
+#                                IF_FALSE: [RUN-IF-FALSE])
+# ------------------------------------------------------------
+# Check that the C and C++ compilers support an argument
+BASIC_DEFUN_NAMED([FLAGS_COMPILER_CHECK_ARGUMENTS],
+    [*ARGUMENT IF_TRUE IF_FALSE], [$@],
+[
+  FLAGS_C_COMPILER_CHECK_ARGUMENTS(ARGUMENT: [ARG_ARGUMENT],
+  					     IF_TRUE: [C_COMP_SUPPORTS="yes"],
+					     IF_FALSE: [C_COMP_SUPPORTS="no"])
+  FLAGS_CXX_COMPILER_CHECK_ARGUMENTS(ARGUMENT: [ARG_ARGUMENT],
+  					       IF_TRUE: [CXX_COMP_SUPPORTS="yes"],
+					       IF_FALSE: [CXX_COMP_SUPPORTS="no"])
+
+  AC_MSG_CHECKING([if both compilers support "ARG_ARGUMENT"])
+  supports=no
+  if test "x$C_COMP_SUPPORTS" = "xyes" -a "x$CXX_COMP_SUPPORTS" = "xyes"; then supports=yes; fi
+  
   AC_MSG_RESULT([$supports])
   if test "x$supports" = "xyes" ; then
     :
@@ -1075,5 +1162,23 @@ AC_DEFUN_ONCE([FLAGS_SETUP_COMPILER_FLAGS_MISC],
       ;;
   esac
   AC_SUBST(DISABLE_WARNING_PREFIX)
+  AC_SUBST(BUILD_CC_DISABLE_WARNING_PREFIX)
   AC_SUBST(CFLAGS_WARNINGS_ARE_ERRORS)
+])
+
+AC_DEFUN_ONCE([FLAGS_SETUP_GCC6_COMPILER_FLAGS],
+[
+  # These flags are required for GCC 6 builds as undefined behaviour in OpenJDK code
+  # runs afoul of the more aggressive versions of these optimisations.
+  # Notably, value range propagation now assumes that the this pointer of C++
+  # member functions is non-null.
+  NO_NULL_POINTER_CHECK_CFLAG="-fno-delete-null-pointer-checks"
+  FLAGS_COMPILER_CHECK_ARGUMENTS(ARGUMENT: [$NO_NULL_POINTER_CHECK_CFLAG -Werror],
+  					     IF_FALSE: [NO_NULL_POINTER_CHECK_CFLAG=""])
+  AC_SUBST([NO_NULL_POINTER_CHECK_CFLAG])
+  NO_LIFETIME_DSE_CFLAG="-fno-lifetime-dse"
+  FLAGS_COMPILER_CHECK_ARGUMENTS(ARGUMENT: [$NO_LIFETIME_DSE_CFLAG -Werror],
+  					     IF_FALSE: [NO_LIFETIME_DSE_CFLAG=""])
+  CFLAGS_JDK="${CFLAGS_JDK} ${NO_NULL_POINTER_CHECK_CFLAG} ${NO_LIFETIME_DSE_CFLAG}"
+  AC_SUBST([NO_LIFETIME_DSE_CFLAG])
 ])
