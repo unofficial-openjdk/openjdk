@@ -37,6 +37,7 @@ import java.nio.BufferUnderflowException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -337,7 +338,7 @@ final class ModuleInfo {
                 // computeIfAbsent
                 Set<String> providers = pm.get(sn);
                 if (providers == null) {
-                    providers = new HashSet<>();
+                    providers = new LinkedHashSet<>(); // preserve order
                     pm.put(sn, providers);
                 }
                 providers.add(cn);

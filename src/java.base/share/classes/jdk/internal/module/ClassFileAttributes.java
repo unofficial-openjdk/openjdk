@@ -34,6 +34,7 @@ import java.lang.module.ModuleDescriptor.Version;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -148,7 +149,7 @@ class ClassFileAttributes {
                 for (int i=0; i<provides_count; i++) {
                     String sn = cr.readClass(off, buf).replace('/', '.');
                     String cn = cr.readClass(off + 2, buf).replace('/', '.');
-                    provides.computeIfAbsent(sn, k -> new HashSet<>()).add(cn);
+                    provides.computeIfAbsent(sn, k -> new LinkedHashSet<>()).add(cn);
                     off += 4;
                 }
                 provides.entrySet().forEach(e -> builder.provides(e.getKey(),
@@ -281,10 +282,10 @@ class ClassFileAttributes {
      *   u4 attribute_length;
      *
      *   // the number of entries in the packages table
-     *   u2 package_count;
+     *   u2 packages_count;
      *   { // index to CONSTANT_CONSTANT_utf8_info structure with the package name
      *     u2 package_index
-     *   } package[package_count];
+     *   } packages[package_count];
      *
      * }</pre>
      */

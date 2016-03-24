@@ -315,9 +315,9 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
                 }
             }
 
-            // provides
+            // provides (preserve iteration order)
             for (ModuleDescriptor.Provides p : md.provides().values()) {
-                stringSets.computeIfAbsent(p.providers(), s -> new StringSetBuilder(s))
+                stringSets.computeIfAbsent(p.providers(), s -> new StringSetBuilder(s, true))
                           .increment();
             }
 
@@ -603,7 +603,7 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
             /*
              * Invoke Builder.provides(String service, Set<String> providers)
              *
-             * Set<String> providers = new HashSet<>();
+             * Set<String> providers = new LinkedHashSet<>();
              * providers.add(impl);
              * :
              * :
@@ -663,10 +663,17 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
          */
         class StringSetBuilder {
             final Set<String> names;
+            final boolean linked;
             int refCount;
             int localVarIndex;
-            StringSetBuilder(Set<String> names) {
+
+            StringSetBuilder(Set<String> names, boolean linked) {
                 this.names = names;
+                this.linked = linked;
+            }
+
+            StringSetBuilder(Set<String> names) {
+                this(names, false);
             }
 
             void increment() {
@@ -704,11 +711,11 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
                                 "singleton", "(Ljava/lang/Object;)Ljava/util/Set;", false);
                         mv.visitVarInsn(ASTORE, index);
                     } else {
-                        mv.visitTypeInsn(NEW, "java/util/HashSet");
+                        String cn = linked ? "java/util/LinkedHashSet" : "java/util/HashSet";
+                        mv.visitTypeInsn(NEW, cn);
                         mv.visitInsn(DUP);
                         pushInt(initialCapacity(names.size()));
-                        mv.visitMethodInsn(INVOKESPECIAL, "java/util/HashSet",
-                                "<init>", "(I)V", false);
+                        mv.visitMethodInsn(INVOKESPECIAL, cn, "<init>", "(I)V", false);
 
                         mv.visitVarInsn(ASTORE, index);
                         for (String t : names) {

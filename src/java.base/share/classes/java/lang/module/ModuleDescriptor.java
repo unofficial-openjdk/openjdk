@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -372,8 +373,9 @@ public class ModuleDescriptor
 
         private Provides(String service, Set<String> providers, boolean check) {
             this.service = check ? requireServiceTypeName(service) : service;
-            providers = check ? Collections.unmodifiableSet(new HashSet<>(providers))
-                              : Collections.unmodifiableSet(providers);
+            providers = check
+                ? Collections.unmodifiableSet(new LinkedHashSet<>(providers))
+                : Collections.unmodifiableSet(providers);
             if (providers.isEmpty())
                 throw new IllegalArgumentException("Empty providers set");
             if (check)
