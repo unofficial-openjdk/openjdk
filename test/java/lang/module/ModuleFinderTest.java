@@ -340,7 +340,7 @@ public class ModuleFinderTest {
      */
     public void testOfWithUnrecognizedEntry() throws Exception {
         Path dir = Files.createTempDirectory(USER_DIR, "mods");
-        Path mod = Files.createTempFile(dir, "m", "mod");
+        Path mod = Files.createTempFile(dir, "m", ".junk");
 
         ModuleFinder finder = ModuleFinder.of(mod);
         try {
@@ -351,6 +351,32 @@ public class ModuleFinderTest {
         }
 
         finder = ModuleFinder.of(mod);
+        try {
+            finder.findAll();
+            assertTrue(false);
+        } catch (FindException e) {
+            // expected
+        }
+    }
+
+
+    /**
+     * Test ModuleFinder.of with a file path to a directory containing a file
+     * that will not be recognized as a module.
+     */
+    public void testOfWithUnrecognizedEntryInDirectory() throws Exception {
+        Path dir = Files.createTempDirectory(USER_DIR, "mods");
+        Files.createTempFile(dir, "m", ".junk");
+
+        ModuleFinder finder = ModuleFinder.of(dir);
+        try {
+            finder.find("java.rhubarb");
+            assertTrue(false);
+        } catch (FindException e) {
+            // expected
+        }
+
+        finder = ModuleFinder.of(dir);
         try {
             finder.findAll();
             assertTrue(false);
