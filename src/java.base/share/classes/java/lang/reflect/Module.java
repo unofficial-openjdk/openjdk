@@ -1097,7 +1097,7 @@ public final class Module {
      * the representation is the string {@code "module"}, followed by a space,
      * and then the module name. For an unnamed module, the representation is
      * the string {@code "unnamed module"}, followed by a space, and then an
-     * implementation specific identifier for the unnamed module.
+     * implementation specific string that identifies the unnamed module.
      *
      * @return The string representation of this module
      */
