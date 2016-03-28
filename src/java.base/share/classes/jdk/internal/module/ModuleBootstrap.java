@@ -27,8 +27,9 @@ package jdk.internal.module;
 
 import java.io.File;
 import java.lang.module.Configuration;
-import java.lang.module.ModuleReference;
+import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleReference;
 import java.lang.module.ResolvedModule;
 import java.lang.reflect.Layer;
 import java.lang.reflect.Module;
@@ -64,6 +65,8 @@ public final class ModuleBootstrap {
     private ModuleBootstrap() { }
 
     private static final String JAVA_BASE = "java.base";
+
+    private static final String JAVA_SE = "java.se.ee";  // will be java.se
 
     // the token for "all unnamed modules"
     private static final String ALL_UNNAMED = "ALL-UNNAMED";
@@ -108,7 +111,6 @@ public final class ModuleBootstrap {
         BootLoader.loadModule(base);
         Modules.defineModule(null, base.descriptor(), base.location().orElse(null));
 
-
         // -upgrademodulepath option specified to launcher
         ModuleFinder upgradeModulePath
             = createModulePathFinder("jdk.upgrade.module.path");
@@ -139,6 +141,10 @@ public final class ModuleBootstrap {
                         addAllSystemModules = true;
                         break;
                     case ALL_MODULE_PATH:
+                        if (mainModule != null) {
+                            fail(ALL_MODULE_PATH
+                                 + " not allowed with initial module");
+                        }
                         addAllApplicationModules = true;
                         break;
                     default :
@@ -151,19 +157,14 @@ public final class ModuleBootstrap {
         Set<String> roots = new HashSet<>();
 
         // main/initial module
-        if (mainModule != null) {
+        if (mainModule != null)
             roots.add(mainModule);
-            if (addAllApplicationModules)
-                fail(ALL_MODULE_PATH + " not allowed with initial module");
-        }
 
         // If -addmods is specified then those modules need to be resolved
         if (addModules != null)
             roots.addAll(addModules);
 
-
         // -limitmods
-        boolean limitmods = false;
         propValue = System.getProperty("jdk.launcher.limitmods");
         if (propValue != null) {
             Set<String> mods = new HashSet<>();
@@ -171,42 +172,71 @@ public final class ModuleBootstrap {
                 mods.add(mod);
             }
             finder = limitFinder(finder, mods, roots);
-            limitmods = true;
         }
 
+        // If `-addmods ALL-SYSTEM` is used then all observable modules on the
+        // system module path will be resolved, irrespective of whether an
+        // initial module is specified.
+        if (addAllSystemModules) {
 
-        // If there is no initial module specified then assume that the
-        // initial module is the unnamed module of the application class
-        // loader. By convention, and for compatibility, this is
-        // implemented by putting the names of all modules on the system
-        // module path into the set of modules to resolve.
-        //
-        // If `-addmods ALL-SYSTEM` is used then all modules on the system
-        // module path will be resolved, irrespective of whether an initial
-        // module is specified.
-        //
-        // If `-addmods ALL-MODULE-PATH` is used, and no initial module is
-        // specified, then all modules on the application module path will
-        // be resolved.
-        //
-        if (mainModule == null || addAllSystemModules) {
-            Set<ModuleReference> mrefs;
-            if (addAllApplicationModules) {
-                assert mainModule == null;
-                mrefs = finder.findAll();
-            } else {
-                mrefs = systemModulePath.findAll();
-                if (limitmods) {
-                    ModuleFinder f = finder;
-                    mrefs = mrefs.stream()
-                        .filter(m -> f.find(m.descriptor().name()).isPresent())
-                        .collect(Collectors.toSet());
+            ModuleFinder f = finder;  // observable modules
+            systemModulePath.findAll()
+                    .stream()
+                    .map(ModuleReference::descriptor)
+                    .map(ModuleDescriptor::name)
+                    .filter(mn -> f.find(mn).isPresent())  // observable
+                    .forEach(mn -> roots.add(mn));
+
+        } else if (mainModule == null) {
+
+            // If there is no initial module specified then assume that the
+            // initial module is the unnamed module of the application class
+            // loader. By convention, this is implemented by resolving
+            // "java.se" and all other (non-java.*) modules that export an API.
+            // If "java.se" is not observable then all java.* modules are
+            // resolved.
+
+            boolean hasJava = false;
+            if (systemModulePath.find(JAVA_SE).isPresent()) {
+                // java.se is on the system module path
+                if (finder == systemModulePath || finder.find(JAVA_SE).isPresent()) {
+                    // java.se is observable
+                    hasJava = true;
+                    roots.add(JAVA_SE);
                 }
             }
-            // map to module names
-            for (ModuleReference mref : mrefs) {
-                roots.add(mref.descriptor().name());
+
+            for (ModuleReference mref : systemModulePath.findAll()) {
+                String mn = mref.descriptor().name();
+                if (hasJava && mn.startsWith("java."))
+                    continue;
+
+                // add as root if observable and exports at least one package
+                if ((finder == systemModulePath || finder.find(mn).isPresent())) {
+                    ModuleDescriptor descriptor = mref.descriptor();
+                    for (ModuleDescriptor.Exports e : descriptor.exports()) {
+                        if (!e.isQualified()) {
+                            roots.add(mn);
+                            break;
+                        }
+                    }
+                }
             }
+        }
+
+        // If `-addmods ALL-MODULE-PATH` is used, and no initial module is
+        // specified, then all observable modules on the application module
+        // path will be resolved.
+        if (addAllApplicationModules) {
+            assert mainModule == null;
+
+            ModuleFinder f = finder;  // observable modules
+            appModulePath.findAll()
+                    .stream()
+                    .map(ModuleReference::descriptor)
+                    .map(ModuleDescriptor::name)
+                    .filter(mn -> f.find(mn).isPresent())  // observable
+                    .forEach(mn -> roots.add(mn));
         }
 
         long t1 = System.nanoTime();
