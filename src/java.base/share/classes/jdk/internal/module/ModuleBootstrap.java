@@ -42,7 +42,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import jdk.internal.loader.BootLoader;
 import jdk.internal.loader.BuiltinClassLoader;
@@ -97,14 +96,14 @@ public final class ModuleBootstrap {
 
         long t0 = System.nanoTime();
 
-        // system module path
-        ModuleFinder systemModulePath = ModuleFinder.ofSystem();
+        // system modules
+        ModuleFinder systemModules = ModuleFinder.ofSystem();
 
         // Once we have the system module path then we define the base module.
         // We do this here so that java.base is defined to the VM as early as
         // possible and also that resources in the base module can be located
         // for error messages that may happen from here on.
-        Optional<ModuleReference> obase = systemModulePath.find(JAVA_BASE);
+        Optional<ModuleReference> obase = systemModules.find(JAVA_BASE);
         if (!obase.isPresent())
             throw new InternalError(JAVA_BASE + " not found");
         ModuleReference base = obase.get();
@@ -114,14 +113,15 @@ public final class ModuleBootstrap {
         // -upgrademodulepath option specified to launcher
         ModuleFinder upgradeModulePath
             = createModulePathFinder("jdk.upgrade.module.path");
+        if (upgradeModulePath != null)
+            systemModules = ModuleFinder.compose(upgradeModulePath, systemModules);
+
 
         // -modulepath option specified to the launcher
         ModuleFinder appModulePath = createModulePathFinder("jdk.module.path");
 
-        // The module finder: [-upgrademodulepath] system-module-path [-modulepath]
-        ModuleFinder finder = systemModulePath;
-        if (upgradeModulePath != null)
-            finder = ModuleFinder.compose(upgradeModulePath, finder);
+        // The module finder: [-upgrademodulepath] system [-modulepath]
+        ModuleFinder finder = systemModules;
         if (appModulePath != null)
             finder = ModuleFinder.compose(finder, appModulePath);
 
@@ -180,7 +180,7 @@ public final class ModuleBootstrap {
         if (addAllSystemModules) {
 
             ModuleFinder f = finder;  // observable modules
-            systemModulePath.findAll()
+            systemModules.findAll()
                     .stream()
                     .map(ModuleReference::descriptor)
                     .map(ModuleDescriptor::name)
@@ -197,22 +197,22 @@ public final class ModuleBootstrap {
             // resolved.
 
             boolean hasJava = false;
-            if (systemModulePath.find(JAVA_SE).isPresent()) {
+            if (systemModules.find(JAVA_SE).isPresent()) {
                 // java.se is on the system module path
-                if (finder == systemModulePath || finder.find(JAVA_SE).isPresent()) {
+                if (finder == systemModules || finder.find(JAVA_SE).isPresent()) {
                     // java.se is observable
                     hasJava = true;
                     roots.add(JAVA_SE);
                 }
             }
 
-            for (ModuleReference mref : systemModulePath.findAll()) {
+            for (ModuleReference mref : systemModules.findAll()) {
                 String mn = mref.descriptor().name();
                 if (hasJava && mn.startsWith("java."))
                     continue;
 
                 // add as root if observable and exports at least one package
-                if ((finder == systemModulePath || finder.find(mn).isPresent())) {
+                if ((finder == systemModules || finder.find(mn).isPresent())) {
                     ModuleDescriptor descriptor = mref.descriptor();
                     for (ModuleDescriptor.Exports e : descriptor.exports()) {
                         if (!e.isQualified()) {
@@ -255,8 +255,8 @@ public final class ModuleBootstrap {
         Function<String, ClassLoader> clf = ModuleLoaderMap.mappingFunction(cf);
 
         // check that all modules to be mapped to the boot loader will be
-        // loaded from the system module path
-        if (finder != systemModulePath) {
+        // loaded from the runtime image
+        if (upgradeModulePath != null || appModulePath != null) {
             for (ResolvedModule resolvedModule : cf.modules()) {
                 ModuleReference mref = resolvedModule.reference();
                 String name = mref.descriptor().name();
@@ -267,7 +267,7 @@ public final class ModuleBootstrap {
                             && upgradeModulePath.find(name).isPresent())
                         fail(name + ": cannot be loaded from upgrade module path");
 
-                    if (!systemModulePath.find(name).isPresent())
+                    if (!systemModules.find(name).isPresent())
                         fail(name + ": cannot be loaded from application module path");
                 }
             }
@@ -469,10 +469,6 @@ public final class ModuleBootstrap {
      * Decodes the values of -XaddReads or -XaddExports options
      *
      * The format of the options is: $KEY=$MODULE(,$MODULE)*
-     *
-     * For transition purposes, this method allows the first usage to be
-     *     $KEY=$MODULE(,$KEY=$MODULE)
-     * This format will eventually be removed.
      */
     private static Map<String, Set<String>> decode(String prefix) {
         int index = 0;
@@ -497,42 +493,15 @@ public final class ModuleBootstrap {
             if (rhs.isEmpty())
                 fail("Unable to parse: " + value);
 
-            // new format $MODULE(,$MODULE)* or old format $(MODULE)=...
-            pos = rhs.indexOf('=');
 
-            // old format only allowed in first -X option
-            if (pos >= 0 && index > 0)
-                fail("Unable to parse: " + value);
+            // value is <module>(,<module>)*
+            if (map.containsKey(key))
+                fail(key + " specified more than once");
 
-            if (pos == -1) {
-
-                // new format: $KEY=$MODULE(,$MODULE)*
-
-                Set<String> values = map.get(key);
-                if (values != null)
-                    fail(key + " specified more than once");
-
-                values = new HashSet<>();
-                map.put(key, values);
-                for (String s : rhs.split(",")) {
-                    if (s.length() > 0) values.add(s);
-                }
-
-            } else {
-
-                // old format: $KEY=$MODULE(,$KEY=$MODULE)*
-
-                assert index == 0;  // old format only allowed in first usage
-
-                for (String expr : value.split(",")) {
-                    if (expr.length() > 0) {
-                        String[] s = expr.split("=");
-                        if (s.length != 2)
-                            fail("Unable to parse: " + expr);
-
-                        map.computeIfAbsent(s[0], k -> new HashSet<>()).add(s[1]);
-                    }
-                }
+            Set<String> values = new HashSet<>();
+            map.put(key, values);
+            for (String s : rhs.split(",")) {
+                if (s.length() > 0) values.add(s);
             }
 
             index++;
