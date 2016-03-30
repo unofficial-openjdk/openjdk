@@ -42,7 +42,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 
-import jdk.internal.module.Hasher.DependencyHashes;
+import jdk.internal.module.ModuleHashes;
 
 import static jdk.internal.module.ClassFileConstants.*;
 
@@ -426,7 +426,7 @@ final class ModuleInfo {
             map.put(dn, hash);
         }
 
-        builder.hashes(new DependencyHashes(algorithm, map));
+        builder.hashes(new ModuleHashes(algorithm, map));
     }
 
 

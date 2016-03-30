@@ -43,7 +43,7 @@ import java.util.Set;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
-import jdk.internal.module.Hasher;
+import jdk.internal.module.ModuleHashes;
 
 /**
  * The resolver used by {@link Configuration#resolveRequires} and
@@ -423,49 +423,39 @@ final class Resolver {
 
     /**
      * Checks the hashes in the module descriptor to ensure that they match
-     * the hash of the dependency's module reference.
+     * any recorded hashes.
      */
     private void checkHashes() {
-
         for (ModuleReference mref : nameToReference.values()) {
             ModuleDescriptor descriptor = mref.descriptor();
 
-            // get map of module names to hash
-            Optional<Hasher.DependencyHashes> ohashes = descriptor.hashes();
+            // get map of module hashes
+            Optional<ModuleHashes> ohashes = descriptor.hashes();
             if (!ohashes.isPresent())
                 continue;
-            Hasher.DependencyHashes hashes = ohashes.get();
+            ModuleHashes hashes = ohashes.get();
 
-            // check dependences
-            for (ModuleDescriptor.Requires d : descriptor.requires()) {
-                String dn = d.name();
-                String recordedHash = hashes.hashFor(dn);
-
-                if (recordedHash != null) {
-
-                    ModuleReference other = nameToReference.get(dn);
-                    if (other == null) {
-                        other = parent.findModule(dn)
-                                .map(ResolvedModule::reference)
-                                .orElse(null);
-                    }
-                    if (other == null)
-                        throw new InternalError(dn + " not found");
-
-                    String actualHash = other.computeHash(hashes.algorithm());
+            String algorithm = hashes.algorithm();
+            for (String dn : hashes.names()) {
+                ModuleReference other = nameToReference.get(dn);
+                if (other == null) {
+                    other = parent.findModule(dn)
+                            .map(ResolvedModule::reference)
+                            .orElse(null);
+                }
+                if (other != null) {
+                    String recordedHash = hashes.hashFor(dn);
+                    String actualHash = other.computeHash(algorithm);
                     if (actualHash == null)
                         fail("Unable to compute the hash of module %s", dn);
-
                     if (!recordedHash.equals(actualHash)) {
                         fail("Hash of %s (%s) differs to expected hash (%s)",
                                 dn, actualHash, recordedHash);
                     }
-
                 }
-
             }
-        }
 
+        }
     }
 
 
@@ -708,13 +698,13 @@ final class Resolver {
                 String pn = packageName(service);
                 if (!packageToExporter.containsKey(pn)) {
                     fail("Module %s does not read a module that exports %s",
-                            descriptor1.name(), pn);
+                         descriptor1.name(), pn);
                 }
 
                 for (String provider : provides.providers()) {
                     if (!packages.contains(packageName(provider))) {
                         fail("Provider %s not in module %s",
-                                provider, descriptor1.name());
+                             provider, descriptor1.name());
                     }
                 }
             }

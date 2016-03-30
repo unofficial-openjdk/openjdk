@@ -49,7 +49,7 @@ import java.util.jar.Pack200.*;
 import java.util.jar.Manifest;
 import java.text.MessageFormat;
 
-import jdk.internal.module.Hasher;
+import jdk.internal.module.ModuleHashes;
 import jdk.internal.module.ModuleInfoExtender;
 import sun.misc.JarIndex;
 import static sun.misc.JarIndex.INDEX_NAME;
@@ -1692,11 +1692,11 @@ class Main {
         try {
             Method m = ModuleDescriptor.class.getDeclaredMethod("hashes");
             m.setAccessible(true);
-            Optional<Hasher.DependencyHashes> optHashes =
-                    (Optional<Hasher.DependencyHashes>) m.invoke(md);
+            Optional<ModuleHashes> optHashes =
+                    (Optional<ModuleHashes>) m.invoke(md);
 
             if (optHashes.isPresent()) {
-                Hasher.DependencyHashes hashes = optHashes.get();
+                ModuleHashes hashes = optHashes.get();
                 sb.append("\nHashes:");
                 sb.append("\n  Algorithm: " + hashes.algorithm());
                 hashes.names().stream().forEach(mod ->
@@ -1791,7 +1791,7 @@ class Main {
      * Examines the module dependences of the given module and computes the
      * hash of any module that matches the pattern {@code dependenciesToHash}.
      */
-    private Hasher.DependencyHashes
+    private ModuleHashes
     hashDependences(String name,
                     Set<ModuleDescriptor.Requires> moduleDependences)
         throws IOException
@@ -1812,7 +1812,7 @@ class Main {
         if (map.size() == 0) {
             return null;
         } else {
-            return Hasher.generate(map, "SHA-256");
+            return ModuleHashes.generate(map, "SHA-256");
         }
     }
 
