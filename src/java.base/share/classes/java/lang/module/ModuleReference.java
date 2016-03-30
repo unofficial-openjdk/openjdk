@@ -32,7 +32,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import jdk.internal.module.Hasher.HashSupplier;
+import jdk.internal.module.ModuleHashes.HashSupplier;
 
 
 /**

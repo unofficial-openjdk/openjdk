@@ -43,7 +43,6 @@ import jdk.internal.org.objectweb.asm.ByteVector;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.Label;
-import jdk.internal.module.Hasher.DependencyHashes;
 import static jdk.internal.module.ClassFileConstants.*;
 
 
@@ -580,9 +579,9 @@ class ClassFileAttributes {
      * alternative is to store it as an array of u1.
      */
     static class HashesAttribute extends Attribute {
-        private final DependencyHashes hashes;
+        private final ModuleHashes hashes;
 
-        HashesAttribute(DependencyHashes hashes) {
+        HashesAttribute(ModuleHashes hashes) {
             super(HASHES);
             this.hashes = hashes;
         }
@@ -614,7 +613,7 @@ class ClassFileAttributes {
                 map.put(dn, hash);
             }
 
-            DependencyHashes hashes = new DependencyHashes(algorithm, map);
+            ModuleHashes hashes = new ModuleHashes(algorithm, map);
 
             return new HashesAttribute(hashes);
         }

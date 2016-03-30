@@ -484,6 +484,8 @@ public final class Layer {
      *         parent layer
      */
     public Optional<Module> findModule(String name) {
+        if (this == EMPTY_LAYER)
+            return Optional.empty();
         Module m = nameToModule.get(Objects.requireNonNull(name));
         if (m != null)
             return Optional.of(m);
