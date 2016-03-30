@@ -680,33 +680,39 @@ final class Resolver {
                 }
             }
 
-            // uses S
-            for (String service : descriptor1.uses()) {
-                String pn = packageName(service);
-                if (!packageToExporter.containsKey(pn)) {
-                    fail("Module %s does not read a module that exports %s",
-                            descriptor1.name(), pn);
-                }
-            }
 
-            // provides S
-            for (Map.Entry<String, ModuleDescriptor.Provides> entry :
-                    descriptor1.provides().entrySet()) {
-                String service = entry.getKey();
-                ModuleDescriptor.Provides provides = entry.getValue();
+            // uses/provides checks not applicable to automatic modules
+            if (!descriptor1.isAutomatic()) {
 
-                String pn = packageName(service);
-                if (!packageToExporter.containsKey(pn)) {
-                    fail("Module %s does not read a module that exports %s",
-                         descriptor1.name(), pn);
-                }
-
-                for (String provider : provides.providers()) {
-                    if (!packages.contains(packageName(provider))) {
-                        fail("Provider %s not in module %s",
-                             provider, descriptor1.name());
+                // uses S
+                for (String service : descriptor1.uses()) {
+                    String pn = packageName(service);
+                    if (!packageToExporter.containsKey(pn)) {
+                        fail("Module %s does not read a module that exports %s",
+                             descriptor1.name(), pn);
                     }
                 }
+
+                // provides S
+                for (Map.Entry<String, ModuleDescriptor.Provides> entry :
+                        descriptor1.provides().entrySet()) {
+                    String service = entry.getKey();
+                    ModuleDescriptor.Provides provides = entry.getValue();
+
+                    String pn = packageName(service);
+                    if (!packageToExporter.containsKey(pn)) {
+                        fail("Module %s does not read a module that exports %s",
+                             descriptor1.name(), pn);
+                    }
+
+                    for (String provider : provides.providers()) {
+                        if (!packages.contains(packageName(provider))) {
+                            fail("Provider %s not in module %s",
+                                 provider, descriptor1.name());
+                        }
+                    }
+                }
+
             }
 
         }
