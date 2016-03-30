@@ -142,9 +142,6 @@ public class JlinkTask {
             }
             task.options.packagedModulesPath = path;
         }, true, "--keep-packaged-modules"),
-        new Option<JlinkTask>(false, (task, opt, arg) -> {
-            task.options.genbom = true;
-        }, true, "--genbom"),
         new Option<JlinkTask>(true, (task, opt, arg) -> {
             task.options.saveoptsfile = arg;
         }, "--saveopts"),
@@ -175,7 +172,6 @@ public class JlinkTask {
 
     static class OptionsValues {
         boolean help;
-        boolean genbom;
         String  saveoptsfile;
         boolean version;
         boolean fullVersion;
@@ -275,8 +271,7 @@ public class JlinkTask {
                                       null);
 
         // Then create the Plugin Stack
-        ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(plugins,
-                genBOMContent(config, plugins));
+        ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(plugins);
 
         //Ask the stack to proceed;
         stack.operate(imageProvider);
@@ -297,7 +292,7 @@ public class JlinkTask {
     }
 
     private void postProcessOnly(Path existingImage) throws Exception {
-        PluginsConfiguration config = taskHelper.getPluginsConfig(null, false);
+        PluginsConfiguration config = taskHelper.getPluginsConfig(null);
         ExecutableImage img = DefaultImageBuilder.getExecutableImage(existingImage);
         if (img == null) {
             throw taskHelper.newBadArgs("err.existing.image.invalid");
@@ -327,8 +322,7 @@ public class JlinkTask {
 
         // Then create the Plugin Stack
         ImagePluginStack stack = ImagePluginConfiguration.
-                parseConfiguration(taskHelper.getPluginsConfig(options.output, options.genbom),
-                        genBOMContent());
+                parseConfiguration(taskHelper.getPluginsConfig(options.output));
 
         //Ask the stack to proceed
         stack.operate(imageProvider);
