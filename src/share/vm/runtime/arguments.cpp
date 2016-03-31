@@ -3593,6 +3593,12 @@ jint Arguments::finalize_vm_init_args(ArgumentBootClassPath* bcp_p, bool bcp_ass
   UNSUPPORTED_OPTION(TieredCompilation, "TieredCompilation");
 #endif
 
+#if INCLUDE_JVMCI
+  if (EnableJVMCI && !append_to_addmods_property("jdk.vm.ci")) {
+    return JNI_ENOMEM;
+  }
+#endif
+
   // If we are running in a headless jre, force java.awt.headless property
   // to be true unless the property has already been set.
   // Also allow the OS environment variable JAVA_AWT_HEADLESS to set headless state.
