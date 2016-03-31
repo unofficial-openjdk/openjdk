@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -45,7 +46,7 @@ import static jdk.internal.module.Checks.*;
 import static java.util.Objects.*;
 
 import jdk.internal.module.Checks;
-import jdk.internal.module.Hasher.DependencyHashes;
+import jdk.internal.module.ModuleHashes;
 
 
 /**
@@ -372,8 +373,9 @@ public class ModuleDescriptor
 
         private Provides(String service, Set<String> providers, boolean check) {
             this.service = check ? requireServiceTypeName(service) : service;
-            providers = check ? Collections.unmodifiableSet(new HashSet<>(providers))
-                              : Collections.unmodifiableSet(providers);
+            providers = check
+                ? Collections.unmodifiableSet(new LinkedHashSet<>(providers))
+                : Collections.unmodifiableSet(providers);
             if (providers.isEmpty())
                 throw new IllegalArgumentException("Empty providers set");
             if (check)
@@ -787,7 +789,7 @@ public class ModuleDescriptor
     private final String osVersion;
     private final Set<String> conceals;
     private final Set<String> packages;
-    private final DependencyHashes hashes;
+    private final ModuleHashes hashes;
 
     private ModuleDescriptor(String name,
                              boolean automatic,
@@ -802,7 +804,7 @@ public class ModuleDescriptor
                              String osArch,
                              String osVersion,
                              Set<String> conceals,
-                             DependencyHashes hashes)
+                             ModuleHashes hashes)
     {
 
         this.name = name;
@@ -1063,9 +1065,9 @@ public class ModuleDescriptor
     }
 
     /**
-     * Returns the object with the hashes of the dependences.
+     * Returns the object with the hashes of other modules
      */
-    Optional<DependencyHashes> hashes() {
+    Optional<ModuleHashes> hashes() {
         return Optional.ofNullable(hashes);
     }
 
@@ -1103,7 +1105,7 @@ public class ModuleDescriptor
         String osArch;
         String osVersion;
         String mainClass;
-        DependencyHashes hashes;
+        ModuleHashes hashes;
 
         /**
          * Initializes a new builder with the given module name.
@@ -1580,7 +1582,7 @@ public class ModuleDescriptor
             return this;
         }
 
-        /* package */ Builder hashes(DependencyHashes hashes) {
+        /* package */ Builder hashes(ModuleHashes hashes) {
             this.hashes = hashes;
             return this;
         }

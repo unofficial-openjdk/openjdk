@@ -85,7 +85,7 @@ import sun.reflect.Reflection;
  * and deployed as a named module must have an appropriate <i>uses</i> clause
  * in its <i>module descriptor</i> to declare that the module uses
  * implementations of the service. A corresponding requirement is that a
- * provider deployed as a named modules must have an appropriate
+ * provider deployed as a named module must have an appropriate
  * <i>provides</i> clause in its module descriptor to declare that the module
  * provides an implementation of the service. The <i>uses</i> and
  * <i>provides</i> allow consumers of a service to be <i>linked</i> to

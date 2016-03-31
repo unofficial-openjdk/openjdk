@@ -91,8 +91,7 @@ import jdk.internal.joptsimple.OptionSpec;
 import jdk.internal.joptsimple.ValueConverter;
 import jdk.internal.module.ConfigurableModuleFinder;
 import jdk.internal.module.ConfigurableModuleFinder.Phase;
-import jdk.internal.module.Hasher;
-import jdk.internal.module.Hasher.DependencyHashes;
+import jdk.internal.module.ModuleHashes;
 import jdk.internal.module.ModuleInfoExtender;
 
 import static java.util.function.Function.identity;
@@ -366,11 +365,11 @@ public class JmodTask {
                         Method m = ModuleDescriptor.class.getDeclaredMethod("hashes");
                         m.setAccessible(true);
                         @SuppressWarnings("unchecked")
-                        Optional<Hasher.DependencyHashes> optHashes =
-                                (Optional<Hasher.DependencyHashes>) m.invoke(md);
+                        Optional<ModuleHashes> optHashes =
+                                (Optional<ModuleHashes>) m.invoke(md);
 
                         if (optHashes.isPresent()) {
-                            Hasher.DependencyHashes hashes = optHashes.get();
+                            ModuleHashes hashes = optHashes.get();
                             hashes.names().stream().forEach(mod ->
                                     sb.append("\n  hashes ").append(mod).append(" ")
                                       .append(hashes.algorithm()).append(" ")
@@ -566,7 +565,7 @@ public class JmodTask {
          * and computes the hash of any module that matches the
          * pattern {@code dependenciesToHash}.
          */
-        DependencyHashes hashDependences(String name, Set<Requires> moduleDependences)
+        ModuleHashes hashDependences(String name, Set<Requires> moduleDependences)
             throws IOException
         {
             Set<ModuleDescriptor> descriptors = new HashSet<>();
@@ -592,7 +591,7 @@ public class JmodTask {
                 return null;
             } else {
                 // use SHA-256 for now, easy to make this configurable if needed
-                return Hasher.generate(map, "SHA-256");
+                return ModuleHashes.generate(map, "SHA-256");
             }
         }
 

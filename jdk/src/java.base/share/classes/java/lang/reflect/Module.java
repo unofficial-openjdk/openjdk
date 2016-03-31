@@ -984,7 +984,16 @@ public final class Module {
                     Set<Module> targets = new HashSet<>();
                     for (String target : export.targets()) {
                         // only export to modules that are in this configuration
+                        // or in parent layers
                         Module m2 = modules.get(target);
+
+                        if (m2 == null) {
+                            Layer parent = layer.parent().orElse(null);
+                            if (parent != null) {
+                                m2 = parent.findModule(target).orElse(null);
+                            }
+                        }
+
                         if (m2 != null) {
                             targets.add(m2);
                             addExports0(m, sourceInternalForm, m2);
@@ -1097,7 +1106,7 @@ public final class Module {
      * the representation is the string {@code "module"}, followed by a space,
      * and then the module name. For an unnamed module, the representation is
      * the string {@code "unnamed module"}, followed by a space, and then an
-     * implementation specific identifier for the unnamed module.
+     * implementation specific string that identifies the unnamed module.
      *
      * @return The string representation of this module
      */

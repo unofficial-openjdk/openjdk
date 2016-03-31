@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,14 +21,26 @@
  * questions.
  */
 
-package jdk.rmi.rmic;
+import jdk.testlibrary.OutputAnalyzer;
+import jdk.testlibrary.ProcessTools;
+import jdk.testlibrary.Utils;
 
-/**
- * The initial class for the rmic tool.
+/* @test
+ * @bug 8147456
+ * @summary Check that providing a non-existing -agentpath gives a proper error.
+ * @author Sharath Ballal
+ *
+ * @library /lib/testlibrary
+ * @modules java.management
+ * @build jdk.testlibrary.*
+ * @build BadAgentPath
+ * @run driver BadAgentPath
  */
 
-public class Main {
-    public static void main(String[] args) {
-        sun.rmi.rmic.Main.main(args);
+public class BadAgentPath {
+
+    public static void main(String[] args) throws Throwable {
+        OutputAnalyzer output = ProcessTools.executeTestJvm("-agentpath:/badAgent/agent", "-version");
+        output.shouldContain("Could not find agent library /badAgent/agent");
     }
 }

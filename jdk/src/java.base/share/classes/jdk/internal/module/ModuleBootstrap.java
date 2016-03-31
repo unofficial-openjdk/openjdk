@@ -27,8 +27,9 @@ package jdk.internal.module;
 
 import java.io.File;
 import java.lang.module.Configuration;
-import java.lang.module.ModuleReference;
+import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleReference;
 import java.lang.module.ResolvedModule;
 import java.lang.reflect.Layer;
 import java.lang.reflect.Module;
@@ -41,7 +42,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import jdk.internal.loader.BootLoader;
 import jdk.internal.loader.BuiltinClassLoader;
@@ -64,6 +64,8 @@ public final class ModuleBootstrap {
     private ModuleBootstrap() { }
 
     private static final String JAVA_BASE = "java.base";
+
+    private static final String JAVA_SE = "java.se.ee";  // will be java.se
 
     // the token for "all unnamed modules"
     private static final String ALL_UNNAMED = "ALL-UNNAMED";
@@ -94,32 +96,32 @@ public final class ModuleBootstrap {
 
         long t0 = System.nanoTime();
 
-        // system module path
-        ModuleFinder systemModulePath = ModuleFinder.ofSystem();
+        // system modules
+        ModuleFinder systemModules = ModuleFinder.ofSystem();
 
         // Once we have the system module path then we define the base module.
         // We do this here so that java.base is defined to the VM as early as
         // possible and also that resources in the base module can be located
         // for error messages that may happen from here on.
-        Optional<ModuleReference> obase = systemModulePath.find(JAVA_BASE);
+        Optional<ModuleReference> obase = systemModules.find(JAVA_BASE);
         if (!obase.isPresent())
             throw new InternalError(JAVA_BASE + " not found");
         ModuleReference base = obase.get();
         BootLoader.loadModule(base);
         Modules.defineModule(null, base.descriptor(), base.location().orElse(null));
 
-
         // -upgrademodulepath option specified to launcher
         ModuleFinder upgradeModulePath
             = createModulePathFinder("jdk.upgrade.module.path");
+        if (upgradeModulePath != null)
+            systemModules = ModuleFinder.compose(upgradeModulePath, systemModules);
+
 
         // -modulepath option specified to the launcher
         ModuleFinder appModulePath = createModulePathFinder("jdk.module.path");
 
-        // The module finder: [-upgrademodulepath] system-module-path [-modulepath]
-        ModuleFinder finder = systemModulePath;
-        if (upgradeModulePath != null)
-            finder = ModuleFinder.compose(upgradeModulePath, finder);
+        // The module finder: [-upgrademodulepath] system [-modulepath]
+        ModuleFinder finder = systemModules;
         if (appModulePath != null)
             finder = ModuleFinder.compose(finder, appModulePath);
 
@@ -139,6 +141,10 @@ public final class ModuleBootstrap {
                         addAllSystemModules = true;
                         break;
                     case ALL_MODULE_PATH:
+                        if (mainModule != null) {
+                            fail(ALL_MODULE_PATH
+                                 + " not allowed with initial module");
+                        }
                         addAllApplicationModules = true;
                         break;
                     default :
@@ -151,19 +157,14 @@ public final class ModuleBootstrap {
         Set<String> roots = new HashSet<>();
 
         // main/initial module
-        if (mainModule != null) {
+        if (mainModule != null)
             roots.add(mainModule);
-            if (addAllApplicationModules)
-                fail(ALL_MODULE_PATH + " not allowed with initial module");
-        }
 
         // If -addmods is specified then those modules need to be resolved
         if (addModules != null)
             roots.addAll(addModules);
 
-
         // -limitmods
-        boolean limitmods = false;
         propValue = System.getProperty("jdk.launcher.limitmods");
         if (propValue != null) {
             Set<String> mods = new HashSet<>();
@@ -171,42 +172,71 @@ public final class ModuleBootstrap {
                 mods.add(mod);
             }
             finder = limitFinder(finder, mods, roots);
-            limitmods = true;
         }
 
+        // If `-addmods ALL-SYSTEM` is used then all observable modules on the
+        // system module path will be resolved, irrespective of whether an
+        // initial module is specified.
+        if (addAllSystemModules) {
 
-        // If there is no initial module specified then assume that the
-        // initial module is the unnamed module of the application class
-        // loader. By convention, and for compatibility, this is
-        // implemented by putting the names of all modules on the system
-        // module path into the set of modules to resolve.
-        //
-        // If `-addmods ALL-SYSTEM` is used then all modules on the system
-        // module path will be resolved, irrespective of whether an initial
-        // module is specified.
-        //
-        // If `-addmods ALL-MODULE-PATH` is used, and no initial module is
-        // specified, then all modules on the application module path will
-        // be resolved.
-        //
-        if (mainModule == null || addAllSystemModules) {
-            Set<ModuleReference> mrefs;
-            if (addAllApplicationModules) {
-                assert mainModule == null;
-                mrefs = finder.findAll();
-            } else {
-                mrefs = systemModulePath.findAll();
-                if (limitmods) {
-                    ModuleFinder f = finder;
-                    mrefs = mrefs.stream()
-                        .filter(m -> f.find(m.descriptor().name()).isPresent())
-                        .collect(Collectors.toSet());
+            ModuleFinder f = finder;  // observable modules
+            systemModules.findAll()
+                    .stream()
+                    .map(ModuleReference::descriptor)
+                    .map(ModuleDescriptor::name)
+                    .filter(mn -> f.find(mn).isPresent())  // observable
+                    .forEach(mn -> roots.add(mn));
+
+        } else if (mainModule == null) {
+
+            // If there is no initial module specified then assume that the
+            // initial module is the unnamed module of the application class
+            // loader. By convention, this is implemented by resolving
+            // "java.se" and all other (non-java.*) modules that export an API.
+            // If "java.se" is not observable then all java.* modules are
+            // resolved.
+
+            boolean hasJava = false;
+            if (systemModules.find(JAVA_SE).isPresent()) {
+                // java.se is on the system module path
+                if (finder == systemModules || finder.find(JAVA_SE).isPresent()) {
+                    // java.se is observable
+                    hasJava = true;
+                    roots.add(JAVA_SE);
                 }
             }
-            // map to module names
-            for (ModuleReference mref : mrefs) {
-                roots.add(mref.descriptor().name());
+
+            for (ModuleReference mref : systemModules.findAll()) {
+                String mn = mref.descriptor().name();
+                if (hasJava && mn.startsWith("java."))
+                    continue;
+
+                // add as root if observable and exports at least one package
+                if ((finder == systemModules || finder.find(mn).isPresent())) {
+                    ModuleDescriptor descriptor = mref.descriptor();
+                    for (ModuleDescriptor.Exports e : descriptor.exports()) {
+                        if (!e.isQualified()) {
+                            roots.add(mn);
+                            break;
+                        }
+                    }
+                }
             }
+        }
+
+        // If `-addmods ALL-MODULE-PATH` is used, and no initial module is
+        // specified, then all observable modules on the application module
+        // path will be resolved.
+        if (addAllApplicationModules) {
+            assert mainModule == null;
+
+            ModuleFinder f = finder;  // observable modules
+            appModulePath.findAll()
+                    .stream()
+                    .map(ModuleReference::descriptor)
+                    .map(ModuleDescriptor::name)
+                    .filter(mn -> f.find(mn).isPresent())  // observable
+                    .forEach(mn -> roots.add(mn));
         }
 
         long t1 = System.nanoTime();
@@ -225,8 +255,8 @@ public final class ModuleBootstrap {
         Function<String, ClassLoader> clf = ModuleLoaderMap.mappingFunction(cf);
 
         // check that all modules to be mapped to the boot loader will be
-        // loaded from the system module path
-        if (finder != systemModulePath) {
+        // loaded from the runtime image
+        if (upgradeModulePath != null || appModulePath != null) {
             for (ResolvedModule resolvedModule : cf.modules()) {
                 ModuleReference mref = resolvedModule.reference();
                 String name = mref.descriptor().name();
@@ -237,7 +267,7 @@ public final class ModuleBootstrap {
                             && upgradeModulePath.find(name).isPresent())
                         fail(name + ": cannot be loaded from upgrade module path");
 
-                    if (!systemModulePath.find(name).isPresent())
+                    if (!systemModules.find(name).isPresent())
                         fail(name + ": cannot be loaded from application module path");
                 }
             }
@@ -439,10 +469,6 @@ public final class ModuleBootstrap {
      * Decodes the values of -XaddReads or -XaddExports options
      *
      * The format of the options is: $KEY=$MODULE(,$MODULE)*
-     *
-     * For transition purposes, this method allows the first usage to be
-     *     $KEY=$MODULE(,$KEY=$MODULE)
-     * This format will eventually be removed.
      */
     private static Map<String, Set<String>> decode(String prefix) {
         int index = 0;
@@ -467,42 +493,15 @@ public final class ModuleBootstrap {
             if (rhs.isEmpty())
                 fail("Unable to parse: " + value);
 
-            // new format $MODULE(,$MODULE)* or old format $(MODULE)=...
-            pos = rhs.indexOf('=');
 
-            // old format only allowed in first -X option
-            if (pos >= 0 && index > 0)
-                fail("Unable to parse: " + value);
+            // value is <module>(,<module>)*
+            if (map.containsKey(key))
+                fail(key + " specified more than once");
 
-            if (pos == -1) {
-
-                // new format: $KEY=$MODULE(,$MODULE)*
-
-                Set<String> values = map.get(key);
-                if (values != null)
-                    fail(key + " specified more than once");
-
-                values = new HashSet<>();
-                map.put(key, values);
-                for (String s : rhs.split(",")) {
-                    if (s.length() > 0) values.add(s);
-                }
-
-            } else {
-
-                // old format: $KEY=$MODULE(,$KEY=$MODULE)*
-
-                assert index == 0;  // old format only allowed in first usage
-
-                for (String expr : value.split(",")) {
-                    if (expr.length() > 0) {
-                        String[] s = expr.split("=");
-                        if (s.length != 2)
-                            fail("Unable to parse: " + expr);
-
-                        map.computeIfAbsent(s[0], k -> new HashSet<>()).add(s[1]);
-                    }
-                }
+            Set<String> values = new HashSet<>();
+            map.put(key, values);
+            for (String s : rhs.split(",")) {
+                if (s.length() > 0) values.add(s);
             }
 
             index++;
