@@ -235,8 +235,6 @@ void Arguments::init_system_properties() {
 
   // Set OS specific system properties values
   os::init_system_properties_values();
-
-  JVMCI_ONLY(JVMCIRuntime::init_system_properties(&_system_properties);)
 }
 
 // Update/Initialize System properties after JDK version number is known
@@ -2540,9 +2538,11 @@ bool Arguments::check_vm_args_consistency() {
     status = false;
   }
 
+#ifdef _LP64
   if (!FLAG_IS_DEFAULT(CICompilerCount) && !FLAG_IS_DEFAULT(CICompilerCountPerCPU) && CICompilerCountPerCPU) {
     warning("The VM option CICompilerCountPerCPU overrides CICompilerCount.");
   }
+#endif
 
 #ifndef SUPPORT_RESERVED_STACK_AREA
   if (StackReservedPages != 0) {
@@ -3591,6 +3591,12 @@ jint Arguments::finalize_vm_init_args(ArgumentBootClassPath* bcp_p, bool bcp_ass
 #ifndef TIERED
   // Tiered compilation is undefined.
   UNSUPPORTED_OPTION(TieredCompilation, "TieredCompilation");
+#endif
+
+#if INCLUDE_JVMCI
+  if (EnableJVMCI && !append_to_addmods_property("jdk.vm.ci")) {
+    return JNI_ENOMEM;
+  }
 #endif
 
   // If we are running in a headless jre, force java.awt.headless property
