@@ -338,7 +338,9 @@ void stringStream::write(const char* s, size_t len) {
       }
       char* oldbuf = buffer;
       assert(rm == NULL || Thread::current()->current_resource_mark() == rm,
-             "stringStream is re-allocated with a different ResourceMark");
+             "StringStream is re-allocated with a different ResourceMark. Current: "
+             PTR_FORMAT " original: " PTR_FORMAT,
+             p2i(Thread::current()->current_resource_mark()), p2i(rm));
       buffer = NEW_RESOURCE_ARRAY(char, end);
       if (buffer_pos > 0) {
         memcpy(buffer, oldbuf, buffer_pos);
@@ -706,8 +708,10 @@ void defaultStream::start_log() {
       for (SystemProperty* p = Arguments::system_properties(); p != NULL; p = p->next()) {
         // Print in two stages to avoid problems with long
         // keys/values.
+        assert(p->key() != NULL, "p->key() is NULL");
         text->print_raw(p->key());
         text->put('=');
+        assert(p->value() != NULL, "p->value() is NULL");
         text->print_raw_cr(p->value());
       }
       xs->tail("properties");

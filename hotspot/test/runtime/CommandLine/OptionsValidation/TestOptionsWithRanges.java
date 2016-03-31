@@ -27,8 +27,9 @@
  * @library /testlibrary /runtime/CommandLine/OptionsValidation/common
  * @modules java.base/sun.misc
  *          java.management
- *          jdk.attach
- *          jdk.management/sun.tools.attach
+ *          jdk.attach/sun.tools.attach
+ *          jdk.jvmstat/sun.jvmstat.monitor
+ * @build jdk.test.lib.* TestOptionsWithRanges
  * @run main/othervm/timeout=900 TestOptionsWithRanges
  */
 
@@ -82,13 +83,6 @@ public class TestOptionsWithRanges {
         setAllowedExitCodes("SharedReadOnlySize", 2);
         setAllowedExitCodes("SharedMiscDataSize", 2);
         setAllowedExitCodes("SharedMiscCodeSize", 2);
-
-        /*
-         * JDK-8145204
-         * Temporarily remove testing of max range for ParGCArrayScanChunk because
-         * JVM can hang when ParGCArrayScanChunk=4294967296 and ParallelGC is used
-         */
-        excludeTestMaxRange("ParGCArrayScanChunk");
 
         /*
          * Remove CICompilerCount from testing because currently it can hang system
