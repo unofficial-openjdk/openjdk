@@ -204,27 +204,47 @@ public class DefaultImageBuilder implements ImageBuilder {
             mainClass = ModuleDescriptor.read(stream).mainClass();
             if (mainClass.isPresent()) {
                 Path cmd = root.resolve("bin").resolve(module);
-                if (!Files.exists(cmd)) {
-                    StringBuilder sb = new StringBuilder();
-                    sb.append("#!/bin/sh")
-                            .append("\n");
-                    sb.append("JLINK_VM_OPTIONS=")
-                            .append("\n");
-                    sb.append("DIR=`dirname $0`")
-                            .append("\n");
-                    sb.append("$DIR/java $JLINK_VM_OPTIONS -m ")
+                // generate shell script for Unix platforms
+                StringBuilder sb = new StringBuilder();
+                sb.append("#!/bin/sh")
+                        .append("\n");
+                sb.append("JLINK_VM_OPTIONS=")
+                        .append("\n");
+                sb.append("DIR=`dirname $0`")
+                        .append("\n");
+                sb.append("$DIR/java $JLINK_VM_OPTIONS -m ")
+                        .append(module).append('/')
+                        .append(mainClass.get())
+                        .append(" $@\n");
+
+                try (BufferedWriter writer = Files.newBufferedWriter(cmd,
+                        StandardCharsets.ISO_8859_1,
+                        StandardOpenOption.CREATE_NEW)) {
+                    writer.write(sb.toString());
+                }
+                if (Files.getFileStore(root.resolve("bin"))
+                        .supportsFileAttributeView(PosixFileAttributeView.class)) {
+                    setExecutable(cmd);
+                }
+                // generate .bat file for Windows
+                if (isWindows()) {
+                    Path bat = root.resolve("bin").resolve(module + ".bat");
+                    sb = new StringBuilder();
+                    sb.append("@echo off")
+                            .append("\r\n");
+                    sb.append("set JLINK_VM_OPTIONS=")
+                            .append("\r\n");
+                    sb.append("set DIR=%~dp0")
+                            .append("\r\n");
+                    sb.append("\"%DIR%\\java\" %JLINK_VM_OPTIONS% -m ")
                             .append(module).append('/')
                             .append(mainClass.get())
-                            .append(" $@\n");
+                            .append(" %*\r\n");
 
-                    try (BufferedWriter writer = Files.newBufferedWriter(cmd,
+                    try (BufferedWriter writer = Files.newBufferedWriter(bat,
                             StandardCharsets.ISO_8859_1,
                             StandardOpenOption.CREATE_NEW)) {
                         writer.write(sb.toString());
-                    }
-                    if (Files.getFileStore(root.resolve("bin"))
-                            .supportsFileAttributeView(PosixFileAttributeView.class)) {
-                        setExecutable(cmd);
                     }
                 }
             }
