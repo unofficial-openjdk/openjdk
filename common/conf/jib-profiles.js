@@ -402,10 +402,8 @@ var getJibProfilesDependencies = function (input, common) {
 
         jtreg: {
             server: "javare",
-            revision: "4.2",
-            build_number: "b01",
-            checksum_file: "MD5_VALUES",
-            file: "jtreg_bin-4.2.zip",
+            path: "java/re/jtreg/4.2/nightly/bundles/jtreg_bin-4.2.zip",
+            checksum_path: "java/re/jtreg/4.2/nightly/bundles/MD5_VALUES",
             environment_name: "JT_HOME"
         },
 
