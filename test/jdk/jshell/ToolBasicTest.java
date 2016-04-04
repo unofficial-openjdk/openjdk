@@ -24,11 +24,12 @@
 /*
  * @test
  * @bug 8143037 8142447 8144095 8140265 8144906 8146138 8147887 8147886 8148316 8148317
- * @requires os.family != "solaris"
  * @summary Tests for Basic tests for REPL tool
+ * @requires os.family != "solaris"
  * @library /tools/lib
  * @ignore 8139873
- * @build KullaTesting TestingInputStream ToolBox Compiler
+ * @build toolbox.ToolBox toolbox.JarTask toolbox.JavacTask
+ * @build KullaTesting TestingInputStream Compiler
  * @run testng/timeout=600 ToolBasicTest
  */
 
@@ -42,6 +43,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Scanner;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -462,7 +464,7 @@ public class ToolBasicTest extends ReplToolTesting {
                     (a) -> assertCommandCheckOutput(a, "printf(\"\")", assertStartsWith("|  Error:\n|  cannot find symbol"))
             );
             test((a) -> assertCommand(a, "printf(\"A\")", "", "", null, "A", ""));
-            test(false, new String[]{"-startup", "UNKNOWN"}, "|  File 'UNKNOWN' for start-up is not found.");
+            test(Locale.ROOT, false, new String[]{"-startup", "UNKNOWN"}, "|  File 'UNKNOWN' for start-up is not found.");
         } finally {
             removeStartup();
         }
@@ -477,9 +479,9 @@ public class ToolBasicTest extends ReplToolTesting {
                 (a) -> assertCommand(a, "a", "|  Variable a of type double has value 10.0\n")
         );
         Path unknown = compiler.getPath("UNKNOWN.jar");
-        test(true, new String[]{unknown.toString()},
-                "|  File '" + unknown
-                + "' is not found: " + unresolvableMessage(unknown) + "\n");
+        test(Locale.ROOT, true, new String[]{unknown.toString()},
+                "|  File " + unknown
+                + " is not found: " + unresolvableMessage(unknown) + "\n");
     }
 
     public void testReset() {

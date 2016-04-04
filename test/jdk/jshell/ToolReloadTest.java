@@ -31,7 +31,7 @@
  *          jdk.jdeps/com.sun.tools.javap
  *          jdk.jshell/jdk.internal.jshell.tool
  * @library /tools/lib
- * @build KullaTesting TestingInputStream ToolBox Compiler
+ * @build KullaTesting TestingInputStream toolbox.ToolBox Compiler
  * @run testng ToolReloadTest
  */
 
@@ -71,7 +71,7 @@ public class ToolReloadTest extends ReplToolTesting {
         Path classpath = compiler.getPath(outDir);
         test(
                 (a) -> assertCommand(a, "/classpath " + classpath,
-                        String.format("|  Path %s added to classpath\n", classpath)),
+                        String.format("|  Path '%s' added to classpath\n", classpath)),
                 (a) -> assertMethod(a, "String foo() { return (new pkg.A()).toString(); }",
                         "()String", "foo"),
                 (a) -> assertVariable(a, "String", "v", "foo()", "\"A\""),
