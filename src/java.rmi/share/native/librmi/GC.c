@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,18 +23,13 @@
  * questions.
  */
 
-package sun.util.resources.provider;
+#include <jni.h>
+#include <jvm.h>
+#include "sun_rmi_transport_GC.h"
 
-import java.util.Locale;
-import java.util.ResourceBundle;
-import sun.util.resources.LocaleData;
 
-/**
- * Service Provider for loading JavaTimeSupplementary resource bundles in jdk.localedata.
- */
-public class SupplementaryLocaleDataProvider extends LocaleData.SupplementaryResourceBundleProvider {
-    @Override
-    public ResourceBundle getBundle(String baseName, Locale locale) {
-        return LocaleDataProvider.loadResourceBundle(toBundleName(baseName, locale));
-    }
+JNIEXPORT jlong JNICALL
+Java_sun_rmi_transport_GC_maxObjectInspectionAge(JNIEnv *env, jclass cls)
+{
+    return JVM_MaxObjectInspectionAge();
 }

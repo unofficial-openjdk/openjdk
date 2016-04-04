@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,18 +21,7 @@
  * questions.
  */
 
-package sun.util.resources.provider;
-
-import java.util.Locale;
-import java.util.ResourceBundle;
-import sun.util.resources.LocaleData;
-
-/**
- * Service Provider for loading JavaTimeSupplementary resource bundles in jdk.localedata.
- */
-public class SupplementaryLocaleDataProvider extends LocaleData.SupplementaryResourceBundleProvider {
-    @Override
-    public ResourceBundle getBundle(String baseName, Locale locale) {
-        return LocaleDataProvider.loadResourceBundle(toBundleName(baseName, locale));
-    }
-}
+@javax.xml.bind.annotation.XmlSchema(
+        namespace = "http://www.example.org/testNamespace/",
+        elementFormDefault = javax.xml.bind.annotation.XmlNsForm.QUALIFIED)
+package testTypes;

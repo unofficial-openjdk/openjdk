@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 1998, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,13 +21,41 @@
  * questions.
  */
 
-#include <jni.h>
-#include <jvm.h>
-#include "sun_misc_GC.h"
+package testTypes;
 
+import javax.xml.bind.annotation.XmlRegistry;
 
-JNIEXPORT jlong JNICALL
-Java_sun_misc_GC_maxObjectInspectionAge(JNIEnv *env, jclass cls)
-{
-    return JVM_MaxObjectInspectionAge();
+/**
+ * This object contains factory methods for each
+ * Java content interface and Java element interface
+ * generated in the testTypes package.
+ *
+ */
+@XmlRegistry
+public class ObjectFactory {
+
+    /**
+     * Create a new ObjectFactory that can be used to create
+     * new instances of schema derived classes for package: testTypes
+     *
+     */
+    public ObjectFactory() {
+    }
+
+    /**
+     * Create an instance of {@link Root }
+     *
+     */
+    public Root createRoot() {
+        return new Root();
+    }
+
+    /**
+     * Create an instance of {@link WhenType }
+     *
+     */
+    public WhenType createWhenType() {
+        return new WhenType();
+    }
+
 }
