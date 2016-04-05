@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -1927,8 +1928,8 @@ public class ModuleDescriptor
 
     static {
         /**
-         * Setup the shared secret to allow code in other packages create
-         * ModuleDescriptor and associated objects directly.
+         * Setup the shared secret to allow code in other packages access
+         * private package methods in java.lang.module.
          */
         jdk.internal.misc.SharedSecrets
             .setJavaLangModuleAccess(new jdk.internal.misc.JavaLangModuleAccess() {
@@ -1991,6 +1992,14 @@ public class ModuleDescriptor
                                                 osVersion,
                                                 conceals,
                                                 packages);
+                }
+
+                @Override
+                public Configuration resolveRequiresAndUses(ModuleFinder finder,
+                                                            Collection<String> roots,
+                                                            boolean check)
+                {
+                    return Configuration.resolveRequiresAndUses(finder, roots, check);
                 }
             });
     }

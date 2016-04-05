@@ -264,22 +264,26 @@ final class Resolver {
      * Execute post-resolution checks and returns the module graph of resolved
      * modules as {@code Map}. The resolved modules will be in the given
      * configuration.
+     *
+     * @param check {@true} to execute the post resolution checks
      */
-    Map<ResolvedModule, Set<ResolvedModule>> finish(Configuration cf) {
-
-        detectCycles();
-
-        checkPlatformConstraints();
-
-        checkHashes();
+    Map<ResolvedModule, Set<ResolvedModule>> finish(Configuration cf,
+                                                    boolean check)
+    {
+        if (check) {
+            detectCycles();
+            checkPlatformConstraints();
+            checkHashes();
+        }
 
         Map<ResolvedModule, Set<ResolvedModule>> graph = makeGraph(cf);
 
-        checkExportSuppliers(graph);
+        if (check) {
+            checkExportSuppliers(graph);
+        }
 
         return graph;
     }
-
 
     /**
      * Checks the given module graph for cycles.
@@ -656,7 +660,7 @@ final class Resolver {
                     // source is exported to descriptor2
                     String source = export.source();
                     ModuleDescriptor other
-                            = packageToExporter.put(source, descriptor2);
+                        = packageToExporter.put(source, descriptor2);
 
                     if (other != null && other != descriptor2) {
                         // package might be local to descriptor1
@@ -679,7 +683,6 @@ final class Resolver {
                     }
                 }
             }
-
 
             // uses/provides checks not applicable to automatic modules
             if (!descriptor1.isAutomatic()) {
