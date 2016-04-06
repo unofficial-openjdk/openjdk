@@ -67,10 +67,6 @@ public class Modules {
         new javax.security.auth.kerberos.ServicePermission("*", "accept"),
         // java.sql module
         new java.sql.SQLPermission("setLog"),
-        // java.xml.bind module
-        new javax.xml.bind.JAXBPermission("setDatatypeConverter"),
-        // java.xml.ws module
-        new javax.xml.ws.WebServicePermission("publishEndpoint"),
         // java.smartcardio module
         new javax.smartcardio.CardPermission("*", "*"),
         // jdk.attach module (@jdk.Exported Permissions)

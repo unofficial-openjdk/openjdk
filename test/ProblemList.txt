@@ -438,6 +438,11 @@ demo/jvmti/compiledMethodLoad/CompiledMethodLoadTest.java       generic-all
 # 8141370
 com/sun/jndi/ldap/DeadSSLLdapTimeoutTest.java			linux-i586,macosx-all
 
+# CODETOOLS-7901647 
+javax/transaction/testng/test/transaction/InvalidTransactionExceptionTests.java		generic-all
+javax/transaction/testng/test/transaction/TransactionRequiredExceptionTests.java	generic-all
+javax/transaction/testng/test/transaction/TransactionRolledbackExceptionTests.java	generic-all
+
 ############################################################################
 
 # core_tools

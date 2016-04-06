@@ -66,7 +66,7 @@ public final class ModuleBootstrap {
 
     private static final String JAVA_BASE = "java.base";
 
-    private static final String JAVA_SE = "java.se.ee";  // will be java.se
+    private static final String JAVA_SE = "java.se";
 
     // the token for "all unnamed modules"
     private static final String ALL_UNNAMED = "ALL-UNNAMED";
