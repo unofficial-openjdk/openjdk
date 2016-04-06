@@ -1,0 +1,751 @@
+#
+# Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.  Oracle designates this
+# particular file as subject to the "Classpath" exception as provided
+# by Oracle in the LICENSE file that accompanied this code.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
+#
+
+# Configured @DATE_WHEN_CONFIGURED@ to build
+# for target system @OPENJDK_TARGET_OS@-@OPENJDK_TARGET_CPU@
+#   (called @OPENJDK_TARGET_AUTOCONF_NAME@ by autoconf)
+# on build system @OPENJDK_BUILD_OS@-@OPENJDK_BUILD_CPU@
+#   (called @OPENJDK_BUILD_AUTOCONF_NAME@ by autoconf)
+# using 'configure @CONFIGURE_COMMAND_LINE@'
+
+# The command line given to configure.
+CONFIGURE_COMMAND_LINE:=@CONFIGURE_COMMAND_LINE@
+
+# A self-referential reference to this file.
+SPEC:=@SPEC@
+
+# SPACE and COMMA are defined in MakeBase.gmk, but they are also used in
+# some definitions here, and are needed if MakeBase.gmk is not included before
+# this file.
+X:=
+SPACE:=$(X) $(X)
+COMMA:=,
+
+# What make to use for main processing, after bootstrapping top-level Makefile.
+MAKE := @MAKE@
+
+# The default make arguments
+MAKE_ARGS = $(MAKE_LOG_FLAGS) -r -R -I $(TOPDIR)/make/common SPEC=$(SPEC) \
+    MAKE_LOG_FLAGS="$(MAKE_LOG_FLAGS)" LOG_LEVEL=$(LOG_LEVEL)
+
+OUTPUT_SYNC_SUPPORTED:=@OUTPUT_SYNC_SUPPORTED@
+OUTPUT_SYNC:=@OUTPUT_SYNC@
+
+# Override the shell with bash
+BASH:=@BASH@
+BASH_ARGS:=@BASH_ARGS@
+SHELL:=$(BASH) $(BASH_ARGS)
+
+# The "human readable" name of this configuration
+CONF_NAME:=@CONF_NAME@
+
+# The built jdk will run in this target system.
+OPENJDK_TARGET_OS:=@OPENJDK_TARGET_OS@
+OPENJDK_TARGET_OS_TYPE:=@OPENJDK_TARGET_OS_TYPE@
+OPENJDK_TARGET_OS_ENV:=@OPENJDK_TARGET_OS_ENV@
+
+OPENJDK_TARGET_CPU:=@OPENJDK_TARGET_CPU@
+OPENJDK_TARGET_CPU_ARCH:=@OPENJDK_TARGET_CPU_ARCH@
+OPENJDK_TARGET_CPU_BITS:=@OPENJDK_TARGET_CPU_BITS@
+OPENJDK_TARGET_CPU_ENDIAN:=@OPENJDK_TARGET_CPU_ENDIAN@
+
+COMPILE_TYPE:=@COMPILE_TYPE@
+
+# Legacy support
+OPENJDK_TARGET_CPU_ISADIR:=@OPENJDK_TARGET_CPU_ISADIR@
+OPENJDK_TARGET_CPU_LIBDIR:=@OPENJDK_TARGET_CPU_LIBDIR@
+OPENJDK_TARGET_CPU_LEGACY:=@OPENJDK_TARGET_CPU_LEGACY@
+OPENJDK_TARGET_CPU_LEGACY_LIB:=@OPENJDK_TARGET_CPU_LEGACY_LIB@
+OPENJDK_TARGET_CPU_OSARCH:=@OPENJDK_TARGET_CPU_OSARCH@
+OPENJDK_TARGET_CPU_JLI_CFLAGS:=@OPENJDK_TARGET_CPU_JLI_CFLAGS@
+OPENJDK_TARGET_OS_EXPORT_DIR:=@OPENJDK_TARGET_OS_EXPORT_DIR@
+
+# We are building on this build system.
+# When not cross-compiling, it is the same as the target.
+OPENJDK_BUILD_OS:=@OPENJDK_BUILD_OS@
+OPENJDK_BUILD_OS_TYPE:=@OPENJDK_BUILD_OS_TYPE@
+OPENJDK_BUILD_OS_ENV:=@OPENJDK_BUILD_OS_ENV@
+
+OPENJDK_BUILD_CPU:=@OPENJDK_BUILD_CPU@
+OPENJDK_BUILD_CPU_ARCH:=@OPENJDK_BUILD_CPU_ARCH@
+OPENJDK_BUILD_CPU_BITS:=@OPENJDK_BUILD_CPU_BITS@
+OPENJDK_BUILD_CPU_ENDIAN:=@OPENJDK_BUILD_CPU_ENDIAN@
+
+# Legacy OS values for use in release file.
+REQUIRED_OS_NAME:=@REQUIRED_OS_NAME@
+REQUIRED_OS_VERSION:=@REQUIRED_OS_VERSION@
+
+@SET_OPENJDK@
+LIBM:=@LIBM@
+LIBDL:=@LIBDL@
+
+# colon or semicolon
+PATH_SEP:=@PATH_SEP@
+
+# Save the original path before replacing it with the Visual Studio tools
+ORIGINAL_PATH:=@ORIGINAL_PATH@
+ifeq ($(OPENJDK_TARGET_OS), windows)
+  # On Windows, the Visual Studio toolchain needs the PATH to be adjusted
+  # to include Visual Studio tools (this needs to be in cygwin/msys style).
+  export PATH:=@VS_PATH@
+endif
+
+SYSROOT_CFLAGS := @SYSROOT_CFLAGS@
+SYSROOT_LDFLAGS := @SYSROOT_LDFLAGS@
+
+# The top-level directory of the forest (SRC_ROOT is a traditional alias)
+TOPDIR:=@TOPDIR@
+# These two versions of TOPDIR are used in string comparisons
+ORIGINAL_TOPDIR:=@ORIGINAL_TOPDIR@
+CANONICAL_TOPDIR:=@CANONICAL_TOPDIR@
+SRC_ROOT:=@TOPDIR@
+
+OUTPUT_ROOT:=@OUTPUT_ROOT@
+JDK_TOPDIR:=@JDK_TOPDIR@
+LANGTOOLS_TOPDIR:=@LANGTOOLS_TOPDIR@
+CORBA_TOPDIR:=@CORBA_TOPDIR@
+JAXP_TOPDIR:=@JAXP_TOPDIR@
+JAXWS_TOPDIR:=@JAXWS_TOPDIR@
+HOTSPOT_TOPDIR:=@HOTSPOT_TOPDIR@
+NASHORN_TOPDIR:=@NASHORN_TOPDIR@
+
+IMPORT_MODULES_CLASSES:=@IMPORT_MODULES_CLASSES@
+IMPORT_MODULES_CMDS:=@IMPORT_MODULES_CMDS@
+IMPORT_MODULES_LIBS:=@IMPORT_MODULES_LIBS@
+IMPORT_MODULES_CONF:=@IMPORT_MODULES_CONF@
+IMPORT_MODULES_SRC:=@IMPORT_MODULES_SRC@
+IMPORT_MODULES_MAKE:=@IMPORT_MODULES_MAKE@
+
+COPYRIGHT_YEAR:=@COPYRIGHT_YEAR@
+
+# New (JEP-223) version information
+
+## Building blocks of the version string
+# First three version numbers, with well-specified meanings (numerical)
+VERSION_MAJOR := @VERSION_MAJOR@
+VERSION_MINOR := @VERSION_MINOR@
+VERSION_SECURITY := @VERSION_SECURITY@
+# Optional fourth element for use by OpenJDK consumers (numerical)
+VERSION_PATCH := @VERSION_PATCH@
+# The pre-release identifier (string)
+VERSION_PRE := @VERSION_PRE@
+# The build number (numerical)
+VERSION_BUILD := @VERSION_BUILD@
+# Optional build information (string)
+VERSION_OPT := @VERSION_OPT@
+
+## Composite variables
+# The version number as a dot separated sequence of numbers, e.g. 9.0.1
+VERSION_NUMBER := @VERSION_NUMBER@
+# VERSION_NUMBER but always with exactly 4 positions, with 0 for empty positions.
+VERSION_NUMBER_FOUR_POSITIONS := @VERSION_NUMBER_FOUR_POSITIONS@
+# The complete version string, with additional build information
+VERSION_STRING := @VERSION_STRING@
+# The short version string, without trailing zeroes and just PRE, if present.
+VERSION_SHORT := @VERSION_SHORT@
+# The Java specification version. It should be equal to version number.
+VERSION_SPECIFICATION := @VERSION_NUMBER@
+# A GA version is defined by the PRE string being empty. Rather than testing for
+# that, this variable defines it with true/false.
+VERSION_IS_GA := @VERSION_IS_GA@
+
+# Convenience CFLAGS settings for passing version information into native programs.
+VERSION_CFLAGS := \
+    -DVERSION_MAJOR=$(VERSION_MAJOR) \
+    -DVERSION_MINOR=$(VERSION_MINOR) \
+    -DVERSION_SECURITY=$(VERSION_SECURITY) \
+    -DVERSION_PATCH=$(VERSION_PATCH) \
+    -DVERSION_PRE='"$(VERSION_PRE)"' \
+    -DVERSION_BUILD=$(VERSION_BUILD) \
+    -DVERSION_OPT='"$(VERSION_OPT)"' \
+    -DVERSION_NUMBER='"$(VERSION_NUMBER)"' \
+    -DVERSION_STRING='"$(VERSION_STRING)"' \
+    -DVERSION_SHORT='"$(VERSION_SHORT)"' \
+    -DVERSION_SPECIFICATION='"$(VERSION_SPECIFICATION)"' \
+    #
+
+# Platform naming variables
+LAUNCHER_NAME:=@LAUNCHER_NAME@
+PRODUCT_NAME:=@PRODUCT_NAME@
+PRODUCT_SUFFIX:=@PRODUCT_SUFFIX@
+JDK_RC_PLATFORM_NAME:=@JDK_RC_PLATFORM_NAME@
+COMPANY_NAME:=@COMPANY_NAME@
+MACOSX_BUNDLE_NAME_BASE=@MACOSX_BUNDLE_NAME_BASE@
+MACOSX_BUNDLE_ID_BASE=@MACOSX_BUNDLE_ID_BASE@
+USERNAME:=@USERNAME@
+
+# Different naming strings generated from the above information.
+RUNTIME_NAME=$(PRODUCT_NAME) $(PRODUCT_SUFFIX)
+
+# How to compile the code: release, fastdebug or slowdebug
+DEBUG_LEVEL:=@DEBUG_LEVEL@
+
+# This is the JDK variant to build.
+# The JDK variant is a name for a specific set of modules to be compiled for the JDK.
+JDK_VARIANT:=@JDK_VARIANT@
+
+# Should we compile support for running with a graphical UI? (ie headful)
+# Should we compile support for running without? (ie headless)
+SUPPORT_HEADFUL:=@SUPPORT_HEADFUL@
+SUPPORT_HEADLESS:=@SUPPORT_HEADLESS@
+# Legacy defines controlled by the SUPPORT_HEADLESS and SUPPORT_HEADFUL options.
+@BUILD_HEADLESS@
+
+# These are the libjvms that we want to build.
+# The java launcher uses the default.
+# The others can be selected by specifying -client -server -minimal1 -zero or -zeroshark
+# on the java launcher command line.
+JVM_VARIANTS:=@JVM_VARIANTS@
+JVM_VARIANT_SERVER:=@JVM_VARIANT_SERVER@
+JVM_VARIANT_CLIENT:=@JVM_VARIANT_CLIENT@
+JVM_VARIANT_MINIMAL1:=@JVM_VARIANT_MINIMAL1@
+JVM_VARIANT_ZERO:=@JVM_VARIANT_ZERO@
+JVM_VARIANT_ZEROSHARK:=@JVM_VARIANT_ZEROSHARK@
+JVM_VARIANT_CORE:=@JVM_VARIANT_CORE@
+
+# Universal binaries on macosx
+MACOSX_UNIVERSAL=@MACOSX_UNIVERSAL@
+
+# Legacy setting: -debug or -fastdebug
+# Still used in version string...
+BUILD_VARIANT_RELEASE:=@BUILD_VARIANT_RELEASE@
+
+# JDK_OUTPUTDIR specifies where a working jvm is built.
+# You can run $(JDK_OUTPUTDIR)/bin/java
+# Though the layout of the contents of $(JDK_OUTPUTDIR) is not
+# yet the same as a default installation.
+#
+# When you run "make install" it will create the standardized
+# layout for the jdk and the jre inside the IMAGES_OUTPUTDIR subdir.
+# Then it will copy the contents of the jdk into the installation
+# directory.
+
+BUILD_OUTPUT:=@BUILD_OUTPUT@
+# Colon left out to be able to override IMAGES_OUTPUTDIR for bootcycle-images
+SUPPORT_OUTPUTDIR=$(BUILD_OUTPUT)/support
+BUILDTOOLS_OUTPUTDIR=$(BUILD_OUTPUT)/buildtools
+
+HOTSPOT_OUTPUTDIR=$(BUILD_OUTPUT)/hotspot
+JDK_OUTPUTDIR=$(BUILD_OUTPUT)/jdk
+IMAGES_OUTPUTDIR=$(BUILD_OUTPUT)/images
+TESTMAKE_OUTPUTDIR=$(BUILD_OUTPUT)/test-make
+MAKESUPPORT_OUTPUTDIR=$(BUILD_OUTPUT)/make-support
+# This does not get overridden in a bootcycle build
+CONFIGURESUPPORT_OUTPUTDIR:=@CONFIGURESUPPORT_OUTPUTDIR@
+BUILDJDK_OUTPUTDIR=$(BUILD_OUTPUT)/buildjdk
+
+HOTSPOT_DIST=@HOTSPOT_DIST@
+
+BUILD_HOTSPOT=@BUILD_HOTSPOT@
+
+# The boot jdk to use. This is overridden in bootcycle-spec.gmk. Make sure to keep
+# it in sync.
+BOOT_JDK:=@BOOT_JDK@
+
+BUILD_JDK:=@BUILD_JDK@
+CREATE_BUILDJDK:=@CREATE_BUILDJDK@
+
+# When compiling Java source to be run by the boot jdk
+# use these extra flags, eg -source 6 -target 6
+BOOT_JDK_SOURCETARGET:=@BOOT_JDK_SOURCETARGET@
+
+# Information about the build system
+NUM_CORES:=@NUM_CORES@
+MEMORY_SIZE:=@MEMORY_SIZE@
+# Enable sjavac support = use a javac server,
+# multi core javac compilation and dependency tracking.
+ENABLE_SJAVAC:=@ENABLE_SJAVAC@
+ENABLE_JAVAC_SERVER:=@ENABLE_JAVAC_SERVER@
+# Store sjavac server synchronization files here, and
+# the sjavac server log files.
+SJAVAC_SERVER_DIR=$(MAKESUPPORT_OUTPUTDIR)/javacservers
+
+# Number of parallel jobs to use for compilation
+JOBS?=@JOBS@
+TEST_JOBS?=@TEST_JOBS@
+
+# Default make target
+DEFAULT_MAKE_TARGET:=@DEFAULT_MAKE_TARGET@
+
+FREETYPE_LIBS:=@FREETYPE_LIBS@
+FREETYPE_CFLAGS:=@FREETYPE_CFLAGS@
+FREETYPE_BUNDLE_LIB_PATH=@FREETYPE_BUNDLE_LIB_PATH@
+CUPS_CFLAGS:=@CUPS_CFLAGS@
+ALSA_LIBS:=@ALSA_LIBS@
+ALSA_CFLAGS:=@ALSA_CFLAGS@
+LIBFFI_LIBS:=@LIBFFI_LIBS@
+LIBFFI_CFLAGS:=@LIBFFI_CFLAGS@
+
+PACKAGE_PATH=@PACKAGE_PATH@
+
+# Source file for cacerts
+CACERTS_FILE=@CACERTS_FILE@
+
+# Enable unlimited crypto policy
+UNLIMITED_CRYPTO=@UNLIMITED_CRYPTO@
+
+GCOV_ENABLED=@GCOV_ENABLED@
+
+# Necessary additional compiler flags to compile X11
+X_CFLAGS:=@X_CFLAGS@
+X_LIBS:=@X_LIBS@
+
+# The lowest required version of macosx to enforce compatiblity for
+MACOSX_VERSION_MIN=@MACOSX_VERSION_MIN@
+
+# Toolchain type: gcc, clang, solstudio, lxc, microsoft...
+TOOLCHAIN_TYPE:=@TOOLCHAIN_TYPE@
+TOOLCHAIN_VERSION := @TOOLCHAIN_VERSION@
+
+# Option used to tell the compiler whether to create 32- or 64-bit executables
+COMPILER_TARGET_BITS_FLAG:=@COMPILER_TARGET_BITS_FLAG@
+COMPILER_SUPPORTS_TARGET_BITS_FLAG=@COMPILER_SUPPORTS_TARGET_BITS_FLAG@
+
+# Option used to pass a command file to the compiler
+COMPILER_COMMAND_FILE_FLAG:=@COMPILER_COMMAND_FILE_FLAG@
+
+# Option for specifying a file which saves the binder commands
+# produced by the link step (for debugging, currently AIX only)
+COMPILER_BINDCMD_FILE_FLAG:=@COMPILER_BINDCMD_FILE_FLAG@
+
+CC_OUT_OPTION:=@CC_OUT_OPTION@
+EXE_OUT_OPTION:=@EXE_OUT_OPTION@
+LD_OUT_OPTION:=@LD_OUT_OPTION@
+AR_OUT_OPTION:=@AR_OUT_OPTION@
+
+# Flags used for overriding the default opt setting for a C/C++ source file.
+C_O_FLAG_HIGHEST:=@C_O_FLAG_HIGHEST@
+C_O_FLAG_HI:=@C_O_FLAG_HI@
+C_O_FLAG_NORM:=@C_O_FLAG_NORM@
+C_O_FLAG_NONE:=@C_O_FLAG_NONE@
+CXX_O_FLAG_HIGHEST:=@CXX_O_FLAG_HIGHEST@
+CXX_O_FLAG_HI:=@CXX_O_FLAG_HI@
+CXX_O_FLAG_NORM:=@CXX_O_FLAG_NORM@
+CXX_O_FLAG_NONE:=@CXX_O_FLAG_NONE@
+
+C_FLAG_DEPS:=@C_FLAG_DEPS@
+CXX_FLAG_DEPS:=@CXX_FLAG_DEPS@
+
+DISABLE_WARNING_PREFIX := @DISABLE_WARNING_PREFIX@
+CFLAGS_WARNINGS_ARE_ERRORS:=@CFLAGS_WARNINGS_ARE_ERRORS@
+
+# A global flag (true or false) determining if native warnings are considered errors.
+WARNINGS_AS_ERRORS := @WARNINGS_AS_ERRORS@
+
+CFLAGS_CCACHE:=@CFLAGS_CCACHE@
+NO_NULL_POINTER_CHECK_FLAG=@NO_NULL_POINTER_CHECK_CFLAG@
+NO_LIFETIME_DSE_CFLAG=@NO_LIFETIME_DSE_CFLAG@
+CXXSTD_CXXFLAG=@CXXSTD_CXXFLAG@
+
+# Tools that potentially need to be cross compilation aware.
+CC:=@FIXPATH@ @CCACHE@ @ICECC@ @CC@
+
+# CFLAGS used to compile the jdk native libraries (C-code)
+CFLAGS_JDKLIB:=@CFLAGS_JDKLIB@
+CXXFLAGS_JDKLIB:=@CXXFLAGS_JDKLIB@
+
+# CFLAGS used to compile the jdk native launchers (C-code)
+CFLAGS_JDKEXE:=@CFLAGS_JDKEXE@
+CXXFLAGS_JDKEXE:=@CXXFLAGS_JDKEXE@
+
+LDFLAGS_HASH_STYLE := @LDFLAGS_HASH_STYLE@
+
+CXX:=@FIXPATH@ @CCACHE@ @ICECC@ @CXX@
+
+CPP:=@FIXPATH@ @CPP@
+
+# The linker can be gcc or ld on unix systems, or link.exe on windows systems.
+LD:=@FIXPATH@ @LD@
+
+# Xcode SDK path
+SDKROOT:=@SDKROOT@
+
+# The linker on older SuSE distros (e.g. on SLES 10) complains with:
+# "Invalid version tag `SUNWprivate_1.1'. Only anonymous version tag is allowed in executable."
+# if feeded with a version script which contains named tags.
+USING_BROKEN_SUSE_LD:=@USING_BROKEN_SUSE_LD@
+
+# LDFLAGS used to link the jdk native libraries (C-code)
+LDFLAGS_JDKLIB:=@LDFLAGS_JDKLIB@
+JDKLIB_LIBS:=@JDKLIB_LIBS@
+
+# LDFLAGS used to link the jdk native launchers (C-code)
+LDFLAGS_JDKEXE:=@LDFLAGS_JDKEXE@
+JDKEXE_LIBS:=@JDKEXE_LIBS@
+
+# LDFLAGS specific to C++ linking.
+LDFLAGS_CXX_JDK:=@LDFLAGS_CXX_JDK@
+
+# Sometimes a different linker is needed for c++ libs
+LDCXX:=@FIXPATH@ @LDCXX@
+# The flags for linking libstdc++ linker.
+LIBCXX:=@LIBCXX@
+
+# Compiler and linker flags used when building native tests
+CFLAGS_TESTLIB:=@CFLAGS_TESTLIB@
+CXXFLAGS_TESTLIB:=@CXXFLAGS_TESTLIB@
+CFLAGS_TESTEXE:=@CFLAGS_TESTEXE@
+CXXFLAGS_TESTEXE:=@CXXFLAGS_TESTEXE@
+LDFLAGS_TESTLIB:=@LDFLAGS_TESTLIB@
+LDFLAGS_TESTEXE:=@LDFLAGS_TESTEXE@
+
+# BUILD_CC/BUILD_LD is a compiler/linker that generates code that is runnable on the
+# build platform.
+BUILD_CC:=@FIXPATH@ @BUILD_ICECC@ @BUILD_CC@
+BUILD_CXX:=@FIXPATH@ @BUILD_ICECC@ @BUILD_CXX@
+BUILD_LD:=@FIXPATH@ @BUILD_LD@
+BUILD_LDCXX:=@FIXPATH@ @BUILD_LDCXX@
+BUILD_AS:=@FIXPATH@ @BUILD_AS@
+BUILD_AR:=@FIXPATH@ @BUILD_AR@
+BUILD_NM:=@FIXPATH@ @BUILD_NM@
+BUILD_OBJCOPY:=@BUILD_OBJCOPY@
+BUILD_STRIP:=@BUILD_STRIP@
+BUILD_SYSROOT_CFLAGS:=@BUILD_SYSROOT_CFLAGS@
+BUILD_SYSROOT_LDFLAGS:=@BUILD_SYSROOT_LDFLAGS@
+
+AS:=@FIXPATH@ @AS@
+
+# AR is used to create a static library (is ar in unix, lib.exe in windows)
+AR:=@FIXPATH@ @AR@
+ARFLAGS:=@ARFLAGS@
+
+NM:=@NM@
+GNM:=@GNM@
+STRIP:=@STRIP@
+
+LIPO:=@LIPO@
+
+# Options to linker to specify a mapfile.
+# (Note absence of := assignment, because we do not want to evaluate the macro body here)
+SET_SHARED_LIBRARY_MAPFILE=@SET_SHARED_LIBRARY_MAPFILE@
+
+# Options for C/CXX compiler to be used if linking is performed
+#   using reorder file
+C_FLAG_REORDER:=@C_FLAG_REORDER@
+CXX_FLAG_REORDER:=@CXX_FLAG_REORDER@
+
+#
+# Options for generating debug symbols
+COMPILE_WITH_DEBUG_SYMBOLS := @COMPILE_WITH_DEBUG_SYMBOLS@
+COPY_DEBUG_SYMBOLS := @COPY_DEBUG_SYMBOLS@
+ZIP_EXTERNAL_DEBUG_SYMBOLS := @ZIP_EXTERNAL_DEBUG_SYMBOLS@
+
+CFLAGS_DEBUG_SYMBOLS:=@CFLAGS_DEBUG_SYMBOLS@
+CXXFLAGS_DEBUG_SYMBOLS:=@CXXFLAGS_DEBUG_SYMBOLS@
+
+#
+# Compress (or not) jars
+COMPRESS_JARS=@COMPRESS_JARS@
+
+# Options to linker to specify the library name.
+# (Note absence of := assignment, because we do not want to evaluate the macro body here)
+SET_SHARED_LIBRARY_NAME=@SET_SHARED_LIBRARY_NAME@
+
+SHARED_LIBRARY_FLAGS=@SHARED_LIBRARY_FLAGS@
+
+# Set origin using the linker, ie use the relative path to the dependent library to find the dependees.
+# (Note absence of := assignment, because we do not want to evaluate the macro body here)
+SET_SHARED_LIBRARY_ORIGIN=@SET_SHARED_LIBRARY_ORIGIN@
+SET_EXECUTABLE_ORIGIN=@SET_EXECUTABLE_ORIGIN@
+
+# Different OS:es have different ways of naming shared libraries.
+# The SHARED_LIBRARY macro takes "verify" as and argument and returns:
+#    "libverify.so" or "libverify.dylib" or "verify.dll" depending on platform.
+# (Note absence of := assignment, because we do not want to evaluate the macro body here)
+SHARED_LIBRARY=@SHARED_LIBRARY@
+STATIC_LIBRARY=@STATIC_LIBRARY@
+LIBRARY_PREFIX:=@LIBRARY_PREFIX@
+SHARED_LIBRARY_SUFFIX:=@SHARED_LIBRARY_SUFFIX@
+STATIC_LIBRARY_SUFFIX:=@STATIC_LIBRARY_SUFFIX@
+EXE_SUFFIX:=@EXE_SUFFIX@
+OBJ_SUFFIX:=@OBJ_SUFFIX@
+STATIC_BUILD:=@STATIC_BUILD@
+
+STRIPFLAGS:=@STRIPFLAGS@
+
+JAVA_FLAGS:=@JAVA_FLAGS@
+JAVA_FLAGS_BIG:=@JAVA_FLAGS_BIG@
+JAVA_FLAGS_SMALL:=@JAVA_FLAGS_SMALL@
+JAVA_FLAGS_JAVAC:=@JAVA_FLAGS_JAVAC@
+JAVA_TOOL_FLAGS_SMALL:=@JAVA_TOOL_FLAGS_SMALL@
+SJAVAC_SERVER_JAVA_FLAGS:=@SJAVAC_SERVER_JAVA_FLAGS@
+
+# The *_CMD variables are defined separately to be easily overridden in bootcycle-spec.gmk
+# for bootcycle-images build. Make sure to keep them in sync. Do not use the *_CMD
+# versions of the variables directly.
+JAVA_CMD:=@JAVA@
+JAVAC_CMD:=@JAVAC@
+JAVAH_CMD:=@JAVAH@
+JAR_CMD:=@JAR@
+JARSIGNER_CMD:=@JARSIGNER@
+SJAVAC_SERVER_JAVA_CMD:=@SJAVAC_SERVER_JAVA@
+# These variables are meant to be used. They are defined with = instead of := to make
+# it possible to override only the *_CMD variables.
+JAVA=@FIXPATH@ $(JAVA_CMD) $(JAVA_FLAGS_BIG) $(JAVA_FLAGS)
+JAVA_SMALL=@FIXPATH@ $(JAVA_CMD) $(JAVA_FLAGS_SMALL) $(JAVA_FLAGS)
+JAVA_JAVAC=@FIXPATH@ $(JAVA_CMD) $(JAVA_FLAGS_JAVAC) $(JAVA_FLAGS)
+JAVAC=@FIXPATH@ $(JAVAC_CMD)
+JAVAH=@FIXPATH@ $(JAVAH_CMD)
+JAR=@FIXPATH@ $(JAR_CMD)
+JARSIGNER=@FIXPATH@ $(JARSIGNER_CMD)
+# A specific java binary with specific options can be used to run
+# the long running background sjavac servers and other long running tasks.
+SJAVAC_SERVER_JAVA=@FIXPATH@ @FIXPATH_DETACH_FLAG@ $(SJAVAC_SERVER_JAVA_CMD) \
+    $(SJAVAC_SERVER_JAVA_FLAGS)
+
+# Hotspot sets this variable before reading the SPEC when compiling sa-jdi.jar. Avoid
+# overriding that value by using ?=.
+JAVAC_FLAGS?=@JAVAC_FLAGS@
+
+
+BUILD_JAVA_FLAGS:=-Xms64M -Xmx1100M
+BUILD_JAVA=@FIXPATH@ $(BUILD_JDK)/bin/java $(BUILD_JAVA_FLAGS)
+
+# Use ?= as this can be overridden from bootcycle-spec.gmk
+BOOT_JDK_MODULAR ?= @BOOT_JDK_MODULAR@
+
+ifeq ($(BOOT_JDK_MODULAR), true)
+  INTERIM_OVERRIDE_MODULES_ARGS = -Xpatch:$(BUILDTOOLS_OUTPUTDIR)/override_modules
+  INTERIM_LANGTOOLS_ARGS = $(INTERIM_OVERRIDE_MODULES_ARGS)
+  JAVAC_MAIN_CLASS = -m jdk.compiler/com.sun.tools.javac.Main
+  JAVADOC_MAIN_CLASS = -m jdk.javadoc/jdk.javadoc.internal.tool.Main
+else
+  INTERIM_OVERRIDE_MODULES := java.compiler jdk.compiler \
+      jdk.jdeps jdk.javadoc jdk.rmic
+  INTERIM_OVERRIDE_MODULES_ARGS = \
+      -Xbootclasspath/p:$(call PathList, \
+          $(addprefix $(BUILDTOOLS_OUTPUTDIR)/override_modules/, \
+              $(INTERIM_OVERRIDE_MODULES)))
+  INTERIM_LANGTOOLS_ARGS = $(INTERIM_OVERRIDE_MODULES_ARGS) \
+      -cp $(BUILDTOOLS_OUTPUTDIR)/override_modules/jdk.compiler
+  JAVAC_MAIN_CLASS = com.sun.tools.javac.Main
+  JAVADOC_MAIN_CLASS = jdk.javadoc.internal.tool.Main
+endif
+# You run the new javac using the boot jdk with $(BOOT_JDK)/bin/java $(NEW_JAVAC) ...
+# Use = assignment to be able to override in bootcycle-spec.gmk
+NEW_JAVAC   = $(INTERIM_LANGTOOLS_ARGS) $(JAVAC_MAIN_CLASS)
+NEW_JAVADOC = $(INTERIM_LANGTOOLS_ARGS) $(JAVADOC_MAIN_CLASS)
+
+# JLink/Jmod are run using the BUILD_JDK, which is normally the jdk output dir.
+JLINK_KEEP_PACKAGED_MODULES:=@JLINK_KEEP_PACKAGED_MODULES@
+
+JLINK = @FIXPATH@ $(BUILD_JDK)/bin/jlink $(JAVA_TOOL_FLAGS_SMALL)
+JMOD = @FIXPATH@ $(BUILD_JDK)/bin/jmod $(JAVA_TOOL_FLAGS_SMALL)
+
+# Base flags for RC
+# Guarding this against resetting value. Legacy make files include spec multiple
+# times.
+ifndef RC_FLAGS
+  RC_FLAGS:=@RC_FLAGS@
+endif
+
+# Tools adhering to a minimal and common standard of posix compliance.
+AWK:=@AWK@
+BASENAME:=@BASENAME@
+CAT:=@CAT@
+CCACHE:=@CCACHE@
+# CD is going away, but remains to cater for legacy makefiles.
+CD:=cd
+CHMOD:=@CHMOD@
+CODESIGN:=@CODESIGN@
+COMM:=@COMM@
+CP:=@CP@
+CPIO:=@CPIO@
+CUT:=@CUT@
+DATE:=@DATE@
+DIFF:=@DIFF@
+DIRNAME:=@DIRNAME@
+DSYMUTIL:=@DSYMUTIL@
+FIND:=@FIND@
+FIND_DELETE:=@FIND_DELETE@
+ECHO:=@ECHO@
+EGREP:=@EGREP@
+FGREP:=@FGREP@
+GREP:=@GREP@
+HEAD:=@HEAD@
+LS:=@LS@
+LN:=@LN@
+MKDIR:=@MKDIR@
+MV:=@MV@
+NAWK:=@NAWK@
+NICE:=@NICE@
+PATCH:=@PATCH@
+PRINTF:=@PRINTF@
+PWD:=@THEPWDCMD@
+RM:=@RM@
+RMDIR:=@RMDIR@
+SED:=@SED@
+SH:=@SH@
+SORT:=@SORT@
+TAR:=@TAR@
+TAIL:=@TAIL@
+TEE:=@TEE@
+TIME:=@TIME@
+IS_GNU_TIME:=@IS_GNU_TIME@
+TR:=@TR@
+TOUCH:=@TOUCH@
+UNIQ:=@UNIQ@
+WC:=@WC@
+XARGS:=@XARGS@
+ZIPEXE:=@ZIP@
+ZIP:=@ZIP@
+UNZIP:=@UNZIP@
+MT:=@FIXPATH@ @MT@
+RC:=@FIXPATH@ @RC@
+DUMPBIN:=@FIXPATH@ @DUMPBIN@
+CYGPATH:=@CYGPATH@
+LDD:=@LDD@
+OTOOL:=@OTOOL@
+READELF:=@READELF@
+EXPR:=@EXPR@
+FILE:=@FILE@
+HG:=@HG@
+OBJCOPY:=@OBJCOPY@
+SETFILE:=@SETFILE@
+XATTR:=@XATTR@
+JT_HOME:=@JT_HOME@
+JTREGEXE:=@JTREGEXE@
+XCODEBUILD=@XCODEBUILD@
+FIXPATH:=@FIXPATH@
+
+# Build setup
+ENABLE_JFR=@ENABLE_JFR@
+ENABLE_INTREE_EC=@ENABLE_INTREE_EC@
+USE_EXTERNAL_LIBJPEG:=@USE_EXTERNAL_LIBJPEG@
+USE_EXTERNAL_LIBGIF:=@USE_EXTERNAL_LIBGIF@
+USE_EXTERNAL_LIBZ:=@USE_EXTERNAL_LIBZ@
+LIBZIP_CAN_USE_MMAP:=@LIBZIP_CAN_USE_MMAP@
+MSVCR_DLL:=@MSVCR_DLL@
+MSVCP_DLL:=@MSVCP_DLL@
+
+####################################################
+#
+# INSTALLATION
+#
+
+# Common prefix for all installed files. Defaults to /usr/local,
+# but /opt/myjdk is another common version.
+INSTALL_PREFIX=@prefix@
+
+# Directories containing architecture-dependent files should be relative to exec_prefix
+INSTALL_EXECPREFIX=@exec_prefix@
+
+# java,javac,javah,javap etc are installed here.
+INSTALL_BINDIR=@bindir@
+
+# Read only architecture-independent data
+INSTALL_DATADIR=@datadir@
+
+# Root of above.
+INSTALL_DATAROOTDIR=@datarootdir@
+
+# Doc files, other than info and man.
+INSTALL_DOCDIR=@docdir@
+
+# Html documentation
+INSTALL_HTMLDIR=@htmldir@
+
+# Installing C header files, JNI headers for example.
+INSTALL_INCLUDEDIR=@includedir@
+
+# Installing library files....
+INSTALL_INCLUDEDIR=@libdir@
+
+# Executables that other programs run.
+INSTALL_LIBEXECDIR=@libexecdir@
+
+# Locale-dependent but architecture-independent data, such as message catalogs.
+INSTALL_LOCALEDIR=@localedir@
+
+# Modifiable single-machine data
+INSTALL_LOCALSTATEDIR=@localstatedir@
+
+# Man pages
+INSTALL_MANDIR=@mandir@
+
+# Modifiable architecture-independent data.
+INSTALL_SHAREDSTATEDIR=@sharedstatedir@
+
+# Read-only single-machine data
+INSTALL_SYSCONFDIR=@sysconfdir@
+
+####################################################
+#
+# Libraries
+#
+
+USE_EXTERNAL_LCMS:=@USE_EXTERNAL_LCMS@
+LCMS_CFLAGS:=@LCMS_CFLAGS@
+LCMS_LIBS:=@LCMS_LIBS@
+
+USE_EXTERNAL_LIBPNG:=@USE_EXTERNAL_LIBPNG@
+PNG_LIBS:=@PNG_LIBS@
+PNG_CFLAGS:=@PNG_CFLAGS@
+
+
+####################################################
+#
+# Misc
+#
+
+INCLUDE_SA=@INCLUDE_SA@
+
+OS_VERSION_MAJOR:=@OS_VERSION_MAJOR@
+OS_VERSION_MINOR:=@OS_VERSION_MINOR@
+OS_VERSION_MICRO:=@OS_VERSION_MICRO@
+
+# Images directory definitions
+JDK_IMAGE_SUBDIR:=jdk
+JRE_IMAGE_SUBDIR:=jre
+
+# Colon left out to be able to override output dir for bootcycle-images
+JDK_IMAGE_DIR=$(IMAGES_OUTPUTDIR)/$(JDK_IMAGE_SUBDIR)
+JRE_IMAGE_DIR=$(IMAGES_OUTPUTDIR)/$(JRE_IMAGE_SUBDIR)
+
+# Test image, as above
+TEST_IMAGE_SUBDIR:=test
+TEST_IMAGE_DIR=$(IMAGES_OUTPUTDIR)/$(TEST_IMAGE_SUBDIR)
+
+# Symbols image
+SYMBOLS_IMAGE_SUBDIR:=symbols
+SYMBOLS_IMAGE_DIR=$(IMAGES_OUTPUTDIR)/$(SYMBOLS_IMAGE_SUBDIR)
+
+# Macosx bundles directory definitions
+JDK_MACOSX_BUNDLE_SUBDIR=jdk-bundle/jdk-$(VERSION_NUMBER).jdk/Contents
+JRE_MACOSX_BUNDLE_SUBDIR=jre-bundle/jre-$(VERSION_NUMBER).jre/Contents
+JDK_MACOSX_BUNDLE_DIR=$(IMAGES_OUTPUTDIR)/$(JDK_MACOSX_BUNDLE_SUBDIR)
+JRE_MACOSX_BUNDLE_DIR=$(IMAGES_OUTPUTDIR)/$(JRE_MACOSX_BUNDLE_SUBDIR)
+
+# This macro is called to allow inclusion of closed source counterparts.
+# Unless overridden in closed sources, it expands to nothing.
+# Usage: This function is called in an open makefile, with the following
+# arguments:
+# $1 the name of the repo, or empty if the top-level repo.
+# $2 the name of the makefile
+define IncludeCustomExtension
+endef
+
+# Include the custom-spec.gmk file if it exists
+-include $(dir @SPEC@)/custom-spec.gmk

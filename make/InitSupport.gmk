@@ -1,0 +1,556 @@
+#
+# Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.  Oracle designates this
+# particular file as subject to the "Classpath" exception as provided
+# by Oracle in the LICENSE file that accompanied this code.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
+#
+
+################################################################################
+# This file contains helper functions for Init.gmk.
+# It is divided in two parts, depending on if a SPEC is present or not
+# (HAS_SPEC is true or not).
+################################################################################
+
+ifndef _INITSUPPORT_GMK
+_INITSUPPORT_GMK := 1
+
+ifeq ($(HAS_SPEC),)
+  ##############################################################################
+  # Helper functions for the initial part of Init.gmk, before the spec file is
+  # loaded. Most of these functions provide parsing and setting up make options
+  # from the command-line.
+  ##############################################################################
+
+  # Make control variables, handled by Init.gmk
+  INIT_CONTROL_VARIABLES := LOG CONF CONF_NAME SPEC JOBS TEST_JOBS CONF_CHECK \
+      COMPARE_BUILD
+
+  # All known make control variables
+  MAKE_CONTROL_VARIABLES := $(INIT_CONTROL_VARIABLES) TEST JDK_FILTER
+
+  # Define a simple reverse function.
+  # Should maybe move to MakeBase.gmk, but we can't include that file now.
+  reverse = \
+      $(if $(strip $(1)), $(call reverse, $(wordlist 2, $(words $(1)), $(1)))) \
+          $(firstword $(1))
+
+  # The variable MAKEOVERRIDES contains variable assignments from the command
+  # line, but in reverse order to what the user entered.
+  # The '\#' <=> '\ 'dance is needed to keep values with space in them connected.
+  COMMAND_LINE_VARIABLES := $(subst \#,\ , $(call reverse, $(subst \ ,\#,$(MAKEOVERRIDES))))
+
+  # A list like FOO="val1" BAR="val2" containing all user-supplied make
+  # variables that we should propagate.
+  # The '\#' <=> '\ 'dance is needed to keep values with space in them connected.
+  USER_MAKE_VARS := $(subst \#,\ , $(filter-out $(addsuffix =%, $(INIT_CONTROL_VARIABLES)), \
+      $(subst \ ,\#,$(MAKEOVERRIDES))))
+
+  # Setup information about available configurations, if any.
+  build_dir=$(topdir)/build
+  all_spec_files=$(wildcard $(build_dir)/*/spec.gmk)
+  # Extract the configuration names from the path
+  all_confs=$(patsubst %/spec.gmk, %, $(patsubst $(build_dir)/%, %, $(all_spec_files)))
+
+  # Check for unknown command-line variables
+  define CheckControlVariables
+    command_line_variables := $$(strip $$(foreach var, \
+        $$(subst \ ,_,$$(MAKEOVERRIDES)), \
+        $$(firstword $$(subst =, , $$(var)))))
+    unknown_command_line_variables := $$(strip \
+        $$(filter-out $$(MAKE_CONTROL_VARIABLES), $$(command_line_variables)))
+    ifneq ($$(unknown_command_line_variables), )
+      $$(info Note: Command line contains non-control variables:)
+      $$(foreach var, $$(unknown_command_line_variables), $$(info * $$(var)=$$($$(var))))
+      $$(info Make sure it is not mistyped, and that you intend to override this variable.)
+      $$(info 'make help' will list known control variables.)
+      $$(info )
+    endif
+  endef
+
+  # Check for deprecated ALT_ variables
+  define CheckDeprecatedEnvironment
+    defined_alt_variables := $$(filter ALT_%, $$(.VARIABLES))
+    ifneq ($$(defined_alt_variables), )
+      $$(info Warning: You have the following ALT_ variables set:)
+      $$(foreach var, $$(defined_alt_variables), $$(info * $$(var)=$$($$(var))))
+      $$(info ALT_ variables are deprecated, and may result in a failed build.)
+      $$(info Please clean your environment.)
+      $$(info )
+    endif
+  endef
+
+  # Check for invalid make flags like -j
+  define CheckInvalidMakeFlags
+    # This is a trick to get this rule to execute before any other rules
+    # MAKEFLAGS only indicate -j if read in a recipe (!)
+    $$(topdir)/make/Init.gmk: .FORCE
+	$$(if $$(findstring --jobserver, $$(MAKEFLAGS)), \
+	    $$(info Error: 'make -jN' is not supported, use 'make JOBS=N') \
+	    $$(error Cannot continue) \
+	)
+    .FORCE:
+    .PHONY: .FORCE
+  endef
+
+  # Check that the CONF_CHECK option is valid and set up handling
+  define ParseConfCheckOption
+    ifeq ($$(CONF_CHECK), )
+      # Default behavior is fail
+      CONF_CHECK := fail
+    else ifneq ($$(filter-out auto fail ignore, $$(CONF_CHECK)),)
+      $$(info Error: CONF_CHECK must be one of: auto, fail or ignore.)
+      $$(error Cannot continue)
+    endif
+  endef
+
+  # Look for a given option in the LOG variable, and if found, set a variable
+  # and remove the option from the LOG variable
+  # $1: The option to look for
+  # $2: The option to set to "true" if the option is found
+  define ParseLogOption
+    ifneq ($$(findstring $1, $$(LOG)),)
+      $2 := true
+      # COMMA is defined in spec.gmk, but that is not included yet
+      COMMA := ,
+      # First try to remove ",<option>" if it exists, otherwise just remove "<option>"
+      LOG_STRIPPED := $$(subst $1,, $$(subst $$(COMMA)$(strip $1),, $$(LOG)))
+      # We might have ended up with a leading comma. Remove it. Need override
+      # since LOG is set from the command line.
+      override LOG := $$(strip $$(patsubst $$(COMMA)%, %, $$(LOG_STRIPPED)))
+    endif
+  endef
+
+  define ParseLogLevel
+    # Catch old-style VERBOSE= command lines.
+    ifneq ($$(origin VERBOSE), undefined)
+      $$(info Error: VERBOSE is deprecated. Use LOG=<warn|info|debug|trace> instead.)
+      $$(error Cannot continue)
+    endif
+
+    # Setup logging according to LOG
+
+    # If the "nofile" argument is given, act on it and strip it away
+    $$(eval $$(call ParseLogOption, nofile, LOG_NOFILE))
+
+    # If the "cmdline" argument is given, act on it and strip it away
+    $$(eval $$(call ParseLogOption, cmdlines, LOG_CMDLINES))
+
+    LOG_LEVEL := $$(LOG)
+
+    ifeq ($$(LOG_LEVEL),)
+      # Set LOG to "warn" as default if not set
+      LOG_LEVEL := warn
+    endif
+
+    ifeq ($$(LOG_LEVEL), warn)
+      MAKE_LOG_FLAGS := -s
+    else ifeq ($$(LOG_LEVEL), info)
+      MAKE_LOG_FLAGS := -s
+    else ifeq ($$(LOG_LEVEL), debug)
+      MAKE_LOG_FLAGS :=
+    else ifeq ($$(LOG_LEVEL), trace)
+      MAKE_LOG_FLAGS :=
+    else
+      $$(info Error: LOG contains unknown option or log level: $$(LOG).)
+      $$(info LOG can be <level>[,<opt>[...]] where <opt> is nofile | cmdlines)
+      $$(info and <level> is warn | info | debug | trace)
+      $$(error Cannot continue)
+    endif
+  endef
+
+  define ParseConfAndSpec
+    ifneq ($$(origin SPEC), undefined)
+      # We have been given a SPEC, check that it works out properly
+      ifneq ($$(origin CONF), undefined)
+        # We also have a CONF argument. We can't have both.
+        $$(info Error: Cannot use CONF=$$(CONF) and SPEC=$$(SPEC) at the same time. Choose one.)
+        $$(error Cannot continue)
+      endif
+      ifneq ($$(origin CONF_NAME), undefined)
+        # We also have a CONF_NAME argument. We can't have both.
+        $$(info Error: Cannot use CONF_NAME=$$(CONF_NAME) and SPEC=$$(SPEC) at the same time. Choose one.)
+        $$(error Cannot continue)
+      endif
+      ifeq ($$(wildcard $$(SPEC)),)
+        $$(info Error: Cannot locate spec.gmk, given by SPEC=$$(SPEC).)
+        $$(error Cannot continue)
+      endif
+      ifeq ($$(filter /%, $$(SPEC)),)
+        # If given with relative path, make it absolute
+        SPECS := $$(CURDIR)/$$(strip $$(SPEC))
+      else
+        SPECS := $$(SPEC)
+      endif
+
+      # For now, unset this SPEC variable.
+      override SPEC :=
+    else
+      # Use spec.gmk files in the build output directory
+      ifeq ($$(all_spec_files),)
+        $$(info Error: No configurations found for $$(topdir).)
+        $$(info Please run 'bash configure' to create a configuration.)
+        $$(info )
+        $$(error Cannot continue)
+      endif
+
+      ifneq ($$(origin CONF_NAME), undefined)
+        ifneq ($$(origin CONF), undefined)
+          # We also have a CONF argument. We can't have both.
+          $$(info Error: Cannot use CONF=$$(CONF) and CONF_NAME=$$(CONF_NAME) at the same time. Choose one.)
+          $$(error Cannot continue)
+        endif
+        matching_conf := $$(strip $$(filter $$(CONF_NAME), $$(all_confs)))
+        ifeq ($$(matching_conf),)
+          $$(info Error: No configurations found matching CONF_NAME=$$(CONF_NAME).)
+          $$(info Available configurations in $$(build_dir):)
+          $$(foreach var, $$(all_confs), $$(info * $$(var)))
+          $$(error Cannot continue)
+        else ifneq ($$(words $$(matching_conf)), 1)
+          $$(info Error: Matching more than one configuration CONF_NAME=$$(CONF_NAME).)
+          $$(info Available configurations in $$(build_dir):)
+          $$(foreach var, $$(all_confs), $$(info * $$(var)))
+          $$(error Cannot continue)
+        else
+          $$(info Building configuration '$$(matching_conf)' (matching CONF_NAME=$$(CONF_NAME)))
+        endif
+        # Create a SPEC definition. This will contain the path to exactly one spec file.
+        SPECS := $$(build_dir)/$$(matching_conf)/spec.gmk
+      else ifneq ($$(origin CONF), undefined)
+        # User have given a CONF= argument.
+        ifeq ($$(CONF),)
+          # If given CONF=, match all configurations
+          matching_confs := $$(strip $$(all_confs))
+        else
+          # Otherwise select those that contain the given CONF string
+          matching_confs := $$(strip $$(foreach var, $$(all_confs), \
+              $$(if $$(findstring $$(CONF), $$(var)), $$(var))))
+        endif
+        ifeq ($$(matching_confs),)
+          $$(info Error: No configurations found matching CONF=$$(CONF).)
+          $$(info Available configurations in $$(build_dir):)
+          $$(foreach var, $$(all_confs), $$(info * $$(var)))
+          $$(error Cannot continue)
+        else
+          # Don't repeat this output on make restarts caused by including
+          # generated files.
+          ifeq ($$(MAKE_RESTARTS),)
+            ifeq ($$(words $$(matching_confs)), 1)
+              $$(info Building configuration '$$(matching_confs)' (matching CONF=$$(CONF)))
+            else
+              $$(info Building these configurations (matching CONF=$$(CONF)):)
+              $$(foreach var, $$(matching_confs), $$(info * $$(var)))
+            endif
+          endif
+        endif
+
+        # Create a SPEC definition. This will contain the path to one or more spec.gmk files.
+        SPECS := $$(addsuffix /spec.gmk, $$(addprefix $$(build_dir)/, $$(matching_confs)))
+      else
+        # No CONF or SPEC given, check the available configurations
+        ifneq ($$(words $$(all_spec_files)), 1)
+          $$(info Error: No CONF given, but more than one configuration found.)
+          $$(info Available configurations in $$(build_dir):)
+          $$(foreach var, $$(all_confs), $$(info * $$(var)))
+          $$(info Please retry building with CONF=<config pattern> (or SPEC=<spec file>).)
+          $$(info )
+          $$(error Cannot continue)
+        endif
+
+        # We found exactly one configuration, use it
+        SPECS := $$(strip $$(all_spec_files))
+      endif
+    endif
+  endef
+
+  # Extract main targets from Main.gmk using the spec provided in $2.
+  #
+  # Param 1: FORCE = force generation of main-targets.gmk or LAZY = do not force.
+  # Param 2: The SPEC file to use.
+  define DefineMainTargets
+
+    # We will start by making sure the main-targets.gmk file is removed, if
+    # make has not been restarted. By the -include, we will trigger the
+    # rule for generating the file (which is never there since we removed it),
+    # thus generating it fresh, and make will restart, incrementing the restart
+    # count.
+    main_targets_file := $$(dir $(strip $2))make-support/main-targets.gmk
+
+    ifeq ($$(MAKE_RESTARTS),)
+      # Only do this if make has not been restarted, and if we do not force it.
+      ifeq ($(strip $1), FORCE)
+        $$(shell rm -f $$(main_targets_file))
+      endif
+    endif
+
+    $$(main_targets_file):
+	@( cd $$(topdir) && \
+	$$(MAKE) $$(MAKE_LOG_FLAGS) -r -R -f $$(topdir)/make/Main.gmk \
+	    -I $$(topdir)/make/common SPEC=$(strip $2) NO_RECIPES=true \
+	    LOG_LEVEL=$$(LOG_LEVEL) \
+	    create-main-targets-include )
+
+    # Now include main-targets.gmk. This will define ALL_MAIN_TARGETS.
+    -include $$(main_targets_file)
+  endef
+
+  define PrintConfCheckFailed
+	@echo ' '
+	@echo "Please rerun configure! Easiest way to do this is by running"
+	@echo "'make reconfigure'."
+	@echo "This behavior may also be changed using CONF_CHECK=<ignore|auto>."
+	@echo ' '
+  endef
+
+else # $(HAS_SPEC)=true
+  ##############################################################################
+  # Helper functions for the 'main' target. These functions assume a single,
+  # proper and existing SPEC is included.
+  ##############################################################################
+
+  include $(SRC_ROOT)/make/common/MakeBase.gmk
+
+  # Define basic logging setup
+  BUILD_LOG := $(OUTPUT_ROOT)/build.log
+  BUILD_TRACE_LOG := $(OUTPUT_ROOT)/build-trace-time.log
+
+  BUILD_LOG_PIPE := > >($(TEE) -a $(BUILD_LOG)) 2> >($(TEE) -a $(BUILD_LOG) >&2)
+
+  # Sanity check the spec file, so it matches this source code
+  define CheckSpecSanity
+    ifneq ($$(ACTUAL_TOPDIR), $$(TOPDIR))
+      ifneq ($$(ACTUAL_TOPDIR), $$(ORIGINAL_TOPDIR))
+        ifneq ($$(ACTUAL_TOPDIR), $$(CANONICAL_TOPDIR))
+          $$(info Error: SPEC mismatch! Current working directory)
+          $$(info $$(ACTUAL_TOPDIR))
+          $$(info does not match either TOPDIR, ORIGINAL_TOPDIR or CANONICAL_TOPDIR)
+          $$(info $$(TOPDIR))
+          $$(info $$(ORIGINAL_TOPDIR))
+          $$(info $$(CANONICAL_TOPDIR))
+          $$(error Cannot continue)
+        endif
+      endif
+    endif
+  endef
+
+  # Parse COMPARE_BUILD into COMPARE_BUILD_*
+  # Syntax: COMPARE_BUILD=CONF=<configure options>:PATCH=<patch file>:
+  #         MAKE=<make targets>:COMP_OPTS=<compare script options>:
+  #         COMP_DIR=<compare script base dir>|<default>:
+  #         FAIL=<bool>
+  # If neither CONF or PATCH is given, assume <default> means CONF if it
+  # begins with "--", otherwise assume it means PATCH.
+  # MAKE and COMP_OPTS can only be used with CONF and/or PATCH specified.
+  # If any value contains "+", it will be replaced by space.
+  # FAIL can be set to false to have the return value of compare be ignored.
+  define ParseCompareBuild
+    ifneq ($$(COMPARE_BUILD), )
+      COMPARE_BUILD_OUTPUT_ROOT := $(TOPDIR)/build/compare-build/$(CONF_NAME)
+      COMPARE_BUILD_FAIL := true
+
+      ifneq ($$(findstring :, $$(COMPARE_BUILD)), )
+        $$(foreach part, $$(subst :, , $$(COMPARE_BUILD)), \
+          $$(if $$(filter PATCH=%, $$(part)), \
+            $$(eval COMPARE_BUILD_PATCH=$$(strip $$(patsubst PATCH=%, %, $$(part)))) \
+          ) \
+          $$(if $$(filter CONF=%, $$(part)), \
+            $$(eval COMPARE_BUILD_CONF=$$(strip $$(subst +, , $$(patsubst CONF=%, %, $$(part))))) \
+          ) \
+          $$(if $$(filter MAKE=%, $$(part)), \
+            $$(eval COMPARE_BUILD_MAKE=$$(strip $$(subst +, , $$(patsubst MAKE=%, %, $$(part))))) \
+          ) \
+          $$(if $$(filter COMP_OPTS=%, $$(part)), \
+            $$(eval COMPARE_BUILD_COMP_OPTS=$$(strip $$(subst +, , $$(patsubst COMP_OPTS=%, %, $$(part))))) \
+          ) \
+          $$(if $$(filter COMP_DIR=%, $$(part)), \
+            $$(eval COMPARE_BUILD_COMP_DIR=$$(strip $$(subst +, , $$(patsubst COMP_DIR=%, %, $$(part))))) \
+          ) \
+          $$(if $$(filter FAIL=%, $$(part)), \
+            $$(eval COMPARE_BUILD_FAIL=$$(strip $$(subst +, , $$(patsubst FAIL=%, %, $$(part))))) \
+          ) \
+        )
+      else
+        # Separate handling for single field case, to allow for spaces in values.
+        ifneq ($$(filter PATCH=%, $$(COMPARE_BUILD)), )
+          COMPARE_BUILD_PATCH=$$(strip $$(patsubst PATCH=%, %, $$(COMPARE_BUILD)))
+        else ifneq ($$(filter CONF=%, $$(COMPARE_BUILD)), )
+          COMPARE_BUILD_CONF=$$(strip $$(subst +, , $$(patsubst CONF=%, %, $$(COMPARE_BUILD))))
+        else ifneq ($$(filter --%, $$(COMPARE_BUILD)), )
+          # Assume CONF if value begins with --
+          COMPARE_BUILD_CONF=$$(strip $$(subst +, , $$(COMPARE_BUILD)))
+        else
+          # Otherwise assume patch file
+          COMPARE_BUILD_PATCH=$$(strip $$(COMPARE_BUILD))
+        endif
+      endif
+      ifneq ($$(COMPARE_BUILD_PATCH), )
+        ifneq ($$(wildcard $$(TOPDIR)/$$(COMPARE_BUILD_PATCH)), )
+          # Assume relative path, if file exists
+          COMPARE_BUILD_PATCH := $$(wildcard $$(TOPDIR)/$$(COMPARE_BUILD_PATCH))
+        else ifeq ($$(wildcard $$(COMPARE_BUILD_PATCH)), )
+          $$(error Patch file $$(COMPARE_BUILD_PATCH) does not exist)
+        endif
+      endif
+      ifneq ($$(COMPARE_BUILD_FAIL), true)
+        COMPARE_BUILD_IGNORE_RESULT := || true
+      endif
+    endif
+  endef
+
+  # Prepare for a comparison rebuild
+  define PrepareCompareBuild
+	$(ECHO) "Preparing for comparison rebuild"
+        # Apply patch, if any
+	$(if $(COMPARE_BUILD_PATCH), $(PATCH) -p1 < $(COMPARE_BUILD_PATCH))
+        # Move the first build away temporarily
+	$(RM) -r $(TOPDIR)/build/.compare-build-temp
+	$(MKDIR) -p $(TOPDIR)/build/.compare-build-temp
+	$(MV) $(OUTPUT_ROOT) $(TOPDIR)/build/.compare-build-temp
+        # Restore an old compare-build, or create a new compare-build directory.
+	if test -d $(COMPARE_BUILD_OUTPUT_ROOT); then \
+	  $(MV) $(COMPARE_BUILD_OUTPUT_ROOT) $(OUTPUT_ROOT); \
+	else \
+	  $(MKDIR) -p $(OUTPUT_ROOT); \
+	fi
+        # Re-run configure with the same arguments (and possibly some additional),
+        # must be done after patching.
+	( cd $(OUTPUT_ROOT) && PATH="$(ORIGINAL_PATH)" \
+	    $(BASH) $(TOPDIR)/configure $(CONFIGURE_COMMAND_LINE) $(COMPARE_BUILD_CONF))
+  endef
+
+  # Cleanup after a compare build
+  define CleanupCompareBuild
+        # If running with a COMPARE_BUILD patch, reverse-apply it
+	$(if $(COMPARE_BUILD_PATCH), $(PATCH) -R -p1 < $(COMPARE_BUILD_PATCH))
+        # Move this build away and restore the original build
+	$(MKDIR) -p $(TOPDIR)/build/compare-build
+	$(MV) $(OUTPUT_ROOT) $(COMPARE_BUILD_OUTPUT_ROOT)
+	$(MV) $(TOPDIR)/build/.compare-build-temp/$(CONF_NAME) $(OUTPUT_ROOT)
+	$(RM) -r $(TOPDIR)/build/.compare-build-temp
+  endef
+
+  # Do the actual comparison of two builds
+  define CompareBuildDoComparison
+        # Compare first and second build. Ignore any error code from compare.sh.
+	$(ECHO) "Comparing between comparison rebuild (this/new) and baseline (other/old)"
+	$(if $(COMPARE_BUILD_COMP_DIR), \
+	  +(cd $(COMPARE_BUILD_OUTPUT_ROOT) && ./compare.sh $(COMPARE_BUILD_COMP_OPTS) \
+	      -2dirs $(COMPARE_BUILD_OUTPUT_ROOT)/$(COMPARE_BUILD_COMP_DIR) \
+	      $(OUTPUT_ROOT)/$(COMPARE_BUILD_COMP_DIR) $(COMPARE_BUILD_IGNORE_RESULT)), \
+	  +(cd $(COMPARE_BUILD_OUTPUT_ROOT) && ./compare.sh $(COMPARE_BUILD_COMP_OPTS) \
+	      -o $(OUTPUT_ROOT) $(COMPARE_BUILD_IGNORE_RESULT)) \
+	)
+  endef
+
+  define PrintFailureReports
+	$(if $(wildcard $(MAKESUPPORT_OUTPUTDIR)/failure-logs/*), \
+	  $(PRINTF) "=== Output from failing command(s) repeated here ===\n" $(NEWLINE) \
+	  $(foreach logfile, $(sort $(wildcard $(MAKESUPPORT_OUTPUTDIR)/failure-logs/*)), \
+	      $(PRINTF) "* For target $(notdir $(basename $(logfile))):\n" $(NEWLINE) \
+	      ($(GREP) -v -e "^Note: including file:" <  $(logfile) || true) | $(HEAD) -n 12 $(NEWLINE) \
+	      if test `$(WC) -l < $(logfile)` -gt 12; then \
+	        $(ECHO) "   ... (rest of output omitted)" ; \
+	      fi $(NEWLINE) \
+	  ) \
+	  $(PRINTF) "=== End of repeated output ===\n" \
+	)
+  endef
+
+  define PrintBuildLogFailures
+	if $(GREP) -q "recipe for target .* failed" $(BUILD_LOG) 2> /dev/null; then  \
+	  $(PRINTF) "=== Make failure sequence repeated here ===\n" ; \
+	  $(GREP) "recipe for target .* failed" $(BUILD_LOG) ; \
+	  $(PRINTF) "=== End of repeated output ===\n" ; \
+	  $(PRINTF) "Hint: Try searching the build log for the name of the first failed target.\n" ; \
+	else \
+	  $(PRINTF) "No indication of failed target found.\n" ; \
+	  $(PRINTF) "Hint: Try searching the build log for '] Error'.\n" ; \
+	fi
+  endef
+
+  define RotateLogFiles
+	$(RM) $(BUILD_LOG).old 2> /dev/null && \
+	$(MV) $(BUILD_LOG) $(BUILD_LOG).old 2> /dev/null || true
+	$(if $(findstring trace, $(LOG_LEVEL)), \
+	  $(RM) $(BUILD_TRACE_LOG).old 2> /dev/null && \
+	  $(MV) $(BUILD_TRACE_LOG) $(BUILD_TRACE_LOG).old 2> /dev/null || true \
+	)
+  endef
+
+  define PrepareFailureLogs
+	$(RM) -r $(MAKESUPPORT_OUTPUTDIR)/failure-logs 2> /dev/null && \
+	$(MKDIR) -p $(MAKESUPPORT_OUTPUTDIR)/failure-logs
+  endef
+
+  # Remove any javac server logs and port files. This
+  # prevents a new make run to reuse the previous servers.
+  define PrepareSmartJavac
+	$(if $(SJAVAC_SERVER_DIR), \
+	  $(RM) -r $(SJAVAC_SERVER_DIR) 2> /dev/null && \
+	  $(MKDIR) -p $(SJAVAC_SERVER_DIR) \
+	)
+  endef
+
+  define CleanupSmartJavac
+	[ -f $(SJAVAC_SERVER_DIR)/server.port ] && $(ECHO) Stopping sjavac server && \
+	    $(TOUCH) $(SJAVAC_SERVER_DIR)/server.port.stop; true
+  endef
+
+  ifeq ($(OPENJDK_BUILD_OS), windows)
+    # On windows we need to synchronize with the javac server to be able to
+    # move or remove the build output directory. Since we have no proper
+    # synchronization process, wait for a while and hope it helps. This is only
+    # used by build comparisons.
+    define WaitForSmartJavacFinish
+	$(if $(SJAVAC_SERVER_DIR), \
+	  sleep 5\
+	)
+    endef
+  else
+    define WaitForSmartJavacFinish
+    endef
+  endif
+
+  define StartGlobalTimer
+	$(RM) -r $(BUILDTIMESDIR) 2> /dev/null && \
+	$(MKDIR) -p $(BUILDTIMESDIR) && \
+	$(call RecordStartTime,TOTAL)
+  endef
+
+  define StopGlobalTimer
+	$(call RecordEndTime,TOTAL)
+  endef
+
+  # Find all build_time_* files and print their contents in a list sorted
+  # on the name of the sub repository.
+  define ReportBuildTimes
+	$(PRINTF) $(LOG_INFO) -- \
+	    "----- Build times -------\nStart %s\nEnd   %s\n%s\n%s\n-------------------------\n" \
+	    "`$(CAT) $(BUILDTIMESDIR)/build_time_start_TOTAL_human_readable`" \
+	    "`$(CAT) $(BUILDTIMESDIR)/build_time_end_TOTAL_human_readable`" \
+	    "`$(LS) $(BUILDTIMESDIR)/build_time_diff_* | $(GREP) -v _TOTAL | \
+	    $(XARGS) $(CAT) | $(SORT) -k 2`" \
+	    "`$(CAT) $(BUILDTIMESDIR)/build_time_diff_TOTAL`" \
+	    $(BUILD_LOG_PIPE)
+  endef
+
+endif # HAS_SPEC
+
+endif # _INITSUPPORT_GMK

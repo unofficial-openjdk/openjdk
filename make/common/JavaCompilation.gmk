@@ -1,0 +1,486 @@
+#
+# Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.  Oracle designates this
+# particular file as subject to the "Classpath" exception as provided
+# by Oracle in the LICENSE file that accompanied this code.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
+#
+
+# When you read this source. Remember that $(sort ...) has the side effect
+# of removing duplicates. It is actually this side effect that is
+# desired whenever sort is used below!
+
+ifndef _JAVA_COMPILATION_GMK
+_JAVA_COMPILATION_GMK := 1
+
+ifeq (,$(_MAKEBASE_GMK))
+  $(error You must include MakeBase.gmk prior to including JavaCompilation.gmk)
+endif
+
+# Java compilation needs SetupJarArchive and/or SetupZipArchive, if we're
+# generating a jar file or a source zip.
+include JarArchive.gmk
+include ZipArchive.gmk
+
+# Setup make rules for defining a Java compiler, which is needed to compile
+# Java code. This rule generates no output.
+#
+# Parameter 1 is the name of the compiler definition. This name needs to be
+# passed to SetupJavaCompilation. This name is used as variable prefix.
+#
+# Remaining parameters are named arguments. These include:
+#   JVM:=The jvm used to run the javac/javah command
+#   JAVAC:=The javac jar and bootstrap classpath changes, or just bin/javac if JVM is left out
+#   FLAGS:=Flags to be supplied to javac
+#   SERVER_DIR:=Use a javac server (-XDserver) and store the server related files here
+#   SERVER_JVM:=Use this JVM for the server. Defaults to the JVM above.
+#   DISABLE_SJAVAC:=Set to true if this setup does not support sjavac
+SetupJavaCompiler = $(NamedParamsMacroTemplate)
+define SetupJavaCompilerBody
+  # The port file contains the tcp/ip on which the server listens
+  # and the cookie necessary to talk to the server.
+  $1_SJAVAC_PORTFILE:=$$($1_SERVER_DIR)/server.port
+  # You can use a different JVM to run the background javac server.
+  ifeq ($$($1_SERVER_JVM),)
+    # It defaults to the same JVM that is used to start the javac command.
+    $1_SERVER_JVM:=$$($1_JVM)
+  endif
+endef
+
+define add_file_to_copy
+  # param 1 = BUILD_MYPACKAGE
+  # parma 2 = The source file to copy.
+  $2_TARGET:=$2
+  # Remove the source prefix.
+  $$(foreach i,$$($1_SRC),$$(eval $$(call remove_string,$$i,$2_TARGET)))
+  # To allow for automatic overrides, do not create a rule for a target file that
+  # already has one
+  ifneq ($$($1_COPY_$$($2_TARGET)), 1)
+    $1_COPY_$$($2_TARGET) := 1
+    # Now we can setup the dependency that will trigger the copying.
+    $$($1_BIN)$$($1_MODULE_SUBDIR)$$($2_TARGET) : $2
+	$(MKDIR) -p $$(@D)
+	$(CP) $$< $$@
+	$(CHMOD) -f ug+w $$@
+
+    # And do not forget this target
+    $1_ALL_COPY_TARGETS += $$($1_BIN)$$($1_MODULE_SUBDIR)$$($2_TARGET)
+  endif
+endef
+
+# This macro is used only for properties files that are to be
+# copied over to the classes directory in cleaned form:
+# Previously this was inconsistently done in different repositories.
+# This is the new clean standard. Though it is to be superseded by
+# a standard annotation processor from with sjavac.
+#
+# An empty echo ensures that the input to sed always ends with a newline.
+# Certain implementations (e.g. Solaris) will skip the last line without
+# it.
+#
+# The sed expression does this:
+# 1. Add a backslash before any :, = or ! that do not have a backslash already.
+# 2. Apply the file unicode2x.sed which does a whole bunch of \u00XX to \xXX
+#    conversions.
+# 3. Delete all lines starting with #.
+# 4. Delete empty lines.
+# 5. Append lines ending with \ with the next line.
+# 6. Remove leading and trailing white space. Note that tabs must be explicit
+#    as sed on macosx does not understand '\t'.
+# 7. Replace the first \= with just =.
+# 8. Finally it's all sorted to create a stable output.
+#
+# It is assumed that = is the character used for separating names and values.
+define add_file_to_clean
+  # param 1 = BUILD_MYPACKAGE
+  # parma 2 = The source file to copy and clean.
+  $2_TARGET:=$2
+  # Remove the source prefix.
+  $$(foreach i,$$($1_SRC),$$(eval $$(call remove_string,$$i,$2_TARGET)))
+  # Now we can setup the depency that will trigger the copying.
+  # To allow for automatic overrides, do not create a rule for a target file that
+  # already has one
+  ifneq ($$($1_CLEAN_$$($2_TARGET)), 1)
+    $1_CLEAN_$$($2_TARGET) := 1
+    $$($1_BIN)$$($1_MODULE_SUBDIR)$$($2_TARGET) : $2
+	$(MKDIR) -p $$(@D)
+	export LC_ALL=C ; ( $(CAT) $$< && $(ECHO) "" ) \
+	    | $(SED) -e 's/\([^\\]\):/\1\\:/g' -e 's/\([^\\]\)=/\1\\=/g' \
+	        -e 's/\([^\\]\)!/\1\\!/g' -e 's/^[ 	]*#.*/#/g' \
+	    | $(SED) -f "$(SRC_ROOT)/make/common/support/unicode2x.sed" \
+	    | $(SED) -e '/^#/d' -e '/^$$$$/d' \
+	        -e :a -e '/\\$$$$/N; s/\\\n//; ta' \
+	        -e 's/^[ 	]*//;s/[ 	]*$$$$//' \
+	        -e 's/\\=/=/' \
+	    | $(SORT) > $$@
+	$(CHMOD) -f ug+w $$@
+
+    # And do not forget this target
+    $1_ALL_COPY_CLEAN_TARGETS += $$($1_BIN)$$($1_MODULE_SUBDIR)$$($2_TARGET)
+  endif
+endef
+
+define remove_string
+  $2 := $$(subst $1,,$$($2))
+endef
+
+# Setup make rules for compiling Java source code to class files and/or a
+# resulting jar file.
+#
+# Parameter 1 is the name of the rule. This name is used as variable prefix,
+# and the targets generated are listed in a variable by that name.
+#
+# Remaining parameters are named arguments. These include:
+#   SETUP:=must point to a previously setup java compiler, for example: SETUP:=BOOTJAVAC
+#   JVM:=path to ..bin/java
+#   ADD_JAVAC_FLAGS:=javac flags to append to the default ones.
+#   SRC:=one or more directories to search for sources. The order of the source roots
+#        is significant. The first found file of a certain name has priority.
+#   BIN:=store classes here
+#   MODULE:=Name of module being compiled. If set, classes are put in BIN/MODULE.
+#   CLASSPATH:=a list of additional entries to set as classpath to javac
+#   INCLUDES:=myapp.foo means will only compile java files in myapp.foo or any of its sub-packages.
+#   EXCLUDES:=myapp.foo means will do not compile java files in myapp.foo or any of its sub-packages.
+#   COPY:=.prp means copy all prp files to the corresponding package in BIN.
+#   COPY_FILES:=myapp/foo/setting.txt means copy this file over to the package myapp/foo
+#   CLEAN:=.properties means copy and clean all properties file to the corresponding package in BIN.
+#   CLEAN_FILES:=myapp/foo/setting.txt means clean this file over to the package myapp/foo
+#   SRCZIP:=Create a src.zip based on the found sources and copied files.
+#   INCLUDE_FILES:="com/sun/SolarisFoobar.java" means only compile this file!
+#   EXCLUDE_FILES:="com/sun/SolarisFoobar.java" means do not compile this particular file!
+#       "SolarisFoobar.java" means do not compile SolarisFoobar, wherever it is found.
+#   HEADERS:=path to directory where all generated c-headers are written.
+#   DEPENDS:=Extra dependecy
+#   DISABLE_SJAVAC:=Explicitly disable the use of sjavac for this compilation unit.
+#   KEEP_DUPS:=Do not remove duplicate file names from different source roots.
+SetupJavaCompilation = $(NamedParamsMacroTemplate)
+define SetupJavaCompilationBody
+
+  # Verify arguments
+  ifeq ($$($1_BIN),)
+    $$(error Must specify BIN (in $1))
+  endif
+
+  # Extract the info from the java compiler setup.
+  $1_JVM := $$($$($1_SETUP)_JVM)
+  $1_JAVAC := $$($$($1_SETUP)_JAVAC)
+  $1_FLAGS := $$($$($1_SETUP)_FLAGS) $(JAVAC_FLAGS) $$($1_ADD_JAVAC_FLAGS)
+  ifneq ($$($1_CLASSPATH), )
+    $1_FLAGS += -cp $$(call PathList, $$($1_CLASSPATH))
+  endif
+  ifeq ($$($1_JAVAC),)
+    $$(error The Java compilation $1 refers to a non-existant java compiler setup $$($1_SETUP))
+  endif
+  $1_SJAVAC_PORTFILE := $$($$($1_SETUP)_SJAVAC_PORTFILE)
+  $1_SERVER_JVM := $$($$($1_SETUP)_SERVER_JVM)
+  $1_DISABLE_SJAVAC := $$($$($1_SETUP)_DISABLE_SJAVAC)
+ 
+  ifneq ($$($1_MODULE), )
+    $1_MODULE_SUBDIR := /$$($1_MODULE)
+  endif
+
+  # Make sure the dirs exist.
+  $$(foreach d,$$($1_SRC), $$(if $$(wildcard $$d),,$$(error SRC specified to SetupJavaCompilation $1 contains missing directory >$$d<)))
+  $$(call MakeDir,$$($1_BIN))
+  # Add all source roots to the find cache since we are likely going to run find
+  # on these more than once. The cache will only be updated if necessary.
+  $$(eval $$(call FillCacheFind,$$($1_SRC)))
+  # Find all files in the source trees. Preserve order of source roots so that
+  # the first version in case of multiple instances of the same file is selected.
+  # CacheFind does not preserve order so need to call it for each root.
+  $1_ALL_SRCS += $$(foreach s, $$($1_SRC), $$(call CacheFind, $$(s)))
+  # Extract the java files.
+  $1_SRCS := $$(filter %.java, $$($1_ALL_SRCS))
+
+  # Translate include/exclude into patterns
+  ifneq ($$($1_EXCLUDE_FILES), )
+    $1_EXCLUDE_PATTERN := $$(addprefix %, $$($1_EXCLUDE_FILES))
+  endif
+  ifneq ($$($1_INCLUDE_FILES), )
+    $1_INCLUDE_PATTERN := $$(foreach i, $$($1_SRC), $$(addprefix $$i/, $$($1_INCLUDE_FILES)))
+  endif
+  ifneq ($$($1_EXCLUDES), )
+    $1_EXCLUDE_PATTERN += $$(foreach i, $$($1_SRC), $$(addprefix $$i/, $$(addsuffix /%, $$($1_EXCLUDES))))
+  endif
+  ifneq ($$($1_INCLUDES), )
+    $1_INCLUDE_PATTERN += $$(foreach i, $$($1_SRC), $$(addprefix $$i/, $$(addsuffix /%, $$($1_INCLUDES))))
+  endif
+
+  # Apply include/exclude patterns to java sources
+  ifneq ($$($1_EXCLUDE_PATTERN), )
+    $1_SRCS := $$(filter-out $$($1_EXCLUDE_PATTERN), $$($1_SRCS))
+  endif
+  ifneq ($$($1_INCLUDE_PATTERN), )
+    $1_SRCS := $$(filter $$($1_INCLUDE_PATTERN), $$($1_SRCS))
+  endif
+
+  ifneq ($$($1_KEEP_DUPS), true)
+    # Remove duplicate source files by keeping the first found of each duplicate.
+    # This allows for automatic overrides with custom or platform specific versions
+    # source files.
+    #
+    # For the smart javac wrapper case, add each removed file to an extra exclude
+    # file list to prevent sjavac from finding duplicate sources.
+    $1_SRCS := $$(strip $$(foreach s, $$($1_SRCS), \
+        $$(eval relative_src := $$(call remove-prefixes, $$($1_SRC), $$(s))) \
+        $$(if $$($1_$$(relative_src)), \
+          $$(eval $1_SJAVAC_EXCLUDE_FILES += $$(s)), \
+          $$(eval $1_$$(relative_src) := 1) $$(s))))
+  endif
+
+  ifeq ($$(strip $$($1_SRCS)), )
+    $$(error No source files found for $1)
+  endif
+
+  $1_SAFE_NAME := $$(strip $$(subst /,_, $1))
+
+  # All files below META-INF are always copied.
+  $1_ALL_COPIES := $$(filter $$(addsuffix /META-INF%,$$($1_SRC)),$$($1_ALL_SRCS))
+  # Find all files to be copied from source to bin.
+  ifneq (,$$($1_COPY)$$($1_COPY_FILES))
+    # Search for all files to be copied.
+    $1_ALL_COPIES += $$(filter $$(addprefix %,$$($1_COPY)),$$($1_ALL_SRCS))
+    # Copy these explicitly
+    $1_ALL_COPIES += $$($1_COPY_FILES)
+  endif
+  # Copy must also respect filters.
+  ifneq (,$$($1_INCLUDE_PATTERN))
+    $1_ALL_COPIES := $$(filter $$($1_INCLUDE_PATTERN),$$($1_ALL_COPIES))
+  endif
+  ifneq (,$$($1_EXCLUDE_PATTERN))
+    $1_ALL_COPIES := $$(filter-out $$($1_EXCLUDE_PATTERN),$$($1_ALL_COPIES))
+  endif
+  ifneq (,$$($1_ALL_COPIES))
+    # Yep, there are files to be copied!
+    $1_ALL_COPY_TARGETS:=
+        $$(foreach i,$$($1_ALL_COPIES),$$(eval $$(call add_file_to_copy,$1,$$i)))
+    # Now we can depend on $$($1_ALL_COPY_TARGETS) to copy all files!
+  endif
+
+  # Find all property files to be copied and cleaned from source to bin.
+  ifneq (,$$($1_CLEAN)$$($1_CLEAN_FILES))
+    # Search for all files to be copied.
+    $1_ALL_CLEANS := $$(filter $$(addprefix %,$$($1_CLEAN)),$$($1_ALL_SRCS))
+    # Clean these explicitly
+    $1_ALL_CLEANS += $$($1_CLEAN_FILES)
+    # Copy and clean must also respect filters.
+    ifneq (,$$($1_INCLUDE_PATTERN))
+      $1_ALL_CLEANS := $$(filter $$($1_INCLUDE_PATTERN),$$($1_ALL_CLEANS))
+    endif
+    ifneq (,$$($1_EXCLUDE_PATTERN))
+      $1_ALL_CLEANS := $$(filter-out $$($1_EXCLUDE_PATTERN),$$($1_ALL_CLEANS))
+    endif
+    ifneq (,$$($1_ALL_CLEANS))
+      # Yep, there are files to be copied and cleaned!
+      $1_ALL_COPY_CLEAN_TARGETS:=
+          $$(foreach i,$$($1_ALL_CLEANS),$$(eval $$(call add_file_to_clean,$1,$$i)))
+      # Now we can depend on $$($1_ALL_COPY_CLEAN_TARGETS) to copy all files!
+    endif
+  endif
+
+  # Create a sed expression to remove the source roots and to replace / with .
+  # and remove .java at the end.
+  $1_REWRITE_INTO_CLASSES:=$$(foreach i,$$($1_SRC),-e 's|$$i/||g') -e 's|/|.|g' -e 's|.java$$$$||g'
+
+  # Create SJAVAC variable from JAVAC variable. Expects $1_JAVAC to be
+  # "bootclasspathprepend -cp .../javac.jar com.sun.tools.javac.Main"
+  # and javac is simply replaced with sjavac.
+  $1_SJAVAC:=$$(subst com.sun.tools.javac.Main,com.sun.tools.sjavac.Main,$$($1_JAVAC))
+
+  # Set the $1_REMOTE to spawn a background javac server.
+  $1_REMOTE:=--server:portfile=$$($1_SJAVAC_PORTFILE),id=$1,sjavac=$$(subst \
+      $$(SPACE),%20,$$(subst $$(COMMA),%2C,$$(strip $$($1_SERVER_JVM) $$($1_SJAVAC))))
+
+  $1_COMPILE_TARGET := $$($1_BIN)$$($1_MODULE_SUBDIR)/_the.$1_batch
+
+  ifeq ($$($1_DISABLE_SJAVAC)x$$(ENABLE_SJAVAC),xyes)
+    # Using sjavac to compile.
+
+    # Create the sjavac wrapper command line. Sjavac doesn't handle patterns that
+    # match the absolute path, only the part inside each src dir. Instead -i and
+    # -x flags apply only to the next -src arg on the command line.
+    $1_EXCLUDE_FILES_ABS := $$(filter /%, $$($1_EXCLUDE_FILES)) $$($1_SJAVAC_EXCLUDE_FILES)
+    $1_EXCLUDE_FILES_REL := $$(filter-out /%, $$($1_EXCLUDE_FILES))
+    $1_SJAVAC_ARGS_STRING := $$(foreach s, $$(patsubst %/, %, $$($1_SRC)), \
+        $$(addprefix -x ,$$(addsuffix /**,$$($1_EXCLUDES))) \
+        $$(addprefix -i ,$$(addsuffix /**,$$($1_INCLUDES))) \
+        $$(addprefix -x **,$$(strip $$($1_EXCLUDE_FILES_REL))) \
+        $$(addprefix -i **,$$(strip $$($1_INCLUDE_FILES))) \
+        $$(addprefix -x , $$(strip $$(patsubst $$(s)/%, %, $$(filter $$(s)/%, $$($1_EXCLUDE_FILES_ABS))))) \
+        -src $$(s))
+
+    ifneq ($$(word 20, $$($1_SJAVAC_ARGS_STRING)), )
+      $1_SJAVAC_ARGS_FILE := $$($1_BIN)/_the.$1_args
+      $1_SJAVAC_ARGS := @$$($1_SJAVAC_ARGS_FILE)
+    else
+      $1_SJAVAC_ARGS := $$($1_SJAVAC_ARGS_STRING)
+    endif
+
+
+    ifneq (,$$($1_HEADERS))
+      $1_HEADERS_ARG := -h $$($1_HEADERS)
+    endif
+
+    $1_VARDEPS := $$($1_JVM) $$($1_SJAVAC) $$($1_SJAVAC_ARGS_STRING) $$($1_FLAGS) \
+        $$($1_HEADERS_ARG) $$($1_BIN) $$($1_EXCLUDES) $$($1_INCLUDES) \
+        $$($1_EXCLUDE_FILES) $$($1_INCLUDE_FILES)
+    $1_VARDEPS_FILE := $$(call DependOnVariable, $1_VARDEPS, \
+        $$($1_BIN)$$($1_MODULE_SUBDIR)/_the.$1.vardeps)
+
+    $$($1_COMPILE_TARGET): $$($1_SRCS) $$($1_DEPENDS) $$($1_VARDEPS_FILE)
+	$$(call MakeDir, $$(@D) $$(dir $$($1_SJAVAC_PORTFILE)))
+	$$(eval $$(call ListPathsSafely,$1_SRCS, $$@.tmp))
+        ifneq ($$($1_SJAVAC_ARGS_FILE), )
+	  $$(eval $$(call ListPathsSafely,$1_SJAVAC_ARGS_STRING, $$($1_SJAVAC_ARGS_FILE)))
+        endif
+	$$(call LogWarn, Compiling $1)
+	$$(call ExecuteWithLog, $$($1_BIN)$$($1_MODULE_SUBDIR)/_the.$$($1_SAFE_NAME)_batch, \
+	    $$($1_JVM) $$($1_SJAVAC) \
+	        $$($1_REMOTE) \
+	        -j 1 \
+	        --permit-unidentified-artifacts \
+	        --permit-sources-without-package \
+	        --compare-found-sources $$@.tmp \
+	        --log=$(LOG_LEVEL) \
+	        --state-dir=$$($1_BIN)$$($1_MODULE_SUBDIR) \
+	        $$($1_SJAVAC_ARGS) \
+	        $$($1_FLAGS) \
+	        $$($1_HEADERS_ARG) \
+	        -d $$($1_BIN)) && \
+	$(MV) $$@.tmp $$@
+        # Create a pubapi file that only changes when the pubapi changes. Dependent
+        # compilations can use this file to only get recompiled when pubapi has changed.
+        # Grep returns 1 if no matching lines are found. Do not fail for this.
+	$(GREP) -e "^I" $$($1_BIN)$$($1_MODULE_SUBDIR)/javac_state > $$($1_BIN)$$($1_MODULE_SUBDIR)/_the.$1_pubapi.tmp \
+	    || test "$$$$?" = "1"
+	if [ ! -f $$($1_BIN)$$($1_MODULE_SUBDIR)/_the.$1_pubapi ] \
+	    || [ "`$(DIFF) $$($1_BIN)$$($1_MODULE_SUBDIR)/_the.$1_pubapi \
+	        $$($1_BIN)$$($1_MODULE_SUBDIR)/_the.$1_pubapi.tmp`" != "" ]; then \
+	  $(MV) $$($1_BIN)$$($1_MODULE_SUBDIR)/_the.$1_pubapi.tmp \
+	      $$($1_BIN)$$($1_MODULE_SUBDIR)/_the.$1_pubapi; \
+	fi
+
+  else
+    # Using plain javac to batch compile everything.
+
+    # When building in batch, put headers in a temp dir to filter out those that actually
+    # changed before copying them to the real header dir.
+    ifneq (,$$($1_HEADERS))
+      $1_HEADERS_ARG := -h $$($1_HEADERS).$1.tmp
+
+      $$($1_HEADERS)/_the.$1_headers: $$($1_COMPILE_TARGET)
+		$(MKDIR) -p $$(@D)
+		if [ -d "$$($1_HEADERS).$1.tmp" ]; then \
+		  for f in `$(CD) $$($1_HEADERS).$1.tmp && $(FIND) . -type f`; do \
+		    if [ ! -f "$$($1_HEADERS)/$$$$f" ] \
+		        || [ "`$(DIFF) $$($1_HEADERS)/$$$$f $$($1_HEADERS).$1.tmp/$$$$f`" != "" ]; then \
+		      $(MKDIR) -p `$(DIRNAME) $$($1_HEADERS)/$$$$f`; \
+		      $(CP) -f $$($1_HEADERS).$1.tmp/$$$$f $$($1_HEADERS)/$$$$f; \
+		    fi; \
+		  done; \
+		fi
+		$(RM) -r $$($1_HEADERS).$1.tmp
+		$(TOUCH) $$@
+
+      $1_HEADER_TARGETS := $$($1_HEADERS)/_the.$1_headers
+    endif
+
+    $1_VARDEPS := $$($1_JVM) $$($1_JAVAC) $$($1_FLAGS) $$($1_BIN) \
+        $$($1_HEADERS_ARG) $$($1_EXCLUDES) $$($1_INCLUDES) \
+        $$($1_EXCLUDE_FILES) $$($1_INCLUDE_FILES)
+    $1_VARDEPS_FILE := $$(call DependOnVariable, $1_VARDEPS, \
+        $$($1_BIN)$$($1_MODULE_SUBDIR)/_the.$1.vardeps)
+
+    ifeq ($$($1_DISABLE_SJAVAC)x$(ENABLE_JAVAC_SERVER), xyes)
+      $1_JAVAC_CMD := $$($1_SJAVAC) $$($1_REMOTE)
+    else
+      $1_JAVAC_CMD := $$($1_JAVAC)
+    endif
+
+    # When not using sjavac, pass along all sources to javac using an @file.
+    $$($1_COMPILE_TARGET): $$($1_SRCS) $$($1_DEPENDS) $$($1_VARDEPS_FILE)
+	$$(call MakeDir, $$(@D))
+	$$(eval $$(call ListPathsSafely,$1_SRCS, $$@.tmp))
+	$$(call LogWarn, Compiling $$(words $$($1_SRCS)) files for $1)
+	$$(call ExecuteWithLog, $$($1_BIN)$$($1_MODULE_SUBDIR)/_the.$$($1_SAFE_NAME)_batch, \
+	    $$($1_JVM) $$($1_JAVAC_CMD) $$($1_FLAGS) \
+	        -implicit:none \
+		-d $$($1_BIN) $$($1_HEADERS_ARG) @$$@.tmp) && \
+	$(MV) $$@.tmp $$@
+  endif
+
+  # Add all targets to main variable
+  $1 := $$($1_ALL_COPY_TARGETS) $$($1_ALL_COPY_CLEAN_TARGETS) $$($1_COMPILE_TARGET) \
+      $$($1_HEADER_TARGETS)
+
+  # Check if a jar file was specified, then setup the rules for the jar.
+  ifneq (,$$($1_JAR))
+    # If no suffixes was explicitly set for this jar file.
+    # Use class and the cleaned/copied properties file suffixes as the default
+    # for the types of files to be put into the jar.
+    ifeq (,$$($1_SUFFIXES))
+      $1_SUFFIXES:=.class $$($1_CLEAN) $$($1_COPY)
+    endif
+
+    $$(eval $$(call SetupJarArchive, ARCHIVE_$1, \
+        DEPENDENCIES:=$$($1), \
+        SRCS:=$$($1_BIN)$$($1_MODULE_SUBDIR), \
+        SUFFIXES:=$$($1_SUFFIXES), \
+        EXCLUDE:=$$($1_EXCLUDES), \
+        INCLUDES:=$$($1_INCLUDES), \
+        EXTRA_FILES:=$$($1_ALL_COPY_TARGETS) $$($1_ALL_COPY_CLEAN_TARGETS), \
+        JAR:=$$($1_JAR), \
+        JARMAIN:=$$($1_JARMAIN), \
+        MANIFEST:=$$($1_MANIFEST), \
+        EXTRA_MANIFEST_ATTR:=$$($1_EXTRA_MANIFEST_ATTR), \
+        JARINDEX:=$$($1_JARINDEX), \
+        HEADERS:=$$($1_HEADERS), \
+        SETUP:=$$($1_SETUP), \
+    ))
+
+    # Add jar to target list
+    $1 += $$($1_JAR)
+  endif
+
+  # Check if a srczip was specified, then setup the rules for the srczip.
+  ifneq (,$$($1_SRCZIP))
+    $$(eval $$(call SetupZipArchive, ZIP_ARCHIVE_$1, \
+        SRC:=$$($1_SRC), \
+        ZIP:=$$($1_SRCZIP), \
+        INCLUDES:=$$($1_INCLUDES), \
+        EXCLUDES:=$$($1_EXCLUDES), \
+        EXCLUDE_FILES:=$$($1_EXCLUDE_FILES)))
+
+    # Add zip to target list
+    $1 += $$($1_SRCZIP)
+  endif
+endef
+
+# Use this macro to find the correct target to depend on when the original
+# SetupJavaCompilation is declared in a different makefile, to avoid having
+# to declare and evaluate it again.
+# param 1 is for example BUILD_MYPACKAGE
+# param 2 is the output directory (BIN)
+define SetupJavaCompilationCompileTarget
+  $(if $(findstring yes, $(ENABLE_SJAVAC)), $(strip $2)/_the.$(strip $1)_pubapi, \
+      $(strip $2)/_the.$(strip $1)_batch)
+endef
+
+endif # _JAVA_COMPILATION_GMK

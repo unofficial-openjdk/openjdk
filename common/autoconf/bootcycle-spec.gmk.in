@@ -1,0 +1,68 @@
+#
+# Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.  Oracle designates this
+# particular file as subject to the "Classpath" exception as provided
+# by Oracle in the LICENSE file that accompanied this code.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
+#
+
+# Support for building boot cycle builds
+
+BOOT_JDK_MODULAR := true
+
+# First include the real base spec.gmk file
+include @SPEC@
+
+# Check that the user did not try to specify a different java to use for compiling.
+# On windows we need to account for fixpath being first word.
+ifeq ($(firstword $(JAVA)),$(FIXPATH))
+  JAVA_EXEC_POS=2
+else
+  JAVA_EXEC_POS=1
+endif
+ifneq ($(word $(JAVA_EXEC_POS),$(SJAVAC_SERVER_JAVA)),$(word $(JAVA_EXEC_POS),$(JAVA)))
+  $(error Bootcycle builds are not possible if --with-sjavac-server-java is specified)
+endif
+
+
+# Override specific values to do a boot cycle build
+
+# Use a different Boot JDK
+BOOT_JDK := $(JDK_IMAGE_DIR)
+
+# The bootcycle build has a different output directory
+OLD_BUILD_OUTPUT:=@BUILD_OUTPUT@
+BUILD_OUTPUT:=$(OLD_BUILD_OUTPUT)/bootcycle-build
+# The HOTSPOT_DIST dir is not defined relative to BUILD_OUTPUT in spec.gmk. Must not
+# use space in this patsubst to avoid leading space in HOTSPOT_DIST.
+HOTSPOT_DIST:=$(patsubst $(OLD_BUILD_OUTPUT)%,$(BUILD_OUTPUT)%,$(HOTSPOT_DIST))
+SJAVAC_SERVER_DIR:=$(patsubst $(OLD_BUILD_OUTPUT)%, $(BUILD_OUTPUT)%, $(SJAVAC_SERVER_DIR))
+
+JAVA_CMD:=$(BOOT_JDK)/bin/java
+JAVAC_CMD:=$(BOOT_JDK)/bin/javac
+JAVAH_CMD:=$(BOOT_JDK)/bin/javah
+JAR_CMD:=$(BOOT_JDK)/bin/jar
+JARSIGNER_CMD:=$(BOOT_JDK)/bin/jarsigner
+SJAVAC_SERVER_JAVA_CMD:=$(JAVA_CMD)
+# When building a 32bit target, make sure the sjavac server flags are compatible
+# with a 32bit JVM.
+ifeq ($(OPENJDK_TARGET_CPU_BITS), 32)
+  SJAVAC_SERVER_JAVA_FLAGS:= -Xms256M -Xmx1500M
+endif

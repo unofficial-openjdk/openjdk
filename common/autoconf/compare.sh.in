@@ -1,0 +1,102 @@
+#!/bin/bash
+#
+# Copyright (c) 2012, 2014, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
+#
+
+# This script is processed by configure before it's usable. It is run from
+# the root of the build directory.
+
+
+##########################################################################################
+# Substitutions from autoconf
+
+export LEGACY_BUILD_DIR=@OPENJDK_TARGET_OS@-@OPENJDK_TARGET_CPU_LEGACY@
+
+export OPENJDK_TARGET_OS="@OPENJDK_TARGET_OS@"
+export OPENJDK_TARGET_CPU="@OPENJDK_TARGET_CPU@"
+export OPENJDK_TARGET_CPU_LIBDIR="@OPENJDK_TARGET_CPU_LIBDIR@"
+export DEBUG_LEVEL="@DEBUG_LEVEL@"
+
+export AWK="@AWK@"
+export BASH="@BASH@"
+export CAT="@CAT@"
+export CMP="@CMP@"
+export CP="@CP@"
+export CUT="@CUT@"
+export DIFF="@DIFF@"
+export DUMPBIN="@FIXPATH@ @DUMPBIN@"
+export EXPR="@EXPR@"
+export FILE="@FILE@"
+export FIND="@FIND@"
+export GREP="@GREP@"
+export LDD="@LDD@"
+export LN="@LN@"
+export MKDIR="@MKDIR@"
+export MV="@MV@"
+export NAWK="@NAWK@"
+export NM="@GNM@"
+export OBJDUMP="@OBJDUMP@"
+export OTOOL="@OTOOL@"
+export PRINTF="@PRINTF@"
+export READELF="@READELF@"
+export RM="@RM@"
+export SED="@SED@"
+export SORT="@SORT@"
+export STAT="@STAT@"
+export STRIP="@STRIP@ @STRIPFLAGS@"
+export TEE="@TEE@"
+export UNIQ="@UNIQ@"
+export UNPACK200="@FIXPATH@ @BOOT_JDK@/bin/unpack200"
+export UNARCHIVE="@UNZIP@ -q"
+
+export SRC_ROOT="@TOPDIR@"
+export OUTPUT_ROOT="@OUTPUT_ROOT@"
+
+if [ "@COMPILE_TYPE@" != "cross" ]; then
+    export JAVAP="@FIXPATH@ $OUTPUT_ROOT/jdk/bin/javap @JAVA_TOOL_FLAGS_SMALL@"
+    export JIMAGE="@FIXPATH@ $OUTPUT_ROOT/jdk/bin/jimage"
+elif [ "@CREATE_BUILDJDK@" = "true" ]; then
+    export JAVAP="@FIXPATH@ $OUTPUT_ROOT/buildjdk/jdk/bin/javap @JAVA_TOOL_FLAGS_SMALL@"
+    export JIMAGE="@FIXPATH@ $OUTPUT_ROOT/buildjdk/jdk/bin/jimage"
+else
+    export JAVAP="@FIXPATH@ @BUILD_JDK@/bin/javap @JAVA_TOOL_FLAGS_SMALL@"
+    export JIMAGE="@FIXPATH@ @BUILD_JDK@/bin/jimage"
+fi
+
+if [ "$OPENJDK_TARGET_OS" = "windows" ]; then
+  export PATH="@VS_PATH@"
+fi
+
+# Now locate the main script and run it.
+REAL_COMPARE_SCRIPT="$SRC_ROOT/common/bin/compare.sh"
+if [ ! -e "$REAL_COMPARE_SCRIPT" ]; then
+  echo "Error: Cannot locate compare script, it should have been in $REAL_COMPARE_SCRIPT"
+  exit 1
+fi
+
+# Rotate logs
+$RM $OUTPUT_ROOT/compare.log.old 2> /dev/null
+$MV $OUTPUT_ROOT/compare.log $OUTPUT_ROOT/compare.log.old 2> /dev/null
+
+export SCRIPT_DIR="$( cd "$( dirname "$0" )" > /dev/null && pwd )"
+
+$BASH $SRC_ROOT/common/bin/logger.sh $OUTPUT_ROOT/compare.log $BASH "$REAL_COMPARE_SCRIPT" "$@"

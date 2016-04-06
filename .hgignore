@@ -1,0 +1,10 @@
+^build/
+^dist/
+nbproject/private/
+^webrev
+^.hgtip
+^.bridge2
+^.jib/
+.DS_Store
+.metadata/
+.recommenders/
