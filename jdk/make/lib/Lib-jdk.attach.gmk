@@ -1,0 +1,65 @@
+#
+# Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.  Oracle designates this
+# particular file as subject to the "Classpath" exception as provided
+# by Oracle in the LICENSE file that accompanied this code.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
+#
+
+include LibCommon.gmk
+
+################################################################################
+
+ifeq ($(OPENJDK_TARGET_OS), windows)
+  # In (at least) VS2013 and later, -DPSAPI_VERSION=1 is needed to generate
+  # a binary that is compatible with windows versions older than 7/2008R2.
+  # See MSDN documentation for GetProcessMemoryInfo for more information.
+  LIBATTACH_CFLAGS := -DPSAPI_VERSION=1
+endif
+
+$(eval $(call SetupNativeCompilation,BUILD_LIBATTACH, \
+    LIBRARY := attach, \
+    OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
+    SRC := $(call FindSrcDirsForLib, jdk.attach, attach), \
+    OPTIMIZATION := LOW, \
+    CFLAGS := $(CFLAGS_JDKLIB) \
+        -I$(SUPPORT_OUTPUTDIR)/headers/jdk.attach \
+        $(LIBJAVA_HEADER_FLAGS) $(LIBATTACH_CFLAGS), \
+    CFLAGS_windows := /Gy, \
+    MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libattach/mapfile-$(OPENJDK_TARGET_OS), \
+    VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
+    RC_FLAGS := $(RC_FLAGS) \
+        -D "JDK_FNAME=attach.dll" \
+        -D "JDK_INTERNAL_NAME=attach" \
+        -D "JDK_FTYPE=0x2L", \
+    LDFLAGS := $(LDFLAGS_JDKLIB) \
+        $(call SET_SHARED_LIBRARY_ORIGIN), \
+    LDFLAGS_windows := -order:@$(JDK_TOPDIR)/make/mapfiles/libattach/reorder-windows-$(OPENJDK_TARGET_CPU), \
+    LIBS := $(JDKLIB_LIBS), \
+    LIBS_solaris := -ldoor, \
+    LIBS_windows := $(WIN_JAVA_LIB) advapi32.lib psapi.lib, \
+    OBJECT_DIR := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/libattach, \
+))
+
+$(BUILD_LIBATTACH): $(call FindLib, java.base, java)
+
+TARGETS += $(BUILD_LIBATTACH)
+
+################################################################################

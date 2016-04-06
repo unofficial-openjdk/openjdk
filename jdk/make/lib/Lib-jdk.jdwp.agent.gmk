@@ -1,0 +1,124 @@
+#
+# Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.  Oracle designates this
+# particular file as subject to the "Classpath" exception as provided
+# by Oracle in the LICENSE file that accompanied this code.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
+#
+
+include LibCommon.gmk
+
+################################################################################
+
+LIBDT_SOCKET_SRC := $(JDK_TOPDIR)/src/jdk.jdwp.agent/share/native/libdt_socket \
+    $(JDK_TOPDIR)/src/jdk.jdwp.agent/$(OPENJDK_TARGET_OS_TYPE)/native/libdt_socket
+LIBDT_SOCKET_CPPFLAGS := \
+    $(addprefix -I, $(LIBDT_SOCKET_SRC)) \
+    -I$(JDK_TOPDIR)/src/jdk.jdwp.agent/share/native/libjdwp/export \
+    -I$(JDK_TOPDIR)/src/jdk.jdwp.agent/share/native/libjdwp \
+    -I$(JDK_TOPDIR)/src/jdk.jdwp.agent/share/native/include \
+    #
+
+$(eval $(call SetupNativeCompilation,BUILD_LIBDT_SOCKET, \
+    LIBRARY := dt_socket, \
+    OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
+    SRC := $(LIBDT_SOCKET_SRC), \
+    OPTIMIZATION := LOW, \
+    CFLAGS := $(CFLAGS_JDKLIB) -DUSE_MMAP \
+        $(LIBDT_SOCKET_CPPFLAGS), \
+    MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libdt_socket/mapfile-vers, \
+    LDFLAGS := $(LDFLAGS_JDKLIB) \
+        $(call SET_SHARED_LIBRARY_ORIGIN), \
+    LDFLAGS_windows := -export:jdwpTransport_OnLoad, \
+    LIBS_linux := -lpthread, \
+    LIBS_solaris := -lnsl -lsocket -lc, \
+    LIBS_windows := $(JDKLIB_LIBS) ws2_32.lib, \
+    VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
+    RC_FLAGS := $(RC_FLAGS) \
+        -D "JDK_FNAME=dt_socket.dll" \
+        -D "JDK_INTERNAL_NAME=dt_socket" \
+        -D "JDK_FTYPE=0x2L", \
+    OBJECT_DIR := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/libdt_socket, \
+))
+
+$(BUILD_LIBDT_SOCKET): $(call FindLib, java.base, java)
+
+# Include socket transport with JDWP agent to allow for remote debugging
+TARGETS += $(BUILD_LIBDT_SOCKET)
+
+################################################################################
+
+LIBJDWP_SRC := $(JDK_TOPDIR)/src/jdk.jdwp.agent/share/native/libjdwp \
+    $(JDK_TOPDIR)/src/jdk.jdwp.agent/$(OPENJDK_TARGET_OS_TYPE)/native/libjdwp
+LIBJDWP_CPPFLAGS := \
+    -I$(JDK_TOPDIR)/src/jdk.jdwp.agent/share/native/libjdwp/export \
+    -I$(JDK_TOPDIR)/src/jdk.jdwp.agent/share/native/include \
+    $(addprefix -I, $(LIBJDWP_SRC))
+
+# JDWP_LOGGING causes log messages to be compiled into the library.
+$(eval $(call SetupNativeCompilation,BUILD_LIBJDWP, \
+    LIBRARY := jdwp, \
+    OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
+    SRC := $(LIBJDWP_SRC), \
+    OPTIMIZATION := LOW, \
+    CFLAGS := $(CFLAGS_JDKLIB) -DJDWP_LOGGING \
+        $(LIBJDWP_CPPFLAGS) \
+        -I$(SUPPORT_OUTPUTDIR)/headers/jdk.jdwp.agent, \
+    MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libjdwp/mapfile-vers, \
+    LDFLAGS := $(LDFLAGS_JDKLIB) \
+        $(call SET_SHARED_LIBRARY_ORIGIN), \
+    LIBS := $(JDKLIB_LIBS), \
+    LIBS_linux := $(LIBDL), \
+    LIBS_solaris := $(LIBDL), \
+    LIBS_macosx := -liconv, \
+    LIBS_aix := -liconv, \
+    VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
+    RC_FLAGS := $(RC_FLAGS) \
+        -D "JDK_FNAME=jdwp.dll" \
+        -D "JDK_INTERNAL_NAME=jdwp" \
+        -D "JDK_FTYPE=0x2L", \
+    OBJECT_DIR := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/libjdwp, \
+))
+
+$(BUILD_LIBJDWP): $(call FindLib, java.base, java)
+
+TARGETS += $(BUILD_LIBJDWP)
+
+################################################################################
+
+ifeq ($(STATIC_BUILD), true)
+  JDK_JDWP_AGENT_EXPORT_SYMBOLS_SRC := \
+      $(SUPPORT_OUTPUTDIR)/modules_libs/jdk.jdwp.agent/$(LIBRARY_PREFIX)dt_socket.symbols \
+      $(SUPPORT_OUTPUTDIR)/modules_libs/jdk.jdwp.agent/$(LIBRARY_PREFIX)jdwp.symbols
+
+  JDK_JDWP_AGENT_EXPORT_SYMBOL_FILE := $(SUPPORT_OUTPUTDIR)/modules_libs/jdk.jdwp.agent/jdk.jdwp.agent.symbols
+
+  $(JDK_JDWP_AGENT_EXPORT_SYMBOL_FILE): $(JDK_JDWP_AGENT_EXPORT_SYMBOLS_SRC)
+	$(call LogInfo, Generating jdk.jdwp.agent symbols file)
+	$(CAT) $^ > $@
+
+  # The individual symbol files is generated when the respective lib is built
+  $(JDK_JDWP_AGENT_EXPORT_SYMBOLS_SRC): $(BUILD_LIBDT_SOCKET) $(BUILD_LIBJDWP)
+
+  TARGETS += $(JDK_JDWP_AGENT_EXPORT_SYMBOL_FILE)
+
+endif
+
+################################################################################
