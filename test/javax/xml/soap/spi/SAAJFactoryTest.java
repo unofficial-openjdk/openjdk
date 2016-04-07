@@ -50,7 +50,7 @@ import java.nio.file.StandardOpenOption;
  *      scenario14 javax.xml.soap.MessageFactory=saaj.factory.Valid saaj.factory.Valid2 -
  *
  * @compile -addmods java.xml.ws saaj/factory/Invalid.java saaj/factory/Valid.java
- *     saaj/factory/Valid2.java saaj/factory/Valid3.java
+ *     saaj/factory/Valid2.java saaj/factory/Valid3.java SAAJFactoryTest.java
  *
  * @run main/othervm -addmods java.xml.ws
  *      SAAJFactoryTest com.sun.xml.internal.messaging.saaj.soap.ver1_1.SOAPMessageFactory1_1Impl - scenario2 - -

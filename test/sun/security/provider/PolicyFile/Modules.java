@@ -25,7 +25,9 @@
  * @test
  * @bug 8047771
  * @summary check permissions and principals from various modules
- * @run main/othervm/java.security.policy==modules.policy Modules
+ * @compile -addmods java.xml.ws,java.smartcardio Modules.java
+ * @run main/othervm/java.security.policy==modules.policy
+ *     -addmods java.xml.ws,java.smartcardio Modules
  */
 
 import java.security.AccessController;
@@ -67,6 +69,10 @@ public class Modules {
         new javax.security.auth.kerberos.ServicePermission("*", "accept"),
         // java.sql module
         new java.sql.SQLPermission("setLog"),
+        // java.xml.bind module
+        new javax.xml.bind.JAXBPermission("setDatatypeConverter"),
+        // java.xml.ws module
+        new javax.xml.ws.WebServicePermission("publishEndpoint"),
         // java.smartcardio module
         new javax.smartcardio.CardPermission("*", "*"),
         // jdk.attach module (@jdk.Exported Permissions)
