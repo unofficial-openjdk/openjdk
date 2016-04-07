@@ -117,7 +117,7 @@ needs_jdk = \
   serviceability/attach/AttachWithStalePidFile.java \
   serviceability/sa/jmap-hprof/JMapHProfLargeHeapTest.java \
   serviceability/dcmd/vm/DynLibsTest.java \
-  serviceability/tmtools		
+  serviceability/tmtools
 
 
 # JRE adds further tests to compact3
@@ -268,7 +268,7 @@ needs_g1gc = \
   gc/metaspace/G1AddMetaspaceDependency.java \
   gc/metaspace/TestMetaspacePerfCounters.java \
   gc/startup_warnings/TestG1.java \
-  gc/whitebox/TestConcMarkCycleWB.java 
+  gc/whitebox/TestConcMarkCycleWB.java
 
 hotspot_native_sanity = \
   native_sanity
@@ -287,7 +287,7 @@ hotspot_fast_compiler_1 = \
   -compiler/c2/6792161 \
   -compiler/c2/7070134 \
   -compiler/c2/8004867
-  
+
 hotspot_fast_compiler_2 = \
   compiler/classUnloading/ \
   compiler/codecache/ \
@@ -304,8 +304,9 @@ hotspot_fast_compiler_2 = \
   compiler/interpreter/ \
   compiler/jvmci/ \
   -compiler/codegen/7184394 \
-  -compiler/codecache/stress
-  
+  -compiler/codecache/stress \
+  -compiler/gcbarriers/PreserveFPRegistersTest.java
+
 hotspot_fast_compiler_3 = \
   compiler/intrinsics/ \
   compiler/jsr292/ \
@@ -404,4 +405,4 @@ not_needs_nashorn = \
   -:needs_nashorn
 
 hotspot_tmtools = \
-  serviceability/tmtools	
+  serviceability/tmtools

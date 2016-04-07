@@ -810,11 +810,6 @@ void VirtualSpaceNode::verify_container_count() {
 BlockFreelist::BlockFreelist() : _dictionary(new BlockTreeDictionary()) {}
 
 BlockFreelist::~BlockFreelist() {
-  Log(gc, metaspace, freelist) log;
-  if (log.is_trace()) {
-    ResourceMark rm;
-    dictionary()->print_free_lists(log.trace_stream());
-  }
   delete _dictionary;
 }
 
@@ -2144,6 +2139,7 @@ void ChunkManager::return_chunks(ChunkIndex index, Metachunk* chunks) {
     // by the call to return_chunk_at_head();
     Metachunk* next = cur->next();
     DEBUG_ONLY(cur->set_is_tagged_free(true);)
+    NOT_PRODUCT(cur->mangle(badMetaWordVal);)
     list->return_chunk_at_head(cur);
     cur = next;
   }
@@ -2168,10 +2164,8 @@ SpaceManager::~SpaceManager() {
     log.trace("~SpaceManager(): " PTR_FORMAT, p2i(this));
     ResourceMark rm;
     locked_print_chunks_in_use_on(log.trace_stream());
+    block_freelists()->print_on(log.trace_stream());
   }
-
-  // Do not mangle freed Metachunks.  The chunk size inside Metachunks
-  // is during the freeing of a VirtualSpaceNodes.
 
   // Have to update before the chunks_in_use lists are emptied
   // below.
@@ -2205,9 +2199,8 @@ SpaceManager::~SpaceManager() {
   Metachunk* humongous_chunks = chunks_in_use(HumongousIndex);
 
   while (humongous_chunks != NULL) {
-#ifdef ASSERT
-    humongous_chunks->set_is_tagged_free(true);
-#endif
+    DEBUG_ONLY(humongous_chunks->set_is_tagged_free(true);)
+    NOT_PRODUCT(humongous_chunks->mangle(badMetaWordVal);)
     log.trace(PTR_FORMAT " (" SIZE_FORMAT ") ", p2i(humongous_chunks), humongous_chunks->word_size());
     assert(humongous_chunks->word_size() == (size_t)
            align_size_up(humongous_chunks->word_size(),
