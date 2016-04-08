@@ -2832,9 +2832,8 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
       if (tail != NULL) {
         char *options = strcpy(NEW_C_HEAP_ARRAY(char, strlen(tail) + 1, mtInternal), tail);
         add_init_agent("instrument", options, false);
-        // java agents need module java.instrument. Also -addmods ALL-SYSTEM because
-        // the java agent is in the unmamed module of the application class loader
-        if (!Arguments::append_to_addmods_property("java.instrument,ALL-SYSTEM")) {
+        // java agents need module java.instrument
+        if (!Arguments::append_to_addmods_property("java.instrument")) {
           return JNI_ENOMEM;
         }
       }
