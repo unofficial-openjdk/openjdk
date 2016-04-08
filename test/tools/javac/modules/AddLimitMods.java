@@ -70,7 +70,6 @@ import toolbox.JarTask;
 import toolbox.JavacTask;
 import toolbox.JavaTask;
 import toolbox.Task;
-import toolbox.ToolBox;
 
 public class AddLimitMods extends ModuleTestBase {
 
@@ -198,13 +197,13 @@ public class AddLimitMods extends ModuleTestBase {
             options.add("-XDrawDiagnostics");
             options.addAll(Arrays.asList(variant.getKey()));
 
-            String log = tb.new JavacTask()
+            String log = new JavacTask(tb)
                     .options(options.toArray(new String[0]))
                     .outdir(out)
                     .files(findJavaFiles(src))
-                    .run(variant.getValue() == null ? ToolBox.Expect.SUCCESS : ToolBox.Expect.FAIL)
+                    .run(variant.getValue() == null ? Task.Expect.SUCCESS : Task.Expect.FAIL)
                     .writeAll()
-                    .getOutput(ToolBox.OutputKind.DIRECT);
+                    .getOutput(Task.OutputKind.DIRECT);
 
             log = log.replace(System.getProperty("line.separator"), "\n");
 
