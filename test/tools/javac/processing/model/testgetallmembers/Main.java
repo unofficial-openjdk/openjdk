@@ -27,13 +27,12 @@
  * @summary PackageElement.getEnclosedElements() throws ClassReader$BadClassFileException
  * @author  Peter von der Ah\u00e9
  * @modules jdk.compiler/com.sun.tools.javac.model
- * @run main/othervm -Xmx256m Main
+ * @run main/othervm -addmods ALL-SYSTEM -Xmx256m Main
  */
 
 import java.io.File;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.stream.StreamSupport;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -42,14 +41,12 @@ import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 import javax.tools.*;
-import javax.tools.JavaFileManager.Location;
 
 import com.sun.source.util.JavacTask;
 import com.sun.tools.javac.model.JavacElements;
 
 import static javax.tools.StandardLocation.CLASS_PATH;
 import static javax.tools.StandardLocation.PLATFORM_CLASS_PATH;
-import static javax.tools.StandardLocation.SYSTEM_MODULES;
 import static javax.tools.JavaFileObject.Kind.CLASS;
 
 
