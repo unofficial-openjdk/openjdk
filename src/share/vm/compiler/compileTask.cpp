@@ -27,6 +27,7 @@
 #include "compiler/compileLog.hpp"
 #include "compiler/compileBroker.hpp"
 #include "compiler/compilerDirectives.hpp"
+#include "memory/resourceArea.hpp"
 
 CompileTask*  CompileTask::_task_free_list = NULL;
 #ifdef ASSERT
