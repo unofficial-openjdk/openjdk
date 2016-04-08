@@ -27,7 +27,7 @@
  * @summary PackageElement.getEnclosedElements() throws ClassReader$BadClassFileException
  * @author  Peter von der Ah\u00e9
  * @modules jdk.compiler/com.sun.tools.javac.model
- * @run main/othervm -addmods ALL-SYSTEM -Xmx256m Main
+ * @run main/othervm -Xmx256m Main
  */
 
 import java.io.File;
@@ -64,11 +64,13 @@ public class Main {
     static JavacTask javac;
     static Elements elements;
 
+    static List<String> addmods_ALL_SYSTEM = Arrays.asList("-addmods", "ALL-SYSTEM");
+
     public static void main(String[] args) throws Exception {
         JavaCompiler tool = ToolProvider.getSystemJavaCompiler();
         try (StandardJavaFileManager fm = tool.getStandardFileManager(null, null, null)) {
             fm.setLocation(CLASS_PATH, Collections.<File>emptyList());
-            JavacTask javac = (JavacTask)tool.getTask(null, fm, null, null, null, null);
+            JavacTask javac = (JavacTask)tool.getTask(null, fm, null, addmods_ALL_SYSTEM, null, null);
             Elements elements = javac.getElements();
 
             final Map<String, Set<String>> packages = new LinkedHashMap<>();
@@ -106,11 +108,12 @@ public class Main {
             javac = null;
             elements = null;
 
-            javac = (JavacTask)tool.getTask(null, fm, null, null, null, null);
+            javac = (JavacTask)tool.getTask(null, fm, null, addmods_ALL_SYSTEM, null, null);
             elements = javac.getElements();
 
             for (Entry<String, Set<String>> module2Packages : packages.entrySet()) {
                 ModuleElement me = elements.getModuleElement(module2Packages.getKey());
+                me.getClass();
                 for (String name : module2Packages.getValue()) {
                     PackageElement pe = ((JavacElements) elements).getPackageElement(me, name);
                     for (Element e : pe.getEnclosedElements()) {
