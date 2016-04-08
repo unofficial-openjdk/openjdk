@@ -74,6 +74,8 @@ import com.sun.tools.javac.code.Lint;
 import com.sun.tools.javac.main.Option;
 import com.sun.tools.javac.resources.CompilerProperties.Errors;
 import com.sun.tools.javac.resources.CompilerProperties.Warnings;
+import com.sun.tools.javac.util.DefinedBy;
+import com.sun.tools.javac.util.DefinedBy.Api;
 import com.sun.tools.javac.util.ListBuffer;
 import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Pair;
@@ -864,12 +866,12 @@ public class Locations {
             }
         }
 
-        @Override // defined by Location
+        @Override @DefinedBy(Api.COMPILER)
         public String getName() {
             return name;
         }
 
-        @Override // defined by Location
+        @Override @DefinedBy(Api.COMPILER)
         public boolean isOutputLocation() {
             return output;
         }
