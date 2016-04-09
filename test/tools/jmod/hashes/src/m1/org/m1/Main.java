@@ -21,6 +21,14 @@
  * questions.
  */
 
-module m2 {
-    exports org.m2;
+package org.m1;
+
+import org.m2.Util;
+import org.m3.Name;
+
+public class Main {
+    public static void main(String[] args) {
+        System.out.println(Util.timeOfDay());
+        System.out.println(Name.name());
+    }
 }

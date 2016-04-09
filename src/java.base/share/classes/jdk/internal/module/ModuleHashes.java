@@ -43,6 +43,8 @@ import java.util.Set;
  */
 
 public class ModuleHashes {
+    // If a module is patched, its hash is not available
+    public static final HashSupplier NOT_AVAILABLE = (a) -> "<not available>";
 
     private final String algorithm;
     private final Map<String, String> nameToHash;

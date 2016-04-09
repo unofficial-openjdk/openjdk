@@ -21,14 +21,12 @@
  * questions.
  */
 
-package org.m1;
+package org.m3;
 
-import org.m2.Util;
-import org.not_matched.Name;
+public class Name {
+    private Name() { }
 
-public class Main {
-    public static void main(String[] args) {
-        System.out.println(Util.timeOfDay());
-        System.out.println(Name.name());
+    public static String name() {
+        return "m3";
     }
 }

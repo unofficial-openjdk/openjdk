@@ -211,8 +211,9 @@ public final class ModulePatcher {
 
         // return a new module reference
         URI location = mref.location().orElse(null);
-        return new ModuleReference(descriptor, location,
-                                   () -> new PatchedModuleReader(paths, mref));
+        return JLMA.newModuleRefernce(descriptor, location,
+                                      () -> new PatchedModuleReader(paths, mref),
+                                      ModuleHashes.NOT_AVAILABLE);
 
     }
 

@@ -424,7 +424,6 @@ final class Resolver {
 
     }
 
-
     /**
      * Checks the hashes in the module descriptor to ensure that they match
      * any recorded hashes.
@@ -447,14 +446,15 @@ final class Resolver {
                             .map(ResolvedModule::reference)
                             .orElse(null);
                 }
-                if (other != null) {
+                if (other != null && other.hasher() != ModuleHashes.NOT_AVAILABLE) {
                     String recordedHash = hashes.hashFor(dn);
                     String actualHash = other.computeHash(algorithm);
                     if (actualHash == null)
                         fail("Unable to compute the hash of module %s", dn);
                     if (!recordedHash.equals(actualHash)) {
-                        fail("Hash of %s (%s) differs to expected hash (%s)",
-                                dn, actualHash, recordedHash);
+                        fail("Hash of %s (%s) differs to expected hash (%s)" +
+                             " recorded in %s", dn, actualHash, recordedHash,
+                             descriptor.name());
                     }
                 }
             }

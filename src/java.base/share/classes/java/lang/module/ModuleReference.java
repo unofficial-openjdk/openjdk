@@ -32,6 +32,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import jdk.internal.module.ModuleHashes;
 import jdk.internal.module.ModuleHashes.HashSupplier;
 
 
@@ -149,6 +150,12 @@ public final class ModuleReference {
 
     }
 
+    /**
+     * Returns the hash supplier for this module.
+     */
+    HashSupplier hasher() {
+        return hasher;
+    }
 
     /**
      * Computes the hash of this module, returning it as a hex string.

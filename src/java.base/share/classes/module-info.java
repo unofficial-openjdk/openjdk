@@ -172,6 +172,7 @@ module java.base {
         java.sql,
         java.xml,
         jdk.charsets,
+        jdk.jlink,
         jdk.scripting.nashorn,
         jdk.vm.ci;
     exports jdk.internal.perf to

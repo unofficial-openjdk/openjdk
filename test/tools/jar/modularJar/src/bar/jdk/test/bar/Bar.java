@@ -43,10 +43,11 @@ public class Bar {
 
         Method m = ModuleDescriptor.class.getDeclaredMethod("hashes");
         m.setAccessible(true);
+        ModuleDescriptor foo = jdk.test.foo.Foo.class.getModule().getDescriptor();
         Optional<ModuleHashes> oHashes =
-                (Optional<ModuleHashes>) m.invoke(md);
+                (Optional<ModuleHashes>) m.invoke(foo);
 
-        System.out.println("hashes:" + oHashes.get().hashFor("foo"));
+        System.out.println("hashes:" + oHashes.get().hashFor("bar"));
 
         StringJoiner sj = new StringJoiner(",");
         md.conceals().forEach(sj::add);

@@ -26,6 +26,8 @@
 package jdk.internal.misc;
 
 import java.lang.module.Configuration;
+import jdk.internal.module.ModuleHashes;
+
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Requires;
@@ -33,15 +35,19 @@ import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Version;
 import java.lang.module.ModuleFinder;
 import java.util.Collection;
+import java.lang.module.ModuleReader;
+import java.lang.module.ModuleReference;
+import java.net.URI;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * Provides access to non-public methods in java.lang.module.
  */
 
 public interface JavaLangModuleAccess {
-
     /**
      * Returns {@code ModuleDescriptor.Requires} of the given modifier
      * and module name.
@@ -92,7 +98,8 @@ public interface JavaLangModuleAccess {
                                          String osArch,
                                          String osVersion,
                                          Set<String> conceals,
-                                         Set<String> packages);
+                                         Set<String> packages,
+                                         ModuleHashes hashes);
 
     /**
      * Resolves a collection of root modules, with service binding
@@ -102,4 +109,18 @@ public interface JavaLangModuleAccess {
     Configuration resolveRequiresAndUses(ModuleFinder finder,
                                          Collection<String> roots,
                                          boolean check);
+
+    /**
+     * Returns a ModuleReference with hash supplier
+     */
+    ModuleReference newModuleRefernce(ModuleDescriptor descriptor,
+                                      URI location,
+                                      Supplier<ModuleReader> readerSupplier,
+                                      ModuleHashes.HashSupplier hasher);
+
+    /**
+     * Returns the object with the hashes of other modules
+     */
+    Optional<ModuleHashes> hashes(ModuleDescriptor descriptor);
+
 }
