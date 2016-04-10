@@ -228,7 +228,7 @@ public final class ModuleBootstrap {
         // If `-addmods ALL-MODULE-PATH` is used, and no initial module is
         // specified, then all observable modules on the application module
         // path will be resolved.
-        if (addAllApplicationModules) {
+        if (addAllApplicationModules && appModulePath != null) {
             assert mainModule == null;
 
             ModuleFinder f = finder;  // observable modules
