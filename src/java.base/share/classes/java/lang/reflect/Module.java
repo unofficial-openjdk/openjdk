@@ -984,16 +984,7 @@ public final class Module {
                     Set<Module> targets = new HashSet<>();
                     for (String target : export.targets()) {
                         // only export to modules that are in this configuration
-                        // or in parent layers
                         Module m2 = modules.get(target);
-
-                        if (m2 == null) {
-                            Layer parent = layer.parent().orElse(null);
-                            if (parent != null) {
-                                m2 = parent.findModule(target).orElse(null);
-                            }
-                        }
-
                         if (m2 != null) {
                             targets.add(m2);
                             addExports0(m, sourceInternalForm, m2);
