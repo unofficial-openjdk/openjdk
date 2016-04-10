@@ -2008,11 +2008,10 @@ public class ModuleDescriptor
                 }
 
                 @Override
-                public ModuleReference newModuleRefernce(ModuleDescriptor descriptor,
-                                                         URI location,
-                                                         Supplier<ModuleReader> readerSupplier,
-                                                         ModuleHashes.HashSupplier hasher) {
-                    return new ModuleReference(descriptor, location, readerSupplier, hasher);
+                public ModuleReference newPatchedModule(ModuleDescriptor descriptor,
+                                                        URI location,
+                                                        Supplier<ModuleReader> s) {
+                    return new ModuleReference(descriptor, location, s, true, null);
                 }
 
                 @Override

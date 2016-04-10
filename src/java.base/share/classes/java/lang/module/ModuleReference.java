@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -55,11 +55,32 @@ public final class ModuleReference {
     private final URI location;
     private final Supplier<ModuleReader> readerSupplier;
 
+    // true if this is a reference to a patched module
+    private boolean patched;
+
     // the function that computes the hash of this module reference
     private final HashSupplier hasher;
 
     // cached hash string to avoid needing to compute it many times
     private String cachedHash;
+
+
+    /**
+     * Constructs a new instance of this class.
+     */
+    ModuleReference(ModuleDescriptor descriptor,
+                    URI location,
+                    Supplier<ModuleReader> readerSupplier,
+                    boolean patched,
+                    HashSupplier hasher)
+
+    {
+        this.descriptor = Objects.requireNonNull(descriptor);
+        this.location = location;
+        this.readerSupplier = Objects.requireNonNull(readerSupplier);
+        this.patched = patched;
+        this.hasher = hasher;
+    }
 
     /**
      * Constructs a new instance of this class.
@@ -68,11 +89,9 @@ public final class ModuleReference {
                     URI location,
                     Supplier<ModuleReader> readerSupplier,
                     HashSupplier hasher)
+
     {
-        this.descriptor = Objects.requireNonNull(descriptor);
-        this.location = location;
-        this.readerSupplier = Objects.requireNonNull(readerSupplier);
-        this.hasher = hasher;
+        this(descriptor, location, readerSupplier, false, hasher);
     }
 
 
@@ -97,9 +116,8 @@ public final class ModuleReference {
                            URI location,
                            Supplier<ModuleReader> readerSupplier)
     {
-        this(descriptor, location, readerSupplier, null);
+        this(descriptor, location, readerSupplier, false, null);
     }
-
 
     /**
      * Returns the module descriptor.
@@ -150,6 +168,14 @@ public final class ModuleReference {
 
     }
 
+
+    /**
+     * Returns {@code true} if this module has been patched via -Xpatch.
+     */
+    boolean isPatched() {
+        return patched;
+    }
+
     /**
      * Returns the hash supplier for this module.
      */
@@ -173,8 +199,6 @@ public final class ModuleReference {
         return result;
     }
 
-    private int hash;
-
     /**
      * Computes a hash code for this module reference.
      *
@@ -193,6 +217,8 @@ public final class ModuleReference {
         }
         return hc;
     }
+
+    private int hash;
 
     /**
      * Tests this module reference for equality with the given object.

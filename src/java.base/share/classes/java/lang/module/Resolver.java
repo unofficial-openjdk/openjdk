@@ -446,7 +446,9 @@ final class Resolver {
                             .map(ResolvedModule::reference)
                             .orElse(null);
                 }
-                if (other != null && other.hasher() != ModuleHashes.NOT_AVAILABLE) {
+
+                // skip checking the hash if the module has been patched
+                if (other != null && !other.isPatched()) {
                     String recordedHash = hashes.hashFor(dn);
                     String actualHash = other.computeHash(algorithm);
                     if (actualHash == null)

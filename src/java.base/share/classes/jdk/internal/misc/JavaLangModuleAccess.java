@@ -48,6 +48,7 @@ import java.util.function.Supplier;
  */
 
 public interface JavaLangModuleAccess {
+
     /**
      * Returns {@code ModuleDescriptor.Requires} of the given modifier
      * and module name.
@@ -111,12 +112,11 @@ public interface JavaLangModuleAccess {
                                          boolean check);
 
     /**
-     * Returns a ModuleReference with hash supplier
+     * Creates a ModuleReference to a "patched" module.
      */
-    ModuleReference newModuleRefernce(ModuleDescriptor descriptor,
-                                      URI location,
-                                      Supplier<ModuleReader> readerSupplier,
-                                      ModuleHashes.HashSupplier hasher);
+    ModuleReference newPatchedModule(ModuleDescriptor descriptor,
+                                     URI location,
+                                     Supplier<ModuleReader> readerSupplier);
 
     /**
      * Returns the object with the hashes of other modules
