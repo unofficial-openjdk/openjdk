@@ -44,7 +44,8 @@ set +e
 
 failed=0
 
-# Skip SA options for now, see 7175133
+runSA=true
+
 if [ $isMacos = true -o $isAIX = true -o `uname -m` = ppc64 ]; then
     runSA=false
 fi
