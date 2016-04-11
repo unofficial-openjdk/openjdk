@@ -120,12 +120,14 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
      * Returns the flags of a ClassSymbol in terms of javac's flags
      */
     static long getFlags(ClassSymbol clazz) {
-        while (true) {
-            try {
-                return clazz.flags();
-            } catch (CompletionFailure ex) {
-                // quietly ignore completion failures
-            }
+        try {
+            return clazz.flags();
+        } catch (CompletionFailure ex) {
+            /* Quietly ignore completion failures and try again - the type
+             * for which the CompletionFailure was thrown shouldn't be completed
+             * again by the completer that threw the CompletionFailure.
+             */
+            return getFlags(clazz);
         }
     }
 
