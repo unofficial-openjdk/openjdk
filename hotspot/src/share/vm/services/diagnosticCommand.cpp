@@ -356,6 +356,10 @@ JMXStartRemoteDCmd::JMXStartRemoteDCmd(outputStream *output, bool heap_allocated
   ("config.file",
    "set com.sun.management.config.file", "STRING", false),
 
+  _jmxremote_host
+  ("jmxremote.host",
+   "set com.sun.management.jmxremote.host", "STRING", false),
+
   _jmxremote_port
   ("jmxremote.port",
    "set com.sun.management.jmxremote.port", "STRING", false),
@@ -431,6 +435,7 @@ JMXStartRemoteDCmd::JMXStartRemoteDCmd(outputStream *output, bool heap_allocated
 
   {
     _dcmdparser.add_dcmd_option(&_config_file);
+    _dcmdparser.add_dcmd_option(&_jmxremote_host);
     _dcmdparser.add_dcmd_option(&_jmxremote_port);
     _dcmdparser.add_dcmd_option(&_jmxremote_rmi_port);
     _dcmdparser.add_dcmd_option(&_jmxremote_ssl);
@@ -499,6 +504,7 @@ void JMXStartRemoteDCmd::execute(TRAPS) {
     }
 
     PUT_OPTION(_config_file);
+    PUT_OPTION(_jmxremote_host);
     PUT_OPTION(_jmxremote_port);
     PUT_OPTION(_jmxremote_rmi_port);
     PUT_OPTION(_jmxremote_ssl);
