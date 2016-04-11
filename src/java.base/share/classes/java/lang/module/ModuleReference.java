@@ -32,7 +32,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import jdk.internal.module.ModuleHashes;
 import jdk.internal.module.ModuleHashes.HashSupplier;
 
 
@@ -212,7 +211,8 @@ public final class ModuleReference {
     public int hashCode() {
         int hc = hash;
         if (hc == 0) {
-            hc = Objects.hash(descriptor, location, readerSupplier, hasher);
+            hc = Objects.hash(descriptor, location, readerSupplier, hasher,
+                    Boolean.valueOf(patched));
             if (hc != 0) hash = hc;
         }
         return hc;
@@ -247,7 +247,8 @@ public final class ModuleReference {
         return Objects.equals(this.descriptor, that.descriptor)
                 && Objects.equals(this.location, that.location)
                 && Objects.equals(this.readerSupplier, that.readerSupplier)
-                && Objects.equals(this.hasher, that.hasher);
+                && Objects.equals(this.hasher, that.hasher)
+                && this.patched == that.patched;
     }
 
     /**
