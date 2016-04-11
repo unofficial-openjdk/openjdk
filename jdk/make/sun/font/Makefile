@@ -95,9 +95,12 @@ else # PLATFORM unix
 endif # PLATFORM
 
 # Turn off aliasing with GCC for ExtensionSubtables.cpp
+# Turn off strict overflow with GCC for IndicRearrangementProcessor.cpp
 ifeq ($(PLATFORM), linux)
   CXXFLAGS += $(CXXFLAGS_$(@F))
   CXXFLAGS_ExtensionSubtables.o = -fno-strict-aliasing
+  CXXFLAGS_IndicRearrangementProcessor.o := -fno-strict-overflow
+  CXXFLAGS_IndicRearrangementProcessor2.o := -fno-strict-overflow
 endif
 
 #In the non-OpenJDK mode we need to build T2K
