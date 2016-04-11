@@ -33,13 +33,14 @@
  *      jdk.compiler/com.sun.tools.javac.processing
  *      jdk.compiler/com.sun.tools.javac.util
  *      jdk.jdeps/com.sun.tools.javap
- * @build ToolBox ModuleTestBase
+ * @build toolbox.ToolBox toolbox.JarTask toolbox.JavacTask toolbox.JavaTask ModuleTestBase
  * @run main AddLimitMods
  */
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -64,6 +65,11 @@ import com.sun.tools.javac.code.Symtab;
 import com.sun.tools.javac.model.JavacElements;
 import com.sun.tools.javac.processing.JavacProcessingEnvironment;
 import com.sun.tools.javac.util.Context;
+
+import toolbox.JarTask;
+import toolbox.JavacTask;
+import toolbox.JavaTask;
+import toolbox.Task;
 
 public class AddLimitMods extends ModuleTestBase {
 
@@ -96,14 +102,14 @@ public class AddLimitMods extends ModuleTestBase {
 
         Files.createDirectories(modulePath);
 
-        tb.new JavacTask()
+        new JavacTask(tb)
                 .options("-modulesourcepath", moduleSrc.toString())
                 .outdir(modulePath)
                 .files(findJavaFiles(m3))
                 .run()
                 .writeAll();
 
-        tb.new JavacTask()
+        new JavacTask(tb)
                 .options("-modulesourcepath", moduleSrc.toString())
                 .outdir(modulePath)
                 .files(findJavaFiles(m2))
@@ -111,26 +117,26 @@ public class AddLimitMods extends ModuleTestBase {
                 .writeAll();
 
         //real test
-        tb.new JavacTask()
+        new JavacTask(tb)
                 .options("-modulepath", modulePath.toString(),
                          "-XDshouldStopPolicyIfNoError=FLOW",
                          "-limitmods", "java.base")
                 .outdir(modulePath)
                 .files(findJavaFiles(m1))
-                .run(ToolBox.Expect.FAIL)
+                .run(Task.Expect.FAIL)
                 .writeAll();
 
-        tb.new JavacTask()
+        new JavacTask(tb)
                 .options("-modulepath", modulePath.toString(),
                          "-XDshouldStopPolicyIfNoError=FLOW",
                          "-limitmods", "java.base",
                          "-addmods", "m2")
                 .outdir(modulePath)
                 .files(findJavaFiles(m1))
-                .run(ToolBox.Expect.FAIL)
+                .run(Task.Expect.FAIL)
                 .writeAll();
 
-        tb.new JavacTask()
+        new JavacTask(tb)
                 .options("-modulepath", modulePath.toString(),
                          "-XDshouldStopPolicyIfNoError=FLOW",
                          "-limitmods", "java.base",
@@ -140,7 +146,7 @@ public class AddLimitMods extends ModuleTestBase {
                 .run()
                 .writeAll();
 
-        tb.new JavacTask()
+        new JavacTask(tb)
                 .options("-modulepath", modulePath.toString(),
                          "-XDshouldStopPolicyIfNoError=FLOW",
                          "-limitmods", "m2")
@@ -149,16 +155,16 @@ public class AddLimitMods extends ModuleTestBase {
                 .run()
                 .writeAll();
 
-        tb.new JavacTask()
+        new JavacTask(tb)
                 .options("-modulepath", modulePath.toString(),
                          "-XDshouldStopPolicyIfNoError=FLOW",
                          "-limitmods", "m3")
                 .outdir(modulePath)
                 .files(findJavaFiles(m1))
-                .run(ToolBox.Expect.FAIL)
+                .run(Task.Expect.FAIL)
                 .writeAll();
 
-        tb.new JavacTask()
+        new JavacTask(tb)
                 .options("-modulepath", modulePath.toString(),
                          "-XDshouldStopPolicyIfNoError=FLOW",
                          "-limitmods", "m3",
@@ -168,6 +174,55 @@ public class AddLimitMods extends ModuleTestBase {
                 .run()
                 .writeAll();
     }
+
+    @Test
+    void testObservableForUnnamed(Path base) throws Exception {
+        Path src = base.resolve("src");
+
+        tb.writeJavaFiles(src,
+                          "package test;\n" +
+                          "@javax.annotation.Generated(\"test\")\n" +
+                          "public class Test {\n" +
+                          "    com.sun.tools.javac.Main m;\n" +
+                          "}\n");
+
+        Path out = base.resolve("out");
+
+        Files.createDirectories(out);
+
+        for (Entry<String[], String> variant : variants) {
+            System.err.println("running variant: options=" + Arrays.asList(variant.getKey()) + ", expected log: " + variant.getValue());
+
+            List<String> options = new ArrayList<>();
+            options.add("-XDrawDiagnostics");
+            options.addAll(Arrays.asList(variant.getKey()));
+
+            String log = new JavacTask(tb)
+                    .options(options.toArray(new String[0]))
+                    .outdir(out)
+                    .files(findJavaFiles(src))
+                    .run(variant.getValue() == null ? Task.Expect.SUCCESS : Task.Expect.FAIL)
+                    .writeAll()
+                    .getOutput(Task.OutputKind.DIRECT);
+
+            log = log.replace(System.getProperty("line.separator"), "\n");
+
+            if (variant.getValue() != null && !log.equals(variant.getValue())) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    private static final List<Entry<String[], String>> variants = Arrays.asList(
+            new SimpleEntry<String[], String>(new String[] {},
+                                              "Test.java:2:18: compiler.err.doesnt.exist: javax.annotation\n1 error\n"),
+            new SimpleEntry<String[], String>(new String[] {"-addmods", "java.annotations.common"},
+                                              null),
+            new SimpleEntry<String[], String>(new String[] {"-limitmods", "java.xml.ws,jdk.compiler"},
+                                              null),
+            new SimpleEntry<String[], String>(new String[] {"-addmods", "ALL-SYSTEM"},
+                                              null)
+    );
 
     @Test
     void testAllModulePath(Path base) throws Exception {
@@ -185,7 +240,7 @@ public class AddLimitMods extends ModuleTestBase {
 
         Files.createDirectories(modulePath);
 
-        tb.new JavacTask()
+        new JavacTask(tb)
                 .options("-modulesourcepath", moduleSrc.toString())
                 .outdir(modulePath)
                 .files(findJavaFiles(moduleSrc))
@@ -199,14 +254,14 @@ public class AddLimitMods extends ModuleTestBase {
 
         Files.createDirectories(cpOut);
 
-        tb.new JavacTask()
+        new JavacTask(tb)
                 .options("-modulepath", modulePath.toString())
                 .outdir(cpOut)
                 .files(findJavaFiles(cpSrc))
-                .run(ToolBox.Expect.FAIL)
+                .run(Task.Expect.FAIL)
                 .writeAll();
 
-        tb.new JavacTask()
+        new JavacTask(tb)
                 .options("-modulepath", modulePath.toString(),
                          "-addmods", "ALL-MODULE-PATH")
                 .outdir(cpOut)
@@ -219,43 +274,43 @@ public class AddLimitMods extends ModuleTestBase {
                 "- compiler.err.addmods.all.module.path.invalid",
                 "1 error");
 
-        actual = tb.new JavacTask()
+        actual = new JavacTask(tb)
                    .options("-modulesourcepath", moduleSrc.toString(),
                             "-XDrawDiagnostics",
                             "-addmods", "ALL-MODULE-PATH")
                    .outdir(modulePath)
                    .files(findJavaFiles(moduleSrc))
-                   .run(ToolBox.Expect.FAIL)
+                   .run(Task.Expect.FAIL)
                    .writeAll()
-                   .getOutputLines(ToolBox.OutputKind.DIRECT);
+                   .getOutputLines(Task.OutputKind.DIRECT);
 
         if (!Objects.equals(actual, expected)) {
             throw new IllegalStateException("incorrect errors; actual=" + actual + "; expected=" + expected);
         }
 
-        actual = tb.new JavacTask()
+        actual = new JavacTask(tb)
                    .options("-Xmodule:java.base",
                             "-XDrawDiagnostics",
                             "-addmods", "ALL-MODULE-PATH")
                    .outdir(cpOut)
                    .files(findJavaFiles(cpSrc))
-                   .run(ToolBox.Expect.FAIL)
+                   .run(Task.Expect.FAIL)
                    .writeAll()
-                   .getOutputLines(ToolBox.OutputKind.DIRECT);
+                   .getOutputLines(Task.OutputKind.DIRECT);
 
         if (!Objects.equals(actual, expected)) {
             throw new IllegalStateException("incorrect errors; actual=" + actual + "; expected=" + expected);
         }
 
-        actual = tb.new JavacTask(ToolBox.Mode.CMDLINE)
+        actual = new JavacTask(tb, Task.Mode.CMDLINE)
                    .options("-source", "8", "-target", "8",
                             "-XDrawDiagnostics",
                             "-addmods", "ALL-MODULE-PATH")
                    .outdir(cpOut)
                    .files(findJavaFiles(cpSrc))
-                   .run(ToolBox.Expect.FAIL)
+                   .run(Task.Expect.FAIL)
                    .writeAll()
-                   .getOutputLines(ToolBox.OutputKind.DIRECT);
+                   .getOutputLines(Task.OutputKind.DIRECT);
 
         if (!actual.contains("javac: option -addmods not allowed with target 1.8")) {
             throw new IllegalStateException("incorrect errors; actual=" + actual);
@@ -263,14 +318,14 @@ public class AddLimitMods extends ModuleTestBase {
 
         tb.writeJavaFiles(cpSrc, "module m1 {}");
 
-        actual = tb.new JavacTask()
+        actual = new JavacTask(tb)
                    .options("-XDrawDiagnostics",
                             "-addmods", "ALL-MODULE-PATH")
                    .outdir(cpOut)
                    .files(findJavaFiles(cpSrc))
-                   .run(ToolBox.Expect.FAIL)
+                   .run(Task.Expect.FAIL)
                    .writeAll()
-                   .getOutputLines(ToolBox.OutputKind.DIRECT);
+                   .getOutputLines(Task.OutputKind.DIRECT);
 
         if (!Objects.equals(actual, expected)) {
             throw new IllegalStateException("incorrect errors; actual=" + actual + "; expected=" + expected);
@@ -287,12 +342,12 @@ public class AddLimitMods extends ModuleTestBase {
 
         Files.createDirectories(classpathOut);
 
-        tb.new JavacTask()
+        new JavacTask(tb)
                 .outdir(classpathOut)
                 .files(findJavaFiles(classpathSrc))
                 .run()
                 .writeAll()
-                .getOutput(ToolBox.OutputKind.DIRECT);
+                .getOutput(Task.OutputKind.DIRECT);
 
         Path automaticSrc = base.resolve("automatic-src");
         Path automaticOut = base.resolve("automatic-out");
@@ -302,12 +357,12 @@ public class AddLimitMods extends ModuleTestBase {
 
         Files.createDirectories(automaticOut);
 
-        tb.new JavacTask()
+        new JavacTask(tb)
                 .outdir(automaticOut)
                 .files(findJavaFiles(automaticSrc))
                 .run()
                 .writeAll()
-                .getOutput(ToolBox.OutputKind.DIRECT);
+                .getOutput(Task.OutputKind.DIRECT);
 
         Path modulePath = base.resolve("module-path");
 
@@ -315,7 +370,7 @@ public class AddLimitMods extends ModuleTestBase {
 
         Path automaticJar = modulePath.resolve("automatic.jar");
 
-        tb.new JarTask(automaticJar)
+        new JarTask(tb, automaticJar)
           .baseDir(automaticOut)
           .files("automatic/Automatic.class")
           .run();
@@ -327,13 +382,13 @@ public class AddLimitMods extends ModuleTestBase {
                           "module m1 { exports api; }",
                           "package api; public class Api { public void test() { } }");
 
-        tb.new JavacTask()
+        new JavacTask(tb)
                 .options("-modulesourcepath", moduleSrc.toString())
                 .outdir(modulePath)
                 .files(findJavaFiles(moduleSrc))
                 .run()
                 .writeAll()
-                .getOutput(ToolBox.OutputKind.DIRECT);
+                .getOutput(Task.OutputKind.DIRECT);
 
         int index = 0;
 
@@ -369,7 +424,7 @@ public class AddLimitMods extends ModuleTestBase {
 
                 tb.writeJavaFiles(m2Runtime, moduleInfo, testClassNamed.toString());
 
-                tb.new JavacTask()
+                new JavacTask(tb)
                    .options("-modulepath", modulePath.toString())
                    .outdir(out)
                    .files(findJavaFiles(m2Runtime))
@@ -380,7 +435,7 @@ public class AddLimitMods extends ModuleTestBase {
                 String output;
 
                 try {
-                    output = tb.new JavaTask()
+                    output = new JavaTask(tb)
                        .vmOptions(augmentOptions(options,
                                                  Collections.emptyList(),
                                                  "-modulepath", modulePath.toString() + File.pathSeparator + out.getParent().toString(),
@@ -389,10 +444,10 @@ public class AddLimitMods extends ModuleTestBase {
                                                  "-m", "m2/test.Test"))
                        .run()
                        .writeAll()
-                       .getOutput(ToolBox.OutputKind.STDERR);
+                       .getOutput(Task.OutputKind.STDERR);
 
                     success = true;
-                } catch (ToolBox.TaskError err) {
+                } catch (Task.TaskError err) {
                     success = false;
                     output = "";
                 }
@@ -410,7 +465,7 @@ public class AddLimitMods extends ModuleTestBase {
                     "-Aoutput=" + output,
                     "-XDaccessInternalAPI=true"
                 ) : Collections.emptyList();
-                tb.new JavacTask()
+                new JavacTask(tb)
                    .options(augmentOptions(options,
                                            auxOptions,
                                            "-modulepath", modulePath.toString(),
@@ -418,7 +473,7 @@ public class AddLimitMods extends ModuleTestBase {
                                            "-XDshouldStopPolicyIfNoError=FLOW"))
                    .outdir(modulePath)
                    .files(findJavaFiles(m2))
-                   .run(success ? ToolBox.Expect.SUCCESS : ToolBox.Expect.FAIL)
+                   .run(success ? Task.Expect.SUCCESS : Task.Expect.FAIL)
                    .writeAll();
             }
         }
