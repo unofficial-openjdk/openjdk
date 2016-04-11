@@ -157,29 +157,28 @@ public class Ktab {
         boolean argAlreadyAppeared = false;
         for (int i = 0; i < args.length; i++) {
             if (args[i].startsWith("-")) {
-                switch (args[i].toLowerCase(Locale.US)) {
-
+                String argLower = args[i].toLowerCase(Locale.US);
                     // Commands
-                    case "-l":   // list
+                    if ("-l".equals(argLower)) {    // list
                         action = 'l';
-                        break;
-                    case "-a":   // add a new entry to keytab.
+                    }
+                    else if ("-a".equals(argLower)) {    // add a new entry to keytab.
                         action = 'a';
                         if (++i >= args.length || args[i].startsWith("-")) {
                             error("A principal name must be specified after -a");
                         }
                         principal = args[i];
-                        break;
-                    case "-d":   // delete entries
+                    }
+                    else if ("-d".equals(argLower)) {    // delete entries
                         action = 'd';
                         if (++i >= args.length || args[i].startsWith("-")) {
                             error("A principal name must be specified after -d");
                         }
                         principal = args[i];
-                        break;
+                    }
 
                         // Options
-                    case "-e":
+                    else if ("-e".equals(argLower)) {
                         if (action == 'l') {    // list etypes
                             showEType = true;
                         } else if (action == 'd') { // delete etypes
@@ -197,8 +196,8 @@ public class Ktab {
                         } else {
                             error(args[i] + " is not valid after -" + action);
                         }
-                        break;
-                    case "-n":   // kvno for -a
+                    }
+                    else if ("-n".equals(argLower)) {    // kvno for -a
                         if (++i >= args.length || args[i].startsWith("-")) {
                             error("A KVNO must be specified after -n");
                         }
@@ -210,8 +209,8 @@ public class Ktab {
                         } catch (NumberFormatException nfe) {
                             error(args[i] + " is not a valid KVNO");
                         }
-                        break;
-                    case "-k":  // specify keytab to use
+                    }
+                    else if ("-k".equals(argLower)) {    // specify keytab to use
                         if (++i >= args.length || args[i].startsWith("-")) {
                             error("A keytab name must be specified after -k");
                         }
@@ -221,20 +220,19 @@ public class Ktab {
                         } else {
                             name = args[i];
                         }
-                        break;
-                    case "-t":   // list timestamps
+                    }
+                    else if ("-t".equals(argLower)) {    // list timestamps
                         showTime = true;
-                        break;
-                    case "-f":   // force delete, no prompt
+                    }
+                    else if ("-f".equals(argLower)) {    // force delete, no prompt
                         forced = true;
-                        break;
-                    case "-append": // -a, new keys append to file
+                    }
+                    else if ("-append".equals(argLower)) {    // -a, new keys append to file
                         append = true;
-                        break;
-                    default:
+                    }
+                    else {
                         printHelp();
-                        break;
-                }
+                    }
             } else {    // optional standalone arguments
                 if (argAlreadyAppeared) {
                     error("Useless extra argument " + args[i]);
@@ -242,10 +240,10 @@ public class Ktab {
                 if (action == 'a') {
                     password = args[i].toCharArray();
                 } else if (action == 'd') {
-                    switch (args[i]) {
-                        case "all": vDel = -1; break;
-                        case "old": vDel = -2; break;
-                        default: {
+                    String ar = args[i];
+                        if ("all".equals(ar)) { vDel = -1; }
+                        else if ("old".equals(ar)) { vDel = -2; }
+                        else {
                             try {
                                 vDel = Integer.parseInt(args[i]);
                                 if (vDel < 0) {
@@ -255,7 +253,6 @@ public class Ktab {
                                 error(args[i] + " is not a valid KVNO");
                             }
                         }
-                    }
                 } else {
                     error("Useless extra argument " + args[i]);
                 }

@@ -35,6 +35,7 @@ import sun.security.krb5.internal.ccache.CredentialsCache;
 import sun.security.krb5.internal.crypto.EType;
 import java.io.IOException;
 import java.util.Date;
+import java.util.Locale;
 import java.net.InetAddress;
 
 /**
@@ -288,7 +289,7 @@ public class Credentials {
             // The default ticket cache on Windows is not a file.
             String os = java.security.AccessController.doPrivileged(
                         new sun.security.action.GetPropertyAction("os.name"));
-            if (os.toUpperCase().startsWith("WINDOWS")) {
+            if (os.toUpperCase(Locale.ENGLISH).startsWith("WINDOWS")) {
                 Credentials creds = acquireDefaultCreds();
                 if (creds == null) {
                     if (DEBUG) {
