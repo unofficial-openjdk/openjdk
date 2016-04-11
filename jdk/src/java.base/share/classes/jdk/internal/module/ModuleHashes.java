@@ -42,7 +42,15 @@ import java.util.Set;
  * The result of hashing the contents of a number of module artifacts.
  */
 
-public class ModuleHashes {
+public final class ModuleHashes {
+
+    /**
+     * A supplier of an encoded message digest.
+     */
+    public static interface HashSupplier {
+        String generate(String algorithm);
+    }
+
 
     private final String algorithm;
     private final Map<String, String> nameToHash;
@@ -78,13 +86,6 @@ public class ModuleHashes {
      */
     public String hashFor(String dn) {
         return nameToHash.get(dn);
-    }
-
-    /**
-     * A supplier of an encoded message digest.
-     */
-    public static interface HashSupplier {
-        String generate(String algorithm);
     }
 
     /**

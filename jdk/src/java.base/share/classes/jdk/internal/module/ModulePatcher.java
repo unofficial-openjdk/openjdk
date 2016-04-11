@@ -209,10 +209,11 @@ public final class ModulePatcher {
             descriptor = JLMA.newModuleDescriptor(descriptor, packages);
         }
 
-        // return a new module reference
+        // return a module reference to the patched module
         URI location = mref.location().orElse(null);
-        return new ModuleReference(descriptor, location,
-                                   () -> new PatchedModuleReader(paths, mref));
+        return JLMA.newPatchedModule(descriptor,
+                                     location,
+                                     () -> new PatchedModuleReader(paths, mref));
 
     }
 

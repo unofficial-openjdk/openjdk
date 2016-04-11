@@ -45,6 +45,7 @@ import java.util.function.Function;
 
 import jdk.internal.loader.BootLoader;
 import jdk.internal.loader.BuiltinClassLoader;
+import jdk.internal.misc.SharedSecrets;
 import jdk.internal.perf.PerfCounter;
 
 /**
@@ -65,7 +66,7 @@ public final class ModuleBootstrap {
 
     private static final String JAVA_BASE = "java.base";
 
-    private static final String JAVA_SE = "java.se.ee";  // will be java.se
+    private static final String JAVA_SE = "java.se";
 
     // the token for "all unnamed modules"
     private static final String ALL_UNNAMED = "ALL-UNNAMED";
@@ -227,7 +228,7 @@ public final class ModuleBootstrap {
         // If `-addmods ALL-MODULE-PATH` is used, and no initial module is
         // specified, then all observable modules on the application module
         // path will be resolved.
-        if (addAllApplicationModules) {
+        if (addAllApplicationModules && appModulePath != null) {
             assert mainModule == null;
 
             ModuleFinder f = finder;  // observable modules
@@ -241,12 +242,18 @@ public final class ModuleBootstrap {
 
         long t1 = System.nanoTime();
 
-        // run the resolver to create the configuration
+        // determine if post resolution checks are needed
+        boolean needPostResolutionChecks = true;
+        if (base.location().get().getScheme().equals("jrt")
+                && (upgradeModulePath == null)
+                && (appModulePath == null)
+                && (System.getProperty("jdk.launcher.patch.0") == null)) {
+            needPostResolutionChecks = false;
+        }
 
-        Configuration cf = Configuration.empty()
-                .resolveRequiresAndUses(finder,
-                                        ModuleFinder.empty(),
-                                        roots);
+        // run the resolver to create the configuration
+        Configuration cf = SharedSecrets.getJavaLangModuleAccess()
+                .resolveRequiresAndUses(finder, roots, needPostResolutionChecks);
 
         // time to create configuration
         PerfCounters.resolveTime.addElapsedTimeFrom(t1);
@@ -256,7 +263,7 @@ public final class ModuleBootstrap {
 
         // check that all modules to be mapped to the boot loader will be
         // loaded from the runtime image
-        if (upgradeModulePath != null || appModulePath != null) {
+        if (needPostResolutionChecks) {
             for (ResolvedModule resolvedModule : cf.modules()) {
                 ModuleReference mref = resolvedModule.reference();
                 String name = mref.descriptor().name();

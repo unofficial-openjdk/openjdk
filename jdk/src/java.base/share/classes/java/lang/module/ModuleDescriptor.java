@@ -28,8 +28,10 @@ package java.lang.module;
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -880,7 +882,8 @@ public class ModuleDescriptor
                      String osArch,
                      String osVersion,
                      Set<String> conceals,
-                     Set<String> packages) {
+                     Set<String> packages,
+                     ModuleHashes hashes) {
         this.name = name;
         this.automatic = automatic;
         this.synthetic = synthetic;
@@ -896,7 +899,7 @@ public class ModuleDescriptor
         this.osName = osName;
         this.osArch = osArch;
         this.osVersion = osVersion;
-        this.hashes = null;
+        this.hashes = hashes;
     }
 
     /**
@@ -1927,11 +1930,12 @@ public class ModuleDescriptor
 
     static {
         /**
-         * Setup the shared secret to allow code in other packages create
-         * ModuleDescriptor and associated objects directly.
+         * Setup the shared secret to allow code in other packages access
+         * private package methods in java.lang.module.
          */
         jdk.internal.misc.SharedSecrets
             .setJavaLangModuleAccess(new jdk.internal.misc.JavaLangModuleAccess() {
+
                 @Override
                 public Requires newRequires(Set<Requires.Modifier> ms, String mn) {
                     return new Requires(ms, mn, false);
@@ -1976,7 +1980,8 @@ public class ModuleDescriptor
                                                             String osArch,
                                                             String osVersion,
                                                             Set<String> conceals,
-                                                            Set<String> packages) {
+                                                            Set<String> packages,
+                                                            ModuleHashes hashes) {
                     return new ModuleDescriptor(name,
                                                 automatic,
                                                 synthetic,
@@ -1990,7 +1995,28 @@ public class ModuleDescriptor
                                                 osArch,
                                                 osVersion,
                                                 conceals,
-                                                packages);
+                                                packages,
+                                                hashes);
+                }
+
+                @Override
+                public Configuration resolveRequiresAndUses(ModuleFinder finder,
+                                                            Collection<String> roots,
+                                                            boolean check)
+                {
+                    return Configuration.resolveRequiresAndUses(finder, roots, check);
+                }
+
+                @Override
+                public ModuleReference newPatchedModule(ModuleDescriptor descriptor,
+                                                        URI location,
+                                                        Supplier<ModuleReader> s) {
+                    return new ModuleReference(descriptor, location, s, true, null);
+                }
+
+                @Override
+                public Optional<ModuleHashes> hashes(ModuleDescriptor descriptor) {
+                    return descriptor.hashes();
                 }
             });
     }

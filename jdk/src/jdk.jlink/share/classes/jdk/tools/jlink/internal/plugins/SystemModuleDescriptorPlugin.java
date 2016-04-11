@@ -36,10 +36,14 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jdk.internal.misc.JavaLangModuleAccess;
+import jdk.internal.misc.SharedSecrets;
 import jdk.internal.module.Checks;
+import jdk.internal.module.ModuleHashes;
 import jdk.internal.module.ModuleInfoExtender;
 import jdk.internal.module.SystemModules;
 import jdk.internal.org.objectweb.asm.ClassWriter;
@@ -50,6 +54,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
 import jdk.tools.jlink.plugin.PluginException;
 import jdk.tools.jlink.plugin.Pool;
 import jdk.tools.jlink.plugin.TransformerPlugin;
+import jdk.tools.jlink.internal.plugins.SystemModuleDescriptorPlugin.Builder.*;
 
 /**
  * Jlink plugin to reconstitute module descriptors for installed modules.
@@ -63,6 +68,8 @@ import jdk.tools.jlink.plugin.TransformerPlugin;
  * @see SystemModules
  */
 public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
+    private static final JavaLangModuleAccess JLMA = SharedSecrets.getJavaLangModuleAccess();
+
     // TODO: packager has the dependency on the plugin name
     // Keep it as "--installed-modules" until packager removes such
     // dependency (should not need to specify this plugin since it
@@ -118,7 +125,8 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
             Pool.ModuleData data = module.get("module-info.class");
             if (data == null) {
                 // automatic module not supported yet
-                throw new PluginException("module-info.class not found for " + module.getName() + " module");
+                throw new PluginException("module-info.class not found for " +
+                                          module.getName() + " module");
             }
             assert module.getName().equals(data.getModule());
             try {
@@ -126,15 +134,20 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
                 ModuleDescriptor md = ModuleDescriptor.read(bain);
                 validateNames(md);
 
-                Builder.ModuleDescriptorBuilder mbuilder = builder.module(md, module.getAllPackages());
+                ModuleDescriptorBuilder mbuilder = builder.module(md, module.getAllPackages());
+                int packages = md.exports().size() + md.conceals().size();
                 if (md.conceals().isEmpty() &&
-                        (md.exports().size() + md.conceals().size()) != module.getAllPackages().size()) {
+                        packages != module.getAllPackages().size()) {
                     // add ConcealedPackages attribute if not exist
                     bain.reset();
-                    ModuleInfoRewriter minfoWriter = new ModuleInfoRewriter(bain, mbuilder.conceals());
+                    ModuleInfoRewriter minfoWriter =
+                        new ModuleInfoRewriter(bain, mbuilder.conceals());
                     // replace with the overridden version
-                    data = new Pool.ModuleData(data.getModule(), data.getPath(), data.getType(),
-                                               minfoWriter.stream(), minfoWriter.size());
+                    data = new Pool.ModuleData(data.getModule(),
+                                               data.getPath(),
+                                               data.getType(),
+                                               minfoWriter.stream(),
+                                               minfoWriter.size());
                 }
                 out.add(data);
             } catch (IOException e) {
@@ -151,8 +164,12 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
 
             if (builder.isOverriddenClass(data.getPath())) {
                 byte[] bytes = cwriter.toByteArray();
-                Pool.ModuleData ndata = new Pool.ModuleData(data.getModule(), data.getPath(), data.getType(),
-                                                            new ByteArrayInputStream(bytes), bytes.length);
+                Pool.ModuleData ndata =
+                    new Pool.ModuleData(data.getModule(),
+                                        data.getPath(),
+                                        data.getType(),
+                                        new ByteArrayInputStream(bytes),
+                                        bytes.length);
                 out.add(ndata);
             } else {
                 out.add(data);
@@ -230,6 +247,7 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
 
         // static variables in SystemModules class
         private static final String MODULE_NAMES = "MODULE_NAMES";
+        private static final String MODULES_TO_HASH = "MODULES_TO_HASH";
         private static final String PACKAGE_COUNT = "PACKAGES_IN_BOOT_LAYER";
 
         private static final int BUILDER_VAR    = 0;
@@ -245,6 +263,9 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
 
         // list of all ModuleDescriptorBuilders, invoked in turn when building.
         private final List<ModuleDescriptorBuilder> builders = new ArrayList<>();
+
+        // module name to hash
+        private final Map<String, String> modulesToHash = new HashMap<>();
 
         // map Set<String> to a specialized builder to allow them to be
         // deduplicated as they are requested
@@ -268,6 +289,11 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
                     "[Ljava/lang/String;", null, null)
                     .visitEnd();
 
+            // public static String[] MODULES_TO_HASH = new String[] {....};
+            cw.visitField(ACC_PUBLIC+ACC_FINAL+ACC_STATIC, MODULES_TO_HASH,
+                "[Ljava/lang/String;", null, null)
+                .visitEnd();
+
             // public static int PACKAGES_IN_BOOT_LAYER;
             cw.visitField(ACC_PUBLIC+ACC_FINAL+ACC_STATIC, PACKAGE_COUNT,
                     "I", null, numPackages)
@@ -283,13 +309,33 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
 
             int index = 0;
             for (ModuleDescriptorBuilder builder : builders) {
-                mv.visitInsn(DUP);       // arrayref
+                mv.visitInsn(DUP);                  // arrayref
                 pushInt(index++);
-                mv.visitLdcInsn(builder.md.name());      // value
+                mv.visitLdcInsn(builder.md.name()); // value
                 mv.visitInsn(AASTORE);
             }
 
             mv.visitFieldInsn(PUTSTATIC, CLASSNAME, MODULE_NAMES,
+                    "[Ljava/lang/String;");
+
+            // create the MODULES_TO_HASH array
+            pushInt(numModules);
+            mv.visitTypeInsn(ANEWARRAY, "java/lang/String");
+
+            index = 0;
+            for (ModuleDescriptorBuilder builder : builders) {
+                String mn = builder.md.name();
+                String recordedHash = modulesToHash.get(mn);
+                if (recordedHash != null) {
+                    mv.visitInsn(DUP);              // arrayref
+                    pushInt(index);
+                    mv.visitLdcInsn(recordedHash);  // value
+                    mv.visitInsn(AASTORE);
+                }
+                index++;
+            }
+
+            mv.visitFieldInsn(PUTSTATIC, CLASSNAME, MODULES_TO_HASH,
                     "[Ljava/lang/String;");
 
             mv.visitInsn(RETURN);
@@ -324,6 +370,13 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
             // uses
             stringSets.computeIfAbsent(md.uses(), s -> new StringSetBuilder(s))
                       .increment();
+
+            // hashes
+            Optional<ModuleHashes> hashes = JLMA.hashes(md);
+            if (hashes.isPresent()) {
+                hashes.get().names().stream()
+                    .forEach(mn -> modulesToHash.put(mn, hashes.get().hashFor(mn)));
+            }
             return builder;
         }
 
@@ -492,6 +545,14 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
                     mainClass(md.mainClass().get());
                 }
 
+                Optional<ModuleHashes> hashes = JLMA.hashes(md);
+                if (hashes.isPresent()) {
+                    ModuleHashes moduleHashes = hashes.get();
+                    algorithm(moduleHashes.algorithm());
+                    for (String mn : moduleHashes.names()) {
+                        moduleHash(mn, moduleHashes.hashFor(mn));
+                    }
+                }
                 putModuleDescriptor();
             }
 
@@ -652,6 +713,22 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
                 mv.visitInsn(POP);
             }
 
+            void algorithm(String alg) {
+                mv.visitVarInsn(ALOAD, BUILDER_VAR);
+                mv.visitLdcInsn(alg);
+                mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
+                    "algorithm", STRING_SIG, false);
+                mv.visitInsn(POP);
+            }
+
+            void moduleHash(String name, String hashString) {
+                mv.visitVarInsn(ALOAD, BUILDER_VAR);
+                mv.visitLdcInsn(name);
+                mv.visitLdcInsn(hashString);
+                mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
+                    "moduleHash", STRING_STRING_SIG, false);
+                mv.visitInsn(POP);
+            }
         }
 
         /*

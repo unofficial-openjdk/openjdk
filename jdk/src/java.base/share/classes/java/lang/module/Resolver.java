@@ -264,22 +264,26 @@ final class Resolver {
      * Execute post-resolution checks and returns the module graph of resolved
      * modules as {@code Map}. The resolved modules will be in the given
      * configuration.
+     *
+     * @param check {@true} to execute the post resolution checks
      */
-    Map<ResolvedModule, Set<ResolvedModule>> finish(Configuration cf) {
-
-        detectCycles();
-
-        checkPlatformConstraints();
-
-        checkHashes();
+    Map<ResolvedModule, Set<ResolvedModule>> finish(Configuration cf,
+                                                    boolean check)
+    {
+        if (check) {
+            detectCycles();
+            checkPlatformConstraints();
+            checkHashes();
+        }
 
         Map<ResolvedModule, Set<ResolvedModule>> graph = makeGraph(cf);
 
-        checkExportSuppliers(graph);
+        if (check) {
+            checkExportSuppliers(graph);
+        }
 
         return graph;
     }
-
 
     /**
      * Checks the given module graph for cycles.
@@ -420,7 +424,6 @@ final class Resolver {
 
     }
 
-
     /**
      * Checks the hashes in the module descriptor to ensure that they match
      * any recorded hashes.
@@ -443,14 +446,17 @@ final class Resolver {
                             .map(ResolvedModule::reference)
                             .orElse(null);
                 }
-                if (other != null) {
+
+                // skip checking the hash if the module has been patched
+                if (other != null && !other.isPatched()) {
                     String recordedHash = hashes.hashFor(dn);
                     String actualHash = other.computeHash(algorithm);
                     if (actualHash == null)
                         fail("Unable to compute the hash of module %s", dn);
                     if (!recordedHash.equals(actualHash)) {
-                        fail("Hash of %s (%s) differs to expected hash (%s)",
-                                dn, actualHash, recordedHash);
+                        fail("Hash of %s (%s) differs to expected hash (%s)" +
+                             " recorded in %s", dn, actualHash, recordedHash,
+                             descriptor.name());
                     }
                 }
             }
@@ -656,7 +662,7 @@ final class Resolver {
                     // source is exported to descriptor2
                     String source = export.source();
                     ModuleDescriptor other
-                            = packageToExporter.put(source, descriptor2);
+                        = packageToExporter.put(source, descriptor2);
 
                     if (other != null && other != descriptor2) {
                         // package might be local to descriptor1
@@ -679,7 +685,6 @@ final class Resolver {
                     }
                 }
             }
-
 
             // uses/provides checks not applicable to automatic modules
             if (!descriptor1.isAutomatic()) {
