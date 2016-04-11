@@ -45,7 +45,9 @@ set +e
 failed=0
 
 # Skip SA options for now, see 7175133
-runSA=false
+if [ $isMacos = true -o $isAIX = true -o `uname -m` = ppc64 ]; then
+    runSA=false
+fi
 
 if [ $isLinux = true ]; then
     # Some Linux systems disable non-child ptrace (see 7050524)

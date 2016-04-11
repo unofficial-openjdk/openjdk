@@ -86,6 +86,8 @@ public class TestHelper {
             System.getProperty("os.name", "unknown").startsWith("SunOS");
     static final boolean isLinux =
             System.getProperty("os.name", "unknown").startsWith("Linux");
+    static final boolean isAIX =
+            System.getProperty("os.name", "unknown").startsWith("AIX");
     static final boolean isDualMode = isSolaris;
     static final boolean isSparc = System.getProperty("os.arch").startsWith("sparc");
 

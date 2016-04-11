@@ -63,7 +63,9 @@ import java.util.Map;
 public class ExecutionEnvironment {
     static final String LD_LIBRARY_PATH    = TestHelper.isMacOSX
             ? "DYLD_LIBRARY_PATH"
-            : "LD_LIBRARY_PATH";
+            : TestHelper.isAIX
+                    ? "LIBPATH"
+                    : "LD_LIBRARY_PATH";
     static final String LD_LIBRARY_PATH_32 = LD_LIBRARY_PATH + "_32";
     static final String LD_LIBRARY_PATH_64 = LD_LIBRARY_PATH + "_64";
 
@@ -184,7 +186,7 @@ public class ExecutionEnvironment {
 
         Map<String, String> env = new HashMap<String, String>();
 
-        if (TestHelper.isLinux || TestHelper.isMacOSX) {
+        if (TestHelper.isLinux || TestHelper.isMacOSX || TestHelper.isAIX) {
             for (String x : LD_PATH_STRINGS) {
                 String pairs[] = x.split("=");
                 env.put(pairs[0], pairs[1]);

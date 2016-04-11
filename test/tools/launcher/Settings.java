@@ -73,16 +73,20 @@ public class Settings {
     }
 
     static void runTestOptionDefault() throws IOException {
+        String stackSize = "256"; // in kb
+        if (getArch().equals("ppc64")) {
+            stackSize = "800";
+        }
         TestHelper.TestResult tr = null;
         tr = TestHelper.doExec(TestHelper.javaCmd, "-Xms64m", "-Xmx512m",
-                "-Xss256k", "-XshowSettings", "-jar", testJar.getAbsolutePath());
+                "-Xss" + stackSize + "k", "-XshowSettings", "-jar", testJar.getAbsolutePath());
         containsAllOptions(tr);
         if (!tr.isOK()) {
             System.out.println(tr.status);
             throw new RuntimeException("test fails");
         }
         tr = TestHelper.doExec(TestHelper.javaCmd, "-Xms65536k", "-Xmx712m",
-                "-Xss256000", "-XshowSettings", "-jar", testJar.getAbsolutePath());
+                "-Xss" + stackSize + "000", "-XshowSettings", "-jar", testJar.getAbsolutePath());
         containsAllOptions(tr);
         if (!tr.isOK()) {
             System.out.println(tr.status);

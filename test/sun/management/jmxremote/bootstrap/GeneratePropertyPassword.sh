@@ -35,7 +35,7 @@ OS=`uname -s`
 UMASK=`umask`
 
 case $OS in
-SunOS | Linux | Darwin)
+SunOS | Linux | Darwin | AIX )
     PATHSEP=":"
     FILESEP="/"
     DFILESEP=$FILESEP

@@ -43,11 +43,11 @@
 #
 # List items  are testnames followed by labels, all MUST BE commented
 #   as to why they are here and use a label:
-#     generic-all       Problems on all platforms
-#     generic-ARCH      Where ARCH is one of: sparc, sparcv9, x64, i586, etc.
-#     OSNAME-all        Where OSNAME is one of: solaris, linux, windows
-#     OSNAME-ARCH       Specific on to one OSNAME and ARCH, e.g. solaris-x64
-#     OSNAME-REV        Specific on to one OSNAME and REV, e.g. solaris-5.8
+#     generic-all   Problems on all platforms
+#     generic-ARCH  Where ARCH is one of: sparc, sparcv9, x64, i586, etc.
+#     OSNAME-all    Where OSNAME is one of: solaris, linux, windows, macosx, aix
+#     OSNAME-ARCH   Specific on to one OSNAME and ARCH, e.g. solaris-amd64
+#     OSNAME-REV    Specific on to one OSNAME and REV, e.g. solaris-5.8
 #
 # More than one label is allowed but must be on the same line.
 #
@@ -220,6 +220,11 @@ javax/management/eventService/CustomForwarderTest.java          windows-all
 
 # Windows i586 failure, callback did not complete
 javax/management/eventService/LeaseManagerDeadlockTest.java     windows-all
+
+# 8030957
+com/sun/management/OperatingSystemMXBean/GetProcessCpuLoad.java aix-all
+com/sun/management/OperatingSystemMXBean/GetSystemCpuLoad.java  aix-all
+javax/management/MBeanServer/OldMBeanServerTest.java            aix-all
 
 ############################################################################
 
