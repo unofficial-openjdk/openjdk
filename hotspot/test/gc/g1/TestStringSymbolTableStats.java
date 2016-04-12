@@ -27,7 +27,7 @@
  * @summary Ensure that the G1TraceStringSymbolTableScrubbing prints the expected message.
  * @key gc
  * @library /testlibrary
- * @modules java.base/sun.misc
+ * @modules java.base/jdk.internal.misc
  *          java.management
  */
 
@@ -39,7 +39,7 @@ public class TestStringSymbolTableStats {
 
     ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-XX:+UseG1GC",
                                                               "-XX:+UnlockExperimentalVMOptions",
-                                                              "-Xlog:gc+stringdedup=trace",
+                                                              "-Xlog:gc+stringtable=trace",
                                                               SystemGCTest.class.getName());
 
     OutputAnalyzer output = new OutputAnalyzer(pb.start());

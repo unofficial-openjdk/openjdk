@@ -26,7 +26,7 @@
  * @bug 8141211 8147477
  * @summary exceptions=info output should have an exception message for interpreter methods
  * @library /testlibrary
- * @modules java.base/sun.misc
+ * @modules java.base/jdk.internal.misc
  *          java.management
  * @build jdk.test.lib.OutputAnalyzer jdk.test.lib.ProcessTools
  * @run driver ExceptionsTest
@@ -45,7 +45,7 @@ public class ExceptionsTest {
 
     static void analyzeOutputOn(ProcessBuilder pb) throws Exception {
         OutputAnalyzer output = new OutputAnalyzer(pb.start());
-        output.shouldContain("<a 'java/lang/RuntimeException': Test exception 1 for logging>");
+        output.shouldContain("<a 'java/lang/RuntimeException'").shouldContain(": Test exception 1 for logging>");
         output.shouldContain(" thrown in interpreter method ");
         output.shouldHaveExitValue(0);
     }

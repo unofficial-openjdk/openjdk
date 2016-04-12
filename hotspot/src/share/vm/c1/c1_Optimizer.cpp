@@ -28,6 +28,7 @@
 #include "c1/c1_ValueMap.hpp"
 #include "c1/c1_ValueSet.hpp"
 #include "c1/c1_ValueStack.hpp"
+#include "memory/resourceArea.hpp"
 #include "utilities/bitMap.inline.hpp"
 #include "compiler/compileLog.hpp"
 
