@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1639,8 +1639,19 @@ run:
           OrderAccess::release_store(&BYTE_MAP_BASE[(uintptr_t)elem_loc >> CardTableModRefBS::card_shift], 0);
           UPDATE_PC_AND_TOS_AND_CONTINUE(1, -3);
       }
-      CASE(_bastore):
-          ARRAY_STOREFROM32(T_BYTE, jbyte,  "%d",   STACK_INT, 0);
+      CASE(_bastore): {
+          ARRAY_INTRO(-3);
+          int item = STACK_INT(-1);
+          // if it is a T_BOOLEAN array, mask the stored value to 0/1
+          if (arrObj->klass() == Universe::boolArrayKlassObj()) {
+            item &= 1;
+          } else {
+            assert(arrObj->klass() == Universe::byteArrayKlassObj(),
+                   "should be byte array otherwise");
+          }
+          ((typeArrayOop)arrObj)->byte_at_put(index, item);
+          UPDATE_PC_AND_TOS_AND_CONTINUE(1, -3);
+      }
       CASE(_castore):
           ARRAY_STOREFROM32(T_CHAR, jchar,  "%d",   STACK_INT, 0);
       CASE(_sastore):
@@ -1791,7 +1802,7 @@ run:
             } else if (tos_type == ltos) {
               SET_STACK_LONG(obj->long_field_acquire(field_offset), 0);
               MORE_STACK(1);
-            } else if (tos_type == btos) {
+            } else if (tos_type == btos || tos_type == ztos) {
               SET_STACK_INT(obj->byte_field_acquire(field_offset), -1);
             } else if (tos_type == ctos) {
               SET_STACK_INT(obj->char_field_acquire(field_offset), -1);
@@ -1812,7 +1823,7 @@ run:
             } else if (tos_type == ltos) {
               SET_STACK_LONG(obj->long_field(field_offset), 0);
               MORE_STACK(1);
-            } else if (tos_type == btos) {
+            } else if (tos_type == btos || tos_type == ztos) {
               SET_STACK_INT(obj->byte_field(field_offset), -1);
             } else if (tos_type == ctos) {
               SET_STACK_INT(obj->char_field(field_offset), -1);
@@ -1901,6 +1912,9 @@ run:
               OrderAccess::release_store(&BYTE_MAP_BASE[(uintptr_t)obj >> CardTableModRefBS::card_shift], 0);
             } else if (tos_type == btos) {
               obj->release_byte_field_put(field_offset, STACK_INT(-1));
+            } else if (tos_type == ztos) {
+              int bool_field = STACK_INT(-1);  // only store LSB
+              obj->release_byte_field_put(field_offset, (bool_field & 1));
             } else if (tos_type == ltos) {
               obj->release_long_field_put(field_offset, STACK_LONG(-1));
             } else if (tos_type == ctos) {
@@ -1922,6 +1936,9 @@ run:
               OrderAccess::release_store(&BYTE_MAP_BASE[(uintptr_t)obj >> CardTableModRefBS::card_shift], 0);
             } else if (tos_type == btos) {
               obj->byte_field_put(field_offset, STACK_INT(-1));
+            } else if (tos_type == ztos) {
+              int bool_field = STACK_INT(-1);  // only store LSB
+              obj->byte_field_put(field_offset, (bool_field & 1));
             } else if (tos_type == ltos) {
               obj->long_field_put(field_offset, STACK_LONG(-1));
             } else if (tos_type == ctos) {
