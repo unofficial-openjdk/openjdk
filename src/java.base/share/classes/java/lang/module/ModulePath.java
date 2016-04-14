@@ -196,9 +196,7 @@ class ModulePath implements ConfigurableModuleFinder {
                 String name = mref.descriptor().name();
                 return Collections.singletonMap(name, mref);
             } else {
-                // if we get here then it must be a directory containing a
-                // a module-info.class but it could not be accessed. We
-                // ignore this module for now.
+                // skipped
                 return Collections.emptyMap();
             }
 
@@ -254,10 +252,9 @@ class ModulePath implements ConfigurableModuleFinder {
 
     /**
      * Locates a packaged or exploded module, returning a {@code ModuleReference}
-     * to the module.
-     *
-     * Returns {@code null} if the path is to a directory that does not contain a
-     * module-info.class.
+     * to the module. Returns {@code null} if the entry is skipped because it is
+     * to a directory that does not contain a module-info.class or it's a hidden
+     * file.
      *
      * @throws IOException if an I/O error occurs
      * @throws FindException if the file is not recognized as a module or an
@@ -281,7 +278,12 @@ class ModulePath implements ConfigurableModuleFinder {
                 }
             }
 
-            throw new FindException("Unrecognized module: " + entry);
+            // skip hidden files
+            if (entry.toString().startsWith(".") || Files.isHidden(entry)) {
+                return null;
+            } else {
+                throw new FindException("Unrecognized module: " + entry);
+            }
 
         } catch (InvalidModuleDescriptorException e) {
             throw new FindException("Error reading module: " + entry, e);
@@ -497,7 +499,6 @@ class ModulePath implements ConfigurableModuleFinder {
      */
     private ModuleReference readJar(Path file) throws IOException {
         try (JarFile jf = new JarFile(file.toString())) {
-
             ModuleDescriptor md;
             JarEntry entry = jf.getJarEntry(MODULE_INFO);
             if (entry == null) {
