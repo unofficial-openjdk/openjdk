@@ -91,6 +91,7 @@ intptr_t narrow(BasicType type, intptr_t result) {
     case T_SHORT:
       return (intptr_t)(jshort)result;
     case T_OBJECT:  // nothing to do fall through
+    case T_ARRAY:
     case T_LONG:
     case T_INT:
     case T_FLOAT:
@@ -217,9 +218,16 @@ void CppInterpreter::main_loop(int recurse, TRAPS) {
   // Push our result
   for (int i = 0; i < result_slots; i++) {
     // Adjust result to smaller
-    intptr_t res = result[-i];
+    union {
+      intptr_t res;
+      jint res_jint;
+    };
+    res = result[-i];
     if (result_slots == 1) {
-      res = narrow(result_type_of(method), res);
+      BasicType t = result_type_of(method);
+      if (is_subword_type(t)) {
+        res_jint = (jint)narrow(t, res_jint);
+      }
     }
     stack->push(res);
   }
@@ -788,22 +796,10 @@ int AbstractInterpreter::BasicType_as_index(BasicType type) {
 }
 
 BasicType CppInterpreter::result_type_of(methodOop method) {
-  BasicType t;
-  switch (method->result_index()) {
-    case 0 : t = T_BOOLEAN; break;
-    case 1 : t = T_CHAR;    break;
-    case 2 : t = T_BYTE;    break;
-    case 3 : t = T_SHORT;   break;
-    case 4 : t = T_INT;     break;
-    case 5 : t = T_LONG;    break;
-    case 6 : t = T_VOID;    break;
-    case 7 : t = T_FLOAT;   break;
-    case 8 : t = T_DOUBLE;  break;
-    case 9 : t = T_OBJECT;  break;
-    default: ShouldNotReachHere();
-  }
-  assert(AbstractInterpreter::BasicType_as_index(t) == method->result_index(),
-         "out of step with AbstractInterpreter::BasicType_as_index");
+  // Get method->_constMethod->_result_type
+  u1 *p = ((unsigned char *)method->constMethod()
+           + in_bytes(constMethodOopDesc::result_type_offset()));
+  BasicType t = (BasicType)*p;
   return t;
 }
 
