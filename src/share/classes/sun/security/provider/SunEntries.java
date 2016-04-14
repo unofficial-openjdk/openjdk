@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,6 +43,14 @@ import java.security.*;
  *   identifier strings "OID.1.3.14.3.2.13", "OID.1.3.14.3.2.27" and
  *   "OID.1.2.840.10040.4.3".
  *
+ * - SHA-2 is a set of message digest schemes described in FIPS 180-2.
+ *   SHA-2 family of hash functions includes SHA-224, SHA-256, SHA-384,
+ *   and SHA-512.
+ *
+ * - SHA-224withDSA/SHA-256withDSA are the signature schemes
+ *   described in FIPS 186-3. The associated object identifiers are
+ *   "OID.2.16.840.1.101.3.4.3.1", and "OID.2.16.840.1.101.3.4.3.2".
+
  * - DSA is the key generation scheme as described in FIPS 186.
  *   Aliases for DSA include the OID strings "OID.1.3.14.3.2.12"
  *   and "OID.1.2.840.10040.4.1".
@@ -102,11 +110,15 @@ final class SunEntries {
         map.put("Signature.SHA1withDSA", "sun.security.provider.DSA$SHA1withDSA");
         map.put("Signature.NONEwithDSA", "sun.security.provider.DSA$RawDSA");
         map.put("Alg.Alias.Signature.RawDSA", "NONEwithDSA");
+        map.put("Signature.SHA224withDSA", "sun.security.provider.DSA$SHA224withDSA");
+        map.put("Signature.SHA256withDSA", "sun.security.provider.DSA$SHA256withDSA");
 
         String dsaKeyClasses = "java.security.interfaces.DSAPublicKey" +
                 "|java.security.interfaces.DSAPrivateKey";
         map.put("Signature.SHA1withDSA SupportedKeyClasses", dsaKeyClasses);
         map.put("Signature.NONEwithDSA SupportedKeyClasses", dsaKeyClasses);
+        map.put("Signature.SHA224withDSA SupportedKeyClasses", dsaKeyClasses);
+        map.put("Signature.SHA256withDSA SupportedKeyClasses", dsaKeyClasses);
 
         map.put("Alg.Alias.Signature.DSA", "SHA1withDSA");
         map.put("Alg.Alias.Signature.DSS", "SHA1withDSA");
@@ -120,6 +132,10 @@ final class SunEntries {
         map.put("Alg.Alias.Signature.1.2.840.10040.4.3", "SHA1withDSA");
         map.put("Alg.Alias.Signature.1.3.14.3.2.13", "SHA1withDSA");
         map.put("Alg.Alias.Signature.1.3.14.3.2.27", "SHA1withDSA");
+        map.put("Alg.Alias.Signature.OID.2.16.840.1.101.3.4.3.1", "SHA224withDSA");
+        map.put("Alg.Alias.Signature.2.16.840.1.101.3.4.3.1", "SHA224withDSA");
+        map.put("Alg.Alias.Signature.OID.2.16.840.1.101.3.4.3.2", "SHA256withDSA");
+        map.put("Alg.Alias.Signature.2.16.840.1.101.3.4.3.2", "SHA256withDSA");
 
         /*
          *  Key Pair Generator engines
@@ -139,10 +155,22 @@ final class SunEntries {
 
         map.put("Alg.Alias.MessageDigest.SHA-1", "SHA");
         map.put("Alg.Alias.MessageDigest.SHA1", "SHA");
+        map.put("Alg.Alias.MessageDigest.1.3.14.3.2.26", "SHA");
+        map.put("Alg.Alias.MessageDigest.OID.1.3.14.3.2.26", "SHA");
 
-        map.put("MessageDigest.SHA-256", "sun.security.provider.SHA2");
+        map.put("MessageDigest.SHA-224", "sun.security.provider.SHA2$SHA224");
+        map.put("Alg.Alias.MessageDigest.2.16.840.1.101.3.4.2.4", "SHA-224");
+        map.put("Alg.Alias.MessageDigest.OID.2.16.840.1.101.3.4.2.4", "SHA-224");
+
+        map.put("MessageDigest.SHA-256", "sun.security.provider.SHA2$SHA256");
+        map.put("Alg.Alias.MessageDigest.2.16.840.1.101.3.4.2.1", "SHA-256");
+        map.put("Alg.Alias.MessageDigest.OID.2.16.840.1.101.3.4.2.1", "SHA-256");
         map.put("MessageDigest.SHA-384", "sun.security.provider.SHA5$SHA384");
+        map.put("Alg.Alias.MessageDigest.2.16.840.1.101.3.4.2.2", "SHA-384");
+        map.put("Alg.Alias.MessageDigest.OID.2.16.840.1.101.3.4.2.2", "SHA-384");
         map.put("MessageDigest.SHA-512", "sun.security.provider.SHA5$SHA512");
+        map.put("Alg.Alias.MessageDigest.2.16.840.1.101.3.4.2.3", "SHA-512");
+        map.put("Alg.Alias.MessageDigest.OID.2.16.840.1.101.3.4.2.3", "SHA-512");
 
         /*
          * Algorithm Parameter Generator engines
@@ -155,15 +183,17 @@ final class SunEntries {
          */
         map.put("AlgorithmParameters.DSA",
             "sun.security.provider.DSAParameters");
-        map.put("Alg.Alias.AlgorithmParameters.1.3.14.3.2.12", "DSA");
+        map.put("Alg.Alias.AlgorithmParameters.OID.1.2.840.10040.4.1", "DSA");
         map.put("Alg.Alias.AlgorithmParameters.1.2.840.10040.4.1", "DSA");
+        map.put("Alg.Alias.AlgorithmParameters.1.3.14.3.2.12", "DSA");
 
         /*
          * Key factories
          */
         map.put("KeyFactory.DSA", "sun.security.provider.DSAKeyFactory");
-        map.put("Alg.Alias.KeyFactory.1.3.14.3.2.12", "DSA");
+        map.put("Alg.Alias.KeyFactory.OID.1.2.840.10040.4.1", "DSA");
         map.put("Alg.Alias.KeyFactory.1.2.840.10040.4.1", "DSA");
+        map.put("Alg.Alias.KeyFactory.1.3.14.3.2.12", "DSA");
 
         /*
          * Certificates
@@ -220,9 +250,13 @@ final class SunEntries {
         /*
          * KeySize
          */
+        map.put("Signature.NONEwithDSA KeySize", "1024");
         map.put("Signature.SHA1withDSA KeySize", "1024");
-        map.put("KeyPairGenerator.DSA KeySize", "1024");
-        map.put("AlgorithmParameterGenerator.DSA KeySize", "1024");
+        map.put("Signature.SHA224withDSA KeySize", "2048");
+        map.put("Signature.SHA256withDSA KeySize", "2048");
+
+        map.put("KeyPairGenerator.DSA KeySize", "2048");
+        map.put("AlgorithmParameterGenerator.DSA KeySize", "2048");
 
         /*
          * Implementation type: software or hardware
