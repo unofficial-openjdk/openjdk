@@ -89,7 +89,9 @@ if [ "$OPENJDK_TARGET_OS" = "linux" ]; then
       ./bin/jimage
       ./bin/jinfo
       ./bin/jjs
+      ./bin/jlink
       ./bin/jmap
+      ./bin/jmod
       ./bin/jps
       ./bin/jrunscript
       ./bin/jsadebugd
@@ -239,7 +241,9 @@ if [ "$OPENJDK_TARGET_OS" = "solaris" ] && [ "$OPENJDK_TARGET_CPU" = "x86_64" ];
       ./bin/jimage
       ./bin/jinfo
       ./bin/jjs
+      ./bin/jlink
       ./bin/jmap
+      ./bin/jmod
       ./bin/jps
       ./bin/jrunscript
       ./bin/jsadebugd
@@ -366,7 +370,9 @@ if [ "$OPENJDK_TARGET_OS" = "solaris" ] && [ "$OPENJDK_TARGET_CPU" = "sparcv9" ]
       ./bin/jimage
       ./bin/jinfo
       ./bin/jjs
+      ./bin/jlink
       ./bin/jmap
+      ./bin/jmod
       ./bin/jps
       ./bin/jrunscript
       ./bin/jsadebugd
@@ -395,15 +401,26 @@ if [ "$OPENJDK_TARGET_OS" = "solaris" ] && [ "$OPENJDK_TARGET_CPU" = "sparcv9" ]
       -e 's/^ *[0-9a-f]\{3,8\}:/  <ADDR>:/' \
       -e 's/:	[0-9a-f][0-9a-f]\( [0-9a-f][0-9a-f]\)\{2,10\}/:	<NUMS>/' \
       -e 's/\$[a-zA-Z0-9_\$]\{15\}\./<SYM>./' \
+      -e 's/, [0-9a-fx\-]\{1,8\}/, <ADDR>/g' \
       -e 's/0x[0-9a-f]\{1,8\}/<HEX>/g' \
       -e 's/\! [0-9a-f]\{1,8\} /! <ADDR> /' \
-      -e 's/, [0-9a-fx\-]\{1,8\}/, <ADDR>/g' \
       -e 's/call  [0-9a-f]\{4,7\}/call  <ADDR>/' \
+      -e 's/%hi(0),/%hi(<HEX>),/' \
       "
 
   KNOWN_DIS_DIFF="
       ./lib/sparcv9/libsaproc.so
   "
+
+  MAX_KNOWN_DIS_DIFF_SIZE="3000"
+
+  # On slowdebug the disassembly can differ randomly.
+  if [ "$DEBUG_LEVEL" = "slowdebug" ]; then
+    ACCEPTED_DIS_DIFF="
+        ./lib/sparcv9/libfontmanager.so
+        ./lib/sparcv9/server/libjvm.so
+    "
+  fi
 
   SKIP_FULLDUMP_DIFF="true"
 
@@ -444,7 +461,9 @@ if [ "$OPENJDK_TARGET_OS" = "windows" ]; then
       ./bin/jimage.exe
       ./bin/jinfo.exe
       ./bin/jjs.exe
+      ./bin/jlink.exe
       ./bin/jmap.exe
+      ./bin/jmod.exe
       ./bin/jps.exe
       ./bin/jrunscript.exe
       ./bin/jsadebugd.exe
@@ -535,7 +554,9 @@ if [ "$OPENJDK_TARGET_OS" = "macosx" ]; then
       ./bin/jimage
       ./bin/jinfo
       ./bin/jjs
+      ./bin/jlink
       ./bin/jmap
+      ./bin/jmod
       ./bin/jps
       ./bin/jrunscript
       ./bin/jsadebugd
