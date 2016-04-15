@@ -131,6 +131,9 @@ public class Modules extends JCTree.Visitor {
 
     private final String moduleOverride;
 
+    private final Name java_se;
+    private final Name java_;
+
     ModuleSymbol defaultModule;
 
     private final String addExportsOpt;
@@ -172,6 +175,9 @@ public class Modules extends JCTree.Visitor {
         classWriter.multiModuleMode = multiModuleMode;
         JNIWriter jniWriter = JNIWriter.instance(context);
         jniWriter.multiModuleMode = multiModuleMode;
+
+        java_se = names.fromString("java.se");
+        java_ = names.fromString("java.");
 
         addExportsOpt = options.get(Option.XADDEXPORTS);
         addReadsOpt = options.get(Option.XADDREADS);
@@ -826,8 +832,21 @@ public class Modules extends JCTree.Visitor {
         Set<ModuleSymbol> enabledRoot = new LinkedHashSet<>();
 
         if (rootModules.contains(syms.unnamedModule)) {
-            for (ModuleSymbol sym : syms.getAllModules()) {
-                if (systemModulePred.test(sym) && observablePred.test(sym)) {
+            ModuleSymbol javaSE = syms.getModule(java_se);
+            Predicate<ModuleSymbol> jdkModulePred;
+
+            if (javaSE != null && (observable == null || observable.contains(javaSE))) {
+                jdkModulePred = sym -> {
+                    sym.complete();
+                    return !sym.name.startsWith(java_) && !sym.exports.isEmpty();
+                };
+                enabledRoot.add(javaSE);
+            } else {
+                jdkModulePred = sym -> true;
+            }
+
+            for (ModuleSymbol sym : new HashSet<>(syms.getAllModules())) {
+                if (systemModulePred.test(sym) && observablePred.test(sym) && jdkModulePred.test(sym)) {
                     enabledRoot.add(sym);
                 }
             }

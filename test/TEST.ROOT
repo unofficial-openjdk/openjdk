@@ -16,3 +16,6 @@ groups=TEST.groups
 
 # Tests using jtreg 4.2 b01 features
 requiredVersion=4.2 b01
+
+# Use new form of -Xpatch
+useNewXpatch=true
