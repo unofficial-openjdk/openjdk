@@ -85,7 +85,7 @@ public class AddModsTest {
 
     /**
      * Basic test of -addmods ALL-SYSTEM, using the output of -listmods to
-     * check that the a sample of the system modules are resolved.
+     * check that a sample of the system modules are resolved.
      */
     public void testAddSystemModules() throws Exception {
 
@@ -127,12 +127,30 @@ public class AddModsTest {
      */
     public void testAddAllModulePath() throws Exception {
 
-        // java -mp mods -addmods lib -cp classes app.Main
+        // java -mp mods -addmods ALL-MODULE-PATH -cp classes app.Main
         int exitValue
             = executeTestJava("-mp", MODS_DIR.toString(),
                               "-addmods", "ALL-MODULE-PATH",
                               "-cp", CLASSES_DIR.toString(),
                               MAIN_CLASS)
+                .outputTo(System.out)
+                .errorTo(System.out)
+                .getExitValue();
+
+        assertTrue(exitValue == 0);
+
+    }
+
+
+    /**
+     * Test {@code -addmods ALL-MODULE-PATH} without {@code -modulepath}.
+     */
+    public void testAddAllModulePathWithNoModulePath() throws Exception {
+
+        // java -addmods ALL-MODULE-PATH -version
+        int exitValue
+            = executeTestJava("-addmods", "ALL-MODULE-PATH",
+                              "-version")
                 .outputTo(System.out)
                 .errorTo(System.out)
                 .getExitValue();

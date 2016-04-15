@@ -24,7 +24,7 @@
 package org.m1;
 
 import org.m2.Util;
-import org.not_matched.Name;
+import org.m3.Name;
 
 public class Main {
     public static void main(String[] args) {

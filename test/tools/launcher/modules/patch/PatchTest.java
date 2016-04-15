@@ -125,14 +125,24 @@ public class PatchTest {
      */
     public void testRunWithXPatch() throws Exception {
 
-        // value for -Xpatch
-        String patchPath = PATCHES1_DIR + File.pathSeparator + PATCHES2_DIR;
+        // values for -Xpatch options
+        String basePatches = PATCHES1_DIR.resolve("java.base")
+                + File.pathSeparator + PATCHES2_DIR.resolve("java.base");
+
+        String dnsPatches = PATCHES1_DIR.resolve("jdk.naming.dns")
+                +  File.pathSeparator + PATCHES2_DIR.resolve("jdk.naming.dns");
+
+        String compilerPatches = PATCHES1_DIR.resolve("jdk.compiler")
+                +  File.pathSeparator + PATCHES2_DIR.resolve("jdk.compiler");
 
         // the argument to the test is the list of classes overridden or added
         String arg = Stream.of(CLASSES).collect(Collectors.joining(","));
 
+
         int exitValue
-            =  executeTestJava("-Xpatch:" + patchPath,
+            =  executeTestJava("-Xpatch:java.base=" + basePatches,
+                               "-Xpatch:jdk.naming.dns=" + dnsPatches,
+                               "-Xpatch:jdk.compiler=" + compilerPatches,
                                "-XaddExports:java.base/java.lang2=test",
                                "-XaddExports:jdk.naming.dns/com.sun.jndi.dns=test",
                                "-XaddExports:jdk.naming.dns/com.sun.jndi.dns2=test",

@@ -43,7 +43,7 @@ import java.util.Set;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
-import jdk.internal.module.Hasher;
+import jdk.internal.module.ModuleHashes;
 
 /**
  * The resolver used by {@link Configuration#resolveRequires} and
@@ -264,22 +264,26 @@ final class Resolver {
      * Execute post-resolution checks and returns the module graph of resolved
      * modules as {@code Map}. The resolved modules will be in the given
      * configuration.
+     *
+     * @param check {@true} to execute the post resolution checks
      */
-    Map<ResolvedModule, Set<ResolvedModule>> finish(Configuration cf) {
-
-        detectCycles();
-
-        checkPlatformConstraints();
-
-        checkHashes();
+    Map<ResolvedModule, Set<ResolvedModule>> finish(Configuration cf,
+                                                    boolean check)
+    {
+        if (check) {
+            detectCycles();
+            checkPlatformConstraints();
+            checkHashes();
+        }
 
         Map<ResolvedModule, Set<ResolvedModule>> graph = makeGraph(cf);
 
-        checkExportSuppliers(graph);
+        if (check) {
+            checkExportSuppliers(graph);
+        }
 
         return graph;
     }
-
 
     /**
      * Checks the given module graph for cycles.
@@ -420,52 +424,44 @@ final class Resolver {
 
     }
 
-
     /**
      * Checks the hashes in the module descriptor to ensure that they match
-     * the hash of the dependency's module reference.
+     * any recorded hashes.
      */
     private void checkHashes() {
-
         for (ModuleReference mref : nameToReference.values()) {
             ModuleDescriptor descriptor = mref.descriptor();
 
-            // get map of module names to hash
-            Optional<Hasher.DependencyHashes> ohashes = descriptor.hashes();
+            // get map of module hashes
+            Optional<ModuleHashes> ohashes = descriptor.hashes();
             if (!ohashes.isPresent())
                 continue;
-            Hasher.DependencyHashes hashes = ohashes.get();
+            ModuleHashes hashes = ohashes.get();
 
-            // check dependences
-            for (ModuleDescriptor.Requires d : descriptor.requires()) {
-                String dn = d.name();
-                String recordedHash = hashes.hashFor(dn);
-
-                if (recordedHash != null) {
-
-                    ModuleReference other = nameToReference.get(dn);
-                    if (other == null) {
-                        other = parent.findModule(dn)
-                                .map(ResolvedModule::reference)
-                                .orElse(null);
-                    }
-                    if (other == null)
-                        throw new InternalError(dn + " not found");
-
-                    String actualHash = other.computeHash(hashes.algorithm());
-                    if (actualHash == null)
-                        fail("Unable to compute the hash of module %s", dn);
-
-                    if (!recordedHash.equals(actualHash)) {
-                        fail("Hash of %s (%s) differs to expected hash (%s)",
-                                dn, actualHash, recordedHash);
-                    }
-
+            String algorithm = hashes.algorithm();
+            for (String dn : hashes.names()) {
+                ModuleReference other = nameToReference.get(dn);
+                if (other == null) {
+                    other = parent.findModule(dn)
+                            .map(ResolvedModule::reference)
+                            .orElse(null);
                 }
 
+                // skip checking the hash if the module has been patched
+                if (other != null && !other.isPatched()) {
+                    String recordedHash = hashes.hashFor(dn);
+                    String actualHash = other.computeHash(algorithm);
+                    if (actualHash == null)
+                        fail("Unable to compute the hash of module %s", dn);
+                    if (!recordedHash.equals(actualHash)) {
+                        fail("Hash of %s (%s) differs to expected hash (%s)" +
+                             " recorded in %s", dn, actualHash, recordedHash,
+                             descriptor.name());
+                    }
+                }
             }
-        }
 
+        }
     }
 
 
@@ -666,7 +662,7 @@ final class Resolver {
                     // source is exported to descriptor2
                     String source = export.source();
                     ModuleDescriptor other
-                            = packageToExporter.put(source, descriptor2);
+                        = packageToExporter.put(source, descriptor2);
 
                     if (other != null && other != descriptor2) {
                         // package might be local to descriptor1
@@ -690,33 +686,38 @@ final class Resolver {
                 }
             }
 
-            // uses S
-            for (String service : descriptor1.uses()) {
-                String pn = packageName(service);
-                if (!packageToExporter.containsKey(pn)) {
-                    fail("Module %s does not read a module that exports %s",
-                            descriptor1.name(), pn);
-                }
-            }
+            // uses/provides checks not applicable to automatic modules
+            if (!descriptor1.isAutomatic()) {
 
-            // provides S
-            for (Map.Entry<String, ModuleDescriptor.Provides> entry :
-                    descriptor1.provides().entrySet()) {
-                String service = entry.getKey();
-                ModuleDescriptor.Provides provides = entry.getValue();
-
-                String pn = packageName(service);
-                if (!packageToExporter.containsKey(pn)) {
-                    fail("Module %s does not read a module that exports %s",
-                            descriptor1.name(), pn);
-                }
-
-                for (String provider : provides.providers()) {
-                    if (!packages.contains(packageName(provider))) {
-                        fail("Provider %s not in module %s",
-                                provider, descriptor1.name());
+                // uses S
+                for (String service : descriptor1.uses()) {
+                    String pn = packageName(service);
+                    if (!packageToExporter.containsKey(pn)) {
+                        fail("Module %s does not read a module that exports %s",
+                             descriptor1.name(), pn);
                     }
                 }
+
+                // provides S
+                for (Map.Entry<String, ModuleDescriptor.Provides> entry :
+                        descriptor1.provides().entrySet()) {
+                    String service = entry.getKey();
+                    ModuleDescriptor.Provides provides = entry.getValue();
+
+                    String pn = packageName(service);
+                    if (!packageToExporter.containsKey(pn)) {
+                        fail("Module %s does not read a module that exports %s",
+                             descriptor1.name(), pn);
+                    }
+
+                    for (String provider : provides.providers()) {
+                        if (!packages.contains(packageName(provider))) {
+                            fail("Provider %s not in module %s",
+                                 provider, descriptor1.name());
+                        }
+                    }
+                }
+
             }
 
         }

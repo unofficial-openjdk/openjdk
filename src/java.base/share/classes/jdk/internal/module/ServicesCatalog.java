@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,30 +29,26 @@ import java.lang.reflect.Module;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * A services catalog. Each {@code ClassLoader} has an optional {@code
- * ServicesCatalog} for modules that provide services. This is to support
- * ClassLoader centric ServiceLoader.load methods.
+ * A CHM that acts as a <em>services catalog</em>. Each {@code ClassLoader}
+ * (and eventually Layer) has an optional {@code ServicesCatalog} for modules
+ * that provide services.
+ *
+ * @see java.util.ServiceLoader
  */
-public class ServicesCatalog {
 
-    // use RW locks as register is rare
-    private final ReadWriteLock lock = new ReentrantReadWriteLock();
-    private final Lock readLock = lock.readLock();
-    private final Lock writeLock = lock.writeLock();
+@SuppressWarnings("serial")
+public final class ServicesCatalog
+    extends ConcurrentHashMap<String, Set<ServicesCatalog.ServiceProvider>> {
 
     /**
      * Represents a service provider in the services catalog.
      */
-    public class ServiceProvider {
+    public final class ServiceProvider {
         private final Module module;
         private final String providerName;
         ServiceProvider(Module module, String providerName) {
@@ -67,56 +63,40 @@ public class ServicesCatalog {
         }
     }
 
-    // service providers
-    private final Map<String, Set<ServiceProvider>> loaderServices = new HashMap<>();
-
     /**
      * Creates a new module catalog.
      */
     public ServicesCatalog() { }
 
     /**
-     * Registers the module in this module catalog.
+     * Registers the providers in the given module.
      */
     public void register(Module m) {
         ModuleDescriptor descriptor = m.getDescriptor();
 
-        writeLock.lock();
-        try {
-            // extend the services map
-            for (Provides ps : descriptor.provides().values()) {
-                String service = ps.service();
-                Set<String> providerNames = ps.providers();
+        for (Provides provides : descriptor.provides().values()) {
+            String service = provides.service();
+            Set<String> providerNames = provides.providers();
 
-                // create a new set to replace the existing
-                Set<ServiceProvider> result = new HashSet<>();
-                Set<ServiceProvider> providers = loaderServices.get(service);
-                if (providers != null) {
-                    result.addAll(providers);
-                }
-                for (String pn : providerNames) {
-                    result.add(new ServiceProvider(m, pn));
-                }
-                loaderServices.put(service, Collections.unmodifiableSet(result));
+            // create a new set to replace the existing
+            Set<ServiceProvider> result = new HashSet<>();
+            Set<ServiceProvider> providers = get(service);
+            if (providers != null) {
+                result.addAll(providers);
             }
-
-        } finally {
-            writeLock.unlock();
+            for (String pn : providerNames) {
+                result.add(new ServiceProvider(m, pn));
+            }
+            put(service, Collections.unmodifiableSet(result));
         }
+
     }
 
     /**
      * Returns the (possibly empty) set of service providers that implement the
      * given service type.
-     *
-     * @see java.util.ServiceLoader
      */
     public Set<ServiceProvider> findServices(String service) {
-        readLock.lock();
-        try {
-            return loaderServices.getOrDefault(service, Collections.emptySet());
-        } finally {
-            readLock.unlock();
-        }
+        return getOrDefault(service, Collections.emptySet());
     }
 }

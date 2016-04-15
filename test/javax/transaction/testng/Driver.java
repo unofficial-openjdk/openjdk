@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,16 @@
  * questions.
  */
 
-module m2 {
-    exports org.m2;
-}
+/**
+ * @test
+ * @compile -addmods java.transaction
+ *   test/transaction/InvalidTransactionExceptionTests.java
+ *   test/transaction/TransactionRequiredExceptionTests.java
+ *   test/transaction/TransactionRolledbackExceptionTests.java
+ *   test/transaction/XAExceptionTests.java
+ *   util/SerializedTransactionExceptions.java
+ * @run testng/othervm -addmods java.transaction test.transaction.InvalidTransactionExceptionTests
+ * @run testng/othervm -addmods java.transaction test.transaction.TransactionRequiredExceptionTests
+ * @run testng/othervm -addmods java.transaction test.transaction.TransactionRolledbackExceptionTests
+ * @run testng/othervm -addmods java.transaction util.SerializedTransactionExceptions
+ */

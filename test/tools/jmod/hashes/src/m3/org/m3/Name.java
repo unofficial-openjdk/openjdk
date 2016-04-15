@@ -21,7 +21,12 @@
  * questions.
  */
 
-module m1 {
-    requires m2;
-    requires not_matched;
+package org.m3;
+
+public class Name {
+    private Name() { }
+
+    public static String name() {
+        return "m3";
+    }
 }

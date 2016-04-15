@@ -21,6 +21,6 @@
  * questions.
  */
 
-module not_matched {
-    exports org.not_matched;
+module m3 {
+    exports org.m3;
 }

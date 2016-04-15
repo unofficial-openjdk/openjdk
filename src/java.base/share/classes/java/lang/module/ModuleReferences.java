@@ -48,8 +48,8 @@ import java.util.zip.ZipFile;
 
 import jdk.internal.misc.JavaLangAccess;
 import jdk.internal.misc.SharedSecrets;
-import jdk.internal.module.Hasher;
-import jdk.internal.module.Hasher.HashSupplier;
+import jdk.internal.module.ModuleHashes;
+import jdk.internal.module.ModuleHashes.HashSupplier;
 import jdk.internal.module.ModulePatcher;
 import sun.net.www.ParseUtil;
 
@@ -89,7 +89,7 @@ class ModuleReferences {
     static ModuleReference newJarModule(ModuleDescriptor md, Path file) {
         URI uri = file.toUri();
         Supplier<ModuleReader> supplier = () -> new JarModuleReader(file, uri);
-        HashSupplier hasher = (algorithm) -> Hasher.generate(file, algorithm);
+        HashSupplier hasher = (a) -> ModuleHashes.computeHashAsString(file, a);
         return newModule(md, uri, supplier, hasher);
     }
 
@@ -99,7 +99,7 @@ class ModuleReferences {
     static ModuleReference newJModModule(ModuleDescriptor md, Path file) {
         URI uri = file.toUri();
         Supplier<ModuleReader> supplier = () -> new JModModuleReader(file, uri);
-        HashSupplier hasher = (algorithm) -> Hasher.generate(file, algorithm);
+        HashSupplier hasher = (a) -> ModuleHashes.computeHashAsString(file, a);
         return newModule(md, file.toUri(), supplier, hasher);
     }
 

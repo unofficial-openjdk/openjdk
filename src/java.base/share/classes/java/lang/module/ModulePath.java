@@ -40,7 +40,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -190,17 +190,15 @@ class ModulePath implements ConfigurableModuleFinder {
                 }
             }
 
-            if (attrs.isRegularFile() || attrs.isDirectory()) {
-                // packaged or exploded module
-                ModuleReference mref = readModule(entry, attrs);
-                if (mref != null) {
-                    String name = mref.descriptor().name();
-                    return Collections.singletonMap(name, mref);
-                }
+            // packaged or exploded module
+            ModuleReference mref = readModule(entry, attrs);
+            if (mref != null) {
+                String name = mref.descriptor().name();
+                return Collections.singletonMap(name, mref);
+            } else {
+                // skipped
+                return Collections.emptyMap();
             }
-
-            // not recognized
-            throw new FindException("Unrecognized module: " + entry);
 
         } catch (IOException ioe) {
             throw new FindException(ioe);
@@ -238,16 +236,13 @@ class ModulePath implements ConfigurableModuleFinder {
 
                 // module found
                 if (mref != null) {
-
                     // can have at most one version of a module in the directory
                     String name = mref.descriptor().name();
                     if (nameToReference.put(name, mref) != null) {
                         throw new FindException("Two versions of module "
-                                + name + " found in " + dir);
+                                                  + name + " found in " + dir);
                     }
-
                 }
-
             }
         }
 
@@ -257,28 +252,38 @@ class ModulePath implements ConfigurableModuleFinder {
 
     /**
      * Locates a packaged or exploded module, returning a {@code ModuleReference}
-     * to the module. Returns {@code null} if the module is not recognized
-     * as a packaged or exploded module.
+     * to the module. Returns {@code null} if the entry is skipped because it is
+     * to a directory that does not contain a module-info.class or it's a hidden
+     * file.
      *
      * @throws IOException if an I/O error occurs
-     * @throws FindException if an error occurs parsing the module descriptor
+     * @throws FindException if the file is not recognized as a module or an
+     *         error occurs parsing its module descriptor
      */
     private ModuleReference readModule(Path entry, BasicFileAttributes attrs)
         throws IOException
     {
         try {
 
-            ModuleReference mref = null;
             if (attrs.isDirectory()) {
-                mref = readExplodedModule(entry);
+                return readExplodedModule(entry); // may return null
             } if (attrs.isRegularFile()) {
-                if (entry.toString().endsWith(".jar")) {
-                    mref = readJar(entry);
-                } else if (isLinkPhase && entry.toString().endsWith(".jmod")) {
-                    mref = readJMod(entry);
+                String fn = entry.getFileName().toString();
+                if (fn.endsWith(".jar")) {
+                    return readJar(entry);
+                } else if (fn.endsWith(".jmod")) {
+                    if (isLinkPhase)
+                        return readJMod(entry);
+                    throw new FindException("JMOD files not supported: " + entry);
                 }
             }
-            return mref;
+
+            // skip hidden files
+            if (entry.toString().startsWith(".") || Files.isHidden(entry)) {
+                return null;
+            } else {
+                throw new FindException("Unrecognized module: " + entry);
+            }
 
         } catch (InvalidModuleDescriptorException e) {
             throw new FindException("Error reading module: " + entry, e);
@@ -301,6 +306,9 @@ class ModulePath implements ConfigurableModuleFinder {
     /**
      * Returns a {@code ModuleReference} to a module in jmod file on the
      * file system.
+     *
+     * @throws IOException
+     * @throws InvalidModuleDescriptorException
      */
     private ModuleReference readJMod(Path file) throws IOException {
         try (ZipFile zf = new ZipFile(file.toString())) {
@@ -445,7 +453,7 @@ class ModulePath implements ConfigurableModuleFinder {
         // parse each service configuration file
         for (String sn : serviceNames) {
             JarEntry entry = jf.getJarEntry(SERVICES_PREFIX + sn);
-            Set<String> providerClasses = new HashSet<>();
+            Set<String> providerClasses = new LinkedHashSet<>();
             try (InputStream in = jf.getInputStream(entry)) {
                 BufferedReader reader
                     = new BufferedReader(new InputStreamReader(in, "UTF-8"));
@@ -484,10 +492,13 @@ class ModulePath implements ConfigurableModuleFinder {
     /**
      * Returns a {@code ModuleReference} to a module in modular JAR file on
      * the file system.
+     *
+     * @throws IOException
+     * @throws FindException
+     * @throws InvalidModuleDescriptorException
      */
     private ModuleReference readJar(Path file) throws IOException {
         try (JarFile jf = new JarFile(file.toString())) {
-
             ModuleDescriptor md;
             JarEntry entry = jf.getJarEntry(MODULE_INFO);
             if (entry == null) {
@@ -530,6 +541,9 @@ class ModulePath implements ConfigurableModuleFinder {
     /**
      * Returns a {@code ModuleReference} to an exploded module on the file
      * system or {@code null} if {@code module-info.class} not found.
+     *
+     * @throws IOException
+     * @throws InvalidModuleDescriptorException
      */
     private ModuleReference readExplodedModule(Path dir) throws IOException {
         Path mi = dir.resolve(MODULE_INFO);

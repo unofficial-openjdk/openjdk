@@ -21,12 +21,7 @@
  * questions.
  */
 
-package org.m2;
-
-public class Util {
-    private Util() { }
-
-    public static String timeOfDay() {
-        return "Time for a beer";
-    }
+module m1 {
+    requires m2;
+    requires m3;
 }
