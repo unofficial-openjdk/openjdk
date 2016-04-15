@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -74,6 +74,7 @@ import javax.security.auth.Subject;
 import com.sun.jmx.remote.internal.RMIExporter;
 import com.sun.jmx.remote.security.JMXPluggableAuthenticator;
 import com.sun.jmx.remote.util.ClassLogger;
+import com.sun.jmx.remote.util.EnvHelp;
 
 import sun.management.Agent;
 import sun.management.AgentConfigurationError;
@@ -511,6 +512,9 @@ public final class ConnectorBootstrap {
         // This RMI server should not keep the VM alive
         Map<String, Object> env = new HashMap<String, Object>();
         env.put(RMIExporter.EXPORTER_ATTRIBUTE, new PermanentExporter());
+        env.put(EnvHelp.CREDENTIAL_TYPES, new String[]{
+            String[].class.getName(), String.class.getName()
+        });
 
         // The local connector server need only be available via the
         // loopback connection.
@@ -750,6 +754,9 @@ public final class ConnectorBootstrap {
         PermanentExporter exporter = new PermanentExporter();
 
         env.put(RMIExporter.EXPORTER_ATTRIBUTE, exporter);
+        env.put(EnvHelp.CREDENTIAL_TYPES, new String[]{
+            String[].class.getName(), String.class.getName()
+        });
 
         boolean useSocketFactory = bindAddress != null && !useSsl;
 
