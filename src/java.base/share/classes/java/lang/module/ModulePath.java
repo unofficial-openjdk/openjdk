@@ -279,7 +279,8 @@ class ModulePath implements ConfigurableModuleFinder {
             }
 
             // skip hidden files
-            if (entry.toString().startsWith(".") || Files.isHidden(entry)) {
+            String fn = entry.getFileName().toString();
+            if (fn.startsWith(".") || Files.isHidden(entry)) {
                 return null;
             } else {
                 throw new FindException("Unrecognized module: " + entry);
