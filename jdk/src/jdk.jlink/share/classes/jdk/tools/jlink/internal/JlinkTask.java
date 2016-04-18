@@ -70,6 +70,7 @@ import jdk.tools.jlink.plugin.Plugin;
  * ## Should use jdk.joptsimple some day.
  */
 public class JlinkTask {
+    private static final boolean DEBUG = Boolean.getBoolean("jlink.debug");
 
     private static <T extends Throwable> void fail(Class<T> type,
             String format,
@@ -215,18 +216,24 @@ public class JlinkTask {
             }
 
             return EXIT_OK;
-        } catch (UncheckedIOException | PluginException | IOException | ResolutionException e) {
+        } catch (UncheckedIOException | PluginException | IllegalArgumentException |
+                 IOException | ResolutionException e) {
             log.println(taskHelper.getMessage("error.prefix") + " " + e.getMessage());
-            log.println(taskHelper.getMessage("main.usage.summary", PROGNAME));
+            if (DEBUG) {
+                e.printStackTrace(log);
+            }
             return EXIT_ERROR;
         } catch (BadArgs e) {
             taskHelper.reportError(e.key, e.args);
             if (e.showUsage) {
                 log.println(taskHelper.getMessage("main.usage.summary", PROGNAME));
             }
+            if (DEBUG) {
+                e.printStackTrace(log);
+            }
             return EXIT_CMDERR;
         } catch (Throwable x) {
-            log.println(taskHelper.getMessage("main.msg.bug"));
+            log.println(taskHelper.getMessage("error.prefix") + " " + x.getMessage());
             x.printStackTrace(log);
             return EXIT_ABNORMAL;
         } finally {

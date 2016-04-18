@@ -387,6 +387,22 @@ public class ModuleFinderTest {
 
 
     /**
+     * Test ModuleFinder.of with a file path to a directory containing a file
+     * starting with ".", the file should be ignored.
+     */
+    public void testOfWithHiddenEntryInDirectory() throws Exception {
+        Path dir = Files.createTempDirectory(USER_DIR, "mods");
+        Files.createTempFile(dir, ".marker", "");
+
+        ModuleFinder finder = ModuleFinder.of(dir);
+        assertFalse(finder.find("java.rhubarb").isPresent());
+
+        finder = ModuleFinder.of(dir);
+        assertTrue(finder.findAll().isEmpty());
+    }
+
+
+    /**
      * Test ModuleFinder.of with a directory that contains two
      * versions of the same module
      */

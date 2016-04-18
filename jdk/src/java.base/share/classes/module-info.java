@@ -86,8 +86,7 @@ module java.base {
     // see JDK-8044773
     exports jdk.net;
 
-    // These will move to a jdk.internal module via JEP-260
-    exports sun.misc;
+    // This will move to a jdk.internal module via JEP-260
     exports sun.reflect;
 
 
@@ -174,6 +173,7 @@ module java.base {
         jdk.charsets,
         jdk.jlink,
         jdk.scripting.nashorn,
+        jdk.unsupported,
         jdk.vm.ci;
     exports jdk.internal.perf to
         java.desktop,
@@ -181,14 +181,17 @@ module java.base {
         jdk.jvmstat;
     exports jdk.internal.ref to
         java.desktop;
+    exports jdk.internal.vm.annotation to
+        jdk.unsupported;
     exports jdk.internal.util.jar to
         jdk.jartool;
+    exports jdk.internal.vm to
+        java.management,
+        jdk.jvmstat;
     exports sun.net to
         java.httpclient;
     exports sun.net.dns to
         java.security.jgss,
-        jdk.naming.dns;
-    exports sun.net.spi.nameservice to
         jdk.naming.dns;
     exports sun.net.util to
         java.desktop,
@@ -282,7 +285,6 @@ module java.base {
 
     // JDK-internal service types
     uses jdk.internal.logger.DefaultLoggerFinder;
-    uses sun.net.spi.nameservice.NameServiceDescriptor;
     uses sun.security.ssl.ClientKeyExchangeService;
     uses sun.util.spi.CalendarProvider;
     uses sun.util.locale.provider.LocaleDataMetaInfo;

@@ -25,6 +25,7 @@
 # @test
 # @bug 6299235
 # @summary test Bug 6299235 to make sure the third-party provided sun resources could be picked up.
+# @modules java.desktop
 # @build Bug6299235Test
 # @run shell Bug6299235Test.sh
 
@@ -67,7 +68,7 @@ cd ${PATCHDIR}/java.desktop
 ${TESTJAVA}/bin/jar xf ${TESTSRC}/awtres.jar
 
 echo 
-${TESTJAVA}/bin/java ${TESTVMOPTS} -Xpatch:${PATCHDIR} \
+${TESTJAVA}/bin/java ${TESTVMOPTS} -Xpatch:java.desktop=${PATCHDIR}/java.desktop \
      -cp ${TESTCLASSES} Bug6299235Test
 
 if [ $? -ne 0 ]

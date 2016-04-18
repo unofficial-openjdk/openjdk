@@ -39,7 +39,7 @@ $COMPILEJAVA/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} \
 $COMPILEJAVA/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} \
    $TESTSRC/AbstractMethodErrorTest.java -d exec || exit 3
 
-$TESTJAVA/bin/java ${TESTVMOPTS} -Xpatch:exec -cp exec AbstractMethodErrorTest || exit 4
+$TESTJAVA/bin/java ${TESTVMOPTS} -Xpatch:java.xml=exec -cp exec AbstractMethodErrorTest || exit 4
 
 exit 0
 
