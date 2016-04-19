@@ -838,7 +838,8 @@ public class Modules extends JCTree.Visitor {
             if (javaSE != null && (observable == null || observable.contains(javaSE))) {
                 jdkModulePred = sym -> {
                     sym.complete();
-                    return !sym.name.startsWith(java_) && !sym.exports.isEmpty();
+                    return   !sym.name.startsWith(java_)
+                           && sym.exports.stream().anyMatch(e -> e.modules == null);
                 };
                 enabledRoot.add(javaSE);
             } else {
