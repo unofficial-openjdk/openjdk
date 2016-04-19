@@ -1392,7 +1392,7 @@ class Thread implements Runnable {
      * This method is used only for debugging.
      */
     public static void dumpStack() {
-        StackStreamFactory.makeStackTrace().printStackTrace(System.err);
+        new Exception("Stack trace").printStackTrace();
     }
 
     /**
@@ -1614,8 +1614,7 @@ class Thread implements Runnable {
             }
             return stackTrace;
         } else {
-            // Don't need JVM help for current thread
-            return StackStreamFactory.makeStackTrace().getStackTraceElements();
+            return (new Exception()).getStackTrace();
         }
     }
 
