@@ -374,7 +374,7 @@ import java.util.Objects;
     }
     public static boolean isVarHandleMethodInvokeName(String name) {
         try {
-            VarHandle.AccessMode.valueOf(name);
+            VarHandle.AccessMode.valueFromMethodName(name);
             return true;
         } catch (IllegalArgumentException e) {
             return false;
@@ -1131,6 +1131,10 @@ import java.util.Objects;
         jdk.internal.misc.SharedSecrets.setJavaLangInvokeAccess(new jdk.internal.misc.JavaLangInvokeAccess() {
             public Object newMemberName() {
                 return new MemberName();
+            }
+            public String getName(Object mname) {
+                MemberName memberName = (MemberName)mname;
+                return memberName.getName();
             }
         });
     }
