@@ -767,17 +767,17 @@ public class Modules extends JCTree.Visitor {
         private void checkForCorrectness() {
             for (Directive.ProvidesDirective provides : allProvides) {
                 JCProvides tree = directiveToTreeMap.get(provides);
-                /** The implementation must be defined in the same module as the provides directive
-                 *  (else, error)
+                /* The implementation must be defined in the same module as the provides directive
+                 * (else, error)
                  */
                 PackageSymbol implementationDefiningPackage = provides.impl.packge();
                 if (implementationDefiningPackage.modle != msym) {
                     log.error(tree.pos(), Errors.ServiceImplementationNotInRightModule(implementationDefiningPackage.modle));
                 }
 
-                /** There is no inherent requirement that module that provides a service should actually
-                 *  use it itself. However, it is a pointless declaration if the service package is not
-                 *  exported and there is no uses for the service.
+                /* There is no inherent requirement that module that provides a service should actually
+                 * use it itself. However, it is a pointless declaration if the service package is not
+                 * exported and there is no uses for the service.
                  */
                 PackageSymbol interfaceDeclaringPackage = provides.service.packge();
                 boolean isInterfaceDeclaredInCurrentModule = interfaceDeclaringPackage.modle == msym;
