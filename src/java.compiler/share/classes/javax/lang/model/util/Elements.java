@@ -55,12 +55,32 @@ public interface Elements {
     PackageElement getPackageElement(CharSequence name);
 
     /**
+     * Returns a package given its fully qualified name, as seen from the given module.
+     *
+     * @param name  fully qualified package name, or "" for an unnamed package
+     * @param module module relative to which the lookup should happen
+     * @return the named package, or {@code null} if it cannot be found
+     * @since 9
+     */
+    PackageElement getPackageElement(ModuleElement module, CharSequence name);
+
+    /**
      * Returns a type element given its canonical name.
      *
      * @param name  the canonical name
      * @return the named type element, or {@code null} if it cannot be found
      */
     TypeElement getTypeElement(CharSequence name);
+
+    /**
+     * Returns a type element given its canonical name, as seen from the given module.
+     *
+     * @param name  the canonical name
+     * @param module module relative to which the lookup should happen
+     * @return the named type element, or {@code null} if it cannot be found
+     * @since 9
+     */
+    TypeElement getTypeElement(ModuleElement module, CharSequence name);
 
     /**
      * Returns a module element given its fully qualified name.
