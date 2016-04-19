@@ -27,8 +27,9 @@
 #include "gc/g1/concurrentMarkThread.inline.hpp"
 #include "gc/g1/g1Analytics.hpp"
 #include "gc/g1/g1CollectedHeap.inline.hpp"
-#include "gc/g1/g1CollectorPolicy.hpp"
+#include "gc/g1/g1ConcurrentMark.inline.hpp"
 #include "gc/g1/g1MMUTracker.hpp"
+#include "gc/g1/g1Policy.hpp"
 #include "gc/g1/suspendibleThreadSet.hpp"
 #include "gc/g1/vm_operations_g1.hpp"
 #include "gc/shared/gcId.hpp"
@@ -79,7 +80,7 @@ public:
 };
 
 // Marking pauses can be scheduled flexibly, so we might delay marking to meet MMU.
-void ConcurrentMarkThread::delay_to_keep_mmu(G1CollectorPolicy* g1_policy, bool remark) {
+void ConcurrentMarkThread::delay_to_keep_mmu(G1Policy* g1_policy, bool remark) {
   const G1Analytics* analytics = g1_policy->analytics();
   if (g1_policy->adaptive_young_list_length()) {
     double now = os::elapsedTime();
@@ -110,7 +111,7 @@ void ConcurrentMarkThread::run_service() {
   _vtime_start = os::elapsedVTime();
 
   G1CollectedHeap* g1h = G1CollectedHeap::heap();
-  G1CollectorPolicy* g1_policy = g1h->g1_policy();
+  G1Policy* g1_policy = g1h->g1_policy();
 
   while (!should_terminate()) {
     // wait until started is set.
@@ -182,6 +183,11 @@ void ConcurrentMarkThread::run_service() {
           log_info(gc, marking)("Concurrent Mark Restart due to overflow");
         }
       } while (cm()->restart_for_overflow());
+
+      if (!cm()->has_aborted()) {
+        G1ConcPhaseTimer t(_cm, "Concurrent Create Live Data");
+        cm()->create_live_data();
+      }
 
       double end_time = os::elapsedVTime();
       // Update the total virtual time before doing this, since it will try

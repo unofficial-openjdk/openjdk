@@ -199,9 +199,6 @@ const size_t M                  = K*K;
 const size_t G                  = M*K;
 const size_t HWperKB            = K / sizeof(HeapWord);
 
-const jint min_jint = (jint)1 << (sizeof(jint)*BitsPerByte-1); // 0x80000000 == smallest jint
-const jint max_jint = (juint)min_jint - 1;                     // 0x7FFFFFFF == largest jint
-
 // Constants for converting from a base unit to milli-base units.  For
 // example from seconds to milliseconds and microseconds
 
@@ -241,6 +238,36 @@ inline T byte_size_in_proper_unit(T s) {
   } else {
     return s;
   }
+}
+
+inline const char* exact_unit_for_byte_size(size_t s) {
+#ifdef _LP64
+  if (s >= G && (s % G) == 0) {
+    return "G";
+  }
+#endif
+  if (s >= M && (s % M) == 0) {
+    return "M";
+  }
+  if (s >= K && (s % K) == 0) {
+    return "K";
+  }
+  return "B";
+}
+
+inline size_t byte_size_in_exact_unit(size_t s) {
+#ifdef _LP64
+  if (s >= G && (s % G) == 0) {
+    return s / G;
+  }
+#endif
+  if (s >= M && (s % M) == 0) {
+    return s / M;
+  }
+  if (s >= K && (s % K) == 0) {
+    return s / K;
+  }
+  return s;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -328,7 +355,7 @@ inline size_t pointer_delta(const MetaWord* left, const MetaWord* right) {
 // so far from the middle of the road that it is likely to be problematic in
 // many C++ compilers.
 //
-#define CAST_TO_FN_PTR(func_type, value) ((func_type)(castable_address(value)))
+#define CAST_TO_FN_PTR(func_type, value) (reinterpret_cast<func_type>(value))
 #define CAST_FROM_FN_PTR(new_type, func_ptr) ((new_type)((address_word)(func_ptr)))
 
 // Unsigned byte types for os and stream.hpp
@@ -350,6 +377,14 @@ typedef jbyte  s1;
 typedef jshort s2;
 typedef jint   s4;
 typedef jlong  s8;
+
+const jbyte min_jbyte = -(1 << 7);       // smallest jbyte
+const jbyte max_jbyte = (1 << 7) - 1;    // largest jbyte
+const jshort min_jshort = -(1 << 15);    // smallest jshort
+const jshort max_jshort = (1 << 15) - 1; // largest jshort
+
+const jint min_jint = (jint)1 << (sizeof(jint)*BitsPerByte-1); // 0x80000000 == smallest jint
+const jint max_jint = (juint)min_jint - 1;                     // 0x7FFFFFFF == largest jint
 
 //----------------------------------------------------------------------------------------------------
 // JVM spec restrictions

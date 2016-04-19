@@ -48,6 +48,7 @@
   LOG_TAG(classpath) \
   LOG_TAG(compaction) \
   LOG_TAG(constraints) \
+  LOG_TAG(coops) \
   LOG_TAG(cpu) \
   LOG_TAG(cset) \
   LOG_TAG(defaultmethods) \
@@ -61,6 +62,7 @@
   LOG_TAG(ihop) \
   LOG_TAG(itables) \
   LOG_TAG(jni) \
+  LOG_TAG(jvmti) \
   LOG_TAG(liveness) \
   LOG_TAG(logging) \
   LOG_TAG(marking) \
@@ -68,7 +70,9 @@
   LOG_TAG(modules) \
   LOG_TAG(monitorinflation) \
   LOG_TAG(monitormismatch) \
+  LOG_TAG(objecttagging) \
   LOG_TAG(os) \
+  LOG_TAG(pagesize) \
   LOG_TAG(phases) \
   LOG_TAG(plab) \
   LOG_TAG(promotion) \

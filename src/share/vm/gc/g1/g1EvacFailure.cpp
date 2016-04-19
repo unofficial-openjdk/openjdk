@@ -95,8 +95,6 @@ public:
   void do_object(oop obj) {
     HeapWord* obj_addr = (HeapWord*) obj;
     assert(_hr->is_in(obj_addr), "sanity");
-    size_t obj_size = obj->size();
-    HeapWord* obj_end = obj_addr + obj_size;
 
     if (obj->is_forwarded() && obj->forwardee() == obj) {
       // The object failed to move.
@@ -119,8 +117,10 @@ public:
         // explicitly and all objects in the CSet are considered
         // (implicitly) live. So, we won't mark them explicitly and
         // we'll leave them over NTAMS.
-        _cm->grayRoot(obj, obj_size, _worker_id, _hr);
+        _cm->grayRoot(obj, _hr);
       }
+      size_t obj_size = obj->size();
+
       _marked_bytes += (obj_size * HeapWordSize);
       obj->set_mark(markOopDesc::prototype());
 
@@ -138,6 +138,7 @@ public:
       // the collection set. So, we'll recreate such entries now.
       obj->oop_iterate(_update_rset_cl);
 
+      HeapWord* obj_end = obj_addr + obj_size;
       _last_forwarded_object_end = obj_end;
       _hr->cross_threshold(obj_addr, obj_end);
     }
@@ -226,15 +227,6 @@ public:
                                                during_conc_mark);
         _g1h->verifier()->check_bitmaps("Self-Forwarding Ptr Removal", hr);
 
-        // In the common case (i.e. when there is no evacuation
-        // failure) we make sure that the following is done when
-        // the region is freed so that it is "ready-to-go" when it's
-        // re-allocated. However, when evacuation failure happens, a
-        // region will remain in the heap and might ultimately be added
-        // to a CSet in the future. So we have to be careful here and
-        // make sure the region's RSet is ready for parallel iteration
-        // whenever this might be required in the future.
-        hr->rem_set()->reset_for_par_iteration();
         hr->reset_bot();
 
         size_t live_bytes = remove_self_forward_ptr_by_walking_hr(hr, during_initial_mark);

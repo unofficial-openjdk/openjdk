@@ -26,6 +26,7 @@
 #include "gc/g1/concurrentG1Refine.hpp"
 #include "gc/g1/g1BlockOffsetTable.inline.hpp"
 #include "gc/g1/g1CollectedHeap.inline.hpp"
+#include "gc/g1/g1CardLiveData.inline.hpp"
 #include "gc/g1/heapRegionManager.inline.hpp"
 #include "gc/g1/heapRegionRemSet.hpp"
 #include "gc/shared/space.inline.hpp"
@@ -141,10 +142,8 @@ public:
     add_reference_work(from, /*parallel*/ false);
   }
 
-  void scrub(CardTableModRefBS* ctbs, BitMap* card_bm) {
-    HeapWord* hr_bot = hr()->bottom();
-    size_t hr_first_card_index = ctbs->index_for(hr_bot);
-    bm()->set_intersection_at_offset(*card_bm, hr_first_card_index);
+  void scrub(G1CardLiveData* live_data) {
+    live_data->remove_nonlive_cards(hr()->hrm_index(), &_bm);
     recount_occupied();
   }
 
@@ -515,14 +514,12 @@ PerRegionTable* OtherRegionsTable::delete_region_table() {
   return max;
 }
 
-void OtherRegionsTable::scrub(CardTableModRefBS* ctbs,
-                              BitMap* region_bm, BitMap* card_bm) {
+void OtherRegionsTable::scrub(G1CardLiveData* live_data) {
   // First eliminated garbage regions from the coarse map.
   log_develop_trace(gc, remset, scrub)("Scrubbing region %u:", _hr->hrm_index());
 
-  assert(_coarse_map.size() == region_bm->size(), "Precondition");
   log_develop_trace(gc, remset, scrub)("   Coarse map: before = " SIZE_FORMAT "...", _n_coarse_entries);
-  _coarse_map.set_intersection(*region_bm);
+  live_data->remove_nonlive_regions(&_coarse_map);
   _n_coarse_entries = _coarse_map.count_one_bits();
   log_develop_trace(gc, remset, scrub)("   after = " SIZE_FORMAT ".", _n_coarse_entries);
 
@@ -534,7 +531,7 @@ void OtherRegionsTable::scrub(CardTableModRefBS* ctbs,
       PerRegionTable* nxt = cur->collision_list_next();
       // If the entire region is dead, eliminate.
       log_develop_trace(gc, remset, scrub)("     For other region %u:", cur->hr()->hrm_index());
-      if (!region_bm->at((size_t) cur->hr()->hrm_index())) {
+      if (!live_data->is_region_live(cur->hr()->hrm_index())) {
         *prev = nxt;
         cur->set_collision_list_next(NULL);
         _n_fine_entries--;
@@ -544,7 +541,7 @@ void OtherRegionsTable::scrub(CardTableModRefBS* ctbs,
       } else {
         // Do fine-grain elimination.
         log_develop_trace(gc, remset, scrub)("          occ: before = %4d.", cur->occupied());
-        cur->scrub(ctbs, card_bm);
+        cur->scrub(live_data);
         log_develop_trace(gc, remset, scrub)("          after = %4d.", cur->occupied());
         // Did that empty the table completely?
         if (cur->occupied() == 0) {
@@ -695,8 +692,8 @@ HeapRegionRemSet::HeapRegionRemSet(G1BlockOffsetTable* bot,
                                    HeapRegion* hr)
   : _bot(bot),
     _m(Mutex::leaf, FormatBuffer<128>("HeapRegionRemSet lock #%u", hr->hrm_index()), true, Monitor::_safepoint_check_never),
-    _code_roots(), _other_regions(hr, &_m), _iter_state(Unclaimed), _iter_claimed(0) {
-  reset_for_par_iteration();
+    _code_roots(),
+    _other_regions(hr, &_m) {
 }
 
 void HeapRegionRemSet::setup_remset_size() {
@@ -711,20 +708,6 @@ void HeapRegionRemSet::setup_remset_size() {
     G1RSetRegionEntries = G1RSetRegionEntriesBase * (region_size_log_mb + 1);
   }
   guarantee(G1RSetSparseRegionEntries > 0 && G1RSetRegionEntries > 0 , "Sanity");
-}
-
-bool HeapRegionRemSet::claim_iter() {
-  if (_iter_state != Unclaimed) return false;
-  jint res = Atomic::cmpxchg(Claimed, (jint*)(&_iter_state), Unclaimed);
-  return (res == Unclaimed);
-}
-
-void HeapRegionRemSet::set_iter_complete() {
-  _iter_state = Complete;
-}
-
-bool HeapRegionRemSet::iter_is_complete() {
-  return _iter_state == Complete;
 }
 
 #ifndef PRODUCT
@@ -763,19 +746,10 @@ void HeapRegionRemSet::clear_locked() {
   _code_roots.clear();
   _other_regions.clear();
   assert(occupied_locked() == 0, "Should be clear.");
-  reset_for_par_iteration();
 }
 
-void HeapRegionRemSet::reset_for_par_iteration() {
-  _iter_state = Unclaimed;
-  _iter_claimed = 0;
-  // It's good to check this to make sure that the two methods are in sync.
-  assert(verify_ready_for_par_iteration(), "post-condition");
-}
-
-void HeapRegionRemSet::scrub(CardTableModRefBS* ctbs,
-                             BitMap* region_bm, BitMap* card_bm) {
-  _other_regions.scrub(ctbs, region_bm, card_bm);
+void HeapRegionRemSet::scrub(G1CardLiveData* live_data) {
+  _other_regions.scrub(live_data);
 }
 
 // Code roots support

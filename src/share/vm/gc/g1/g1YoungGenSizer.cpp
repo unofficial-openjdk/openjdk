@@ -25,12 +25,13 @@
 #include "precompiled.hpp"
 #include "gc/g1/g1YoungGenSizer.hpp"
 #include "gc/g1/heapRegion.hpp"
+#include "logging/log.hpp"
 
 G1YoungGenSizer::G1YoungGenSizer() : _sizer_kind(SizerDefaults), _adaptive_size(true),
         _min_desired_young_length(0), _max_desired_young_length(0) {
   if (FLAG_IS_CMDLINE(NewRatio)) {
     if (FLAG_IS_CMDLINE(NewSize) || FLAG_IS_CMDLINE(MaxNewSize)) {
-      warning("-XX:NewSize and -XX:MaxNewSize override -XX:NewRatio");
+      log_warning(gc, ergo)("-XX:NewSize and -XX:MaxNewSize override -XX:NewRatio");
     } else {
       _sizer_kind = SizerNewRatio;
       _adaptive_size = false;
@@ -40,9 +41,9 @@ G1YoungGenSizer::G1YoungGenSizer() : _sizer_kind(SizerDefaults), _adaptive_size(
 
   if (NewSize > MaxNewSize) {
     if (FLAG_IS_CMDLINE(MaxNewSize)) {
-      warning("NewSize (" SIZE_FORMAT "k) is greater than the MaxNewSize (" SIZE_FORMAT "k). "
-              "A new max generation size of " SIZE_FORMAT "k will be used.",
-              NewSize/K, MaxNewSize/K, NewSize/K);
+      log_warning(gc, ergo)("NewSize (" SIZE_FORMAT "k) is greater than the MaxNewSize (" SIZE_FORMAT "k). "
+                            "A new max generation size of " SIZE_FORMAT "k will be used.",
+                            NewSize/K, MaxNewSize/K, NewSize/K);
     }
     MaxNewSize = NewSize;
   }
@@ -107,13 +108,18 @@ void G1YoungGenSizer::recalculate_min_max_young_length(uint number_of_heap_regio
   assert(*min_young_length <= *max_young_length, "Invalid min/max young gen size values");
 }
 
-uint G1YoungGenSizer::max_young_length(uint number_of_heap_regions) {
+void G1YoungGenSizer::adjust_max_new_size(uint number_of_heap_regions) {
+
   // We need to pass the desired values because recalculation may not update these
   // values in some cases.
   uint temp = _min_desired_young_length;
   uint result = _max_desired_young_length;
   recalculate_min_max_young_length(number_of_heap_regions, &temp, &result);
-  return result;
+
+  size_t max_young_size = result * HeapRegion::GrainBytes;
+  if (max_young_size != MaxNewSize) {
+    FLAG_SET_ERGO(size_t, MaxNewSize, max_young_size);
+  }
 }
 
 void G1YoungGenSizer::heap_size_changed(uint new_number_of_heap_regions) {
