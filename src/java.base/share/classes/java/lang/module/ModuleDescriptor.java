@@ -27,6 +27,7 @@ package java.lang.module;
 
 import java.io.InputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.ByteBuffer;
@@ -2002,9 +2003,10 @@ public class ModuleDescriptor
                 @Override
                 public Configuration resolveRequiresAndUses(ModuleFinder finder,
                                                             Collection<String> roots,
-                                                            boolean check)
+                                                            boolean check,
+                                                            PrintStream traceOutput)
                 {
-                    return Configuration.resolveRequiresAndUses(finder, roots, check);
+                    return Configuration.resolveRequiresAndUses(finder, roots, check, traceOutput);
                 }
 
                 @Override

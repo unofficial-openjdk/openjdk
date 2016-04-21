@@ -26,6 +26,7 @@
 package jdk.internal.module;
 
 import java.io.File;
+import java.io.PrintStream;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
@@ -100,8 +101,13 @@ public final class ModuleBootstrap {
         // system modules
         ModuleFinder systemModules = ModuleFinder.ofSystem();
 
-        // Once we have the system module path then we define the base module.
-        // We do this here so that java.base is defined to the VM as early as
+        PerfCounters.systemModulesTime.addElapsedTimeFrom(t0);
+
+
+        long t1 = System.nanoTime();
+
+        // Once we have the system modules then we define the base module to
+        // the VM. We do this here so that java.base is defined as early as
         // possible and also that resources in the base module can be located
         // for error messages that may happen from here on.
         Optional<ModuleReference> obase = systemModules.find(JAVA_BASE);
@@ -111,12 +117,16 @@ public final class ModuleBootstrap {
         BootLoader.loadModule(base);
         Modules.defineModule(null, base.descriptor(), base.location().orElse(null));
 
+        PerfCounters.defineBaseTime.addElapsedTimeFrom(t1);
+
+
+        long t2 = System.nanoTime();
+
         // -upgrademodulepath option specified to launcher
         ModuleFinder upgradeModulePath
             = createModulePathFinder("jdk.upgrade.module.path");
         if (upgradeModulePath != null)
             systemModules = ModuleFinder.compose(upgradeModulePath, systemModules);
-
 
         // -modulepath option specified to the launcher
         ModuleFinder appModulePath = createModulePathFinder("jdk.module.path");
@@ -240,7 +250,10 @@ public final class ModuleBootstrap {
                     .forEach(mn -> roots.add(mn));
         }
 
-        long t1 = System.nanoTime();
+        PerfCounters.optionsAndRootsTime.addElapsedTimeFrom(t2);
+
+
+        long t3 = System.nanoTime();
 
         // determine if post resolution checks are needed
         boolean needPostResolutionChecks = true;
@@ -251,12 +264,20 @@ public final class ModuleBootstrap {
             needPostResolutionChecks = false;
         }
 
+        PrintStream traceOutput = null;
+        if (Boolean.getBoolean("jdk.launcher.traceResolver"))
+            traceOutput = System.out;
+
         // run the resolver to create the configuration
         Configuration cf = SharedSecrets.getJavaLangModuleAccess()
-                .resolveRequiresAndUses(finder, roots, needPostResolutionChecks);
+                .resolveRequiresAndUses(finder,
+                                        roots,
+                                        needPostResolutionChecks,
+                                        traceOutput);
 
         // time to create configuration
-        PerfCounters.resolveTime.addElapsedTimeFrom(t1);
+        PerfCounters.resolveTime.addElapsedTimeFrom(t3);
+
 
         // mapping of modules to class loaders
         Function<String, ClassLoader> clf = ModuleLoaderMap.mappingFunction(cf);
@@ -280,14 +301,16 @@ public final class ModuleBootstrap {
             }
         }
 
-        long t2 = System.nanoTime();
+
+        long t4 = System.nanoTime();
 
         // define modules to VM/runtime
         Layer bootLayer = Layer.empty().defineModules(cf, clf);
 
-        PerfCounters.layerCreateTime.addElapsedTimeFrom(t2);
+        PerfCounters.layerCreateTime.addElapsedTimeFrom(t4);
 
-        long t3 = System.nanoTime();
+
+        long t5 = System.nanoTime();
 
         // define the module to its class loader, except java.base
         for (ResolvedModule resolvedModule : cf.modules()) {
@@ -301,7 +324,8 @@ public final class ModuleBootstrap {
             }
         }
 
-        PerfCounters.loadModulesTime.addElapsedTimeFrom(t3);
+        PerfCounters.loadModulesTime.addElapsedTimeFrom(t5);
+
 
         // -XaddReads and -XaddExports
         addExtraReads(bootLayer);
@@ -527,6 +551,13 @@ public final class ModuleBootstrap {
     }
 
     static class PerfCounters {
+
+        static PerfCounter systemModulesTime
+            = PerfCounter.newPerfCounter("jdk.module.bootstrap.systemModulesTime");
+        static PerfCounter defineBaseTime
+            = PerfCounter.newPerfCounter("jdk.module.bootstrap.defineBaseTime");
+        static PerfCounter optionsAndRootsTime
+            = PerfCounter.newPerfCounter("jdk.module.bootstrap.optionsAndRootsTime");
         static PerfCounter resolveTime
             = PerfCounter.newPerfCounter("jdk.module.bootstrap.resolveTime");
         static PerfCounter layerCreateTime

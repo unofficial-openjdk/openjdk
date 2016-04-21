@@ -25,6 +25,7 @@
 
 package jdk.internal.misc;
 
+import java.io.PrintStream;
 import java.lang.module.Configuration;
 import jdk.internal.module.ModuleHashes;
 
@@ -105,11 +106,12 @@ public interface JavaLangModuleAccess {
     /**
      * Resolves a collection of root modules, with service binding
      * and the empty configuration as the parent. The post resolution
-     * checks are optionall run.
+     * checks are optionally run.
      */
     Configuration resolveRequiresAndUses(ModuleFinder finder,
                                          Collection<String> roots,
-                                         boolean check);
+                                         boolean check,
+                                         PrintStream traceOutput);
 
     /**
      * Creates a ModuleReference to a "patched" module.
