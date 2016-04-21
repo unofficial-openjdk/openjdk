@@ -447,8 +447,7 @@ class ModulePath implements ConfigurableModuleFinder {
         // map names of service configuration files to service names
         Set<String> serviceNames = configFiles.stream()
             .map(this::toServiceName)
-            .filter(Optional::isPresent)
-            .map(Optional::get)
+            .flatMap(Optional::stream)
             .collect(Collectors.toSet());
 
         // parse each service configuration file
@@ -499,7 +498,11 @@ class ModulePath implements ConfigurableModuleFinder {
      * @throws InvalidModuleDescriptorException
      */
     private ModuleReference readJar(Path file) throws IOException {
-        try (JarFile jf = new JarFile(file.toString())) {
+        try (JarFile jf = new JarFile(file.toFile(),
+                                      true,               // verify
+                                      ZipFile.OPEN_READ,
+                                      JarFile.Release.RUNTIME))
+        {
             ModuleDescriptor md;
             JarEntry entry = jf.getJarEntry(MODULE_INFO);
             if (entry == null) {

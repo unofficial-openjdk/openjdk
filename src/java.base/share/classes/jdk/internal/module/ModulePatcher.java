@@ -148,7 +148,8 @@ public final class ModulePatcher {
             for (Path file : paths) {
                 if (Files.isRegularFile(file)) {
 
-                    // JAR file
+                    // JAR file - do not open as a multi-release JAR as this
+                    // is not supported by the boot class loader
                     try (JarFile jf = new JarFile(file.toFile())) {
                         jf.stream()
                           .filter(e -> e.getName().endsWith(".class"))
