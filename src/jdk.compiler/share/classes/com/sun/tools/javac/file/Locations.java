@@ -815,7 +815,7 @@ public class Locations {
      * SYSTEM_MODULES and MODULE_PATH.
      *
      * The Location can be specified to accept overriding classes from the
-     * -Xpatch:dir parameter.
+     * {@code -Xpatch:<module>=<path> } parameter.
      */
     private class ModuleLocationHandler extends LocationHandler implements Location {
         protected final String name;
@@ -831,35 +831,15 @@ public class Locations {
             this.searchPath = searchPath;
             this.output = output;
 
-            if (allowOverrides) {
-                if (patchMap != null) {
-                    SearchPath mPatch = patchMap.get(moduleName);
-                    if (mPatch != null) {
-                        SearchPath sp = new SearchPath();
-                        sp.addAll(mPatch);
-                        sp.addAll(searchPath);
-                        searchPathWithOverrides = sp;
-                    } else {
-                        searchPathWithOverrides = searchPath;
-                    }
+            if (allowOverrides && patchMap != null) {
+                SearchPath mPatch = patchMap.get(moduleName);
+                if (mPatch != null) {
+                    SearchPath sp = new SearchPath();
+                    sp.addAll(mPatch);
+                    sp.addAll(searchPath);
+                    searchPathWithOverrides = sp;
                 } else {
-                     // for old style patch option; retained for transition
-                    Set<Path> overrides = new LinkedHashSet<>();
-                    if (moduleOverrideSearchPath != null) {
-                       for (Path p: moduleOverrideSearchPath) {
-                           Path o = p.resolve(moduleName);
-                           if (Files.isDirectory(o)) {
-                               overrides.add(o);
-                           }
-                       }
-                    }
-
-                    if (!overrides.isEmpty()) {
-                        overrides.addAll(searchPath);
-                        searchPathWithOverrides = overrides;
-                    } else {
-                        searchPathWithOverrides = searchPath;
-                    }
+                    searchPathWithOverrides = searchPath;
                 }
             } else {
                 searchPathWithOverrides = searchPath;
@@ -1524,41 +1504,33 @@ public class Locations {
         }
     }
 
-    private SearchPath moduleOverrideSearchPath; // for old style patch option; retained for transition
     private Map<String, SearchPath> patchMap;
 
     boolean handleOption(Option option, String value) {
         switch (option) {
             case XPATCH:
-                if (value.contains("=")) {
-                    Map<String, SearchPath> map = new LinkedHashMap<>();
-                    for (String entry: value.split(",")) {
-                        int eq = entry.indexOf('=');
-                        if (eq > 0) {
-                            String mName = entry.substring(0, eq);
-                            SearchPath mPatchPath = new SearchPath()
-                                    .addFiles(entry.substring(eq + 1));
-                            boolean ok = true;
-                            for (Path p: mPatchPath) {
-                                Path mi = p.resolve("module-info.class");
-                                if (Files.exists(mi)) {
-                                    log.error(Errors.LocnModuleInfoNotAllowedOnPatchPath(mi));
-                                    ok = false;
-                                }
-                            }
-                            if (ok && !mPatchPath.isEmpty()) {
-                                map.computeIfAbsent(mName, (_x) -> new SearchPath())
-                                        .addAll(mPatchPath);
-                            }
-                        } else {
-                            log.error(Errors.LocnInvalidArgForXpatch(entry));
+                Map<String, SearchPath> map = new LinkedHashMap<>();
+                int eq = value.indexOf('=');
+                if (eq > 0) {
+                    String mName = value.substring(0, eq);
+                    SearchPath mPatchPath = new SearchPath()
+                            .addFiles(value.substring(eq + 1));
+                    boolean ok = true;
+                    for (Path p: mPatchPath) {
+                        Path mi = p.resolve("module-info.class");
+                        if (Files.exists(mi)) {
+                            log.error(Errors.LocnModuleInfoNotAllowedOnPatchPath(mi));
+                            ok = false;
                         }
                     }
-                    patchMap = map;
+                    if (ok && !mPatchPath.isEmpty()) {
+                        map.computeIfAbsent(mName, (_x) -> new SearchPath())
+                                .addAll(mPatchPath);
+                    }
                 } else {
-                     // for old style patch option; retained for transition
-                    moduleOverrideSearchPath = new SearchPath().addFiles(value);
+                    log.error(Errors.LocnInvalidArgForXpatch(value));
                 }
+                patchMap = map;
                 return true;
             default:
                 LocationHandler h = handlersForOption.get(option);
