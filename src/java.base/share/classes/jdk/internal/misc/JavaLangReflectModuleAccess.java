@@ -26,8 +26,11 @@
 package jdk.internal.misc;
 
 import java.lang.module.ModuleDescriptor;
+import java.lang.reflect.Layer;
 import java.lang.reflect.Module;
 import java.net.URI;
+
+import jdk.internal.module.ServicesCatalog;
 
 /**
  * Provides access to non-public methods in java.lang.reflect.Module
@@ -81,5 +84,10 @@ public interface JavaLangReflectModuleAccess {
      * Add a package to the given module.
      */
     void addPackage(Module m, String pkg);
+
+    /**
+     * Returns the ServicesCatalog for the given Layer.
+     */
+    ServicesCatalog getServicesCatalog(Layer layer);
 
 }

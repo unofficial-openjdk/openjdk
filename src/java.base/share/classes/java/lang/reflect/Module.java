@@ -1192,6 +1192,10 @@ public final class Module {
                 public void addPackage(Module m, String pn) {
                     m.implAddPackage(pn, true);
                 }
+                @Override
+                public ServicesCatalog getServicesCatalog(Layer layer) {
+                    return layer.getServicesCatalog();
+                }
             });
     }
 }

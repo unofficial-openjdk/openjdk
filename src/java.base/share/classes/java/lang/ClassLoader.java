@@ -2612,7 +2612,7 @@ public abstract class ClassLoader {
     ServicesCatalog createOrGetServicesCatalog() {
         ServicesCatalog catalog = servicesCatalog;
         if (catalog == null) {
-            catalog = new ServicesCatalog();
+            catalog = ServicesCatalog.create();
             boolean set = trySetObjectField("servicesCatalog", catalog);
             if (!set) {
                 // beaten by someone else
