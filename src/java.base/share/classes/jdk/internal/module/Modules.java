@@ -98,8 +98,8 @@ public class Modules {
     /**
      * Update module {@code m} to read all unnamed modules.
      */
-    public static void addReadsToAllUnnamed(Module m) {
-        JLRMA.addReadsToAllUnnamed(m);
+    public static void addReadsAllUnnamed(Module m) {
+        JLRMA.addReadsAllUnnamed(m);
     }
 
     /**

@@ -1173,7 +1173,7 @@ public final class Module {
                     m1.implAddReads(m2, true);
                 }
                 @Override
-                public void addReadsToAllUnnamed(Module m) {
+                public void addReadsAllUnnamed(Module m) {
                     m.implAddReads(Module.ALL_UNNAMED_MODULE);
                 }
                 @Override

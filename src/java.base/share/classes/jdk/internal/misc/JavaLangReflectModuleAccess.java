@@ -62,7 +62,7 @@ public interface JavaLangReflectModuleAccess {
     /**
      * Updates module m to read all unnamed modules.
      */
-    void addReadsToAllUnnamed(Module m);
+    void addReadsAllUnnamed(Module m);
 
     /**
      * Updates module m1 to export a package to module m2. The export does

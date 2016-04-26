@@ -430,7 +430,7 @@ public final class ModuleBootstrap {
 
                 Module other;
                 if (ALL_UNNAMED.equals(name)) {
-                    Modules.addReadsToAllUnnamed(m);
+                    Modules.addReadsAllUnnamed(m);
                 } else {
                     om = bootLayer.findModule(name);
                     if (!om.isPresent())
