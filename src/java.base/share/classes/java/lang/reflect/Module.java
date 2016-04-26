@@ -142,9 +142,6 @@ public final class Module {
         this.name = null;
         this.loader = loader;
         this.descriptor = null;
-
-        // unnamed modules are loose
-        this.loose = true;
     }
 
 
@@ -245,10 +242,19 @@ public final class Module {
     }
 
 
-    // -- readability --
+    // --
 
-    // true if this module reads all unnamed modules (a.k.a. loose module)
-    private volatile boolean loose;
+    // the special Module to mean reads or exported to "all unnamed modules"
+    private static final Module ALL_UNNAMED_MODULE = new Module(null);
+
+    // special Module to mean exported to "everyone"
+    private static final Module EVERYONE_MODULE = new Module(null);
+
+    // exported to all modules
+    private static final Set<Module> EVERYONE = Collections.singleton(EVERYONE_MODULE);
+
+
+    // -- readability --
 
     // the modules that this module permanently reads
     // (will be final when the modules are defined in reverse topology order)
@@ -284,24 +290,19 @@ public final class Module {
 
         // check if this module reads other
         if (other.isNamed()) {
-
             Set<Module> reads = this.reads; // volatile read
             if (reads != null && reads.contains(other))
                 return true;
-
-        } else {
-
-            // loose modules read all unnamed modules
-            if (this.loose)
-                return true;
-
         }
 
         // check if this module reads the other module reflectively
         WeakSet<Module> tr = this.transientReads; // volatile read
-        if (tr != null && tr.contains(other))
-            return true;
-
+        if (tr != null) {
+            if (tr.contains(other))
+                return true;
+            if (!other.isNamed() && tr.contains(ALL_UNNAMED_MODULE))
+                return true;
+        }
         return false;
     }
 
@@ -346,8 +347,7 @@ public final class Module {
     }
 
     /**
-     * Makes the given {@code Module} readable to this module without
-     * notifying the VM.
+     * Updates this module to read another module without notifying the VM.
      *
      * @apiNote This method is for VM white-box testing.
      */
@@ -361,18 +361,11 @@ public final class Module {
      * If {@code syncVM} is {@code true} then the VM is notified.
      */
     private void implAddReads(Module other, boolean syncVM) {
+        Objects.requireNonNull(other);
 
         // nothing to do
         if (other == this || !this.isNamed())
             return;
-
-        // if the other is null then change this module to be loose.
-        if (other == null) {
-            if (syncVM)
-                addReads0(this, null);
-            this.loose = true;
-            return;
-        }
 
         // check if we already read this module
         Set<Module> reads = this.reads;
@@ -380,8 +373,13 @@ public final class Module {
             return;
 
         // update VM first, just in case it fails
-        if (syncVM)
-            addReads0(this, other);
+        if (syncVM) {
+            if (other == ALL_UNNAMED_MODULE) {
+                addReads0(this, null);
+            } else {
+                addReads0(this, other);
+            }
+        }
 
         // add reflective read
         WeakSet<Module> tr = this.transientReads;
@@ -406,13 +404,6 @@ public final class Module {
 
     // created lazily, additional exports added at run-time
     private volatile Map<String, WeakSet<Module>> transientExports;
-
-    // the special Module to mean exported to all modules
-    private static final Module EVERYONE_MODULE = new Module(null);
-    private static final Set<Module> EVERYONE = Collections.singleton(EVERYONE_MODULE);
-
-    // the special Module to mean exported to all unnamed modules
-    private static final Module ALL_UNNAMED_MODULE = new Module(null);
 
 
     /**
@@ -489,23 +480,9 @@ public final class Module {
         if (exports != null) {
             Set<Module> targets = exports.get(pn);
 
-            if (targets != null) {
-
-                // exported to all modules
-                if (targets.contains(EVERYONE_MODULE))
-                    return true;
-
-                if (other != EVERYONE_MODULE) {
-                    // exported to other
-                    if (targets.contains(other))
-                        return true;
-
-                    // other is an unnamed module && exported to all unnamed
-                    if (!other.isNamed() && targets.contains(ALL_UNNAMED_MODULE))
-                        return true;
-                }
-
-            }
+            if ((targets != null)
+                && (targets.contains(other) || targets.contains(EVERYONE_MODULE)))
+                return true;
         }
         return false;
     }
@@ -969,7 +946,7 @@ public final class Module {
 
             // automatic modules reads all unnamed modules
             if (descriptor.isAutomatic()) {
-                m.implAddReads(null, true);
+                m.implAddReads(ALL_UNNAMED_MODULE, true);
             }
 
             // exports
@@ -1196,8 +1173,12 @@ public final class Module {
                     m1.implAddReads(m2, true);
                 }
                 @Override
+                public void addReadsToAllUnnamed(Module m) {
+                    m.implAddReads(Module.ALL_UNNAMED_MODULE);
+                }
+                @Override
                 public void addExports(Module m, String pn, Module other) {
-                    m.implAddExports(pn, Objects.requireNonNull(other), true);
+                    m.implAddExports(pn, other, true);
                 }
                 @Override
                 public void addExportsToAll(Module m, String pn) {

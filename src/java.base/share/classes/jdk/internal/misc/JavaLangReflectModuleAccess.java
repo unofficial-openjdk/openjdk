@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -57,6 +57,11 @@ public interface JavaLangReflectModuleAccess {
     void addReads(Module m1, Module m2);
 
     /**
+     * Updates module m to read all unnamed modules.
+     */
+    void addReadsToAllUnnamed(Module m);
+
+    /**
      * Updates module m1 to export a package to module m2. The export does
      * not result in a strong reference to m2 (m2 can be GC'ed).
      */
@@ -76,4 +81,5 @@ public interface JavaLangReflectModuleAccess {
      * Add a package to the given module.
      */
     void addPackage(Module m, String pkg);
+
 }
