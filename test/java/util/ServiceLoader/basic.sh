@@ -42,9 +42,7 @@ JAR="$TESTJAVA/bin/jar"
 
 OS=`uname -s`
 case "$OS" in
-    SunOS )
-      SEP=':' ;;
-    Linux )
+    SunOS | Linux | Darwin | AIX )
       SEP=':' ;;
     * )
       SEP='\;' ;;

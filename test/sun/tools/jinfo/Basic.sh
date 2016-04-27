@@ -44,6 +44,10 @@ set +e
 
 failed=0
 
+if [ $isMacos = true -o $isAIX = true -o `uname -m` = ppc64 ]; then
+    runSA=false
+fi
+
 if [ $isWindows = false ]; then
     # -sysprops option
     ${JINFO} -sysprops $appJavaPid
