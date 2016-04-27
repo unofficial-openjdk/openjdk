@@ -1001,8 +1001,6 @@ public class JmodTask {
                         }
                     });
                 }
-                out.println(getMessage("module.hashes.recorded", name));
-                Files.move(tempTarget, target, StandardCopyOption.REPLACE_EXISTING);
             } catch (IOException|RuntimeException e) {
                 if (Files.exists(tempTarget)) {
                     try {
@@ -1015,6 +1013,8 @@ public class JmodTask {
             } finally {
                 zip.close();
             }
+            out.println(getMessage("module.hashes.recorded", name));
+            Files.move(tempTarget, target, StandardCopyOption.REPLACE_EXISTING);
         }
 
         private Map<String, Path> modulesToPath(Set<String> modules) {

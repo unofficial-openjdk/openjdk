@@ -30,7 +30,7 @@
  *          jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jmod
  *          jdk.compiler
- * @build jdk.testlibrary.ProcessTools jdk.testlibrary.OutputAnalyzer CompilerUtils
+ * @build CompilerUtils
  * @run testng HashesTest
  */
 
@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
 import java.lang.reflect.Method;
 import java.nio.file.FileVisitResult;
@@ -56,8 +57,6 @@ import java.util.stream.Collectors;
 
 import jdk.internal.module.ConfigurableModuleFinder;
 import jdk.internal.module.ModuleHashes;
-import jdk.testlibrary.OutputAnalyzer;
-import jdk.testlibrary.ProcessTools;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -117,8 +116,9 @@ public class HashesTest {
         jmod("m2", "--modulepath", jmods.toString(), "--hash-modules", ".*");
         checkHashes(hashes("m2").get(), "m1");
 
-        // hash m1 in m2 and m3
+        // create m2.jmod with no hash
         jmod("m2");
+        // run jmod hash command to hash m1 in m2 and m3
         runJmod(Arrays.asList("hash", "--modulepath", jmods.toString(),
                 "--hash-modules", ".*"));
         checkHashes(hashes("m2").get(), "m1");
@@ -145,7 +145,8 @@ public class HashesTest {
                 .configurePhase(ConfigurableModuleFinder.Phase.LINK_TIME);
         }
         ModuleReference mref = finder.find(name).orElseThrow(RuntimeException::new);
-        try (InputStream in = mref.open().open("module-info.class").get()) {
+        ModuleReader reader = mref.open();
+        try (InputStream in = reader.open("module-info.class").get()) {
             ModuleDescriptor md = ModuleDescriptor.read(in);
             Optional<ModuleHashes> hashes =
                 (Optional<ModuleHashes>) hashesMethod.invoke(md);
@@ -157,6 +158,8 @@ public class HashesTest {
                     .forEach(n -> System.out.format("  %s %s%n", n, hashes.get().hashFor(n)));
             }
             return hashes;
+        } finally {
+            reader.close();
         }
     }
 
