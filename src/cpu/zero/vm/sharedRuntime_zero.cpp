@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
- * Copyright 2007, 2008, 2009, 2010, 2011 Red Hat, Inc.
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2013, Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,6 +47,11 @@
 #endif
 
 
+static address zero_null_code_stub() {
+  address start = ShouldNotCallThisStub();
+  return start;
+}
+
 int SharedRuntime::java_calling_convention(const BasicType *sig_bt,
                                            VMRegPair *regs,
                                            int total_args_passed,
@@ -63,9 +68,9 @@ AdapterHandlerEntry* SharedRuntime::generate_i2c2i_adapters(
                         AdapterFingerPrint *fingerprint) {
   return AdapterHandlerLibrary::new_entry(
     fingerprint,
-    ShouldNotCallThisStub(),
-    ShouldNotCallThisStub(),
-    ShouldNotCallThisStub());
+    CAST_FROM_FN_PTR(address,zero_null_code_stub),
+    CAST_FROM_FN_PTR(address,zero_null_code_stub),
+    CAST_FROM_FN_PTR(address,zero_null_code_stub));
 }
 
 nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
@@ -96,19 +101,20 @@ uint SharedRuntime::out_preserve_stack_slots() {
   ShouldNotCallThis();
 }
 
+JRT_LEAF(void, zero_stub())
+  ShouldNotCallThis();
+JRT_END
+
 static RuntimeStub* generate_empty_runtime_stub(const char* name) {
-  CodeBuffer buffer(name, 0, 0);
-  return RuntimeStub::new_runtime_stub(name, &buffer, 0, 0, NULL, false);
+  return CAST_FROM_FN_PTR(RuntimeStub*,zero_stub);
 }
 
 static SafepointBlob* generate_empty_safepoint_blob() {
-  CodeBuffer buffer("handler_blob", 0, 0);
-  return SafepointBlob::create(&buffer, NULL, 0);
+  return CAST_FROM_FN_PTR(SafepointBlob*,zero_stub);
 }
 
 static DeoptimizationBlob* generate_empty_deopt_blob() {
-  CodeBuffer buffer("handler_blob", 0, 0);
-  return DeoptimizationBlob::create(&buffer, NULL, 0, 0, 0, 0);
+  return CAST_FROM_FN_PTR(DeoptimizationBlob*,zero_stub);
 }
 
 

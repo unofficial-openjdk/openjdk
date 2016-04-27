@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -674,7 +674,7 @@ void CodeBuffer::relocate_code_to(CodeBuffer* dest) const {
     }
   }
 
-  if (dest->blob() == NULL) {
+  if (dest->blob() == NULL && dest_filled != NULL) {
     // Destination is a final resting place, not just another buffer.
     // Normalize uninitialized bytes in the final padding.
     Copy::fill_to_bytes(dest_filled, dest_end - dest_filled,

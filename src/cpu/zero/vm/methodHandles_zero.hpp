@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
- * Copyright 2011 Red Hat, Inc.
+ * Copyright 2011, 2012 Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,3 +29,14 @@ enum /* platform_dependent_constants */ {
   adapter_code_size = 0
 };
 
+class RicochetFrame : public ResourceObj {
+  friend class MethodHandles;
+ public:
+
+static void generate_ricochet_blob(MacroAssembler* _masm,
+                                     // output params:
+                                     int* bounce_offset,
+                                     int* exception_offset,
+                                     int* frame_size_in_words);
+
+};

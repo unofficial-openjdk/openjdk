@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -828,10 +829,10 @@ static inline uint64_t cast_uint64_t(size_t x)
   /* CodeBlobs (NOTE: incomplete, but only a little) */                                                                              \
   /***************************************************/                                                                              \
                                                                                                                                      \
-  X86_ONLY(nonstatic_field(MethodHandles::RicochetFrame, _sender_pc,                                     address))                   \
-  X86_ONLY(nonstatic_field(MethodHandles::RicochetFrame, _exact_sender_sp,                              intptr_t*))                  \
-  X86_ONLY(nonstatic_field(MethodHandles::RicochetFrame, _sender_link,                                  intptr_t*))                  \
-  X86_ONLY(nonstatic_field(MethodHandles::RicochetFrame, _saved_args_base,                              intptr_t*))                  \
+  NOT_ZERO(X86_ONLY(nonstatic_field(MethodHandles::RicochetFrame, _sender_pc, address))) \
+  NOT_ZERO(X86_ONLY(nonstatic_field(MethodHandles::RicochetFrame, _exact_sender_sp, intptr_t*))) \
+  NOT_ZERO(X86_ONLY(nonstatic_field(MethodHandles::RicochetFrame, _sender_link, intptr_t*))) \
+  NOT_ZERO(X86_ONLY(nonstatic_field(MethodHandles::RicochetFrame, _saved_args_base, intptr_t*))) \
                                                                                                                                      \
      static_field(SharedRuntime,               _ricochet_blob,                                RicochetBlob*)                         \
                                                                                                                                      \
@@ -2530,7 +2531,7 @@ static inline uint64_t cast_uint64_t(size_t x)
   /* frame              */                                                \
   /**********************/                                                \
                                                                           \
-  X86_ONLY(declare_constant(frame::entry_frame_call_wrapper_offset))      \
+  NOT_ZERO(X86_ONLY(declare_constant(frame::entry_frame_call_wrapper_offset))) \
   declare_constant(frame::pc_return_offset)                               \
                                                                           \
   /*************/                                                         \
