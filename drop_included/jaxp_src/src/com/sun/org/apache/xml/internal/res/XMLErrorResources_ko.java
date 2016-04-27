@@ -258,7 +258,7 @@ public class XMLErrorResources_ko extends ListResourceBundle
        "\uad6c\ubb38 \ubd84\uc11d\uae30\ub97c \ucd08\uae30\ud654\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4."},
 
     { ER_EXCEPTION_CREATING_POOL,
-       "\ud480\uc758 \uc0c8 \uc778\uc2a4\ud134\uc2a4 \uc791\uc131 \uc911 \uc608\uc678"},
+       "\uD480\uC5D0 \uB300\uD55C \uC0C8 \uC778\uC2A4\uD134\uC2A4\uB97C \uC0DD\uC131\uD558\uB294 \uC911 \uC608\uC678\uC0AC\uD56D\uC774 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4."},
 
     { ER_PATH_CONTAINS_INVALID_ESCAPE_SEQUENCE,
        "\uacbd\ub85c\uc5d0 \uc798\ubabb\ub41c \uc774\uc2a4\ucf00\uc774\ud504 \uc21c\uc11c\uac00 \uc788\uc2b5\ub2c8\ub2e4."},
@@ -378,7 +378,7 @@ public class XMLErrorResources_ko extends ListResourceBundle
        "QNAME\uc758 \uc811\ub450\ubd80\ub294 \uc62c\ubc14\ub978 NCName\uc774\uc5b4\uc57c \ud569\ub2c8\ub2e4."},
 
     { "BAD_CODE", "createMessage\uc5d0 \ub300\ud55c \ub9e4\uac1c\ubcc0\uc218\uac00 \ubc94\uc704\ub97c \ubc97\uc5b4\ub0a9\ub2c8\ub2e4."},
-    { "FORMAT_FAILED", "messageFormat \ud638\ucd9c \uc911 \uc608\uc678 \ubc1c\uc0dd"},
+    { "FORMAT_FAILED", "messageFormat \uD638\uCD9C \uC911 \uC608\uC678\uC0AC\uD56D\uC774 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4."},
     { "line", "\ud589 #"},
     { "column","\uc5f4 #"},
 

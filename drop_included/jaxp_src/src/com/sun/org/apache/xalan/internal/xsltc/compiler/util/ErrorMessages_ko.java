@@ -303,7 +303,7 @@ public class ErrorMessages_ko extends ListResourceBundle {
          * not recognized.
          */
         {ErrorMsg.ILLEGAL_BINARY_OP_ERR,
-        "2\uc9c4 \ud45c\ud604\uc2dd\uc5d0 \ub300\ud55c \uc5f0\uc0b0\uc790\ub97c \uc54c \uc218 \uc5c6\uc2b5\ub2c8\ub2e4."},
+        "\uBC14\uC774\uB108\uB9AC \uD45C\uD604\uC2DD\uC5D0 \uB300\uD574 \uC54C \uC218 \uC5C6\uB294 \uC5F0\uC0B0\uC790\uC785\uB2C8\uB2E4."},
 
         /*
          * Note to translators:  This message is produced if a reference to a

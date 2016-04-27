@@ -722,7 +722,7 @@ public class XSLTErrorResources_ko extends ListResourceBundle
 
 
     { ER_IOEXCEPTION,
-      "\uc2a4\ud0c0\uc77c \uc2dc\ud2b8 \ud30c\uc77c\uc5d0 \uc785\ucd9c\ub825 \uc608\uc678\uac00 \uc788\uc2b5\ub2c8\ub2e4: {0}"},
+      "\uC2A4\uD0C0\uC77C\uC2DC\uD2B8 \uD30C\uC77C\uC5D0 IO \uC608\uC678\uC0AC\uD56D \uBC1C\uC0DD: {0}"},
 
   /** ER_NO_HREF_ATTRIB          */
 //  public static final int ER_NO_HREF_ATTRIB = 38;
@@ -978,7 +978,7 @@ public class XSLTErrorResources_ko extends ListResourceBundle
 //  public static final int ER_SAX_EXCEPTION = 79;
 
     { ER_SAX_EXCEPTION,
-     "SAX \uc608\uc678"},
+     "SAX \uC608\uC678\uC0AC\uD56D"},
 
   /** ER_FUNCTION_NOT_SUPPORTED          */
 //  public static final int ER_FUNCTION_NOT_SUPPORTED = 80;
@@ -2290,7 +2290,7 @@ public class XSLTErrorResources_ko extends ListResourceBundle
   {  "help_language",  "ko" },
   {  "language",  "ko" },
   { "BAD_CODE", "createMessage\uc5d0 \ub300\ud55c \ub9e4\uac1c\ubcc0\uc218\uac00 \ubc94\uc704\ub97c \ubc97\uc5b4\ub0a9\ub2c8\ub2e4."},
-  {  "FORMAT_FAILED", "messageFormat \ud638\ucd9c \uc911 \uc608\uc678 \ubc1c\uc0dd"},
+  {  "FORMAT_FAILED", "messageFormat \uD638\uCD9C \uC911 \uC608\uC678\uC0AC\uD56D\uC774 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4."},
   {  "version", ">>>>>>> Xalan \ubc84\uc804 "},
   {  "version2",  "<<<<<<<"},
   {  "yes", "\uc608"},
