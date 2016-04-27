@@ -486,9 +486,9 @@ public final class TemplatesImpl implements Templates, Serializable {
                 thisModule.addExports(p, m);
             });
 
-            // For now, the module is loose. This will be changed once the XSLT
-            // compiler is updated to generate code to invoke addReads.
-            Modules.addReads(m, null);
+            // For now, the module reads all unnnamed modules. This will be changed once
+            // the XSLT compiler is updated to generate code to invoke addReads.
+            Modules.addReadsAllUnnamed(m);
 
             // java.xml needs to instanitate the translate class
             thisModule.addReads(m);
