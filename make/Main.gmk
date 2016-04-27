@@ -229,10 +229,17 @@ ALL_TARGETS += $(LAUNCHER_TARGETS)
 
 ifeq ($(BUILD_HOTSPOT),true)
   hotspot:
-	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f HotspotWrapper.gmk)
+        ifeq ($(USE_NEW_HOTSPOT_BUILD), true)
+	  +($(CD) $(HOTSPOT_TOPDIR)/makefiles && $(MAKE) $(MAKE_ARGS) -f BuildHotspot.gmk)
+        else
+	  +($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f HotspotWrapper.gmk)
+        endif
 endif
 
-ALL_TARGETS += hotspot
+hotspot-ide-project:
+	+($(CD) $(HOTSPOT_TOPDIR)/makefiles && $(MAKE) $(MAKE_ARGS) -f ide/CreateVSProject.gmk)
+
+ALL_TARGETS += hotspot hotspot-ide-project
 
 ################################################################################
 # Build demos and samples targets
@@ -333,6 +340,9 @@ docs-javadoc:
 docs-jvmtidoc:
 	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f Javadoc.gmk jvmtidocs)
 
+zip-docs: docs-javadoc docs-jvmtidoc
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f Javadoc.gmk zip-docs)
+
 ALL_TARGETS += docs-javadoc docs-jvmtidoc
 
 ################################################################################
@@ -385,9 +395,27 @@ test-image-jdk-jtreg-native:
 build-test-lib:
 	+($(CD) $(TOPDIR)/make/test && $(MAKE) $(MAKE_ARGS) -f BuildTestLib.gmk)
 
+ifeq ($(BUILD_FAILURE_HANDLER), true)
+  # Builds the failure handler jtreg extension
+  build-test-failure-handler:
+	+($(CD) $(TOPDIR)/make/test && $(MAKE) $(MAKE_ARGS) \
+	    -f BuildFailureHandler.gmk build)
+
+  # Runs the tests for the failure handler jtreg extension
+  test-failure-handler:
+	+($(CD) $(TOPDIR)/make/test && $(MAKE) $(MAKE_ARGS) \
+	    -f BuildFailureHandler.gmk test)
+
+  # Copies the failure handler jtreg extension into the test image
+  test-image-failure-handler:
+	+($(CD) $(TOPDIR)/make/test && $(MAKE) $(MAKE_ARGS) \
+	     -f BuildFailureHandler.gmk images)
+endif
+
 ALL_TARGETS += prepare-test-image build-test-hotspot-jtreg-native \
     test-image-hotspot-jtreg-native build-test-jdk-jtreg-native \
-    test-image-jdk-jtreg-native build-test-lib
+    test-image-jdk-jtreg-native build-test-lib build-test-failure-handler \
+    test-failure-handler test-image-failure-handler
 
 ################################################################################
 # Run tests
@@ -462,6 +490,8 @@ else
   $(RMIC_TARGETS): interim-langtools interim-rmic
 
   $(JAVA_TARGETS): interim-langtools
+
+  hotspot-ide-project: hotspot exploded-image
 
   import-hotspot: hotspot
 
@@ -582,6 +612,12 @@ else
 
   build-test-lib: java
 
+  build-test-failure-handler: interim-langtools
+
+  test-failure-handler: build-test-failure-handler
+
+  test-image-failure-handler: build-test-failure-handler
+
   build-test-hotspot-jtreg-native: buildtools-jdk
 
   build-test-jdk-jtreg-native: buildtools-jdk
@@ -667,11 +703,11 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
 endif
 
 # This target builds the documentation image
-docs-image: docs-javadoc docs-jvmtidoc
+docs-image: zip-docs
 
 # This target builds the test image
 test-image: prepare-test-image test-image-hotspot-jtreg-native \
-    test-image-jdk-jtreg-native
+    test-image-jdk-jtreg-native test-image-failure-handler
 
 # all-images is the top-most target, it builds all our deliverables ("images").
 all-images: product-images test-image docs-image
@@ -691,7 +727,7 @@ images: product-images
 docs: docs-image
 all: all-images
 
-ALL_TARGETS += default jdk images docs all
+ALL_TARGETS += default jdk images docs all zip-docs
 
 ################################################################################
 ################################################################################

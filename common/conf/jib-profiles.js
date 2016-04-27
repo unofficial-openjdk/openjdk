@@ -214,7 +214,7 @@ var getJibProfiles = function (input) {
 var getJibProfilesCommon = function (input) {
     var common = {
         dependencies: ["boot_jdk", "gnumake", "jtreg"],
-        configure_args: ["--with-default-make-target=all"],
+        configure_args: ["--with-default-make-target=all", "--enable-jtreg-failure-handler"],
         configure_args_32bit: ["--with-target-bits=32", "--with-jvm-variants=client,server"],
         configure_args_debug: ["--enable-debug"],
         configure_args_slowdebug: ["--with-debug-level=slowdebug"],
@@ -241,7 +241,7 @@ var getJibProfilesProfiles = function (input, common) {
             target_os: "linux",
             target_cpu: "x64",
             dependencies: concat(common.dependencies, "devkit"),
-            configure_args: concat(common.configure_args, "--with-zlib=system"),
+	    configure_args: concat(common.configure_args, "--with-zlib=system"),
             make_args: common.make_args
         },
 
@@ -259,7 +259,7 @@ var getJibProfilesProfiles = function (input, common) {
             target_os: "macosx",
             target_cpu: "x64",
             dependencies: concat(common.dependencies, "devkit"),
-            configure_args: concat(common.configure_args, "--with-zlib=system"),
+	    configure_args: concat(common.configure_args, "--with-zlib=system"),
             make_args: common.make_args
         },
 
@@ -267,7 +267,7 @@ var getJibProfilesProfiles = function (input, common) {
             target_os: "solaris",
             target_cpu: "x64",
             dependencies: concat(common.dependencies, "devkit", "cups"),
-            configure_args: concat(common.configure_args, "--with-zlib=system"),
+	    configure_args: concat(common.configure_args, "--with-zlib=system"),
             make_args: common.make_args
         },
 
@@ -275,7 +275,7 @@ var getJibProfilesProfiles = function (input, common) {
             target_os: "solaris",
             target_cpu: "sparcv9",
             dependencies: concat(common.dependencies, "devkit", "cups"),
-            configure_args: concat(common.configure_args, "--with-zlib=system"),
+	    configure_args: concat(common.configure_args, "--with-zlib=system"),
             make_args: common.make_args
         },
 
