@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2014, 2015, Red Hat Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -31,6 +31,7 @@
 #include "code/vtableStubs.hpp"
 #include "interpreter/interpreter.hpp"
 #include "interpreter/interp_masm.hpp"
+#include "memory/resourceArea.hpp"
 #include "oops/compiledICHolder.hpp"
 #include "prims/jvmtiRedefineClassesTrace.hpp"
 #include "runtime/sharedRuntime.hpp"
@@ -197,6 +198,16 @@ void RegisterSaver::restore_result_registers(MacroAssembler* masm) {
 bool SharedRuntime::is_wide_vector(int size) {
   return size > 8;
 }
+
+size_t SharedRuntime::trampoline_size() {
+  return 16;
+}
+
+void SharedRuntime::generate_trampoline(MacroAssembler *masm, address destination) {
+  __ mov(rscratch1, destination);
+  __ br(rscratch1);
+}
+
 // The java_calling_convention describes stack locations as ideal slots on
 // a frame with no abi restrictions. Since we must observe abi restrictions
 // (like the placement of the register window) the slots must be biased by

@@ -25,6 +25,7 @@
 #include "precompiled.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "jvmtifiles/jvmtiEnv.hpp"
+#include "memory/resourceArea.hpp"
 #include "oops/objArrayKlass.hpp"
 #include "oops/objArrayOop.hpp"
 #include "oops/oop.inline.hpp"
@@ -1353,7 +1354,7 @@ JvmtiEnvBase::check_top_frame(JavaThread* current_thread, JavaThread* java_threa
   ResultTypeFinder rtf(signature);
   TosState fr_tos = as_TosState(rtf.type());
   if (fr_tos != tos) {
-    if (tos != itos || (fr_tos != btos && fr_tos != ctos && fr_tos != stos)) {
+    if (tos != itos || (fr_tos != btos && fr_tos != ztos && fr_tos != ctos && fr_tos != stos)) {
       return JVMTI_ERROR_TYPE_MISMATCH;
     }
   }

@@ -93,7 +93,7 @@ void CardTableModRefBS::initialize() {
 
   MemTracker::record_virtual_memory_type((address)heap_rs.base(), mtGC);
 
-  os::trace_page_sizes("card table", _guard_index + 1, _guard_index + 1,
+  os::trace_page_sizes("Card Table", _guard_index + 1, _guard_index + 1,
                        _page_size, heap_rs.base(), heap_rs.size());
   if (!heap_rs.is_reserved()) {
     vm_exit_during_initialization("Could not reserve enough space for the "
@@ -500,16 +500,14 @@ void CardTableModRefBS::verify_region(MemRegion mr,
     bool failed = (val_equals) ? (curr_val != val) : (curr_val == val);
     if (failed) {
       if (!failures) {
-        tty->cr();
-        tty->print_cr("== CT verification failed: [" INTPTR_FORMAT "," INTPTR_FORMAT "]", p2i(start), p2i(end));
-        tty->print_cr("==   %sexpecting value: %d",
-                      (val_equals) ? "" : "not ", val);
+        log_error(gc, verify)("== CT verification failed: [" INTPTR_FORMAT "," INTPTR_FORMAT "]", p2i(start), p2i(end));
+        log_error(gc, verify)("==   %sexpecting value: %d", (val_equals) ? "" : "not ", val);
         failures = true;
       }
-      tty->print_cr("==   card " PTR_FORMAT " [" PTR_FORMAT "," PTR_FORMAT "], "
-                    "val: %d", p2i(curr), p2i(addr_for(curr)),
-                    p2i((HeapWord*) (((size_t) addr_for(curr)) + card_size)),
-                    (int) curr_val);
+      log_error(gc, verify)("==   card " PTR_FORMAT " [" PTR_FORMAT "," PTR_FORMAT "], val: %d",
+                            p2i(curr), p2i(addr_for(curr)),
+                            p2i((HeapWord*) (((size_t) addr_for(curr)) + card_size)),
+                            (int) curr_val);
     }
   }
   guarantee(!failures, "there should not have been any failures");

@@ -161,6 +161,7 @@ address os::Solaris::handler_end;    // end pc of thr_sighndlrinfo
 
 address os::Solaris::_main_stack_base = NULL;  // 4352906 workaround
 
+os::Solaris::pthread_setname_np_func_t os::Solaris::_pthread_setname_np = NULL;
 
 // "default" initializers for missing libc APIs
 extern "C" {
@@ -441,8 +442,15 @@ static bool assign_distribution(processorid_t* id_array,
 }
 
 void os::set_native_thread_name(const char *name) {
-  // Not yet implemented.
-  return;
+  if (Solaris::_pthread_setname_np != NULL) {
+    // Only the first 31 bytes of 'name' are processed by pthread_setname_np
+    // but we explicitly copy into a size-limited buffer to avoid any
+    // possible overflow.
+    char buf[32];
+    snprintf(buf, sizeof(buf), "%s", name);
+    buf[sizeof(buf) - 1] = '\0';
+    Solaris::_pthread_setname_np(pthread_self(), buf);
+  }
 }
 
 bool os::distribute_processes(uint length, uint* distribution) {
@@ -1009,7 +1017,7 @@ bool os::create_thread(Thread* thread, ThreadType thr_type,
       (uintx) tid, describe_thr_create_attributes(buf, sizeof(buf), stack_size, flags));
   } else {
     log_warning(os, thread)("Failed to start thread - thr_create failed (%s) for attributes: %s.",
-      strerror(status), describe_thr_create_attributes(buf, sizeof(buf), stack_size, flags));
+      os::errno_name(status), describe_thr_create_attributes(buf, sizeof(buf), stack_size, flags));
   }
 
   if (status != 0) {
@@ -1354,7 +1362,7 @@ jlong getTimeMillis() {
 jlong os::javaTimeMillis() {
   timeval t;
   if (gettimeofday(&t, NULL) == -1) {
-    fatal("os::javaTimeMillis: gettimeofday (%s)", strerror(errno));
+    fatal("os::javaTimeMillis: gettimeofday (%s)", os::strerror(errno));
   }
   return jlong(t.tv_sec) * 1000  +  jlong(t.tv_usec) / 1000;
 }
@@ -1362,7 +1370,7 @@ jlong os::javaTimeMillis() {
 void os::javaTimeSystemUTC(jlong &seconds, jlong &nanos) {
   timeval t;
   if (gettimeofday(&t, NULL) == -1) {
-    fatal("os::javaTimeSystemUTC: gettimeofday (%s)", strerror(errno));
+    fatal("os::javaTimeSystemUTC: gettimeofday (%s)", os::strerror(errno));
   }
   seconds = jlong(t.tv_sec);
   nanos = jlong(t.tv_usec) * 1000;
@@ -1819,6 +1827,19 @@ int os::stat(const char *path, struct stat *sbuf) {
   return ::stat(pathbuf, sbuf);
 }
 
+static inline time_t get_mtime(const char* filename) {
+  struct stat st;
+  int ret = os::stat(filename, &st);
+  assert(ret == 0, "failed to stat() file '%s': %s", filename, strerror(errno));
+  return st.st_mtime;
+}
+
+int os::compare_file_modified_times(const char* file1, const char* file2) {
+  time_t t1 = get_mtime(file1);
+  time_t t2 = get_mtime(file2);
+  return t1 - t2;
+}
+
 static bool _print_ascii_file(const char* filename, outputStream* st) {
   int fd = ::open(filename, O_RDONLY);
   if (fd == -1) {
@@ -1892,21 +1913,39 @@ void os::Solaris::print_libversion_info(outputStream* st) {
 
 static bool check_addr0(outputStream* st) {
   jboolean status = false;
+  const int read_chunk = 200;
+  int ret = 0;
+  int nmap = 0;
   int fd = ::open("/proc/self/map",O_RDONLY);
   if (fd >= 0) {
-    prmap_t p;
-    while (::read(fd, &p, sizeof(p)) > 0) {
-      if (p.pr_vaddr == 0x0) {
-        st->print("Warning: Address: 0x%x, Size: %dK, ",p.pr_vaddr, p.pr_size/1024, p.pr_mapname);
-        st->print("Mapped file: %s, ", p.pr_mapname[0] == '\0' ? "None" : p.pr_mapname);
-        st->print("Access:");
-        st->print("%s",(p.pr_mflags & MA_READ)  ? "r" : "-");
-        st->print("%s",(p.pr_mflags & MA_WRITE) ? "w" : "-");
-        st->print("%s",(p.pr_mflags & MA_EXEC)  ? "x" : "-");
-        st->cr();
-        status = true;
+    prmap_t *p = NULL;
+    char *mbuff = (char *) calloc(read_chunk, sizeof(prmap_t));
+    if (NULL == mbuff) {
+      ::close(fd);
+      return status;
+    }
+    while ((ret = ::read(fd, mbuff, read_chunk*sizeof(prmap_t))) > 0) {
+      //check if read() has not read partial data
+      if( 0 != ret % sizeof(prmap_t)){
+        break;
+      }
+      nmap = ret / sizeof(prmap_t);
+      p = (prmap_t *)mbuff;
+      for(int i = 0; i < nmap; i++){
+        if (p->pr_vaddr == 0x0) {
+          st->print("Warning: Address: " PTR_FORMAT ", Size: " SIZE_FORMAT "K, ",p->pr_vaddr, p->pr_size/1024);
+          st->print("Mapped file: %s, ", p->pr_mapname[0] == '\0' ? "None" : p->pr_mapname);
+          st->print("Access: ");
+          st->print("%s",(p->pr_mflags & MA_READ)  ? "r" : "-");
+          st->print("%s",(p->pr_mflags & MA_WRITE) ? "w" : "-");
+          st->print("%s",(p->pr_mflags & MA_EXEC)  ? "x" : "-");
+          st->cr();
+          status = true;
+        }
+        p++;
       }
     }
+    free(mbuff);
     ::close(fd);
   }
   return status;
@@ -2142,7 +2181,7 @@ void os::print_jni_name_suffix_on(outputStream* st, int args_size) {
 size_t os::lasterror(char *buf, size_t len) {
   if (errno == 0)  return 0;
 
-  const char *s = ::strerror(errno);
+  const char *s = os::strerror(errno);
   size_t n = ::strlen(s);
   if (n >= len) {
     n = len - 1;
@@ -2351,7 +2390,7 @@ static void warn_fail_commit_memory(char* addr, size_t bytes, bool exec,
                                     int err) {
   warning("INFO: os::commit_memory(" PTR_FORMAT ", " SIZE_FORMAT
           ", %d) failed; error='%s' (errno=%d)", addr, bytes, exec,
-          strerror(err), err);
+          os::strerror(err), err);
 }
 
 static void warn_fail_commit_memory(char* addr, size_t bytes,
@@ -2359,7 +2398,7 @@ static void warn_fail_commit_memory(char* addr, size_t bytes,
                                     int err) {
   warning("INFO: os::commit_memory(" PTR_FORMAT ", " SIZE_FORMAT
           ", " SIZE_FORMAT ", %d) failed; error='%s' (errno=%d)", addr, bytes,
-          alignment_hint, exec, strerror(err), err);
+          alignment_hint, exec, os::strerror(err), err);
 }
 
 int os::Solaris::commit_memory_impl(char* addr, size_t bytes, bool exec) {
@@ -2736,13 +2775,13 @@ char* os::pd_attempt_reserve_memory_at(size_t bytes, char* requested_addr) {
     pd_unmap_memory(addr, bytes);
   }
 
-  if (PrintMiscellaneous && Verbose) {
+  if (log_is_enabled(Warning, os)) {
     char buf[256];
     buf[0] = '\0';
     if (addr == NULL) {
-      jio_snprintf(buf, sizeof(buf), ": %s", strerror(err));
+      jio_snprintf(buf, sizeof(buf), ": %s", os::strerror(err));
     }
-    warning("attempt_reserve_memory_at: couldn't reserve " SIZE_FORMAT " bytes at "
+    log_info(os)("attempt_reserve_memory_at: couldn't reserve " SIZE_FORMAT " bytes at "
             PTR_FORMAT ": reserve_memory_helper returned " PTR_FORMAT
             "%s", bytes, requested_addr, addr, buf);
   }
@@ -2772,9 +2811,7 @@ char* os::pd_attempt_reserve_memory_at(size_t bytes, char* requested_addr) {
           assert(i > 0, "gap adjustment code problem");
           have_adjusted_gap = true;  // adjust the gap only once, just in case
           gap = actual_gap;
-          if (PrintMiscellaneous && Verbose) {
-            warning("attempt_reserve_memory_at: adjusted gap to 0x%lx", gap);
-          }
+          log_info(os)("attempt_reserve_memory_at: adjusted gap to 0x%lx", gap);
           unmap_memory(base[i], bytes);
           unmap_memory(base[i-1], size[i-1]);
           i-=2;
@@ -2806,8 +2843,8 @@ char* os::pd_attempt_reserve_memory_at(size_t bytes, char* requested_addr) {
       } else {
         size_t bottom_overlap = base[i] + bytes - requested_addr;
         if (bottom_overlap >= 0 && bottom_overlap < bytes) {
-          if (PrintMiscellaneous && Verbose && bottom_overlap == 0) {
-            warning("attempt_reserve_memory_at: possible alignment bug");
+          if (bottom_overlap == 0) {
+            log_info(os)("attempt_reserve_memory_at: possible alignment bug");
           }
           unmap_memory(requested_addr, bottom_overlap);
           size[i] = bytes - bottom_overlap;
@@ -4337,8 +4374,8 @@ static pset_getloadavg_type pset_getloadavg_ptr = NULL;
 void init_pset_getloadavg_ptr(void) {
   pset_getloadavg_ptr =
     (pset_getloadavg_type)dlsym(RTLD_DEFAULT, "pset_getloadavg");
-  if (PrintMiscellaneous && Verbose && pset_getloadavg_ptr == NULL) {
-    warning("pset_getloadavg function not found");
+  if (pset_getloadavg_ptr == NULL) {
+    log_warning(os)("pset_getloadavg function not found");
   }
 }
 
@@ -4354,7 +4391,7 @@ void os::init(void) {
 
   page_size = sysconf(_SC_PAGESIZE);
   if (page_size == -1) {
-    fatal("os_solaris.cpp: os::init: sysconf failed (%s)", strerror(errno));
+    fatal("os_solaris.cpp: os::init: sysconf failed (%s)", os::strerror(errno));
   }
   init_page_sizes((size_t) page_size);
 
@@ -4366,7 +4403,7 @@ void os::init(void) {
 
   int fd = ::open("/dev/zero", O_RDWR);
   if (fd < 0) {
-    fatal("os::init: cannot open /dev/zero (%s)", strerror(errno));
+    fatal("os::init: cannot open /dev/zero (%s)", os::strerror(errno));
   } else {
     Solaris::set_dev_zero_fd(fd);
 
@@ -4394,6 +4431,13 @@ void os::init(void) {
   // the minimum of what the OS supports (thr_min_stack()), and
   // enough to allow the thread to get to user bytecode execution.
   Solaris::min_stack_allowed = MAX2(thr_min_stack(), Solaris::min_stack_allowed);
+
+  // retrieve entry point for pthread_setname_np
+  void * handle = dlopen("libc.so.1", RTLD_LAZY);
+  if (handle != NULL) {
+    Solaris::_pthread_setname_np =
+        (Solaris::pthread_setname_np_func_t)dlsym(handle, "pthread_setname_np");
+  }
 }
 
 // To install functions for atexit system call
@@ -4421,25 +4465,13 @@ jint os::init_2(void) {
   }
 
   os::set_polling_page(polling_page);
-
-#ifndef PRODUCT
-  if (Verbose && PrintMiscellaneous) {
-    tty->print("[SafePoint Polling address: " INTPTR_FORMAT "]\n",
-               (intptr_t)polling_page);
-  }
-#endif
+  log_info(os)("SafePoint Polling address: " INTPTR_FORMAT, p2i(polling_page));
 
   if (!UseMembar) {
     address mem_serialize_page = (address)Solaris::mmap_chunk(NULL, page_size, MAP_PRIVATE, PROT_READ | PROT_WRITE);
     guarantee(mem_serialize_page != NULL, "mmap Failed for memory serialize page");
     os::set_memory_serialize_page(mem_serialize_page);
-
-#ifndef PRODUCT
-    if (Verbose && PrintMiscellaneous) {
-      tty->print("[Memory Serialize  Page address: " INTPTR_FORMAT "]\n",
-                 (intptr_t)mem_serialize_page);
-    }
-#endif
+    log_info(os)("Memory Serialize Page address: " INTPTR_FORMAT, p2i(mem_serialize_page));
   }
 
   // Check minimum allowable stack size for thread creation and to initialize
@@ -4519,16 +4551,12 @@ jint os::init_2(void) {
     struct rlimit nbr_files;
     int status = getrlimit(RLIMIT_NOFILE, &nbr_files);
     if (status != 0) {
-      if (PrintMiscellaneous && (Verbose || WizardMode)) {
-        perror("os::init_2 getrlimit failed");
-      }
+      log_info(os)("os::init_2 getrlimit failed: %s", os::strerror(errno));
     } else {
       nbr_files.rlim_cur = nbr_files.rlim_max;
       status = setrlimit(RLIMIT_NOFILE, &nbr_files);
       if (status != 0) {
-        if (PrintMiscellaneous && (Verbose || WizardMode)) {
-          perror("os::init_2 setrlimit failed");
-        }
+        log_info(os)("os::init_2 setrlimit failed: %s", os::strerror(errno));
       }
     }
   }
@@ -5607,7 +5635,7 @@ int os::fork_and_exec(char* cmd) {
 
   if (pid < 0) {
     // fork failed
-    warning("fork failed: %s", strerror(errno));
+    warning("fork failed: %s", os::strerror(errno));
     return -1;
 
   } else if (pid == 0) {

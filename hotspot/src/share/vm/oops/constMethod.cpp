@@ -27,6 +27,7 @@
 #include "interpreter/interpreter.hpp"
 #include "memory/heapInspection.hpp"
 #include "memory/metadataFactory.hpp"
+#include "memory/resourceArea.hpp"
 #include "oops/constMethod.hpp"
 #include "oops/method.hpp"
 
@@ -65,6 +66,7 @@ ConstMethod::ConstMethod(int byte_code_size,
   set_max_locals(0);
   set_method_idnum(0);
   set_size_of_parameters(0);
+  set_result_type(T_VOID);
 }
 
 // Accessor that copies to metadata.

@@ -655,6 +655,7 @@ address TemplateInterpreterGenerator::generate_return_entry_for(TosState state, 
   switch (state) {
     case ltos:
     case btos:
+    case ztos:
     case ctos:
     case stos:
     case atos:
@@ -701,6 +702,7 @@ address TemplateInterpreterGenerator::generate_deopt_entry_for(TosState state, i
   switch (state) {
     case ltos:
     case btos:
+    case ztos:
     case ctos:
     case stos:
     case atos:
@@ -2092,12 +2094,14 @@ address TemplateInterpreterGenerator::generate_earlyret_entry_for(TosState state
   // Copied from TemplateTable::_return.
   // Restoration of lr done by remove_activation.
   switch (state) {
+    // Narrow result if state is itos but result type is smaller.
+    case itos: __ narrow(R17_tos); /* fall through */
     case ltos:
     case btos:
+    case ztos:
     case ctos:
     case stos:
-    case atos:
-    case itos: __ mr(R3_RET, R17_tos); break;
+    case atos: __ mr(R3_RET, R17_tos); break;
     case ftos:
     case dtos: __ fmr(F1_RET, F15_ftos); break;
     case vtos: // This might be a constructor. Final fields (and volatile fields on PPC64) need
@@ -2157,6 +2161,10 @@ address TemplateInterpreterGenerator::generate_trace_code(TosState state) {
     bname = "trace_code_btos {";
     tsize = 2;
     break;
+  case ztos:
+    bname = "trace_code_ztos {";
+    tsize = 2;
+    break;
   case ctos:
     bname = "trace_code_ctos {";
     tsize = 2;
@@ -2211,7 +2219,7 @@ address TemplateInterpreterGenerator::generate_trace_code(TosState state) {
   __ ld(R6_ARG4, tsize*Interpreter::stackElementSize, R15_esp);
   __ ld(R5_ARG3, Interpreter::stackElementSize, R15_esp);
   __ mflr(R31);
-  __ call_VM(noreg, CAST_FROM_FN_PTR(address, SharedRuntime::trace_bytecode), /* unused */ R4_ARG2, R5_ARG3, R6_ARG4, false);
+  __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::trace_bytecode), /* unused */ R4_ARG2, R5_ARG3, R6_ARG4, false);
   __ mtlr(R31);
   __ pop(state);
 

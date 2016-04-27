@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@
 #include "code/icBuffer.hpp"
 #include "code/vtableStubs.hpp"
 #include "interpreter/interpreter.hpp"
+#include "memory/resourceArea.hpp"
 #include "oops/compiledICHolder.hpp"
 #include "prims/jvmtiRedefineClassesTrace.hpp"
 #include "runtime/sharedRuntime.hpp"
@@ -321,6 +322,16 @@ bool SharedRuntime::is_wide_vector(int size) {
   // Note, MaxVectorSize == 8 on SPARC.
   assert(size <= 8, "%d bytes vectors are not supported", size);
   return size > 8;
+}
+
+size_t SharedRuntime::trampoline_size() {
+  return 40;
+}
+
+void SharedRuntime::generate_trampoline(MacroAssembler *masm, address destination) {
+  __ set((intptr_t)destination, G3_scratch);
+  __ JMP(G3_scratch, 0);
+  __ delayed()->nop();
 }
 
 // The java_calling_convention describes stack locations as ideal slots on

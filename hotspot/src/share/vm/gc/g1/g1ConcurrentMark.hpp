@@ -34,6 +34,8 @@ class G1CollectedHeap;
 class G1CMBitMap;
 class G1CMTask;
 class G1ConcurrentMark;
+class ConcurrentGCTimer;
+class G1OldTracer;
 typedef GenericTaskQueue<oop, mtGC>              G1CMTaskQueue;
 typedef GenericTaskQueueSet<G1CMTaskQueue, mtGC> G1CMTaskQueueSet;
 
@@ -139,10 +141,7 @@ class G1CMBitMap : public G1CMBitMapRO {
   inline void clear(HeapWord* addr);
   inline bool parMark(HeapWord* addr);
 
-  void clearRange(MemRegion mr);
-
-  // Clear the whole mark bitmap.
-  void clearAll();
+  void clear_range(MemRegion mr);
 };
 
 // Represents a marking stack used by ConcurrentMarking in the G1 collector.
@@ -267,7 +266,7 @@ class ConcurrentMarkThread;
 class G1ConcurrentMark: public CHeapObj<mtGC> {
   friend class ConcurrentMarkThread;
   friend class G1ParNoteEndTask;
-  friend class CalcLiveObjectsClosure;
+  friend class G1VerifyLiveDataClosure;
   friend class G1CMRefProcTaskProxy;
   friend class G1CMRefProcTaskExecutor;
   friend class G1CMKeepAliveAndDrainClosure;
@@ -298,9 +297,6 @@ protected:
   G1CMBitMap              _markBitMap2;
   G1CMBitMapRO*           _prevMarkBitMap; // Completed mark bitmap
   G1CMBitMap*             _nextMarkBitMap; // Under-construction mark bitmap
-
-  BitMap                  _region_bm;
-  BitMap                  _card_bm;
 
   // Heap bounds
   HeapWord*               _heap_start;
@@ -352,17 +348,9 @@ protected:
   // time of remark.
   volatile bool           _concurrent_marking_in_progress;
 
-  // There would be a race between ConcurrentMarkThread and VMThread(ConcurrentMark::abort())
-  // to call ConcurrentGCTimer::register_gc_concurrent_end().
-  // And this variable is used to keep track of concurrent phase.
-  volatile uint           _concurrent_phase_status;
-  // Concurrent phase is not yet started.
-  static const uint       ConcPhaseNotStarted = 0;
-  // Concurrent phase is started.
-  static const uint       ConcPhaseStarted = 1;
-  // Caller thread of ConcurrentGCTimer::register_gc_concurrent_end() is ending concurrent phase.
-  // So other thread should wait until the status to be changed to ConcPhaseNotStarted.
-  static const uint       ConcPhaseStopping = 2;
+  ConcurrentGCTimer*      _gc_timer_cm;
+
+  G1OldTracer*            _gc_tracer_cm;
 
   // All of these times are in ms
   NumberSeq _init_times;
@@ -470,23 +458,6 @@ protected:
   void enter_first_sync_barrier(uint worker_id);
   void enter_second_sync_barrier(uint worker_id);
 
-  // Live Data Counting data structures...
-  // These data structures are initialized at the start of
-  // marking. They are written to while marking is active.
-  // They are aggregated during remark; the aggregated values
-  // are then used to populate the _region_bm, _card_bm, and
-  // the total live bytes, which are then subsequently updated
-  // during cleanup.
-
-  // An array of bitmaps (one bit map per task). Each bitmap
-  // is used to record the cards spanned by the live objects
-  // marked by that task/worker.
-  BitMap*  _count_card_bitmaps;
-
-  // Used to record the number of marked live bytes
-  // (for each region, by worker thread).
-  size_t** _count_marked_bytes;
-
   // Card index of the bottom of the G1 heap. Used for biasing indices into
   // the card bitmaps.
   intptr_t _heap_bottom_card_num;
@@ -497,6 +468,9 @@ protected:
   // end_timer, true to end gc timer after ending concurrent phase.
   void register_concurrent_phase_end_common(bool end_timer);
 
+  // Clear the given bitmap in parallel using the given WorkGang. If may_yield is
+  // true, periodically insert checks to see if this method should exit prematurely.
+  void clear_bitmap(G1CMBitMap* bitmap, WorkGang* workers, bool may_yield);
 public:
   // Manipulation of the global mark stack.
   // The push and pop operations are used by tasks for transfers
@@ -530,10 +504,8 @@ public:
     _concurrent_marking_in_progress = false;
   }
 
-  void register_concurrent_phase_start(const char* title);
-  void register_concurrent_phase_end();
-  // Ends both concurrent phase and timer.
-  void register_concurrent_gc_end_and_stop_timer();
+  void concurrent_cycle_start();
+  void concurrent_cycle_end();
 
   void update_accum_task_vtime(int i, double vtime) {
     _accum_task_vtime[i] += vtime;
@@ -571,22 +543,19 @@ public:
   // G1CollectedHeap
 
   // This notifies CM that a root during initial-mark needs to be
-  // grayed. It is MT-safe. word_size is the size of the object in
-  // words. It is passed explicitly as sometimes we cannot calculate
-  // it from the given object because it might be in an inconsistent
-  // state (e.g., in to-space and being copied). So the caller is
-  // responsible for dealing with this issue (e.g., get the size from
-  // the from-space image when the to-space image might be
-  // inconsistent) and always passing the size. hr is the region that
+  // grayed. It is MT-safe. hr is the region that
   // contains the object and it's passed optionally from callers who
   // might already have it (no point in recalculating it).
   inline void grayRoot(oop obj,
-                       size_t word_size,
-                       uint worker_id,
                        HeapRegion* hr = NULL);
 
-  // Clear the next marking bitmap (will be called concurrently).
-  void clearNextBitmap();
+  // Prepare internal data structures for the next mark cycle. This includes clearing
+  // the next mark bitmap and some internal data structures. This method is intended
+  // to be called concurrently to the mutator. It will yield to safepoint requests.
+  void cleanup_for_next_mark();
+
+  // Clear the previous marking bitmap during safepoint.
+  void clear_prev_bitmap(WorkGang* workers);
 
   // Return whether the next mark bitmap has no marks set. To be used for assertions
   // only. Will not yield to pause requests.
@@ -603,18 +572,18 @@ public:
 
   // Scan all the root regions and mark everything reachable from
   // them.
-  void scanRootRegions();
+  void scan_root_regions();
 
   // Scan a single root region and mark everything reachable from it.
-  void scanRootRegion(HeapRegion* hr, uint worker_id);
+  void scanRootRegion(HeapRegion* hr);
 
   // Do concurrent phase of marking, to a tentative transitive closure.
-  void markFromRoots();
+  void mark_from_roots();
 
   void checkpointRootsFinal(bool clear_all_soft_refs);
   void checkpointRootsFinalWork();
   void cleanup();
-  void completeCleanup();
+  void complete_cleanup();
 
   // Mark in the previous bitmap.  NB: this is usually read-only, so use
   // this carefully!
@@ -642,9 +611,9 @@ public:
 
   inline bool isPrevMarked(oop p) const;
 
-  inline bool do_yield_check(uint worker_i = 0);
+  inline bool do_yield_check();
 
-  // Called to abort the marking cycle after a Full GC takes place.
+  // Abandon current marking iteration due to a Full GC.
   void abort();
 
   bool has_aborted()      { return _has_aborted; }
@@ -652,97 +621,37 @@ public:
   void print_summary_info();
 
   void print_worker_threads_on(outputStream* st) const;
+  void threads_do(ThreadClosure* tc) const;
 
   void print_on_error(outputStream* st) const;
 
-  // Liveness counting
-
-  // Utility routine to set an exclusive range of cards on the given
-  // card liveness bitmap
-  inline void set_card_bitmap_range(BitMap* card_bm,
-                                    BitMap::idx_t start_idx,
-                                    BitMap::idx_t end_idx,
-                                    bool is_par);
-
-  // Returns the card number of the bottom of the G1 heap.
-  // Used in biasing indices into accounting card bitmaps.
-  intptr_t heap_bottom_card_num() const {
-    return _heap_bottom_card_num;
-  }
-
-  // Returns the card bitmap for a given task or worker id.
-  BitMap* count_card_bitmap_for(uint worker_id) {
-    assert(worker_id < _max_worker_id, "oob");
-    assert(_count_card_bitmaps != NULL, "uninitialized");
-    BitMap* task_card_bm = &_count_card_bitmaps[worker_id];
-    assert(task_card_bm->size() == _card_bm.size(), "size mismatch");
-    return task_card_bm;
-  }
-
-  // Returns the array containing the marked bytes for each region,
-  // for the given worker or task id.
-  size_t* count_marked_bytes_array_for(uint worker_id) {
-    assert(worker_id < _max_worker_id, "oob");
-    assert(_count_marked_bytes != NULL, "uninitialized");
-    size_t* marked_bytes_array = _count_marked_bytes[worker_id];
-    assert(marked_bytes_array != NULL, "uninitialized");
-    return marked_bytes_array;
-  }
-
-  // Returns the index in the liveness accounting card table bitmap
-  // for the given address
-  inline BitMap::idx_t card_bitmap_index_for(HeapWord* addr);
-
-  // Counts the size of the given memory region in the the given
-  // marked_bytes array slot for the given HeapRegion.
-  // Sets the bits in the given card bitmap that are associated with the
-  // cards that are spanned by the memory region.
-  inline void count_region(MemRegion mr,
-                           HeapRegion* hr,
-                           size_t* marked_bytes_array,
-                           BitMap* task_card_bm);
-
-  // Counts the given object in the given task/worker counting
-  // data structures.
-  inline void count_object(oop obj,
-                           HeapRegion* hr,
-                           size_t* marked_bytes_array,
-                           BitMap* task_card_bm,
-                           size_t word_size);
-
-  // Attempts to mark the given object and, if successful, counts
-  // the object in the given task/worker counting structures.
-  inline bool par_mark_and_count(oop obj,
-                                 HeapRegion* hr,
-                                 size_t* marked_bytes_array,
-                                 BitMap* task_card_bm);
-
-  // Attempts to mark the given object and, if successful, counts
-  // the object in the task/worker counting structures for the
-  // given worker id.
-  inline bool par_mark_and_count(oop obj,
-                                 size_t word_size,
-                                 HeapRegion* hr,
-                                 uint worker_id);
+  // Attempts to mark the given object on the next mark bitmap.
+  inline bool par_mark(oop obj);
 
   // Returns true if initialization was successfully completed.
   bool completed_initialization() const {
     return _completed_initialization;
   }
 
-protected:
-  // Clear all the per-task bitmaps and arrays used to store the
-  // counting data.
-  void clear_all_count_data();
+  ConcurrentGCTimer* gc_timer_cm() const { return _gc_timer_cm; }
+  G1OldTracer* gc_tracer_cm() const { return _gc_tracer_cm; }
 
-  // Aggregates the counting data for each worker/task
-  // that was constructed while marking. Also sets
-  // the amount of marked bytes for each region and
-  // the top at concurrent mark count.
-  void aggregate_count_data();
+private:
+  // Clear (Reset) all liveness count data.
+  void clear_live_data(WorkGang* workers);
 
-  // Verification routine
-  void verify_count_data();
+#ifdef ASSERT
+  // Verify all of the above data structures that they are in initial state.
+  void verify_live_data_clear();
+#endif
+
+  // Aggregates the per-card liveness data based on the current marking. Also sets
+  // the amount of marked bytes for each region.
+  void create_live_data();
+
+  void finalize_live_data();
+
+  void verify_live_data();
 };
 
 // A class representing a marking task.
@@ -844,12 +753,6 @@ private:
 
   TruncatedSeq                _marking_step_diffs_ms;
 
-  // Counting data structures. Embedding the task's marked_bytes_array
-  // and card bitmap into the actual task saves having to go through
-  // the ConcurrentMark object.
-  size_t*                     _marked_bytes_array;
-  BitMap*                     _card_bm;
-
   // it updates the local fields after this task has claimed
   // a new region to scan
   void setup_for_region(HeapRegion* hr);
@@ -936,9 +839,8 @@ public:
 
   // Grey the object by marking it.  If not already marked, push it on
   // the local queue if below the finger.
-  // Precondition: obj is in region.
-  // Precondition: obj is below region's NTAMS.
-  inline void make_reference_grey(oop obj, HeapRegion* region);
+  // obj is below its region's NTAMS.
+  inline void make_reference_grey(oop obj);
 
   // Grey the object (by calling make_grey_reference) if required,
   // e.g. obj is below its containing region's NTAMS.
@@ -976,8 +878,6 @@ public:
 
   G1CMTask(uint worker_id,
            G1ConcurrentMark *cm,
-           size_t* marked_bytes,
-           BitMap* card_bm,
            G1CMTaskQueue* task_queue,
            G1CMTaskQueueSet* task_queues);
 
@@ -996,18 +896,6 @@ private:
   size_t _total_prev_live_bytes;
   size_t _total_next_live_bytes;
 
-  // These are set up when we come across a "stars humongous" region
-  // (as this is where most of this information is stored, not in the
-  // subsequent "continues humongous" regions). After that, for every
-  // region in a given humongous region series we deduce the right
-  // values for it by simply subtracting the appropriate amount from
-  // these fields. All these values should reach 0 after we've visited
-  // the last region in the series.
-  size_t _hum_used_bytes;
-  size_t _hum_capacity_bytes;
-  size_t _hum_prev_live_bytes;
-  size_t _hum_next_live_bytes;
-
   // Accumulator for the remembered set size
   size_t _total_remset_bytes;
 
@@ -1025,11 +913,6 @@ private:
   static double bytes_to_mb(size_t val) {
     return (double) val / (double) M;
   }
-
-  // See the .cpp file.
-  size_t get_hum_bytes(size_t* hum_bytes);
-  void get_hum_bytes(size_t* used_bytes, size_t* capacity_bytes,
-                     size_t* prev_live_bytes, size_t* next_live_bytes);
 
 public:
   // The header and footer are printed in the constructor and

@@ -60,6 +60,7 @@
 #include "memory/metadataFactory.hpp"
 #include "memory/metaspaceShared.hpp"
 #include "memory/oopFactory.hpp"
+#include "memory/resourceArea.hpp"
 #include "oops/objArrayOop.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/atomic.inline.hpp"
@@ -357,7 +358,7 @@ void ClassLoaderData::unload() {
 
   if (log_is_enabled(Debug, classloaderdata)) {
     ResourceMark rm;
-    outputStream* log = LogHandle(classloaderdata)::debug_stream();
+    outputStream* log = Log(classloaderdata)::debug_stream();
     log->print(": unload loader data " INTPTR_FORMAT, p2i(this));
     log->print(" for instance " INTPTR_FORMAT " of %s", p2i((void *)class_loader()),
                loader_name());
@@ -372,13 +373,10 @@ PackageEntryTable* ClassLoaderData::packages() {
   // Lazily create the package entry table at first request.
   if (_packages == NULL) {
     MutexLockerEx m1(metaspace_lock(), Mutex::_no_safepoint_check_flag);
-    // Check again if _packages has been allocated while we were getting this lock.
-    if (_packages != NULL) {
-      return _packages;
+    // Check if _packages got allocated while we were waiting for this lock.
+    if (_packages == NULL) {
+      _packages = new PackageEntryTable(PackageEntryTable::_packagetable_entry_size);
     }
-    // Ensure _packages is stable, since it is examined without a lock
-    OrderAccess::storestore();
-    _packages = new PackageEntryTable(PackageEntryTable::_packagetable_entry_size);
   }
   return _packages;
 }
@@ -717,7 +715,7 @@ void ClassLoaderDataGraph::log_creation(Handle loader, ClassLoaderData* cld, TRA
   }
 
   ResourceMark rm;
-  outputStream* log = LogHandle(classloaderdata)::debug_stream();
+  outputStream* log = Log(classloaderdata)::debug_stream();
   log->print("create class loader data " INTPTR_FORMAT, p2i(cld));
   log->print(" for instance " INTPTR_FORMAT " of %s", p2i((void *)cld->class_loader()),
              cld->loader_name());
@@ -859,7 +857,7 @@ GrowableArray<ClassLoaderData*>* ClassLoaderDataGraph::new_clds() {
       array->push(curr);
 
       if (log_is_enabled(Debug, classloaderdata)) {
-        outputStream* log = LogHandle(classloaderdata)::debug_stream();
+        outputStream* log = Log(classloaderdata)::debug_stream();
         log->print("found new CLD: ");
         curr->print_value_on(log);
         log->cr();

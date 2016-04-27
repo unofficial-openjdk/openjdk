@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -269,9 +269,6 @@ class SharedRuntime: AllStatic {
   static address native_method_throw_unsatisfied_link_error_entry();
   static address native_method_throw_unsupported_operation_exception_entry();
 
-  // bytecode tracing is only used by the TraceBytecodes
-  static intptr_t trace_bytecode(JavaThread* thread, intptr_t preserve_this_value, intptr_t tos, intptr_t tos2) PRODUCT_RETURN0;
-
   static oop retrieve_receiver(Symbol* sig, frame caller);
 
   static void register_finalizer(JavaThread* thread, oopDesc* obj);
@@ -400,6 +397,10 @@ class SharedRuntime: AllStatic {
   // is true.
   static void convert_ints_to_longints(int i2l_argcnt, int& in_args_count,
                                        BasicType*& in_sig_bt, VMRegPair*& in_regs);
+
+  static size_t trampoline_size();
+
+  static void generate_trampoline(MacroAssembler *masm, address destination);
 
   // Generate I2C and C2I adapters. These adapters are simple argument marshalling
   // blobs. Unlike adapters in the tiger and earlier releases the code in these
@@ -683,6 +684,17 @@ class AdapterHandlerEntry : public BasicHashtableEntry<mtCode> {
   void print_adapter_on(outputStream* st) const;
 };
 
+class CDSAdapterHandlerEntry: public AdapterHandlerEntry {
+  address               _c2i_entry_trampoline;   // allocated from shared spaces "MC" region
+  AdapterHandlerEntry** _adapter_trampoline;     // allocated from shared spaces "MD" region
+
+public:
+  address get_c2i_entry_trampoline()             const { return _c2i_entry_trampoline; }
+  AdapterHandlerEntry** get_adapter_trampoline() const { return _adapter_trampoline; }
+  void init() NOT_CDS_RETURN;
+};
+
+
 class AdapterHandlerLibrary: public AllStatic {
  private:
   static BufferBlob* _buffer; // the temporary code buffer in CodeCache
@@ -690,6 +702,7 @@ class AdapterHandlerLibrary: public AllStatic {
   static AdapterHandlerEntry* _abstract_method_handler;
   static BufferBlob* buffer_blob();
   static void initialize();
+  static AdapterHandlerEntry* get_adapter0(const methodHandle& method);
 
  public:
 

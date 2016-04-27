@@ -372,7 +372,7 @@ bool FileMapInfo::open_for_read() {
       fail_continue("Specified shared archive not found.");
     } else {
       fail_continue("Failed to open shared archive file (%s).",
-                    strerror(errno));
+                    os::strerror(errno));
     }
     return false;
   }
@@ -402,7 +402,7 @@ void FileMapInfo::open_for_write() {
   int fd = open(_full_path, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, 0444);
   if (fd < 0) {
     fail_stop("Unable to create shared archive file %s: (%s).", _full_path,
-              strerror(errno));
+              os::strerror(errno));
   }
   _fd = fd;
   _file_offset = 0;
@@ -956,6 +956,16 @@ bool FileMapInfo::is_in_shared_space(const void* p) {
     }
   }
 
+  return false;
+}
+
+// Check if a given address is within one of the shared regions (ro, rw, md, mc)
+bool FileMapInfo::is_in_shared_region(const void* p, int idx) {
+  assert((idx >= MetaspaceShared::ro) && (idx <= MetaspaceShared::mc), "invalid region index");
+  char* base = _header->region_addr(idx);
+  if (p >= base && p < base + _header->_space[idx]._used) {
+    return true;
+  }
   return false;
 }
 

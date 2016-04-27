@@ -32,6 +32,7 @@
 #include "code/icBuffer.hpp"
 #include "code/vtableStubs.hpp"
 #include "interpreter/interpreter.hpp"
+#include "memory/resourceArea.hpp"
 #include "oops/compiledICHolder.hpp"
 #include "prims/jvmtiRedefineClassesTrace.hpp"
 #include "runtime/sharedRuntime.hpp"
@@ -388,6 +389,14 @@ void RegisterSaver::restore_result_registers(MacroAssembler* masm) {
 // 16 bytes XMM registers are saved by default using fxsave/fxrstor instructions.
 bool SharedRuntime::is_wide_vector(int size) {
   return size > 16;
+}
+
+size_t SharedRuntime::trampoline_size() {
+  return 16;
+}
+
+void SharedRuntime::generate_trampoline(MacroAssembler *masm, address destination) {
+  __ jump(RuntimeAddress(destination));
 }
 
 // The java_calling_convention describes stack locations as ideal slots on

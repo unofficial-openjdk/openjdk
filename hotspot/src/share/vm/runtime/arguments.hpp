@@ -31,7 +31,6 @@
 #include "runtime/os.hpp"
 #include "runtime/perfData.hpp"
 #include "utilities/debug.hpp"
-#include "utilities/top.hpp"
 
 // Arguments parses the command line and recognizes options
 
@@ -48,7 +47,7 @@ class ArgumentBootClassPath;
 // PathString is used as the underlying value container for a
 // SystemProperty and for the string that represents the system
 // boot class path, Arguments::_system_boot_class_path.
-class PathString : public CHeapObj<mtInternal> {
+class PathString : public CHeapObj<mtArguments> {
  protected:
   char*           _value;
  public:
@@ -58,7 +57,7 @@ class PathString : public CHeapObj<mtInternal> {
     if (_value != NULL) {
       FreeHeap(_value);
     }
-    _value = AllocateHeap(strlen(value)+1, mtInternal);
+    _value = AllocateHeap(strlen(value)+1, mtArguments);
     assert(_value != NULL, "Unable to allocate space for new path value");
     if (_value != NULL) {
       strcpy(_value, value);
@@ -77,7 +76,7 @@ class PathString : public CHeapObj<mtInternal> {
       if (_value != NULL) {
         len += strlen(_value);
       }
-      sp = AllocateHeap(len+2, mtInternal);
+      sp = AllocateHeap(len+2, mtArguments);
       assert(sp != NULL, "Unable to allocate space for new append path value");
       if (sp != NULL) {
         if (_value != NULL) {
@@ -98,7 +97,7 @@ class PathString : public CHeapObj<mtInternal> {
     if (value == NULL) {
       _value = NULL;
     } else {
-      _value = AllocateHeap(strlen(value)+1, mtInternal);
+      _value = AllocateHeap(strlen(value)+1, mtArguments);
       strcpy(_value, value);
     }
   }
@@ -144,7 +143,7 @@ class SystemProperty : public PathString {
     if (key == NULL) {
       _key = NULL;
     } else {
-      _key = AllocateHeap(strlen(key)+1, mtInternal);
+      _key = AllocateHeap(strlen(key)+1, mtArguments);
       strcpy(_key, key);
     }
     _next = NULL;
@@ -155,7 +154,7 @@ class SystemProperty : public PathString {
 
 
 // For use by -agentlib, -agentpath and -Xrun
-class AgentLibrary : public CHeapObj<mtInternal> {
+class AgentLibrary : public CHeapObj<mtArguments> {
   friend class AgentLibraryList;
 public:
   // Is this library valid or not. Don't rely on os_lib == NULL as statically
@@ -190,12 +189,12 @@ public:
 
   // Constructor
   AgentLibrary(const char* name, const char* options, bool is_absolute_path, void* os_lib) {
-    _name = AllocateHeap(strlen(name)+1, mtInternal);
+    _name = AllocateHeap(strlen(name)+1, mtArguments);
     strcpy(_name, name);
     if (options == NULL) {
       _options = NULL;
     } else {
-      _options = AllocateHeap(strlen(options)+1, mtInternal);
+      _options = AllocateHeap(strlen(options)+1, mtArguments);
       strcpy(_options, options);
     }
     _is_absolute_path = is_absolute_path;
@@ -265,7 +264,12 @@ typedef struct {
   const char* alias_name;
   LogLevelType level;
   bool exactMatch;
-  LogTagType tag;
+  LogTagType tag0;
+  LogTagType tag1;
+  LogTagType tag2;
+  LogTagType tag3;
+  LogTagType tag4;
+  LogTagType tag5;
 } AliasedLoggingFlag;
 
 class Arguments : AllStatic {
@@ -503,6 +507,10 @@ class Arguments : AllStatic {
   // the version number when the flag became obsolete.
   static bool is_obsolete_flag(const char* flag_name, JDK_Version* version);
 
+#ifndef PRODUCT
+  static const char* removed_develop_logging_flag_name(const char* name);
+#endif // PRODUCT
+
   // Returns 1 if the flag is deprecated (and not yet obsolete or expired).
   //     In this case the 'version' buffer is filled in with the version number when
   //     the flag became deprecated.
@@ -517,7 +525,7 @@ class Arguments : AllStatic {
   // Return NULL if the arg has expired.
   static const char* handle_aliases_and_deprecation(const char* arg, bool warn);
   static bool lookup_logging_aliases(const char* arg, char* buffer);
-  static AliasedLoggingFlag catch_logging_aliases(const char* name);
+  static AliasedLoggingFlag catch_logging_aliases(const char* name, bool on);
   static short  CompileOnlyClassesNum;
   static short  CompileOnlyClassesMax;
   static char** CompileOnlyClasses;
@@ -558,7 +566,7 @@ class Arguments : AllStatic {
   static jint adjust_after_os();
 
   static void set_gc_specific_flags();
-  static inline bool gc_selected(); // whether a gc has been selected
+  static bool gc_selected(); // whether a gc has been selected
   static void select_gc_ergonomically();
 #if INCLUDE_JVMCI
   // Check consistency of jvmci vm argument settings.
@@ -723,20 +731,16 @@ class Arguments : AllStatic {
   static void check_unsupported_dumping_properties() NOT_CDS_RETURN;
 };
 
-bool Arguments::gc_selected() {
-  return UseConcMarkSweepGC || UseG1GC || UseParallelGC || UseParallelOldGC || UseSerialGC;
-}
-
 // Disable options not supported in this release, with a warning if they
 // were explicitly requested on the command-line
-#define UNSUPPORTED_OPTION(opt, description)                    \
-do {                                                            \
-  if (opt) {                                                    \
-    if (FLAG_IS_CMDLINE(opt)) {                                 \
-      warning(description " is disabled in this release.");     \
-    }                                                           \
-    FLAG_SET_DEFAULT(opt, false);                               \
-  }                                                             \
+#define UNSUPPORTED_OPTION(opt)                          \
+do {                                                     \
+  if (opt) {                                             \
+    if (FLAG_IS_CMDLINE(opt)) {                          \
+      warning("-XX:+" #opt " not supported in this VM"); \
+    }                                                    \
+    FLAG_SET_DEFAULT(opt, false);                        \
+  }                                                      \
 } while(0)
 
 #endif // SHARE_VM_RUNTIME_ARGUMENTS_HPP

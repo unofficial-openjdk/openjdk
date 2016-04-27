@@ -29,6 +29,7 @@
 #include "interpreter/bytecodeStream.hpp"
 #include "interpreter/linkResolver.hpp"
 #include "memory/heapInspection.hpp"
+#include "memory/resourceArea.hpp"
 #include "oops/methodData.hpp"
 #include "prims/jvmtiRedefineClasses.hpp"
 #include "runtime/arguments.hpp"
@@ -1728,6 +1729,7 @@ void MethodData::verify_extra_data_clean(CleanExtraDataClosure* cl) {
 }
 
 void MethodData::clean_method_data(BoolObjectClosure* is_alive) {
+  ResourceMark rm;
   for (ProfileData* data = first_data();
        is_valid(data);
        data = next_data(data)) {
@@ -1744,6 +1746,7 @@ void MethodData::clean_method_data(BoolObjectClosure* is_alive) {
 }
 
 void MethodData::clean_weak_method_links() {
+  ResourceMark rm;
   for (ProfileData* data = first_data();
        is_valid(data);
        data = next_data(data)) {
@@ -1757,6 +1760,7 @@ void MethodData::clean_weak_method_links() {
 
 #ifdef ASSERT
 void MethodData::verify_clean_weak_method_links() {
+  ResourceMark rm;
   for (ProfileData* data = first_data();
        is_valid(data);
        data = next_data(data)) {

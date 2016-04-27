@@ -30,9 +30,9 @@
 #include "gc/shared/blockOffsetTable.inline.hpp"
 #include "gc/shared/collectedHeap.inline.hpp"
 #include "gc/shared/genCollectedHeap.hpp"
-#include "gc/shared/liveRange.hpp"
 #include "gc/shared/space.inline.hpp"
 #include "gc/shared/spaceDecorator.hpp"
+#include "logging/logStream.inline.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/resourceArea.hpp"
 #include "memory/universe.inline.hpp"
@@ -501,15 +501,18 @@ void CompactibleFreeListSpace::dump_at_safepoint_with_locks(CMSCollector* c, out
 
 void CompactibleFreeListSpace::reportFreeListStatistics(const char* title) const {
   assert_lock_strong(&_freelistLock);
-  LogHandle(gc, freelist, stats) log;
+  Log(gc, freelist, stats) log;
   if (!log.is_debug()) {
     return;
   }
   log.debug("%s", title);
-  _dictionary->report_statistics(log.debug_stream());
+
+  LogStream out(log.debug());
+  _dictionary->report_statistics(&out);
+
   if (log.is_trace()) {
-    ResourceMark rm;
-    reportIndexedFreeListStatistics(log.trace_stream());
+    LogStream trace_out(log.trace());
+    reportIndexedFreeListStatistics(&trace_out);
     size_t total_size = totalSizeInIndexedFreeLists() +
                        _dictionary->total_chunk_size(DEBUG_ONLY(freelistLock()));
     log.trace(" free=" SIZE_FORMAT " frag=%1.4f", total_size, flsFrag());
@@ -1931,11 +1934,6 @@ CompactibleFreeListSpace::refillLinearAllocBlockIfNeeded(LinearAllocBlock* blk) 
   if (blk->_ptr == NULL) {
     refillLinearAllocBlock(blk);
   }
-  if (PrintMiscellaneous && Verbose) {
-    if (blk->_word_size == 0) {
-      warning("CompactibleFreeListSpace(prologue):: Linear allocation failure");
-    }
-  }
 }
 
 void
@@ -2205,7 +2203,7 @@ class VerifyAllBlksClosure: public BlkClosure {
       }
     }
     if (res == 0) {
-      LogHandle(gc, verify) log;
+      Log(gc, verify) log;
       log.error("Livelock: no rank reduction!");
       log.error(" Current:  addr = " PTR_FORMAT ", size = " SIZE_FORMAT ", obj = %s, live = %s \n"
                 " Previous: addr = " PTR_FORMAT ", size = " SIZE_FORMAT ", obj = %s, live = %s \n",
@@ -2379,14 +2377,14 @@ void CompactibleFreeListSpace::check_free_list_consistency() const {
 
 void CompactibleFreeListSpace::printFLCensus(size_t sweep_count) const {
   assert_lock_strong(&_freelistLock);
-  LogHandle(gc, freelist, census) log;
-  if (!log.is_debug()) {
+  LogTarget(Debug, gc, freelist, census) log;
+  if (!log.is_enabled()) {
     return;
   }
   AdaptiveFreeList<FreeChunk> total;
-  log.debug("end sweep# " SIZE_FORMAT, sweep_count);
+  log.print("end sweep# " SIZE_FORMAT, sweep_count);
   ResourceMark rm;
-  outputStream* out = log.debug_stream();
+  outputStream* out = log.stream();
   AdaptiveFreeList<FreeChunk>::print_labels_on(out, "size");
   size_t total_free = 0;
   for (size_t i = IndexSetStart; i < IndexSetSize; i += IndexSetStride) {
@@ -2408,8 +2406,8 @@ void CompactibleFreeListSpace::printFLCensus(size_t sweep_count) const {
     total.set_split_deaths(total.split_deaths() + fl->split_deaths());
   }
   total.print_on(out, "TOTAL");
-  log.debug("Total free in indexed lists " SIZE_FORMAT " words", total_free);
-  log.debug("growth: %8.5f  deficit: %8.5f",
+  log.print("Total free in indexed lists " SIZE_FORMAT " words", total_free);
+  log.print("growth: %8.5f  deficit: %8.5f",
             (double)(total.split_births()+total.coal_births()-total.split_deaths()-total.coal_deaths())/
                     (total.prev_sweep() != 0 ? (double)total.prev_sweep() : 1.0),
             (double)(total.desired() - total.count())/(total.desired() != 0 ? (double)total.desired() : 1.0));
@@ -2541,7 +2539,7 @@ void CompactibleFreeListSpaceLAB::compute_desired_plab_size() {
         _blocks_to_claim[i].sample(
           MAX2(CMSOldPLABMin,
           MIN2(CMSOldPLABMax,
-               _global_num_blocks[i]/(_global_num_workers[i]*CMSOldPLABNumRefills))));
+               _global_num_blocks[i]/_global_num_workers[i]/CMSOldPLABNumRefills)));
       }
       // Reset counters for next round
       _global_num_workers[i] = 0;
@@ -2840,6 +2838,11 @@ void CompactibleFreeListSpace:: par_get_chunk_of_blocks(size_t word_sz, size_t n
 
   // Otherwise, we'll split a block from the dictionary.
   par_get_chunk_of_blocks_dictionary(word_sz, n, fl);
+}
+
+const size_t CompactibleFreeListSpace::max_flag_size_for_task_size() const {
+  const size_t ergo_max = _old_gen->reserved().word_size() / (CardTableModRefBS::card_size_in_words * BitsPerWord);
+  return ergo_max;
 }
 
 // Set up the space's par_seq_tasks structure for work claiming

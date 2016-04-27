@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -296,7 +296,7 @@ void InterpreterMacroAssembler::call_VM_base(Register oop_result,
     Label L;
     cmpptr(Address(rbp, frame::interpreter_frame_last_sp_offset * wordSize), (int32_t)NULL_WORD);
     jcc(Assembler::equal, L);
-    stop("InterpreterMacroAssembler::call_VM_leaf_base:"
+    stop("InterpreterMacroAssembler::call_VM_base:"
          " last_sp != NULL");
     bind(L);
   }
@@ -349,6 +349,7 @@ void InterpreterMacroAssembler::load_earlyret_value(TosState state) {
                verify_oop(rax, state);              break;
     case ltos: movptr(rax, val_addr);                 break;
     case btos:                                   // fall through
+    case ztos:                                   // fall through
     case ctos:                                   // fall through
     case stos:                                   // fall through
     case itos: movl(rax, val_addr);                 break;
@@ -370,6 +371,7 @@ void InterpreterMacroAssembler::load_earlyret_value(TosState state) {
     case ltos:
                movl(rdx, val_addr1);               // fall through
     case btos:                                     // fall through
+    case ztos:                                     // fall through
     case ctos:                                     // fall through
     case stos:                                     // fall through
     case itos: movl(rax, val_addr);                   break;
@@ -616,6 +618,7 @@ void InterpreterMacroAssembler::pop(TosState state) {
   switch (state) {
   case atos: pop_ptr();                 break;
   case btos:
+  case ztos:
   case ctos:
   case stos:
   case itos: pop_i();                   break;
@@ -633,6 +636,7 @@ void InterpreterMacroAssembler::push(TosState state) {
   switch (state) {
   case atos: push_ptr();                break;
   case btos:
+  case ztos:
   case ctos:
   case stos:
   case itos: push_i();                  break;
@@ -668,6 +672,7 @@ void InterpreterMacroAssembler::pop(TosState state) {
   switch (state) {
     case atos: pop_ptr(rax);                                 break;
     case btos:                                               // fall through
+    case ztos:                                               // fall through
     case ctos:                                               // fall through
     case stos:                                               // fall through
     case itos: pop_i(rax);                                   break;
@@ -716,6 +721,7 @@ void InterpreterMacroAssembler::push(TosState state) {
   switch (state) {
     case atos: push_ptr(rax); break;
     case btos:                                               // fall through
+    case ztos:                                               // fall through
     case ctos:                                               // fall through
     case stos:                                               // fall through
     case itos: push_i(rax);                                    break;
@@ -847,6 +853,51 @@ void InterpreterMacroAssembler::dispatch_via(TosState state, address* table) {
   // load current bytecode
   load_unsigned_byte(rbx, Address(_bcp_register, 0));
   dispatch_base(state, table);
+}
+
+void InterpreterMacroAssembler::narrow(Register result) {
+
+  // Get method->_constMethod->_result_type
+  movptr(rcx, Address(rbp, frame::interpreter_frame_method_offset * wordSize));
+  movptr(rcx, Address(rcx, Method::const_offset()));
+  load_unsigned_byte(rcx, Address(rcx, ConstMethod::result_type_offset()));
+
+  Label done, notBool, notByte, notChar;
+
+  // common case first
+  cmpl(rcx, T_INT);
+  jcc(Assembler::equal, done);
+
+  // mask integer result to narrower return type.
+  cmpl(rcx, T_BOOLEAN);
+  jcc(Assembler::notEqual, notBool);
+  andl(result, 0x1);
+  jmp(done);
+
+  bind(notBool);
+  cmpl(rcx, T_BYTE);
+  jcc(Assembler::notEqual, notByte);
+  LP64_ONLY(movsbl(result, result);)
+  NOT_LP64(shll(result, 24);)      // truncate upper 24 bits
+  NOT_LP64(sarl(result, 24);)      // and sign-extend byte
+  jmp(done);
+
+  bind(notByte);
+  cmpl(rcx, T_CHAR);
+  jcc(Assembler::notEqual, notChar);
+  LP64_ONLY(movzwl(result, result);)
+  NOT_LP64(andl(result, 0xFFFF);)  // truncate upper 16 bits
+  jmp(done);
+
+  bind(notChar);
+  // cmpl(rcx, T_SHORT);  // all that's left
+  // jcc(Assembler::notEqual, done);
+  LP64_ONLY(movswl(result, result);)
+  NOT_LP64(shll(result, 16);)      // truncate upper 16 bits
+  NOT_LP64(sarl(result, 16);)      // and sign-extend short
+
+  // Nothing to do for T_INT
+  bind(done);
 }
 
 // remove activation
@@ -1099,7 +1150,7 @@ void InterpreterMacroAssembler::lock_object(Register lock_reg) {
     movptr(Address(lock_reg, mark_offset), swap_reg);
 
     assert(lock_offset == 0,
-           "displached header must be first word in BasicObjectLock");
+           "displaced header must be first word in BasicObjectLock");
 
     if (os::is_MP()) lock();
     cmpxchgptr(lock_reg, Address(obj_reg, 0));
@@ -1154,7 +1205,7 @@ void InterpreterMacroAssembler::lock_object(Register lock_reg) {
 // Kills:
 //      rax
 //      c_rarg0, c_rarg1, c_rarg2, c_rarg3, ... (param regs)
-//      rscratch1, rscratch2 (scratch regs)
+//      rscratch1 (scratch reg)
 // rax, rbx, rcx, rdx
 void InterpreterMacroAssembler::unlock_object(Register lock_reg) {
   assert(lock_reg == LP64_ONLY(c_rarg1) NOT_LP64(rdx),
@@ -1201,7 +1252,7 @@ void InterpreterMacroAssembler::unlock_object(Register lock_reg) {
     if (os::is_MP()) lock();
     cmpxchgptr(header_reg, Address(obj_reg, 0));
 
-    // zero for recursive case
+    // zero for simple unlock of a stack-lock case
     jcc(Assembler::zero, done);
 
     // Call the runtime routine for slow case.

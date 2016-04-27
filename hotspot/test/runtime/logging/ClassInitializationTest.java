@@ -62,16 +62,16 @@ public class ClassInitializationTest {
             out.shouldContain("[Initialized").shouldContain("without side effects]");
             out.shouldHaveExitValue(0);
         }
-        // (3) Ensure that VerboseVerification still triggers appropriate messages.
-        pb = ProcessTools.createJavaProcessBuilder("-XX:+UnlockDiagnosticVMOptions",
-                                                   "-XX:+VerboseVerification",
+
+        // (3) classinit should turn off.
+        pb = ProcessTools.createJavaProcessBuilder("-Xlog:classinit=off",
                                                    "-Xverify:all",
                                                    "-Xmx64m",
                                                    "BadMap50");
         out = new OutputAnalyzer(pb.start());
-        out.shouldContain("End class verification for:");
-        out.shouldContain("Verification for BadMap50 failed");
-        out.shouldContain("Fail over class verification to old verifier for: BadMap50");
+        out.shouldNotContain("[classinit]");
+        out.shouldNotContain("Fail over class verification to old verifier for: BadMap50");
+
     }
     public static class InnerClass {
         public static void main(String[] args) throws Exception {

@@ -33,6 +33,7 @@
 #include "memory/heapInspection.hpp"
 #include "memory/metadataFactory.hpp"
 #include "memory/oopFactory.hpp"
+#include "memory/resourceArea.hpp"
 #include "oops/constantPool.hpp"
 #include "oops/instanceKlass.hpp"
 #include "oops/objArrayKlass.hpp"
@@ -208,11 +209,11 @@ void ConstantPool::trace_class_resolution(const constantPoolHandle& this_cp, Kla
   if (k() != this_cp->pool_holder()) {
     // only print something if the classes are different
     if (source_file != NULL) {
-      log_info(classresolve)("%s %s %s:%d",
+      log_debug(classresolve)("%s %s %s:%d",
                  this_cp->pool_holder()->external_name(),
                  k->external_name(), source_file, line_number);
     } else {
-      log_info(classresolve)("%s %s",
+      log_debug(classresolve)("%s %s",
                  this_cp->pool_holder()->external_name(),
                  k->external_name());
     }
@@ -281,15 +282,11 @@ Klass* ConstantPool::klass_at_impl(const constantPoolHandle& this_cp, int which,
   ClassLoaderData* this_key = this_cp->pool_holder()->class_loader_data();
   this_key->record_dependency(k(), CHECK_NULL); // Can throw OOM
 
-  if (log_is_enabled(Info, classresolve) && !k->is_array_klass()) {
-    // skip resolving the constant pool so that this code gets
-    // called the next time some bytecodes refer to this class.
+  // logging for classresolve tag.
+  if (log_is_enabled(Debug, classresolve)){
     trace_class_resolution(this_cp, k);
-    return k();
-  } else {
-    this_cp->klass_at_put(which, k());
   }
-
+  this_cp->klass_at_put(which, k());
   entry = this_cp->resolved_klass_at(which);
   assert(entry.is_resolved() && entry.get_klass()->is_klass(), "must be resolved at this point");
   return entry.get_klass();
@@ -344,9 +341,7 @@ Method* ConstantPool::method_at_if_loaded(const constantPoolHandle& cpool,
   int cache_index = decode_cpcache_index(which, true);
   if (!(cache_index >= 0 && cache_index < cpool->cache()->length())) {
     // FIXME: should be an assert
-    if (PrintMiscellaneous && (Verbose||WizardMode)) {
-      tty->print_cr("bad operand %d in:", which); cpool->print();
-    }
+    log_debug(classresolve)("bad operand %d in:", which); cpool->print();
     return NULL;
   }
   ConstantPoolCacheEntry* e = cpool->cache()->entry_at(cache_index);
@@ -400,7 +395,7 @@ int ConstantPool::impl_name_and_type_ref_index_at(int which, bool uncached) {
   int i = which;
   if (!uncached && cache() != NULL) {
     if (ConstantPool::is_invokedynamic_index(which)) {
-      // Invokedynamic index is index into resolved_references
+      // Invokedynamic index is index into the constant pool cache
       int pool_index = invokedynamic_cp_cache_entry_at(which)->constant_pool_index();
       pool_index = invoke_dynamic_name_and_type_ref_index_at(pool_index);
       assert(tag_at(pool_index).is_name_and_type(), "");
@@ -676,10 +671,11 @@ oop ConstantPool::resolve_constant_at_impl(const constantPoolHandle& this_cp, in
       int callee_index             = this_cp->method_handle_klass_index_at(index);
       Symbol*  name =      this_cp->method_handle_name_ref_at(index);
       Symbol*  signature = this_cp->method_handle_signature_ref_at(index);
-      if (PrintMiscellaneous)
-        tty->print_cr("resolve JVM_CONSTANT_MethodHandle:%d [%d/%d/%d] %s.%s",
-                      ref_kind, index, this_cp->method_handle_index_at(index),
-                      callee_index, name->as_C_string(), signature->as_C_string());
+      { ResourceMark rm(THREAD);
+        log_debug(classresolve)("resolve JVM_CONSTANT_MethodHandle:%d [%d/%d/%d] %s.%s",
+                              ref_kind, index, this_cp->method_handle_index_at(index),
+                              callee_index, name->as_C_string(), signature->as_C_string());
+      }
       KlassHandle callee;
       { Klass* k = klass_at_impl(this_cp, callee_index, true, CHECK_NULL);
         callee = KlassHandle(THREAD, k);
@@ -698,10 +694,11 @@ oop ConstantPool::resolve_constant_at_impl(const constantPoolHandle& this_cp, in
   case JVM_CONSTANT_MethodType:
     {
       Symbol*  signature = this_cp->method_type_signature_at(index);
-      if (PrintMiscellaneous)
-        tty->print_cr("resolve JVM_CONSTANT_MethodType [%d/%d] %s",
-                      index, this_cp->method_type_index_at(index),
-                      signature->as_C_string());
+      { ResourceMark rm(THREAD);
+        log_debug(classresolve)("resolve JVM_CONSTANT_MethodType [%d/%d] %s",
+                              index, this_cp->method_type_index_at(index),
+                              signature->as_C_string());
+      }
       KlassHandle klass(THREAD, this_cp->pool_holder());
       Handle value = SystemDictionary::find_method_handle_type(signature, klass, THREAD);
       result_oop = value();
@@ -968,8 +965,8 @@ bool ConstantPool::compare_entry_to(int index1, const constantPoolHandle& cp2,
 
   case JVM_CONSTANT_MethodType:
   {
-    int k1 = method_type_index_at_error_ok(index1);
-    int k2 = cp2->method_type_index_at_error_ok(index2);
+    int k1 = method_type_index_at(index1);
+    int k2 = cp2->method_type_index_at(index2);
     bool match = compare_entry_to(k1, cp2, k2, CHECK_false);
     if (match) {
       return true;
@@ -978,11 +975,11 @@ bool ConstantPool::compare_entry_to(int index1, const constantPoolHandle& cp2,
 
   case JVM_CONSTANT_MethodHandle:
   {
-    int k1 = method_handle_ref_kind_at_error_ok(index1);
-    int k2 = cp2->method_handle_ref_kind_at_error_ok(index2);
+    int k1 = method_handle_ref_kind_at(index1);
+    int k2 = cp2->method_handle_ref_kind_at(index2);
     if (k1 == k2) {
-      int i1 = method_handle_index_at_error_ok(index1);
-      int i2 = cp2->method_handle_index_at_error_ok(index2);
+      int i1 = method_handle_index_at(index1);
+      int i2 = cp2->method_handle_index_at(index2);
       bool match = compare_entry_to(i1, cp2, i2, CHECK_false);
       if (match) {
         return true;
@@ -1314,15 +1311,15 @@ void ConstantPool::copy_entry_to(const constantPoolHandle& from_cp, int from_i,
   case JVM_CONSTANT_MethodType:
   case JVM_CONSTANT_MethodTypeInError:
   {
-    jint k = from_cp->method_type_index_at_error_ok(from_i);
+    jint k = from_cp->method_type_index_at(from_i);
     to_cp->method_type_index_at_put(to_i, k);
   } break;
 
   case JVM_CONSTANT_MethodHandle:
   case JVM_CONSTANT_MethodHandleInError:
   {
-    int k1 = from_cp->method_handle_ref_kind_at_error_ok(from_i);
-    int k2 = from_cp->method_handle_index_at_error_ok(from_i);
+    int k1 = from_cp->method_handle_ref_kind_at(from_i);
+    int k2 = from_cp->method_handle_index_at(from_i);
     to_cp->method_handle_index_at_put(to_i, k1, k2);
   } break;
 
@@ -1758,8 +1755,8 @@ int ConstantPool::copy_cpool_bytes(int cpool_size,
       case JVM_CONSTANT_MethodHandle:
       case JVM_CONSTANT_MethodHandleInError: {
         *bytes = JVM_CONSTANT_MethodHandle;
-        int kind = method_handle_ref_kind_at_error_ok(idx);
-        idx1 = method_handle_index_at_error_ok(idx);
+        int kind = method_handle_ref_kind_at(idx);
+        idx1 = method_handle_index_at(idx);
         *(bytes+1) = (unsigned char) kind;
         Bytes::put_Java_u2((address) (bytes+2), idx1);
         DBG(printf("JVM_CONSTANT_MethodHandle: %d %hd", kind, idx1));
@@ -1768,7 +1765,7 @@ int ConstantPool::copy_cpool_bytes(int cpool_size,
       case JVM_CONSTANT_MethodType:
       case JVM_CONSTANT_MethodTypeInError: {
         *bytes = JVM_CONSTANT_MethodType;
-        idx1 = method_type_index_at_error_ok(idx);
+        idx1 = method_type_index_at(idx);
         Bytes::put_Java_u2((address) (bytes+1), idx1);
         DBG(printf("JVM_CONSTANT_MethodType: %hd", idx1));
         break;
@@ -1956,12 +1953,12 @@ void ConstantPool::print_entry_on(const int index, outputStream* st) {
       break;
     case JVM_CONSTANT_MethodHandle :
     case JVM_CONSTANT_MethodHandleInError :
-      st->print("ref_kind=%d", method_handle_ref_kind_at_error_ok(index));
-      st->print(" ref_index=%d", method_handle_index_at_error_ok(index));
+      st->print("ref_kind=%d", method_handle_ref_kind_at(index));
+      st->print(" ref_index=%d", method_handle_index_at(index));
       break;
     case JVM_CONSTANT_MethodType :
     case JVM_CONSTANT_MethodTypeInError :
-      st->print("signature_index=%d", method_type_index_at_error_ok(index));
+      st->print("signature_index=%d", method_type_index_at(index));
       break;
     case JVM_CONSTANT_InvokeDynamic :
       {

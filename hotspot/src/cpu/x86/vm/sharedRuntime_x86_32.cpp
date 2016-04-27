@@ -29,6 +29,7 @@
 #include "code/icBuffer.hpp"
 #include "code/vtableStubs.hpp"
 #include "interpreter/interpreter.hpp"
+#include "memory/resourceArea.hpp"
 #include "oops/compiledICHolder.hpp"
 #include "prims/jvmtiRedefineClassesTrace.hpp"
 #include "runtime/sharedRuntime.hpp"
@@ -352,6 +353,14 @@ void RegisterSaver::restore_result_registers(MacroAssembler* masm) {
 // Note, MaxVectorSize == 0 with UseSSE < 2 and vectors are not generated.
 bool SharedRuntime::is_wide_vector(int size) {
   return size > 16;
+}
+
+size_t SharedRuntime::trampoline_size() {
+  return 16;
+}
+
+void SharedRuntime::generate_trampoline(MacroAssembler *masm, address destination) {
+  __ jump(RuntimeAddress(destination));
 }
 
 // The java_calling_convention describes stack locations as ideal slots on

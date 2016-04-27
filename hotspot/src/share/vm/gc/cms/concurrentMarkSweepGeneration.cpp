@@ -425,7 +425,7 @@ void CMSStats::print_on(outputStream *st) const {
     st->print(",cms_consumption_rate=%g,time_until_full=%g",
               cms_consumption_rate(), time_until_cms_gen_full());
   }
-  st->print(" ");
+  st->cr();
 }
 #endif // #ifndef PRODUCT
 
@@ -502,7 +502,7 @@ CMSCollector::CMSCollector(ConcurrentMarkSweepGeneration* cmsGen,
   {
     MutexLockerEx x(_markBitMap.lock(), Mutex::_no_safepoint_check_flag);
     if (!_markBitMap.allocate(_span)) {
-      warning("Failed to allocate CMS Bit Map");
+      log_warning(gc)("Failed to allocate CMS Bit Map");
       return;
     }
     assert(_markBitMap.covers(_span), "_markBitMap inconsistency?");
@@ -513,7 +513,7 @@ CMSCollector::CMSCollector(ConcurrentMarkSweepGeneration* cmsGen,
   }
 
   if (!_markStack.allocate(MarkStackSize)) {
-    warning("Failed to allocate CMS Marking Stack");
+    log_warning(gc)("Failed to allocate CMS Marking Stack");
     return;
   }
 
@@ -527,8 +527,7 @@ CMSCollector::CMSCollector(ConcurrentMarkSweepGeneration* cmsGen,
       _conc_workers = new YieldingFlexibleWorkGang("CMS Thread",
                                  ConcGCThreads, true);
       if (_conc_workers == NULL) {
-        warning("GC/CMS: _conc_workers allocation failure: "
-              "forcing -CMSConcurrentMTEnabled");
+        log_warning(gc)("GC/CMS: _conc_workers allocation failure: forcing -CMSConcurrentMTEnabled");
         CMSConcurrentMTEnabled = false;
       } else {
         _conc_workers->initialize_workers();
@@ -559,7 +558,7 @@ CMSCollector::CMSCollector(ConcurrentMarkSweepGeneration* cmsGen,
         && num_queues > 0) {
       _task_queues = new OopTaskQueueSet(num_queues);
       if (_task_queues == NULL) {
-        warning("task_queues allocation failure.");
+        log_warning(gc)("task_queues allocation failure.");
         return;
       }
       _hash_seed = NEW_C_HEAP_ARRAY(int, num_queues, mtGC);
@@ -567,7 +566,7 @@ CMSCollector::CMSCollector(ConcurrentMarkSweepGeneration* cmsGen,
       for (i = 0; i < num_queues; i++) {
         PaddedOopTaskQueue *q = new PaddedOopTaskQueue();
         if (q == NULL) {
-          warning("work_queue allocation failure.");
+          log_warning(gc)("work_queue allocation failure.");
           return;
         }
         _task_queues->register_queue(i, q);
@@ -694,7 +693,7 @@ bool ConcurrentMarkSweepGeneration::promotion_attempt_is_safe(size_t max_promoti
 // At a promotion failure dump information on block layout in heap
 // (cms old generation).
 void ConcurrentMarkSweepGeneration::promotion_failure_occurred() {
-  LogHandle(gc, promotion) log;
+  Log(gc, promotion) log;
   if (log.is_trace()) {
     ResourceMark rm;
     cmsSpace()->dump_at_safepoint_with_locks(collector(), log.trace_stream());
@@ -753,7 +752,7 @@ void ConcurrentMarkSweepGeneration::compute_new_size_free_list() {
     size_t desired_capacity = (size_t)(used() / ((double) 1 - desired_free_percentage));
     assert(desired_capacity >= capacity(), "invalid expansion size");
     size_t expand_bytes = MAX2(desired_capacity - capacity(), MinHeapDeltaBytes);
-    LogHandle(gc) log;
+    Log(gc) log;
     if (log.is_trace()) {
       size_t desired_capacity = (size_t)(used() / ((double) 1 - desired_free_percentage));
       log.trace("From compute_new_size: ");
@@ -1109,8 +1108,10 @@ bool ConcurrentMarkSweepGeneration::should_collect(bool   full,
 }
 
 bool CMSCollector::shouldConcurrentCollect() {
+  LogTarget(Trace, gc) log;
+
   if (_full_gc_requested) {
-    log_trace(gc)("CMSCollector: collect because of explicit  gc request (or GCLocker)");
+    log.print("CMSCollector: collect because of explicit  gc request (or GCLocker)");
     return true;
   }
 
@@ -1118,21 +1119,22 @@ bool CMSCollector::shouldConcurrentCollect() {
   // ------------------------------------------------------------------
   // Print out lots of information which affects the initiation of
   // a collection.
-  LogHandle(gc) log;
-  if (log.is_trace() && stats().valid()) {
-    log.trace("CMSCollector shouldConcurrentCollect: ");
-    ResourceMark rm;
-    stats().print_on(log.debug_stream());
-    log.trace("time_until_cms_gen_full %3.7f", stats().time_until_cms_gen_full());
-    log.trace("free=" SIZE_FORMAT, _cmsGen->free());
-    log.trace("contiguous_available=" SIZE_FORMAT, _cmsGen->contiguous_available());
-    log.trace("promotion_rate=%g", stats().promotion_rate());
-    log.trace("cms_allocation_rate=%g", stats().cms_allocation_rate());
-    log.trace("occupancy=%3.7f", _cmsGen->occupancy());
-    log.trace("initiatingOccupancy=%3.7f", _cmsGen->initiating_occupancy());
-    log.trace("cms_time_since_begin=%3.7f", stats().cms_time_since_begin());
-    log.trace("cms_time_since_end=%3.7f", stats().cms_time_since_end());
-    log.trace("metadata initialized %d", MetaspaceGC::should_concurrent_collect());
+  if (log.is_enabled() && stats().valid()) {
+    log.print("CMSCollector shouldConcurrentCollect: ");
+
+    LogStream out(log);
+    stats().print_on(&out);
+
+    log.print("time_until_cms_gen_full %3.7f", stats().time_until_cms_gen_full());
+    log.print("free=" SIZE_FORMAT, _cmsGen->free());
+    log.print("contiguous_available=" SIZE_FORMAT, _cmsGen->contiguous_available());
+    log.print("promotion_rate=%g", stats().promotion_rate());
+    log.print("cms_allocation_rate=%g", stats().cms_allocation_rate());
+    log.print("occupancy=%3.7f", _cmsGen->occupancy());
+    log.print("initiatingOccupancy=%3.7f", _cmsGen->initiating_occupancy());
+    log.print("cms_time_since_begin=%3.7f", stats().cms_time_since_begin());
+    log.print("cms_time_since_end=%3.7f", stats().cms_time_since_end());
+    log.print("metadata initialized %d", MetaspaceGC::should_concurrent_collect());
   }
   // ------------------------------------------------------------------
 
@@ -1150,8 +1152,8 @@ bool CMSCollector::shouldConcurrentCollect() {
       // this branch will not fire after the first successful CMS
       // collection because the stats should then be valid.
       if (_cmsGen->occupancy() >= _bootstrap_occupancy) {
-        log_trace(gc)(" CMSCollector: collect for bootstrapping statistics: occupancy = %f, boot occupancy = %f",
-                      _cmsGen->occupancy(), _bootstrap_occupancy);
+        log.print(" CMSCollector: collect for bootstrapping statistics: occupancy = %f, boot occupancy = %f",
+                  _cmsGen->occupancy(), _bootstrap_occupancy);
         return true;
       }
     }
@@ -1163,7 +1165,7 @@ bool CMSCollector::shouldConcurrentCollect() {
   // XXX We need to make sure that the gen expansion
   // criterion dovetails well with this. XXX NEED TO FIX THIS
   if (_cmsGen->should_concurrent_collect()) {
-    log_trace(gc)("CMS old gen initiated");
+    log.print("CMS old gen initiated");
     return true;
   }
 
@@ -1174,12 +1176,12 @@ bool CMSCollector::shouldConcurrentCollect() {
   assert(gch->collector_policy()->is_generation_policy(),
          "You may want to check the correctness of the following");
   if (gch->incremental_collection_will_fail(true /* consult_young */)) {
-    log_trace(gc)("CMSCollector: collect because incremental collection will fail ");
+    log.print("CMSCollector: collect because incremental collection will fail ");
     return true;
   }
 
   if (MetaspaceGC::should_concurrent_collect()) {
-    log_trace(gc)("CMSCollector: collect for metadata allocation ");
+    log.print("CMSCollector: collect for metadata allocation ");
     return true;
   }
 
@@ -1194,10 +1196,10 @@ bool CMSCollector::shouldConcurrentCollect() {
     // as we want to be able to trigger the first CMS cycle as well)
     if (stats().cms_time_since_begin() >= (CMSTriggerInterval / ((double) MILLIUNITS))) {
       if (stats().valid()) {
-        log_trace(gc)("CMSCollector: collect because of trigger interval (time since last begin %3.7f secs)",
-                      stats().cms_time_since_begin());
+        log.print("CMSCollector: collect because of trigger interval (time since last begin %3.7f secs)",
+                  stats().cms_time_since_begin());
       } else {
-        log_trace(gc)("CMSCollector: collect because of trigger interval (first collection)");
+        log.print("CMSCollector: collect because of trigger interval (first collection)");
       }
       return true;
     }
@@ -1413,7 +1415,7 @@ void CMSCollector::acquire_control_and_collect(bool full,
     if (_foregroundGCShouldWait) {
       // We are going to be waiting for action for the CMS thread;
       // it had better not be gone (for instance at shutdown)!
-      assert(ConcurrentMarkSweepThread::cmst() != NULL,
+      assert(ConcurrentMarkSweepThread::cmst() != NULL && !ConcurrentMarkSweepThread::cmst()->has_terminated(),
              "CMS thread must be running");
       // Wait here until the background collector gives us the go-ahead
       ConcurrentMarkSweepThread::clear_CMS_flag(
@@ -1519,7 +1521,7 @@ void CMSCollector::do_compaction_work(bool clear_all_soft_refs) {
 
   gch->pre_full_gc_dump(gc_timer);
 
-  GCTraceTime(Trace, gc) t("CMS:MSC");
+  GCTraceTime(Trace, gc, phases) t("CMS:MSC");
 
   // Temporarily widen the span of the weak reference processing to
   // the entire heap.
@@ -1606,7 +1608,7 @@ void CMSCollector::do_compaction_work(bool clear_all_soft_refs) {
 }
 
 void CMSCollector::print_eden_and_survivor_chunk_arrays() {
-  LogHandle(gc, heap) log;
+  Log(gc, heap) log;
   if (!log.is_trace()) {
     return;
   }
@@ -2222,7 +2224,7 @@ class VerifyMarkedClosure: public BitMapClosure {
   bool do_bit(size_t offset) {
     HeapWord* addr = _marks->offsetToHeapWord(offset);
     if (!_marks->isMarked(addr)) {
-      LogHandle(gc, verify) log;
+      Log(gc, verify) log;
       ResourceMark rm;
       oop(addr)->print_on(log.error_stream());
       log.error(" (" INTPTR_FORMAT " should have been marked)", p2i(addr));
@@ -2235,7 +2237,7 @@ class VerifyMarkedClosure: public BitMapClosure {
 };
 
 bool CMSCollector::verify_after_remark() {
-  GCTraceTime(Info, gc, verify) tm("Verifying CMS Marking.");
+  GCTraceTime(Info, gc, phases, verify) tm("Verifying CMS Marking.");
   MutexLockerEx ml(verification_mark_bm()->lock(), Mutex::_no_safepoint_check_flag);
   static bool init = false;
 
@@ -2287,17 +2289,16 @@ bool CMSCollector::verify_after_remark() {
     // all marking, then check if the new marks-vector is
     // a subset of the CMS marks-vector.
     verify_after_remark_work_1();
-  } else if (CMSRemarkVerifyVariant == 2) {
+  } else {
+    guarantee(CMSRemarkVerifyVariant == 2, "Range checking for CMSRemarkVerifyVariant should guarantee 1 or 2");
     // In this second variant of verification, we flag an error
     // (i.e. an object reachable in the new marks-vector not reachable
     // in the CMS marks-vector) immediately, also indicating the
     // identify of an object (A) that references the unmarked object (B) --
     // presumably, a mutation to A failed to be picked up by preclean/remark?
     verify_after_remark_work_2();
-  } else {
-    warning("Unrecognized value " UINTX_FORMAT " for CMSRemarkVerifyVariant",
-            CMSRemarkVerifyVariant);
   }
+
   return true;
 }
 
@@ -2349,7 +2350,7 @@ void CMSCollector::verify_after_remark_work_1() {
   VerifyMarkedClosure vcl(markBitMap());
   verification_mark_bm()->iterate(&vcl);
   if (vcl.failed()) {
-    LogHandle(gc, verify) log;
+    Log(gc, verify) log;
     log.error("Failed marking verification after remark");
     ResourceMark rm;
     gch->print_on(log.error_stream());
@@ -2820,7 +2821,7 @@ void CMSCollector::checkpointRootsInitialWork() {
   // CMS collection cycle.
   setup_cms_unloading_and_verification_state();
 
-  GCTraceTime(Trace, gc) ts("checkpointRootsInitialWork", _gc_timer_cm);
+  GCTraceTime(Trace, gc, phases) ts("checkpointRootsInitialWork", _gc_timer_cm);
 
   // Reset all the PLAB chunk arrays if necessary.
   if (_survivor_plab_array != NULL && !CMSPLABRecordAlways) {
@@ -3600,7 +3601,7 @@ void CMSCollector::preclean() {
     size_t capacity = get_eden_capacity();
     // Don't start sampling unless we will get sufficiently
     // many samples.
-    if (used < (capacity/(CMSScheduleRemarkSamplingRatio * 100)
+    if (used < (((capacity / CMSScheduleRemarkSamplingRatio) / 100)
                 * CMSScheduleRemarkEdenPenetration)) {
       _start_sampling = true;
     } else {
@@ -3650,7 +3651,7 @@ void CMSCollector::abortable_preclean() {
     // XXX FIX ME!!! YSR
     size_t loops = 0, workdone = 0, cumworkdone = 0, waited = 0;
     while (!(should_abort_preclean() ||
-             ConcurrentMarkSweepThread::should_terminate())) {
+             ConcurrentMarkSweepThread::cmst()->should_terminate())) {
       workdone = preclean_work(CMSPrecleanRefLists2, CMSPrecleanSurvivors2);
       cumworkdone += workdone;
       loops++;
@@ -4104,8 +4105,6 @@ void CMSCollector::checkpointRootsFinal() {
       // expect it to be false and set to true
       FlagSetting fl(gch->_is_gc_active, false);
 
-      GCTraceTime(Trace, gc) tm("Pause Scavenge Before Remark", _gc_timer_cm);
-
       gch->do_collection(true,                      // full (i.e. force, see below)
                          false,                     // !clear_all_soft_refs
                          0,                         // size
@@ -4123,7 +4122,7 @@ void CMSCollector::checkpointRootsFinal() {
 }
 
 void CMSCollector::checkpointRootsFinalWork() {
-  GCTraceTime(Trace, gc) tm("checkpointRootsFinalWork", _gc_timer_cm);
+  GCTraceTime(Trace, gc, phases) tm("checkpointRootsFinalWork", _gc_timer_cm);
 
   assert(haveFreelistLocks(), "must have free list locks");
   assert_lock_strong(bitMapLock());
@@ -4173,10 +4172,10 @@ void CMSCollector::checkpointRootsFinalWork() {
     // the most recent young generation GC, minus those cleaned up by the
     // concurrent precleaning.
     if (CMSParallelRemarkEnabled) {
-      GCTraceTime(Debug, gc) t("Rescan (parallel)", _gc_timer_cm);
+      GCTraceTime(Debug, gc, phases) t("Rescan (parallel)", _gc_timer_cm);
       do_remark_parallel();
     } else {
-      GCTraceTime(Debug, gc) t("Rescan (non-parallel)", _gc_timer_cm);
+      GCTraceTime(Debug, gc, phases) t("Rescan (non-parallel)", _gc_timer_cm);
       do_remark_non_parallel();
     }
   }
@@ -4184,7 +4183,7 @@ void CMSCollector::checkpointRootsFinalWork() {
   verify_overflow_empty();
 
   {
-    GCTraceTime(Trace, gc) ts("refProcessingWork", _gc_timer_cm);
+    GCTraceTime(Trace, gc, phases) ts("refProcessingWork", _gc_timer_cm);
     refProcessingWork();
   }
   verify_work_stacks_empty();
@@ -4907,7 +4906,7 @@ void CMSCollector::do_remark_non_parallel() {
                               NULL,  // space is set further below
                               &_markBitMap, &_markStack, &mrias_cl);
   {
-    GCTraceTime(Trace, gc) t("Grey Object Rescan", _gc_timer_cm);
+    GCTraceTime(Trace, gc, phases) t("Grey Object Rescan", _gc_timer_cm);
     // Iterate over the dirty cards, setting the corresponding bits in the
     // mod union table.
     {
@@ -4941,7 +4940,7 @@ void CMSCollector::do_remark_non_parallel() {
     Universe::verify();
   }
   {
-    GCTraceTime(Trace, gc) t("Root Rescan", _gc_timer_cm);
+    GCTraceTime(Trace, gc, phases) t("Root Rescan", _gc_timer_cm);
 
     verify_work_stacks_empty();
 
@@ -4963,7 +4962,7 @@ void CMSCollector::do_remark_non_parallel() {
   }
 
   {
-    GCTraceTime(Trace, gc) t("Visit Unhandled CLDs", _gc_timer_cm);
+    GCTraceTime(Trace, gc, phases) t("Visit Unhandled CLDs", _gc_timer_cm);
 
     verify_work_stacks_empty();
 
@@ -4982,7 +4981,7 @@ void CMSCollector::do_remark_non_parallel() {
   }
 
   {
-    GCTraceTime(Trace, gc) t("Dirty Klass Scan", _gc_timer_cm);
+    GCTraceTime(Trace, gc, phases) t("Dirty Klass Scan", _gc_timer_cm);
 
     verify_work_stacks_empty();
 
@@ -5186,7 +5185,7 @@ void CMSCollector::refProcessingWork() {
                                 _span, &_markBitMap, &_markStack,
                                 &cmsKeepAliveClosure, false /* !preclean */);
   {
-    GCTraceTime(Debug, gc) t("Weak Refs Processing", _gc_timer_cm);
+    GCTraceTime(Debug, gc, phases) t("Reference Processing", _gc_timer_cm);
 
     ReferenceProcessorStats stats;
     if (rp->processing_is_mt()) {
@@ -5228,7 +5227,7 @@ void CMSCollector::refProcessingWork() {
 
   if (should_unload_classes()) {
     {
-      GCTraceTime(Debug, gc) t("Class Unloading", _gc_timer_cm);
+      GCTraceTime(Debug, gc, phases) t("Class Unloading", _gc_timer_cm);
 
       // Unload classes and purge the SystemDictionary.
       bool purged_class = SystemDictionary::do_unloading(&_is_alive_closure);
@@ -5241,13 +5240,13 @@ void CMSCollector::refProcessingWork() {
     }
 
     {
-      GCTraceTime(Debug, gc) t("Scrub Symbol Table", _gc_timer_cm);
+      GCTraceTime(Debug, gc, phases) t("Scrub Symbol Table", _gc_timer_cm);
       // Clean up unreferenced symbols in symbol table.
       SymbolTable::unlink();
     }
 
     {
-      GCTraceTime(Debug, gc) t("Scrub String Table", _gc_timer_cm);
+      GCTraceTime(Debug, gc, phases) t("Scrub String Table", _gc_timer_cm);
       // Delete entries for dead interned strings.
       StringTable::unlink(&_is_alive_closure);
     }
@@ -5657,13 +5656,13 @@ bool CMSBitMap::allocate(MemRegion mr) {
   ReservedSpace brs(ReservedSpace::allocation_align_size_up(
                      (_bmWordSize >> (_shifter + LogBitsPerByte)) + 1));
   if (!brs.is_reserved()) {
-    warning("CMS bit map allocation failure");
+    log_warning(gc)("CMS bit map allocation failure");
     return false;
   }
   // For now we'll just commit all of the bit map up front.
   // Later on we'll try to be more parsimonious with swap.
   if (!_virtual_space.initialize(brs, brs.size())) {
-    warning("CMS bit map backing store failure");
+    log_warning(gc)("CMS bit map backing store failure");
     return false;
   }
   assert(_virtual_space.committed_size() == brs.size(),
@@ -5749,11 +5748,11 @@ bool CMSMarkStack::allocate(size_t size) {
   ReservedSpace rs(ReservedSpace::allocation_align_size_up(
                    size * sizeof(oop)));
   if (!rs.is_reserved()) {
-    warning("CMSMarkStack allocation failure");
+    log_warning(gc)("CMSMarkStack allocation failure");
     return false;
   }
   if (!_virtual_space.initialize(rs, rs.size())) {
-    warning("CMSMarkStack backing store failure");
+    log_warning(gc)("CMSMarkStack backing store failure");
     return false;
   }
   assert(_virtual_space.committed_size() == rs.size(),
@@ -5878,7 +5877,7 @@ void MarkRefsIntoVerifyClosure::do_oop(oop obj) {
   if (_span.contains(addr)) {
     _verification_bm->mark(addr);
     if (!_cms_bm->isMarked(addr)) {
-      LogHandle(gc, verify) log;
+      Log(gc, verify) log;
       ResourceMark rm;
       oop(addr)->print_on(log.error_stream());
       log.error(" (" INTPTR_FORMAT " should have been marked)", p2i(addr));
@@ -6659,7 +6658,7 @@ void PushAndMarkVerifyClosure::do_oop(oop obj) {
     // Oop lies in _span and isn't yet grey or black
     _verification_bm->mark(addr);            // now grey
     if (!_cms_bm->isMarked(addr)) {
-      LogHandle(gc, verify) log;
+      Log(gc, verify) log;
       ResourceMark rm;
       oop(addr)->print_on(log.error_stream());
       log.error(" (" INTPTR_FORMAT " should have been marked)", p2i(addr));
@@ -7047,13 +7046,13 @@ SweepClosure::SweepClosure(CMSCollector* collector,
 }
 
 void SweepClosure::print_on(outputStream* st) const {
-  tty->print_cr("_sp = [" PTR_FORMAT "," PTR_FORMAT ")",
-                p2i(_sp->bottom()), p2i(_sp->end()));
-  tty->print_cr("_limit = " PTR_FORMAT, p2i(_limit));
-  tty->print_cr("_freeFinger = " PTR_FORMAT, p2i(_freeFinger));
-  NOT_PRODUCT(tty->print_cr("_last_fc = " PTR_FORMAT, p2i(_last_fc));)
-  tty->print_cr("_inFreeRange = %d, _freeRangeInFreeLists = %d, _lastFreeRangeCoalesced = %d",
-                _inFreeRange, _freeRangeInFreeLists, _lastFreeRangeCoalesced);
+  st->print_cr("_sp = [" PTR_FORMAT "," PTR_FORMAT ")",
+               p2i(_sp->bottom()), p2i(_sp->end()));
+  st->print_cr("_limit = " PTR_FORMAT, p2i(_limit));
+  st->print_cr("_freeFinger = " PTR_FORMAT, p2i(_freeFinger));
+  NOT_PRODUCT(st->print_cr("_last_fc = " PTR_FORMAT, p2i(_last_fc));)
+  st->print_cr("_inFreeRange = %d, _freeRangeInFreeLists = %d, _lastFreeRangeCoalesced = %d",
+               _inFreeRange, _freeRangeInFreeLists, _lastFreeRangeCoalesced);
 }
 
 #ifndef PRODUCT
@@ -7066,8 +7065,10 @@ SweepClosure::~SweepClosure() {
   assert(_limit >= _sp->bottom() && _limit <= _sp->end(),
          "sweep _limit out of bounds");
   if (inFreeRange()) {
-    warning("inFreeRange() should have been reset; dumping state of SweepClosure");
-    print();
+    Log(gc, sweep) log;
+    log.error("inFreeRange() should have been reset; dumping state of SweepClosure");
+    ResourceMark rm;
+    print_on(log.error_stream());
     ShouldNotReachHere();
   }
 

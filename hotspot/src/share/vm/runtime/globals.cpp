@@ -35,7 +35,6 @@
 #include "trace/tracing.hpp"
 #include "utilities/macros.hpp"
 #include "utilities/ostream.hpp"
-#include "utilities/top.hpp"
 #if INCLUDE_ALL_GCS
 #include "gc/g1/g1_globals.hpp"
 #endif // INCLUDE_ALL_GCS
@@ -83,6 +82,56 @@ ARCH_FLAGS(MATERIALIZE_DEVELOPER_FLAG, \
            IGNORE_CONSTRAINT)
 
 MATERIALIZE_FLAGS_EXT
+
+#define DEFAULT_RANGE_STR_CHUNK_SIZE 64
+static char* create_range_str(const char *fmt, ...) {
+  static size_t string_length = DEFAULT_RANGE_STR_CHUNK_SIZE;
+  static char* range_string = NEW_C_HEAP_ARRAY(char, string_length, mtLogging);
+
+  int size_needed = 0;
+  do {
+    va_list args;
+    va_start(args, fmt);
+    size_needed = jio_vsnprintf(range_string, string_length, fmt, args);
+    va_end(args);
+
+    if (size_needed < 0) {
+      string_length += DEFAULT_RANGE_STR_CHUNK_SIZE;
+      range_string = REALLOC_C_HEAP_ARRAY(char, range_string, string_length, mtLogging);
+      guarantee(range_string != NULL, "create_range_str string should not be NULL");
+    }
+  } while (size_needed < 0);
+
+  return range_string;
+}
+
+const char* Flag::get_int_default_range_str() {
+  return create_range_str("[ " INT32_FORMAT_W(-25) " ... " INT32_FORMAT_W(25) " ]", INT_MIN, INT_MAX);
+}
+
+const char* Flag::get_uint_default_range_str() {
+  return create_range_str("[ " UINT32_FORMAT_W(-25) " ... " UINT32_FORMAT_W(25) " ]", 0, UINT_MAX);
+}
+
+const char* Flag::get_intx_default_range_str() {
+  return create_range_str("[ " INTX_FORMAT_W(-25) " ... " INTX_FORMAT_W(25) " ]", min_intx, max_intx);
+}
+
+const char* Flag::get_uintx_default_range_str() {
+  return create_range_str("[ " UINTX_FORMAT_W(-25) " ... " UINTX_FORMAT_W(25) " ]", 0, max_uintx);
+}
+
+const char* Flag::get_uint64_t_default_range_str() {
+  return create_range_str("[ " UINT64_FORMAT_W(-25) " ... " UINT64_FORMAT_W(25) " ]", 0, uint64_t(max_juint));
+}
+
+const char* Flag::get_size_t_default_range_str() {
+  return create_range_str("[ " SIZE_FORMAT_W(-25) " ... " SIZE_FORMAT_W(25) " ]", 0, SIZE_MAX);
+}
+
+const char* Flag::get_double_default_range_str() {
+  return create_range_str("[ %-25.3f ... %25.3f ]", DBL_MIN, DBL_MAX);
+}
 
 static bool is_product_build() {
 #ifdef PRODUCT
@@ -405,7 +454,25 @@ void Flag::print_on(outputStream* st, bool withComments, bool printRanges) {
   } else if (!is_bool() && !is_ccstr()) {
     st->print("%9s %-50s ", _type, _name);
 
-    CommandLineFlagRangeList::print(_name, st, true);
+    RangeStrFunc func = NULL;
+    if (is_int()) {
+      func = Flag::get_int_default_range_str;
+    } else if (is_uint()) {
+      func = Flag::get_uint_default_range_str;
+    } else if (is_intx()) {
+      func = Flag::get_intx_default_range_str;
+    } else if (is_uintx()) {
+      func = Flag::get_uintx_default_range_str;
+    } else if (is_uint64_t()) {
+      func = Flag::get_uint64_t_default_range_str;
+    } else if (is_size_t()) {
+      func = Flag::get_size_t_default_range_str;
+    } else if (is_double()) {
+      func = Flag::get_double_default_range_str;
+    } else {
+      ShouldNotReachHere();
+    }
+    CommandLineFlagRangeList::print(st, _name, func);
 
     st->print(" %-20s", " ");
     print_kind(st);
@@ -1225,7 +1292,7 @@ void CommandLineFlags::printSetFlags(outputStream* out) {
   const size_t length = Flag::numFlags - 1;
 
   // Sort
-  Flag** array = NEW_C_HEAP_ARRAY(Flag*, length, mtInternal);
+  Flag** array = NEW_C_HEAP_ARRAY(Flag*, length, mtArguments);
   for (size_t i = 0; i < length; i++) {
     array[i] = &flagTable[i];
   }
@@ -1259,7 +1326,7 @@ void CommandLineFlags::printFlags(outputStream* out, bool withComments, bool pri
   const size_t length = Flag::numFlags - 1;
 
   // Sort
-  Flag** array = NEW_C_HEAP_ARRAY(Flag*, length, mtInternal);
+  Flag** array = NEW_C_HEAP_ARRAY(Flag*, length, mtArguments);
   for (size_t i = 0; i < length; i++) {
     array[i] = &flagTable[i];
   }

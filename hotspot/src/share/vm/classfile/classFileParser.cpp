@@ -1967,7 +1967,7 @@ AnnotationCollector::annotation_index(const ClassLoaderData* loader_data,
                           loader_data->is_platform_class_loader_data() ||
                           loader_data->is_anonymous();
   switch (sid) {
-    case vmSymbols::VM_SYMBOL_ENUM_NAME(sun_reflect_CallerSensitive_signature): {
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(reflect_CallerSensitive_signature): {
       if (_location != _in_method)  break;  // only allow for methods
       if (!privileged)              break;  // only allow in privileged code
       return _method_CallerSensitive;
@@ -2713,11 +2713,9 @@ Method* ClassFileParser::parse_method(const ClassFileStream* const cfs,
   m->set_constants(_cp);
   m->set_name_index(name_index);
   m->set_signature_index(signature_index);
-#ifdef CC_INTERP
-  // hmm is there a gc issue here??
+
   ResultTypeFinder rtf(cp->symbol_at(signature_index));
-  m->set_result_index(rtf.type());
-#endif
+  m->constMethod()->set_result_type(rtf.type());
 
   if (args_size >= 0) {
     m->set_size_of_parameters(args_size);
@@ -5372,12 +5370,12 @@ void ClassFileParser::fill_instance_klass(InstanceKlass* ik, bool changed_by_loa
       }
     }
 
-    if (log_is_enabled(Info, classresolve))  {
+    if (log_is_enabled(Debug, classresolve))  {
       ResourceMark rm;
       // print out the superclass.
       const char * from = ik->external_name();
       if (ik->java_super() != NULL) {
-        log_info(classresolve)("%s %s (super)",
+        log_debug(classresolve)("%s %s (super)",
                    from,
                    ik->java_super()->external_name());
       }
@@ -5388,7 +5386,7 @@ void ClassFileParser::fill_instance_klass(InstanceKlass* ik, bool changed_by_loa
         for (int i = 0; i < length; i++) {
           const Klass* const k = local_interfaces->at(i);
           const char * to = k->external_name();
-          log_info(classresolve)("%s %s (interface)", from, to);
+          log_debug(classresolve)("%s %s (interface)", from, to);
         }
       }
     }
@@ -5698,15 +5696,16 @@ void ClassFileParser::parse_stream(const ClassFileStream* const stream,
   }
 
   if (!is_internal()) {
-    if (TraceClassLoadingPreorder) {
-      tty->print("[Loading %s",
-        _class_name->as_klass_external_name());
-
+    if (log_is_enabled(Debug, classload, preorder)){
+      ResourceMark rm(THREAD);
+      outputStream* log = Log(classload, preorder)::debug_stream();
+      log->print("%s", _class_name->as_klass_external_name());
       if (stream->source() != NULL) {
-        tty->print(" from %s", stream->source());
+        log->print(" source: %s", stream->source());
       }
-      tty->print_cr("]");
+      log->cr();
     }
+
 #if INCLUDE_CDS
     if (DumpLoadedClassList != NULL && stream->source() != NULL && classlist_file->is_open()) {
       // Only dump the classes that can be stored into CDS archive

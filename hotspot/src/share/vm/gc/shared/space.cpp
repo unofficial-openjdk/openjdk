@@ -30,7 +30,6 @@
 #include "gc/shared/collectedHeap.inline.hpp"
 #include "gc/shared/genCollectedHeap.hpp"
 #include "gc/shared/genOopClosures.inline.hpp"
-#include "gc/shared/liveRange.hpp"
 #include "gc/shared/space.hpp"
 #include "gc/shared/space.inline.hpp"
 #include "gc/shared/spaceDecorator.hpp"
@@ -410,22 +409,6 @@ HeapWord* CompactibleSpace::forward(oop q, size_t size,
     cp->threshold =
       cp->space->cross_threshold(compact_top - size, compact_top);
   return compact_top;
-}
-
-
-bool CompactibleSpace::insert_deadspace(size_t& allowed_deadspace_words,
-                                        HeapWord* q, size_t deadlength) {
-  if (allowed_deadspace_words >= deadlength) {
-    allowed_deadspace_words -= deadlength;
-    CollectedHeap::fill_with_object(q, deadlength);
-    oop(q)->set_mark(oop(q)->mark()->set_marked());
-    assert((int) deadlength == oop(q)->size(), "bad filler object size");
-    // Recall that we required "q == compaction_top".
-    return true;
-  } else {
-    allowed_deadspace_words = 0;
-    return false;
-  }
 }
 
 void ContiguousSpace::prepare_for_compaction(CompactPoint* cp) {

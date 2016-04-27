@@ -60,8 +60,10 @@ jint ParallelScavengeHeap::initialize() {
 
   ReservedSpace heap_rs = Universe::reserve_heap(heap_size, _collector_policy->heap_alignment());
 
-  os::trace_page_sizes("ps main", _collector_policy->min_heap_byte_size(),
-                       heap_size, generation_alignment(),
+  os::trace_page_sizes("Heap",
+                       _collector_policy->min_heap_byte_size(),
+                       heap_size,
+                       generation_alignment(),
                        heap_rs.base(),
                        heap_rs.size());
 
@@ -325,8 +327,8 @@ HeapWord* ParallelScavengeHeap::mem_allocate(
     loop_count++;
     if ((result == NULL) && (QueuedAllocationWarningCount > 0) &&
         (loop_count % QueuedAllocationWarningCount == 0)) {
-      warning("ParallelScavengeHeap::mem_allocate retries %d times \n\t"
-              " size=" SIZE_FORMAT, loop_count, size);
+      log_warning(gc)("ParallelScavengeHeap::mem_allocate retries %d times", loop_count);
+      log_warning(gc)("\tsize=" SIZE_FORMAT, size);
     }
   }
 

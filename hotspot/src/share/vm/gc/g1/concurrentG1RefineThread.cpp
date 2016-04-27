@@ -36,7 +36,8 @@
 ConcurrentG1RefineThread::
 ConcurrentG1RefineThread(ConcurrentG1Refine* cg1r, ConcurrentG1RefineThread *next,
                          CardTableEntryClosure* refine_closure,
-                         uint worker_id_offset, uint worker_id) :
+                         uint worker_id_offset, uint worker_id,
+                         size_t activate, size_t deactivate) :
   ConcurrentGCThread(),
   _refine_closure(refine_closure),
   _worker_id_offset(worker_id_offset),
@@ -45,7 +46,9 @@ ConcurrentG1RefineThread(ConcurrentG1Refine* cg1r, ConcurrentG1RefineThread *nex
   _next(next),
   _monitor(NULL),
   _cg1r(cg1r),
-  _vtime_accum(0.0)
+  _vtime_accum(0.0),
+  _activation_threshold(activate),
+  _deactivation_threshold(deactivate)
 {
 
   // Each thread has its own monitor. The i-th thread is responsible for signaling
@@ -58,27 +61,22 @@ ConcurrentG1RefineThread(ConcurrentG1Refine* cg1r, ConcurrentG1RefineThread *nex
   } else {
     _monitor = DirtyCardQ_CBL_mon;
   }
-  initialize();
 
   // set name
   set_name("G1 Refine#%d", worker_id);
   create_and_start();
 }
 
-void ConcurrentG1RefineThread::initialize() {
-  // Current thread activation threshold
-  _threshold = MIN2(cg1r()->thread_threshold_step() * (_worker_id + 1) + cg1r()->green_zone(),
-                    cg1r()->yellow_zone());
-  // A thread deactivates once the number of buffer reached a deactivation threshold
-   _deactivation_threshold =
-     MAX2(_threshold - MIN2(_threshold, cg1r()->thread_threshold_step()),
-          cg1r()->green_zone());
+void ConcurrentG1RefineThread::update_thresholds(size_t activate,
+                                                 size_t deactivate) {
+  assert(deactivate < activate, "precondition");
+  _activation_threshold = activate;
+  _deactivation_threshold = deactivate;
 }
 
 void ConcurrentG1RefineThread::wait_for_completed_buffers() {
-  DirtyCardQueueSet& dcqs = JavaThread::dirty_card_queue_set();
   MutexLockerEx x(_monitor, Mutex::_no_safepoint_check_flag);
-  while (!_should_terminate && !is_active()) {
+  while (!should_terminate() && !is_active()) {
     _monitor->wait(Mutex::_no_safepoint_check_flag);
   }
 }
@@ -109,33 +107,30 @@ void ConcurrentG1RefineThread::deactivate() {
   }
 }
 
-void ConcurrentG1RefineThread::run() {
-  initialize_in_thread();
-  wait_for_universe_init();
-
-  run_service();
-
-  terminate();
-}
-
 void ConcurrentG1RefineThread::run_service() {
   _vtime_start = os::elapsedVTime();
 
-  while (!_should_terminate) {
+  while (!should_terminate()) {
     // Wait for work
     wait_for_completed_buffers();
-    if (_should_terminate) {
+    if (should_terminate()) {
       break;
     }
 
+    size_t buffers_processed = 0;
     DirtyCardQueueSet& dcqs = JavaThread::dirty_card_queue_set();
     log_debug(gc, refine)("Activated %d, on threshold: " SIZE_FORMAT ", current: " SIZE_FORMAT,
-                          _worker_id, _threshold, dcqs.completed_buffers_num());
+                          _worker_id, _activation_threshold, dcqs.completed_buffers_num());
 
     {
       SuspendibleThreadSetJoiner sts_join;
 
-      do {
+      while (!should_terminate()) {
+        if (sts_join.should_yield()) {
+          sts_join.yield();
+          continue;             // Re-check for termination after yield delay.
+        }
+
         size_t curr_buffer_num = dcqs.completed_buffers_num();
         // If the number of the buffers falls down into the yellow zone,
         // that means that the transition period after the evacuation pause has ended.
@@ -144,19 +139,29 @@ void ConcurrentG1RefineThread::run_service() {
         }
 
         // Check if we need to activate the next thread.
-        if (_next != NULL && !_next->is_active() && curr_buffer_num > _next->_threshold) {
+        if ((_next != NULL) &&
+            !_next->is_active() &&
+            (curr_buffer_num > _next->_activation_threshold)) {
           _next->activate();
         }
-      } while (dcqs.apply_closure_to_completed_buffer(_refine_closure,
-                                                      _worker_id + _worker_id_offset,
-                                                      _deactivation_threshold,
-                                                      false /* during_pause */));
 
-      deactivate();
-      log_debug(gc, refine)("Deactivated %d, off threshold: " SIZE_FORMAT ", current: " SIZE_FORMAT,
-                            _worker_id, _deactivation_threshold,
-                            dcqs.completed_buffers_num());
+        // Process the next buffer, if there are enough left.
+        if (!dcqs.apply_closure_to_completed_buffer(_refine_closure,
+                                                    _worker_id + _worker_id_offset,
+                                                    _deactivation_threshold,
+                                                    false /* during_pause */)) {
+          break; // Deactivate, number of buffers fell below threshold.
+        }
+        ++buffers_processed;
+      }
     }
+
+    deactivate();
+    log_debug(gc, refine)("Deactivated %d, off threshold: " SIZE_FORMAT
+                          ", current: " SIZE_FORMAT ", processed: " SIZE_FORMAT,
+                          _worker_id, _deactivation_threshold,
+                          dcqs.completed_buffers_num(),
+                          buffers_processed);
 
     if (os::supports_vtime()) {
       _vtime_accum = (os::elapsedVTime() - _vtime_start);
@@ -166,23 +171,6 @@ void ConcurrentG1RefineThread::run_service() {
   }
 
   log_debug(gc, refine)("Stopping %d", _worker_id);
-}
-
-void ConcurrentG1RefineThread::stop() {
-  // it is ok to take late safepoints here, if needed
-  {
-    MutexLockerEx mu(Terminator_lock);
-    _should_terminate = true;
-  }
-
-  stop_service();
-
-  {
-    MutexLockerEx mu(Terminator_lock);
-    while (!_has_terminated) {
-      Terminator_lock->wait();
-    }
-  }
 }
 
 void ConcurrentG1RefineThread::stop_service() {

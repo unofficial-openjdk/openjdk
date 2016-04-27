@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,6 @@
 #define SHARE_VM_UTILITIES_BITMAP_HPP
 
 #include "memory/allocation.hpp"
-#include "utilities/top.hpp"
 
 // Forward decl;
 class BitMapClosure;
@@ -48,7 +47,6 @@ class BitMap VALUE_OBJ_CLASS_SPEC {
   } RangeSizeHint;
 
  private:
-  ArrayAllocator<bm_word_t, mtInternal> _map_allocator;
   bm_word_t* _map;     // First word in bitmap
   idx_t      _size;    // Size of bitmap (in bits)
 
@@ -101,9 +99,8 @@ class BitMap VALUE_OBJ_CLASS_SPEC {
   idx_t word_index_round_up(idx_t bit) const;
 
   // Verification.
-  inline void verify_index(idx_t index) const NOT_DEBUG_RETURN;
-  inline void verify_range(idx_t beg_index, idx_t end_index) const
-    NOT_DEBUG_RETURN;
+  void verify_index(idx_t index) const NOT_DEBUG_RETURN;
+  void verify_range(idx_t beg_index, idx_t end_index) const NOT_DEBUG_RETURN;
 
   // Statistics.
   static idx_t* _pop_count_table;
@@ -114,10 +111,10 @@ class BitMap VALUE_OBJ_CLASS_SPEC {
  public:
 
   // Constructs a bitmap with no map, and size 0.
-  BitMap() : _map(NULL), _size(0), _map_allocator(false) {}
+  BitMap() : _map(NULL), _size(0) {}
 
   // Constructs a bitmap with the given map and size.
-  BitMap(bm_word_t* map, idx_t size_in_bits);
+  BitMap(bm_word_t* map, idx_t size_in_bits) :_map(map), _size(size_in_bits) {}
 
   // Constructs an empty bitmap of the given size (that is, this clears the
   // new bitmap).  Allocates the map array in resource area if
@@ -137,10 +134,18 @@ class BitMap VALUE_OBJ_CLASS_SPEC {
   // use the same value for "in_resource_area".)
   void resize(idx_t size_in_bits, bool in_resource_area = true);
 
+  // Pretouch the entire range of memory this BitMap covers.
+  void pretouch();
+
   // Accessing
   idx_t size() const                    { return _size; }
+  idx_t size_in_bytes() const           { return size_in_words() * BytesPerWord; }
   idx_t size_in_words() const           {
-    return word_index(size() + BitsPerWord - 1);
+    return calc_size_in_words(size());
+  }
+
+  static idx_t calc_size_in_words(size_t size_in_bits) {
+    return word_index(size_in_bits + BitsPerWord - 1);
   }
 
   bool at(idx_t index) const {
@@ -307,36 +312,12 @@ class BitMap2D VALUE_OBJ_CLASS_SPEC {
     return _map.size() / _bits_per_slot;
   }
 
-  bool is_valid_index(idx_t slot_index, idx_t bit_within_slot_index) {
-    verify_bit_within_slot_index(bit_within_slot_index);
-    return (bit_index(slot_index, bit_within_slot_index) < size_in_bits());
-  }
-
-  bool at(idx_t slot_index, idx_t bit_within_slot_index) const {
-    verify_bit_within_slot_index(bit_within_slot_index);
-    return _map.at(bit_index(slot_index, bit_within_slot_index));
-  }
-
-  void set_bit(idx_t slot_index, idx_t bit_within_slot_index) {
-    verify_bit_within_slot_index(bit_within_slot_index);
-    _map.set_bit(bit_index(slot_index, bit_within_slot_index));
-  }
-
-  void clear_bit(idx_t slot_index, idx_t bit_within_slot_index) {
-    verify_bit_within_slot_index(bit_within_slot_index);
-    _map.clear_bit(bit_index(slot_index, bit_within_slot_index));
-  }
-
-  void at_put(idx_t slot_index, idx_t bit_within_slot_index, bool value) {
-    verify_bit_within_slot_index(bit_within_slot_index);
-    _map.at_put(bit_index(slot_index, bit_within_slot_index), value);
-  }
-
-  void at_put_grow(idx_t slot_index, idx_t bit_within_slot_index, bool value) {
-    verify_bit_within_slot_index(bit_within_slot_index);
-    _map.at_put_grow(bit_index(slot_index, bit_within_slot_index), value);
-  }
-
+  bool is_valid_index(idx_t slot_index, idx_t bit_within_slot_index);
+  bool at(idx_t slot_index, idx_t bit_within_slot_index) const;
+  void set_bit(idx_t slot_index, idx_t bit_within_slot_index);
+  void clear_bit(idx_t slot_index, idx_t bit_within_slot_index);
+  void at_put(idx_t slot_index, idx_t bit_within_slot_index, bool value);
+  void at_put_grow(idx_t slot_index, idx_t bit_within_slot_index, bool value);
   void clear();
 };
 

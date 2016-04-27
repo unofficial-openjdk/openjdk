@@ -25,8 +25,8 @@
 #ifndef SHARE_VM_RUNTIME_JNIHANDLES_HPP
 #define SHARE_VM_RUNTIME_JNIHANDLES_HPP
 
+#include "memory/allocation.hpp"
 #include "runtime/handles.hpp"
-#include "utilities/top.hpp"
 
 class JNIHandleBlock;
 
@@ -86,6 +86,8 @@ class JNIHandles : AllStatic {
   static void oops_do(OopClosure* f);
   // Traversal of weak global handles. Unreachable oops are cleared.
   static void weak_oops_do(BoolObjectClosure* is_alive, OopClosure* f);
+  // Traversal of weak global handles.
+  static void weak_oops_do(OopClosure* f);
 };
 
 

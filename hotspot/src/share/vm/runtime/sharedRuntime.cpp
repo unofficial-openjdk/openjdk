@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,8 @@
 #include "interpreter/interpreter.hpp"
 #include "interpreter/interpreterRuntime.hpp"
 #include "logging/log.hpp"
+#include "memory/metaspaceShared.hpp"
+#include "memory/resourceArea.hpp"
 #include "memory/universe.inline.hpp"
 #include "oops/klass.hpp"
 #include "oops/objArrayKlass.hpp"
@@ -993,19 +995,6 @@ address SharedRuntime::native_method_throw_unsatisfied_link_error_entry() {
   return CAST_FROM_FN_PTR(address, &throw_unsatisfied_link_error);
 }
 
-
-#ifndef PRODUCT
-JRT_ENTRY(intptr_t, SharedRuntime::trace_bytecode(JavaThread* thread, intptr_t preserve_this_value, intptr_t tos, intptr_t tos2))
-  const frame f = thread->last_frame();
-  assert(f.is_interpreted_frame(), "must be an interpreted frame");
-#ifndef PRODUCT
-  methodHandle mh(THREAD, f.interpreter_frame_method());
-  BytecodeTracer::trace(mh, f.interpreter_frame_bcp(), tos, tos2);
-#endif // !PRODUCT
-  return preserve_this_value;
-JRT_END
-#endif // !PRODUCT
-
 JRT_ENTRY_NO_ASYNC(void, SharedRuntime::register_finalizer(JavaThread* thread, oopDesc* obj))
   assert(obj->is_oop(), "must be a valid oop");
 #if INCLUDE_JVMCI
@@ -1800,7 +1789,7 @@ void SharedRuntime::check_member_name_argument_is_last_argument(const methodHand
 IRT_LEAF(void, SharedRuntime::fixup_callers_callsite(Method* method, address caller_pc))
   Method* moop(method);
 
-  address entry_point = moop->from_compiled_entry();
+  address entry_point = moop->from_compiled_entry_no_trampoline();
 
   // It's possible that deoptimization can occur at a call site which hasn't
   // been resolved yet, in which case this function will be called from
@@ -1981,8 +1970,8 @@ JRT_END
 // Handles the uncommon case in locking, i.e., contention or an inflated lock.
 JRT_BLOCK_ENTRY(void, SharedRuntime::complete_monitor_locking_C(oopDesc* _obj, BasicLock* lock, JavaThread* thread))
   // Disable ObjectSynchronizer::quick_enter() in default config
-  // until JDK-8077392 is resolved.
-  if ((SyncFlags & 256) != 0 && !SafepointSynchronize::is_synchronizing()) {
+  // on AARCH64 until JDK-8153107 is resolved.
+  if (AARCH64_ONLY((SyncFlags & 256) != 0 &&) !SafepointSynchronize::is_synchronizing()) {
     // Only try quick_enter() if we're not trying to reach a safepoint
     // so that the calling thread reaches the safepoint more quickly.
     if (ObjectSynchronizer::quick_enter(_obj, thread, lock)) return;
@@ -2363,12 +2352,15 @@ class AdapterHandlerTable : public BasicHashtable<mtCode> {
 
  public:
   AdapterHandlerTable()
-    : BasicHashtable<mtCode>(293, sizeof(AdapterHandlerEntry)) { }
+    : BasicHashtable<mtCode>(293, (DumpSharedSpaces ? sizeof(CDSAdapterHandlerEntry) : sizeof(AdapterHandlerEntry))) { }
 
   // Create a new entry suitable for insertion in the table
   AdapterHandlerEntry* new_entry(AdapterFingerPrint* fingerprint, address i2c_entry, address c2i_entry, address c2i_unverified_entry) {
     AdapterHandlerEntry* entry = (AdapterHandlerEntry*)BasicHashtable<mtCode>::new_entry(fingerprint->compute_hash());
     entry->init(fingerprint, i2c_entry, c2i_entry, c2i_unverified_entry);
+    if (DumpSharedSpaces) {
+      ((CDSAdapterHandlerEntry*)entry)->init();
+    }
     return entry;
   }
 
@@ -2531,6 +2523,28 @@ AdapterHandlerEntry* AdapterHandlerLibrary::new_entry(AdapterFingerPrint* finger
 }
 
 AdapterHandlerEntry* AdapterHandlerLibrary::get_adapter(const methodHandle& method) {
+  AdapterHandlerEntry* entry = get_adapter0(method);
+  if (method->is_shared()) {
+    MutexLocker mu(AdapterHandlerLibrary_lock);
+    if (method->adapter() == NULL) {
+      method->update_adapter_trampoline(entry);
+    }
+    address trampoline = method->from_compiled_entry();
+    if (*(int*)trampoline == 0) {
+      CodeBuffer buffer(trampoline, (int)SharedRuntime::trampoline_size());
+      MacroAssembler _masm(&buffer);
+      SharedRuntime::generate_trampoline(&_masm, entry->get_c2i_entry());
+
+      if (PrintInterpreter) {
+        Disassembler::decode(buffer.insts_begin(), buffer.insts_end());
+      }
+    }
+  }
+
+  return entry;
+}
+
+AdapterHandlerEntry* AdapterHandlerLibrary::get_adapter0(const methodHandle& method) {
   // Use customized signature handler.  Need to lock around updates to
   // the AdapterHandlerTable (it is not safe for concurrent readers
   // and a single writer: this could be fixed if it becomes a
@@ -2547,7 +2561,9 @@ AdapterHandlerEntry* AdapterHandlerLibrary::get_adapter(const methodHandle& meth
     // make sure data structure is initialized
     initialize();
 
-    if (CodeCacheExtensions::skip_compiler_support()) {
+    // during dump time, always generate adapters, even if the
+    // compiler has been turned off.
+    if (!DumpSharedSpaces && CodeCacheExtensions::skip_compiler_support()) {
       // adapters are useless and should not be used, including the
       // abstract_method_handler. However, some callers check that
       // an adapter was installed.
@@ -2966,7 +2982,7 @@ JRT_LEAF(intptr_t*, SharedRuntime::OSR_migration_begin( JavaThread *thread) )
   Method* moop = fr.interpreter_frame_method();
   int max_locals = moop->max_locals();
   // Allocate temp buffer, 1 word per local & 2 per active monitor
-  int buf_size_words = max_locals + active_monitor_count*2;
+  int buf_size_words = max_locals + active_monitor_count * BasicObjectLock::size();
   intptr_t *buf = NEW_C_HEAP_ARRAY(intptr_t,buf_size_words, mtCode);
 
   // Copy the locals.  Order is preserved so that loading of longs works.
@@ -3028,6 +3044,17 @@ void AdapterHandlerEntry::print_adapter_on(outputStream* st) const {
                p2i(get_i2c_entry()), p2i(get_c2i_entry()), p2i(get_c2i_unverified_entry()));
 
 }
+
+#if INCLUDE_CDS
+
+void CDSAdapterHandlerEntry::init() {
+  assert(DumpSharedSpaces, "used during dump time only");
+  _c2i_entry_trampoline = (address)MetaspaceShared::misc_data_space_alloc(SharedRuntime::trampoline_size());
+  _adapter_trampoline = (AdapterHandlerEntry**)MetaspaceShared::misc_data_space_alloc(sizeof(AdapterHandlerEntry*));
+};
+
+#endif // INCLUDE_CDS
+
 
 #ifndef PRODUCT
 

@@ -31,6 +31,7 @@
 #include "frame_ppc.hpp"
 #include "interpreter/interpreter.hpp"
 #include "interpreter/interp_masm.hpp"
+#include "memory/resourceArea.hpp"
 #include "oops/compiledICHolder.hpp"
 #include "prims/jvmtiRedefineClassesTrace.hpp"
 #include "runtime/sharedRuntime.hpp"
@@ -482,6 +483,18 @@ bool SharedRuntime::is_wide_vector(int size) {
   assert(size <= 8, "%d bytes vectors are not supported", size);
   return size > 8;
 }
+
+size_t SharedRuntime::trampoline_size() {
+  return Assembler::load_const_size + 8;
+}
+
+void SharedRuntime::generate_trampoline(MacroAssembler *masm, address destination) {
+  Register Rtemp = R12;
+  __ load_const(Rtemp, destination);
+  __ mtctr(Rtemp);
+  __ bctr();
+}
+
 #ifdef COMPILER2
 static int reg2slot(VMReg r) {
   return r->reg2stack() + SharedRuntime::out_preserve_stack_slots();

@@ -594,15 +594,7 @@ void os::Linux::libpthread_init() {
 // _expand_stack_to() assumes its frame size is less than page size, which
 // should always be true if the function is not inlined.
 
-#if __GNUC__ < 3    // gcc 2.x does not support noinline attribute
-  #define NOINLINE
-#else
-  #define NOINLINE __attribute__ ((noinline))
-#endif
-
-static void _expand_stack_to(address bottom) NOINLINE;
-
-static void _expand_stack_to(address bottom) {
+static void NOINLINE _expand_stack_to(address bottom) {
   address sp;
   size_t size;
   volatile char *p;
@@ -769,7 +761,7 @@ bool os::create_thread(Thread* thread, ThreadType thr_type,
         (uintx) tid, os::Posix::describe_pthread_attr(buf, sizeof(buf), &attr));
     } else {
       log_warning(os, thread)("Failed to start thread - pthread_create failed (%s) for attributes: %s.",
-        strerror(ret), os::Posix::describe_pthread_attr(buf, sizeof(buf), &attr));
+        os::errno_name(ret), os::Posix::describe_pthread_attr(buf, sizeof(buf), &attr));
     }
 
     pthread_attr_destroy(&attr);
@@ -890,6 +882,13 @@ void os::free_thread(OSThread* osthread) {
   assert(osthread != NULL, "osthread not set");
 
   if (Thread::current()->osthread() == osthread) {
+#ifdef ASSERT
+    sigset_t current;
+    sigemptyset(&current);
+    pthread_sigmask(SIG_SETMASK, NULL, &current);
+    assert(!sigismember(&current, SR_signum), "SR signal should not be blocked!");
+#endif
+
     // Restore caller's signal mask
     sigset_t sigmask = osthread->caller_sigmask();
     pthread_sigmask(SIG_SETMASK, &sigmask, NULL);
@@ -1395,7 +1394,7 @@ void os::die() {
 size_t os::lasterror(char *buf, size_t len) {
   if (errno == 0)  return 0;
 
-  const char *s = ::strerror(errno);
+  const char *s = os::strerror(errno);
   size_t n = ::strlen(s);
   if (n >= len) {
     n = len - 1;
@@ -2164,7 +2163,7 @@ static bool print_model_name_and_flags(outputStream* st, char* buf, size_t bufle
         bool model_name_printed = false;
         if (strstr(buf, "model name") != NULL) {
           if (!model_name_printed) {
-            st->print_raw("\nCPU Model and flags from /proc/cpuinfo:\n");
+            st->print_raw("CPU Model and flags from /proc/cpuinfo:\n");
             st->print_raw(buf);
             model_name_printed = true;
           } else {
@@ -2601,7 +2600,7 @@ static void warn_fail_commit_memory(char* addr, size_t size, bool exec,
                                     int err) {
   warning("INFO: os::commit_memory(" PTR_FORMAT ", " SIZE_FORMAT
           ", %d) failed; error='%s' (errno=%d)", p2i(addr), size, exec,
-          strerror(err), err);
+          os::strerror(err), err);
 }
 
 static void warn_fail_commit_memory(char* addr, size_t size,
@@ -2609,7 +2608,7 @@ static void warn_fail_commit_memory(char* addr, size_t size,
                                     int err) {
   warning("INFO: os::commit_memory(" PTR_FORMAT ", " SIZE_FORMAT
           ", " SIZE_FORMAT ", %d) failed; error='%s' (errno=%d)", p2i(addr), size,
-          alignment_hint, exec, strerror(err), err);
+          alignment_hint, exec, os::strerror(err), err);
 }
 
 // NOTE: Linux kernel does not really reserve the pages for us.
@@ -3912,7 +3911,8 @@ static void SR_handler(int sig, siginfo_t* siginfo, ucontext_t* context) {
   // after sigsuspend.
   int old_errno = errno;
 
-  Thread* thread = Thread::current();
+  Thread* thread = Thread::current_or_null_safe();
+  assert(thread != NULL, "Missing current thread in SR_handler");
   OSThread* osthread = thread->osthread();
   assert(thread->is_VM_thread() || thread->is_Java_thread(), "Must be VMThread or JavaThread");
 
@@ -3924,7 +3924,7 @@ static void SR_handler(int sig, siginfo_t* siginfo, ucontext_t* context) {
     os::SuspendResume::State state = osthread->sr.suspended();
     if (state == os::SuspendResume::SR_SUSPENDED) {
       sigset_t suspend_set;  // signals for sigsuspend()
-
+      sigemptyset(&suspend_set);
       // get current set of blocked signals and unblock resume signal
       pthread_sigmask(SIG_BLOCK, NULL, &suspend_set);
       sigdelset(&suspend_set, SR_signum);
@@ -4178,6 +4178,7 @@ static bool call_chained_handler(struct sigaction *actp, int sig,
 
     // try to honor the signal mask
     sigset_t oset;
+    sigemptyset(&oset);
     pthread_sigmask(SIG_SETMASK, &(actp->sa_mask), &oset);
 
     // call into the chained handler
@@ -4188,7 +4189,7 @@ static bool call_chained_handler(struct sigaction *actp, int sig,
     }
 
     // restore the signal mask
-    pthread_sigmask(SIG_SETMASK, &oset, 0);
+    pthread_sigmask(SIG_SETMASK, &oset, NULL);
   }
   // Tell jvm's signal handler the signal is taken care of.
   return true;
@@ -4615,7 +4616,7 @@ void os::init(void) {
   Linux::set_page_size(sysconf(_SC_PAGESIZE));
   if (Linux::page_size() == -1) {
     fatal("os_linux.cpp: os::init: sysconf failed (%s)",
-          strerror(errno));
+          os::strerror(errno));
   }
   init_page_sizes((size_t) Linux::page_size());
 
@@ -4633,7 +4634,7 @@ void os::init(void) {
   int status;
   pthread_condattr_t* _condattr = os::Linux::condAttr();
   if ((status = pthread_condattr_init(_condattr)) != 0) {
-    fatal("pthread_condattr_init: %s", strerror(status));
+    fatal("pthread_condattr_init: %s", os::strerror(status));
   }
   // Only set the clock if CLOCK_MONOTONIC is available
   if (os::supports_monotonic_clock()) {
@@ -4642,7 +4643,7 @@ void os::init(void) {
         warning("Unable to use monotonic clock with relative timed-waits" \
                 " - changes to the time-of-day clock may have adverse affects");
       } else {
-        fatal("pthread_condattr_setclock: %s", strerror(status));
+        fatal("pthread_condattr_setclock: %s", os::strerror(status));
       }
     }
   }
@@ -4670,25 +4671,13 @@ jint os::init_2(void) {
   guarantee(polling_page != MAP_FAILED, "os::init_2: failed to allocate polling page");
 
   os::set_polling_page(polling_page);
-
-#ifndef PRODUCT
-  if (Verbose && PrintMiscellaneous) {
-    tty->print("[SafePoint Polling address: " INTPTR_FORMAT "]\n",
-               (intptr_t)polling_page);
-  }
-#endif
+  log_info(os)("SafePoint Polling address: " INTPTR_FORMAT, p2i(polling_page));
 
   if (!UseMembar) {
     address mem_serialize_page = (address) ::mmap(NULL, Linux::page_size(), PROT_READ | PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
     guarantee(mem_serialize_page != MAP_FAILED, "mmap Failed for memory serialize page");
     os::set_memory_serialize_page(mem_serialize_page);
-
-#ifndef PRODUCT
-    if (Verbose && PrintMiscellaneous) {
-      tty->print("[Memory Serialize  Page address: " INTPTR_FORMAT "]\n",
-                 (intptr_t)mem_serialize_page);
-    }
-#endif
+    log_info(os)("Memory Serialize Page address: " INTPTR_FORMAT, p2i(mem_serialize_page));
   }
 
   // initialize suspend/resume support - must do this before signal_sets_init()
@@ -4731,10 +4720,8 @@ jint os::init_2(void) {
 #endif
 
   Linux::libpthread_init();
-  if (PrintMiscellaneous && (Verbose || WizardMode)) {
-    tty->print_cr("[HotSpot is running with %s, %s]\n",
-                  Linux::glibc_version(), Linux::libpthread_version());
-  }
+  log_info(os)("HotSpot is running with %s, %s",
+               Linux::glibc_version(), Linux::libpthread_version());
 
   if (UseNUMA) {
     if (!Linux::libnuma_init()) {
@@ -4775,16 +4762,12 @@ jint os::init_2(void) {
     struct rlimit nbr_files;
     int status = getrlimit(RLIMIT_NOFILE, &nbr_files);
     if (status != 0) {
-      if (PrintMiscellaneous && (Verbose || WizardMode)) {
-        perror("os::init_2 getrlimit failed");
-      }
+      log_info(os)("os::init_2 getrlimit failed: %s", os::strerror(errno));
     } else {
       nbr_files.rlim_cur = nbr_files.rlim_max;
       status = setrlimit(RLIMIT_NOFILE, &nbr_files);
       if (status != 0) {
-        if (PrintMiscellaneous && (Verbose || WizardMode)) {
-          perror("os::init_2 setrlimit failed");
-        }
+        log_info(os)("os::init_2 setrlimit failed: %s", os::strerror(errno));
       }
     }
   }
@@ -4888,7 +4871,7 @@ int os::active_processor_count() {
        log_trace(os)("active_processor_count: "
                      "CPU_ALLOC failed (%s) - using "
                      "online processor count: %d",
-                     strerror(errno), online_cpus);
+                     os::strerror(errno), online_cpus);
        return online_cpus;
     }
   }
@@ -4918,7 +4901,7 @@ int os::active_processor_count() {
   else {
     cpu_count = ::sysconf(_SC_NPROCESSORS_ONLN);
     warning("sched_getaffinity failed (%s)- using online processor count (%d) "
-            "which may exceed available processors", strerror(errno), cpu_count);
+            "which may exceed available processors", os::strerror(errno), cpu_count);
   }
 
   if (cpus_p != &cpus) { // can only be true when CPU_ALLOC used
@@ -5769,6 +5752,7 @@ void Parker::park(bool isAbsolute, jlong time) {
   // Don't catch signals while blocked; let the running threads have the signals.
   // (This allows a debugger to break into the running thread.)
   sigset_t oldsigs;
+  sigemptyset(&oldsigs);
   sigset_t* allowdebug_blocked = os::Linux::allowdebug_blocked_signals();
   pthread_sigmask(SIG_BLOCK, allowdebug_blocked, &oldsigs);
 #endif
@@ -6024,7 +6008,22 @@ bool os::start_debugging(char *buf, int buflen) {
   return yes;
 }
 
+static inline struct timespec get_mtime(const char* filename) {
+  struct stat st;
+  int ret = os::stat(filename, &st);
+  assert(ret == 0, "failed to stat() file '%s': %s", filename, strerror(errno));
+  return st.st_mtim;
+}
 
+int os::compare_file_modified_times(const char* file1, const char* file2) {
+  struct timespec filetime1 = get_mtime(file1);
+  struct timespec filetime2 = get_mtime(file2);
+  int diff = filetime1.tv_sec - filetime2.tv_sec;
+  if (diff == 0) {
+    return filetime1.tv_nsec - filetime2.tv_nsec;
+  }
+  return diff;
+}
 
 /////////////// Unit tests ///////////////
 

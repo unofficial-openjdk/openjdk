@@ -35,6 +35,7 @@
 #include "compiler/compileTask.hpp"
 #include "gc/shared/gcId.hpp"
 #include "gc/shared/gcLocker.inline.hpp"
+#include "gc/shared/referencePendingListLocker.hpp"
 #include "gc/shared/workgroup.hpp"
 #include "interpreter/interpreter.hpp"
 #include "interpreter/linkResolver.hpp"
@@ -44,6 +45,7 @@
 #include "logging/logConfiguration.hpp"
 #include "memory/metaspaceShared.hpp"
 #include "memory/oopFactory.hpp"
+#include "memory/resourceArea.hpp"
 #include "memory/universe.inline.hpp"
 #include "oops/instanceKlass.hpp"
 #include "oops/objArrayOop.hpp"
@@ -68,7 +70,7 @@
 #include "runtime/java.hpp"
 #include "runtime/javaCalls.hpp"
 #include "runtime/jniPeriodicChecker.hpp"
-#include "runtime/logTimer.hpp"
+#include "runtime/timerTrace.hpp"
 #include "runtime/memprofiler.hpp"
 #include "runtime/mutexLocker.hpp"
 #include "runtime/objectMonitor.hpp"
@@ -152,7 +154,6 @@ void universe_post_module_init();  // must happen after call_initPhase2
 // Current thread is maintained as a thread-local variable
 THREAD_LOCAL_DECL Thread* Thread::_thr_current = NULL;
 #endif
-
 // Class hierarchy
 // - Thread
 //   - VMThread
@@ -791,10 +792,6 @@ void Thread::oops_do(OopClosure* f, CLDClosure* cld_f, CodeBlobClosure* cf) {
   handle_area()->oops_do(f);
 }
 
-void Thread::nmethods_do(CodeBlobClosure* cf) {
-  // no nmethods in a generic thread...
-}
-
 void Thread::metadata_handles_do(void f(Metadata*)) {
   // Only walk the Handles in Thread.
   if (metadata_handles() != NULL) {
@@ -821,13 +818,17 @@ void Thread::print_on(outputStream* st) const {
 // Thread::print_on_error() is called by fatal error handler. Don't use
 // any lock or allocate memory.
 void Thread::print_on_error(outputStream* st, char* buf, int buflen) const {
-  if (is_VM_thread())                 st->print("VMThread");
-  else if (is_Compiler_thread())      st->print("CompilerThread");
-  else if (is_Java_thread())          st->print("JavaThread");
-  else if (is_GC_task_thread())       st->print("GCTaskThread");
-  else if (is_Watcher_thread())       st->print("WatcherThread");
-  else if (is_ConcurrentGC_thread())  st->print("ConcurrentGCThread");
-  else                                st->print("Thread");
+  assert(!(is_Compiler_thread() || is_Java_thread()), "Can't call name() here if it allocates");
+
+  if (is_VM_thread())                 { st->print("VMThread"); }
+  else if (is_GC_task_thread())       { st->print("GCTaskThread"); }
+  else if (is_Watcher_thread())       { st->print("WatcherThread"); }
+  else if (is_ConcurrentGC_thread())  { st->print("ConcurrentGCThread"); }
+  else                                { st->print("Thread"); }
+
+  if (is_Named_thread()) {
+    st->print(" \"%s\"", name());
+  }
 
   st->print(" [stack: " PTR_FORMAT "," PTR_FORMAT "]",
             p2i(stack_end()), p2i(stack_base()));
@@ -2093,7 +2094,7 @@ void JavaThread::check_and_handle_async_exceptions(bool check_unsafe_error) {
 
       if (log_is_enabled(Info, exceptions)) {
         ResourceMark rm;
-        outputStream* logstream = LogHandle(exceptions)::info_stream();
+        outputStream* logstream = Log(exceptions)::info_stream();
         logstream->print("Async. exception installed at runtime exit (" INTPTR_FORMAT ")", p2i(this));
           if (has_last_Java_frame()) {
             frame f = last_frame();
@@ -2827,8 +2828,6 @@ void JavaThread::oops_do(OopClosure* f, CLDClosure* cld_f, CodeBlobClosure* cf) 
 }
 
 void JavaThread::nmethods_do(CodeBlobClosure* cf) {
-  Thread::nmethods_do(cf);  // (super method is a no-op)
-
   assert((!has_last_Java_frame() && java_call_counter() == 0) ||
          (has_last_Java_frame() && java_call_counter() > 0), "wrong java_sp info!");
 
@@ -2887,7 +2886,9 @@ void JavaThread::print_thread_state() const {
 
 // Called by Threads::print() for VM_PrintThreads operation
 void JavaThread::print_on(outputStream *st) const {
-  st->print("\"%s\" ", get_thread_name());
+  st->print_raw("\"");
+  st->print_raw(get_thread_name());
+  st->print_raw("\" ");
   oop thread_oop = threadObj();
   if (thread_oop != NULL) {
     st->print("#" INT64_FORMAT " ", java_lang_Thread::thread_id(thread_oop));
@@ -3301,8 +3302,19 @@ CodeCacheSweeperThread::CodeCacheSweeperThread()
 : JavaThread(&sweeper_thread_entry) {
   _scanned_nmethod = NULL;
 }
+
 void CodeCacheSweeperThread::oops_do(OopClosure* f, CLDClosure* cld_f, CodeBlobClosure* cf) {
   JavaThread::oops_do(f, cld_f, cf);
+  if (_scanned_nmethod != NULL && cf != NULL) {
+    // Safepoints can occur when the sweeper is scanning an nmethod so
+    // process it here to make sure it isn't unloaded in the middle of
+    // a scan.
+    cf->do_code_blob(_scanned_nmethod);
+  }
+}
+
+void CodeCacheSweeperThread::nmethods_do(CodeBlobClosure* cf) {
+  JavaThread::nmethods_do(cf);
   if (_scanned_nmethod != NULL && cf != NULL) {
     // Safepoints can occur when the sweeper is scanning an nmethod so
     // process it here to make sure it isn't unloaded in the middle of
@@ -3416,7 +3428,7 @@ static void call_initPhase3(TRAPS) {
 }
 
 void Threads::initialize_java_lang_classes(JavaThread* main_thread, TRAPS) {
-  TraceStartupTime timer("Initialize java.lang classes");
+  TraceTime timer("Initialize java.lang classes", TRACETIME_LOG(Info, startuptime));
 
   if (EagerXrunInit && Arguments::init_libraries_at_startup()) {
     create_vm_init_libraries();
@@ -3468,7 +3480,7 @@ void Threads::initialize_java_lang_classes(JavaThread* main_thread, TRAPS) {
 }
 
 void Threads::initialize_jsr292_core_classes(TRAPS) {
-  TraceStartupTime timer("Initialize java.lang.invoke classes");
+  TraceTime timer("Initialize java.lang.invoke classes", TRACETIME_LOG(Info, startuptime));
 
   initialize_class(vmSymbols::java_lang_invoke_MethodHandle(), CHECK);
   initialize_class(vmSymbols::java_lang_invoke_MemberName(), CHECK);
@@ -3539,7 +3551,7 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   HOTSPOT_VM_INIT_BEGIN();
 
   // Timing (must come after argument parsing)
-  TraceStartupTime timer("Create VM");
+  TraceTime timer("Create VM", TRACETIME_LOG(Info, startuptime));
 
   // Initialize the os module after parsing the args
   jint os_init_2_result = os::init_2();
@@ -3628,7 +3640,7 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   JvmtiExport::transition_pending_onload_raw_monitors();
 
   // Create the VMThread
-  { TraceStartupTime timer("Start VMThread");
+  { TraceTime timer("Start VMThread", TRACETIME_LOG(Info, startuptime));
 
   VMThread::create();
     Thread* vmthread = VMThread::vm_thread();
@@ -3703,18 +3715,9 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   // set_init_completed has just been called, causing exceptions not to be shortcut
   // anymore. We call vm_exit_during_initialization directly instead.
 
-#if INCLUDE_ALL_GCS
-  // Support for ConcurrentMarkSweep. This should be cleaned up
-  // and better encapsulated. The ugly nested if test would go away
-  // once things are properly refactored. XXX YSR
-  if (UseConcMarkSweepGC || UseG1GC) {
-    if (UseConcMarkSweepGC) {
-      ConcurrentMarkSweepThread::makeSurrogateLockerThread(CHECK_JNI_ERR);
-    } else {
-      ConcurrentMarkThread::makeSurrogateLockerThread(CHECK_JNI_ERR);
-    }
-  }
-#endif // INCLUDE_ALL_GCS
+  // Initialize reference pending list locker
+  bool needs_locker_thread = Universe::heap()->needs_reference_pending_list_locker_thread();
+  ReferencePendingListLocker::initialize(needs_locker_thread, CHECK_JNI_ERR);
 
   // Signal Dispatcher needs to be started before VMInit event is posted
   os::signal_init();
@@ -4348,9 +4351,13 @@ void Threads::create_thread_roots_marking_tasks(GCTaskQueue* q) {
 
 void Threads::nmethods_do(CodeBlobClosure* cf) {
   ALL_JAVA_THREADS(p) {
-    p->nmethods_do(cf);
+    // This is used by the code cache sweeper to mark nmethods that are active
+    // on the stack of a Java thread. Ignore the sweeper thread itself to avoid
+    // marking CodeCacheSweeperThread::_scanned_nmethod as active.
+    if(!p->is_Code_cache_sweeper_thread()) {
+      p->nmethods_do(cf);
+    }
   }
-  VMThread::vm_thread()->nmethods_do(cf);
 }
 
 void Threads::metadata_do(void f(Metadata*)) {
@@ -4495,6 +4502,36 @@ void Threads::print_on(outputStream* st, bool print_stacks,
   st->flush();
 }
 
+void Threads::print_on_error(Thread* this_thread, outputStream* st, Thread* current, char* buf,
+                             int buflen, bool* found_current) {
+  if (this_thread != NULL) {
+    bool is_current = (current == this_thread);
+    *found_current = *found_current || is_current;
+    st->print("%s", is_current ? "=>" : "  ");
+
+    st->print(PTR_FORMAT, p2i(this_thread));
+    st->print(" ");
+    this_thread->print_on_error(st, buf, buflen);
+    st->cr();
+  }
+}
+
+class PrintOnErrorClosure : public ThreadClosure {
+  outputStream* _st;
+  Thread* _current;
+  char* _buf;
+  int _buflen;
+  bool* _found_current;
+ public:
+  PrintOnErrorClosure(outputStream* st, Thread* current, char* buf,
+                      int buflen, bool* found_current) :
+   _st(st), _current(current), _buf(buf), _buflen(buflen), _found_current(found_current) {}
+
+  virtual void do_thread(Thread* thread) {
+    Threads::print_on_error(thread, _st, _current, _buf, _buflen, _found_current);
+  }
+};
+
 // Threads::print_on_error() is called by fatal error handler. It's possible
 // that VM is not at safepoint and/or current thread is inside signal handler.
 // Don't print stack trace, as the stack may not be walkable. Don't allocate
@@ -4504,40 +4541,17 @@ void Threads::print_on_error(outputStream* st, Thread* current, char* buf,
   bool found_current = false;
   st->print_cr("Java Threads: ( => current thread )");
   ALL_JAVA_THREADS(thread) {
-    bool is_current = (current == thread);
-    found_current = found_current || is_current;
-
-    st->print("%s", is_current ? "=>" : "  ");
-
-    st->print(PTR_FORMAT, p2i(thread));
-    st->print(" ");
-    thread->print_on_error(st, buf, buflen);
-    st->cr();
+    print_on_error(thread, st, current, buf, buflen, &found_current);
   }
   st->cr();
 
   st->print_cr("Other Threads:");
-  if (VMThread::vm_thread()) {
-    bool is_current = (current == VMThread::vm_thread());
-    found_current = found_current || is_current;
-    st->print("%s", current == VMThread::vm_thread() ? "=>" : "  ");
+  print_on_error(VMThread::vm_thread(), st, current, buf, buflen, &found_current);
+  print_on_error(WatcherThread::watcher_thread(), st, current, buf, buflen, &found_current);
 
-    st->print(PTR_FORMAT, p2i(VMThread::vm_thread()));
-    st->print(" ");
-    VMThread::vm_thread()->print_on_error(st, buf, buflen);
-    st->cr();
-  }
-  WatcherThread* wt = WatcherThread::watcher_thread();
-  if (wt != NULL) {
-    bool is_current = (current == wt);
-    found_current = found_current || is_current;
-    st->print("%s", is_current ? "=>" : "  ");
+  PrintOnErrorClosure print_closure(st, current, buf, buflen, &found_current);
+  Universe::heap()->gc_threads_do(&print_closure);
 
-    st->print(PTR_FORMAT, p2i(wt));
-    st->print(" ");
-    wt->print_on_error(st, buf, buflen);
-    st->cr();
-  }
   if (!found_current) {
     st->cr();
     st->print("=>" PTR_FORMAT " (exited) ", p2i(current));

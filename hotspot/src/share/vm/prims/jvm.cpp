@@ -38,6 +38,7 @@
 #include "gc/shared/collectedHeap.inline.hpp"
 #include "interpreter/bytecode.hpp"
 #include "memory/oopFactory.hpp"
+#include "memory/resourceArea.hpp"
 #include "memory/universe.inline.hpp"
 #include "oops/fieldStreams.hpp"
 #include "oops/instanceKlass.hpp"
@@ -78,7 +79,6 @@
 #include "utilities/events.hpp"
 #include "utilities/histogram.hpp"
 #include "utilities/macros.hpp"
-#include "utilities/top.hpp"
 #include "utilities/utf8.hpp"
 #if INCLUDE_CDS
 #include "classfile/sharedClassUtil.hpp"
@@ -210,9 +210,9 @@ static void trace_class_resolution_impl(Klass* to_class, TRAPS) {
       const char * to = to_class->external_name();
       // print in a single call to reduce interleaving between threads
       if (source_file != NULL) {
-        log_info(classresolve)("%s %s %s:%d (%s)", from, to, source_file, line_number, trace);
+        log_debug(classresolve)("%s %s %s:%d (%s)", from, to, source_file, line_number, trace);
       } else {
-        log_info(classresolve)("%s %s (%s)", from, to, trace);
+        log_debug(classresolve)("%s %s (%s)", from, to, trace);
       }
     }
   }
@@ -518,19 +518,13 @@ JVM_ENTRY(void, JVM_FillInStackTrace(JNIEnv *env, jobject receiver))
 JVM_END
 
 
-JVM_ENTRY(jint, JVM_GetStackTraceDepth(JNIEnv *env, jobject throwable))
-  JVMWrapper("JVM_GetStackTraceDepth");
-  oop exception = JNIHandles::resolve(throwable);
-  return java_lang_Throwable::get_stack_trace_depth(exception, THREAD);
-JVM_END
-
-
-JVM_ENTRY(jobject, JVM_GetStackTraceElement(JNIEnv *env, jobject throwable, jint index))
-  JVMWrapper("JVM_GetStackTraceElement");
-  JvmtiVMObjectAllocEventCollector oam; // This ctor (throughout this module) may trigger a safepoint/GC
-  oop exception = JNIHandles::resolve(throwable);
-  oop element = java_lang_Throwable::get_stack_trace_element(exception, index, CHECK_NULL);
-  return JNIHandles::make_local(env, element);
+JVM_ENTRY(void, JVM_GetStackTraceElements(JNIEnv *env, jobject throwable, jobjectArray stackTrace))
+  JVMWrapper("JVM_GetStackTraceElements");
+  Handle exception(THREAD, JNIHandles::resolve(throwable));
+  objArrayOop st = objArrayOop(JNIHandles::resolve(stackTrace));
+  objArrayHandle stack_trace(THREAD, st);
+  // Fill in the allocated stack trace
+  java_lang_Throwable::get_stack_trace_elements(exception, stack_trace, CHECK);
 JVM_END
 
 
@@ -539,7 +533,6 @@ JVM_END
 
 JVM_ENTRY(jobject, JVM_CallStackWalk(JNIEnv *env, jobject stackStream, jlong mode,
                                      jint skip_frames, jint frame_count, jint start_index,
-                                     jobjectArray classes,
                                      jobjectArray frames))
   JVMWrapper("JVM_CallStackWalk");
   JavaThread* jt = (JavaThread*) THREAD;
@@ -548,78 +541,51 @@ JVM_ENTRY(jobject, JVM_CallStackWalk(JNIEnv *env, jobject stackStream, jlong mod
   }
 
   Handle stackStream_h(THREAD, JNIHandles::resolve_non_null(stackStream));
-  objArrayOop ca = objArrayOop(JNIHandles::resolve_non_null(classes));
-  objArrayHandle classes_array_h(THREAD, ca);
 
-  // frames array is null when only getting caller reference
-  objArrayOop fa = objArrayOop(JNIHandles::resolve(frames));
+  // frames array is a Class<?>[] array when only getting caller reference,
+  // and a StackFrameInfo[] array (or derivative) otherwise. It should never
+  // be null.
+  objArrayOop fa = objArrayOop(JNIHandles::resolve_non_null(frames));
   objArrayHandle frames_array_h(THREAD, fa);
 
   int limit = start_index + frame_count;
-  if (classes_array_h->length() < limit) {
+  if (frames_array_h->length() < limit) {
     THROW_MSG_(vmSymbols::java_lang_IllegalArgumentException(), "not enough space in buffers", NULL);
   }
 
   Handle result = StackWalk::walk(stackStream_h, mode, skip_frames, frame_count,
-                                  start_index, classes_array_h,
-                                  frames_array_h, CHECK_NULL);
+                                  start_index, frames_array_h, CHECK_NULL);
   return JNIHandles::make_local(env, result());
 JVM_END
 
 
 JVM_ENTRY(jint, JVM_MoreStackWalk(JNIEnv *env, jobject stackStream, jlong mode, jlong anchor,
                                   jint frame_count, jint start_index,
-                                  jobjectArray classes,
                                   jobjectArray frames))
   JVMWrapper("JVM_MoreStackWalk");
   JavaThread* jt = (JavaThread*) THREAD;
-  objArrayOop ca = objArrayOop(JNIHandles::resolve_non_null(classes));
-  objArrayHandle classes_array_h(THREAD, ca);
 
-  // frames array is null when only getting caller reference
-  objArrayOop fa = objArrayOop(JNIHandles::resolve(frames));
+  // frames array is a Class<?>[] array when only getting caller reference,
+  // and a StackFrameInfo[] array (or derivative) otherwise. It should never
+  // be null.
+  objArrayOop fa = objArrayOop(JNIHandles::resolve_non_null(frames));
   objArrayHandle frames_array_h(THREAD, fa);
 
   int limit = start_index+frame_count;
-  if (classes_array_h->length() < limit) {
+  if (frames_array_h->length() < limit) {
     THROW_MSG_0(vmSymbols::java_lang_IllegalArgumentException(), "not enough space in buffers");
   }
 
   Handle stackStream_h(THREAD, JNIHandles::resolve_non_null(stackStream));
   return StackWalk::moreFrames(stackStream_h, mode, anchor, frame_count,
-                               start_index, classes_array_h,
-                               frames_array_h, THREAD);
+                               start_index, frames_array_h, THREAD);
 JVM_END
 
-JVM_ENTRY(void, JVM_FillStackFrames(JNIEnv *env, jclass stackStream,
-                                    jint start_index,
-                                    jobjectArray frames,
-                                    jint from_index, jint to_index))
-  JVMWrapper("JVM_FillStackFrames");
-  if (TraceStackWalk) {
-    tty->print("JVM_FillStackFrames() start_index=%d from_index=%d to_index=%d\n",
-               start_index, from_index, to_index);
-  }
-
-  JavaThread* jt = (JavaThread*) THREAD;
-
-  objArrayOop fa = objArrayOop(JNIHandles::resolve_non_null(frames));
-  objArrayHandle frames_array_h(THREAD, fa);
-
-  if (frames_array_h->length() < to_index) {
-    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(), "array length not matched");
-  }
-
-  for (int i = from_index; i < to_index; i++) {
-    Handle stackFrame(THREAD, frames_array_h->obj_at(i));
-    java_lang_StackFrameInfo::fill_methodInfo(stackFrame, CHECK);
-  }
-JVM_END
-
-JVM_ENTRY(void, JVM_SetMethodInfo(JNIEnv *env, jobject frame))
-  JVMWrapper("JVM_SetMethodInfo");
-  Handle stackFrame(THREAD, JNIHandles::resolve(frame));
-  java_lang_StackFrameInfo::fill_methodInfo(stackFrame, THREAD);
+JVM_ENTRY(void, JVM_ToStackTraceElement(JNIEnv *env, jobject frame, jobject stack))
+  JVMWrapper("JVM_ToStackTraceElement");
+  Handle stack_frame_info(THREAD, JNIHandles::resolve_non_null(frame));
+  Handle stack_trace_element(THREAD, JNIHandles::resolve_non_null(stack));
+  java_lang_StackFrameInfo::to_stack_trace_element(stack_frame_info, stack_trace_element, THREAD);
 JVM_END
 
 // java.lang.Object ///////////////////////////////////////////////
@@ -839,7 +805,7 @@ JVM_ENTRY(jclass, JVM_FindClassFromBootLoader(JNIEnv* env,
     return NULL;
   }
 
-  if (log_is_enabled(Info, classresolve)) {
+  if (log_is_enabled(Debug, classresolve)) {
     trace_class_resolution(k);
   }
   return (jclass) JNIHandles::make_local(env, k->java_mirror());
@@ -876,7 +842,7 @@ JVM_ENTRY(jclass, JVM_FindClassFromCaller(JNIEnv* env, const char* name,
   jclass result = find_class_from_class_loader(env, h_name, init, h_loader,
                                                h_prot, false, THREAD);
 
-  if (log_is_enabled(Info, classresolve) && result != NULL) {
+  if (log_is_enabled(Debug, classresolve) && result != NULL) {
     trace_class_resolution(java_lang_Class::as_Klass(JNIHandles::resolve_non_null(result)));
   }
   return result;
@@ -906,7 +872,7 @@ JVM_ENTRY(jclass, JVM_FindClassFromClass(JNIEnv *env, const char *name,
   jclass result = find_class_from_class_loader(env, h_name, init, h_loader,
                                                h_prot, true, thread);
 
-  if (log_is_enabled(Info, classresolve) && result != NULL) {
+  if (log_is_enabled(Debug, classresolve) && result != NULL) {
     // this function is generally only used for class loading during verification.
     ResourceMark rm;
     oop from_mirror = JNIHandles::resolve_non_null(from);
@@ -916,7 +882,7 @@ JVM_ENTRY(jclass, JVM_FindClassFromClass(JNIEnv *env, const char *name,
     oop mirror = JNIHandles::resolve_non_null(result);
     Klass* to_class = java_lang_Class::as_Klass(mirror);
     const char * to = to_class->external_name();
-    log_info(classresolve)("%s %s (verification)", from_name, to);
+    log_debug(classresolve)("%s %s (verification)", from_name, to);
   }
 
   return result;
@@ -984,7 +950,7 @@ static jclass jvm_define_class_common(JNIEnv *env, const char *name,
                                                    &st,
                                                    CHECK_NULL);
 
-  if (log_is_enabled(Info, classresolve) && k != NULL) {
+  if (log_is_enabled(Debug, classresolve) && k != NULL) {
     trace_class_resolution(k);
   }
 
@@ -1823,9 +1789,6 @@ JVM_ENTRY(jobjectArray, JVM_GetClassDeclaredFields(JNIEnv *env, jclass ofClass, 
   // Ensure class is linked
   k->link_class(CHECK_NULL);
 
-  // 4496456 We need to filter out java.lang.Throwable.backtrace
-  bool skip_backtrace = false;
-
   // Allocate result
   int num_fields;
 
@@ -1836,11 +1799,6 @@ JVM_ENTRY(jobjectArray, JVM_GetClassDeclaredFields(JNIEnv *env, jclass ofClass, 
     }
   } else {
     num_fields = k->java_fields_count();
-
-    if (k() == SystemDictionary::Throwable_klass()) {
-      num_fields--;
-      skip_backtrace = true;
-    }
   }
 
   objArrayOop r = oopFactory::new_objArray(SystemDictionary::reflect_Field_klass(), num_fields, CHECK_NULL);
@@ -1849,12 +1807,6 @@ JVM_ENTRY(jobjectArray, JVM_GetClassDeclaredFields(JNIEnv *env, jclass ofClass, 
   int out_idx = 0;
   fieldDescriptor fd;
   for (JavaFieldStream fs(k); !fs.done(); fs.next()) {
-    if (skip_backtrace) {
-      // 4496456 skip java.lang.Throwable.backtrace
-      int offset = fs.offset();
-      if (offset == java_lang_Throwable::get_backtrace_offset()) continue;
-    }
-
     if (!publicOnly || fs.access_flags().is_public()) {
       fd.reinitialize(k(), fs.index());
       oop field = Reflection::new_field(&fd, CHECK_NULL);
@@ -1988,8 +1940,8 @@ JVM_ENTRY(jobject, JVM_GetClassConstantPool(JNIEnv *env, jclass cls))
     Klass* k = java_lang_Class::as_Klass(JNIHandles::resolve_non_null(cls));
     if (k->is_instance_klass()) {
       instanceKlassHandle k_h(THREAD, k);
-      Handle jcp = sun_reflect_ConstantPool::create(CHECK_NULL);
-      sun_reflect_ConstantPool::set_cp(jcp(), k_h->constants());
+      Handle jcp = reflect_ConstantPool::create(CHECK_NULL);
+      reflect_ConstantPool::set_cp(jcp(), k_h->constants());
       return JNIHandles::make_local(jcp());
     }
   }
@@ -2001,7 +1953,7 @@ JVM_END
 JVM_ENTRY(jint, JVM_ConstantPoolGetSize(JNIEnv *env, jobject obj, jobject unused))
 {
   JVMWrapper("JVM_ConstantPoolGetSize");
-  constantPoolHandle cp = constantPoolHandle(THREAD, sun_reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
+  constantPoolHandle cp = constantPoolHandle(THREAD, reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
   return cp->length();
 }
 JVM_END
@@ -2010,7 +1962,7 @@ JVM_END
 JVM_ENTRY(jclass, JVM_ConstantPoolGetClassAt(JNIEnv *env, jobject obj, jobject unused, jint index))
 {
   JVMWrapper("JVM_ConstantPoolGetClassAt");
-  constantPoolHandle cp = constantPoolHandle(THREAD, sun_reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
+  constantPoolHandle cp = constantPoolHandle(THREAD, reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
   bounds_check(cp, index, CHECK_NULL);
   constantTag tag = cp->tag_at(index);
   if (!tag.is_klass() && !tag.is_unresolved_klass()) {
@@ -2024,7 +1976,7 @@ JVM_END
 JVM_ENTRY(jclass, JVM_ConstantPoolGetClassAtIfLoaded(JNIEnv *env, jobject obj, jobject unused, jint index))
 {
   JVMWrapper("JVM_ConstantPoolGetClassAtIfLoaded");
-  constantPoolHandle cp = constantPoolHandle(THREAD, sun_reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
+  constantPoolHandle cp = constantPoolHandle(THREAD, reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
   bounds_check(cp, index, CHECK_NULL);
   constantTag tag = cp->tag_at(index);
   if (!tag.is_klass() && !tag.is_unresolved_klass()) {
@@ -2069,7 +2021,7 @@ JVM_ENTRY(jobject, JVM_ConstantPoolGetMethodAt(JNIEnv *env, jobject obj, jobject
 {
   JVMWrapper("JVM_ConstantPoolGetMethodAt");
   JvmtiVMObjectAllocEventCollector oam;
-  constantPoolHandle cp = constantPoolHandle(THREAD, sun_reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
+  constantPoolHandle cp = constantPoolHandle(THREAD, reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
   bounds_check(cp, index, CHECK_NULL);
   jobject res = get_method_at_helper(cp, index, true, CHECK_NULL);
   return res;
@@ -2080,7 +2032,7 @@ JVM_ENTRY(jobject, JVM_ConstantPoolGetMethodAtIfLoaded(JNIEnv *env, jobject obj,
 {
   JVMWrapper("JVM_ConstantPoolGetMethodAtIfLoaded");
   JvmtiVMObjectAllocEventCollector oam;
-  constantPoolHandle cp = constantPoolHandle(THREAD, sun_reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
+  constantPoolHandle cp = constantPoolHandle(THREAD, reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
   bounds_check(cp, index, CHECK_NULL);
   jobject res = get_method_at_helper(cp, index, false, CHECK_NULL);
   return res;
@@ -2116,7 +2068,7 @@ JVM_ENTRY(jobject, JVM_ConstantPoolGetFieldAt(JNIEnv *env, jobject obj, jobject 
 {
   JVMWrapper("JVM_ConstantPoolGetFieldAt");
   JvmtiVMObjectAllocEventCollector oam;
-  constantPoolHandle cp = constantPoolHandle(THREAD, sun_reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
+  constantPoolHandle cp = constantPoolHandle(THREAD, reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
   bounds_check(cp, index, CHECK_NULL);
   jobject res = get_field_at_helper(cp, index, true, CHECK_NULL);
   return res;
@@ -2127,7 +2079,7 @@ JVM_ENTRY(jobject, JVM_ConstantPoolGetFieldAtIfLoaded(JNIEnv *env, jobject obj, 
 {
   JVMWrapper("JVM_ConstantPoolGetFieldAtIfLoaded");
   JvmtiVMObjectAllocEventCollector oam;
-  constantPoolHandle cp = constantPoolHandle(THREAD, sun_reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
+  constantPoolHandle cp = constantPoolHandle(THREAD, reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
   bounds_check(cp, index, CHECK_NULL);
   jobject res = get_field_at_helper(cp, index, false, CHECK_NULL);
   return res;
@@ -2138,7 +2090,7 @@ JVM_ENTRY(jobjectArray, JVM_ConstantPoolGetMemberRefInfoAt(JNIEnv *env, jobject 
 {
   JVMWrapper("JVM_ConstantPoolGetMemberRefInfoAt");
   JvmtiVMObjectAllocEventCollector oam;
-  constantPoolHandle cp = constantPoolHandle(THREAD, sun_reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
+  constantPoolHandle cp = constantPoolHandle(THREAD, reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
   bounds_check(cp, index, CHECK_NULL);
   constantTag tag = cp->tag_at(index);
   if (!tag.is_field_or_method()) {
@@ -2164,7 +2116,7 @@ JVM_ENTRY(jint, JVM_ConstantPoolGetClassRefIndexAt(JNIEnv *env, jobject obj, job
 {
   JVMWrapper("JVM_ConstantPoolGetClassRefIndexAt");
   JvmtiVMObjectAllocEventCollector oam;
-  constantPoolHandle cp(THREAD, sun_reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
+  constantPoolHandle cp(THREAD, reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
   bounds_check(cp, index, CHECK_0);
   constantTag tag = cp->tag_at(index);
   if (!tag.is_field_or_method()) {
@@ -2178,7 +2130,7 @@ JVM_ENTRY(jint, JVM_ConstantPoolGetNameAndTypeRefIndexAt(JNIEnv *env, jobject ob
 {
   JVMWrapper("JVM_ConstantPoolGetNameAndTypeRefIndexAt");
   JvmtiVMObjectAllocEventCollector oam;
-  constantPoolHandle cp(THREAD, sun_reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
+  constantPoolHandle cp(THREAD, reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
   bounds_check(cp, index, CHECK_0);
   constantTag tag = cp->tag_at(index);
   if (!tag.is_invoke_dynamic() && !tag.is_field_or_method()) {
@@ -2192,7 +2144,7 @@ JVM_ENTRY(jobjectArray, JVM_ConstantPoolGetNameAndTypeRefInfoAt(JNIEnv *env, job
 {
   JVMWrapper("JVM_ConstantPoolGetNameAndTypeRefInfoAt");
   JvmtiVMObjectAllocEventCollector oam;
-  constantPoolHandle cp(THREAD, sun_reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
+  constantPoolHandle cp(THREAD, reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
   bounds_check(cp, index, CHECK_NULL);
   constantTag tag = cp->tag_at(index);
   if (!tag.is_name_and_type()) {
@@ -2213,7 +2165,7 @@ JVM_END
 JVM_ENTRY(jint, JVM_ConstantPoolGetIntAt(JNIEnv *env, jobject obj, jobject unused, jint index))
 {
   JVMWrapper("JVM_ConstantPoolGetIntAt");
-  constantPoolHandle cp = constantPoolHandle(THREAD, sun_reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
+  constantPoolHandle cp = constantPoolHandle(THREAD, reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
   bounds_check(cp, index, CHECK_0);
   constantTag tag = cp->tag_at(index);
   if (!tag.is_int()) {
@@ -2226,7 +2178,7 @@ JVM_END
 JVM_ENTRY(jlong, JVM_ConstantPoolGetLongAt(JNIEnv *env, jobject obj, jobject unused, jint index))
 {
   JVMWrapper("JVM_ConstantPoolGetLongAt");
-  constantPoolHandle cp = constantPoolHandle(THREAD, sun_reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
+  constantPoolHandle cp = constantPoolHandle(THREAD, reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
   bounds_check(cp, index, CHECK_(0L));
   constantTag tag = cp->tag_at(index);
   if (!tag.is_long()) {
@@ -2239,7 +2191,7 @@ JVM_END
 JVM_ENTRY(jfloat, JVM_ConstantPoolGetFloatAt(JNIEnv *env, jobject obj, jobject unused, jint index))
 {
   JVMWrapper("JVM_ConstantPoolGetFloatAt");
-  constantPoolHandle cp = constantPoolHandle(THREAD, sun_reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
+  constantPoolHandle cp = constantPoolHandle(THREAD, reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
   bounds_check(cp, index, CHECK_(0.0f));
   constantTag tag = cp->tag_at(index);
   if (!tag.is_float()) {
@@ -2252,7 +2204,7 @@ JVM_END
 JVM_ENTRY(jdouble, JVM_ConstantPoolGetDoubleAt(JNIEnv *env, jobject obj, jobject unused, jint index))
 {
   JVMWrapper("JVM_ConstantPoolGetDoubleAt");
-  constantPoolHandle cp = constantPoolHandle(THREAD, sun_reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
+  constantPoolHandle cp = constantPoolHandle(THREAD, reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
   bounds_check(cp, index, CHECK_(0.0));
   constantTag tag = cp->tag_at(index);
   if (!tag.is_double()) {
@@ -2265,7 +2217,7 @@ JVM_END
 JVM_ENTRY(jstring, JVM_ConstantPoolGetStringAt(JNIEnv *env, jobject obj, jobject unused, jint index))
 {
   JVMWrapper("JVM_ConstantPoolGetStringAt");
-  constantPoolHandle cp = constantPoolHandle(THREAD, sun_reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
+  constantPoolHandle cp = constantPoolHandle(THREAD, reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
   bounds_check(cp, index, CHECK_NULL);
   constantTag tag = cp->tag_at(index);
   if (!tag.is_string()) {
@@ -2280,7 +2232,7 @@ JVM_ENTRY(jstring, JVM_ConstantPoolGetUTF8At(JNIEnv *env, jobject obj, jobject u
 {
   JVMWrapper("JVM_ConstantPoolGetUTF8At");
   JvmtiVMObjectAllocEventCollector oam;
-  constantPoolHandle cp = constantPoolHandle(THREAD, sun_reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
+  constantPoolHandle cp = constantPoolHandle(THREAD, reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
   bounds_check(cp, index, CHECK_NULL);
   constantTag tag = cp->tag_at(index);
   if (!tag.is_symbol()) {
@@ -2295,7 +2247,7 @@ JVM_END
 JVM_ENTRY(jbyte, JVM_ConstantPoolGetTagAt(JNIEnv *env, jobject obj, jobject unused, jint index))
 {
   JVMWrapper("JVM_ConstantPoolGetTagAt");
-  constantPoolHandle cp = constantPoolHandle(THREAD, sun_reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
+  constantPoolHandle cp = constantPoolHandle(THREAD, reflect_ConstantPool::get_cp(JNIHandles::resolve_non_null(obj)));
   bounds_check(cp, index, CHECK_0);
   constantTag tag = cp->tag_at(index);
   jbyte result = tag.value();

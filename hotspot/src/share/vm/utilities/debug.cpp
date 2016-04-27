@@ -52,7 +52,6 @@
 #include "utilities/defaultStream.hpp"
 #include "utilities/events.hpp"
 #include "utilities/macros.hpp"
-#include "utilities/top.hpp"
 #include "utilities/vmError.hpp"
 
 #if INCLUDE_TRACE
@@ -222,6 +221,11 @@ void report_vm_error(const char* file, int line, const char* error_msg, const ch
   va_start(detail_args, detail_fmt);
   VMError::report_and_die(Thread::current_or_null(), file, line, error_msg, detail_fmt, detail_args);
   va_end(detail_args);
+}
+
+void report_vm_status_error(const char* file, int line, const char* error_msg,
+                            int status, const char* detail) {
+  report_vm_error(file, line, error_msg, "error %s(%d), %s", os::errno_name(status), status, detail);
 }
 
 void report_fatal(const char* file, int line, const char* detail_fmt, ...)

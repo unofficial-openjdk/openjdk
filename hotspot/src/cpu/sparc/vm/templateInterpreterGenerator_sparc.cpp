@@ -616,7 +616,7 @@ void TemplateInterpreterGenerator::generate_stack_overflow_check(Register Rframe
 
   // compute the beginning of the protected zone minus the requested frame size
   __ sub( Rscratch, Rscratch2,   Rscratch );
-  __ set( JavaThread::stack_red_zone_size() + JavaThread::stack_yellow_zone_size(), Rscratch2 );
+  __ set(MAX2(JavaThread::stack_shadow_zone_size(), JavaThread::stack_guard_zone_size()), Rscratch2 );
   __ add( Rscratch, Rscratch2,   Rscratch );
 
   // Add in the size of the frame (which is the same as subtracting it from the
@@ -1966,7 +1966,7 @@ address TemplateInterpreterGenerator::generate_trace_code(TosState state) {
 
   // Pass a 0 (not used in sparc) and the top of stack to the bytecode tracer
   __ mov( Otos_l2, G3_scratch );
-  __ call_VM(noreg, CAST_FROM_FN_PTR(address, SharedRuntime::trace_bytecode), G0, Otos_l1, G3_scratch);
+  __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::trace_bytecode), G0, Otos_l1, G3_scratch);
   __ mov(Lscratch, O7); // restore return address
   __ pop(state);
   __ retl();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@
 #include "precompiled.hpp"
 #include "gc/shared/collectedHeap.hpp"
 #include "gc/shared/collectorPolicy.hpp"
+#include "gc/shared/genCollectedHeap.hpp"
 #include "gc/shared/threadLocalAllocBuffer.hpp"
 #include "runtime/arguments.hpp"
 #include "runtime/commandLineFlagConstraintsGC.hpp"
@@ -35,6 +36,7 @@
 #include "utilities/defaultStream.hpp"
 
 #if INCLUDE_ALL_GCS
+#include "gc/cms/concurrentMarkSweepGeneration.inline.hpp"
 #include "gc/g1/g1_globals.hpp"
 #include "gc/g1/heapRegionBounds.inline.hpp"
 #include "gc/shared/plab.hpp"
@@ -113,7 +115,7 @@ Flag::Error ConcGCThreadsConstraintFunc(uint value, bool verbose) {
 
 static Flag::Error MinPLABSizeBounds(const char* name, size_t value, bool verbose) {
 #if INCLUDE_ALL_GCS
-  if ((UseConcMarkSweepGC || UseG1GC) && (value < PLAB::min_size())) {
+  if ((UseConcMarkSweepGC || UseG1GC || UseParallelGC) && (value < PLAB::min_size())) {
     CommandLineError::print(verbose,
                             "%s (" SIZE_FORMAT ") must be "
                             "greater than or equal to ergonomic PLAB minimum size (" SIZE_FORMAT ")\n",
@@ -126,7 +128,7 @@ static Flag::Error MinPLABSizeBounds(const char* name, size_t value, bool verbos
 
 static Flag::Error MaxPLABSizeBounds(const char* name, size_t value, bool verbose) {
 #if INCLUDE_ALL_GCS
-  if ((UseConcMarkSweepGC || UseG1GC) && (value > PLAB::max_size())) {
+  if ((UseConcMarkSweepGC || UseG1GC || UseParallelGC) && (value > PLAB::max_size())) {
     CommandLineError::print(verbose,
                             "%s (" SIZE_FORMAT ") must be "
                             "less than or equal to ergonomic PLAB maximum size (" SIZE_FORMAT ")\n",
@@ -381,6 +383,39 @@ Flag::Error ParGCStridesPerThreadConstraintFunc(uintx value, bool verbose) {
   return Flag::SUCCESS;
 }
 
+Flag::Error ParGCCardsPerStrideChunkConstraintFunc(intx value, bool verbose) {
+#if INCLUDE_ALL_GCS
+  if (UseConcMarkSweepGC) {
+    // ParGCCardsPerStrideChunk should be compared with card table size.
+    size_t heap_size = Universe::heap()->reserved_region().word_size();
+    CardTableModRefBS* bs = (CardTableModRefBS*)GenCollectedHeap::heap()->rem_set()->bs();
+    size_t card_table_size = bs->cards_required(heap_size) - 1; // Valid card table size
+
+    if ((size_t)value > card_table_size) {
+      CommandLineError::print(verbose,
+                              "ParGCCardsPerStrideChunk (" INTX_FORMAT ") is too large for the heap size and "
+                              "must be less than or equal to card table size (" SIZE_FORMAT ")\n",
+                              value, card_table_size);
+      return Flag::VIOLATES_CONSTRAINT;
+    }
+
+    // ParGCCardsPerStrideChunk is used with n_strides(ParallelGCThreads*ParGCStridesPerThread)
+    // from CardTableModRefBSForCTRS::process_stride(). Note that ParGCStridesPerThread is already checked
+    // not to make an overflow with ParallelGCThreads from its constraint function.
+    uintx n_strides = ParallelGCThreads * ParGCStridesPerThread;
+    uintx ergo_max = max_uintx / n_strides;
+    if ((uintx)value > ergo_max) {
+      CommandLineError::print(verbose,
+                              "ParGCCardsPerStrideChunk (" INTX_FORMAT ") must be "
+                              "less than or equal to ergonomic maximum (" UINTX_FORMAT ")\n",
+                              value, ergo_max);
+      return Flag::VIOLATES_CONSTRAINT;
+    }
+  }
+#endif
+  return Flag::SUCCESS;
+}
+
 Flag::Error CMSOldPLABMinConstraintFunc(size_t value, bool verbose) {
   Flag::Error status = Flag::SUCCESS;
 
@@ -422,6 +457,51 @@ Flag::Error MarkStackSizeConstraintFunc(size_t value, bool verbose) {
   }
 }
 
+static Flag::Error CMSReservedAreaConstraintFunc(const char* name, size_t value, bool verbose) {
+#if INCLUDE_ALL_GCS
+  if (UseConcMarkSweepGC) {
+    ConcurrentMarkSweepGeneration* cms = (ConcurrentMarkSweepGeneration*)GenCollectedHeap::heap()->old_gen();
+    const size_t ergo_max = cms->cmsSpace()->max_flag_size_for_task_size();
+    if (value > ergo_max) {
+      CommandLineError::print(verbose,
+                              "%s (" SIZE_FORMAT ") must be "
+                              "less than or equal to ergonomic maximum (" SIZE_FORMAT ") "
+                              "which is based on the maximum size of the old generation of the Java heap\n",
+                              name, value, ergo_max);
+      return Flag::VIOLATES_CONSTRAINT;
+    }
+  }
+#endif
+
+  return Flag::SUCCESS;
+}
+
+Flag::Error CMSRescanMultipleConstraintFunc(size_t value, bool verbose) {
+  Flag::Error status = CMSReservedAreaConstraintFunc("CMSRescanMultiple", value, verbose);
+
+#if INCLUDE_ALL_GCS
+  if (status == Flag::SUCCESS && UseConcMarkSweepGC) {
+    // CMSParRemarkTask::do_dirty_card_rescan_tasks requires CompactibleFreeListSpace::rescan_task_size()
+    // to be aligned to CardTableModRefBS::card_size * BitsPerWord.
+    // Note that rescan_task_size() will be aligned if CMSRescanMultiple is a multiple of 'HeapWordSize'
+    // because rescan_task_size() is CardTableModRefBS::card_size / HeapWordSize * BitsPerWord.
+    if (value % HeapWordSize != 0) {
+      CommandLineError::print(verbose,
+                              "CMSRescanMultiple (" SIZE_FORMAT ") must be "
+                              "a multiple of " SIZE_FORMAT "\n",
+                              value, HeapWordSize);
+      status = Flag::VIOLATES_CONSTRAINT;
+    }
+  }
+#endif
+
+  return status;
+}
+
+Flag::Error CMSConcMarkMultipleConstraintFunc(size_t value, bool verbose) {
+  return CMSReservedAreaConstraintFunc("CMSConcMarkMultiple", value, verbose);
+}
+
 Flag::Error CMSPrecleanDenominatorConstraintFunc(uintx value, bool verbose) {
 #if INCLUDE_ALL_GCS
   if (UseConcMarkSweepGC && (value <= CMSPrecleanNumerator)) {
@@ -448,10 +528,47 @@ Flag::Error CMSPrecleanNumeratorConstraintFunc(uintx value, bool verbose) {
   return Flag::SUCCESS;
 }
 
+Flag::Error CMSSamplingGrainConstraintFunc(uintx value, bool verbose) {
+#if INCLUDE_ALL_GCS
+  if (UseConcMarkSweepGC) {
+    size_t max_capacity = GenCollectedHeap::heap()->young_gen()->max_capacity();
+    if (value > max_uintx - max_capacity) {
+    CommandLineError::print(verbose,
+                            "CMSSamplingGrain (" UINTX_FORMAT ") must be "
+                            "less than or equal to ergonomic maximum (" SIZE_FORMAT ")\n",
+                            value, max_uintx - max_capacity);
+    return Flag::VIOLATES_CONSTRAINT;
+    }
+  }
+#endif
+  return Flag::SUCCESS;
+}
+
 Flag::Error CMSWorkQueueDrainThresholdConstraintFunc(uintx value, bool verbose) {
 #if INCLUDE_ALL_GCS
   if (UseConcMarkSweepGC) {
     return ParallelGCThreadsAndCMSWorkQueueDrainThreshold(ParallelGCThreads, value, verbose);
+  }
+#endif
+  return Flag::SUCCESS;
+}
+
+Flag::Error CMSBitMapYieldQuantumConstraintFunc(size_t value, bool verbose) {
+#if INCLUDE_ALL_GCS
+  // Skip for current default value.
+  if (UseConcMarkSweepGC && FLAG_IS_CMDLINE(CMSBitMapYieldQuantum)) {
+    // CMSBitMapYieldQuantum should be compared with mark bitmap size.
+    ConcurrentMarkSweepGeneration* cms = (ConcurrentMarkSweepGeneration*)GenCollectedHeap::heap()->old_gen();
+    size_t bitmap_size = cms->collector()->markBitMap()->sizeInWords();
+
+    if (value > bitmap_size) {
+      CommandLineError::print(verbose,
+                              "CMSBitMapYieldQuantum (" SIZE_FORMAT ") must "
+                              "be less than or equal to bitmap size (" SIZE_FORMAT ") "
+                              "whose size corresponds to the size of old generation of the Java heap\n",
+                              value, bitmap_size);
+      return Flag::VIOLATES_CONSTRAINT;
+    }
   }
 #endif
   return Flag::SUCCESS;
@@ -589,9 +706,15 @@ Flag::Error MinTLABSizeConstraintFunc(size_t value, bool verbose) {
                             "greater than or equal to reserved area in TLAB (" SIZE_FORMAT ")\n",
                             value, ThreadLocalAllocBuffer::alignment_reserve_in_bytes());
     return Flag::VIOLATES_CONSTRAINT;
-  } else {
-    return Flag::SUCCESS;
   }
+  if (value > (ThreadLocalAllocBuffer::max_size() * HeapWordSize)) {
+    CommandLineError::print(verbose,
+                            "MinTLABSize (" SIZE_FORMAT ") must be "
+                            "less than or equal to ergonomic TLAB maximum (" SIZE_FORMAT ")\n",
+                            value, ThreadLocalAllocBuffer::max_size() * HeapWordSize);
+    return Flag::VIOLATES_CONSTRAINT;
+  }
+  return Flag::SUCCESS;
 }
 
 Flag::Error TLABSizeConstraintFunc(size_t value, bool verbose) {

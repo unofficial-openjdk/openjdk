@@ -26,6 +26,7 @@
 #include "classfile/classFileStream.hpp"
 #include "classfile/vmSymbols.hpp"
 #include "memory/allocation.inline.hpp"
+#include "memory/resourceArea.hpp"
 #include "oops/objArrayOop.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "prims/jni.h"
@@ -132,13 +133,22 @@ jlong Unsafe_field_offset_from_byte_offset(jlong byte_offset) {
 
 ///// Data in the Java heap.
 
+#define truncate_jboolean(x) ((x) & 1)
+#define truncate_jbyte(x) (x)
+#define truncate_jshort(x) (x)
+#define truncate_jchar(x) (x)
+#define truncate_jint(x) (x)
+#define truncate_jlong(x) (x)
+#define truncate_jfloat(x) (x)
+#define truncate_jdouble(x) (x)
+
 #define GET_FIELD(obj, offset, type_name, v) \
   oop p = JNIHandles::resolve(obj); \
   type_name v = *(type_name*)index_oop_from_field_offset_long(p, offset)
 
 #define SET_FIELD(obj, offset, type_name, x) \
   oop p = JNIHandles::resolve(obj); \
-  *(type_name*)index_oop_from_field_offset_long(p, offset) = x
+  *(type_name*)index_oop_from_field_offset_long(p, offset) = truncate_##type_name(x)
 
 #define GET_FIELD_VOLATILE(obj, offset, type_name, v) \
   oop p = JNIHandles::resolve(obj); \
@@ -149,7 +159,7 @@ jlong Unsafe_field_offset_from_byte_offset(jlong byte_offset) {
 
 #define SET_FIELD_VOLATILE(obj, offset, type_name, x) \
   oop p = JNIHandles::resolve(obj); \
-  OrderAccess::release_store_fence((volatile type_name*)index_oop_from_field_offset_long(p, offset), x);
+  OrderAccess::release_store_fence((volatile type_name*)index_oop_from_field_offset_long(p, offset), truncate_##type_name(x));
 
 
 // Get/SetObject must be special-cased, since it works with handles.
@@ -867,7 +877,10 @@ Unsafe_DefineAnonymousClass_impl(JNIEnv *env,
   }
 
   const Klass* host_klass = java_lang_Class::as_Klass(JNIHandles::resolve_non_null(host_class));
-  assert(host_klass != NULL, "invariant");
+  // Primitive types have NULL Klass* fields in their java.lang.Class instances.
+  if (host_klass == NULL) {
+    THROW_0(vmSymbols::java_lang_IllegalArgumentException());
+  }
 
   const char* host_source = host_klass->external_name();
   Handle      host_loader(THREAD, host_klass->class_loader());

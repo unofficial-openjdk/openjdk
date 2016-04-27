@@ -38,9 +38,10 @@
 #include "memory/filemap.hpp"
 #include "memory/metaspace.hpp"
 #include "memory/metaspaceShared.hpp"
+#include "memory/resourceArea.hpp"
 #include "oops/objArrayOop.hpp"
 #include "oops/oop.inline.hpp"
-#include "runtime/logTimer.hpp"
+#include "runtime/timerTrace.hpp"
 #include "runtime/os.hpp"
 #include "runtime/signature.hpp"
 #include "runtime/vmThread.hpp"
@@ -58,6 +59,8 @@ bool MetaspaceShared::_link_classes_made_progress;
 bool MetaspaceShared::_check_classes_made_progress;
 bool MetaspaceShared::_has_error_classes;
 bool MetaspaceShared::_archive_loading_failed = false;
+address MetaspaceShared::_cds_i2i_entry_code_buffers = NULL;
+size_t MetaspaceShared::_cds_i2i_entry_code_buffers_size = 0;
 SharedMiscRegion MetaspaceShared::_mc;
 SharedMiscRegion MetaspaceShared::_md;
 
@@ -128,6 +131,21 @@ void MetaspaceShared::serialize(SerializeClosure* soc) {
   soc->do_tag(666);
 }
 
+address MetaspaceShared::cds_i2i_entry_code_buffers(size_t total_size) {
+  if (DumpSharedSpaces) {
+    if (_cds_i2i_entry_code_buffers == NULL) {
+      _cds_i2i_entry_code_buffers = (address)misc_data_space_alloc(total_size);
+      _cds_i2i_entry_code_buffers_size = total_size;
+    }
+  } else if (UseSharedSpaces) {
+    assert(_cds_i2i_entry_code_buffers != NULL, "must already been initialized");
+  } else {
+    return NULL;
+  }
+
+  assert(_cds_i2i_entry_code_buffers_size == total_size, "must not change");
+  return _cds_i2i_entry_code_buffers;
+}
 
 // CDS code for dumping shared archive.
 
@@ -575,6 +593,8 @@ void VM_PopulateDumpSharedSpace::doit() {
                                      &md_top, md_end,
                                      &mc_top, mc_end);
 
+  guarantee(md_top <= md_end, "Insufficient space for vtables.");
+
   // Reorder the system dictionary.  (Moving the symbols affects
   // how the hash table indices are calculated.)
   // Not doing this either.
@@ -667,6 +687,8 @@ void VM_PopulateDumpSharedSpace::doit() {
   FileMapInfo* mapinfo = new FileMapInfo();
   mapinfo->populate_header(MetaspaceShared::max_alignment());
   mapinfo->set_misc_data_patching_start((char*)vtbl_list);
+  mapinfo->set_cds_i2i_entry_code_buffers(MetaspaceShared::cds_i2i_entry_code_buffers());
+  mapinfo->set_cds_i2i_entry_code_buffers_size(MetaspaceShared::cds_i2i_entry_code_buffers_size());
 
   for (int pass=1; pass<=2; pass++) {
     if (pass == 1) {
@@ -685,7 +707,7 @@ void VM_PopulateDumpSharedSpace::doit() {
     mapinfo->write_region(MetaspaceShared::md, _md_vs.low(),
                           pointer_delta(md_top, _md_vs.low(), sizeof(char)),
                           SharedMiscDataSize,
-                          false, false);
+                          false, true);
     mapinfo->write_region(MetaspaceShared::mc, _mc_vs.low(),
                           pointer_delta(mc_top, _mc_vs.low(), sizeof(char)),
                           SharedMiscCodeSize,
@@ -775,7 +797,7 @@ void MetaspaceShared::prepare_for_dumping() {
 // Preload classes from a list, populate the shared spaces and dump to a
 // file.
 void MetaspaceShared::preload_and_dump(TRAPS) {
-  { TraceStartupTime timer("Dump Shared Spaces");
+  { TraceTime timer("Dump Shared Spaces", TRACETIME_LOG(Info, startuptime));
     ResourceMark rm;
     char class_list_path_str[JVM_MAXPATHLEN];
 
@@ -882,7 +904,7 @@ int MetaspaceShared::preload_and_dump(const char* class_list_path,
 
         InstanceKlass* ik = InstanceKlass::cast(klass);
 
-        // Should be class load order as per -XX:+TraceClassLoadingPreorder
+        // Should be class load order as per -Xlog:classload+preorder
         class_promote_order->append(ik);
 
         // Link the class to cause the bytecodes to be rewritten and the
@@ -979,6 +1001,11 @@ bool MetaspaceShared::is_in_shared_space(const void* p) {
   return UseSharedSpaces && FileMapInfo::current_info()->is_in_shared_space(p);
 }
 
+// Return true if given address is in the misc data region
+bool MetaspaceShared::is_in_shared_region(const void* p, int idx) {
+  return UseSharedSpaces && FileMapInfo::current_info()->is_in_shared_region(p, idx);
+}
+
 bool MetaspaceShared::is_string_region(int idx) {
   return (idx >= MetaspaceShared::first_string &&
           idx < MetaspaceShared::first_string + MetaspaceShared::max_strings);
@@ -1052,6 +1079,8 @@ bool MetaspaceShared::map_shared_spaces(FileMapInfo* mapinfo) {
 
 void MetaspaceShared::initialize_shared_spaces() {
   FileMapInfo *mapinfo = FileMapInfo::current_info();
+  _cds_i2i_entry_code_buffers = mapinfo->cds_i2i_entry_code_buffers();
+  _cds_i2i_entry_code_buffers_size = mapinfo->cds_i2i_entry_code_buffers_size();
   char* buffer = mapinfo->misc_data_patching_start();
 
   // Skip over (reserve space for) a list of addresses of C++ vtables

@@ -437,7 +437,7 @@ class MethodFamily : public ResourceObj {
       _exception_name = vmSymbols::java_lang_IncompatibleClassChangeError();
       if (log_is_enabled(Debug, defaultmethods)) {
         ResourceMark rm;
-        outputStream* logstream = LogHandle(defaultmethods)::debug_stream();
+        outputStream* logstream = Log(defaultmethods)::debug_stream();
         _exception_message->print_value_on(logstream);
         logstream->cr();
       }
@@ -663,7 +663,7 @@ static GrowableArray<EmptyVtableSlot*>* find_empty_vtable_slots(
   if (log_is_enabled(Debug, defaultmethods)) {
     log_debug(defaultmethods)("Slots that need filling:");
     ResourceMark rm;
-    outputStream* logstream = LogHandle(defaultmethods)::debug_stream();
+    outputStream* logstream = Log(defaultmethods)::debug_stream();
     streamIndentor si(logstream);
     for (int i = 0; i < slots->length(); ++i) {
       logstream->indent();
@@ -799,7 +799,7 @@ void DefaultMethods::generate_default_methods(
     log_debug(defaultmethods)("%s %s requires default method processing",
                               klass->is_interface() ? "Interface" : "Class",
                               klass->name()->as_klass_external_name());
-    PrintHierarchy printer(LogHandle(defaultmethods)::debug_stream());
+    PrintHierarchy printer(Log(defaultmethods)::debug_stream());
     printer.run(klass);
   }
 
@@ -809,7 +809,7 @@ void DefaultMethods::generate_default_methods(
   for (int i = 0; i < empty_slots->length(); ++i) {
     EmptyVtableSlot* slot = empty_slots->at(i);
     if (log_is_enabled(Debug, defaultmethods)) {
-      outputStream* logstream = LogHandle(defaultmethods)::debug_stream();
+      outputStream* logstream = Log(defaultmethods)::debug_stream();
       streamIndentor si(logstream, 2);
       logstream->indent().print("Looking for default methods for slot ");
       slot->print_on(logstream);
@@ -860,10 +860,8 @@ static Method* new_method(
   m->set_constants(NULL); // This will get filled in later
   m->set_name_index(cp->utf8(name));
   m->set_signature_index(cp->utf8(sig));
-#ifdef CC_INTERP
   ResultTypeFinder rtf(sig);
-  m->set_result_index(rtf.type());
-#endif
+  m->constMethod()->set_result_type(rtf.type());
   m->set_size_of_parameters(params);
   m->set_max_stack(max_stack);
   m->set_max_locals(params);
@@ -917,7 +915,7 @@ static void create_defaults_and_exceptions(
 
       if (log_is_enabled(Debug, defaultmethods)) {
         ResourceMark rm;
-        outputStream* logstream = LogHandle(defaultmethods)::debug_stream();
+        outputStream* logstream = Log(defaultmethods)::debug_stream();
         logstream->print("for slot: ");
         slot->print_on(logstream);
         logstream->cr();

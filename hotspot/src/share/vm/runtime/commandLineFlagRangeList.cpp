@@ -27,6 +27,7 @@
 #include "classfile/symbolTable.hpp"
 #include "gc/shared/referenceProcessor.hpp"
 #include "runtime/arguments.hpp"
+#include "runtime/commandLineFlagConstraintList.hpp"
 #include "runtime/commandLineFlagRangeList.hpp"
 #include "runtime/os.hpp"
 #include "runtime/task.hpp"
@@ -291,7 +292,7 @@ GrowableArray<CommandLineFlagRange*>* CommandLineFlagRangeList::_ranges = NULL;
 // Check the ranges of all flags that have them
 void CommandLineFlagRangeList::init(void) {
 
-  _ranges = new (ResourceObj::C_HEAP, mtInternal) GrowableArray<CommandLineFlagRange*>(INITIAL_RANGES_SIZE, true);
+  _ranges = new (ResourceObj::C_HEAP, mtArguments) GrowableArray<CommandLineFlagRange*>(INITIAL_RANGES_SIZE, true);
 
   emit_range_no(NULL RUNTIME_FLAGS(EMIT_RANGE_DEVELOPER_FLAG,
                                    EMIT_RANGE_PD_DEVELOPER_FLAG,
@@ -378,12 +379,18 @@ CommandLineFlagRange* CommandLineFlagRangeList::find(const char* name) {
   return found;
 }
 
-void CommandLineFlagRangeList::print(const char* name, outputStream* st, bool unspecified) {
+void CommandLineFlagRangeList::print(outputStream* st, const char* name, RangeStrFunc default_range_str_func) {
   CommandLineFlagRange* range = CommandLineFlagRangeList::find(name);
   if (range != NULL) {
     range->print(st);
-  } else if (unspecified == true) {
-    st->print("[                           ...                           ]");
+  } else {
+    CommandLineFlagConstraint* constraint = CommandLineFlagConstraintList::find(name);
+    if (constraint != NULL) {
+      assert(default_range_str_func!=NULL, "default_range_str_func must be provided");
+      st->print("%s", default_range_str_func());
+    } else {
+      st->print("[                           ...                           ]");
+    }
   }
 }
 

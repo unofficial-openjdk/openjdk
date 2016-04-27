@@ -33,10 +33,12 @@
 #include "gc/shared/vmGCOperations.hpp"
 #include "interpreter/interpreter.hpp"
 #include "logging/log.hpp"
+#include "logging/logStream.inline.hpp"
 #include "memory/allocation.inline.hpp"
 #ifdef ASSERT
 #include "memory/guardedMemory.hpp"
 #endif
+#include "memory/resourceArea.hpp"
 #include "oops/oop.inline.hpp"
 #include "prims/jvm.h"
 #include "prims/jvm_misc.hpp"
@@ -61,6 +63,7 @@
 #include "utilities/events.hpp"
 
 # include <signal.h>
+# include <errno.h>
 
 OSThread*         os::_starting_thread    = NULL;
 address           os::_polling_page       = NULL;
@@ -1282,8 +1285,8 @@ void os::set_memory_serialize_page(address page) {
   _mem_serialize_page = (volatile int32_t *)page;
   // We initialize the serialization page shift count here
   // We assume a cache line size of 64 bytes
-  assert(SerializePageShiftCount == count,
-         "thread size changed, fix SerializePageShiftCount constant");
+  assert(SerializePageShiftCount == count, "JavaThread size changed; "
+         "SerializePageShiftCount constant should be %d", count);
   set_serialize_page_mask((uintptr_t)(vm_page_size() - sizeof(int32_t)));
 }
 
@@ -1367,31 +1370,188 @@ size_t os::page_size_for_region_unaligned(size_t region_size, size_t min_pages) 
   return page_size_for_region(region_size, min_pages, false);
 }
 
-#ifndef PRODUCT
-void os::trace_page_sizes(const char* str, const size_t* page_sizes, int count)
-{
-  if (TracePageSizes) {
-    tty->print("%s: ", str);
+static const char* errno_to_string (int e, bool short_text) {
+  #define ALL_SHARED_ENUMS(X) \
+    X(E2BIG, "Argument list too long") \
+    X(EACCES, "Permission denied") \
+    X(EADDRINUSE, "Address in use") \
+    X(EADDRNOTAVAIL, "Address not available") \
+    X(EAFNOSUPPORT, "Address family not supported") \
+    X(EAGAIN, "Resource unavailable, try again") \
+    X(EALREADY, "Connection already in progress") \
+    X(EBADF, "Bad file descriptor") \
+    X(EBADMSG, "Bad message") \
+    X(EBUSY, "Device or resource busy") \
+    X(ECANCELED, "Operation canceled") \
+    X(ECHILD, "No child processes") \
+    X(ECONNABORTED, "Connection aborted") \
+    X(ECONNREFUSED, "Connection refused") \
+    X(ECONNRESET, "Connection reset") \
+    X(EDEADLK, "Resource deadlock would occur") \
+    X(EDESTADDRREQ, "Destination address required") \
+    X(EDOM, "Mathematics argument out of domain of function") \
+    X(EEXIST, "File exists") \
+    X(EFAULT, "Bad address") \
+    X(EFBIG, "File too large") \
+    X(EHOSTUNREACH, "Host is unreachable") \
+    X(EIDRM, "Identifier removed") \
+    X(EILSEQ, "Illegal byte sequence") \
+    X(EINPROGRESS, "Operation in progress") \
+    X(EINTR, "Interrupted function") \
+    X(EINVAL, "Invalid argument") \
+    X(EIO, "I/O error") \
+    X(EISCONN, "Socket is connected") \
+    X(EISDIR, "Is a directory") \
+    X(ELOOP, "Too many levels of symbolic links") \
+    X(EMFILE, "Too many open files") \
+    X(EMLINK, "Too many links") \
+    X(EMSGSIZE, "Message too large") \
+    X(ENAMETOOLONG, "Filename too long") \
+    X(ENETDOWN, "Network is down") \
+    X(ENETRESET, "Connection aborted by network") \
+    X(ENETUNREACH, "Network unreachable") \
+    X(ENFILE, "Too many files open in system") \
+    X(ENOBUFS, "No buffer space available") \
+    X(ENODATA, "No message is available on the STREAM head read queue") \
+    X(ENODEV, "No such device") \
+    X(ENOENT, "No such file or directory") \
+    X(ENOEXEC, "Executable file format error") \
+    X(ENOLCK, "No locks available") \
+    X(ENOLINK, "Reserved") \
+    X(ENOMEM, "Not enough space") \
+    X(ENOMSG, "No message of the desired type") \
+    X(ENOPROTOOPT, "Protocol not available") \
+    X(ENOSPC, "No space left on device") \
+    X(ENOSR, "No STREAM resources") \
+    X(ENOSTR, "Not a STREAM") \
+    X(ENOSYS, "Function not supported") \
+    X(ENOTCONN, "The socket is not connected") \
+    X(ENOTDIR, "Not a directory") \
+    X(ENOTEMPTY, "Directory not empty") \
+    X(ENOTSOCK, "Not a socket") \
+    X(ENOTSUP, "Not supported") \
+    X(ENOTTY, "Inappropriate I/O control operation") \
+    X(ENXIO, "No such device or address") \
+    X(EOPNOTSUPP, "Operation not supported on socket") \
+    X(EOVERFLOW, "Value too large to be stored in data type") \
+    X(EPERM, "Operation not permitted") \
+    X(EPIPE, "Broken pipe") \
+    X(EPROTO, "Protocol error") \
+    X(EPROTONOSUPPORT, "Protocol not supported") \
+    X(EPROTOTYPE, "Protocol wrong type for socket") \
+    X(ERANGE, "Result too large") \
+    X(EROFS, "Read-only file system") \
+    X(ESPIPE, "Invalid seek") \
+    X(ESRCH, "No such process") \
+    X(ETIME, "Stream ioctl() timeout") \
+    X(ETIMEDOUT, "Connection timed out") \
+    X(ETXTBSY, "Text file busy") \
+    X(EWOULDBLOCK, "Operation would block") \
+    X(EXDEV, "Cross-device link")
+
+  #define DEFINE_ENTRY(e, text) { e, #e, text },
+
+  static const struct {
+    int v;
+    const char* short_text;
+    const char* long_text;
+  } table [] = {
+
+    ALL_SHARED_ENUMS(DEFINE_ENTRY)
+
+    // The following enums are not defined on all platforms.
+    #ifdef ESTALE
+    DEFINE_ENTRY(ESTALE, "Reserved")
+    #endif
+    #ifdef EDQUOT
+    DEFINE_ENTRY(EDQUOT, "Reserved")
+    #endif
+    #ifdef EMULTIHOP
+    DEFINE_ENTRY(EMULTIHOP, "Reserved")
+    #endif
+
+    // End marker.
+    { -1, "Unknown errno", "Unknown error" }
+
+  };
+
+  #undef DEFINE_ENTRY
+  #undef ALL_FLAGS
+
+  int i = 0;
+  while (table[i].v != -1 && table[i].v != e) {
+    i ++;
+  }
+
+  return short_text ? table[i].short_text : table[i].long_text;
+
+}
+
+const char* os::strerror(int e) {
+  return errno_to_string(e, false);
+}
+
+const char* os::errno_name(int e) {
+  return errno_to_string(e, true);
+}
+
+void os::trace_page_sizes(const char* str, const size_t* page_sizes, int count) {
+  LogTarget(Info, pagesize) log;
+  if (log.is_enabled()) {
+    LogStreamCHeap out(log);
+
+    out.print("%s: ", str);
     for (int i = 0; i < count; ++i) {
-      tty->print(" " SIZE_FORMAT, page_sizes[i]);
+      out.print(" " SIZE_FORMAT, page_sizes[i]);
     }
-    tty->cr();
+    out.cr();
   }
 }
 
-void os::trace_page_sizes(const char* str, const size_t region_min_size,
-                          const size_t region_max_size, const size_t page_size,
-                          const char* base, const size_t size)
-{
-  if (TracePageSizes) {
-    tty->print_cr("%s:  min=" SIZE_FORMAT " max=" SIZE_FORMAT
-                  " pg_sz=" SIZE_FORMAT " base=" PTR_FORMAT
-                  " size=" SIZE_FORMAT,
-                  str, region_min_size, region_max_size,
-                  page_size, p2i(base), size);
-  }
+#define trace_page_size_params(size) byte_size_in_exact_unit(size), exact_unit_for_byte_size(size)
+
+void os::trace_page_sizes(const char* str,
+                          const size_t region_min_size,
+                          const size_t region_max_size,
+                          const size_t page_size,
+                          const char* base,
+                          const size_t size) {
+
+  log_info(pagesize)("%s: "
+                     " min=" SIZE_FORMAT "%s"
+                     " max=" SIZE_FORMAT "%s"
+                     " base=" PTR_FORMAT
+                     " page_size=" SIZE_FORMAT "%s"
+                     " size=" SIZE_FORMAT "%s",
+                     str,
+                     trace_page_size_params(region_min_size),
+                     trace_page_size_params(region_max_size),
+                     p2i(base),
+                     trace_page_size_params(page_size),
+                     trace_page_size_params(size));
 }
-#endif  // #ifndef PRODUCT
+
+void os::trace_page_sizes_for_requested_size(const char* str,
+                                             const size_t requested_size,
+                                             const size_t page_size,
+                                             const size_t alignment,
+                                             const char* base,
+                                             const size_t size) {
+
+  log_info(pagesize)("%s:"
+                     " req_size=" SIZE_FORMAT "%s"
+                     " base=" PTR_FORMAT
+                     " page_size=" SIZE_FORMAT "%s"
+                     " alignment=" SIZE_FORMAT "%s"
+                     " size=" SIZE_FORMAT "%s",
+                     str,
+                     trace_page_size_params(requested_size),
+                     p2i(base),
+                     trace_page_size_params(page_size),
+                     trace_page_size_params(alignment),
+                     trace_page_size_params(size));
+}
+
 
 // This is the working definition of a server class machine:
 // >= 2 physical CPU's and >=2GB of memory, with some fuzz
@@ -1540,8 +1700,8 @@ bool os::release_memory(char* addr, size_t bytes) {
   return res;
 }
 
-void os::pretouch_memory(char* start, char* end) {
-  for (volatile char *p = start; p < end; p += os::vm_page_size()) {
+void os::pretouch_memory(void* start, void* end) {
+  for (volatile char *p = (char*)start; p < (char*)end; p += os::vm_page_size()) {
     *p = 0;
   }
 }

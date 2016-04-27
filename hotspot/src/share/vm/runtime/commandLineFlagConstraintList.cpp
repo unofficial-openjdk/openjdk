@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -226,7 +226,7 @@ CommandLineFlagConstraint::ConstraintType CommandLineFlagConstraintList::_valida
 
 // Check the ranges of all flags that have them or print them out and exit if requested
 void CommandLineFlagConstraintList::init(void) {
-  _constraints = new (ResourceObj::C_HEAP, mtInternal) GrowableArray<CommandLineFlagConstraint*>(INITIAL_CONSTRAINTS_SIZE, true);
+  _constraints = new (ResourceObj::C_HEAP, mtArguments) GrowableArray<CommandLineFlagConstraint*>(INITIAL_CONSTRAINTS_SIZE, true);
 
   emit_constraint_no(NULL RUNTIME_FLAGS(EMIT_CONSTRAINT_DEVELOPER_FLAG,
                                         EMIT_CONSTRAINT_PD_DEVELOPER_FLAG,
@@ -290,16 +290,24 @@ void CommandLineFlagConstraintList::init(void) {
 #endif // INCLUDE_ALL_GCS
 }
 
-// Find constraints by name and return only if found constraint's type is equal or lower than current validating type.
-CommandLineFlagConstraint* CommandLineFlagConstraintList::find_if_needs_check(const char* name) {
+CommandLineFlagConstraint* CommandLineFlagConstraintList::find(const char* name) {
   CommandLineFlagConstraint* found = NULL;
   for (int i=0; i<length(); i++) {
     CommandLineFlagConstraint* constraint = at(i);
-    if ((strcmp(constraint->name(), name) == 0) &&
-        (constraint->type() <= _validating_type)) {
+    if (strcmp(constraint->name(), name) == 0) {
       found = constraint;
       break;
     }
+  }
+  return found;
+}
+
+// Find constraints by name and return only if found constraint's type is equal or lower than current validating type.
+CommandLineFlagConstraint* CommandLineFlagConstraintList::find_if_needs_check(const char* name) {
+  CommandLineFlagConstraint* found = NULL;
+  CommandLineFlagConstraint* constraint = find(name);
+  if (constraint && (constraint->type() <= _validating_type)) {
+    found = constraint;
   }
   return found;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,19 @@
 
 #include "runtime/globals.hpp"
 #include "utilities/macros.hpp"
-#include "utilities/top.hpp"
+#include "utilities/macros.hpp"
+#if INCLUDE_ALL_GCS
+#include "gc/g1/g1_globals.hpp"
+#endif
+#if INCLUDE_JVMCI
+#include "jvmci/jvmci_globals.hpp"
+#endif
+#ifdef COMPILER1
+#include "c1/c1_globals.hpp"
+#endif
+#ifdef COMPILER2
+#include "opto/c2_globals.hpp"
+#endif
 
 // Construct enum of Flag_<cmdline-arg> constants.
 
@@ -290,6 +302,12 @@ typedef enum {
 
 #define FLAG_SET_CMDLINE(type, name, value) (CommandLineFlagsEx::type##AtPut(FLAG_MEMBER_WITH_TYPE(name,type), (type)(value), Flag::COMMAND_LINE))
 #define FLAG_SET_ERGO(type, name, value)    (CommandLineFlagsEx::type##AtPut(FLAG_MEMBER_WITH_TYPE(name,type), (type)(value), Flag::ERGONOMIC))
+#define FLAG_SET_ERGO_IF_DEFAULT(type, name, value) \
+  do {                                              \
+    if (FLAG_IS_DEFAULT(name)) {                    \
+      FLAG_SET_ERGO(type, name, value);             \
+    }                                               \
+  } while (0)
 
 // Can't put the following in CommandLineFlags because
 // of a circular dependency on the enum definition.
