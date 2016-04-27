@@ -25,11 +25,7 @@
  * @test
  * @bug 8043643
  * @summary Run the langtools coding rules over the langtools source code.
- * @modules java.base/sun.reflect.annotation
- *          java.logging
- *          java.xml
- *          jdk.compiler/com.sun.tools.javac.resources
- *          jdk.compiler/com.sun.tools.javac.util
+ * @modules jdk.compiler/com.sun.tools.javac.util
  */
 
 

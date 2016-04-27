@@ -184,6 +184,7 @@ public class AddLimitMods extends ModuleTestBase {
                           "@javax.annotation.Generated(\"test\")\n" +
                           "public class Test {\n" +
                           "    com.sun.tools.javac.Main m;\n" +
+                          "    javax.xml.bind.JAXBException e;\n" +
                           "}\n");
 
         Path out = base.resolve("out");
@@ -215,8 +216,10 @@ public class AddLimitMods extends ModuleTestBase {
 
     private static final List<Entry<String[], String>> variants = Arrays.asList(
             new SimpleEntry<String[], String>(new String[] {},
-                                              "Test.java:2:18: compiler.err.doesnt.exist: javax.annotation\n1 error\n"),
-            new SimpleEntry<String[], String>(new String[] {"-addmods", "java.annotations.common"},
+                                              "Test.java:2:18: compiler.err.doesnt.exist: javax.annotation\n"
+                                            + "Test.java:5:19: compiler.err.doesnt.exist: javax.xml.bind\n"
+                                            + "2 errors\n"),
+            new SimpleEntry<String[], String>(new String[] {"-addmods", "java.annotations.common,java.xml.bind"},
                                               null),
             new SimpleEntry<String[], String>(new String[] {"-limitmods", "java.xml.ws,jdk.compiler"},
                                               null),

@@ -199,7 +199,7 @@ public enum Option {
 
     SYSTEM("-system", "opt.arg.jdk", "opt.system", STANDARD, FILEMANAGER),
 
-    XPATCH("-Xpatch:", "opt.arg.path", "opt.Xpatch", EXTENDED, FILEMANAGER),
+    XPATCH("-Xpatch:", "opt.arg.patch", "opt.patch", EXTENDED, FILEMANAGER),
 
     BOOTCLASSPATH("-bootclasspath", "opt.arg.path", "opt.bootclasspath", STANDARD, FILEMANAGER) {
         @Override
@@ -605,7 +605,9 @@ public enum Option {
             }
             return false;
         }
-    };
+    },
+
+    MULTIRELEASE("-multi-release", "opt.arg.multi-release", "opt.multi-release", HIDDEN, FILEMANAGER);
 
     /** The kind of an Option. This is used by the -help and -X options. */
     public enum OptionKind {
