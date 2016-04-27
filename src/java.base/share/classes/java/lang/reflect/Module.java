@@ -43,11 +43,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -260,8 +256,9 @@ public final class Module {
     // (will be final when the modules are defined in reverse topology order)
     private volatile Set<Module> reads;
 
-    // created lazily, additional modules that this module reflectively reads
-    private volatile WeakSet<Module> transientReads;
+    // additional module (2nd key) that some module (1st key) reflectively reads
+    private static final WeakPairMap<Module, Module, Boolean> transientReads
+        = new WeakPairMap<>();
 
 
     /**
@@ -296,13 +293,15 @@ public final class Module {
         }
 
         // check if this module reads the other module reflectively
-        WeakSet<Module> tr = this.transientReads; // volatile read
-        if (tr != null) {
-            if (tr.contains(other))
-                return true;
-            if (!other.isNamed() && tr.contains(ALL_UNNAMED_MODULE))
-                return true;
-        }
+        if (transientReads.containsKeyPair(this, other))
+            return true;
+
+        // if other is an unnamed module then check if this module reads
+        // all unnamed modules
+        if (!other.isNamed()
+            && transientReads.containsKeyPair(this, ALL_UNNAMED_MODULE))
+            return true;
+
         return false;
     }
 
@@ -382,17 +381,7 @@ public final class Module {
         }
 
         // add reflective read
-        WeakSet<Module> tr = this.transientReads;
-        if (tr == null) {
-            synchronized (this) {
-                tr = this.transientReads;
-                if (tr == null) {
-                    tr = new WeakSet<>();
-                    this.transientReads = tr;
-                }
-            }
-        }
-        tr.add(other);
+        transientReads.putIfAbsent(this, other, Boolean.TRUE);
     }
 
 
@@ -402,8 +391,10 @@ public final class Module {
     // (will be final when the modules are defined in reverse topology order)
     private volatile Map<String, Set<Module>> exports;
 
-    // created lazily, additional exports added at run-time
-    private volatile Map<String, WeakSet<Module>> transientExports;
+    // additional exports added at run-time
+    // this module (1st key), other module (2nd key), exported packages (value)
+    private static final WeakPairMap<Module, Module, Map<String, Boolean>>
+        transientExports = new WeakPairMap<>();
 
 
     /**
@@ -492,29 +483,27 @@ public final class Module {
      * package package to the given module.
      */
     private boolean isExportedReflectively(String pn, Module other) {
-        Map<String, WeakSet<Module>> te = this.transientExports;
-        if (te != null) {
-            WeakSet<Module> targets = te.get(pn);
+        // exported to all modules
+        Map<String, ?> exports = transientExports.get(this, EVERYONE_MODULE);
+        if (exports != null && exports.containsKey(pn))
+            return true;
 
-            if (targets != null) {
+        if (other != EVERYONE_MODULE) {
 
-                // exported to all modules
-                if (targets.contains(EVERYONE_MODULE))
+            // exported to other
+            exports = transientExports.get(this, other);
+            if (exports != null && exports.containsKey(pn))
+                return true;
+
+            // other is an unnamed module && exported to all unnamed
+            if (!other.isNamed()) {
+                exports = transientExports.get(this, ALL_UNNAMED_MODULE);
+                if (exports != null && exports.containsKey(pn))
                     return true;
-
-                if (other != EVERYONE_MODULE) {
-
-                    // exported to other
-                    if (targets.contains(other))
-                        return true;
-
-                    // other is an unnamed module && exported to all unnamed
-                    if (!other.isNamed() && targets.contains(ALL_UNNAMED_MODULE))
-                        return true;
-                }
             }
 
         }
+
         return false;
     }
 
@@ -615,34 +604,19 @@ public final class Module {
             }
         }
 
-        // create transientExports if needed
-        Map<String, WeakSet<Module>> te = this.transientExports; // read
-        if (te == null) {
-            synchronized (this) {
-                te = this.transientExports;
-                if (te == null) {
-                    te = new ConcurrentHashMap<>();
-                    this.transientExports = te;  // volatile write
-                }
-            }
-        }
-
         // add package name to transientExports if absent
-        WeakSet<Module> s = te.get(pn);
-        if (s == null) {
-            s = new WeakSet<>();
-            WeakSet<Module> prev = te.putIfAbsent(pn, s);
-            if (prev != null)
-                s = prev;
-        }
-        s.add(other);
+        transientExports
+            .computeIfAbsent(this, other,
+                             (_this, _other) -> new ConcurrentHashMap<>())
+            .putIfAbsent(pn, Boolean.TRUE);
     }
 
 
     // -- services --
 
-    // created lazily, additional service types that this module uses
-    private volatile WeakSet<Class<?>> transientUses;
+    // additional service type (2nd key) that some module (1st key) uses
+    private static final WeakPairMap<Module, Class<?>, Boolean> transientUses
+        = new WeakPairMap<>();
 
     /**
      * If the caller's module is this module then update this module to add a
@@ -679,17 +653,7 @@ public final class Module {
             }
 
             if (!canUse(st)) {
-                WeakSet<Class<?>> uses = this.transientUses;
-                if (uses == null) {
-                    synchronized (this) {
-                        uses = this.transientUses;
-                        if (uses == null) {
-                            uses = new WeakSet<>();
-                            this.transientUses = uses;
-                        }
-                    }
-                }
-                uses.add(st);
+                transientUses.putIfAbsent(this, st, Boolean.TRUE);
             }
 
         }
@@ -723,11 +687,7 @@ public final class Module {
             return true;
 
         // uses added via addUses
-        WeakSet<Class<?>> uses = this.transientUses;
-        if (uses != null && uses.contains(st))
-            return true;
-
-        return false;
+        return transientUses.containsKeyPair(this, st);
     }
 
 
@@ -1085,46 +1045,6 @@ public final class Module {
         } else {
             String id = Integer.toHexString(System.identityHashCode(this));
             return "unnamed module @" + id;
-        }
-    }
-
-
-    // -- supporting classes --
-
-
-    /**
-     * A "not-a-Set" set of weakly referenced objects that supports concurrent
-     * access.
-     */
-    private static class WeakSet<E> {
-        private final ReadWriteLock lock = new ReentrantReadWriteLock();
-        private final Lock readLock = lock.readLock();
-        private final Lock writeLock = lock.writeLock();
-
-        private final WeakHashMap<E, Boolean> map = new WeakHashMap<>();
-
-        /**
-         * Adds the specified element to the set.
-         */
-        void add(E e) {
-            writeLock.lock();
-            try {
-                map.put(e, Boolean.TRUE);
-            } finally {
-                writeLock.unlock();
-            }
-        }
-
-        /**
-         * Returns {@code true} if this set contains the specified element.
-         */
-        boolean contains(E e) {
-            readLock.lock();
-            try {
-                return map.containsKey(e);
-            } finally {
-                readLock.unlock();
-            }
         }
     }
 
