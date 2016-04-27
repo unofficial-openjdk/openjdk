@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,12 +21,17 @@
  * questions.
  */
 
-package app;
+package test;
 
-import jdk.lib.Util;
-
+/**
+ * Invoked by tests for the {@code java -addmods} option to check that types
+ * are visible.
+ */
 public class Main {
-    public static void main(String[] args) {
-        Object obj = Util.makeObject();
+    public static void main(String[] args) throws Exception {
+        for (String cn : args) {
+            Class<?> c = Class.forName(cn);
+            System.out.println("Loaded: " + c);
+        }
     }
 }

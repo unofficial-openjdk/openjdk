@@ -69,6 +69,9 @@ public final class ModuleBootstrap {
 
     private static final String JAVA_SE = "java.se";
 
+    // the token for "all default modules"
+    private static final String ALL_DEFAULT = "ALL-DEFAULT";
+
     // the token for "all unnamed modules"
     private static final String ALL_UNNAMED = "ALL-UNNAMED";
 
@@ -136,44 +139,36 @@ public final class ModuleBootstrap {
         if (appModulePath != null)
             finder = ModuleFinder.compose(finder, appModulePath);
 
-        // launcher -m option to specify the initial module
+        // The root modules to resolve
+        Set<String> roots = new HashSet<>();
+
+        // launcher -m option to specify the main/initial module
         String mainModule = System.getProperty("jdk.module.main");
+        if (mainModule != null)
+            roots.add(mainModule);
 
         // additional module(s) specified by -addmods
+        boolean addAllDefaultModules = false;
         boolean addAllSystemModules = false;
         boolean addAllApplicationModules = false;
-        Set<String> addModules = null;
         String propValue = System.getProperty("jdk.launcher.addmods");
         if (propValue != null) {
-            addModules = new HashSet<>();
             for (String mod: propValue.split(",")) {
                 switch (mod) {
+                    case ALL_DEFAULT:
+                        addAllDefaultModules = true;
+                        break;
                     case ALL_SYSTEM:
                         addAllSystemModules = true;
                         break;
                     case ALL_MODULE_PATH:
-                        if (mainModule != null) {
-                            fail(ALL_MODULE_PATH
-                                 + " not allowed with initial module");
-                        }
                         addAllApplicationModules = true;
                         break;
                     default :
-                        addModules.add(mod);
+                        roots.add(mod);
                 }
             }
         }
-
-        // The root modules to resolve
-        Set<String> roots = new HashSet<>();
-
-        // main/initial module
-        if (mainModule != null)
-            roots.add(mainModule);
-
-        // If -addmods is specified then those modules need to be resolved
-        if (addModules != null)
-            roots.addAll(addModules);
 
         // -limitmods
         propValue = System.getProperty("jdk.launcher.limitmods");
@@ -185,9 +180,8 @@ public final class ModuleBootstrap {
             finder = limitFinder(finder, mods, roots);
         }
 
-        // If `-addmods ALL-SYSTEM` is used then all observable modules on the
-        // system module path will be resolved, irrespective of whether an
-        // initial module is specified.
+        // If `-addmods ALL-SYSTEM` is used then all observable system modules
+        // will be resolved.
         if (addAllSystemModules) {
 
             ModuleFinder f = finder;  // observable modules
@@ -198,7 +192,7 @@ public final class ModuleBootstrap {
                     .filter(mn -> f.find(mn).isPresent())  // observable
                     .forEach(mn -> roots.add(mn));
 
-        } else if (mainModule == null) {
+        } else if (mainModule == null || addAllDefaultModules) {
 
             // If there is no initial module specified then assume that the
             // initial module is the unnamed module of the application class
@@ -235,12 +229,9 @@ public final class ModuleBootstrap {
             }
         }
 
-        // If `-addmods ALL-MODULE-PATH` is used, and no initial module is
-        // specified, then all observable modules on the application module
-        // path will be resolved.
-        if (addAllApplicationModules && appModulePath != null) {
-            assert mainModule == null;
-
+        // If `-addmods ALL-MODULE-PATH` is specified then all observable
+        // modules on the application module path will be resolved.
+        if  (appModulePath != null && addAllApplicationModules) {
             ModuleFinder f = finder;  // observable modules
             appModulePath.findAll()
                     .stream()
