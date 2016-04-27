@@ -33,12 +33,11 @@ import jdk.internal.vm.annotation.ForceInline;
 import jdk.internal.misc.Unsafe;
 
 import java.lang.invoke.MethodHandles.Lookup;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
+import sun.security.action.GetPropertyAction;
 
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
@@ -188,20 +187,15 @@ public final class StringConcatFactory {
     private static final ProxyClassesDumper DUMPER;
 
     static {
-        // Poke the privileged block once, taking everything we need:
-        final Object[] values = new Object[4];
-        AccessController.doPrivileged((PrivilegedAction<Object>) () -> {
-            values[0] = System.getProperty("java.lang.invoke.stringConcat");
-            values[1] = Boolean.getBoolean("java.lang.invoke.stringConcat.cache");
-            values[2] = Boolean.getBoolean("java.lang.invoke.stringConcat.debug");
-            values[3] = System.getProperty("java.lang.invoke.stringConcat.dumpClasses");
-            return null;
-        });
-
-        final String strategy = (String)  values[0];
-        CACHE_ENABLE          = (Boolean) values[1];
-        DEBUG                 = (Boolean) values[2];
-        final String dumpPath = (String)  values[3];
+        Properties props = GetPropertyAction.getProperties();
+        final String strategy =
+                props.getProperty("java.lang.invoke.stringConcat");
+        CACHE_ENABLE = Boolean.parseBoolean(
+                props.getProperty("java.lang.invoke.stringConcat.cache"));
+        DEBUG = Boolean.parseBoolean(
+                props.getProperty("java.lang.invoke.stringConcat.debug"));
+        final String dumpPath =
+                props.getProperty("java.lang.invoke.stringConcat.dumpClasses");
 
         STRATEGY = (strategy == null) ? DEFAULT_STRATEGY : Strategy.valueOf(strategy);
         CACHE = CACHE_ENABLE ? new ConcurrentHashMap<>() : null;
