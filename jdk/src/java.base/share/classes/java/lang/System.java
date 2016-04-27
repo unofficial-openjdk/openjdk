@@ -56,8 +56,8 @@ import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.function.Supplier;
 import sun.nio.ch.Interruptible;
-import sun.reflect.CallerSensitive;
-import sun.reflect.Reflection;
+import jdk.internal.reflect.CallerSensitive;
+import jdk.internal.reflect.Reflection;
 import sun.security.util.SecurityConstants;
 import sun.reflect.annotation.AnnotationType;
 import jdk.internal.HotSpotIntrinsicCandidate;
@@ -69,7 +69,6 @@ import jdk.internal.logger.LazyLoggers;
 import jdk.internal.logger.LocalizedLoggerWrapper;
 
 import jdk.internal.module.ModuleBootstrap;
-import jdk.internal.module.Modules;
 import jdk.internal.module.ServicesCatalog;
 
 /**
@@ -1916,10 +1915,6 @@ public final class System {
         // initialize the module system
         System.bootLayer = ModuleBootstrap.boot();
 
-        // base module needs to be loose (CODETOOLS-7901619)
-        Module base = Object.class.getModule();
-        Modules.addReads(base, null);
-
         // module system initialized
         VM.initLevel(2);
     }
@@ -1978,7 +1973,7 @@ public final class System {
     private static void setJavaLangAccess() {
         // Allow privileged classes outside of java.lang
         SharedSecrets.setJavaLangAccess(new JavaLangAccess(){
-            public sun.reflect.ConstantPool getConstantPool(Class<?> klass) {
+            public jdk.internal.reflect.ConstantPool getConstantPool(Class<?> klass) {
                 return klass.getConstantPool();
             }
             public boolean casAnnotationType(Class<?> klass, AnnotationType oldType, AnnotationType newType) {

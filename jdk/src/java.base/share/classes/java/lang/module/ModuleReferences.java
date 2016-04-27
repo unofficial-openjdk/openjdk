@@ -198,7 +198,10 @@ class ModuleReferences {
 
         static JarFile newJarFile(Path path) {
             try {
-                return new JarFile(path.toFile());
+                return new JarFile(path.toFile(),
+                                   true,               // verify
+                                   ZipFile.OPEN_READ,
+                                   JarFile.Release.RUNTIME);
             } catch (IOException ioe) {
                 throw new UncheckedIOException(ioe);
             }
@@ -219,6 +222,8 @@ class ModuleReferences {
             if (je != null) {
                 String encodedPath = ParseUtil.encodePath(name, false);
                 String uris = "jar:" + uri + "!/" + encodedPath;
+                if (jf.isMultiRelease())
+                    uris += "#runtime";
                 return Optional.of(URI.create(uris));
             } else {
                 return Optional.empty();

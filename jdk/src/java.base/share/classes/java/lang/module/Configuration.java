@@ -25,6 +25,7 @@
 
 package java.lang.module;
 
+import java.io.PrintStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -286,7 +287,7 @@ public final class Configuration {
         Objects.requireNonNull(after);
         Objects.requireNonNull(roots);
 
-        Resolver resolver = new Resolver(before, this, after);
+        Resolver resolver = new Resolver(before, this, after, null);
         resolver.resolveRequires(roots);
 
         return new Configuration(this, resolver, true);
@@ -343,7 +344,7 @@ public final class Configuration {
         Objects.requireNonNull(after);
         Objects.requireNonNull(roots);
 
-        Resolver resolver = new Resolver(before, this, after);
+        Resolver resolver = new Resolver(before, this, after, null);
         resolver.resolveRequires(roots).resolveUses();
 
         return new Configuration(this, resolver, true);
@@ -359,11 +360,13 @@ public final class Configuration {
      */
     static Configuration resolveRequiresAndUses(ModuleFinder finder,
                                                  Collection<String> roots,
-                                                 boolean check)
+                                                 boolean check,
+                                                 PrintStream traceOutput)
     {
         Configuration parent = empty();
 
-        Resolver resolver = new Resolver(finder, parent, ModuleFinder.empty());
+        Resolver resolver
+            = new Resolver(finder, parent, ModuleFinder.empty(), traceOutput);
         resolver.resolveRequires(roots).resolveUses();
 
         return new Configuration(parent, resolver, check);
