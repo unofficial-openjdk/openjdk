@@ -119,7 +119,7 @@ void SuperWord::transform_loop(IdealLoopTree* lpt, bool do_optimization) {
 
   // skip any loop that has not been assigned max unroll by analysis
   if (do_optimization) {
-    if (cl->slp_max_unroll() == 0) return;
+    if (SuperWordLoopUnrollAnalysis && cl->slp_max_unroll() == 0) return;
   }
 
   // Check for no control flow in body (other than exit)
@@ -3230,8 +3230,7 @@ void SuperWord::align_initial_loop_index(MemNode* align_to_ref) {
                  : (Node*) new MaxINode(lim, orig_limit);
   _igvn.register_new_node_with_optimizer(constrained);
   _phase->set_ctrl(constrained, pre_ctrl);
-  _igvn.hash_delete(pre_opaq);
-  pre_opaq->set_req(1, constrained);
+  _igvn.replace_input_of(pre_opaq, 1, constrained);
 }
 
 //----------------------------get_pre_loop_end---------------------------
