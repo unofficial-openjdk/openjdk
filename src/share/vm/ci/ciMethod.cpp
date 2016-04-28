@@ -1117,7 +1117,7 @@ bool ciMethod::has_compiled_code() {
 int ciMethod::comp_level() {
   check_is_loaded();
   VM_ENTRY_MARK;
-  nmethod* nm = get_Method()->code();
+  CompiledMethod* nm = get_Method()->code();
   if (nm != NULL) return nm->comp_level();
   return 0;
 }
@@ -1152,7 +1152,7 @@ int ciMethod::code_size_for_inlining() {
 int ciMethod::instructions_size() {
   if (_instructions_size == -1) {
     GUARDED_VM_ENTRY(
-                     nmethod* code = get_Method()->code();
+                     CompiledMethod* code = get_Method()->code();
                      if (code != NULL && (code->comp_level() == CompLevel_full_optimization)) {
                        _instructions_size = code->insts_end() - code->verified_entry_point();
                      } else {
@@ -1167,7 +1167,7 @@ int ciMethod::instructions_size() {
 // ciMethod::log_nmethod_identity
 void ciMethod::log_nmethod_identity(xmlStream* log) {
   GUARDED_VM_ENTRY(
-    nmethod* code = get_Method()->code();
+    CompiledMethod* code = get_Method()->code();
     if (code != NULL) {
       code->log_identity(log);
     }

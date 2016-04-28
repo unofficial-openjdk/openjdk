@@ -59,7 +59,7 @@ inline frame::frame(ZeroFrame* zf, intptr_t* sp) {
   case ZeroFrame::SHARK_FRAME: {
     _pc = zero_sharkframe()->pc();
     _cb = CodeCache::find_blob_unsafe(pc());
-    address original_pc = nmethod::get_deopt_original_pc(this);
+    address original_pc = CompiledMethod::get_deopt_original_pc(this);
     if (original_pc != NULL) {
       _pc = original_pc;
       _deopt_state = is_deoptimized;
