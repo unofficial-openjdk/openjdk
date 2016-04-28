@@ -38,12 +38,10 @@ import java.lang.module.Configuration;
 import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
-import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Version;
 import java.lang.module.ResolutionException;
 import java.lang.module.ResolvedModule;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
@@ -62,7 +60,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
-import java.util.Formatter;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -131,21 +128,6 @@ public class JmodTask {
             } catch (MissingResourceException e) {
                 return key;
             }
-        }
-    }
-
-    static <T extends Throwable> void fail(Class<T> type,
-                                           String format,
-                                           Object... args) throws T {
-        String msg = new Formatter().format(format, args).toString();
-        try {
-            T t = type.getConstructor(String.class).newInstance(msg);
-            throw t;
-        } catch (InstantiationException |
-                 InvocationTargetException |
-                 NoSuchMethodException |
-                 IllegalAccessException e) {
-            throw new InternalError("Unable to create an instance of " + type, e);
         }
     }
 
@@ -307,67 +289,40 @@ public class JmodTask {
                     StringBuilder sb = new StringBuilder();
                     sb.append("\n").append(md.toNameAndVersion());
 
-                    List<Requires> requires = md.requires().stream().sorted().collect(toList());
-                    if (!requires.isEmpty()) {
-                        requires.forEach(r -> {
-                                sb.append("\n  requires ");
-                                if (!r.modifiers().isEmpty())
-                                  sb.append(toString(r.modifiers())).append(" ");
-                                sb.append(r.name());
-                            });
-                    }
+                    md.requires().stream().sorted().collect(toList()).forEach(
+                        r -> { sb.append("\n  requires ");
+                               if (!r.modifiers().isEmpty())
+                                   sb.append(toString(r.modifiers())).append(" ");
+                               sb.append(r.name());
+                             });
 
-                    List<String> l = md.uses().stream().sorted().collect(toList());
-                    if (!l.isEmpty()) {
-                        l.forEach(sv -> sb.append("\n  uses ").append(sv));
-                    }
+                    md.uses().stream().sorted().collect(toList()).forEach(
+                            s -> sb.append("\n  uses ").append(s));
 
-                    List<ModuleDescriptor.Exports> exports = sortExports(md.exports());
-                    if (!exports.isEmpty()) {
-                        exports.forEach(ex -> sb.append("\n  exports ").append(ex));
-                    }
+                    sortExports(md.exports()).forEach(
+                            p -> sb.append("\n  exports ").append(p));
 
-                    l = md.conceals().stream().sorted().collect(toList());
-                    if (!l.isEmpty()) {
-                        l.forEach(p -> sb.append("\n  conceals ").append(p));
-                    }
+                    md.conceals().stream().sorted().collect(toList()).forEach(
+                            p -> sb.append("\n  conceals ").append(p));
 
-                    Map<String, ModuleDescriptor.Provides> provides = md.provides();
-                    if (!provides.isEmpty()) {
-                        provides.values().forEach(p ->
-                                sb.append("\n  provides ").append(p.service())
+                    md.provides().values().forEach(
+                            p -> sb.append("\n  provides ").append(p.service())
                                   .append(" with ")
                                   .append(toString(p.providers())));
-                    }
 
-                    Optional<String> mc = md.mainClass();
-                    if (mc.isPresent())
-                        sb.append("\n  main-class " + mc.get());
+                    md.mainClass().ifPresent(v -> sb.append("\n  main-class " + v));
 
+                    md.osName().ifPresent(v -> sb.append("\n  operating-system-name " + v));
 
+                    md.osArch().ifPresent(v -> sb.append("\n  operating-system-architecture " + v));
 
-                    Optional<String> osname = md.osName();
-                    if (osname.isPresent())
-                        sb.append("\n  operating-system-name " + osname.get());
+                    md.osVersion().ifPresent(v -> sb.append("\n  operating-system-version " + v));
 
-                    Optional<String> osarch = md.osArch();
-                    if (osarch.isPresent())
-                        sb.append("\n  operating-system-architecture " + osarch.get());
-
-                    Optional<String> osversion = md.osVersion();
-                    if (osversion.isPresent())
-                        sb.append("\n  operating-system-version " + osversion.get());
-
-                    Optional<ModuleHashes> optHashes = JLMA.hashes(md);
-                    if (optHashes.isPresent()) {
-                        ModuleHashes hashes = optHashes.get();
-                        hashes.names().stream()
-                            .sorted()
-                            .forEach(mod ->
-                                sb.append("\n  hashes ").append(mod).append(" ")
-                                  .append(hashes.algorithm()).append(" ")
-                                  .append(hashes.hashFor(mod)));
-                    }
+                    JLMA.hashes(md).ifPresent(
+                            hashes -> hashes.names().stream().sorted().forEach(
+                                    mod -> sb.append("\n  hashes ").append(mod).append(" ")
+                                             .append(hashes.algorithm()).append(" ")
+                                             .append(hashes.hashFor(mod))));
 
                     out.println(sb.toString());
                     return true;
@@ -1020,19 +975,14 @@ public class JmodTask {
         private Map<String, Path> modulesToPath(Set<String> modules) {
             Map<String,Path> modPaths = new HashMap<>();
             for (String name : modules) {
-                Optional<ModuleReference> omref = moduleFinder.find(name);
-                if (!omref.isPresent()) {
-                    // this should not happen, module path bug?
-                    fail(InternalError.class,
-                         "Selected module %s not on module path", name);
-                }
+                ModuleReference mref = moduleFinder.find(name).orElseThrow(
+                        () -> new InternalError("Selected module " + name + " not on module path"));
 
-                URI uri = omref.get().location().get();
+                URI uri = mref.location().get();
                 Path path = Paths.get(uri);
                 String fn = path.getFileName().toString();
                 if (!fn.endsWith(".jar") && !fn.endsWith(".jmod")) {
-                    fail(InternalError.class,
-                         "%s is not a modular JAR or jmod file", path);
+                    throw new InternalError(path + " is not a modular JAR or jmod file");
                 }
                 modPaths.put(name, path);
             }

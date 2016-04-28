@@ -340,16 +340,16 @@ public class Basic {
             "--file=" + modularJar.toString())
             .assertSuccess()
             .resultChecker(r -> {
-                // Expect similar output: "Name:bar,  Requires: foo,...
-                // Conceals: jdk.test.foo, jdk.test.foo.internal"
-                Pattern p = Pattern.compile("\\s+Name:\\s+bar\\s+Requires:\\s+foo");
+                // Expect similar output: "bar, requires mandated foo, ...
+                // conceals jdk.test.foo, conceals jdk.test.foo.internal"
+                Pattern p = Pattern.compile("\\s+bar\\s+requires\\s++foo");
                 assertTrue(p.matcher(r.output).find(),
-                           "Expecting to find \"Name: bar, Requires: foo,...\"",
+                           "Expecting to find \"bar, requires foo,...\"",
                            "in output, but did not: [" + r.output + "]");
                 p = Pattern.compile(
-                        "Conceals:\\s+jdk.test.foo\\s+jdk.test.foo.internal");
+                        "conceals\\s+jdk.test.foo\\s+conceals\\s+jdk.test.foo.internal");
                 assertTrue(p.matcher(r.output).find(),
-                           "Expecting to find \"Conceals: jdk.test.foo,...\"",
+                           "Expecting to find \"conceals jdk.test.foo,...\"",
                            "in output, but did not: [" + r.output + "]");
             });
     }
@@ -365,7 +365,6 @@ public class Basic {
             "--file=" + modularJar.toString(),
             "--main-class=" + BAR.mainClass,
             "--module-version=" + BAR.version,
-
             "--no-manifest",
             "-C", modClasses.toString(), ".")
             .assertSuccess();
