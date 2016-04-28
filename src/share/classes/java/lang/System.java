@@ -56,7 +56,13 @@ import sun.reflect.annotation.AnnotationType;
  */
 public final class System {
 
-    /* First thing---register the natives */
+    /* register the natives via the static initializer.
+     *
+     * VM will invoke the initializeSystemClass method to complete
+     * the initialization for this class separated from clinit.
+     * Note that to use properties set by the VM, see the constraints
+     * described in the initializeSystemClass method.
+     */
     private static native void registerNatives();
     static {
         registerNatives();
@@ -1089,8 +1095,18 @@ public final class System {
      * Initialize the system class.  Called after thread initialization.
      */
     private static void initializeSystemClass() {
-        props = new Properties();
-        initProperties(props);
+        // There are certain system configurations that may be controlled by
+        // VM options such as the maximum amount of direct memory and
+        // Integer cache size used to support the object identity semantics
+        // of autoboxing.  Typically, the library will obtain these values
+        // from the properties set by the VM.  If the properties are for
+        // internal implementation use only, these properties should be
+        // removed from the system properties.
+        //
+        // See java.lang.Integer.IntegerCache and the
+        // sun.misc.VM.saveAndRemoveProperties method for example.
+        props = initSystemProperties();
+
         sun.misc.Version.init();
         FileInputStream fdIn = new FileInputStream(FileDescriptor.in);
         FileOutputStream fdOut = new FileOutputStream(FileDescriptor.out);
@@ -1119,17 +1135,6 @@ public final class System {
         // for Windows where the process-wide error mode is set before the java.io
         // classes are used.
         sun.misc.VM.initializeOSEnvironment();
-
-        // Set the maximum amount of direct memory.  This value is controlled
-        // by the vm option -XX:MaxDirectMemorySize=<size>.  This method acts
-        // as an initializer only if it is called before sun.misc.VM.booted().
-        sun.misc.VM.maxDirectMemory();
-
-        // Set a boolean to determine whether ClassLoader.loadClass accepts
-        // array syntax.  This value is controlled by the system property
-        // "sun.lang.ClassLoader.allowArraySyntax".  This method acts as
-        // an initializer only if it is called before sun.misc.VM.booted().
-        sun.misc.VM.allowArraySyntax();
 
         // Subsystems that are invoked during initialization can invoke
         // sun.misc.VM.isBooted() in order to avoid doing things that should
@@ -1167,4 +1172,17 @@ public final class System {
             }
         });
     }
+
+    private static Properties initSystemProperties() {
+        Properties props = new Properties();
+        initProperties(props);  // initialized by the VM
+
+        // Save a private copy of the system properties object that
+        // can only be accessed by the internal implementation.  Remove
+        // certain system properties that are not intended for public access.
+        sun.misc.VM.saveAndRemoveProperties(props);
+
+        return props;
+    }
+
 }

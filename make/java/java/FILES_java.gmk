@@ -440,10 +440,6 @@ JAVA_JAVA_java = \
     sun/misc/MetaIndex.java \
     sun/misc/URLClassPath.java \
     sun/misc/Version.java \
-    sun/net/www/protocol/jar/Handler.java \
-    sun/net/www/protocol/jar/JarURLConnection.java \
-    sun/net/www/protocol/file/Handler.java \
-    sun/net/www/protocol/file/FileURLConnection.java \
     sun/misc/FileURLMapper.java \
     sun/misc/MessageUtils.java \
     sun/misc/GC.java \
@@ -452,6 +448,10 @@ JAVA_JAVA_java = \
     sun/misc/JavaLangAccess.java \
     sun/misc/JavaIOAccess.java \
     sun/misc/JavaIODeleteOnExitAccess.java \
-    sun/misc/JavaIOFileDescriptorAccess.java
+    sun/misc/JavaIOFileDescriptorAccess.java \
+    sun/net/www/protocol/jar/Handler.java \
+    sun/net/www/protocol/jar/JarURLConnection.java \
+    sun/net/www/protocol/file/Handler.java \
+    sun/net/www/protocol/file/FileURLConnection.java
 
 FILES_java = $(JAVA_JAVA_java)
