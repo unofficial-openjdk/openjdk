@@ -81,3 +81,9 @@ JLI_MemFree(void *ptr)
 {
     free(ptr);
 }
+
+int
+JLI_StrCCmp(const char *s1, const char* s2)
+{
+   return JLI_StrNCmp(s1, s2, JLI_StrLen(s2));
+}

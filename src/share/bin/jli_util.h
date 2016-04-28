@@ -32,5 +32,10 @@ void *JLI_MemAlloc(size_t size);
 void *JLI_MemRealloc(void *ptr, size_t size);
 char *JLI_StringDup(const char *s1);
 void  JLI_MemFree(void *ptr);
+int   JLI_StrCCmp(const char *s1, const char* s2);
+
+#define JLI_StrLen(p1)          strlen((p1))
+#define JLI_StrCmp(p1, p2)      strcmp((p1), (p2))
+#define JLI_StrNCmp(p1, p2, p3) strncmp((p1), (p2), (p3))
 
 #endif  /* _JLI_UTIL_H */

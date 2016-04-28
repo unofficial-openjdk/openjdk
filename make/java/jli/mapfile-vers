@@ -40,7 +40,8 @@ SUNWprivate_1.1 {
 		JLI_MemRealloc;
 		JLI_StringDup;
 		JLI_MemFree;
-
+		JLI_StrCCmp;
+		
 	local:
 		*;
 };
