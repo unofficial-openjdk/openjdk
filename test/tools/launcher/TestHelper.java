@@ -1,6 +1,5 @@
-
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -17,14 +16,14 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
-import javax.tools.ToolProvider;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
@@ -33,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 
 /**
  * This class provides some common utilites for the launcher tests.
@@ -59,6 +59,10 @@ public enum TestHelper {
             System.getProperty("os.name", "unknown").startsWith("Linux");
     static final boolean isDualMode = isSolaris;
     static final boolean isSparc = System.getProperty("os.arch").startsWith("sparc");
+
+    static final String JAVA_FILE_EXT  = ".java";
+    static final String CLASS_FILE_EXT = ".class";
+    static final String JAR_FILE_EXT   = ".jar";
 
     static int testExitValue = 0;
 
@@ -203,6 +207,19 @@ public enum TestHelper {
             ex.printStackTrace();
             throw new RuntimeException(ex.getMessage());
         }
+    }
+
+    static FileFilter createFilter(final String extension) {
+        return new FileFilter() {
+            @Override
+            public boolean accept(File pathname) {
+                String name = pathname.getName();
+                if (name.endsWith(extension)) {
+                    return true;
+                }
+                return false;
+            }
+        };
     }
 
     /*

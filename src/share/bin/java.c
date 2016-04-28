@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1318,7 +1318,7 @@ LoadMainClass(JNIEnv *env, jboolean isJar, char *name)
                 "checkAndLoadMain",
                 "(ZZLjava/lang/String;)Ljava/lang/Object;"));
 
-    str = (*env)->NewStringUTF(env, name);
+    str = NewPlatformString(env, name);
     result = (*env)->CallStaticObjectMethod(env, cls, mid, USE_STDERR, isJar, str);
 
     if (_launcher_debug) {
