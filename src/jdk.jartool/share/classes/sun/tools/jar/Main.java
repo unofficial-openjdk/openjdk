@@ -28,26 +28,21 @@ package sun.tools.jar;
 import java.io.*;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Provides;
-import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Version;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
 import java.lang.module.ResolutionException;
 import java.lang.module.ResolvedModule;
-import java.lang.reflect.Method;
 import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.zip.*;
@@ -56,9 +51,15 @@ import java.util.jar.Pack200.*;
 import java.util.jar.Manifest;
 import java.text.MessageFormat;
 
+import jdk.internal.misc.JavaLangModuleAccess;
+import jdk.internal.misc.SharedSecrets;
 import jdk.internal.module.ModuleHashes;
 import jdk.internal.module.ModuleInfoExtender;
 import jdk.internal.util.jar.JarIndex;
+
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 import static jdk.internal.util.jar.JarIndex.INDEX_NAME;
 import static java.util.jar.JarFile.MANIFEST_NAME;
 import static java.util.stream.Collectors.joining;
@@ -1649,73 +1650,72 @@ class Main {
         return false;
     }
 
-    @SuppressWarnings("unchecked")
+    static <T> String toString(Set<T> set) {
+        if (set.isEmpty()) { return ""; }
+        return set.stream().map(e -> e.toString().toLowerCase(Locale.ROOT))
+                  .collect(joining(" "));
+    }
+
+    private static final JavaLangModuleAccess JLMA = SharedSecrets.getJavaLangModuleAccess();
+
     private void printModuleDescriptor(InputStream entryInputStream)
         throws IOException
     {
         ModuleDescriptor md = ModuleDescriptor.read(entryInputStream);
         StringBuilder sb = new StringBuilder();
-        sb.append("\nName:\n  " + md.toNameAndVersion());
+        sb.append("\n").append(md.toNameAndVersion());
 
-        Set<Requires> requires = md.requires();
-        if (!requires.isEmpty()) {
-            sb.append("\nRequires:");
-            requires.forEach(r ->
-                    sb.append("\n  ").append(r.name())
-                            .append(toString(r.modifiers(), " [ ", " ]")));
-        }
+        md.requires().stream().sorted().collect(toList()).forEach(
+                r -> { sb.append("\n  requires ");
+                       if (!r.modifiers().isEmpty())
+                           sb.append(toString(r.modifiers())).append(" ");
+                       sb.append(r.name());
+            });
 
-        Set<String> s = md.uses();
-        if (!s.isEmpty()) {
-            sb.append("\nUses: ");
-            s.forEach(sv -> sb.append("\n  ").append(sv));
-        }
+        md.uses().stream().sorted().collect(toList()).forEach(
+                p -> sb.append("\n  uses ").append(p));
 
-        Set<Exports> exports = md.exports();
-        if (!exports.isEmpty()) {
-            sb.append("\nExports:");
-            exports.forEach(sv -> sb.append("\n  ").append(sv));
-        }
+        sortExports(md.exports()).forEach(
+                p -> sb.append("\n  exports ").append(p));
 
-        Map<String,Provides> provides = md.provides();
-        if (!provides.isEmpty()) {
-            sb.append("\nProvides: ");
-            provides.values().forEach(p ->
-                    sb.append("\n  ").append(p.service())
-                      .append(" with ")
-                      .append(toString(p.providers(), "", "")));
-        }
+        md.conceals().stream().sorted().collect(toList()).forEach(
+                p -> sb.append("\n  conceals ").append(p));
 
-        Optional<String> mc = md.mainClass();
-        if (mc.isPresent())
-            sb.append("\nMain class:\n  " + mc.get());
+        md.provides().values().forEach(
+                p -> sb.append("\n  provides ").append(p.service())
+                       .append(" with ")
+                       .append(toString(p.providers())));
 
-        s = md.conceals();
-        if (!s.isEmpty()) {
-            sb.append("\nConceals:");
-            s.forEach(p -> sb.append("\n  ").append(p));
-        }
+        md.mainClass().ifPresent(v -> sb.append("\n  main-class " + v));
 
-        try {
-            Method m = ModuleDescriptor.class.getDeclaredMethod("hashes");
-            m.setAccessible(true);
-            Optional<ModuleHashes> optHashes =
-                    (Optional<ModuleHashes>) m.invoke(md);
+        md.osName().ifPresent(v -> sb.append("\n  operating-system-name " + v));
 
-            if (optHashes.isPresent()) {
-                ModuleHashes hashes = optHashes.get();
-                sb.append("\nHashes:");
-                sb.append("\n  Algorithm: " + hashes.algorithm());
-                hashes.names().stream()
-                    .sorted()
-                    .forEach(mod ->
-                        sb.append("\n  ").append(mod)
-                          .append(": ").append(hashes.hashFor(mod)));
-            }
-        } catch (ReflectiveOperationException x) {
-            throw new InternalError(x);
-        }
+        md.osArch().ifPresent(v -> sb.append("\n  operating-system-architecture " + v));
+
+        md.osVersion().ifPresent(v -> sb.append("\n  operating-system-version " + v));
+
+        JLMA.hashes(md).ifPresent(hashes ->
+                hashes.names().stream().sorted().forEach(
+                    mod -> sb.append("\n  hashes ").append(mod).append(" ")
+                             .append(hashes.algorithm()).append(" ")
+                             .append(hashes.hashFor(mod))));
+
         output(sb.toString());
+    }
+
+    static List<ModuleDescriptor.Exports> sortExports(Set<ModuleDescriptor.Exports> exports) {
+        Map<String,ModuleDescriptor.Exports> map =
+                exports.stream()
+                        .collect(toMap(ModuleDescriptor.Exports::source,
+                                identity()));
+        List<String> sources = exports.stream()
+                                      .map(ModuleDescriptor.Exports::source)
+                                      .sorted()
+                                      .collect(toList());
+
+        List<ModuleDescriptor.Exports> l = new ArrayList<>();
+        sources.forEach(e -> l.add(map.get(e)));
+        return l;
     }
 
     private static String toBinaryName(String classname) {
