@@ -444,6 +444,7 @@ JavaMain(void * _args)
         if (showVersion) {
             fprintf(stderr, "\n");
         }
+        AddOption("-Dsun.java.launcher.diag=true", NULL);
     }
 
     if (showSettings != NULL) {
@@ -1103,6 +1104,8 @@ ParseArguments(int *pargc, char ***pargv, char **pjarfile,
         } else if (JLI_StrCmp(arg, "-XshowSettings") == 0 ||
                 JLI_StrCCmp(arg, "-XshowSettings:") == 0) {
             showSettings = arg;
+        } else if (JLI_StrCmp(arg, "-Xdiag") == 0) {
+            AddOption("-Dsun.java.launcher.diag=true", NULL);
 /*
  * The following case provide backward compatibility with old-style
  * command line options.

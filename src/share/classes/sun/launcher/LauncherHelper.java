@@ -61,14 +61,20 @@ import java.util.jar.Manifest;
 
 public enum LauncherHelper {
     INSTANCE;
-    private static final String defaultBundleName =
-            "sun.launcher.resources.launcher";
-    private static ResourceBundle javarb =
-            ResourceBundle.getBundle(defaultBundleName);
     private static final String MAIN_CLASS = "Main-Class";
 
     private static StringBuilder outBuf = new StringBuilder();
 
+    // sync with java.c and sun.misc.VM
+    private static final String diagprop = "sun.java.launcher.diag";
+
+    private static final String defaultBundleName =
+            "sun.launcher.resources.launcher";
+    private static class ResourceBundleHolder {
+        private static final ResourceBundle RB =
+                ResourceBundle.getBundle(defaultBundleName);
+    }
+    
     private static final String INDENT = "    ";
     private static final String VM_SETTINGS     = "VM settings:";
     private static final String PROP_SETTINGS   = "Property settings:";
@@ -257,7 +263,7 @@ public enum LauncherHelper {
      * apply any arguments that we might pass.
      */
     private static String getLocalizedMessage(String key, Object... args) {
-        String msg = javarb.getString(key);
+        String msg = ResourceBundleHolder.RB.getString(key);
         return (args != null) ? MessageFormat.format(msg, args) : msg;
     }
 
@@ -329,25 +335,43 @@ public enum LauncherHelper {
                 File.pathSeparator));
     }
 
-    static String getMainClassFromJar(String jarname) throws IOException {
-        JarFile jarFile = null;
+    static String getMainClassFromJar(PrintStream ostream, String jarname) {
         try {
-            jarFile = new JarFile(jarname);
-            Manifest manifest = jarFile.getManifest();
-            if (manifest == null) {
-                throw new IOException("manifest not found in " + jarname);
+            JarFile jarFile = null;
+            try {
+                jarFile = new JarFile(jarname);
+                Manifest manifest = jarFile.getManifest();
+                if (manifest == null) {
+                    abort(ostream, null, "java.launcher.jar.error2", jarname);
+                }
+                Attributes mainAttrs = manifest.getMainAttributes();
+                if (mainAttrs == null) {
+                    abort(ostream, null, "java.launcher.jar.error3", jarname);
+                }
+                return mainAttrs.getValue(MAIN_CLASS).trim();
+            } finally {
+                if (jarFile != null) {
+                    jarFile.close();
+                }
             }
-            Attributes mainAttrs = manifest.getMainAttributes();
-            if (mainAttrs == null) {
-                throw new IOException("no main mainifest attributes, in " +
-                        jarname);
-            }
-            return mainAttrs.getValue(MAIN_CLASS).trim();
-        } finally {
-            if (jarFile != null) {
-                jarFile.close();
+        } catch (IOException ioe) {
+            abort(ostream, ioe, "java.launcher.jar.error1", jarname);
+        }
+        return null;
+    }
+
+    static void abort(PrintStream ostream, Throwable t, String msgKey, Object... args) {
+        if (msgKey != null) {
+            ostream.println(getLocalizedMessage(msgKey, args));
+        }
+        if (sun.misc.VM.getSavedProperty(diagprop) != null) {
+            if (t != null) {
+                t.printStackTrace();
+            } else {
+                Thread.currentThread().dumpStack();
             }
         }
+        System.exit(1);
     }
 
     /**
@@ -367,23 +391,19 @@ public enum LauncherHelper {
      * @param isJar
      * @param name
      * @return
-     * @throws java.io.IOException
      */
     public static Object checkAndLoadMain(boolean printToStderr,
             boolean isJar, String name) throws IOException {
         // get the class name
-        String classname = (isJar) ? getMainClassFromJar(name) : name;
-        classname = classname.replace('/', '.');
-        ClassLoader loader = ClassLoader.getSystemClassLoader();
         Class<?> clazz = null;
-        PrintStream ostream = (printToStderr) ? System.err : System.out;
+        final PrintStream ostream = (printToStderr) ? System.err : System.out;
+        String classname = (isJar) ? getMainClassFromJar(ostream, name) : name;
+        classname = classname.replace('/', '.');
+        final ClassLoader loader = ClassLoader.getSystemClassLoader();
         try {
             clazz = loader.loadClass(classname);
         } catch (ClassNotFoundException cnfe) {
-            ostream.println(getLocalizedMessage("java.launcher.cls.error1", classname));
-            NoClassDefFoundError ncdfe = new NoClassDefFoundError(classname);
-            ncdfe.initCause(cnfe);
-            throw ncdfe;
+            abort(ostream, cnfe, "java.launcher.cls.error1", classname);
         }
         signatureDiagnostic(ostream, clazz);
         return clazz;
@@ -395,9 +415,7 @@ public enum LauncherHelper {
         try {
             method = clazz.getMethod("main", String[].class);
         } catch (NoSuchMethodException nsme) {
-            ostream.println(getLocalizedMessage("java.launcher.cls.error4",
-                    classname));
-            throw new RuntimeException("Main method not found in " + classname);
+            abort(ostream, null, "java.launcher.cls.error4", classname);
         }
         /*
          * getMethod (above) will choose the correct method, based
@@ -406,17 +424,10 @@ public enum LauncherHelper {
          */
         int mod = method.getModifiers();
         if (!Modifier.isStatic(mod)) {
-            ostream.println(getLocalizedMessage("java.launcher.cls.error2",
-                    "static", classname));
-            throw new RuntimeException("Main method is not static in class " +
-                    classname);
+            abort(ostream, null, "java.launcher.cls.error2", "static", classname);
         }
         if (method.getReturnType() != java.lang.Void.TYPE) {
-            ostream.println(getLocalizedMessage("java.launcher.cls.error3",
-                    classname));
-            throw new RuntimeException("Main method must return a value" +
-                    " of type void in class " +
-                    classname);
+            abort(ostream, null, "java.launcher.cls.error3", classname);
         }
         return;
     }
