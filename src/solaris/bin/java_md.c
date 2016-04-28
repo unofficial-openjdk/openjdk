@@ -46,10 +46,6 @@
 #define JVM_DLL "libjvm.so"
 #define JAVA_DLL "libjava.so"
 
-#define JRE_ERROR1      "Error: Could not find Java SE Runtime Environment."
-#define JRE_ERROR11     "Error: Path length exceeds maximum length (PATH_MAX)"
-#define JRE_ERROR13     "Error: String processing operation failed"
-
 /*
  * If a processor / os combination has the ability to run binaries of
  * two data models and cohabitation of jre/jdk bits with both data
@@ -938,7 +934,15 @@ void ReportErrorMessage2(char * format, char * string, jboolean always) {
   }
 }
 
-void  ReportExceptionDescription(JNIEnv * env) {
+void JLI_ReportErrorMessage(const char* fmt, ...) {
+    va_list vl;
+    va_start(vl, fmt);
+    vfprintf(stderr, fmt, vl);
+    fprintf(stderr, "\n");
+    va_end(vl);
+}
+
+void  JLI_ReportExceptionDescription(JNIEnv * env) {
   (*env)->ExceptionDescribe(env);
 }
 
@@ -1820,4 +1824,25 @@ void SetJavaLauncherPlatformProps() {
     sprintf(pid_prop_str, "%s%d", substr, getpid());
     AddOption(pid_prop_str, NULL);
 #endif
+}
+
+/*
+ * The implementation for finding classes from the bootstrap
+ * class loader, refer to java.h
+ */
+static FindClassFromBootLoader_t *findBootClass = NULL;
+
+jclass
+FindBootStrapClass(JNIEnv *env, const char* classname)
+{
+   if (findBootClass == NULL) {
+       findBootClass = (FindClassFromBootLoader_t *)dlsym(RTLD_DEFAULT,
+          "JVM_FindClassFromBootLoader");
+       if (findBootClass == NULL) {
+           JLI_ReportErrorMessage(DLL_ERROR4,
+               "JVM_FindClassFromBootLoader");
+           return NULL;
+       }
+   }
+   return findBootClass(env, classname, JNI_FALSE);
 }

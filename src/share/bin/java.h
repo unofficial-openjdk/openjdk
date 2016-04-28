@@ -30,6 +30,7 @@
  * Get system specific defines.
  */
 #include "jni.h"
+#include "emessages.h"
 #include "java_md.h"
 #include "jli_util.h"
 
@@ -81,11 +82,14 @@ void CreateExecutionEnvironment(int *_argc,
 void ReportErrorMessage(char * message, jboolean always);
 void ReportErrorMessage2(char * format, char * string, jboolean always);
 
+/* Reports an error message to stderr or a window as appropriate. */
+void JLI_ReportErrorMessage(const char * message, ...);
+
 /*
  * Report an exception which terminates the vm to stderr or a window
  * as appropriate.
  */
-void ReportExceptionDescription(JNIEnv * env);
+void JLI_ReportExceptionDescription(JNIEnv * env);
 
 jboolean RemovableMachineDependentOption(char * option);
 void PrintMachineDependentOptions();
@@ -112,4 +116,15 @@ void AddOption(char *str, void *info);
  */
 extern jboolean _launcher_debug;
 
+/*
+ * This allows for finding classes from the VM's bootstrap class loader directly,
+ * FindClass uses the application class loader internally, this will cause
+ * unnecessary searching of the classpath for the required classes.
+ *
+ */
+typedef jclass (JNICALL FindClassFromBootLoader_t(JNIEnv *env,
+                                                const char *name,
+                                                jboolean throwError));
+
+jclass FindBootStrapClass(JNIEnv *env, const char *classname);
 #endif /* _JAVA_H_ */
