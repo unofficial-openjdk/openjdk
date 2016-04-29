@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,8 +26,10 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
@@ -47,6 +49,7 @@ public class TestHelper {
     static final File TEST_SOURCES_DIR;
 
     static final String JAVAHOME = System.getProperty("java.home");
+    static final String JAVA_JRE_BIN;
     static final boolean isSDK = JAVAHOME.endsWith("jre");
     static final String javaCmd;
     static final String javawCmd;
@@ -99,8 +102,11 @@ public class TestHelper {
             throw new RuntimeException("arch model is not 32 or 64 bit ?");
         }
         compiler = ToolProvider.getSystemJavaCompiler();
-        File binDir = (isSDK) ? new File((new File(JAVAHOME)).getParentFile(), "bin")
-            : new File(JAVAHOME, "bin");
+        File binDir = (isSDK)
+                ? new File((new File(JAVAHOME)).getParentFile(), "bin")
+                : new File(JAVAHOME, "bin");
+        JAVA_JRE_BIN = new File((new File(JAVAHOME)).getParentFile(),
+                        (isSDK) ? "jre/bin" : "bin").getAbsolutePath();
         File javaCmdFile = (isWindows)
                 ? new File(binDir, "java.exe")
                 : new File(binDir, "java");
@@ -144,11 +150,35 @@ public class TestHelper {
     }
 
     /*
+     * is a dual mode available in the test jdk
+     */
+    static boolean dualModePresent() {
+        return isDualMode && java64Cmd != null;
+    }
+
+    /*
      * usually the jre/lib/arch-name is the same as os.arch, except for x86.
      */
     static String getJreArch() {
         String arch = System.getProperty("os.arch");
         return arch.equals("x86") ? "i386" : arch;
+    }
+    static String getArch() {
+        return System.getProperty("os.arch");
+    }
+    static File getClassFile(File javaFile) {
+        String s = javaFile.getAbsolutePath().replace(JAVA_FILE_EXT, CLASS_FILE_EXT);
+        return new File(s);
+    }
+
+    static File getJavaFile(File classFile) {
+        String s = classFile.getAbsolutePath().replace(CLASS_FILE_EXT, JAVA_FILE_EXT);
+        return new File(s);
+    }
+
+    static String baseName(File f) {
+        String s = f.getName();
+        return s.substring(0, s.indexOf("."));
     }
 
     /*
@@ -374,6 +404,16 @@ public class TestHelper {
             return false;
         }
 
+        boolean notContains(String str) {
+             for (String x : testOutput) {
+                if (x.contains(str)) {
+                    appendStatus("string <" + str + "> found");
+                    return false;
+                }
+            }
+            return true;
+        }
+
         boolean matches(String stringToMatch) {
           for (String x : testOutput) {
                 if (x.matches(stringToMatch)) {
@@ -381,6 +421,16 @@ public class TestHelper {
                 }
             }
             appendStatus("Error: string <" + stringToMatch + "> not found");
+            return false;
+        }
+
+        boolean notMatches(String stringToMatch) {
+            for (String x : testOutput) {
+                if (!x.matches(stringToMatch)) {
+                    return true;
+                }
+            }
+            appendStatus("string <" + stringToMatch + "> found");
             return false;
         }
     }
