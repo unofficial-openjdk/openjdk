@@ -490,7 +490,7 @@ public final class TemplatesImpl implements Templates, Serializable {
             // the XSLT compiler is updated to generate code to invoke addReads.
             Modules.addReadsAllUnnamed(m);
 
-            // java.xml needs to instanitate the translate class
+            // java.xml needs to instanitate the translet class
             thisModule.addReads(m);
 
             for (int i = 0; i < classCount; i++) {
