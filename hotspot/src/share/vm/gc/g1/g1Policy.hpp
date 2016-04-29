@@ -57,8 +57,8 @@ public:
 
   // Accessors
 
-  virtual void set_region_eden(HeapRegion* hr, int young_index_in_cset) = 0;
-  virtual void set_region_survivor(HeapRegion* hr, int young_index_in_cset) = 0;
+  virtual void set_region_eden(HeapRegion* hr) = 0;
+  virtual void set_region_survivor(HeapRegion* hr) = 0;
 
   virtual void record_max_rs_lengths(size_t rs_lengths) = 0;
 
@@ -162,7 +162,7 @@ public:
 
   virtual size_t young_list_target_length() const = 0;
 
-  virtual bool is_young_list_full() const = 0;
+  virtual bool should_allocate_mutator_region() const = 0;
 
   virtual bool can_expand_young_list() const = 0;
 

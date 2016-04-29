@@ -40,6 +40,7 @@ import java.nio.file.Paths;
  * @summary Checks that unreachable classes and unreachable humongous class loader are unloaded after GC
  * @requires vm.gc=="G1" | vm.gc=="null"
  * @requires vm.opt.G1HeapRegionSize == "null" | vm.opt.G1HeapRegionSize == "1M"
+ * @requires vm.opt.ExplicitGCInvokesConcurrent != true
  * @library /testlibrary /test/lib /
  * @modules java.management
  * @build sun.hotspot.WhiteBox
@@ -51,7 +52,7 @@ import java.nio.file.Paths;
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
  *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  *
- * @run main/othervm/timeout=240  -Xms256M -Xmx256M -XX:+WhiteBoxAPI -Xbootclasspath/a:.
+ * @run main/othervm/timeout=240  -Xms256M -Xmx256M -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xbootclasspath/a:.
  *                                gc.g1.humongousObjects.ClassLoaderGenerator 1
  *
  * @run main/othervm -Xms256M -Xmx256M -XX:+UseG1GC -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xbootclasspath/a:.
