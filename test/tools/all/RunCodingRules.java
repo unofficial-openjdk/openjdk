@@ -63,14 +63,15 @@ public class RunCodingRules {
             if (Files.exists(d.resolve("TEST.ROOT"))) {
                 d = d.getParent();
                 Path toolsPath = d.resolve("make/tools");
-                if (Files.exists(toolsPath)) {
+                Path buildDir = d.getParent().resolve("build");
+                if (Files.exists(toolsPath) && Files.exists(buildDir)) {
                     mainSrcDir = d.resolve("src");
                     crulesDir = toolsPath;
                     sourceDirs = Files.walk(mainSrcDir, 1)
                                       .map(p -> p.resolve("share/classes"))
                                       .filter(p -> Files.isDirectory(p))
                                       .collect(Collectors.toList());
-                    genSrcDirs = Files.walk(d.getParent().resolve("build"), 1)
+                    genSrcDirs = Files.walk(buildDir, 1)
                                       .map(p -> p.resolve("support/gensrc"))
                                       .filter(p -> Files.isDirectory(p.resolve("jdk.compiler")))
                                       .collect(Collectors.toList());
