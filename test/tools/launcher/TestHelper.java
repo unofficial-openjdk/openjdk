@@ -319,19 +319,18 @@ public class TestHelper {
 
         void appendStatus(String x) {
             status = status.append("  " + x + "\n");
+            testExitValue++;
         }
 
         void checkNegative() {
             if (exitValue == 0) {
                 appendStatus("Error: test must not return 0 exit value");
-                testExitValue++;
             }
         }
 
         void checkPositive() {
             if (exitValue != 0) {
                 appendStatus("Error: test did not return 0 exit value");
-                testExitValue++;
             }
         }
 
@@ -342,7 +341,6 @@ public class TestHelper {
         boolean isZeroOutput() {
             if (!testOutput.isEmpty()) {
                 appendStatus("Error: No message from cmd please");
-                testExitValue++;
                 return false;
             }
             return true;
@@ -351,7 +349,6 @@ public class TestHelper {
         boolean isNotZeroOutput() {
             if (testOutput.isEmpty()) {
                 appendStatus("Error: Missing message");
-                testExitValue++;
                 return false;
             }
             return true;
@@ -374,7 +371,6 @@ public class TestHelper {
                 }
             }
             appendStatus("Error: string <" + str + "> not found");
-            testExitValue++;
             return false;
         }
 
@@ -385,7 +381,6 @@ public class TestHelper {
                 }
             }
             appendStatus("Error: string <" + stringToMatch + "> not found");
-            testExitValue++;
             return false;
         }
     }
