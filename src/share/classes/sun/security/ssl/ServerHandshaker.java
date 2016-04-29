@@ -270,7 +270,7 @@ final class ServerHandshaker extends Handshaker {
         // Move state machine forward if the message handling
         // code didn't already do so
         //
-        if (state < type) { 
+        if (state < type) {
             if(type == HandshakeMessage.ht_certificate_verify) {
                 state = type + 2;    // an annoying special case
             } else {
@@ -878,32 +878,45 @@ final class ServerHandshaker extends Handshaker {
 
         switch (keyExchange) {
         case K_RSA:
+            // need RSA certs for authentication
+            if (setupPrivateKeyAndChain("RSA") == false) {
+                return false;
+            }
+            break;
         case K_RSA_EXPORT:
+            // need RSA certs for authentication
+            if (setupPrivateKeyAndChain("RSA") == false) {
+                return false;
+            }
+
+            try {
+                if (JsseJce.getRSAKeyLength(certs[0].getPublicKey()) > 512) {
+                    if (!setupEphemeralRSAKeys(suite.exportable)) {
+                        return false;
+                    }
+                }
+            } catch (RuntimeException e) {
+                // could not determine keylength, ignore key
+                return false;
+            }
+            break;
         case K_DHE_RSA:
+            // need RSA certs for authentication
+            if (setupPrivateKeyAndChain("RSA") == false) {
+                return false;
+            }
+
+            setupEphemeralDHKeys(suite.exportable);
+            break;
         case K_ECDHE_RSA:
             // need RSA certs for authentication
             if (setupPrivateKeyAndChain("RSA") == false) {
                 return false;
             }
 
-            if (keyExchange == K_RSA_EXPORT) {
-                try {
-                   if (JsseJce.getRSAKeyLength(certs[0].getPublicKey()) > 512) {
-                        if (!setupEphemeralRSAKeys(suite.exportable)) {
-                            return false;
-                        }
-                   }
-                } catch (RuntimeException e) {
-                    // could not determine keylength, ignore key
-                    return false;
-                }
-            } else if (keyExchange == K_DHE_RSA) {
-                setupEphemeralDHKeys(suite.exportable);
-            } else if (keyExchange == K_ECDHE_RSA) {
-                if (setupEphemeralECDHKeys() == false) {
-                    return false;
-                }
-            } // else nothing more to do for K_RSA
+            if (setupEphemeralECDHKeys() == false) {
+                return false;
+            }
             break;
         case K_DHE_DSS:
             // need DSS certs for authentication
@@ -1099,8 +1112,8 @@ final class ServerHandshaker extends Handshaker {
                     // get kerberos key for the default principal
                     KerberosKey[] keys = Krb5Util.getKeys(
                         GSSCaller.CALLER_SSL_SERVER, null, acc);
-		    return keys != null ? keys : new KerberosKey[0];
-		}});
+                    return keys != null ? keys : new KerberosKey[0];
+                }});
 
             // check permission to access and use the secret key of the
             // Kerberized "host" service
