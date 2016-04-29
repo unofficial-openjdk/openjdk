@@ -56,7 +56,7 @@ public class I18NJarTest extends TestHelper {
     public static void main(String... args) throws Exception {
         boolean localeAvailable = false;
         for (Locale l : Locale.getAvailableLocales()) {
-            if (l.toLanguageTag().equals(Locale.JAPAN.toLanguageTag())) {
+            if (l.equals(Locale.JAPAN)) {
                 localeAvailable = true;
                 break;
             }

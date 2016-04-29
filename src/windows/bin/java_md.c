@@ -636,12 +636,13 @@ void ReportSysErrorMessage2(char * format, char * string, jboolean always) {
 
 void
 JLI_ReportErrorMessage(const char* fmt, ...) {
+#ifdef JAVAW
+    char *message;
+#endif
     va_list vl;
     va_start(vl,fmt);
 
 #ifdef JAVAW
-        char *message;
-
         /* get the length of the string we need */
         int n = _vscprintf(fmt, vl);
 
