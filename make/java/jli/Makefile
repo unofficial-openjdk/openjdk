@@ -89,7 +89,8 @@ ifeq ($(PLATFORM), windows)
 	OTHER_LCF += -export:JLI_MemAlloc \
 		     -export:JLI_MemRealloc \
 		     -export:JLI_StringDup \
-		     -export:JLI_MemFree
+		     -export:JLI_MemFree \
+		     -export:JLI_StrCCmp
 
 	# Files from zlib built here do not compile with warning level 3
 	# if warnings are fatal
