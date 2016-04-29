@@ -638,13 +638,14 @@ void
 JLI_ReportErrorMessage(const char* fmt, ...) {
 #ifdef JAVAW
     char *message;
+    int n;
 #endif
     va_list vl;
     va_start(vl,fmt);
 
 #ifdef JAVAW
         /* get the length of the string we need */
-        int n = _vscprintf(fmt, vl);
+        n = _vscprintf(fmt, vl);
 
         message = (char *)JLI_MemAlloc(n + 1);
         _vsnprintf(message, n, fmt, vl);
