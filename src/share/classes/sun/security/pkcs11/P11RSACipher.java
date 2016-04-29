@@ -204,7 +204,9 @@ final class P11RSACipher extends CipherSpi {
                 throw new InvalidKeyException
                                 ("Unwrap has to be used with private keys");
             }
-            encrypt = false;
+            // No further setup needed for C_Unwrap(). We'll initialize later
+            // if we can't use C_Unwrap().
+            return;
         } else {
             throw new InvalidKeyException("Unsupported mode: " + opmode);
         }
