@@ -27,9 +27,13 @@ import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
@@ -37,11 +41,15 @@ import javax.tools.ToolProvider;
 /**
  * This class provides some common utilites for the launcher tests.
  */
-public enum TestHelper {
-    INSTANCE;
+public class TestHelper {
+    // commonly used jtreg constants
+    static final File TEST_CLASSES_DIR;
+    static final File TEST_SOURCES_DIR;
+
     static final String JAVAHOME = System.getProperty("java.home");
     static final boolean isSDK = JAVAHOME.endsWith("jre");
     static final String javaCmd;
+    static final String javawCmd;
     static final String java64Cmd;
     static final String javacCmd;
     static final JavaCompiler compiler;
@@ -60,13 +68,30 @@ public enum TestHelper {
     static final boolean isDualMode = isSolaris;
     static final boolean isSparc = System.getProperty("os.arch").startsWith("sparc");
 
+    // make a note of the golden default locale
+    static final Locale DefaultLocale = Locale.getDefault();
+
     static final String JAVA_FILE_EXT  = ".java";
     static final String CLASS_FILE_EXT = ".class";
     static final String JAR_FILE_EXT   = ".jar";
+    static final String JLDEBUG_KEY     = "_JAVA_LAUNCHER_DEBUG";
+    static final String EXPECTED_MARKER = "TRACER_MARKER:About to EXEC";
 
     static int testExitValue = 0;
 
     static {
+        String tmp = System.getProperty("test.classes", null);
+        if (tmp == null) {
+            throw new Error("property test.classes not defined ??");
+        }
+        TEST_CLASSES_DIR = new File(tmp).getAbsoluteFile();
+
+        tmp = System.getProperty("test.src", null);
+        if (tmp == null) {
+            throw new Error("property test.src not defined ??");
+        }
+        TEST_SOURCES_DIR = new File(tmp).getAbsoluteFile();
+
         if (is64Bit && is32Bit) {
             throw new RuntimeException("arch model cannot be both 32 and 64 bit");
         }
@@ -81,15 +106,29 @@ public enum TestHelper {
                 : new File(binDir, "java");
         javaCmd = javaCmdFile.getAbsolutePath();
         if (!javaCmdFile.canExecute()) {
-            throw new RuntimeException("java <" + TestHelper.javaCmd + "> must exist");
+            throw new RuntimeException("java <" + TestHelper.javaCmd +
+                    "> must exist and should be executable");
         }
 
         File javacCmdFile = (isWindows)
                 ? new File(binDir, "javac.exe")
                 : new File(binDir, "javac");
         javacCmd = javacCmdFile.getAbsolutePath();
+
+        if (isWindows) {
+            File javawCmdFile = new File(binDir, "javaw.exe");
+            javawCmd = javawCmdFile.getAbsolutePath();
+            if (!javawCmdFile.canExecute()) {
+                throw new RuntimeException("java <" + javawCmd +
+                        "> must exist and should be executable");
+            }
+        } else {
+            javawCmd = null;
+        }
+
         if (!javacCmdFile.canExecute()) {
-            throw new RuntimeException("java <" + javacCmd + "> must exist");
+            throw new RuntimeException("java <" + javacCmd +
+                    "> must exist and should be executable");
         }
         if (isSolaris) {
             File sparc64BinDir = new File(binDir,isSparc ? "sparcv9" : "amd64");
@@ -127,6 +166,19 @@ public enum TestHelper {
     static void createJar(File jarName, File mainClass, String... mainDefs)
             throws FileNotFoundException {
             createJar(null, jarName, mainClass, mainDefs);
+    }
+
+    /*
+     * A convenience method to compile java files.
+     */
+    static void compile(String... compilerArgs) {
+        if (compiler.run(null, null, null, compilerArgs) != 0) {
+            String sarg = "";
+            for (String x : compilerArgs) {
+                sarg.concat(x + " ");
+            }
+            throw new Error("compilation failed: " + sarg);
+        }
     }
 
     /*
@@ -172,6 +224,30 @@ public enum TestHelper {
         }
     }
 
+    static void createJar(String... args) {
+        sun.tools.jar.Main jarTool =
+                new sun.tools.jar.Main(System.out, System.err, "JarCreator");
+        if (!jarTool.run(args)) {
+            String message = "jar creation failed with command:";
+            for (String x : args) {
+                message = message.concat(" " + x);
+            }
+            throw new RuntimeException(message);
+        }
+    }
+
+    static void createFile(File outFile, List<String> content) throws IOException {
+	PrintWriter writer = null;
+	try {
+	    writer = new PrintWriter(outFile, Charset.defaultCharset().name());
+	    for (String line : content)
+		writer.println(line);
+	} finally {
+	    if (writer != null)
+		writer.close();
+	}
+    }
+    
     static TestResult doExec(String...cmds) {
         return doExec(null, cmds);
     }
@@ -220,6 +296,10 @@ public enum TestHelper {
                 return false;
             }
         };
+    }
+
+    static boolean isEnglishLocale() {
+        return Locale.getDefault().getLanguage().equals("en");
     }
 
     /*
