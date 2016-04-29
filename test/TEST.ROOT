@@ -36,8 +36,8 @@ groups=TEST.groups [closed/TEST.groups]
 requires.extraPropDefns = ../../test/jtreg-ext/requires/VMProps.java
 requires.properties=sun.arch.data.model
 
-# Tests using jtreg 4.2 b01 features
-requiredVersion=4.2 b01
+# Tests using jtreg 4.2 b02 features
+requiredVersion=4.2 b02
 
 # Path to libraries in the topmost test directory. This is needed so @library
 # does not need ../../ notation to reach them
