@@ -549,11 +549,7 @@ double G1DefaultPolicy::non_young_other_time_ms() const {
 }
 
 double G1DefaultPolicy::other_time_ms(double pause_time_ms) const {
-  return pause_time_ms -
-         average_time_ms(G1GCPhaseTimes::UpdateRS) -
-         average_time_ms(G1GCPhaseTimes::ScanRS) -
-         average_time_ms(G1GCPhaseTimes::ObjCopy) -
-         average_time_ms(G1GCPhaseTimes::Termination);
+  return pause_time_ms - phase_times()->cur_collection_par_time_ms();
 }
 
 double G1DefaultPolicy::constant_other_time_ms(double pause_time_ms) const {
@@ -911,10 +907,10 @@ void G1DefaultPolicy::print_yg_surv_rate_info() const {
 #endif // PRODUCT
 }
 
-bool G1DefaultPolicy::is_young_list_full() const {
+bool G1DefaultPolicy::should_allocate_mutator_region() const {
   uint young_list_length = _g1->young_list()->length();
   uint young_list_target_length = _young_list_target_length;
-  return young_list_length >= young_list_target_length;
+  return young_list_length < young_list_target_length;
 }
 
 bool G1DefaultPolicy::can_expand_young_list() const {

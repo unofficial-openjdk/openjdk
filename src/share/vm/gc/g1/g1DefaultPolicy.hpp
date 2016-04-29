@@ -113,16 +113,14 @@ public:
 
   // Accessors
 
-  void set_region_eden(HeapRegion* hr, int young_index_in_cset) {
+  void set_region_eden(HeapRegion* hr) {
     hr->set_eden();
     hr->install_surv_rate_group(_short_lived_surv_rate_group);
-    hr->set_young_index_in_cset(young_index_in_cset);
   }
 
-  void set_region_survivor(HeapRegion* hr, int young_index_in_cset) {
+  void set_region_survivor(HeapRegion* hr) {
     assert(hr->is_survivor(), "pre-condition");
     hr->install_surv_rate_group(_survivor_surv_rate_group);
-    hr->set_young_index_in_cset(young_index_in_cset);
   }
 
 #ifndef PRODUCT
@@ -384,7 +382,7 @@ public:
 
   size_t young_list_target_length() const { return _young_list_target_length; }
 
-  bool is_young_list_full() const;
+  bool should_allocate_mutator_region() const;
 
   bool can_expand_young_list() const;
 
