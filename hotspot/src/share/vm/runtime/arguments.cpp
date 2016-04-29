@@ -2648,6 +2648,14 @@ bool Arguments::check_vm_args_consistency() {
     }
     FLAG_SET_CMDLINE(bool, UseCompiler, false);
   }
+#ifdef COMPILER2
+  if (PostLoopMultiversioning && !RangeCheckElimination) {
+    if (!FLAG_IS_DEFAULT(PostLoopMultiversioning)) {
+      warning("PostLoopMultiversioning disabled because RangeCheckElimination is disabled.");
+    }
+    FLAG_SET_CMDLINE(bool, PostLoopMultiversioning, false);
+  }
+#endif
   return status;
 }
 
