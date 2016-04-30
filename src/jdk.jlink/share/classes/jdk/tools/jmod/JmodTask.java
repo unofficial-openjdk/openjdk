@@ -734,7 +734,7 @@ public class JmodTask {
      */
     private class Hasher {
         final ModuleFinder moduleFinder;
-        final Map<String, Path> modulesToPath;
+        final Map<String, Path> moduleNameToPath;
         final Set<String> modules;
         final Configuration configuration;
         final boolean dryrun = options.dryrun;
@@ -746,7 +746,12 @@ public class JmodTask {
                 .filter(mn -> options.modulesToHash.matcher(mn).find())
                 .collect(Collectors.toSet());
 
-            this.modulesToPath = modulesToPath(modules);
+            // a map from a module name to Path of the packaged module
+            this.moduleNameToPath = moduleFinder.findAll().stream()
+                .map(mref -> mref.descriptor().name())
+                .collect(Collectors.toMap(Function.identity(), mn -> moduleToPath(mn)));
+
+            // get a resolved module graph
             Configuration config = null;
             try {
                 config = Configuration.empty()
@@ -771,7 +776,8 @@ public class JmodTask {
             if (configuration == null)
                 return false;
 
-            // transposed graph containing the matching modules
+            // transposed graph containing the the packaged modules and
+            // its transitive dependences matching --hash-modules
             Map<String, Set<String>> graph = new HashMap<>();
             for (String root : modules) {
                 Deque<String> deque = new ArrayDeque<>();
@@ -804,12 +810,16 @@ public class JmodTask {
             if (dryrun)
                 out.println("Dry run:");
 
-            // each entry is a matching module and the modules that depend upon it
+            // each node in a transposed graph is a matching packaged module
+            // in which the hash of the modules that depend upon it is recorded
             graph.entrySet().stream()
                 .filter(e -> !e.getValue().isEmpty())
-                .map(Map.Entry::getKey)
-                .forEach(mn -> {
-                    ModuleHashes hashes = computeHashes(mn, graph.get(mn));
+                .forEach(e -> {
+                    String mn = e.getKey();
+                    Map<String, Path> modulesForHash = e.getValue().stream()
+                            .collect(Collectors.toMap(Function.identity(),
+                                                      moduleNameToPath::get));
+                    ModuleHashes hashes = ModuleHashes.generate(modulesForHash, "SHA-256");
                     if (dryrun) {
                         out.format("%s%n", mn);
                         hashes.names().stream()
@@ -819,8 +829,8 @@ public class JmodTask {
                     } else {
                         try {
                             updateModuleInfo(mn, hashes);
-                        } catch (IOException e) {
-                            throw new UncheckedIOException(e);
+                        } catch (IOException ex) {
+                            throw new UncheckedIOException(ex);
                         }
                     }
                 });
@@ -837,26 +847,24 @@ public class JmodTask {
             if (configuration == null)
                 return null;
 
+            // the transposed graph includes all modules in the resolved graph
             Map<String, Set<String>> graph = transpose();
-            Deque<String> deque = new ArrayDeque<>();
-            deque.add(name);
 
             // find the modules that transitively depend upon the specified name
-            Set<String> modulesToHash = visitNodes(graph, deque);
-            // remove itself as the jmod file is being generated
-            modulesToHash.remove(name);
+            Deque<String> deque = new ArrayDeque<>();
+            deque.add(name);
+            Set<String> mods = visitNodes(graph, deque);
 
-            if (modulesToHash.isEmpty())
+            // filter modules matching the pattern specified --hash-modules
+            // as well as itself as the jmod file is being generated
+            Map<String, Path> modulesForHash = mods.stream()
+                .filter(mn -> !mn.equals(name) && modules.contains(mn))
+                .collect(Collectors.toMap(Function.identity(), moduleNameToPath::get));
+
+            if (modulesForHash.isEmpty())
                 return null;
 
-           return computeHashes(name, modulesToHash);
-        }
-
-        private ModuleHashes computeHashes(String name, Set<String> modulesToHash) {
-            Map<String, Path> map = modulesToHash.stream()
-                .collect(Collectors.toMap(Function.identity(), modulesToPath::get));
-            // use SHA-256 for now, easy to make this configurable if needed
-            return ModuleHashes.generate(map, "SHA-256");
+           return ModuleHashes.generate(modulesForHash, "SHA-256");
         }
 
         /**
@@ -895,8 +903,7 @@ public class JmodTask {
                 if (!visited.contains(mn)) {
                     visited.add(mn);
 
-                    if (modules.contains(mn))
-                        transposedGraph.computeIfAbsent(mn, _k -> new HashSet<>());
+                    transposedGraph.computeIfAbsent(mn, _k -> new HashSet<>());
 
                     ResolvedModule resolvedModule = configuration.findModule(mn).get();
                     for (ResolvedModule dm : resolvedModule.reads()) {
@@ -906,10 +913,8 @@ public class JmodTask {
                         }
 
                         // reverse edge
-                        if (modules.contains(name) && modules.contains(mn)) {
-                            transposedGraph.computeIfAbsent(name, _k -> new HashSet<>())
+                        transposedGraph.computeIfAbsent(name, _k -> new HashSet<>())
                                 .add(mn);
-                        }
                     }
                 }
             }
@@ -935,7 +940,7 @@ public class JmodTask {
         private void updateModuleInfo(String name, ModuleHashes moduleHashes)
             throws IOException
         {
-            Path target = modulesToPath.get(name);
+            Path target = moduleNameToPath.get(name);
             Path tempTarget = target.resolveSibling(target.getFileName() + ".tmp");
             ZipFile zip = new ZipFile(target.toFile());
             try {
@@ -977,21 +982,17 @@ public class JmodTask {
             Files.move(tempTarget, target, StandardCopyOption.REPLACE_EXISTING);
         }
 
-        private Map<String, Path> modulesToPath(Set<String> modules) {
-            Map<String,Path> modPaths = new HashMap<>();
-            for (String name : modules) {
-                ModuleReference mref = moduleFinder.find(name).orElseThrow(
-                        () -> new InternalError("Selected module " + name + " not on module path"));
+        private Path moduleToPath(String name) {
+            ModuleReference mref = moduleFinder.find(name).orElseThrow(
+                () -> new InternalError("Selected module " + name + " not on module path"));
 
-                URI uri = mref.location().get();
-                Path path = Paths.get(uri);
-                String fn = path.getFileName().toString();
-                if (!fn.endsWith(".jar") && !fn.endsWith(".jmod")) {
-                    throw new InternalError(path + " is not a modular JAR or jmod file");
-                }
-                modPaths.put(name, path);
+            URI uri = mref.location().get();
+            Path path = Paths.get(uri);
+            String fn = path.getFileName().toString();
+            if (!fn.endsWith(".jar") && !fn.endsWith(".jmod")) {
+                throw new InternalError(path + " is not a modular JAR or jmod file");
             }
-            return modPaths;
+            return path;
         }
     }
 

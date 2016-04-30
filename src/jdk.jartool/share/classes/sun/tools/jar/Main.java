@@ -1808,7 +1808,7 @@ class Main {
      */
     private class Hasher {
         final ModuleFinder finder;
-        final Map<String, Path> modulesToPath;
+        final Map<String, Path> moduleNameToPath;
         final Set<String> modules;
         final Configuration configuration;
         Hasher(ModuleDescriptor descriptor, String fname) throws IOException {
@@ -1847,7 +1847,12 @@ class Main {
                 .filter(mn -> modulesToHash.matcher(mn).find())
                 .collect(Collectors.toSet());
 
-            this.modulesToPath = modulesToPath(modules);
+            // a map from a module name to Path of the modular JAR
+            this.moduleNameToPath = moduleFinder.findAll().stream()
+                .map(ModuleReference::descriptor)
+                .map(ModuleDescriptor::name)
+                .collect(Collectors.toMap(Function.identity(), mn -> moduleToPath(mn)));
+
             Configuration config = null;
             try {
                 config = Configuration.empty()
@@ -1864,22 +1869,24 @@ class Main {
          * module directly or indirectly.
          */
         ModuleHashes computeHashes(String name) {
-            // transpose the module graph and find the modules to be hashed
+            // the transposed graph includes all modules in the resolved graph
             Map<String, Set<String>> graph = transpose();
-            Deque<String> deque = new ArrayDeque<>();
-            deque.add(name);
 
             // find the modules that transitively depend upon the specified name
-            Set<String> modulesToHash = visitNodes(graph, deque);
-            // remove itself as the JAR file is being created/updated
-            modulesToHash.remove(name);
+            Deque<String> deque = new ArrayDeque<>();
+            deque.add(name);
+            Set<String> mods = visitNodes(graph, deque);
 
-            if (modulesToHash.isEmpty())
+            // filter modules matching the pattern specified --hash-modules
+            // as well as itself as the jmod file is being generated
+            Map<String, Path> modulesForHash = mods.stream()
+                .filter(mn -> !mn.equals(name) && modules.contains(mn))
+                .collect(Collectors.toMap(Function.identity(), moduleNameToPath::get));
+
+            if (modulesForHash.isEmpty())
                 return null;
 
-            Map<String, Path> map = modulesToHash.stream()
-                .collect(Collectors.toMap(Function.identity(), modulesToPath::get));
-            return ModuleHashes.generate(map, "SHA-256");
+            return ModuleHashes.generate(modulesForHash, "SHA-256");
         }
 
         /**
@@ -1936,25 +1943,17 @@ class Main {
             return transposedGraph;
         }
 
-        private Map<String, Path> modulesToPath(Set<String> modules)
-            throws IOException
-        {
-            Map<String,Path> modPaths = new HashMap<>();
-            for (String name : modules) {
-                Optional<ModuleReference> omref = moduleFinder.find(name);
-                if (!omref.isPresent()) {
-                    throw new IOException(formatMsg2("error.hash.dep",name , name));
-                }
+        private Path moduleToPath(String name) {
+            ModuleReference mref = moduleFinder.find(name).orElseThrow(
+                () -> new InternalError(formatMsg2("error.hash.dep",name , name)));
 
-                URI uri = omref.get().location().get();
-                Path path = Paths.get(uri);
-                String fn = path.getFileName().toString();
-                if (!fn.endsWith(".jar")) {
-                    throw new UnsupportedOperationException(path + " is not a modular JAR");
-                }
-                modPaths.put(name, path);
+            URI uri = mref.location().get();
+            Path path = Paths.get(uri);
+            String fn = path.getFileName().toString();
+            if (!fn.endsWith(".jar")) {
+                throw new UnsupportedOperationException(path + " is not a modular JAR");
             }
-            return modPaths;
+            return path;
         }
     }
 }
