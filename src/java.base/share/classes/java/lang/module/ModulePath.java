@@ -267,8 +267,10 @@ class ModulePath implements ConfigurableModuleFinder {
 
             if (attrs.isDirectory()) {
                 return readExplodedModule(entry); // may return null
-            } if (attrs.isRegularFile()) {
-                String fn = entry.getFileName().toString();
+            }
+
+            String fn = entry.getFileName().toString();
+            if (attrs.isRegularFile()) {
                 if (fn.endsWith(".jar")) {
                     return readJar(entry);
                 } else if (fn.endsWith(".jmod")) {
@@ -279,7 +281,6 @@ class ModulePath implements ConfigurableModuleFinder {
             }
 
             // skip hidden files
-            String fn = entry.getFileName().toString();
             if (fn.startsWith(".") || Files.isHidden(entry)) {
                 return null;
             } else {
