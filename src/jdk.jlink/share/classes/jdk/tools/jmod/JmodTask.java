@@ -894,17 +894,22 @@ public class JmodTask {
                 String mn = deque.pop();
                 if (!visited.contains(mn)) {
                     visited.add(mn);
-                    // add an empty set
-                    transposedGraph.computeIfAbsent(mn, _k -> new HashSet<>());
+
+                    if (modules.contains(mn))
+                        transposedGraph.computeIfAbsent(mn, _k -> new HashSet<>());
+
                     ResolvedModule resolvedModule = configuration.findModule(mn).get();
                     for (ResolvedModule dm : resolvedModule.reads()) {
                         String name = dm.name();
                         if (!visited.contains(name)) {
                             deque.push(name);
                         }
+
                         // reverse edge
-                        transposedGraph.computeIfAbsent(name, _k -> new HashSet<>())
-                                       .add(mn);
+                        if (modules.contains(name) && modules.contains(mn)) {
+                            transposedGraph.computeIfAbsent(name, _k -> new HashSet<>())
+                                .add(mn);
+                        }
                     }
                 }
             }
