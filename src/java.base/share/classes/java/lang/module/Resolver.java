@@ -98,8 +98,7 @@ final class Resolver {
 
             if (isTracing()) {
                 trace("Root module %s located", root);
-                if (mref.location().isPresent())
-                    trace("  (%s)", mref.location().get());
+                mref.location().ifPresent(uri -> trace("  (%s)", uri));
             }
 
             assert mref.descriptor().name().equals(root);
@@ -150,8 +149,7 @@ final class Resolver {
                     if (isTracing()) {
                         trace("Module %s located, required by %s",
                                 dn, descriptor.name());
-                        if (mref.location().isPresent())
-                            trace("  (%s)", mref.location().get());
+                        mref.location().ifPresent(uri -> trace("  (%s)", uri));
                     }
                 }
 
@@ -222,10 +220,10 @@ final class Resolver {
 
                                     String pn = provider.name();
                                     if (!nameToReference.containsKey(pn)) {
-
-                                        if (isTracing() && mref.location().isPresent())
-                                            trace("  (%s)", mref.location().get());
-
+                                        if (isTracing()) {
+                                            mref.location()
+                                                .ifPresent(uri -> trace("  (%s)", uri));
+                                        }
                                         nameToReference.put(pn, mref);
                                         q.push(provider);
                                     }

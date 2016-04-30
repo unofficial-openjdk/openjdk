@@ -537,14 +537,13 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
                     conceals(pn);
                 }
 
-                if (md.version().isPresent()) {
-                    version(md.version().get());
-                }
+                // version
+                md.version().ifPresent(this::version);
 
-                if (md.mainClass().isPresent()) {
-                    mainClass(md.mainClass().get());
-                }
+                // main class
+                md.mainClass().ifPresent(this::mainClass);
 
+                // hashes
                 Optional<ModuleHashes> hashes = JLMA.hashes(md);
                 if (hashes.isPresent()) {
                     ModuleHashes moduleHashes = hashes.get();
