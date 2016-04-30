@@ -28,7 +28,9 @@ package sun.tools.jar;
 import java.io.*;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Provides;
+import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Version;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReader;
@@ -57,9 +59,6 @@ import jdk.internal.module.ModuleHashes;
 import jdk.internal.module.ModuleInfoExtender;
 import jdk.internal.util.jar.JarIndex;
 
-import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
 import static jdk.internal.util.jar.JarIndex.INDEX_NAME;
 import static java.util.jar.JarFile.MANIFEST_NAME;
 import static java.util.stream.Collectors.joining;
@@ -1665,26 +1664,30 @@ class Main {
         StringBuilder sb = new StringBuilder();
         sb.append("\n").append(md.toNameAndVersion());
 
-        md.requires().stream().sorted().collect(toList()).forEach(
-                r -> { sb.append("\n  requires ");
-                       if (!r.modifiers().isEmpty())
-                           sb.append(toString(r.modifiers())).append(" ");
-                       sb.append(r.name());
+        md.requires().stream()
+            .sorted(Comparator.comparing(Requires::name))
+            .forEach(r -> {
+                sb.append("\n  requires ");
+                if (!r.modifiers().isEmpty())
+                    sb.append(toString(r.modifiers())).append(" ");
+                sb.append(r.name());
             });
 
-        md.uses().stream().sorted().collect(toList()).forEach(
-                p -> sb.append("\n  uses ").append(p));
+        md.uses().stream().sorted()
+            .forEach(p -> sb.append("\n  uses ").append(p));
 
-        sortExports(md.exports()).forEach(
-                p -> sb.append("\n  exports ").append(p));
+        md.exports().stream()
+            .sorted(Comparator.comparing(Exports::source))
+            .forEach(p -> sb.append("\n  exports ").append(p));
 
-        md.conceals().stream().sorted().collect(toList()).forEach(
-                p -> sb.append("\n  conceals ").append(p));
+        md.conceals().stream().sorted()
+            .forEach(p -> sb.append("\n  conceals ").append(p));
 
-        md.provides().values().forEach(
-                p -> sb.append("\n  provides ").append(p.service())
-                       .append(" with ")
-                       .append(toString(p.providers())));
+        md.provides().values().stream()
+            .sorted(Comparator.comparing(Provides::service))
+            .forEach(p -> sb.append("\n  provides ").append(p.service())
+                            .append(" with ")
+                            .append(toString(p.providers())));
 
         md.mainClass().ifPresent(v -> sb.append("\n  main-class " + v));
 
@@ -1701,21 +1704,6 @@ class Main {
                              .append(hashes.hashFor(mod))));
 
         output(sb.toString());
-    }
-
-    static List<ModuleDescriptor.Exports> sortExports(Set<ModuleDescriptor.Exports> exports) {
-        Map<String,ModuleDescriptor.Exports> map =
-                exports.stream()
-                        .collect(toMap(ModuleDescriptor.Exports::source,
-                                identity()));
-        List<String> sources = exports.stream()
-                                      .map(ModuleDescriptor.Exports::source)
-                                      .sorted()
-                                      .collect(toList());
-
-        List<ModuleDescriptor.Exports> l = new ArrayList<>();
-        sources.forEach(e -> l.add(map.get(e)));
-        return l;
     }
 
     private static String toBinaryName(String classname) {
