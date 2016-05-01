@@ -36,14 +36,12 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import jdk.internal.misc.JavaLangModuleAccess;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.module.Checks;
-import jdk.internal.module.ModuleHashes;
 import jdk.internal.module.ModuleInfoExtender;
 import jdk.internal.module.SystemModules;
 import jdk.internal.org.objectweb.asm.ClassWriter;
@@ -372,11 +370,8 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
                       .increment();
 
             // hashes
-            Optional<ModuleHashes> hashes = JLMA.hashes(md);
-            if (hashes.isPresent()) {
-                hashes.get().names().stream()
-                    .forEach(mn -> modulesToHash.put(mn, hashes.get().hashFor(mn)));
-            }
+            JLMA.hashes(md).ifPresent(mh -> modulesToHash.putAll(mh.hashes()));
+
             return builder;
         }
 
@@ -544,14 +539,11 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
                 md.mainClass().ifPresent(this::mainClass);
 
                 // hashes
-                Optional<ModuleHashes> hashes = JLMA.hashes(md);
-                if (hashes.isPresent()) {
-                    ModuleHashes moduleHashes = hashes.get();
-                    algorithm(moduleHashes.algorithm());
-                    for (String mn : moduleHashes.names()) {
-                        moduleHash(mn, moduleHashes.hashFor(mn));
-                    }
-                }
+                JLMA.hashes(md).ifPresent(mh -> {
+                    algorithm(mh.algorithm());
+                    mh.names().forEach(mn -> moduleHash(mn, mh.hashFor(mn)));
+                });
+
                 putModuleDescriptor();
             }
 

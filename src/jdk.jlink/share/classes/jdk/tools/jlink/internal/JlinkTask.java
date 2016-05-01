@@ -241,16 +241,6 @@ public class JlinkTask {
         }
     }
 
-    private static Map<String, Path> modulesToPath(Configuration cf) {
-        Map<String, Path> modPaths = new HashMap<>();
-        for (ResolvedModule resolvedModule : cf.modules()) {
-            ModuleReference mref = resolvedModule.reference();
-            URI uri = mref.location().get();
-            modPaths.put(mref.descriptor().name(), Paths.get(uri));
-        }
-        return modPaths;
-    }
-
     /*
      * Jlink API entry point.
      */
@@ -359,6 +349,15 @@ public class JlinkTask {
         return finder;
     }
 
+
+    private static Path toPathLocation(ResolvedModule m) {
+        Optional<URI> ouri = m.reference().location();
+        if (!ouri.isPresent())
+            throw new InternalError(m + " does not have a location");
+        URI uri = ouri.get();
+        return Paths.get(uri);
+    }
+
     private static ImageProvider createImageProvider(ModuleFinder finder,
                                                      Set<String> addMods,
                                                      Set<String> limitMods,
@@ -375,7 +374,8 @@ public class JlinkTask {
                                  ModuleFinder.empty(),
                                  addMods);
 
-        Map<String, Path> mods = modulesToPath(cf);
+        Map<String, Path> mods = cf.modules().stream()
+            .collect(Collectors.toMap(ResolvedModule::name, JlinkTask::toPathLocation));
         return new ImageHelper(cf, mods, order, retainModulesPath);
     }
 
@@ -400,20 +400,14 @@ public class JlinkTask {
             map.put(mref.descriptor().name(), mref);
         });
 
+        // add the other modules
+        otherMods.stream()
+            .map(finder::find)
+            .flatMap(Optional::stream)
+            .forEach(mref -> map.putIfAbsent(mref.descriptor().name(), mref));
+
         // set of modules that are observable
         Set<ModuleReference> mrefs = new HashSet<>(map.values());
-
-        // add the other modules
-        for (String mod : otherMods) {
-            Optional<ModuleReference> omref = finder.find(mod);
-            if (omref.isPresent()) {
-                ModuleReference mref = omref.get();
-                map.putIfAbsent(mod, mref);
-                mrefs.add(mref);
-            } else {
-                // no need to fail
-            }
-        }
 
         return new ModuleFinder() {
             @Override

@@ -84,8 +84,15 @@ public final class ModuleHashes {
      * Returns the hash string for the given module name, {@code null}
      * if there is no hash recorded for the module.
      */
-    public String hashFor(String dn) {
-        return nameToHash.get(dn);
+    public String hashFor(String mn) {
+        return nameToHash.get(mn);
+    }
+
+    /**
+     * Returns unmodifiable map of module name to hash string.
+     */
+    public Map<String, String> hashes() {
+        return nameToHash;
     }
 
     /**

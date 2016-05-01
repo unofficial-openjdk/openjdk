@@ -822,7 +822,7 @@ public final class Module {
     // -- creating Module objects --
 
     /**
-     * Find the runtime Module corresponding to the given ReadDependence
+     * Find the runtime Module corresponding to the given ResolvedModule
      * in the given parent Layer (or its parents).
      */
     private static Module find(ResolvedModule resolvedModule, Layer layer) {
