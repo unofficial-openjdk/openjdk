@@ -26,6 +26,7 @@
 package jdk.tools.jmod;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -345,8 +346,9 @@ public class JmodTask {
         Path target = options.jmodFile;
         Path tempTarget = target.resolveSibling(target.getFileName() + ".tmp");
         try {
-            try (OutputStream out = Files.newOutputStream(tempTarget)) {
-                jmod.write(out);
+            try (OutputStream out = Files.newOutputStream(tempTarget);
+                 BufferedOutputStream bos = new BufferedOutputStream(out)) {
+                jmod.write(bos);
             }
             Files.move(tempTarget, target);
         } catch (Exception e) {
