@@ -2487,10 +2487,11 @@ int LocateSample(LPIT8 it8, const char* cSample)
     for (i=0; i < t->nSamples; i++) {
 
         fld = GetDataFormat(it8, i);
-        if (stricmp(fld, cSample) == 0)
-            return i;
+        if (fld != NULL) {
+	    if (stricmp(fld, cSample) == 0)
+		return i;
+	}
     }
-
 
     // SynError(it8, "Couldn't find data field %s\n", cSample);
     return -1;
