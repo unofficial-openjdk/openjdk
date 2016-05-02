@@ -52,7 +52,6 @@ import java.util.jar.Manifest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -299,9 +298,8 @@ class ModulePath implements ConfigurableModuleFinder {
         return zf.stream()
             .filter(e -> e.getName().startsWith("classes/") &&
                     e.getName().endsWith(".class"))
-            .map(e -> toPackageName(e))
+            .map(e -> toPackageName(e.getName().substring(8)))
             .filter(pkg -> pkg.length() > 0) // module-info
-            .distinct()
             .collect(Collectors.toSet());
     }
 
@@ -429,13 +427,12 @@ class ModulePath implements ConfigurableModuleFinder {
 
         // scan the entries in the JAR file to locate the .class and service
         // configuration file
-        Stream<String> stream = jf.stream()
-            .map(e -> e.getName())
-            .filter(e -> (e.endsWith(".class") || e.startsWith(SERVICES_PREFIX)))
-            .distinct();
-        Map<Boolean, Set<String>> map
-            = stream.collect(Collectors.partitioningBy(s -> s.endsWith(".class"),
-                             Collectors.toSet()));
+        Map<Boolean, Set<String>> map =
+            jf.stream()
+              .map(JarEntry::getName)
+              .filter(s -> (s.endsWith(".class") ^ s.startsWith(SERVICES_PREFIX)))
+              .collect(Collectors.partitioningBy(s -> s.endsWith(".class"),
+                                                 Collectors.toSet()));
         Set<String> classFiles = map.get(Boolean.TRUE);
         Set<String> configFiles = map.get(Boolean.FALSE);
 
@@ -443,7 +440,7 @@ class ModulePath implements ConfigurableModuleFinder {
         classFiles.stream()
             .map(c -> toPackageName(c))
             .distinct()
-            .forEach(p -> builder.exports(p));
+            .forEach(builder::exports);
 
         // map names of service configuration files to service names
         Set<String> serviceNames = configFiles.stream()
@@ -484,9 +481,8 @@ class ModulePath implements ConfigurableModuleFinder {
     private Set<String> jarPackages(JarFile jf) {
         return jf.stream()
             .filter(e -> e.getName().endsWith(".class"))
-            .map(e -> toPackageName(e))
+            .map(e -> toPackageName(e.getName()))
             .filter(pkg -> pkg.length() > 0)   // module-info
-            .distinct()
             .collect(Collectors.toSet());
     }
 
@@ -536,7 +532,6 @@ class ModulePath implements ConfigurableModuleFinder {
                                path.toString().endsWith(".class")))
                 .map(path -> toPackageName(dir.relativize(path)))
                 .filter(pkg -> pkg.length() > 0)   // module-info
-                .distinct()
                 .collect(Collectors.toSet());
         } catch (IOException x) {
             throw new UncheckedIOException(x);
@@ -573,19 +568,6 @@ class ModulePath implements ConfigurableModuleFinder {
         int index = cn.lastIndexOf("/");
         if (index > start) {
             return cn.substring(start, index).replace('/', '.');
-        } else {
-            return "";
-        }
-    }
-
-    private String toPackageName(ZipEntry entry) {
-        String name = entry.getName();
-        assert name.endsWith(".class");
-        // jmod classes in classes/, jar in /
-        int start = name.startsWith("classes/") ? 8 : 0;
-        int index = name.lastIndexOf("/");
-        if (index > start) {
-            return name.substring(start, index).replace('/', '.');
         } else {
             return "";
         }

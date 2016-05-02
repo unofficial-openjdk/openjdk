@@ -122,7 +122,7 @@ class ModuleReferences {
         private final ReadWriteLock lock = new ReentrantReadWriteLock();
         private final Lock readLock = lock.readLock();
         private final Lock writeLock = lock.writeLock();
-        private volatile boolean closed;
+        private boolean closed;
 
         SafeCloseModuleReader() { }
 
