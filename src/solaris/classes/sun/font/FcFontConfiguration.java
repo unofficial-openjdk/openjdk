@@ -1,12 +1,12 @@
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -15,12 +15,12 @@
  * accompanied this code).
  *
  * You should have received a copy of the GNU General Public License version
- * along with this work; if not, write to the Free Software Foundation,
+ * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 package sun.font;
@@ -171,8 +171,16 @@ public class FcFontConfiguration extends FontConfiguration {
     }
 
     @Override
-    public FontDescriptor[] getFontDescriptors(String fontName, int style) {
-        return new FontDescriptor[0];
+    protected FontDescriptor[] buildFontDescriptors(int fontIndex, int styleIndex) {
+        CompositeFontDescriptor[] cfi = get2DCompositeFontInfo();
+        int idx = fontIndex * NUM_STYLES + styleIndex;
+        String[] componentFaceNames = cfi[idx].getComponentFaceNames();
+        FontDescriptor[] ret = new FontDescriptor[componentFaceNames.length];
+        for (int i = 0; i < componentFaceNames.length; i++) {
+            ret[i] = new FontDescriptor(componentFaceNames[i], Charset.forName("UTF-8").newEncoder(), new int[0]);
+        }
+
+        return ret;
     }
 
     @Override
@@ -244,10 +252,12 @@ public class FcFontConfiguration extends FontConfiguration {
                 }
 
                 String[] fileNames = new String[numFonts];
+                String[] faceNames = new String[numFonts];
 
                 int index;
                 for (index = 0; index < fcFonts.length; index++) {
                     fileNames[index] = fcFonts[index].fontFile;
+                    faceNames[index] = fcFonts[index].familyName;
                 }
 
                 if (installedFallbackFontFiles != null) {
@@ -260,7 +270,7 @@ public class FcFontConfiguration extends FontConfiguration {
                         = new CompositeFontDescriptor(
                             faceName,
                             1,
-                            null,
+                            faceNames,
                             fileNames,
                             null, null);
             }
