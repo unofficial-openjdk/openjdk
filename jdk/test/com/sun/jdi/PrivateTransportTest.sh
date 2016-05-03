@@ -67,9 +67,9 @@ if [ -z "${TESTJAVA}" ] ; then
    # is given on the command line, tell the user that and use a default.
    # THIS IS THE JDK BEING TESTED.
    if [ -n "$1" ] ; then
-          TESTJAVA=$1
+         TESTJAVA=$1
       else
-	  TESTJAVA=$JAVA_HOME
+         TESTJAVA=$JAVA_HOME
    fi
    TESTSRC=.
    TESTCLASSES=.
@@ -123,7 +123,7 @@ case `uname -s` in
     esac
     libloc=${jreloc}/lib/${libarch}
     ;;
-  Linux)
+  Linux|AIX)
     xx=`find ${jreloc}/lib -name libdt_socket.so`
     libloc=`dirname ${xx}`
     ;;
@@ -182,13 +182,23 @@ elif [ -f ${libloc}/libdt_socket.so ] ; then
     echo cp ${libloc}/libdt_socket.so ${fullpath}
     cp ${libloc}/libdt_socket.so ${fullpath}
     # make sure we can find libraries in current directory
-    if [ "${LD_LIBRARY_PATH}" = "" ] ; then
-        LD_LIBRARY_PATH=${libdir}
+    if [ "$os" = "AIX" ] ; then
+        if [ "${LIBPATH}" = "" ] ; then
+            LIBPATH=${libdir}
+        else
+            LIBPATH=${LIBPATH}:${libdir}
+        fi
+        export LIBPATH
+        echo LIBPATH=${LIBPATH}
     else
-        LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${libdir}
+        if [ "${LD_LIBRARY_PATH}" = "" ] ; then
+            LD_LIBRARY_PATH=${libdir}
+        else
+            LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${libdir}
+        fi
+        export LD_LIBRARY_PATH
+        echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
     fi
-    export LD_LIBRARY_PATH
-    echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
 else 
     echo "cannot find dt_socket in ${libloc} for ${private_transport}"
     fail "cannot find dt_socket in ${libloc} for ${private_transport}"

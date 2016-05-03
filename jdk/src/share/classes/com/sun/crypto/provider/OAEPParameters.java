@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -131,6 +131,8 @@ public final class OAEPParameters extends AlgorithmParametersSpi {
                         params.getName());
                 if (mgfDigestName.equals("SHA-1")) {
                     mgfSpec = MGF1ParameterSpec.SHA1;
+                } else if (mgfDigestName.equals("SHA-224")) {
+                    mgfSpec = new MGF1ParameterSpec("SHA-224");
                 } else if (mgfDigestName.equals("SHA-256")) {
                     mgfSpec = MGF1ParameterSpec.SHA256;
                 } else if (mgfDigestName.equals("SHA-384")) {

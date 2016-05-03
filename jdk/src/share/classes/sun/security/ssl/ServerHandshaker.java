@@ -41,6 +41,8 @@ import javax.net.ssl.*;
 
 import javax.security.auth.Subject;
 
+import sun.security.action.GetPropertyAction;
+import sun.security.util.KeyUtil;
 import sun.security.util.LegacyAlgorithmConstraints;
 import sun.security.ssl.HandshakeMessage.*;
 import sun.security.ssl.CipherSuite.*;
@@ -101,6 +103,50 @@ final class ServerHandshaker extends Handshaker {
             new LegacyAlgorithmConstraints(
                     LegacyAlgorithmConstraints.PROPERTY_TLS_LEGACY_ALGS,
                     new SSLAlgorithmDecomposer());
+
+    // Flag to use smart ephemeral DH key which size matches the corresponding
+    // authentication key
+    private static final boolean useSmartEphemeralDHKeys;
+
+    // Flag to use legacy ephemeral DH key which size is 512 bits for
+    // exportable cipher suites, and 768 bits for others
+    private static final boolean useLegacyEphemeralDHKeys;
+
+    // The customized ephemeral DH key size for non-exportable cipher suites.
+    private static final int customizedDHKeySize;
+
+    static {
+        String property = AccessController.doPrivileged(
+                    new GetPropertyAction("jdk.tls.ephemeralDHKeySize"));
+        if (property == null || property.length() == 0) {
+            useLegacyEphemeralDHKeys = false;
+            useSmartEphemeralDHKeys = false;
+            customizedDHKeySize = -1;
+        } else if ("matched".equals(property)) {
+            useLegacyEphemeralDHKeys = false;
+            useSmartEphemeralDHKeys = true;
+            customizedDHKeySize = -1;
+        } else if ("legacy".equals(property)) {
+            useLegacyEphemeralDHKeys = true;
+            useSmartEphemeralDHKeys = false;
+            customizedDHKeySize = -1;
+        } else {
+            useLegacyEphemeralDHKeys = false;
+            useSmartEphemeralDHKeys = false;
+
+            try {
+                customizedDHKeySize = parseUnsignedInt(property);
+                if (customizedDHKeySize < 1024 || customizedDHKeySize > 2048) {
+                    throw new IllegalArgumentException(
+                        "Customized DH key size should be positive integer " +
+                        "between 1024 and 2048 bits, inclusive");
+                }
+            } catch (NumberFormatException nfe) {
+                throw new IllegalArgumentException(
+                        "Invalid system property jdk.tls.ephemeralDHKeySize");
+            }
+        }
+    }
 
     /*
      * Constructor ... use the keys found in the auth context.
@@ -1081,7 +1127,7 @@ final class ServerHandshaker extends Handshaker {
                 }
             }
 
-            setupEphemeralDHKeys(suite.exportable);
+            setupEphemeralDHKeys(suite.exportable, privateKey);
             break;
         case K_ECDHE_RSA:
             // need RSA certs for authentication
@@ -1128,7 +1174,8 @@ final class ServerHandshaker extends Handshaker {
             if (setupPrivateKeyAndChain("DSA") == false) {
                 return false;
             }
-            setupEphemeralDHKeys(suite.exportable);
+
+            setupEphemeralDHKeys(suite.exportable, privateKey);
             break;
         case K_ECDHE_ECDSA:
             // get preferable peer signature algorithm for server key exchange
@@ -1177,7 +1224,7 @@ final class ServerHandshaker extends Handshaker {
             break;
         case K_DH_ANON:
             // no certs needed for anonymous
-            setupEphemeralDHKeys(suite.exportable);
+            setupEphemeralDHKeys(suite.exportable, null);
             break;
         case K_ECDH_ANON:
             // no certs needed for anonymous
@@ -1227,15 +1274,70 @@ final class ServerHandshaker extends Handshaker {
      * Acquire some "ephemeral" Diffie-Hellman  keys for this handshake.
      * We don't reuse these, for improved forward secrecy.
      */
-    private void setupEphemeralDHKeys(boolean export) {
+    private void setupEphemeralDHKeys(boolean export, Key key) {
         /*
-         * Diffie-Hellman keys ... we use 768 bit private keys due
-         * to the "use twice as many key bits as bits you want secret"
-         * rule of thumb, assuming we want the same size premaster
-         * secret with Diffie-Hellman and RSA key exchanges.  Except
-         * that exportable ciphers max out at 512 bits modulus values.
+         * 768 bits ephemeral DH private keys were used to be used in
+         * ServerKeyExchange except that exportable ciphers max out at 512
+         * bits modulus values. We still adhere to this behavior in legacy
+         * mode (system property "jdk.tls.ephemeralDHKeySize" is defined
+         * as "legacy").
+         *
+         * Older versions of OpenJDK don't support DH keys bigger
+         * than 1024 bits. We have to consider the compatibility requirement.
+         * 1024 bits DH key is always used for non-exportable cipher suites
+         * in default mode (system property "jdk.tls.ephemeralDHKeySize"
+         * is not defined).
+         *
+         * However, if applications want more stronger strength, setting
+         * system property "jdk.tls.ephemeralDHKeySize" to "matched"
+         * is a workaround to use ephemeral DH key which size matches the
+         * corresponding authentication key. For example, if the public key
+         * size of an authentication certificate is 2048 bits, then the
+         * ephemeral DH key size should be 2048 bits accordingly unless
+         * the cipher suite is exportable.  This key sizing scheme keeps
+         * the cryptographic strength consistent between authentication
+         * keys and key-exchange keys.
+         *
+         * Applications may also want to customize the ephemeral DH key size
+         * to a fixed length for non-exportable cipher suites. This can be
+         * approached by setting system property "jdk.tls.ephemeralDHKeySize"
+         * to a valid positive integer between 1024 and 2048 bits, inclusive.
+         *
+         * Note that the minimum acceptable key size is 1024 bits except
+         * exportable cipher suites or legacy mode.
+         *
+         * Note that the maximum acceptable key size is 2048 bits because
+         * DH keys bigger than 2048 are not always supported by underlying
+         * JCE providers.
+         *
+         * Note that per RFC 2246, the key size limit of DH is 512 bits for
+         * exportable cipher suites.  Because of the weakness, exportable
+         * cipher suites are deprecated since TLS v1.1 and they are not
+         * enabled by default in Oracle provider. The legacy behavior is
+         * reserved and 512 bits DH key is always used for exportable
+         * cipher suites.
          */
-        dh = new DHCrypt((export ? 512 : 768), sslContext.getSecureRandom());
+        int keySize = export ? 512 : 1024;           // default mode
+        if (!export) {
+            if (useLegacyEphemeralDHKeys) {          // legacy mode
+                keySize = 768;
+            } else if (useSmartEphemeralDHKeys) {    // matched mode
+                if (key != null) {
+                    int ks = KeyUtil.getKeySize(key);
+                    // Note that SunJCE provider only supports 2048 bits DH
+                    // keys bigger than 1024.  Please DON'T use value other
+                    // than 1024 and 2048 at present.  We may improve the
+                    // underlying providers and key size here in the future.
+                    //
+                    // keySize = ks <= 1024 ? 1024 : (ks >= 2048 ? 2048 : ks);
+                    keySize = ks <= 1024 ? 1024 : 2048;
+                } // Otherwise, anonymous cipher suites, 1024-bit is used.
+            } else if (customizedDHKeySize > 0) {    // customized mode
+                keySize = customizedDHKeySize;
+            }
+        }
+
+        dh = new DHCrypt(keySize, sslContext.getSecureRandom());
     }
 
     // Setup the ephemeral ECDH parameters.
@@ -1746,5 +1848,99 @@ final class ServerHandshaker extends Handshaker {
         needClientVerify = true;
 
         session.setPeerCertificates(peerCerts);
+    }
+
+    /**
+     * Parses the string argument as an unsigned integer in the radix
+     * specified by the second argument.  An unsigned integer maps the
+     * values usually associated with negative numbers to positive
+     * numbers larger than {@code MAX_VALUE}.
+     *
+     * The characters in the string must all be digits of the
+     * specified radix (as determined by whether {@link
+     * java.lang.Character#digit(char, int)} returns a nonnegative
+     * value), except that the first character may be an ASCII plus
+     * sign {@code '+'} ({@code '\u005Cu002B'}). The resulting
+     * integer value is returned.
+     *
+     * <p>An exception of type {@code NumberFormatException} is
+     * thrown if any of the following situations occurs:
+     * <ul>
+     * <li>The first argument is {@code null} or is a string of
+     * length zero.
+     *
+     * <li>The radix is either smaller than
+     * {@link java.lang.Character#MIN_RADIX} or
+     * larger than {@link java.lang.Character#MAX_RADIX}.
+     *
+     * <li>Any character of the string is not a digit of the specified
+     * radix, except that the first character may be a plus sign
+     * {@code '+'} ({@code '\u005Cu002B'}) provided that the
+     * string is longer than length 1.
+     *
+     * <li>The value represented by the string is larger than the
+     * largest unsigned {@code int}, 2<sup>32</sup>-1.
+     *
+     * </ul>
+     *
+     *
+     * @param      s   the {@code String} containing the unsigned integer
+     *                  representation to be parsed
+     * @param      radix   the radix to be used while parsing {@code s}.
+     * @return     the integer represented by the string argument in the
+     *             specified radix.
+     * @throws     NumberFormatException if the {@code String}
+     *             does not contain a parsable {@code int}.
+     */
+    private static int parseUnsignedInt(String s, int radix)
+                throws NumberFormatException {
+        if (s == null)  {
+            throw new NumberFormatException("null");
+        }
+
+        int len = s.length();
+        if (len > 0) {
+            char firstChar = s.charAt(0);
+            if (firstChar == '-') {
+                throw new
+                    NumberFormatException(String.format("Illegal leading minus sign " +
+                                                       "on unsigned string %s.", s));
+            } else {
+                if (len <= 5 || // Integer.MAX_VALUE in Character.MAX_RADIX is 6 digits
+                    (radix == 10 && len <= 9) ) { // Integer.MAX_VALUE in base 10 is 10 digits
+                    return Integer.parseInt(s, radix);
+                } else {
+                    long ell = Long.parseLong(s, radix);
+                    if ((ell & 0xffff_ffff_0000_0000L) == 0) {
+                        return (int) ell;
+                    } else {
+                        throw new
+                            NumberFormatException(String.format("String value %s exceeds " +
+                                                                "range of unsigned int.", s));
+                    }
+                }
+            }
+        } else {
+            throw new NumberFormatException("For input string: \"" + s + "\"");
+        }
+    }
+
+    /**
+     * Parses the string argument as an unsigned decimal integer. The
+     * characters in the string must all be decimal digits, except
+     * that the first character may be an an ASCII plus sign {@code
+     * '+'} ({@code '\u005Cu002B'}). The resulting integer value
+     * is returned, exactly as if the argument and the radix 10 were
+     * given as arguments to the {@link
+     * #parseUnsignedInt(java.lang.String, int)} method.
+     *
+     * @param s   a {@code String} containing the unsigned {@code int}
+     *            representation to be parsed
+     * @return    the unsigned integer value represented by the argument in decimal.
+     * @throws    NumberFormatException  if the string does not contain a
+     *            parsable unsigned integer.
+     */
+    private static int parseUnsignedInt(String s) throws NumberFormatException {
+        return parseUnsignedInt(s, 10);
     }
 }
