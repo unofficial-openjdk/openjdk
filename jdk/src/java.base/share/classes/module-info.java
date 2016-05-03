@@ -166,6 +166,9 @@ module java.base {
         java.sql,
         java.xml,
         jdk.charsets,
+        jdk.jartool,
+        jdk.jlink,
+        jdk.net,
         jdk.scripting.nashorn,
         jdk.unsupported,
         jdk.vm.ci;
