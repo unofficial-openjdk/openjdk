@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
  * Copyright 2007, 2008, 2009, 2010, 2011, 2012 Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -78,6 +78,29 @@ int CppInterpreter::normal_entry(methodOop method, intptr_t UNUSED, TRAPS) {
   // No deoptimized frames on the stack
   return 0;
 }
+
+intptr_t narrow(BasicType type, intptr_t result) {
+  // mask integer result to narrower return type.
+  switch (type) {
+    case T_BOOLEAN:
+      return result&1;
+    case T_BYTE:
+      return (intptr_t)(jbyte)result;
+    case T_CHAR:
+      return (intptr_t)(uintptr_t)(jchar)result;
+    case T_SHORT:
+      return (intptr_t)(jshort)result;
+    case T_OBJECT:  // nothing to do fall through
+    case T_LONG:
+    case T_INT:
+    case T_FLOAT:
+    case T_DOUBLE:
+    case T_VOID:
+      return result;
+    default  : ShouldNotReachHere();
+  }
+}
+
 
 void CppInterpreter::main_loop(int recurse, TRAPS) {
   JavaThread *thread = (JavaThread *) THREAD;
@@ -211,8 +234,14 @@ void CppInterpreter::main_loop(int recurse, TRAPS) {
   stack->set_sp(stack->sp() + method->max_locals());
 
   // Push our result
-  for (int i = 0; i < result_slots; i++)
-    stack->push(result[-i]);
+  for (int i = 0; i < result_slots; i++) {
+    // Adjust result to smaller
+    intptr_t res = result[-i];
+    if (result_slots == 1) {
+      res = narrow(result_type_of(method), res);
+    }
+    stack->push(res);
+  }
 }
 
 int CppInterpreter::native_entry(methodOop method, intptr_t UNUSED, TRAPS) {
@@ -539,6 +568,7 @@ int CppInterpreter::accessor_entry(methodOop method, intptr_t UNUSED, TRAPS) {
       break;
 
     case btos:
+    case ztos:
       SET_LOCALS_INT(object->byte_field_acquire(entry->f2()), 0);
       break;
 
@@ -577,6 +607,7 @@ int CppInterpreter::accessor_entry(methodOop method, intptr_t UNUSED, TRAPS) {
       break;
 
     case btos:
+    case ztos:
       SET_LOCALS_INT(object->byte_field(entry->f2()), 0);
       break;
 

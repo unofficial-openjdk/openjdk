@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -85,6 +85,7 @@ constMethodOop constMethodKlass::allocate(int byte_code_size,
   cm->set_exception_table(NULL);
   cm->set_code_size(byte_code_size);
   cm->set_constMethod_size(size);
+  cm->set_result_type(T_VOID);
   cm->set_inlined_tables_length(checked_exceptions_length,
                                 compressed_line_number_size,
                                 localvariable_table_length);
