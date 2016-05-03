@@ -31,7 +31,6 @@
 #include "runtime/os.hpp"
 #include "runtime/perfData.hpp"
 #include "utilities/debug.hpp"
-#include "utilities/top.hpp"
 
 // Arguments parses the command line and recognizes options
 
@@ -46,7 +45,7 @@ extern "C" {
 //  - the underlying value for a SystemProperty
 //  - the path portion of an -Xpatch module/path pair
 //  - the string that represents the system boot class path, Arguments::_system_boot_class_path.
-class PathString : public CHeapObj<mtInternal> {
+class PathString : public CHeapObj<mtArguments> {
  protected:
   char* _value;
  public:
@@ -56,7 +55,7 @@ class PathString : public CHeapObj<mtInternal> {
     if (_value != NULL) {
       FreeHeap(_value);
     }
-    _value = AllocateHeap(strlen(value)+1, mtInternal);
+    _value = AllocateHeap(strlen(value)+1, mtArguments);
     assert(_value != NULL, "Unable to allocate space for new path value");
     if (_value != NULL) {
       strcpy(_value, value);
@@ -75,7 +74,7 @@ class PathString : public CHeapObj<mtInternal> {
       if (_value != NULL) {
         len += strlen(_value);
       }
-      sp = AllocateHeap(len+2, mtInternal);
+      sp = AllocateHeap(len+2, mtArguments);
       assert(sp != NULL, "Unable to allocate space for new append path value");
       if (sp != NULL) {
         if (_value != NULL) {
@@ -95,7 +94,7 @@ class PathString : public CHeapObj<mtInternal> {
     if (value == NULL) {
       _value = NULL;
     } else {
-      _value = AllocateHeap(strlen(value)+1, mtInternal);
+      _value = AllocateHeap(strlen(value)+1, mtArguments);
       strcpy(_value, value);
     }
   }
@@ -178,7 +177,7 @@ class SystemProperty : public PathString {
     if (key == NULL) {
       _key = NULL;
     } else {
-      _key = AllocateHeap(strlen(key)+1, mtInternal);
+      _key = AllocateHeap(strlen(key)+1, mtArguments);
       strcpy(_key, key);
     }
     _next = NULL;
@@ -189,7 +188,7 @@ class SystemProperty : public PathString {
 
 
 // For use by -agentlib, -agentpath and -Xrun
-class AgentLibrary : public CHeapObj<mtInternal> {
+class AgentLibrary : public CHeapObj<mtArguments> {
   friend class AgentLibraryList;
 public:
   // Is this library valid or not. Don't rely on os_lib == NULL as statically
@@ -224,12 +223,12 @@ public:
 
   // Constructor
   AgentLibrary(const char* name, const char* options, bool is_absolute_path, void* os_lib) {
-    _name = AllocateHeap(strlen(name)+1, mtInternal);
+    _name = AllocateHeap(strlen(name)+1, mtArguments);
     strcpy(_name, name);
     if (options == NULL) {
       _options = NULL;
     } else {
-      _options = AllocateHeap(strlen(options)+1, mtInternal);
+      _options = AllocateHeap(strlen(options)+1, mtArguments);
       strcpy(_options, options);
     }
     _is_absolute_path = is_absolute_path;
