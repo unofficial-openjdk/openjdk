@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -61,8 +61,9 @@ void TemplateInterpreter::initialize() {
 // Implementation of EntryPoint
 
 EntryPoint::EntryPoint() {
-  assert(number_of_states == 9, "check the code below");
+  assert(number_of_states == 10, "check the code below");
   _entry[btos] = NULL;
+  _entry[ztos] = NULL;
   _entry[ctos] = NULL;
   _entry[stos] = NULL;
   _entry[atos] = NULL;
@@ -74,9 +75,10 @@ EntryPoint::EntryPoint() {
 }
 
 
-EntryPoint::EntryPoint(address bentry, address centry, address sentry, address aentry, address ientry, address lentry, address fentry, address dentry, address ventry) {
-  assert(number_of_states == 9, "check the code below");
+EntryPoint::EntryPoint(address bentry, address zentry, address centry, address sentry, address aentry, address ientry, address lentry, address fentry, address dentry, address ventry) {
+  assert(number_of_states == 10, "check the code below");
   _entry[btos] = bentry;
+  _entry[ztos] = zentry;
   _entry[ctos] = centry;
   _entry[stos] = sentry;
   _entry[atos] = aentry;
@@ -127,6 +129,7 @@ EntryPoint DispatchTable::entry(int i) const {
   return
     EntryPoint(
       _table[btos][i],
+      _table[ztos][i],
       _table[ctos][i],
       _table[stos][i],
       _table[atos][i],
@@ -141,8 +144,9 @@ EntryPoint DispatchTable::entry(int i) const {
 
 void DispatchTable::set_entry(int i, EntryPoint& entry) {
   assert(0 <= i && i < length, "index out of bounds");
-  assert(number_of_states == 9, "check the code below");
+  assert(number_of_states == 10, "check the code below");
   _table[btos][i] = entry.entry(btos);
+  _table[ztos][i] = entry.entry(ztos);
   _table[ctos][i] = entry.entry(ctos);
   _table[stos][i] = entry.entry(stos);
   _table[atos][i] = entry.entry(atos);
@@ -224,6 +228,7 @@ void TemplateInterpreterGenerator::generate_all() {
     Interpreter::_trace_code =
       EntryPoint(
         generate_trace_code(btos),
+        generate_trace_code(ztos),
         generate_trace_code(ctos),
         generate_trace_code(stos),
         generate_trace_code(atos),
@@ -243,6 +248,7 @@ void TemplateInterpreterGenerator::generate_all() {
           generate_return_entry_for(itos, i),
           generate_return_entry_for(itos, i),
           generate_return_entry_for(itos, i),
+          generate_return_entry_for(itos, i),
           generate_return_entry_for(atos, i),
           generate_return_entry_for(itos, i),
           generate_return_entry_for(ltos, i),
@@ -257,6 +263,7 @@ void TemplateInterpreterGenerator::generate_all() {
     Interpreter::_earlyret_entry =
       EntryPoint(
         generate_earlyret_entry_for(btos),
+        generate_earlyret_entry_for(ztos),
         generate_earlyret_entry_for(ctos),
         generate_earlyret_entry_for(stos),
         generate_earlyret_entry_for(atos),
@@ -272,6 +279,7 @@ void TemplateInterpreterGenerator::generate_all() {
     for (int i = 0; i < Interpreter::number_of_deopt_entries; i++) {
       Interpreter::_deopt_entry[i] =
         EntryPoint(
+          generate_deopt_entry_for(itos, i),
           generate_deopt_entry_for(itos, i),
           generate_deopt_entry_for(itos, i),
           generate_deopt_entry_for(itos, i),
@@ -299,7 +307,7 @@ void TemplateInterpreterGenerator::generate_all() {
   }
 
   for (int j = 0; j < number_of_states; j++) {
-    const TosState states[] = {btos, ctos, stos, itos, ltos, ftos, dtos, atos, vtos};
+    const TosState states[] = {btos, ztos, ctos, stos, itos, ltos, ftos, dtos, atos, vtos};
     int index = Interpreter::TosState_as_index(states[j]);
     Interpreter::_return_3_addrs_by_index[index] = Interpreter::return_entry(states[j], 3);
     Interpreter::_return_5_addrs_by_index[index] = Interpreter::return_entry(states[j], 5);
@@ -309,6 +317,7 @@ void TemplateInterpreterGenerator::generate_all() {
     Interpreter::_continuation_entry =
       EntryPoint(
         generate_continuation_for(btos),
+        generate_continuation_for(ztos),
         generate_continuation_for(ctos),
         generate_continuation_for(stos),
         generate_continuation_for(atos),
@@ -324,6 +333,7 @@ void TemplateInterpreterGenerator::generate_all() {
     Interpreter::_safept_entry =
       EntryPoint(
         generate_safept_entry_for(btos, CAST_FROM_FN_PTR(address, InterpreterRuntime::at_safepoint)),
+        generate_safept_entry_for(ztos, CAST_FROM_FN_PTR(address, InterpreterRuntime::at_safepoint)),
         generate_safept_entry_for(ctos, CAST_FROM_FN_PTR(address, InterpreterRuntime::at_safepoint)),
         generate_safept_entry_for(stos, CAST_FROM_FN_PTR(address, InterpreterRuntime::at_safepoint)),
         generate_safept_entry_for(atos, CAST_FROM_FN_PTR(address, InterpreterRuntime::at_safepoint)),
@@ -421,7 +431,7 @@ void TemplateInterpreterGenerator::set_safepoints_for_all_bytes() {
 
 void TemplateInterpreterGenerator::set_unimplemented(int i) {
   address e = _unimplemented_bytecode;
-  EntryPoint entry(e, e, e, e, e, e, e, e, e);
+  EntryPoint entry(e, e, e, e, e, e, e, e, e, e);
   Interpreter::_normal_table.set_entry(i, entry);
   Interpreter::_wentry_point[i] = _unimplemented_bytecode;
 }
@@ -433,6 +443,7 @@ void TemplateInterpreterGenerator::set_entry_points(Bytecodes::Code code) {
   assert(_unimplemented_bytecode    != NULL, "should have been generated before");
   assert(_illegal_bytecode_sequence != NULL, "should have been generated before");
   address bep = _illegal_bytecode_sequence;
+  address zep = _illegal_bytecode_sequence;
   address cep = _illegal_bytecode_sequence;
   address sep = _illegal_bytecode_sequence;
   address aep = _illegal_bytecode_sequence;
@@ -454,7 +465,7 @@ void TemplateInterpreterGenerator::set_entry_points(Bytecodes::Code code) {
     set_wide_entry_point(t, wep);
   }
   // set entry points
-  EntryPoint entry(bep, cep, sep, aep, iep, lep, fep, dep, vep);
+  EntryPoint entry(bep, zep, cep, sep, aep, iep, lep, fep, dep, vep);
   Interpreter::_normal_table.set_entry(code, entry);
   Interpreter::_wentry_point[code] = wep;
 }
@@ -471,6 +482,7 @@ void TemplateInterpreterGenerator::set_short_entry_points(Template* t, address& 
   assert(t->is_valid(), "template must exist");
   switch (t->tos_in()) {
     case btos:
+    case ztos:
     case ctos:
     case stos:
       ShouldNotReachHere();  // btos/ctos/stos should use itos.

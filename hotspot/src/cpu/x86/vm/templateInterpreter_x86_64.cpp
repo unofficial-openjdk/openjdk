@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -677,7 +677,7 @@ address InterpreterGenerator::generate_accessor_entry(void) {
                     constantPoolCacheOopDesc::base_offset() +
                     ConstantPoolCacheEntry::flags_offset()));
 
-    Label notObj, notInt, notByte, notShort;
+    Label notObj, notInt, notByte, notBool, notShort;
     const Address field_address(rax, rcx, Address::times_1);
 
     // Need to differentiate between igetfield, agetfield, bgetfield etc.
@@ -708,6 +708,13 @@ address InterpreterGenerator::generate_accessor_entry(void) {
     __ jmp(xreturn_path);
 
     __ bind(notByte);
+    __ cmpl(rdx, ztos);
+    __ jcc(Assembler::notEqual, notBool);
+    // ztos
+    __ load_signed_byte(rax, field_address);
+    __ jmp(xreturn_path);
+
+    __ bind(notBool);
     __ cmpl(rdx, stos);
     __ jcc(Assembler::notEqual, notShort);
     // stos

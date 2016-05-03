@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,7 @@
  */
 
 #include "precompiled.hpp"
-#include "interp_masm_x86_64.hpp"
+#include "interp_masm_x86.hpp"
 #include "interpreter/interpreter.hpp"
 #include "interpreter/interpreterRuntime.hpp"
 #include "oops/arrayOop.hpp"
@@ -160,6 +160,7 @@ void InterpreterMacroAssembler::load_earlyret_value(TosState state) {
                verify_oop(rax, state);              break;
     case ltos: movptr(rax, val_addr);                 break;
     case btos:                                   // fall through
+    case ztos:                                   // fall through
     case ctos:                                   // fall through
     case stos:                                   // fall through
     case itos: movl(rax, val_addr);                 break;
@@ -365,6 +366,7 @@ void InterpreterMacroAssembler::pop(TosState state) {
   switch (state) {
   case atos: pop_ptr();                 break;
   case btos:
+  case ztos:
   case ctos:
   case stos:
   case itos: pop_i();                   break;
@@ -382,6 +384,7 @@ void InterpreterMacroAssembler::push(TosState state) {
   switch (state) {
   case atos: push_ptr();                break;
   case btos:
+  case ztos:
   case ctos:
   case stos:
   case itos: push_i();                  break;

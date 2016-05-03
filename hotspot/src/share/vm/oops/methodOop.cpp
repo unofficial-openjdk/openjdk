@@ -975,10 +975,8 @@ methodHandle methodOopDesc::make_method_handle_intrinsic(vmIntrinsics::ID iid,
   m->set_signature_index(_imcp_invoke_signature);
   assert(MethodHandles::is_signature_polymorphic_name(m->name()), "");
   assert(m->signature() == signature, "");
-#ifdef CC_INTERP
   ResultTypeFinder rtf(signature);
-  m->set_result_index(rtf.type());
-#endif
+  m->constMethod()->set_result_type(rtf.type());
   m->compute_size_of_parameters(THREAD);
   m->init_intrinsic_id();
   assert(m->is_method_handle_intrinsic(), "");

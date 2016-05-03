@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2007, 2013, Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -78,6 +78,30 @@ int CppInterpreter::normal_entry(methodOop method, intptr_t UNUSED, TRAPS) {
   // No deoptimized frames on the stack
   return 0;
 }
+
+intptr_t narrow(BasicType type, intptr_t result) {
+  // mask integer result to narrower return type.
+  switch (type) {
+    case T_BOOLEAN:
+      return result&1;
+    case T_BYTE:
+      return (intptr_t)(jbyte)result;
+    case T_CHAR:
+      return (intptr_t)(uintptr_t)(jchar)result;
+    case T_SHORT:
+      return (intptr_t)(jshort)result;
+    case T_OBJECT:  // nothing to do fall through
+    case T_ARRAY:
+    case T_LONG:
+    case T_INT:
+    case T_FLOAT:
+    case T_DOUBLE:
+    case T_VOID:
+      return result;
+    default  : ShouldNotReachHere();
+  }
+}
+
 
 void CppInterpreter::main_loop(int recurse, TRAPS) {
   JavaThread *thread = (JavaThread *) THREAD;
@@ -192,8 +216,21 @@ void CppInterpreter::main_loop(int recurse, TRAPS) {
   stack->set_sp(stack->sp() + method->max_locals());
 
   // Push our result
-  for (int i = 0; i < result_slots; i++)
-    stack->push(result[-i]);
+  for (int i = 0; i < result_slots; i++) {
+    // Adjust result to smaller
+    union {
+      intptr_t res;
+      jint res_jint;
+    };
+    res = result[-i];
+    if (result_slots == 1) {
+      BasicType t = result_type_of(method);
+      if (is_subword_type(t)) {
+        res_jint = (jint)narrow(t, res_jint);
+      }
+    }
+    stack->push(res);
+  }
 }
 
 int CppInterpreter::native_entry(methodOop method, intptr_t UNUSED, TRAPS) {
@@ -520,6 +557,7 @@ int CppInterpreter::accessor_entry(methodOop method, intptr_t UNUSED, TRAPS) {
       break;
 
     case btos:
+    case ztos:
       SET_LOCALS_INT(object->byte_field_acquire(entry->f2_as_index()), 0);
       break;
 
@@ -558,6 +596,7 @@ int CppInterpreter::accessor_entry(methodOop method, intptr_t UNUSED, TRAPS) {
       break;
 
     case btos:
+    case ztos:
       SET_LOCALS_INT(object->byte_field(entry->f2_as_index()), 0);
       break;
 
@@ -757,22 +796,10 @@ int AbstractInterpreter::BasicType_as_index(BasicType type) {
 }
 
 BasicType CppInterpreter::result_type_of(methodOop method) {
-  BasicType t;
-  switch (method->result_index()) {
-    case 0 : t = T_BOOLEAN; break;
-    case 1 : t = T_CHAR;    break;
-    case 2 : t = T_BYTE;    break;
-    case 3 : t = T_SHORT;   break;
-    case 4 : t = T_INT;     break;
-    case 5 : t = T_LONG;    break;
-    case 6 : t = T_VOID;    break;
-    case 7 : t = T_FLOAT;   break;
-    case 8 : t = T_DOUBLE;  break;
-    case 9 : t = T_OBJECT;  break;
-    default: ShouldNotReachHere();
-  }
-  assert(AbstractInterpreter::BasicType_as_index(t) == method->result_index(),
-         "out of step with AbstractInterpreter::BasicType_as_index");
+  // Get method->_constMethod->_result_type
+  u1 *p = ((unsigned char *)method->constMethod()
+           + in_bytes(constMethodOopDesc::result_type_offset()));
+  BasicType t = (BasicType)*p;
   return t;
 }
 
