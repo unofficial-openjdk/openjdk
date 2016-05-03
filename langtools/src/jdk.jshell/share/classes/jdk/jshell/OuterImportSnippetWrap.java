@@ -4,7 +4,9 @@
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -21,17 +23,39 @@
  * questions.
  */
 
-class A {
-    public static final int i = 42;
-    public static final boolean b = true;
-    public static final float f = 1.0f;
-    public static final double d = 1.0d;
-    public static final short s = 1;
-    public static final long l = 1l;
-    public static final char cA = 'A';
-    public static final char c0 = '\u0000';
-    public static final char cn = '\n';
-    public static final char cq1 = '\'';
-    public static final char cq2 = '"';
-    public static final java.lang.String t1 = "abc \u0000 \f\n\r\t'\"";
+package jdk.jshell;
+
+import java.util.IdentityHashMap;
+import java.util.List;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
+
+/**
+ * The outer wrap for a set of snippets wrapped in a generated class
+ * @author Robert Field
+ */
+public class OuterImportSnippetWrap extends OuterWrap {
+
+    private final Snippet snippet;
+
+    OuterImportSnippetWrap(Wrap wrap, Snippet snippet) {
+        super(wrap);
+        this.snippet = snippet;
+    }
+
+    @Override
+    Diag wrapDiag(Diagnostic<? extends JavaFileObject> d) {
+        return new WrappedDiagnostic(d) {
+
+            @Override
+            Snippet snippetOrNull() {
+                return snippet;
+            }
+        };
+    }
+
+    @Override
+    public String toString() {
+        return "OISW(" + w + ")";
+    }
 }

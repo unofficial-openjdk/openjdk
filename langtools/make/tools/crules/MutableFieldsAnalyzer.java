@@ -51,7 +51,7 @@ public class MutableFieldsAnalyzer extends AbstractCodingRulesAnalyzer {
 
     private boolean ignoreField(String className, String field) {
         Set<String> fieldsToIgnore = classFieldsToIgnoreMap.get(className);
-        return (fieldsToIgnore) != null &&fieldsToIgnore.contains(field);
+        return (fieldsToIgnore) != null && fieldsToIgnore.contains(field);
     }
 
     class MutableFieldsVisitor extends TreeScanner {
