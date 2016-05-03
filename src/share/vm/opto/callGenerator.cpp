@@ -136,7 +136,7 @@ JVMState* DirectCallGenerator::generate(JVMState* jvms) {
     kit.C->log()->elem("direct_call bci='%d'", jvms->bci());
   }
 
-  CallStaticJavaNode *call = new (kit.C, tf()->domain()->cnt()) CallStaticJavaNode(tf(), target, method(), kit.bci());
+  CallStaticJavaNode *call = new (kit.C) CallStaticJavaNode(tf(), target, method(), kit.bci());
   if (!is_static) {
     // Make an explicit receiver null_check as part of this call.
     // Since we share a map with the caller, his JVMS gets adjusted.
@@ -206,7 +206,7 @@ JVMState* DynamicCallGenerator::generate(JVMState* jvms) {
 
   address resolve_stub = SharedRuntime::get_resolve_opt_virtual_call_stub();
 
-  CallStaticJavaNode* call = new (C, tf()->domain()->cnt()) CallStaticJavaNode(tf(), resolve_stub, method(), kit.bci());
+  CallStaticJavaNode* call = new (C) CallStaticJavaNode(tf(), resolve_stub, method(), kit.bci());
   // invokedynamic is treated as an optimized invokevirtual.
   call->set_optimized_virtual(true);
   // Take extra care (in the presence of argument motion) not to trash the SP:
@@ -290,7 +290,7 @@ JVMState* VirtualCallGenerator::generate(JVMState* jvms) {
          "no vtable calls if +UseInlineCaches ");
   address target = SharedRuntime::get_resolve_virtual_call_stub();
   // Normal inline cache used for call
-  CallDynamicJavaNode *call = new (kit.C, tf()->domain()->cnt()) CallDynamicJavaNode(tf(), target, method(), _vtable_index, kit.bci());
+  CallDynamicJavaNode *call = new (kit.C) CallDynamicJavaNode(tf(), target, method(), _vtable_index, kit.bci());
   kit.set_arguments_for_java_call(call);
   kit.set_edges_for_java_call(call);
   Node* ret = kit.set_results_for_java_call(call);
@@ -374,7 +374,7 @@ void LateInlineCallGenerator::do_late_inline() {
   Compile* C = Compile::current();
   JVMState* jvms     = call->jvms()->clone_shallow(C);
   uint size = call->req();
-  SafePointNode* map = new (C, size) SafePointNode(size, jvms);
+  SafePointNode* map = new (C) SafePointNode(size, jvms);
   for (uint i1 = 0; i1 < size; i1++) {
     map->init_req(i1, call->in(i1));
   }
@@ -625,7 +625,7 @@ JVMState* PredictedCallGenerator::generate(JVMState* jvms) {
 
   // Finish the diamond.
   kit.C->set_has_split_ifs(true); // Has chance for split-if optimization
-  RegionNode* region = new (kit.C, 3) RegionNode(3);
+  RegionNode* region = new (kit.C) RegionNode(3);
   region->init_req(1, kit.control());
   region->init_req(2, slow_map->control());
   kit.set_control(gvn.transform(region));
@@ -809,8 +809,8 @@ JVMState* PredictedDynamicCallGenerator::generate(JVMState* jvms) {
     Node* receiver = kit.argument(0);
 
     // Check if the MethodHandle is the expected one
-    Node* cmp = gvn.transform(new (C, 3) CmpPNode(receiver, predicted_mh));
-    bol = gvn.transform(new (C, 2) BoolNode(cmp, BoolTest::eq) );
+    Node* cmp = gvn.transform(new (C) CmpPNode(receiver, predicted_mh));
+    bol = gvn.transform(new (C) BoolNode(cmp, BoolTest::eq) );
   } else {
     // Get the constant pool cache from the caller class.
     ciMethod* caller_method = jvms->method();
@@ -837,12 +837,12 @@ JVMState* PredictedDynamicCallGenerator::generate(JVMState* jvms) {
     Node* target_mh  = kit.make_load(kit.control(), target_adr, target_type, T_OBJECT);
 
     // Check if the MethodHandle is still the same.
-    Node* cmp = gvn.transform(new (C, 3) CmpPNode(target_mh, predicted_mh));
-    bol = gvn.transform(new (C, 2) BoolNode(cmp, BoolTest::eq) );
+    Node* cmp = gvn.transform(new (C) CmpPNode(target_mh, predicted_mh));
+    bol = gvn.transform(new (C) BoolNode(cmp, BoolTest::eq) );
   }
   IfNode* iff = kit.create_and_xform_if(kit.control(), bol, _hit_prob, COUNT_UNKNOWN);
-  kit.set_control( gvn.transform(new (C, 1) IfTrueNode (iff)));
-  Node* slow_ctl = gvn.transform(new (C, 1) IfFalseNode(iff));
+  kit.set_control( gvn.transform(new (C) IfTrueNode (iff)));
+  Node* slow_ctl = gvn.transform(new (C) IfFalseNode(iff));
 
   SafePointNode* slow_map = NULL;
   JVMState* slow_jvms;
@@ -891,7 +891,7 @@ JVMState* PredictedDynamicCallGenerator::generate(JVMState* jvms) {
 
   // Finish the diamond.
   kit.C->set_has_split_ifs(true); // Has chance for split-if optimization
-  RegionNode* region = new (C, 3) RegionNode(3);
+  RegionNode* region = new (C) RegionNode(3);
   region->init_req(1, kit.control());
   region->init_req(2, slow_map->control());
   kit.set_control(gvn.transform(region));

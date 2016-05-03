@@ -1797,23 +1797,23 @@ void SuperWord::align_initial_loop_index(MemNode* align_to_ref) {
   if (align_to_ref_p.invar() != NULL) {
     // incorporate any extra invariant piece producing k +/- invar >>> log2(elt)
     Node* log2_elt = _igvn.intcon(exact_log2(elt_size));
-    Node* aref     = new (_phase->C, 3) URShiftINode(align_to_ref_p.invar(), log2_elt);
+    Node* aref     = new (_phase->C) URShiftINode(align_to_ref_p.invar(), log2_elt);
     _phase->_igvn.register_new_node_with_optimizer(aref);
     _phase->set_ctrl(aref, pre_ctrl);
     if (align_to_ref_p.negate_invar()) {
-      e = new (_phase->C, 3) SubINode(e, aref);
+      e = new (_phase->C) SubINode(e, aref);
     } else {
-      e = new (_phase->C, 3) AddINode(e, aref);
+      e = new (_phase->C) AddINode(e, aref);
     }
     _phase->_igvn.register_new_node_with_optimizer(e);
     _phase->set_ctrl(e, pre_ctrl);
   }
 
   // compute e +/- lim0
-  if (scale < 0) {
-    e = new (_phase->C, 3) SubINode(e, lim0);
+  if (scale < 0) { 
+    e = new (_phase->C) SubINode(e, lim0);
   } else {
-    e = new (_phase->C, 3) AddINode(e, lim0);
+    e = new (_phase->C) AddINode(e, lim0);
   }
   _phase->_igvn.register_new_node_with_optimizer(e);
   _phase->set_ctrl(e, pre_ctrl);
@@ -1821,13 +1821,13 @@ void SuperWord::align_initial_loop_index(MemNode* align_to_ref) {
   if (stride * scale > 0) {
     // compute V - (e +/- lim0)
     Node* va  = _igvn.intcon(v_align);
-    e = new (_phase->C, 3) SubINode(va, e);
+    e = new (_phase->C) SubINode(va, e);
     _phase->_igvn.register_new_node_with_optimizer(e);
     _phase->set_ctrl(e, pre_ctrl);
   }
   // compute N = (exp) % V
   Node* va_msk = _igvn.intcon(v_align - 1);
-  Node* N = new (_phase->C, 3) AndINode(e, va_msk);
+  Node* N = new (_phase->C) AndINode(e, va_msk);
   _phase->_igvn.register_new_node_with_optimizer(N);
   _phase->set_ctrl(N, pre_ctrl);
 
@@ -1835,15 +1835,15 @@ void SuperWord::align_initial_loop_index(MemNode* align_to_ref) {
   //     lim = lim0 + N
   Node* lim;
   if (stride < 0) {
-    lim = new (_phase->C, 3) SubINode(lim0, N);
+    lim = new (_phase->C) SubINode(lim0, N);
   } else {
-    lim = new (_phase->C, 3) AddINode(lim0, N);
+    lim = new (_phase->C) AddINode(lim0, N);
   }
   _phase->_igvn.register_new_node_with_optimizer(lim);
   _phase->set_ctrl(lim, pre_ctrl);
   Node* constrained =
-    (stride > 0) ? (Node*) new (_phase->C,3) MinINode(lim, orig_limit)
-                 : (Node*) new (_phase->C,3) MaxINode(lim, orig_limit);
+    (stride > 0) ? (Node*) new (_phase->C) MinINode(lim, orig_limit)
+                 : (Node*) new (_phase->C) MaxINode(lim, orig_limit);
   _phase->_igvn.register_new_node_with_optimizer(constrained);
   _phase->set_ctrl(constrained, pre_ctrl);
   _igvn.hash_delete(pre_opaq);

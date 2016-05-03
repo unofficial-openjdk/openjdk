@@ -73,33 +73,33 @@ VectorNode* VectorNode::scalar2vector(Compile* C, Node* s, uint vlen, const Type
   switch (bt) {
   case T_BOOLEAN:
   case T_BYTE:
-    if (vlen == 16) return new (C, 2) Replicate16BNode(s);
-    if (vlen ==  8) return new (C, 2) Replicate8BNode(s);
-    if (vlen ==  4) return new (C, 2) Replicate4BNode(s);
+    if (vlen == 16) return new (C) Replicate16BNode(s);
+    if (vlen ==  8) return new (C) Replicate8BNode(s);
+    if (vlen ==  4) return new (C) Replicate4BNode(s);
     break;
   case T_CHAR:
-    if (vlen == 8) return new (C, 2) Replicate8CNode(s);
-    if (vlen == 4) return new (C, 2) Replicate4CNode(s);
-    if (vlen == 2) return new (C, 2) Replicate2CNode(s);
+    if (vlen == 8) return new (C) Replicate8CNode(s);
+    if (vlen == 4) return new (C) Replicate4CNode(s);
+    if (vlen == 2) return new (C) Replicate2CNode(s);
     break;
   case T_SHORT:
-    if (vlen == 8) return new (C, 2) Replicate8SNode(s);
-    if (vlen == 4) return new (C, 2) Replicate4SNode(s);
-    if (vlen == 2) return new (C, 2) Replicate2SNode(s);
+    if (vlen == 8) return new (C) Replicate8SNode(s);
+    if (vlen == 4) return new (C) Replicate4SNode(s);
+    if (vlen == 2) return new (C) Replicate2SNode(s);
     break;
   case T_INT:
-    if (vlen == 4) return new (C, 2) Replicate4INode(s);
-    if (vlen == 2) return new (C, 2) Replicate2INode(s);
+    if (vlen == 4) return new (C) Replicate4INode(s);
+    if (vlen == 2) return new (C) Replicate2INode(s);
     break;
   case T_LONG:
-    if (vlen == 2) return new (C, 2) Replicate2LNode(s);
+    if (vlen == 2) return new (C) Replicate2LNode(s);
     break;
   case T_FLOAT:
-    if (vlen == 4) return new (C, 2) Replicate4FNode(s);
-    if (vlen == 2) return new (C, 2) Replicate2FNode(s);
+    if (vlen == 4) return new (C) Replicate4FNode(s);
+    if (vlen == 2) return new (C) Replicate2FNode(s);
     break;
   case T_DOUBLE:
-    if (vlen == 2) return new (C, 2) Replicate2DNode(s);
+    if (vlen == 2) return new (C) Replicate2DNode(s);
     break;
   }
   ShouldNotReachHere();
@@ -112,19 +112,19 @@ PackNode* PackNode::make(Compile* C, Node* s, const Type* opd_t) {
   switch (bt) {
   case T_BOOLEAN:
   case T_BYTE:
-    return new (C, 2) PackBNode(s);
+    return new (C) PackBNode(s);
   case T_CHAR:
-    return new (C, 2) PackCNode(s);
+    return new (C) PackCNode(s);
   case T_SHORT:
-    return new (C, 2) PackSNode(s);
+    return new (C) PackSNode(s);
   case T_INT:
-    return new (C, 2) PackINode(s);
+    return new (C) PackINode(s);
   case T_LONG:
-    return new (C, 2) PackLNode(s);
+    return new (C) PackLNode(s);
   case T_FLOAT:
-    return new (C, 2) PackFNode(s);
+    return new (C) PackFNode(s);
   case T_DOUBLE:
-    return new (C, 2) PackDNode(s);
+    return new (C) PackDNode(s);
   }
   ShouldNotReachHere();
   return NULL;
@@ -140,16 +140,16 @@ Node* PackNode::binaryTreePack(Compile* C, int lo, int hi) {
   int rslt_bsize = ct * type2aelembytes(elt_basic_type());
   if (bottom_type()->is_floatingpoint()) {
     switch (rslt_bsize) {
-    case  8: return new (C, 3) PackFNode(n1, n2);
-    case 16: return new (C, 3) PackDNode(n1, n2);
+    case  8: return new (C) PackFNode(n1, n2);
+    case 16: return new (C) PackDNode(n1, n2);
     }
   } else {
     assert(bottom_type()->isa_int() || bottom_type()->isa_long(), "int or long");
     switch (rslt_bsize) {
-    case  2: return new (C, 3) Pack2x1BNode(n1, n2);
-    case  4: return new (C, 3) Pack2x2BNode(n1, n2);
-    case  8: return new (C, 3) PackINode(n1, n2);
-    case 16: return new (C, 3) PackLNode(n1, n2);
+    case  2: return new (C) Pack2x1BNode(n1, n2);
+    case  4: return new (C) Pack2x2BNode(n1, n2);
+    case  8: return new (C) PackINode(n1, n2);
+    case 16: return new (C) PackLNode(n1, n2);
     }
   }
   ShouldNotReachHere();
@@ -352,41 +352,41 @@ VectorNode* VectorNode::make(Compile* C, int sopc, Node* n1, Node* n2, uint vlen
   int vopc = opcode(sopc, vlen, opd_t);
 
   switch (vopc) {
-  case Op_AddVB: return new (C, 3) AddVBNode(n1, n2, vlen);
-  case Op_AddVC: return new (C, 3) AddVCNode(n1, n2, vlen);
-  case Op_AddVS: return new (C, 3) AddVSNode(n1, n2, vlen);
-  case Op_AddVI: return new (C, 3) AddVINode(n1, n2, vlen);
-  case Op_AddVL: return new (C, 3) AddVLNode(n1, n2, vlen);
-  case Op_AddVF: return new (C, 3) AddVFNode(n1, n2, vlen);
-  case Op_AddVD: return new (C, 3) AddVDNode(n1, n2, vlen);
+  case Op_AddVB: return new (C) AddVBNode(n1, n2, vlen);
+  case Op_AddVC: return new (C) AddVCNode(n1, n2, vlen);
+  case Op_AddVS: return new (C) AddVSNode(n1, n2, vlen);
+  case Op_AddVI: return new (C) AddVINode(n1, n2, vlen);
+  case Op_AddVL: return new (C) AddVLNode(n1, n2, vlen);
+  case Op_AddVF: return new (C) AddVFNode(n1, n2, vlen);
+  case Op_AddVD: return new (C) AddVDNode(n1, n2, vlen);
 
-  case Op_SubVB: return new (C, 3) SubVBNode(n1, n2, vlen);
-  case Op_SubVC: return new (C, 3) SubVCNode(n1, n2, vlen);
-  case Op_SubVS: return new (C, 3) SubVSNode(n1, n2, vlen);
-  case Op_SubVI: return new (C, 3) SubVINode(n1, n2, vlen);
-  case Op_SubVL: return new (C, 3) SubVLNode(n1, n2, vlen);
-  case Op_SubVF: return new (C, 3) SubVFNode(n1, n2, vlen);
-  case Op_SubVD: return new (C, 3) SubVDNode(n1, n2, vlen);
+  case Op_SubVB: return new (C) SubVBNode(n1, n2, vlen);
+  case Op_SubVC: return new (C) SubVCNode(n1, n2, vlen);
+  case Op_SubVS: return new (C) SubVSNode(n1, n2, vlen);
+  case Op_SubVI: return new (C) SubVINode(n1, n2, vlen);
+  case Op_SubVL: return new (C) SubVLNode(n1, n2, vlen);
+  case Op_SubVF: return new (C) SubVFNode(n1, n2, vlen);
+  case Op_SubVD: return new (C) SubVDNode(n1, n2, vlen);
 
-  case Op_MulVF: return new (C, 3) MulVFNode(n1, n2, vlen);
-  case Op_MulVD: return new (C, 3) MulVDNode(n1, n2, vlen);
+  case Op_MulVF: return new (C) MulVFNode(n1, n2, vlen);
+  case Op_MulVD: return new (C) MulVDNode(n1, n2, vlen);
 
-  case Op_DivVF: return new (C, 3) DivVFNode(n1, n2, vlen);
-  case Op_DivVD: return new (C, 3) DivVDNode(n1, n2, vlen);
+  case Op_DivVF: return new (C) DivVFNode(n1, n2, vlen);
+  case Op_DivVD: return new (C) DivVDNode(n1, n2, vlen);
 
-  case Op_LShiftVB: return new (C, 3) LShiftVBNode(n1, n2, vlen);
-  case Op_LShiftVC: return new (C, 3) LShiftVCNode(n1, n2, vlen);
-  case Op_LShiftVS: return new (C, 3) LShiftVSNode(n1, n2, vlen);
-  case Op_LShiftVI: return new (C, 3) LShiftVINode(n1, n2, vlen);
+  case Op_LShiftVB: return new (C) LShiftVBNode(n1, n2, vlen);
+  case Op_LShiftVC: return new (C) LShiftVCNode(n1, n2, vlen);
+  case Op_LShiftVS: return new (C) LShiftVSNode(n1, n2, vlen);
+  case Op_LShiftVI: return new (C) LShiftVINode(n1, n2, vlen);
 
-  case Op_URShiftVB: return new (C, 3) URShiftVBNode(n1, n2, vlen);
-  case Op_URShiftVC: return new (C, 3) URShiftVCNode(n1, n2, vlen);
-  case Op_URShiftVS: return new (C, 3) URShiftVSNode(n1, n2, vlen);
-  case Op_URShiftVI: return new (C, 3) URShiftVINode(n1, n2, vlen);
+  case Op_URShiftVB: return new (C) URShiftVBNode(n1, n2, vlen);
+  case Op_URShiftVC: return new (C) URShiftVCNode(n1, n2, vlen);
+  case Op_URShiftVS: return new (C) URShiftVSNode(n1, n2, vlen);
+  case Op_URShiftVI: return new (C) URShiftVINode(n1, n2, vlen);
 
-  case Op_AndV: return new (C, 3) AndVNode(n1, n2, vlen, opd_t->array_element_basic_type());
-  case Op_OrV:  return new (C, 3) OrVNode (n1, n2, vlen, opd_t->array_element_basic_type());
-  case Op_XorV: return new (C, 3) XorVNode(n1, n2, vlen, opd_t->array_element_basic_type());
+  case Op_AndV: return new (C) AndVNode(n1, n2, vlen, opd_t->array_element_basic_type());
+  case Op_OrV:  return new (C) OrVNode (n1, n2, vlen, opd_t->array_element_basic_type());
+  case Op_XorV: return new (C) XorVNode(n1, n2, vlen, opd_t->array_element_basic_type());
   }
   ShouldNotReachHere();
   return NULL;
@@ -398,27 +398,27 @@ VectorLoadNode* VectorLoadNode::make(Compile* C, int opc, Node* ctl, Node* mem,
   int vopc = opcode(opc, vlen);
 
   switch(vopc) {
-  case Op_Load16B: return new (C, 3) Load16BNode(ctl, mem, adr, atyp);
-  case Op_Load8B:  return new (C, 3) Load8BNode(ctl, mem, adr, atyp);
-  case Op_Load4B:  return new (C, 3) Load4BNode(ctl, mem, adr, atyp);
+  case Op_Load16B: return new (C) Load16BNode(ctl, mem, adr, atyp);
+  case Op_Load8B:  return new (C) Load8BNode(ctl, mem, adr, atyp);
+  case Op_Load4B:  return new (C) Load4BNode(ctl, mem, adr, atyp);
 
-  case Op_Load8C:  return new (C, 3) Load8CNode(ctl, mem, adr, atyp);
-  case Op_Load4C:  return new (C, 3) Load4CNode(ctl, mem, adr, atyp);
-  case Op_Load2C:  return new (C, 3) Load2CNode(ctl, mem, adr, atyp);
+  case Op_Load8C:  return new (C) Load8CNode(ctl, mem, adr, atyp);
+  case Op_Load4C:  return new (C) Load4CNode(ctl, mem, adr, atyp);
+  case Op_Load2C:  return new (C) Load2CNode(ctl, mem, adr, atyp);
 
-  case Op_Load8S:  return new (C, 3) Load8SNode(ctl, mem, adr, atyp);
-  case Op_Load4S:  return new (C, 3) Load4SNode(ctl, mem, adr, atyp);
-  case Op_Load2S:  return new (C, 3) Load2SNode(ctl, mem, adr, atyp);
+  case Op_Load8S:  return new (C) Load8SNode(ctl, mem, adr, atyp);
+  case Op_Load4S:  return new (C) Load4SNode(ctl, mem, adr, atyp);
+  case Op_Load2S:  return new (C) Load2SNode(ctl, mem, adr, atyp);
 
-  case Op_Load4I:  return new (C, 3) Load4INode(ctl, mem, adr, atyp);
-  case Op_Load2I:  return new (C, 3) Load2INode(ctl, mem, adr, atyp);
+  case Op_Load4I:  return new (C) Load4INode(ctl, mem, adr, atyp);
+  case Op_Load2I:  return new (C) Load2INode(ctl, mem, adr, atyp);
 
-  case Op_Load2L:  return new (C, 3) Load2LNode(ctl, mem, adr, atyp);
+  case Op_Load2L:  return new (C) Load2LNode(ctl, mem, adr, atyp);
 
-  case Op_Load4F:  return new (C, 3) Load4FNode(ctl, mem, adr, atyp);
-  case Op_Load2F:  return new (C, 3) Load2FNode(ctl, mem, adr, atyp);
+  case Op_Load4F:  return new (C) Load4FNode(ctl, mem, adr, atyp);
+  case Op_Load2F:  return new (C) Load2FNode(ctl, mem, adr, atyp);
 
-  case Op_Load2D:  return new (C, 3) Load2DNode(ctl, mem, adr, atyp);
+  case Op_Load2D:  return new (C) Load2DNode(ctl, mem, adr, atyp);
   }
   ShouldNotReachHere();
   return NULL;
@@ -431,23 +431,23 @@ VectorStoreNode* VectorStoreNode::make(Compile* C, int opc, Node* ctl, Node* mem
   int vopc = opcode(opc, vlen);
 
   switch(vopc) {
-  case Op_Store16B: return new (C, 4) Store16BNode(ctl, mem, adr, atyp, val);
-  case Op_Store8B: return new (C, 4) Store8BNode(ctl, mem, adr, atyp, val);
-  case Op_Store4B: return new (C, 4) Store4BNode(ctl, mem, adr, atyp, val);
+  case Op_Store16B: return new (C) Store16BNode(ctl, mem, adr, atyp, val);
+  case Op_Store8B: return new (C) Store8BNode(ctl, mem, adr, atyp, val);
+  case Op_Store4B: return new (C) Store4BNode(ctl, mem, adr, atyp, val);
 
-  case Op_Store8C: return new (C, 4) Store8CNode(ctl, mem, adr, atyp, val);
-  case Op_Store4C: return new (C, 4) Store4CNode(ctl, mem, adr, atyp, val);
-  case Op_Store2C: return new (C, 4) Store2CNode(ctl, mem, adr, atyp, val);
+  case Op_Store8C: return new (C) Store8CNode(ctl, mem, adr, atyp, val);
+  case Op_Store4C: return new (C) Store4CNode(ctl, mem, adr, atyp, val);
+  case Op_Store2C: return new (C) Store2CNode(ctl, mem, adr, atyp, val);
 
-  case Op_Store4I: return new (C, 4) Store4INode(ctl, mem, adr, atyp, val);
-  case Op_Store2I: return new (C, 4) Store2INode(ctl, mem, adr, atyp, val);
+  case Op_Store4I: return new (C) Store4INode(ctl, mem, adr, atyp, val);
+  case Op_Store2I: return new (C) Store2INode(ctl, mem, adr, atyp, val);
 
-  case Op_Store2L: return new (C, 4) Store2LNode(ctl, mem, adr, atyp, val);
+  case Op_Store2L: return new (C) Store2LNode(ctl, mem, adr, atyp, val);
 
-  case Op_Store4F: return new (C, 4) Store4FNode(ctl, mem, adr, atyp, val);
-  case Op_Store2F: return new (C, 4) Store2FNode(ctl, mem, adr, atyp, val);
+  case Op_Store4F: return new (C) Store4FNode(ctl, mem, adr, atyp, val);
+  case Op_Store2F: return new (C) Store2FNode(ctl, mem, adr, atyp, val);
 
-  case Op_Store2D: return new (C, 4) Store2DNode(ctl, mem, adr, atyp, val);
+  case Op_Store2D: return new (C) Store2DNode(ctl, mem, adr, atyp, val);
   }
   ShouldNotReachHere();
   return NULL;
@@ -461,19 +461,19 @@ Node* ExtractNode::make(Compile* C, Node* v, uint position, const Type* opd_t) {
   switch (bt) {
   case T_BOOLEAN:
   case T_BYTE:
-    return new (C, 3) ExtractBNode(v, pos);
+    return new (C) ExtractBNode(v, pos);
   case T_CHAR:
-    return new (C, 3) ExtractCNode(v, pos);
+    return new (C) ExtractCNode(v, pos);
   case T_SHORT:
-    return new (C, 3) ExtractSNode(v, pos);
+    return new (C) ExtractSNode(v, pos);
   case T_INT:
-    return new (C, 3) ExtractINode(v, pos);
+    return new (C) ExtractINode(v, pos);
   case T_LONG:
-    return new (C, 3) ExtractLNode(v, pos);
+    return new (C) ExtractLNode(v, pos);
   case T_FLOAT:
-    return new (C, 3) ExtractFNode(v, pos);
+    return new (C) ExtractFNode(v, pos);
   case T_DOUBLE:
-    return new (C, 3) ExtractDNode(v, pos);
+    return new (C) ExtractDNode(v, pos);
   }
   ShouldNotReachHere();
   return NULL;
