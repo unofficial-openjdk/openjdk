@@ -1725,7 +1725,9 @@ public class ModuleDescriptor
             hc = hc * 43 + Objects.hashCode(osVersion);
             hc = hc * 43 + Objects.hashCode(conceals);
             hc = hc * 43 + Objects.hashCode(hashes);
-            if (hc != 0) hash = hc;
+            if (hc == 0)
+                hc = -1;
+            hash = hc;
         }
         return hc;
     }

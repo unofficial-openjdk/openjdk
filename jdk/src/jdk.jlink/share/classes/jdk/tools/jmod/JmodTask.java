@@ -26,6 +26,7 @@
 package jdk.tools.jmod;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -38,12 +39,13 @@ import java.lang.module.Configuration;
 import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
-import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleDescriptor.Exports;
+import java.lang.module.ModuleDescriptor.Provides;
+import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Version;
 import java.lang.module.ResolutionException;
 import java.lang.module.ResolvedModule;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
@@ -61,8 +63,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Deque;
-import java.util.Formatter;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -102,10 +104,7 @@ import jdk.internal.module.ConfigurableModuleFinder.Phase;
 import jdk.internal.module.ModuleHashes;
 import jdk.internal.module.ModuleInfoExtender;
 
-import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
 
 /**
  * Implementation for the jmod tool.
@@ -131,21 +130,6 @@ public class JmodTask {
             } catch (MissingResourceException e) {
                 return key;
             }
-        }
-    }
-
-    static <T extends Throwable> void fail(Class<T> type,
-                                           String format,
-                                           Object... args) throws T {
-        String msg = new Formatter().format(format, args).toString();
-        try {
-            T t = type.getConstructor(String.class).newInstance(msg);
-            throw t;
-        } catch (InstantiationException |
-                 InvocationTargetException |
-                 NoSuchMethodException |
-                 IllegalAccessException e) {
-            throw new InternalError("Unable to create an instance of " + type, e);
         }
     }
 
@@ -307,67 +291,44 @@ public class JmodTask {
                     StringBuilder sb = new StringBuilder();
                     sb.append("\n").append(md.toNameAndVersion());
 
-                    List<Requires> requires = md.requires().stream().sorted().collect(toList());
-                    if (!requires.isEmpty()) {
-                        requires.forEach(r -> {
-                                sb.append("\n  requires ");
-                                if (!r.modifiers().isEmpty())
-                                  sb.append(toString(r.modifiers())).append(" ");
-                                sb.append(r.name());
-                            });
-                    }
+                    md.requires().stream()
+                        .sorted(Comparator.comparing(Requires::name))
+                        .forEach(r -> {
+                            sb.append("\n  requires ");
+                            if (!r.modifiers().isEmpty())
+                                sb.append(toString(r.modifiers())).append(" ");
+                            sb.append(r.name());
+                        });
 
-                    List<String> l = md.uses().stream().sorted().collect(toList());
-                    if (!l.isEmpty()) {
-                        l.forEach(sv -> sb.append("\n  uses ").append(sv));
-                    }
+                    md.uses().stream().sorted()
+                        .forEach(s -> sb.append("\n  uses ").append(s));
 
-                    List<ModuleDescriptor.Exports> exports = sortExports(md.exports());
-                    if (!exports.isEmpty()) {
-                        exports.forEach(ex -> sb.append("\n  exports ").append(ex));
-                    }
+                    md.exports().stream()
+                        .sorted(Comparator.comparing(Exports::source))
+                        .forEach(p -> sb.append("\n  exports ").append(p));
 
-                    l = md.conceals().stream().sorted().collect(toList());
-                    if (!l.isEmpty()) {
-                        l.forEach(p -> sb.append("\n  conceals ").append(p));
-                    }
+                    md.conceals().stream().sorted()
+                        .forEach(p -> sb.append("\n  conceals ").append(p));
 
-                    Map<String, ModuleDescriptor.Provides> provides = md.provides();
-                    if (!provides.isEmpty()) {
-                        provides.values().forEach(p ->
-                                sb.append("\n  provides ").append(p.service())
-                                  .append(" with ")
-                                  .append(toString(p.providers())));
-                    }
+                    md.provides().values().stream()
+                        .sorted(Comparator.comparing(Provides::service))
+                        .forEach(p -> sb.append("\n  provides ").append(p.service())
+                                        .append(" with ")
+                                        .append(toString(p.providers())));
 
-                    Optional<String> mc = md.mainClass();
-                    if (mc.isPresent())
-                        sb.append("\n  main-class " + mc.get());
+                    md.mainClass().ifPresent(v -> sb.append("\n  main-class " + v));
 
+                    md.osName().ifPresent(v -> sb.append("\n  operating-system-name " + v));
 
+                    md.osArch().ifPresent(v -> sb.append("\n  operating-system-architecture " + v));
 
-                    Optional<String> osname = md.osName();
-                    if (osname.isPresent())
-                        sb.append("\n  operating-system-name " + osname.get());
+                    md.osVersion().ifPresent(v -> sb.append("\n  operating-system-version " + v));
 
-                    Optional<String> osarch = md.osArch();
-                    if (osarch.isPresent())
-                        sb.append("\n  operating-system-architecture " + osarch.get());
-
-                    Optional<String> osversion = md.osVersion();
-                    if (osversion.isPresent())
-                        sb.append("\n  operating-system-version " + osversion.get());
-
-                    Optional<ModuleHashes> optHashes = JLMA.hashes(md);
-                    if (optHashes.isPresent()) {
-                        ModuleHashes hashes = optHashes.get();
-                        hashes.names().stream()
-                            .sorted()
-                            .forEach(mod ->
-                                sb.append("\n  hashes ").append(mod).append(" ")
-                                  .append(hashes.algorithm()).append(" ")
-                                  .append(hashes.hashFor(mod)));
-                    }
+                    JLMA.hashes(md).ifPresent(
+                            hashes -> hashes.names().stream().sorted().forEach(
+                                    mod -> sb.append("\n  hashes ").append(mod).append(" ")
+                                             .append(hashes.algorithm()).append(" ")
+                                             .append(hashes.hashFor(mod))));
 
                     out.println(sb.toString());
                     return true;
@@ -375,21 +336,6 @@ public class JmodTask {
             }
         }
         return false;
-    }
-
-    static List<ModuleDescriptor.Exports> sortExports(Set<ModuleDescriptor.Exports> exports) {
-        Map<String,ModuleDescriptor.Exports> map =
-                exports.stream()
-                       .collect(toMap(ModuleDescriptor.Exports::source,
-                                      identity()));
-        List<String> sources = exports.stream()
-                                      .map(ModuleDescriptor.Exports::source)
-                                      .sorted()
-                                      .collect(toList());
-
-        List<ModuleDescriptor.Exports> l = new ArrayList<>();
-        sources.forEach(e -> l.add(map.get(e)));
-        return l;
     }
 
     private boolean create() throws IOException {
@@ -400,8 +346,9 @@ public class JmodTask {
         Path target = options.jmodFile;
         Path tempTarget = target.resolveSibling(target.getFileName() + ".tmp");
         try {
-            try (OutputStream out = Files.newOutputStream(tempTarget)) {
-                jmod.write(out);
+            try (OutputStream out = Files.newOutputStream(tempTarget);
+                 BufferedOutputStream bos = new BufferedOutputStream(out)) {
+                jmod.write(bos);
             }
             Files.move(tempTarget, target);
         } catch (Exception e) {
@@ -779,7 +726,7 @@ public class JmodTask {
      */
     private class Hasher {
         final ModuleFinder moduleFinder;
-        final Map<String, Path> modulesToPath;
+        final Map<String, Path> moduleNameToPath;
         final Set<String> modules;
         final Configuration configuration;
         final boolean dryrun = options.dryrun;
@@ -791,7 +738,12 @@ public class JmodTask {
                 .filter(mn -> options.modulesToHash.matcher(mn).find())
                 .collect(Collectors.toSet());
 
-            this.modulesToPath = modulesToPath(modules);
+            // a map from a module name to Path of the packaged module
+            this.moduleNameToPath = moduleFinder.findAll().stream()
+                .map(mref -> mref.descriptor().name())
+                .collect(Collectors.toMap(Function.identity(), mn -> moduleToPath(mn)));
+
+            // get a resolved module graph
             Configuration config = null;
             try {
                 config = Configuration.empty()
@@ -816,7 +768,8 @@ public class JmodTask {
             if (configuration == null)
                 return false;
 
-            // transposed graph containing the matching modules
+            // transposed graph containing the the packaged modules and
+            // its transitive dependences matching --hash-modules
             Map<String, Set<String>> graph = new HashMap<>();
             for (String root : modules) {
                 Deque<String> deque = new ArrayDeque<>();
@@ -849,12 +802,16 @@ public class JmodTask {
             if (dryrun)
                 out.println("Dry run:");
 
-            // each entry is a matching module and the modules that depend upon it
+            // each node in a transposed graph is a matching packaged module
+            // in which the hash of the modules that depend upon it is recorded
             graph.entrySet().stream()
                 .filter(e -> !e.getValue().isEmpty())
-                .map(Map.Entry::getKey)
-                .forEach(mn -> {
-                    ModuleHashes hashes = computeHashes(mn, graph.get(mn));
+                .forEach(e -> {
+                    String mn = e.getKey();
+                    Map<String, Path> modulesForHash = e.getValue().stream()
+                            .collect(Collectors.toMap(Function.identity(),
+                                                      moduleNameToPath::get));
+                    ModuleHashes hashes = ModuleHashes.generate(modulesForHash, "SHA-256");
                     if (dryrun) {
                         out.format("%s%n", mn);
                         hashes.names().stream()
@@ -864,8 +821,8 @@ public class JmodTask {
                     } else {
                         try {
                             updateModuleInfo(mn, hashes);
-                        } catch (IOException e) {
-                            throw new UncheckedIOException(e);
+                        } catch (IOException ex) {
+                            throw new UncheckedIOException(ex);
                         }
                     }
                 });
@@ -882,26 +839,24 @@ public class JmodTask {
             if (configuration == null)
                 return null;
 
+            // the transposed graph includes all modules in the resolved graph
             Map<String, Set<String>> graph = transpose();
-            Deque<String> deque = new ArrayDeque<>();
-            deque.add(name);
 
             // find the modules that transitively depend upon the specified name
-            Set<String> modulesToHash = visitNodes(graph, deque);
-            // remove itself as the jmod file is being generated
-            modulesToHash.remove(name);
+            Deque<String> deque = new ArrayDeque<>();
+            deque.add(name);
+            Set<String> mods = visitNodes(graph, deque);
 
-            if (modulesToHash.isEmpty())
+            // filter modules matching the pattern specified --hash-modules
+            // as well as itself as the jmod file is being generated
+            Map<String, Path> modulesForHash = mods.stream()
+                .filter(mn -> !mn.equals(name) && modules.contains(mn))
+                .collect(Collectors.toMap(Function.identity(), moduleNameToPath::get));
+
+            if (modulesForHash.isEmpty())
                 return null;
 
-           return computeHashes(name, modulesToHash);
-        }
-
-        private ModuleHashes computeHashes(String name, Set<String> modulesToHash) {
-            Map<String, Path> map = modulesToHash.stream()
-                .collect(Collectors.toMap(Function.identity(), modulesToPath::get));
-            // use SHA-256 for now, easy to make this configurable if needed
-            return ModuleHashes.generate(map, "SHA-256");
+           return ModuleHashes.generate(modulesForHash, "SHA-256");
         }
 
         /**
@@ -939,17 +894,19 @@ public class JmodTask {
                 String mn = deque.pop();
                 if (!visited.contains(mn)) {
                     visited.add(mn);
-                    // add an empty set
+
                     transposedGraph.computeIfAbsent(mn, _k -> new HashSet<>());
+
                     ResolvedModule resolvedModule = configuration.findModule(mn).get();
                     for (ResolvedModule dm : resolvedModule.reads()) {
                         String name = dm.name();
                         if (!visited.contains(name)) {
                             deque.push(name);
                         }
+
                         // reverse edge
                         transposedGraph.computeIfAbsent(name, _k -> new HashSet<>())
-                                       .add(mn);
+                                .add(mn);
                     }
                 }
             }
@@ -975,7 +932,7 @@ public class JmodTask {
         private void updateModuleInfo(String name, ModuleHashes moduleHashes)
             throws IOException
         {
-            Path target = modulesToPath.get(name);
+            Path target = moduleNameToPath.get(name);
             Path tempTarget = target.resolveSibling(target.getFileName() + ".tmp");
             ZipFile zip = new ZipFile(target.toFile());
             try {
@@ -1017,26 +974,17 @@ public class JmodTask {
             Files.move(tempTarget, target, StandardCopyOption.REPLACE_EXISTING);
         }
 
-        private Map<String, Path> modulesToPath(Set<String> modules) {
-            Map<String,Path> modPaths = new HashMap<>();
-            for (String name : modules) {
-                Optional<ModuleReference> omref = moduleFinder.find(name);
-                if (!omref.isPresent()) {
-                    // this should not happen, module path bug?
-                    fail(InternalError.class,
-                         "Selected module %s not on module path", name);
-                }
+        private Path moduleToPath(String name) {
+            ModuleReference mref = moduleFinder.find(name).orElseThrow(
+                () -> new InternalError("Selected module " + name + " not on module path"));
 
-                URI uri = omref.get().location().get();
-                Path path = Paths.get(uri);
-                String fn = path.getFileName().toString();
-                if (!fn.endsWith(".jar") && !fn.endsWith(".jmod")) {
-                    fail(InternalError.class,
-                         "%s is not a modular JAR or jmod file", path);
-                }
-                modPaths.put(name, path);
+            URI uri = mref.location().get();
+            Path path = Paths.get(uri);
+            String fn = path.getFileName().toString();
+            if (!fn.endsWith(".jar") && !fn.endsWith(".jmod")) {
+                throw new InternalError(path + " is not a modular JAR or jmod file");
             }
-            return modPaths;
+            return path;
         }
     }
 

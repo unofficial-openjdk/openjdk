@@ -37,17 +37,14 @@ import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
 import java.lang.module.ResolutionException;
 import java.lang.module.ResolvedModule;
-import java.lang.reflect.Method;
 import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.zip.*;
@@ -56,9 +53,12 @@ import java.util.jar.Pack200.*;
 import java.util.jar.Manifest;
 import java.text.MessageFormat;
 
+import jdk.internal.misc.JavaLangModuleAccess;
+import jdk.internal.misc.SharedSecrets;
 import jdk.internal.module.ModuleHashes;
 import jdk.internal.module.ModuleInfoExtender;
 import jdk.internal.util.jar.JarIndex;
+
 import static jdk.internal.util.jar.JarIndex.INDEX_NAME;
 import static java.util.jar.JarFile.MANIFEST_NAME;
 import static java.util.stream.Collectors.joining;
@@ -1649,72 +1649,60 @@ class Main {
         return false;
     }
 
-    @SuppressWarnings("unchecked")
+    static <T> String toString(Set<T> set) {
+        if (set.isEmpty()) { return ""; }
+        return set.stream().map(e -> e.toString().toLowerCase(Locale.ROOT))
+                  .collect(joining(" "));
+    }
+
+    private static final JavaLangModuleAccess JLMA = SharedSecrets.getJavaLangModuleAccess();
+
     private void printModuleDescriptor(InputStream entryInputStream)
         throws IOException
     {
         ModuleDescriptor md = ModuleDescriptor.read(entryInputStream);
         StringBuilder sb = new StringBuilder();
-        sb.append("\nName:\n  " + md.toNameAndVersion());
+        sb.append("\n").append(md.toNameAndVersion());
 
-        Set<Requires> requires = md.requires();
-        if (!requires.isEmpty()) {
-            sb.append("\nRequires:");
-            requires.forEach(r ->
-                    sb.append("\n  ").append(r.name())
-                            .append(toString(r.modifiers(), " [ ", " ]")));
-        }
+        md.requires().stream()
+            .sorted(Comparator.comparing(Requires::name))
+            .forEach(r -> {
+                sb.append("\n  requires ");
+                if (!r.modifiers().isEmpty())
+                    sb.append(toString(r.modifiers())).append(" ");
+                sb.append(r.name());
+            });
 
-        Set<String> s = md.uses();
-        if (!s.isEmpty()) {
-            sb.append("\nUses: ");
-            s.forEach(sv -> sb.append("\n  ").append(sv));
-        }
+        md.uses().stream().sorted()
+            .forEach(p -> sb.append("\n  uses ").append(p));
 
-        Set<Exports> exports = md.exports();
-        if (!exports.isEmpty()) {
-            sb.append("\nExports:");
-            exports.forEach(sv -> sb.append("\n  ").append(sv));
-        }
+        md.exports().stream()
+            .sorted(Comparator.comparing(Exports::source))
+            .forEach(p -> sb.append("\n  exports ").append(p));
 
-        Map<String,Provides> provides = md.provides();
-        if (!provides.isEmpty()) {
-            sb.append("\nProvides: ");
-            provides.values().forEach(p ->
-                    sb.append("\n  ").append(p.service())
-                      .append(" with ")
-                      .append(toString(p.providers(), "", "")));
-        }
+        md.conceals().stream().sorted()
+            .forEach(p -> sb.append("\n  conceals ").append(p));
 
-        Optional<String> mc = md.mainClass();
-        if (mc.isPresent())
-            sb.append("\nMain class:\n  " + mc.get());
+        md.provides().values().stream()
+            .sorted(Comparator.comparing(Provides::service))
+            .forEach(p -> sb.append("\n  provides ").append(p.service())
+                            .append(" with ")
+                            .append(toString(p.providers())));
 
-        s = md.conceals();
-        if (!s.isEmpty()) {
-            sb.append("\nConceals:");
-            s.forEach(p -> sb.append("\n  ").append(p));
-        }
+        md.mainClass().ifPresent(v -> sb.append("\n  main-class " + v));
 
-        try {
-            Method m = ModuleDescriptor.class.getDeclaredMethod("hashes");
-            m.setAccessible(true);
-            Optional<ModuleHashes> optHashes =
-                    (Optional<ModuleHashes>) m.invoke(md);
+        md.osName().ifPresent(v -> sb.append("\n  operating-system-name " + v));
 
-            if (optHashes.isPresent()) {
-                ModuleHashes hashes = optHashes.get();
-                sb.append("\nHashes:");
-                sb.append("\n  Algorithm: " + hashes.algorithm());
-                hashes.names().stream()
-                    .sorted()
-                    .forEach(mod ->
-                        sb.append("\n  ").append(mod)
-                          .append(": ").append(hashes.hashFor(mod)));
-            }
-        } catch (ReflectiveOperationException x) {
-            throw new InternalError(x);
-        }
+        md.osArch().ifPresent(v -> sb.append("\n  operating-system-architecture " + v));
+
+        md.osVersion().ifPresent(v -> sb.append("\n  operating-system-version " + v));
+
+        JLMA.hashes(md).ifPresent(hashes ->
+                hashes.names().stream().sorted().forEach(
+                    mod -> sb.append("\n  hashes ").append(mod).append(" ")
+                             .append(hashes.algorithm()).append(" ")
+                             .append(hashes.hashFor(mod))));
+
         output(sb.toString());
     }
 
@@ -1808,7 +1796,7 @@ class Main {
      */
     private class Hasher {
         final ModuleFinder finder;
-        final Map<String, Path> modulesToPath;
+        final Map<String, Path> moduleNameToPath;
         final Set<String> modules;
         final Configuration configuration;
         Hasher(ModuleDescriptor descriptor, String fname) throws IOException {
@@ -1847,7 +1835,12 @@ class Main {
                 .filter(mn -> modulesToHash.matcher(mn).find())
                 .collect(Collectors.toSet());
 
-            this.modulesToPath = modulesToPath(modules);
+            // a map from a module name to Path of the modular JAR
+            this.moduleNameToPath = moduleFinder.findAll().stream()
+                .map(ModuleReference::descriptor)
+                .map(ModuleDescriptor::name)
+                .collect(Collectors.toMap(Function.identity(), mn -> moduleToPath(mn)));
+
             Configuration config = null;
             try {
                 config = Configuration.empty()
@@ -1864,22 +1857,24 @@ class Main {
          * module directly or indirectly.
          */
         ModuleHashes computeHashes(String name) {
-            // transpose the module graph and find the modules to be hashed
+            // the transposed graph includes all modules in the resolved graph
             Map<String, Set<String>> graph = transpose();
-            Deque<String> deque = new ArrayDeque<>();
-            deque.add(name);
 
             // find the modules that transitively depend upon the specified name
-            Set<String> modulesToHash = visitNodes(graph, deque);
-            // remove itself as the JAR file is being created/updated
-            modulesToHash.remove(name);
+            Deque<String> deque = new ArrayDeque<>();
+            deque.add(name);
+            Set<String> mods = visitNodes(graph, deque);
 
-            if (modulesToHash.isEmpty())
+            // filter modules matching the pattern specified --hash-modules
+            // as well as itself as the jmod file is being generated
+            Map<String, Path> modulesForHash = mods.stream()
+                .filter(mn -> !mn.equals(name) && modules.contains(mn))
+                .collect(Collectors.toMap(Function.identity(), moduleNameToPath::get));
+
+            if (modulesForHash.isEmpty())
                 return null;
 
-            Map<String, Path> map = modulesToHash.stream()
-                .collect(Collectors.toMap(Function.identity(), modulesToPath::get));
-            return ModuleHashes.generate(map, "SHA-256");
+            return ModuleHashes.generate(modulesForHash, "SHA-256");
         }
 
         /**
@@ -1936,25 +1931,17 @@ class Main {
             return transposedGraph;
         }
 
-        private Map<String, Path> modulesToPath(Set<String> modules)
-            throws IOException
-        {
-            Map<String,Path> modPaths = new HashMap<>();
-            for (String name : modules) {
-                Optional<ModuleReference> omref = moduleFinder.find(name);
-                if (!omref.isPresent()) {
-                    throw new IOException(formatMsg2("error.hash.dep",name , name));
-                }
+        private Path moduleToPath(String name) {
+            ModuleReference mref = moduleFinder.find(name).orElseThrow(
+                () -> new InternalError(formatMsg2("error.hash.dep",name , name)));
 
-                URI uri = omref.get().location().get();
-                Path path = Paths.get(uri);
-                String fn = path.getFileName().toString();
-                if (!fn.endsWith(".jar")) {
-                    throw new UnsupportedOperationException(path + " is not a modular JAR");
-                }
-                modPaths.put(name, path);
+            URI uri = mref.location().get();
+            Path path = Paths.get(uri);
+            String fn = path.getFileName().toString();
+            if (!fn.endsWith(".jar")) {
+                throw new UnsupportedOperationException(path + " is not a modular JAR");
             }
-            return modPaths;
+            return path;
         }
     }
 }

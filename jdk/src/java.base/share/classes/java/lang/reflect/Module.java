@@ -513,7 +513,7 @@ public final class Module {
      * package {@code pn} to the given module.
      *
      * <p> This method has no effect if the package is already exported to the
-     * given module. If also has no effect if invoked on an unnamed module (as
+     * given module. It also has no effect if invoked on an unnamed module (as
      * unnamed modules export all packages). </p>
      *
      * @param  pn
@@ -822,7 +822,7 @@ public final class Module {
     // -- creating Module objects --
 
     /**
-     * Find the runtime Module corresponding to the given ReadDependence
+     * Find the runtime Module corresponding to the given ResolvedModule
      * in the given parent Layer (or its parents).
      */
     private static Module find(ResolvedModule resolvedModule, Layer layer) {

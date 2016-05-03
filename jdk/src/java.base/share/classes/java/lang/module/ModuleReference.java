@@ -213,7 +213,9 @@ public final class ModuleReference {
         if (hc == 0) {
             hc = Objects.hash(descriptor, location, readerSupplier, hasher,
                     Boolean.valueOf(patched));
-            if (hc != 0) hash = hc;
+            if (hc == 0)
+                hc = -1;
+            hash = hc;
         }
         return hc;
     }

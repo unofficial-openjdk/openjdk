@@ -359,9 +359,9 @@ public final class Configuration {
      * This method is used to create the configuration for the boot layer.
      */
     static Configuration resolveRequiresAndUses(ModuleFinder finder,
-                                                 Collection<String> roots,
-                                                 boolean check,
-                                                 PrintStream traceOutput)
+                                                Collection<String> roots,
+                                                boolean check,
+                                                PrintStream traceOutput)
     {
         Configuration parent = empty();
 
