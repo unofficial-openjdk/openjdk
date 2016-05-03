@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
- * Copyright 2007 Red Hat, Inc.
+ * Copyright 2007, 2016 Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -169,6 +169,7 @@ static void pd_fill_to_aligned_words(HeapWord* tohw,
 }
 
 static void pd_fill_to_bytes(void* to, size_t count, jubyte value) {
+  assert(count > 0, "count for pd_fill_to_bytes should be greater than zero");
   memset(to, value, count);
 }
 
@@ -177,6 +178,7 @@ static void pd_zero_to_words(HeapWord* tohw, size_t count) {
 }
 
 static void pd_zero_to_bytes(void* to, size_t count) {
+  assert(count > 0, "count for pd_zero_to_bytes should be greater than zero");
   memset(to, 0, count);
 }
 

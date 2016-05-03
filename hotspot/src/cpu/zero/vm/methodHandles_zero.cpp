@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
- * Copyright 2009, 2010, 2011 Red Hat, Inc.
+ * Copyright 2009, 2010, 2011, 2012 Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,12 +38,29 @@ int MethodHandles::adapter_conversion_ops_supported_mask() {
          |(1<<java_lang_invoke_AdapterMethodHandle::OP_ROT_ARGS)
          |(1<<java_lang_invoke_AdapterMethodHandle::OP_DUP_ARGS)
          |(1<<java_lang_invoke_AdapterMethodHandle::OP_DROP_ARGS)
-         //|(1<<java_lang_invoke_AdapterMethodHandle::OP_SPREAD_ARGS) //BUG!
+         |(1<<java_lang_invoke_AdapterMethodHandle::OP_SPREAD_ARGS)
          );
-  // FIXME: MethodHandlesTest gets a crash if we enable OP_SPREAD_ARGS.
 }
 
 void MethodHandles::generate_method_handle_stub(MacroAssembler*          masm,
                                                 MethodHandles::EntryKind ek) {
   init_entry(ek, (MethodHandleEntry *) ek);
+}
+
+void MethodHandles::RicochetFrame::generate_ricochet_blob(MacroAssembler* _masm,
+                                                          // output params:
+                                                          int* bounce_offset,
+                                                          int* exception_offset,
+                                                          int* frame_size_in_words) {
+  (*frame_size_in_words) = 0;
+  address start = _masm->pc();
+  (*bounce_offset) = _masm->pc() - start;
+  (*exception_offset) = _masm->pc() - start;
+}
+
+frame MethodHandles::ricochet_frame_sender(const frame& fr, RegisterMap *map) {
+  ShouldNotCallThis();  
+}
+
+void MethodHandles::ricochet_frame_oops_do(const frame& fr, OopClosure* blk, const RegisterMap* reg_map) {
 }

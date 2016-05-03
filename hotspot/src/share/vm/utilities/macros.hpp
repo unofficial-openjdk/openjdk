@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -175,6 +176,22 @@
 #else
 #define WIN64_ONLY(code)
 #define NOT_WIN64(code) code
+#endif
+
+#if defined(ZERO)
+#define ZERO_ONLY(code) code
+#define NOT_ZERO(code)
+#else
+#define ZERO_ONLY(code)
+#define NOT_ZERO(code) code
+#endif
+
+#if defined(SHARK)
+#define SHARK_ONLY(code) code
+#define NOT_SHARK(code)
+#else
+#define SHARK_ONLY(code)
+#define NOT_SHARK(code) code
 #endif
 
 #if defined(IA32) || defined(AMD64)

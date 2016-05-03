@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
- * Copyright 2007, 2008, 2009, 2010, 2011 Red Hat, Inc.
+ * Copyright 2007, 2008, 2009, 2010, 2011, 2012 Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -811,11 +811,10 @@ void CppInterpreter::process_method_handle(oop method_handle, TRAPS) {
   case MethodHandles::_bound_int_mh:
   case MethodHandles::_bound_long_mh:
     {
-      BasicType arg_type  = T_ILLEGAL;
-      int       arg_mask  = -1;
-      int       arg_slots = -1;
-      MethodHandles::get_ek_bound_mh_info(
-        entry_kind, arg_type, arg_mask, arg_slots);
+      BasicType arg_type = MethodHandles::ek_bound_mh_arg_type(entry_kind);
+      int arg_mask = 0;
+      int arg_slots = type2size[arg_type];;
+
       int arg_slot =
         java_lang_invoke_BoundMethodHandle::vmargslot(method_handle);
 
@@ -961,10 +960,10 @@ void CppInterpreter::process_method_handle(oop method_handle, TRAPS) {
         java_lang_invoke_AdapterMethodHandle::conversion(method_handle);
       int arg2 = MethodHandles::adapter_conversion_vminfo(conv);
 
-      int swap_bytes = 0, rotate = 0;
-      MethodHandles::get_ek_adapter_opt_swap_rot_info(
-        entry_kind, swap_bytes, rotate);
-      int swap_slots = swap_bytes >> LogBytesPerWord;
+      int swap_slots = MethodHandles::ek_adapter_opt_swap_slots(entry_kind);
+      int rotate = MethodHandles::ek_adapter_opt_swap_mode(entry_kind);
+      int swap_bytes = swap_slots * Interpreter::stackElementSize;
+      swap_slots = swap_bytes >> LogBytesPerWord;
 
       intptr_t tmp;
       switch (rotate) {
