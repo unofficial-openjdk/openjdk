@@ -177,7 +177,7 @@ public class FcFontConfiguration extends FontConfiguration {
         String[] componentFaceNames = cfi[idx].getComponentFaceNames();
         FontDescriptor[] ret = new FontDescriptor[componentFaceNames.length];
         for (int i = 0; i < componentFaceNames.length; i++) {
-            ret[i] = new FontDescriptor(componentFaceNames[i], Charset.forName("UTF-8").newEncoder(), new int[0]);
+            ret[i] = new FontDescriptor(componentFaceNames[i], Charset.forName("ISO-8859-1").newEncoder(), new int[0]);
         }
 
         return ret;
