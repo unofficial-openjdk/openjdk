@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,12 @@
 
 package javax.management.remote.rmi;
 
+import com.sun.jmx.remote.internal.RMIExporter;
+import com.sun.jmx.remote.util.EnvHelp;
+
 import java.io.IOException;
+import java.io.ObjectStreamClass;
+import java.lang.reflect.Method;
 import java.rmi.NoSuchObjectException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
@@ -33,11 +38,14 @@ import java.rmi.server.RMIClientSocketFactory;
 import java.rmi.server.RMIServerSocketFactory;
 import java.rmi.server.UnicastRemoteObject;
 import java.rmi.server.RemoteObject;
-import java.util.Map;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import javax.security.auth.Subject;
 
-import com.sun.jmx.remote.internal.RMIExporter;
+import sun.reflect.misc.ReflectUtil;
+import sun.rmi.server.DeserializationChecker;
 
 /**
  * <p>An {@link RMIServer} object that is exported through JRMP and that
@@ -49,6 +57,9 @@ import com.sun.jmx.remote.internal.RMIExporter;
  * @since 1.5
  */
 public class RMIJRMPServerImpl extends RMIServerImpl {
+
+    private final ExportedWrapper exportedWrapper;
+
     /**
      * <p>Creates a new {@link RMIServer} object that will be exported
      * on the given port using the given socket factories.</p>
@@ -86,10 +97,31 @@ public class RMIJRMPServerImpl extends RMIServerImpl {
         this.csf = csf;
         this.ssf = ssf;
         this.env = (env == null) ? Collections.<String, Object>emptyMap() : env;
+
+        String[] credentialsTypes
+                = (String[]) this.env.get(EnvHelp.CREDENTIAL_TYPES);
+        List<String> types = null;
+        if (credentialsTypes != null) {
+            types = new ArrayList<String>();
+            for (String type : credentialsTypes) {
+                if (type == null) {
+                    throw new IllegalArgumentException("A credential type is null.");
+                }
+                ReflectUtil.checkPackageAccess(type);
+                types.add(type);
+            }
+        }
+        exportedWrapper = types != null ?
+                new ExportedWrapper(this, types) :
+                null;
     }
 
     protected void export() throws IOException {
-        export(this);
+        if (exportedWrapper != null) {
+            export(exportedWrapper);
+        } else {
+            export(this);
+        }
     }
 
     private void export(Remote obj) throws RemoteException {
@@ -124,7 +156,11 @@ public class RMIJRMPServerImpl extends RMIServerImpl {
      *            RMIJRMPServerImpl has not been exported yet.
      */
     public Remote toStub() throws IOException {
-        return RemoteObject.toStub(this);
+        if (exportedWrapper != null) {
+            return RemoteObject.toStub(exportedWrapper);
+        } else {
+            return RemoteObject.toStub(this);
+        }
     }
 
     /**
@@ -171,11 +207,61 @@ public class RMIJRMPServerImpl extends RMIServerImpl {
      * server failed.
      */
     protected void closeServer() throws IOException {
-        unexport(this, true);
+        if (exportedWrapper != null) {
+            unexport(exportedWrapper, true);
+        } else {
+            unexport(this, true);
+        }
     }
 
     private final int port;
     private final RMIClientSocketFactory csf;
     private final RMIServerSocketFactory ssf;
     private final Map<String, ?> env;
+
+    private static class ExportedWrapper implements RMIServer, DeserializationChecker {
+        private final RMIServer impl;
+        private final List<String> allowedTypes;
+        private ExportedWrapper(RMIServer impl, List<String> credentialsTypes) {
+            this.impl = impl;
+            allowedTypes = credentialsTypes;
+        }
+
+        @Override
+        public String getVersion() throws RemoteException {
+            return impl.getVersion();
+        }
+
+        @Override
+        public RMIConnection newClient(Object credentials) throws IOException {
+            return impl.newClient(credentials);
+        }
+
+        @Override
+        public void check(Method method, ObjectStreamClass descriptor,
+                int paramIndex, int callID) {
+
+            String type = descriptor.getName();
+            if (!allowedTypes.contains(type)) {
+                throw new ClassCastException("Unsupported type: " + type);
+            }
+        }
+
+        @Override
+        public void checkProxyClass(Method method, String[] ifaces,
+                int paramIndex, int callID) {
+            if (ifaces != null && ifaces.length > 0) {
+                for (String iface : ifaces) {
+                    if (!allowedTypes.contains(iface)) {
+                        throw new ClassCastException("Unsupported type: " + iface);
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void end(int callID) {
+            /* Do nothing */
+        }
+    }
 }
