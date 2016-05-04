@@ -44,6 +44,7 @@ import com.sun.tools.classfile.DescriptorException;
 import com.sun.tools.classfile.Exceptions_attribute;
 import com.sun.tools.classfile.Field;
 import com.sun.tools.classfile.Method;
+import com.sun.tools.classfile.ModuleV52_attribute;
 import com.sun.tools.classfile.Module_attribute;
 import com.sun.tools.classfile.Signature;
 import com.sun.tools.classfile.Signature_attribute;
@@ -549,20 +550,86 @@ public class ClassWriter extends BasicWriter {
 
     void writeDirectives() {
         Attribute attr = classFile.attributes.get(Attribute.Module);
+        if (attr instanceof ModuleV52_attribute) {
+            writeOldDirectives();
+            return;
+        }
+
         if (!(attr instanceof Module_attribute))
             return;
 
         Module_attribute m = (Module_attribute) attr;
         for (Module_attribute.RequiresEntry entry: m.requires) {
             print("requires");
-            if ((entry.requires_flags & Module_attribute.ACC_PUBLIC) != 0)
+            if ((entry.requires_flags & Module_attribute.ACC_TRANSITIVE) != 0)
                 print(" public");
+            if ((entry.requires_flags & Module_attribute.ACC_STATIC_PHASE) != 0)
+                print(" static");
             print(" ");
             print(getUTF8Value(entry.requires_index).replace('/', '.'));
             println(";");
         }
 
         for (Module_attribute.ExportsEntry entry: m.exports) {
+            print("exports ");
+            print(getUTF8Value(entry.exports_index).replace('/', '.'));
+            if ((entry.exports_flags & Module_attribute.ACC_DYNAMIC_PHASE) != 0)
+                print(" dynamic");
+            boolean first = true;
+            for (int i: entry.exports_to_index) {
+                String mname;
+                try {
+                    mname = classFile.constant_pool.getUTF8Value(i).replace('/', '.');
+                } catch (ConstantPoolException e) {
+                    mname = report(e);
+                }
+                if (first) {
+                    println(" to");
+                    indent(+1);
+                    first = false;
+                } else {
+                    println(",");
+                }
+                print(mname);
+            }
+            println(";");
+            if (!first)
+                indent(-1);
+        }
+
+        for (int entry: m.uses_index) {
+            print("uses ");
+            print(getClassName(entry).replace('/', '.'));
+            println(";");
+        }
+
+        for (Module_attribute.ProvidesEntry entry: m.provides) {
+            print("provides ");
+            print(getClassName(entry.provides_index).replace('/', '.'));
+            println(" with");
+            indent(+1);
+            print(getClassName(entry.with_index).replace('/', '.'));
+            println(";");
+            indent(-1);
+        }
+    }
+
+    void writeOldDirectives() {
+        Attribute attr = classFile.attributes.get(Attribute.Module);
+        if (!(attr instanceof ModuleV52_attribute))
+            return;
+
+        ModuleV52_attribute m = (ModuleV52_attribute) attr;
+        for (ModuleV52_attribute.RequiresEntry entry: m.requires) {
+            print("requires");
+            if ((entry.requires_flags & ModuleV52_attribute.ACC_PUBLIC) != 0)
+                print(" public");
+            print(" ");
+            print(getUTF8Value(entry.requires_index).replace('/', '.'));
+            println(";");
+        }
+
+        for (ModuleV52_attribute.ExportsEntry entry: m.exports) {
             print("exports ");
             print(getUTF8Value(entry.exports_index).replace('/', '.'));
             boolean first = true;
@@ -593,7 +660,7 @@ public class ClassWriter extends BasicWriter {
             println(";");
         }
 
-        for (Module_attribute.ProvidesEntry entry: m.provides) {
+        for (ModuleV52_attribute.ProvidesEntry entry: m.provides) {
             print("provides ");
             print(getClassName(entry.provides_index).replace('/', '.'));
             println(" with");

@@ -53,7 +53,8 @@ public abstract class Directive implements ModuleElement.Directive {
 
     /** Flags for RequiresDirective. */
     public enum RequiresFlag {
-        PUBLIC(0x0020),
+        TRANSITIVE(0x0010),
+        STATIC_PHASE(0x0020),
         SYNTHETIC(0x1000),
         MANDATED(0x8000),
         EXTRA(0x10000);
@@ -73,16 +74,41 @@ public abstract class Directive implements ModuleElement.Directive {
         public final int value;
     }
 
+    /** Flags for ExportsDirective. */
+    public enum ExportsFlag {
+        DYNAMIC_PHASE(0x0040);
+
+        // overkill? move to ClassWriter?
+        public static int value(Set<ExportsFlag> s) {
+            int v = 0;
+            for (ExportsFlag f: s)
+                v |= f.value;
+            return v;
+        }
+
+        ExportsFlag(int value) {
+            this.value = value;
+        }
+
+        public final int value;
+    }
+
     /**
      * 'exports' Package ';'
      */
     public static class ExportsDirective extends Directive
             implements ModuleElement.ExportsDirective {
         public final PackageSymbol packge;
+        public final Set<ExportsFlag> flags;
         public final List<ModuleSymbol> modules;
 
         public ExportsDirective(PackageSymbol packge, List<ModuleSymbol> modules) {
+            this(packge, modules, EnumSet.noneOf(ExportsFlag.class));
+        }
+
+        public ExportsDirective(PackageSymbol packge, List<ModuleSymbol> modules, Set<ExportsFlag> flags) {
             this.packge = packge;
+            this.flags = flags;
             this.modules = modules;
         }
 
@@ -182,7 +208,7 @@ public abstract class Directive implements ModuleElement.Directive {
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
         public boolean isPublic() {
-            return flags.contains(RequiresFlag.PUBLIC);
+            return flags.contains(RequiresFlag.TRANSITIVE);
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)

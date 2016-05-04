@@ -3202,16 +3202,35 @@ public class JavacParser implements Parser {
             int pos = token.pos;
             if (token.name() == names.requires) {
                 nextToken();
-                boolean isPublic = false;
+                boolean isTransitive = false;
+                boolean isStaticPhase = false;
                 if (token.kind == PUBLIC) {
-                    isPublic = true;
+                    isTransitive = true;
+                    nextToken();
+                }
+                if (token.kind == STATIC) {
+                    isStaticPhase = true;
                     nextToken();
                 }
                 JCExpression moduleName = qualident(false);
                 accept(SEMI);
-                defs.append(toP(F.at(pos).Requires(isPublic, moduleName)));
+                defs.append(toP(F.at(pos).Requires(isTransitive, isStaticPhase, moduleName)));
             } else if (token.name() == names.exports) {
                 nextToken();
+                boolean isDynamicPhase = false;
+                if (token.kind == IDENTIFIER && token.name() == names.dynamic) {
+                    // lookahead to see if dynamic is followed by a package name
+                    // (or if the token is itself the beginning of a package name)
+                    Token t1 = S.token(1);
+                    Token t2 = S.token(2);
+                    if (t1.kind == IDENTIFIER
+                            && (t2.kind == SEMI
+                                || t2.kind == DOT
+                                || t2.kind == IDENTIFIER && t2.name() == names.to)) {
+                        isDynamicPhase = true;
+                        nextToken();
+                    }
+                }
                 JCExpression pkgName = qualident(false);
                 List<JCExpression> moduleNames = null;
                 if (token.kind == IDENTIFIER && token.name() == names.to) {
@@ -3219,7 +3238,7 @@ public class JavacParser implements Parser {
                     moduleNames = qualidentList();
                 }
                 accept(SEMI);
-                defs.append(toP(F.at(pos).Exports(pkgName, moduleNames)));
+                defs.append(toP(F.at(pos).Exports(pkgName, isDynamicPhase, moduleNames)));
             } else if (token.name() == names.provides) {
                 nextToken();
                 JCExpression serviceName = qualident(false);

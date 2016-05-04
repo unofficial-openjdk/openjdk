@@ -52,6 +52,7 @@ import javax.tools.StandardLocation;
 
 import com.sun.tools.javac.code.Directive;
 import com.sun.tools.javac.code.Directive.ExportsDirective;
+import com.sun.tools.javac.code.Directive.ExportsFlag;
 import com.sun.tools.javac.code.Directive.RequiresDirective;
 import com.sun.tools.javac.code.Directive.RequiresFlag;
 import com.sun.tools.javac.code.Directive.UsesDirective;
@@ -504,7 +505,7 @@ public class Modules extends JCTree.Visitor {
             for (ModuleSymbol ms : allModules()) {
                 if (ms == syms.unnamedModule || ms == msym)
                     continue;
-                RequiresDirective d = new RequiresDirective(ms, EnumSet.of(RequiresFlag.PUBLIC));
+                RequiresDirective d = new RequiresDirective(ms, EnumSet.of(RequiresFlag.TRANSITIVE));
                 directives.add(d);
                 requires.add(d);
             }
@@ -577,8 +578,10 @@ public class Modules extends JCTree.Visitor {
             } else {
                 allRequires.add(msym);
                 Set<RequiresFlag> flags = EnumSet.noneOf(RequiresFlag.class);
-                if (tree.isPublic)
-                    flags.add(RequiresFlag.PUBLIC);
+                if (tree.isTransitive)
+                    flags.add(RequiresFlag.TRANSITIVE);
+                if (tree.isStaticPhase)
+                    flags.add(RequiresFlag.STATIC_PHASE);
                 RequiresDirective d = new RequiresDirective(msym, flags);
                 tree.directive = d;
                 sym.requires = sym.requires.prepend(d);
@@ -609,7 +612,9 @@ public class Modules extends JCTree.Visitor {
             }
 
             if (toModules == null || !toModules.isEmpty()) {
-                ExportsDirective d = new ExportsDirective(packge, toModules);
+                Set<ExportsFlag> flags = tree.isDynamicPhase
+                        ? EnumSet.of(ExportsFlag.DYNAMIC_PHASE) : Collections.emptySet();
+                ExportsDirective d = new ExportsDirective(packge, toModules, flags);
                 tree.directive = d;
                 sym.exports = sym.exports.prepend(d);
             }
@@ -1002,7 +1007,7 @@ public class Modules extends JCTree.Visitor {
                 Set<ModuleSymbol> s = retrieveRequiresPublic(d.module);
                 Assert.checkNonNull(s, () -> "no entry in cache for " + d.module);
                 readable.addAll(s);
-                if (d.flags.contains(RequiresFlag.PUBLIC)) {
+                if (d.flags.contains(RequiresFlag.TRANSITIVE)) {
                     requiresPublic.add(d.module);
                     requiresPublic.addAll(s);
                 }

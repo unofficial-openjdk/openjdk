@@ -518,7 +518,7 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
         JCExports t = (JCExports) node;
         JCExpression qualId = copy(t.qualid, p);
         List<JCExpression> moduleNames = copy(t.moduleNames, p);
-        return M.at(t.pos).Exports(qualId, moduleNames);
+        return M.at(t.pos).Exports(qualId, t.isDynamicPhase, moduleNames);
     }
 
     @Override @DefinedBy(Api.COMPILER_TREE)
@@ -533,7 +533,7 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
     public JCRequires visitRequires(RequiresTree node, P p) {
         JCRequires t = (JCRequires) node;
         JCExpression moduleName = copy(t.moduleName, p);
-        return M.at(t.pos).Requires(t.isPublic, moduleName);
+        return M.at(t.pos).Requires(t.isTransitive, t.isStaticPhase, moduleName);
     }
 
     @Override @DefinedBy(Api.COMPILER_TREE)
