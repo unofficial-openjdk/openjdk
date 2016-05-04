@@ -114,7 +114,7 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(Modifier.PUBLIC, "m3")
+                .requires(Set.of(Modifier.PUBLIC), "m3")
                 .build();
 
         ModuleDescriptor descriptor3
@@ -169,7 +169,7 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(Modifier.PUBLIC, "m1")
+                .requires(Set.of(Modifier.PUBLIC), "m1")
                 .build();
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
@@ -245,7 +245,7 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(Modifier.PUBLIC, "m1")
+                .requires(Set.of(Modifier.PUBLIC), "m1")
                 .build();
 
         ModuleDescriptor descriptor3
@@ -309,7 +309,7 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(Modifier.PUBLIC, "m1")
+                .requires(Set.of(Modifier.PUBLIC), "m1")
                 .build();
 
         ModuleFinder finder2 = ModuleUtils.finderOf(descriptor2);
@@ -371,7 +371,7 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(Modifier.PUBLIC, "m1")
+                .requires(Set.of(Modifier.PUBLIC), "m1")
                 .build();
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
@@ -398,7 +398,7 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor3
             = new ModuleDescriptor.Builder("m3")
-                .requires(Modifier.PUBLIC, "m2")
+                .requires(Set.of(Modifier.PUBLIC), "m2")
                 .build();
 
         ModuleDescriptor descriptor4
@@ -431,6 +431,132 @@ public class ConfigurationTest {
         assertTrue(m4.reads().contains(m1));
         assertTrue(m4.reads().contains(m2));
         assertTrue(m4.reads().contains(m3));
+    }
+
+
+    /**
+     * Basic test of "requires static":
+     *     m1 requires static m2
+     *     m2 is not observable
+     *     resolve m1
+     */
+    public void testRequiresStatic1() {
+        ModuleDescriptor descriptor1
+            = new ModuleDescriptor.Builder("m1")
+                .requires(Set.of(Modifier.STATIC), "m2")
+                .build();
+
+        ModuleFinder finder = ModuleUtils.finderOf(descriptor1);
+
+        Configuration cf = resolveRequires(finder, "m1");
+
+        assertTrue(cf.modules().size() == 1);
+
+        ResolvedModule m1 = cf.findModule("m1").get();
+        assertTrue(m1.reads().size() == 0);
+    }
+
+
+    /**
+     * Basic test of "requires static":
+     *     m1 requires static m2
+     *     m2
+     *     resolve m1
+     */
+    public void testRequiresStatic2() {
+        ModuleDescriptor descriptor1
+            = new ModuleDescriptor.Builder("m1")
+                .requires(Set.of(Modifier.STATIC), "m2")
+                .build();
+
+        ModuleDescriptor descriptor2
+            = new ModuleDescriptor.Builder("m2")
+                .build();
+
+        ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);
+
+        Configuration cf = resolveRequires(finder, "m1");
+
+        assertTrue(cf.modules().size() == 1);
+
+        ResolvedModule m1 = cf.findModule("m1").get();
+        assertTrue(m1.reads().size() == 0);
+    }
+
+
+    /**
+     * Basic test of "requires static":
+     *     m1 requires static m2
+     *     m2
+     *     resolve m1, m2
+     */
+    public void testRequiresStatic3() {
+        ModuleDescriptor descriptor1
+            = new ModuleDescriptor.Builder("m1")
+                .requires(Set.of(Modifier.STATIC), "m2")
+                .build();
+
+        ModuleDescriptor descriptor2
+            = new ModuleDescriptor.Builder("m2")
+                .build();
+
+        ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);
+
+        Configuration cf = resolveRequires(finder, "m1", "m2");
+
+        assertTrue(cf.modules().size() == 2);
+
+        ResolvedModule m1 = cf.findModule("m1").get();
+        ResolvedModule m2 = cf.findModule("m2").get();
+
+        assertTrue(m1.reads().size() == 1);
+        assertTrue(m1.reads().contains(m2));
+
+        assertTrue(m2.reads().size() == 0);
+    }
+
+
+    /**
+     * Basic test of "requires static":
+     *     m1 requires m2, m3
+     *     m2 requires static m2
+     *     m3
+     */
+    public void testRequiresStatic4() {
+        ModuleDescriptor descriptor1
+            = new ModuleDescriptor.Builder("m1")
+                .requires("m2")
+                .requires("m3")
+                .build();
+
+        ModuleDescriptor descriptor2
+            = new ModuleDescriptor.Builder("m2")
+                .requires(Set.of(Modifier.STATIC), "m3")
+                .build();
+
+        ModuleDescriptor descriptor3
+            = new ModuleDescriptor.Builder("m3")
+                .build();
+
+        ModuleFinder finder
+                = ModuleUtils.finderOf(descriptor1, descriptor2, descriptor3);
+
+        Configuration cf = resolveRequires(finder, "m1");
+
+        assertTrue(cf.modules().size() == 3);
+
+        ResolvedModule m1 = cf.findModule("m1").get();
+        ResolvedModule m2 = cf.findModule("m2").get();
+        ResolvedModule m3 = cf.findModule("m3").get();
+
+        assertTrue(m1.reads().size() == 2);
+        assertTrue(m1.reads().contains(m2));
+        assertTrue(m1.reads().contains(m3));
+
+        assertTrue(m2.reads().size() == 1);
+        assertTrue(m2.reads().contains(m3));
+
+        assertTrue(m3.reads().size() == 0);
     }
 
 
@@ -917,7 +1043,7 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(Modifier.PUBLIC, "m1")
+                .requires(Set.of(Modifier.PUBLIC), "m1")
                 .build();
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);

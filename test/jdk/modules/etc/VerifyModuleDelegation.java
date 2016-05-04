@@ -51,11 +51,11 @@ public class VerifyModuleDelegation {
 
     private static final ModuleDescriptor COMPACT2
         = new ModuleDescriptor.Builder(JAVA_COMPACT2)
-            .requires(MANDATED, JAVA_BASE)
-            .requires(PUBLIC, JAVA_COMPACT1)
-            .requires(PUBLIC, "java.rmi")
-            .requires(PUBLIC, "java.sql")
-            .requires(PUBLIC, "java.xml")
+            .requires(Set.of(MANDATED), JAVA_BASE)
+            .requires(Set.of(PUBLIC), JAVA_COMPACT1)
+            .requires(Set.of(PUBLIC), "java.rmi")
+            .requires(Set.of(PUBLIC), "java.sql")
+            .requires(Set.of(PUBLIC), "java.xml")
             .build();
 
     private static final Set<ModuleReference> MREFS

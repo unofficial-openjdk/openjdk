@@ -43,6 +43,9 @@ import static jdk.internal.module.ClassFileConstants.ACC_MODULE;
 
 public final class ModuleInfoWriter {
 
+    // v53.0, not defined by ASM yet
+    private static final int V9 = 53;
+
     private ModuleInfoWriter() { }
 
     /**
@@ -54,7 +57,7 @@ public final class ModuleInfoWriter {
         ClassWriter cw = new ClassWriter(0);
 
         String name = md.name().replace('.', '/') + "/module-info";
-        cw.visit(Opcodes.V1_8, ACC_MODULE, name, null, null, null);
+        cw.visit(V9, ACC_MODULE, name, null, null, null);
 
         cw.visitAttribute(new ModuleAttribute(md));
         cw.visitAttribute(new ConcealedPackagesAttribute(md.conceals()));

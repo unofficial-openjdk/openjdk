@@ -126,6 +126,11 @@ final class Resolver {
 
             // process dependences
             for (ModuleDescriptor.Requires requires : descriptor.requires()) {
+
+                // only required at compile-time
+                if (requires.modifiers().contains(Modifier.STATIC))
+                    continue;
+
                 String dn = requires.name();
 
                 // find dependence
@@ -520,8 +525,10 @@ final class Resolver {
                     y = new ResolvedModule(cf, other);  // cache?
                 } else {
                     y = parent.findModule(dn).orElse(null);
-                    if (y == null)
-                        throw new InternalError("unable to find " + dn);
+                    if (y == null) {
+                        assert requires.modifiers().contains(Modifier.STATIC);
+                        continue;
+                    }
                 }
 
                 // m requires other => m reads other
