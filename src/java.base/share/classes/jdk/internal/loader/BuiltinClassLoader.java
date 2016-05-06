@@ -198,28 +198,22 @@ public class BuiltinClassLoader
         if (mref == null)
             return null;   // not defined to this class loader
 
-        URL url;
-
         try {
-            url = AccessController.doPrivileged(
+
+            URL url = AccessController.doPrivileged(
                 new PrivilegedExceptionAction<URL>() {
                     @Override
                     public URL run() throws IOException {
-                        URI u = moduleReaderFor(mref).find(name).orElse(null);
-                        if (u != null) {
-                            try {
-                                return u.toURL();
-                            } catch (MalformedURLException e) { }
-                        }
-                        return null;
+                        return findResource(mref, name);
                     }
                 });
+
+            // check access to the URL
+            return checkURL(url);
+
         } catch (PrivilegedActionException pae) {
             throw (IOException) pae.getCause();
         }
-
-        // check access to the URL
-        return checkURL(url);
     }
 
     /**
@@ -258,41 +252,102 @@ public class BuiltinClassLoader
     }
 
     /**
-     * Finds the resource with the given name on the class path of this class
-     * loader.
+     * Finds the resource with the given name in the modules defined to this
+     * class loader or its class path.
      */
     @Override
     public URL findResource(String name) {
-        if (ucp != null) {
-            PrivilegedAction<URL> pa = () -> ucp.findResource(name, false);
-            URL url = AccessController.doPrivileged(pa);
-            return checkURL(url);
-        } else {
-            return null;
+        URL url = null;
+
+        try {
+            url = AccessController.doPrivileged(
+                new PrivilegedExceptionAction<URL>() {
+                    @Override
+                    public URL run() throws IOException {
+                        for (ModuleReference mref : nameToModule.values()) {
+                            URL url = findResource(mref, name);
+                            if (url != null) return url;
+                        }
+                        return null;
+                    }
+                });
+        } catch (PrivilegedActionException pae) {
+            // ignore
         }
+
+        // search class path
+        if (url == null && ucp != null) {
+            PrivilegedAction<URL> pa = () -> ucp.findResource(name, false);
+            url = AccessController.doPrivileged(pa);
+        }
+
+        return checkURL(url);
     }
 
     /**
      * Returns an enumeration of URL objects to all the resources with the
-     * given name on the class path of this class loader.
+     * given name in modules defined to this class loader or on the class
+     * path of this loader.
      */
     @Override
     public Enumeration<URL> findResources(String name) throws IOException {
+
+        List<URL> checked = new ArrayList<>();
+
+        try {
+            List<URL> result = AccessController.doPrivileged(
+                new PrivilegedExceptionAction<List<URL>>() {
+                    @Override
+                    public List<URL> run() throws IOException {
+                        List<URL> result = new ArrayList<>();
+                        for (ModuleReference mref : nameToModule.values()) {
+                            URL url = findResource(mref, name);
+                            if (url != null)
+                                result.add(url);
+                        }
+                        return result;
+                    }
+                });
+
+            // check permissions
+            for (URL url : result) {
+                if (checkURL(url) != null) {
+                    checked.add(url);
+                }
+            }
+
+        } catch (PrivilegedActionException pae) {
+            throw (IOException) pae.getCause();
+        }
+
         if (ucp != null) {
-            List<URL> result = new ArrayList<>();
             PrivilegedAction<Enumeration<URL>> pa = () -> ucp.findResources(name, false);
             Enumeration<URL> e = AccessController.doPrivileged(pa);
             while (e.hasMoreElements()) {
                 URL url = checkURL(e.nextElement());
                 if (url != null) {
-                    result.add(url);
+                    checked.add(url);
                 }
             }
-            return Collections.enumeration(result); // checked URLs
-        } else {
-            return Collections.emptyEnumeration();
         }
+
+        return Collections.enumeration(checked); // checked URLs
     }
+
+
+    /**
+     * Returns the URL to the given reference in the given module.
+     */
+    private URL findResource(ModuleReference mref, String name) throws IOException {
+        URI u = moduleReaderFor(mref).find(name).orElse(null);
+        if (u != null) {
+            try {
+                return u.toURL();
+            } catch (MalformedURLException e) { }
+        }
+        return null;
+    }
+
 
 
     // -- finding/loading classes
@@ -457,20 +512,20 @@ public class BuiltinClassLoader
      */
     private Class<?> findClassOnClassPathOrNull(String cn) {
         return AccessController.doPrivileged(
-            new PrivilegedAction<Class<?>>() {
-                public Class<?> run() {
-                    String path = cn.replace('.', '/').concat(".class");
-                    Resource res = ucp.getResource(path, false);
-                    if (res != null) {
-                        try {
-                            return defineClass(cn, res);
-                        } catch (IOException ioe) {
-                            // TBD on how I/O errors should be propagated
+                new PrivilegedAction<Class<?>>() {
+                    public Class<?> run() {
+                        String path = cn.replace('.', '/').concat(".class");
+                        Resource res = ucp.getResource(path, false);
+                        if (res != null) {
+                            try {
+                                return defineClass(cn, res);
+                            } catch (IOException ioe) {
+                                // TBD on how I/O errors should be propagated
+                            }
                         }
+                        return null;
                     }
-                    return null;
-                }
-            });
+                });
     }
 
     /**
