@@ -23,6 +23,7 @@
 
 /*
  * @test
+ * @bug 8154556
  * @run testng/othervm -Diters=20000 -XX:TieredStopAtLevel=1 VarHandleTestByteArrayAsDouble
  * @run testng/othervm -Diters=20000                         VarHandleTestByteArrayAsDouble
  * @run testng/othervm -Diters=20000 -XX:-TieredCompilation  VarHandleTestByteArrayAsDouble
@@ -57,15 +58,16 @@ public class VarHandleTestByteArrayAsDouble extends VarHandleBaseByteArrayTest {
         // Combinations of VarHandle byte[] or ByteBuffer
         vhss = new ArrayList<>();
         for (MemoryMode endianess : Arrays.asList(MemoryMode.BIG_ENDIAN, MemoryMode.LITTLE_ENDIAN)) {
+
+            ByteOrder bo = endianess == MemoryMode.BIG_ENDIAN
+                    ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN;
             VarHandleSource aeh = new VarHandleSource(
-                    MethodHandles.byteArrayViewVarHandle(double[].class,
-                                                         endianess == MemoryMode.BIG_ENDIAN),
+                    MethodHandles.byteArrayViewVarHandle(double[].class, bo),
                     endianess, MemoryMode.READ_WRITE);
             vhss.add(aeh);
 
             VarHandleSource bbh = new VarHandleSource(
-                    MethodHandles.byteBufferViewVarHandle(double[].class,
-                                                          endianess == MemoryMode.BIG_ENDIAN),
+                    MethodHandles.byteBufferViewVarHandle(double[].class, bo),
                     endianess, MemoryMode.READ_WRITE);
             vhss.add(bbh);
         }
