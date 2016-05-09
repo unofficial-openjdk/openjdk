@@ -2066,6 +2066,9 @@ public:
   notproduct(bool, VerboseInternalVMTests, false,                           \
           "Turn on logging for internal VM tests.")                         \
                                                                             \
+  product(bool, ExecutingUnitTests, false,                                  \
+          "Whether the JVM is running unit tests or not")                   \
+                                                                            \
   product_pd(bool, UseTLAB, "Use thread-local object allocation")           \
                                                                             \
   product_pd(bool, ResizeTLAB,                                              \
