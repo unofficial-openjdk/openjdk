@@ -48,8 +48,12 @@ import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.security.SecureClassLoader;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -72,8 +76,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * loader. This allows automatic modules (for example) to link to types in the
  * unnamed module of the parent class loader.
  *
- * @see Layer#createWithOneLoader
- * @see Layer#createWithManyLoaders
+ * @see Layer#defineModulesWithOneLoader
+ * @see Layer#defineModulesWithManyLoaders
  */
 
 public final class Loader extends SecureClassLoader {
@@ -316,6 +320,31 @@ public final class Loader extends SecureClassLoader {
         } catch (PrivilegedActionException pae) {
             throw (IOException) pae.getCause();
         }
+    }
+
+    @Override
+    public URL findResource(String name) {
+        for (ModuleReference mref : nameToModule.values()) {
+            try {
+                URL url = findResource(mref.descriptor().name(), name);
+                if (url != null)
+                    return url;
+            } catch (IOException ioe) { }
+        }
+        return null;
+    }
+
+    @Override
+    public Enumeration<URL> findResources(String name) throws IOException {
+        List<URL> urls = new ArrayList<>();
+        for (ModuleReference mref : nameToModule.values()) {
+            try {
+                URL url = findResource(mref.descriptor().name(), name);
+                if (url != null)
+                    urls.add(url);
+            } catch (IOException ioe) { }
+        }
+        return Collections.enumeration(urls);
     }
 
 

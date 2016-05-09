@@ -29,6 +29,8 @@
  * @summary Tests for java.lang.reflect.Layer@createWithXXX methods
  */
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
@@ -38,8 +40,10 @@ import java.lang.reflect.Layer;
 import java.lang.reflect.LayerInstantiationException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Module;
+import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -70,7 +74,7 @@ public class LayerAndLoadersTest {
 
 
     /**
-     * Basic test of Layer.createWithOneLoader
+     * Basic test of Layer.defineModulesWithOneLoader
      *
      * Test scenario:
      *   m1 requires m2 and m3
@@ -99,7 +103,7 @@ public class LayerAndLoadersTest {
 
 
     /**
-     * Basic test of Layer.createWithManyLoaders
+     * Basic test of Layer.defineModulesWithManyLoaders
      *
      * Test scenario:
      *   m1 requires m2 and m3
@@ -131,7 +135,7 @@ public class LayerAndLoadersTest {
 
 
     /**
-     * Basic test of Layer.createWithOneLoader where one of the modules
+     * Basic test of Layer.defineModulesWithOneLoader where one of the modules
      * is a service provider module.
      *
      * Test scenario:
@@ -172,7 +176,7 @@ public class LayerAndLoadersTest {
 
 
     /**
-     * Basic test of Layer.createWithManyLoaders where one of the modules
+     * Basic test of Layer.defineModulesWithManyLoaders where one of the modules
      * is a service provider module.
      *
      * Test scenario:
@@ -560,6 +564,48 @@ public class LayerAndLoadersTest {
 
         assertTrue(loader6.loadClass("w.Hello").getClassLoader() == loader6);
 
+    }
+
+
+    /**
+     * Basic test of resource loading with a class loader created by
+     * Layer.defineModulesWithOneLoader.
+     */
+    public void testResourcesOneLoader() throws Exception {
+        Configuration cf = resolveRequires("m1");
+        ClassLoader scl = ClassLoader.getSystemClassLoader();
+        Layer layer = Layer.boot().defineModulesWithOneLoader(cf, scl);
+        ClassLoader loader = layer.findLoader("m1");
+        testResourceLoading(loader, "p/Main.class");
+    }
+
+    /**
+     * Basic test of resource loading with a class loader created by
+     * Layer.defineModulesWithOneLoader.
+     */
+    public void testResourcesManyLoaders() throws Exception {
+        Configuration cf = resolveRequires("m1");
+        ClassLoader scl = ClassLoader.getSystemClassLoader();
+        Layer layer = Layer.boot().defineModulesWithManyLoaders(cf, scl);
+        ClassLoader loader = layer.findLoader("m1");
+        testResourceLoading(loader, "p/Main.class");
+    }
+
+    /**
+     * Test that a resource is located by a class loader.
+     */
+    private void testResourceLoading(ClassLoader loader, String name)
+        throws IOException
+    {
+        URL url = loader.getResource(name);
+        assertNotNull(url);
+
+        try (InputStream in = loader.getResourceAsStream(name)) {
+            assertNotNull(in);
+        }
+
+        Enumeration<URL> urls = loader.getResources(name);
+        assertTrue(urls.hasMoreElements());
     }
 
 

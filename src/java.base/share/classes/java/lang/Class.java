@@ -2359,9 +2359,7 @@ public final class Class<T> implements java.io.Serializable,
     /**
      * Finds a resource with a given name. If this class is in a named {@link
      * Module Module} then this method will attempt to find the resource in
-     * that module.
-     *
-     * Otherwise, the rules for searching resources
+     * that module. Otherwise, the rules for searching resources
      * associated with a given class are implemented by the defining
      * {@linkplain ClassLoader class loader} of the class.  This method
      * delegates to this object's class loader.  If this object was loaded by
@@ -2433,9 +2431,7 @@ public final class Class<T> implements java.io.Serializable,
     /**
      * Finds a resource with a given name. If this class is in a named {@link
      * Module Module} then this method will attempt to find the resource in
-     * that module.
-     *
-     * Otherwise, the rules for searching resources
+     * that module. Otherwise, the rules for searching resources
      * associated with a given class are implemented by the defining
      * {@linkplain ClassLoader class loader} of the class.  This method
      * delegates to this object's class loader. If this object was loaded by
