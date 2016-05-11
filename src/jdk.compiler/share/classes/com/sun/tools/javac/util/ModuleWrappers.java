@@ -73,22 +73,10 @@ public class ModuleWrappers {
                 throw new Abort(ex);
             }
         }
-
-        public static ModuleFinder empty() {
-            try {
-                Object result = ModuleFinderHelper.getEmptyMethod()
-                        .invoke(ModuleFinderHelper.moduleFinderInterface);
-                ModuleFinder mFinder = new ModuleFinder(result);
-                return mFinder;
-            } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-                throw new Abort(ex);
-            }
-        }
     }
 
     private static class ModuleFinderHelper {
         static Method ofMethod = null;
-        static Method emptyMethod = null;
         static Class<?> moduleFinderInterface;
 
         static Method getOfMethod() {
@@ -101,18 +89,6 @@ public class ModuleWrappers {
                 }
             }
             return ofMethod;
-        }
-
-        static Method getEmptyMethod() {
-            if (emptyMethod == null) {
-                try {
-                    getModuleFinderInterface();
-                    emptyMethod = moduleFinderInterface.getDeclaredMethod("empty");
-                } catch (NoSuchMethodException | SecurityException ex) {
-                    throw new Abort(ex);
-                }
-            }
-            return emptyMethod;
         }
 
         static Class<?> getModuleFinderInterface() {
