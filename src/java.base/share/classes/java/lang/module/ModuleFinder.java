@@ -33,12 +33,15 @@ import java.nio.file.Paths;
 import java.security.AccessController;
 import java.security.Permission;
 import java.security.PrivilegedAction;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import sun.security.action.GetPropertyAction;
 
 /**
@@ -60,7 +63,7 @@ import sun.security.action.GetPropertyAction;
  *     ModuleFinder finder = ModuleFinder.of(dir1, dir2, dir3);
  *
  *     Optional<ModuleReference> omref = finder.find("jdk.foo");
- *     if (omref.isPresent()) { ... }
+ *     omref.ifPresent(mref -> ... );
  *
  * }</pre>
  *
@@ -285,79 +288,87 @@ public interface ModuleFinder {
      * @return A {@code ModuleFinder} that locates modules on the file system
      */
     static ModuleFinder of(Path... entries) {
+        // special case zero entries
+        if (entries.length == 0) {
+            return new ModuleFinder() {
+                @Override
+                public Optional<ModuleReference> find(String name) {
+                    Objects.requireNonNull(name);
+                    return Optional.empty();
+                }
+
+                @Override
+                public Set<ModuleReference> findAll() {
+                    return Collections.emptySet();
+                }
+            };
+        }
+
         return new ModulePath(entries);
     }
 
     /**
-     * Returns a module finder that is the equivalent to composing two
-     * module finders. The resulting finder will locate modules references
-     * using {@code first}; if not found then it will attempt to locate module
-     * references using {@code second}.
+     * Returns a module finder that is composed from a sequence of zero or more
+     * module finders. The {@link #find(String) find} method of the resulting
+     * module finder will locate a module by invoking the {@code find} method
+     * of each module finder, in array index order, until either the module is
+     * found or all module finders have been searched. The {@link #findAll()
+     * findAll} method of the resulting module finder will return a set of
+     * modules that includes all modules located by the first module finder.
+     * The set of modules will include all modules located by the second or
+     * subsequent module finder that are not located by previous module finders
+     * in the sequence.
      *
-     * <p> The {@link #findAll() findAll} method of the resulting module finder
-     * will locate all modules located by the first module finder. It will
-     * also locate all modules located by the second module finder that are not
-     * located by the first module finder. </p>
+     * <p> When locating modules then any exceptions or errors thrown by the
+     * {@code find} or {@code findAll} methods of the underlying module finders
+     * will be propogated to the caller of the resulting module finder's
+     * {@code find} or {@code findAll} methods. </p>
      *
-     * @apiNote This method will eventually be changed to take a sequence of
-     *          module finders.
+     * @param finders
+     *        The array of module finders
      *
-     * @param first
-     *        The first module finder
-     * @param second
-     *        The second module finder
-     *
-     * @return A {@code ModuleFinder} that composes two module finders
+     * @return A {@code ModuleFinder} that composes a sequence of module finders
      */
-    static ModuleFinder compose(ModuleFinder first, ModuleFinder second) {
-        Objects.requireNonNull(first);
-        Objects.requireNonNull(second);
+    static ModuleFinder compose(ModuleFinder... finders) {
+        final List<ModuleFinder> finderList = Arrays.asList(finders);
+        finderList.forEach(Objects::requireNonNull);
 
         return new ModuleFinder() {
-            Set<ModuleReference> allModules;
+            // cached name -> module
+            private Map<String, ModuleReference> nameToModule = new HashMap<>();
+            // lazily created result of findAll
+            private Set<ModuleReference> allModules;
 
             @Override
             public Optional<ModuleReference> find(String name) {
-                Optional<ModuleReference> om = first.find(name);
-                if (!om.isPresent())
-                    om = second.find(name);
-                return om;
+                ModuleReference mref = nameToModule.get(name);
+                if (mref != null)
+                    return Optional.of(mref);
+                Optional<ModuleReference> omref = finderList.stream()
+                        .map(f -> f.find(name))
+                        .flatMap(Optional::stream)
+                        .findFirst();
+                omref.ifPresent(m -> nameToModule.put(name, m));
+                return omref;
             }
+
             @Override
             public Set<ModuleReference> findAll() {
-                if (allModules == null) {
-                    allModules = Stream.concat(first.findAll().stream(),
-                                               second.findAll().stream())
-                                       .map(a -> a.descriptor().name())
-                                       .distinct()
-                                       .map(this::find)
-                                       .map(Optional::get)
-                                       .collect(Collectors.toSet());
-                }
-                return allModules;
-            }
-        };
-    }
-
-    /**
-     * Returns an empty module finder.  The empty finder does not find any
-     * modules.
-     *
-     * @apiNote This is useful when using methods such as {@link
-     * Configuration#resolveRequires resolveRequires} where two finders are
-     * specified. An alternative is {@code ModuleFinder.of()}.
-     *
-     * @return A {@code ModuleFinder} that does not find any modules
-     */
-    static ModuleFinder empty() {
-        // an alternative implementation of ModuleFinder.of()
-        return new ModuleFinder() {
-            @Override public Optional<ModuleReference> find(String name) {
-                Objects.requireNonNull(name);
-                return Optional.empty();
-            }
-            @Override public Set<ModuleReference> findAll() {
-                return Collections.emptySet();
+                Set<ModuleReference> allModules = this.allModules;
+                if (allModules != null)
+                    return allModules;
+                Set<ModuleReference> result = new HashSet<>();
+                result.addAll(nameToModule.values());
+                finderList.stream()
+                          .flatMap(f -> f.findAll().stream())
+                          .forEach(mref -> {
+                              String name = mref.descriptor().name();
+                              if (nameToModule.putIfAbsent(name, mref) == null) {
+                                  result.add(mref);
+                              }
+                          });
+                this.allModules = Collections.unmodifiableSet(result);
+                return result;
             }
         };
     }
