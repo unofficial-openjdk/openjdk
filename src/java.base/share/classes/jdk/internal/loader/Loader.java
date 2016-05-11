@@ -319,6 +319,8 @@ public final class Loader extends SecureClassLoader {
                 }, acc);
         } catch (PrivilegedActionException pae) {
             throw (IOException) pae.getCause();
+        } catch (SecurityException se) {
+            return null;
         }
     }
 
