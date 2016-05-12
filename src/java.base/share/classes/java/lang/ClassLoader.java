@@ -1267,9 +1267,6 @@ public abstract class ClassLoader {
      * (images, audio, text, etc) that can be accessed by class code in a way
      * that is independent of the location of the code.
      *
-     * Resources in a named module are private to that module. This method does
-     * not find resource in named modules.
-     *
      * <p> The name of a resource is a '<tt>/</tt>'-separated path name that
      * identifies the resource.
      *
@@ -1308,9 +1305,6 @@ public abstract class ClassLoader {
      * Finds all the resources with the given name. A resource is some data
      * (images, audio, text, etc) that can be accessed by class code in a way
      * that is independent of the location of the code.
-     *
-     * Resources in a named module are private to that module. This method does
-     * not find resources in named modules.
      *
      * <p>The name of a resource is a <tt>/</tt>-separated path name that
      * identifies the resource.
@@ -1357,9 +1351,6 @@ public abstract class ClassLoader {
      * Finds the resource with the given name. Class loader implementations
      * should override this method to specify where to find resources.
      *
-     * Resources in a named module are private to that module. This method does
-     * not find resources in named modules defined to this class loader.
-     *
      * @param  name
      *         The resource name
      *
@@ -1378,9 +1369,6 @@ public abstract class ClassLoader {
      * implementations should override this method to specify where to load
      * resources from.
      *
-     * Resources in a named module are private to that module. This method does
-     * not find resources in named modules defined to this class loader.
-     *
      * @param  name
      *         The resource name
      *
@@ -1393,7 +1381,7 @@ public abstract class ClassLoader {
      * @since  1.2
      */
     protected Enumeration<URL> findResources(String name) throws IOException {
-        return java.util.Collections.emptyEnumeration();
+        return Collections.emptyEnumeration();
     }
 
     /**

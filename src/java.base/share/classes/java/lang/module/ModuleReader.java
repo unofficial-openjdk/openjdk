@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.ByteBuffer;
+import java.util.Objects;
 import java.util.Optional;
 
 
@@ -165,7 +166,9 @@ public interface ModuleReader extends Closeable {
      *
      * @implSpec The default implementation does nothing.
      */
-    default void release(ByteBuffer bb) { }
+    default void release(ByteBuffer bb) {
+        Objects.requireNonNull(bb);
+    }
 
     /**
      * Closes the module reader. Once closed then subsequent calls to locate or
