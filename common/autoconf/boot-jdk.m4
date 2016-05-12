@@ -397,6 +397,7 @@ AC_DEFUN_ONCE([BOOTJDK_SETUP_BOOT_JDK_ARGUMENTS],
   ADD_JVM_ARG_IF_OK([-XX:+UseSerialGC],boot_jdk_jvmargs_small,[$JAVA])
   ADD_JVM_ARG_IF_OK([-Xms32M],boot_jdk_jvmargs_small,[$JAVA])
   ADD_JVM_ARG_IF_OK([-Xmx512M],boot_jdk_jvmargs_small,[$JAVA])
+  ADD_JVM_ARG_IF_OK([-XX:TieredStopAtLevel=1],boot_jdk_jvmargs_small,[$JAVA])
 
   AC_MSG_RESULT([$boot_jdk_jvmargs_small])
 
@@ -433,6 +434,9 @@ AC_DEFUN([BOOTJDK_CHECK_BUILD_JDK],
         BUILD_JDK_FOUND=no
       elif test ! -x "$BUILD_JDK/bin/jlink"; then
         AC_MSG_NOTICE([Potential Build JDK found at $BUILD_JDK did not contain bin/jlink; ignoring])
+        BUILD_JDK_FOUND=no
+      elif test ! -x "$BUILD_JDK/bin/jmod"; then
+        AC_MSG_NOTICE([Potential Build JDK found at $BUILD_JDK did not contain bin/jmod; ignoring])
         BUILD_JDK_FOUND=no
       elif test ! -x "$BUILD_JDK/bin/javac"; then
         # Do we have a bin/javac?
@@ -473,7 +477,8 @@ AC_DEFUN([BOOTJDK_SETUP_BUILD_JDK],
   AC_ARG_WITH(build-jdk, [AS_HELP_STRING([--with-build-jdk],
       [path to JDK of same version as is being built@<:@the newly built JDK@:>@])])
 
-  CREATE_BUILDJDK_FOR_HOST=false
+  CREATE_BUILDJDK=false
+  EXTERNAL_BUILDJDK=false
   BUILD_JDK_FOUND="no"
   if test "x$with_build_jdk" != "x"; then
     BOOTJDK_CHECK_BUILD_JDK([
@@ -482,6 +487,7 @@ AC_DEFUN([BOOTJDK_SETUP_BUILD_JDK],
          BUILD_JDK_FOUND=maybe
          AC_MSG_NOTICE([Found potential Build JDK using configure arguments])
        fi])
+    EXTERNAL_BUILDJDK=true
   else
     if test "x$COMPILE_TYPE" = "xcross"; then
       BUILD_JDK="\$(BUILDJDK_OUTPUTDIR)/jdk"
@@ -497,6 +503,11 @@ AC_DEFUN([BOOTJDK_SETUP_BUILD_JDK],
     fi
   fi
 
+  JMOD="$BUILD_JDK/bin/jmod"
+  JLINK="$BUILD_JDK/bin/jlink"
+  AC_SUBST(JMOD)
+  AC_SUBST(JLINK)
+
   if test "x$BUILD_JDK_FOUND" != "xyes"; then
     AC_MSG_CHECKING([for Build JDK])
     AC_MSG_RESULT([no])
@@ -505,4 +516,5 @@ AC_DEFUN([BOOTJDK_SETUP_BUILD_JDK],
 
   AC_SUBST(CREATE_BUILDJDK)
   AC_SUBST(BUILD_JDK)
+  AC_SUBST(EXTERNAL_BUILDJDK)
 ])

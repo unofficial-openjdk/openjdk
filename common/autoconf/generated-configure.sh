@@ -896,8 +896,11 @@ JAXWS_TOPDIR
 JAXP_TOPDIR
 CORBA_TOPDIR
 LANGTOOLS_TOPDIR
+EXTERNAL_BUILDJDK
 BUILD_JDK
 CREATE_BUILDJDK
+JLINK
+JMOD
 BOOT_JDK_BITS
 JAVAC_FLAGS
 BOOT_JDK_MODULAR
@@ -1224,9 +1227,9 @@ with_lcms
 with_dxsdk
 with_dxsdk_lib
 with_dxsdk_include
-enable_jtreg_failure_handler
 enable_new_hotspot_build
 enable_hotspot_test_in_build
+enable_jtreg_failure_handler
 with_num_cores
 with_memory_size
 with_jobs
@@ -5070,7 +5073,7 @@ VS_SDK_PLATFORM_NAME_2013=
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1460963400
+DATE_WHEN_GENERATED=1462806878
 
 ###############################################################################
 #
@@ -15492,7 +15495,7 @@ $as_echo "$COMPILE_TYPE" >&6; }
     HOTSPOT_TARGET_CPU_DEFINE=PPC32
   elif test "x$OPENJDK_TARGET_CPU" = xs390; then
     HOTSPOT_TARGET_CPU_DEFINE=S390
-  elif test "x$OPENJDK_TARGET_CPU" = ss390x; then
+  elif test "x$OPENJDK_TARGET_CPU" = xs390x; then
     HOTSPOT_TARGET_CPU_DEFINE=S390
   fi
 
@@ -15648,7 +15651,7 @@ $as_echo "$COMPILE_TYPE" >&6; }
     HOTSPOT_BUILD_CPU_DEFINE=PPC32
   elif test "x$OPENJDK_BUILD_CPU" = xs390; then
     HOTSPOT_BUILD_CPU_DEFINE=S390
-  elif test "x$OPENJDK_BUILD_CPU" = ss390x; then
+  elif test "x$OPENJDK_BUILD_CPU" = xs390x; then
     HOTSPOT_BUILD_CPU_DEFINE=S390
   fi
 
@@ -30171,7 +30174,8 @@ if test "${with_build_jdk+set}" = set; then :
 fi
 
 
-  CREATE_BUILDJDK_FOR_HOST=false
+  CREATE_BUILDJDK=false
+  EXTERNAL_BUILDJDK=false
   BUILD_JDK_FOUND="no"
   if test "x$with_build_jdk" != "x"; then
 
@@ -30195,6 +30199,10 @@ $as_echo "$as_me: Potential Build JDK found at $BUILD_JDK did not contain bin/ja
       elif test ! -x "$BUILD_JDK/bin/jlink"; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: Potential Build JDK found at $BUILD_JDK did not contain bin/jlink; ignoring" >&5
 $as_echo "$as_me: Potential Build JDK found at $BUILD_JDK did not contain bin/jlink; ignoring" >&6;}
+        BUILD_JDK_FOUND=no
+      elif test ! -x "$BUILD_JDK/bin/jmod"; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Potential Build JDK found at $BUILD_JDK did not contain bin/jmod; ignoring" >&5
+$as_echo "$as_me: Potential Build JDK found at $BUILD_JDK did not contain bin/jmod; ignoring" >&6;}
         BUILD_JDK_FOUND=no
       elif test ! -x "$BUILD_JDK/bin/javac"; then
         # Do we have a bin/javac?
@@ -30364,6 +30372,7 @@ $as_echo "$BUILD_JDK_VERSION" >&6; }
     fi # end check build jdk found
   fi
 
+    EXTERNAL_BUILDJDK=true
   else
     if test "x$COMPILE_TYPE" = "xcross"; then
       BUILD_JDK="\$(BUILDJDK_OUTPUTDIR)/jdk"
@@ -30383,6 +30392,11 @@ $as_echo "yes, will use output dir" >&6; }
     fi
   fi
 
+  JMOD="$BUILD_JDK/bin/jmod"
+  JLINK="$BUILD_JDK/bin/jlink"
+
+
+
   if test "x$BUILD_JDK_FOUND" != "xyes"; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Build JDK" >&5
 $as_echo_n "checking for Build JDK... " >&6; }
@@ -30390,6 +30404,7 @@ $as_echo_n "checking for Build JDK... " >&6; }
 $as_echo "no" >&6; }
     as_fn_error $? "Could not find a suitable Build JDK" "$LINENO" 5
   fi
+
 
 
 
@@ -64274,6 +64289,21 @@ $as_echo_n "checking flags for boot jdk java command for small workloads... " >&
   FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
   if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
     boot_jdk_jvmargs_small="$boot_jdk_jvmargs_small -Xmx512M"
+    JVM_ARG_OK=true
+  else
+    $ECHO "Arg failed:" >&5
+    $ECHO "$OUTPUT" >&5
+    JVM_ARG_OK=false
+  fi
+
+
+  $ECHO "Check if jvm arg is ok: -XX:TieredStopAtLevel=1" >&5
+  $ECHO "Command: $JAVA -XX:TieredStopAtLevel=1 -version" >&5
+  OUTPUT=`$JAVA -XX:TieredStopAtLevel=1 -version 2>&1`
+  FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
+  FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
+  if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
+    boot_jdk_jvmargs_small="$boot_jdk_jvmargs_small -XX:TieredStopAtLevel=1"
     JVM_ARG_OK=true
   else
     $ECHO "Arg failed:" >&5

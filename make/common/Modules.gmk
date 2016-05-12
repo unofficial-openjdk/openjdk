@@ -38,12 +38,11 @@ _MODULES_GMK := 1
 BOOT_MODULES :=
 PLATFORM_MODULES :=
 JRE_TOOL_MODULES :=
+UPGRADEABLE_MODULES :=
+AGGREGATOR_MODULES :=
 
 # Hook to include the corresponding custom file, if present.
 $(eval $(call IncludeCustomExtension, , common/Modules.gmk))
-
-UPGRADEABLE_MDOULES :=
-AGGREGATOR_MDOULES :=
 
 BOOT_MODULES += \
     java.base \
@@ -63,6 +62,7 @@ BOOT_MODULES += \
     java.xml.crypto \
     jdk.httpserver \
     jdk.management \
+    jdk.net \
     jdk.sctp \
     jdk.security.auth \
     jdk.security.jgss \
@@ -72,11 +72,9 @@ BOOT_MODULES += \
 
 # to be deprivileged
 BOOT_MODULES += \
-    java.compiler \
     java.scripting \
     java.sql.rowset \
     java.smartcardio \
-    jdk.charsets \
     jdk.naming.rmi \
     #
 
@@ -103,7 +101,9 @@ PLATFORM_MODULES += \
     #
 
 PLATFORM_MODULES += \
+    java.compiler \
     jdk.accessibility \
+    jdk.charsets \
     jdk.crypto.ec \
     jdk.crypto.pkcs11 \
     jdk.dynalink \
@@ -127,6 +127,10 @@ endif
 ifeq ($(OPENJDK_TARGET_OS), solaris)
   PLATFORM_MODULES += jdk.crypto.ucrypto
 endif
+
+# These modules are included in the interim image which is used to run profiling
+# before building the real images.
+INTERIM_IMAGE_MODULES := java.base java.logging
 
 ################################################################################
 # Some platforms don't have the serviceability agent
@@ -185,7 +189,8 @@ FindAllModules = \
     $(call GetModuleNameFromModuleInfo, $(MODULE_INFOS))))
 
 FindImportedModules = \
-    $(if $(IMPORT_MODULES_CLASSES), $(notdir $(wildcard $(IMPORT_MODULES_CLASSES)/*)))
+    $(filter-out $(MODULES_FILTER), \
+    $(if $(IMPORT_MODULES_CLASSES), $(notdir $(wildcard $(IMPORT_MODULES_CLASSES)/*))))
 
 # Find all source dirs for a particular module
 # $1 - Module to find source dirs for
