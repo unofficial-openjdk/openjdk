@@ -59,13 +59,11 @@ final class VarHandleByteArrayAs$Type$s extends VarHandleByteArrayBase {
 #end[floatingPoint]
 
 
-    private static class ByteArrayViewVarHandle extends VarHandle {
+    private static abstract class ByteArrayViewVarHandle extends VarHandle {
         final boolean be;
 
-        ByteArrayViewVarHandle(Class<? extends ByteArrayViewVarHandle> implSubType,
-                               Class<?> arrayType, Class<?> component, boolean be) {
-            super(VarForm.createFromStatic(implSubType),
-                  arrayType, component, int.class);
+        ByteArrayViewVarHandle(VarForm form, boolean be) {
+            super(form);
             this.be = be;
         }
     }
@@ -73,7 +71,12 @@ final class VarHandleByteArrayAs$Type$s extends VarHandleByteArrayBase {
     static final class ArrayHandle extends ByteArrayViewVarHandle {
 
         ArrayHandle(boolean be) {
-            super(ArrayHandle.class, byte[].class, $type$.class, be);
+            super(ArrayHandle.FORM, be);
+        }
+
+        @Override
+        final MethodType accessModeTypeUncached(AccessMode accessMode) {
+            return accessMode.at.accessModeType(byte[].class, $type$.class, int.class);
         }
 
         @ForceInline
@@ -228,6 +231,16 @@ final class VarHandleByteArrayAs$Type$s extends VarHandleByteArrayBase {
         }
 
         @ForceInline
+        static boolean weakCompareAndSetVolatile(ArrayHandle handle, Object oba, int index, $type$ expected, $type$ value) {
+            byte[] ba = (byte[]) oba;
+            // TODO defer to strong form until new Unsafe method is added
+            return UNSAFE.compareAndSwap$RawType$(
+                    ba,
+                    address(ba, index(ba, index)),
+                    convEndian(handle.be, expected), convEndian(handle.be, value));
+        }
+
+        @ForceInline
         static boolean weakCompareAndSetAcquire(ArrayHandle handle, Object oba, int index, $type$ expected, $type$ value) {
             byte[] ba = (byte[]) oba;
             return UNSAFE.weakCompareAndSwap$RawType$Acquire(
@@ -276,13 +289,20 @@ final class VarHandleByteArrayAs$Type$s extends VarHandleByteArrayBase {
                     convEndian(handle.be, value))) + value;
         }
 #end[AtomicAdd]
+
+        static final VarForm FORM = new VarForm(ArrayHandle.class, byte[].class, $type$.class, int.class);
     }
 
 
     static final class ByteBufferHandle extends ByteArrayViewVarHandle {
 
         ByteBufferHandle(boolean be) {
-            super(ByteBufferHandle.class, ByteBuffer.class, $type$.class, be);
+            super(ByteBufferHandle.FORM, be);
+        }
+
+        @Override
+        final MethodType accessModeTypeUncached(AccessMode accessMode) {
+            return accessMode.at.accessModeType(ByteBuffer.class, $type$.class, int.class);
         }
 
         @ForceInline
@@ -444,6 +464,16 @@ final class VarHandleByteArrayAs$Type$s extends VarHandleByteArrayBase {
         }
 
         @ForceInline
+        static boolean weakCompareAndSetVolatile(ByteBufferHandle handle, Object obb, int index, $type$ expected, $type$ value) {
+            ByteBuffer bb = (ByteBuffer) obb;
+            // TODO defer to strong form until new Unsafe method is added
+            return UNSAFE.compareAndSwap$RawType$(
+                    UNSAFE.getObject(bb, BYTE_BUFFER_HB),
+                    address(bb, indexRO(bb, index)),
+                    convEndian(handle.be, expected), convEndian(handle.be, value));
+        }
+
+        @ForceInline
         static boolean weakCompareAndSetAcquire(ByteBufferHandle handle, Object obb, int index, $type$ expected, $type$ value) {
             ByteBuffer bb = (ByteBuffer) obb;
             return UNSAFE.weakCompareAndSwap$RawType$Acquire(
@@ -493,5 +523,7 @@ final class VarHandleByteArrayAs$Type$s extends VarHandleByteArrayBase {
                                       convEndian(handle.be, value))) + value;
         }
 #end[AtomicAdd]
+
+        static final VarForm FORM = new VarForm(ByteBufferHandle.class, ByteBuffer.class, $type$.class, int.class);
     }
 }
