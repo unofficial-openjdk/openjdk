@@ -29,17 +29,20 @@
  * @summary Tests for java.lang.reflect.Layer@createWithXXX methods
  */
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
-import static java.lang.module.ModuleFinder.empty;
 import java.lang.module.ModuleReference;
 import java.lang.reflect.Layer;
 import java.lang.reflect.LayerInstantiationException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Module;
+import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -70,7 +73,7 @@ public class LayerAndLoadersTest {
 
 
     /**
-     * Basic test of Layer.createWithOneLoader
+     * Basic test of Layer.defineModulesWithOneLoader
      *
      * Test scenario:
      *   m1 requires m2 and m3
@@ -99,7 +102,7 @@ public class LayerAndLoadersTest {
 
 
     /**
-     * Basic test of Layer.createWithManyLoaders
+     * Basic test of Layer.defineModulesWithManyLoaders
      *
      * Test scenario:
      *   m1 requires m2 and m3
@@ -131,7 +134,7 @@ public class LayerAndLoadersTest {
 
 
     /**
-     * Basic test of Layer.createWithOneLoader where one of the modules
+     * Basic test of Layer.defineModulesWithOneLoader where one of the modules
      * is a service provider module.
      *
      * Test scenario:
@@ -172,7 +175,7 @@ public class LayerAndLoadersTest {
 
 
     /**
-     * Basic test of Layer.createWithManyLoaders where one of the modules
+     * Basic test of Layer.defineModulesWithManyLoaders where one of the modules
      * is a service provider module.
      *
      * Test scenario:
@@ -272,7 +275,7 @@ public class LayerAndLoadersTest {
 
         Configuration cf = Layer.boot()
             .configuration()
-            .resolveRequires(finder, empty(), Set.of("m1", "m2"));
+            .resolveRequires(finder, ModuleFinder.of(), Set.of("m1", "m2"));
 
         // cannot define both module m1 and m2 to the same class loader
         try {
@@ -306,7 +309,7 @@ public class LayerAndLoadersTest {
 
         Configuration cf1 = Layer.boot()
             .configuration()
-            .resolveRequires(finder1, empty(), Set.of("m1", "m2"));
+            .resolveRequires(finder1, ModuleFinder.of(), Set.of("m1", "m2"));
 
         Layer layer1 = Layer.boot().defineModulesWithManyLoaders(cf1, null);
         checkLayer(layer1, "m1", "m2");
@@ -319,7 +322,7 @@ public class LayerAndLoadersTest {
 
         ModuleFinder finder2 = ModuleUtils.finderOf(descriptor3, descriptor4);
 
-        Configuration cf2 = cf1.resolveRequires(finder2, empty(), Set.of("m3", "m4"));
+        Configuration cf2 = cf1.resolveRequires(finder2, ModuleFinder.of(), Set.of("m3", "m4"));
 
         // package p cannot be supplied by two class loaders
         try {
@@ -350,7 +353,7 @@ public class LayerAndLoadersTest {
         checkLayer(layer1, "m1", "m2", "m3");
 
         ModuleFinder finder = ModuleFinder.of(MODS_DIR);
-        Configuration cf2 = cf1.resolveRequires(finder, empty(), Set.of("m1"));
+        Configuration cf2 = cf1.resolveRequires(finder, ModuleFinder.of(), Set.of("m1"));
 
         Layer layer2 = layer1.defineModulesWithOneLoader(cf2, null);
         checkLayer(layer2, "m1", "m2", "m3");
@@ -398,7 +401,7 @@ public class LayerAndLoadersTest {
         checkLayer(layer1, "m1", "m2", "m3");
 
         ModuleFinder finder = ModuleFinder.of(MODS_DIR);
-        Configuration cf2 = cf1.resolveRequires(finder, empty(), Set.of("m1"));
+        Configuration cf2 = cf1.resolveRequires(finder, ModuleFinder.of(), Set.of("m1"));
 
         Layer layer2 = layer1.defineModulesWithManyLoaders(cf2, null);
         checkLayer(layer2, "m1", "m2", "m3");
@@ -492,7 +495,7 @@ public class LayerAndLoadersTest {
 
         ModuleFinder finder = finderFor("m1", "m3");
 
-        Configuration cf2 = cf1.resolveRequires(finder, empty(), Set.of("m1"));
+        Configuration cf2 = cf1.resolveRequires(finder, ModuleFinder.of(), Set.of("m1"));
 
         Layer layer2 = layer1.defineModulesWithOneLoader(cf2, null);
         checkLayer(layer2, "m1", "m3");
@@ -528,7 +531,7 @@ public class LayerAndLoadersTest {
 
         ModuleFinder finder = finderFor("m1", "m3");
 
-        Configuration cf2 = cf1.resolveRequires(finder, empty(), Set.of("m1"));
+        Configuration cf2 = cf1.resolveRequires(finder, ModuleFinder.of(), Set.of("m1"));
 
         Layer layer2 = layer1.defineModulesWithManyLoaders(cf2, null);
         checkLayer(layer2, "m1", "m3");
@@ -563,6 +566,48 @@ public class LayerAndLoadersTest {
     }
 
 
+    /**
+     * Basic test of resource loading with a class loader created by
+     * Layer.defineModulesWithOneLoader.
+     */
+    public void testResourcesOneLoader() throws Exception {
+        Configuration cf = resolveRequires("m1");
+        ClassLoader scl = ClassLoader.getSystemClassLoader();
+        Layer layer = Layer.boot().defineModulesWithOneLoader(cf, scl);
+        ClassLoader loader = layer.findLoader("m1");
+        testResourceLoading(loader, "p/Main.class");
+    }
+
+    /**
+     * Basic test of resource loading with a class loader created by
+     * Layer.defineModulesWithOneLoader.
+     */
+    public void testResourcesManyLoaders() throws Exception {
+        Configuration cf = resolveRequires("m1");
+        ClassLoader scl = ClassLoader.getSystemClassLoader();
+        Layer layer = Layer.boot().defineModulesWithManyLoaders(cf, scl);
+        ClassLoader loader = layer.findLoader("m1");
+        testResourceLoading(loader, "p/Main.class");
+    }
+
+    /**
+     * Test that a resource is located by a class loader.
+     */
+    private void testResourceLoading(ClassLoader loader, String name)
+        throws IOException
+    {
+        URL url = loader.getResource(name);
+        assertNotNull(url);
+
+        try (InputStream in = loader.getResourceAsStream(name)) {
+            assertNotNull(in);
+        }
+
+        Enumeration<URL> urls = loader.getResources(name);
+        assertTrue(urls.hasMoreElements());
+    }
+
+
     // -- supporting methods --
 
 
@@ -574,7 +619,7 @@ public class LayerAndLoadersTest {
         ModuleFinder finder = ModuleFinder.of(MODS_DIR);
         return Layer.boot()
             .configuration()
-            .resolveRequires(finder, empty(), Set.of(roots));
+            .resolveRequires(finder, ModuleFinder.of(), Set.of(roots));
     }
 
     /**
@@ -585,7 +630,7 @@ public class LayerAndLoadersTest {
         ModuleFinder finder = ModuleFinder.of(MODS_DIR);
         return Layer.boot()
             .configuration()
-            .resolveRequiresAndUses(finder, empty(), Set.of(roots));
+            .resolveRequiresAndUses(finder, ModuleFinder.of(), Set.of(roots));
     }
 
 

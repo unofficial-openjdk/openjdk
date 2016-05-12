@@ -114,7 +114,7 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(Modifier.PUBLIC, "m3")
+                .requires(Set.of(Modifier.PUBLIC), "m3")
                 .build();
 
         ModuleDescriptor descriptor3
@@ -169,7 +169,7 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(Modifier.PUBLIC, "m1")
+                .requires(Set.of(Modifier.PUBLIC), "m1")
                 .build();
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
@@ -245,7 +245,7 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(Modifier.PUBLIC, "m1")
+                .requires(Set.of(Modifier.PUBLIC), "m1")
                 .build();
 
         ModuleDescriptor descriptor3
@@ -309,7 +309,7 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(Modifier.PUBLIC, "m1")
+                .requires(Set.of(Modifier.PUBLIC), "m1")
                 .build();
 
         ModuleFinder finder2 = ModuleUtils.finderOf(descriptor2);
@@ -371,7 +371,7 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(Modifier.PUBLIC, "m1")
+                .requires(Set.of(Modifier.PUBLIC), "m1")
                 .build();
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
@@ -398,7 +398,7 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor3
             = new ModuleDescriptor.Builder("m3")
-                .requires(Modifier.PUBLIC, "m2")
+                .requires(Set.of(Modifier.PUBLIC), "m2")
                 .build();
 
         ModuleDescriptor descriptor4
@@ -431,6 +431,132 @@ public class ConfigurationTest {
         assertTrue(m4.reads().contains(m1));
         assertTrue(m4.reads().contains(m2));
         assertTrue(m4.reads().contains(m3));
+    }
+
+
+    /**
+     * Basic test of "requires static":
+     *     m1 requires static m2
+     *     m2 is not observable
+     *     resolve m1
+     */
+    public void testRequiresStatic1() {
+        ModuleDescriptor descriptor1
+            = new ModuleDescriptor.Builder("m1")
+                .requires(Set.of(Modifier.STATIC), "m2")
+                .build();
+
+        ModuleFinder finder = ModuleUtils.finderOf(descriptor1);
+
+        Configuration cf = resolveRequires(finder, "m1");
+
+        assertTrue(cf.modules().size() == 1);
+
+        ResolvedModule m1 = cf.findModule("m1").get();
+        assertTrue(m1.reads().size() == 0);
+    }
+
+
+    /**
+     * Basic test of "requires static":
+     *     m1 requires static m2
+     *     m2
+     *     resolve m1
+     */
+    public void testRequiresStatic2() {
+        ModuleDescriptor descriptor1
+            = new ModuleDescriptor.Builder("m1")
+                .requires(Set.of(Modifier.STATIC), "m2")
+                .build();
+
+        ModuleDescriptor descriptor2
+            = new ModuleDescriptor.Builder("m2")
+                .build();
+
+        ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);
+
+        Configuration cf = resolveRequires(finder, "m1");
+
+        assertTrue(cf.modules().size() == 1);
+
+        ResolvedModule m1 = cf.findModule("m1").get();
+        assertTrue(m1.reads().size() == 0);
+    }
+
+
+    /**
+     * Basic test of "requires static":
+     *     m1 requires static m2
+     *     m2
+     *     resolve m1, m2
+     */
+    public void testRequiresStatic3() {
+        ModuleDescriptor descriptor1
+            = new ModuleDescriptor.Builder("m1")
+                .requires(Set.of(Modifier.STATIC), "m2")
+                .build();
+
+        ModuleDescriptor descriptor2
+            = new ModuleDescriptor.Builder("m2")
+                .build();
+
+        ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);
+
+        Configuration cf = resolveRequires(finder, "m1", "m2");
+
+        assertTrue(cf.modules().size() == 2);
+
+        ResolvedModule m1 = cf.findModule("m1").get();
+        ResolvedModule m2 = cf.findModule("m2").get();
+
+        assertTrue(m1.reads().size() == 1);
+        assertTrue(m1.reads().contains(m2));
+
+        assertTrue(m2.reads().size() == 0);
+    }
+
+
+    /**
+     * Basic test of "requires static":
+     *     m1 requires m2, m3
+     *     m2 requires static m2
+     *     m3
+     */
+    public void testRequiresStatic4() {
+        ModuleDescriptor descriptor1
+            = new ModuleDescriptor.Builder("m1")
+                .requires("m2")
+                .requires("m3")
+                .build();
+
+        ModuleDescriptor descriptor2
+            = new ModuleDescriptor.Builder("m2")
+                .requires(Set.of(Modifier.STATIC), "m3")
+                .build();
+
+        ModuleDescriptor descriptor3
+            = new ModuleDescriptor.Builder("m3")
+                .build();
+
+        ModuleFinder finder
+                = ModuleUtils.finderOf(descriptor1, descriptor2, descriptor3);
+
+        Configuration cf = resolveRequires(finder, "m1");
+
+        assertTrue(cf.modules().size() == 3);
+
+        ResolvedModule m1 = cf.findModule("m1").get();
+        ResolvedModule m2 = cf.findModule("m2").get();
+        ResolvedModule m3 = cf.findModule("m3").get();
+
+        assertTrue(m1.reads().size() == 2);
+        assertTrue(m1.reads().contains(m2));
+        assertTrue(m1.reads().contains(m3));
+
+        assertTrue(m2.reads().size() == 1);
+        assertTrue(m2.reads().contains(m3));
+
+        assertTrue(m3.reads().size() == 0);
     }
 
 
@@ -721,7 +847,7 @@ public class ConfigurationTest {
         // finder2 is the after ModuleFinder and so p@2.0 should not be located
         // as module p is in parent configuration.
 
-        cf2 = resolveRequiresAndUses(cf1, ModuleFinder.empty(), finder2, "m1");
+        cf2 = resolveRequiresAndUses(cf1, ModuleFinder.of(), finder2, "m1");
 
         assertTrue(cf2.parent().get() == cf1);
         assertTrue(cf2.modules().size() == 1);
@@ -865,7 +991,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder2 = ModuleUtils.finderOf(descriptor2);
 
-        Configuration cf2 = resolveRequires(cf1, ModuleFinder.empty(), finder2, "m2");
+        Configuration cf2 = resolveRequires(cf1, ModuleFinder.of(), finder2, "m2");
 
         assertTrue(cf2.modules().size() == 1);
         assertTrue(cf2.findModule("m2").isPresent());
@@ -917,7 +1043,7 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(Modifier.PUBLIC, "m1")
+                .requires(Set.of(Modifier.PUBLIC), "m1")
                 .build();
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
@@ -967,7 +1093,7 @@ public class ConfigurationTest {
      */
     @Test(expectedExceptions = { ResolutionException.class })
     public void testRootNotFound() {
-        resolveRequires(ModuleFinder.empty(), "m1");
+        resolveRequires(ModuleFinder.of(), "m1");
     }
 
 
@@ -1440,22 +1566,22 @@ public class ConfigurationTest {
 
     @Test(expectedExceptions = { NullPointerException.class })
     public void testResolveRequiresWithNull1() {
-        resolveRequires((ModuleFinder)null, ModuleFinder.empty());
+        resolveRequires((ModuleFinder)null, ModuleFinder.of());
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
     public void testResolveRequiresWithNull2() {
-        resolveRequires(ModuleFinder.empty(), (ModuleFinder)null);
+        resolveRequires(ModuleFinder.of(), (ModuleFinder)null);
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
     public void testResolveRequiresAndUsesWithNull1() {
-        resolveRequiresAndUses((ModuleFinder) null, ModuleFinder.empty());
+        resolveRequiresAndUses((ModuleFinder) null, ModuleFinder.of());
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
     public void testResolveRequiresAndUsesWithNull2() {
-        resolveRequiresAndUses(ModuleFinder.empty(), (ModuleFinder) null);
+        resolveRequiresAndUses(ModuleFinder.of(), (ModuleFinder) null);
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
@@ -1493,7 +1619,7 @@ public class ConfigurationTest {
     private Configuration resolveRequires(Configuration parent,
                                           ModuleFinder before,
                                           String... roots) {
-        return resolveRequires(parent, before, ModuleFinder.empty(), roots);
+        return resolveRequires(parent, before, ModuleFinder.of(), roots);
     }
 
     private Configuration resolveRequires(ModuleFinder before,
@@ -1521,7 +1647,7 @@ public class ConfigurationTest {
     private Configuration resolveRequiresAndUses(Configuration parent,
                                                  ModuleFinder before,
                                                  String... roots) {
-        return resolveRequiresAndUses(parent, before, ModuleFinder.empty(), roots);
+        return resolveRequiresAndUses(parent, before, ModuleFinder.of(), roots);
     }
 
     private Configuration resolveRequiresAndUses(ModuleFinder before,
