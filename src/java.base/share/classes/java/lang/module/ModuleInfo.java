@@ -291,13 +291,13 @@ final class ModuleInfo {
             } else {
                 mods = new HashSet<>();
 
-                boolean isTransitive = ((flags & ACC_TRANSITIVE) != 0);
+                boolean isPublic = ((flags & ACC_PUBLIC) != 0);
                 boolean isStatic = (((flags) & ACC_STATIC_PHASE) != 0);
-                if (isTransitive && isStatic) {
-                    throw invalidModuleDescriptor("ACC_TRANSITIVE and"
+                if (isPublic && isStatic) {
+                    throw invalidModuleDescriptor("ACC_PUBLIC and"
                                                   + "ACC_STATIC_PHASE set");
                 }
-                if (isTransitive)
+                if (isPublic)
                     mods.add(Requires.Modifier.PUBLIC);
                 else if (isStatic)
                     mods.add(Requires.Modifier.STATIC);

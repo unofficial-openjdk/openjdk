@@ -46,7 +46,7 @@ public class ClassFileConstants {
 
     // access, requires, and exports flags
     public static final int ACC_MODULE        = 0x8000;
-    public static final int ACC_TRANSITIVE    = 0x0010;
+    public static final int ACC_PUBLIC        = 0x0010;
     public static final int ACC_STATIC_PHASE  = 0x0020;
     public static final int ACC_DYNAMIC_PHASE = 0x0040;
     public static final int ACC_SYNTHETIC     = 0x1000;

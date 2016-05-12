@@ -95,7 +95,7 @@ class ClassFileAttributes {
                     mods = Collections.emptySet();
                 } else {
                     mods = new HashSet<>();
-                    if ((flags & ACC_TRANSITIVE) != 0)
+                    if ((flags & ACC_PUBLIC) != 0)
                         mods.add(Requires.Modifier.PUBLIC);
                     if ((flags & ACC_STATIC_PHASE) != 0)
                         mods.add(Requires.Modifier.STATIC);
@@ -195,7 +195,7 @@ class ClassFileAttributes {
                 String dn = md.name();
                 int flags = 0;
                 if (md.modifiers().contains(Requires.Modifier.PUBLIC))
-                    flags |= ACC_TRANSITIVE;
+                    flags |= ACC_PUBLIC;
                 if (md.modifiers().contains(Requires.Modifier.STATIC))
                     flags |= ACC_STATIC_PHASE;
                 if (md.modifiers().contains(Requires.Modifier.SYNTHETIC))
