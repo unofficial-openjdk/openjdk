@@ -63,6 +63,7 @@ public class Names {
     public final Name _default;
     public final Name _super;
     public final Name _this;
+    public final Name dynamic;
     public final Name exports;
     public final Name module;
     public final Name provides;
@@ -218,6 +219,7 @@ public class Names {
         _default = fromString("default");
         _super = fromString("super");
         _this = fromString("this");
+        dynamic = fromString("dynamic");
         exports = fromString("exports");
         module = fromString("module");
         provides = fromString("provides");

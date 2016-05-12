@@ -91,7 +91,7 @@ public class ModulePaths {
     }
 
     Configuration configuration(String... roots) {
-        return Configuration.empty().resolveRequires(finder, ModuleFinder.empty(), Set.of(roots));
+        return Configuration.empty().resolveRequires(finder, ModuleFinder.of(), Set.of(roots));
     }
 
     private static ModuleFinder createModulePathFinder(String mpaths) {
