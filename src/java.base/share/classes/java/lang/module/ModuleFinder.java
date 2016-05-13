@@ -68,10 +68,10 @@ import sun.security.action.GetPropertyAction;
  * }</pre>
  *
  * <p> The {@link #find(String) find} and {@link #findAll() findAll} methods
- * defined here can fail for several reasons. These include include I/O errors,
- * errors detected parsing a module descriptor ({@code module-info.class}), or
- * in the case of {@code ModuleFinder} returned by {@link #of ModuleFinder.of},
- * that two or more modules with the same name are found in a directory.
+ * defined here can fail for several reasons. These include I/O errors, errors
+ * detected parsing a module descriptor ({@code module-info.class}), or in the
+ * case of {@code ModuleFinder} returned by {@link #of ModuleFinder.of}, that
+ * two or more modules with the same name are found in a directory.
  * When an error is detected then these methods throw {@link FindException
  * FindException} with an appropriate {@link Throwable#getCause cause}.
  * The behavior of a {@code ModuleFinder} after a {@code FindException} is
