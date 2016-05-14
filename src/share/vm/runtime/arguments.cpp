@@ -1278,7 +1278,7 @@ void Arguments::check_unsupported_dumping_properties() {
   assert(DumpSharedSpaces, "this function is only used with -Xshare:dump");
   const char* unsupported_properties[5] = { "jdk.module.main",
                                            "jdk.module.path",
-                                           "jdk.upgrade.module.path",
+                                           "jdk.module.upgrade.path",
                                            "jdk.launcher.addmods",
                                            "jdk.launcher.limitmods" };
   const char* unsupported_options[5] = { "-m",
