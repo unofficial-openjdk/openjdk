@@ -268,18 +268,22 @@ public interface ModuleFinder {
      * </ul>
      *
      * <p> In addition to JAR files, an implementation may also support modules
-     * that are packaged in other implementation specific module formats. As
-     * with automatic modules, the contents of a packaged or exploded module
-     * may need to be <em>scanned</em> in order to determine the packages in
-     * the module. If a {@code .class} file that corresponds to a class in an
+     * that are packaged in other implementation specific module formats. When
+     * a file is encountered that is not recognized as a packaged module then
+     * {@code FindException} is thrown. An implementation may choose to ignore
+     * some files, {@link java.nio.file.Files#isHidden hidden} files for
+     * example. Paths to files that do not exist are always ignored. </p>
+     *
+     * <p> As with automatic modules, the contents of a packaged or exploded
+     * module may need to be <em>scanned</em> in order to determine the packages
+     * in the module. If a {@code .class} file that corresponds to a class in an
      * unnamed package is encountered then {@code FindException} is thrown. </p>
      *
      * <p> Finders created by this method are lazy and do not eagerly check
      * that the given file paths are directories or packaged modules.
      * Consequently, the {@code find} or {@code findAll} methods will only
      * fail if invoking these methods results in searching a directory or
-     * packaged module and an error is encountered. Paths to files that do not
-     * exist are ignored. </p>
+     * packaged module and an error is encountered. </p>
      *
      * @param entries
      *        A possibly-empty array of paths to directories of modules
