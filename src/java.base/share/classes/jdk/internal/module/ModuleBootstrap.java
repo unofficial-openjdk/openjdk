@@ -129,7 +129,7 @@ public final class ModuleBootstrap {
 
         // -upgrademodulepath option specified to launcher
         ModuleFinder upgradeModulePath
-            = createModulePathFinder("jdk.upgrade.module.path");
+            = createModulePathFinder("jdk.module.upgrade.path");
         if (upgradeModulePath != null)
             systemModules = ModuleFinder.compose(upgradeModulePath, systemModules);
 

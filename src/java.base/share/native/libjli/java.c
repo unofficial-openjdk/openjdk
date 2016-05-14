@@ -887,7 +887,7 @@ SetUpgradeModulePath(const char *s)
 {
     char *def;
     const char *orig = s;
-    static const char format[] = "-Djdk.upgrade.module.path=%s";
+    static const char format[] = "-Djdk.module.upgrade.path=%s";
     if (s == NULL)
         return;
     s = JLI_WildcardExpandClasspath(s);
