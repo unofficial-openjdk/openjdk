@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -97,6 +97,9 @@ final class SunEntries {
             map.put("SecureRandom.NativePRNG",
                 "sun.security.provider.NativePRNG");
         }
+
+        map.put("SecureRandom.DRBG", "sun.security.provider.DRBG");
+
         map.put("SecureRandom.SHA1PRNG",
              "sun.security.provider.SecureRandom");
         if (nativeAvailable && !useNativePRNG) {
@@ -199,6 +202,33 @@ final class SunEntries {
         map.put("Alg.Alias.MessageDigest.2.16.840.1.101.3.4.2.3", "SHA-512");
         map.put("Alg.Alias.MessageDigest.OID.2.16.840.1.101.3.4.2.3",
                 "SHA-512");
+        map.put("MessageDigest.SHA-512/224", "sun.security.provider.SHA5$SHA512_224");
+        map.put("Alg.Alias.MessageDigest.2.16.840.1.101.3.4.2.5", "SHA-512/224");
+        map.put("Alg.Alias.MessageDigest.OID.2.16.840.1.101.3.4.2.5",
+                "SHA-512/224");
+        map.put("MessageDigest.SHA-512/256", "sun.security.provider.SHA5$SHA512_256");
+        map.put("Alg.Alias.MessageDigest.2.16.840.1.101.3.4.2.6", "SHA-512/256");
+        map.put("Alg.Alias.MessageDigest.OID.2.16.840.1.101.3.4.2.6",
+                "SHA-512/256");
+
+        map.put("MessageDigest.SHA3-224", "sun.security.provider.SHA3$SHA224");
+        map.put("Alg.Alias.MessageDigest.2.16.840.1.101.3.4.2.7", "SHA3-224");
+        map.put("Alg.Alias.MessageDigest.OID.2.16.840.1.101.3.4.2.7",
+                "SHA3-224");
+
+        map.put("MessageDigest.SHA3-256", "sun.security.provider.SHA3$SHA256");
+        map.put("Alg.Alias.MessageDigest.2.16.840.1.101.3.4.2.8", "SHA3-256");
+        map.put("Alg.Alias.MessageDigest.OID.2.16.840.1.101.3.4.2.8",
+                "SHA3-256");
+        map.put("MessageDigest.SHA3-384", "sun.security.provider.SHA3$SHA384");
+        map.put("Alg.Alias.MessageDigest.2.16.840.1.101.3.4.2.9", "SHA3-384");
+        map.put("Alg.Alias.MessageDigest.OID.2.16.840.1.101.3.4.2.9",
+                "SHA3-384");
+        map.put("MessageDigest.SHA3-512", "sun.security.provider.SHA3$SHA512");
+        map.put("Alg.Alias.MessageDigest.2.16.840.1.101.3.4.2.10", "SHA3-512");
+        map.put("Alg.Alias.MessageDigest.OID.2.16.840.1.101.3.4.2.10",
+                "SHA3-512");
+
 
         /*
          * Algorithm Parameter Generator engines
