@@ -338,13 +338,12 @@ public interface ModuleFinder {
         finderList.forEach(Objects::requireNonNull);
 
         return new ModuleFinder() {
-            // cached name -> module
-            private Map<String, ModuleReference> nameToModule = new HashMap<>();
-            // lazily created result of findAll
+            private final Map<String, ModuleReference> nameToModule = new HashMap<>();
             private Set<ModuleReference> allModules;
 
             @Override
             public Optional<ModuleReference> find(String name) {
+                // cached?
                 ModuleReference mref = nameToModule.get(name);
                 if (mref != null)
                     return Optional.of(mref);
@@ -358,11 +357,10 @@ public interface ModuleFinder {
 
             @Override
             public Set<ModuleReference> findAll() {
-                Set<ModuleReference> allModules = this.allModules;
                 if (allModules != null)
                     return allModules;
-                Set<ModuleReference> result = new HashSet<>();
-                result.addAll(nameToModule.values());
+                // seed with modules already found
+                Set<ModuleReference> result = new HashSet<>(nameToModule.values());
                 finderList.stream()
                           .flatMap(f -> f.findAll().stream())
                           .forEach(mref -> {
@@ -371,8 +369,8 @@ public interface ModuleFinder {
                                   result.add(mref);
                               }
                           });
-                this.allModules = Collections.unmodifiableSet(result);
-                return result;
+                allModules = Collections.unmodifiableSet(result);
+                return allModules;
             }
         };
     }
