@@ -1275,16 +1275,21 @@ public abstract class ClassLoader {
      * built-in to the virtual machine is searched.  That failing, this method
      * will invoke {@link #findResource(String)} to find the resource.  </p>
      *
-     * @apiNote When overriding this method it is recommended that an
-     * implementation ensures that any delegation is consistent with the {@link
+     * @apiNote Where several modules are defined to the same class loader,
+     * and where more than one module contains a resource with the given name,
+     * then the ordering that modules are searched is not specified and may be
+     * very unpredictable.
+     * When overriding this method it is recommended that an implementation
+     * ensures that any delegation is consistent with the {@link
      * #getResources(java.lang.String) getResources(String)} method.
      *
      * @param  name
      *         The resource name
      *
-     * @return  A <tt>URL</tt> object for reading the resource, or
-     *          <tt>null</tt> if the resource could not be found or the invoker
-     *          doesn't have adequate  privileges to get the resource.
+     * @return  {@code URL} object for reading the resource; {@code null} if
+     *          the resource could not be found, a {@code URL} could not be
+     *          constructed to locate the resource, or access to the resource
+     *          is denied by the security manager.
      *
      * @since  1.1
      */
@@ -1306,13 +1311,16 @@ public abstract class ClassLoader {
      * (images, audio, text, etc) that can be accessed by class code in a way
      * that is independent of the location of the code.
      *
-     * <p>The name of a resource is a <tt>/</tt>-separated path name that
+     * <p> The name of a resource is a <tt>/</tt>-separated path name that
      * identifies the resource.
      *
-     * <p> The search order is described in the documentation for {@link
-     * #getResource(String)}.  </p>
+     * <p> The delegation order for searching is described in the documentation
+     * for {@link #getResource(String)}.  </p>
      *
-     * @apiNote When overriding this method it is recommended that an
+     * @apiNote Where several modules are defined to the same class loader,
+     * and where more than one module contains a resource with the given name,
+     * then the ordering is not specified and may be very unpredictable.
+     * When overriding this method it is recommended that an
      * implementation ensures that any delegation is consistent with the {@link
      * #getResource(java.lang.String) getResource(String)} method. This should
      * ensure that the first element returned by the Enumeration's
@@ -1323,9 +1331,10 @@ public abstract class ClassLoader {
      *         The resource name
      *
      * @return  An enumeration of {@link java.net.URL <tt>URL</tt>} objects for
-     *          the resource.  If no resources could  be found, the enumeration
-     *          will be empty.  Resources that the class loader doesn't have
-     *          access to will not be in the enumeration.
+     *          the resource. If no resources could  be found, the enumeration
+     *          will be empty. Resources for which a {@code URL} cannot be
+     *          constructed, or where access to the resource is denied by the
+     *          security manager, are not returned in the enumeration.
      *
      * @throws  IOException
      *          If I/O errors occur
