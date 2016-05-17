@@ -91,7 +91,7 @@ public class Umod {
      // Resolves "m1"
      Configuration cf = Layer.boot()
              .configuration()
-             .resolveRequires(finder, ModuleFinder.empty(), Set.of("m1"));
+             .resolveRequires(finder, ModuleFinder.of(), Set.of("m1"));
 
      // map module m1 to class loader.
      // class c2 will be loaded in an unnamed module/loader.
@@ -137,7 +137,7 @@ public class Umod {
      // Resolves "m1"
      Configuration cf = Layer.boot()
              .configuration()
-             .resolveRequires(finder, ModuleFinder.empty(), Set.of("m1"));
+             .resolveRequires(finder, ModuleFinder.of(), Set.of("m1"));
 
      MySameClassLoader loader = new MySameClassLoader();
      // map module m1 to class loader.
@@ -183,7 +183,7 @@ public class Umod {
      // Resolves "m1"
      Configuration cf = Layer.boot()
              .configuration()
-             .resolveRequires(finder, ModuleFinder.empty(), Set.of("m1"));
+             .resolveRequires(finder, ModuleFinder.of(), Set.of("m1"));
 
      MySameClassLoader loader = new MySameClassLoader();
      // map module m1 to class loader.
