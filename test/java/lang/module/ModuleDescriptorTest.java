@@ -549,8 +549,11 @@ public class ModuleDescriptorTest {
 
     // isAutomatic
     public void testIsAutomatic() {
-        ModuleDescriptor descriptor = new Builder("foo").build();
-        assertFalse(descriptor.isAutomatic());
+        ModuleDescriptor descriptor1 = new Builder("foo").build();
+        assertFalse(descriptor1.isAutomatic());
+
+        ModuleDescriptor descriptor2 = new Builder("foo").automatic().build();
+        assertTrue(descriptor2.isAutomatic());
     }
 
     // isSynthetic

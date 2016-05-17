@@ -1154,8 +1154,7 @@ public class ModuleDescriptor
      *         .build();
      * }</pre>
      *
-     * @apiNote A {@code Builder} cannot be used to create an {@link
-     * ModuleDescriptor#isAutomatic() automatic} or a {@link
+     * @apiNote A {@code Builder} cannot be used to create a {@link
      * ModuleDescriptor#isSynthetic() synthetic} module.
      *
      * @since 9
@@ -1163,7 +1162,7 @@ public class ModuleDescriptor
     public static final class Builder {
 
         final String name;
-        final boolean automatic;
+        boolean automatic;
         boolean synthetic;
         final Map<String, Requires> requires = new HashMap<>();
         final Set<String> uses = new HashSet<>();
@@ -1188,12 +1187,19 @@ public class ModuleDescriptor
          *         identifier
          */
         public Builder(String name) {
-            this(name, false);
+            this.name = requireModuleName(name);
         }
 
-        /* package */ Builder(String name, boolean automatic) {
-            this.name = requireModuleName(name);
-            this.automatic = automatic;
+        /**
+         * Updates the builder so that is builds an automatic module.
+         *
+         * @return This builder
+         *
+         * @see ModuleDescriptor#isAutomatic()
+         */
+        public Builder automatic() {
+            this.automatic = true;
+            return this;
         }
 
         /**
