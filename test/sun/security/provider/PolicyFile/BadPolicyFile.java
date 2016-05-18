@@ -4,9 +4,7 @@
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,20 +21,31 @@
  * questions.
  */
 
-package jdk.internal.vm.agent.spi;
-
-/**
- * Service interface for jdk.hotspot.agent to provide the tools that
- * jstack, jmap, jinfo will invoke, if present.
+/*
+ * @test
+ * @bug 8150468
+ * @summary check that a badly formatted policy file is handled correctly
+ * @run main/othervm BadPolicyFile
  */
-public interface ToolProvider {
-    /**
-     * Returns the name of the tool provider
-     */
-    String getName();
 
-    /**
-     * Invoke the tool provider with the given arguments
-     */
-    void run(String... arguments);
+import java.io.File;
+import java.net.URI;
+import java.security.AccessControlException;
+import java.security.Policy;
+import java.security.URIParameter;
+
+public class BadPolicyFile {
+
+    public static void main(String[] args) throws Exception {
+        URI uri = new File(System.getProperty("test.src", "."),
+                           "BadPolicyFile.policy").toURI();
+        Policy.setPolicy(Policy.getInstance("JavaPolicy", new URIParameter(uri)));
+        System.setSecurityManager(new SecurityManager());
+        try {
+            String javahome = System.getProperty("java.home");
+            throw new Exception("Expected AccessControlException");
+        } catch (AccessControlException ace) {
+            System.out.println("Test PASSED");
+        }
+    }
 }
