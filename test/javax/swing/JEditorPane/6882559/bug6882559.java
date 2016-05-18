@@ -4,9 +4,7 @@
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,23 +21,21 @@
  * questions.
  */
 
-package jdk.internal.netscape.javascript.spi;
+/* @test
+   @bug 6882559
+   @summary new JEditorPane("text/plain","") fails for null context class loader
+   @author Mikhail Cherkasov
+   @run main bug6882559
+*/
 
-import java.applet.Applet;
-import netscape.javascript.JSException;
-import netscape.javascript.JSObject;
+import javax.swing.*;
 
-@SuppressWarnings("deprecation")
-public interface JSObjectProvider {
-    /**
-     * Return a JSObject for the window containing the given applet.
-     * Implementations of this class should return null if not connected to a
-     * browser, for example, when running in AppletViewer.
-     *
-     * @param applet The applet.
-     * @return JSObject for the window containing the given applet or null if we
-     * are not connected to a browser.
-     * @throws JSException when an error is encountered.
-     */
-    public JSObject getWindow(Applet applet) throws JSException;
+
+public class bug6882559 {
+    public static void main(String[] args) throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            Thread.currentThread().setContextClassLoader(null);
+            new javax.swing.JEditorPane("text/plain", "");
+        });
+    }
 }
