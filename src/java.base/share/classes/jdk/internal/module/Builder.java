@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Requires;
+import java.lang.module.ModuleDescriptor.Requires.Modifier;
 import java.lang.module.ModuleDescriptor.Version;
 import java.util.Collections;
 import java.util.HashMap;
@@ -53,10 +54,12 @@ final class Builder {
     private static final JavaLangModuleAccess jlma =
         SharedSecrets.getJavaLangModuleAccess();
 
-    private static final Set<Requires.Modifier> MANDATED =
-        Collections.singleton(Requires.Modifier.MANDATED);
-    private static final Set<Requires.Modifier> PUBLIC =
-        Collections.singleton(Requires.Modifier.PUBLIC);
+    private static final Set<Modifier> MANDATED_MODS =
+        Collections.singleton(Modifier.MANDATED);
+    private static final Set<Modifier> PUBLIC_MODS =
+        Collections.singleton(Modifier.PUBLIC);
+    private static final Set<Modifier> STATIC_MODS =
+        Collections.singleton(Modifier.STATIC);
 
     // Static cache of the most recently seen Version to cheaply deduplicate
     // most Version objects.  JDK modules have the same version.
@@ -98,24 +101,30 @@ final class Builder {
     }
 
     /**
-     * Adds a module dependence with an empty set of modifiers.
+     * Adds a module dependence with the given modifier.
      */
-    public Builder requires(String mn) {
-        requires.add(jlma.newRequires(Collections.emptySet(), mn));
+    public Builder requires(Requires.Modifier mod, String mn) {
+        switch (mod) {
+            case MANDATED :
+                requires.add(jlma.newRequires(MANDATED_MODS, mn));
+                break;
+            case PUBLIC :
+                requires.add(jlma.newRequires(PUBLIC_MODS, mn));
+                break;
+            case STATIC :
+                requires.add(jlma.newRequires(STATIC_MODS, mn));
+                break;
+            default:
+                requires.add(jlma.newRequires(Collections.singleton(mod), mn));
+        }
         return this;
     }
 
     /**
-     * Adds a module dependence with the given modifier.
+     * Adds a module dependence with an empty set of modifiers.
      */
-    public Builder requires(Requires.Modifier mod, String mn) {
-        if (mod == Requires.Modifier.MANDATED) {
-            requires.add(jlma.newRequires(MANDATED, mn));
-        } else if (mod == Requires.Modifier.PUBLIC) {
-            requires.add(jlma.newRequires(PUBLIC, mn));
-        } else {
-            requires.add(jlma.newRequires(Collections.singleton(mod), mn));
-        }
+    public Builder requires(String mn) {
+        requires.add(jlma.newRequires(Collections.emptySet(), mn));
         return this;
     }
 
@@ -131,7 +140,7 @@ final class Builder {
      * Adds an export to a set of target modules.
      */
     public Builder exports(String pn, Set<String> targets) {
-        exports.add(jlma.newExports(pn, targets));
+        exports.add(jlma.newExports(Collections.emptySet(), pn, targets));
         return this;
     }
 
@@ -146,7 +155,7 @@ final class Builder {
      * Adds an export.
      */
     public Builder exports(String pn) {
-        exports.add(jlma.newExports(pn));
+        exports.add(jlma.newExports(Collections.emptySet(), pn));
         return this;
     }
 

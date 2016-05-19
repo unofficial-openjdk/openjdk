@@ -706,7 +706,7 @@ public final class TaskHelper {
         Configuration bootConfiguration = Layer.boot().configuration();
         try {
             Configuration cf = bootConfiguration
-                .resolveRequiresAndUses(ModuleFinder.empty(),
+                .resolveRequiresAndUses(ModuleFinder.of(),
                                         finder,
                                         Collections.emptySet());
             ClassLoader scl = ClassLoader.getSystemClassLoader();

@@ -25,8 +25,9 @@
 
 package java.lang.module;
 
-import java.util.*;
-import java.util.stream.*;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 class Dependence {

@@ -129,7 +129,7 @@ public final class ModuleBootstrap {
 
         // -upgrademodulepath option specified to launcher
         ModuleFinder upgradeModulePath
-            = createModulePathFinder("jdk.upgrade.module.path");
+            = createModulePathFinder("jdk.module.upgrade.path");
         if (upgradeModulePath != null)
             systemModules = ModuleFinder.compose(upgradeModulePath, systemModules);
 
@@ -230,7 +230,7 @@ public final class ModuleBootstrap {
 
         // If `-addmods ALL-MODULE-PATH` is specified then all observable
         // modules on the application module path will be resolved.
-        if  (appModulePath != null && addAllApplicationModules) {
+        if (appModulePath != null && addAllApplicationModules) {
             ModuleFinder f = finder;  // observable modules
             appModulePath.findAll()
                 .stream()
@@ -341,7 +341,7 @@ public final class ModuleBootstrap {
         // resolve all root modules
         Configuration cf = Configuration.empty()
                 .resolveRequires(finder,
-                                 ModuleFinder.empty(),
+                                 ModuleFinder.of(),
                                  roots);
 
         // module name -> reference

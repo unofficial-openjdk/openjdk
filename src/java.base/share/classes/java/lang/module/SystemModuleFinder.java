@@ -207,9 +207,9 @@ class SystemModuleFinder implements ModuleFinder {
          * if not found.
          */
         private ImageLocation findImageLocation(String name) throws IOException {
+            Objects.requireNonNull(name);
             if (closed)
                 throw new IOException("ModuleReader is closed");
-
             if (imageReader != null) {
                 return imageReader.findLocation(module, name);
             } else {
@@ -257,6 +257,7 @@ class SystemModuleFinder implements ModuleFinder {
 
         @Override
         public void release(ByteBuffer bb) {
+            Objects.requireNonNull(bb);
             ImageReader.releaseByteBuffer(bb);
         }
 

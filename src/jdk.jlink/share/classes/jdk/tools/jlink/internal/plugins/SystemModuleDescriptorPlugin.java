@@ -28,8 +28,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.module.ModuleDescriptor.*;
 import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleDescriptor.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -496,6 +496,12 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
 
                 // requires
                 for (ModuleDescriptor.Requires req : md.requires()) {
+                    Set<Requires.Modifier> mods = req.modifiers();
+                    if (mods.contains(Requires.Modifier.PUBLIC) &&
+                            mods.contains(Requires.Modifier.STATIC)) {
+                        throw new IllegalArgumentException("PUBLIC and STATIC not allowed together");
+                    }
+
                     switch (req.modifiers().size()) {
                         case 0:
                             requires(req.name());

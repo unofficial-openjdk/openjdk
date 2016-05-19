@@ -336,7 +336,7 @@ public class AutomaticModulesTest {
 
         ModuleDescriptor descriptor2
             =  new ModuleDescriptor.Builder("m2")
-                .requires(Modifier.PUBLIC, "m3")
+                .requires(Set.of(Modifier.PUBLIC), "m3")
                 .requires("java.base")
                 .build();
 
@@ -469,7 +469,7 @@ public class AutomaticModulesTest {
     static Configuration resolve(Configuration parent,
                                  ModuleFinder finder,
                                  String... roots) {
-        return parent.resolveRequires(finder, ModuleFinder.empty(), Set.of(roots));
+        return parent.resolveRequires(finder, ModuleFinder.of(), Set.of(roots));
     }
 
     /**
