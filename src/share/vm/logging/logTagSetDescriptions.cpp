@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,19 +21,22 @@
  * questions.
  *
  */
-
 #include "precompiled.hpp"
-#include "gc/g1/g1_globals.hpp"
+#include "logging/logTag.hpp"
+#include "logging/logTagSet.hpp"
+#include "logging/logTagSetDescriptions.hpp"
 
-G1_FLAGS(MATERIALIZE_DEVELOPER_FLAG, \
-         MATERIALIZE_PD_DEVELOPER_FLAG, \
-         MATERIALIZE_PRODUCT_FLAG, \
-         MATERIALIZE_PD_PRODUCT_FLAG,     \
-         MATERIALIZE_DIAGNOSTIC_FLAG, \
-         MATERIALIZE_EXPERIMENTAL_FLAG, \
-         MATERIALIZE_NOTPRODUCT_FLAG,  \
-         MATERIALIZE_MANAGEABLE_FLAG, \
-         MATERIALIZE_PRODUCT_RW_FLAG, \
-         IGNORE_RANGE, \
-         IGNORE_CONSTRAINT, \
-         IGNORE_WRITEABLE)
+// List of described tag sets. Tags should be specified using the LOG_TAGS()
+// macro. Described tag sets can be listed from command line (or DCMD) using
+// -Xlog:help (or "VM.log list")
+#define LOG_TAG_SET_DESCRIPTION_LIST \
+  LOG_TAG_SET_DESCRIPTION(LOG_TAGS(logging), \
+                          "Logging for the log framework itself")
+
+#define LOG_TAG_SET_DESCRIPTION(tags, descr) \
+  { &LogTagSetMapping<tags>::tagset(), descr },
+
+struct LogTagSetDescription tagset_descriptions[] = {
+  LOG_TAG_SET_DESCRIPTION_LIST
+  { NULL, NULL }
+};

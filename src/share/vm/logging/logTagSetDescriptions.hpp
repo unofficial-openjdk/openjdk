@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,19 +21,16 @@
  * questions.
  *
  */
+#ifndef SHARE_VM_LOGGING_LOGTAGSETDESCRIPTIONS_HPP
+#define SHARE_VM_LOGGING_LOGTAGSETDESCRIPTIONS_HPP
 
-#include "precompiled.hpp"
-#include "gc/g1/g1_globals.hpp"
+class LogTagSet;
 
-G1_FLAGS(MATERIALIZE_DEVELOPER_FLAG, \
-         MATERIALIZE_PD_DEVELOPER_FLAG, \
-         MATERIALIZE_PRODUCT_FLAG, \
-         MATERIALIZE_PD_PRODUCT_FLAG,     \
-         MATERIALIZE_DIAGNOSTIC_FLAG, \
-         MATERIALIZE_EXPERIMENTAL_FLAG, \
-         MATERIALIZE_NOTPRODUCT_FLAG,  \
-         MATERIALIZE_MANAGEABLE_FLAG, \
-         MATERIALIZE_PRODUCT_RW_FLAG, \
-         IGNORE_RANGE, \
-         IGNORE_CONSTRAINT, \
-         IGNORE_WRITEABLE)
+struct LogTagSetDescription {
+  const LogTagSet* tagset;
+  const char* descr;
+};
+
+extern struct LogTagSetDescription tagset_descriptions[];
+
+#endif // SHARE_VM_LOGGING_LOGTAGSETDESCRIPTIONS_HPP
