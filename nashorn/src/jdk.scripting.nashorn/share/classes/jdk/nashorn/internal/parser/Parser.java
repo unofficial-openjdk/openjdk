@@ -534,7 +534,7 @@ public class Parser extends AbstractParser implements Loggable {
 
         final ParserContextFunctionNode parentFunction = lc.getCurrentFunction();
         if (parentFunction != null && !parentFunction.isProgram()) {
-            sb.append(parentFunction.getName()).append('$');
+            sb.append(parentFunction.getName()).append(CompilerConstants.NESTED_FUNCTION_SEPARATOR.symbolName());
         }
 
         assert ident.getName() != null;
@@ -1827,7 +1827,7 @@ public class Parser extends AbstractParser implements Loggable {
 
     /**
      * ExpressionStatement :
-     *      Expression ; // [lookahead ~( or  function )]
+     *      Expression ; // [lookahead ~({ or  function )]
      *
      * See 12.4
      *
@@ -4711,7 +4711,7 @@ public class Parser extends AbstractParser implements Loggable {
         expect(ARROW);
 
         final long functionToken = Token.recast(startToken, ARROW);
-        final IdentNode name = new IdentNode(functionToken, Token.descPosition(functionToken), "=>:" + functionLine);
+        final IdentNode name = new IdentNode(functionToken, Token.descPosition(functionToken), NameCodec.encode("=>:") + functionLine);
         final ParserContextFunctionNode functionNode = createParserContextFunctionNode(name, functionToken, FunctionNode.Kind.ARROW, functionLine, null);
         functionNode.setFlag(FunctionNode.IS_ANONYMOUS);
 

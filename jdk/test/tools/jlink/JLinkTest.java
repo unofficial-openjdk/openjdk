@@ -162,7 +162,7 @@ public class JLinkTest {
         {
             String[] userOptions2 = {"--compress=2:compress-filter=^/java.base/*",
                 "--strip-debug", "--exclude-resources",
-                "*.jcov, */META-INF/*", "--sort-resources",
+                "*.jcov, */META-INF/*", "--order-resources",
                 "*/module-info.class,/sortcomposite2/*,*/javax/management/*"};
             String moduleName = "excludezipfilterskipdebugcomposite2";
             helper.generateDefaultJModule(moduleName, "composite2");
@@ -204,7 +204,7 @@ public class JLinkTest {
             String[] userOptions = {"--compress", "invalid"};
             String moduleName = "invalidCompressLevel";
             helper.generateDefaultJModule(moduleName, "composite2");
-            helper.generateDefaultImage(userOptions, moduleName).assertFailure("Error: Invalid level invalid");
+            helper.generateDefaultImage(userOptions, moduleName).assertFailure("Error: Invalid compression level invalid");
         }
 
         // @file

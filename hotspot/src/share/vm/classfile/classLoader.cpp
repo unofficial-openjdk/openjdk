@@ -320,7 +320,7 @@ u1* ClassPathZipEntry::open_entry(const char* name, jint* filesize, bool nul_ter
 #if INCLUDE_CDS
 u1* ClassPathZipEntry::open_versioned_entry(const char* name, jint* filesize, TRAPS) {
   u1* buffer = NULL;
-  if (DumpSharedSpaces) {
+  if (DumpSharedSpaces && !_is_boot_append) {
     // We presume default is multi-release enabled
     const char* multi_ver = Arguments::get_property("jdk.util.jar.enableMultiRelease");
     const char* verstr = Arguments::get_property("jdk.util.jar.version");
@@ -343,9 +343,11 @@ u1* ClassPathZipEntry::open_versioned_entry(const char* name, jint* filesize, TR
     }
 
     if (is_multi_ver) {
+      int n;
       char entry_name[JVM_MAXPATHLEN];
       if (version > 0) {
-        jio_snprintf(entry_name, sizeof(entry_name), "META-INF/versions/%d/%s", version, name);
+        n = jio_snprintf(entry_name, sizeof(entry_name), "META-INF/versions/%d/%s", version, name);
+        entry_name[n] = '\0';
         buffer = open_entry((const char*)entry_name, filesize, false, CHECK_NULL);
         if (buffer == NULL) {
           warning("Could not find %s in %s, try to find highest version instead", entry_name, _zip_name);
@@ -353,7 +355,8 @@ u1* ClassPathZipEntry::open_versioned_entry(const char* name, jint* filesize, TR
       }
       if (buffer == NULL) {
         for (int i = cur_ver; i >= base_version; i--) {
-          jio_snprintf(entry_name, sizeof(entry_name), "META-INF/versions/%d/%s", i, name);
+          n = jio_snprintf(entry_name, sizeof(entry_name), "META-INF/versions/%d/%s", i, name);
+          entry_name[n] = '\0';
           buffer = open_entry((const char*)entry_name, filesize, false, CHECK_NULL);
           if (buffer != NULL) {
             break;

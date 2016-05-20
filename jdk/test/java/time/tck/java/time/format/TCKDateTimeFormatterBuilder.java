@@ -72,7 +72,11 @@ import static org.testng.Assert.assertEquals;
 import java.text.ParsePosition;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.Month;
 import java.time.YearMonth;
+import java.time.ZonedDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
@@ -458,6 +462,98 @@ public class TCKDateTimeFormatterBuilder {
     //-----------------------------------------------------------------------
     //-----------------------------------------------------------------------
     //-----------------------------------------------------------------------
+    @DataProvider(name = "formatGenericTimeZonePatterns")
+    Object[][] data_formatGenericNonLocationPatterns() {
+        return new Object[][] {
+                {"v", "America/Los_Angeles", "PT"},
+                {"vvvv", "America/Los_Angeles", "Pacific Time"},
+                {"v", "America/New_York", "ET"},
+                {"vvvv", "America/New_York", "Eastern Time"},
+        };
+    }
+
+    @Test(dataProvider = "formatGenericTimeZonePatterns")
+    public void test_appendZoneText_formatGenericTimeZonePatterns(String pattern, String input, String expected) {
+        ZonedDateTime zdt = ZonedDateTime.of(LocalDateTime.now(), ZoneId.of(input));
+        DateTimeFormatter df = DateTimeFormatter.ofPattern(pattern);
+        assertEquals(zdt.format(df), expected);
+    }
+
+    @DataProvider(name = "parseGenericTimeZonePatterns")
+    Object[][]  data_parseGenericTimeZonePatterns() {
+        return new Object[][] {
+                {"yyyy DDD HH mm v", LocalDateTime.of(2015, Month.MARCH, 10, 12, 13), ZoneId.of("America/Los_Angeles"),
+                 "2015 069 12 13 PT"},
+                {"yyyy DDD HH mm vvvv", LocalDateTime.of(2015, Month.MARCH, 10, 12, 13), ZoneId.of("America/Los_Angeles"),
+                 "2015 069 12 13 Pacific Time"},
+                {"yyyy DDD HH mm v", LocalDateTime.of(2015, Month.NOVEMBER, 10, 12, 13), ZoneId.of("America/Los_Angeles"),
+                 "2015 314 12 13 PT"},
+                {"yyyy DDD HH mm vvvv", LocalDateTime.of(2015, Month.NOVEMBER, 10, 12, 13), ZoneId.of("America/Los_Angeles"),
+                 "2015 314 12 13 Pacific Time"},
+        };
+    }
+
+    @Test(dataProvider = "parseGenericTimeZonePatterns")
+    public void test_appendZoneText_parseGenericTimeZonePatterns(String pattern, LocalDateTime ldt, ZoneId zId, String input) {
+        DateTimeFormatter df = new DateTimeFormatterBuilder().appendPattern(pattern).toFormatter();
+        ZonedDateTime expected = ZonedDateTime.parse(input, df);
+        ZonedDateTime actual = ZonedDateTime.of(ldt, zId);
+        assertEquals(actual, expected);
+    }
+
+    @DataProvider(name = "formatNonGenericTimeZonePatterns_1")
+    Object[][]  data_formatNonGenericTimeZonePatterns_1() {
+        return new Object[][] {
+                {"yyyy-MM-dd HH:mm:ss z", LocalDateTime.of(2015, Month.NOVEMBER, 1, 0, 30),
+                 "2015-11-01 00:30:00 PDT"},
+                {"yyyy-MM-dd HH:mm:ss z", LocalDateTime.of(2015, Month.NOVEMBER, 1, 1, 30),
+                 "2015-11-01 01:30:00 PDT"},
+                {"yyyy-MM-dd HH:mm:ss z", LocalDateTime.of(2015, Month.NOVEMBER, 1, 2, 30),
+                 "2015-11-01 02:30:00 PST"},
+                {"yyyy-MM-dd HH:mm:ss zzzz", LocalDateTime.of(2015, Month.NOVEMBER, 1, 0, 30),
+                 "2015-11-01 00:30:00 Pacific Daylight Time"},
+                {"yyyy-MM-dd HH:mm:ss zzzz", LocalDateTime.of(2015, Month.NOVEMBER, 1, 1, 30),
+                 "2015-11-01 01:30:00 Pacific Daylight Time"},
+                {"yyyy-MM-dd HH:mm:ss zzzz", LocalDateTime.of(2015, Month.NOVEMBER, 1, 2, 30),
+                 "2015-11-01 02:30:00 Pacific Standard Time"},
+        };
+    }
+
+    @Test(dataProvider = "formatNonGenericTimeZonePatterns_1")
+    public void test_appendZoneText_parseNonGenricTimeZonePatterns_1(String pattern, LocalDateTime ldt, String expected) {
+        ZoneId  zId = ZoneId.of("America/Los_Angeles");
+        DateTimeFormatter df = new DateTimeFormatterBuilder().appendPattern(pattern).toFormatter();
+        ZonedDateTime zdt = ZonedDateTime.of(ldt, zId);
+        String actual = df.format(zdt);
+        assertEquals(actual, expected);
+    }
+
+    @DataProvider(name = "formatNonGenericTimeZonePatterns_2")
+    Object[][]  data_formatNonGenericTimeZonePatterns_2() {
+        return new Object[][] {
+                {"yyyy-MM-dd HH:mm:ss z", LocalDateTime.of(2015, Month.NOVEMBER, 1, 0, 30),
+                 "2015-11-01 00:30:00 PDT"},
+                {"yyyy-MM-dd HH:mm:ss z", LocalDateTime.of(2015, Month.NOVEMBER, 1, 1, 30),
+                 "2015-11-01 01:30:00 PT"},
+                {"yyyy-MM-dd HH:mm:ss z", LocalDateTime.of(2015, Month.NOVEMBER, 1, 2, 30),
+                 "2015-11-01 02:30:00 PST"},
+                {"yyyy-MM-dd HH:mm:ss zzzz", LocalDateTime.of(2015, Month.NOVEMBER, 1, 0, 30),
+                 "2015-11-01 00:30:00 Pacific Daylight Time"},
+                {"yyyy-MM-dd HH:mm:ss zzzz", LocalDateTime.of(2015, Month.NOVEMBER, 1, 1, 30),
+                 "2015-11-01 01:30:00 Pacific Time"},
+                {"yyyy-MM-dd HH:mm:ss zzzz", LocalDateTime.of(2015, Month.NOVEMBER, 1, 2, 30),
+                 "2015-11-01 02:30:00 Pacific Standard Time"},
+        };
+    }
+
+    @Test(dataProvider = "formatNonGenericTimeZonePatterns_2")
+    public void test_appendZoneText_parseNonGenricTimeZonePatterns_2(String pattern, LocalDateTime ldt, String expected) {
+        ZoneId  zId = ZoneId.of("America/Los_Angeles");
+        DateTimeFormatter df = DateTimeFormatter.ofPattern(pattern).withZone(zId);
+        String actual = df.format(ldt);
+        assertEquals(actual, expected);
+    }
+
     @Test(expectedExceptions=NullPointerException.class)
     public void test_appendZoneText_1arg_nullText() throws Exception {
         builder.appendZoneText(null);
@@ -733,6 +829,9 @@ public class TCKDateTimeFormatterBuilder {
 
             {"www"},
             {"WW"},
+
+            {"vv"},
+            {"vvv"},
         };
     }
 
@@ -793,7 +892,101 @@ public class TCKDateTimeFormatterBuilder {
         DateTimeFormatter df = new DateTimeFormatterBuilder().appendPattern("g").toFormatter();
          assertEquals(LocalDate.of(y, m, d).format(df), expected);
     }
+    //----------------------------------------------------------------------
+    @DataProvider(name="dayOfYearFieldValues")
+    Object[][] data_dayOfYearFieldValues() {
+        return new Object[][] {
+                {2016, 1, 1, "D", "1"},
+                {2016, 1, 31, "D", "31"},
+                {2016, 1, 1, "DD", "01"},
+                {2016, 1, 31, "DD", "31"},
+                {2016, 4, 9, "DD", "100"},
+                {2016, 1, 1, "DDD", "001"},
+                {2016, 1, 31, "DDD", "031"},
+                {2016, 4, 9, "DDD", "100"},
+        };
+    }
 
+    @Test(dataProvider="dayOfYearFieldValues")
+    public void test_dayOfYearFieldValues(int y, int m, int d, String pattern, String expected) throws Exception {
+        DateTimeFormatter df = new DateTimeFormatterBuilder().appendPattern(pattern).toFormatter();
+        assertEquals(LocalDate.of(y, m, d).format(df), expected);
+    }
+
+    @DataProvider(name="dayOfYearFieldAdjacentParsingValues")
+    Object[][] data_dayOfYearFieldAdjacentParsingValues() {
+        return new Object[][] {
+            {"20160281015", LocalDateTime.of(2016, 1, 28, 10, 15)},
+            {"20161001015", LocalDateTime.of(2016, 4, 9, 10, 15)},
+        };
+    }
+
+    @Test(dataProvider="dayOfYearFieldAdjacentParsingValues")
+    public void test_dayOfYearFieldAdjacentValueParsing(String input, LocalDateTime expected) {
+        DateTimeFormatter df = new DateTimeFormatterBuilder().appendPattern("yyyyDDDHHmm").toFormatter();
+        LocalDateTime actual = LocalDateTime.parse(input, df);
+        assertEquals(actual, expected);
+    }
+
+    @Test(expectedExceptions = DateTimeParseException.class)
+    public void test_dayOfYearFieldInvalidValue() {
+        DateTimeFormatter.ofPattern("DDD").parse("1234");
+    }
+
+    @Test(expectedExceptions = DateTimeParseException.class)
+    public void test_dayOfYearFieldInvalidAdacentValueParsingPattern() {
+        // patterns D and DD will not take part in adjacent value parsing
+        DateTimeFormatter.ofPattern("yyyyDDHHmmss").parse("201610123456");
+    }
+
+    //-----------------------------------------------------------------------
+    @DataProvider(name="secondsPattern")
+    Object[][] data_secondsPattern() {
+        return new Object[][] {
+                {"A", "1", LocalTime.ofNanoOfDay(1_000_000)},
+                {"A", "100000", LocalTime.ofSecondOfDay(100)},
+                {"AA", "01", LocalTime.ofNanoOfDay(1_000_000)},
+                {"AA", "100000", LocalTime.ofSecondOfDay(100)},
+                {"AAAAAA", "100000", LocalTime.ofSecondOfDay(100)},
+                {"HHmmssn", "0000001", LocalTime.ofNanoOfDay(1)},
+                {"HHmmssn", "000000111", LocalTime.ofNanoOfDay(111)},
+                {"HHmmssnn", "00000001", LocalTime.ofNanoOfDay(1)},
+                {"HHmmssnn", "0000001111", LocalTime.ofNanoOfDay(1111)},
+                {"HHmmssnnnnnn", "000000111111", LocalTime.ofNanoOfDay(111_111)},
+                {"N", "1", LocalTime.ofNanoOfDay(1)},
+                {"N", "100000", LocalTime.ofNanoOfDay(100_000)},
+                {"NN", "01", LocalTime.ofNanoOfDay(1)},
+                {"NN", "100000", LocalTime.ofNanoOfDay(100_000)},
+                {"NNNNNN", "100000", LocalTime.ofNanoOfDay(100_000)},
+        };
+    }
+
+    @Test(dataProvider="secondsPattern")
+    public void test_secondsPattern(String pattern, String input, LocalTime expected) throws Exception {
+        DateTimeFormatter df = new DateTimeFormatterBuilder().appendPattern(pattern).toFormatter();
+        assertEquals(LocalTime.parse(input, df), expected);
+    }
+
+    @DataProvider(name="secondsValues")
+    Object[][] data_secondsValues() {
+        return new Object[][] {
+                {"A", 1, "1000"},
+                {"n", 1, "0"},
+                {"N", 1, "1000000000"},
+        };
+    }
+
+    @Test(dataProvider="secondsValues")
+    public void test_secondsValues(String pattern, int seconds , String expected) throws Exception {
+        DateTimeFormatter df = new DateTimeFormatterBuilder().appendPattern(pattern).toFormatter();
+        assertEquals(LocalTime.ofSecondOfDay(seconds).format(df), expected);
+    }
+
+    @Test(expectedExceptions = DateTimeParseException.class)
+    public void test_secondsPatternInvalidAdacentValueParsingPattern() {
+        // patterns A*, N*, n* will not take part in adjacent value parsing
+        DateTimeFormatter.ofPattern("yyyyAA").parse("201610");
+    }
 
     //-----------------------------------------------------------------------
     @Test

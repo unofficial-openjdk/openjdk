@@ -329,6 +329,7 @@ public abstract class Configuration {
     public abstract MessageRetriever getDocletSpecificMsg();
 
     public CommentUtils cmtUtils;
+    public SortedSet<ModuleElement> modules;
 
     /**
      * A sorted set of packages specified on the command-line merged with a
@@ -395,6 +396,8 @@ public abstract class Configuration {
                 s.add(p);
             }
         }
+        modules = new TreeSet<>(utils.makeModuleComparator());
+        modules.addAll(modulePackages.keySet());
         showModules = (modulePackages.size() > 1);
     }
 
@@ -1140,7 +1143,7 @@ public abstract class Configuration {
          */
         @Override
         public String toString() {
-            String opt = name + " " + parameters;
+            String opt = name + (name.endsWith(":") ? "" : " ") + parameters;
             int optlen = opt.length();
             int spaces = 32 - optlen;
             StringBuffer sb = new StringBuffer("  -").append(opt);
