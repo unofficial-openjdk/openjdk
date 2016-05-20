@@ -181,6 +181,8 @@ java/nio/file/WatchService/LotsOfEvents.java                    7158947 solaris-
 
 java/nio/charset/coders/BashStreams.java                        8149712 generic-all
 
+java/nio/file/WatchService/DeleteInterference.java              8156511 linux-all
+
 ############################################################################
 
 # jdk_rmi
@@ -207,6 +209,10 @@ sun/security/krb5/auto/Unreachable.java                         7164518 macosx-a
 
 java/security/KeyPairGenerator/SolarisShortDSA.java             7041639 solaris-all
 sun/security/tools/keytool/standard.sh                          7041639 solaris-all
+
+sun/security/tools/keytool/ListKeychainStore.sh                 8156889 macosx-all
+
+sun/security/mscapi/ShortRSAKey1024.sh                          8153948 windows-all
 
 java/security/Security/ClassLoaderDeadlock/Deadlock2.sh         8062758 generic-all
 
