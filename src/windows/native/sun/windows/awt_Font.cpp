@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -256,7 +256,7 @@ AwtFont* AwtFont::Create(JNIEnv *env, jobject font, jint angle, jfloat awScale)
 
     AwtFont* awtFont = NULL;
     jobjectArray compFont = NULL;
-    int cfnum;
+    int cfnum = 0;
 
     try {
         if (env->EnsureLocalCapacity(3) < 0)
@@ -264,13 +264,15 @@ AwtFont* AwtFont::Create(JNIEnv *env, jobject font, jint angle, jfloat awScale)
 
         if (IsMultiFont(env, font)) {
             compFont = GetComponentFonts(env, font);
-            cfnum = env->GetArrayLength(compFont);
+            if (compFont != NULL) {
+                cfnum = env->GetArrayLength(compFont);
+            }
         } else {
             compFont = NULL;
             cfnum = 0;
         }
 
-        LPCWSTR wName;
+        LPCWSTR wName = NULL;
 
         awtFont = new AwtFont(cfnum, env, font);
 
@@ -614,7 +616,9 @@ int AwtFont::getFontDescriptorNumber(JNIEnv *env, jobject font,
 
     if (IsMultiFont(env, font)) {
         array = GetComponentFonts(env, font);
-        num = env->GetArrayLength(array);
+        if (array != NULL) {
+            num = env->GetArrayLength(array);
+        }
     } else {
         array = NULL;
         num = 0;
@@ -672,14 +676,16 @@ SIZE  AwtFont::DrawStringSize_sub(jstring str, HDC hDC,
 
     if (IsMultiFont(env, font)) {
         jobject peer = env->CallObjectMethod(font, AwtFont::peerMID);
-        array =  (jobjectArray)(env->CallObjectMethod(
-        peer, AwtFont::makeConvertedMultiFontStringMID, str));
-        DASSERT(!safe_ExceptionOccurred(env));
+        if (peer != NULL) {
+            array = (jobjectArray)(env->CallObjectMethod(
+            peer, AwtFont::makeConvertedMultiFontStringMID, str));
+            DASSERT(!safe_ExceptionOccurred(env));
 
-        if (array != NULL) {
-            arrayLength = env->GetArrayLength(array);
+            if (array != NULL) {
+                arrayLength = env->GetArrayLength(array);
+            }
+            env->DeleteLocalRef(peer);
         }
-        env->DeleteLocalRef(peer);
     } else {
         array = NULL;
         arrayLength = 0;
@@ -1168,7 +1174,7 @@ void AwtFontCache::IncRefCount(HFONT hFont){
 }
 
 LONG AwtFontCache::IncRefCount(Item* item){
-    LONG    newVal;
+    LONG    newVal = 0;
 
     if(NULL != item){
         newVal = InterlockedIncrement((long*)&item->refCount);
@@ -1177,7 +1183,7 @@ LONG AwtFontCache::IncRefCount(Item* item){
 }
 
 LONG AwtFontCache::DecRefCount(Item* item){
-    LONG    newVal;
+    LONG    newVal = 0;
 
     if(NULL != item){
         newVal = InterlockedDecrement((long*)&item->refCount);

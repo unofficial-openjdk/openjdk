@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -319,20 +319,22 @@ final class GaloisCounterMode extends FeedbackCipher {
 
     // Feed the AAD data to GHASH, pad if necessary
     void processAAD() {
-        if (aadBuffer != null && aadBuffer.size() > 0) {
-            byte[] aad = aadBuffer.toByteArray();
-            sizeOfAAD = aad.length;
-            aadBuffer = null;
+        if (aadBuffer != null) {
+            if (aadBuffer.size() > 0) {
+                byte[] aad = aadBuffer.toByteArray();
+                sizeOfAAD = aad.length;
 
-            int lastLen = aad.length % AES_BLOCK_SIZE;
-            if (lastLen != 0) {
-                ghashAllToS.update(aad, 0, aad.length - lastLen);
-                byte[] padded = expandToOneBlock(aad, aad.length - lastLen,
-                                                 lastLen);
-                ghashAllToS.update(padded);
-            } else {
-                ghashAllToS.update(aad);
+                int lastLen = aad.length % AES_BLOCK_SIZE;
+                if (lastLen != 0) {
+                    ghashAllToS.update(aad, 0, aad.length - lastLen);
+                    byte[] padded = expandToOneBlock(aad, aad.length - lastLen,
+                                                     lastLen);
+                    ghashAllToS.update(padded);
+                } else {
+                    ghashAllToS.update(aad);
+                }
             }
+            aadBuffer = null;
         }
     }
 
@@ -519,11 +521,17 @@ final class GaloisCounterMode extends FeedbackCipher {
         byte[] sOut = new byte[s.length];
         GCTR gctrForSToTag = new GCTR(embeddedCipher, this.preCounterBlock);
         gctrForSToTag.doFinal(s, 0, s.length, sOut, 0);
+
+        // check entire authentication tag for time-consistency
+        int mismatch = 0;
         for (int i = 0; i < tagLenBytes; i++) {
-            if (tag[i] != sOut[i]) {
-                throw new AEADBadTagException("Tag mismatch!");
-            }
+            mismatch |= tag[i] ^ sOut[i];
         }
+
+        if (mismatch != 0) {
+            throw new AEADBadTagException("Tag mismatch!");
+        }
+
         return len;
     }
 
