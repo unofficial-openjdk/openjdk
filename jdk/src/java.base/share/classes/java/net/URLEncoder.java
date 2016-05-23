@@ -133,7 +133,7 @@ public class URLEncoder {
         dontNeedEncoding.set('.');
         dontNeedEncoding.set('*');
 
-        dfltEncName = GetPropertyAction.getProperty("file.encoding");
+        dfltEncName = GetPropertyAction.privilegedGetProperty("file.encoding");
     }
 
     /**
@@ -225,7 +225,7 @@ public class URLEncoder {
                     /*
                      * If this character represents the start of a Unicode
                      * surrogate pair, then pass in two characters. It's not
-                     * clear what should be done if a bytes reserved in the
+                     * clear what should be done if a byte reserved in the
                      * surrogate pairs range occurs outside of a legal
                      * surrogate pair. For now, just treat it as if it were
                      * any other character.
