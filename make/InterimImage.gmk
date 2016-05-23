@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -26,17 +26,35 @@
 default: all
 
 include $(SPEC)
+include MakeBase.gmk
+include Modules.gmk
 
-make-base:
-	+$(MAKE) -f TestMakeBase.gmk $(TEST_SUBTARGET)
+################################################################################
 
-java-compilation:
-	+$(MAKE) -f TestJavaCompilation.gmk $(TEST_SUBTARGET)
+# Use this file inside the image as target for make rule
+JIMAGE_TARGET_FILE := bin/java$(EXE_SUFFIX)
 
-test-idea:
-	+$(MAKE) -f TestIdea.gmk $(TEST_SUBTARGET)
+INTERIM_MODULES_LIST := $(call CommaList, $(INTERIM_IMAGE_MODULES))
 
+JMODS := $(patsubst %, $(IMAGES_OUTPUTDIR)/jmods/%.jmod, $(INTERIM_IMAGE_MODULES))
 
-all: make-base java-compilation test-idea
+JLINK_TOOL := $(JLINK) \
+    --modulepath $(IMAGES_OUTPUTDIR)/jmods \
+    --endian $(OPENJDK_BUILD_CPU_ENDIAN)
 
-.PHONY: default all make-base java-compilation test-idea
+$(INTERIM_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS) \
+    $(call DependOnVariable, INTERIM_MODULES_LIST)
+	$(ECHO) Creating interim jimage
+	$(RM) -r $(INTERIM_IMAGE_DIR)
+	$(JLINK_TOOL) \
+	    --output $(INTERIM_IMAGE_DIR) \
+	    --addmods $(INTERIM_MODULES_LIST)
+	$(TOUCH) $@
+
+TARGETS += $(INTERIM_IMAGE_DIR)/$(JIMAGE_TARGET_FILE)
+
+################################################################################
+
+all: $(TARGETS)
+
+.PHONY: all
