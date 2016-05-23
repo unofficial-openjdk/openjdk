@@ -372,6 +372,9 @@ endef
 #       toolchain when compiling C++ code
 #   STRIP_SYMBOLS Set to true to strip the final binary if the toolchain allows for it
 #   DEBUG_SYMBOLS Set to false to disable generation of debug symbols
+#   COPY_DEBUG_SYMBOLS Set to false to override global setting of debug symbol copying
+#   ZIP_EXTERNAL_DEBUG_SYMBOLS Set to false to override global setting of debug symbol
+#       zipping
 #   CFLAGS_DEBUG_SYMBOLS Overrides the default cflags for enabling debug symbols
 #   CXXFLAGS_DEBUG_SYMBOLS Overrides the default cxxflags for enabling debug symbols
 #   STRIPFLAGS Optionally change the flags given to the strip command
@@ -770,13 +773,20 @@ define SetupNativeCompilationBody
 		$$(call ExecuteWithLog, $$@, \
 		    $$($1_RC) $$($1_RC_FLAGS) $$($1_SYSROOT_CFLAGS) $(CC_OUT_OPTION)$$@ \
 		    $$($1_VERSIONINFO_RESOURCE))
-                # Windows RC compiler does not support -showIncludes, so we mis-use CL for this.
+                # Windows RC compiler does not support -showIncludes, so we mis-use CL
+                # for this. Filter out RC specific arguments that are unknown to CL.
+                # For some unknown reason, in this case CL actually outputs the show
+                # includes to stderr so need to redirect it to hide the output from the
+                # main log.
 		$$(call ExecuteWithLog, $$($1_RES_DEP).obj, \
-		    $$($1_CC) $$($1_RC_FLAGS) $$($1_SYSROOT_CFLAGS) -showIncludes -nologo -TC \
-		    $(CC_OUT_OPTION)$$($1_RES_DEP).obj -P -Fi$$($1_RES_DEP).pp \
-		    $$($1_VERSIONINFO_RESOURCE)) > $$($1_RES_DEP).raw 2>&1 || true ; \
+		    $$($1_CC) $$(filter-out -l%, $$($1_RC_FLAGS)) \
+		        $$($1_SYSROOT_CFLAGS) -showIncludes -nologo -TC \
+		        $(CC_OUT_OPTION)$$($1_RES_DEP).obj -P -Fi$$($1_RES_DEP).pp \
+		        $$($1_VERSIONINFO_RESOURCE)) 2>&1 \
+		    | $(GREP) -v -e "^Note: including file:" \
+		        -e "^$$(notdir $$($1_VERSIONINFO_RESOURCE))$$$$" || test "$$$$?" = "1" ; \
 		$(ECHO) $$($1_RES): \\ > $$($1_RES_DEP) ; \
-		$(SED) $(WINDOWS_SHOWINCLUDE_SED_PATTERN) $$($1_RES_DEP).raw >> $$($1_RES_DEP) ; \
+		$(SED) $(WINDOWS_SHOWINCLUDE_SED_PATTERN) $$($1_RES_DEP).obj.log >> $$($1_RES_DEP) ; \
 		$(SED) $(DEPENDENCY_TARGET_SED_PATTERN) $$($1_RES_DEP) > $$($1_RES_DEP_TARGETS)
     endif
   endif
@@ -807,7 +817,15 @@ define SetupNativeCompilationBody
   # Need to make sure TARGET is first on list
   $1 := $$($1_TARGET)
 
-  ifeq ($(COPY_DEBUG_SYMBOLS), true)
+  ifneq ($$($1_COPY_DEBUG_SYMBOLS), false)
+    $1_COPY_DEBUG_SYMBOLS := $(COPY_DEBUG_SYMBOLS)
+  endif
+
+  ifneq ($$($1_ZIP_EXTERNAL_DEBUG_SYMBOLS), false)
+    $1_ZIP_EXTERNAL_DEBUG_SYMBOLS := $(ZIP_EXTERNAL_DEBUG_SYMBOLS)
+  endif
+
+  ifeq ($$($1_COPY_DEBUG_SYMBOLS), true)
     ifneq ($$($1_DEBUG_SYMBOLS), false)
       # Only copy debug symbols for dynamic libraries and programs.
       ifeq ($$($1_STATIC_LIBRARY), )
@@ -854,7 +872,7 @@ define SetupNativeCompilationBody
         $$($1_TARGET): $$($1_DEBUGINFO_FILES)
         $$($1_DEBUGINFO_FILES): $$($1_ALL_OBJS)
 
-        ifeq ($(ZIP_EXTERNAL_DEBUG_SYMBOLS), true)
+        ifeq ($$($1_ZIP_EXTERNAL_DEBUG_SYMBOLS), true)
           $1_DEBUGINFO_ZIP := $$($1_OBJECT_DIR)/$$($1_NOSUFFIX).diz
           $1 += $$(subst $$($1_OBJECT_DIR),$$($1_OUTPUT_DIR),$$($1_DEBUGINFO_ZIP))
 
