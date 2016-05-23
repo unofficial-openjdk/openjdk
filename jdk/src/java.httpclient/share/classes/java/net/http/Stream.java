@@ -32,6 +32,10 @@ import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
 import java.util.function.LongConsumer;
 
@@ -409,13 +413,20 @@ class Stream extends ExchangeImpl {
     @Override
     HttpResponseImpl getResponse() throws IOException {
         try {
-            return getResponseAsync(null).join();
-        } catch (Throwable e) {
+            if (request.timeval() > 0) {
+                return getResponseAsync(null).get(
+                        request.timeval(), TimeUnit.MILLISECONDS);
+            } else {
+                return getResponseAsync(null).join();
+            }
+        } catch (TimeoutException e) {
+            throw new HttpTimeoutException("Response timed out");
+        } catch (InterruptedException | ExecutionException | CompletionException e) {
             Throwable t = e.getCause();
             if (t instanceof IOException) {
                 throw (IOException)t;
             }
-            throw e;
+            throw new IOException(e);
         }
     }
 
@@ -626,6 +637,7 @@ class Stream extends ExchangeImpl {
     void cancelImpl(Throwable e) {
         Log.logTrace("cancelling stream: {0}\n", e.toString());
         inputQ.close();
+        completeResponseExceptionally(e);
         try {
             connection.resetStream(streamid, ResetFrame.CANCEL);
         } catch (IOException | InterruptedException ex) {
