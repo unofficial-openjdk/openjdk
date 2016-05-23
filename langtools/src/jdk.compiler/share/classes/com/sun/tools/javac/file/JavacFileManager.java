@@ -74,10 +74,10 @@ import com.sun.tools.javac.util.DefinedBy;
 import com.sun.tools.javac.util.DefinedBy.Api;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
-import com.sun.tools.javac.util.ModuleWrappers.Configuration;
-import com.sun.tools.javac.util.ModuleWrappers.Layer;
-import com.sun.tools.javac.util.ModuleWrappers.ModuleFinder;
-import com.sun.tools.javac.util.ModuleWrappers.ServiceLoaderHelper;
+import com.sun.tools.javac.util.JDK9Wrappers.Configuration;
+import com.sun.tools.javac.util.JDK9Wrappers.Layer;
+import com.sun.tools.javac.util.JDK9Wrappers.ModuleFinder;
+import com.sun.tools.javac.util.JDK9Wrappers.ServiceLoaderHelper;
 
 import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
 
@@ -108,6 +108,8 @@ public class JavacFileManager extends BaseFileManager implements StandardJavaFil
         EnumSet.of(JavaFileObject.Kind.SOURCE, JavaFileObject.Kind.CLASS);
 
     protected boolean symbolFileEnabled;
+
+    private PathFactory pathFactory = Paths::get;
 
     protected enum SortFiles implements Comparator<Path> {
         FORWARD {
@@ -166,6 +168,16 @@ public class JavacFileManager extends BaseFileManager implements StandardJavaFil
         }
     }
 
+    @Override @DefinedBy(DefinedBy.Api.COMPILER)
+    public void setPathFactory(PathFactory f) {
+        pathFactory = Objects.requireNonNull(f);
+        locations.setPathFactory(f);
+    }
+
+    private Path getPath(String first, String... more) {
+        return pathFactory.getPath(first, more);
+    }
+
     /**
      * Set whether or not to use ct.sym as an alternate to rt.jar.
      */
@@ -199,7 +211,7 @@ public class JavacFileManager extends BaseFileManager implements StandardJavaFil
     public Iterable<? extends JavaFileObject> getJavaFileObjectsFromStrings(Iterable<String> names) {
         ListBuffer<Path> paths = new ListBuffer<>();
         for (String name : names)
-            paths.append(Paths.get(nullCheck(name)));
+            paths.append(getPath(nullCheck(name)));
         return getJavaFileObjectsFromPaths(paths.toList());
     }
 
@@ -837,7 +849,7 @@ public class JavacFileManager extends BaseFileManager implements StandardJavaFil
                 if (sibling != null && sibling instanceof PathFileObject) {
                     return ((PathFileObject) sibling).getSibling(baseName);
                 } else {
-                    Path p = Paths.get(baseName);
+                    Path p = getPath(baseName);
                     Path real = fsInfo.getCanonicalFile(p);
                     return PathFileObject.forSimplePath(this, real, p);
                 }
@@ -855,7 +867,7 @@ public class JavacFileManager extends BaseFileManager implements StandardJavaFil
 
         try {
             if (dir == null) {
-                dir = Paths.get(System.getProperty("user.dir"));
+                dir = getPath(System.getProperty("user.dir"));
             }
             Path path = fileName.resolveAgainst(fsInfo.getCanonicalFile(dir));
             return PathFileObject.forDirectoryPath(this, path, dir, fileName);
@@ -918,7 +930,7 @@ public class JavacFileManager extends BaseFileManager implements StandardJavaFil
 
     @Override @DefinedBy(Api.COMPILER)
     public void setLocationFromPaths(Location location,
-                            Iterable<? extends Path> searchpath)
+                            Collection<? extends Path> searchpath)
         throws IOException
     {
         nullCheck(location);
@@ -960,7 +972,7 @@ public class JavacFileManager extends BaseFileManager implements StandardJavaFil
             Collection<Path> paths = locations.getLocation(location);
             ModuleFinder finder = ModuleFinder.of(paths.toArray(new Path[paths.size()]));
             Layer bootLayer = Layer.boot();
-            Configuration cf = bootLayer.configuration().resolveRequiresAndUses(ModuleFinder.empty(), finder, Collections.emptySet());
+            Configuration cf = bootLayer.configuration().resolveRequiresAndUses(ModuleFinder.of(), finder, Collections.emptySet());
             Layer layer = bootLayer.defineModulesWithOneLoader(cf, ClassLoader.getSystemClassLoader());
             return ServiceLoaderHelper.load(layer, service);
         } else {
