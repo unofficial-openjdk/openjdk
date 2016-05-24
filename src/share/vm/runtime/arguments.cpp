@@ -1251,9 +1251,9 @@ bool Arguments::add_property(const char* prop) {
   return true;
 }
 
-// sets or adds a module name to the jdk.launcher.addmods property
+// sets or adds a module name to the jdk.module.addmods property
 bool Arguments::append_to_addmods_property(const char* module_name) {
-  const char* key = "jdk.launcher.addmods";
+  const char* key = "jdk.module.addmods";
   const char* old_value = Arguments::get_property(key);
   size_t buf_len = strlen(key) + strlen(module_name) + 2;
   if (old_value != NULL) {
@@ -1279,8 +1279,8 @@ void Arguments::check_unsupported_dumping_properties() {
   const char* unsupported_properties[5] = { "jdk.module.main",
                                            "jdk.module.path",
                                            "jdk.module.upgrade.path",
-                                           "jdk.launcher.addmods",
-                                           "jdk.launcher.limitmods" };
+                                           "jdk.module.addmods",
+                                           "jdk.module.limitmods" };
   const char* unsupported_options[5] = { "-m",
                                         "-modulepath",
                                         "-upgrademodulepath",
@@ -2476,6 +2476,38 @@ bool Arguments::parse_uintx(const char* value,
   return false;
 }
 
+unsigned int addreads_count = 0;
+unsigned int addexports_count = 0;
+unsigned int xpatch_count = 0;
+JavaVMOption* addmods_value = NULL;
+
+bool Arguments::create_property(const char* prop_name, const char* prop_value) {
+  size_t prop_len = strlen(prop_name) + strlen(prop_value) + 2;
+  char* property = AllocateHeap(prop_len, mtArguments);
+  int ret = jio_snprintf(property, prop_len, "%s=%s", prop_name, prop_value);
+  if (ret < 0 || ret >= (int)prop_len) {
+    FreeHeap(property);
+    return false;
+  }
+  bool added = add_property(property);
+  FreeHeap(property);
+  return added;
+}
+
+bool Arguments::create_numbered_property(const char* prop_base_name, const char* prop_value, unsigned int count) {
+  assert(count < 10000, "count is too large");
+  size_t prop_len = strlen(prop_base_name) + strlen(prop_value) + 6;
+  char* property = AllocateHeap(prop_len, mtArguments);
+  int ret = jio_snprintf(property, prop_len, "%s.%d=%s", prop_base_name, count, prop_value);
+  if (ret < 0 || ret >= (int)prop_len) {
+    FreeHeap(property);
+    return false;
+  }
+  bool added = add_property(property);
+  FreeHeap(property);
+  return added;
+}
+
 Arguments::ArgsRange Arguments::parse_memory_size(const char* s,
                                                   julong* long_arg,
                                                   julong min_size) {
@@ -2661,6 +2693,92 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* xpatch_
         }
 #endif // !INCLUDE_JVMTI
         add_init_library(name, options);
+      }
+    } else if (match_option(option, "-XaddReads:", &tail)) {
+      if (tail != NULL) {
+        if (!create_numbered_property("jdk.module.addreads", tail, addreads_count++)) {
+          return JNI_ENOMEM;
+        }
+      } else {
+        jio_fprintf(defaultStream::output_stream(),
+          "Missing value for -XaddReads option.\n");
+        return JNI_EINVAL;
+      }
+    } else if (match_option(option, "-XaddExports:", &tail)) {
+      if (tail != NULL) {
+        if (!create_numbered_property("jdk.module.addexports", tail, addexports_count++)) {
+          return JNI_ENOMEM;
+        }
+      } else {
+        jio_fprintf(defaultStream::output_stream(),
+          "Missing value for -XaddExports option.\n");
+        return JNI_EINVAL;
+      }
+    } else if (match_option(option, "-addmods")) {
+      if (++index < args->nOptions) {
+        addmods_value = args->options + index;
+      } else {
+        jio_fprintf(defaultStream::output_stream(),
+          "Missing value for -addmods option.\n");
+        return JNI_EINVAL;
+      }
+    } else if (match_option(option, "-limitmods")) {
+      if (++index < args->nOptions) {
+        const JavaVMOption* limitmods_value = args->options + index;
+        if (!create_property("jdk.module.limitmods", limitmods_value->optionString)) {
+            return JNI_ENOMEM;
+        }
+      } else {
+        jio_fprintf(defaultStream::output_stream(),
+          "Missing value for -limitmods option.\n");
+        return JNI_EINVAL;
+      }
+    } else if (match_option(option, "-modulepath") || match_option(option, "-mp")) {
+      if (++index < args->nOptions) {
+        const JavaVMOption* modulepath_value = args->options + index;
+        if (!create_property("jdk.module.path", modulepath_value->optionString)) {
+            return JNI_ENOMEM;
+        }
+      } else {
+        jio_fprintf(defaultStream::output_stream(),
+          "Missing value for -modulepath option.\n");
+        return JNI_EINVAL;
+      }
+    } else if (match_option(option, "-upgrademodulepath")) {
+      if (++index < args->nOptions) {
+        const JavaVMOption* ump_value = args->options + index;
+        if (!create_property("jdk.module.upgrade.path", ump_value->optionString)) {
+          return JNI_ENOMEM;
+        }
+      } else {
+        jio_fprintf(defaultStream::output_stream(),
+          "Missing value for -upgrademodulepath option.\n");
+        return JNI_EINVAL;
+      }
+    } else if (match_option(option, "-Xpatch:", &tail)) {
+      // -Xpatch=<module>=<file>(<pathsep><file>)*
+      if (tail != NULL) {
+        // Find the equal sign between the module name and the path specification
+        const char* module_equal = strchr(tail, '=');
+        if (module_equal == NULL) {
+          jio_fprintf(defaultStream::output_stream(), "Missing '=' in -Xpatch specification\n");
+          return JNI_ERR;
+        } else {
+          // Pick out the module name
+          size_t module_len = module_equal - tail;
+          char* module_name = NEW_C_HEAP_ARRAY(char, module_len+1, mtArguments);
+          memcpy(module_name, tail, module_len);
+          *(module_name + module_len) = '\0';
+          // The path piece begins one past the module_equal sign
+          Arguments::add_xpatchprefix(module_name, module_equal + 1, xpatch_javabase);
+          FREE_C_HEAP_ARRAY(char, module_name);
+          if (!create_numbered_property("jdk.module.patch", tail, xpatch_count++)) {
+            return JNI_ENOMEM;
+          }
+        }
+      } else {
+        jio_fprintf(defaultStream::output_stream(), "Missing value for -Xpatch option.\n");
+        return JNI_EINVAL;
       }
     // -agentlib and -agentpath
     } else if (match_option(option, "-agentlib:", &tail) ||
@@ -2972,33 +3090,6 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* xpatch_
           "-Dcom.sun.management is not supported in this VM.\n");
         return JNI_ERR;
 #endif
-      }
-      if (match_option(option, "-Djdk.launcher.patch.", &tail)) {
-        // -Djdk.launcher.patch.#=<module>=<file>(<pathsep><file>)*
-        // The number, #, specified will be increasing with each -Xpatch
-        // specified on the command line.
-        // Pick up module name, following the -D property's equal sign.
-        const char* property_equal = strchr(tail, '=');
-        if (property_equal == NULL) {
-          jio_fprintf(defaultStream::output_stream(), "Missing '=' in -Xpatch specification\n");
-          return JNI_ERR;
-        } else {
-          // Find the equal sign between the module name and the path specification
-          const char* module_equal = strchr(property_equal + 1, '=');
-          if (module_equal == NULL) {
-            jio_fprintf(defaultStream::output_stream(), "Bad value for -Xpatch, no module name specified\n");
-            return JNI_ERR;
-          } else {
-            // Pick out the module name, in between the two equal signs
-            size_t module_len = module_equal - property_equal - 1;
-            char* module_name = NEW_C_HEAP_ARRAY(char, module_len+1, mtArguments);
-            memcpy(module_name, property_equal + 1, module_len);
-            *(module_name + module_len) = '\0';
-            // The path piece begins one past the module_equal sign
-            Arguments::add_xpatchprefix(module_name, module_equal + 1, xpatch_javabase);
-            FREE_C_HEAP_ARRAY(char, module_name);
-          }
-        }
       }
     // -Xint
     } else if (match_option(option, "-Xint")) {
@@ -3412,6 +3503,13 @@ jint Arguments::finalize_vm_init_args() {
       "Use -classpath instead.\n.");
     os::closedir(dir);
     return JNI_ERR;
+  }
+
+  // Append the value of the last -addmods option specified on the command line.
+  // This needs to be done here, to prevent overwriting possible values written
+  // to the jdk.module.addmods property by -javaagent and other options.
+  if (addmods_value != NULL) {
+    append_to_addmods_property(addmods_value->optionString);
   }
 
   Arguments::set_bootclassloader_append_index(((int)strlen(Arguments::get_sysclasspath()))+1);
