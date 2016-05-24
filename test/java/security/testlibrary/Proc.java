@@ -186,8 +186,8 @@ public class Proc {
 
         int n = 0;
         String addexports;
-        while ((addexports = System.getProperty("jdk.launcher.addexports." + n)) != null) {
-            prop("jdk.launcher.addexports." + n, addexports);
+        while ((addexports = System.getProperty("jdk.module.addexports." + n)) != null) {
+            prop("jdk.module.addexports." + n, addexports);
             n++;
         }
 

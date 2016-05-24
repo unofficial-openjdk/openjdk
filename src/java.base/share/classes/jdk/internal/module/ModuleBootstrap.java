@@ -153,7 +153,7 @@ public final class ModuleBootstrap {
         boolean addAllDefaultModules = false;
         boolean addAllSystemModules = false;
         boolean addAllApplicationModules = false;
-        String propValue = System.getProperty("jdk.launcher.addmods");
+        String propValue = System.getProperty("jdk.module.addmods");
         if (propValue != null) {
             for (String mod: propValue.split(",")) {
                 switch (mod) {
@@ -173,7 +173,7 @@ public final class ModuleBootstrap {
         }
 
         // -limitmods
-        propValue = System.getProperty("jdk.launcher.limitmods");
+        propValue = System.getProperty("jdk.module.limitmods");
         if (propValue != null) {
             Set<String> mods = new HashSet<>();
             for (String mod: propValue.split(",")) {
@@ -250,7 +250,7 @@ public final class ModuleBootstrap {
         if (baseUri.getScheme().equals("jrt")   // toLowerCase not needed here
                 && (upgradeModulePath == null)
                 && (appModulePath == null)
-                && (System.getProperty("jdk.launcher.patch.0") == null)) {
+                && (System.getProperty("jdk.module.patch.0") == null)) {
             needPostResolutionChecks = false;
         }
 
@@ -400,7 +400,7 @@ public final class ModuleBootstrap {
     private static void addExtraReads(Layer bootLayer) {
 
         // decode the command line options
-        Map<String, Set<String>> map = decode("jdk.launcher.addreads.");
+        Map<String, Set<String>> map = decode("jdk.module.addreads.");
 
         for (Map.Entry<String, Set<String>> e : map.entrySet()) {
 
@@ -437,7 +437,7 @@ public final class ModuleBootstrap {
     private static void addExtraExports(Layer bootLayer) {
 
         // decode the command line options
-        Map<String, Set<String>> map = decode("jdk.launcher.addexports.");
+        Map<String, Set<String>> map = decode("jdk.module.addexports.");
 
         for (Map.Entry<String, Set<String>> e : map.entrySet()) {
 

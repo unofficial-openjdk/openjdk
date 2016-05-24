@@ -98,14 +98,7 @@ static int numOptions, maxOptions;
  * Prototypes for functions internal to launcher.
  */
 static void SetClassPath(const char *s);
-static void SetModulePath(const char *s);
-static void SetUpgradeModulePath(const char *s);
 static void SetMainModule(const char *s);
-static void SetAddModulesProp(const char *mods);
-static void SetLimitModulesProp(const char *mods);
-static void SetAddReadsProp(const jint n, const char *s);
-static void SetAddExportsProp(const jint n, const char *s);
-static void SetPatchProp(const jint n, const char *s);
 static void SelectVersion(int argc, char **argv, char **main_class);
 static void SetJvmEnvironment(int argc, char **argv);
 static jboolean ParseArguments(int *pargc, char ***pargv,
@@ -865,39 +858,17 @@ SetClassPath(const char *s)
 }
 
 static void
-SetModulePath(const char *s)
+AddModulePathOption(const char *option, const char *s)
 {
-    char *def;
-    const char *orig = s;
-    static const char format[] = "-Djdk.module.path=%s";
-    if (s == NULL)
-        return;
-    s = JLI_WildcardExpandClasspath(s);
-    def = JLI_MemAlloc(sizeof(format)
-                       - 2 /* strlen("%s") */
-                       + JLI_StrLen(s));
-    sprintf(def, format, s);
-    AddOption(def, NULL);
-    if (s != orig)
-        JLI_MemFree((char *) s);
+    AddOption((char*) option, NULL);
+    AddOption((char*) JLI_WildcardExpandClasspath(s), NULL);
 }
 
 static void
-SetUpgradeModulePath(const char *s)
+AddOptionWithArgument(const char *option, const char *arg)
 {
-    char *def;
-    const char *orig = s;
-    static const char format[] = "-Djdk.module.upgrade.path=%s";
-    if (s == NULL)
-        return;
-    s = JLI_WildcardExpandClasspath(s);
-    def = JLI_MemAlloc(sizeof(format)
-                       - 2 /* strlen("%s") */
-                       + JLI_StrLen(s));
-    sprintf(def, format, s);
-    AddOption(def, NULL);
-    if (s != orig)
-        JLI_MemFree((char *) s);
+    AddOption((char*) option, NULL);
+    AddOption((char*) arg, NULL);
 }
 
 static void
@@ -920,46 +891,6 @@ SetMainModule(const char *s)
     def = JLI_MemAlloc(def_len);
     JLI_Snprintf(def, def_len, format, s);
     AddOption(def, NULL);
-}
-
-static void
-SetAddModulesProp(const char *mods) {
-    size_t buflen = JLI_StrLen(mods) + 40;
-    char *prop = (char *)JLI_MemAlloc(buflen);
-    JLI_Snprintf(prop, buflen, "-Djdk.launcher.addmods=%s", mods);
-    AddOption(prop, NULL);
-}
-
-static void
-SetLimitModulesProp(const char *mods) {
-    size_t buflen = JLI_StrLen(mods) + 40;
-    char *prop = (char *)JLI_MemAlloc(buflen);
-    JLI_Snprintf(prop, buflen, "-Djdk.launcher.limitmods=%s", mods);
-    AddOption(prop, NULL);
-}
-
-static void
-SetAddReadsProp(const jint n, const char *s) {
-    size_t buflen = JLI_StrLen(s) + 40;
-    char *prop = (char *)JLI_MemAlloc(buflen);
-    JLI_Snprintf(prop, buflen, "-Djdk.launcher.addreads.%d=%s", n, s);
-    AddOption(prop, NULL);
-}
-
-static void
-SetAddExportsProp(const jint n, const char *s) {
-    size_t buflen = JLI_StrLen(s) + 40;
-    char *prop = (char *)JLI_MemAlloc(buflen);
-    JLI_Snprintf(prop, buflen, "-Djdk.launcher.addexports.%d=%s", n, s);
-    AddOption(prop, NULL);
-}
-
-static void
-SetPatchProp(const jint n, const char *s) {
-    size_t buflen = JLI_StrLen(s) + 40;
-    char *prop = (char *)JLI_MemAlloc(buflen);
-    JLI_Snprintf(prop, buflen, "-Djdk.launcher.patch.%d=%s", n, s);
-    AddOption(prop, NULL);
 }
 
 /*
@@ -1151,11 +1082,11 @@ ParseArguments(int *pargc, char ***pargv,
             argv++; --argc;
         } else if (JLI_StrCmp(arg, "-modulepath") == 0 || JLI_StrCmp(arg, "-mp") == 0) {
             ARG_CHECK (argc, ARG_ERROR4, arg);
-            SetModulePath(*argv);
+            AddModulePathOption(arg, *argv);
             argv++; --argc;
         } else if (JLI_StrCmp(arg, "-upgrademodulepath") == 0) {
             ARG_CHECK (argc, ARG_ERROR4, arg);
-            SetUpgradeModulePath(*argv);
+            AddModulePathOption(arg, *argv);
             argv++; --argc;
         } else if (JLI_StrCmp(arg, "-jar") == 0) {
             ARG_CHECK (argc, ARG_ERROR2, arg);
@@ -1166,11 +1097,11 @@ ParseArguments(int *pargc, char ***pargv,
             mode = LM_MODULE;
         } else if (JLI_StrCmp(arg, "-addmods") == 0) {
             ARG_CHECK (argc, ARG_ERROR6, arg);
-            SetAddModulesProp(*argv);
+            AddOptionWithArgument(arg, *argv);
             argv++; --argc;
         } else if (JLI_StrCmp(arg, "-limitmods") == 0) {
             ARG_CHECK (argc, ARG_ERROR6, arg);
-            SetLimitModulesProp(*argv);
+            AddOptionWithArgument(arg, *argv);
             argv++; --argc;
         } else if (JLI_StrCmp(arg, "-listmods") == 0 ||
                    JLI_StrCCmp(arg, "-listmods:") == 0) {
@@ -1179,15 +1110,15 @@ ParseArguments(int *pargc, char ***pargv,
         } else if (JLI_StrCCmp(arg, "-XaddReads:") == 0) {
             static jint n;
             char *value = arg + 11;
-            SetAddReadsProp(n++, value);
+            AddOption(arg, NULL);
         } else if (JLI_StrCCmp(arg, "-XaddExports:") == 0) {
             static jint n;
             char *value = arg + 13;
-            SetAddExportsProp(n++, value);
+            AddOption(arg, NULL);
         } else if (JLI_StrCCmp(arg, "-Xpatch:") == 0) {
             static jint n;
             char *value = arg + 8;
-            SetPatchProp(n++, value);
+            AddOption(arg, NULL);
         } else if (JLI_StrCmp(arg, "-help") == 0 ||
                    JLI_StrCmp(arg, "-h") == 0 ||
                    JLI_StrCmp(arg, "-?") == 0) {
