@@ -70,7 +70,7 @@ public class TestUserDoclet implements Doclet {
         cmdArgs.add(javadoc.getPath());
         int i = 0;
         String prop;
-        while ((prop = System.getProperty("jdk.launcher.patch." + (i++))) != null) {
+        while ((prop = System.getProperty("jdk.module.patch." + (i++))) != null) {
             cmdArgs.add("-J-Xpatch:" + prop);
         }
         cmdArgs.addAll(Arrays.asList(
