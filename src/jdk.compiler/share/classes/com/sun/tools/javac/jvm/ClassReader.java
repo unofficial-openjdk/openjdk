@@ -591,12 +591,6 @@ public class ClassReader {
     /** Read requires_flags.
      */
     Set<RequiresFlag> readRequiresFlags(int flags) {
-        if (majorVersion == 52) {
-            // temporarily support old bit valuee for old "requires public"
-            if ((flags & 0x0020) != 0)
-                flags = (flags & ~0x0020) | RequiresFlag.TRANSITIVE.value;
-        }
-
         Set<RequiresFlag> set = EnumSet.noneOf(RequiresFlag.class);
         for (RequiresFlag f: RequiresFlag.values()) {
             if ((flags & f.value) != 0)
@@ -1253,12 +1247,7 @@ public class ClassReader {
                         for (int i = 0; i < nexports; i++) {
                             Name n = readName(nextChar());
                             PackageSymbol p = syms.enterPackage(currentModule, names.fromUtf(internalize(n)));
-                            Set<ExportsFlag> flags;
-                            if (majorVersion == 52) {
-                                flags = EnumSet.noneOf(ExportsFlag.class);
-                            } else {
-                                flags = readExportsFlags(nextChar());
-                            }
+                            Set<ExportsFlag> flags = readExportsFlags(nextChar());
                             int nto = nextChar();
                             List<ModuleSymbol> to;
                             if (nto == 0) {
