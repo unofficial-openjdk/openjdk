@@ -577,9 +577,26 @@ public class ClassReader {
         throw badClassFile("bad.module-info.name");
     }
 
+    /** Read exports_flags.
+     */
+    Set<ExportsFlag> readExportsFlags(int flags) {
+        Set<ExportsFlag> set = EnumSet.noneOf(ExportsFlag.class);
+        for (ExportsFlag f: ExportsFlag.values()) {
+            if ((flags & f.value) != 0)
+                set.add(f);
+        }
+        return set;
+    }
+
     /** Read requires_flags.
      */
     Set<RequiresFlag> readRequiresFlags(int flags) {
+        if (majorVersion == 52) {
+            // temporarily support old bit valuee for old "requires public"
+            if ((flags & 0x0020) != 0)
+                flags = (flags & ~0x0020) | RequiresFlag.TRANSITIVE.value;
+        }
+
         Set<RequiresFlag> set = EnumSet.noneOf(RequiresFlag.class);
         for (RequiresFlag f: RequiresFlag.values()) {
             if ((flags & f.value) != 0)
@@ -1236,6 +1253,12 @@ public class ClassReader {
                         for (int i = 0; i < nexports; i++) {
                             Name n = readName(nextChar());
                             PackageSymbol p = syms.enterPackage(currentModule, names.fromUtf(internalize(n)));
+                            Set<ExportsFlag> flags;
+                            if (majorVersion == 52) {
+                                flags = EnumSet.noneOf(ExportsFlag.class);
+                            } else {
+                                flags = readExportsFlags(nextChar());
+                            }
                             int nto = nextChar();
                             List<ModuleSymbol> to;
                             if (nto == 0) {
@@ -1246,7 +1269,7 @@ public class ClassReader {
                                     lb.append(syms.enterModule(readName(nextChar())));
                                 to = lb.toList();
                             }
-                            exports.add(new ExportsDirective(p, to));
+                            exports.add(new ExportsDirective(p, to, flags));
                         }
                         msym.exports = exports.toList();
                         directives.addAll(msym.exports);
@@ -2475,7 +2498,7 @@ public class ClassReader {
 
         minorVersion = nextChar();
         majorVersion = nextChar();
-        int maxMajor = Version.MAX().major;
+        int maxMajor = 53; // Version.MAX().major;  //******* TEMPORARY *******
         int maxMinor = Version.MAX().minor;
         if (majorVersion > maxMajor ||
             majorVersion * 1000 + minorVersion <

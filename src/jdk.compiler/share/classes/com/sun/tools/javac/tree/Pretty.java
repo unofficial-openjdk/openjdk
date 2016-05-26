@@ -486,7 +486,7 @@ public class Pretty extends JCTree.Visitor {
     public void visitRequires(JCRequires tree) {
         try {
             print("requires ");
-            if (tree.isPublic)
+            if (tree.isTransitive)
                 print("public ");
             printExpr(tree.moduleName);
             print(";");

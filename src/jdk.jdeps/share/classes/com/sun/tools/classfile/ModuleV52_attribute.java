@@ -35,14 +35,12 @@ import java.io.IOException;
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
  */
-public class Module_attribute extends Attribute {
-    public static final int ACC_TRANSITIVE    =   0x10;
-    public static final int ACC_STATIC_PHASE  =   0x20;
-    public static final int ACC_DYNAMIC_PHASE =   0x40;
-    public static final int ACC_SYNTHETIC     = 0x1000;
-    public static final int ACC_MANDATED      = 0x8000;
+public class ModuleV52_attribute extends Attribute {
+    public static final int ACC_PUBLIC    =   0x20;
+    public static final int ACC_SYNTHETIC = 0x1000;
+    public static final int ACC_MANDATED  = 0x8000;
 
-    Module_attribute(ClassReader cr, int name_index, int length) throws IOException {
+    ModuleV52_attribute(ClassReader cr, int name_index, int length) throws IOException {
         super(name_index, length);
         requires_count = cr.readUnsignedShort();
         requires = new RequiresEntry[requires_count];
@@ -62,7 +60,7 @@ public class Module_attribute extends Attribute {
             provides[i] = new ProvidesEntry(cr);
     }
 
-    public Module_attribute(int name_index,
+    public ModuleV52_attribute(int name_index,
             RequiresEntry[] requires,
             ExportsEntry[] exports,
             int[] uses,
@@ -122,16 +120,14 @@ public class Module_attribute extends Attribute {
     public static class ExportsEntry {
         ExportsEntry(ClassReader cr) throws IOException {
             exports_index = cr.readUnsignedShort();
-            exports_flags = cr.readUnsignedShort();
             exports_to_count = cr.readUnsignedShort();
             exports_to_index = new int[exports_to_count];
             for (int i = 0; i < exports_to_count; i++)
                 exports_to_index[i] = cr.readUnsignedShort();
         }
 
-        public ExportsEntry(int index, int flags, int[] to) {
+        public ExportsEntry(int index, int[] to) {
             this.exports_index = index;
-            this.exports_flags = flags;
             this.exports_to_count = to.length;
             this.exports_to_index = to;
         }
@@ -141,7 +137,6 @@ public class Module_attribute extends Attribute {
         }
 
         public final int exports_index;
-        public final int exports_flags;
         public final int exports_to_count;
         public final int[] exports_to_index;
     }

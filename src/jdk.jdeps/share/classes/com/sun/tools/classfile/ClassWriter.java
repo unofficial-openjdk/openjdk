@@ -540,6 +540,31 @@ public class ClassWriter {
         }
 
         @Override
+        public Void visitModule(ModuleV52_attribute attr, ClassOutputStream out) {
+            out.writeShort(attr.requires.length);
+            for (ModuleV52_attribute.RequiresEntry e: attr.requires) {
+                out.writeShort(e.requires_index);
+                out.writeShort(e.requires_flags);
+            }
+            out.writeShort(attr.exports.length);
+            for (ModuleV52_attribute.ExportsEntry e: attr.exports) {
+                out.writeShort(e.exports_index);
+                out.writeShort(e.exports_to_index.length);
+                for (int index: e.exports_to_index)
+                    out.writeShort(index);
+            }
+            out.writeShort(attr.uses_index.length);
+            for (int index: attr.uses_index)
+                out.writeShort(index);
+            out.writeShort(attr.provides.length);
+            for (ModuleV52_attribute.ProvidesEntry e: attr.provides) {
+                out.writeShort(e.provides_index);
+                out.writeShort(e.with_index);
+            }
+            return null;
+        }
+
+        @Override
         public Void visitModule(Module_attribute attr, ClassOutputStream out) {
             out.writeShort(attr.requires.length);
             for (Module_attribute.RequiresEntry e: attr.requires) {
@@ -549,6 +574,7 @@ public class ClassWriter {
             out.writeShort(attr.exports.length);
             for (Module_attribute.ExportsEntry e: attr.exports) {
                 out.writeShort(e.exports_index);
+                out.writeShort(e.exports_flags);
                 out.writeShort(e.exports_to_index.length);
                 for (int index: e.exports_to_index)
                     out.writeShort(index);

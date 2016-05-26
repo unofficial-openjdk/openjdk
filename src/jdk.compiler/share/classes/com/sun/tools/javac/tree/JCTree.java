@@ -2655,11 +2655,13 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     public static class JCExports extends JCDirective
             implements ExportsTree {
         public JCExpression qualid;
+        public boolean isDynamicPhase;
         public List<JCExpression> moduleNames;
         public ExportsDirective directive;
 
-        protected JCExports(JCExpression qualId, List<JCExpression> moduleNames) {
+        protected JCExports(JCExpression qualId, boolean isDynamicPhase, List<JCExpression> moduleNames) {
             this.qualid = qualId;
+            this.isDynamicPhase = isDynamicPhase;
             this.moduleNames = moduleNames;
         }
 
@@ -2733,12 +2735,14 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
     public static class JCRequires extends JCDirective
             implements RequiresTree {
-        public boolean isPublic;
+        public boolean isTransitive;
+        public boolean isStaticPhase;
         public JCExpression moduleName;
         public RequiresDirective directive;
 
-        protected JCRequires(boolean isPublic, JCExpression moduleName) {
-            this.isPublic = isPublic;
+        protected JCRequires(boolean isTransitive, boolean isStaticPhase, JCExpression moduleName) {
+            this.isTransitive = isTransitive;
+            this.isStaticPhase = isStaticPhase;
             this.moduleName = moduleName;
         }
 
@@ -2757,7 +2761,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
         @Override @DefinedBy(Api.COMPILER_TREE)
         public boolean isPublic() {
-            return isPublic;
+            return isTransitive;
         }
 
         @Override @DefinedBy(Api.COMPILER_TREE)
@@ -2942,9 +2946,9 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         JCModifiers Modifiers(long flags, List<JCAnnotation> annotations);
         JCErroneous Erroneous(List<? extends JCTree> errs);
         JCModuleDecl ModuleDef(JCExpression qualId, List<JCDirective> directives);
-        JCExports Exports(JCExpression qualId, List<JCExpression> moduleNames);
+        JCExports Exports(JCExpression qualId, boolean isDynamicPhase, List<JCExpression> moduleNames);
         JCProvides Provides(JCExpression serviceName, JCExpression implName);
-        JCRequires Requires(boolean isPublic, JCExpression qualId);
+        JCRequires Requires(boolean isTransitive, boolean isStaticPhase, JCExpression qualId);
         JCUses Uses(JCExpression qualId);
         LetExpr LetExpr(List<JCVariableDecl> defs, JCExpression expr);
     }

@@ -50,6 +50,7 @@ import com.sun.tools.classfile.LocalVariableTable_attribute;
 import com.sun.tools.classfile.LocalVariableTypeTable_attribute;
 import com.sun.tools.classfile.MainClass_attribute;
 import com.sun.tools.classfile.MethodParameters_attribute;
+import com.sun.tools.classfile.ModuleV52_attribute;
 import com.sun.tools.classfile.Module_attribute;
 import com.sun.tools.classfile.RuntimeInvisibleAnnotations_attribute;
 import com.sun.tools.classfile.RuntimeInvisibleParameterAnnotations_attribute;
@@ -477,7 +478,6 @@ public class AttributeWriter extends BasicWriter
     @Override
     public Void visitMethodParameters(MethodParameters_attribute attr,
                                       Void ignore) {
-
         final String header = String.format(format, "Name", "Flags");
         println("MethodParameters:");
         indent(+1);
@@ -495,6 +495,83 @@ public class AttributeWriter extends BasicWriter
         }
         indent(-1);
         return null;
+    }
+
+    @Override
+    public Void visitModule(ModuleV52_attribute attr, Void ignore) {
+        println("Module:");
+        indent(+1);
+        printRequiresTable(attr);
+        printExportsTable(attr);
+        printUsesTable(attr);
+        printProvidesTable(attr);
+        indent(-1);
+        return null;
+    }
+
+    protected void printRequiresTable(ModuleV52_attribute attr) {
+        ModuleV52_attribute.RequiresEntry[] entries = attr.requires;
+        println(entries.length + "\t// " + "requires");
+        indent(+1);
+        for (ModuleV52_attribute.RequiresEntry e: entries) {
+            print("#" + e.requires_index + "," +
+                    String.format("%x", e.requires_flags)+ "\t// requires");
+            if ((e.requires_flags & Module_attribute.ACC_TRANSITIVE) != 0)
+                print(" public");
+            if ((e.requires_flags & Module_attribute.ACC_STATIC_PHASE) != 0)
+                print(" static");
+            if ((e.requires_flags & Module_attribute.ACC_SYNTHETIC) != 0)
+                print(" synthetic");
+            if ((e.requires_flags & Module_attribute.ACC_MANDATED) != 0)
+                print(" mandated");
+            println(" " + constantWriter.stringValue(e.requires_index));
+        }
+        indent(-1);
+    }
+
+    protected void printExportsTable(ModuleV52_attribute attr) {
+        ModuleV52_attribute.ExportsEntry[] entries = attr.exports;
+        println(entries.length + "\t// " + "exports");
+        indent(+1);
+        for (ModuleV52_attribute.ExportsEntry e: entries) {
+            print("#" + e.exports_index + "\t// exports");
+            print(" " + constantWriter.stringValue(e.exports_index));
+            if (e.exports_to_index.length == 0) {
+                println();
+            } else {
+                println(" to ... " + e.exports_to_index.length);
+                indent(+1);
+                for (int to: e.exports_to_index) {
+                    println("#" + to + "\t// ... to " + constantWriter.stringValue(to));
+                }
+                indent(-1);
+            }
+        }
+        indent(-1);
+    }
+
+    protected void printUsesTable(ModuleV52_attribute attr) {
+        int[] entries = attr.uses_index;
+        println(entries.length + "\t// " + "uses services");
+        indent(+1);
+        for (int e: entries) {
+            println("#" + e + "\t// uses " + constantWriter.stringValue(e));
+        }
+        indent(-1);
+    }
+
+    protected void printProvidesTable(ModuleV52_attribute attr) {
+        ModuleV52_attribute.ProvidesEntry[] entries = attr.provides;
+        println(entries.length + "\t// " + "provides services");
+        indent(+1);
+        for (ModuleV52_attribute.ProvidesEntry e: entries) {
+            print("#" + e.provides_index + ",#" +
+                    e.with_index + "\t// provides ");
+            print(constantWriter.stringValue(e.provides_index));
+            print (" with ");
+            println(constantWriter.stringValue(e.with_index));
+        }
+        indent(-1);
     }
 
     @Override
@@ -516,8 +593,10 @@ public class AttributeWriter extends BasicWriter
         for (Module_attribute.RequiresEntry e: entries) {
             print("#" + e.requires_index + "," +
                     String.format("%x", e.requires_flags)+ "\t// requires");
-            if ((e.requires_flags & Module_attribute.ACC_PUBLIC) != 0)
+            if ((e.requires_flags & Module_attribute.ACC_TRANSITIVE) != 0)
                 print(" public");
+            if ((e.requires_flags & Module_attribute.ACC_STATIC_PHASE) != 0)
+                print(" static");
             if ((e.requires_flags & Module_attribute.ACC_SYNTHETIC) != 0)
                 print(" synthetic");
             if ((e.requires_flags & Module_attribute.ACC_MANDATED) != 0)
@@ -532,8 +611,11 @@ public class AttributeWriter extends BasicWriter
         println(entries.length + "\t// " + "exports");
         indent(+1);
         for (Module_attribute.ExportsEntry e: entries) {
-            print("#" + e.exports_index + "\t// exports");
+            print("#" + e.exports_index + "," +
+                    String.format("%x", e.exports_flags) + "\t// exports");
             print(" " + constantWriter.stringValue(e.exports_index));
+            if ((e.exports_flags & Module_attribute.ACC_DYNAMIC_PHASE) != 0)
+                print(" dynamic");
             if (e.exports_to_index.length == 0) {
                 println();
             } else {
