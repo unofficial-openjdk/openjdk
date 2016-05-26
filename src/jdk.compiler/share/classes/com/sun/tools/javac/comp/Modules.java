@@ -1095,6 +1095,11 @@ public class Modules extends JCTree.Visitor {
                                     ModuleSymbol exportsFrom,
                                     Collection<ExportsDirective> exports) {
         for (ExportsDirective d : exports) {
+            // "exports dynamic ..." are not effective at compile-time
+            if (d.flags.contains(ExportsFlag.DYNAMIC_PHASE)) {
+                continue;
+            }
+
             if (d.modules == null || d.modules.contains(msym)) {
                 Name packageName = d.packge.fullname;
                 ModuleSymbol previousModule = seenPackages.get(packageName);
