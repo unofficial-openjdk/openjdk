@@ -29,6 +29,8 @@
  * @modules jdk.compiler/com.sun.tools.javac.api
  *          jdk.compiler/com.sun.tools.javac.main
  *          jdk.compiler/com.sun.tools.sjavac
+ *          jdk.compiler/com.sun.tools.sjavac.options
+ *          jdk.compiler/com.sun.tools.sjavac.pubapi
  *          jdk.jdeps/com.sun.tools.javap
  * @build Wrapper toolbox.ToolBox
  * @run main Wrapper ApiExtraction
