@@ -24,6 +24,6 @@
 module m1 {
     requires m2;
     requires m3;
-    exports dynamic p;
+    exports p;
     uses p.Service;
 }
