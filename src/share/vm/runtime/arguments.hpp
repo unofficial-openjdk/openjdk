@@ -466,6 +466,9 @@ class Arguments : AllStatic {
   // System properties
   static bool add_property(const char* prop);
 
+  static bool create_property(const char* prop_name, const char* prop_value);
+  static bool create_numbered_property(const char* prop_base_name, const char* prop_value, unsigned int count);
+
   // Miscellaneous system property setter
   static bool append_to_addmods_property(const char* module_name);
 
