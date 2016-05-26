@@ -31,10 +31,10 @@
  *          jdk.compiler/com.sun.tools.sjavac
  *          jdk.compiler/com.sun.tools.sjavac.options
  *          jdk.compiler/com.sun.tools.sjavac.pubapi
- *          jdk.jdeps/com.sun.tools.javap
- * @build Wrapper toolbox.ToolBox
+ * @build Wrapper toolbox.ToolBox toolbox.JavacTask
  * @run main Wrapper ApiExtraction
  */
+
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static javax.lang.model.element.Modifier.FINAL;
@@ -58,6 +58,8 @@ import com.sun.tools.sjavac.pubapi.PubType;
 import com.sun.tools.sjavac.pubapi.PubVar;
 import com.sun.tools.sjavac.pubapi.ReferenceTypeDesc;
 
+import toolbox.JavacTask;
+import toolbox.ToolBox;
 
 public class ApiExtraction {
     public static void main(String[] args) throws IOException {
@@ -88,7 +90,7 @@ public class ApiExtraction {
                 "}");
 
         // Create class file to extract API from
-        new ToolBox().new JavacTask().sources(testSrc).run();
+        new JavacTask(new ToolBox()).sources(testSrc).run();
 
         // Extract PubApi
         Options options = Options.parseArgs("-d", "bin", "--state-dir=bin", "-cp", ".");
