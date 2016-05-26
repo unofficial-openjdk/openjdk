@@ -67,7 +67,7 @@ public final class ModulePatcher {
         = SharedSecrets.getJavaLangModuleAccess();
 
     // the prefix of the system properties that encode the value of -Xpatch
-    private static final String PATCH_PROPERTY_PREFIX = "jdk.launcher.patch.";
+    private static final String PATCH_PROPERTY_PREFIX = "jdk.module.patch.";
 
     // module name -> sequence of patches (directories or JAR files)
     private static final Map<String, List<Path>> PATCH_MAP = decodeProperties();
