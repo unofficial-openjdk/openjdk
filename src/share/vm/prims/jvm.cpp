@@ -3816,8 +3816,21 @@ JVM_ENTRY(jobjectArray, JVM_GetVmArguments(JNIEnv *env))
   int num_flags = Arguments::num_jvm_flags();
   int num_args = Arguments::num_jvm_args();
 
+  // Loop through argument list to determine num_args.  White-spaced options may take
+  // up two slots in jvm_args_array but only one slot in the returned jobjectArray.
+  int num_args_count = num_args;
+  for (int i = 0; i < num_args; i++) {
+    if (i + 1 < num_args && ((strcmp(vm_args[i], "-addmods") == 0) ||
+                             (strcmp(vm_args[i], "-mp") == 0) ||
+                             (strcmp(vm_args[i], "-modulepath") == 0) ||
+                             (strcmp(vm_args[i], "-limitmods") == 0) ||
+                             (strcmp(vm_args[i], "-upgrademodulepath") == 0))) {
+      num_args_count--;
+    }
+  }
+
   instanceKlassHandle ik (THREAD, SystemDictionary::String_klass());
-  objArrayOop r = oopFactory::new_objArray(ik(), num_args + num_flags, CHECK_NULL);
+  objArrayOop r = oopFactory::new_objArray(ik(), num_args_count + num_flags, CHECK_NULL);
   objArrayHandle result_h(THREAD, r);
 
   int index = 0;
@@ -3826,7 +3839,19 @@ JVM_ENTRY(jobjectArray, JVM_GetVmArguments(JNIEnv *env))
     result_h->obj_at_put(index, h());
   }
   for (int i = 0; i < num_args; i++, index++) {
-    Handle h = java_lang_String::create_from_platform_dependent_str(vm_args[i], CHECK_NULL);
+    Handle h;
+    if (i + 1 < num_args && ((strcmp(vm_args[i], "-addmods") == 0) ||
+                             (strcmp(vm_args[i], "-mp") == 0) ||
+                             (strcmp(vm_args[i], "-modulepath") == 0) ||
+                             (strcmp(vm_args[i], "-limitmods") == 0) ||
+                             (strcmp(vm_args[i], "-upgrademodulepath") == 0))) {
+      char white_spaced_option[512]; // TBD: check if big enough
+      jio_snprintf(white_spaced_option, 512, "%s %s", vm_args[i], vm_args[i+1]);
+      i++;
+      h = java_lang_String::create_from_platform_dependent_str(white_spaced_option, CHECK_NULL);
+    } else {
+      h = java_lang_String::create_from_platform_dependent_str(vm_args[i], CHECK_NULL);
+    }
     result_h->obj_at_put(index, h());
   }
   return (jobjectArray) JNIHandles::make_local(env, result_h());

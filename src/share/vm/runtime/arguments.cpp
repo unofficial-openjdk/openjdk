@@ -2763,6 +2763,7 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* xpatch_
     } else if (match_option(option, "-addmods")) {
       if (++index < args->nOptions) {
         addmods_value = args->options + index;
+        build_jvm_args(addmods_value->optionString);
       } else {
         jio_fprintf(defaultStream::output_stream(),
           "Missing value for -addmods option.\n");
@@ -2771,6 +2772,7 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* xpatch_
     } else if (match_option(option, "-limitmods")) {
       if (++index < args->nOptions) {
         const JavaVMOption* limitmods_value = args->options + index;
+        build_jvm_args(limitmods_value->optionString);
         if (!create_property("jdk.module.limitmods", limitmods_value->optionString)) {
             return JNI_ENOMEM;
         }
@@ -2782,6 +2784,7 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* xpatch_
     } else if (match_option(option, "-modulepath") || match_option(option, "-mp")) {
       if (++index < args->nOptions) {
         const JavaVMOption* modulepath_value = args->options + index;
+        build_jvm_args(modulepath_value->optionString);
         if (!create_property("jdk.module.path", modulepath_value->optionString)) {
             return JNI_ENOMEM;
         }
@@ -2793,6 +2796,7 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* xpatch_
     } else if (match_option(option, "-upgrademodulepath")) {
       if (++index < args->nOptions) {
         const JavaVMOption* ump_value = args->options + index;
+        build_jvm_args(ump_value->optionString);
         if (!create_property("jdk.module.upgrade.path", ump_value->optionString)) {
           return JNI_ENOMEM;
         }
