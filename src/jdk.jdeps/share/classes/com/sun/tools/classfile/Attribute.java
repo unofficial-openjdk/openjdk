@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -87,13 +87,7 @@ public abstract class Attribute {
             String reasonForDefaultAttr;
             try {
                 String name = cp.getUTF8Value(name_index);
-                Class<? extends Attribute> attrClass;
-                if (name.equals(Module) && cr.getClassFile().major_version == 52) {
-                    // temporary, for transition period
-                    attrClass = ModuleV52_attribute.class;
-                } else {
-                    attrClass = standardAttributes.get(name);
-                }
+                Class<? extends Attribute> attrClass = standardAttributes.get(name);
                 if (attrClass != null) {
                     try {
                         Class<?>[] constrArgTypes = {ClassReader.class, int.class, int.class};
@@ -197,7 +191,6 @@ public abstract class Attribute {
         R visitMainClass(MainClass_attribute attr, P p);
         R visitMethodParameters(MethodParameters_attribute attr, P p);
         R visitModule(Module_attribute attr, P p);
-        R visitModule(ModuleV52_attribute attr, P p);
         R visitRuntimeVisibleAnnotations(RuntimeVisibleAnnotations_attribute attr, P p);
         R visitRuntimeInvisibleAnnotations(RuntimeInvisibleAnnotations_attribute attr, P p);
         R visitRuntimeVisibleParameterAnnotations(RuntimeVisibleParameterAnnotations_attribute attr, P p);
