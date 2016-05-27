@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,25 +21,23 @@
  * questions.
  */
 
-/**
- * @test TestShrinkAuxiliaryData25
- * @bug 8038423 8061715 8078405
- * @summary Checks that decommitment occurs for JVM with different
- * G1ConcRSLogCacheSize and ObjectAlignmentInBytes options values
- * @requires vm.gc=="G1" | vm.gc=="null"
- * @requires vm.opt.AggressiveOpts=="false" | vm.opt.AggressiveOpts=="null"
- * @library /testlibrary /test/lib
+/*
+ * @test TestDefaultLogOutput
+ * @summary Ensure logging is default on stdout.
  * @modules java.base/jdk.internal.misc
- *          java.management
- * @build jdk.test.lib.* sun.hotspot.WhiteBox
- * @build TestShrinkAuxiliaryData TestShrinkAuxiliaryData25
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/timeout=720 TestShrinkAuxiliaryData25
+ * @library /testlibrary
  */
-public class TestShrinkAuxiliaryData25 {
+
+import jdk.test.lib.ProcessTools;
+import jdk.test.lib.OutputAnalyzer;
+
+public class TestDefaultLogOutput {
 
     public static void main(String[] args) throws Exception {
-        new TestShrinkAuxiliaryData(25).test();
+        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-Xlog:badTag");
+        OutputAnalyzer output = new OutputAnalyzer(pb.start());
+        output.stdoutShouldMatch("\\[error *\\]\\[logging *\\]");
+        output.shouldHaveExitValue(1);
     }
 }
+
