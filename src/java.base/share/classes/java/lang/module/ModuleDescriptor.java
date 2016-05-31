@@ -1191,7 +1191,7 @@ public class ModuleDescriptor
         }
 
         /**
-         * Updates the builder so that is builds an automatic module.
+         * Updates the builder so that it builds an automatic module.
          *
          * @return This builder
          *

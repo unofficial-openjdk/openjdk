@@ -74,16 +74,6 @@ public final class ModulePatcher {
 
     private ModulePatcher() { }
 
-
-    /**
-     * Returns {@code true} is -Xpatch is specified to patch modules in the
-     * boot layer.
-     */
-    static boolean isBootLayerPatched() {
-        return !PATCH_MAP.isEmpty();
-    }
-
-
     /**
      * Decodes the values of -Xpatch options, returning a Map of module name to
      * list of file paths.
@@ -130,6 +120,14 @@ public final class ModulePatcher {
         return map;
     }
 
+
+    /**
+     * Returns {@code true} is -Xpatch is specified to patch modules in the
+     * boot layer.
+     */
+    static boolean isBootLayerPatched() {
+        return !PATCH_MAP.isEmpty();
+    }
 
     /**
      * Returns a module reference that interposes on the given module if
