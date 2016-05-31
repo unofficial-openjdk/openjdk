@@ -76,6 +76,15 @@ public final class ModulePatcher {
 
 
     /**
+     * Returns {@code true} is -Xpatch is specified to patch modules in the
+     * boot layer.
+     */
+    static boolean isBootLayerPatched() {
+        return !PATCH_MAP.isEmpty();
+    }
+
+
+    /**
      * Decodes the values of -Xpatch options, returning a Map of module name to
      * list of file paths.
      *
@@ -85,7 +94,7 @@ public final class ModulePatcher {
     private static Map<String, List<Path>> decodeProperties() {
 
         int index = 0;
-        String value = System.getProperty(PATCH_PROPERTY_PREFIX + index);
+        String value = getAndRemoveProperty(PATCH_PROPERTY_PREFIX + index);
         if (value == null)
             return Collections.emptyMap();  // -Xpatch not specified
 
@@ -115,7 +124,7 @@ public final class ModulePatcher {
             }
 
             index++;
-            value = System.getProperty(PATCH_PROPERTY_PREFIX + index);
+            value = getAndRemoveProperty(PATCH_PROPERTY_PREFIX + index);
         }
 
         return map;
@@ -534,6 +543,13 @@ public final class ModulePatcher {
         } else {
             return parent.toString().replace(File.separatorChar, '.');
         }
+    }
+
+    /**
+     * Gets and remove the named system property
+     */
+    private static String getAndRemoveProperty(String key) {
+        return (String)System.getProperties().remove(key);
     }
 
     /**

@@ -153,7 +153,7 @@ public final class ModuleBootstrap {
         boolean addAllDefaultModules = false;
         boolean addAllSystemModules = false;
         boolean addAllApplicationModules = false;
-        String propValue = System.getProperty("jdk.module.addmods");
+        String propValue = getAndRemoveProperty("jdk.module.addmods");
         if (propValue != null) {
             for (String mod: propValue.split(",")) {
                 switch (mod) {
@@ -173,7 +173,7 @@ public final class ModuleBootstrap {
         }
 
         // -limitmods
-        propValue = System.getProperty("jdk.module.limitmods");
+        propValue = getAndRemoveProperty("jdk.module.limitmods");
         if (propValue != null) {
             Set<String> mods = new HashSet<>();
             for (String mod: propValue.split(",")) {
@@ -250,7 +250,7 @@ public final class ModuleBootstrap {
         if (baseUri.getScheme().equals("jrt")   // toLowerCase not needed here
                 && (upgradeModulePath == null)
                 && (appModulePath == null)
-                && (System.getProperty("jdk.module.patch.0") == null)) {
+                && (!ModulePatcher.isBootLayerPatched())) {
             needPostResolutionChecks = false;
         }
 
@@ -489,7 +489,8 @@ public final class ModuleBootstrap {
      */
     private static Map<String, Set<String>> decode(String prefix) {
         int index = 0;
-        String value = System.getProperty(prefix + index);
+        // the system property is removed after decoding
+        String value = getAndRemoveProperty(prefix + index);
         if (value == null)
             return Collections.emptyMap();
 
@@ -522,12 +523,18 @@ public final class ModuleBootstrap {
             }
 
             index++;
-            value = System.getProperty(prefix + index);
+            value = getAndRemoveProperty(prefix + index);
         }
 
         return map;
     }
 
+    /**
+     * Gets and remove the named system property
+     */
+    private static String getAndRemoveProperty(String key) {
+        return (String)System.getProperties().remove(key);
+    }
 
     /**
      * Throws a RuntimeException with the given message
