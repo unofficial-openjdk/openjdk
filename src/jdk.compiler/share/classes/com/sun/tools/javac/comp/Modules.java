@@ -129,7 +129,6 @@ public class Modules extends JCTree.Visitor {
     private final boolean allowModules;
 
     public final boolean multiModuleMode;
-    public final boolean noModules;
 
     private final String moduleOverride;
 
@@ -168,10 +167,6 @@ public class Modules extends JCTree.Visitor {
 
         moduleOverride = options.get(Option.XMODULE);
 
-        // The following is required, for now, to support building
-        // Swing beaninfo via javadoc.
-        noModules = options.isSet("noModules");
-
         multiModuleMode = fileManager.hasLocation(StandardLocation.MODULE_SOURCE_PATH);
         ClassWriter classWriter = ClassWriter.instance(context);
         classWriter.multiModuleMode = multiModuleMode;
@@ -195,7 +190,7 @@ public class Modules extends JCTree.Visitor {
     }
 
     public boolean enter(List<JCCompilationUnit> trees, ClassSymbol c) {
-        if (!allowModules || noModules) {
+        if (!allowModules) {
             for (JCCompilationUnit tree: trees) {
                 tree.modle = syms.noModule;
             }
