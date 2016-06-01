@@ -129,7 +129,7 @@ public final class ModuleBootstrap {
 
         // -upgrademodulepath option specified to launcher
         ModuleFinder upgradeModulePath
-            = createModulePathFinder("jdk.upgrade.module.path");
+            = createModulePathFinder("jdk.module.upgrade.path");
         if (upgradeModulePath != null)
             systemModules = ModuleFinder.compose(upgradeModulePath, systemModules);
 
@@ -153,7 +153,7 @@ public final class ModuleBootstrap {
         boolean addAllDefaultModules = false;
         boolean addAllSystemModules = false;
         boolean addAllApplicationModules = false;
-        String propValue = System.getProperty("jdk.launcher.addmods");
+        String propValue = getAndRemoveProperty("jdk.module.addmods");
         if (propValue != null) {
             for (String mod: propValue.split(",")) {
                 switch (mod) {
@@ -173,7 +173,7 @@ public final class ModuleBootstrap {
         }
 
         // -limitmods
-        propValue = System.getProperty("jdk.launcher.limitmods");
+        propValue = getAndRemoveProperty("jdk.module.limitmods");
         if (propValue != null) {
             Set<String> mods = new HashSet<>();
             for (String mod: propValue.split(",")) {
@@ -230,7 +230,7 @@ public final class ModuleBootstrap {
 
         // If `-addmods ALL-MODULE-PATH` is specified then all observable
         // modules on the application module path will be resolved.
-        if  (appModulePath != null && addAllApplicationModules) {
+        if (appModulePath != null && addAllApplicationModules) {
             ModuleFinder f = finder;  // observable modules
             appModulePath.findAll()
                 .stream()
@@ -250,7 +250,7 @@ public final class ModuleBootstrap {
         if (baseUri.getScheme().equals("jrt")   // toLowerCase not needed here
                 && (upgradeModulePath == null)
                 && (appModulePath == null)
-                && (System.getProperty("jdk.launcher.patch.0") == null)) {
+                && (!ModulePatcher.isBootLayerPatched())) {
             needPostResolutionChecks = false;
         }
 
@@ -400,7 +400,7 @@ public final class ModuleBootstrap {
     private static void addExtraReads(Layer bootLayer) {
 
         // decode the command line options
-        Map<String, Set<String>> map = decode("jdk.launcher.addreads.");
+        Map<String, Set<String>> map = decode("jdk.module.addreads.");
 
         for (Map.Entry<String, Set<String>> e : map.entrySet()) {
 
@@ -437,7 +437,7 @@ public final class ModuleBootstrap {
     private static void addExtraExports(Layer bootLayer) {
 
         // decode the command line options
-        Map<String, Set<String>> map = decode("jdk.launcher.addexports.");
+        Map<String, Set<String>> map = decode("jdk.module.addexports.");
 
         for (Map.Entry<String, Set<String>> e : map.entrySet()) {
 
@@ -489,7 +489,8 @@ public final class ModuleBootstrap {
      */
     private static Map<String, Set<String>> decode(String prefix) {
         int index = 0;
-        String value = System.getProperty(prefix + index);
+        // the system property is removed after decoding
+        String value = getAndRemoveProperty(prefix + index);
         if (value == null)
             return Collections.emptyMap();
 
@@ -522,12 +523,18 @@ public final class ModuleBootstrap {
             }
 
             index++;
-            value = System.getProperty(prefix + index);
+            value = getAndRemoveProperty(prefix + index);
         }
 
         return map;
     }
 
+    /**
+     * Gets and remove the named system property
+     */
+    private static String getAndRemoveProperty(String key) {
+        return (String)System.getProperties().remove(key);
+    }
 
     /**
      * Throws a RuntimeException with the given message
