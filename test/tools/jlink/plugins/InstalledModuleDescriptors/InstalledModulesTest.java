@@ -61,8 +61,8 @@ public class InstalledModulesTest {
         assertUnmodifiable(md.conceals(), "conceal");
         assertUnmodifiable(md.packages(), "package");
         assertUnmodifiable(md.requires(),
-                           jlma.newRequires(EnumSet.allOf(Modifier.class), "require"));
-        assertUnmodifiable(md.exports(), jlma.newExports("export"));
+                           jlma.newRequires(Set.of(Modifier.PUBLIC), "require"));
+        assertUnmodifiable(md.exports(), jlma.newExports(Set.of(), "export"));
         assertUnmodifiable(md.uses(), "use");
         assertUnmodifiable(md.provides(), "provide",
                            jlma.newProvides("provide", Collections.singleton("provide")));

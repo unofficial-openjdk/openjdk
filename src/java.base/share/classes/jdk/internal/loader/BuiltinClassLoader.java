@@ -199,26 +199,19 @@ public class BuiltinClassLoader
             return null;   // not defined to this class loader
 
         URL url;
-
         try {
             url = AccessController.doPrivileged(
                 new PrivilegedExceptionAction<URL>() {
                     @Override
                     public URL run() throws IOException {
-                        URI u = moduleReaderFor(mref).find(name).orElse(null);
-                        if (u != null) {
-                            try {
-                                return u.toURL();
-                            } catch (MalformedURLException e) { }
-                        }
-                        return null;
+                        return findResource(mref, name);
                     }
                 });
         } catch (PrivilegedActionException pae) {
             throw (IOException) pae.getCause();
         }
 
-        // check access to the URL
+        // check access before returning
         return checkURL(url);
     }
 
@@ -258,40 +251,137 @@ public class BuiltinClassLoader
     }
 
     /**
-     * Finds the resource with the given name on the class path of this class
-     * loader.
+     * Finds the resource with the given name in the modules defined to this
+     * class loader or its class path.
      */
     @Override
     public URL findResource(String name) {
-        if (ucp != null) {
+
+        // for .class resources then locate in module if possible
+        URL url = findClassResourceOrNull(name);
+
+        // search all modules
+        if (url == null) {
+            url = AccessController.doPrivileged(
+                new PrivilegedAction<URL>() {
+                    @Override
+                    public URL run() {
+                        for (ModuleReference mref : nameToModule.values()) {
+                            URL url = findResourceOrNull(mref, name);
+                            if (url != null) return url;
+                        }
+                        return null;
+                    }
+                });
+        }
+
+        // search class path
+        if (url == null && ucp != null) {
             PrivilegedAction<URL> pa = () -> ucp.findResource(name, false);
-            URL url = AccessController.doPrivileged(pa);
-            return checkURL(url);
+            url = AccessController.doPrivileged(pa);
+        }
+
+        // check access before returning
+        return checkURL(url);
+    }
+
+    /**
+     * Returns an enumeration of URL objects to all the resources with the
+     * given name in modules defined to this class loader or on the class
+     * path of this loader.
+     */
+    @Override
+    public Enumeration<URL> findResources(String name) throws IOException {
+        List<URL> checked = new ArrayList<>();
+
+        // for .class resources then locate in module if possible
+        URL url = findClassResourceOrNull(name);
+
+        if (url != null) {
+            // check access
+            if (checkURL(url) != null) {
+                checked.add(url);
+            }
         } else {
+            List<URL> result = AccessController.doPrivileged(
+                new PrivilegedAction<List<URL>>() {
+                    @Override
+                    public List<URL> run() {
+                        List<URL> result = new ArrayList<>();
+                        for (ModuleReference mref : nameToModule.values()) {
+                            URL url = findResourceOrNull(mref, name);
+                            if (url != null) result.add(url);
+                        }
+                        return result;
+                    }
+                });
+
+                // check access
+                for (URL u : result) {
+                    if (checkURL(u) != null) {
+                        checked.add(u);
+                    }
+                }
+        }
+
+        if (ucp != null) {
+            PrivilegedAction<Enumeration<URL>> pa = () -> ucp.findResources(name, false);
+            Enumeration<URL> e = AccessController.doPrivileged(pa);
+            while (e.hasMoreElements()) {
+                url = checkURL(e.nextElement());
+                if (url != null) {
+                    checked.add(url);
+                }
+            }
+        }
+
+        return Collections.enumeration(checked); // checked URLs
+    }
+
+
+    /**
+     * Returns the URL to the given reference in the given module.
+     */
+    private URL findResource(ModuleReference mref, String name) throws IOException {
+        URI u = moduleReaderFor(mref).find(name).orElse(null);
+        if (u != null) {
+            try {
+                return u.toURL();
+            } catch (MalformedURLException e) { }
+        }
+        return null;
+    }
+
+    /**
+     * Returns the URL to the given reference in the given module. Returns
+     * {@code null} if not found or an I/O error occurs.
+     */
+    private URL findResourceOrNull(ModuleReference mref, String name) {
+        try {
+            return findResource(mref, name);
+        } catch (IOException ignore) {
             return null;
         }
     }
 
     /**
-     * Returns an enumeration of URL objects to all the resources with the
-     * given name on the class path of this class loader.
+     * Returns the URL to a .class file in a module. Returns {@code null} if not
+     * a .class file in a module or an I/O error occurs.
      */
-    @Override
-    public Enumeration<URL> findResources(String name) throws IOException {
-        if (ucp != null) {
-            List<URL> result = new ArrayList<>();
-            PrivilegedAction<Enumeration<URL>> pa = () -> ucp.findResources(name, false);
-            Enumeration<URL> e = AccessController.doPrivileged(pa);
-            while (e.hasMoreElements()) {
-                URL url = checkURL(e.nextElement());
-                if (url != null) {
-                    result.add(url);
+    private URL findClassResourceOrNull(String name) {
+        int index = name.lastIndexOf(".class");
+        if (index > 0) {
+            String cn = name.substring(0, index).replace("/", ".");
+            LoadedModule module = findLoadedModule(cn);
+            if (module != null) {
+                try {
+                    return findResource(module.name(), name);
+                } catch (IOException ioe) {
+                    // ignore
                 }
             }
-            return Collections.enumeration(result); // checked URLs
-        } else {
-            return Collections.emptyEnumeration();
         }
+        return null;
     }
 
 
@@ -457,20 +547,20 @@ public class BuiltinClassLoader
      */
     private Class<?> findClassOnClassPathOrNull(String cn) {
         return AccessController.doPrivileged(
-            new PrivilegedAction<Class<?>>() {
-                public Class<?> run() {
-                    String path = cn.replace('.', '/').concat(".class");
-                    Resource res = ucp.getResource(path, false);
-                    if (res != null) {
-                        try {
-                            return defineClass(cn, res);
-                        } catch (IOException ioe) {
-                            // TBD on how I/O errors should be propagated
+                new PrivilegedAction<Class<?>>() {
+                    public Class<?> run() {
+                        String path = cn.replace('.', '/').concat(".class");
+                        Resource res = ucp.getResource(path, false);
+                        if (res != null) {
+                            try {
+                                return defineClass(cn, res);
+                            } catch (IOException ioe) {
+                                // TBD on how I/O errors should be propagated
+                            }
                         }
+                        return null;
                     }
-                    return null;
-                }
-            });
+                });
     }
 
     /**
