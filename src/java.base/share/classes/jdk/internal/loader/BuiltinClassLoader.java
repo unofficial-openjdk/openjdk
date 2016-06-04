@@ -194,6 +194,11 @@ public class BuiltinClassLoader
      */
     @Override
     public URL findResource(String mn, String name) throws IOException {
+        if (mn == null) {
+            // search class path
+            return findResourceOnClassPath(name);
+        }
+
         ModuleReference mref = nameToModule.get(mn);
         if (mref == null)
             return null;   // not defined to this class loader
@@ -225,8 +230,9 @@ public class BuiltinClassLoader
         // Need URL to resource when running with a security manager so that
         // the right permission check is done.
         SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
 
+        // or search class path for unnamed module
+        if (sm != null || mn == null) {
             URL url = findResource(mn, name);
             return (url != null) ? url.openStream() : null;
 
@@ -275,14 +281,12 @@ public class BuiltinClassLoader
                 });
         }
 
-        // search class path
-        if (url == null && ucp != null) {
-            PrivilegedAction<URL> pa = () -> ucp.findResource(name, false);
-            url = AccessController.doPrivileged(pa);
-        }
+        if (url != null)
+            // check access before returning
+            return checkURL(url);
 
-        // check access before returning
-        return checkURL(url);
+        // search class path
+        return findResourceOnClassPath(name);
     }
 
     /**
@@ -384,6 +388,19 @@ public class BuiltinClassLoader
         return null;
     }
 
+    /**
+     * Returns a URL to a resource of the given name on the class path.
+     */
+    private URL findResourceOnClassPath(String name) {
+        if (ucp == null)
+            return null;
+
+        PrivilegedAction<URL> pa = () -> ucp.findResource(name, false);
+        URL url = AccessController.doPrivileged(pa);
+
+        // check access before returning
+        return checkURL(url);
+    }
 
     // -- finding/loading classes
 

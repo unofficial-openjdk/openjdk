@@ -667,7 +667,7 @@ public abstract class ClassLoader {
      * should override this method.
      *
      * @apiNote This method returns {@code null} rather than throwing
-     *          {@code ClassNotFoundException} if the class could not be found
+     *          {@code ClassNotFoundException} if the class could not be found.
      *
      * @implSpec The default implementation returns {@code null}.
      *
@@ -1239,10 +1239,14 @@ public abstract class ClassLoader {
      * Class loader implementations that support the loading from modules
      * should override this method.
      *
-     * @implSpec The default implementation returns {@code null}.
+     * @implSpec The default implementation returns {@code null} if
+     * {@code moduleName} is not {@code null}, i.e, finding a resource in
+     * a named module; otherwise, it calls and returns {@link #findResource(String)}.
      *
      * @param  moduleName
-     *         The module name
+     *         The module name; or {@code null} to find a resource in the
+     *         {@linkplain #getUnnamedModule() unnamed module} for this
+     *         class loader
      * @param  name
      *         The resource name
      *
@@ -1259,7 +1263,10 @@ public abstract class ClassLoader {
      * @since 9
      */
     protected URL findResource(String moduleName, String name) throws IOException {
-        return null;
+        if (moduleName != null)
+            return null;
+        else
+            return findResource(name);
     }
 
     /**
@@ -1476,9 +1483,6 @@ public abstract class ClassLoader {
 
     /**
      * Returns an input stream for reading the specified resource.
-     *
-     * Resources in a named module are private to that module. This method does
-     * not find resources in named modules.
      *
      * <p> The search order is described in the documentation for {@link
      * #getResource(String)}.  </p>
