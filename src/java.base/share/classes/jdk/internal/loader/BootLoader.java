@@ -111,6 +111,18 @@ public class BootLoader {
     }
 
     /**
+     * Loads the Class object with the given name in the given module
+     * defined to the boot loader.
+     */
+    public static Class<?> loadClass(Module module, String name) {
+        Class<?> c = loadClassOrNull(name);
+        if (c != null && c.getModule() == module)
+            return c;
+
+        return null;
+    }
+
+    /**
      * Returns a URL to a resource in a module defined to the boot loader.
      */
     public static URL findResource(String mn, String name) throws IOException {

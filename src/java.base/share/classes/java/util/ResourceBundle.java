@@ -3106,7 +3106,7 @@ public abstract class ResourceBundle {
             ResourceBundle bundle = null;
             if (format.equals("java.class")) {
                 try {
-                    Class<?> c = Class.forName(bundleName, false, loader);
+                    Class<?> c = loader.loadClass(bundleName);
                     // If the class isn't a ResourceBundle subclass, throw a
                     // ClassCastException.
                     if (ResourceBundle.class.isAssignableFrom(c)) {

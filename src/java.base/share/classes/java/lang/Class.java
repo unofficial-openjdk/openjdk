@@ -446,21 +446,10 @@ public final class Class<T> implements java.io.Serializable,
 
         PrivilegedAction<ClassLoader> pa = module::getClassLoader;
         ClassLoader cl = AccessController.doPrivileged(pa);
-        if (module.isNamed() && cl != null) {
-            return cl.loadLocalClass(module, name);
-        }
-
-        final Class<?> c;
         if (cl != null) {
-            c = cl.loadLocalClass(name);
+            return cl.loadClass(module, name);
         } else {
-            c = BootLoader.loadClassOrNull(name);
-        }
-
-        if (c != null && c.getModule() == module) {
-            return c;
-        } else {
-            return null;
+            return BootLoader.loadClass(module, name);
         }
     }
 

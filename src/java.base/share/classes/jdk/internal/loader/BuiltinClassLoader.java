@@ -441,24 +441,30 @@ public class BuiltinClassLoader
     }
 
     /**
-     * Finds the class with the specified binary name in a given module.
-     * This method returns {@code null} if the class cannot be found.
+     * Finds the class with the specified binary name in a module.
+     * This method returns {@code null} if the class cannot be found
+     * or not defined in the specified module.
      */
     @Override
     protected Class<?> findClass(String mn, String cn) {
-        ModuleReference mref = nameToModule.get(mn);
-        if (mref == null)
-            return null;   // not defined to this class loader
+        if (mn != null) {
+            // find the candidate module for this class
+            LoadedModule loadedModule = findLoadedModule(mn, cn);
+            if (loadedModule == null) {
+                return null;
+            }
 
-        // find the candidate module for this class
-        LoadedModule loadedModule = findLoadedModule(cn);
-        if (loadedModule == null || !loadedModule.name().equals(mn)) {
-            return null;   // module name does not match
+            // attempt to load class in module defined to this loader
+            assert loadedModule.loader() == this;
+            return findClassInModuleOrNull(loadedModule, cn);
         }
 
-        // attempt to load class in module defined to this loader
-        assert loadedModule.loader() == this;
-        return findClassInModuleOrNull(loadedModule, cn);
+        // search class path
+        if (ucp != null) {
+            return findClassOnClassPathOrNull(cn);
+        }
+
+        return null;
     }
 
     /**
@@ -544,6 +550,20 @@ public class BuiltinClassLoader
 
         String pn = cn.substring(0, pos);
         return packageToModule.get(pn);
+    }
+
+    /**
+     * Find the candidate loaded module for the given class name
+     * in the named module.  Returns {@code null} if the named module
+     * is not defined to this class loader or does not contain
+     * the API package for the class.
+     */
+    private LoadedModule findLoadedModule(String mn, String cn) {
+        LoadedModule loadedModule = findLoadedModule(cn);
+        if (loadedModule != null && mn.equals(loadedModule.name())) {
+            return loadedModule;
+        }
+        return null;
     }
 
     /**

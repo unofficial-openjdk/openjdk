@@ -523,46 +523,18 @@ public abstract class ClassLoader {
      * @return The resulting {@code Class} object in a module defined by
      *         this class loader, or {@code null} if the class could not be found.
      */
-    final Class<?> loadLocalClass(Module module, String name) {
+    final Class<?> loadClass(Module module, String name) {
         synchronized (getClassLoadingLock(name)) {
             // First, check if the class has already been loaded
             Class<?> c = findLoadedClass(name);
             if (c == null) {
                 c = findClass(module.getName(), name);
             }
-            if (c != null && c.getModule() == module) {
-                return c;
-            } else {
-                return null;
-            }
-        }
-    }
 
-    /**
-     * Loads the class with the specified <a href="#name">binary name</a>
-     * defined by this class loader.  This method returns {@code null}
-     * if the class could not be found.
-     *
-     * @apiNote This method does not delegate to the parent class loader.
-     *
-     * @param  name
-     *         The <a href="#name">binary name</a> of the class
-     *
-     * @return The resulting {@code Class} object in a module defined by
-     *         this class loader, or {@code null} if the class could not be found.
-     */
-    final Class<?> loadLocalClass(String name) {
-        synchronized (getClassLoadingLock(name)) {
-            // First, check if the class has already been loaded
-            Class<?> c = findLoadedClass(name);
-            if (c == null) {
-                try {
-                    return findClass(name);
-                } catch (ClassNotFoundException e) {
-                    // ignore
-                }
-            }
-            return c;
+            if (c != null && c.getModule() == module)
+                return c;
+
+            return null;
         }
     }
 
@@ -669,10 +641,16 @@ public abstract class ClassLoader {
      * @apiNote This method returns {@code null} rather than throwing
      *          {@code ClassNotFoundException} if the class could not be found.
      *
-     * @implSpec The default implementation returns {@code null}.
+     * @implSpec The default implementation returns {@code null} if
+     * {@code moduleName} is not {@code null} to find the class in
+     * a named module; otherwise, it calls and returns
+     * {@link #findClass(String)}.
      *
      * @param  moduleName
-     *         The module name
+     *         The module name; or {@code null} to find the class in the
+     *         {@linkplain #getUnnamedModule() unnamed module} for this
+     *         class loader
+
      * @param  name
      *         The <a href="#name">binary name</a> of the class
      *
@@ -682,7 +660,14 @@ public abstract class ClassLoader {
      * @since 9
      */
     protected Class<?> findClass(String moduleName, String name) {
-        return null;
+        if (moduleName != null)
+            return null;
+
+        try {
+            return findClass(name);
+        } catch (ClassNotFoundException e) {
+            return null;
+        }
     }
 
 
