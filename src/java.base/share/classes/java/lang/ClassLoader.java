@@ -1414,9 +1414,6 @@ public abstract class ClassLoader {
      * classes.  This method locates the resource through the system class
      * loader (see {@link #getSystemClassLoader()}).
      *
-     * Resources in a named module are private to that module. This method does
-     * not find resources in named modules.
-     *
      * @param  name
      *         The resource name
      *
@@ -1438,9 +1435,6 @@ public abstract class ClassLoader {
      * load classes.  The resources thus found are returned as an
      * {@link java.util.Enumeration <tt>Enumeration</tt>} of {@link
      * java.net.URL <tt>URL</tt>} objects.
-     *
-     * Resources in a named module are private to that module. This method does
-     * not find resources in named modules.
      *
      * <p> The search order is described in the documentation for {@link
      * #getSystemResource(String)}.  </p>
@@ -1493,9 +1487,6 @@ public abstract class ClassLoader {
      * Open for reading, a resource of the specified name from the search path
      * used to load classes.  This method locates the resource through the
      * system class loader (see {@link #getSystemClassLoader()}).
-     *
-     * Resources in a named module are private to that module. This method does
-     * not find resources in named modules.
      *
      * @param  name
      *         The resource name
