@@ -33,13 +33,9 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
+import java.util.jar.Manifest;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
-import javax.tools.JavaCompiler;
-import javax.tools.JavaFileObject;
-import javax.tools.StandardJavaFileManager;
-import javax.tools.StandardLocation;
-import javax.tools.ToolProvider;
 
 import jdk.testlibrary.FileUtils;
 import jdk.testlibrary.JDKToolFinder;
@@ -52,45 +48,68 @@ import static java.lang.System.out;
 /*
  * @test
  * @library /lib/testlibrary
+ * @modules jdk.compiler
+ *          jdk.jartool
  * @build jdk.testlibrary.FileUtils jdk.testlibrary.JDKToolFinder
  * @compile Basic.java
  * @run testng Basic
- * @summary Basic test for Modular jars
+ * @summary Tests for plain Modular jars & Multi-Release Modular jars
  */
 
 public class Basic {
     static final Path TEST_SRC = Paths.get(System.getProperty("test.src", "."));
     static final Path TEST_CLASSES = Paths.get(System.getProperty("test.classes", "."));
     static final Path MODULE_CLASSES = TEST_CLASSES.resolve("build");
+    static final Path MRJAR_DIR = MODULE_CLASSES.resolve("mrjar");
+
+    static final String VM_OPTIONS = System.getProperty("test.vm.opts", "");
+    static final String TOOL_VM_OPTIONS = System.getProperty("test.tool.vm.opts", "");
+    static final String JAVA_OPTIONS = System.getProperty("test.java.opts", "");
 
     // Details based on the checked in module source
     static TestModuleData FOO = new TestModuleData("foo",
                                                    "1.123",
                                                    "jdk.test.foo.Foo",
-                                                   "Hello World!!!", null,
-                                                   "jdk.test.foo.internal");
+                                                   "Hello World!!!",
+                                                   null, // no hashes
+                                                   Set.of("java.base"),
+                                                   Set.of("jdk.test.foo"),
+                                                   null, // no uses
+                                                   null, // no provides
+                                                   Set.of("jdk.test.foo.internal"));
     static TestModuleData BAR = new TestModuleData("bar",
                                                    "4.5.6.7",
                                                    "jdk.test.bar.Bar",
-                                                   "Hello from Bar!", null,
-                                                   "jdk.test.bar",
-                                                   "jdk.test.bar.internal");
+                                                   "Hello from Bar!",
+                                                   null, // no hashes
+                                                   Set.of("java.base", "foo"),
+                                                   null, // no exports
+                                                   null, // no uses
+                                                   null, // no provides
+                                                   Set.of("jdk.test.bar",
+                                                          "jdk.test.bar.internal"));
 
     static class TestModuleData {
         final String moduleName;
+        final Set<String> requires;
+        final Set<String> exports;
+        final Set<String> uses;
+        final Set<String> provides;
         final String mainClass;
         final String version;
         final String message;
         final String hashes;
         final Set<String> conceals;
-        TestModuleData(String mn, String v, String mc, String m, String h, String... pkgs) {
+
+        TestModuleData(String mn, String v, String mc, String m, String h,
+                       Set<String> requires, Set<String> exports, Set<String> uses,
+                       Set<String> provides, Set<String> conceals) {
             moduleName = mn; mainClass = mc; version = v; message = m; hashes = h;
-            conceals = new HashSet<>();
-            Stream.of(pkgs).forEach(conceals::add);
-        }
-        TestModuleData(String mn, String v, String mc, String m, String h, Set<String> pkgs) {
-            moduleName = mn; mainClass = mc; version = v; message = m; hashes = h;
-            conceals = pkgs;
+            this.requires = requires;
+            this.exports = exports;
+            this.uses = uses;
+            this.provides = provides;
+            this.conceals = conceals;
         }
         static TestModuleData from(String s) {
             try {
@@ -99,7 +118,8 @@ public class Basic {
                 String message = null;
                 String name = null, version = null, mainClass = null;
                 String hashes = null;
-                Set<String> conceals = null;
+                Set<String> requires, exports, uses, provides, conceals;
+                requires = exports = uses = provides = conceals = null;
                 while ((line = reader.readLine()) != null) {
                     if (line.startsWith("message:")) {
                         message = line.substring("message:".length());
@@ -114,27 +134,45 @@ public class Basic {
                         }
                     } else if (line.startsWith("mainClass:")) {
                         mainClass = line.substring("mainClass:".length());
+                    } else if (line.startsWith("requires:")) {
+                        line = line.substring("requires:".length());
+                        requires = stringToSet(line);
+                    } else if (line.startsWith("exports:")) {
+                        line = line.substring("exports:".length());
+                        exports = stringToSet(line);
+                    } else if (line.startsWith("uses:")) {
+                        line = line.substring("uses:".length());
+                        uses = stringToSet(line);
+                    } else if (line.startsWith("provides:")) {
+                        line = line.substring("provides:".length());
+                        provides = stringToSet(line);
                     } else if (line.startsWith("hashes:")) {
                         hashes = line.substring("hashes:".length());
-                    }  else if (line.startsWith("conceals:")) {
+                    } else if (line.startsWith("conceals:")) {
                         line = line.substring("conceals:".length());
-                        conceals = new HashSet<>();
-                        int i = line.indexOf(',');
-                        if (i != -1) {
-                            String[] p = line.split(",");
-                            Stream.of(p).forEach(conceals::add);
-                        } else {
-                            conceals.add(line);
-                        }
+                        conceals = stringToSet(line);
                     } else {
                         throw new AssertionError("Unknown value " + line);
                     }
                 }
 
-                return new TestModuleData(name, version, mainClass, message, hashes, conceals);
+                return new TestModuleData(name, version, mainClass, message,
+                                          hashes, requires, exports, uses,
+                                          provides, conceals);
             } catch (IOException x) {
                 throw new UncheckedIOException(x);
             }
+        }
+        static Set<String> stringToSet(String commaList) {
+            Set<String> s = new HashSet<>();
+            int i = commaList.indexOf(',');
+            if (i != -1) {
+                String[] p = commaList.split(",");
+                Stream.of(p).forEach(s::add);
+            } else {
+                s.add(commaList);
+            }
+            return s;
         }
     }
 
@@ -150,10 +188,19 @@ public class Basic {
                    "Expected version: ", expected.version, ", got:", received.version);
         assertTrue(expected.mainClass.equals(received.mainClass),
                    "Expected mainClass: ", expected.mainClass, ", got:", received.mainClass);
-        expected.conceals.forEach(p -> assertTrue(received.conceals.contains(p),
-                                                  "Expected ", p, ", in ", received.conceals));
-        received.conceals.forEach(p -> assertTrue(expected.conceals.contains(p),
-                                                  "Expected ", p, ", in ", expected.conceals));
+        assertSetsEqual(expected.requires, received.requires);
+        assertSetsEqual(expected.exports, received.exports);
+        assertSetsEqual(expected.uses, received.uses);
+        assertSetsEqual(expected.provides, received.provides);
+        assertSetsEqual(expected.conceals, received.conceals);
+    }
+
+    static void assertSetsEqual(Set<String> s1, Set<String> s2) {
+        if (s1 == null && s2 == null) // none expected, or received
+            return;
+        assertTrue(s1.size() == s2.size(),
+                   "Unexpected set size difference: ", s1.size(), ", ", s2.size());
+        s1.forEach(p -> assertTrue(s2.contains(p), "Expected ", p, ", in ", s2));
     }
 
     @BeforeTest
@@ -161,6 +208,10 @@ public class Basic {
         compileModule(FOO.moduleName);
         compileModule(BAR.moduleName, MODULE_CLASSES);
         compileModule("baz");  // for service provider consistency checking
+
+        setupMRJARModuleInfo(FOO.moduleName);
+        setupMRJARModuleInfo(BAR.moduleName);
+        setupMRJARModuleInfo("baz");
     }
 
     @Test
@@ -180,13 +231,36 @@ public class Basic {
         java(mp, FOO.moduleName + "/" + FOO.mainClass)
             .assertSuccess()
             .resultChecker(r -> assertModuleData(r, FOO));
-
         try (InputStream fis = Files.newInputStream(modularJar);
              JarInputStream jis = new JarInputStream(fis)) {
             assertTrue(!jarContains(jis, "./"),
                        "Unexpected ./ found in ", modularJar.toString());
         }
     }
+
+    /** Similar to createFoo, but with a Multi-Release Modular jar. */
+    @Test
+    public void createMRMJarFoo() throws IOException {
+        Path mp = Paths.get("createMRMJarFoo");
+        createTestDir(mp);
+        Path modClasses = MODULE_CLASSES.resolve(FOO.moduleName);
+        Path mrjarDir = MRJAR_DIR.resolve(FOO.moduleName);
+        Path modularJar = mp.resolve(FOO.moduleName + ".jar");
+
+        // Positive test, create
+        jar("--create",
+            "--file=" + modularJar.toString(),
+            "--main-class=" + FOO.mainClass,
+            "--module-version=" + FOO.version,
+            "-m", mrjarDir.resolve("META-INF/MANIFEST.MF").toRealPath().toString(),
+            "-C", mrjarDir.toString(), "META-INF/versions/9/module-info.class",
+            "-C", modClasses.toString(), ".")
+            .assertSuccess();
+        java(mp, FOO.moduleName + "/" + FOO.mainClass)
+            .assertSuccess()
+            .resultChecker(r -> assertModuleData(r, FOO));
+    }
+
 
     @Test
     public void updateFoo() throws IOException {
@@ -205,6 +279,32 @@ public class Basic {
             "--main-class=" + FOO.mainClass,
             "--module-version=" + FOO.version,
             "--no-manifest",
+            "-C", modClasses.toString(), "module-info.class")
+            .assertSuccess();
+        java(mp, FOO.moduleName + "/" + FOO.mainClass)
+            .assertSuccess()
+            .resultChecker(r -> assertModuleData(r, FOO));
+    }
+
+    @Test
+    public void updateMRMJarFoo() throws IOException {
+        Path mp = Paths.get("updateMRMJarFoo");
+        createTestDir(mp);
+        Path modClasses = MODULE_CLASSES.resolve(FOO.moduleName);
+        Path mrjarDir = MRJAR_DIR.resolve(FOO.moduleName);
+        Path modularJar = mp.resolve(FOO.moduleName + ".jar");
+
+        jar("--create",
+            "--file=" + modularJar.toString(),
+            "--no-manifest",
+            "-C", modClasses.toString(), "jdk")
+            .assertSuccess();
+        jar("--update",
+            "--file=" + modularJar.toString(),
+            "--main-class=" + FOO.mainClass,
+            "--module-version=" + FOO.version,
+            "-m", mrjarDir.resolve("META-INF/MANIFEST.MF").toRealPath().toString(),
+            "-C", mrjarDir.toString(), "META-INF/versions/9/module-info.class",
             "-C", modClasses.toString(), "module-info.class")
             .assertSuccess();
         java(mp, FOO.moduleName + "/" + FOO.mainClass)
@@ -283,6 +383,30 @@ public class Basic {
             "--module-version=" + FOO.version,
             "--no-manifest",
             "-C", modClasses.toString(), "jdk/test/foo/internal/Message.class")
+            .assertSuccess();
+        java(mp, FOO.moduleName + "/" + FOO.mainClass)
+            .assertSuccess()
+            .resultChecker(r -> assertModuleData(r, FOO));
+    }
+
+    @Test
+    public void partialUpdateMRMJarFooNotAllFiles() throws IOException {
+        Path mp = Paths.get("partialUpdateMRMJarFooNotAllFiles");
+        createTestDir(mp);
+        Path modClasses = MODULE_CLASSES.resolve(FOO.moduleName);
+        Path mrjarDir = MRJAR_DIR.resolve(FOO.moduleName);
+        Path modularJar = mp.resolve(FOO.moduleName + ".jar");
+
+        jar("--create",
+            "--file=" + modularJar.toString(),
+            "--module-version=" + FOO.version,
+            "-C", modClasses.toString(), ".")
+            .assertSuccess();
+        jar("--update",
+            "--file=" + modularJar.toString(),
+            "--main-class=" + FOO.mainClass,
+            "-m", mrjarDir.resolve("META-INF/MANIFEST.MF").toRealPath().toString(),
+            "-C", mrjarDir.toString(), "META-INF/versions/9/module-info.class")
             .assertSuccess();
         java(mp, FOO.moduleName + "/" + FOO.mainClass)
             .assertSuccess()
@@ -528,6 +652,24 @@ public class Basic {
     }
 
     @Test
+    public void servicesCreateWithoutFailureMRMJAR() throws IOException {
+        Path mp = Paths.get("servicesCreateWithoutFailureMRMJAR");
+        createTestDir(mp);
+        Path modClasses = MODULE_CLASSES.resolve("baz");
+        Path mrjarDir = MRJAR_DIR.resolve("baz");
+        Path modularJar = mp.resolve("baz" + ".jar");
+
+        jar("--create",
+            "--file=" + modularJar.toString(),
+            "-m", mrjarDir.resolve("META-INF/MANIFEST.MF").toRealPath().toString(),
+            "-C", modClasses.toString(), "module-info.class",
+            "-C", mrjarDir.toString(), "META-INF/versions/9/module-info.class",
+            "-C", modClasses.toString(), "jdk/test/baz/BazService.class",
+            "-C", modClasses.toString(), "jdk/test/baz/internal/BazServiceImpl.class")
+            .assertSuccess();
+    }
+
+    @Test
     public void printModuleDescriptorFoo() throws IOException {
         Path mp = Paths.get("printModuleDescriptorFoo");
         createTestDir(mp);
@@ -587,7 +729,10 @@ public class Basic {
         String jar = getJDKTool("jar");
         List<String> commands = new ArrayList<>();
         commands.add(jar);
-        Stream.of(args).forEach(x -> commands.add(x));
+        if (!TOOL_VM_OPTIONS.isEmpty()) {
+            commands.addAll(Arrays.asList(TOOL_VM_OPTIONS.split("\\s+", -1)));
+        }
+        Stream.of(args).forEach(commands::add);
         ProcessBuilder p = new ProcessBuilder(commands);
         if (stdinSource != null)
             p.redirectInput(stdinSource);
@@ -609,6 +754,24 @@ public class Basic {
         Path build = Files.createDirectories(MODULE_CLASSES.resolve(mn));
         javac(build, mp, fileList(fooSourcePath));
         return build;
+    }
+
+    static void setupMRJARModuleInfo(String moduleName) throws IOException {
+        Path modClasses = MODULE_CLASSES.resolve(moduleName);
+        Path metaInfDir = MRJAR_DIR.resolve(moduleName).resolve("META-INF");
+        Path versionSection = metaInfDir.resolve("versions").resolve("9");
+        createTestDir(versionSection);
+
+        Path versionModuleInfo = versionSection.resolve("module-info.class");
+        System.out.println("copying " + modClasses.resolve("module-info.class") + " to " + versionModuleInfo);
+        Files.copy(modClasses.resolve("module-info.class"), versionModuleInfo);
+
+        Manifest manifest = new Manifest();
+        manifest.getMainAttributes().putValue("Manifest-Version", "1.0");
+        manifest.getMainAttributes().putValue("Multi-Release", "true");
+        try (OutputStream os = Files.newOutputStream(metaInfDir.resolve("MANIFEST.MF"))) {
+            manifest.write(os);
+        }
     }
 
     // Re-enable when there is support in javax.tools for module path
@@ -647,6 +810,9 @@ public class Basic {
 
         List<String> commands = new ArrayList<>();
         commands.add(javac);
+        if (!TOOL_VM_OPTIONS.isEmpty()) {
+            commands.addAll(Arrays.asList(TOOL_VM_OPTIONS.split("\\s+", -1)));
+        }
         commands.add("-d");
         commands.add(dest.toString());
         if (dest.toString().contains("bar"))
@@ -665,6 +831,12 @@ public class Basic {
 
         List<String> commands = new ArrayList<>();
         commands.add(java);
+        if (!VM_OPTIONS.isEmpty()) {
+            commands.addAll(Arrays.asList(VM_OPTIONS.split("\\s+", -1)));
+        }
+        if (!JAVA_OPTIONS.isEmpty()) {
+            commands.addAll(Arrays.asList(JAVA_OPTIONS.split("\\s+", -1)));
+        }
         Stream.of(args).forEach(x -> commands.add(x));
         commands.add("-mp");
         commands.add(modulePath.toString());
@@ -690,7 +862,7 @@ public class Basic {
     static void createTestDir(Path p) throws IOException{
         if (Files.exists(p))
             FileUtils.deleteFileTreeWithRetry(p);
-        Files.createDirectory(p);
+        Files.createDirectories(p);
     }
 
     static boolean jarContains(JarInputStream jis, String entryName)

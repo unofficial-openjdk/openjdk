@@ -87,9 +87,9 @@ public final class Unsafe {
      *
      * (It may assist compilers to make the local variable {@code final}.)
      *
-     * @throws  SecurityException  if a security manager exists and its
-     *          {@code checkPropertiesAccess} method doesn't allow
-     *          access to the system properties.
+     * @throws  SecurityException if the class loader of the caller
+     *          class is not in the system domain in which all permissions
+     *          are granted.
      */
     @CallerSensitive
     public static Unsafe getUnsafe() {
@@ -294,45 +294,6 @@ public final class Unsafe {
     @ForceInline
     public void putDouble(Object o, long offset, double x) {
         theInternalUnsafe.putDouble(o, offset, x);
-    }
-
-
-    // These read VM internal data.
-
-    /**
-     * Fetches an uncompressed reference value from a given native variable
-     * ignoring the VM's compressed references mode.
-     *
-     * @param address a memory address locating the variable
-     * @return the value fetched from the indicated native variable
-     */
-    @ForceInline
-    public Object getUncompressedObject(long address) {
-        return theInternalUnsafe.getUncompressedObject(address);
-    }
-
-    /**
-     * Fetches the {@link java.lang.Class} Java mirror for the given native
-     * metaspace {@code Klass} pointer.
-     *
-     * @param metaspaceKlass a native metaspace {@code Klass} pointer
-     * @return the {@link java.lang.Class} Java mirror
-     */
-    @ForceInline
-    public Class<?> getJavaMirror(long metaspaceKlass) {
-        return theInternalUnsafe.getJavaMirror(metaspaceKlass);
-    }
-
-    /**
-     * Fetches a native metaspace {@code Klass} pointer for the given Java
-     * object.
-     *
-     * @param o Java heap object for which to fetch the class pointer
-     * @return a native metaspace {@code Klass} pointer
-     */
-    @ForceInline
-    public long getKlassPointer(Object o) {
-        return theInternalUnsafe.getKlassPointer(o);
     }
 
     // These work on values in the C heap.

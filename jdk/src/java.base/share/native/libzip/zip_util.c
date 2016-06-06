@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -75,6 +75,13 @@ static void freeCEN(jzfile *);
 #endif
 
 static jint INITIAL_META_COUNT = 2;   /* initial number of entries in meta name array */
+
+/*
+ * Declare library specific JNI_Onload entry if static build
+ */
+#ifdef STATIC_BUILD
+DEF_STATIC_JNI_OnLoad
+#endif
 
 /*
  * The ZFILE_* functions exist to provide some platform-independence with
@@ -575,16 +582,17 @@ readCEN(jzfile *zip, jint knownTotal)
         }
     }
 
-    if (cenlen > endpos)
+    if (cenlen > endpos) {
         ZIP_FORMAT_ERROR("invalid END header (bad central directory size)");
+    }
     cenpos = endpos - cenlen;
 
     /* Get position of first local file (LOC) header, taking into
      * account that there may be a stub prefixed to the zip file. */
     zip->locpos = cenpos - cenoff;
-    if (zip->locpos < 0)
+    if (zip->locpos < 0) {
         ZIP_FORMAT_ERROR("invalid END header (bad central directory offset)");
-
+    }
 #ifdef USE_MMAP
     if (zip->usemmap) {
       /* On Solaris & Linux prior to JDK 6, we used to mmap the whole jar file to
@@ -674,15 +682,18 @@ readCEN(jzfile *zip, jint knownTotal)
         method = CENHOW(cp);
         nlen   = CENNAM(cp);
 
-        if (!CENSIG_AT(cp))
+        if (!CENSIG_AT(cp)) {
             ZIP_FORMAT_ERROR("invalid CEN header (bad signature)");
-        if (CENFLG(cp) & 1)
+        }
+        if (CENFLG(cp) & 1) {
             ZIP_FORMAT_ERROR("invalid CEN header (encrypted entry)");
-        if (method != STORED && method != DEFLATED)
+        }
+        if (method != STORED && method != DEFLATED) {
             ZIP_FORMAT_ERROR("invalid CEN header (bad compression method)");
-        if (cp + CENHDR + nlen > cenend)
+        }
+        if (cp + CENHDR + nlen > cenend) {
             ZIP_FORMAT_ERROR("invalid CEN header (bad header size)");
-
+        }
         /* if the entry is metadata add it to our metadata names */
         if (isMetaName((char *)cp+CENHDR, nlen))
             if (addMetaName(zip, (char *)cp+CENHDR, nlen) != 0)
@@ -697,9 +708,9 @@ readCEN(jzfile *zip, jint knownTotal)
         entries[i].next = table[hsh];
         table[hsh] = i;
     }
-    if (cp != cenend)
+    if (cp != cenend) {
         ZIP_FORMAT_ERROR("invalid CEN header (bad header size)");
-
+    }
     zip->total = i;
     goto Finally;
 
@@ -1108,7 +1119,7 @@ jzentry *
 ZIP_GetEntry(jzfile *zip, char *name, jint ulen)
 {
     if (ulen == 0) {
-        return ZIP_GetEntry2(zip, name, strlen(name), JNI_FALSE);
+        return ZIP_GetEntry2(zip, name, (jint)strlen(name), JNI_FALSE);
     }
     return ZIP_GetEntry2(zip, name, ulen, JNI_TRUE);
 }
@@ -1434,7 +1445,7 @@ ZIP_FindEntry(jzfile *zip, char *name, jint *sizeP, jint *nameLenP)
     jzentry *entry = ZIP_GetEntry(zip, name, 0);
     if (entry) {
         *sizeP = (jint)entry->size;
-        *nameLenP = strlen(entry->name);
+        *nameLenP = (jint)strlen(entry->name);
     }
     return entry;
 }
