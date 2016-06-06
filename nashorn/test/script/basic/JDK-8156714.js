@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  * 
  * This code is free software; you can redistribute it and/or modify it
@@ -22,20 +22,29 @@
  */
 
 /**
- * JDK-8134490: Dead var statement evacuation incorrectly descends into nested functions
+ * JDK-8156714: Parsing issue with automatic semicolon insertion
  *
  * @test
  * @run
  */
 
-var v1; 
+a = function() {
+}
 
-function f1() 
-{ 
-v1 = 1; 
-return true; 
-(function () { var v1; })(); 
-} 
+/* */ function b() {
+}
 
-f1(); 
-// If it executes without throwing an exception in code generator, it's working.
+c = function() {
+} /*
+
+*/ function d() {
+}
+
+try {
+    eval("x = function() {} /* */ function y() {}");
+    throw new Error("Error expected");
+} catch (e) {
+    if (!(e instanceof SyntaxError)) {
+        throw new Error("Unexpected error: " + e);
+    }
+}
