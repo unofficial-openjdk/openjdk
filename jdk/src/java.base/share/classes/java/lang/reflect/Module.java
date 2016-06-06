@@ -866,7 +866,7 @@ public final class Module {
             URI uri = mref.location().orElse(null);
 
             Module m;
-            if (loader == null && name.equals("java.base")) {
+            if (loader == null && name.equals("java.base") && Layer.boot() == null) {
                 m = Object.class.getModule();
             } else {
                 m = new Module(layer, loader, descriptor, uri);
