@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,25 +21,21 @@
  * questions.
  */
 
-package java.lang.invoke;
-
 /* @test
- * @summary Assertion in LambdaFormEditor.bindArgumentType is too strong
- *
- * @run main/othervm/bootclasspath -esa java.lang.invoke.CustomizedLambdaFormTest
- */
-public class CustomizedLambdaFormTest {
+   @bug 6882559
+   @summary new JEditorPane("text/plain","") fails for null context class loader
+   @author Mikhail Cherkasov
+   @run main bug6882559
+*/
 
-    static void testExtendCustomizedBMH() throws Exception {
-        // Construct BMH
-        MethodHandle mh = MethodHandles.Lookup.IMPL_LOOKUP.findVirtual(String.class, "concat",
-                MethodType.methodType(String.class, String.class))
-                .bindTo("a");
-        mh.customize();
-        mh.bindTo("b"); // Try to extend customized BMH
-    }
+import javax.swing.*;
 
-    public static void main(String[] args) throws Throwable {
-        testExtendCustomizedBMH();
+
+public class bug6882559 {
+    public static void main(String[] args) throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            Thread.currentThread().setContextClassLoader(null);
+            new javax.swing.JEditorPane("text/plain", "");
+        });
     }
 }
