@@ -1306,8 +1306,8 @@ bool Arguments::add_property(const char* prop, bool writeable, bool internal) {
     // private and are processed in process_sun_java_launcher_properties();
     // the sun.java.launcher property is passed on to the java application
   } else if (strcmp(key, "sun.boot.library.path") == 0) {
-    // append is false, writable is true, internal is false
-    PropertyList_unique_add(&_system_properties, key, value, false, true, false);
+    // append is true, writable is true, internal is false
+    PropertyList_unique_add(&_system_properties, key, value, true, true, false);
   } else {
     if (strcmp(key, "sun.java.command") == 0) {
       char *old_java_command = _java_command;
