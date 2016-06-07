@@ -464,10 +464,10 @@ class Arguments : AllStatic {
   static vfprintf_hook_t  _vfprintf_hook;
 
   // System properties
-  static bool add_property(const char* prop);
+  static bool add_property(const char* prop, bool writeable=true, bool internal=false);
 
-  static bool create_property(const char* prop_name, const char* prop_value);
-  static bool create_numbered_property(const char* prop_base_name, const char* prop_value, unsigned int count);
+  static bool create_module_property(const char* prop_name, const char* prop_value, bool internal);
+  static bool create_numbered_module_property(const char* prop_base_name, const char* prop_value, unsigned int count);
 
   // Miscellaneous system property setter
   static bool append_to_addmods_property(const char* module_name);
@@ -724,15 +724,24 @@ class Arguments : AllStatic {
   // Property List manipulation
   static void PropertyList_add(SystemProperty *element);
   static void PropertyList_add(SystemProperty** plist, SystemProperty *element);
-  static void PropertyList_add(SystemProperty** plist, const char* k, const char* v);
-  static void PropertyList_unique_add(SystemProperty** plist, const char* k, const char* v) {
-    PropertyList_unique_add(plist, k, v, false);
-  }
-  static void PropertyList_unique_add(SystemProperty** plist, const char* k, const char* v, jboolean append);
+  static void PropertyList_add(SystemProperty** plist, const char* k, const char* v, bool writeable, bool internal);
+
+  static void PropertyList_unique_add(SystemProperty** plist, const char* k, const char* v,
+                                      jboolean append, bool writeable, bool internal);
   static const char* PropertyList_get_value(SystemProperty* plist, const char* key);
   static int  PropertyList_count(SystemProperty* pl);
   static const char* PropertyList_get_key_at(SystemProperty* pl,int index);
   static char* PropertyList_get_value_at(SystemProperty* pl,int index);
+
+  // Return TRUE if option matches property or matches property=.
+  static bool is_matching_property(const char* option, const char* property, size_t len) {
+    return (strncmp(option, property, len) == 0) && (option[len] == '=' || option[len] == '\0');
+  }
+
+  // Return TRUE if option matches property.<digits> or matches property.<digits>=.
+  static bool is_matching_numbered_property(const char* option, const char* property, size_t len);
+
+  static bool is_internal_module_property(const char* option);
 
   // Miscellaneous System property value getter and setters.
   static void set_dll_dir(const char *value) { _sun_boot_library_path->set_value(value); }
