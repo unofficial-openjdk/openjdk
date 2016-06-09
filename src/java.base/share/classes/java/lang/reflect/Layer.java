@@ -591,6 +591,10 @@ public final class Layer {
                 throw new UnsupportedOperationException();
             }
             @Override
+            public void addProvider(Module m, Class<?> service, Class<?> impl) {
+                // not yet implemented
+            }
+            @Override
             public Set<ServiceProvider> findServices(String service) {
                 Set<ServiceProvider> providers = map.get(service);
                 if (providers == null) {

@@ -646,20 +646,26 @@ public final class Module {
         Objects.requireNonNull(st);
 
         if (isNamed()) {
-
             Module caller = Reflection.getCallerClass().getModule();
             if (caller != this) {
                 throw new IllegalStateException(caller + " != " + this);
             }
-
-            if (!canUse(st)) {
-                transientUses.putIfAbsent(this, st, Boolean.TRUE);
-            }
-
+            implAddUses(st);
         }
 
         return this;
     }
+
+    /**
+     * Update this module to add a service dependence on the given service
+     * type.
+     */
+    void implAddUses(Class<?> st) {
+        if (!canUse(st)) {
+            transientUses.putIfAbsent(this, st, Boolean.TRUE);
+        }
+    }
+
 
     /**
      * Indicates if this module has a service dependence on the given service
@@ -1090,6 +1096,10 @@ public final class Module {
                 @Override
                 public void addExportsToAllUnnamed(Module m, String pn) {
                     m.implAddExports(pn, Module.ALL_UNNAMED_MODULE, true);
+                }
+                @Override
+                public void addUses(Module m, Class<?> service) {
+                    m.implAddUses(service);
                 }
                 @Override
                 public void addPackage(Module m, String pn) {
