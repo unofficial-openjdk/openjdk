@@ -163,12 +163,12 @@ public class ModuleAnalyzer {
             ModuleDescriptor.Builder builder = new ModuleDescriptor.Builder(root.name());
 
             if (!root.name().equals(JAVA_BASE))
-                builder.requires(MANDATED, JAVA_BASE);
+                builder.requires(Set.of(MANDATED), JAVA_BASE);
 
             requiresPublic.stream()
                 .filter(m -> !m.name().equals(JAVA_BASE))
                 .map(Module::name)
-                .forEach(mn -> builder.requires(PUBLIC, mn));
+                .forEach(mn -> builder.requires(Set.of(PUBLIC), mn));
 
             requires.stream()
                 .filter(m -> !requiresPublic.contains(m))

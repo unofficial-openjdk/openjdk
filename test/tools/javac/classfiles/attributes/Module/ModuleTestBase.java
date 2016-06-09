@@ -178,7 +178,7 @@ public class ModuleTestBase {
 
         public ModuleDescriptor requiresPublic(String... requiresPublic) {
             for (String require : requiresPublic) {
-                this.requires.add(new Pair<>(require, Module_attribute.ACC_PUBLIC));
+                this.requires.add(new Pair<>(require, Module_attribute.ACC_TRANSITIVE));
                 content.append("    requires public ").append(require).append(LINE_END);
             }
             return this;
