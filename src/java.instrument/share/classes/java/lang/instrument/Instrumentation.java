@@ -704,9 +704,9 @@ public interface Instrumentation {
      *         If {@code extraExports} contains a key that is not a package in
      *         the module; if a {@code extraProvides} map value contains a service
      *         provider type that is not a member of the module or an
-     *         implementation of the service; if any of the Sets or Maps contain
-     *         a {@code null} key or value
-     * @throws NullPointerException if any of the arguments are {@code null}
+     *         implementation of the service
+     * @throws NullPointerException if any of the arguments are {@code null} or
+     *         any of the Sets or Maps contains a {@code null} key or value
      *
      * @since 9
      */
