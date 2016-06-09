@@ -87,6 +87,11 @@ public interface ServicesCatalog {
     void register(Module module);
 
     /**
+     * Add providers in the given module in this services catalog.
+     */
+    void addProvider(Module m, Class<?> service, Class<?> impl);
+
+    /**
      * Returns the (possibly empty) set of service providers that implement the
      * given service type.
      */
@@ -106,20 +111,35 @@ public interface ServicesCatalog {
                 ModuleDescriptor descriptor = m.getDescriptor();
 
                 for (Provides provides : descriptor.provides().values()) {
-                    String service = provides.service();
+                    String sn = provides.service();
                     Set<String> providerNames = provides.providers();
 
                     // create a new set to replace the existing
                     Set<ServiceProvider> result = new HashSet<>();
-                    Set<ServiceProvider> providers = map.get(service);
+                    Set<ServiceProvider> providers = map.get(sn);
                     if (providers != null) {
                         result.addAll(providers);
                     }
                     for (String pn : providerNames) {
                         result.add(new ServiceProvider(m, pn));
                     }
-                    map.put(service, Collections.unmodifiableSet(result));
+                    map.put(sn, Collections.unmodifiableSet(result));
                 }
+
+            }
+
+            @Override
+            public void addProvider(Module m, Class<?> service, Class<?> impl) {
+                String sn = service.getName();
+
+                // create a new set to replace the existing
+                Set<ServiceProvider> result = new HashSet<>();
+                Set<ServiceProvider> providers = map.get(sn);
+                if (providers != null) {
+                    result.addAll(providers);
+                }
+                result.add(new ServiceProvider(m, impl.getName()));
+                map.put(sn, Collections.unmodifiableSet(result));
 
             }
 

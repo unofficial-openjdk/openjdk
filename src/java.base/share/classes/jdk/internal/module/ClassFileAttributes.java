@@ -27,7 +27,6 @@ package jdk.internal.module;
 
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Requires;
-import java.lang.module.ModuleDescriptor.Requires.Modifier;
 import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Version;
@@ -91,17 +90,19 @@ class ClassFileAttributes {
             for (int i=0; i<requires_count; i++) {
                 String dn = cr.readUTF8(off, buf);
                 int flags = cr.readUnsignedShort(off + 2);
-                Set<Modifier> mods;
+                Set<Requires.Modifier> mods;
                 if (flags == 0) {
                     mods = Collections.emptySet();
                 } else {
                     mods = new HashSet<>();
                     if ((flags & ACC_PUBLIC) != 0)
-                        mods.add(Modifier.PUBLIC);
+                        mods.add(Requires.Modifier.PUBLIC);
+                    if ((flags & ACC_STATIC_PHASE) != 0)
+                        mods.add(Requires.Modifier.STATIC);
                     if ((flags & ACC_SYNTHETIC) != 0)
-                        mods.add(Modifier.SYNTHETIC);
+                        mods.add(Requires.Modifier.SYNTHETIC);
                     if ((flags & ACC_MANDATED) != 0)
-                        mods.add(Modifier.MANDATED);
+                        mods.add(Requires.Modifier.MANDATED);
                 }
                 builder.requires(mods, dn);
                 off += 4;
@@ -113,8 +114,25 @@ class ClassFileAttributes {
             if (exports_count > 0) {
                 for (int i=0; i<exports_count; i++) {
                     String pkg = cr.readUTF8(off, buf).replace('/', '.');
-                    int exports_to_count = cr.readUnsignedShort(off+2);
-                    off += 4;
+                    off += 2;
+
+                    int flags = cr.readUnsignedShort(off);
+                    off += 2;
+                    Set<Exports.Modifier> mods;
+                    if (flags == 0) {
+                        mods = Collections.emptySet();
+                    } else {
+                        mods = new HashSet<>();
+                        if ((flags & ACC_DYNAMIC_PHASE) != 0)
+                            mods.add(Exports.Modifier.DYNAMIC);
+                        if ((flags & ACC_SYNTHETIC) != 0)
+                            mods.add(Exports.Modifier.SYNTHETIC);
+                        if ((flags & ACC_MANDATED) != 0)
+                            mods.add(Exports.Modifier.MANDATED);
+                    }
+
+                    int exports_to_count = cr.readUnsignedShort(off);
+                    off += 2;
                     if (exports_to_count > 0) {
                         Set<String> targets = new HashSet<>();
                         for (int j=0; j<exports_to_count; j++) {
@@ -122,9 +140,9 @@ class ClassFileAttributes {
                             off += 2;
                             targets.add(t);
                         }
-                        builder.exports(pkg, targets);
+                        builder.exports(mods, pkg, targets);
                     } else {
-                        builder.exports(pkg);
+                        builder.exports(mods, pkg);
                     }
                 }
             }
@@ -176,11 +194,13 @@ class ClassFileAttributes {
             for (Requires md : descriptor.requires()) {
                 String dn = md.name();
                 int flags = 0;
-                if (md.modifiers().contains(Modifier.PUBLIC))
+                if (md.modifiers().contains(Requires.Modifier.PUBLIC))
                     flags |= ACC_PUBLIC;
-                if (md.modifiers().contains(Modifier.SYNTHETIC))
+                if (md.modifiers().contains(Requires.Modifier.STATIC))
+                    flags |= ACC_STATIC_PHASE;
+                if (md.modifiers().contains(Requires.Modifier.SYNTHETIC))
                     flags |= ACC_SYNTHETIC;
-                if (md.modifiers().contains(Modifier.MANDATED))
+                if (md.modifiers().contains(Requires.Modifier.MANDATED))
                     flags |= ACC_MANDATED;
                 int index = cw.newUTF8(dn);
                 attr.putShort(index);
@@ -195,6 +215,16 @@ class ClassFileAttributes {
                 for (Exports e : descriptor.exports()) {
                     String pkg = e.source().replace('.', '/');
                     attr.putShort(cw.newUTF8(pkg));
+
+                    int flags = 0;
+                    if (e.modifiers().contains(Exports.Modifier.DYNAMIC))
+                        flags |= ACC_DYNAMIC_PHASE;
+                    if (e.modifiers().contains(Exports.Modifier.SYNTHETIC))
+                        flags |= ACC_SYNTHETIC;
+                    if (e.modifiers().contains(Exports.Modifier.MANDATED))
+                        flags |= ACC_MANDATED;
+                    attr.putShort(flags);
+
                     if (e.isQualified()) {
                         Set<String> ts = e.targets();
                         attr.putShort(ts.size());

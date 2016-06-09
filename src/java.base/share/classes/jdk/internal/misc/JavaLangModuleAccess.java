@@ -60,13 +60,13 @@ public interface JavaLangModuleAccess {
      * Returns an unqualified {@code ModuleDescriptor.Exports}
      * of the given package name.
      */
-    Exports newExports(String source);
+    Exports newExports(Set<Exports.Modifier> ms, String source);
 
     /**
      * Returns a qualified {@code ModuleDescriptor.Exports}
      * of the given package name and targets.
      */
-    Exports newExports(String source, Set<String> targets);
+    Exports newExports(Set<Exports.Modifier> ms, String source, Set<String> targets);
 
     /**
      * Returns a {@code ModuleDescriptor.Provides}

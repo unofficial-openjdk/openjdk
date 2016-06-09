@@ -646,20 +646,26 @@ public final class Module {
         Objects.requireNonNull(st);
 
         if (isNamed()) {
-
             Module caller = Reflection.getCallerClass().getModule();
             if (caller != this) {
                 throw new IllegalStateException(caller + " != " + this);
             }
-
-            if (!canUse(st)) {
-                transientUses.putIfAbsent(this, st, Boolean.TRUE);
-            }
-
+            implAddUses(st);
         }
 
         return this;
     }
+
+    /**
+     * Update this module to add a service dependence on the given service
+     * type.
+     */
+    void implAddUses(Class<?> st) {
+        if (!canUse(st)) {
+            transientUses.putIfAbsent(this, st, Boolean.TRUE);
+        }
+    }
+
 
     /**
      * Indicates if this module has a service dependence on the given service
@@ -975,11 +981,6 @@ public final class Module {
      * The {@code name} is a {@code '/'}-separated path name that identifies
      * the resource.
      *
-     * <p> If this module is an unnamed module, and the {@code ClassLoader} for
-     * this module is not {@code null}, then this method is equivalent to
-     * invoking the {@link ClassLoader#getResourceAsStream(String)
-     * getResourceAsStream} method on the class loader for this module.
-     *
      * @param  name
      *         The resource name
      *
@@ -995,29 +996,17 @@ public final class Module {
 
         URL url = null;
 
-        if (isNamed()) {
-            String mn = this.name;
+        String mn = this.name;
 
-            // special-case built-in class loaders to avoid URL connection
-            if (loader == null) {
-                return BootLoader.findResourceAsStream(mn, name);
-            } else if (loader instanceof BuiltinClassLoader) {
-                return ((BuiltinClassLoader) loader).findResourceAsStream(mn, name);
-            }
-
-            // use SharedSecrets to invoke protected method
-            url = SharedSecrets.getJavaLangAccess().findResource(loader, mn, name);
-
-        } else {
-
-            // unnamed module
-            if (loader == null) {
-                url = BootLoader.findResource(name);
-            } else {
-                return loader.getResourceAsStream(name);
-            }
-
+        // special-case built-in class loaders to avoid URL connection
+        if (loader == null) {
+            return BootLoader.findResourceAsStream(mn, name);
+        } else if (loader instanceof BuiltinClassLoader) {
+            return ((BuiltinClassLoader) loader).findResourceAsStream(mn, name);
         }
+
+        // use SharedSecrets to invoke protected method
+        url = SharedSecrets.getJavaLangAccess().findResource(loader, mn, name);
 
         // fallthrough to URL case
         if (url != null) {
@@ -1107,6 +1096,10 @@ public final class Module {
                 @Override
                 public void addExportsToAllUnnamed(Module m, String pn) {
                     m.implAddExports(pn, Module.ALL_UNNAMED_MODULE, true);
+                }
+                @Override
+                public void addUses(Module m, Class<?> service) {
+                    m.implAddUses(service);
                 }
                 @Override
                 public void addPackage(Module m, String pn) {

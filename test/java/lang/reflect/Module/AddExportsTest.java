@@ -23,6 +23,7 @@
 
 /**
  * @test
+ * @modules java.base/jdk.internal.misc
  * @run main/othervm -XaddExports:java.desktop/sun.awt=java.base AddExportsTest
  * @run main/othervm -XaddExports:java.desktop/sun.awt=ALL-UNNAMED AddExportsTest
  * @summary Test Module isExported methods with exports changed by -AddExportsTest
@@ -31,20 +32,34 @@
 import java.lang.reflect.Layer;
 import java.lang.reflect.Module;
 import java.util.Optional;
+import java.util.stream.Stream;
+
+import jdk.internal.misc.VM;
 
 public class AddExportsTest {
+    /*
+     * jtreg sets -Dtest.modules system property to the internal APIs
+     * specified at @modules tag.  The test will exclude -XaddExports set
+     * for @modules.
+     */
+    private static final String TEST_MODULES = System.getProperty("test.modules");
 
     public static void main(String[] args) {
 
-        String addExports = System.getProperty("jdk.launcher.addexports.0");
-        assertTrue(addExports != null, "Expected to be run with -XaddExports");
+        Optional<String> oaddExports = Stream.of(VM.getRuntimeArguments())
+            .filter(arg -> arg.startsWith("-XaddExports:"))
+            .filter(arg -> !arg.equals("-XaddExports:" + TEST_MODULES + "=ALL-UNNAMED"))
+            .map(arg -> arg.substring("-XaddExports:".length(), arg.length()))
+            .findFirst();
+
+        assertTrue(oaddExports.isPresent());
 
         Layer bootLayer = Layer.boot();
 
         Module unnamedModule = AddExportsTest.class.getModule();
         assertFalse(unnamedModule.isNamed());
 
-        for (String expr : addExports.split(",")) {
+        for (String expr : oaddExports.get().split(",")) {
 
             String[] s = expr.split("=");
             assertTrue(s.length == 2);

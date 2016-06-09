@@ -56,7 +56,7 @@ public class Main {
 
         // invoke Class getResource from the unnamed module
         URL url0 = Main.class.getResource("/" + NAME);
-        assertNull(url0);
+        assertNotNull(url0);
 
         // invoke Class getResource from modules m1-m3
         URL url1 = p1.Main.getResource("/" + NAME);
@@ -72,7 +72,7 @@ public class Main {
 
         // invoke Class getResourceAsStream from the unnamed module
         InputStream in0 = Main.class.getResourceAsStream("/" + NAME);
-        assertNull(in0);
+        assertNotNull(in0);
 
         // invoke Class getResourceAsStream from modules m1-m3
         try (InputStream in = p1.Main.getResourceAsStream("/" + NAME)) {
