@@ -71,8 +71,8 @@ public class BootLoader {
     private static final ServicesCatalog SERVICES_CATALOG = ServicesCatalog.create();
 
     // ClassLoaderValue map for boot class loader
-    private static final ConcurrentHashMap<?, ?> CLASS_LOADER_VALUE_MAP =
-        new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<?, ?> CLASS_LOADER_VALUE_MAP
+        = new ConcurrentHashMap<>();
 
     /**
      * Returns the unnamed module for the boot loader.
@@ -112,14 +112,15 @@ public class BootLoader {
 
     /**
      * Loads the Class object with the given name in the given module
-     * defined to the boot loader.
+     * defined to the boot loader. Returns {@code null} if not found.
      */
     public static Class<?> loadClass(Module module, String name) {
         Class<?> c = loadClassOrNull(name);
-        if (c != null && c.getModule() == module)
+        if (c != null && c.getModule() == module) {
             return c;
-
-        return null;
+        } else {
+            return null;
+        }
     }
 
     /**

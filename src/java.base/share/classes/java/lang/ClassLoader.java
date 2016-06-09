@@ -660,14 +660,12 @@ public abstract class ClassLoader {
      * @since 9
      */
     protected Class<?> findClass(String moduleName, String name) {
-        if (moduleName != null)
-            return null;
-
-        try {
-            return findClass(name);
-        } catch (ClassNotFoundException e) {
-            return null;
+        if (moduleName == null) {
+            try {
+                return findClass(name);
+            } catch (ClassNotFoundException ignore) { }
         }
+        return null;
     }
 
 
@@ -1248,10 +1246,11 @@ public abstract class ClassLoader {
      * @since 9
      */
     protected URL findResource(String moduleName, String name) throws IOException {
-        if (moduleName != null)
-            return null;
-        else
+        if (moduleName == null) {
             return findResource(name);
+        } else {
+            return null;
+        }
     }
 
     /**

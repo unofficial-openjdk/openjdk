@@ -242,33 +242,35 @@ public class InstrumentationImpl implements Instrumentation {
         // copy and check reads
         extraReads = new HashSet<>(extraReads);
         if (extraReads.contains(null))
-            throw new IllegalArgumentException("'extraReads' contains null");
+            throw new NullPointerException("'extraReads' contains null");
 
         // copy and check exports
         Set<String> packages = Set.of(module.getPackages());
         Map<String, Set<Module>> tmpExports = new HashMap<>();
         for (Map.Entry<String, Set<Module>> e : extraExports.entrySet()) {
             String pkg = e.getKey();
+            if (pkg == null)
+                throw new NullPointerException("package cannot be null");
             if (!packages.contains(pkg))
                 throw new IllegalArgumentException(pkg + " not in module");
             Set<Module> targets = new HashSet<>(e.getValue());
             if (targets.contains(null))
-                throw new IllegalArgumentException("set of targets cannot be null");
+                throw new NullPointerException("set of targets cannot include null");
             tmpExports.put(pkg, targets);
         }
         extraExports = tmpExports;
 
         // copy and check uses
         extraUses = new HashSet<>(extraUses);
-        if (extraReads.contains(null))
-            throw new IllegalArgumentException("'extraUses' contains null");
+        if (extraUses.contains(null))
+            throw new NullPointerException("'extraUses' contains null");
 
         // copy and check provides
         Map<Class<?>, Set<Class<?>>> tmpProvides = new HashMap<>();
         for (Map.Entry<Class<?>, Set<Class<?>>> e : extraProvides.entrySet()) {
             Class<?> service = e.getKey();
             if (service == null)
-                throw new IllegalArgumentException("'extraProvides' contains null");
+                throw new NullPointerException("'extraProvides' contains null");
             Set<Class<?>> providers = new HashSet<>(e.getValue());
             providers.forEach(p -> {
                 if (p.getModule() != module)

@@ -90,7 +90,7 @@ public class BuiltinClassLoader
 {
     static {
         if (!ClassLoader.registerAsParallelCapable())
-            throw new InternalError();
+            throw new InternalError("Unable to register as parallel capable");
     }
 
     // parent ClassLoader
@@ -281,9 +281,10 @@ public class BuiltinClassLoader
                 });
         }
 
-        if (url != null)
+        if (url != null) {
             // check access before returning
             return checkURL(url);
+        }
 
         // search class path
         return findResourceOnClassPath(name);
@@ -562,8 +563,9 @@ public class BuiltinClassLoader
         LoadedModule loadedModule = findLoadedModule(cn);
         if (loadedModule != null && mn.equals(loadedModule.name())) {
             return loadedModule;
+        } else {
+            return null;
         }
-        return null;
     }
 
     /**
