@@ -152,11 +152,13 @@ static bool match_option(const JavaVMOption *option, const char* name) {
 #define ADDMODS_LEN 7
 #define LIMITMODS "limitmods"
 #define LIMITMODS_LEN 9
+#define PATH "path"
+#define PATH_LEN 4
+#define UPGRADE_PATH "upgrade.path"
+#define UPGRADE_PATH_LEN 12
 
 // Return TRUE if option matches property.<digits> or matches property.<digits>=.
-bool Arguments::is_matching_numbered_property(const char* option,
-                                              const char* property,
-                                              size_t len) {
+static bool is_matching_numbered_property(const char* option, const char* property, size_t len) {
   if (strncmp(option, property, len) == 0) {
     // Check for digits.
     const char* sptr = option + len;
@@ -172,6 +174,36 @@ bool Arguments::is_matching_numbered_property(const char* option,
   return false;
 }
 
+// Return TRUE if option matches property or matches property=.
+static bool is_matching_property(const char* option, const char* property, size_t len) {
+  return (strncmp(option, property, len) == 0) && (option[len] == '=' || option[len] == '\0');
+}
+
+// Return true if option_end is the name of a module-related java property
+// with "-Djdk.module." removed.
+static bool is_internal_module_property_end(const char* option_end) {
+  // For the repeating properties such as (-Djdk.module.patch.0
+  // -Djdk.module.patch.1, etc) return true for "<property_name>.<digit>[=]".
+  if (is_matching_numbered_property(option_end, ADDEXPORTS ".", ADDEXPORTS_LEN + 1) ||
+      is_matching_numbered_property(option_end, ADDREADS ".", ADDREADS_LEN + 1) ||
+      is_matching_numbered_property(option_end, PATCH ".", PATCH_LEN + 1)) {
+      return true;
+  }
+  return (is_matching_property(option_end, ADDMODS, ADDMODS_LEN) ||
+          is_matching_property(option_end, LIMITMODS, LIMITMODS_LEN));
+}
+
+// Return true if the option is one of the module-related java properties
+// that can only be set using the proper module-related option.
+static bool is_module_property(const JavaVMOption *option) {
+  if (strncmp(option->optionString, "-D" MODULE_PROPERTY_PREFIX ".", MODULE_PROPERTY_PREFIX_LEN + 3) == 0) {
+    const char* option_end = option->optionString + MODULE_PROPERTY_PREFIX_LEN + 3;
+    return (is_internal_module_property_end(option_end) ||
+            is_matching_property(option_end, PATH, PATH_LEN) ||
+            is_matching_property(option_end, UPGRADE_PATH, UPGRADE_PATH_LEN));
+  }
+  return false;
+}
 
 // Return true if the option is one of the module-related java properties
 // that can only be set using the proper module-related option and cannot
@@ -180,41 +212,9 @@ bool Arguments::is_matching_numbered_property(const char* option,
 bool Arguments::is_internal_module_property(const char* option) {
   assert((strncmp(option, "-D", 2) != 0), "Unexpected leading -D");
   if (strncmp(option, MODULE_PROPERTY_PREFIX ".", MODULE_PROPERTY_PREFIX_LEN + 1) == 0) {
-    const char* option_end = option + MODULE_PROPERTY_PREFIX_LEN + 1;
-    // For the repeating properties such as (-Djdk.module.patch.0
-    // -Djdk.module.patch.1, etc) return true for "-D<property_name>.<digit>...".
-    if (Arguments::is_matching_numbered_property(option_end,
-                                                 ADDEXPORTS ".",
-                                                 ADDEXPORTS_LEN + 1) ||
-        Arguments::is_matching_numbered_property(option_end,
-                                                 ADDREADS ".",
-                                                 ADDREADS_LEN + 1) ||
-        Arguments::is_matching_numbered_property(option_end,
-                                                 PATCH ".",
-                                                 PATCH_LEN + 1)) {
-      return true;
-    }
-    return (Arguments::is_matching_property(option_end, ADDMODS, ADDMODS_LEN) ||
-           Arguments::is_matching_property(option_end, LIMITMODS, LIMITMODS_LEN));
+    return is_internal_module_property_end(option + MODULE_PROPERTY_PREFIX_LEN + 1);
   }
   return false;
-}
-
-#define MODULE_PATH_PROPERTY "-Djdk.module.path"
-#define MODULE_PATH_PROPERTY_LEN 17
-#define MODULE_UPGRADE_PATH_PROPERTY "-Djdk.module.upgrade.path"
-#define MODULE_UPGRADE_PATH_PROPERTY_LEN 25
-
-// Return true if the option is one of the module-related java properties
-// that can only be set using the proper module-related option.
-static bool is_module_property(const JavaVMOption *option) {
-  return (Arguments::is_internal_module_property(option->optionString + 2) ||  // Skip over "-D"
-          Arguments::is_matching_property(option->optionString,
-                                          MODULE_PATH_PROPERTY,
-                                          MODULE_PATH_PROPERTY_LEN) ||
-          Arguments::is_matching_property(option->optionString,
-                                          MODULE_UPGRADE_PATH_PROPERTY,
-                                          MODULE_UPGRADE_PATH_PROPERTY_LEN));
 }
 
 // Return true if any of the strings in null-terminated array 'names' matches.
@@ -1030,6 +1030,8 @@ void Arguments::add_string(char*** bldarray, int* count, const char* arg) {
   *count = new_count;
 }
 
+// Note that options skipped by the main parse_each_vm_init_arg loop must be added
+// explicitly; for example, the "module_name" part of "-limitmods module_name".
 void Arguments::build_jvm_args(const char* arg) {
   add_string(&_jvm_args_array, &_num_jvm_args, arg);
 }
@@ -1276,7 +1278,7 @@ const char* Arguments::get_property(const char* key) {
   return PropertyList_get_value(system_properties(), key);
 }
 
-bool Arguments::add_property(const char* prop, bool writeable, bool internal) {
+bool Arguments::add_property(const char* prop, PropertyWriteable writeable, PropertyInternal internal) {
   const char* eq = strchr(prop, '=');
   const char* key;
   const char* value = "";
@@ -1307,7 +1309,8 @@ bool Arguments::add_property(const char* prop, bool writeable, bool internal) {
     // the sun.java.launcher property is passed on to the java application
   } else if (strcmp(key, "sun.boot.library.path") == 0) {
     // append is true, writable is true, internal is false
-    PropertyList_unique_add(&_system_properties, key, value, true, true, false);
+    PropertyList_unique_add(&_system_properties, key, value, AppendProperty,
+                            WriteableProperty, ExternalProperty);
   } else {
     if (strcmp(key, "sun.java.command") == 0) {
       char *old_java_command = _java_command;
@@ -1327,7 +1330,7 @@ bool Arguments::add_property(const char* prop, bool writeable, bool internal) {
     }
 
     // Create new property and add at the end of the list
-    PropertyList_unique_add(&_system_properties, key, value, false, writeable, internal);
+    PropertyList_unique_add(&_system_properties, key, value, AddProperty, writeable, internal);
   }
 
   if (key != prop) {
@@ -1356,7 +1359,7 @@ bool Arguments::append_to_addmods_property(const char* module_name) {
   } else {
     jio_snprintf(new_value, buf_len, "%s=%s,%s", key, old_value, module_name);
   }
-  bool added = add_property(new_value, false, true);
+  bool added = add_property(new_value, UnwriteableProperty, InternalProperty);
   FreeHeap(new_value);
   return added;
 }
@@ -1400,7 +1403,7 @@ void Arguments::set_mode_flags(Mode mode) {
   // Ensure Agent_OnLoad has the correct initial values.
   // This may not be the final mode; mode may change later in onload phase.
   PropertyList_unique_add(&_system_properties, "java.vm.info",
-                          VM_Version::vm_info_string(), false, false, false);
+                          VM_Version::vm_info_string(), AddProperty, UnwriteableProperty, ExternalProperty);
 
   UseInterpreter             = true;
   UseCompiler                = true;
@@ -2603,7 +2606,7 @@ unsigned int addexports_count = 0;
 unsigned int xpatch_count = 0;
 JavaVMOption* addmods_value = NULL;
 
-bool Arguments::create_module_property(const char* prop_name, const char* prop_value, bool internal) {
+bool Arguments::create_module_property(const char* prop_name, const char* prop_value, PropertyInternal internal) {
   size_t prop_len = strlen(prop_name) + strlen(prop_value) + 2;
   char* property = AllocateHeap(prop_len, mtArguments);
   int ret = jio_snprintf(property, prop_len, "%s=%s", prop_name, prop_value);
@@ -2611,7 +2614,7 @@ bool Arguments::create_module_property(const char* prop_name, const char* prop_v
     FreeHeap(property);
     return false;
   }
-  bool added = add_property(property, false, internal);
+  bool added = add_property(property, UnwriteableProperty, internal);
   FreeHeap(property);
   return added;
 }
@@ -2626,7 +2629,7 @@ bool Arguments::create_numbered_module_property(const char* prop_base_name, cons
       FreeHeap(property);
       return false;
     }
-    bool added = add_property(property, false, true);
+    bool added = add_property(property, UnwriteableProperty, InternalProperty);
     FreeHeap(property);
     return added;
   }
@@ -2732,6 +2735,34 @@ bool valid_jdwp_agent(char *name, bool is_path) {
   }
 
   return false;
+}
+
+int Arguments::process_xpatch_option(const char* xpatch_tail, bool* xpatch_javabase) {
+  // -Xpatch:<module>=<file>(<pathsep><file>)*
+  assert(xpatch_tail != NULL, "Unexpected NULL xpatch value");
+  // Find the equal sign between the module name and the path specification
+  const char* module_equal = strchr(xpatch_tail, '=');
+  if (module_equal == NULL) {
+    jio_fprintf(defaultStream::output_stream(), "Missing '=' in -Xpatch specification\n");
+    return JNI_ERR;
+  } else {
+    // Pick out the module name
+    size_t module_len = module_equal - xpatch_tail;
+    char* module_name = NEW_C_HEAP_ARRAY_RETURN_NULL(char, module_len+1, mtArguments);
+    if (module_name != NULL) {
+      memcpy(module_name, xpatch_tail, module_len);
+      *(module_name + module_len) = '\0';
+      // The path piece begins one past the module_equal sign
+      add_xpatchprefix(module_name, module_equal + 1, xpatch_javabase);
+      FREE_C_HEAP_ARRAY(char, module_name);
+      if (!create_numbered_module_property("jdk.module.patch", xpatch_tail, xpatch_count++)) {
+        return JNI_ENOMEM;
+      }
+    } else {
+      return JNI_ENOMEM;
+    }
+  }
+  return JNI_OK;
 }
 
 jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* xpatch_javabase, Flag::Flags origin) {
@@ -2852,7 +2883,7 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* xpatch_
       if (++index < args->nOptions) {
         const JavaVMOption* limitmods_value = args->options + index;
         build_jvm_args(limitmods_value->optionString);
-        if (!create_module_property("jdk.module.limitmods", limitmods_value->optionString, true)) {
+        if (!create_module_property("jdk.module.limitmods", limitmods_value->optionString, InternalProperty)) {
             return JNI_ENOMEM;
         }
       } else {
@@ -2864,7 +2895,7 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* xpatch_
       if (++index < args->nOptions) {
         const JavaVMOption* modulepath_value = args->options + index;
         build_jvm_args(modulepath_value->optionString);
-        if (!create_module_property("jdk.module.path", modulepath_value->optionString, false)) {
+        if (!create_module_property("jdk.module.path", modulepath_value->optionString, ExternalProperty)) {
             return JNI_ENOMEM;
         }
       } else {
@@ -2876,7 +2907,7 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* xpatch_
       if (++index < args->nOptions) {
         const JavaVMOption* ump_value = args->options + index;
         build_jvm_args(ump_value->optionString);
-        if (!create_module_property("jdk.module.upgrade.path", ump_value->optionString, false)) {
+        if (!create_module_property("jdk.module.upgrade.path", ump_value->optionString, ExternalProperty)) {
           return JNI_ENOMEM;
         }
       } else {
@@ -2887,27 +2918,9 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* xpatch_
     } else if (match_option(option, "-Xpatch:", &tail)) {
       // -Xpatch:<module>=<file>(<pathsep><file>)*
       if (tail != NULL) {
-        // Find the equal sign between the module name and the path specification
-        const char* module_equal = strchr(tail, '=');
-        if (module_equal == NULL) {
-          jio_fprintf(defaultStream::output_stream(), "Missing '=' in -Xpatch specification\n");
-          return JNI_ERR;
-        } else {
-          // Pick out the module name
-          size_t module_len = module_equal - tail;
-          char* module_name = NEW_C_HEAP_ARRAY_RETURN_NULL(char, module_len+1, mtArguments);
-          if (module_name != NULL) {
-            memcpy(module_name, tail, module_len);
-            *(module_name + module_len) = '\0';
-            // The path piece begins one past the module_equal sign
-            Arguments::add_xpatchprefix(module_name, module_equal + 1, xpatch_javabase);
-            FREE_C_HEAP_ARRAY(char, module_name);
-            if (!create_numbered_module_property("jdk.module.patch", tail, xpatch_count++)) {
-              return JNI_ENOMEM;
-            }
-          } else {
-            return JNI_ENOMEM;
-          }
+        int res = process_xpatch_option(tail, xpatch_javabase);
+        if (res != JNI_OK) {
+          return res;
         }
       } else {
         jio_fprintf(defaultStream::output_stream(), "Missing value for -Xpatch option.\n");
@@ -4683,7 +4696,8 @@ void Arguments::PropertyList_add(SystemProperty *element) {
 
 // This add maintains unique property key in the list.
 void Arguments::PropertyList_unique_add(SystemProperty** plist, const char* k, const char* v,
-                                        jboolean append, bool writeable, bool internal) {
+                                        PropertyAppendable append, PropertyWriteable writeable,
+                                        PropertyInternal internal) {
   if (plist == NULL)
     return;
 
@@ -4691,7 +4705,7 @@ void Arguments::PropertyList_unique_add(SystemProperty** plist, const char* k, c
   SystemProperty* prop;
   for (prop = *plist; prop != NULL; prop = prop->next()) {
     if (strcmp(k, prop->key()) == 0) {
-      if (append) {
+      if (append == AppendProperty) {
         prop->append_value(v);
       } else {
         prop->set_value(v);
@@ -4700,7 +4714,7 @@ void Arguments::PropertyList_unique_add(SystemProperty** plist, const char* k, c
     }
   }
 
-  PropertyList_add(plist, k, v, writeable, internal);
+  PropertyList_add(plist, k, v, writeable == WriteableProperty, internal == InternalProperty);
 }
 
 // Copies src into buf, replacing "%%" with "%" and "%p" with pid

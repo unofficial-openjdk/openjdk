@@ -325,6 +325,21 @@ class Arguments : AllStatic {
     arg_in_range   = 0
   };
 
+  enum PropertyAppendable {
+    AppendProperty,
+    AddProperty
+  };
+
+  enum PropertyWriteable {
+    WriteableProperty,
+    UnwriteableProperty
+  };
+
+  enum PropertyInternal {
+    InternalProperty,
+    ExternalProperty
+  };
+
  private:
 
   // a pointer to the flags file name if it is specified
@@ -464,10 +479,13 @@ class Arguments : AllStatic {
   static vfprintf_hook_t  _vfprintf_hook;
 
   // System properties
-  static bool add_property(const char* prop, bool writeable=true, bool internal=false);
+  static bool add_property(const char* prop, PropertyWriteable writeable=WriteableProperty,
+                           PropertyInternal internal=ExternalProperty);
 
-  static bool create_module_property(const char* prop_name, const char* prop_value, bool internal);
+  static bool create_module_property(const char* prop_name, const char* prop_value, PropertyInternal internal);
   static bool create_numbered_module_property(const char* prop_base_name, const char* prop_value, unsigned int count);
+
+  static int process_xpatch_option(const char* xpatch_tail, bool* xpatch_javabase);
 
   // Miscellaneous system property setter
   static bool append_to_addmods_property(const char* module_name);
@@ -727,19 +745,12 @@ class Arguments : AllStatic {
   static void PropertyList_add(SystemProperty** plist, const char* k, const char* v, bool writeable, bool internal);
 
   static void PropertyList_unique_add(SystemProperty** plist, const char* k, const char* v,
-                                      jboolean append, bool writeable, bool internal);
+                                      PropertyAppendable append, PropertyWriteable writeable,
+                                      PropertyInternal internal);
   static const char* PropertyList_get_value(SystemProperty* plist, const char* key);
   static int  PropertyList_count(SystemProperty* pl);
   static const char* PropertyList_get_key_at(SystemProperty* pl,int index);
   static char* PropertyList_get_value_at(SystemProperty* pl,int index);
-
-  // Return TRUE if option matches property or matches property=.
-  static bool is_matching_property(const char* option, const char* property, size_t len) {
-    return (strncmp(option, property, len) == 0) && (option[len] == '=' || option[len] == '\0');
-  }
-
-  // Return TRUE if option matches property.<digits> or matches property.<digits>=.
-  static bool is_matching_numbered_property(const char* option, const char* property, size_t len);
 
   static bool is_internal_module_property(const char* option);
 
