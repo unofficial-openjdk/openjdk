@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,40 +21,26 @@
  * questions.
  */
 
-package sampleapi;
+/*
+ * @test
+ * @bug 8131029
+ * @summary Tests for alternate JDI connector -- listening
+ * @modules jdk.jshell/jdk.internal.jshell.jdi
+ * @build KullaTesting ExecutionControlTestBase
+ * @run testng JDIListeningExecutionControlTest
+ */
 
-import java.io.File;
-import java.nio.file.Path;
 
-import sampleapi.generator.PackageGenerator;
+import org.testng.annotations.Test;
+import org.testng.annotations.BeforeMethod;
+import jdk.internal.jshell.jdi.JDIExecutionControl;
 
-public class SampleApi {
+@Test
+public class JDIListeningExecutionControlTest extends ExecutionControlTestBase {
 
-    PackageGenerator pkgGen = new PackageGenerator();
-
-    public void generate(File dir) throws Fault {
-        pkgGen.processDataSet("simple");
-        pkgGen.generate(dir);
-        pkgGen.processDataSet("tiny");
-        pkgGen.generate(dir);
-        pkgGen.processDataSet("fx");
-        pkgGen.generate(dir);
-    }
-
-    public void generate(Path dir) throws Fault {
-        generate(dir.toFile());
-    }
-
-    public void generate(String dir) throws Fault {
-        generate(new File(dir));
-    }
-
-    public static class Fault extends Exception {
-        public Fault(String msg) {
-            super(msg);
-        }
-        public Fault(String msg, Throwable th) {
-            super(msg, th);
-        }
+    @BeforeMethod
+    @Override
+    public void setUp() {
+        setUp(new JDIExecutionControl(false));
     }
 }
