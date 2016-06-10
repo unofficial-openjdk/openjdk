@@ -691,8 +691,8 @@ public interface Instrumentation {
      * is set of implementation types, each of which is a member of the module
      * and an implementation of the service. </p>
      *
-     * <p> This method is safe for concurrent use and may be used concurrently
-     * by different agents that are instrumenting the same module.
+     * <p> This method is safe for concurrent use and so allows multiple agents
+     * to instrument and update same module at around the same time. </p>
      *
      * @param module the module to redefine
      * @param extraReads the set of additional modules to read
@@ -702,8 +702,8 @@ public interface Instrumentation {
      *
      * @throws IllegalArgumentException
      *         If {@code extraExports} contains a key that is not a package in
-     *         the module; if a {@code extraProvides} map value contains a service
-     *         provider type that is not a member of the module or an
+     *         the module; if a value in the {@code extraProvides} map contains
+     *         a service provider type that is not a member of the module or an
      *         implementation of the service
      * @throws NullPointerException if any of the arguments are {@code null} or
      *         any of the Sets or Maps contains a {@code null} key or value
