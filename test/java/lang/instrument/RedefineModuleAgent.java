@@ -26,6 +26,10 @@ import java.lang.reflect.Module;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Agent used by RedefineModuleTest
+ */
+
 public class RedefineModuleAgent {
 
     private static Instrumentation inst;

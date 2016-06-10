@@ -34,6 +34,9 @@
 import java.lang.TestProvider;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Module;
+import java.net.URLStreamHandler;
+import java.net.spi.URLStreamHandlerProvider;
+import java.nio.file.FileSystems;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -68,6 +71,7 @@ public class RedefineModuleTest {
         // pre-conditions
         assertFalse(baseModule.canRead(instrumentModule));
 
+        // update java.base to read java.instrument
         redefineModule(baseModule, Set.of(instrumentModule), Map.of(), Set.of(), Map.of());
         assertTrue(baseModule.canRead(instrumentModule));
     }
@@ -84,11 +88,13 @@ public class RedefineModuleTest {
         assertFalse(baseModule.isExported(pkg));
         assertFalse(baseModule.isExported(pkg, thisModule));
 
+        // update java.base to export jdk.internal.misc to an unnamed module
         Map<String, Set<Module>> extraExports = Map.of(pkg, Set.of(thisModule));
         redefineModule(baseModule, Set.of(), extraExports, Set.of(), Map.of());
         assertFalse(baseModule.isExported(pkg));
         assertTrue(baseModule.isExported(pkg, thisModule));
 
+        // update java.base to export jdk.internal.misc unconditionally
         extraExports = Map.of(pkg, Set.of());
         redefineModule(baseModule, Set.of(), extraExports, Set.of(), Map.of());
         assertTrue(baseModule.isExported(pkg));
@@ -107,13 +113,65 @@ public class RedefineModuleTest {
         // pre-conditions
         assertFalse(baseModule.canUse(service));
 
+        // update java.base to use TestProvider
         redefineModule(baseModule, Set.of(), Map.of(), Set.of(service), Map.of());
         assertTrue(baseModule.canUse(service));
         assertFalse(TestProvider.providers().iterator().hasNext());
 
+        // update java.base to provider an implementation of TestProvider
         Map<Class<?>, Set<Class<?>>> extraProvides = Map.of(service, Set.of(impl));
         redefineModule(baseModule, Set.of(), Map.of(), Set.of(), extraProvides);
         assertTrue(TestProvider.providers().iterator().hasNext());
+    }
+
+    /**
+     * Test redefineClass by attempting to update java.base to export a package
+     * that it does not contain.
+     */
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testExportPackageNotInModule() {
+        Module baseModule = Object.class.getModule();
+        String pkg = "jdk.doesnotexist";
+
+        // attempt to update java.base to export jdk.doesnotexist
+        Map<String, Set<Module>> extraExports = Map.of(pkg, Set.of());
+        redefineModule(baseModule, Set.of(), extraExports, Set.of(), Map.of());
+    }
+
+    /**
+     * Test redefineClass by attempting to update java.base to provide a service
+     * where the service provider class is not in the module.
+     */
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testProvideServiceNotInModule() {
+        Module baseModule = Object.class.getModule();
+        class MyProvider extends URLStreamHandlerProvider {
+            @Override
+            public URLStreamHandler createURLStreamHandler(String protocol) {
+                return null;
+            }
+        }
+
+        // attempt to update java.base to provide MyProvider
+        Map<Class<?>, Set<Class<?>>> extraProvides
+            = Map.of(URLStreamHandlerProvider.class, Set.of(MyProvider.class));
+        redefineModule(baseModule, Set.of(), Map.of(), Set.of(), extraProvides);
+    }
+
+    /**
+     * Test redefineClass by attempting to update java.base to provider a
+     * service where the service provider class is not a sub-type.
+     */
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testProvideServiceNotSubtype() {
+        Module baseModule = Object.class.getModule();
+
+        Class<?> service = TestProvider.class;
+        Class<?> impl = FileSystems.getDefault().provider().getClass();
+
+        // attempt to update java.base to provide an implementation of TestProvider
+        Map<Class<?>, Set<Class<?>>> extraProvides = Map.of(service, Set.of(impl));
+        redefineModule(baseModule, Set.of(), Map.of(), Set.of(), extraProvides);
     }
 
     /**
