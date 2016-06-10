@@ -5092,7 +5092,7 @@ VS_SDK_PLATFORM_NAME_2013=
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1465306933
+DATE_WHEN_GENERATED=1465351120
 
 ###############################################################################
 #
@@ -49613,9 +49613,9 @@ $as_echo "$supports" >&6; }
       fi
       C_O_FLAG_NONE="-O0"
     elif test "x$TOOLCHAIN_TYPE" = xxlc; then
-      C_O_FLAG_HIGHEST_JVM="-O3"
-      C_O_FLAG_HIGHEST="-O3"
-      C_O_FLAG_HI="-O3 -qstrict"
+      C_O_FLAG_HIGHEST_JVM="-O3 -qhot=level=1 -qinline -qinlglue"
+      C_O_FLAG_HIGHEST="-O3 -qhot=level=1 -qinline -qinlglue"
+      C_O_FLAG_HI="-O3 -qinline -qinlglue"
       C_O_FLAG_NORM="-O2"
       C_O_FLAG_DEBUG="-qnoopt"
       # FIXME: Value below not verified.
@@ -50622,8 +50622,8 @@ $as_echo "$supports" >&6; }
   elif test "x$OPENJDK_TARGET_OS" = xaix; then
     JVM_CFLAGS="$JVM_CFLAGS -DAIX"
     # We may need '-qminimaltoc' or '-qpic=large -bbigtoc' if the TOC overflows.
-    JVM_CFLAGS="$JVM_CFLAGS -qtune=balanced -qhot=level=1 -qinline \
-        -qinlglue -qalias=noansi -qstrict -qtls=default -qlanglvl=c99vla \
+    JVM_CFLAGS="$JVM_CFLAGS -qtune=balanced \
+        -qalias=noansi -qstrict -qtls=default -qlanglvl=c99vla \
         -qlanglvl=noredefmac -qnortti -qnoeh -qignerrno"
   elif test "x$OPENJDK_TARGET_OS" = xbsd; then
     COMMON_CCXXFLAGS_JDK="$COMMON_CCXXFLAGS_JDK -D_ALLBSD_SOURCE"
@@ -51427,8 +51427,8 @@ $as_echo "$supports" >&6; }
   elif test "x$OPENJDK_BUILD_OS" = xaix; then
     OPENJDK_BUILD_JVM_CFLAGS="$OPENJDK_BUILD_JVM_CFLAGS -DAIX"
     # We may need '-qminimaltoc' or '-qpic=large -bbigtoc' if the TOC overflows.
-    OPENJDK_BUILD_JVM_CFLAGS="$OPENJDK_BUILD_JVM_CFLAGS -qtune=balanced -qhot=level=1 -qinline \
-        -qinlglue -qalias=noansi -qstrict -qtls=default -qlanglvl=c99vla \
+    OPENJDK_BUILD_JVM_CFLAGS="$OPENJDK_BUILD_JVM_CFLAGS -qtune=balanced \
+        -qalias=noansi -qstrict -qtls=default -qlanglvl=c99vla \
         -qlanglvl=noredefmac -qnortti -qnoeh -qignerrno"
   elif test "x$OPENJDK_BUILD_OS" = xbsd; then
     OPENJDK_BUILD_COMMON_CCXXFLAGS_JDK="$OPENJDK_BUILD_COMMON_CCXXFLAGS_JDK -D_ALLBSD_SOURCE"
@@ -53456,7 +53456,7 @@ $as_echo "yes, forced" >&6; }
 $as_echo "no, forced" >&6; }
     BUILD_GTEST="false"
   elif test "x$enable_hotspot_gtest" = "x"; then
-    if test "x$GTEST_DIR_EXISTS" = "xtrue"; then
+    if test "x$GTEST_DIR_EXISTS" = "xtrue" && test "x$OPENJDK_TARGET_OS" != "xaix"; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
       BUILD_GTEST="true"
@@ -64600,12 +64600,16 @@ fi
 
 
 
-  if test "$OPENJDK_TARGET_OS" = "solaris"; then
+  if test "$OPENJDK_TARGET_OS" = "solaris" && test "x$BUILD_GTEST" = "xtrue"; then
     # Find the root of the Solaris Studio installation from the compiler path
     SOLARIS_STUDIO_DIR="$(dirname $CC)/.."
     STLPORT_LIB="$SOLARIS_STUDIO_DIR/lib/stlport4$OPENJDK_TARGET_CPU_ISADIR/libstlport.so.1"
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libstlport.so.1" >&5
 $as_echo_n "checking for libstlport.so.1... " >&6; }
+    if ! test -f "$STLPORT_LIB" && test "x$OPENJDK_TARGET_CPU_ISADIR" = "x/sparcv9"; then
+      # SS12u3 has libstlport under 'stlport4/v9' instead of 'stlport4/sparcv9'
+      STLPORT_LIB="$SOLARIS_STUDIO_DIR/lib/stlport4/v9/libstlport.so.1"
+    fi
     if test -f "$STLPORT_LIB"; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes, $STLPORT_LIB" >&5
 $as_echo "yes, $STLPORT_LIB" >&6; }
@@ -66119,6 +66123,10 @@ $as_echo "no, does not work effectively with icecc" >&6; }
   elif test "x$TOOLCHAIN_TYPE" = xsolstudio; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, does not work with Solaris Studio" >&5
 $as_echo "no, does not work with Solaris Studio" >&6; }
+    USE_PRECOMPILED_HEADER=0
+  elif test "x$TOOLCHAIN_TYPE" = xxlc; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, does not work with xlc" >&5
+$as_echo "no, does not work with xlc" >&6; }
     USE_PRECOMPILED_HEADER=0
   else
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
