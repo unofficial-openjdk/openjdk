@@ -168,6 +168,7 @@ public class Names {
     public final Name FIELD;
     public final Name LOCAL_VARIABLE;
     public final Name METHOD;
+    public final Name MODULE;
     public final Name PACKAGE;
     public final Name PARAMETER;
     public final Name TYPE;
@@ -325,6 +326,7 @@ public class Names {
         FIELD = fromString("FIELD");
         LOCAL_VARIABLE = fromString("LOCAL_VARIABLE");
         METHOD = fromString("METHOD");
+        MODULE = fromString("MODULE");
         PACKAGE = fromString("PACKAGE");
         PARAMETER = fromString("PARAMETER");
         TYPE = fromString("TYPE");
