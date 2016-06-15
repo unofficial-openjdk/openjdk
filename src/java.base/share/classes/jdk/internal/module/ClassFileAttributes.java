@@ -50,7 +50,7 @@ import static jdk.internal.module.ClassFileConstants.*;
  * class file attributes in a module-info class file.
  */
 
-class ClassFileAttributes {
+public final class ClassFileAttributes {
 
     private ClassFileAttributes() { }
 
@@ -59,16 +59,16 @@ class ClassFileAttributes {
      *   // See lang-vm.html for details.
      * }
      */
-    static class ModuleAttribute extends Attribute {
+    public static class ModuleAttribute extends Attribute {
 
         private ModuleDescriptor descriptor;
 
-        ModuleAttribute(ModuleDescriptor descriptor) {
+        public ModuleAttribute(ModuleDescriptor descriptor) {
             super(MODULE);
             this.descriptor = descriptor;
         }
 
-        ModuleAttribute() {
+        public ModuleAttribute() {
             super(MODULE);
         }
 
@@ -318,15 +318,15 @@ class ClassFileAttributes {
      *
      * }</pre>
      */
-    static class ConcealedPackagesAttribute extends Attribute {
+    public static class ConcealedPackagesAttribute extends Attribute {
         private final Set<String> packages;
 
-        ConcealedPackagesAttribute(Set<String> packages) {
+        public ConcealedPackagesAttribute(Set<String> packages) {
             super(CONCEALED_PACKAGES);
             this.packages = packages;
         }
 
-        ConcealedPackagesAttribute() {
+        public ConcealedPackagesAttribute() {
             this(null);
         }
 
@@ -394,15 +394,15 @@ class ClassFileAttributes {
      *
      * } </pre>
      */
-    static class VersionAttribute extends Attribute {
+    public static class VersionAttribute extends Attribute {
         private final Version version;
 
-        VersionAttribute(Version version) {
+        public VersionAttribute(Version version) {
             super(VERSION);
             this.version = version;
         }
 
-        VersionAttribute() {
+        public VersionAttribute() {
             this(null);
         }
 
@@ -449,15 +449,15 @@ class ClassFileAttributes {
      *
      * } </pre>
      */
-    static class MainClassAttribute extends Attribute {
+    public static class MainClassAttribute extends Attribute {
         private final String mainClass;
 
-        MainClassAttribute(String mainClass) {
+        public MainClassAttribute(String mainClass) {
             super(MAIN_CLASS);
             this.mainClass = mainClass;
         }
 
-        MainClassAttribute() {
+        public MainClassAttribute() {
             this(null);
         }
 
@@ -508,19 +508,19 @@ class ClassFileAttributes {
      *
      * } </pre>
      */
-    static class TargetPlatformAttribute extends Attribute {
+    public static class TargetPlatformAttribute extends Attribute {
         private final String osName;
         private final String osArch;
         private final String osVersion;
 
-        TargetPlatformAttribute(String osName, String osArch, String osVersion) {
+        public TargetPlatformAttribute(String osName, String osArch, String osVersion) {
             super(TARGET_PLATFORM);
             this.osName = osName;
             this.osArch = osArch;
             this.osVersion = osVersion;
         }
 
-        TargetPlatformAttribute() {
+        public TargetPlatformAttribute() {
             this(null, null, null);
         }
 

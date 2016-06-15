@@ -495,8 +495,6 @@ final class ModuleInfo {
                     "LineNumberTable",
                     "LocalVariableTable",
                     "LocalVariableTypeTable",
-                    "RuntimeVisibleAnnotations",
-                    "RuntimeInvisibleAnnotations",
                     "RuntimeVisibleParameterAnnotations",
                     "RuntimeInvisibleParameterAnnotations",
                     "RuntimeVisibleTypeAnnotations",

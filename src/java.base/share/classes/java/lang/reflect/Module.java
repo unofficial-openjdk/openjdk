@@ -27,6 +27,7 @@ package java.lang.reflect;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.Annotation;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleDescriptor;
@@ -36,6 +37,8 @@ import java.lang.module.ModuleDescriptor.Version;
 import java.lang.module.ResolvedModule;
 import java.net.URI;
 import java.net.URL;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -52,6 +55,10 @@ import jdk.internal.loader.BootLoader;
 import jdk.internal.misc.JavaLangReflectModuleAccess;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.module.ServicesCatalog;
+import jdk.internal.org.objectweb.asm.ClassReader;
+import jdk.internal.org.objectweb.asm.ClassVisitor;
+import jdk.internal.org.objectweb.asm.ClassWriter;
+import jdk.internal.org.objectweb.asm.Opcodes;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 import sun.security.util.SecurityConstants;
@@ -83,7 +90,7 @@ import sun.security.util.SecurityConstants;
  * @see java.lang.Class#getModule
  */
 
-public final class Module {
+public final class Module implements AnnotatedElement {
 
     // the layer that contains this module, can be null
     private final Layer layer;
@@ -968,6 +975,117 @@ public final class Module {
         }
 
         return modules;
+    }
+
+
+    // -- annotations --
+
+    /**
+     * {@inheritDoc}
+     * This method returns {@code null} when invoked on an unnamed module.
+     */
+    @Override
+    public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+        return moduleInfoClass().getDeclaredAnnotation(annotationClass);
+    }
+
+    /**
+     * {@inheritDoc}
+     * This method returns an empty array when invoked on an unnamed module.
+     */
+    @Override
+    public Annotation[] getAnnotations() {
+        return moduleInfoClass().getAnnotations();
+    }
+
+    /**
+     * {@inheritDoc}
+     * This method returns an empty array when invoked on an unnamed module.
+     */
+    @Override
+    public Annotation[] getDeclaredAnnotations() {
+        return moduleInfoClass().getDeclaredAnnotations();
+    }
+
+    // cached class file with annotations
+    private volatile Class<?> moduleInfoClass;
+
+    private Class<?> moduleInfoClass() {
+        Class<?> clazz = this.moduleInfoClass;
+        if (clazz != null)
+            return clazz;
+
+        synchronized (this) {
+            clazz = this.moduleInfoClass;
+            if (clazz == null) {
+                if (isNamed()) {
+                    PrivilegedAction<Class<?>> pa = this::loadModuleInfoClass;
+                    clazz = AccessController.doPrivileged(pa);
+                }
+                if (clazz == null) {
+                    class DummyModuleInfo { }
+                    clazz = DummyModuleInfo.class;
+                }
+                this.moduleInfoClass = clazz;
+            }
+            return clazz;
+        }
+    }
+
+    private Class<?> loadModuleInfoClass() {
+        Class<?> clazz = null;
+        try (InputStream in = getResourceAsStream("module-info.class")) {
+            if (in != null)
+                clazz = loadModuleInfoClass(in);
+        } catch (Exception ignore) { }
+        return clazz;
+    }
+
+    private Class<?> loadModuleInfoClass(InputStream in) throws IOException {
+        final String MODULE_INFO = "module-info";
+
+        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS
+                                         + ClassWriter.COMPUTE_FRAMES);
+
+        ClassVisitor cv = new ClassVisitor(Opcodes.ASM5, cw) {
+            // change header
+            public void visit(int version,
+                              int access,
+                              String name,
+                              String signature,
+                              String superName,
+                              String[] interfaces) {
+                cw.visit(version,
+                        Opcodes.ACC_INTERFACE
+                            + Opcodes.ACC_ABSTRACT
+                            + Opcodes.ACC_SYNTHETIC,
+                        MODULE_INFO,
+                        null,
+                        "java/lang/Object",
+                        null);
+            }
+        };
+
+        ClassReader cr = new ClassReader(in);
+        cr.accept(cv, 0);
+        byte[] bytes = cw.toByteArray();
+
+        ClassLoader ldr = new ClassLoader(loader) {
+            @Override
+            protected Class<?> findClass(String cn)throws ClassNotFoundException {
+                if (cn.equals(MODULE_INFO)) {
+                    return super.defineClass(cn, bytes, 0, bytes.length);
+                } else {
+                    throw new ClassNotFoundException(cn);
+                }
+            }
+        };
+
+        try {
+            return ldr.loadClass(MODULE_INFO);
+        } catch (ClassNotFoundException e) {
+            throw new InternalError(e);
+        }
     }
 
 
