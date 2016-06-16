@@ -22,24 +22,14 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
-package com.sun.source.doctree;
-
-import java.util.List;
+package testpkgmdltags;
 
 /**
- *
- * A tree node for an @hidden block tag.
- *
- * <p>
- * &#064;hidden
- *
- * @since 9
+ * Simple tag test
+ * @regular Just a regular simple tag.
+ * @moduletag Just a simple module tag.
  */
-public interface HiddenTree extends BlockTagTree {
-    /**
-     * Returns the description explaining why an item is hidden.
-     * @return the description
-     */
-    List<? extends DocTree> getBody();
+
+public class TestClassInModuleTags {
+    public void testMethod(String str){}
 }

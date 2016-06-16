@@ -23,23 +23,22 @@
  * questions.
  */
 
-package com.sun.source.doctree;
-
-import java.util.List;
-
 /**
- *
- * A tree node for an @hidden block tag.
- *
- * <p>
- * &#064;hidden
- *
- * @since 9
- */
-public interface HiddenTree extends BlockTagTree {
-    /**
-     * Returns the description explaining why an item is hidden.
-     * @return the description
-     */
-    List<? extends DocTree> getBody();
+  * This is a test description for the module1 module.<br>
+  * Type Link: {@link testpkgmdltags.TestClassInModuleTags}.<br>
+  * Member Link: {@link testpkgmdltags.TestClassInModuleTags#testMethod(String)}.<br>
+  * Package Link: {@link testpkgmdltags}.<br>
+  *
+  * @author Bhavesh Patel
+  * @since JDK 9
+  * @see "Test see tag"
+  * @see testpkgmdltags.TestClassInModuleTags
+  * @regular Just a regular simple tag.
+  * @moduletag Just a simple module tag.
+  * @version 1.0
+  */
+module moduletags {
+    requires module2;
+
+    exports testpkgmdltags;
 }

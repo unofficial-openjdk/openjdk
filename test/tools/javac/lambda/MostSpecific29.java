@@ -4,9 +4,7 @@
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,23 +21,22 @@
  * questions.
  */
 
-package com.sun.source.doctree;
-
-import java.util.List;
-
-/**
- *
- * A tree node for an @hidden block tag.
- *
- * <p>
- * &#064;hidden
- *
- * @since 9
+/*
+ * @test
+ * @bug 8144767
+ * @summary Correct most-specific test when wildcards appear in functional interface type
+ * @compile MostSpecific29.java
  */
-public interface HiddenTree extends BlockTagTree {
-    /**
-     * Returns the description explaining why an item is hidden.
-     * @return the description
-     */
-    List<? extends DocTree> getBody();
+class MostSpecific29 {
+
+    interface Pred<T> { boolean test(T arg); }
+    interface Fun<T,R> { R apply(T arg); }
+
+    static void m1(Pred<? super Integer> f) {}
+    static void m1(Fun<Integer, Boolean> f) {}
+
+    void test() {
+        m1((Integer n) -> true);
+    }
+
 }
