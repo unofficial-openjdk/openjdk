@@ -106,6 +106,7 @@ import com.sun.tools.javac.tree.JCTree.Tag;
 import static com.sun.tools.javac.code.Flags.ABSTRACT;
 import static com.sun.tools.javac.code.Flags.ENUM;
 import static com.sun.tools.javac.code.Flags.PUBLIC;
+import com.sun.tools.javac.tree.JCTree.JCImport;
 import static com.sun.tools.javac.tree.JCTree.Tag.MODULEDEF;
 
 /**
@@ -249,9 +250,9 @@ public class Modules extends JCTree.Visitor {
 
     private void enterModule(JCCompilationUnit toplevel, ClassSymbol c, Set<ModuleSymbol> modules) {
         boolean isModuleInfo = toplevel.sourcefile.isNameCompatible("module-info", Kind.SOURCE);
-        boolean isModuleDecl = toplevel.defs.nonEmpty() && toplevel.defs.head.hasTag(MODULEDEF);
+        boolean isModuleDecl = toplevel.getModuleDecl() != null;
         if (isModuleInfo && isModuleDecl) {
-            JCModuleDecl decl = (JCModuleDecl) toplevel.defs.head;
+            JCModuleDecl decl = toplevel.getModuleDecl();
             Name name = TreeInfo.fullName(decl.qualId);
             ModuleSymbol sym;
             if (c != null) {
@@ -312,8 +313,8 @@ public class Modules extends JCTree.Visitor {
                     if (locn != null) {
                         Name name = names.fromString(fileManager.inferModuleName(locn));
                         ModuleSymbol msym;
-                        if (tree.defs.head.hasTag(MODULEDEF)) {
-                            JCModuleDecl decl = (JCModuleDecl) tree.defs.head;
+                        JCModuleDecl decl = tree.getModuleDecl();
+                        if (decl != null) {
                             msym = decl.sym;
                             if (msym.name != name) {
                                 log.error(decl.qualId, Errors.ModuleNameMismatch(msym.name, name));
@@ -405,17 +406,14 @@ public class Modules extends JCTree.Visitor {
     }
 
     private Location getModuleLocation(JCCompilationUnit tree) throws IOException {
-        switch (tree.defs.head.getTag()) {
-            case MODULEDEF:
-                return getModuleLocation(tree.sourcefile, null);
-
-            case PACKAGEDEF:
-                JCPackageDecl pkg = (JCPackageDecl) tree.defs.head;
-                return getModuleLocation(tree.sourcefile, TreeInfo.fullName(pkg.pid));
-
-            default:
-                // code in unnamed module
-                return null;
+        if (tree.getModuleDecl() != null) {
+            return getModuleLocation(tree.sourcefile, null);
+        } else if (tree.getPackage() != null) {
+            JCPackageDecl pkg = tree.getPackage();
+            return getModuleLocation(tree.sourcefile, TreeInfo.fullName(pkg.pid));
+        } else {
+            // code in unnamed module
+            return null;
         }
     }
 
@@ -533,9 +531,10 @@ public class Modules extends JCTree.Visitor {
                 ModuleVisitor v = new ModuleVisitor();
                 JavaFileObject prev = log.useSource(tree.sourcefile);
                 try {
-                    tree.defs.head.accept(v);
+                    JCModuleDecl moduleDecl = tree.getModuleDecl();
+                    moduleDecl.accept(v);
                     completeModule(msym);
-                    checkCyclicDependencies((JCModuleDecl) tree.defs.head);
+                    checkCyclicDependencies(moduleDecl);
                 } finally {
                     log.useSource(prev);
                     msym.flags_field &= ~UNATTRIBUTED;
@@ -661,7 +660,7 @@ public class Modules extends JCTree.Visitor {
             UsesProvidesVisitor v = new UsesProvidesVisitor(msym, env);
             JavaFileObject prev = log.useSource(env.toplevel.sourcefile);
             try {
-                env.toplevel.defs.head.accept(v);
+                env.toplevel.getModuleDecl().accept(v);
             } finally {
                 log.useSource(prev);
             }

@@ -1554,7 +1554,13 @@ public class ClassReader {
     }
 
     CompoundAnnotationProxy readCompoundAnnotation() {
-        Type t = readTypeOrClassSymbol(nextChar());
+        Type t;
+        if (currentModule.module_info == currentOwner) {
+            int index = poolIdx[nextChar()];
+            t = new ProxyType(Arrays.copyOfRange(buf, index + 3, index + 3 + getChar(index + 1)));
+        } else {
+            t = readTypeOrClassSymbol(nextChar());
+        }
         int numFields = nextChar();
         ListBuffer<Pair<Name,Attribute>> pairs = new ListBuffer<>();
         for (int i=0; i<numFields; i++) {
@@ -1904,14 +1910,18 @@ public class ClassReader {
         }
 
         Attribute.Compound deproxyCompound(CompoundAnnotationProxy a) {
+            Type annotationType = a.type;
+            if (annotationType instanceof ProxyType) {
+                annotationType = ((ProxyType) annotationType).resolve();
+            }
             ListBuffer<Pair<Symbol.MethodSymbol,Attribute>> buf = new ListBuffer<>();
             for (List<Pair<Name,Attribute>> l = a.values;
                  l.nonEmpty();
                  l = l.tail) {
-                MethodSymbol meth = findAccessMethod(a.type, l.head.fst);
+                MethodSymbol meth = findAccessMethod(annotationType, l.head.fst);
                 buf.append(new Pair<>(meth, deproxy(meth.type.getReturnType(), l.head.snd)));
             }
-            return new Attribute.Compound(a.type, buf.toList());
+            return new Attribute.Compound(annotationType, buf.toList());
         }
 
         MethodSymbol findAccessMethod(Type container, Name name) {
@@ -2081,7 +2091,11 @@ public class ClassReader {
         AnnotationCompleter(Symbol sym, List<CompoundAnnotationProxy> l) {
             super(currentOwner.kind == MTH
                     ? currentOwner.enclClass() : (ClassSymbol)currentOwner);
-            this.sym = sym;
+            if (sym.kind == TYP && sym.owner.kind == MDL) {
+                this.sym = sym.owner;
+            } else {
+                this.sym = sym;
+            }
             this.l = l;
             this.classFile = currentClassFile;
         }
@@ -2788,6 +2802,31 @@ public class ClassReader {
             sym.getAnnotationTypeMetadata().setTarget(theTarget);
             sym.getAnnotationTypeMetadata().setRepeatable(theRepeatable);
         }
+    }
+
+    private class ProxyType extends Type {
+
+        private final byte[] content;
+
+        public ProxyType(byte[] content) {
+            super(syms.noSymbol, TypeMetadata.EMPTY);
+            this.content = content;
+        }
+
+        @Override
+        public TypeTag getTag() {
+            return TypeTag.NONE;
+        }
+
+        @Override
+        public Type cloneWithMetadata(TypeMetadata metadata) {
+            throw new UnsupportedOperationException();
+        }
+
+        public Type resolve() {
+            return sigToType(content, 0, content.length);
+        }
+
     }
 
     private static final class InterimUsesDirective {

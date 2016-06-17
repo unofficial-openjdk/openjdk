@@ -3102,65 +3102,72 @@ public class JavacParser implements Parser {
         Token firstToken = token;
         JCModifiers mods = null;
         boolean consumedToplevelDoc = false;
+        boolean seenImport = false;
+        boolean seenPackage = false;
         ListBuffer<JCTree> defs = new ListBuffer<>();
+        if (token.kind == MONKEYS_AT)
+            mods = modifiersOpt();
 
-        if (token.kind == IDENTIFIER && token.name() == names.module) {
-            defs.append(moduleDecl(token.comment(CommentStyle.JAVADOC)));
+        if (token.kind == PACKAGE) {
+            int packagePos = token.pos;
+            List<JCAnnotation> annotations = List.nil();
+            seenPackage = true;
+            if (mods != null) {
+                checkNoMods(mods.flags);
+                annotations = mods.annotations;
+                mods = null;
+            }
+            nextToken();
+            JCExpression pid = qualident(false);
+            accept(SEMI);
+            JCPackageDecl pd = F.at(packagePos).PackageDecl(annotations, pid);
+            attach(pd, firstToken.comment(CommentStyle.JAVADOC));
             consumedToplevelDoc = true;
-        } else {
-            boolean seenImport = false;
-            boolean seenPackage = false;
-            if (token.kind == MONKEYS_AT)
-                mods = modifiersOpt();
-
-            if (token.kind == PACKAGE) {
-                int packagePos = token.pos;
-                List<JCAnnotation> annotations = List.nil();
-                seenPackage = true;
-                if (mods != null) {
-                    checkNoMods(mods.flags);
-                    annotations = mods.annotations;
-                    mods = null;
-                }
-                nextToken();
-                JCExpression pid = qualident(false);
-                accept(SEMI);
-                JCPackageDecl pd = F.at(packagePos).PackageDecl(annotations, pid);
-                attach(pd, firstToken.comment(CommentStyle.JAVADOC));
-                consumedToplevelDoc = true;
-                storeEnd(pd, token.pos);
-                defs.append(pd);
-            }
-            boolean checkForImports = true;
-            boolean firstTypeDecl = true;
-            while (token.kind != EOF) {
-                if (token.pos <= endPosTable.errorEndPos) {
-                    // error recovery
-                    skip(checkForImports, false, false, false);
-                    if (token.kind == EOF)
-                        break;
-                }
-                if (checkForImports && mods == null && token.kind == IMPORT) {
-                    seenImport = true;
-                    defs.append(importDeclaration());
-                } else {
-                    Comment docComment = token.comment(CommentStyle.JAVADOC);
-                    if (firstTypeDecl && !seenImport && !seenPackage) {
-                        docComment = firstToken.comment(CommentStyle.JAVADOC);
-                        consumedToplevelDoc = true;
-                    }
-                    JCTree def = typeDeclaration(mods, docComment);
-                    if (def instanceof JCExpressionStatement)
-                        def = ((JCExpressionStatement)def).expr;
-                    defs.append(def);
-                    if (def instanceof JCClassDecl)
-                        checkForImports = false;
-                    mods = null;
-                    firstTypeDecl = false;
-                }
-            }
+            storeEnd(pd, token.pos);
+            defs.append(pd);
         }
 
+        boolean checkForImports = true;
+        boolean firstTypeDecl = true;
+        while (token.kind != EOF) {
+            if (token.pos <= endPosTable.errorEndPos) {
+                // error recovery
+                skip(checkForImports, false, false, false);
+                if (token.kind == EOF)
+                    break;
+            }
+            if (checkForImports && mods == null && token.kind == IMPORT) {
+                seenImport = true;
+                defs.append(importDeclaration());
+            } else {
+                Comment docComment = token.comment(CommentStyle.JAVADOC);
+                if (firstTypeDecl && !seenImport && !seenPackage) {
+                    docComment = firstToken.comment(CommentStyle.JAVADOC);
+                    consumedToplevelDoc = true;
+                }
+                if (mods != null || token.kind != SEMI)
+                    mods = modifiersOpt(mods);
+                if (token.kind == IDENTIFIER && token.name() == names.module && firstTypeDecl) {
+                    List<JCAnnotation> annotations = List.nil();
+                    if (mods != null) {
+                        checkNoMods(mods.flags);
+                        annotations = mods.annotations;
+                        mods = null;
+                    }
+                    defs.append(moduleDecl(annotations, docComment));
+                    consumedToplevelDoc = true;
+                    break;
+                }
+                JCTree def = typeDeclaration(mods, docComment);
+                if (def instanceof JCExpressionStatement)
+                    def = ((JCExpressionStatement)def).expr;
+                defs.append(def);
+                if (def instanceof JCClassDecl)
+                    checkForImports = false;
+                mods = null;
+                firstTypeDecl = false;
+            }
+        }
         JCTree.JCCompilationUnit toplevel = F.at(firstToken.pos).TopLevel(defs.toList());
         if (!consumedToplevelDoc)
             attach(toplevel, firstToken.comment(CommentStyle.JAVADOC));
@@ -3175,7 +3182,7 @@ public class JavacParser implements Parser {
         return toplevel;
     }
 
-    JCModuleDecl moduleDecl(Comment dc) {
+    JCModuleDecl moduleDecl(List<JCAnnotation> annotations, Comment dc) {
         int pos = token.pos;
         if (!allowModules) {
             log.error(pos, Errors.ModulesNotSupportedInSource(source.name));
@@ -3191,7 +3198,7 @@ public class JavacParser implements Parser {
         accept(RBRACE);
         accept(EOF);
 
-        JCModuleDecl result = toP(F.at(pos).ModuleDef(name, directives));
+        JCModuleDecl result = toP(F.at(pos).ModuleDef(annotations, name, directives));
         attach(result, dc);
         return result;
     }
