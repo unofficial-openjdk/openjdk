@@ -692,7 +692,7 @@ public interface Instrumentation {
      * and an implementation of the service. </p>
      *
      * <p> This method is safe for concurrent use and so allows multiple agents
-     * to instrument and update same module at around the same time. </p>
+     * to instrument and update the same module at around the same time. </p>
      *
      * @param module the module to redefine
      * @param extraReads the set of additional modules to read
