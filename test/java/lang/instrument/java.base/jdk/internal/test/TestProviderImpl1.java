@@ -25,7 +25,7 @@ package jdk.internal.test;
 
 import java.lang.TestProvider;
 
-public class TestProviderImpl implements TestProvider {
-    public TestProviderImpl() { }
+public class TestProviderImpl1 implements TestProvider {
+    public TestProviderImpl1() { }
 }
 

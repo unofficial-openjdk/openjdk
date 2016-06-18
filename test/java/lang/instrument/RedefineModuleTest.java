@@ -26,20 +26,24 @@
  * @summary Basic test for redefineModule
  * @modules java.instrument
  * @build java.base/java.lang.TestProvider
- *        java.base/jdk.internal.test.TestProviderImpl
+ *        java.base/jdk.internal.test.TestProviderImpl1
+ *        java.base/jdk.internal.test.TestProviderImpl2
  * @run shell MakeJAR3.sh RedefineModuleAgent
  * @run testng/othervm -javaagent:RedefineModuleAgent.jar RedefineModuleTest
  */
 
 import java.lang.TestProvider;
 import java.lang.instrument.Instrumentation;
+import java.lang.reflect.Layer;
 import java.lang.reflect.Module;
 import java.net.URLStreamHandler;
 import java.net.spi.URLStreamHandlerProvider;
 import java.nio.file.FileSystems;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.Set;
 
 import org.testng.annotations.Test;
@@ -103,25 +107,78 @@ public class RedefineModuleTest {
 
     /**
      * Use redefineModule to update java.base to use TestProvider and
-     * provide an implementation of TestProvider.
+     * provide implementations of TestProvider.
      */
     public void testAddUsesAndProvides() throws Exception {
         Module baseModule = Object.class.getModule();
-        Class<?> service = TestProvider.class;
-        Class<?> impl = Class.forName("jdk.internal.test.TestProviderImpl");
+        Class<TestProvider> service = TestProvider.class;
 
         // pre-conditions
         assertFalse(baseModule.canUse(service));
+        assertTrue(collect(ServiceLoader.load(service)).isEmpty());
+        assertTrue(collect(ServiceLoader.load(Layer.boot(), service)).isEmpty());
 
         // update java.base to use TestProvider
         redefineModule(baseModule, Set.of(), Map.of(), Set.of(service), Map.of());
         assertTrue(baseModule.canUse(service));
-        assertFalse(TestProvider.providers().iterator().hasNext());
+        assertTrue(collect(ServiceLoader.load(service)).isEmpty());
+        assertTrue(collect(ServiceLoader.load(Layer.boot(), service)).isEmpty());
 
-        // update java.base to provider an implementation of TestProvider
-        Map<Class<?>, Set<Class<?>>> extraProvides = Map.of(service, Set.of(impl));
+        // update java.base to provide an implementation of TestProvider
+        Class<?> type1 = Class.forName("jdk.internal.test.TestProviderImpl1");
+        Map<Class<?>, Set<Class<?>>> extraProvides = Map.of(service, Set.of(type1));
         redefineModule(baseModule, Set.of(), Map.of(), Set.of(), extraProvides);
-        assertTrue(TestProvider.providers().iterator().hasNext());
+
+        // invoke ServiceLoader from java.base to find providers
+        Set<TestProvider> providers = collect(TestProvider.providers());
+        assertTrue(providers.size() == 1);
+        assertTrue(containsInstanceOf(providers, type1));
+
+        // use ServiceLoader to load implementations visible via TCCL
+        providers = collect(ServiceLoader.load(service));
+        assertTrue(collect(providers).size() == 1);
+        assertTrue(containsInstanceOf(collect(providers), type1));
+
+        // use ServiceLoader to load implementations in the boot layer
+        providers = collect(ServiceLoader.load(Layer.boot(), service));
+        assertTrue(collect(providers).size() == 1);
+        assertTrue(containsInstanceOf(collect(providers), type1));
+
+        // update java.base to provide a second implementation of TestProvider
+        Class<?> type2 = Class.forName("jdk.internal.test.TestProviderImpl2");
+        extraProvides = Map.of(service, Set.of(type2));
+        redefineModule(baseModule, Set.of(), Map.of(), Set.of(), extraProvides);
+
+        // invoke ServiceLoader from java.base to find providers
+        providers = collect(TestProvider.providers());
+        assertTrue(providers.size() == 2);
+        assertTrue(containsInstanceOf(providers, type1));
+        assertTrue(containsInstanceOf(providers, type2));
+
+        // use ServiceLoader to load implementations visible via TCCL
+        providers = collect(ServiceLoader.load(service));
+        assertTrue(collect(providers).size() == 2);
+        assertTrue(containsInstanceOf(providers, type1));
+        assertTrue(containsInstanceOf(providers, type2));
+
+        // use ServiceLoader to load implementations in the boot layer
+        providers = collect(ServiceLoader.load(Layer.boot(), service));
+        assertTrue(collect(providers).size() == 2);
+        assertTrue(containsInstanceOf(providers, type1));
+        assertTrue(containsInstanceOf(providers, type2));
+    }
+
+    private <S> Set<S> collect(Iterable<S> sl) {
+        Set<S> providers = new HashSet<>();
+        sl.forEach(providers::add);
+        return providers;
+    }
+
+    private boolean containsInstanceOf(Collection<?> c, Class<?> type) {
+        for (Object o : c) {
+            if (type.isInstance(o)) return true;
+        }
+        return false;
     }
 
     /**
@@ -159,7 +216,7 @@ public class RedefineModuleTest {
     }
 
     /**
-     * Test redefineClass by attempting to update java.base to provider a
+     * Test redefineClass by attempting to update java.base to provide a
      * service where the service provider class is not a sub-type.
      */
     @Test(expectedExceptions = IllegalArgumentException.class)
@@ -251,4 +308,3 @@ public class RedefineModuleTest {
     }
 
 }
-
