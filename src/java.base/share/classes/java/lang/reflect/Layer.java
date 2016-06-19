@@ -570,13 +570,12 @@ public final class Layer {
         if (servicesCatalog != null)
             return servicesCatalog;
 
-        ServicesCatalog catalog = ServicesCatalog.create();
-        nameToModule.values().forEach(catalog::register);
-
         synchronized (this) {
             servicesCatalog = this.servicesCatalog;
             if (servicesCatalog == null) {
-                this.servicesCatalog = servicesCatalog = catalog;
+                servicesCatalog = ServicesCatalog.create();
+                nameToModule.values().forEach(servicesCatalog::register);
+                this.servicesCatalog = servicesCatalog;
             }
         }
 

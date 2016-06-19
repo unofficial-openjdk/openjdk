@@ -231,10 +231,10 @@ public class InstrumentationImpl implements Instrumentation {
 
     @Override
     public void redefineModule(Module module,
-                                Set<Module> extraReads,
-                                Map<String, Set<Module>> extraExports,
-                                Set<Class<?>> extraUses,
-                                Map<Class<?>, Set<Class<?>>> extraProvides)
+                               Set<Module> extraReads,
+                               Map<String, Set<Module>> extraExports,
+                               Set<Class<?>> extraUses,
+                               Map<Class<?>, Set<Class<?>>> extraProvides)
     {
         if (!module.isNamed())
             return;

@@ -641,10 +641,9 @@ public abstract class ClassLoader {
      * @apiNote This method returns {@code null} rather than throwing
      *          {@code ClassNotFoundException} if the class could not be found.
      *
-     * @implSpec The default implementation returns {@code null} if
-     * {@code moduleName} is not {@code null} to find the class in
-     * a named module; otherwise, it calls and returns
-     * {@link #findClass(String)}.
+     * @implSpec The default implementation attempts to find the class by
+     * invoking {@link #findClass(String)} when the {@code moduleName} is
+     * {@code null}. It otherwise returns {@code null}.
      *
      * @param  moduleName
      *         The module name; or {@code null} to find the class in the
@@ -1222,9 +1221,9 @@ public abstract class ClassLoader {
      * Class loader implementations that support the loading from modules
      * should override this method.
      *
-     * @implSpec The default implementation returns {@code null} if
-     * {@code moduleName} is not {@code null}, i.e, finding a resource in
-     * a named module; otherwise, it calls and returns {@link #findResource(String)}.
+     * @implSpec The default implementation attempts to find the resource by
+     * invoking {@link #findResource(String)} when the {@code moduleName} is
+     * {@code null}. It otherwise returns {@code null}.
      *
      * @param  moduleName
      *         The module name; or {@code null} to find a resource in the
