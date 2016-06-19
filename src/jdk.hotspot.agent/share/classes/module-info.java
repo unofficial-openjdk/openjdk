@@ -31,7 +31,7 @@ module jdk.hotspot.agent {
     requires jdk.jdi;
 
     // RMI needs to serialize types in this package
-    exports sun.jvm.hotspot.debugger.remote to java.rmi;
+    exports dynamic sun.jvm.hotspot.debugger.remote to java.rmi;
     provides com.sun.jdi.connect.Connector with sun.jvm.hotspot.jdi.SACoreAttachingConnector;
     provides com.sun.jdi.connect.Connector with sun.jvm.hotspot.jdi.SADebugServerAttachingConnector;
     provides com.sun.jdi.connect.Connector with sun.jvm.hotspot.jdi.SAPIDAttachingConnector;
