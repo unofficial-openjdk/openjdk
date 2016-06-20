@@ -131,7 +131,8 @@ enum OptionKind {
     LAUNCHER_OPTION = 0,
     LAUNCHER_OPTION_WITH_ARGUMENT,
     LAUNCHER_MAIN_OPTION,
-    VM_LONG_FORM_OPTION,
+    VM_LONG_OPTION,
+    VM_LONG_OPTION_WITH_ARGUMENT,
     VM_WHITE_SPACE_OPTION, // old option
     VM_DASH_X_OPTION,      // old option
     VM_OPTION
@@ -1209,7 +1210,7 @@ GetOpt(int *pargc, char ***pargv, char **poption, char **pvalue) {
         }
     } else if (IsModuleOption(arg) || IsOldModuleOption(arg)) {
         if (_gnu_option_enabled) {
-            kind = VM_LONG_FORM_OPTION;
+            kind = VM_LONG_OPTION_WITH_ARGUMENT;
         } else {
             kind = VM_WHITE_SPACE_OPTION;
         }
@@ -1225,7 +1226,7 @@ GetOpt(int *pargc, char ***pargv, char **poption, char **pvalue) {
             kind = LAUNCHER_OPTION_WITH_ARGUMENT;
         } else {
             if (_gnu_option_enabled) {
-                kind = VM_LONG_FORM_OPTION;
+                kind = VM_LONG_OPTION;
             } else {
                 kind = VM_WHITE_SPACE_OPTION;
             }
@@ -1246,26 +1247,29 @@ GetOpt(int *pargc, char ***pargv, char **poption, char **pvalue) {
         } else if (JLI_StrCCmp(arg, "-XaddExports:") == 0) {
             option = "--add-exports";
             value = arg + 13;
-            kind = VM_LONG_FORM_OPTION;
+            kind = VM_LONG_OPTION_WITH_ARGUMENT;
         } else if (JLI_StrCCmp(arg, "-XaddReads:") == 0) {
             option = "--add-reads";
             value = arg + 11;
-            kind = VM_LONG_FORM_OPTION;
+            kind = VM_LONG_OPTION_WITH_ARGUMENT;
         } else if (JLI_StrCCmp(arg, "-Xpatch:") == 0) {
             option = "--patch-module";
             value = arg + 8;
-            kind = VM_LONG_FORM_OPTION;
+            kind = VM_LONG_OPTION_WITH_ARGUMENT;
         }
     } else {
         if (JLI_StrCmp(arg, "--module-path") == 0 ||
             JLI_StrCmp(arg, "-p") == 0 ||
             JLI_StrCCmp(arg, "--module-path=") == 0) {
             option = "-modulepath";
-        } else if (JLI_StrCmp(arg, "--upgrade-module-path") == 0) {
+        } else if (JLI_StrCmp(arg, "--upgrade-module-path") == 0 ||
+                   JLI_StrCCmp(arg, "--upgrade-module-path=") == 0) {
             option = "-upgrademodulepath";
-        } else if (JLI_StrCmp(arg, "--add-modules") == 0) {
+        } else if (JLI_StrCmp(arg, "--add-modules") == 0 ||
+                   JLI_StrCCmp(arg, "--add-modules=") == 0) {
             option = "-addmods";
-        } else if (JLI_StrCmp(arg, "--limit-modules") == 0) {
+        } else if (JLI_StrCmp(arg, "--limit-modules") == 0 ||
+                   JLI_StrCCmp(arg, "--limit-modules=") == 0) {
             option = "-limitmods";
         } else if (JLI_StrCmp(arg, "--add-exports") == 0 ||
                    JLI_StrCCmp(arg, "--add-exports=") == 0) {
@@ -1351,7 +1355,9 @@ ParseArguments(int *pargc, char ***pargv,
  * Parse white-space options
  */
         } else if (has_arg) {
-            if (kind == VM_LONG_FORM_OPTION) {
+            if (kind == VM_LONG_OPTION) {
+                AddOption(option, NULL);
+            } else if (kind == VM_LONG_OPTION_WITH_ARGUMENT) {
                 AddLongFormOption(option, value);
             } else if (kind == VM_WHITE_SPACE_OPTION) {
                 AddOptionWithArgument(option, value);
