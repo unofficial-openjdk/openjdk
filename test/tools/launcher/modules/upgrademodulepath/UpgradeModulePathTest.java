@@ -27,7 +27,7 @@
  * @modules jdk.compiler
  * @build UpgradeModulePathTest CompilerUtils jdk.testlibrary.*
  * @run testng UpgradeModulePathTest
- * @summary Basic test for java -upgrademodulepath
+ * @summary Basic test for java --upgrade-module-path
  */
 
 import java.io.File;
@@ -72,7 +72,7 @@ public class UpgradeModulePathTest {
                 "-mp", MODS_DIR.toString());
         assertTrue(compiled);
 
-        // javac -d mods -upgrademodulepath upgrademods -mp mods src/test/**
+        // javac -d mods --upgrade-module-path upgrademods -mp mods src/test/**
         compiled = CompilerUtils.compile(
                 SRC_DIR.resolve("test"),
                 MODS_DIR.resolve("test"),
@@ -92,7 +92,7 @@ public class UpgradeModulePathTest {
 
         int exitValue
             = executeTestJava(
-                "-upgrademodulepath", UPGRADEDMODS_DIR.toString(),
+                "--upgrade-module-path", UPGRADEDMODS_DIR.toString(),
                 "-mp", MODS_DIR.toString(),
                 "-m", mid)
             .outputTo(System.out)
@@ -116,7 +116,7 @@ public class UpgradeModulePathTest {
 
         int exitValue
             = executeTestJava(
-                "-upgrademodulepath", upgrademodulepath,
+                "--upgrade-module-path", upgrademodulepath,
                 "-mp", MODS_DIR.toString(),
                 "-m", mid)
             .outputTo(System.out)

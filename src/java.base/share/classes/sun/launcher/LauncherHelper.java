@@ -903,7 +903,7 @@ public final class LauncherHelper {
 
         ModuleFinder finder = jdk.internal.module.ModuleBootstrap.finder();
 
-        int colon = optionFlag.indexOf(':');
+        int colon = optionFlag.indexOf('=');
         if (colon == -1) {
             finder.findAll().stream()
                 .sorted(Comparator.comparing(ModuleReference::descriptor))
