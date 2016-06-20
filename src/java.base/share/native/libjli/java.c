@@ -1230,19 +1230,12 @@ GetOpt(int *pargc, char ***pargv, char **poption, char **pvalue) {
                 kind = VM_WHITE_SPACE_OPTION;
             }
         }
-    } else if (JLI_StrCmp(arg, "--list-modules") == 0) {
-        // launcher option with optional argument
-        jboolean has_arg = HasArgument(arg, argc, *argv);
-        if (has_arg) {
-            value = *argv;
-            argv++; --argc;
-            kind = LAUNCHER_OPTION_WITH_ARGUMENT;
-        }
     }
 
     // rename to the VM option name for transition to support both old and new syntax
     if (_gnu_option_enabled) {
-        if (JLI_StrCmp(arg, "-modulepath") == 0) {
+        if (JLI_StrCmp(arg, "-modulepath") == 0 ||
+            JLI_StrCmp(arg, "-mp") == 0) {
             option = "--module-path";
         } else if (JLI_StrCmp(arg, "-upgrademodulepath") == 0) {
             option = "--upgrade-module-path";
@@ -1345,13 +1338,13 @@ ParseArguments(int *pargc, char ***pargv,
             mode = LM_CLASS;
         } else if (JLI_StrCmp(arg, "--list-modules") == 0 ||
                    JLI_StrCCmp(arg, "--list-modules=") == 0) {
-            // listModules is either --list-modules or --list-modules=<module-names>
-            if (value != NULL && JLI_StrCmp(arg, "--list-modules") == 0) {
+            listModules = arg;
+
+            // set listModules to --list-modules=<module-names> if argument is specified
+            if (JLI_StrCmp(arg, "--list-modules") == 0 && has_arg) {
                 static const char format[] = "%s=%s";
                 listModules = JLI_MemAlloc(JLI_StrLen(option)+2+JLI_StrLen(value));
                 sprintf(listModules, format, option, value);
-            } else {
-                listModules = arg;
             }
             return JNI_TRUE;
 /*
