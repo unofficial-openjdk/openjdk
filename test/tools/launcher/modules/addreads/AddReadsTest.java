@@ -109,10 +109,10 @@ public class AddReadsTest {
      */
     public void testJUnitOnClassPath() throws Exception {
 
-        // java -p mods -cp mods/junit.jar --add-reads m1=ALL-UNNAMED -m ..
+        // java --module-path mods -cp mods/junit.jar --add-reads m1=ALL-UNNAMED -m ..
         String cp = MODS_DIR.resolve("junit.jar").toString();
         int exitValue
-            = run("-p", MODS_DIR.toString(),
+            = run("--module-path", MODS_DIR.toString(),
                   "-cp", cp,
                   "--add-reads", "m1=ALL-UNNAMED",
                   "-m", MAIN)
@@ -142,10 +142,10 @@ public class AddReadsTest {
      * Run with junit on the class path but without --add-reads.
      */
     public void testJUnitOnClassPathMissingAddReads() throws Exception {
-        // java -p mods -cp mods/junit.jar -m ..
+        // java --module-path mods -cp mods/junit.jar -m ..
         String cp = MODS_DIR.resolve("junit.jar").toString();
         int exitValue
-            = run("-p", MODS_DIR.toString(),
+            = run("--module-path", MODS_DIR.toString(),
                   "-cp", cp,
                   "-m", MAIN)
                 .shouldContain("IllegalAccessError")
@@ -177,13 +177,13 @@ public class AddReadsTest {
     public void testWithTargetSpecifiedManyTimes() throws Exception {
 
         int exitValue
-            = run("-p", MODS_DIR.toString(),
-                "--add-modules", "java.xml,junit",
-                "--add-reads", "m1=java.xml",
-                "--add-reads", "m1=junit",
-                "-m", MAIN)
-                .shouldContain("specified more than once")
-                .getExitValue();
+            = run("--module-path", MODS_DIR.toString(),
+                  "--add-modules", "java.xml,junit",
+                  "--add-reads", "m1=java.xml",
+                  "--add-reads", "m1=junit",
+                  "-m", MAIN)
+                  .shouldContain("specified more than once")
+                 .getExitValue();
 
         assertTrue(exitValue != 0);
     }

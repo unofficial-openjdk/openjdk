@@ -149,7 +149,7 @@ public class AddExportsTest {
         String mid = TEST1_MODULE + "/" + TEST1_MAIN_CLASS;
         int exitValue =
             executeTestJava("--add-exports", "java.base/jdk.internal.misc=" + TEST1_MODULE,
-                            "-mp", MODS_DIR.toString(),
+                            "--module-path", MODS_DIR.toString(),
                             "-m", mid)
                 .outputTo(System.out)
                 .errorTo(System.out)
@@ -169,7 +169,7 @@ public class AddExportsTest {
         String mid = TEST2_MODULE + "/" + TEST2_MAIN_CLASS;
         int exitValue = executeTestJava(
                 "--add-exports", "java.transaction/javax.transaction.internal=m2",
-                "-upgrademodulepath", UPGRADE_MODS_DIRS.toString(),
+                "--upgrade-module-path", UPGRADE_MODS_DIRS.toString(),
                 "-mp", MODS_DIR.toString(),
                 "-m", mid)
                 .outputTo(System.out)
@@ -190,8 +190,8 @@ public class AddExportsTest {
         String mid = TEST3_MODULE + "/" + TEST3_MAIN_CLASS;
         int exitValue = executeTestJava(
                 "--add-exports", "m4/jdk.test4=m3",
-                "-mp", MODS_DIR.toString(),
-                "-addmods", TEST4_MODULE,
+                "--module-path", MODS_DIR.toString(),
+                "--add-modules", TEST4_MODULE,
                 "-m", mid)
                 .outputTo(System.out)
                 .errorTo(System.out)

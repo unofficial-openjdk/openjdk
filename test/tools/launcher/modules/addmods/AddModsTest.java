@@ -207,7 +207,7 @@ public class AddModsTest {
 
 
     /**
-     * Test {@code --add-modules ALL-MODULE-PATH} without {@code -modulepath}.
+     * Test {@code --add-modules ALL-MODULE-PATH} without {@code --module-path}.
      */
     public void testAddAllModulePathWithNoModulePath() throws Exception {
 
