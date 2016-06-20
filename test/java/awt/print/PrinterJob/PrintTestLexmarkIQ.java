@@ -20,18 +20,25 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
- /*
+/*
  * @test
- * @bug 6529030 8159134
- * @summary  Verifies if Java Printing: Selection radiobutton gets enabled.
- * @requires (os.family == "windows")
- * @run main/manual PrintDlgSelectionAttribTest
+ * @bug 6966350
+ * @summary Verifies if Empty pages are printed on Lexmark E352dn PS3
+ *           with "1200 IQ" setting
+ * @run main/manual PrintTestLexmarkIQ
  */
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.Graphics;
-import java.awt.print.Printable;
+import java.awt.Graphics2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.print.PageFormat;
+import java.awt.print.Paper;
+import java.awt.print.Printable;
+import static java.awt.print.Printable.NO_SUCH_PAGE;
+import static java.awt.print.Printable.PAGE_EXISTS;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import javax.swing.JButton;
@@ -40,58 +47,46 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 
-public class PrintDlgSelectionAttribTest {
+public class PrintTestLexmarkIQ implements Printable {
 
     private static Thread mainThread;
     private static boolean testPassed;
     private static boolean testGeneratedInterrupt;
-    private static PrinterJob printJob;
-
-    public static void print() {
-
-        // Set working printable to print pages
-        printJob.setPrintable(new Printable() {
-            public int print(Graphics graphics, PageFormat pageFormat,
-                    int pageIndex) throws PrinterException {
-                return NO_SUCH_PAGE;
-            }
-        });
-
-        // Display Print dialog
-        if (!printJob.printDialog()) {
-            System.out.println("\tPrinting canceled by user");
-            return;
-        }
-
-        try {
-            printJob.print();
-        } catch (PrinterException e) {
-        }
-    }
-
-    public static void printTest() {
-        printJob = PrinterJob.getPrinterJob();
-        System.out.println(" -=- Starting printing #1 -=-");
-        print();
-        System.out.println(" -=- Starting printing #2 -=-");
-        print();
-    }
 
     public static void main(String[] args) throws Exception {
         SwingUtilities.invokeAndWait(() -> {
-            doTest(PrintDlgSelectionAttribTest::printTest);
+            doTest(PrintTestLexmarkIQ::printTest);
         });
         mainThread = Thread.currentThread();
         try {
-            Thread.sleep(60000);
+            Thread.sleep(90000);
         } catch (InterruptedException e) {
             if (!testPassed && testGeneratedInterrupt) {
-                throw new RuntimeException(""
-                        + "Selection radio button is enabled in print dialog");
+                throw new RuntimeException(" Empty pages printed ");
             }
         }
         if (!testGeneratedInterrupt) {
             throw new RuntimeException("user has not executed the test");
+        }
+    }
+
+    private static void printTest() {
+        PrinterJob pj = PrinterJob.getPrinterJob();
+
+        PageFormat pf = pj.defaultPage();
+        Paper paper = new Paper();
+        double margin = 36; // half inch
+        paper.setImageableArea(margin, margin, paper.getWidth() - margin * 2,
+                paper.getHeight() - margin * 2);
+        pf.setPaper(paper);
+
+        pj.setPrintable(new PrintTestLexmarkIQ(), pf);
+        if (pj.printDialog()) {
+            try {
+                pj.print();
+            } catch (PrinterException e) {
+                System.out.println(e);
+            }
         }
     }
 
@@ -109,15 +104,16 @@ public class PrintDlgSelectionAttribTest {
 
     private static void doTest(Runnable action) {
         String description
-                = " Visual inspection of print dialog is required.\n"
-                + " Initially, a print dialog will be shown.\n "
-                + " Please verify Selection radio button is disabled.\n"
-                + " Press OK. Then 2nd print dialog will be shown.\n"
-                + " Please verify the Selection radio button is disabled\n"
-                + " in 2nd print dialog. If disabled, press PASS else press fail";
+                = " Install Lexmark E352dn PS3 or Dell 5310n printer.\n"
+                + " A print dialog will be shown.\n"
+                + " Select Normal 1200IQ setting in Properties->PrintQuality in Dell 5310n \n"
+                + " or for Lexmark E352dn printer, select Normal 1200IQ setting in\n "
+                + " Properties -> Advanced -> Graphic -> Print Quality.\n"
+                + " Press Print. Verify the print output.\n "
+                + " If empty page is printed, press Fail else press Pass.";
 
         final JDialog dialog = new JDialog();
-        dialog.setTitle("printSelectionTest");
+        dialog.setTitle("1200IQTest");
         JTextArea textArea = new JTextArea(description);
         textArea.setEditable(false);
         final JButton testButton = new JButton("Start Test");
@@ -150,4 +146,21 @@ public class PrintDlgSelectionAttribTest {
         dialog.pack();
         dialog.setVisible(true);
     }
+
+    public int print(Graphics g, PageFormat pf, int pi)
+            throws PrinterException {
+        if (pi != 0) {
+            return NO_SUCH_PAGE;
+        }
+        Graphics2D g2 = (Graphics2D) g;
+        g2.setFont(new Font("Serif", Font.PLAIN, 36));
+        g2.setPaint(Color.black);
+        g2.drawString("Java Source and Support", 100, 100);
+        Rectangle2D outline = new Rectangle2D.Double(pf.getImageableX(), pf
+                .getImageableY(), pf.getImageableWidth(), pf
+                .getImageableHeight());
+        g2.draw(outline);
+        return PAGE_EXISTS;
+    }
+
 }
