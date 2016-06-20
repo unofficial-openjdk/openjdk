@@ -55,6 +55,7 @@ import jdk.internal.loader.BootLoader;
 import jdk.internal.misc.JavaLangReflectModuleAccess;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.module.ServicesCatalog;
+import jdk.internal.org.objectweb.asm.Attribute;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassVisitor;
 import jdk.internal.org.objectweb.asm.ClassWriter;
@@ -259,12 +260,11 @@ public final class Module implements AnnotatedElement {
 
     // -- readability --
 
-    // the modules that this module permanently reads
-    // (will be final when the modules are defined in reverse topology order)
+    // the modules that this module reads
     private volatile Set<Module> reads;
 
     // additional module (2nd key) that some module (1st key) reflectively reads
-    private static final WeakPairMap<Module, Module, Boolean> transientReads
+    private static final WeakPairMap<Module, Module, Boolean> reflectivelyReads
         = new WeakPairMap<>();
 
 
@@ -300,13 +300,13 @@ public final class Module implements AnnotatedElement {
         }
 
         // check if this module reads the other module reflectively
-        if (transientReads.containsKeyPair(this, other))
+        if (reflectivelyReads.containsKeyPair(this, other))
             return true;
 
         // if other is an unnamed module then check if this module reads
         // all unnamed modules
         if (!other.isNamed()
-            && transientReads.containsKeyPair(this, ALL_UNNAMED_MODULE))
+            && reflectivelyReads.containsKeyPair(this, ALL_UNNAMED_MODULE))
             return true;
 
         return false;
@@ -388,20 +388,19 @@ public final class Module implements AnnotatedElement {
         }
 
         // add reflective read
-        transientReads.putIfAbsent(this, other, Boolean.TRUE);
+        reflectivelyReads.putIfAbsent(this, other, Boolean.TRUE);
     }
 
 
     // -- exports --
 
-    // the packages that are permanently exported
-    // (will be final when the modules are defined in reverse topology order)
+    // the packages that are exported
     private volatile Map<String, Set<Module>> exports;
 
     // additional exports added at run-time
     // this module (1st key), other module (2nd key), exported packages (value)
     private static final WeakPairMap<Module, Module, Map<String, Boolean>>
-        transientExports = new WeakPairMap<>();
+        reflectivelyExports = new WeakPairMap<>();
 
 
     /**
@@ -458,7 +457,7 @@ public final class Module implements AnnotatedElement {
             return true;
 
         // exported via module declaration/descriptor
-        if (isExportedPermanently(pn, other))
+        if (isExportedStatically(pn, other))
             return true;
 
         // exported via addExports
@@ -470,10 +469,10 @@ public final class Module implements AnnotatedElement {
     }
 
     /**
-     * Returns {@code true} if this module permanently exports the given
+     * Returns {@code true} if this module statically exports the given
      * package to the given module.
      */
-    private boolean isExportedPermanently(String pn, Module other) {
+    private boolean isExportedStatically(String pn, Module other) {
         Map<String, Set<Module>> exports = this.exports;
         if (exports != null) {
             Set<Module> targets = exports.get(pn);
@@ -491,20 +490,20 @@ public final class Module implements AnnotatedElement {
      */
     private boolean isExportedReflectively(String pn, Module other) {
         // exported to all modules
-        Map<String, ?> exports = transientExports.get(this, EVERYONE_MODULE);
+        Map<String, ?> exports = reflectivelyExports.get(this, EVERYONE_MODULE);
         if (exports != null && exports.containsKey(pn))
             return true;
 
         if (other != EVERYONE_MODULE) {
 
             // exported to other
-            exports = transientExports.get(this, other);
+            exports = reflectivelyExports.get(this, other);
             if (exports != null && exports.containsKey(pn))
                 return true;
 
             // other is an unnamed module && exported to all unnamed
             if (!other.isNamed()) {
-                exports = transientExports.get(this, ALL_UNNAMED_MODULE);
+                exports = reflectivelyExports.get(this, ALL_UNNAMED_MODULE);
                 if (exports != null && exports.containsKey(pn))
                     return true;
             }
@@ -611,10 +610,10 @@ public final class Module implements AnnotatedElement {
             }
         }
 
-        // add package name to transientExports if absent
-        transientExports
+        // add package name to reflectivelyExports if absent
+        reflectivelyExports
             .computeIfAbsent(this, other,
-                             (_this, _other) -> new ConcurrentHashMap<>())
+                             (m1, m2) -> new ConcurrentHashMap<>())
             .putIfAbsent(pn, Boolean.TRUE);
     }
 
@@ -1041,6 +1040,10 @@ public final class Module implements AnnotatedElement {
         return clazz;
     }
 
+    /**
+     * Loads module-info.class as a package-private interface in a class loader
+     * that is a child of this module's class loader.
+     */
     private Class<?> loadModuleInfoClass(InputStream in) throws IOException {
         final String MODULE_INFO = "module-info";
 
@@ -1048,7 +1051,7 @@ public final class Module implements AnnotatedElement {
                                          + ClassWriter.COMPUTE_FRAMES);
 
         ClassVisitor cv = new ClassVisitor(Opcodes.ASM5, cw) {
-            // change header
+            @Override
             public void visit(int version,
                               int access,
                               String name,
@@ -1064,13 +1067,17 @@ public final class Module implements AnnotatedElement {
                         "java/lang/Object",
                         null);
             }
+            @Override
+            public void visitAttribute(Attribute attr) {
+                // drop
+            }
         };
 
         ClassReader cr = new ClassReader(in);
         cr.accept(cv, 0);
         byte[] bytes = cw.toByteArray();
 
-        ClassLoader ldr = new ClassLoader(loader) {
+        ClassLoader cl = new ClassLoader(loader) {
             @Override
             protected Class<?> findClass(String cn)throws ClassNotFoundException {
                 if (cn.equals(MODULE_INFO)) {
@@ -1082,7 +1089,7 @@ public final class Module implements AnnotatedElement {
         };
 
         try {
-            return ldr.loadClass(MODULE_INFO);
+            return cl.loadClass(MODULE_INFO);
         } catch (ClassNotFoundException e) {
             throw new InternalError(e);
         }
