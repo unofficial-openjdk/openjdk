@@ -101,25 +101,25 @@ public class JlinkTask {
             for (String dir : dirs) {
                 task.options.modulePath[i++] = Paths.get(dir);
             }
-        }, "--modulepath", "--mp"),
+        }, "--module-path"),
         new Option<JlinkTask>(true, (task, opt, arg) -> {
             for (String mn : arg.split(",")) {
                 if (mn.isEmpty()) {
                     throw taskHelper.newBadArgs("err.mods.must.be.specified",
-                            "--limitmods");
+                            "--limit-modules");
                 }
                 task.options.limitMods.add(mn);
             }
-        }, "--limitmods"),
+        }, "--limit-modules"),
         new Option<JlinkTask>(true, (task, opt, arg) -> {
             for (String mn : arg.split(",")) {
                 if (mn.isEmpty()) {
                     throw taskHelper.newBadArgs("err.mods.must.be.specified",
-                            "--addmods");
+                            "--add-modules");
                 }
                 task.options.addMods.add(mn);
             }
-        }, "--addmods"),
+        }, "--add-modules"),
         new Option<JlinkTask>(true, (task, opt, arg) -> {
             Path path = Paths.get(arg);
             task.options.output = path;
@@ -145,10 +145,10 @@ public class JlinkTask {
         }, true, "--keep-packaged-modules"),
         new Option<JlinkTask>(true, (task, opt, arg) -> {
             task.options.saveoptsfile = arg;
-        }, "--saveopts"),
+        }, "--save-opts"),
         new Option<JlinkTask>(false, (task, opt, arg) -> {
             task.options.fullVersion = true;
-        }, true, "--fullversion"),};
+        }, true, "--full-version"),};
 
     private static final String PROGNAME = "jlink";
     private final OptionsValues options = new OptionsValues();
@@ -306,7 +306,7 @@ public class JlinkTask {
         try {
             options.addMods = checkAddMods(options.addMods);
         } catch (IllegalArgumentException ex) {
-            throw taskHelper.newBadArgs("err.mods.must.be.specified", "--addmods")
+            throw taskHelper.newBadArgs("err.mods.must.be.specified", "--add-modules")
                     .showUsage(true);
         }
         // First create the image provider

@@ -56,8 +56,8 @@ import jdk.internal.perf.PerfCounter;
  * The {@link #boot() boot} method is called early in the startup to initialize
  * the module system. In summary, the boot method creates a Configuration by
  * resolving a set of module names specified via the launcher (or equivalent)
- * -m and -addmods options. The modules are located on a module path that is
- * constructed from the upgrade module path, system modules, and application
+ * -m and --add-modules options. The modules are located on a module path that
+ * is constructed from the upgrade module path, system modules, and application
  * module path. The Configuration is instantiated as the boot Layer with each
  * module in the the configuration defined to one of the built-in class loaders.
  */
@@ -149,7 +149,7 @@ public final class ModuleBootstrap {
         if (mainModule != null)
             roots.add(mainModule);
 
-        // additional module(s) specified by -addmods
+        // additional module(s) specified by --add-modules
         boolean addAllDefaultModules = false;
         boolean addAllSystemModules = false;
         boolean addAllApplicationModules = false;
@@ -172,7 +172,7 @@ public final class ModuleBootstrap {
             }
         }
 
-        // -limitmods
+        // --limit-modules
         propValue = getAndRemoveProperty("jdk.module.limitmods");
         if (propValue != null) {
             Set<String> mods = new HashSet<>();
@@ -216,7 +216,7 @@ public final class ModuleBootstrap {
             }
         }
 
-        // If `-addmods ALL-SYSTEM` is specified then all observable system
+        // If `--add-modules ALL-SYSTEM` is specified then all observable system
         // modules will be resolved.
         if (addAllSystemModules) {
             ModuleFinder f = finder;  // observable modules
@@ -228,7 +228,7 @@ public final class ModuleBootstrap {
                 .forEach(mn -> roots.add(mn));
         }
 
-        // If `-addmods ALL-MODULE-PATH` is specified then all observable
+        // If `--add-modules ALL-MODULE-PATH` is specified then all observable
         // modules on the application module path will be resolved.
         if (appModulePath != null && addAllApplicationModules) {
             ModuleFinder f = finder;  // observable modules
@@ -317,7 +317,7 @@ public final class ModuleBootstrap {
         PerfCounters.loadModulesTime.addElapsedTimeFrom(t5);
 
 
-        // -XaddReads and -XaddExports
+        // --add-reads and --add-exports
         addExtraReads(bootLayer);
         addExtraExports(bootLayer);
 
@@ -394,7 +394,7 @@ public final class ModuleBootstrap {
 
 
     /**
-     * Process the -XaddReads options to add any additional read edges that
+     * Process the --add-reads options to add any additional read edges that
      * are specified on the command-line.
      */
     private static void addExtraReads(Layer bootLayer) {
@@ -431,7 +431,7 @@ public final class ModuleBootstrap {
 
 
     /**
-     * Process the -XaddExports options to add any additional read edges that
+     * Process the --add-exports options to add any additional read edges that
      * are specified on the command-line.
      */
     private static void addExtraExports(Layer bootLayer) {
@@ -483,7 +483,7 @@ public final class ModuleBootstrap {
 
 
     /**
-     * Decodes the values of -XaddReads or -XaddExports options
+     * Decodes the values of --add-reads or --add-exports options
      *
      * The format of the options is: $KEY=$MODULE(,$MODULE)*
      */

@@ -145,7 +145,7 @@ class GNUStyleOptions {
                     }
                 }
             },
-            new Option(true, OptionType.CREATE_UPDATE, "--modulepath", "--mp") {
+            new Option(true, OptionType.CREATE_UPDATE, "--module-path") {
                 void process(Main jartool, String opt, String arg) {
                     String[] dirs = arg.split(File.pathSeparator);
                     Path[] paths = new Path[dirs.length];

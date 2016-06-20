@@ -185,14 +185,14 @@ public class PatchSystemModules {
 
         jar("--create",
             "--file=" + m2.toString(),
-            "--modulepath", JARS_DIR.toString(),
+            "--module-path", JARS_DIR.toString(),
             "--hash-modules", "m1",
             "-C", MODS_DIR.resolve("m2").toString(), ".");
 
 
         String mpath = JARS_DIR.toString() + File.pathSeparator + JMODS.toString();
-        execTool("jlink", "--modulepath", mpath,
-                 "--addmods", "m1",
+        execTool("jlink", "--module-path", mpath,
+                 "--add-modules", "m1",
                  "--output", IMAGE.toString());
     }
 

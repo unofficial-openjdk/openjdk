@@ -499,7 +499,7 @@ public class Basic {
             "--file=" + modularJar.toString(),
             "--main-class=" + FOO.mainClass,
             "--module-version=" + FOO.version,
-            "--modulepath=" + mp.toString(),
+            "--module-path=" + mp.toString(),
             "--hash-modules=" + "bar",
             "--no-manifest",
             "-C", modClasses.toString(), ".")
@@ -535,7 +535,7 @@ public class Basic {
             "--file=" + fooJar.toString(),
             "--main-class=" + FOO.mainClass,
             "--module-version=" + FOO.version,
-            "--modulepath=" + mp.toString(),
+            "--module-path=" + mp.toString(),
             "--hash-modules=" + "bar",
             "--no-manifest",
             "-C", fooClasses.toString(), ".").assertSuccess();
@@ -838,7 +838,7 @@ public class Basic {
             commands.addAll(Arrays.asList(JAVA_OPTIONS.split("\\s+", -1)));
         }
         Stream.of(args).forEach(x -> commands.add(x));
-        commands.add("-mp");
+        commands.add("--module-path");
         commands.add(modulePath.toString());
         commands.add("-m");
         commands.add(entryPoint);

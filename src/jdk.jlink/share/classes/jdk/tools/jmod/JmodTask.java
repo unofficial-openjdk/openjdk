@@ -1220,9 +1220,9 @@ public class JmodTask {
                         .withRequiredArg()
                         .describedAs(getMessage("main.opt.main-class.arg"));
 
-        OptionSpec<Path> modulePath  // TODO: short version of --mp ??
-                = parser.acceptsAll(Arrays.asList("mp", "modulepath"),
-                                    getMessage("main.opt.modulepath"))
+        OptionSpec<Path> modulePath
+                = parser.acceptsAll(Arrays.asList("module-path"),
+                                    getMessage("main.opt.module-path"))
                         .withRequiredArg()
                         .withValuesSeparatedBy(File.pathSeparatorChar)
                         .withValuesConvertedBy(DirPathConverter.INSTANCE);
