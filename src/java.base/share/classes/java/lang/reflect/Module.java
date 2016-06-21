@@ -52,6 +52,7 @@ import java.util.stream.Stream;
 
 import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.loader.BootLoader;
+import jdk.internal.misc.JavaLangAccess;
 import jdk.internal.misc.JavaLangReflectModuleAccess;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.module.ServicesCatalog;
@@ -1119,8 +1120,6 @@ public final class Module implements AnnotatedElement {
     public InputStream getResourceAsStream(String name) throws IOException {
         Objects.requireNonNull(name);
 
-        URL url = null;
-
         String mn = this.name;
 
         // special-case built-in class loaders to avoid URL connection
@@ -1130,10 +1129,9 @@ public final class Module implements AnnotatedElement {
             return ((BuiltinClassLoader) loader).findResourceAsStream(mn, name);
         }
 
-        // use SharedSecrets to invoke protected method
-        url = SharedSecrets.getJavaLangAccess().findResource(loader, mn, name);
-
-        // fallthrough to URL case
+        // locate resource in module
+        JavaLangAccess jla = SharedSecrets.getJavaLangAccess();
+        URL url = jla.findResource(loader, mn, name);
         if (url != null) {
             try {
                 return url.openStream();
