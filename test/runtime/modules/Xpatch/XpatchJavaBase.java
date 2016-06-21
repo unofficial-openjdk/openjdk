@@ -24,7 +24,8 @@
 /*
  * @test
  * @bug 8130399
- * @summary Make sure -Xpatch works for java.base.
+ * @summary Make sure --patch-module works for java.base.
+ * @modules java.base/jdk.internal.misc
  * @library /testlibrary
  * @compile XpatchMain.java
  * @run main XpatchJavaBase
@@ -46,7 +47,7 @@ public class XpatchJavaBase {
              InMemoryJavaCompiler.compile("java.lang.NewClass", source, "-Xmodule:java.base"),
              "mods/java.base");
 
-        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-Xpatch:java.base=mods/java.base",
+        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("--patch-module=java.base=mods/java.base",
              "XpatchMain", "java.lang.NewClass");
 
         new OutputAnalyzer(pb.start())

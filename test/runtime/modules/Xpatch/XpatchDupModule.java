@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @summary Module system initialization exception results if a module is specificed twice to Xpatch.
+ * @summary Module system initialization exception results if a module is specificed twice to --patch-module.
  * @modules java.base/jdk.internal.misc
  * @library /testlibrary
  */
@@ -33,12 +33,12 @@ import jdk.test.lib.*;
 public class XpatchDupModule {
 
   // The module system initialization should generate an ExceptionInInitializerError
-  // if -Xpatch is specified with the same module more than once.
+  // if --patch-module is specified with the same module more than once.
 
   public static void main(String args[]) throws Exception {
     ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
-      "-Xpatch:module1=module1_dir",
-      "-Xpatch:module1=module1_dir",
+      "--patch-module=module1=module1_dir",
+      "--patch-module=module1=module1_dir",
       "-version");
     OutputAnalyzer output = new OutputAnalyzer(pb.start());
     output.shouldContain("java.lang.ExceptionInInitializerError");

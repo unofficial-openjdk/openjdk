@@ -53,35 +53,23 @@ public class IgnoreModulePropertiesTest {
         }
     }
 
-    // For options of the form "option value", check that an exception gets thrown for
-    // the illegal value and then check that its corresponding property is handled
-    // correctly.
-    public static void testWhiteSpaceOption(String option, String value,
-                                            String prop, String result) throws Exception{
-        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
-            option, value, "-version");
-        OutputAnalyzer output = new OutputAnalyzer(pb.start());
-        output.shouldContain(result);
-        testProperty(prop, value);
-    }
-
-    // For options of the form "option:value", check that an exception gets thrown for
+    // For options of the form "option=value", check that an exception gets thrown for
     // the illegal value and then check that its corresponding property is handled
     // correctly.
     public static void testOption(String option, String value,
                                   String prop, String result) throws Exception {
         ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
-            option + ":" + value, "-version");
+            option + "=" + value, "-version");
         OutputAnalyzer output = new OutputAnalyzer(pb.start());
         output.shouldContain(result);
         testProperty(prop, value);
     }
 
     public static void main(String[] args) throws Exception {
-        testWhiteSpaceOption("-addmods", "java.sqlx", "jdk.module.addmods", "java.lang.module.ResolutionException");
-        testWhiteSpaceOption("-limitmods", "java.sqlx", "jdk.module.limitmods", "java.lang.module.ResolutionException");
-        testOption("-XaddReads", "xyzz=yyzd", "jdk.module.addreads.0", "java.lang.RuntimeException");
-        testOption("-XaddExports", "java.base/xyzz=yyzd", "jdk.module.addexports.0", "java.lang.RuntimeException");
-        testOption("-Xpatch", "=d", "jdk.module.patch.0", "IllegalArgumentException");
+        testOption("--add-modules", "java.sqlx", "jdk.module.addmods", "java.lang.module.ResolutionException");
+        testOption("--limit-modules", "java.sqlx", "jdk.module.limitmods", "java.lang.module.ResolutionException");
+        testOption("--add-reads", "xyzz=yyzd", "jdk.module.addreads.0", "java.lang.RuntimeException");
+        testOption("--add-exports", "java.base/xyzz=yyzd", "jdk.module.addexports.0", "java.lang.RuntimeException");
+        testOption("--patch-module", "=d", "jdk.module.patch.0", "IllegalArgumentException");
     }
 }

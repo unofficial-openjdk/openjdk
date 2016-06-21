@@ -21,8 +21,8 @@
  * questions.
  */
 
-// This loads the class affected by the -Xpatch option.  For the test to pass
-// it must load the class from the -Xpatch directory, not the jimage file.
+// This loads the class affected by the --patch-module option.  For the test to pass
+// it must load the class from the --patch-module directory, not the jimage file.
 public class XpatchMain {
     public static void main(String[] args) throws Exception {
         Class.forName(args[0]);

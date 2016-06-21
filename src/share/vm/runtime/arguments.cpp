@@ -111,7 +111,7 @@ SystemProperty *Arguments::_java_home = NULL;
 SystemProperty *Arguments::_java_class_path = NULL;
 SystemProperty *Arguments::_jdk_boot_class_path_append = NULL;
 
-GrowableArray<ModuleXPatchPath*> *Arguments::_xpatchprefix = NULL;
+GrowableArray<ModulePatchPath*> *Arguments::_patch_mod_prefix = NULL;
 PathString *Arguments::_system_boot_class_path = NULL;
 
 char* Arguments::_ext_dirs = NULL;
@@ -1030,8 +1030,6 @@ void Arguments::add_string(char*** bldarray, int* count, const char* arg) {
   *count = new_count;
 }
 
-// Note that options skipped by the main parse_each_vm_init_arg loop must be added
-// explicitly; for example, the "module_name" part of "-limitmods module_name".
 void Arguments::build_jvm_args(const char* arg) {
   add_string(&_jvm_args_array, &_num_jvm_args, arg);
 }
@@ -1373,10 +1371,10 @@ void Arguments::check_unsupported_dumping_properties() {
                                            "jdk.module.addmods",
                                            "jdk.module.limitmods" };
   const char* unsupported_options[5] = { "-m",
-                                        "-modulepath",
-                                        "-upgrademodulepath",
-                                        "-addmods",
-                                        "-limitmods" };
+                                        "--module-path",
+                                        "--upgrade-module-path",
+                                        "--add-modules",
+                                        "--limit-modules" };
   SystemProperty* sp = system_properties();
   while (sp != NULL) {
     for (int i = 0; i < 5; i++) {
@@ -2603,8 +2601,8 @@ bool Arguments::parse_uintx(const char* value,
 
 unsigned int addreads_count = 0;
 unsigned int addexports_count = 0;
-unsigned int xpatch_count = 0;
-JavaVMOption* addmods_value = NULL;
+unsigned int patch_mod_count = 0;
+const char* add_modules_value = NULL;
 
 bool Arguments::create_module_property(const char* prop_name, const char* prop_value, PropertyInternal internal) {
   size_t prop_len = strlen(prop_name) + strlen(prop_value) + 2;
@@ -2648,7 +2646,7 @@ Arguments::ArgsRange Arguments::parse_memory_size(const char* s,
 jint Arguments::parse_vm_init_args(const JavaVMInitArgs *java_tool_options_args,
                                    const JavaVMInitArgs *java_options_args,
                                    const JavaVMInitArgs *cmd_line_args) {
-  bool xpatch_javabase = false;
+  bool patch_mod_javabase = false;
 
   // Save default settings for some mode flags
   Arguments::_AlwaysCompileLoopMethods = AlwaysCompileLoopMethods;
@@ -2665,20 +2663,20 @@ jint Arguments::parse_vm_init_args(const JavaVMInitArgs *java_tool_options_args,
 
   // Parse args structure generated from JAVA_TOOL_OPTIONS environment
   // variable (if present).
-  jint result = parse_each_vm_init_arg(java_tool_options_args, &xpatch_javabase, Flag::ENVIRON_VAR);
+  jint result = parse_each_vm_init_arg(java_tool_options_args, &patch_mod_javabase, Flag::ENVIRON_VAR);
   if (result != JNI_OK) {
     return result;
   }
 
   // Parse args structure generated from the command line flags.
-  result = parse_each_vm_init_arg(cmd_line_args, &xpatch_javabase, Flag::COMMAND_LINE);
+  result = parse_each_vm_init_arg(cmd_line_args, &patch_mod_javabase, Flag::COMMAND_LINE);
   if (result != JNI_OK) {
     return result;
   }
 
   // Parse args structure generated from the _JAVA_OPTIONS environment
   // variable (if present) (mimics classic VM)
-  result = parse_each_vm_init_arg(java_options_args, &xpatch_javabase, Flag::ENVIRON_VAR);
+  result = parse_each_vm_init_arg(java_options_args, &patch_mod_javabase, Flag::ENVIRON_VAR);
   if (result != JNI_OK) {
     return result;
   }
@@ -2737,25 +2735,25 @@ bool valid_jdwp_agent(char *name, bool is_path) {
   return false;
 }
 
-int Arguments::process_xpatch_option(const char* xpatch_tail, bool* xpatch_javabase) {
-  // -Xpatch:<module>=<file>(<pathsep><file>)*
-  assert(xpatch_tail != NULL, "Unexpected NULL xpatch value");
+int Arguments::process_patch_mod_option(const char* patch_mod_tail, bool* patch_mod_javabase) {
+  // --patch-module=<module>=<file>(<pathsep><file>)*
+  assert(patch_mod_tail != NULL, "Unexpected NULL patch-module value");
   // Find the equal sign between the module name and the path specification
-  const char* module_equal = strchr(xpatch_tail, '=');
+  const char* module_equal = strchr(patch_mod_tail, '=');
   if (module_equal == NULL) {
-    jio_fprintf(defaultStream::output_stream(), "Missing '=' in -Xpatch specification\n");
+    jio_fprintf(defaultStream::output_stream(), "Missing '=' in --patch-module specification\n");
     return JNI_ERR;
   } else {
     // Pick out the module name
-    size_t module_len = module_equal - xpatch_tail;
+    size_t module_len = module_equal - patch_mod_tail;
     char* module_name = NEW_C_HEAP_ARRAY_RETURN_NULL(char, module_len+1, mtArguments);
     if (module_name != NULL) {
-      memcpy(module_name, xpatch_tail, module_len);
+      memcpy(module_name, patch_mod_tail, module_len);
       *(module_name + module_len) = '\0';
       // The path piece begins one past the module_equal sign
-      add_xpatchprefix(module_name, module_equal + 1, xpatch_javabase);
+      add_patch_mod_prefix(module_name, module_equal + 1, patch_mod_javabase);
       FREE_C_HEAP_ARRAY(char, module_name);
-      if (!create_numbered_module_property("jdk.module.patch", xpatch_tail, xpatch_count++)) {
+      if (!create_numbered_module_property("jdk.module.patch", patch_mod_tail, patch_mod_count++)) {
         return JNI_ENOMEM;
       }
     } else {
@@ -2765,7 +2763,7 @@ int Arguments::process_xpatch_option(const char* xpatch_tail, bool* xpatch_javab
   return JNI_OK;
 }
 
-jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* xpatch_javabase, Flag::Flags origin) {
+jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* patch_mod_javabase, Flag::Flags origin) {
   // For match_option to return remaining or value part of option string
   const char* tail;
 
@@ -2850,7 +2848,8 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* xpatch_
 #endif // !INCLUDE_JVMTI
         add_init_library(name, options);
       }
-    } else if (match_option(option, "-XaddReads:", &tail)) {
+    } else if (match_option(option, "--add-reads=", &tail) ||
+               match_option(option, "-XaddReads:", &tail)) {
       if (tail != NULL) {
         if (!create_numbered_module_property("jdk.module.addreads", tail, addreads_count++)) {
           return JNI_ENOMEM;
@@ -2860,7 +2859,8 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* xpatch_
           "Missing value for -XaddReads option.\n");
         return JNI_EINVAL;
       }
-    } else if (match_option(option, "-XaddExports:", &tail)) {
+    } else if (match_option(option, "--add-exports=", &tail) ||
+               match_option(option, "-XaddExports:", &tail)) {
       if (tail != NULL) {
         if (!create_numbered_module_property("jdk.module.addexports", tail, addexports_count++)) {
           return JNI_ENOMEM;
@@ -2870,14 +2870,20 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* xpatch_
           "Missing value for -XaddExports option.\n");
         return JNI_EINVAL;
       }
+    } else if (match_option(option, "--add-modules=", &tail)) {
+      add_modules_value = tail;
     } else if (match_option(option, "-addmods")) {
       if (++index < args->nOptions) {
-        addmods_value = args->options + index;
-        build_jvm_args(addmods_value->optionString);
+        add_modules_value = (args->options + index)->optionString;
+        build_jvm_args(add_modules_value);
       } else {
         jio_fprintf(defaultStream::output_stream(),
           "Missing value for -addmods option.\n");
         return JNI_EINVAL;
+      }
+    } else if (match_option(option, "--limit-modules=", &tail)) {
+      if (!create_module_property("jdk.module.limitmods", tail, InternalProperty)) {
+        return JNI_ENOMEM;
       }
     } else if (match_option(option, "-limitmods")) {
       if (++index < args->nOptions) {
@@ -2891,6 +2897,10 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* xpatch_
           "Missing value for -limitmods option.\n");
         return JNI_EINVAL;
       }
+    } else if (match_option(option, "--module-path=", &tail)) {
+      if (!create_module_property("jdk.module.path", tail, ExternalProperty)) {
+          return JNI_ENOMEM;
+      }
     } else if (match_option(option, "-modulepath") || match_option(option, "-mp")) {
       if (++index < args->nOptions) {
         const JavaVMOption* modulepath_value = args->options + index;
@@ -2902,6 +2912,10 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* xpatch_
         jio_fprintf(defaultStream::output_stream(),
           "Missing value for -modulepath option.\n");
         return JNI_EINVAL;
+      }
+    } else if (match_option(option, "--upgrade-module-path=", &tail)) {
+      if (!create_module_property("jdk.module.upgrade.path", tail, ExternalProperty)) {
+        return JNI_ENOMEM;
       }
     } else if (match_option(option, "-upgrademodulepath")) {
       if (++index < args->nOptions) {
@@ -2915,10 +2929,13 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* xpatch_
           "Missing value for -upgrademodulepath option.\n");
         return JNI_EINVAL;
       }
+    } else if (match_option(option, "--patch-module=", &tail)) {
+      // --patch-module=<module>=<file>(<pathsep><file>)*
+      int res = process_patch_mod_option(tail, patch_mod_javabase);
     } else if (match_option(option, "-Xpatch:", &tail)) {
       // -Xpatch:<module>=<file>(<pathsep><file>)*
       if (tail != NULL) {
-        int res = process_xpatch_option(tail, xpatch_javabase);
+        int res = process_patch_mod_option(tail, patch_mod_javabase);
         if (res != JNI_OK) {
           return res;
         }
@@ -3218,7 +3235,7 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* xpatch_
         return JNI_EINVAL;
       }
       // Silently ignore module related properties.  They must be set using the modules
-      // options. For example: use "-addmods java.sql", not "-Djdk.module.addmods=java.sql"
+      // options. For example: use "--add-modules java.sql", not "-Djdk.module.addmods=java.sql"
       if (is_module_property(option)) {
         continue;
       }
@@ -3501,25 +3518,25 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* xpatch_
   return JNI_OK;
 }
 
-void Arguments::add_xpatchprefix(const char* module_name, const char* path, bool* xpatch_javabase) {
-  // For java.base check for duplicate -Xpatch options being specified on the command line.
+void Arguments::add_patch_mod_prefix(const char* module_name, const char* path, bool* patch_mod_javabase) {
+  // For java.base check for duplicate --patch-module options being specified on the command line.
   // This check is only required for java.base, all other duplicate module specifications
   // will be checked during module system initialization.  The module system initialization
   // will throw an ExceptionInInitializerError if this situation occurs.
   if (strcmp(module_name, "java.base") == 0) {
-    if (*xpatch_javabase) {
-      vm_exit_during_initialization("Cannot specify java.base more than once to -Xpatch");
+    if (*patch_mod_javabase) {
+      vm_exit_during_initialization("Cannot specify java.base more than once to --patch-module");
     } else {
-      *xpatch_javabase = true;
+      *patch_mod_javabase = true;
     }
   }
 
-  // Create GrowableArray lazily, only if -Xpatch has been specified
-  if (_xpatchprefix == NULL) {
-    _xpatchprefix = new (ResourceObj::C_HEAP, mtArguments) GrowableArray<ModuleXPatchPath*>(10, true);
+  // Create GrowableArray lazily, only if --patch-module has been specified
+  if (_patch_mod_prefix == NULL) {
+    _patch_mod_prefix = new (ResourceObj::C_HEAP, mtArguments) GrowableArray<ModulePatchPath*>(10, true);
   }
 
-  _xpatchprefix->push(new ModuleXPatchPath(module_name, path));
+  _patch_mod_prefix->push(new ModulePatchPath(module_name, path));
 }
 
 // Set property jdk.boot.class.path.append to the contents of the bootclasspath
@@ -3659,8 +3676,8 @@ jint Arguments::finalize_vm_init_args() {
   // Append the value of the last -addmods option specified on the command line.
   // This needs to be done here, to prevent overwriting possible values written
   // to the jdk.module.addmods property by -javaagent and other options.
-  if (addmods_value != NULL) {
-    append_to_addmods_property(addmods_value->optionString);
+  if (add_modules_value != NULL) {
+    append_to_addmods_property(add_modules_value);
   }
 
   Arguments::set_bootclassloader_append_index(((int)strlen(Arguments::get_sysclasspath()))+1);
@@ -4019,9 +4036,9 @@ jint Arguments::parse_options_buffer(const char* name, char* buffer, const size_
 
 void Arguments::set_shared_spaces_flags() {
   if (DumpSharedSpaces) {
-    if (Arguments::get_xpatchprefix() != NULL) {
+    if (Arguments::get_patch_mod_prefix() != NULL) {
       vm_exit_during_initialization(
-        "Cannot use the following option when dumping the shared archive", "-Xpatch");
+        "Cannot use the --patch-module option when dumping the shared archive");
     }
 
     if (RequireSharedSpaces) {

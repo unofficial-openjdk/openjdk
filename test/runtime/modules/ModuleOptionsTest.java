@@ -36,25 +36,18 @@ public class ModuleOptionsTest {
 
     public static void main(String[] args) throws Exception {
 
-        // Test that last -addmods is the only one recognized.  No exception
+        // Test that last --add-modules is the only one recognized.  No exception
         // should be thrown.
         ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
-            "-addmods", "i_dont_exist", "-addmods", "java.base", "-version");
+            "--add-modules=i_dont_exist", "--add-modules=java.base", "-version");
         OutputAnalyzer output = new OutputAnalyzer(pb.start());
         output.shouldHaveExitValue(0);
 
-        // Test that last -limitmods is the only one recognized.  No exception
+        // Test that last --limit-modules is the only one recognized.  No exception
         // should be thrown.
         pb = ProcessTools.createJavaProcessBuilder(
-            "-limitmods", "i_dont_exist", "-limitmods", "java.base", "-version");
+            "--limit-modules=i_dont_exist", "--limit-modules=java.base", "-version");
         output = new OutputAnalyzer(pb.start());
         output.shouldHaveExitValue(0);
-
-        // Test what happens when the value for -addmods is missing.
-        pb = ProcessTools.createJavaProcessBuilder(
-            "-addmods", "-XX:-UseCompressedOops", "-version");
-        output = new OutputAnalyzer(pb.start());
-        output.shouldContain("ResolutionException");
-        output.shouldHaveExitValue(1);
     }
 }

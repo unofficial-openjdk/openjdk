@@ -23,8 +23,8 @@
 
 /*
  * @test
- * @summary Ensure that a newly introduced java.base package placed within the -Xpatch directory
- *          is considered part of the boot loader's visibility boundary
+ * @summary Ensure that a newly introduced java.base package placed within the --patch-module
+ *          directory is considered part of the boot loader's visibility boundary
  * @requires !(os.family == "windows")
  * @library /testlibrary
  * @modules java.base/jdk.internal.misc
@@ -55,7 +55,7 @@ public class XpatchVisibility {
               "public class Vis2_A {" +
               "    public static void main(String args[]) throws Exception {" +
                       // Try loading a class within a newly introduced java.base
-                      // package.  Make sure the class can be found via -Xpatch.
+                      // package.  Make sure the class can be found via --patch-module.
               "        try {" +
               "            p2.Vis2_B b = new p2.Vis2_B();" +
               "            if (b.getClass().getClassLoader() != null) {" +
@@ -83,8 +83,8 @@ public class XpatchVisibility {
                                                            "p2" + File.separator + "Vis2_B.class"));
 
       new OutputAnalyzer(ProcessTools.createJavaProcessBuilder(
-              "-Xpatch:java.base=mods2/java.base",
-              "-XaddExports:java.base/p2=ALL-UNNAMED",
+              "--patch-module=java.base=mods2/java.base",
+              "--add-exports=java.base/p2=ALL-UNNAMED",
               "Vis2_A")
           .start()).shouldHaveExitValue(0);
     }

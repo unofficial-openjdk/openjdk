@@ -104,7 +104,7 @@ INIT: $(DIST_DIR)
 	$(shell if [ ! -d $(CLASSES_DIR) ]; then mkdir -p $(CLASSES_DIR); fi)
 
 install: clean_testbase testgroup testroot copytestlibrary JAR cleantmp
-	$(JAVA) -XaddExports:java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED -ea -jar $(DIST_JAR) $(APPLICATION_ARGS)
+	$(JAVA) --add-exports=java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED -ea -jar $(DIST_JAR) $(APPLICATION_ARGS)
 
 clean_testbase:
 	@rm -rf $(TESTBASE_DIR)

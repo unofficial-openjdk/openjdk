@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @summary VM exit initialization results if java.base is specificed more than once to Xpatch.
+ * @summary VM exit initialization results if java.base is specificed more than once to --patch-module.
  * @modules java.base/jdk.internal.misc
  * @library /testlibrary
  */
@@ -32,14 +32,14 @@ import jdk.test.lib.*;
 
 public class XpatchDupJavaBase {
   // The VM should exit initialization if java.base is specified
-  // more than once to -Xpatch.
+  // more than once to --patch-module.
   public static void main(String args[]) throws Exception {
     ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
-      "-Xpatch:java.base=javabase_dir",
-      "-Xpatch:java.base=javabase_dir",
+      "--patch-module=java.base=javabase_dir",
+      "--patch-module=java.base=javabase_dir",
       "-version");
     OutputAnalyzer output = new OutputAnalyzer(pb.start());
-    output.shouldContain("Cannot specify java.base more than once to -Xpatch");
+    output.shouldContain("Cannot specify java.base more than once to --patch-module");
     output.shouldHaveExitValue(1);
   }
 }

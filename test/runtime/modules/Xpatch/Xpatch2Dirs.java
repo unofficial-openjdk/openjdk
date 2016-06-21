@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @summary Make sure -Xpatch works with multiple directories.
+ * @summary Make sure --patch-module works with multiple directories.
  * @modules java.base/jdk.internal.misc
  * @library /testlibrary
  * @compile Xpatch2DirsMain.java
@@ -58,8 +58,8 @@ public class Xpatch2Dirs {
              "mods2/java.desktop");
 
         ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
-             "-Xpatch:java.naming=mods/java.naming",
-             "-Xpatch:java.desktop=mods2/java.desktop",
+             "--patch-module=java.naming=mods/java.naming",
+             "--patch-module=java.desktop=mods2/java.desktop",
              "Xpatch2DirsMain", "javax.naming.spi.NamingManager", "java.beans.Encoder");
 
         OutputAnalyzer oa = new OutputAnalyzer(pb.start());

@@ -25,7 +25,7 @@
  * @test
  * @bug 8069469
  * @summary Make sure -Xlog:classload=info works properly with "modules" jimage,
-            -Xpatch, and with -Xbootclasspath/a
+            --patch-module, and with -Xbootclasspath/a
  * @modules java.base/jdk.internal.misc
  * @library /testlibrary
  * @compile XpatchMain.java
@@ -45,18 +45,18 @@ public class XpatchTraceCL {
                         "    } "                                    +
                         "}";
 
-        // Test -Xlog:classload=info output for -Xpatch
+        // Test -Xlog:classload=info output for --patch-module
         ClassFileInstaller.writeClassToDisk("javax/naming/spi/NamingManager",
              InMemoryJavaCompiler.compile("javax.naming.spi.NamingManager", source, "-Xmodule:java.naming"),
              "mods/java.naming");
 
-        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-Xpatch:java.naming=mods/java.naming",
+        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("--patch-module=java.naming=mods/java.naming",
              "-Xlog:class+load=info", "XpatchMain", "javax.naming.spi.NamingManager");
 
         OutputAnalyzer output = new OutputAnalyzer(pb.start());
         // "modules" jimage case.
         output.shouldContain("[class,load] java.lang.Thread source: jrt:/java.base");
-        // -Xpatch case.
+        // --patch-module case.
         output.shouldContain("[class,load] javax.naming.spi.NamingManager source: mods/java.naming");
         // -cp case.
         output.shouldContain("[class,load] XpatchMain source: file");

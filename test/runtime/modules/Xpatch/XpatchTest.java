@@ -24,7 +24,7 @@
 /*
  * @test
  * @bug 8130399
- * @summary Make sure -Xpatch works for modules besides java.base.
+ * @summary Make sure --patch-module works for modules besides java.base.
  * @modules java.base/jdk.internal.misc
  * @library /testlibrary
  * @compile XpatchMain.java
@@ -47,7 +47,7 @@ public class XpatchTest {
              InMemoryJavaCompiler.compile("javax.naming.spi.NamingManager", source, "-Xmodule:java.naming"),
              "mods/java.naming");
 
-        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-Xpatch:java.naming=mods/java.naming",
+        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("--patch-module=java.naming=mods/java.naming",
              "XpatchMain", "javax.naming.spi.NamingManager");
 
         new OutputAnalyzer(pb.start())
