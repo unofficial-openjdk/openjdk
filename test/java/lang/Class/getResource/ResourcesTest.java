@@ -79,8 +79,8 @@ public class ResourcesTest {
     public void runTest() throws Exception {
 
         int exitValue
-            = executeTestJava("-mp", MODS_DIR.toString(),
-                              "-addmods", "m1,m2,m3",
+            = executeTestJava("--module-path", MODS_DIR.toString(),
+                              "--add-modules", "m1,m2,m3",
                                "-cp", CLASSES_DIR.toString(),
                               "Main")
                 .outputTo(System.out)
