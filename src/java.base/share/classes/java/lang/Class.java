@@ -2378,8 +2378,9 @@ public final class Class<T> implements java.io.Serializable,
      * </ul>
      *
      * @param  name name of the desired resource
-     * @return  A {@link java.io.InputStream} object or {@code null} if
-     *          no resource with this name is found
+     * @return  A {@link java.io.InputStream} object; {@code null} if no
+     *          resource with this name is found or access to the resource is
+     *          denied by the security manager.
      * @throws  NullPointerException If {@code name} is {@code null}
      * @since  1.1
      */
@@ -2449,9 +2450,9 @@ public final class Class<T> implements java.io.Serializable,
      * </ul>
      *
      * @param  name name of the desired resource
-     * @return A {@link java.net.URL} object; {@code null} if no
-     *         resource with this name is found or the resource cannot
-     *         be located by a URL.
+     * @return A {@link java.net.URL} object; {@code null} if no resource with
+     *         this name is found, the resource cannot be located by a URL, or
+     *         access to the resource is denied by the security manager.
      * @since  1.1
      */
     public URL getResource(String name) {

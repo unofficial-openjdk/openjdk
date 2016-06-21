@@ -530,11 +530,11 @@ public abstract class ClassLoader {
             if (c == null) {
                 c = findClass(module.getName(), name);
             }
-
-            if (c != null && c.getModule() == module)
+            if (c != null && c.getModule() == module) {
                 return c;
-
-            return null;
+            } else {
+                return null;
+            }
         }
     }
 
@@ -1415,8 +1415,10 @@ public abstract class ClassLoader {
      * @param  name
      *         The resource name
      *
-     * @return  A {@link java.net.URL <tt>URL</tt>} object for reading the
-     *          resource, or <tt>null</tt> if the resource could not be found
+     * @return  A {@link java.net.URL <tt>URL</tt>} to the resource; {@code
+     *          null} if the resource could not be found, a URL could not be
+     *          constructed to locate the resource, or access to the resource
+     *          is denied by the security manager.
      *
      * @since  1.1
      */
@@ -1440,8 +1442,11 @@ public abstract class ClassLoader {
      * @param  name
      *         The resource name
      *
-     * @return  An enumeration of resource {@link java.net.URL <tt>URL</tt>}
-     *          objects
+     * @return  An enumeration of {@link java.net.URL <tt>URL</tt>} objects for
+     *          the resource. If no resources could be found, the enumeration
+     *          will be empty. Resources for which a {@code URL} cannot be
+     *          constructed, or where access to the resource is denied by the
+     *          security manager, are not returned in the enumeration.
      *
      * @throws  IOException
      *          If I/O errors occur
@@ -1467,8 +1472,9 @@ public abstract class ClassLoader {
      * @param  name
      *         The resource name
      *
-     * @return  An input stream for reading the resource, or <tt>null</tt>
-     *          if the resource could not be found
+     * @return  An input stream for reading the resource; {@code null}
+     *          if the resource could not be found or access to the resource
+     *          is denied by the security manager.
      *
      * @since  1.1
      */
@@ -1489,8 +1495,9 @@ public abstract class ClassLoader {
      * @param  name
      *         The resource name
      *
-     * @return  An input stream for reading the resource, or <tt>null</tt>
-     *          if the resource could not be found
+     * @return  An input stream for reading the resource; {@code null}
+     *          if the resource could not be found or access to the resource
+     *          is denied by the security manager.
      *
      * @since  1.1
      */
