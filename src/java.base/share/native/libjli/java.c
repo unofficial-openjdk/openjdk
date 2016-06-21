@@ -80,7 +80,7 @@ static jboolean _wc_enabled = JNI_FALSE;
 static jint _ergo_policy = DEFAULT_POLICY;
 
 /* Switch to use VM new options */
-static jboolean _gnu_option_enabled = JNI_FALSE;
+static jboolean _gnu_option_enabled = JNI_TRUE;
 
 /*
  * Entries for splash screen environment variables.
@@ -1231,6 +1231,13 @@ GetOpt(int *pargc, char ***pargv, char **poption, char **pvalue) {
                 kind = VM_WHITE_SPACE_OPTION;
             }
         }
+    }
+
+    /*
+     * Support short form alias
+     */
+    if (JLI_StrCmp(arg, "-p") == 0) {
+        option = "--module-path";
     }
 
     // rename to the VM option name for transition to support both old and new syntax

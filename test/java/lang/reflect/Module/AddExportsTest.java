@@ -47,9 +47,9 @@ public class AddExportsTest {
     public static void main(String[] args) {
 
         Optional<String> oaddExports = Stream.of(VM.getRuntimeArguments())
-            .filter(arg -> arg.startsWith("-XaddExports:"))
-            .filter(arg -> !arg.equals("-XaddExports:" + TEST_MODULES + "=ALL-UNNAMED"))
-            .map(arg -> arg.substring("-XaddExports:".length(), arg.length()))
+            .filter(arg -> arg.startsWith("--add-exports="))
+            .filter(arg -> !arg.equals("--add-exports=" + TEST_MODULES + "=ALL-UNNAMED"))
+            .map(arg -> arg.substring("--add-exports=".length(), arg.length()))
             .findFirst();
 
         assertTrue(oaddExports.isPresent());
