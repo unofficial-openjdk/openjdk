@@ -79,9 +79,6 @@ static const char *_fVersion;
 static jboolean _wc_enabled = JNI_FALSE;
 static jint _ergo_policy = DEFAULT_POLICY;
 
-/* Switch to use VM new options */
-static jboolean _gnu_option_enabled = JNI_TRUE;
-
 /*
  * Entries for splash screen environment variables.
  * putenv is performed in SelectVersion. We need
@@ -248,11 +245,6 @@ JLI_Launch(int argc, char ** argv,              /* main argc, argc */
             printf("argv[%d] = %s\n", i, argv[i]);
         }
         AddOption("-Dsun.java.launcher.diag=true", NULL);
-    }
-
-    // switch to GNU-style VM long form options
-    if (getenv("_JAVA_GNU_OPTIONS") != NULL) {
-        _gnu_option_enabled = JNI_TRUE;
     }
 
     /*
@@ -1209,15 +1201,19 @@ GetOpt(int *pargc, char ***pargv, char **poption, char **pvalue) {
             kind = LAUNCHER_OPTION_WITH_ARGUMENT;
         }
     } else if (IsModuleOption(arg) || IsOldModuleOption(arg)) {
-        if (_gnu_option_enabled) {
-            kind = VM_LONG_OPTION_WITH_ARGUMENT;
-        } else {
-            kind = VM_WHITE_SPACE_OPTION;
-        }
+        kind = VM_LONG_OPTION_WITH_ARGUMENT;
         if (has_arg) {
             value = *argv;
             argv++; --argc;
         }
+
+        /*
+         * Support short form alias
+         */
+        if (JLI_StrCmp(arg, "-p") == 0) {
+            option = "--module-path";
+        }
+
     } else if (JLI_StrCCmp(arg, "--") == 0 && (equals = JLI_StrChr(arg, '=')) != NULL) {
         value = equals+1;
         if (JLI_StrCCmp(arg, "--list-modules=") == 0 ||
@@ -1225,72 +1221,32 @@ GetOpt(int *pargc, char ***pargv, char **poption, char **pvalue) {
             JLI_StrCCmp(arg, "--class-path=") == 0) {
             kind = LAUNCHER_OPTION_WITH_ARGUMENT;
         } else {
-            if (_gnu_option_enabled) {
-                kind = VM_LONG_OPTION;
-            } else {
-                kind = VM_WHITE_SPACE_OPTION;
-            }
+            kind = VM_LONG_OPTION;
         }
     }
 
-    /*
-     * Support short form alias
-     */
-    if (JLI_StrCmp(arg, "-p") == 0) {
+    // for transition to support both old and new syntax
+    if (JLI_StrCmp(arg, "-modulepath") == 0 ||
+        JLI_StrCmp(arg, "-mp") == 0) {
         option = "--module-path";
-    }
-
-    // rename to the VM option name for transition to support both old and new syntax
-    if (_gnu_option_enabled) {
-        if (JLI_StrCmp(arg, "-modulepath") == 0 ||
-            JLI_StrCmp(arg, "-mp") == 0) {
-            option = "--module-path";
-        } else if (JLI_StrCmp(arg, "-upgrademodulepath") == 0) {
-            option = "--upgrade-module-path";
-        } else if (JLI_StrCmp(arg, "-addmods") == 0) {
-            option = "--add-modules";
-        } else if (JLI_StrCmp(arg, "-limitmods") == 0) {
-            option = "--limit-modules";
-        } else if (JLI_StrCCmp(arg, "-XaddExports:") == 0) {
-            option = "--add-exports";
-            value = arg + 13;
-            kind = VM_LONG_OPTION_WITH_ARGUMENT;
-        } else if (JLI_StrCCmp(arg, "-XaddReads:") == 0) {
-            option = "--add-reads";
-            value = arg + 11;
-            kind = VM_LONG_OPTION_WITH_ARGUMENT;
-        } else if (JLI_StrCCmp(arg, "-Xpatch:") == 0) {
-            option = "--patch-module";
-            value = arg + 8;
-            kind = VM_LONG_OPTION_WITH_ARGUMENT;
-        }
-    } else {
-        if (JLI_StrCmp(arg, "--module-path") == 0 ||
-            JLI_StrCmp(arg, "-p") == 0 ||
-            JLI_StrCCmp(arg, "--module-path=") == 0) {
-            option = "-modulepath";
-        } else if (JLI_StrCmp(arg, "--upgrade-module-path") == 0 ||
-                   JLI_StrCCmp(arg, "--upgrade-module-path=") == 0) {
-            option = "-upgrademodulepath";
-        } else if (JLI_StrCmp(arg, "--add-modules") == 0 ||
-                   JLI_StrCCmp(arg, "--add-modules=") == 0) {
-            option = "-addmods";
-        } else if (JLI_StrCmp(arg, "--limit-modules") == 0 ||
-                   JLI_StrCCmp(arg, "--limit-modules=") == 0) {
-            option = "-limitmods";
-        } else if (JLI_StrCmp(arg, "--add-exports") == 0 ||
-                   JLI_StrCCmp(arg, "--add-exports=") == 0) {
-            option = "-XaddExports:";
-            kind = VM_DASH_X_OPTION;
-        } else if (JLI_StrCmp(arg, "--add-reads") == 0 ||
-                   JLI_StrCCmp(arg, "--add-reads=") == 0) {
-            option = "-XaddReads:";
-            kind = VM_DASH_X_OPTION;
-        } else if (JLI_StrCmp(arg, "--patch-module") == 0 ||
-                   JLI_StrCCmp(arg, "--patch-module=") == 0) {
-            option = "-Xpatch:";
-            kind = VM_DASH_X_OPTION;
-        }
+    } else if (JLI_StrCmp(arg, "-upgrademodulepath") == 0) {
+        option = "--upgrade-module-path";
+    } else if (JLI_StrCmp(arg, "-addmods") == 0) {
+        option = "--add-modules";
+    } else if (JLI_StrCmp(arg, "-limitmods") == 0) {
+        option = "--limit-modules";
+    } else if (JLI_StrCCmp(arg, "-XaddExports:") == 0) {
+        option = "--add-exports";
+        value = arg + 13;
+        kind = VM_LONG_OPTION_WITH_ARGUMENT;
+    } else if (JLI_StrCCmp(arg, "-XaddReads:") == 0) {
+        option = "--add-reads";
+        value = arg + 11;
+        kind = VM_LONG_OPTION_WITH_ARGUMENT;
+    } else if (JLI_StrCCmp(arg, "-Xpatch:") == 0) {
+        option = "--patch-module";
+        value = arg + 8;
+        kind = VM_LONG_OPTION_WITH_ARGUMENT;
     }
 
     *pargc = argc;
@@ -1393,15 +1349,6 @@ ParseArguments(int *pargc, char ***pargv,
                        JLI_StrCmp(arg, "-limitmods") == 0) {
                 REPORT_ERROR (has_arg, ARG_ERROR6, arg);
             }
-/*
- * Old -X option to be removed
- */
-        } else if (JLI_StrCCmp(arg, "-XaddReads:") == 0) {
-            AddOption(arg, NULL);
-        } else if (JLI_StrCCmp(arg, "-XaddExports:") == 0) {
-            AddOption(arg, NULL);
-        } else if (JLI_StrCCmp(arg, "-Xpatch:") == 0) {
-            AddOption(arg, NULL);
 
 /*
  * The following cases will cause the argument parsing to stop
