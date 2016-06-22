@@ -350,7 +350,7 @@ public class JmodNegativeTest {
             jmod("create",
                  "--class-path", cp,
                  "--hash-modules", ".*",
-                 "--modulepath", MODS_DIR.toString(),
+                 "--module-path", MODS_DIR.toString(),
                  jmod.toString())
                 .assertFailure();
         } finally {

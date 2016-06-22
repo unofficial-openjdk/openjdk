@@ -24,8 +24,8 @@
 /**
  * @test
  * @modules java.base/jdk.internal.misc
- * @run main/othervm -XaddExports:java.desktop/sun.awt=java.base AddExportsTest
- * @run main/othervm -XaddExports:java.desktop/sun.awt=ALL-UNNAMED AddExportsTest
+ * @run main/othervm --add-exports=java.desktop/sun.awt=java.base AddExportsTest
+ * @run main/othervm --add-exports=java.desktop/sun.awt=ALL-UNNAMED AddExportsTest
  * @summary Test Module isExported methods with exports changed by -AddExportsTest
  */
 
