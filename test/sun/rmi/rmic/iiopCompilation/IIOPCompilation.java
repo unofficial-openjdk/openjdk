@@ -30,8 +30,10 @@
  *          java.rmi/sun.rmi.transport
  *          java.rmi/sun.rmi.transport.tcp
  * @build TestLibrary
+ * @compile -addmods java.corba IIOPCompilation.java
+ * @run main/othervm --add-modules=java.corba IIOPCompilation
+ *
  * @summary Compiles a PortableRemoteObject with rmic -iiop and ensures that stub and tie classes are generated.
- * @run main IIOPCompilation
  * @author Felix Yang
  *
  */

@@ -24,9 +24,11 @@
 /*
  * @test
  * @bug 8011805
- * @modules jdk.rmic/sun.tools.java jdk.rmic/sun.rmi.rmic
  * @summary Update sun.tools.java class file reading/writing support to include
  *   the new constant pool entries (including invokedynamic)
+ * @modules jdk.rmic/sun.tools.java jdk.rmic/sun.rmi.rmic
+ * @compile -addmods jdk.rmic CFCTest.java
+ * @run main/othervm --add-modules=jdk.rmic CFCTest
  */
 
 import java.io.DataInputStream;
