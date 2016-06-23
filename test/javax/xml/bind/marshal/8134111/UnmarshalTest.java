@@ -26,10 +26,11 @@
  * @bug 8134111
  * @summary test that elements without namespace is ignored by unmarshaller
  *          when elementFormDefault is set to QUALIFIED.
- * @compile testTypes/package-info.java testTypes/Root.java
- *          testTypes/WhenType.java testTypes/ObjectFactory.java
  * @modules java.xml.bind
- * @run testng/othervm UnmarshalTest
+ * @compile -addmods java.xml.bind UnmarshalTest.java
+ *          testTypes/package-info.java testTypes/Root.java
+ *          testTypes/WhenType.java testTypes/ObjectFactory.java
+ * @run testng/othervm --add-modules=java.xml.bind UnmarshalTest
  */
 
 import java.io.StringReader;

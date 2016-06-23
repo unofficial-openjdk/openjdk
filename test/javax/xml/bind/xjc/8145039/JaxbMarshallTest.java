@@ -28,7 +28,8 @@
  *          ClassCast exception.
  * @modules java.xml.bind
  * @library /lib/testlibrary
- * @run testng/othervm JaxbMarshallTest
+ * @compile -addmods java.xml.bind JaxbMarshallTest.java
+ * @run testng/othervm --add-modules=java.xml.bind JaxbMarshallTest
  */
 
 import java.io.IOException;
