@@ -71,7 +71,7 @@ public class AnnotationsOnModules extends ModuleTestBase {
         Files.createDirectories(modulePath);
 
         new JavacTask(tb)
-                .options("-modulesourcepath", moduleSrc.toString())
+                .options("--module-source-path", moduleSrc.toString())
                 .outdir(modulePath)
                 .files(findJavaFiles(m1))
                 .run()
@@ -99,7 +99,7 @@ public class AnnotationsOnModules extends ModuleTestBase {
         Files.createDirectories(modulePath);
 
         new JavacTask(tb)
-                .options("-modulesourcepath", moduleSrc.toString())
+                .options("--module-source-path", moduleSrc.toString())
                 .outdir(modulePath)
                 .files(findJavaFiles(m1))
                 .run()
@@ -127,7 +127,7 @@ public class AnnotationsOnModules extends ModuleTestBase {
         Files.createDirectories(modulePath);
 
         new JavacTask(tb)
-                .options("-modulesourcepath", moduleSrc.toString(),
+                .options("--module-source-path", moduleSrc.toString(),
                          "-processor", AP.class.getName())
                 .outdir(modulePath)
                 .files(findJavaFiles(m1))
@@ -144,8 +144,8 @@ public class AnnotationsOnModules extends ModuleTestBase {
         Files.createDirectories(out);
 
         new JavacTask(tb)
-                .options("-modulepath", modulePath.toString(),
-                         "-addmods", "m1",
+                .options("--module-path", modulePath.toString(),
+                         "--add-modules", "m1",
                          "-processor", AP.class.getName())
                 .outdir(out)
                 .files(findJavaFiles(src))

@@ -182,9 +182,30 @@ public enum Option {
         }
     },
 
+    CLASS_PATH("--class-path", "opt.arg.path", "opt.classpath", STANDARD, FILEMANAGER) {
+        @Override
+        public boolean process(OptionHelper helper, String option, String arg) {
+            return CLASSPATH.process(helper, "-classpath", arg);
+        }
+    },
+
     SOURCEPATH("-sourcepath", "opt.arg.path", "opt.sourcepath", STANDARD, FILEMANAGER),
 
+    SOURCE_PATH("--source-path", "opt.arg.path", "opt.sourcepath", STANDARD, FILEMANAGER) {
+        @Override
+        public boolean process(OptionHelper helper, String option, String arg) {
+            return SOURCEPATH.process(helper, "-sourcepath", arg);
+        }
+    },
+
     MODULESOURCEPATH("-modulesourcepath", "opt.arg.mspath", "opt.modulesourcepath", STANDARD, FILEMANAGER),
+
+    MODULE_SOURCE_PATH("--module-source-path", "opt.arg.mspath", "opt.modulesourcepath", STANDARD, FILEMANAGER) {
+        @Override
+        public boolean process(OptionHelper helper, String option, String arg) {
+            return MODULESOURCEPATH.process(helper, "-modulesourcepath", arg);
+        }
+    },
 
     MODULEPATH("-modulepath", "opt.arg.path", "opt.modulepath", STANDARD, FILEMANAGER),
 
@@ -195,11 +216,39 @@ public enum Option {
         }
     },
 
+    MODULE_PATH("--module-path", "opt.arg.path", "opt.modulepath", STANDARD, FILEMANAGER) {
+        @Override
+        public boolean process(OptionHelper helper, String option, String arg) {
+            return MODULEPATH.process(helper, "-modulepath", arg);
+        }
+    },
+
+    P("-p", "opt.arg.path", "opt.modulepath", STANDARD, FILEMANAGER) {
+        @Override
+        public boolean process(OptionHelper helper, String option, String arg) {
+            return MODULEPATH.process(helper, "-modulepath", arg);
+        }
+    },
+
     UPGRADEMODULEPATH("-upgrademodulepath", "opt.arg.path", "opt.upgrademodulepath", STANDARD, FILEMANAGER),
+
+    UPGRADE_MODULE_PATH("--upgrade-module-path", "opt.arg.path", "opt.upgrademodulepath", STANDARD, FILEMANAGER) {
+        @Override
+        public boolean process(OptionHelper helper, String option, String arg) {
+            return UPGRADEMODULEPATH.process(helper, "-upgrademodulepath", arg);
+        }
+    },
 
     SYSTEM("-system", "opt.arg.jdk", "opt.system", STANDARD, FILEMANAGER),
 
     XPATCH("-Xpatch:", "opt.arg.patch", "opt.patch", EXTENDED, FILEMANAGER),
+
+    PATCH_MODULE("--patch-module", "opt.arg.patch", "opt.patch", EXTENDED, FILEMANAGER) {
+        @Override
+        public boolean process(OptionHelper helper, String option, String arg) {
+            return XPATCH.process(helper, "-Xpatch:", arg);
+        }
+    },
 
     BOOTCLASSPATH("-bootclasspath", "opt.arg.path", "opt.bootclasspath", STANDARD, FILEMANAGER) {
         @Override
@@ -207,6 +256,13 @@ public enum Option {
             helper.remove("-Xbootclasspath/p:");
             helper.remove("-Xbootclasspath/a:");
             return super.process(helper, option, arg);
+        }
+    },
+
+    BOOT_CLASS_PATH("--boot-class-path", "opt.arg.path", "opt.bootclasspath", STANDARD, FILEMANAGER) {
+        @Override
+        public boolean process(OptionHelper helper, String option, String arg) {
+            return BOOTCLASSPATH.process(helper, "-bootclasspath", arg);
         }
     },
 
@@ -247,7 +303,21 @@ public enum Option {
 
     PROCESSORPATH("-processorpath", "opt.arg.path", "opt.processorpath", STANDARD, FILEMANAGER),
 
+    PROCESSOR_PATH("--processor-path", "opt.arg.path", "opt.processorpath", STANDARD, FILEMANAGER) {
+        @Override
+        public boolean process(OptionHelper helper, String option, String arg) {
+            return PROCESSORPATH.process(helper, "-processorpath", arg);
+        }
+    },
+
     PROCESSORMODULEPATH("-processormodulepath", "opt.arg.path", "opt.processormodulepath", STANDARD, FILEMANAGER),
+
+    PROCESSOR_MODULE_PATH("--processor-module-path", "opt.arg.path", "opt.processormodulepath", STANDARD, FILEMANAGER) {
+        @Override
+        public boolean process(OptionHelper helper, String option, String arg) {
+            return PROCESSORMODULEPATH.process(helper, "-processormodulepath", arg);
+        }
+    },
 
     PARAMETERS("-parameters","opt.parameters", STANDARD, BASIC),
 
@@ -536,6 +606,13 @@ public enum Option {
         }
     },
 
+    ADD_EXPORTS("--add-exports", "opt.arg.addExports", "opt.addExports", EXTENDED, BASIC) {
+        @Override
+        public boolean process(OptionHelper helper, String option, String arg) {
+            return XADDEXPORTS.process(helper, "-XaddExports:", arg);
+        }
+    },
+
     XADDREADS("-XaddReads:", "opt.arg.addReads", "opt.addReads", EXTENDED, BASIC) {
         @Override
         public boolean process(OptionHelper helper, String option) {
@@ -543,6 +620,13 @@ public enum Option {
             String prev = helper.get(XADDREADS);
             helper.put(XADDREADS.text, (prev == null) ? p : prev + '\0' + p);
             return false;
+        }
+    },
+
+    ADD_READS("--add-reads", "opt.arg.addReads", "opt.addReads", EXTENDED, BASIC) {
+        @Override
+        public boolean process(OptionHelper helper, String option, String arg) {
+            return XADDREADS.process(helper, "-XaddReads:", arg);
         }
     },
 
@@ -561,8 +645,31 @@ public enum Option {
 
     M("-m", "opt.arg.m", "opt.m", STANDARD, BASIC),
 
+    MODULE("--module", "opt.arg.m", "opt.m", STANDARD, BASIC) {
+        @Override
+        public boolean process(OptionHelper helper, String option, String arg) {
+            return M.process(helper, "-m", arg);
+        }
+    },
+
     ADDMODS("-addmods", "opt.arg.addmods", "opt.addmods", STANDARD, BASIC),
+
+    ADD_MODULES("--add-modules", "opt.arg.addmods", "opt.addmods", STANDARD, BASIC) {
+        @Override
+        public boolean process(OptionHelper helper, String option, String arg) {
+            return ADDMODS.process(helper, "-addmods", arg);
+        }
+    },
+
     LIMITMODS("-limitmods", "opt.arg.limitmods", "opt.limitmods", STANDARD, BASIC),
+
+    LIMIT_MODULES("--limit-modules", "opt.arg.limitmods", "opt.limitmods", STANDARD, BASIC) {
+        @Override
+        public boolean process(OptionHelper helper, String option, String arg) {
+            return LIMITMODS.process(helper, "-limitmods", arg);
+        }
+
+    },
 
     // This option exists only for the purpose of documenting itself.
     // It's actually implemented by the CommandLine class.
@@ -732,6 +839,11 @@ public enum Option {
     }
 
     public boolean matches(String option) {
+        if (text.startsWith("--")) {
+            return option.equals(text)
+                    || hasArg() && option.startsWith(text + "=");
+        }
+
         if (!hasSuffix)
             return option.equals(text);
 

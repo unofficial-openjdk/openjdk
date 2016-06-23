@@ -380,11 +380,16 @@ public class Arguments {
             }
 
             if (option.hasArg()) {
-                if (!argIter.hasNext()) {
-                    error("err.req.arg", arg);
-                    return false;
+                String operand;
+                if (arg.startsWith(option.text + "=")) {
+                    operand = arg.substring(option.text.length() + 1);
+                } else {
+                    if (!argIter.hasNext()) {
+                        error("err.req.arg", arg);
+                        return false;
+                    }
+                    operand = argIter.next();
                 }
-                String operand = argIter.next();
                 if (option.process(helper, arg, operand)) {
                     return false;
                 }

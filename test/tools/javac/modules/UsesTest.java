@@ -154,7 +154,7 @@ public class UsesTest extends ModuleTestBase {
         Files.createDirectories(modules);
 
         new JavacTask(tb)
-                .options("-modulesourcepath", src.toString())
+                .options("--module-source-path", src.toString())
                 .outdir(modules)
                 .files(findJavaFiles(src))
                 .run(Task.Expect.SUCCESS)
@@ -174,7 +174,7 @@ public class UsesTest extends ModuleTestBase {
                 .write(modules);
 
         new JavacTask(tb)
-                .options("-mp", modules.toString())
+                .options("-p", modules.toString())
                 .outdir(modules)
                 .files(findJavaFiles(modules.resolve("m2")))
                 .run(Task.Expect.SUCCESS)
@@ -194,7 +194,7 @@ public class UsesTest extends ModuleTestBase {
                 .write(modules);
 
         new JavacTask(tb)
-                .options("-mp", modules.toString())
+                .options("-p", modules.toString())
                 .outdir(modules)
                 .files(findJavaFiles(modules.resolve("m2")))
                 .run(Task.Expect.SUCCESS)
@@ -253,7 +253,7 @@ public class UsesTest extends ModuleTestBase {
                 "module m2 { requires m1; uses p.C; }");
 
         List<String> output = new JavacTask(tb)
-                .options("-XDrawDiagnostics", "-modulesourcepath", src.toString())
+                .options("-XDrawDiagnostics", "--module-source-path", src.toString())
                 .outdir(Files.createDirectories(base.resolve("modules")))
                 .files(findJavaFiles(src))
                 .run(Task.Expect.FAIL)
@@ -277,7 +277,7 @@ public class UsesTest extends ModuleTestBase {
                 "module m2 { requires m1; uses p.C; }");
 
         List<String> output = new JavacTask(tb)
-                .options("-XDrawDiagnostics", "-modulesourcepath", src.toString())
+                .options("-XDrawDiagnostics", "--module-source-path", src.toString())
                 .outdir(Files.createDirectories(base.resolve("modules")))
                 .files(findJavaFiles(src))
                 .run(Task.Expect.FAIL)

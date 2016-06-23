@@ -116,7 +116,7 @@ public class GraphsTest extends ModuleTestBase {
                 .write(base.resolve("positiveSrc"));
 
         new JavacTask(tb)
-                .options("-XDrawDiagnostics", "-mp", modules + File.pathSeparator + jarModules)
+                .options("-XDrawDiagnostics", "-p", modules + File.pathSeparator + jarModules)
                 .outdir(Files.createDirectories(base.resolve("positive")))
                 .files(findJavaFiles(positiveSrc))
                 .run()
@@ -125,7 +125,7 @@ public class GraphsTest extends ModuleTestBase {
         Path negativeSrc = m.classes("package p; public class Negative { closedO.O o; closedN.N n; closedL.L l; }")
                 .write(base.resolve("negativeSrc"));
         List<String> log = new JavacTask(tb)
-                .options("-XDrawDiagnostics", "-mp", modules + File.pathSeparator + jarModules)
+                .options("-XDrawDiagnostics", "-p", modules + File.pathSeparator + jarModules)
                 .outdir(Files.createDirectories(base.resolve("negative")))
                 .files(findJavaFiles(negativeSrc))
                 .run(Task.Expect.FAIL)
@@ -143,8 +143,8 @@ public class GraphsTest extends ModuleTestBase {
         m.write(modules);
         List<String> out = new JavacTask(tb)
                 .options("-XDrawDiagnostics",
-                        "-modulesourcepath", modules + "/*/src",
-                        "-mp", jarModules.toString()
+                        "--module-source-path", modules + "/*/src",
+                        "-p", jarModules.toString()
                 )
                 .outdir(Files.createDirectories(base.resolve("negative")))
                 .files(findJavaFiles(modules))
@@ -193,7 +193,7 @@ public class GraphsTest extends ModuleTestBase {
                 .write(modules);
         String log = new JavacTask(tb)
                 .options("-XDrawDiagnostics",
-                        "-modulesourcepath", modules + "/*/src")
+                        "--module-source-path", modules + "/*/src")
                 .outdir(Files.createDirectories(base.resolve("negative")))
                 .files(findJavaFiles(modules))
                 .run(Task.Expect.FAIL)
