@@ -19,30 +19,27 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
-#include "precompiled.hpp"
-#include "prims/jvm.h"
-#include "utilities/quickSort.hpp"
-#include "unittest.hpp"
+/*
+ * @test
+ * @bug 8159470
+ * @summary Test that MethodHandle constants are checked
+ * @modules java.base/jdk.internal.misc
+ * @compile WithConfiguration.jcod
+ * @run main/othervm TestMethodHandleConstant
+ */
+public class TestMethodHandleConstant {
 
-static int int_comparator(int a, int b) {
-  if (a == b) {
-    return 0;
-  } else if (a < b) {
-    return -1;
-  }
-
-  // a > b
-  return 1;
+    public static void main(String[] args) {
+        try {
+          // This interface has bad constant pool entry for MethodHandle -> Method
+          String URI_DEFAULT
+            = WithConfiguration.autoDetect().getLocation();
+          throw new RuntimeException("FAILED, ICCE not thrown");
+        } catch (BootstrapMethodError icce) {
+          System.out.println("PASSED, expecting ICCE" + icce.getMessage());
+        }
+    }
 }
 
-TEST(utilities, quicksort) {
-  int test_array[] = {3,2,1};
-  QuickSort::sort(test_array, 3, int_comparator, false);
-
-  ASSERT_EQ(1, test_array[0]);
-  ASSERT_EQ(2, test_array[1]);
-  ASSERT_EQ(3, test_array[2]);
-}
