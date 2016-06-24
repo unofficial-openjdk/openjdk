@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,41 +20,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.vm.ci.hotspotvmconfig;
+package jdk.vm.ci.hotspot.aarch64;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import jdk.vm.ci.hotspot.HotSpotVMConfigAccess;
+import jdk.vm.ci.hotspot.HotSpotVMConfigStore;
 
 /**
- * Refers to a C++ type in the VM.
+ * Used to access native configuration details.
+ *
+ * All non-static, public fields in this class are so that they can be compiled as constants.
  */
-@Target(ElementType.FIELD)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface HotSpotVMType {
+class AArch64HotSpotVMConfig extends HotSpotVMConfigAccess {
 
-    /**
-     * Types of information this annotation can return.
-     */
-    enum Type {
-        /**
-         * Returns the size of the type (C++ {@code sizeof()}).
-         */
-        SIZE;
+    AArch64HotSpotVMConfig(HotSpotVMConfigStore config) {
+        super(config);
     }
 
-    /**
-     * Specifies what type of information to return.
-     *
-     * @see Type
-     */
-    Type get();
+    final boolean linuxOs = System.getProperty("os.name", "").startsWith("Linux");
 
-    /**
-     * Returns the name of the type.
-     *
-     * @return name of type
-     */
-    String name();
+    final boolean useCompressedOops = getFlag("UseCompressedOops", Boolean.class);
 }
