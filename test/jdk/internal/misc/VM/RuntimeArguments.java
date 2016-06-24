@@ -45,21 +45,28 @@ public class RuntimeArguments {
     public Object[][] options() {
         return new Object[][] {
             { // CLI options
-              List.of("-XaddExports:java.base/jdk.internal.misc=ALL-UNNAMED",
-                      "-XaddExports:java.base/jdk.internal.perf=ALL-UNNAMED",
-                      "-addmods", "jdk.zipfs"),
+              List.of("--add-exports",
+                      "java.base/jdk.internal.misc=ALL-UNNAMED",
+                      "--add-exports",
+                      "java.base/jdk.internal.perf=ALL-UNNAMED",
+                      "--add-modules",
+                      "jdk.zipfs"),
               // expected runtime arguments
-              List.of("-Djdk.launcher.addexports.0=java.base/jdk.internal.misc=ALL-UNNAMED",
-                      "-Djdk.launcher.addexports.1=java.base/jdk.internal.perf=ALL-UNNAMED",
-                      "-Djdk.launcher.addmods=jdk.zipfs")
+              List.of("--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED",
+                      "--add-exports=java.base/jdk.internal.perf=ALL-UNNAMED",
+                      "--add-modules=jdk.zipfs")
             },
             { // CLI options
-              List.of("-XaddExports:java.base/jdk.internal.misc=ALL-UNNAMED",
-                      "-addmods", "jdk.zipfs",
-                      "-limitmods", "java.compact3"),
+              List.of("--add-exports",
+                      "java.base/jdk.internal.misc=ALL-UNNAMED",
+                      "--add-modules",
+                      "jdk.zipfs",
+                      "--limit-modules",
+                      "java.compact3"),
               // expected runtime arguments
-              List.of("-Djdk.launcher.addexports.0=java.base/jdk.internal.misc=ALL-UNNAMED",
-                      "-Djdk.launcher.addmods=jdk.zipfs", "-Djdk.launcher.limitmods=java.compact3")
+              List.of("--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED",
+                      "--add-modules=jdk.zipfs",
+                      "--limit-modules=java.compact3"),
             },
         };
     };
