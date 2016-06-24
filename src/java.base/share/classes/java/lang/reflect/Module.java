@@ -56,6 +56,7 @@ import jdk.internal.misc.JavaLangAccess;
 import jdk.internal.misc.JavaLangReflectModuleAccess;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.module.ServicesCatalog;
+import jdk.internal.org.objectweb.asm.AnnotationVisitor;
 import jdk.internal.org.objectweb.asm.Attribute;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassVisitor;
@@ -1069,8 +1070,13 @@ public final class Module implements AnnotatedElement {
                         null);
             }
             @Override
+            public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+                // keep annotations
+                return super.visitAnnotation(desc, visible);
+            }
+            @Override
             public void visitAttribute(Attribute attr) {
-                // drop
+                // drop non-annotation attributes
             }
         };
 
