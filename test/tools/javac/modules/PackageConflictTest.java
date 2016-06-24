@@ -265,7 +265,7 @@ public class PackageConflictTest extends ModuleTestBase {
 
         List<String> output = new JavacTask(tb)
                 .options("-XDrawDiagnostics",
-                        "-module-source-path", modSrc.toString())
+                        "--module-source-path", modSrc.toString())
                 .outdir(Files.createDirectories(base.resolve("classes")))
                 .files(findJavaFiles(modSrc.resolve("K")))
                 .run(Task.Expect.FAIL)
