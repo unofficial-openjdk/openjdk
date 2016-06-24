@@ -116,9 +116,6 @@
 
 # jdk_beans
 
-java/beans/XMLDecoder/8028054/TestConstructorFinder.java        8156579 generic-all
-java/beans/XMLDecoder/8028054/TestMethodFinder.java             8156579 generic-all
-
 java/beans/Introspector/8132566/OverridePropertyInfoTest.java   8132565 generic-all
 java/beans/Introspector/8132566/OverrideUserDefPropertyInfoTest.java 8132565 generic-all
 
@@ -138,6 +135,9 @@ java/lang/instrument/RetransformBigClass.sh                     8061177 generic-
 java/lang/instrument/BootClassPath/BootClassPathTest.sh         8072130 macosx-all
 
 java/lang/management/MemoryMXBean/LowMemoryTest.java            8130339 generic-all
+
+java/lang/management/MemoryMXBean/Pending.java                  8158837 generic-all
+java/lang/management/MemoryMXBean/PendingAllGC.sh               8158760 generic-all
 
 ############################################################################
 
@@ -199,6 +199,8 @@ java/rmi/activation/Activatable/extLoadedImpl/ext.sh            8062724 generic-
 
 sun/rmi/rmic/newrmic/equivalence/run.sh                         8145980 generic-all
 
+java/rmi/transport/dgcDeadLock/DGCDeadLock.java                 8029360 macosx-all
+
 ############################################################################
 
 # jdk_security
@@ -207,14 +209,9 @@ sun/security/pkcs11/ec/TestKeyFactory.java                      7157786 generic-
 
 sun/security/krb5/auto/Unreachable.java                         7164518 macosx-all no PortUnreachableException on Mac
 
-java/security/KeyPairGenerator/SolarisShortDSA.java             7041639 solaris-all
-sun/security/tools/keytool/standard.sh                          7041639 solaris-all
-
 sun/security/tools/keytool/ListKeychainStore.sh                 8156889 macosx-all
 
 sun/security/mscapi/ShortRSAKey1024.sh                          8153948 windows-all
-
-java/security/Security/ClassLoaderDeadlock/Deadlock2.sh         8062758 generic-all
 
 sun/security/tools/jarsigner/warnings/BadKeyUsageTest.java      8026393 generic-all
 
@@ -278,23 +275,15 @@ sun/security/pkcs11/tls/TestMasterSecret.java                   8077138,8023434 
 sun/security/pkcs11/tls/TestPRF.java                            8077138,8023434 windows-all
 sun/security/pkcs11/tls/TestPremaster.java                      8077138,8023434 windows-all
 
-sun/security/provider/SecureRandom/StrongSecureRandom.java      8051770 macosx-10.10
-
-sun/security/pkcs11/rsa/TestKeyPairGenerator.java               8074580 generic-all
-
 sun/security/krb5/auto/HttpNegotiateServer.java                 8038079 generic-all
 
 sun/security/tools/keytool/autotest.sh                          8130302 generic-all
 
 sun/security/x509/URICertStore/ExtensionsWithLDAP.java          8134577 generic-all
 
-sun/security/provider/SecureRandom/StrongSecureRandom.java      8157387 linux-all
-
 ############################################################################
 
 # jdk_sound
-
-javax/sound/sampled/DirectAudio/bug6400879.java                 8148915 linux-all
 
 ############################################################################
 
@@ -306,6 +295,8 @@ javax/imageio/plugins/tiff/WriteToSequenceAfterAbort.java       8148454 generic-
 ############################################################################
 
 # jdk_swing
+
+sanity/client/SwingSet/src/ButtonDemoScreenshotTest.java        8157338 generic-all
 
 ############################################################################
 
@@ -397,6 +388,6 @@ com/sun/jndi/ldap/DeadSSLLdapTimeoutTest.java                   8141370 linux-i5
 
 # core_tools
 
-tools/jlink/plugins/IncludeLocalesPluginTest.java               8158272 generic-all
+tools/jlink/JLinkOptimTest.java                                 8159264 generic-all
 
 ############################################################################
