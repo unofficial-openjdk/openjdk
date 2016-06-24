@@ -258,15 +258,25 @@ public abstract class BaseFileManager implements JavaFileManager {
         for (Option o: javacFileManagerOptions) {
             if (o.matches(current))  {
                 if (o.hasArg()) {
-                    if (remaining.hasNext()) {
-                        if (!o.process(helper, current, remaining.next()))
-                            return true;
+                    String arg;
+                    int eq = current.indexOf("=");
+                    int colon = current.indexOf(":");
+                    int sep = (eq < 0) ? colon : (colon < 0) ? eq : Math.min(colon, eq);
+                    if (sep > 0) {
+                        arg = current.substring(sep + 1);
+                    } else if (remaining.hasNext()) {
+                        arg = remaining.next();
+                    } else {
+                        // missing operand
+                        throw new IllegalArgumentException(current);
                     }
+                    if (!o.process(helper, current, arg))
+                        return true;
                 } else {
                     if (!o.process(helper, current))
                         return true;
                 }
-                // operand missing, or process returned true
+                // process returned true
                 throw new IllegalArgumentException(current);
             }
         }

@@ -68,7 +68,7 @@ public class ModulePathTest extends ModuleTestBase {
                 .writeAll()
                 .getOutput(Task.OutputKind.DIRECT);
 
-        if (!log.contains("- compiler.err.illegal.argument.for.option: -modulepath, doesNotExist"))
+        if (!log.contains("- compiler.err.illegal.argument.for.option: --module-path, doesNotExist"))
             throw new Exception("expected output not found");
     }
 
@@ -86,7 +86,7 @@ public class ModulePathTest extends ModuleTestBase {
                 .writeAll()
                 .getOutput(Task.OutputKind.DIRECT);
 
-        if (!log.contains("- compiler.err.illegal.argument.for.option: -modulepath, dummy.txt"))
+        if (!log.contains("- compiler.err.illegal.argument.for.option: --module-path, dummy.txt"))
             throw new Exception("expected output not found");
     }
 
@@ -104,7 +104,7 @@ public class ModulePathTest extends ModuleTestBase {
                 .writeAll()
                 .getOutput(Task.OutputKind.DIRECT);
 
-        if (!log.contains("- compiler.err.illegal.argument.for.option: -modulepath, dummy.jimage"))
+        if (!log.contains("- compiler.err.illegal.argument.for.option: --module-path, dummy.jimage"))
             throw new Exception("expected output not found");
     }
 

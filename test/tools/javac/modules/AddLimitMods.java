@@ -315,7 +315,7 @@ public class AddLimitMods extends ModuleTestBase {
                    .writeAll()
                    .getOutputLines(Task.OutputKind.DIRECT);
 
-        if (!actual.contains("javac: option -addmods not allowed with target 1.8")) {
+        if (!actual.contains("javac: option --add-modules not allowed with target 1.8")) {
             throw new IllegalStateException("incorrect errors; actual=" + actual);
         }
 

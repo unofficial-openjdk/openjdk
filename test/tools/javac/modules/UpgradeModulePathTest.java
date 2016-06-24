@@ -184,7 +184,7 @@ public class UpgradeModulePathTest extends ModuleTestBase {
                 .run(Task.Expect.FAIL)
                 .writeAll()
                 .getOutput(Task.OutputKind.DIRECT);
-        if (!output.contains("compiler.err.illegal.argument.for.option: -upgrademodulepath, " + dummy)) {
+        if (!output.contains("compiler.err.illegal.argument.for.option: --upgrade-module-path, " + dummy)) {
             throw new Exception("Expected output was not found");
         }
     }

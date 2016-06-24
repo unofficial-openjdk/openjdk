@@ -62,14 +62,14 @@ public class ModuleSourcePathTest extends ModuleTestBase {
 
         String log = new JavacTask(tb, Task.Mode.CMDLINE)
                 .options("-XDrawDiagnostics",
-                        "-sourcepath", sp.toString().replace('/', File.separatorChar),
+                        "--source-path", sp.toString().replace('/', File.separatorChar),
                         "--module-source-path", msp.toString().replace('/', File.separatorChar),
                         "dummyClass")
                 .run(Task.Expect.FAIL)
                 .writeAll()
                 .getOutput(Task.OutputKind.DIRECT);
 
-        if (!log.contains("cannot specify both -sourcepath and -modulesourcepath"))
+        if (!log.contains("cannot specify both --source-path and --module-source-path"))
             throw new Exception("expected diagnostic not found");
     }
 
@@ -159,7 +159,7 @@ public class ModuleSourcePathTest extends ModuleTestBase {
                     .writeAll()
                     .getOutput(Task.OutputKind.DIRECT);
 
-            if (!log.contains("- compiler.err.illegal.argument.for.option: -modulesourcepath, mismatched braces"))
+            if (!log.contains("- compiler.err.illegal.argument.for.option: --module-source-path, mismatched braces"))
                 throw new Exception("expected output for path [" + sourcepath + "] not found");
         }
     }
@@ -437,7 +437,7 @@ public class ModuleSourcePathTest extends ModuleTestBase {
                     .writeAll()
                     .getOutput(Task.OutputKind.DIRECT);
 
-            if (!log.contains("- compiler.err.illegal.argument.for.option: -modulesourcepath, illegal use of *"))
+            if (!log.contains("- compiler.err.illegal.argument.for.option: --module-source-path, illegal use of *"))
                 throw new Exception("expected output for path [" + sourcepath + "] not found");
         }
     }
