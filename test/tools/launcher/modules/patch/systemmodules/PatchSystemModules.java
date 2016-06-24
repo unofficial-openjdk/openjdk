@@ -69,7 +69,7 @@ public class PatchSystemModules {
         for (String name : modules) {
             assertTrue(CompilerUtils.compile(src.resolve(name),
                                              MODS_DIR,
-                                             "-modulesourcepath", src.toString()));
+                                             "--module-source-path", src.toString()));
         }
 
         // compile patched source

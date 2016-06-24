@@ -60,7 +60,7 @@ public class ResourcesTest {
         compiled = CompilerUtils
             .compile(SRC_DIR,
                      MODS_DIR,
-                     "-modulesourcepath", SRC_DIR.toString());
+                     "--module-source-path", SRC_DIR.toString());
         assertTrue(compiled);
 
         // javac --module-path mods -d classes Main.java

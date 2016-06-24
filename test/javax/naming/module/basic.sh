@@ -78,7 +78,7 @@ $JAVAC -d mods/ldapv4 `find $TESTSRC/src/ldapv4 -name "*.java"`
 
 echo "\nPreparing the 'test' module..."
 mkdir -p mods/test
-$JAVAC -d mods -modulesourcepath $TESTSRC/src `find $TESTSRC/src/test -name "*.java"`
+$JAVAC -d mods --module-source-path $TESTSRC/src `find $TESTSRC/src/test -name "*.java"`
 
 
 echo "\nRunning with the 'java.desktop' module..."

@@ -67,11 +67,11 @@ public class DryRunTest {
         // javac -d mods/$TESTMODULE src/$TESTMODULE/**
         assertTrue(CompilerUtils.compile(SRC_DIR.resolve(M_MODULE),
                                          MODS_DIR,
-                                         "-modulesourcepath", SRC_DIR.toString()));
+                                         "--module-source-path", SRC_DIR.toString()));
 
         assertTrue(CompilerUtils.compile(SRC_DIR.resolve(TEST_MODULE),
                                          MODS_DIR,
-                                         "-modulesourcepath", SRC_DIR.toString()));
+                                         "--module-source-path", SRC_DIR.toString()));
 
         Files.createDirectories(LIBS_DIR);
 

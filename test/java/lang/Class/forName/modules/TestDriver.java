@@ -65,7 +65,7 @@ public class TestDriver {
     public void setup() throws Exception {
         assertTrue(CompilerUtils.compile(
                         MOD_SRC_DIR, MOD_DEST_DIR,
-                        "-modulesourcepath",
+                        "--module-source-path",
                         MOD_SRC_DIR.toString()));
 
         copyDirectories(MOD_DEST_DIR.resolve("m1"), Paths.get("mods1"));

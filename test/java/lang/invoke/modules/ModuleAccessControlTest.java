@@ -60,7 +60,7 @@ public class ModuleAccessControlTest {
         for (String mn : modules) {
             Path msrc = SRC_DIR.resolve(mn);
             assertTrue(CompilerUtils
-                .compile(msrc, MODS_DIR, "-modulesourcepath", SRC_DIR.toString()));
+                .compile(msrc, MODS_DIR, "--module-source-path", SRC_DIR.toString()));
         }
     }
 

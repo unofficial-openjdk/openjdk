@@ -57,7 +57,7 @@ do
     mkdir -p mods/$M
     CLASSES="`find $TESTSRC/src/$M -name '*.java'`"
     if [ "x$CLASSES" != x ]; then
-        $JAVAC -g -d mods -modulesourcepath $TESTSRC/src $CLASSES
+        $JAVAC -g -d mods --module-source-path $TESTSRC/src $CLASSES
     fi
     PROPS="`(cd $TESTSRC/src/$M; find . -name '*.properties')`"
     if [ "x$PROPS" != x ]; then

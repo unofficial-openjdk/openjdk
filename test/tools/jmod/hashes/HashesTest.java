@@ -185,7 +185,7 @@ public class HashesTest {
 
     private void compileModule(String moduleName, Path src) throws IOException {
         Path msrc = src.resolve(moduleName);
-        assertTrue(CompilerUtils.compile(msrc, mods, "-modulesourcepath", src.toString()));
+        assertTrue(CompilerUtils.compile(msrc, mods, "--module-source-path", src.toString()));
     }
 
     private void jmod(String moduleName, String... options) throws IOException {
