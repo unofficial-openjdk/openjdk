@@ -2604,7 +2604,7 @@ unsigned int addexports_count = 0;
 unsigned int patch_mod_count = 0;
 const char* add_modules_value = NULL;
 
-bool Arguments::create_module_property(const char* prop_name, const char* prop_value, PropertyInternal internal) {
+bool Arguments::create_property(const char* prop_name, const char* prop_value, PropertyInternal internal) {
   size_t prop_len = strlen(prop_name) + strlen(prop_value) + 2;
   char* property = AllocateHeap(prop_len, mtArguments);
   int ret = jio_snprintf(property, prop_len, "%s=%s", prop_name, prop_value);
@@ -2617,8 +2617,8 @@ bool Arguments::create_module_property(const char* prop_name, const char* prop_v
   return added;
 }
 
-bool Arguments::create_numbered_module_property(const char* prop_base_name, const char* prop_value, unsigned int count) {
-  // Make sure count is < 10,000. Otherwise, otherwise memory allocation will be too small.
+bool Arguments::create_numbered_property(const char* prop_base_name, const char* prop_value, unsigned int count) {
+  // Make sure count is < 10,000. Otherwise, memory allocation will be too small.
   if (count < 10000) {
     size_t prop_len = strlen(prop_base_name) + strlen(prop_value) + 6;
     char* property = AllocateHeap(prop_len, mtArguments);
@@ -2753,7 +2753,7 @@ int Arguments::process_patch_mod_option(const char* patch_mod_tail, bool* patch_
       // The path piece begins one past the module_equal sign
       add_patch_mod_prefix(module_name, module_equal + 1, patch_mod_javabase);
       FREE_C_HEAP_ARRAY(char, module_name);
-      if (!create_numbered_module_property("jdk.module.patch", patch_mod_tail, patch_mod_count++)) {
+      if (!create_numbered_property("jdk.module.patch", patch_mod_tail, patch_mod_count++)) {
         return JNI_ENOMEM;
       }
     } else {
@@ -2850,7 +2850,7 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* patch_m
       }
     } else if (match_option(option, "--add-reads=", &tail)) {
       if (tail != NULL) {
-        if (!create_numbered_module_property("jdk.module.addreads", tail, addreads_count++)) {
+        if (!create_numbered_property("jdk.module.addreads", tail, addreads_count++)) {
           return JNI_ENOMEM;
         }
       } else {
@@ -2860,7 +2860,7 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* patch_m
       }
     } else if (match_option(option, "--add-exports=", &tail)) {
       if (tail != NULL) {
-        if (!create_numbered_module_property("jdk.module.addexports", tail, addexports_count++)) {
+        if (!create_numbered_property("jdk.module.addexports", tail, addexports_count++)) {
           return JNI_ENOMEM;
         }
       } else {
@@ -2878,7 +2878,7 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* patch_m
       }
     } else if (match_option(option, "--limit-modules=", &tail)) {
       if (tail != NULL) {
-        if (!create_module_property("jdk.module.limitmods", tail, InternalProperty)) {
+        if (!create_property("jdk.module.limitmods", tail, InternalProperty)) {
           return JNI_ENOMEM;
         }
       } else {
@@ -2888,7 +2888,7 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* patch_m
       }
     } else if (match_option(option, "--module-path=", &tail)) {
       if (tail != NULL) {
-        if (!create_module_property("jdk.module.path", tail, ExternalProperty)) {
+        if (!create_property("jdk.module.path", tail, ExternalProperty)) {
             return JNI_ENOMEM;
         }
       } else {
@@ -2898,7 +2898,7 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* patch_m
       }
     } else if (match_option(option, "--upgrade-module-path=", &tail)) {
       if (tail != NULL) {
-        if (!create_module_property("jdk.module.upgrade.path", tail, ExternalProperty)) {
+        if (!create_property("jdk.module.upgrade.path", tail, ExternalProperty)) {
           return JNI_ENOMEM;
         }
       } else {
