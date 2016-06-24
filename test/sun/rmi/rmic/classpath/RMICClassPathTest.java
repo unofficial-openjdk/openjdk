@@ -32,7 +32,7 @@
  *          not affect VM global state, so othervm is not required.
  * @modules jdk.rmic/sun.rmi.rmic
  *          jdk.rmic/sun.tools.java
- * @compile -addmods jdk.rmic RMICClassPathTest.java
+ * @compile --add-modules=jdk.rmic RMICClassPathTest.java
  * @run main/othervm --add-modules=jdk.rmic RMICClassPathTest
  */
 
