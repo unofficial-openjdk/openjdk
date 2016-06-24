@@ -27,7 +27,7 @@
  * @summary Introduce option to setKeepAlive parameter on CORBA sockets
  *
  * @modules java.corba/com.sun.corba.se.impl.orb java.corba/com.sun.corba.se.impl.transport
- * @compile -addmods java.corba KeepAliveSockets.java
+ * @compile --add-modules=java.corba KeepAliveSockets.java
  * @run main/othervm --add-modules=java.corba KeepAliveSockets
  * @run main/othervm --add-modules=java.corba -Dcom.sun.CORBA.transport.enableTcpKeepAlive KeepAliveSockets
  * @run main/othervm --add-modules=java.corba -Dcom.sun.CORBA.transport.enableTcpKeepAlive=true KeepAliveSockets

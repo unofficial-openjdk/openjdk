@@ -27,7 +27,7 @@
  * @summary test that elements without namespace is ignored by unmarshaller
  *          when elementFormDefault is set to QUALIFIED.
  * @modules java.xml.bind
- * @compile -addmods java.xml.bind UnmarshalTest.java
+ * @compile --add-modules=java.xml.bind UnmarshalTest.java
  *          testTypes/package-info.java testTypes/Root.java
  *          testTypes/WhenType.java testTypes/ObjectFactory.java
  * @run testng/othervm --add-modules=java.xml.bind UnmarshalTest
