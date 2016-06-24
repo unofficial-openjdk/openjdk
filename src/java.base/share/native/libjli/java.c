@@ -68,8 +68,10 @@ static jboolean printVersion = JNI_FALSE; /* print and exit */
 static jboolean showVersion = JNI_FALSE;  /* print but continue */
 static jboolean printUsage = JNI_FALSE;   /* print and exit*/
 static jboolean printXUsage = JNI_FALSE;  /* print and exit*/
-static char     *showSettings = NULL;      /* print but continue */
+static jboolean dryRun = JNI_FALSE;       /* initialize VM and exit */
+static char     *showSettings = NULL;     /* print but continue */
 static char     *listModules = NULL;
+
 
 static const char *_program_name;
 static const char *_launcher_name;
@@ -130,8 +132,6 @@ enum OptionKind {
     LAUNCHER_MAIN_OPTION,
     VM_LONG_OPTION,
     VM_LONG_OPTION_WITH_ARGUMENT,
-    VM_WHITE_SPACE_OPTION, // old option
-    VM_DASH_X_OPTION,      // old option
     VM_OPTION
 };
 
@@ -505,14 +505,18 @@ JavaMain(void * _args)
     mainArgs = CreateApplicationArgs(env, argv, argc);
     CHECK_EXCEPTION_NULL_LEAVE(mainArgs);
 
-    /* Invoke main method. */
-    (*env)->CallStaticVoidMethod(env, mainClass, mainID, mainArgs);
+    if (dryRun) {
+        ret = 0;
+    } else {
+        /* Invoke main method. */
+        (*env)->CallStaticVoidMethod(env, mainClass, mainID, mainArgs);
 
-    /*
-     * The launcher's exit code (in the absence of calls to
-     * System.exit) will be non-zero if main threw an exception.
-     */
-    ret = (*env)->ExceptionOccurred(env) == NULL ? 0 : 1;
+        /*
+         * The launcher's exit code (in the absence of calls to
+         * System.exit) will be non-zero if main threw an exception.
+         */
+        ret = (*env)->ExceptionOccurred(env) == NULL ? 0 : 1;
+    }
     LEAVE();
 }
 
@@ -1322,10 +1326,6 @@ ParseArguments(int *pargc, char ***pargv,
                 AddOption(option, NULL);
             } else if (kind == VM_LONG_OPTION_WITH_ARGUMENT) {
                 AddLongFormOption(option, value);
-            } else if (kind == VM_WHITE_SPACE_OPTION) {
-                AddOptionWithArgument(option, value);
-            } else if (kind == VM_DASH_X_OPTION) {
-                AddDashXOption(option, value);
             }
 /*
  * Error missing argument
@@ -1363,6 +1363,8 @@ ParseArguments(int *pargc, char ***pargv,
             return JNI_TRUE;
         } else if (JLI_StrCmp(arg, "-showversion") == 0) {
             showVersion = JNI_TRUE;
+        } else if (JLI_StrCmp(arg, "--dry-run") == 0) {
+            dryRun = JNI_TRUE;
         } else if (JLI_StrCmp(arg, "-X") == 0) {
             printXUsage = JNI_TRUE;
             return JNI_TRUE;
