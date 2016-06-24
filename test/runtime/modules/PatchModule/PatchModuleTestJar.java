@@ -28,13 +28,13 @@
  * @modules java.base/jdk.internal.misc
  *          jdk.jartool/sun.tools.jar
  * @build BasicJarBuilder
- * @compile XpatchMain.java
- * @run main XpatchTestJar
+ * @compile PatchModuleMain.java
+ * @run main PatchModuleTestJar
  */
 
 import jdk.test.lib.*;
 
-public class XpatchTestJar {
+public class PatchModuleTestJar {
     private static String moduleJar;
 
     public static void main(String[] args) throws Exception {
@@ -74,7 +74,7 @@ public class XpatchTestJar {
 
         // Supply --patch-module with the name of the jar file for the module java.naming.
         ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("--patch-module=java.naming=" + moduleJar,
-             "XpatchMain", "javax.naming.spi.NamingManager");
+             "PatchModuleMain", "javax.naming.spi.NamingManager");
 
         new OutputAnalyzer(pb.start())
             .shouldContain("I pass!")

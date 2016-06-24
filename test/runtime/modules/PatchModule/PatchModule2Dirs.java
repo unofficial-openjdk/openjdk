@@ -26,14 +26,14 @@
  * @summary Make sure --patch-module works with multiple directories.
  * @modules java.base/jdk.internal.misc
  * @library /testlibrary
- * @compile Xpatch2DirsMain.java
- * @run main Xpatch2Dirs
+ * @compile PatchModule2DirsMain.java
+ * @run main PatchModule2Dirs
  */
 
 import jdk.test.lib.*;
 import java.io.File;
 
-public class Xpatch2Dirs {
+public class PatchModule2Dirs {
 
     public static void main(String[] args) throws Exception {
         String source1 = "package javax.naming.spi; "               +
@@ -60,7 +60,7 @@ public class Xpatch2Dirs {
         ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
              "--patch-module=java.naming=mods/java.naming",
              "--patch-module=java.desktop=mods2/java.desktop",
-             "Xpatch2DirsMain", "javax.naming.spi.NamingManager", "java.beans.Encoder");
+             "PatchModule2DirsMain", "javax.naming.spi.NamingManager", "java.beans.Encoder");
 
         OutputAnalyzer oa = new OutputAnalyzer(pb.start());
         oa.shouldContain("I pass one!");

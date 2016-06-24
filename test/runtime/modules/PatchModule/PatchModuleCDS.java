@@ -25,19 +25,19 @@
  * @test
  * @library /testlibrary
  * @modules java.base/jdk.internal.misc
- * @run main XpatchCDS
+ * @run main PatchModuleCDS
  */
 
 import java.io.File;
 import jdk.test.lib.*;
 
-public class XpatchCDS {
+public class PatchModuleCDS {
 
     public static void main(String args[]) throws Throwable {
         System.out.println("Test that --patch-module and -Xshare:dump are incompatibable");
         ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("--patch-module=java.naming=mods/java.naming", "-Xshare:dump");
         OutputAnalyzer output = new OutputAnalyzer(pb.start());
-        output.shouldContain("Cannot use the --patch-module option when dumping the shared archive");
+        output.shouldContain("Cannot use the following option when dumping the shared archive: --patch-module");
 
         System.out.println("Test that --patch-module and -Xshare:on are incompatibable");
         String filename = "patch_module.jsa";

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,10 +21,26 @@
  * questions.
  */
 
-// This loads the class affected by the --patch-module option.  For the test to pass
-// it must load the class from the --patch-module directory, not the jimage file.
-public class XpatchMain {
-    public static void main(String[] args) throws Exception {
-        Class.forName(args[0]);
-    }
+/*
+ * @test
+ * @summary VM exit initialization results if java.base is specificed more than once to --patch-module.
+ * @modules java.base/jdk.internal.misc
+ * @library /testlibrary
+ */
+
+import jdk.test.lib.*;
+
+public class PatchModuleDupJavaBase {
+  // The VM should exit initialization if java.base is specified
+  // more than once to --patch-module.
+  public static void main(String args[]) throws Exception {
+    ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
+      "--patch-module=java.base=javabase_dir",
+      "--patch-module=java.base=javabase_dir",
+      "-version");
+    OutputAnalyzer output = new OutputAnalyzer(pb.start());
+    output.shouldContain("Cannot specify java.base more than once to --patch-module");
+    output.shouldHaveExitValue(1);
+  }
 }
+

@@ -29,7 +29,7 @@
  * @library /testlibrary
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @run main/othervm XpatchVisibility
+ * @run main/othervm PatchModuleVisibility
  */
 
 import java.io.File;
@@ -38,7 +38,7 @@ import java.nio.file.Paths;
 
 import jdk.test.lib.*;
 
-public class XpatchVisibility {
+public class PatchModuleVisibility {
 
     public static void main(String[] args) throws Throwable {
 
@@ -59,15 +59,15 @@ public class XpatchVisibility {
               "        try {" +
               "            p2.Vis2_B b = new p2.Vis2_B();" +
               "            if (b.getClass().getClassLoader() != null) {" +
-              "                throw new RuntimeException(\"XpatchVisibility FAILED - class B " +
+              "                throw new RuntimeException(\"PatchModuleVisibility FAILED - class B " +
                                                            "should be loaded by boot class loader\\n\");" +
               "            }" +
               "            b.m();" +
               "        } catch (Throwable e) {" +
-              "            throw new RuntimeException(\"XpatchVisibility FAILED - test " +
+              "            throw new RuntimeException(\"PatchModuleVisibility FAILED - test " +
                                                        "should not throw an error or exception\\n\");" +
               "        }" +
-              "        System.out.println(\"XpatchVisibility PASSED\\n\");" +
+              "        System.out.println(\"PatchModuleVisibility PASSED\\n\");" +
               "    }" +
               "}";
 

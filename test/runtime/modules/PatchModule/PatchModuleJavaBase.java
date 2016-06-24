@@ -27,13 +27,13 @@
  * @summary Make sure --patch-module works for java.base.
  * @modules java.base/jdk.internal.misc
  * @library /testlibrary
- * @compile XpatchMain.java
- * @run main XpatchJavaBase
+ * @compile PatchModuleMain.java
+ * @run main PatchModuleJavaBase
  */
 
 import jdk.test.lib.*;
 
-public class XpatchJavaBase {
+public class PatchModuleJavaBase {
 
     public static void main(String[] args) throws Exception {
         String source = "package java.lang; "                       +
@@ -48,7 +48,7 @@ public class XpatchJavaBase {
              "mods/java.base");
 
         ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("--patch-module=java.base=mods/java.base",
-             "XpatchMain", "java.lang.NewClass");
+             "PatchModuleMain", "java.lang.NewClass");
 
         new OutputAnalyzer(pb.start())
             .shouldContain("I pass!")

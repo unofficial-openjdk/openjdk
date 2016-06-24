@@ -28,15 +28,15 @@
  * @modules java.base/jdk.internal.misc
  *          jdk.jartool/sun.tools.jar
  * @build BasicJarBuilder
- * @compile Xpatch2DirsMain.java
- * @run main XpatchTestJarDir
+ * @compile PatchModule2DirsMain.java
+ * @run main PatchModuleTestJarDir
  */
 
 import java.io.File;
 import java.nio.file.Files;
 import jdk.test.lib.*;
 
-public class XpatchTestJarDir {
+public class PatchModuleTestJarDir {
     private static String moduleJar;
 
     public static void main(String[] args) throws Exception {
@@ -93,7 +93,7 @@ public class XpatchTestJarDir {
                                                                            moduleJar +
                                                                            File.pathSeparator +
                                                                            System.getProperty("test.classes") + "/mods/java.naming",
-                                                                  "Xpatch2DirsMain",
+                                                                  "PatchModule2DirsMain",
                                                                   "javax.naming.spi.NamingManager1",
                                                                   "javax.naming.spi.NamingManager2");
 

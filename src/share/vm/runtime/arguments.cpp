@@ -2848,99 +2848,74 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* patch_m
 #endif // !INCLUDE_JVMTI
         add_init_library(name, options);
       }
-    } else if (match_option(option, "--add-reads=", &tail) ||
-               match_option(option, "-XaddReads:", &tail)) {
+    } else if (match_option(option, "--add-reads=", &tail)) {
       if (tail != NULL) {
         if (!create_numbered_module_property("jdk.module.addreads", tail, addreads_count++)) {
           return JNI_ENOMEM;
         }
       } else {
         jio_fprintf(defaultStream::output_stream(),
-          "Missing value for -XaddReads option.\n");
+          "Missing value for --add-reads option.\n");
         return JNI_EINVAL;
       }
-    } else if (match_option(option, "--add-exports=", &tail) ||
-               match_option(option, "-XaddExports:", &tail)) {
+    } else if (match_option(option, "--add-exports=", &tail)) {
       if (tail != NULL) {
         if (!create_numbered_module_property("jdk.module.addexports", tail, addexports_count++)) {
           return JNI_ENOMEM;
         }
       } else {
         jio_fprintf(defaultStream::output_stream(),
-          "Missing value for -XaddExports option.\n");
+          "Missing value for --add-exports option.\n");
         return JNI_EINVAL;
       }
     } else if (match_option(option, "--add-modules=", &tail)) {
-      add_modules_value = tail;
-    } else if (match_option(option, "-addmods")) {
-      if (++index < args->nOptions) {
-        add_modules_value = (args->options + index)->optionString;
-        build_jvm_args(add_modules_value);
+      if (tail != NULL) {
+        add_modules_value = tail;
       } else {
         jio_fprintf(defaultStream::output_stream(),
-          "Missing value for -addmods option.\n");
+           "Missing value for --add-modules option.\n");
         return JNI_EINVAL;
       }
     } else if (match_option(option, "--limit-modules=", &tail)) {
-      if (!create_module_property("jdk.module.limitmods", tail, InternalProperty)) {
-        return JNI_ENOMEM;
-      }
-    } else if (match_option(option, "-limitmods")) {
-      if (++index < args->nOptions) {
-        const JavaVMOption* limitmods_value = args->options + index;
-        build_jvm_args(limitmods_value->optionString);
-        if (!create_module_property("jdk.module.limitmods", limitmods_value->optionString, InternalProperty)) {
-            return JNI_ENOMEM;
+      if (tail != NULL) {
+        if (!create_module_property("jdk.module.limitmods", tail, InternalProperty)) {
+          return JNI_ENOMEM;
         }
       } else {
         jio_fprintf(defaultStream::output_stream(),
-          "Missing value for -limitmods option.\n");
+          "Missing value for --limit-modules option.\n");
         return JNI_EINVAL;
       }
     } else if (match_option(option, "--module-path=", &tail)) {
-      if (!create_module_property("jdk.module.path", tail, ExternalProperty)) {
-          return JNI_ENOMEM;
-      }
-    } else if (match_option(option, "-modulepath") || match_option(option, "-mp")) {
-      if (++index < args->nOptions) {
-        const JavaVMOption* modulepath_value = args->options + index;
-        build_jvm_args(modulepath_value->optionString);
-        if (!create_module_property("jdk.module.path", modulepath_value->optionString, ExternalProperty)) {
+      if (tail != NULL) {
+        if (!create_module_property("jdk.module.path", tail, ExternalProperty)) {
             return JNI_ENOMEM;
         }
       } else {
         jio_fprintf(defaultStream::output_stream(),
-          "Missing value for -modulepath option.\n");
+          "Missing value for --module-path option.\n");
         return JNI_EINVAL;
       }
     } else if (match_option(option, "--upgrade-module-path=", &tail)) {
-      if (!create_module_property("jdk.module.upgrade.path", tail, ExternalProperty)) {
-        return JNI_ENOMEM;
-      }
-    } else if (match_option(option, "-upgrademodulepath")) {
-      if (++index < args->nOptions) {
-        const JavaVMOption* ump_value = args->options + index;
-        build_jvm_args(ump_value->optionString);
-        if (!create_module_property("jdk.module.upgrade.path", ump_value->optionString, ExternalProperty)) {
+      if (tail != NULL) {
+        if (!create_module_property("jdk.module.upgrade.path", tail, ExternalProperty)) {
           return JNI_ENOMEM;
         }
       } else {
         jio_fprintf(defaultStream::output_stream(),
-          "Missing value for -upgrademodulepath option.\n");
+          "Missing value for --upgrade-module-path option.\n");
         return JNI_EINVAL;
       }
     } else if (match_option(option, "--patch-module=", &tail)) {
       // --patch-module=<module>=<file>(<pathsep><file>)*
-      int res = process_patch_mod_option(tail, patch_mod_javabase);
-    } else if (match_option(option, "-Xpatch:", &tail)) {
-      // -Xpatch:<module>=<file>(<pathsep><file>)*
       if (tail != NULL) {
         int res = process_patch_mod_option(tail, patch_mod_javabase);
         if (res != JNI_OK) {
           return res;
         }
       } else {
-        jio_fprintf(defaultStream::output_stream(), "Missing value for -Xpatch option.\n");
+        jio_fprintf(defaultStream::output_stream(),
+          "Missing value for --patch-module option.\n");
         return JNI_EINVAL;
       }
     // -agentlib and -agentpath
@@ -3673,7 +3648,7 @@ jint Arguments::finalize_vm_init_args() {
     return JNI_ERR;
   }
 
-  // Append the value of the last -addmods option specified on the command line.
+  // Append the value of the last --add-modules option specified on the command line.
   // This needs to be done here, to prevent overwriting possible values written
   // to the jdk.module.addmods property by -javaagent and other options.
   if (add_modules_value != NULL) {
@@ -4038,7 +4013,7 @@ void Arguments::set_shared_spaces_flags() {
   if (DumpSharedSpaces) {
     if (Arguments::get_patch_mod_prefix() != NULL) {
       vm_exit_during_initialization(
-        "Cannot use the --patch-module option when dumping the shared archive");
+        "Cannot use the following option when dumping the shared archive: --patch-module");
     }
 
     if (RequireSharedSpaces) {
