@@ -55,7 +55,7 @@ public class ListModsTest {
     public void setup() throws Exception {
         boolean compiled;
 
-        // javac -d mods/m1 -mp mods src/m1/**
+        // javac -d mods/m1 --module-path mods src/m1/**
         compiled = CompilerUtils.compile(
                 SRC_DIR.resolve("m1"),
                 MODS_DIR.resolve("m1"));

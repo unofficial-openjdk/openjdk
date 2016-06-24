@@ -72,7 +72,7 @@ public class AddReadsTest {
             .compile(SRC_DIR.resolve("m1"),
                     MODS_DIR.resolve("m1"),
                     "-cp", CLASSES_DIR.toString(),
-                    "-XaddReads:m1=ALL-UNNAMED"));
+                    "--add-reads", "m1=ALL-UNNAMED"));
 
         // jar cf mods/junit.jar -C classes .
         JarUtils.createJarFile(MODS_DIR.resolve("junit.jar"), CLASSES_DIR);

@@ -98,7 +98,7 @@ public class ContainerTest {
 
         compiled = CompilerUtils.compile(SRC_DIR.resolve("app1"),
                                          dir.resolve("app1"),
-                                         "-upgrademodulepath", dir.toString());
+                                         "--upgrade-module-path", dir.toString());
         assertTrue(compiled);
     }
 

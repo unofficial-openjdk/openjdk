@@ -71,7 +71,7 @@ public class AddExportsTest {
         boolean compiled = CompilerUtils.compile(
                 SRC_DIR.resolve(TEST1_MODULE),
                 MODS_DIR.resolve(TEST1_MODULE),
-                "-XaddExports:java.base/jdk.internal.misc=m1");
+                "--add-exports", "java.base/jdk.internal.misc=m1");
         assertTrue(compiled, "module " + TEST1_MODULE + " did not compile");
 
         // javac -d upgrademods/java.transaction src/java.transaction/**
@@ -80,12 +80,12 @@ public class AddExportsTest {
                 UPGRADE_MODS_DIRS.resolve("java.transaction"));
         assertTrue(compiled, "module java.transaction did not compile");
 
-        // javac -upgrademodulepath upgrademods -d mods/m2 src/m2/**
+        // javac --upgrade-module-path upgrademods -d mods/m2 src/m2/**
         compiled = CompilerUtils.compile(
                 SRC_DIR.resolve(TEST2_MODULE),
                 MODS_DIR.resolve(TEST2_MODULE),
-                "-upgrademodulepath", UPGRADE_MODS_DIRS.toString(),
-                "-XaddExports:java.transaction/javax.transaction.internal=m2");
+                "--upgrade-module-path", UPGRADE_MODS_DIRS.toString(),
+                "--add-exports", "java.transaction/javax.transaction.internal=m2");
         assertTrue(compiled, "module " + TEST2_MODULE + " did not compile");
 
         // javac -d mods/m3 src/m3/**
@@ -144,7 +144,7 @@ public class AddExportsTest {
     public void testNamedModule() throws Exception {
 
         //  java --add-exports java.base/jdk.internal.misc=test \
-        //       -mp mods -m $TESTMODULE/$MAIN_CLASS
+        //       --module-path mods -m $TESTMODULE/$MAIN_CLASS
 
         String mid = TEST1_MODULE + "/" + TEST1_MAIN_CLASS;
         int exitValue =
@@ -165,12 +165,12 @@ public class AddExportsTest {
     public void testWithUpgradedModule() throws Exception {
 
         // java --add-exports java.transaction/javax.transaction.internal=m2
-        //      -upgrademodulepath upgrademods -mp mods -m ...
+        //      --upgrade-module-path upgrademods --module-path mods -m ...
         String mid = TEST2_MODULE + "/" + TEST2_MAIN_CLASS;
         int exitValue = executeTestJava(
                 "--add-exports", "java.transaction/javax.transaction.internal=m2",
                 "--upgrade-module-path", UPGRADE_MODS_DIRS.toString(),
-                "-mp", MODS_DIR.toString(),
+                "--module-path", MODS_DIR.toString(),
                 "-m", mid)
                 .outputTo(System.out)
                 .errorTo(System.out)
@@ -182,11 +182,11 @@ public class AddExportsTest {
 
     /**
      * Test --add-exports with module that is added to the set of root modules
-     * with -addmods.
+     * with --add-modules.
      */
     public void testWithAddMods() throws Exception {
 
-        // java --add-exports m4/jdk.test4=m3 -mp mods -m ...
+        // java --add-exports m4/jdk.test4=m3 --module-path mods -m ...
         String mid = TEST3_MODULE + "/" + TEST3_MAIN_CLASS;
         int exitValue = executeTestJava(
                 "--add-exports", "m4/jdk.test4=m3",

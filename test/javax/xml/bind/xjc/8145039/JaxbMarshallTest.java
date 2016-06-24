@@ -28,7 +28,7 @@
  *          ClassCast exception.
  * @modules java.xml.bind
  * @library /lib/testlibrary
- * @compile -addmods java.xml.bind JaxbMarshallTest.java
+ * @compile --add-modules java.xml.bind JaxbMarshallTest.java
  * @run testng/othervm --add-modules=java.xml.bind JaxbMarshallTest
  */
 
@@ -128,7 +128,7 @@ public class JaxbMarshallTest {
     // Compile java classes with javac tool
     void compileXjcGeneratedClasses() throws Exception {
         JDKToolLauncher javacLauncher = JDKToolLauncher.createUsingTestJDK("javac");
-        javacLauncher.addToolArg("-addmods");
+        javacLauncher.addToolArg("--add-modules");
         javacLauncher.addToolArg("java.xml.bind");
         javacLauncher.addToolArg(xjcResultDir.resolve("ObjectFactory.java").toString());
         javacLauncher.addToolArg(xjcResultDir.resolve("TypesLongList.java").toString());

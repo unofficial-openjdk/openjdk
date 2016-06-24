@@ -506,7 +506,7 @@ public class Basic {
             .assertSuccess();
 
         java(mp, BAR.moduleName + "/" + BAR.mainClass,
-             "-XaddExports:java.base/jdk.internal.module=bar")
+             "--add-exports", "java.base/jdk.internal.module=bar")
             .assertSuccess()
             .resultChecker(r -> {
                 assertModuleData(r, BAR);
@@ -550,7 +550,7 @@ public class Basic {
             "-C", barClasses.toString(), ".").assertSuccess();
 
         java(mp, BAR.moduleName + "/" + BAR.mainClass,
-             "-XaddExports:java.base/jdk.internal.module=bar")
+             "--add-exports", "java.base/jdk.internal.module=bar")
             .assertFailure()
             .resultChecker(r -> {
                 // Expect similar output: "java.lang.module.ResolutionException: Hash
@@ -815,10 +815,12 @@ public class Basic {
         }
         commands.add("-d");
         commands.add(dest.toString());
-        if (dest.toString().contains("bar"))
-            commands.add("-XaddExports:java.base/jdk.internal.module=bar");
+        if (dest.toString().contains("bar")) {
+            commands.add("--add-exports");
+            commands.add("java.base/jdk.internal.module=bar");
+        }
         if (modulePath != null) {
-            commands.add("-mp");
+            commands.add("--module-path");
             commands.add(modulePath.toString());
         }
         Stream.of(sourceFiles).map(Object::toString).forEach(x -> commands.add(x));

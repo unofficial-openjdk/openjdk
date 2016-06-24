@@ -39,7 +39,7 @@ import jdk.internal.misc.VM;
 public class AddExportsTest {
     /*
      * jtreg sets -Dtest.modules system property to the internal APIs
-     * specified at @modules tag.  The test will exclude -XaddExports set
+     * specified at @modules tag.  The test will exclude --add-exports set
      * for @modules.
      */
     private static final String TEST_MODULES = System.getProperty("test.modules");
