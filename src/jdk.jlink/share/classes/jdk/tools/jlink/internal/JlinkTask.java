@@ -93,7 +93,7 @@ public class JlinkTask {
     static Option<?>[] recognizedOptions = {
         new Option<JlinkTask>(false, (task, opt, arg) -> {
             task.options.help = true;
-        }, "--help"),
+        }, "--help", "-h"),
         new Option<JlinkTask>(true, (task, opt, arg) -> {
             String[] dirs = arg.split(File.pathSeparator);
             task.options.modulePath = new Path[dirs.length];
@@ -101,7 +101,7 @@ public class JlinkTask {
             for (String dir : dirs) {
                 task.options.modulePath[i++] = Paths.get(dir);
             }
-        }, "--module-path"),
+        }, "--module-path", "-p"),
         new Option<JlinkTask>(true, (task, opt, arg) -> {
             for (String mn : arg.split(",")) {
                 if (mn.isEmpty()) {
