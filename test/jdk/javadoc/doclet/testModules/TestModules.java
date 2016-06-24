@@ -42,8 +42,8 @@ public class TestModules extends JavadocTester {
     @Test
     void test1() {
         javadoc("-d", "out", "-use",
-                "-modulesourcepath", testSrc,
-                "-addmods", "module1,module2",
+                "--module-source-path", testSrc,
+                "--add-modules", "module1,module2",
                 "testpkgmdl1", "testpkgmdl2");
         checkExit(Exit.OK);
         testDescription(true);
@@ -54,8 +54,8 @@ public class TestModules extends JavadocTester {
     @Test
     void test2() {
         javadoc("-d", "out-html5", "-html5", "-use",
-                "-modulesourcepath", testSrc,
-                "-addmods", "module1,module2",
+                "--module-source-path", testSrc,
+                "--add-modules", "module1,module2",
                 "testpkgmdl1", "testpkgmdl2");
         checkExit(Exit.OK);
         testHtml5Description(true);
@@ -66,8 +66,8 @@ public class TestModules extends JavadocTester {
     @Test
     void test3() {
         javadoc("-d", "out-nocomment", "-nocomment", "-use",
-                "-modulesourcepath", testSrc,
-                "-addmods", "module1,module2",
+                "--module-source-path", testSrc,
+                "--add-modules", "module1,module2",
                 "testpkgmdl1", "testpkgmdl2");
         checkExit(Exit.OK);
         testDescription(false);
@@ -78,8 +78,8 @@ public class TestModules extends JavadocTester {
     @Test
     void test4() {
         javadoc("-d", "out-html5-nocomment", "-nocomment", "-html5", "-use",
-                "-modulesourcepath", testSrc,
-                "-addmods", "module1,module2",
+                "--module-source-path", testSrc,
+                "--add-modules", "module1,module2",
                 "testpkgmdl1", "testpkgmdl2");
         checkExit(Exit.OK);
         testHtml5Description(false);
@@ -100,8 +100,8 @@ public class TestModules extends JavadocTester {
         javadoc("-d", "out-mdltags", "-author", "-version",
                 "-tag", "regular:a:Regular Tag:",
                 "-tag", "moduletag:s:Module Tag:",
-                "-modulesourcepath", testSrc,
-                "-addmods", "moduletags,module2",
+                "--module-source-path", testSrc,
+                "--add-modules", "moduletags,module2",
                 "testpkgmdltags", "testpkgmdl2");
         checkExit(Exit.OK);
         testModuleTags();

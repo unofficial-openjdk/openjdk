@@ -23,7 +23,7 @@
 
 /**
  * @test
- * @summary Test -addmods and -limitmods; also test the "enabled" modules.
+ * @summary Test --add-modules and --limit-modules; also test the "enabled" modules.
  * @library /tools/lib
  * @modules
  *      jdk.compiler/com.sun.tools.javac.api

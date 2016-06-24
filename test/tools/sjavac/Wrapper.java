@@ -57,7 +57,7 @@ public class Wrapper {
             javacArgs.addAll(Arrays.asList("-classpath", clsPath));
             Arrays.stream(tstMdls.split("\\s+"))
                 .filter(s -> s.contains("/"))
-                .map(s -> "-XaddExports:" + s + "=ALL-UNNAMED")
+                .map(s -> "--add-exports=" + s + "=ALL-UNNAMED")
                 .collect(Collectors.toCollection(() -> javacArgs));
             javacArgs.add(src.toString());
             System.out.println("javac: " + javacArgs);

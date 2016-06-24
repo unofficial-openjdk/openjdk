@@ -91,7 +91,7 @@ public class NoJavaLangTest {
         Files.delete(Paths.get("modules", "java.base", "java", "lang", "Object.class"));
 
         // ideally we'd have a better message for this case
-        String[] mpOpts = { "-system", "none", "-modulepath", "modules" };
+        String[] mpOpts = { "--system", "none", "--module-path", "modules" };
         test(mpOpts, compilerErrorMessage);
     }
 

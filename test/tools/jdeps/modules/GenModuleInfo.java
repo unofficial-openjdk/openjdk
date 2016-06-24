@@ -73,7 +73,7 @@ public class GenModuleInfo {
         CompilerUtils.cleanDir(NEW_MODS_DIR);
 
         assertTrue(CompilerUtils.compileModule(SRC_DIR, MODS_DIR, UNSUPPORTED,
-                                               "-XaddExports:java.base/jdk.internal.perf=" + UNSUPPORTED));
+                                               "--add-exports", "java.base/jdk.internal.perf=" + UNSUPPORTED));
         Arrays.asList("m1", "m2", "m3")
               .forEach(mn -> assertTrue(CompilerUtils.compileModule(SRC_DIR, MODS_DIR, mn)));
 
@@ -132,11 +132,11 @@ public class GenModuleInfo {
 
         // compile new module-info.java
         assertTrue(CompilerUtils.compileModule(DEST_DIR, NEW_MODS_DIR, UNSUPPORTED,
-                        "-mp", NEW_MODS_DIR.toString(), "-verbose",
-                        "-XaddExports:java.base/jdk.internal.perf=" + UNSUPPORTED));
+                        "-p", NEW_MODS_DIR.toString(), "-verbose",
+                        "--add-exports", "java.base/jdk.internal.perf=" + UNSUPPORTED));
         Arrays.asList("m1", "m2", "m3")
               .forEach(mn -> assertTrue(CompilerUtils.compileModule(DEST_DIR, NEW_MODS_DIR,
-                                        mn, "-mp", NEW_MODS_DIR.toString())));
+                                        mn, "-p", NEW_MODS_DIR.toString())));
 
         for (String mn : modules) {
             Path p1 = NEW_MODS_DIR.resolve(mn).resolve(MODULE_INFO);

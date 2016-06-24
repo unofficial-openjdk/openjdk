@@ -148,13 +148,13 @@ public class OptionDecoding {
         SourceLocation dir2 = new SourceLocation(Paths.get("dir2"), i, x);
         String dir1_PS_dir2 = "dir1" + File.pathSeparator + "dir2";
 
-        Options options = Options.parseArgs("-sourcepath", dir1_PS_dir2);
+        Options options = Options.parseArgs("--source-path", dir1_PS_dir2);
         assertEquals(options.getSourceSearchPaths(), Arrays.asList(dir1, dir2));
 
-        options = Options.parseArgs("-modulepath", dir1_PS_dir2);
+        options = Options.parseArgs("--module-path", dir1_PS_dir2);
         assertEquals(options.getModuleSearchPaths(), Arrays.asList(dir1, dir2));
 
-        options = Options.parseArgs("-classpath", dir1_PS_dir2);
+        options = Options.parseArgs("--class-path", dir1_PS_dir2);
         assertEquals(options.getClassSearchPath(), Arrays.asList(dir1, dir2));
     }
 

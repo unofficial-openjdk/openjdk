@@ -68,12 +68,12 @@ public class ModuleTest {
         CompilerUtils.cleanDir(UNNAMED_DIR);
 
         assertTrue(CompilerUtils.compileModule(SRC_DIR, MODS_DIR, UNSUPPORTED,
-                                               "-XaddExports:java.base/jdk.internal.perf=" + UNSUPPORTED));
+                                               "--add-exports", "java.base/jdk.internal.perf=" + UNSUPPORTED));
         // m4 is not referenced
         Arrays.asList("m1", "m2", "m3", "m4")
               .forEach(mn -> assertTrue(CompilerUtils.compileModule(SRC_DIR, MODS_DIR, mn)));
 
-        assertTrue(CompilerUtils.compile(SRC_DIR.resolve("m3"), UNNAMED_DIR, "-mp", MODS_DIR.toString()));
+        assertTrue(CompilerUtils.compile(SRC_DIR.resolve("m3"), UNNAMED_DIR, "-p", MODS_DIR.toString()));
         Files.delete(UNNAMED_DIR.resolve("module-info.class"));
     }
 

@@ -61,7 +61,7 @@ public class ShowReplacement {
 
         assertTrue(CompilerUtils.compile(Paths.get(TEST_SRC, "p"),
                                          CLASSES_DIR,
-                                         "-XaddExports:java.base/sun.security.util=ALL-UNNAMED"));
+                                         "--add-exports=java.base/sun.security.util=ALL-UNNAMED"));
     }
 
     @Test

@@ -45,6 +45,8 @@ import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.main.CommandLine;
 import com.sun.tools.javac.main.Option;
 import com.sun.tools.javac.file.BaseFileManager;
+import com.sun.tools.javac.main.OptionHelper;
+import com.sun.tools.javac.main.OptionHelper.GrumpyHelper;
 import com.sun.tools.javac.platform.PlatformDescription;
 import com.sun.tools.javac.platform.PlatformUtils;
 import com.sun.tools.javac.util.ClientCodeException;
@@ -554,5 +556,20 @@ public class Start extends ToolOption.Helper {
             args[k++] = i.head;
         }
         options.append(args);
+    }
+
+    @Override
+    OptionHelper getOptionHelper() {
+        return new GrumpyHelper(null) {
+            @Override
+            public String get(com.sun.tools.javac.main.Option option) {
+                return compOpts.get(option);
+            }
+
+            @Override
+            public void put(String name, String value) {
+                compOpts.put(name, value);
+            }
+        };
     }
 }

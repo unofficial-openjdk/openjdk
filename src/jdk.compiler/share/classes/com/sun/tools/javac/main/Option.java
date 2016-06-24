@@ -593,6 +593,7 @@ public enum Option {
             final Collator collator = Collator.getInstance(Locale.US);
             { collator.setStrength(Collator.PRIMARY); }
 
+            @Override
             public int compare(Option o1, Option o2) {
                 return collator.compare(o1.mainName, o2.mainName);
             }
@@ -717,10 +718,9 @@ public enum Option {
             OptionKind kind, OptionGroup group,
             ChoiceKind choiceKind, Map<String,Boolean> choices,
             boolean doHasSuffix, ArgKind argKind) {
-        String[] names = text.trim().split("\\s+");
-        Assert.check(names.length >= 1, 0);
+        this.names = text.trim().split("\\s+");
+        Assert.check(names.length >= 1);
         this.mainName = names[0];
-        this.names = names;
         this.argsNameKey = argsNameKey;
         this.descrKey = descrKey;
         this.kind = kind;
