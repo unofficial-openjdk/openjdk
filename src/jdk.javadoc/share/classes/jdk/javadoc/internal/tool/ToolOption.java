@@ -63,7 +63,7 @@ public enum ToolOption {
     CP("-cp", true) {
         @Override
         public void process(Helper helper, String arg) {
-            helper.setFileManagerOpt(Option.CP, arg);
+            helper.setFileManagerOpt(Option.CLASSPATH, arg);
         }
     },
 

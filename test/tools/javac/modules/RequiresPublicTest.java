@@ -96,7 +96,7 @@ public class RequiresPublicTest extends ModuleTestBase {
         Files.createDirectories(classes);
 
         new JavacTask(tb, Task.Mode.CMDLINE)
-                .options("-modulesourcepath", src.toString())
+                .options("--module-source-path", src.toString())
                 .files(findJavaFiles(src))
                 .outdir(classes)
                 .run()
@@ -113,7 +113,7 @@ public class RequiresPublicTest extends ModuleTestBase {
 
         String log = new JavacTask(tb, Task.Mode.CMDLINE)
                 .options("-XDrawDiagnostics",
-                        "-modulesourcepath", src.toString())
+                        "--module-source-path", src.toString())
                 .files(findJavaFiles(src))
                 .outdir(classes)
                 .run(Task.Expect.FAIL)

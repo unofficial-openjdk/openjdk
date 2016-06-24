@@ -380,11 +380,21 @@ public class Arguments {
             }
 
             if (option.hasArg()) {
-                if (!argIter.hasNext()) {
-                    error("err.req.arg", arg);
-                    return false;
+                String operand;
+                int eq = arg.indexOf("=");
+                int colon = arg.indexOf(":");
+                int sep = (eq < 0) ? colon : (colon < 0) ? eq : Math.min(colon, eq);
+                if (option.getArgKind() == Option.ArgKind.ADJACENT) {
+                    operand = arg.substring(option.mainName.length());
+                } else if (sep > 0) {
+                    operand = arg.substring(sep + 1);
+                } else {
+                    if (!argIter.hasNext()) {
+                        error("err.req.arg", arg);
+                        return false;
+                    }
+                    operand = argIter.next();
                 }
-                String operand = argIter.next();
                 if (option.process(helper, arg, operand)) {
                     return false;
                 }
@@ -724,7 +734,7 @@ public class Arguments {
             for (String s: xdoclintCustom.split("\\s+")) {
                 if (s.isEmpty())
                     continue;
-                doclintOpts.add(s.replace(Option.XDOCLINT_CUSTOM.text, DocLint.XMSGS_CUSTOM_PREFIX));
+                doclintOpts.add(DocLint.XMSGS_CUSTOM_PREFIX + s);
             }
         }
 
@@ -735,14 +745,13 @@ public class Arguments {
 
         if (checkPackages != null) {
             for (String s : checkPackages.split("\\s+")) {
-                doclintOpts.add(s.replace(Option.XDOCLINT_PACKAGE.text, DocLint.XCHECK_PACKAGE));
+                doclintOpts.add(DocLint.XCHECK_PACKAGE + s);
             }
         }
 
         // standard doclet normally generates H1, H2,
         // so for now, allow user comments to assume that
         doclintOpts.add(DocLint.XIMPLICIT_HEADERS + "2");
-
         return List.from(doclintOpts.toArray(new String[doclintOpts.size()]));
     }
 

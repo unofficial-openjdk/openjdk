@@ -580,8 +580,7 @@ public class Locations {
     private class ClassPathLocationHandler extends SimpleLocationHandler {
 
         ClassPathLocationHandler() {
-            super(StandardLocation.CLASS_PATH,
-                    Option.CLASSPATH, Option.CP);
+            super(StandardLocation.CLASS_PATH, Option.CLASSPATH);
         }
 
         @Override
@@ -1502,7 +1501,7 @@ public class Locations {
             new ModuleSourcePathLocationHandler(),
             // TODO: should UPGRADE_MODULE_PATH be merged with SYSTEM_MODULES?
             new ModulePathLocationHandler(StandardLocation.UPGRADE_MODULE_PATH, Option.UPGRADEMODULEPATH),
-            new ModulePathLocationHandler(StandardLocation.MODULE_PATH, Option.MODULEPATH, Option.MP),
+            new ModulePathLocationHandler(StandardLocation.MODULE_PATH, Option.MODULEPATH),
             new SystemModulesLocationHandler(),
         };
 

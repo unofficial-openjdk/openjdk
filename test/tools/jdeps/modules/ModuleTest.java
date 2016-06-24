@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @summary Tests jdeps -m and -mp options on named modules and unnamed modules
+ * @summary Tests jdeps -m and --module-path options on named modules and unnamed modules
  * @library ../lib
  * @build CompilerUtils JdepsUtil
  * @modules jdk.jdeps/com.sun.tools.jdeps
@@ -112,10 +112,10 @@ public class ModuleTest {
 
     @Test(dataProvider = "modules")
     public void modularTest(String name, ModuleMetaData data) throws IOException {
-        // jdeps -modulepath mods -m <name>
+        // jdeps --module-path mods -m <name>
         runTest(data, MODS_DIR.toString(), Set.of(name));
 
-        // jdeps -modulepath libs/m1.jar:.... -m <name>
+        // jdeps --module-path libs/m1.jar:.... -m <name>
         String mp = Arrays.stream(modules)
                 .filter(mn -> !mn.equals(name))
                 .map(mn -> MODS_DIR.resolve(mn).toString())
@@ -150,8 +150,8 @@ public class ModuleTest {
                          Set<String> roots, Path... paths)
         throws IOException
     {
-        // jdeps -modulepath <modulepath> -m root paths
-        String cmd = String.format("jdeps -modulepath %s -addmods %s %s%n",
+        // jdeps --module-path <modulepath> -m root paths
+        String cmd = String.format("jdeps --module-path %s --add-modules %s %s%n",
             MODS_DIR, roots.stream().collect(Collectors.joining(",")), paths);
 
         try (JdepsUtil.Command jdeps = JdepsUtil.newCommand(cmd)) {

@@ -255,10 +255,10 @@ public class Main {
         }
 
         // init multi-release jar handling
-        if (fileManager.isSupportedOption(Option.MULTIRELEASE.text) == 1) {
+        if (fileManager.isSupportedOption(Option.MULTIRELEASE.mainName) == 1) {
             Target target = Target.instance(context);
             List<String> list = List.of(target.multiReleaseValue());
-            fileManager.handleOption(Option.MULTIRELEASE.text, list.iterator());
+            fileManager.handleOption(Option.MULTIRELEASE.mainName, list.iterator());
         }
 
         // init JavaCompiler

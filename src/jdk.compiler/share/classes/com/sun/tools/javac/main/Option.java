@@ -30,9 +30,12 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.Collator;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
@@ -51,6 +54,7 @@ import com.sun.tools.javac.jvm.Profile;
 import com.sun.tools.javac.jvm.Target;
 import com.sun.tools.javac.platform.PlatformProvider;
 import com.sun.tools.javac.processing.JavacProcessingEnvironment;
+import com.sun.tools.javac.util.Assert;
 import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Log.PrefixKind;
 import com.sun.tools.javac.util.Log.WriterKind;
@@ -92,10 +96,7 @@ public enum Option {
     XLINT_CUSTOM("-Xlint:", EXTENDED, BASIC, ANYOF, getXLintChoices()) {
         private static final String LINT_KEY_FORMAT = "         %-19s %s";
         @Override
-        void help(Log log, OptionKind kind) {
-            if (this.kind != kind)
-                return;
-
+        void help(Log log) {
             log.printRawLines(WriterKind.NOTICE,
                               String.format(HELP_LINE_FORMAT,
                                             log.localize(PrefixKind.JAVAC, "opt.Xlint.subopts"),
@@ -125,14 +126,14 @@ public enum Option {
         @Override
         public boolean matches(String option) {
             return DocLint.isValidOption(
-                    option.replace(XDOCLINT_CUSTOM.text, DocLint.XMSGS_CUSTOM_PREFIX));
+                    option.replace(XDOCLINT_CUSTOM.mainName, DocLint.XMSGS_CUSTOM_PREFIX));
         }
 
         @Override
         public boolean process(OptionHelper helper, String option) {
             String prev = helper.get(XDOCLINT_CUSTOM);
             String next = (prev == null) ? option : (prev + " " + option);
-            helper.put(XDOCLINT_CUSTOM.text, next);
+            helper.put(XDOCLINT_CUSTOM.mainName, next);
             return false;
         }
     },
@@ -141,14 +142,14 @@ public enum Option {
         @Override
         public boolean matches(String option) {
             return DocLint.isValidOption(
-                    option.replace(XDOCLINT_PACKAGE.text, DocLint.XCHECK_PACKAGE));
+                    option.replace(XDOCLINT_PACKAGE.mainName, DocLint.XCHECK_PACKAGE));
         }
 
         @Override
         public boolean process(OptionHelper helper, String option) {
             String prev = helper.get(XDOCLINT_PACKAGE);
             String next = (prev == null) ? option : (prev + " " + option);
-            helper.put(XDOCLINT_PACKAGE.text, next);
+            helper.put(XDOCLINT_PACKAGE.mainName, next);
             return false;
         }
     },
@@ -173,35 +174,21 @@ public enum Option {
         }
     },
 
-    CLASSPATH("-classpath", "opt.arg.path", "opt.classpath", STANDARD, FILEMANAGER),
+    CLASSPATH("--class-path -classpath -cp", "opt.arg.path", "opt.classpath", STANDARD, FILEMANAGER),
 
-    CP("-cp", "opt.arg.path", "opt.classpath", STANDARD, FILEMANAGER) {
-        @Override
-        public boolean process(OptionHelper helper, String option, String arg) {
-            return super.process(helper, "-classpath", arg);
-        }
-    },
+    SOURCEPATH("--source-path -sourcepath", "opt.arg.path", "opt.sourcepath", STANDARD, FILEMANAGER),
 
-    SOURCEPATH("-sourcepath", "opt.arg.path", "opt.sourcepath", STANDARD, FILEMANAGER),
+    MODULESOURCEPATH("--module-source-path -modulesourcepath", "opt.arg.mspath", "opt.modulesourcepath", STANDARD, FILEMANAGER),
 
-    MODULESOURCEPATH("-modulesourcepath", "opt.arg.mspath", "opt.modulesourcepath", STANDARD, FILEMANAGER),
+    MODULEPATH("--module-path -p -modulepath -mp", "opt.arg.path", "opt.modulepath", STANDARD, FILEMANAGER),
 
-    MODULEPATH("-modulepath", "opt.arg.path", "opt.modulepath", STANDARD, FILEMANAGER),
+    UPGRADEMODULEPATH("--upgrade-module-path -upgrademodulepath", "opt.arg.path", "opt.upgrademodulepath", STANDARD, FILEMANAGER),
 
-    MP("-mp", "opt.arg.path", "opt.modulepath", STANDARD, FILEMANAGER) {
-        @Override
-        public boolean process(OptionHelper helper, String option, String arg) {
-            return super.process(helper, "-modulepath", arg);
-        }
-    },
+    SYSTEM("--system -system", "opt.arg.jdk", "opt.system", STANDARD, FILEMANAGER),
 
-    UPGRADEMODULEPATH("-upgrademodulepath", "opt.arg.path", "opt.upgrademodulepath", STANDARD, FILEMANAGER),
+    XPATCH("--patch-module -Xpatch:", "opt.arg.patch", "opt.patch", EXTENDED, FILEMANAGER),
 
-    SYSTEM("-system", "opt.arg.jdk", "opt.system", STANDARD, FILEMANAGER),
-
-    XPATCH("-Xpatch:", "opt.arg.patch", "opt.patch", EXTENDED, FILEMANAGER),
-
-    BOOTCLASSPATH("-bootclasspath", "opt.arg.path", "opt.bootclasspath", STANDARD, FILEMANAGER) {
+    BOOTCLASSPATH("--boot-class-path -bootclasspath", "opt.arg.path", "opt.bootclasspath", STANDARD, FILEMANAGER) {
         @Override
         public boolean process(OptionHelper helper, String option, String arg) {
             helper.remove("-Xbootclasspath/p:");
@@ -228,7 +215,7 @@ public enum Option {
     DJAVA_EXT_DIRS("-Djava.ext.dirs=", "opt.arg.dirs", "opt.extdirs", EXTENDED, FILEMANAGER) {
         @Override
         public boolean process(OptionHelper helper, String option, String arg) {
-            return super.process(helper, "-extdirs", arg);
+            return EXTDIRS.process(helper, "-extdirs", arg);
         }
     },
 
@@ -237,7 +224,7 @@ public enum Option {
     DJAVA_ENDORSED_DIRS("-Djava.endorsed.dirs=", "opt.arg.dirs", "opt.endorseddirs", EXTENDED, FILEMANAGER) {
         @Override
         public boolean process(OptionHelper helper, String option, String arg) {
-            return super.process(helper, "-endorseddirs", arg);
+            return ENDORSEDDIRS.process(helper, "-endorseddirs", arg);
         }
     },
 
@@ -245,9 +232,9 @@ public enum Option {
 
     PROCESSOR("-processor", "opt.arg.class.list", "opt.processor", STANDARD, BASIC),
 
-    PROCESSORPATH("-processorpath", "opt.arg.path", "opt.processorpath", STANDARD, FILEMANAGER),
+    PROCESSORPATH("--processor-path -processorpath", "opt.arg.path", "opt.processorpath", STANDARD, FILEMANAGER),
 
-    PROCESSORMODULEPATH("-processormodulepath", "opt.arg.path", "opt.processormodulepath", STANDARD, FILEMANAGER),
+    PROCESSORMODULEPATH("--processor-module-path -processormodulepath", "opt.arg.path", "opt.processormodulepath", STANDARD, FILEMANAGER),
 
     PARAMETERS("-parameters","opt.parameters", STANDARD, BASIC),
 
@@ -287,10 +274,7 @@ public enum Option {
 
     RELEASE("-release", "opt.arg.release", "opt.release", STANDARD, BASIC) {
         @Override
-        void help(Log log, OptionKind kind) {
-            if (this.kind != kind)
-                return;
-
+        protected void help(Log log) {
             Iterable<PlatformProvider> providers =
                     ServiceLoader.load(PlatformProvider.class, Arguments.class.getClassLoader());
             Set<String> platforms = StreamSupport.stream(providers.spliterator(), false)
@@ -309,7 +293,7 @@ public enum Option {
 
             log.printRawLines(WriterKind.NOTICE,
                     String.format(HELP_LINE_FORMAT,
-                        super.helpSynopsis(log),
+                        super.helpSynopsis(mainName, log),
                         log.localize(PrefixKind.JAVAC, descrKey, targets.toString())));
         }
     },
@@ -361,21 +345,19 @@ public enum Option {
         }
     },
 
-    HELP("-help", "opt.help", STANDARD, INFO) {
+    HELP("--help -help", "opt.help", STANDARD, INFO) {
         @Override
         public boolean process(OptionHelper helper, String option) {
             Log log = helper.getLog();
             String ownName = helper.getOwnName();
             log.printLines(PrefixKind.JAVAC, "msg.usage.header", ownName);
-            for (Option o: getJavaCompilerOptions()) {
-                o.help(log, OptionKind.STANDARD);
-            }
+            showHelp(log, OptionKind.STANDARD);
             log.printNewline();
             return super.process(helper, option);
         }
     },
 
-    A("-A", "opt.arg.key.equals.value", "opt.A", STANDARD, BASIC, true) {
+    A("-A", "opt.arg.key.equals.value", "opt.A", STANDARD, BASIC, true, ArgKind.ADJACENT) {
         @Override
         public boolean matches(String arg) {
             return arg.startsWith("-A");
@@ -400,7 +382,8 @@ public enum Option {
                 helper.error("err.invalid.A.key", option);
                 return true;
             }
-            return process(helper, option, option);
+            helper.put(option, option);
+            return false;
         }
     },
 
@@ -408,9 +391,7 @@ public enum Option {
         @Override
         public boolean process(OptionHelper helper, String option) {
             Log log = helper.getLog();
-            for (Option o: getJavaCompilerOptions()) {
-                o.help(log, OptionKind.EXTENDED);
-            }
+            showHelp(log, OptionKind.EXTENDED);
             log.printNewline();
             log.printLines(PrefixKind.JAVAC, "msg.usage.nonstandard.footer");
             return super.process(helper, option);
@@ -419,7 +400,7 @@ public enum Option {
 
     // This option exists only for the purpose of documenting itself.
     // It's actually implemented by the launcher.
-    J("-J", "opt.arg.flag", "opt.J", STANDARD, INFO, true) {
+    J("-J", "opt.arg.flag", "opt.J", STANDARD, INFO, true, ArgKind.ADJACENT) {
         @Override
         public boolean process(OptionHelper helper, String option) {
             throw new AssertionError
@@ -499,7 +480,7 @@ public enum Option {
         public boolean process(OptionHelper helper, String option) {
             String p = option.substring(option.indexOf(':') + 1).trim();
             String prev = helper.get(PLUGIN);
-            helper.put(PLUGIN.text, (prev == null) ? p : prev + '\0' + p);
+            helper.put(PLUGIN.mainName, (prev == null) ? p : prev + '\0' + p);
             return false;
         }
     },
@@ -513,11 +494,11 @@ public enum Option {
     XD("-XD", null, HIDDEN, BASIC) {
         @Override
         public boolean matches(String s) {
-            return s.startsWith(text);
+            return s.startsWith(mainName);
         }
         @Override
         public boolean process(OptionHelper helper, String option) {
-            option = option.substring(text.length());
+            option = option.substring(mainName.length());
             int eq = option.indexOf('=');
             String key = (eq < 0) ? option : option.substring(0, eq);
             String value = (eq < 0) ? option : option.substring(eq+1);
@@ -526,47 +507,45 @@ public enum Option {
         }
     },
 
-    XADDEXPORTS("-XaddExports:", "opt.arg.addExports", "opt.addExports", EXTENDED, BASIC) {
+    XADDEXPORTS("--add-exports -XaddExports:", "opt.arg.addExports", "opt.addExports", EXTENDED, BASIC) {
         @Override
-        public boolean process(OptionHelper helper, String option) {
-            String p = option.substring(option.indexOf(':') + 1).trim();
+        public boolean process(OptionHelper helper, String option, String arg) {
             String prev = helper.get(XADDEXPORTS);
-            helper.put(XADDEXPORTS.text, (prev == null) ? p : prev + '\0' + p);
+            helper.put(XADDEXPORTS.mainName, (prev == null) ? arg : prev + '\0' + arg);
             return false;
         }
     },
 
-    XADDREADS("-XaddReads:", "opt.arg.addReads", "opt.addReads", EXTENDED, BASIC) {
+    XADDREADS("--add-reads -XaddReads:", "opt.arg.addReads", "opt.addReads", EXTENDED, BASIC) {
         @Override
-        public boolean process(OptionHelper helper, String option) {
-            String p = option.substring(option.indexOf(':') + 1).trim();
+        public boolean process(OptionHelper helper, String option, String arg) {
             String prev = helper.get(XADDREADS);
-            helper.put(XADDREADS.text, (prev == null) ? p : prev + '\0' + p);
+            helper.put(XADDREADS.mainName, (prev == null) ? arg : prev + '\0' + arg);
             return false;
         }
     },
 
     XMODULE("-Xmodule:", "opt.arg.module", "opt.module", EXTENDED, BASIC) {
         @Override
-        public boolean process(OptionHelper helper, String option) {
+        public boolean process(OptionHelper helper, String option, String arg) {
             String prev = helper.get(XMODULE);
             if (prev != null) {
-                helper.error("err.option.too.many", XMODULE.text);
+                helper.error("err.option.too.many", XMODULE.mainName);
             }
-            String p = option.substring(option.indexOf(':') + 1);
-            helper.put(XMODULE.text, p);
+            helper.put(XMODULE.mainName, arg);
             return false;
         }
     },
 
-    M("-m", "opt.arg.m", "opt.m", STANDARD, BASIC),
+    M("--module -m", "opt.arg.m", "opt.m", STANDARD, BASIC),
 
-    ADDMODS("-addmods", "opt.arg.addmods", "opt.addmods", STANDARD, BASIC),
-    LIMITMODS("-limitmods", "opt.arg.limitmods", "opt.limitmods", STANDARD, BASIC),
+    ADDMODS("--add-modules -addmods", "opt.arg.addmods", "opt.addmods", STANDARD, BASIC),
+
+    LIMITMODS("--limit-modules -limitmods", "opt.arg.limitmods", "opt.limitmods", STANDARD, BASIC),
 
     // This option exists only for the purpose of documenting itself.
     // It's actually implemented by the CommandLine class.
-    AT("@", "opt.arg.file", "opt.AT", STANDARD, INFO, true) {
+    AT("@", "opt.arg.file", "opt.AT", STANDARD, INFO, true, ArgKind.ADJACENT) {
         @Override
         public boolean process(OptionHelper helper, String option) {
             throw new AssertionError("the @ flag should be caught by CommandLine.");
@@ -609,6 +588,33 @@ public enum Option {
 
     MULTIRELEASE("-multi-release", "opt.arg.multi-release", "opt.multi-release", HIDDEN, FILEMANAGER);
 
+    static void showHelp(Log log, OptionKind kind) {
+        Comparator<Option> comp = new Comparator<Option>() {
+            final Collator collator = Collator.getInstance(Locale.US);
+            { collator.setStrength(Collator.PRIMARY); }
+
+            public int compare(Option o1, Option o2) {
+                return collator.compare(o1.mainName, o2.mainName);
+            }
+        };
+
+        getJavaCompilerOptions()
+                .stream()
+                .filter(o -> o.kind == kind)
+                .sorted(comp)
+                .forEach(o -> {
+                    o.help(log);
+                });
+
+    }
+
+    public enum ArgKind {
+        NONE,
+        OPTIONAL,
+        REQUIRED,
+        ADJACENT
+    }
+
     /** The kind of an Option. This is used by the -help and -X options. */
     public enum OptionKind {
         /** A standard option, documented by -help. */
@@ -642,7 +648,8 @@ public enum Option {
         ANYOF
     }
 
-    public final String text;
+    public final String mainName;
+    public final String[] names;
 
     final OptionKind kind;
 
@@ -660,6 +667,8 @@ public enum Option {
      */
     final boolean hasSuffix;
 
+    final ArgKind argKind;
+
     /** The kind of choices for this option, if any.
      */
     final ChoiceKind choiceKind;
@@ -672,29 +681,29 @@ public enum Option {
 
     Option(String text, String descrKey,
             OptionKind kind, OptionGroup group) {
-        this(text, null, descrKey, kind, group, null, null, false);
+        this(text, null, descrKey, kind, group, null, null, false, ArgKind.NONE);
     }
 
     Option(String text, String argsNameKey, String descrKey,
             OptionKind kind, OptionGroup group) {
-        this(text, argsNameKey, descrKey, kind, group, null, null, false);
+        this(text, argsNameKey, descrKey, kind, group, null, null, false, ArgKind.REQUIRED);
     }
 
     Option(String text, String argsNameKey, String descrKey,
-            OptionKind kind, OptionGroup group, boolean doHasSuffix) {
-        this(text, argsNameKey, descrKey, kind, group, null, null, doHasSuffix);
+            OptionKind kind, OptionGroup group, boolean doHasSuffix, ArgKind ak) {
+        this(text, argsNameKey, descrKey, kind, group, null, null, doHasSuffix, ak);
     }
 
     Option(String text, OptionKind kind, OptionGroup group,
             ChoiceKind choiceKind, Map<String,Boolean> choices) {
-        this(text, null, null, kind, group, choiceKind, choices, false);
+        this(text, null, null, kind, group, choiceKind, choices, false, ArgKind.REQUIRED);
     }
 
     Option(String text, String descrKey,
             OptionKind kind, OptionGroup group,
             ChoiceKind choiceKind, String... choices) {
         this(text, null, descrKey, kind, group, choiceKind,
-                createChoices(choices), false);
+                createChoices(choices), false, ArgKind.REQUIRED);
     }
     // where
         private static Map<String,Boolean> createChoices(String... choices) {
@@ -707,8 +716,11 @@ public enum Option {
     private Option(String text, String argsNameKey, String descrKey,
             OptionKind kind, OptionGroup group,
             ChoiceKind choiceKind, Map<String,Boolean> choices,
-            boolean doHasSuffix) {
-        this.text = text;
+            boolean doHasSuffix, ArgKind argKind) {
+        String[] names = text.trim().split("\\s+");
+        Assert.check(names.length >= 1, 0);
+        this.mainName = names[0];
+        this.names = names;
         this.argsNameKey = argsNameKey;
         this.descrKey = descrKey;
         this.kind = kind;
@@ -717,29 +729,51 @@ public enum Option {
         this.choices = choices;
         char lastChar = text.charAt(text.length()-1);
         this.hasSuffix = doHasSuffix || lastChar == ':' || lastChar == '=';
+        this.argKind = argKind;
     }
 
     public String getText() {
-        return text;
+        return mainName;
     }
 
     public OptionKind getKind() {
         return kind;
     }
 
+    public ArgKind getArgKind() {
+        return argKind;
+    }
+
     public boolean hasArg() {
-        return argsNameKey != null && !hasSuffix;
+//        return argsNameKey != null && !hasSuffix;
+        return (argKind != ArgKind.NONE);
     }
 
     public boolean matches(String option) {
-        if (!hasSuffix)
-            return option.equals(text);
+        for (String name: names) {
+            if (matches(option, name))
+                return true;
+        }
+        return false;
+    }
 
-        if (!option.startsWith(text))
+    private boolean matches(String option, String name) {
+        if (name.startsWith("--")) {
+            return option.equals(name)
+                    || hasArg() && option.startsWith(name + "=");
+        }
+
+        boolean hasSuffix = (argKind == ArgKind.ADJACENT)
+                || name.endsWith(":") || name.endsWith("=");
+
+        if (!hasSuffix)
+            return option.equals(name);
+
+        if (!option.startsWith(name))
             return false;
 
         if (choices != null) {
-            String arg = option.substring(text.length());
+            String arg = option.substring(name.length());
             if (choiceKind == ChoiceKind.ONEOF)
                 return choices.keySet().contains(arg);
             else {
@@ -758,22 +792,22 @@ public enum Option {
             if (choiceKind == ChoiceKind.ONEOF) {
                 // some clients like to see just one of option+choice set
                 for (String s: choices.keySet())
-                    helper.remove(option + s);
-                String opt = option + arg;
+                    helper.remove(mainName + s);
+                String opt = mainName + arg;
                 helper.put(opt, opt);
                 // some clients like to see option (without trailing ":")
                 // set to arg
-                String nm = option.substring(0, option.length() - 1);
+                String nm = mainName.substring(0, mainName.length() - 1);
                 helper.put(nm, arg);
             } else {
                 // set option+word for each word in arg
                 for (String a: arg.split(",+")) {
-                    String opt = option + a;
+                    String opt = mainName + a;
                     helper.put(opt, opt);
                 }
             }
         }
-        helper.put(option, arg);
+        helper.put(mainName, arg);
         if (group == OptionGroup.FILEMANAGER)
             helper.handleFileManagerOption(this, arg);
         return false;
@@ -781,27 +815,25 @@ public enum Option {
 
     public boolean process(OptionHelper helper, String option) {
         if (hasSuffix)
-            return process(helper, text, option.substring(text.length()));
+            return process(helper, mainName, option.substring(mainName.length()));
         else
-            return process(helper, option, option);
+            return process(helper, mainName, option);
     }
 
     private static final String HELP_LINE_FORMAT = "  %-26s %s";
 
-    void help(Log log, OptionKind kind) {
-        if (this.kind != kind)
-            return;
-
-        log.printRawLines(WriterKind.NOTICE,
-                String.format(HELP_LINE_FORMAT,
-                    helpSynopsis(log),
-                    log.localize(PrefixKind.JAVAC, descrKey)));
-
+    void help(Log log) {
+        for (int i = 0; i < names.length; i++) {
+            String name = names[i];
+            String synopsis = helpSynopsis(name, log);
+            String descr = (i < names.length - 1) ? "" : log.localize(PrefixKind.JAVAC, descrKey);
+            log.printRawLines(WriterKind.NOTICE, String.format(HELP_LINE_FORMAT, synopsis, descr));
+        }
     }
 
-    private String helpSynopsis(Log log) {
+    private String helpSynopsis(String name, Log log) {
         StringBuilder sb = new StringBuilder();
-        sb.append(text);
+        sb.append(name);
         if (argsNameKey == null) {
             if (choices != null) {
                 String sep = "{";
@@ -815,10 +847,9 @@ public enum Option {
                 sb.append("}");
             }
         } else {
-            if (!hasSuffix)
+            if (!name.endsWith(":") && argKind != ArgKind.ADJACENT)
                 sb.append(" ");
             sb.append(log.localize(PrefixKind.JAVAC, argsNameKey));
-
         }
 
         return sb.toString();

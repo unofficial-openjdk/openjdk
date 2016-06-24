@@ -90,7 +90,7 @@ public class AutomaticModules extends ModuleTestBase {
                           "package impl; public class Impl { public void e(api.Api api) { api.actionPerformed(null); } }");
 
         new JavacTask(tb)
-                .options("-modulesourcepath", moduleSrc.toString(), "-modulepath", modulePath.toString(), "-addmods", "java.desktop")
+                .options("--module-source-path", moduleSrc.toString(), "--module-path", modulePath.toString(), "--add-modules", "java.desktop")
                 .outdir(classes)
                 .files(findJavaFiles(moduleSrc))
                 .run()
@@ -148,7 +148,7 @@ public class AutomaticModules extends ModuleTestBase {
                           "package impl; public class Impl { public void e(api.Api api) { api.run(\"\"); } }");
 
         new JavacTask(tb)
-                .options("-modulesourcepath", moduleSrc.toString(), "-modulepath", modulePath.toString(), "-classpath", baseJar.toString())
+                .options("--module-source-path", moduleSrc.toString(), "--module-path", modulePath.toString(), "--class-path", baseJar.toString())
                 .outdir(classes)
                 .files(findJavaFiles(moduleSrc))
                 .run()
@@ -194,7 +194,7 @@ public class AutomaticModules extends ModuleTestBase {
                           "package dep; public class Dep { api.Api api; }");
 
         new JavacTask(tb)
-                .options("-modulepath", modulePath.toString())
+                .options("--module-path", modulePath.toString())
                 .outdir(depClasses)
                 .files(findJavaFiles(depSrc))
                 .run()
@@ -218,7 +218,7 @@ public class AutomaticModules extends ModuleTestBase {
                           "package test; public class Test { }");
 
         new JavacTask(tb)
-                .options("-modulepath", modulePath.toString())
+                .options("--module-path", modulePath.toString())
                 .outdir(testClasses)
                 .files(findJavaFiles(testSrc))
                 .run()

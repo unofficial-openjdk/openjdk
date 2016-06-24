@@ -891,8 +891,8 @@ public class JavaCompiler {
 
         // forcibly set the equivalent of -Xlint:-options, so that no further
         // warnings about command line options are generated from this point on
-        options.put(XLINT_CUSTOM.text + "-" + LintCategory.OPTIONS.option, "true");
-        options.remove(XLINT_CUSTOM.text + LintCategory.OPTIONS.option);
+        options.put(XLINT_CUSTOM.mainName + "-" + LintCategory.OPTIONS.option, "true");
+        options.remove(XLINT_CUSTOM.mainName + LintCategory.OPTIONS.option);
 
         start_msec = now();
 
