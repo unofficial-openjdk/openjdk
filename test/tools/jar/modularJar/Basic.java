@@ -460,7 +460,7 @@ public class Basic {
             "--no-manifest",
             "-C", barModInfo.toString(), "module-info.class")  // stuff in bar's info
             .assertSuccess();
-        jar("-p",
+        jar("-d",
             "--file=" + modularJar.toString())
             .assertSuccess()
             .resultChecker(r -> {
@@ -535,7 +535,7 @@ public class Basic {
             "--file=" + fooJar.toString(),
             "--main-class=" + FOO.mainClass,
             "--module-version=" + FOO.version,
-            "--module-path=" + mp.toString(),
+            "-p", mp.toString(),  // test short-form
             "--hash-modules=" + "bar",
             "--no-manifest",
             "-C", fooClasses.toString(), ".").assertSuccess();
@@ -684,7 +684,7 @@ public class Basic {
             "-C", modClasses.toString(), ".")
             .assertSuccess();
 
-        for (String option : new String[]  {"--print-module-descriptor", "-p" }) {
+        for (String option : new String[]  {"--print-module-descriptor", "-d" }) {
             jar(option,
                 "--file=" + modularJar.toString())
                 .assertSuccess()
@@ -711,7 +711,7 @@ public class Basic {
             "-C", modClasses.toString(), ".")
             .assertSuccess();
 
-        for (String option : new String[]  {"--print-module-descriptor", "-p" }) {
+        for (String option : new String[]  {"--print-module-descriptor", "-d" }) {
             jarWithStdin(modularJar.toFile(),
                          option)
                          .assertSuccess()
