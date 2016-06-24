@@ -107,8 +107,8 @@ public class RunWithAutomaticModules {
         // launch the test. Need -addmods because nothing explicitly depends on logging
 
         int exitValue
-            = executeTestJava("-mp", MODS_DIR.toString(),
-                              "-addmods", "logging",
+            = executeTestJava("--module-path", MODS_DIR.toString(),
+                              "--add-modules", "logging",
                               "-m", testModule + "/" + mainClass)
                 .outputTo(System.out)
                 .errorTo(System.out)

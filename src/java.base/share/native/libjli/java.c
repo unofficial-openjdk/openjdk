@@ -68,8 +68,10 @@ static jboolean printVersion = JNI_FALSE; /* print and exit */
 static jboolean showVersion = JNI_FALSE;  /* print but continue */
 static jboolean printUsage = JNI_FALSE;   /* print and exit*/
 static jboolean printXUsage = JNI_FALSE;  /* print and exit*/
-static char     *showSettings = NULL;      /* print but continue */
+static jboolean dryRun = JNI_FALSE;       /* initialize VM and exit */
+static char     *showSettings = NULL;     /* print but continue */
 static char     *listModules = NULL;
+
 
 static const char *_program_name;
 static const char *_launcher_name;
@@ -98,17 +100,9 @@ static int numOptions, maxOptions;
  * Prototypes for functions internal to launcher.
  */
 static void SetClassPath(const char *s);
-static void SetModulePath(const char *s);
-static void SetUpgradeModulePath(const char *s);
 static void SetMainModule(const char *s);
-static void SetAddModulesProp(const char *mods);
-static void SetLimitModulesProp(const char *mods);
-static void SetAddReadsProp(const jint n, const char *s);
-static void SetAddExportsProp(const jint n, const char *s);
-static void SetPatchProp(const jint n, const char *s);
 static void SelectVersion(int argc, char **argv, char **main_class);
 static void SetJvmEnvironment(int argc, char **argv);
-static jboolean IsWhiteSpaceOptionArgument(const char* name);
 static jboolean ParseArguments(int *pargc, char ***pargv,
                                int *pmode, char **pwhat,
                                int *pret, const char *jrepath);
@@ -131,6 +125,18 @@ static void SetPaths(int argc, char **argv);
 
 static void DumpState();
 static jboolean RemovableOption(char *option);
+
+enum OptionKind {
+    LAUNCHER_OPTION = 0,
+    LAUNCHER_OPTION_WITH_ARGUMENT,
+    LAUNCHER_MAIN_OPTION,
+    VM_LONG_OPTION,
+    VM_LONG_OPTION_WITH_ARGUMENT,
+    VM_OPTION
+};
+
+static int GetOpt(int *pargc, char ***pargv, char **poption, char **pvalue);
+static jboolean HasArgument(const char* option, int argc, const char* arg);
 
 /* Maximum supported entries from jvm.cfg. */
 #define INIT_MAX_KNOWN_VMS      10
@@ -160,6 +166,16 @@ static void GrowKnownVMs(int minimum);
 static int  KnownVMIndex(const char* name);
 static void FreeKnownVMs();
 static jboolean IsWildCardEnabled();
+
+#define REPORT_ERROR(AC_ok, AC_failure_message, AC_questionable_arg) \
+    do { \
+        if (!AC_ok) { \
+            JLI_ReportErrorMessage(AC_failure_message, AC_questionable_arg); \
+            printUsage = JNI_TRUE; \
+            *pret = 1; \
+            return JNI_TRUE; \
+        } \
+    } while (JNI_FALSE)
 
 #define ARG_CHECK(AC_arg_count, AC_failure_message, AC_questionable_arg) \
     do { \
@@ -489,29 +505,87 @@ JavaMain(void * _args)
     mainArgs = CreateApplicationArgs(env, argv, argc);
     CHECK_EXCEPTION_NULL_LEAVE(mainArgs);
 
-    /* Invoke main method. */
-    (*env)->CallStaticVoidMethod(env, mainClass, mainID, mainArgs);
+    if (dryRun) {
+        ret = 0;
+    } else {
+        /* Invoke main method. */
+        (*env)->CallStaticVoidMethod(env, mainClass, mainID, mainArgs);
 
-    /*
-     * The launcher's exit code (in the absence of calls to
-     * System.exit) will be non-zero if main threw an exception.
-     */
-    ret = (*env)->ExceptionOccurred(env) == NULL ? 0 : 1;
+        /*
+         * The launcher's exit code (in the absence of calls to
+         * System.exit) will be non-zero if main threw an exception.
+         */
+        ret = (*env)->ExceptionOccurred(env) == NULL ? 0 : 1;
+    }
     LEAVE();
 }
 
 /*
- * Test if the given option name has a whitespace separated argument.
+ * Test if the given name is one of the class path options.
  */
-jboolean
-IsWhiteSpaceOptionArgument(const char* name) {
+static jboolean
+IsClassPathOption(const char* name) {
     return JLI_StrCmp(name, "-classpath") == 0 ||
            JLI_StrCmp(name, "-cp") == 0 ||
-           JLI_StrCmp(name, "-modulepath") == 0 ||
+           JLI_StrCmp(name, "--class-path") == 0;
+}
+
+/*
+ * Test if the given name is a launcher option taking the main entry point.
+ */
+static jboolean
+IsLauncherMainOption(const char* name) {
+    return JLI_StrCmp(name, "--module") == 0 ||
+           JLI_StrCmp(name, "-m") == 0;
+}
+
+/*
+ * Test if the given name is a white-space launcher option.
+ */
+static jboolean
+IsLauncherOption(const char* name) {
+    return IsClassPathOption(name) ||
+           IsLauncherMainOption(name) ||
+           JLI_StrCmp(name, "--list-modules") == 0;
+}
+
+/*
+ * Test if the given name is a module-system white-space option that
+ * will be passed to the VM with its corresponding long-form option
+ * name and "=" delimiter.
+ */
+static jboolean
+IsModuleOption(const char* name) {
+    return JLI_StrCmp(name, "--module-path") == 0 ||
+           JLI_StrCmp(name, "-p") == 0 ||
+           JLI_StrCmp(name, "--upgrade-module-path") == 0 ||
+           JLI_StrCmp(name, "--add-modules") == 0 ||
+           JLI_StrCmp(name, "--limit-modules") == 0 ||
+           JLI_StrCmp(name, "--add-exports") == 0 ||
+           JLI_StrCmp(name, "--add-reads") == 0 ||
+           JLI_StrCmp(name, "--patch-module") == 0;
+}
+
+/*
+ * Old options for transition
+ */
+static jboolean
+IsOldModuleOption(const char* name) {
+    return JLI_StrCmp(name, "-modulepath") == 0 ||
            JLI_StrCmp(name, "-mp") == 0 ||
            JLI_StrCmp(name, "-upgrademodulepath") == 0 ||
            JLI_StrCmp(name, "-addmods") == 0 ||
            JLI_StrCmp(name, "-limitmods") == 0;
+}
+
+/*
+ * Test if the given name has a white space option.
+ */
+jboolean
+IsWhiteSpaceOption(const char* name) {
+    return IsModuleOption(name) ||
+           IsOldModuleOption(name) ||
+           IsLauncherOption(name);
 }
 
 /*
@@ -549,7 +623,7 @@ CheckJvmType(int *pargc, char ***argv, jboolean speculative) {
                 continue;
             }
         } else {
-            if (IsWhiteSpaceOptionArgument(arg)) {
+            if (IsWhiteSpaceOption(arg)) {
                 newArgv[newArgvIdx++] = arg;
                 argi++;
                 if (argi < argc) {
@@ -691,7 +765,7 @@ SetJvmEnvironment(int argc, char **argv) {
         if (i > 0) {
             char *prev = argv[i - 1];
             // skip non-dash arg preceded by class path specifiers
-            if (*arg != '-' && IsWhiteSpaceOptionArgument(prev)) {
+            if (*arg != '-' && IsWhiteSpaceOption(prev)) {
                 continue;
             }
 
@@ -872,39 +946,39 @@ SetClassPath(const char *s)
 }
 
 static void
-SetModulePath(const char *s)
+AddModulePathOption(const char *option, const char *s)
 {
-    char *def;
-    const char *orig = s;
-    static const char format[] = "-Djdk.module.path=%s";
-    if (s == NULL)
-        return;
-    s = JLI_WildcardExpandClasspath(s);
-    def = JLI_MemAlloc(sizeof(format)
-                       - 2 /* strlen("%s") */
-                       + JLI_StrLen(s));
-    sprintf(def, format, s);
-    AddOption(def, NULL);
-    if (s != orig)
-        JLI_MemFree((char *) s);
+    AddOption((char*) option, NULL);
+    AddOption((char*) JLI_WildcardExpandClasspath(s), NULL);
 }
 
 static void
-SetUpgradeModulePath(const char *s)
+AddLongFormOption(const char *option, const char *arg)
 {
+    static const char format[] = "%s=%s";
     char *def;
-    const char *orig = s;
-    static const char format[] = "-Djdk.upgrade.module.path=%s";
-    if (s == NULL)
-        return;
-    s = JLI_WildcardExpandClasspath(s);
-    def = JLI_MemAlloc(sizeof(format)
-                       - 2 /* strlen("%s") */
-                       + JLI_StrLen(s));
-    sprintf(def, format, s);
+
+    def = JLI_MemAlloc(JLI_StrLen(option)+1+JLI_StrLen(arg)+1);
+    sprintf(def, format, option, arg);
     AddOption(def, NULL);
-    if (s != orig)
-        JLI_MemFree((char *) s);
+}
+
+static void
+AddDashXOption(const char *option, const char *arg)
+{
+    static const char format[] = "%s%s";
+    char *def;
+
+    def = JLI_MemAlloc(JLI_StrLen(option)+JLI_StrLen(arg)+1);
+    sprintf(def, format, option, arg);
+    AddOption(def, NULL);
+}
+
+static void
+AddOptionWithArgument(const char *option, const char *arg)
+{
+    AddOption((char*) option, NULL);
+    AddOption((char*) arg, NULL);
 }
 
 static void
@@ -927,46 +1001,6 @@ SetMainModule(const char *s)
     def = JLI_MemAlloc(def_len);
     JLI_Snprintf(def, def_len, format, s);
     AddOption(def, NULL);
-}
-
-static void
-SetAddModulesProp(const char *mods) {
-    size_t buflen = JLI_StrLen(mods) + 40;
-    char *prop = (char *)JLI_MemAlloc(buflen);
-    JLI_Snprintf(prop, buflen, "-Djdk.launcher.addmods=%s", mods);
-    AddOption(prop, NULL);
-}
-
-static void
-SetLimitModulesProp(const char *mods) {
-    size_t buflen = JLI_StrLen(mods) + 40;
-    char *prop = (char *)JLI_MemAlloc(buflen);
-    JLI_Snprintf(prop, buflen, "-Djdk.launcher.limitmods=%s", mods);
-    AddOption(prop, NULL);
-}
-
-static void
-SetAddReadsProp(const jint n, const char *s) {
-    size_t buflen = JLI_StrLen(s) + 40;
-    char *prop = (char *)JLI_MemAlloc(buflen);
-    JLI_Snprintf(prop, buflen, "-Djdk.launcher.addreads.%d=%s", n, s);
-    AddOption(prop, NULL);
-}
-
-static void
-SetAddExportsProp(const jint n, const char *s) {
-    size_t buflen = JLI_StrLen(s) + 40;
-    char *prop = (char *)JLI_MemAlloc(buflen);
-    JLI_Snprintf(prop, buflen, "-Djdk.launcher.addexports.%d=%s", n, s);
-    AddOption(prop, NULL);
-}
-
-static void
-SetPatchProp(const jint n, const char *s) {
-    size_t buflen = JLI_StrLen(s) + 40;
-    char *prop = (char *)JLI_MemAlloc(buflen);
-    JLI_Snprintf(prop, buflen, "-Djdk.launcher.patch.%d=%s", n, s);
-    AddOption(prop, NULL);
 }
 
 /*
@@ -1035,10 +1069,14 @@ SelectVersion(int argc, char **argv, char **main_class)
         } else {
             if (JLI_StrCmp(arg, "-jar") == 0)
                 jarflag = 1;
-            if (IsWhiteSpaceOptionArgument(arg) && (argc >= 2)) {
-                argc--;
-                argv++;
-                arg = *argv;
+            if (IsWhiteSpaceOption(arg)) {
+                char* p = *argv;
+                p++;
+                if (HasArgument(arg, argc-1, p)) {
+                    argc--;
+                    argv++;
+                    arg = *argv;
+                }
             }
 
             /*
@@ -1130,6 +1168,99 @@ SelectVersion(int argc, char **argv, char **main_class)
 }
 
 /*
+ * Test if the given name has a white space option.
+ */
+static jboolean
+HasArgument(const char* option, int argc, const char* arg) {
+    return argc >= 1 && *arg != '-';
+}
+
+/*
+ * Gets the option, and its argument if the option has an argument.
+ * It will update *pargc, **pargv to the next option.
+ */
+static int
+GetOpt(int *pargc, char ***pargv, char **poption, char **pvalue) {
+    int argc = *pargc;
+    char** argv = *pargv;
+    char* arg = *argv;
+
+    char* option = arg;
+    char* value = NULL;
+    char* equals = NULL;
+    int kind = LAUNCHER_OPTION;
+    jboolean has_arg = JNI_FALSE;
+
+    argv++; --argc;
+    has_arg = HasArgument(arg, argc, *argv);
+
+    if (IsLauncherOption(arg)) {
+        if (has_arg) {
+            value = *argv;
+            argv++; --argc;
+        }
+        if (IsLauncherMainOption(arg)) {
+            kind = LAUNCHER_MAIN_OPTION;
+        } else {
+            kind = LAUNCHER_OPTION_WITH_ARGUMENT;
+        }
+    } else if (IsModuleOption(arg) || IsOldModuleOption(arg)) {
+        kind = VM_LONG_OPTION_WITH_ARGUMENT;
+        if (has_arg) {
+            value = *argv;
+            argv++; --argc;
+        }
+
+        /*
+         * Support short form alias
+         */
+        if (JLI_StrCmp(arg, "-p") == 0) {
+            option = "--module-path";
+        }
+
+    } else if (JLI_StrCCmp(arg, "--") == 0 && (equals = JLI_StrChr(arg, '=')) != NULL) {
+        value = equals+1;
+        if (JLI_StrCCmp(arg, "--list-modules=") == 0 ||
+            JLI_StrCCmp(arg, "--module=") == 0 ||
+            JLI_StrCCmp(arg, "--class-path=") == 0) {
+            kind = LAUNCHER_OPTION_WITH_ARGUMENT;
+        } else {
+            kind = VM_LONG_OPTION;
+        }
+    }
+
+    // for transition to support both old and new syntax
+    if (JLI_StrCmp(arg, "-modulepath") == 0 ||
+        JLI_StrCmp(arg, "-mp") == 0) {
+        option = "--module-path";
+    } else if (JLI_StrCmp(arg, "-upgrademodulepath") == 0) {
+        option = "--upgrade-module-path";
+    } else if (JLI_StrCmp(arg, "-addmods") == 0) {
+        option = "--add-modules";
+    } else if (JLI_StrCmp(arg, "-limitmods") == 0) {
+        option = "--limit-modules";
+    } else if (JLI_StrCCmp(arg, "-XaddExports:") == 0) {
+        option = "--add-exports";
+        value = arg + 13;
+        kind = VM_LONG_OPTION_WITH_ARGUMENT;
+    } else if (JLI_StrCCmp(arg, "-XaddReads:") == 0) {
+        option = "--add-reads";
+        value = arg + 11;
+        kind = VM_LONG_OPTION_WITH_ARGUMENT;
+    } else if (JLI_StrCCmp(arg, "-Xpatch:") == 0) {
+        option = "--patch-module";
+        value = arg + 8;
+        kind = VM_LONG_OPTION_WITH_ARGUMENT;
+    }
+
+    *pargc = argc;
+    *pargv = argv;
+    *poption = option;
+    *pvalue = value;
+    return kind;
+}
+
+/*
  * Parses command line arguments.  Returns JNI_FALSE if launcher
  * should exit without starting vm, returns JNI_TRUE if vm needs
  * to be started to process given options.  *pret (the launcher
@@ -1148,51 +1279,80 @@ ParseArguments(int *pargc, char ***pargv,
     *pret = 0;
 
     while ((arg = *argv) != 0 && *arg == '-') {
-        argv++; --argc;
-        if (JLI_StrCmp(arg, "-classpath") == 0 || JLI_StrCmp(arg, "-cp") == 0) {
-            ARG_CHECK (argc, ARG_ERROR1, arg);
-            SetClassPath(*argv);
-            mode = LM_CLASS;
-            argv++; --argc;
-        } else if (JLI_StrCmp(arg, "-modulepath") == 0 || JLI_StrCmp(arg, "-mp") == 0) {
-            ARG_CHECK (argc, ARG_ERROR4, arg);
-            SetModulePath(*argv);
-            argv++; --argc;
-        } else if (JLI_StrCmp(arg, "-upgrademodulepath") == 0) {
-            ARG_CHECK (argc, ARG_ERROR4, arg);
-            SetUpgradeModulePath(*argv);
-            argv++; --argc;
-        } else if (JLI_StrCmp(arg, "-jar") == 0) {
-            ARG_CHECK (argc, ARG_ERROR2, arg);
+        char *option = NULL;
+        char *value = NULL;
+        int kind = GetOpt(&argc, &argv, &option, &value);
+        jboolean has_arg = value != NULL;
+
+/*
+ * Option to set main entry point
+ */
+        if (JLI_StrCmp(arg, "-jar") == 0) {
+            ARG_CHECK(argc, ARG_ERROR2, arg);
             mode = LM_JAR;
-        } else if (JLI_StrCmp(arg, "-m") == 0) {
-            ARG_CHECK (argc, ARG_ERROR5, arg);
-            SetMainModule(*argv);
+        } else if (JLI_StrCmp(arg, "--module") == 0 ||
+                   JLI_StrCCmp(arg, "--module=") == 0 ||
+                   JLI_StrCmp(arg, "-m") == 0) {
+            REPORT_ERROR (has_arg, ARG_ERROR5, arg);
+            SetMainModule(value);
             mode = LM_MODULE;
-        } else if (JLI_StrCmp(arg, "-addmods") == 0) {
-            ARG_CHECK (argc, ARG_ERROR6, arg);
-            SetAddModulesProp(*argv);
-            argv++; --argc;
-        } else if (JLI_StrCmp(arg, "-limitmods") == 0) {
-            ARG_CHECK (argc, ARG_ERROR6, arg);
-            SetLimitModulesProp(*argv);
-            argv++; --argc;
-        } else if (JLI_StrCmp(arg, "-listmods") == 0 ||
-                   JLI_StrCCmp(arg, "-listmods:") == 0) {
+            if (has_arg) {
+               *pwhat = value;
+                break;
+            }
+        } else if (JLI_StrCmp(arg, "--class-path") == 0 ||
+                   JLI_StrCCmp(arg, "--class-path=") == 0 ||
+                   JLI_StrCmp(arg, "-classpath") == 0 ||
+                   JLI_StrCmp(arg, "-cp") == 0) {
+            REPORT_ERROR (has_arg, ARG_ERROR1, arg);
+            SetClassPath(value);
+            mode = LM_CLASS;
+        } else if (JLI_StrCmp(arg, "--list-modules") == 0 ||
+                   JLI_StrCCmp(arg, "--list-modules=") == 0) {
             listModules = arg;
+
+            // set listModules to --list-modules=<module-names> if argument is specified
+            if (JLI_StrCmp(arg, "--list-modules") == 0 && has_arg) {
+                static const char format[] = "%s=%s";
+                listModules = JLI_MemAlloc(JLI_StrLen(option)+2+JLI_StrLen(value));
+                sprintf(listModules, format, option, value);
+            }
             return JNI_TRUE;
-        } else if (JLI_StrCCmp(arg, "-XaddReads:") == 0) {
-            static jint n;
-            char *value = arg + 11;
-            SetAddReadsProp(n++, value);
-        } else if (JLI_StrCCmp(arg, "-XaddExports:") == 0) {
-            static jint n;
-            char *value = arg + 13;
-            SetAddExportsProp(n++, value);
-        } else if (JLI_StrCCmp(arg, "-Xpatch:") == 0) {
-            static jint n;
-            char *value = arg + 8;
-            SetPatchProp(n++, value);
+/*
+ * Parse white-space options
+ */
+        } else if (has_arg) {
+            if (kind == VM_LONG_OPTION) {
+                AddOption(option, NULL);
+            } else if (kind == VM_LONG_OPTION_WITH_ARGUMENT) {
+                AddLongFormOption(option, value);
+            }
+/*
+ * Error missing argument
+ */
+        } else if (!has_arg && IsWhiteSpaceOption(arg)) {
+            if (JLI_StrCmp(arg, "--module-path") == 0 ||
+                JLI_StrCmp(arg, "-p") == 0 ||
+                JLI_StrCmp(arg, "--upgrade-module-path") == 0) {
+                REPORT_ERROR (has_arg, ARG_ERROR4, arg);
+            } else if (JLI_StrCmp(arg, "--add-modules") == 0 ||
+                       JLI_StrCmp(arg, "--limit-modules") == 0 ||
+                       JLI_StrCmp(arg, "--add-exports") == 0 ||
+                       JLI_StrCmp(arg, "--add-reads") == 0 ||
+                       JLI_StrCmp(arg, "--patch-module") == 0) {
+                REPORT_ERROR (has_arg, ARG_ERROR6, arg);
+            } else if (JLI_StrCmp(arg, "-modulepath") == 0 ||
+                       JLI_StrCmp(arg, "-mp") == 0 ||
+                       JLI_StrCmp(arg, "-upgrademodulepath") == 0) {
+                REPORT_ERROR (has_arg, ARG_ERROR4, arg);
+            } else if (JLI_StrCmp(arg, "-addmods") == 0 ||
+                       JLI_StrCmp(arg, "-limitmods") == 0) {
+                REPORT_ERROR (has_arg, ARG_ERROR6, arg);
+            }
+
+/*
+ * The following cases will cause the argument parsing to stop
+ */
         } else if (JLI_StrCmp(arg, "-help") == 0 ||
                    JLI_StrCmp(arg, "-h") == 0 ||
                    JLI_StrCmp(arg, "-?") == 0) {
@@ -1203,6 +1363,8 @@ ParseArguments(int *pargc, char ***pargv,
             return JNI_TRUE;
         } else if (JLI_StrCmp(arg, "-showversion") == 0) {
             showVersion = JNI_TRUE;
+        } else if (JLI_StrCmp(arg, "--dry-run") == 0) {
+            dryRun = JNI_TRUE;
         } else if (JLI_StrCmp(arg, "-X") == 0) {
             printXUsage = JNI_TRUE;
             return JNI_TRUE;
@@ -1270,7 +1432,7 @@ ParseArguments(int *pargc, char ***pargv,
         }
     }
 
-    if (--argc >= 0) {
+    if (*pwhat == NULL && --argc >= 0) {
         *pwhat = *argv++;
     }
 
@@ -1680,7 +1842,7 @@ static void
 ListModules(JNIEnv *env, char *optString)
 {
     jmethodID listModulesID;
-    jstring joptString;
+    jstring joptString = NULL;
     jclass cls = GetLauncherHelperClass(env);
     NULL_CHECK(cls);
     NULL_CHECK(listModulesID = (*env)->GetStaticMethodID(env, cls,

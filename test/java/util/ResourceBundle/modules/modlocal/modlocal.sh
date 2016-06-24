@@ -57,7 +57,7 @@ if [ "x$PROPS" != x ]; then
     done
 fi
 
-$JAVAC -g -d mods -modulesourcepath $TESTSRC/src \
+$JAVAC -g -d mods --module-source-path $TESTSRC/src \
        -cp mods/bundles `find $TESTSRC/src/test -name "*.java"`
 
 # Create a jar to be added to the class path. Expected properties files are

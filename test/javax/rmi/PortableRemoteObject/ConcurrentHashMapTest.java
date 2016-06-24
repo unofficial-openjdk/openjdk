@@ -27,9 +27,9 @@
  * @summary test RMI-IIOP call with ConcurrentHashMap as an argument
  * @library /lib/testlibrary
  * @build jdk.testlibrary.*
- * @compile -addmods java.corba Test.java HelloInterface.java HelloServer.java HelloClient.java
+ * @compile --add-modules=java.corba Test.java HelloInterface.java HelloServer.java HelloClient.java
  *    HelloImpl.java _HelloImpl_Tie.java _HelloInterface_Stub.java ConcurrentHashMapTest.java
- * @run main/othervm -addmods java.corba -Djava.naming.provider.url=iiop://localhost:1050
+ * @run main/othervm --add-modules=java.corba -Djava.naming.provider.url=iiop://localhost:1050
  *    -Djava.naming.factory.initial=com.sun.jndi.cosnaming.CNCtxFactory ConcurrentHashMapTest
  * @key intermittent
  */
@@ -103,7 +103,7 @@ public class ConcurrentHashMapTest {
         // -Djava.naming.provider.url=iiop://localhost:1050 HelloServer
         List<String> commands = new ArrayList<>();
         commands.add(ConcurrentHashMapTest.JAVA);
-        commands.add("-addmods");
+        commands.add("--add-modules");
         commands.add("java.corba");
         commands.add("-Djava.naming.factory.initial=com.sun.jndi.cosnaming.CNCtxFactory");
         commands.add("-Djava.naming.provider.url=iiop://localhost:1050");

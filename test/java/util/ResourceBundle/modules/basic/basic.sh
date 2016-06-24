@@ -52,7 +52,7 @@ do
   mkdir -p mods/$B
   CLASSES="`find $TESTSRC/src/$B -name '*.java'`"
   if [ "x$CLASSES" != x ]; then
-    $JAVAC -g -d mods -modulesourcepath $TESTSRC/src $CP $CLASSES
+    $JAVAC -g -d mods --module-source-path $TESTSRC/src $CP $CLASSES
   fi
   PROPS="`(cd $TESTSRC/src/$B; find . -name '*.properties')`"
   if [ "x$PROPS" != x ]; then
@@ -67,7 +67,7 @@ do
 done
 
 mkdir -p mods/test
-$JAVAC -g -cp mods/mainbundles -d mods -modulesourcepath $TESTSRC/src \
+$JAVAC -g -cp mods/mainbundles -d mods --module-source-path $TESTSRC/src \
     `find $TESTSRC/src/test -name "*.java"`
 
 # Create a jar to be added to the class path. Expected only properties files are
