@@ -179,10 +179,10 @@ public final class JavacTool implements JavaCompiler {
             args.init("javac", options, classes, compilationUnits);
 
             // init multi-release jar handling
-            if (fileManager.isSupportedOption(Option.MULTIRELEASE.mainName) == 1) {
+            if (fileManager.isSupportedOption(Option.MULTIRELEASE.primaryName) == 1) {
                 Target target = Target.instance(context);
                 List<String> list = List.of(target.multiReleaseValue());
-                fileManager.handleOption(Option.MULTIRELEASE.mainName, list.iterator());
+                fileManager.handleOption(Option.MULTIRELEASE.primaryName, list.iterator());
             }
 
             return new JavacTaskImpl(context);

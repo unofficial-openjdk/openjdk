@@ -373,8 +373,8 @@ public class Start extends ToolOption.Helper {
             if (compOpts.isSet("-source")) {
                 usageError("main.release.bootclasspath.conflict", "-source");
             }
-            if (fileManagerOpts.containsKey(Option.BOOTCLASSPATH)) {
-                usageError("main.release.bootclasspath.conflict", Option.BOOTCLASSPATH.getText());
+            if (fileManagerOpts.containsKey(Option.BOOT_CLASS_PATH)) {
+                usageError("main.release.bootclasspath.conflict", Option.BOOT_CLASS_PATH.getPrimaryName());
             }
 
             PlatformDescription platformDescription =

@@ -71,7 +71,7 @@ public class Options {
      * Get the value for an option.
      */
     public String get(Option option) {
-        return values.get(option.mainName);
+        return values.get(option.primaryName);
     }
 
     /**
@@ -101,14 +101,14 @@ public class Options {
      * Check if the value for an option has been set.
      */
     public boolean isSet(Option option) {
-        return (values.get(option.mainName) != null);
+        return (values.get(option.primaryName) != null);
     }
 
     /**
      * Check if the value for a choice option has been set to a specific value.
      */
     public boolean isSet(Option option, String value) {
-        return (values.get(option.mainName + value) != null);
+        return (values.get(option.primaryName + value) != null);
     }
 
     /**
@@ -122,14 +122,14 @@ public class Options {
      * Check if the value for an option has not been set.
      */
     public boolean isUnset(Option option) {
-        return (values.get(option.mainName) == null);
+        return (values.get(option.primaryName) == null);
     }
 
     /**
      * Check if the value for a choice option has not been set to a specific value.
      */
     public boolean isUnset(Option option, String value) {
-        return (values.get(option.mainName + value) == null);
+        return (values.get(option.primaryName + value) == null);
     }
 
     public void put(String name, String value) {
@@ -137,7 +137,7 @@ public class Options {
     }
 
     public void put(Option option, String value) {
-        values.put(option.mainName, value);
+        values.put(option.primaryName, value);
     }
 
     public void putAll(Options options) {

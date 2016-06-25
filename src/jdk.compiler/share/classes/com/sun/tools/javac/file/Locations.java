@@ -84,7 +84,7 @@ import com.sun.tools.javac.util.StringUtils;
 
 import static javax.tools.StandardLocation.PLATFORM_CLASS_PATH;
 
-import static com.sun.tools.javac.main.Option.BOOTCLASSPATH;
+import static com.sun.tools.javac.main.Option.BOOT_CLASS_PATH;
 import static com.sun.tools.javac.main.Option.DJAVA_ENDORSED_DIRS;
 import static com.sun.tools.javac.main.Option.DJAVA_EXT_DIRS;
 import static com.sun.tools.javac.main.Option.ENDORSEDDIRS;
@@ -580,7 +580,7 @@ public class Locations {
     private class ClassPathLocationHandler extends SimpleLocationHandler {
 
         ClassPathLocationHandler() {
-            super(StandardLocation.CLASS_PATH, Option.CLASSPATH);
+            super(StandardLocation.CLASS_PATH, Option.CLASS_PATH);
         }
 
         @Override
@@ -648,7 +648,7 @@ public class Locations {
 
         BootClassPathLocationHandler() {
             super(StandardLocation.PLATFORM_CLASS_PATH,
-                    Option.BOOTCLASSPATH, Option.XBOOTCLASSPATH,
+                    Option.BOOT_CLASS_PATH, Option.XBOOTCLASSPATH,
                     Option.XBOOTCLASSPATH_PREPEND,
                     Option.XBOOTCLASSPATH_APPEND,
                     Option.ENDORSEDDIRS, Option.DJAVA_ENDORSED_DIRS,
@@ -668,7 +668,7 @@ public class Locations {
 
             option = canonicalize(option);
             optionValues.put(option, value);
-            if (option == BOOTCLASSPATH) {
+            if (option == BOOT_CLASS_PATH) {
                 optionValues.remove(XBOOTCLASSPATH_PREPEND);
                 optionValues.remove(XBOOTCLASSPATH_APPEND);
             }
@@ -681,7 +681,7 @@ public class Locations {
         private Option canonicalize(Option option) {
             switch (option) {
                 case XBOOTCLASSPATH:
-                    return Option.BOOTCLASSPATH;
+                    return Option.BOOT_CLASS_PATH;
                 case DJAVA_ENDORSED_DIRS:
                     return Option.ENDORSEDDIRS;
                 case DJAVA_EXT_DIRS:
@@ -712,7 +712,7 @@ public class Locations {
         SearchPath computePath() throws IOException {
             SearchPath path = new SearchPath();
 
-            String bootclasspathOpt = optionValues.get(BOOTCLASSPATH);
+            String bootclasspathOpt = optionValues.get(BOOT_CLASS_PATH);
             String endorseddirsOpt = optionValues.get(ENDORSEDDIRS);
             String extdirsOpt = optionValues.get(EXTDIRS);
             String xbootclasspathPrependOpt = optionValues.get(XBOOTCLASSPATH_PREPEND);
@@ -1160,7 +1160,7 @@ public class Locations {
 
         ModuleSourcePathLocationHandler() {
             super(StandardLocation.MODULE_SOURCE_PATH,
-                    Option.MODULESOURCEPATH);
+                    Option.MODULE_SOURCE_PATH);
         }
 
         @Override
@@ -1492,16 +1492,16 @@ public class Locations {
         BasicLocationHandler[] handlers = {
             new BootClassPathLocationHandler(),
             new ClassPathLocationHandler(),
-            new SimpleLocationHandler(StandardLocation.SOURCE_PATH, Option.SOURCEPATH),
-            new SimpleLocationHandler(StandardLocation.ANNOTATION_PROCESSOR_PATH, Option.PROCESSORPATH),
-            new SimpleLocationHandler(StandardLocation.ANNOTATION_PROCESSOR_MODULE_PATH, Option.PROCESSORMODULEPATH),
+            new SimpleLocationHandler(StandardLocation.SOURCE_PATH, Option.SOURCE_PATH),
+            new SimpleLocationHandler(StandardLocation.ANNOTATION_PROCESSOR_PATH, Option.PROCESSOR_PATH),
+            new SimpleLocationHandler(StandardLocation.ANNOTATION_PROCESSOR_MODULE_PATH, Option.PROCESSOR_MODULE_PATH),
             new OutputLocationHandler(StandardLocation.CLASS_OUTPUT, Option.D),
             new OutputLocationHandler(StandardLocation.SOURCE_OUTPUT, Option.S),
             new OutputLocationHandler(StandardLocation.NATIVE_HEADER_OUTPUT, Option.H),
             new ModuleSourcePathLocationHandler(),
             // TODO: should UPGRADE_MODULE_PATH be merged with SYSTEM_MODULES?
-            new ModulePathLocationHandler(StandardLocation.UPGRADE_MODULE_PATH, Option.UPGRADEMODULEPATH),
-            new ModulePathLocationHandler(StandardLocation.MODULE_PATH, Option.MODULEPATH),
+            new ModulePathLocationHandler(StandardLocation.UPGRADE_MODULE_PATH, Option.UPGRADE_MODULE_PATH),
+            new ModulePathLocationHandler(StandardLocation.MODULE_PATH, Option.MODULE_PATH),
             new SystemModulesLocationHandler(),
         };
 
@@ -1517,7 +1517,7 @@ public class Locations {
 
     boolean handleOption(Option option, String value) {
         switch (option) {
-            case XPATCH:
+            case PATCH_MODULE:
                 Map<String, SearchPath> map = new LinkedHashMap<>();
                 int eq = value.indexOf('=');
                 if (eq > 0) {
