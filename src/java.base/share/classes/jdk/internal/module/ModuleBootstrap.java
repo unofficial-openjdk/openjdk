@@ -127,16 +127,16 @@ public final class ModuleBootstrap {
 
         long t2 = System.nanoTime();
 
-        // -upgrademodulepath option specified to launcher
+        // --upgrade-module-path option specified to launcher
         ModuleFinder upgradeModulePath
             = createModulePathFinder("jdk.module.upgrade.path");
         if (upgradeModulePath != null)
             systemModules = ModuleFinder.compose(upgradeModulePath, systemModules);
 
-        // -modulepath option specified to the launcher
+        // --module-path option specified to the launcher
         ModuleFinder appModulePath = createModulePathFinder("jdk.module.path");
 
-        // The module finder: [-upgrademodulepath] system [-modulepath]
+        // The module finder: [--upgrade-module-path] system [--module-path]
         ModuleFinder finder = systemModules;
         if (appModulePath != null)
             finder = ModuleFinder.compose(finder, appModulePath);
