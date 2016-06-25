@@ -82,23 +82,23 @@ $JAVAC -d mods --module-source-path $TESTSRC/src `find $TESTSRC/src/test -name "
 
 
 echo "\nRunning with the 'java.desktop' module..."
-$JAVA -Dtest.src=${TESTSRC} -mp mods -m test/test.StoreObject ldap://localhost/dc=ie,dc=oracle,dc=com
+$JAVA -Dtest.src=${TESTSRC} -p mods -m test/test.StoreObject ldap://localhost/dc=ie,dc=oracle,dc=com
 
 echo "\nRunning with the 'person' module..."
-$JAVA -Dtest.src=${TESTSRC} -mp mods -m test/test.StorePerson ldap://localhost/dc=ie,dc=oracle,dc=com
+$JAVA -Dtest.src=${TESTSRC} -p mods -m test/test.StorePerson ldap://localhost/dc=ie,dc=oracle,dc=com
 
 echo "\nRunning with the 'fruit' module..."
-$JAVA -Dtest.src=${TESTSRC} -mp mods -m test/test.StoreFruit ldap://localhost/dc=ie,dc=oracle,dc=com
+$JAVA -Dtest.src=${TESTSRC} -p mods -m test/test.StoreFruit ldap://localhost/dc=ie,dc=oracle,dc=com
 
 echo "\nRunning with the 'hello' module..."
-$JAVA -Dtest.src=${TESTSRC} -mp mods -m test/test.StoreRemote ldap://localhost/dc=ie,dc=oracle,dc=com
+$JAVA -Dtest.src=${TESTSRC} -p mods -m test/test.StoreRemote ldap://localhost/dc=ie,dc=oracle,dc=com
 
 echo "\nRunning with the 'foo' module..."
-$JAVA -Dtest.src=${TESTSRC} -mp mods -m test/test.ConnectWithFoo ldap://localhost/dc=ie,dc=oracle,dc=com
+$JAVA -Dtest.src=${TESTSRC} -p mods -m test/test.ConnectWithFoo ldap://localhost/dc=ie,dc=oracle,dc=com
 
 echo "\nRunning with the 'authz' module..."
-$JAVA -Dtest.src=${TESTSRC} -mp mods -m test/test.ConnectWithAuthzId ldap://localhost/dc=ie,dc=oracle,dc=com
+$JAVA -Dtest.src=${TESTSRC} -p mods -m test/test.ConnectWithAuthzId ldap://localhost/dc=ie,dc=oracle,dc=com
 
 echo "\nRunning with the 'ldapv4' module..."
-$JAVA -Dtest.src=${TESTSRC} -mp mods -m test/test.ReadByUrl ldap://localhost/dc=ie,dc=oracle,dc=com
+$JAVA -Dtest.src=${TESTSRC} -p mods -m test/test.ReadByUrl ldap://localhost/dc=ie,dc=oracle,dc=com
 

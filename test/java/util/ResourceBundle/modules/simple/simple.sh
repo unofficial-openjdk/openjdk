@@ -65,6 +65,6 @@ fi
 $JAVAC -g -d mods --module-source-path $TESTSRC/src \
        -cp mods/bundles `find $TESTSRC/src/test -name "*.java"`
 
-$JAVA -mp mods -m test/jdk.test.Main de fr ja zh-tw en de
+$JAVA -p mods -m test/jdk.test.Main de fr ja zh-tw en de
 
 exit $?

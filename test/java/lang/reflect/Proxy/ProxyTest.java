@@ -71,7 +71,7 @@ public class ProxyTest {
     @Test
     public void runTest() throws Exception {
         int exitValue = executeTestJava("-cp", CPATH_DIR.toString(),
-                                        "-mp", MODS_DIR.toString(),
+                                        "--module-path", MODS_DIR.toString(),
                                         "-m", "test/jdk.test.Main")
                             .outputTo(System.out)
                             .errorTo(System.out)

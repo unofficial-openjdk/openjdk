@@ -116,7 +116,7 @@ public class ContainerTest {
 
         compiled = CompilerUtils.compile(SRC_DIR.resolve("app2"),
                                          dir.resolve("app2"),
-                                         "-mp", dir.toString());
+                                         "--module-path", dir.toString());
         assertTrue(compiled);
     }
 
@@ -134,7 +134,7 @@ public class ContainerTest {
     public void testContainer() throws Exception {
 
         int exitValue
-            = executeTestJava("-mp", MLIB_DIR.toString(),
+            = executeTestJava("--module-path", MLIB_DIR.toString(),
                               "-m", CONTAINER_MODULE)
                 .outputTo(System.out)
                 .errorTo(System.err)

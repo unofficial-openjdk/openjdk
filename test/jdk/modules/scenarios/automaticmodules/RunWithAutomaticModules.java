@@ -100,7 +100,7 @@ public class RunWithAutomaticModules {
         compiled = CompilerUtils
             .compile(SRC_DIR.resolve(testModule),
                     MODS_DIR.resolve(testModule),
-                    "-mp", MODS_DIR.toString());
+                    "--module-path", MODS_DIR.toString());
         assertTrue(compiled);
 
 
@@ -159,7 +159,7 @@ public class RunWithAutomaticModules {
         compiled = CompilerUtils
                 .compile(SRC_DIR.resolve(testModule),
                         MODS_DIR.resolve(testModule),
-                        "-mp", MODS_DIR.toString());
+                        "--module-path", MODS_DIR.toString());
 
         assertTrue(compiled);
 
@@ -167,7 +167,7 @@ public class RunWithAutomaticModules {
         // launch the test
 
         int exitValue
-            = executeTestJava("-mp", MODS_DIR.toString(),
+            = executeTestJava("--module-path", MODS_DIR.toString(),
                               "-m", testModule + "/" + mainClass)
                 .outputTo(System.out)
                 .errorTo(System.out)

@@ -63,6 +63,6 @@ done
 mkdir -p mods/test
 $JAVAC -g -d mods --module-source-path $TESTSRC/src `find $TESTSRC/src/test -name "*.java"`
 
-$JAVA -mp mods -m test/jdk.test.Main de fr ja zh-tw en de
+$JAVA -p mods -m test/jdk.test.Main de fr ja zh-tw en de
 
 exit $?

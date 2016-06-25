@@ -145,7 +145,7 @@ public class PatchTest {
                                "--add-exports", "jdk.naming.dns/com.sun.jndi.dns2=test",
                                "--add-exports", "jdk.compiler/com.sun.tools.javac2=test",
                                "--add-modules", "jdk.naming.dns,jdk.compiler",
-                               "-mp", MODS_DIR.toString(),
+                               "--module-path", MODS_DIR.toString(),
                                "-m", "test/jdk.test.Main", arg)
                 .outputTo(System.out)
                 .errorTo(System.out)

@@ -81,9 +81,9 @@ $JAR -cf extra.jar -C classes jdk/test/resources/eu \
 STATUS=0
 
 echo "jdk.test.Main should load bundles using ResourceBundleProviders."
-$JAVA -mp mods -m test/jdk.test.Main de fr ja ja-jp zh-tw en de ja-jp || STATUS=1
+$JAVA -p mods -m test/jdk.test.Main de fr ja ja-jp zh-tw en de ja-jp || STATUS=1
 
 echo "jdk.test.Main should NOT load bundles from the jar file specified by the class-path."
-$JAVA -cp extra.jar -mp mods -m test/jdk.test.Main es vi && STATUS=1
+$JAVA -cp extra.jar -p mods -m test/jdk.test.Main es vi && STATUS=1
 
 exit $STATUS
