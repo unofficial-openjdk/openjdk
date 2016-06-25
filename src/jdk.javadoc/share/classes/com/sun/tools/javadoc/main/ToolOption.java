@@ -139,6 +139,13 @@ public enum ToolOption {
         }
     },
 
+    SYSTEM_("--system", true) {
+        @Override
+        public void process(Helper helper, String arg) {
+            helper.setFileManagerOpt(Option.SYSTEM, arg);
+        }
+    },
+
     MODULEPATH("-modulepath", true) {
         @Override
         public void process(Helper helper, String arg) {
