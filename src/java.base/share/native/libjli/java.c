@@ -167,13 +167,16 @@ static int  KnownVMIndex(const char* name);
 static void FreeKnownVMs();
 static jboolean IsWildCardEnabled();
 
+/*
+ * This reports error.  VM will not be created and no usage is printed.
+ */
 #define REPORT_ERROR(AC_ok, AC_failure_message, AC_questionable_arg) \
     do { \
         if (!AC_ok) { \
             JLI_ReportErrorMessage(AC_failure_message, AC_questionable_arg); \
-            printUsage = JNI_TRUE; \
+            printUsage = JNI_FALSE; \
             *pret = 1; \
-            return JNI_TRUE; \
+            return JNI_FALSE; \
         } \
     } while (JNI_FALSE)
 
@@ -773,6 +776,7 @@ SetJvmEnvironment(int argc, char **argv) {
                     || JLI_StrCmp(arg, "-version") == 0
                     || JLI_StrCmp(arg, "-fullversion") == 0
                     || JLI_StrCmp(arg, "-help") == 0
+                    || JLI_StrCmp(arg, "--help") == 0
                     || JLI_StrCmp(arg, "-?") == 0
                     || JLI_StrCmp(arg, "-jar") == 0
                     || JLI_StrCmp(arg, "-X") == 0) {
@@ -946,13 +950,6 @@ SetClassPath(const char *s)
 }
 
 static void
-AddModulePathOption(const char *option, const char *s)
-{
-    AddOption((char*) option, NULL);
-    AddOption((char*) JLI_WildcardExpandClasspath(s), NULL);
-}
-
-static void
 AddLongFormOption(const char *option, const char *arg)
 {
     static const char format[] = "%s=%s";
@@ -961,24 +958,6 @@ AddLongFormOption(const char *option, const char *arg)
     def = JLI_MemAlloc(JLI_StrLen(option)+1+JLI_StrLen(arg)+1);
     sprintf(def, format, option, arg);
     AddOption(def, NULL);
-}
-
-static void
-AddDashXOption(const char *option, const char *arg)
-{
-    static const char format[] = "%s%s";
-    char *def;
-
-    def = JLI_MemAlloc(JLI_StrLen(option)+JLI_StrLen(arg)+1);
-    sprintf(def, format, option, arg);
-    AddOption(def, NULL);
-}
-
-static void
-AddOptionWithArgument(const char *option, const char *arg)
-{
-    AddOption((char*) option, NULL);
-    AddOption((char*) arg, NULL);
 }
 
 static void
@@ -1333,27 +1312,26 @@ ParseArguments(int *pargc, char ***pargv,
         } else if (!has_arg && IsWhiteSpaceOption(arg)) {
             if (JLI_StrCmp(arg, "--module-path") == 0 ||
                 JLI_StrCmp(arg, "-p") == 0 ||
-                JLI_StrCmp(arg, "--upgrade-module-path") == 0) {
+                JLI_StrCmp(arg, "-modulepath") == 0 ||
+                JLI_StrCmp(arg, "-mp") == 0 ||
+                JLI_StrCmp(arg, "--upgrade-module-path") == 0 ||
+                JLI_StrCmp(arg, "-upgrademodulepath") == 0) {
                 REPORT_ERROR (has_arg, ARG_ERROR4, arg);
             } else if (JLI_StrCmp(arg, "--add-modules") == 0 ||
+                       JLI_StrCmp(arg, "-addmods") == 0 ||
                        JLI_StrCmp(arg, "--limit-modules") == 0 ||
+                       JLI_StrCmp(arg, "-limitmods") == 0 ||
                        JLI_StrCmp(arg, "--add-exports") == 0 ||
                        JLI_StrCmp(arg, "--add-reads") == 0 ||
                        JLI_StrCmp(arg, "--patch-module") == 0) {
-                REPORT_ERROR (has_arg, ARG_ERROR6, arg);
-            } else if (JLI_StrCmp(arg, "-modulepath") == 0 ||
-                       JLI_StrCmp(arg, "-mp") == 0 ||
-                       JLI_StrCmp(arg, "-upgrademodulepath") == 0) {
-                REPORT_ERROR (has_arg, ARG_ERROR4, arg);
-            } else if (JLI_StrCmp(arg, "-addmods") == 0 ||
-                       JLI_StrCmp(arg, "-limitmods") == 0) {
                 REPORT_ERROR (has_arg, ARG_ERROR6, arg);
             }
 
 /*
  * The following cases will cause the argument parsing to stop
  */
-        } else if (JLI_StrCmp(arg, "-help") == 0 ||
+        } else if (JLI_StrCmp(arg, "--help") == 0 ||
+                   JLI_StrCmp(arg, "-help") == 0 ||
                    JLI_StrCmp(arg, "-h") == 0 ||
                    JLI_StrCmp(arg, "-?") == 0) {
             printUsage = JNI_TRUE;
