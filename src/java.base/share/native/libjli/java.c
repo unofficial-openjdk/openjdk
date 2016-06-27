@@ -136,7 +136,7 @@ enum OptionKind {
 };
 
 static int GetOpt(int *pargc, char ***pargv, char **poption, char **pvalue);
-static jboolean HasArgument(const char* option, int argc, const char* arg);
+static jboolean IsOptionWithArgument(int argc, char **argv);
 
 /* Maximum supported entries from jvm.cfg. */
 #define INIT_MAX_KNOWN_VMS      10
@@ -1006,6 +1006,7 @@ SelectVersion(int argc, char **argv, char **main_class)
     char    *splash_jar_name = NULL;
     char    *env_in;
     int     res;
+    jboolean has_arg;
 
     /*
      * If the version has already been selected, set *main_class
@@ -1036,9 +1037,11 @@ SelectVersion(int argc, char **argv, char **main_class)
      * This capability is no longer available with JRE versions 1.9 and later.
      * These command line options are reported as errors.
      */
+
     argc--;
     argv++;
     while ((arg = *argv) != 0 && *arg == '-') {
+        has_arg = IsOptionWithArgument(argc, argv);
         if (JLI_StrCCmp(arg, "-version:") == 0) {
             JLI_ReportErrorMessage(SPC_ERROR1);
         } else if (JLI_StrCmp(arg, "-jre-restrict-search") == 0) {
@@ -1049,9 +1052,7 @@ SelectVersion(int argc, char **argv, char **main_class)
             if (JLI_StrCmp(arg, "-jar") == 0)
                 jarflag = 1;
             if (IsWhiteSpaceOption(arg)) {
-                char* p = *argv;
-                p++;
-                if (HasArgument(arg, argc-1, p)) {
+                if (has_arg) {
                     argc--;
                     argv++;
                     arg = *argv;
@@ -1147,11 +1148,17 @@ SelectVersion(int argc, char **argv, char **main_class)
 }
 
 /*
- * Test if the given name has a white space option.
+ * Test if the current argv is an option, i.e. with a leading `-`
+ * and followed with an argument without a leading `-`.
  */
 static jboolean
-HasArgument(const char* option, int argc, const char* arg) {
-    return argc >= 1 && *arg != '-';
+IsOptionWithArgument(int argc, char** argv) {
+    if (argc <= 1)
+        return JNI_FALSE;
+
+    char* option = *argv;
+    char* arg = *(argv+1);
+    return *option == '-' && *arg != '-';
 }
 
 /*
@@ -1170,9 +1177,10 @@ GetOpt(int *pargc, char ***pargv, char **poption, char **pvalue) {
     int kind = LAUNCHER_OPTION;
     jboolean has_arg = JNI_FALSE;
 
-    argv++; --argc;
-    has_arg = HasArgument(arg, argc, *argv);
+    // check if this option may be a white-space option with an argument
+    has_arg = IsOptionWithArgument(argc, argv);
 
+    argv++; --argc;
     if (IsLauncherOption(arg)) {
         if (has_arg) {
             value = *argv;
@@ -1293,8 +1301,9 @@ ParseArguments(int *pargc, char ***pargv,
             // set listModules to --list-modules=<module-names> if argument is specified
             if (JLI_StrCmp(arg, "--list-modules") == 0 && has_arg) {
                 static const char format[] = "%s=%s";
-                listModules = JLI_MemAlloc(JLI_StrLen(option)+2+JLI_StrLen(value));
-                sprintf(listModules, format, option, value);
+                size_t buflen = JLI_StrLen(option)+2+JLI_StrLen(value);
+                listModules = JLI_MemAlloc(buflen);
+                JLI_Snprintf(listModules, buflen, format, option, value);
             }
             return JNI_TRUE;
 /*
