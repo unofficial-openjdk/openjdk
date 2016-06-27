@@ -26,6 +26,8 @@
  * @summary Basic test of VM::getRuntimeArguments
  * @library /lib/testlibrary
  * @modules java.base/jdk.internal.misc
+ *          java.compact3
+ *          jdk.zipfs
  * @run testng RuntimeArguments
  */
 
