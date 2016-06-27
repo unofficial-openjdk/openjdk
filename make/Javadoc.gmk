@@ -429,7 +429,7 @@ $(COREAPI_OPTIONS_FILE): $(COREAPI_OVERVIEW)
           $(call COMMON_JAVADOCTAGS) ; \
           $(call OptionOnly,-Xdoclint:reference) ; \
           $(call OptionOnly,-Xdoclint/package:-org.omg.*) ; \
-          $(call OptionPair,-system,none) ; \
+          $(call OptionPair,--system,none) ; \
 	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
 	  $(call OptionPair,--add-modules,$(COREAPI_MODULES)) ; \
 	  $(call OptionPair,-encoding,ISO-8859-1) ; \
@@ -492,7 +492,7 @@ $(DOCLETAPI_OPTIONS_FILE):
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:all) ; \
-          $(call OptionPair,-system,none) ; \
+          $(call OptionPair,--system,none) ; \
 	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
 	  $(call OptionPair,--add-modules,$(DOCLETAPI_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
@@ -554,7 +554,7 @@ $(OLD_DOCLETAPI_OPTIONS_FILE):
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:all) ; \
-          $(call OptionPair,-system,none) ; \
+          $(call OptionPair,--system,none) ; \
 	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
 	  $(call OptionPair,--add-modules,$(OLD_DOCLETAPI_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
@@ -617,7 +617,7 @@ $(TAGLETAPI_OPTIONS_FILE):
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:all) ; \
-          $(call OptionPair,-system,none) ; \
+          $(call OptionPair,--system,none) ; \
 	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
 	  $(call OptionPair,--add-modules,$(TAGLETAPI_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
@@ -675,7 +675,7 @@ $(DOMAPI_OPTIONS_FILE):
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
-          $(call OptionPair,-system,none) ; \
+          $(call OptionPair,--system,none) ; \
 	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
 	  $(call OptionPair,--add-modules,$(DOMAPI_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
@@ -744,7 +744,7 @@ $(JDI_OPTIONS_FILE): $(JDI_OVERVIEW)
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
-          $(call OptionPair,-system,none) ; \
+          $(call OptionPair,--system,none) ; \
 	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
 	  $(call OptionPair,--add-modules,$(JDI_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
@@ -837,7 +837,7 @@ $(JAAS_OPTIONS_FILE): $(JAAS_OVERVIEW)
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
-          $(call OptionPair,-system,none) ; \
+          $(call OptionPair,--system,none) ; \
 	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
 	  $(call OptionPair,--add-modules,$(JAAS_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
@@ -896,7 +896,7 @@ $(JGSS_OPTIONS_FILE): $(JGSS_OVERVIEW)
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
-          $(call OptionPair,-system,none) ; \
+          $(call OptionPair,--system,none) ; \
 	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
 	  $(call OptionPair,--add-modules,$(JGSS_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
@@ -955,7 +955,7 @@ $(SMARTCARDIO_OPTIONS_FILE):
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
-          $(call OptionPair,-system,none) ; \
+          $(call OptionPair,--system,none) ; \
 	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
 	  $(call OptionPair,--add-modules,$(SMARTCARDIO_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
@@ -1012,7 +1012,7 @@ $(HTTPSERVER_OPTIONS_FILE):
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
-          $(call OptionPair,-system,none) ; \
+          $(call OptionPair,--system,none) ; \
 	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
 	  $(call OptionPair,--add-modules,$(HTTPSERVER_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
@@ -1078,7 +1078,7 @@ $(MGMT_OPTIONS_FILE): $(MGMT_OVERVIEW)
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
-          $(call OptionPair,-system,none) ; \
+          $(call OptionPair,--system,none) ; \
 	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
 	  $(call OptionPair,--add-modules,$(MGMT_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
@@ -1136,7 +1136,7 @@ $(ATTACH_OPTIONS_FILE):
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
-          $(call OptionPair,-system,none) ; \
+          $(call OptionPair,--system,none) ; \
 	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
 	  $(call OptionPair,--add-modules,$(ATTACH_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
@@ -1193,7 +1193,7 @@ $(JCONSOLE_OPTIONS_FILE):
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
-          $(call OptionPair,-system,none) ; \
+          $(call OptionPair,--system,none) ; \
 	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
 	  $(call OptionPair,--add-modules,$(JCONSOLE_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
@@ -1252,7 +1252,7 @@ $(JSHELLAPI_OPTIONS_FILE):
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:all) ; \
-          $(call OptionPair,-system,none) ; \
+          $(call OptionPair,--system,none) ; \
 	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
 	  $(call OptionPair,--add-modules,$(JSHELLAPI_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
@@ -1311,7 +1311,7 @@ $(TREEAPI_OPTIONS_FILE):
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:all) ; \
-          $(call OptionPair,-system,none) ; \
+          $(call OptionPair,--system,none) ; \
 	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
 	  $(call OptionPair,--add-modules,$(TREEAPI_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
@@ -1370,7 +1370,7 @@ $(NASHORNAPI_OPTIONS_FILE):
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:all) ; \
-          $(call OptionPair,-system,none) ; \
+          $(call OptionPair,--system,none) ; \
 	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
 	  $(call OptionPair,--add-modules,$(NASHORNAPI_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
@@ -1429,7 +1429,7 @@ $(DYNALINKAPI_OPTIONS_FILE):
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:all) ; \
-          $(call OptionPair,-system,none) ; \
+          $(call OptionPair,--system,none) ; \
 	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
 	  $(call OptionPair,--add-modules,$(DYNALINKAPI_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
@@ -1485,7 +1485,7 @@ $(SCTPAPI_OPTIONS_FILE):
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
-          $(call OptionPair,-system,none) ; \
+          $(call OptionPair,--system,none) ; \
 	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
 	  $(call OptionPair,--add-modules,$(SCTPAPI_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
@@ -1542,7 +1542,7 @@ $(JACCESSAPI_OPTIONS_FILE):
 	@($(call COMMON_JAVADOCFLAGS) ; \
 	  $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:all) ; \
-          $(call OptionPair,-system,none) ; \
+          $(call OptionPair,--system,none) ; \
 	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
 	  $(call OptionPair,--add-modules,$(JACCESSAPI_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
@@ -1599,7 +1599,7 @@ $(JDKNET_OPTIONS_FILE):
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
-          $(call OptionPair,-system,none) ; \
+          $(call OptionPair,--system,none) ; \
 	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
 	  $(call OptionPair,--add-modules,$(JDKNET_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
@@ -1660,7 +1660,7 @@ $(JLINK_PLUGIN_OPTIONS_FILE):
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
-          $(call OptionPair,-system,none) ; \
+          $(call OptionPair,--system,none) ; \
 	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
 	  $(call OptionPair,--add-modules,$(JLINK_PLUGIN_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
