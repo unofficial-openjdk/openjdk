@@ -97,14 +97,12 @@ public enum Option {
 
     XLINT("-Xlint", "opt.Xlint", EXTENDED, BASIC),
 
-    XLINT_CUSTOM("-Xlint:", EXTENDED, BASIC, ANYOF, getXLintChoices()) {
-        private static final String LINT_KEY_FORMAT = "         %-19s %s";
+    XLINT_CUSTOM("-Xlint:", "opt.arg.Xlint", "opt.Xlint.custom", EXTENDED, BASIC, ANYOF, getXLintChoices()) {
+        private final String LINT_KEY_FORMAT = LARGE_INDENT + "  %-" +
+                (DEFAULT_SYNOPSIS_WIDTH + SMALL_INDENT.length() - LARGE_INDENT.length() - 2) + "s %s";
         @Override
         protected void help(Log log) {
-            log.printRawLines(WriterKind.NOTICE,
-                              String.format(HELP_LINE_FORMAT,
-                                            log.localize(PrefixKind.JAVAC, "opt.Xlint.subopts"),
-                                            log.localize(PrefixKind.JAVAC, "opt.Xlint.suboptlist")));
+            super.help(log);
             log.printRawLines(WriterKind.NOTICE,
                               String.format(LINT_KEY_FORMAT,
                                             "all",
@@ -295,10 +293,7 @@ public enum Option {
                 delim = ", ";
             }
 
-            log.printRawLines(WriterKind.NOTICE,
-                    String.format(HELP_LINE_FORMAT,
-                        super.helpSynopsis(primaryName, log),
-                        log.localize(PrefixKind.JAVAC, descrKey, targets.toString())));
+            super.help(log, log.localize(PrefixKind.JAVAC, descrKey, targets.toString()));
         }
     },
 
@@ -760,9 +755,9 @@ public enum Option {
         this(text, argsNameKey, descrKey, kind, group, null, null, ak);
     }
 
-    Option(String text, OptionKind kind, OptionGroup group,
+    Option(String text, String argsNameKey, String descrKey, OptionKind kind, OptionGroup group,
             ChoiceKind choiceKind, Map<String,Boolean> choices) {
-        this(text, null, null, kind, group, choiceKind, choices, ArgKind.REQUIRED);
+        this(text, argsNameKey, descrKey, kind, group, choiceKind, choices, ArgKind.REQUIRED);
     }
 
     Option(String text, String descrKey,
@@ -949,19 +944,51 @@ public enum Option {
         return -1;
     }
 
-    private static final String HELP_LINE_FORMAT = "  %-26s %s";
+    /** The indent for the option synopsis. */
+    private static final String SMALL_INDENT = "  ";
+    /** The automatic indent for the description. */
+    private static final String LARGE_INDENT = "        ";
+    /** The space allowed for the synopsis, if the description is to be shown on the same line. */
+    private static final int DEFAULT_SYNOPSIS_WIDTH = 28;
+    /** The nominal maximum line length, when seeing if text will fit on a line. */
+    private static final int DEFAULT_MAX_LINE_LENGTH = 80;
+    /** The format for a single-line help entry. */
+    private static final String COMPACT_FORMAT = SMALL_INDENT + "%-" + DEFAULT_SYNOPSIS_WIDTH + "s %s";
 
     /**
      * Writes help text for this option to the log.
      * @param log the log
      */
     protected void help(Log log) {
-        for (int i = 0; i < names.length; i++) {
-            String name = names[i];
-            String synopsis = helpSynopsis(name, log);
-            String descr = (i < names.length - 1) ? "" : log.localize(PrefixKind.JAVAC, descrKey);
-            log.printRawLines(WriterKind.NOTICE, String.format(HELP_LINE_FORMAT, synopsis, descr));
+        help(log, log.localize(PrefixKind.JAVAC, descrKey));
+    }
+
+    protected void help(Log log, String descr) {
+        String synopses = Arrays.stream(names)
+                .map(s -> helpSynopsis(s, log))
+                .collect(Collectors.joining(", "));
+
+        // If option synopses and description fit on a single line of reasonable length,
+        // display using COMPACT_FORMAT
+        if (synopses.length() < DEFAULT_SYNOPSIS_WIDTH
+                && !descr.contains("\n")
+                && (SMALL_INDENT.length() + DEFAULT_SYNOPSIS_WIDTH + 1 + descr.length() <= DEFAULT_MAX_LINE_LENGTH)) {
+            log.printRawLines(WriterKind.NOTICE, String.format(COMPACT_FORMAT, synopses, descr));
+            return;
         }
+
+        // If option synopses fit on a single line of reasonable length, show that;
+        // otherwise, show 1 per line
+        if (synopses.length() <= DEFAULT_MAX_LINE_LENGTH) {
+            log.printRawLines(WriterKind.NOTICE, SMALL_INDENT + synopses);
+        } else {
+            for (String name: names) {
+                log.printRawLines(WriterKind.NOTICE, SMALL_INDENT + helpSynopsis(name, log));
+            }
+        }
+
+        // Finally, show the description
+        log.printRawLines(WriterKind.NOTICE, LARGE_INDENT + descr.replace("\n", "\n" + LARGE_INDENT));
     }
 
     /**
@@ -986,7 +1013,7 @@ public enum Option {
                 sb.append("}");
             }
         } else {
-            if (!name.matches("[=:]$") && argKind != ArgKind.ADJACENT)
+            if (!name.matches(".*[=:]$") && argKind != ArgKind.ADJACENT)
                 sb.append(" ");
             sb.append(log.localize(PrefixKind.JAVAC, argsNameKey));
         }
