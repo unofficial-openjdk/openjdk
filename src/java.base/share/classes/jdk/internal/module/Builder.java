@@ -24,11 +24,13 @@
  */
 package jdk.internal.module;
 
+import static java.lang.module.ModuleDescriptor.Exports.Modifier.DYNAMIC;
+import static java.lang.module.ModuleDescriptor.Requires.Modifier.*;
+
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Requires;
-import java.lang.module.ModuleDescriptor.Requires.Modifier;
 import java.lang.module.ModuleDescriptor.Version;
 import java.util.Collections;
 import java.util.HashMap;
@@ -54,12 +56,15 @@ final class Builder {
     private static final JavaLangModuleAccess jlma =
         SharedSecrets.getJavaLangModuleAccess();
 
-    private static final Set<Modifier> MANDATED_MODS =
-        Collections.singleton(Modifier.MANDATED);
-    private static final Set<Modifier> PUBLIC_MODS =
-        Collections.singleton(Modifier.PUBLIC);
-    private static final Set<Modifier> STATIC_MODS =
-        Collections.singleton(Modifier.STATIC);
+    private static final Set<Requires.Modifier> MANDATED_MODS =
+        Collections.singleton(MANDATED);
+    private static final Set<Requires.Modifier> PUBLIC_MODS =
+        Collections.singleton(PUBLIC);
+    private static final Set<Requires.Modifier> STATIC_MODS =
+        Collections.singleton(STATIC);
+
+    private static final Set<Exports.Modifier> DYNAMIC_MODS =
+        Collections.singleton(DYNAMIC);
 
     // Static cache of the most recently seen Version to cheaply deduplicate
     // most Version objects.  JDK modules have the same version.
@@ -134,7 +139,7 @@ final class Builder {
     }
 
     /**
-     * Adds an export to a set of target modules.
+     * Adds a qualified export to a set of target modules with no modifier.
      */
     public Builder exports(String pn, Set<String> targets) {
         exports.add(jlma.newExports(Collections.emptySet(), pn, targets));
@@ -142,17 +147,79 @@ final class Builder {
     }
 
     /**
-     * Adds an export to a target module.
+     * Adds a qualified export to one target module with no modifier.
      */
     public Builder exports(String pn, String target) {
         return exports(pn, Collections.singleton(target));
     }
 
     /**
-     * Adds an export.
+     * Adds an unqualified export with no modifier.
      */
     public Builder exports(String pn) {
         exports.add(jlma.newExports(Collections.emptySet(), pn));
+        return this;
+    }
+
+    /**
+     * Adds a qualified export to a set of target modules with
+     * a given modifier.
+     */
+    public Builder exportsWithModifier(Exports.Modifier mod,
+                                       String pn, Set<String> targets) {
+        if (mod == DYNAMIC) {
+            exports.add(jlma.newExports(DYNAMIC_MODS, pn, targets));
+        } else {
+            exports.add(jlma.newExports(Collections.singleton(mod), pn, targets));
+        }
+        return this;
+    }
+
+    /**
+     * Adds a qualified export to one target module with
+     * a given modifier.
+     */
+    public Builder exportsWithModifier(Exports.Modifier mod,
+                                       String pn, String target) {
+        return exportsWithModifier(mod, pn, Collections.singleton(target));
+    }
+
+    /**
+     * Adds an unqualified export with a given modifier.
+     */
+    public Builder exportsWithModifier(Exports.Modifier mod, String pn) {
+        if (mod == DYNAMIC) {
+            exports.add(jlma.newExports(DYNAMIC_MODS, pn));
+        } else {
+            exports.add(jlma.newExports(Collections.singleton(mod), pn));
+        }
+        return this;
+    }
+
+    /**
+     * Adds a qualified export to a set of target modules with
+     * a given set of modifiers.
+     */
+    public Builder exportsWithModifiers(Set<Exports.Modifier> ms,
+                                        String pn, Set<String> targets) {
+        exports.add(jlma.newExports(ms, pn, targets));
+        return this;
+    }
+
+    /**
+     * Adds a qualified export to one target moduls with
+     * a given set of modifiers.
+     */
+    public Builder exportsWithModifiers(Set<Exports.Modifier> ms,
+                                        String pn, String target) {
+        return exportsWithModifiers(ms, pn, Collections.singleton(target));
+    }
+
+    /**
+     * Adds an unqualified export with a given set of modifiers.
+     */
+    public Builder exportsWithModifiers(Set<Exports.Modifier> ms, String pn) {
+        exports.add(jlma.newExports(ms, pn));
         return this;
     }
 

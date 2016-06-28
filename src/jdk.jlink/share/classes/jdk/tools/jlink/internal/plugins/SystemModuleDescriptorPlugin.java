@@ -70,11 +70,7 @@ import jdk.tools.jlink.plugin.ModuleEntry;
 public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
     private static final JavaLangModuleAccess JLMA = SharedSecrets.getJavaLangModuleAccess();
 
-    // TODO: packager has the dependency on the plugin name
-    // Keep it as "--installed-modules" until packager removes such
-    // dependency (should not need to specify this plugin since it
-    // is enabled by default)
-    private static final String NAME = "installed-modules";
+    private static final String NAME = "system-modules";
     private static final String DESCRIPTION = PluginsResourceBundle.getDescription(NAME);
     private boolean enabled;
 
@@ -422,17 +418,42 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
         }
 
         class ModuleDescriptorBuilder {
+            static final String BUILDER_TYPE = "Ljdk/internal/module/Builder;";
+
+            // type names and signatures related to Requires
             static final String REQUIRES_MODIFIER_CLASSNAME =
                     "java/lang/module/ModuleDescriptor$Requires$Modifier";
             static final String REQUIRES_MODIFIER_TYPE =
                 "Ljava/lang/module/ModuleDescriptor$Requires$Modifier;";
-            static final String BUILDER_TYPE = "Ljdk/internal/module/Builder;";
             static final String REQUIRES_MODIFIER_STRING_SIG =
                 "(" + REQUIRES_MODIFIER_TYPE + "Ljava/lang/String;)" + BUILDER_TYPE;
+
+            // type names and signatures related to Exports
+            static final String EXPORTS_MODIFIER_CLASSNAME =
+                "java/lang/module/ModuleDescriptor$Exports$Modifier";
+            static final String EXPORTS_MODIFIER_TYPE =
+                "Ljava/lang/module/ModuleDescriptor$Exports$Modifier;";
+            static final String EXPORTS_STRING_SET_SIG =
+                "(Ljava/lang/String;Ljava/util/Set;)" + BUILDER_TYPE;
+            static final String EXPORTS_STRING_SIG =
+                "(Ljava/lang/String;)" + BUILDER_TYPE;
+            static final String EXPORTS_MODIFIER_STRING_SET_SIG =
+                "(" + EXPORTS_MODIFIER_TYPE + "Ljava/lang/String;Ljava/util/Set;)"
+                    + BUILDER_TYPE;
+            static final String EXPORTS_MODIFIER_STRING_SIG =
+                "(" + EXPORTS_MODIFIER_TYPE + "Ljava/lang/String;)" + BUILDER_TYPE;
+            static final String EXPORTS_MODIFIER_SET_STRING_SET_SIG =
+                "(Ljava/lang/Set;Ljava/lang/String;Ljava/util/Set;)"
+                    + BUILDER_TYPE;
+            static final String EXPORTS_MODIFIER_SET_STRING_SIG =
+                "(Ljava/lang/Set;Ljava/lang/String;)" + BUILDER_TYPE;
+
+            // general type names and signatures
             static final String STRING_SET_SIG =
                 "(Ljava/lang/String;Ljava/util/Set;)" + BUILDER_TYPE;
             static final String SET_STRING_SIG =
                 "(Ljava/util/Set;Ljava/lang/String;)" + BUILDER_TYPE;
+
             static final String SET_SIG =
                 "(Ljava/util/Set;)" + BUILDER_TYPE;
             static final String STRING_SIG = "(Ljava/lang/String;)" + BUILDER_TYPE;
@@ -497,7 +518,8 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
                     Set<Requires.Modifier> mods = req.modifiers();
                     if (mods.contains(Requires.Modifier.PUBLIC) &&
                             mods.contains(Requires.Modifier.STATIC)) {
-                        throw new IllegalArgumentException("PUBLIC and STATIC not allowed together");
+                        throw new IllegalArgumentException(
+                            "PUBLIC and STATIC not allowed together");
                     }
 
                     switch (req.modifiers().size()) {
@@ -516,10 +538,25 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
 
                 // exports
                 for (ModuleDescriptor.Exports e : md.exports()) {
-                    if (e.isQualified()) {
-                        exports(e.source(), e.targets());
-                    } else {
-                        exports(e.source());
+                    switch (e.modifiers().size()) {
+                        case 0:
+                            if (e.isQualified()) {
+                                exports(e.source(), e.targets());
+                            } else {
+                                exports(e.source());
+                            }
+                            break;
+                        case 1:
+                            ModuleDescriptor.Exports.Modifier mod =
+                                e.modifiers().iterator().next();
+                            if (e.isQualified()) {
+                                exportsWithModifier(mod, e.source(), e.targets());
+                            } else {
+                                exportsWithModifier(mod, e.source());
+                            }
+                            break;
+                        default:
+                            exportsWithModifiers(e.modifiers(), e.source(), e.targets());
                     }
                 }
 
@@ -589,7 +626,7 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
              * Invoke Builder.requires(Set<Modifier> mods, String mn)
              *
              * EnumSet<Modifier> mods = EnumSet.of(mod,....);
-             * Buidler.requires(mods, mn);
+             * Builder.requires(mods, mn);
              */
             void requires(Set<ModuleDescriptor.Requires.Modifier> mods, String name) {
                 mv.visitVarInsn(ALOAD, MODS_VAR);
@@ -619,7 +656,7 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
 
                 mv.visitLdcInsn(pn);
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                        "exports", STRING_SIG, false);
+                                   "exports", EXPORTS_STRING_SIG, false);
                 mv.visitInsn(POP);
             }
 
@@ -638,7 +675,88 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
                 mv.visitLdcInsn(pn);
                 mv.visitVarInsn(ALOAD, varIndex);
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                                   "exports", STRING_SET_SIG, false);
+                                   "exports", EXPORTS_STRING_SET_SIG, false);
+                mv.visitInsn(POP);
+            }
+
+            /*
+             * Invoke Builder.exportsWithModifier(String pn, Set<String> targets)
+             *
+             * Set<String> targets = new HashSet<>();
+             * targets.add(t);
+             * :
+             * :
+             * Builder.exportsWithModifier(pn, targets);
+             */
+            void exportsWithModifier(Exports.Modifier mod, String pn, Set<String> targets) {
+                int varIndex = stringSets.get(targets).build();
+                mv.visitVarInsn(ALOAD, BUILDER_VAR);
+                mv.visitFieldInsn(GETSTATIC, EXPORTS_MODIFIER_CLASSNAME, mod.name(),
+                                  EXPORTS_MODIFIER_TYPE);
+                mv.visitLdcInsn(pn);
+                mv.visitVarInsn(ALOAD, varIndex);
+                mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
+                                   "exportsWithModifier",
+                                   EXPORTS_MODIFIER_STRING_SET_SIG, false);
+                mv.visitInsn(POP);
+            }
+
+            /*
+             * Invoke Builder.exportsWithModifier(Exports.Modifier mod, String pn)
+             */
+            void exportsWithModifier(Exports.Modifier mod, String pn) {
+                mv.visitVarInsn(ALOAD, BUILDER_VAR);
+                mv.visitFieldInsn(GETSTATIC, EXPORTS_MODIFIER_CLASSNAME, mod.name(),
+                                  EXPORTS_MODIFIER_TYPE);
+                mv.visitLdcInsn(pn);
+                mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
+                                   "exportsWithModifier",
+                                   EXPORTS_MODIFIER_STRING_SIG, false);
+                mv.visitInsn(POP);
+            }
+
+            /*
+             * Invoke
+             *     Builder.exportsWithModifiers(Set<Exports.Modifier> ms, String pn,
+             *                                  Set<String> targets)
+             * or
+             *     Builder.exportsWithModifiers(Set<Exports.Modifier> ms, String pn)
+             *
+             * Set<String> targets = new HashSet<>();
+             * targets.add(t);
+             * :
+             * :
+             *
+             * EnumSet<Modifier> mods = EnumSet.of(mod,....);
+             * Builder.exportsWithModifiers(mods, pn, targets);
+             */
+            void exportsWithModifiers(Set<Exports.Modifier> ms,
+                                      String pn,
+                                      Set<String> targets) {
+                mv.visitVarInsn(ALOAD, BUILDER_VAR);
+                // create EnumSet
+                String signature = "(";
+                for (Exports.Modifier m : ms) {
+                    mv.visitFieldInsn(GETSTATIC, EXPORTS_MODIFIER_CLASSNAME, m.name(),
+                                      EXPORTS_MODIFIER_TYPE);
+                    signature += "Ljava/util/Enum;";
+                }
+                signature += ")Ljava/util/EnumSet;";
+                mv.visitMethodInsn(INVOKESTATIC, "java/util/EnumSet", "of",
+                                   signature, false);
+                mv.visitLdcInsn(pn);
+
+                if (targets.isEmpty()) {
+                    mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
+                                       "exportsWithModifiers",
+                                       EXPORTS_MODIFIER_SET_STRING_SIG, false);
+                } else {
+                    int varIndex = stringSets.get(targets).build();
+                    mv.visitVarInsn(ALOAD, varIndex);
+                    mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
+                                       "exportsWithModifiers",
+                                       EXPORTS_MODIFIER_SET_STRING_SET_SIG, false);
+                }
                 mv.visitInsn(POP);
             }
 
