@@ -552,6 +552,20 @@ IsLauncherOption(const char* name) {
            JLI_StrCmp(name, "--list-modules") == 0;
 }
 
+#ifndef OLD_MODULE_OPTIONS
+/*
+ * Old module options for transition
+ */
+static jboolean
+IsOldModuleOption(const char* name) {
+    return JLI_StrCmp(name, "-modulepath") == 0 ||
+    JLI_StrCmp(name, "-mp") == 0 ||
+    JLI_StrCmp(name, "-upgrademodulepath") == 0 ||
+    JLI_StrCmp(name, "-addmods") == 0 ||
+    JLI_StrCmp(name, "-limitmods") == 0;
+}
+#endif
+
 /*
  * Test if the given name is a module-system white-space option that
  * will be passed to the VM with its corresponding long-form option
@@ -566,19 +580,8 @@ IsModuleOption(const char* name) {
            JLI_StrCmp(name, "--limit-modules") == 0 ||
            JLI_StrCmp(name, "--add-exports") == 0 ||
            JLI_StrCmp(name, "--add-reads") == 0 ||
-           JLI_StrCmp(name, "--patch-module") == 0;
-}
-
-/*
- * Old options for transition
- */
-static jboolean
-IsOldModuleOption(const char* name) {
-    return JLI_StrCmp(name, "-modulepath") == 0 ||
-           JLI_StrCmp(name, "-mp") == 0 ||
-           JLI_StrCmp(name, "-upgrademodulepath") == 0 ||
-           JLI_StrCmp(name, "-addmods") == 0 ||
-           JLI_StrCmp(name, "-limitmods") == 0;
+           JLI_StrCmp(name, "--patch-module") == 0 ||
+           IsOldModuleOption(name);
 }
 
 /*
@@ -587,7 +590,6 @@ IsOldModuleOption(const char* name) {
 jboolean
 IsWhiteSpaceOption(const char* name) {
     return IsModuleOption(name) ||
-           IsOldModuleOption(name) ||
            IsLauncherOption(name);
 }
 
@@ -954,9 +956,11 @@ AddLongFormOption(const char *option, const char *arg)
 {
     static const char format[] = "%s=%s";
     char *def;
+    size_t def_len;
 
-    def = JLI_MemAlloc(JLI_StrLen(option)+1+JLI_StrLen(arg)+1);
-    sprintf(def, format, option, arg);
+    def_len = JLI_StrLen(option)+1+JLI_StrLen(arg)+1;
+    def = JLI_MemAlloc(def_len);
+    JLI_Snprintf(def, def_len, format, option, arg);
     AddOption(def, NULL);
 }
 
@@ -1194,7 +1198,7 @@ GetOpt(int *pargc, char ***pargv, char **poption, char **pvalue) {
         } else {
             kind = LAUNCHER_OPTION_WITH_ARGUMENT;
         }
-    } else if (IsModuleOption(arg) || IsOldModuleOption(arg)) {
+    } else if (IsModuleOption(arg)) {
         kind = VM_LONG_OPTION_WITH_ARGUMENT;
         if (has_arg) {
             value = *argv;
@@ -1219,6 +1223,7 @@ GetOpt(int *pargc, char ***pargv, char **poption, char **pvalue) {
         }
     }
 
+#ifndef OLD_MODULE_OPTIONS
     // for transition to support both old and new syntax
     if (JLI_StrCmp(arg, "-modulepath") == 0 ||
         JLI_StrCmp(arg, "-mp") == 0) {
@@ -1242,6 +1247,7 @@ GetOpt(int *pargc, char ***pargv, char **poption, char **pvalue) {
         value = arg + 8;
         kind = VM_LONG_OPTION_WITH_ARGUMENT;
     }
+#endif
 
     *pargc = argc;
     *pargv = argv;
@@ -1324,21 +1330,25 @@ ParseArguments(int *pargc, char ***pargv,
         } else if (!has_arg && IsWhiteSpaceOption(arg)) {
             if (JLI_StrCmp(arg, "--module-path") == 0 ||
                 JLI_StrCmp(arg, "-p") == 0 ||
-                JLI_StrCmp(arg, "-modulepath") == 0 ||
-                JLI_StrCmp(arg, "-mp") == 0 ||
-                JLI_StrCmp(arg, "--upgrade-module-path") == 0 ||
-                JLI_StrCmp(arg, "-upgrademodulepath") == 0) {
+                JLI_StrCmp(arg, "--upgrade-module-path") == 0) {
                 REPORT_ERROR (has_arg, ARG_ERROR4, arg);
             } else if (JLI_StrCmp(arg, "--add-modules") == 0 ||
-                       JLI_StrCmp(arg, "-addmods") == 0 ||
                        JLI_StrCmp(arg, "--limit-modules") == 0 ||
-                       JLI_StrCmp(arg, "-limitmods") == 0 ||
                        JLI_StrCmp(arg, "--add-exports") == 0 ||
                        JLI_StrCmp(arg, "--add-reads") == 0 ||
                        JLI_StrCmp(arg, "--patch-module") == 0) {
                 REPORT_ERROR (has_arg, ARG_ERROR6, arg);
             }
-
+#ifndef OLD_MODULE_OPTIONS
+            else if (JLI_StrCmp(arg, "-modulepath") == 0 ||
+                     JLI_StrCmp(arg, "-mp") == 0 ||
+                     JLI_StrCmp(arg, "-upgrademodulepath") == 0) {
+                REPORT_ERROR (has_arg, ARG_ERROR4, arg);
+            } else if (JLI_StrCmp(arg, "-addmods") == 0 ||
+                       JLI_StrCmp(arg, "-limitmods") == 0) {
+                REPORT_ERROR (has_arg, ARG_ERROR6, arg);
+            }
+#endif
 /*
  * The following cases will cause the argument parsing to stop
  */
