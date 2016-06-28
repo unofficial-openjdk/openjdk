@@ -24,7 +24,7 @@
 /*
  * @test
  * @bug 8136930
- * @summary Examine implications for custom launchers, equivalent of java -X options in particular
+ * @summary Test that the VM ignores explicitly specified module internal properties.
  * @modules java.base/jdk.internal.misc
  * @library /testlibrary
  */

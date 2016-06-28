@@ -2618,9 +2618,9 @@ bool Arguments::create_property(const char* prop_name, const char* prop_value, P
 }
 
 bool Arguments::create_numbered_property(const char* prop_base_name, const char* prop_value, unsigned int count) {
-  // Make sure count is < 10,000. Otherwise, memory allocation will be too small.
-  if (count < 10000) {
-    size_t prop_len = strlen(prop_base_name) + strlen(prop_value) + 6;
+  // Make sure count is < 1,000. Otherwise, memory allocation will be too small.
+  if (count < 1000) {
+    size_t prop_len = strlen(prop_base_name) + strlen(prop_value) + 5;
     char* property = AllocateHeap(prop_len, mtArguments);
     int ret = jio_snprintf(property, prop_len, "%s.%d=%s", prop_base_name, count, prop_value);
     if (ret < 0 || ret >= (int)prop_len) {
