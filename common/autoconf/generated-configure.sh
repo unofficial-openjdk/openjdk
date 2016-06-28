@@ -644,6 +644,7 @@ SJAVAC_SERVER_JAVA
 JAVA_TOOL_FLAGS_SMALL
 JAVA_FLAGS_SMALL
 JAVA_FLAGS_JAVAC
+BOOTCYCLE_JVM_ARGS_BIG
 JAVA_FLAGS_BIG
 JAVA_FLAGS
 TEST_JOBS
@@ -953,6 +954,8 @@ ZIP
 UNZIP
 TAR_SUPPORTS_TRANSFORM
 TAR_INCLUDE_PARAM
+TAR_CREATE_EXTRA_PARAM
+TAR_TYPE
 FIND_DELETE
 OUTPUT_SYNC
 OUTPUT_SYNC_SUPPORTED
@@ -5092,7 +5095,7 @@ VS_SDK_PLATFORM_NAME_2013=
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1464173584
+DATE_WHEN_GENERATED=1467116399
 
 ###############################################################################
 #
@@ -16171,7 +16174,7 @@ $as_echo "$as_me: Your cygwin is too old. You are running $CYGWIN_VERSION, but a
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking cygwin root directory as unix-style path" >&5
 $as_echo_n "checking cygwin root directory as unix-style path... " >&6; }
     # The cmd output ends with Windows line endings (CR/LF), the grep command will strip that away
-    cygwin_winpath_root=`cd / ; cmd /c cd | grep ".*"`
+    cygwin_winpath_root=`cd / ; cmd /c cd | $GREP ".*"`
     # Force cygpath to report the proper root by including a trailing space, and then stripping it off again.
     CYGWIN_ROOT_PATH=`$CYGPATH -u "$cygwin_winpath_root " | $CUT -f 1 -d " "`
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $CYGWIN_ROOT_PATH" >&5
@@ -16194,7 +16197,7 @@ $as_echo "$MSYS_VERSION" >&6; }
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking msys root directory as unix-style path" >&5
 $as_echo_n "checking msys root directory as unix-style path... " >&6; }
     # The cmd output ends with Windows line endings (CR/LF), the grep command will strip that away
-    MSYS_ROOT_PATH=`cd / ; cmd /c cd | grep ".*"`
+    MSYS_ROOT_PATH=`cd / ; cmd /c cd | $GREP ".*"`
 
   windows_path="$MSYS_ROOT_PATH"
   if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
@@ -17185,7 +17188,7 @@ $as_echo "$SDKNAME" >&6; }
 
         if test -n "$SDKNAME"; then
           # Call xcodebuild to determine SYSROOT
-          SYSROOT=`"$XCODEBUILD" -sdk $SDKNAME -version | grep '^Path: ' | sed 's/Path: //'`
+          SYSROOT=`"$XCODEBUILD" -sdk $SDKNAME -version | $GREP '^Path: ' | $SED 's/Path: //'`
         fi
       else
         if test $HAVE_SYSTEM_FRAMEWORK_HEADERS -eq 0; then
@@ -21142,12 +21145,12 @@ $as_echo_n "checking if find supports -delete... " >&6; }
   TEST_DELETE=`$FIND "$DELETEDIR" -name TestIfFindSupportsDelete $FIND_DELETE 2>&1`
   if test -f $DELETEDIR/TestIfFindSupportsDelete; then
     # No, it does not.
-    rm $DELETEDIR/TestIfFindSupportsDelete
+    $RM $DELETEDIR/TestIfFindSupportsDelete
     if test "x$OPENJDK_TARGET_OS" = "xaix"; then
       # AIX 'find' is buggy if called with '-exec {} \+' and an empty file list
-      FIND_DELETE="-print | xargs rm"
+      FIND_DELETE="-print | $XARGS $RM"
     else
-      FIND_DELETE="-exec rm \{\} \+"
+      FIND_DELETE="-exec $RM \{\} \+"
     fi
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
@@ -21155,7 +21158,7 @@ $as_echo "no" >&6; }
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
   fi
-  rmdir $DELETEDIR
+  $RMDIR $DELETEDIR
 
 
 
@@ -21172,13 +21175,21 @@ $as_echo_n "checking what type of tar was found... " >&6; }
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $TAR_TYPE" >&5
 $as_echo "$TAR_TYPE" >&6; }
 
+  TAR_CREATE_FILE_PARAM=""
+
   if test "x$TAR_TYPE" = "xgnu"; then
     TAR_INCLUDE_PARAM="T"
     TAR_SUPPORTS_TRANSFORM="true"
+    if test "x$OPENJDK_TARGET_OS" = "xsolaris"; then
+      # When using gnu tar for Solaris targets, need to use compatibility mode
+      TAR_CREATE_EXTRA_PARAM="--format=ustar"
+    fi
   else
     TAR_INCLUDE_PARAM="I"
     TAR_SUPPORTS_TRANSFORM="false"
   fi
+
+
 
 
 
@@ -23800,10 +23811,10 @@ $as_echo "$tool_specified" >&6; }
       # Verify that the openjdk_codesign certificate is present
       { $as_echo "$as_me:${as_lineno-$LINENO}: checking if openjdk_codesign certificate is present" >&5
 $as_echo_n "checking if openjdk_codesign certificate is present... " >&6; }
-      rm -f codesign-testfile
-      touch codesign-testfile
-      codesign -s openjdk_codesign codesign-testfile 2>&5 >&5 || CODESIGN=
-      rm -f codesign-testfile
+      $RM codesign-testfile
+      $TOUCH codesign-testfile
+      $CODESIGN -s openjdk_codesign codesign-testfile 2>&5 >&5 || CODESIGN=
+      $RM codesign-testfile
       if test "x$CODESIGN" = x; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
@@ -24293,7 +24304,7 @@ fi
   elif test "x$with_copyright_year" != x; then
     COPYRIGHT_YEAR="$with_copyright_year"
   else
-    COPYRIGHT_YEAR=`date +'%Y'`
+    COPYRIGHT_YEAR=`$DATE +'%Y'`
   fi
 
 
@@ -24815,7 +24826,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_FOUND=no
         else
           # Oh, this is looking good! We probably have found a proper JDK. Is it the correct version?
-          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
+          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | $HEAD -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
           FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
@@ -25017,7 +25028,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_FOUND=no
         else
           # Oh, this is looking good! We probably have found a proper JDK. Is it the correct version?
-          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
+          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | $HEAD -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
           FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
@@ -25207,7 +25218,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_FOUND=no
         else
           # Oh, this is looking good! We probably have found a proper JDK. Is it the correct version?
-          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
+          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | $HEAD -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
           FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
@@ -25396,7 +25407,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_FOUND=no
         else
           # Oh, this is looking good! We probably have found a proper JDK. Is it the correct version?
-          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
+          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | $HEAD -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
           FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
@@ -25585,7 +25596,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_FOUND=no
         else
           # Oh, this is looking good! We probably have found a proper JDK. Is it the correct version?
-          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
+          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | $HEAD -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
           FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
@@ -25765,7 +25776,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_FOUND=no
         else
           # Oh, this is looking good! We probably have found a proper JDK. Is it the correct version?
-          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
+          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | $HEAD -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
           FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
@@ -26096,7 +26107,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_FOUND=no
         else
           # Oh, this is looking good! We probably have found a proper JDK. Is it the correct version?
-          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
+          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | $HEAD -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
           FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
@@ -26427,7 +26438,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_FOUND=no
         else
           # Oh, this is looking good! We probably have found a proper JDK. Is it the correct version?
-          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
+          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | $HEAD -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
           FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
@@ -26645,7 +26656,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_FOUND=no
         else
           # Oh, this is looking good! We probably have found a proper JDK. Is it the correct version?
-          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
+          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | $HEAD -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
           FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
@@ -26828,7 +26839,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_FOUND=no
         else
           # Oh, this is looking good! We probably have found a proper JDK. Is it the correct version?
-          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
+          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | $HEAD -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
           FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
@@ -27039,7 +27050,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_FOUND=no
         else
           # Oh, this is looking good! We probably have found a proper JDK. Is it the correct version?
-          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
+          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | $HEAD -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
           FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
@@ -27222,7 +27233,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_FOUND=no
         else
           # Oh, this is looking good! We probably have found a proper JDK. Is it the correct version?
-          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
+          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | $HEAD -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
           FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
@@ -27433,7 +27444,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_FOUND=no
         else
           # Oh, this is looking good! We probably have found a proper JDK. Is it the correct version?
-          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
+          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | $HEAD -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
           FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
@@ -27616,7 +27627,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_FOUND=no
         else
           # Oh, this is looking good! We probably have found a proper JDK. Is it the correct version?
-          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
+          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | $HEAD -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
           FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
@@ -27827,7 +27838,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_FOUND=no
         else
           # Oh, this is looking good! We probably have found a proper JDK. Is it the correct version?
-          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
+          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | $HEAD -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
           FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
@@ -28010,7 +28021,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_FOUND=no
         else
           # Oh, this is looking good! We probably have found a proper JDK. Is it the correct version?
-          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
+          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | $HEAD -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
           FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
@@ -28208,7 +28219,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_FOUND=no
         else
           # Oh, this is looking good! We probably have found a proper JDK. Is it the correct version?
-          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
+          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | $HEAD -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
           FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
@@ -28389,7 +28400,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_FOUND=no
         else
           # Oh, this is looking good! We probably have found a proper JDK. Is it the correct version?
-          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
+          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | $HEAD -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
           FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
@@ -28588,7 +28599,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_FOUND=no
         else
           # Oh, this is looking good! We probably have found a proper JDK. Is it the correct version?
-          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
+          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | $HEAD -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
           FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
@@ -28769,7 +28780,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_FOUND=no
         else
           # Oh, this is looking good! We probably have found a proper JDK. Is it the correct version?
-          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
+          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | $HEAD -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
           FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
@@ -28967,7 +28978,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_FOUND=no
         else
           # Oh, this is looking good! We probably have found a proper JDK. Is it the correct version?
-          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
+          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | $HEAD -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
           FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
@@ -29148,7 +29159,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_FOUND=no
         else
           # Oh, this is looking good! We probably have found a proper JDK. Is it the correct version?
-          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
+          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | $HEAD -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
           FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
@@ -29347,7 +29358,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_FOUND=no
         else
           # Oh, this is looking good! We probably have found a proper JDK. Is it the correct version?
-          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
+          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | $HEAD -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
           FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
@@ -29528,7 +29539,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_FOUND=no
         else
           # Oh, this is looking good! We probably have found a proper JDK. Is it the correct version?
-          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
+          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | $HEAD -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
           FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
@@ -29708,7 +29719,7 @@ $as_echo "$as_me: (This might be an JRE instead of an JDK)" >&6;}
           BOOT_JDK_FOUND=no
         else
           # Oh, this is looking good! We probably have found a proper JDK. Is it the correct version?
-          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | head -n 1`
+          BOOT_JDK_VERSION=`"$BOOT_JDK/bin/java" -version 2>&1 | $HEAD -n 1`
 
           # Extra M4 quote needed to protect [] in grep expression.
           FOUND_CORRECT_VERSION=`$ECHO $BOOT_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"|(1\.[89]\.)'`
@@ -30612,8 +30623,8 @@ $as_echo "$tool_specified" >&6; }
   $ECHO "Check if jvm arg is ok: -Xpatch:foo=bar" >&5
   $ECHO "Command: $JAVA -Xpatch:foo=bar -version" >&5
   OUTPUT=`$JAVA -Xpatch:foo=bar -version 2>&1`
-  FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
-  FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
+  FOUND_WARN=`$ECHO "$OUTPUT" | $GREP -i warn`
+  FOUND_VERSION=`$ECHO $OUTPUT | $GREP " version \""`
   if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
     dummy="$dummy -Xpatch:foo=bar"
     JVM_ARG_OK=true
@@ -30697,7 +30708,7 @@ $as_echo "$as_me: (This might be a JRE instead of an JDK)" >&6;}
         BUILD_JDK_FOUND=no
       else
         # Oh, this is looking good! We probably have found a proper JDK. Is it the correct version?
-        BUILD_JDK_VERSION=`"$BUILD_JDK/bin/java" -version 2>&1 | head -n 1`
+        BUILD_JDK_VERSION=`"$BUILD_JDK/bin/java" -version 2>&1 | $HEAD -n 1`
 
         # Extra M4 quote needed to protect [] in grep expression.
         FOUND_CORRECT_VERSION=`echo $BUILD_JDK_VERSION | $EGREP '\"9([\.+-].*)?\"'`
@@ -36611,7 +36622,6 @@ $as_echo "yes" >&6; }
   # Setup the assembler (AS)
   #
   if test "x$OPENJDK_TARGET_OS" = xsolaris; then
-    # FIXME: should this really be solaris, or solstudio?
 
 
   # Publish this variable in the help.
@@ -37095,6 +37105,9 @@ $as_echo "$as_me: Rewriting AS to \"$new_complete\"" >&6;}
     fi
   fi
 
+    if test "x$AS" = x; then
+      as_fn_error $? "Solaris assembler (as) is required. Please install via \"pkg install pkg:/developer/assembler\"." "$LINENO" 5
+    fi
   else
     # FIXME: is this correct for microsoft?
     AS="$CC -c"
@@ -47860,7 +47873,7 @@ $as_echo "no" >&6; }
 $as_echo "yes" >&6; }
       USING_BROKEN_SUSE_LD=yes
     fi
-    rm -rf version-script.map main.c a.out
+    $RM version-script.map main.c a.out
   fi
 
 
@@ -48294,7 +48307,7 @@ $as_echo "yes" >&6; }
 $as_echo "no" >&6; }
         COMPILER_COMMAND_FILE_FLAG=
       fi
-      rm -rf command.file
+      $RM command.file
     fi
   fi
 
@@ -53498,7 +53511,7 @@ $as_echo_n "checking if fixpath can be created... " >&6; }
       # Take all collected prefixes and turn them into a -m/c/foo@/c/bar@... command line
       # @ was chosen as separator to minimize risk of other tools messing around with it
       all_unique_prefixes=`echo "${all_fixpath_prefixes[@]}" \
-          | tr ' ' '\n' | grep '^/./' | sort | uniq`
+          | tr ' ' '\n' | $GREP '^/./' | $SORT | $UNIQ`
       fixpath_argument_list=`echo $all_unique_prefixes  | tr ' ' '@'`
       FIXPATH="$FIXPATH_BIN -m$fixpath_argument_list"
     fi
@@ -63947,7 +63960,7 @@ fi
         fi
       fi
     done
-    llvm_version=$("${LLVM_CONFIG}" --version | sed 's/\.//; s/svn.*//')
+    llvm_version=$("${LLVM_CONFIG}" --version | $SED 's/\.//; s/svn.*//')
     LLVM_CFLAGS="${LLVM_CFLAGS} -DSHARK_LLVM_VERSION=${llvm_version}"
 
     unset LLVM_LDFLAGS
@@ -65050,8 +65063,8 @@ $as_echo_n "checking flags for boot jdk java command ... " >&6; }
   $ECHO "Check if jvm arg is ok: -XX:-PrintVMOptions -XX:-UnlockDiagnosticVMOptions -XX:-LogVMOutput" >&5
   $ECHO "Command: $JAVA -XX:-PrintVMOptions -XX:-UnlockDiagnosticVMOptions -XX:-LogVMOutput -version" >&5
   OUTPUT=`$JAVA -XX:-PrintVMOptions -XX:-UnlockDiagnosticVMOptions -XX:-LogVMOutput -version 2>&1`
-  FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
-  FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
+  FOUND_WARN=`$ECHO "$OUTPUT" | $GREP -i warn`
+  FOUND_VERSION=`$ECHO $OUTPUT | $GREP " version \""`
   if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
     boot_jdk_jvmargs="$boot_jdk_jvmargs -XX:-PrintVMOptions -XX:-UnlockDiagnosticVMOptions -XX:-LogVMOutput"
     JVM_ARG_OK=true
@@ -65067,8 +65080,8 @@ $as_echo_n "checking flags for boot jdk java command ... " >&6; }
   $ECHO "Check if jvm arg is ok: $with_boot_jdk_jvmargs" >&5
   $ECHO "Command: $JAVA $with_boot_jdk_jvmargs -version" >&5
   OUTPUT=`$JAVA $with_boot_jdk_jvmargs -version 2>&1`
-  FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
-  FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
+  FOUND_WARN=`$ECHO "$OUTPUT" | $GREP -i warn`
+  FOUND_VERSION=`$ECHO $OUTPUT | $GREP " version \""`
   if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
     boot_jdk_jvmargs="$boot_jdk_jvmargs $with_boot_jdk_jvmargs"
     JVM_ARG_OK=true
@@ -65095,8 +65108,8 @@ $as_echo_n "checking flags for boot jdk java command for big workloads... " >&6;
   $ECHO "Check if jvm arg is ok: -Xms64M" >&5
   $ECHO "Command: $JAVA -Xms64M -version" >&5
   OUTPUT=`$JAVA -Xms64M -version 2>&1`
-  FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
-  FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
+  FOUND_WARN=`$ECHO "$OUTPUT" | $GREP -i warn`
+  FOUND_VERSION=`$ECHO $OUTPUT | $GREP " version \""`
   if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
     boot_jdk_jvmargs_big="$boot_jdk_jvmargs_big -Xms64M"
     JVM_ARG_OK=true
@@ -65106,32 +65119,39 @@ $as_echo_n "checking flags for boot jdk java command for big workloads... " >&6;
     JVM_ARG_OK=false
   fi
 
+  BOOTCYCLE_JVM_ARGS_BIG=-Xms64M
 
-  # Maximum amount of heap memory.
-  # Maximum stack size.
-  JVM_MAX_HEAP=`expr $MEMORY_SIZE / 2`
+  # Maximum amount of heap memory and stack size.
+  JVM_HEAP_LIMIT_32="1100"
+  # Running a 64 bit JVM allows for and requires a bigger heap
+  JVM_HEAP_LIMIT_64="1600"
+  STACK_SIZE_32=768
+  STACK_SIZE_64=1536
+  JVM_HEAP_LIMIT_GLOBAL=`expr $MEMORY_SIZE / 2`
+  if test "$JVM_HEAP_LIMIT_GLOBAL" -lt "$JVM_HEAP_LIMIT_32"; then
+    JVM_HEAP_LIMIT_32=$JVM_HEAP_LIMIT_GLOBAL
+  fi
+  if test "$JVM_HEAP_LIMIT_GLOBAL" -lt "$JVM_HEAP_LIMIT_64"; then
+    JVM_HEAP_LIMIT_64=$JVM_HEAP_LIMIT_GLOBAL
+  fi
+  if test "$JVM_HEAP_LIMIT_GLOBAL" -lt "512"; then
+    JVM_HEAP_LIMIT_32=512
+    JVM_HEAP_LIMIT_64=512
+  fi
+
   if test "x$BOOT_JDK_BITS" = "x32"; then
-    if test "$JVM_MAX_HEAP" -gt "1100"; then
-      JVM_MAX_HEAP=1100
-    elif test "$JVM_MAX_HEAP" -lt "512"; then
-      JVM_MAX_HEAP=512
-    fi
-    STACK_SIZE=768
+    STACK_SIZE=$STACK_SIZE_32
+    JVM_MAX_HEAP=$JVM_HEAP_LIMIT_32
   else
-    # Running a 64 bit JVM allows for and requires a bigger heap
-    if test "$JVM_MAX_HEAP" -gt "1600"; then
-      JVM_MAX_HEAP=1600
-    elif test "$JVM_MAX_HEAP" -lt "512"; then
-      JVM_MAX_HEAP=512
-    fi
-    STACK_SIZE=1536
+    STACK_SIZE=$STACK_SIZE_64
+    JVM_MAX_HEAP=$JVM_HEAP_LIMIT_64
   fi
 
   $ECHO "Check if jvm arg is ok: -Xmx${JVM_MAX_HEAP}M" >&5
   $ECHO "Command: $JAVA -Xmx${JVM_MAX_HEAP}M -version" >&5
   OUTPUT=`$JAVA -Xmx${JVM_MAX_HEAP}M -version 2>&1`
-  FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
-  FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
+  FOUND_WARN=`$ECHO "$OUTPUT" | $GREP -i warn`
+  FOUND_VERSION=`$ECHO $OUTPUT | $GREP " version \""`
   if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
     boot_jdk_jvmargs_big="$boot_jdk_jvmargs_big -Xmx${JVM_MAX_HEAP}M"
     JVM_ARG_OK=true
@@ -65145,8 +65165,8 @@ $as_echo_n "checking flags for boot jdk java command for big workloads... " >&6;
   $ECHO "Check if jvm arg is ok: -XX:ThreadStackSize=$STACK_SIZE" >&5
   $ECHO "Command: $JAVA -XX:ThreadStackSize=$STACK_SIZE -version" >&5
   OUTPUT=`$JAVA -XX:ThreadStackSize=$STACK_SIZE -version 2>&1`
-  FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
-  FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
+  FOUND_WARN=`$ECHO "$OUTPUT" | $GREP -i warn`
+  FOUND_VERSION=`$ECHO $OUTPUT | $GREP " version \""`
   if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
     boot_jdk_jvmargs_big="$boot_jdk_jvmargs_big -XX:ThreadStackSize=$STACK_SIZE"
     JVM_ARG_OK=true
@@ -65163,6 +65183,21 @@ $as_echo "$boot_jdk_jvmargs_big" >&6; }
   JAVA_FLAGS_BIG=$boot_jdk_jvmargs_big
 
 
+  if test "x$OPENJDK_TARGET_CPU_BITS" = "x32"; then
+    BOOTCYCLE_MAX_HEAP=$JVM_HEAP_LIMIT_32
+    BOOTCYCLE_STACK_SIZE=$STACK_SIZE_32
+  else
+    BOOTCYCLE_MAX_HEAP=$JVM_HEAP_LIMIT_64
+    BOOTCYCLE_STACK_SIZE=$STACK_SIZE_64
+  fi
+  BOOTCYCLE_JVM_ARGS_BIG="$BOOTCYCLE_JVM_ARGS_BIG -Xmx${BOOTCYCLE_MAX_HEAP}M"
+  BOOTCYCLE_JVM_ARGS_BIG="$BOOTCYCLE_JVM_ARGS_BIG -XX:ThreadStackSize=$BOOTCYCLE_STACK_SIZE"
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking flags for bootcycle boot jdk java command for big workloads" >&5
+$as_echo_n "checking flags for bootcycle boot jdk java command for big workloads... " >&6; }
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $BOOTCYCLE_JVM_ARGS_BIG" >&5
+$as_echo "$BOOTCYCLE_JVM_ARGS_BIG" >&6; }
+
+
   # By default, the main javac compilations use big
   JAVA_FLAGS_JAVAC="$JAVA_FLAGS_BIG"
 
@@ -65175,8 +65210,8 @@ $as_echo_n "checking flags for boot jdk java command for small workloads... " >&
   $ECHO "Check if jvm arg is ok: -XX:+UseSerialGC" >&5
   $ECHO "Command: $JAVA -XX:+UseSerialGC -version" >&5
   OUTPUT=`$JAVA -XX:+UseSerialGC -version 2>&1`
-  FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
-  FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
+  FOUND_WARN=`$ECHO "$OUTPUT" | $GREP -i warn`
+  FOUND_VERSION=`$ECHO $OUTPUT | $GREP " version \""`
   if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
     boot_jdk_jvmargs_small="$boot_jdk_jvmargs_small -XX:+UseSerialGC"
     JVM_ARG_OK=true
@@ -65190,8 +65225,8 @@ $as_echo_n "checking flags for boot jdk java command for small workloads... " >&
   $ECHO "Check if jvm arg is ok: -Xms32M" >&5
   $ECHO "Command: $JAVA -Xms32M -version" >&5
   OUTPUT=`$JAVA -Xms32M -version 2>&1`
-  FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
-  FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
+  FOUND_WARN=`$ECHO "$OUTPUT" | $GREP -i warn`
+  FOUND_VERSION=`$ECHO $OUTPUT | $GREP " version \""`
   if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
     boot_jdk_jvmargs_small="$boot_jdk_jvmargs_small -Xms32M"
     JVM_ARG_OK=true
@@ -65205,8 +65240,8 @@ $as_echo_n "checking flags for boot jdk java command for small workloads... " >&
   $ECHO "Check if jvm arg is ok: -Xmx512M" >&5
   $ECHO "Command: $JAVA -Xmx512M -version" >&5
   OUTPUT=`$JAVA -Xmx512M -version 2>&1`
-  FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
-  FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
+  FOUND_WARN=`$ECHO "$OUTPUT" | $GREP -i warn`
+  FOUND_VERSION=`$ECHO $OUTPUT | $GREP " version \""`
   if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
     boot_jdk_jvmargs_small="$boot_jdk_jvmargs_small -Xmx512M"
     JVM_ARG_OK=true
@@ -65220,8 +65255,8 @@ $as_echo_n "checking flags for boot jdk java command for small workloads... " >&
   $ECHO "Check if jvm arg is ok: -XX:TieredStopAtLevel=1" >&5
   $ECHO "Command: $JAVA -XX:TieredStopAtLevel=1 -version" >&5
   OUTPUT=`$JAVA -XX:TieredStopAtLevel=1 -version 2>&1`
-  FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
-  FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
+  FOUND_WARN=`$ECHO "$OUTPUT" | $GREP -i warn`
+  FOUND_VERSION=`$ECHO $OUTPUT | $GREP " version \""`
   if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
     boot_jdk_jvmargs_small="$boot_jdk_jvmargs_small -XX:TieredStopAtLevel=1"
     JVM_ARG_OK=true
@@ -65270,8 +65305,8 @@ fi
   $ECHO "Check if jvm arg is ok: -d64" >&5
   $ECHO "Command: $SJAVAC_SERVER_JAVA -d64 -version" >&5
   OUTPUT=`$SJAVAC_SERVER_JAVA -d64 -version 2>&1`
-  FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
-  FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
+  FOUND_WARN=`$ECHO "$OUTPUT" | $GREP -i warn`
+  FOUND_VERSION=`$ECHO $OUTPUT | $GREP " version \""`
   if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
     SJAVAC_SERVER_JAVA_FLAGS="$SJAVAC_SERVER_JAVA_FLAGS -d64"
     JVM_ARG_OK=true
@@ -65308,8 +65343,8 @@ fi
   $ECHO "Check if jvm arg is ok: -Xms${MS_VALUE}M -Xmx${MX_VALUE}M" >&5
   $ECHO "Command: $SJAVAC_SERVER_JAVA -Xms${MS_VALUE}M -Xmx${MX_VALUE}M -version" >&5
   OUTPUT=`$SJAVAC_SERVER_JAVA -Xms${MS_VALUE}M -Xmx${MX_VALUE}M -version 2>&1`
-  FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
-  FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
+  FOUND_WARN=`$ECHO "$OUTPUT" | $GREP -i warn`
+  FOUND_VERSION=`$ECHO $OUTPUT | $GREP " version \""`
   if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
     SJAVAC_SERVER_JAVA_FLAGS="$SJAVAC_SERVER_JAVA_FLAGS -Xms${MS_VALUE}M -Xmx${MX_VALUE}M"
     JVM_ARG_OK=true
@@ -66140,7 +66175,7 @@ $as_echo "no" >&6; }
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
       fi
-      rm -f conftest.h conftest.hpp.gch
+      $RM conftest.h conftest.hpp.gch
     fi
   fi
 
