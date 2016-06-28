@@ -1153,11 +1153,14 @@ SelectVersion(int argc, char **argv, char **main_class)
  */
 static jboolean
 IsOptionWithArgument(int argc, char** argv) {
+    char* option;
+    char* arg;
+
     if (argc <= 1)
         return JNI_FALSE;
 
-    char* option = *argv;
-    char* arg = *(argv+1);
+    option = *argv;
+    arg = *(argv+1);
     return *option == '-' && *arg != '-';
 }
 
