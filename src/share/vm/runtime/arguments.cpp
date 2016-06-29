@@ -2849,74 +2849,32 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* patch_m
         add_init_library(name, options);
       }
     } else if (match_option(option, "--add-reads=", &tail)) {
-      if (tail != NULL) {
-        if (!create_numbered_property("jdk.module.addreads", tail, addreads_count++)) {
-          return JNI_ENOMEM;
-        }
-      } else {
-        jio_fprintf(defaultStream::output_stream(),
-          "Missing value for --add-reads option.\n");
-        return JNI_EINVAL;
+      if (!create_numbered_property("jdk.module.addreads", tail, addreads_count++)) {
+        return JNI_ENOMEM;
       }
     } else if (match_option(option, "--add-exports=", &tail)) {
-      if (tail != NULL) {
-        if (!create_numbered_property("jdk.module.addexports", tail, addexports_count++)) {
-          return JNI_ENOMEM;
-        }
-      } else {
-        jio_fprintf(defaultStream::output_stream(),
-          "Missing value for --add-exports option.\n");
-        return JNI_EINVAL;
+      if (!create_numbered_property("jdk.module.addexports", tail, addexports_count++)) {
+        return JNI_ENOMEM;
       }
     } else if (match_option(option, "--add-modules=", &tail)) {
-      if (tail != NULL) {
-        add_modules_value = tail;
-      } else {
-        jio_fprintf(defaultStream::output_stream(),
-           "Missing value for --add-modules option.\n");
-        return JNI_EINVAL;
-      }
+      add_modules_value = tail;
     } else if (match_option(option, "--limit-modules=", &tail)) {
-      if (tail != NULL) {
-        if (!create_property("jdk.module.limitmods", tail, InternalProperty)) {
-          return JNI_ENOMEM;
-        }
-      } else {
-        jio_fprintf(defaultStream::output_stream(),
-          "Missing value for --limit-modules option.\n");
-        return JNI_EINVAL;
+      if (!create_property("jdk.module.limitmods", tail, InternalProperty)) {
+        return JNI_ENOMEM;
       }
     } else if (match_option(option, "--module-path=", &tail)) {
-      if (tail != NULL) {
-        if (!create_property("jdk.module.path", tail, ExternalProperty)) {
-            return JNI_ENOMEM;
-        }
-      } else {
-        jio_fprintf(defaultStream::output_stream(),
-          "Missing value for --module-path option.\n");
-        return JNI_EINVAL;
+      if (!create_property("jdk.module.path", tail, ExternalProperty)) {
+        return JNI_ENOMEM;
       }
     } else if (match_option(option, "--upgrade-module-path=", &tail)) {
-      if (tail != NULL) {
-        if (!create_property("jdk.module.upgrade.path", tail, ExternalProperty)) {
-          return JNI_ENOMEM;
-        }
-      } else {
-        jio_fprintf(defaultStream::output_stream(),
-          "Missing value for --upgrade-module-path option.\n");
-        return JNI_EINVAL;
+      if (!create_property("jdk.module.upgrade.path", tail, ExternalProperty)) {
+        return JNI_ENOMEM;
       }
     } else if (match_option(option, "--patch-module=", &tail)) {
       // --patch-module=<module>=<file>(<pathsep><file>)*
-      if (tail != NULL) {
-        int res = process_patch_mod_option(tail, patch_mod_javabase);
-        if (res != JNI_OK) {
-          return res;
-        }
-      } else {
-        jio_fprintf(defaultStream::output_stream(),
-          "Missing value for --patch-module option.\n");
-        return JNI_EINVAL;
+      int res = process_patch_mod_option(tail, patch_mod_javabase);
+      if (res != JNI_OK) {
+        return res;
       }
     // -agentlib and -agentpath
     } else if (match_option(option, "-agentlib:", &tail) ||
