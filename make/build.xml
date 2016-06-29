@@ -175,7 +175,7 @@
       <compilerarg value="-Xdiags:verbose"/>
       <compilerarg value="-parameters"/>
     </javac>
-    <!-- --patch-module does not like module-info.class files! -->
+    <!-- patch-module does not like module-info.class files! -->
     <delete>
       <fileset dir="${build.classes.dir}" includes="**/module-info.class"/>
     </delete>
@@ -192,7 +192,7 @@
       <compilerarg value="-parameters"/>
       <compilerarg line="${nashorn.override.option}"/>
     </javac>
-    <!-- --patch-module does not like module-info.class files! -->
+    <!-- patch-module does not like module-info.class files! -->
     <delete>
       <fileset dir="${build.classes.dir}" includes="**/module-info.class"/>
     </delete>
@@ -209,7 +209,7 @@
       <compilerarg value="-parameters"/>
       <compilerarg line="${nashorn.override.option}"/>
     </javac>
-    <!-- --patch-module does not like module-info.class files! -->
+    <!-- patch-module does not like module-info.class files! -->
     <delete>
       <fileset dir="${build.classes.dir}" includes="**/module-info.class"/>
     </delete>
