@@ -172,7 +172,7 @@ public class Start extends ToolOption.Helper {
     }
 
     void usage(boolean exit) {
-        usage("main.usage", "-help", null, exit);
+        usage("main.usage", "-help", "main.usage.foot", exit);
     }
 
     @Override
