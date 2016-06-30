@@ -24,9 +24,6 @@
  */
 package jdk.internal.module;
 
-import static java.lang.module.ModuleDescriptor.Exports.Modifier.DYNAMIC;
-import static java.lang.module.ModuleDescriptor.Requires.Modifier.*;
-
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Provides;
@@ -43,7 +40,7 @@ import jdk.internal.misc.SharedSecrets;
 
 /**
  * This builder is optimized for reconstituting ModuleDescriptor
- * for installed modules.  The validation should be done at jlink time.
+ * for system modules.  The validation should be done at jlink time.
  *
  * 1. skip name validation
  * 2. ignores dependency hashes.
@@ -55,16 +52,6 @@ import jdk.internal.misc.SharedSecrets;
 final class Builder {
     private static final JavaLangModuleAccess jlma =
         SharedSecrets.getJavaLangModuleAccess();
-
-    private static final Set<Requires.Modifier> MANDATED_MODS =
-        Collections.singleton(MANDATED);
-    private static final Set<Requires.Modifier> PUBLIC_MODS =
-        Collections.singleton(PUBLIC);
-    private static final Set<Requires.Modifier> STATIC_MODS =
-        Collections.singleton(STATIC);
-
-    private static final Set<Exports.Modifier> DYNAMIC_MODS =
-        Collections.singleton(DYNAMIC);
 
     // Static cache of the most recently seen Version to cheaply deduplicate
     // most Version objects.  JDK modules have the same version.
@@ -98,35 +85,7 @@ final class Builder {
      * of modifiers.
      */
     public Builder requires(Set<Requires.Modifier> mods, String mn) {
-        requires.add(jlma.newRequires(Collections.unmodifiableSet(mods), mn));
-        return this;
-    }
-
-    /**
-     * Adds a module dependence with the given modifier.
-     */
-    public Builder requires(Requires.Modifier mod, String mn) {
-        switch (mod) {
-            case MANDATED :
-                requires.add(jlma.newRequires(MANDATED_MODS, mn));
-                break;
-            case PUBLIC :
-                requires.add(jlma.newRequires(PUBLIC_MODS, mn));
-                break;
-            case STATIC :
-                requires.add(jlma.newRequires(STATIC_MODS, mn));
-                break;
-            default:
-                requires.add(jlma.newRequires(Collections.singleton(mod), mn));
-        }
-        return this;
-    }
-
-    /**
-     * Adds a module dependence with an empty set of modifiers.
-     */
-    public Builder requires(String mn) {
-        requires.add(jlma.newRequires(Collections.emptySet(), mn));
+        requires.add(jlma.newRequires(mods, mn));
         return this;
     }
 
@@ -139,86 +98,19 @@ final class Builder {
     }
 
     /**
-     * Adds a qualified export to a set of target modules with no modifier.
+     * Adds a qualified export to a set of target modules with a given set of
+     * modifiers.
      */
-    public Builder exports(String pn, Set<String> targets) {
-        exports.add(jlma.newExports(Collections.emptySet(), pn, targets));
-        return this;
-    }
-
-    /**
-     * Adds a qualified export to one target module with no modifier.
-     */
-    public Builder exports(String pn, String target) {
-        return exports(pn, Collections.singleton(target));
-    }
-
-    /**
-     * Adds an unqualified export with no modifier.
-     */
-    public Builder exports(String pn) {
-        exports.add(jlma.newExports(Collections.emptySet(), pn));
-        return this;
-    }
-
-    /**
-     * Adds a qualified export to a set of target modules with
-     * a given modifier.
-     */
-    public Builder exportsWithModifier(Exports.Modifier mod,
-                                       String pn, Set<String> targets) {
-        if (mod == DYNAMIC) {
-            exports.add(jlma.newExports(DYNAMIC_MODS, pn, targets));
-        } else {
-            exports.add(jlma.newExports(Collections.singleton(mod), pn, targets));
-        }
-        return this;
-    }
-
-    /**
-     * Adds a qualified export to one target module with
-     * a given modifier.
-     */
-    public Builder exportsWithModifier(Exports.Modifier mod,
-                                       String pn, String target) {
-        return exportsWithModifier(mod, pn, Collections.singleton(target));
-    }
-
-    /**
-     * Adds an unqualified export with a given modifier.
-     */
-    public Builder exportsWithModifier(Exports.Modifier mod, String pn) {
-        if (mod == DYNAMIC) {
-            exports.add(jlma.newExports(DYNAMIC_MODS, pn));
-        } else {
-            exports.add(jlma.newExports(Collections.singleton(mod), pn));
-        }
-        return this;
-    }
-
-    /**
-     * Adds a qualified export to a set of target modules with
-     * a given set of modifiers.
-     */
-    public Builder exportsWithModifiers(Set<Exports.Modifier> ms,
-                                        String pn, Set<String> targets) {
+    public Builder exports(Set<Exports.Modifier> ms,
+                           String pn, Set<String> targets) {
         exports.add(jlma.newExports(ms, pn, targets));
         return this;
     }
 
     /**
-     * Adds a qualified export to one target moduls with
-     * a given set of modifiers.
-     */
-    public Builder exportsWithModifiers(Set<Exports.Modifier> ms,
-                                        String pn, String target) {
-        return exportsWithModifiers(ms, pn, Collections.singleton(target));
-    }
-
-    /**
      * Adds an unqualified export with a given set of modifiers.
      */
-    public Builder exportsWithModifiers(Set<Exports.Modifier> ms, String pn) {
+    public Builder exports(Set<Exports.Modifier> ms, String pn) {
         exports.add(jlma.newExports(ms, pn));
         return this;
     }
@@ -345,6 +237,20 @@ final class Builder {
 
         ModuleHashes moduleHashes =
             hashes != null ? new ModuleHashes(algorithm, hashes) : null;
+
+        // Make those collections we build dynamically unmodifiable
+        Map<String, Provides> provides = this.provides;
+        if (!provides.isEmpty()) {
+            provides = Collections.unmodifiableMap(this.provides);
+        }
+        Set<Exports> exports = this.exports;
+        if (!exports.isEmpty()) {
+            exports = Collections.unmodifiableSet(this.exports);
+        }
+        Set<Requires> requires = this.requires;
+        if (!requires.isEmpty()) {
+            requires = Collections.unmodifiableSet(this.requires);
+        }
 
         return jlma.newModuleDescriptor(name,
                                         false,    // automatic

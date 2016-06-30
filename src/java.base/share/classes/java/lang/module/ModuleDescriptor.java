@@ -120,20 +120,16 @@ public class ModuleDescriptor
         private final String name;
 
         private Requires(Set<Modifier> ms, String mn) {
-            this(ms, mn, true);
+            this.mods = ms.isEmpty()
+                    ? Collections.emptySet()
+                    : Collections.unmodifiableSet(EnumSet.copyOf(ms));
+            requireModifiers(mods);
+            this.name = requireModuleName(mn);
         }
 
-        private Requires(Set<Modifier> ms, String mn, boolean check) {
-            if (ms.isEmpty()) {
-                mods = Collections.emptySet();
-            } else {
-                mods = check ? Collections.unmodifiableSet(EnumSet.copyOf(ms))
-                             : ms;
-                if (mods.contains(Modifier.PUBLIC) && mods.contains(Modifier.STATIC))
-                    throw new IllegalArgumentException("PUBLIC and STATIC"
-                                                       + " not allowed together");
-            }
-            this.name = check ? requireModuleName(mn) : mn;
+        private Requires(Set<Modifier> ms, String mn, boolean checked) {
+            this.mods = ms;
+            this.name = mn;
         }
 
         /**
@@ -275,7 +271,6 @@ public class ModuleDescriptor
 
         }
 
-
         private final Set<Modifier> mods;
         private final String source;
         private final Set<String> targets;  // empty if unqualified export
@@ -284,27 +279,23 @@ public class ModuleDescriptor
          * Constructs a qualified export.
          */
         private Exports(Set<Modifier> ms, String source, Set<String> targets) {
-            this(ms, source, targets, true);
-        }
-
-        private Exports(Set<Modifier> ms,
-                        String source,
-                        Set<String> targets,
-                        boolean check)
-        {
             if (ms.isEmpty()) {
                 this.mods = Collections.emptySet();
             } else {
-                this.mods = check
-                    ? Collections.unmodifiableSet(EnumSet.copyOf(ms)) : ms;
+                this.mods = Collections.unmodifiableSet(EnumSet.copyOf(ms));
             }
-            this.source = check ? requirePackageName(source) : source;
-            targets = check ? Collections.unmodifiableSet(new HashSet<>(targets))
-                            : Collections.unmodifiableSet(targets);
-            if (targets.isEmpty())
+            this.source = requirePackageName(source);
+            if (targets.isEmpty()) {
                 throw new IllegalArgumentException("Empty target set");
-            if (check)
-                targets.stream().forEach(Checks::requireModuleName);
+            }
+            targets.stream().forEach(Checks::requireModuleName);
+            this.targets = Collections.unmodifiableSet(new HashSet<>(targets));
+        }
+
+        private Exports(Set<Modifier> ms, String source, Set<String> targets,
+                        boolean checked) {
+            this.mods = ms;
+            this.source = source;
             this.targets = targets;
         }
 
@@ -312,17 +303,18 @@ public class ModuleDescriptor
          * Constructs an unqualified export.
          */
         private Exports(Set<Modifier> ms, String source) {
-            this(ms, source, true);
-        }
-
-        private Exports(Set<Modifier> ms, String source, boolean check) {
             if (ms.isEmpty()) {
                 this.mods = Collections.emptySet();
             } else {
-                this.mods = check
-                    ? Collections.unmodifiableSet(EnumSet.copyOf(ms)) : ms;
+                this.mods = Collections.unmodifiableSet(EnumSet.copyOf(ms));
             }
-            this.source = check ? requirePackageName(source) : source;
+            this.source = requirePackageName(source);
+            this.targets = Collections.emptySet();
+        }
+
+        private Exports(Set<Modifier> ms, String source, boolean checked) {
+            this.mods = ms;
+            this.source = source;
             this.targets = Collections.emptySet();
         }
 
@@ -437,18 +429,16 @@ public class ModuleDescriptor
         private final Set<String> providers;
 
         private Provides(String service, Set<String> providers) {
-            this(service, providers, true);
-        }
-
-        private Provides(String service, Set<String> providers, boolean check) {
-            this.service = check ? requireServiceTypeName(service) : service;
-            providers = check
-                ? Collections.unmodifiableSet(new LinkedHashSet<>(providers))
-                : Collections.unmodifiableSet(providers);
+            this.service = requireServiceTypeName(service);
             if (providers.isEmpty())
                 throw new IllegalArgumentException("Empty providers set");
-            if (check)
-                providers.forEach(Checks::requireServiceProviderName);
+            providers.forEach(Checks::requireServiceProviderName);
+            this.providers =
+                Collections.unmodifiableSet(new LinkedHashSet<>(providers));
+        }
+
+        private Provides(String service, Set<String> providers, boolean checked) {
+            this.service = service;
             this.providers = providers;
         }
 
@@ -931,8 +921,11 @@ public class ModuleDescriptor
     }
 
     /**
-     * Creates a module descriptor from its components. This method is intended
-     * for use by the jlink plugin.
+     * Creates a module descriptor from its components.
+     * This method is intended for use by the jlink plugin.
+     * The arguments are pre-validated and sets are unmodifiable sets.
+     *
+     * @see jdk.internal.module.Builder
      */
     ModuleDescriptor(String name,
                      boolean automatic,
@@ -947,15 +940,16 @@ public class ModuleDescriptor
                      String osArch,
                      String osVersion,
                      Set<String> packages,
-                     ModuleHashes hashes) {
+                     ModuleHashes hashes,
+                     boolean checked) {
         this.name = name;
         this.automatic = automatic;
         this.synthetic = synthetic;
-        this.requires = Collections.unmodifiableSet(requires);
-        this.exports = Collections.unmodifiableSet(exports);
-        this.uses = Collections.unmodifiableSet(uses);
-        this.provides = Collections.unmodifiableMap(provides);
-        this.packages = Collections.unmodifiableSet(packages);
+        this.requires = requires;
+        this.exports = exports;
+        this.uses = uses;
+        this.provides = provides;
+        this.packages = packages;
 
         this.version = version;
         this.mainClass = mainClass;
@@ -1448,7 +1442,7 @@ public class ModuleDescriptor
          */
         public Builder exports(String pn) {
             ensureNotExportedOrConcealed(pn);
-            exports.put(pn, new Exports(Collections.emptySet(), pn)); // checks pn
+            exports.put(pn, new Exports(Collections.emptySet(), pn));
             return this;
         }
 
@@ -2021,24 +2015,25 @@ public class ModuleDescriptor
 
                 @Override
                 public Requires newRequires(Set<Requires.Modifier> ms, String mn) {
-                    return new Requires(ms, mn, false);
+                    return new Requires(ms, mn, true);
                 }
 
                 @Override
                 public Exports newExports(Set<Exports.Modifier> ms,
                                           String source,
                                           Set<String> targets) {
-                    return new Exports(ms, source, targets, false);
+                    return new Exports(ms, source, targets, true);
                 }
 
                 @Override
-                public Exports newExports(Set<Exports.Modifier> ms, String source) {
-                    return new Exports(ms, source, false);
+                public Exports newExports(Set<Exports.Modifier> ms,
+                                          String source) {
+                    return new Exports(ms, source, true);
                 }
 
                 @Override
                 public Provides newProvides(String service, Set<String> providers) {
-                    return new Provides(service, providers, false);
+                    return new Provides(service, providers, true);
                 }
 
                 @Override
@@ -2080,7 +2075,8 @@ public class ModuleDescriptor
                                                 osArch,
                                                 osVersion,
                                                 packages,
-                                                hashes);
+                                                hashes,
+                                                true);
                 }
 
                 @Override

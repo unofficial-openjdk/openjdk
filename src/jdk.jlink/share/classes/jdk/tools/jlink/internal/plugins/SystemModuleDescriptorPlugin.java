@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.IntSupplier;
 import java.util.stream.Collectors;
 
 import jdk.internal.misc.JavaLangModuleAccess;
@@ -53,11 +54,11 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
 import jdk.tools.jlink.plugin.PluginException;
 import jdk.tools.jlink.plugin.ModulePool;
 import jdk.tools.jlink.plugin.TransformerPlugin;
-import jdk.tools.jlink.internal.plugins.SystemModuleDescriptorPlugin.Builder.*;
+import jdk.tools.jlink.internal.plugins.SystemModuleDescriptorPlugin.SystemModulesClassGenerator.*;
 import jdk.tools.jlink.plugin.ModuleEntry;
 
 /**
- * Jlink plugin to reconstitute module descriptors for installed modules.
+ * Jlink plugin to reconstitute module descriptors for system modules.
  * It will extend module-info.class with ConcealedPackages attribute,
  * if not present. It also determines the number of packages of
  * the boot layer at link time.
@@ -113,7 +114,7 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
             throw new PluginException(NAME + " was set");
         }
 
-        Builder builder = new Builder();
+        SystemModulesClassGenerator generator = new SystemModulesClassGenerator();
 
         // generate the byte code to create ModuleDescriptors
         // skip parsing module-info.class and skip name check
@@ -131,7 +132,7 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
                 ModuleDescriptor md = ModuleDescriptor.read(bain);
                 validateNames(md);
 
-                ModuleDescriptorBuilder mbuilder = builder.module(md, module.getAllPackages());
+                ModuleDescriptorBuilder mbuilder = generator.module(md, module.getAllPackages());
                 int packages = md.exports().size() + md.conceals().size();
                 if (md.conceals().isEmpty() &&
                         packages != module.getAllPackages().size()) {
@@ -153,11 +154,11 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
         });
 
         // Generate the new class
-        ClassWriter cwriter = builder.build();
+        ClassWriter cwriter = generator.getClassWriter();
         in.entries().forEach(data -> {
             if (data.getPath().endsWith("module-info.class"))
                 return;
-            if (builder.isOverriddenClass(data.getPath())) {
+            if (generator.isOverriddenClass(data.getPath())) {
                 byte[] bytes = cwriter.toByteArray();
                 ModuleEntry ndata =
                     ModuleEntry.create(data.getModule(),
@@ -193,6 +194,7 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
         Checks.requireModuleName(md.name());
         for (Requires req : md.requires()) {
             Checks.requireModuleName(req.name());
+            Checks.requireModifiers(req.modifiers());
         }
         for (Exports e : md.exports()) {
             Checks.requirePackageName(e.source());
@@ -229,31 +231,34 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
     }
 
     /**
-     * Builder of a new jdk.internal.module.SystemModules class
-     * to reconstitute ModuleDescriptor of the installed modules.
+     * ClassWriter of a new jdk.internal.module.SystemModules class
+     * to reconstitute ModuleDescriptor of the system modules.
      */
-    static class Builder {
+    static class SystemModulesClassGenerator {
         private static final String CLASSNAME =
             "jdk/internal/module/SystemModules";
         private static final String MODULE_DESCRIPTOR_BUILDER =
             "jdk/internal/module/Builder";
         private static final String MODULE_DESCRIPTOR_ARRAY_SIGNATURE =
             "[Ljava/lang/module/ModuleDescriptor;";
+        private static final String REQUIRES_MODIFIER_CLASSNAME =
+            "java/lang/module/ModuleDescriptor$Requires$Modifier";
+        private static final String EXPORTS_MODIFIER_CLASSNAME =
+            "java/lang/module/ModuleDescriptor$Exports$Modifier";
 
         // static variables in SystemModules class
         private static final String MODULE_NAMES = "MODULE_NAMES";
         private static final String MODULES_TO_HASH = "MODULES_TO_HASH";
         private static final String PACKAGE_COUNT = "PACKAGES_IN_BOOT_LAYER";
 
-        private static final int BUILDER_VAR    = 0;
-        private static final int MD_VAR         = 1;   // variable for ModuleDescriptor
-        private static final int MODS_VAR       = 2;   // variable for Set<Modifier>
-        private static final int STRING_SET_VAR = 3;   // variable for Set<String>
         private static final int MAX_LOCAL_VARS = 256;
+
+        private final int BUILDER_VAR    = 0;
+        private final int MD_VAR         = 1;  // variable for ModuleDescriptor
+        private int nextLocalVar         = 2;  // index to next local variable
 
         private final ClassWriter cw;
         private MethodVisitor mv;
-        private int nextLocalVar = 4;
         private int nextModulesIndex = 0;
 
         // list of all ModuleDescriptorBuilders, invoked in turn when building.
@@ -262,12 +267,19 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
         // module name to hash
         private final Map<String, String> modulesToHash = new HashMap<>();
 
-        // map Set<String> to a specialized builder to allow them to be
-        // deduplicated as they are requested
-        private final Map<Set<String>, StringSetBuilder> stringSets = new HashMap<>();
+        // A builder to create one single Set instance for a given set of
+        // names or modifiers to reduce the footprint
+        // e.g. target modules of qualified exports
+        private final DedupSetBuilder dedupSetBuilder
+            = new DedupSetBuilder(this::getNextLocalVar);
 
-        public Builder() {
-            this.cw = new ClassWriter(ClassWriter.COMPUTE_MAXS+ClassWriter.COMPUTE_FRAMES);
+        public SystemModulesClassGenerator() {
+            this.cw = new ClassWriter(ClassWriter.COMPUTE_MAXS +
+                                      ClassWriter.COMPUTE_FRAMES);
+        }
+
+        private int getNextLocalVar() {
+            return nextLocalVar++;
         }
 
         /*
@@ -277,7 +289,7 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
          */
         private void clinit(int numModules, int numPackages) {
             cw.visit(Opcodes.V1_8, ACC_PUBLIC+ACC_FINAL+ACC_SUPER, CLASSNAME,
-                    null, "java/lang/Object", null);
+                     null, "java/lang/Object", null);
 
             // public static String[] MODULE_NAMES = new String[] {....};
             cw.visitField(ACC_PUBLIC+ACC_FINAL+ACC_STATIC, MODULE_NAMES,
@@ -340,9 +352,9 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
         }
 
         /*
-         * Adds the given ModuleDescriptor to the installed module list, and
-         * prepares mapping from Set<String> to StringSetBuilders to emit an
-         * optimized number of string sets during build.
+         * Adds the given ModuleDescriptor to the system module list, and
+         * prepares mapping from various Sets to SetBuilders to emit an
+         * optimized number of sets during build.
          */
         public ModuleDescriptorBuilder module(ModuleDescriptor md, Set<String> packages) {
             ModuleDescriptorBuilder builder = new ModuleDescriptorBuilder(md, packages);
@@ -350,21 +362,22 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
 
             // exports
             for (ModuleDescriptor.Exports e : md.exports()) {
-                if (e.isQualified()) {
-                    stringSets.computeIfAbsent(e.targets(), s -> new StringSetBuilder(s))
-                              .increment();
-                }
+                dedupSetBuilder.stringSet(e.targets());
+                dedupSetBuilder.exportsModifiers(e.modifiers());
             }
 
-            // provides (preserve iteration order)
+            // provides
             for (ModuleDescriptor.Provides p : md.provides().values()) {
-                stringSets.computeIfAbsent(p.providers(), s -> new StringSetBuilder(s, true))
-                          .increment();
+                dedupSetBuilder.stringSet(p.providers(), true /* preserve iteration order */);
+            }
+
+            // requires
+            for (ModuleDescriptor.Requires r : md.requires()) {
+                dedupSetBuilder.requiresModifiers(r.modifiers());
             }
 
             // uses
-            stringSets.computeIfAbsent(md.uses(), s -> new StringSetBuilder(s))
-                      .increment();
+            dedupSetBuilder.stringSet(md.uses());
 
             // hashes
             JLMA.hashes(md).ifPresent(mh -> modulesToHash.putAll(mh.hashes()));
@@ -375,7 +388,7 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
         /*
          * Generate bytecode for SystemModules
          */
-        public ClassWriter build() {
+        public ClassWriter getClassWriter() {
             int numModules = builders.size();
             int numPackages = 0;
             for (ModuleDescriptorBuilder builder : builders) {
@@ -420,33 +433,11 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
         class ModuleDescriptorBuilder {
             static final String BUILDER_TYPE = "Ljdk/internal/module/Builder;";
 
-            // type names and signatures related to Requires
-            static final String REQUIRES_MODIFIER_CLASSNAME =
-                    "java/lang/module/ModuleDescriptor$Requires$Modifier";
-            static final String REQUIRES_MODIFIER_TYPE =
-                "Ljava/lang/module/ModuleDescriptor$Requires$Modifier;";
-            static final String REQUIRES_MODIFIER_STRING_SIG =
-                "(" + REQUIRES_MODIFIER_TYPE + "Ljava/lang/String;)" + BUILDER_TYPE;
-
-            // type names and signatures related to Exports
-            static final String EXPORTS_MODIFIER_CLASSNAME =
-                "java/lang/module/ModuleDescriptor$Exports$Modifier";
-            static final String EXPORTS_MODIFIER_TYPE =
-                "Ljava/lang/module/ModuleDescriptor$Exports$Modifier;";
-            static final String EXPORTS_STRING_SET_SIG =
-                "(Ljava/lang/String;Ljava/util/Set;)" + BUILDER_TYPE;
-            static final String EXPORTS_STRING_SIG =
-                "(Ljava/lang/String;)" + BUILDER_TYPE;
-            static final String EXPORTS_MODIFIER_STRING_SET_SIG =
-                "(" + EXPORTS_MODIFIER_TYPE + "Ljava/lang/String;Ljava/util/Set;)"
-                    + BUILDER_TYPE;
-            static final String EXPORTS_MODIFIER_STRING_SIG =
-                "(" + EXPORTS_MODIFIER_TYPE + "Ljava/lang/String;)" + BUILDER_TYPE;
             static final String EXPORTS_MODIFIER_SET_STRING_SET_SIG =
-                "(Ljava/lang/Set;Ljava/lang/String;Ljava/util/Set;)"
+                "(Ljava/util/Set;Ljava/lang/String;Ljava/util/Set;)"
                     + BUILDER_TYPE;
             static final String EXPORTS_MODIFIER_SET_STRING_SIG =
-                "(Ljava/lang/Set;Ljava/lang/String;)" + BUILDER_TYPE;
+                "(Ljava/util/Set;Ljava/lang/String;)" + BUILDER_TYPE;
 
             // general type names and signatures
             static final String STRING_SET_SIG =
@@ -515,49 +506,12 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
 
                 // requires
                 for (ModuleDescriptor.Requires req : md.requires()) {
-                    Set<Requires.Modifier> mods = req.modifiers();
-                    if (mods.contains(Requires.Modifier.PUBLIC) &&
-                            mods.contains(Requires.Modifier.STATIC)) {
-                        throw new IllegalArgumentException(
-                            "PUBLIC and STATIC not allowed together");
-                    }
-
-                    switch (req.modifiers().size()) {
-                        case 0:
-                            requires(req.name());
-                            break;
-                        case 1:
-                            ModuleDescriptor.Requires.Modifier mod =
-                                req.modifiers().iterator().next();
-                            requires(mod, req.name());
-                            break;
-                        default:
-                            requires(req.modifiers(), req.name());
-                    }
+                    requires(req.modifiers(), req.name());
                 }
 
                 // exports
                 for (ModuleDescriptor.Exports e : md.exports()) {
-                    switch (e.modifiers().size()) {
-                        case 0:
-                            if (e.isQualified()) {
-                                exports(e.source(), e.targets());
-                            } else {
-                                exports(e.source());
-                            }
-                            break;
-                        case 1:
-                            ModuleDescriptor.Exports.Modifier mod =
-                                e.modifiers().iterator().next();
-                            if (e.isQualified()) {
-                                exportsWithModifier(mod, e.source(), e.targets());
-                            } else {
-                                exportsWithModifier(mod, e.source());
-                            }
-                            break;
-                        default:
-                            exportsWithModifiers(e.modifiers(), e.source(), e.targets());
-                    }
+                    exports(e.modifiers(), e.source(), e.targets());
                 }
 
                 // uses
@@ -599,49 +553,15 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
             }
 
             /*
-             * Invoke Builder.requires(String mn)
-             */
-            void requires(String name) {
-                mv.visitVarInsn(ALOAD, BUILDER_VAR);
-                mv.visitLdcInsn(name);
-                mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                                   "requires", STRING_SIG, false);
-                mv.visitInsn(POP);
-            }
-
-            /*
-             * Invoke Builder.requires(Modifier mod, String mn)
-             */
-            void requires(ModuleDescriptor.Requires.Modifier mod, String name) {
-                mv.visitVarInsn(ALOAD, BUILDER_VAR);
-                mv.visitFieldInsn(GETSTATIC, REQUIRES_MODIFIER_CLASSNAME, mod.name(),
-                                  REQUIRES_MODIFIER_TYPE);
-                mv.visitLdcInsn(name);
-                mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                                   "requires", REQUIRES_MODIFIER_STRING_SIG, false);
-                mv.visitInsn(POP);
-            }
-
-            /*
              * Invoke Builder.requires(Set<Modifier> mods, String mn)
              *
-             * EnumSet<Modifier> mods = EnumSet.of(mod,....);
+             * Set<Modifier> mods = ...
              * Builder.requires(mods, mn);
              */
             void requires(Set<ModuleDescriptor.Requires.Modifier> mods, String name) {
-                mv.visitVarInsn(ALOAD, MODS_VAR);
-                String signature = "(";
-                for (ModuleDescriptor.Requires.Modifier m : mods) {
-                    mv.visitFieldInsn(GETSTATIC, REQUIRES_MODIFIER_CLASSNAME, m.name(),
-                                      REQUIRES_MODIFIER_TYPE);
-                    signature += "Ljava/util/Enum;";
-                }
-                signature += ")Ljava/util/EnumSet;";
-                mv.visitMethodInsn(INVOKESTATIC, "java/util/EnumSet", "of",
-                                   signature, false);
-                mv.visitVarInsn(ASTORE, MODS_VAR);
+                int varIndex = dedupSetBuilder.indexOfRequiresModifiers(mods);
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
-                mv.visitVarInsn(ALOAD, MODS_VAR);
+                mv.visitVarInsn(ALOAD, varIndex);
                 mv.visitLdcInsn(name);
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
                                    "requires", SET_STRING_SIG, false);
@@ -649,113 +569,40 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
             }
 
             /*
-             * Invoke Builder.exports(String pn)
-             */
-            void exports(String pn) {
-                mv.visitVarInsn(ALOAD, BUILDER_VAR);
-
-                mv.visitLdcInsn(pn);
-                mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                                   "exports", EXPORTS_STRING_SIG, false);
-                mv.visitInsn(POP);
-            }
-
-            /*
-             * Invoke Builder.exports(String pn, Set<String> targets)
-             *
-             * Set<String> targets = new HashSet<>();
-             * targets.add(t);
-             * :
-             * :
-             * Builder.exports(pn, targets);
-             */
-            void exports(String pn, Set<String> targets) {
-                int varIndex = stringSets.get(targets).build();
-                mv.visitVarInsn(ALOAD, BUILDER_VAR);
-                mv.visitLdcInsn(pn);
-                mv.visitVarInsn(ALOAD, varIndex);
-                mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                                   "exports", EXPORTS_STRING_SET_SIG, false);
-                mv.visitInsn(POP);
-            }
-
-            /*
-             * Invoke Builder.exportsWithModifier(String pn, Set<String> targets)
-             *
-             * Set<String> targets = new HashSet<>();
-             * targets.add(t);
-             * :
-             * :
-             * Builder.exportsWithModifier(pn, targets);
-             */
-            void exportsWithModifier(Exports.Modifier mod, String pn, Set<String> targets) {
-                int varIndex = stringSets.get(targets).build();
-                mv.visitVarInsn(ALOAD, BUILDER_VAR);
-                mv.visitFieldInsn(GETSTATIC, EXPORTS_MODIFIER_CLASSNAME, mod.name(),
-                                  EXPORTS_MODIFIER_TYPE);
-                mv.visitLdcInsn(pn);
-                mv.visitVarInsn(ALOAD, varIndex);
-                mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                                   "exportsWithModifier",
-                                   EXPORTS_MODIFIER_STRING_SET_SIG, false);
-                mv.visitInsn(POP);
-            }
-
-            /*
-             * Invoke Builder.exportsWithModifier(Exports.Modifier mod, String pn)
-             */
-            void exportsWithModifier(Exports.Modifier mod, String pn) {
-                mv.visitVarInsn(ALOAD, BUILDER_VAR);
-                mv.visitFieldInsn(GETSTATIC, EXPORTS_MODIFIER_CLASSNAME, mod.name(),
-                                  EXPORTS_MODIFIER_TYPE);
-                mv.visitLdcInsn(pn);
-                mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                                   "exportsWithModifier",
-                                   EXPORTS_MODIFIER_STRING_SIG, false);
-                mv.visitInsn(POP);
-            }
-
-            /*
              * Invoke
-             *     Builder.exportsWithModifiers(Set<Exports.Modifier> ms, String pn,
+             *     Builder.exports(Set<Exports.Modifier> ms, String pn,
              *                                  Set<String> targets)
              * or
-             *     Builder.exportsWithModifiers(Set<Exports.Modifier> ms, String pn)
+             *     Builder.exports(Set<Exports.Modifier> ms, String pn)
              *
              * Set<String> targets = new HashSet<>();
              * targets.add(t);
              * :
              * :
              *
-             * EnumSet<Modifier> mods = EnumSet.of(mod,....);
-             * Builder.exportsWithModifiers(mods, pn, targets);
+             * Set<Modifier> mods = ...
+             * Builder.exports(mods, pn, targets);
              */
-            void exportsWithModifiers(Set<Exports.Modifier> ms,
-                                      String pn,
-                                      Set<String> targets) {
+            void exports(Set<Exports.Modifier> ms,
+                         String pn,
+                         Set<String> targets) {
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
-                // create EnumSet
-                String signature = "(";
-                for (Exports.Modifier m : ms) {
-                    mv.visitFieldInsn(GETSTATIC, EXPORTS_MODIFIER_CLASSNAME, m.name(),
-                                      EXPORTS_MODIFIER_TYPE);
-                    signature += "Ljava/util/Enum;";
-                }
-                signature += ")Ljava/util/EnumSet;";
-                mv.visitMethodInsn(INVOKESTATIC, "java/util/EnumSet", "of",
-                                   signature, false);
-                mv.visitLdcInsn(pn);
+                int modifiersSetIndex = dedupSetBuilder.indexOfExportsModifiers(ms);
 
-                if (targets.isEmpty()) {
+                if (!targets.isEmpty()) {
+                    int stringSetIndex = dedupSetBuilder.indexOfStringSet(targets);
+                    mv.visitVarInsn(ALOAD, modifiersSetIndex);
+                    mv.visitLdcInsn(pn);
+                    mv.visitVarInsn(ALOAD, stringSetIndex);
                     mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                                       "exportsWithModifiers",
-                                       EXPORTS_MODIFIER_SET_STRING_SIG, false);
-                } else {
-                    int varIndex = stringSets.get(targets).build();
-                    mv.visitVarInsn(ALOAD, varIndex);
-                    mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                                       "exportsWithModifiers",
+                                       "exports",
                                        EXPORTS_MODIFIER_SET_STRING_SET_SIG, false);
+                } else {
+                    mv.visitVarInsn(ALOAD, modifiersSetIndex);
+                    mv.visitLdcInsn(pn);
+                    mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
+                                       "exports",
+                                       EXPORTS_MODIFIER_SET_STRING_SIG, false);
                 }
                 mv.visitInsn(POP);
             }
@@ -764,7 +611,7 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
              * Invokes Builder.uses(Set<String> uses)
              */
             void uses(Set<String> uses) {
-                int varIndex = stringSets.get(uses).build();
+                int varIndex = dedupSetBuilder.indexOfStringSet(uses);
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
                 mv.visitVarInsn(ALOAD, varIndex);
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
@@ -782,7 +629,7 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
              * Builder.exports(service, providers);
              */
             void provides(String service, Set<String> providers) {
-                int varIndex = stringSets.get(providers).build();
+                int varIndex = dedupSetBuilder.indexOfStringSet(providers);
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
                 mv.visitLdcInsn(service);
                 mv.visitVarInsn(ALOAD, varIndex);
@@ -796,8 +643,7 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
              */
             void packages(Set<String> packages) {
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
-                int varIndex = new StringSetBuilder(packages).build();
-                assert varIndex == STRING_SET_VAR;
+                int varIndex = dedupSetBuilder.newStringSet(packages);
                 mv.visitVarInsn(ALOAD, varIndex);
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
                                    "packages", SET_SIG, false);
@@ -826,6 +672,9 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
                 mv.visitInsn(POP);
             }
 
+            /*
+             * Invoke Builder.algorithm(String a);
+             */
             void algorithm(String alg) {
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
                 mv.visitLdcInsn(alg);
@@ -834,6 +683,9 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
                 mv.visitInsn(POP);
             }
 
+            /*
+             * Invoke Builder.moduleHash(String name, String hashString);
+             */
             void moduleHash(String name, String hashString) {
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
                 mv.visitLdcInsn(name);
@@ -845,79 +697,236 @@ public final class SystemModuleDescriptorPlugin implements TransformerPlugin {
         }
 
         /*
-         * StringSetBuilder generates bytecode to create one single instance
-         * of HashSet for a given set of names and assign to a local variable
-         * slot.  When there is only one single reference to a Set<String>,
-         * it will reuse STRING_SET_VAR for reference.  For Set<String> with
-         * multiple references, it will use a new local variable.
+         * Wraps set creation, ensuring identical sets are properly deduplicated.
          */
-        class StringSetBuilder {
-            final Set<String> names;
-            final boolean linked;
-            int refCount;
-            int localVarIndex;
+        class DedupSetBuilder {
+            // map Set<String> to a specialized builder to allow them to be
+            // deduplicated as they are requested
+            final Map<Set<String>, SetBuilder<String>> stringSets = new HashMap<>();
 
-            StringSetBuilder(Set<String> names, boolean linked) {
-                this.names = names;
-                this.linked = linked;
-            }
+            // map Set<Requires.Modifier> to a specialized builder to allow them to be
+            // deduplicated as they are requested
+            final Map<Set<Requires.Modifier>, EnumSetBuilder<Requires.Modifier>>
+                requiresModifiersSets = new HashMap<>();
 
-            StringSetBuilder(Set<String> names) {
-                this(names, false);
-            }
+            // map Set<Exports.Modifier> to a specialized builder to allow them to be
+            // deduplicated as they are requested
+            final Map<Set<Exports.Modifier>, EnumSetBuilder<Exports.Modifier>>
+                exportsModifiersSets = new HashMap<>();
 
-            void increment() {
-                refCount++;
+            private final int stringSetVar;
+            private final int enumSetVar;
+            private final IntSupplier localVarSupplier;
+
+            DedupSetBuilder(IntSupplier localVarSupplier) {
+                this.stringSetVar = localVarSupplier.getAsInt();
+                this.enumSetVar = localVarSupplier.getAsInt();
+                this.localVarSupplier = localVarSupplier;
             }
 
             /*
-             * Build bytecode for the Set<String> represented by this builder,
+             * Add the given set of names to this builder
+             */
+            void stringSet(Set<String> names) {
+                stringSet(names, false);
+            }
+
+            /*
+             * Add the given set of names to this builder.
+             *
+             * If preserveIterationOrder is true, the builder creates a set
+             * that preserves the order, for example, LinkedHashSet.
+             */
+            void stringSet(Set<String> names, boolean preserveIterationOrder) {
+                stringSets.computeIfAbsent(names,
+                    s -> new SetBuilder<>(s, stringSetVar, localVarSupplier)
+                ).iterationOrder(preserveIterationOrder).increment();
+            }
+
+            /*
+             * Add the given set of Exports.Modifiers
+             */
+            void exportsModifiers(Set<Exports.Modifier> mods) {
+                exportsModifiersSets.computeIfAbsent(mods, s ->
+                    new EnumSetBuilder<>(s, EXPORTS_MODIFIER_CLASSNAME,
+                                         enumSetVar, localVarSupplier)
+                ).increment();
+            }
+
+            /*
+             * Add the given set of Requires.Modifiers
+             */
+            void requiresModifiers(Set<Requires.Modifier> mods) {
+                requiresModifiersSets.computeIfAbsent(mods, s ->
+                    new EnumSetBuilder<>(s, REQUIRES_MODIFIER_CLASSNAME,
+                                         enumSetVar, localVarSupplier)
+                ).increment();
+            }
+
+            /*
+             * Retrieve the index to the given set of Strings. Emit code to
+             * generate it when SetBuilder::build is called.
+             */
+            int indexOfStringSet(Set<String> names) {
+                return stringSets.get(names).build();
+            }
+
+            /*
+             * Retrieve the index to the given set of Exports.Modifier.
+             * Emit code to generate it when EnumSetBuilder::build is called.
+             */
+            int indexOfExportsModifiers(Set<Exports.Modifier> mods) {
+                return exportsModifiersSets.get(mods).build();
+            }
+
+            /*
+             * Retrieve the index to the given set of Requires.Modifier.
+             * Emit code to generate it when EnumSetBuilder::build is called.
+             */
+            int indexOfRequiresModifiers(Set<Requires.Modifier> mods) {
+                return requiresModifiersSets.get(mods).build();
+            }
+
+            /*
+             * Build a new string set without any attempt to deduplicate it.
+             */
+            int newStringSet(Set<String> names) {
+                int index = new SetBuilder<>(names, stringSetVar, localVarSupplier).build();
+                assert index == stringSetVar;
+                return index;
+            }
+        }
+
+        /*
+         * SetBuilder generates bytecode to create one single instance of Set
+         * for a given set of elements and assign to a local variable slot.
+         * When there is only one single reference to a Set<T>,
+         * it will reuse defaultVarIndex.  For a Set with multiple references,
+         * it will use a new local variable retrieved from the nextLocalVar
+         */
+        class SetBuilder<T> {
+            private final Set<T> elements;
+            private final int defaultVarIndex;
+            private final IntSupplier nextLocalVar;
+            private boolean linked;
+            private int refCount;
+            private int localVarIndex;
+
+            SetBuilder(Set<T> elements,
+                       int defaultVarIndex,
+                       IntSupplier nextLocalVar) {
+                this.elements = elements;
+                this.defaultVarIndex = defaultVarIndex;
+                this.nextLocalVar = nextLocalVar;
+            }
+
+            /*
+             * Marks that the builder should maintain the iteration order of
+             * the elements, i.e., use a LinkedHashSet.
+             */
+            final SetBuilder<T> iterationOrder(boolean preserveOrder) {
+                this.linked = preserveOrder;
+                return this;
+            }
+
+            /*
+             * Increments the number of references to this particular set.
+             */
+            final void increment() {
+                refCount++;
+            }
+
+            /**
+             * Generate the appropriate instructions to load an object reference
+             * to the element onto the stack.
+             */
+            void visitElement(T element, MethodVisitor mv) {
+                mv.visitLdcInsn(element);
+            }
+
+            /*
+             * Build bytecode for the Set represented by this builder,
              * or get the local variable index of a previously generated set
              * (in the local scope).
              *
              * @return local variable index of the generated set.
              */
-            int build() {
+            final int build() {
                 int index = localVarIndex;
                 if (localVarIndex == 0) {
                     // if non-empty and more than one set reference this builder,
                     // emit to a unique local
-                    index = refCount <= 1 ? STRING_SET_VAR
-                                          : nextLocalVar++;
+                    index = refCount <= 1 ? defaultVarIndex
+                                          : nextLocalVar.getAsInt();
                     if (index < MAX_LOCAL_VARS) {
                         localVarIndex = index;
                     } else {
-                        // overflow: disable optimization and keep localVarIndex = 0
-                        index = STRING_SET_VAR;
+                        // overflow: disable optimization by using localVarIndex = 0
+                        index = defaultVarIndex;
                     }
 
-                    if (names.isEmpty()) {
+                    if (elements.isEmpty()) {
                         mv.visitMethodInsn(INVOKESTATIC, "java/util/Collections",
-                                "emptySet", "()Ljava/util/Set;", false);
+                                           "emptySet",
+                                           "()Ljava/util/Set;",
+                                           false);
                         mv.visitVarInsn(ASTORE, index);
-                    } else if (names.size() == 1) {
-                        mv.visitLdcInsn(names.iterator().next());
+                    } else if (elements.size() == 1) {
+                        visitElement(elements.iterator().next(), mv);
                         mv.visitMethodInsn(INVOKESTATIC, "java/util/Collections",
-                                "singleton", "(Ljava/lang/Object;)Ljava/util/Set;", false);
+                                           "singleton",
+                                           "(Ljava/lang/Object;)Ljava/util/Set;",
+                                           false);
                         mv.visitVarInsn(ASTORE, index);
                     } else {
                         String cn = linked ? "java/util/LinkedHashSet" : "java/util/HashSet";
                         mv.visitTypeInsn(NEW, cn);
                         mv.visitInsn(DUP);
-                        pushInt(initialCapacity(names.size()));
+                        pushInt(initialCapacity(elements.size()));
                         mv.visitMethodInsn(INVOKESPECIAL, cn, "<init>", "(I)V", false);
 
                         mv.visitVarInsn(ASTORE, index);
-                        for (String t : names) {
+                        for (T t : elements) {
                             mv.visitVarInsn(ALOAD, index);
-                            mv.visitLdcInsn(t);
+                            visitElement(t, mv);
                             mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Set",
-                                    "add", "(Ljava/lang/Object;)Z", true);
+                                               "add",
+                                               "(Ljava/lang/Object;)Z", true);
                             mv.visitInsn(POP);
                         }
+                        mv.visitVarInsn(ALOAD, index);
+                        mv.visitMethodInsn(INVOKESTATIC, "java/util/Collections",
+                                           "unmodifiableSet",
+                                           "(Ljava/util/Set;)Ljava/util/Set;",
+                                           false);
+                        mv.visitVarInsn(ASTORE, index);
                     }
                 }
                 return index;
+            }
+        }
+
+        /*
+         * Generates bytecode to create one single instance of EnumSet
+         * for a given set of modifiers and assign to a local variable slot.
+         */
+        class EnumSetBuilder<T> extends SetBuilder<T> {
+
+            private final String className;
+
+            EnumSetBuilder(Set<T> modifiers, String className,
+                           int defaultVarIndex,
+                           IntSupplier nextLocalVar) {
+                super(modifiers, defaultVarIndex, nextLocalVar);
+                this.className = className;
+            }
+
+            /**
+             * Loads a Enum field.
+             */
+            void visitElement(T t, MethodVisitor mv) {
+                mv.visitFieldInsn(GETSTATIC, className, t.toString(),
+                                  "L" + className + ";");
             }
         }
     }
