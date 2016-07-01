@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,23 +22,9 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.tools.jlink.plugin;
-
 
 /**
- * Implement this interface to develop a Transformer plugin.
- * TransformerPlugin are called during image creation. This kind of plugin aims to
- * modify the content of the runtime image.
+ * This package contains standard, supported doclets.
  */
-public interface TransformerPlugin extends Plugin {
-    /**
-     * Visit the content of the modules that are composing the image.
-     *
-     * @param in Read only content.
-     * @param out The pool to fill with content. This pool must contain
-     * the result of the visit.
-     *
-     * @throws PluginException
-     */
-    public void visit(ModulePool in, ModulePool out);
-}
+package jdk.javadoc.doclets;
+
