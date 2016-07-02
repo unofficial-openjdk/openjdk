@@ -193,6 +193,9 @@ public class Arguments {
         fileObjects = null;
         classNames = new LinkedHashSet<>();
         processArgs(List.from(args), Option.getJavaCompilerOptions(), cmdLineHelper, true, false);
+        if (errors) {
+            log.printLines(PrefixKind.JAVAC, "msg.usage", ownName);
+        }
     }
 
     private final OptionHelper apiHelper = new GrumpyHelper(null) {
@@ -445,11 +448,14 @@ public class Arguments {
             if (emptyAllowed)
                 return true;
 
-            if (JavaCompiler.explicitAnnotationProcessingRequested(options)) {
-                error("err.no.source.files.classes");
-            } else {
-                error("err.no.source.files");
+            if (!errors) {
+                if (JavaCompiler.explicitAnnotationProcessingRequested(options)) {
+                    error("err.no.source.files.classes");
+                } else {
+                    error("err.no.source.files");
+                }
             }
+
             return false;
         }
 
@@ -773,7 +779,6 @@ public class Arguments {
             }
             case LOG:
                 report(key, args);
-                log.printLines(PrefixKind.JAVAC, "msg.usage", ownName);
         }
     }
 

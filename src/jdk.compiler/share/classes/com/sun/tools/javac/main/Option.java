@@ -32,6 +32,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.Collator;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.Iterator;
@@ -56,6 +57,7 @@ import com.sun.tools.javac.jvm.Target;
 import com.sun.tools.javac.platform.PlatformProvider;
 import com.sun.tools.javac.processing.JavacProcessingEnvironment;
 import com.sun.tools.javac.util.Assert;
+import com.sun.tools.javac.util.JDK9Wrappers;
 import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Log.PrefixKind;
 import com.sun.tools.javac.util.Log.WriterKind;
@@ -586,7 +588,43 @@ public enum Option {
         }
     },
 
-    MULTIRELEASE("-multi-release", "opt.arg.multi-release", "opt.multi-release", HIDDEN, FILEMANAGER);
+    MULTIRELEASE("-multi-release", "opt.arg.multi-release", "opt.multi-release", HIDDEN, FILEMANAGER),
+
+    INHERIT_RUNTIME_ENVIRONMENT("--inherit-runtime-environment", "opt.inherit_runtime_environment",
+            EXTENDED, BASIC) {
+        @Override
+        public boolean process(OptionHelper helper, String option) {
+            try {
+                Class.forName(JDK9Wrappers.VMHelper.VM_CLASSNAME);
+                String[] runtimeArgs = JDK9Wrappers.VMHelper.getRuntimeArguments();
+                for (String arg : runtimeArgs) {
+                    // Handle any supported runtime options; ignore all others.
+                    // The runtime arguments always use the single token form, e.g. "--name=value".
+                    for (Option o : getSupportedRuntimeOptions()) {
+                        if (o.matches(arg)) {
+                            o.handleOption(helper, arg, Collections.emptyIterator());
+                            break;
+                        }
+                    }
+                }
+            } catch (ClassNotFoundException | SecurityException e) {
+                helper.error("err.cannot.access.runtime.env");
+            }
+            return false;
+        }
+
+        private Option[] getSupportedRuntimeOptions() {
+            Option[] supportedRuntimeOptions = {
+                ADD_EXPORTS,
+                ADD_MODULES,
+                LIMIT_MODULES,
+                MODULE_PATH,
+                UPGRADE_MODULE_PATH,
+                PATCH_MODULE
+            };
+            return supportedRuntimeOptions;
+        }
+    };
 
     /**
      * The kind of argument, if any, accepted by this option. The kind is augmented

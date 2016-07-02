@@ -229,7 +229,7 @@ public class XModuleTest extends ModuleTestBase {
 
         List<String> expected = Arrays.asList("javac: option -Xmodule: can only be specified once",
                                               "Usage: javac <options> <source files>",
-                                              "use -help for a list of possible options");
+                                              "use --help for a list of possible options");
 
         if (!expected.equals(log))
             throw new Exception("expected output not found: " + log);
