@@ -48,8 +48,12 @@ import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.security.SecureClassLoader;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -295,12 +299,14 @@ public final class Loader extends SecureClassLoader {
      */
     @Override
     protected URL findResource(String mn, String name) throws IOException {
-        ModuleReference mref = nameToModule.get(mn);
+        ModuleReference mref = (mn != null) ? nameToModule.get(mn) : null;
         if (mref == null)
             return null;   // not defined to this class loader
 
+        // locate resource
+        URL url = null;
         try {
-            return AccessController.doPrivileged(
+            url = AccessController.doPrivileged(
                 new PrivilegedExceptionAction<URL>() {
                     @Override
                     public URL run() throws IOException {
@@ -312,12 +318,53 @@ public final class Loader extends SecureClassLoader {
                         }
                         return null;
                     }
-                }, acc);
+                });
         } catch (PrivilegedActionException pae) {
             throw (IOException) pae.getCause();
-        } catch (SecurityException se) {
-            return null;
         }
+
+        // check access with permissions restricted by ACC
+        if (url != null && System.getSecurityManager() != null) {
+            try {
+                URL urlToCheck = url;
+                url = AccessController.doPrivileged(
+                    new PrivilegedExceptionAction<URL>() {
+                        @Override
+                        public URL run() throws IOException {
+                            return URLClassPath.checkURL(urlToCheck);
+                        }
+                    }, acc);
+            } catch (PrivilegedActionException pae) {
+                url = null;
+            }
+        }
+
+        return url;
+    }
+
+    @Override
+    public URL findResource(String name) {
+        for (ModuleReference mref : nameToModule.values()) {
+            try {
+                URL url = findResource(mref.descriptor().name(), name);
+                if (url != null)
+                    return url;
+            } catch (IOException ioe) { }
+        }
+        return null;
+    }
+
+    @Override
+    public Enumeration<URL> findResources(String name) throws IOException {
+        List<URL> urls = new ArrayList<>();
+        for (ModuleReference mref : nameToModule.values()) {
+            try {
+                URL url = findResource(mref.descriptor().name(), name);
+                if (url != null)
+                    urls.add(url);
+            } catch (IOException ioe) { }
+        }
+        return Collections.enumeration(urls);
     }
 
 

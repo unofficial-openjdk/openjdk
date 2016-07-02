@@ -29,6 +29,7 @@
  *          jdk.jartool/sun.security.tools.jarsigner
  *          jdk.policytool/sun.security.tools.policytool
  * @summary security/util/Resources.java needs improvement
+ * @run main/othervm --add-modules=jdk.policytool NewNamesFormat
  */
 
 

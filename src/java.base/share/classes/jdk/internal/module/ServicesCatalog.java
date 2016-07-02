@@ -41,7 +41,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @see java.util.ServiceLoader
  */
-public interface ServicesCatalog {
+public final class ServicesCatalog {
 
     /**
      * Represents a service provider in the services catalog.
@@ -78,56 +78,106 @@ public interface ServicesCatalog {
         }
     }
 
+    // service name -> service providers
+    private Map<String, Set<ServiceProvider>> map = new ConcurrentHashMap<>();
+
+    private ServicesCatalog() { }
+
+    /**
+     * Returns a unmodifiable set that is the union of the given sets.
+     */
+    private <T> Set<T> union(Set<T> s1, Set<T> s2) {
+        Set<T> result = new HashSet<>(s1);
+        result.addAll(s2);
+        return Collections.unmodifiableSet(result);
+    }
+
+    /**
+     * Adds or replaces an entry in the map.
+     */
+    private void replace(String sn,
+                         Set<ServiceProvider> oldSet,
+                         Set<ServiceProvider> newSet) {
+        boolean replaced;
+        if (oldSet == null) {
+            replaced = (map.putIfAbsent(sn, newSet) == null);
+        } else {
+            replaced = map.replace(sn, oldSet, newSet);
+        }
+        if (replaced) {
+            // added or replaced
+            return;
+        }
+        synchronized (this) {
+            oldSet = map.get(sn); // re-read
+            assert oldSet != null;
+            map.put(sn, union(oldSet, newSet));
+        }
+    }
+
+    /**
+     * Creates a ServicesCatalog that supports concurrent registration and
+     * and lookup
+     */
+    public static ServicesCatalog create() {
+        return new ServicesCatalog();
+    }
+
     /**
      * Registers the providers in the given module in this services catalog.
      *
      * @throws UnsupportedOperationException
      *         If this services catalog is immutable
      */
-    void register(Module module);
+    public void register(Module module) {
+        ModuleDescriptor descriptor = module.getDescriptor();
+        for (Provides provides : descriptor.provides().values()) {
+            String sn = provides.service();
+            Set<String> providerNames = provides.providers();
+
+            Set<ServiceProvider> oldSet = map.get(sn);
+            Set<ServiceProvider> newSet;
+            if (oldSet == null && providerNames.size() == 1) {
+                String pn = providerNames.iterator().next();
+                newSet = Set.of(new ServiceProvider(module, pn));
+            } else {
+                newSet = new HashSet<>();
+                if (oldSet != null) {
+                    newSet.addAll(oldSet);
+                }
+                for (String pn : providerNames) {
+                    newSet.add(new ServiceProvider(module, pn));
+                }
+            }
+
+            replace(sn, oldSet, newSet);
+        }
+    }
+
+    /**
+     * Add a provider in the given module to this services catalog
+     */
+    public void addProvider(Module module, Class<?> service, Class<?> impl) {
+        String sn = service.getName();
+        ServiceProvider provider = new ServiceProvider(module, impl.getName());
+        Set<ServiceProvider> providers = Set.of(provider);
+
+        Set<ServiceProvider> oldSet = map.get(sn);
+        Set<ServiceProvider> newSet;
+        if (oldSet == null) {
+            newSet = providers;
+        } else {
+            newSet = union(oldSet, providers);
+        }
+
+        replace(sn, oldSet, newSet);
+    }
 
     /**
      * Returns the (possibly empty) set of service providers that implement the
      * given service type.
      */
-    Set<ServiceProvider> findServices(String service);
-
-    /**
-     * Creates a ServicesCatalog that supports concurrent registration and
-     * and lookup.
-     */
-    static ServicesCatalog create() {
-        return new ServicesCatalog() {
-
-            private Map<String, Set<ServiceProvider>> map = new ConcurrentHashMap<>();
-
-            @Override
-            public void register(Module m) {
-                ModuleDescriptor descriptor = m.getDescriptor();
-
-                for (Provides provides : descriptor.provides().values()) {
-                    String service = provides.service();
-                    Set<String> providerNames = provides.providers();
-
-                    // create a new set to replace the existing
-                    Set<ServiceProvider> result = new HashSet<>();
-                    Set<ServiceProvider> providers = map.get(service);
-                    if (providers != null) {
-                        result.addAll(providers);
-                    }
-                    for (String pn : providerNames) {
-                        result.add(new ServiceProvider(m, pn));
-                    }
-                    map.put(service, Collections.unmodifiableSet(result));
-                }
-
-            }
-
-            @Override
-            public Set<ServiceProvider> findServices(String service) {
-                return map.getOrDefault(service, Collections.emptySet());
-            }
-
-        };
+    public Set<ServiceProvider> findServices(String service) {
+        return map.getOrDefault(service, Collections.emptySet());
     }
 }

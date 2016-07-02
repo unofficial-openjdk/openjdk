@@ -38,9 +38,9 @@
  *          jdk.net
  *          jdk.security.auth
  *          jdk.security.jgss
- * @compile -addmods java.xml.ws,java.smartcardio Modules.java
+ * @compile --add-modules=java.xml.ws,java.smartcardio Modules.java
  * @run main/othervm/java.security.policy==modules.policy
- *     -addmods java.xml.ws,java.smartcardio Modules
+ *     --add-modules=java.xml.ws,java.smartcardio Modules
  */
 
 import java.security.AccessController;

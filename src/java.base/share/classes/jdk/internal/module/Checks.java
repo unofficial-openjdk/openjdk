@@ -25,6 +25,8 @@
 
 package jdk.internal.module;
 
+import java.util.Set;
+import java.lang.module.ModuleDescriptor.Requires.*;
 
 public final class Checks {
 
@@ -83,6 +85,13 @@ public final class Checks {
             fail(what, id, last);
 
         return id;
+    }
+
+    public static void requireModifiers(Set<Modifier> mods) {
+        if (mods.contains(Modifier.PUBLIC) && mods.contains(Modifier.STATIC)) {
+            throw new IllegalArgumentException("PUBLIC and STATIC"
+                    + " not allowed together");
+        }
     }
 
     public static String requireModuleName(String id) {

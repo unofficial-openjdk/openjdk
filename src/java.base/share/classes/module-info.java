@@ -116,7 +116,7 @@ module java.base {
     // see make/gensrc/GenModuleInfo.gmk
 
     // CORBA serialization needs reflective access
-    exports sun.util.calendar to
+    exports dynamic sun.util.calendar to
         java.corba;
 
     exports com.sun.security.ntlm to
