@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,17 +21,26 @@
  * questions.
  */
 
-module jdk.hotspot.agent {
-    requires java.datatransfer;
-    requires java.desktop;
-    requires java.rmi;
-    requires java.scripting;
-    requires jdk.jdi;
+/*
+ * @test
+ * @summary VM exit initialization results if java.base is specificed more than once to --patch-module.
+ * @modules java.base/jdk.internal.misc
+ * @library /testlibrary
+ */
 
-    // RMI needs to serialize types in this package
-    exports dynamic sun.jvm.hotspot.debugger.remote to java.rmi;
-    provides com.sun.jdi.connect.Connector with sun.jvm.hotspot.jdi.SACoreAttachingConnector;
-    provides com.sun.jdi.connect.Connector with sun.jvm.hotspot.jdi.SADebugServerAttachingConnector;
-    provides com.sun.jdi.connect.Connector with sun.jvm.hotspot.jdi.SAPIDAttachingConnector;
+import jdk.test.lib.*;
 
+public class PatchModuleDupJavaBase {
+  // The VM should exit initialization if java.base is specified
+  // more than once to --patch-module.
+  public static void main(String args[]) throws Exception {
+    ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
+      "--patch-module=java.base=javabase_dir",
+      "--patch-module=java.base=javabase_dir",
+      "-version");
+    OutputAnalyzer output = new OutputAnalyzer(pb.start());
+    output.shouldContain("Cannot specify java.base more than once to --patch-module");
+    output.shouldHaveExitValue(1);
+  }
 }
+

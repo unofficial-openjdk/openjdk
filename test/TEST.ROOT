@@ -43,5 +43,5 @@ requiredVersion=4.2 b02
 # does not need ../../ notation to reach them
 external.lib.roots = ../../
 
-# Use new form of -Xpatch
+# Use new form of --patch-module
 useNewXpatch=true
