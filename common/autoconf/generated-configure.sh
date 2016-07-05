@@ -30619,13 +30619,13 @@ $as_echo "$tool_specified" >&6; }
 
 
 
-  $ECHO "Check if jvm arg is ok: -Xpatch:foo=bar" >&5
-  $ECHO "Command: $JAVA -Xpatch:foo=bar -version" >&5
-  OUTPUT=`$JAVA -Xpatch:foo=bar -version 2>&1`
+  $ECHO "Check if jvm arg is ok: --patch-module foo=bar" >&5
+  $ECHO "Command: $JAVA --patch-module foo=bar -version" >&5
+  OUTPUT=`$JAVA --patch-module foo=bar -version 2>&1`
   FOUND_WARN=`$ECHO "$OUTPUT" | $GREP -i warn`
   FOUND_VERSION=`$ECHO $OUTPUT | $GREP " version \""`
   if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
-    dummy="$dummy -Xpatch:foo=bar"
+    dummy="$dummy --patch-module foo=bar"
     JVM_ARG_OK=true
   else
     $ECHO "Arg failed:" >&5
