@@ -102,7 +102,8 @@ final class Builder {
      * modifiers.
      */
     public Builder exports(Set<Exports.Modifier> ms,
-                           String pn, Set<String> targets) {
+                           String pn,
+                           Set<String> targets) {
         exports.add(jlma.newExports(ms, pn, targets));
         return this;
     }

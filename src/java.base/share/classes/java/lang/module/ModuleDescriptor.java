@@ -123,11 +123,11 @@ public class ModuleDescriptor
             this.mods = ms.isEmpty()
                     ? Collections.emptySet()
                     : Collections.unmodifiableSet(EnumSet.copyOf(ms));
-            requireModifiers(mods);
+            Checks.requireModifiers(mods);
             this.name = requireModuleName(mn);
         }
 
-        private Requires(Set<Modifier> ms, String mn, boolean checked) {
+        private Requires(Set<Modifier> ms, String mn, boolean unused) {
             this.mods = ms;
             this.name = mn;
         }
@@ -292,8 +292,10 @@ public class ModuleDescriptor
             this.targets = Collections.unmodifiableSet(new HashSet<>(targets));
         }
 
-        private Exports(Set<Modifier> ms, String source, Set<String> targets,
-                        boolean checked) {
+        private Exports(Set<Modifier> ms,
+                        String source,
+                        Set<String> targets,
+                        boolean unused) {
             this.mods = ms;
             this.source = source;
             this.targets = targets;
@@ -312,7 +314,7 @@ public class ModuleDescriptor
             this.targets = Collections.emptySet();
         }
 
-        private Exports(Set<Modifier> ms, String source, boolean checked) {
+        private Exports(Set<Modifier> ms, String source, boolean unused) {
             this.mods = ms;
             this.source = source;
             this.targets = Collections.emptySet();
@@ -437,7 +439,7 @@ public class ModuleDescriptor
                 Collections.unmodifiableSet(new LinkedHashSet<>(providers));
         }
 
-        private Provides(String service, Set<String> providers, boolean checked) {
+        private Provides(String service, Set<String> providers, boolean unused) {
             this.service = service;
             this.providers = providers;
         }
@@ -922,10 +924,7 @@ public class ModuleDescriptor
 
     /**
      * Creates a module descriptor from its components.
-     * This method is intended for use by the jlink plugin.
      * The arguments are pre-validated and sets are unmodifiable sets.
-     *
-     * @see jdk.internal.module.Builder
      */
     ModuleDescriptor(String name,
                      boolean automatic,
@@ -940,8 +939,7 @@ public class ModuleDescriptor
                      String osArch,
                      String osVersion,
                      Set<String> packages,
-                     ModuleHashes hashes,
-                     boolean checked) {
+                     ModuleHashes hashes) {
         this.name = name;
         this.automatic = automatic;
         this.synthetic = synthetic;
@@ -1345,7 +1343,7 @@ public class ModuleDescriptor
          *         If the package is already declared as an exported or
          *         concealed package
          */
-        public Builder exports(Set<ModuleDescriptor.Exports.Modifier> mods,
+        public Builder exports(Set<Exports.Modifier> mods,
                                String pn,
                                Set<String> targets)
         {
@@ -1371,7 +1369,7 @@ public class ModuleDescriptor
          *         If the package is already declared as an exported or
          *         concealed package
          */
-        public Builder exports(Set<ModuleDescriptor.Exports.Modifier> mods,
+        public Builder exports(Set<Exports.Modifier> mods,
                                String pn)
         {
             ensureNotExportedOrConcealed(pn);
@@ -2075,8 +2073,7 @@ public class ModuleDescriptor
                                                 osArch,
                                                 osVersion,
                                                 packages,
-                                                hashes,
-                                                true);
+                                                hashes);
                 }
 
                 @Override
