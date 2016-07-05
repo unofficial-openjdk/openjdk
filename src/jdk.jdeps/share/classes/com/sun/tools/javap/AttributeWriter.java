@@ -477,7 +477,6 @@ public class AttributeWriter extends BasicWriter
     @Override
     public Void visitMethodParameters(MethodParameters_attribute attr,
                                       Void ignore) {
-
         final String header = String.format(format, "Name", "Flags");
         println("MethodParameters:");
         indent(+1);
@@ -516,8 +515,10 @@ public class AttributeWriter extends BasicWriter
         for (Module_attribute.RequiresEntry e: entries) {
             print("#" + e.requires_index + "," +
                     String.format("%x", e.requires_flags)+ "\t// requires");
-            if ((e.requires_flags & Module_attribute.ACC_PUBLIC) != 0)
+            if ((e.requires_flags & Module_attribute.ACC_TRANSITIVE) != 0)
                 print(" public");
+            if ((e.requires_flags & Module_attribute.ACC_STATIC_PHASE) != 0)
+                print(" static");
             if ((e.requires_flags & Module_attribute.ACC_SYNTHETIC) != 0)
                 print(" synthetic");
             if ((e.requires_flags & Module_attribute.ACC_MANDATED) != 0)
@@ -532,8 +533,11 @@ public class AttributeWriter extends BasicWriter
         println(entries.length + "\t// " + "exports");
         indent(+1);
         for (Module_attribute.ExportsEntry e: entries) {
-            print("#" + e.exports_index + "\t// exports");
+            print("#" + e.exports_index + "," +
+                    String.format("%x", e.exports_flags) + "\t// exports");
             print(" " + constantWriter.stringValue(e.exports_index));
+            if ((e.exports_flags & Module_attribute.ACC_DYNAMIC_PHASE) != 0)
+                print(" dynamic");
             if (e.exports_to_index.length == 0) {
                 println();
             } else {
