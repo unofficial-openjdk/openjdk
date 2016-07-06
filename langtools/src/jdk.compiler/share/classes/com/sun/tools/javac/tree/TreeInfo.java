@@ -768,8 +768,9 @@ public class TreeInfo {
         switch (node.getTag()) {
         case TOPLEVEL:
             JCCompilationUnit cut = (JCCompilationUnit) node;
-            if (isModuleInfo(cut) && cut.defs.nonEmpty() && cut.defs.head.hasTag(MODULEDEF))
-                return symbolFor(cut.defs.head);
+            JCModuleDecl moduleDecl = cut.getModuleDecl();
+            if (isModuleInfo(cut) && moduleDecl != null)
+                return symbolFor(moduleDecl);
             return cut.packge;
         case MODULEDEF:
             return ((JCModuleDecl) node).sym;
@@ -1157,7 +1158,7 @@ public class TreeInfo {
 
     public static boolean isModuleInfo(JCCompilationUnit tree) {
         return tree.sourcefile.isNameCompatible("module-info", JavaFileObject.Kind.SOURCE)
-                && tree.defs.nonEmpty() && tree.defs.head.hasTag(MODULEDEF);
+                && tree.getModuleDecl() != null;
     }
 
     public static JCModuleDecl getModule(JCCompilationUnit t) {

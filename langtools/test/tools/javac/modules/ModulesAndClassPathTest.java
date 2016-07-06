@@ -70,7 +70,7 @@ public class ModulesAndClassPathTest extends ModuleTestBase {
                           "package impl; public class Impl { api.Api api; }");
 
         List<String> modLog = new JavacTask(tb)
-                                .options("-classpath", jar.toString(),
+                                .options("--class-path", jar.toString(),
                                          "-XDrawDiagnostics")
                                 .outdir(classes)
                                 .files(findJavaFiles(moduleSrc))
@@ -86,8 +86,8 @@ public class ModulesAndClassPathTest extends ModuleTestBase {
         }
 
         new JavacTask(tb)
-          .options("-classpath", jar.toString(),
-                   "-XaddReads:m1=ALL-UNNAMED")
+          .options("--class-path", jar.toString(),
+                   "--add-reads", "m1=ALL-UNNAMED")
           .outdir(classes)
           .files(findJavaFiles(moduleSrc))
           .run()
@@ -95,8 +95,8 @@ public class ModulesAndClassPathTest extends ModuleTestBase {
           .getOutputLines(Task.OutputKind.DIRECT);
 
         new JavacTask(tb)
-          .options("-classpath", jar.toString() + File.pathSeparator + System.getProperty("test.classes"),
-                   "-XaddReads:m1=ALL-UNNAMED",
+          .options("--class-path", jar.toString() + File.pathSeparator + System.getProperty("test.classes"),
+                   "--add-reads", "m1=ALL-UNNAMED",
                    "-processor", ProcessorImpl.class.getName())
           .outdir(classes)
           .files(findJavaFiles(moduleSrc))
@@ -121,7 +121,7 @@ public class ModulesAndClassPathTest extends ModuleTestBase {
                           "package impl; public class Impl { api.Api api; }");
 
         List<String> modLog = new JavacTask(tb)
-                                .options("-classpath", jar.toString(),
+                                .options("--class-path", jar.toString(),
                                          "-sourcepath", m1.toString(),
                                          "-XDrawDiagnostics")
                                 .outdir(classes)
@@ -154,7 +154,7 @@ public class ModulesAndClassPathTest extends ModuleTestBase {
                           "package impl; public class Impl { api.Api api; }");
 
         new JavacTask(tb)
-          .options("-classpath", jar.toString(),
+          .options("--class-path", jar.toString(),
                    "-XDrawDiagnostics")
           .outdir(classes)
           .files(m1.resolve("module-info.java"))
@@ -163,7 +163,7 @@ public class ModulesAndClassPathTest extends ModuleTestBase {
           .getOutputLines(Task.OutputKind.DIRECT);
 
         List<String> modLog = new JavacTask(tb)
-                                .options("-classpath", jar.toString(),
+                                .options("--class-path", jar.toString(),
                                          "-XDrawDiagnostics")
                                 .outdir(classes)
                                 .files(m1.resolve("impl").resolve("Impl.java"))

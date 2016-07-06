@@ -55,6 +55,7 @@ import com.sun.tools.javac.file.BaseFileManager;
 import com.sun.tools.javac.file.PathFileObject;
 import com.sun.tools.javac.jvm.ClassFile.NameAndType;
 import com.sun.tools.javac.jvm.ClassFile.Version;
+import com.sun.tools.javac.main.Option;
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.DefinedBy.Api;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
@@ -66,8 +67,6 @@ import static com.sun.tools.javac.code.TypeTag.CLASS;
 import static com.sun.tools.javac.code.TypeTag.TYPEVAR;
 import static com.sun.tools.javac.jvm.ClassFile.*;
 import static com.sun.tools.javac.jvm.ClassFile.Version.*;
-
-import static com.sun.tools.javac.main.Option.*;
 
 /** This class provides operations to read a classfile into an internal
  *  representation. The internal representation is anchored in a
@@ -236,7 +235,7 @@ public class ClassReader {
         log = Log.instance(context);
 
         Options options = Options.instance(context);
-        verbose         = options.isSet(VERBOSE);
+        verbose         = options.isSet(Option.VERBOSE);
 
         Source source = Source.instance(context);
         allowSimplifiedVarargs = source.allowSimplifiedVarargs();
@@ -575,6 +574,17 @@ public class ClassReader {
             }
         }
         throw badClassFile("bad.module-info.name");
+    }
+
+    /** Read exports_flags.
+     */
+    Set<ExportsFlag> readExportsFlags(int flags) {
+        Set<ExportsFlag> set = EnumSet.noneOf(ExportsFlag.class);
+        for (ExportsFlag f: ExportsFlag.values()) {
+            if ((flags & f.value) != 0)
+                set.add(f);
+        }
+        return set;
     }
 
     /** Read requires_flags.
@@ -1039,7 +1049,8 @@ public class ClassReader {
                             if (start_pc == 0) {
                                 // ensure array large enough
                                 if (register >= parameterNameIndices.length) {
-                                    int newSize = Math.max(register, parameterNameIndices.length + 8);
+                                    int newSize =
+                                            Math.max(register + 1, parameterNameIndices.length + 8);
                                     parameterNameIndices =
                                             Arrays.copyOf(parameterNameIndices, newSize);
                                 }
@@ -1236,6 +1247,7 @@ public class ClassReader {
                         for (int i = 0; i < nexports; i++) {
                             Name n = readName(nextChar());
                             PackageSymbol p = syms.enterPackage(currentModule, names.fromUtf(internalize(n)));
+                            Set<ExportsFlag> flags = readExportsFlags(nextChar());
                             int nto = nextChar();
                             List<ModuleSymbol> to;
                             if (nto == 0) {
@@ -1246,7 +1258,7 @@ public class ClassReader {
                                     lb.append(syms.enterModule(readName(nextChar())));
                                 to = lb.toList();
                             }
-                            exports.add(new ExportsDirective(p, to));
+                            exports.add(new ExportsDirective(p, to, flags));
                         }
                         msym.exports = exports.toList();
                         directives.addAll(msym.exports);
@@ -1542,7 +1554,13 @@ public class ClassReader {
     }
 
     CompoundAnnotationProxy readCompoundAnnotation() {
-        Type t = readTypeOrClassSymbol(nextChar());
+        Type t;
+        if (currentModule.module_info == currentOwner) {
+            int index = poolIdx[nextChar()];
+            t = new ProxyType(Arrays.copyOfRange(buf, index + 3, index + 3 + getChar(index + 1)));
+        } else {
+            t = readTypeOrClassSymbol(nextChar());
+        }
         int numFields = nextChar();
         ListBuffer<Pair<Name,Attribute>> pairs = new ListBuffer<>();
         for (int i=0; i<numFields; i++) {
@@ -1892,14 +1910,18 @@ public class ClassReader {
         }
 
         Attribute.Compound deproxyCompound(CompoundAnnotationProxy a) {
+            Type annotationType = a.type;
+            if (annotationType instanceof ProxyType) {
+                annotationType = ((ProxyType) annotationType).resolve();
+            }
             ListBuffer<Pair<Symbol.MethodSymbol,Attribute>> buf = new ListBuffer<>();
             for (List<Pair<Name,Attribute>> l = a.values;
                  l.nonEmpty();
                  l = l.tail) {
-                MethodSymbol meth = findAccessMethod(a.type, l.head.fst);
+                MethodSymbol meth = findAccessMethod(annotationType, l.head.fst);
                 buf.append(new Pair<>(meth, deproxy(meth.type.getReturnType(), l.head.snd)));
             }
-            return new Attribute.Compound(a.type, buf.toList());
+            return new Attribute.Compound(annotationType, buf.toList());
         }
 
         MethodSymbol findAccessMethod(Type container, Name name) {
@@ -2069,7 +2091,11 @@ public class ClassReader {
         AnnotationCompleter(Symbol sym, List<CompoundAnnotationProxy> l) {
             super(currentOwner.kind == MTH
                     ? currentOwner.enclClass() : (ClassSymbol)currentOwner);
-            this.sym = sym;
+            if (sym.kind == TYP && sym.owner.kind == MDL) {
+                this.sym = sym.owner;
+            } else {
+                this.sym = sym;
+            }
             this.l = l;
             this.classFile = currentClassFile;
         }
@@ -2475,7 +2501,7 @@ public class ClassReader {
 
         minorVersion = nextChar();
         majorVersion = nextChar();
-        int maxMajor = Version.MAX().major;
+        int maxMajor = 53; // Version.MAX().major;  //******* TEMPORARY *******
         int maxMinor = Version.MAX().minor;
         if (majorVersion > maxMajor ||
             majorVersion * 1000 + minorVersion <
@@ -2776,6 +2802,31 @@ public class ClassReader {
             sym.getAnnotationTypeMetadata().setTarget(theTarget);
             sym.getAnnotationTypeMetadata().setRepeatable(theRepeatable);
         }
+    }
+
+    private class ProxyType extends Type {
+
+        private final byte[] content;
+
+        public ProxyType(byte[] content) {
+            super(syms.noSymbol, TypeMetadata.EMPTY);
+            this.content = content;
+        }
+
+        @Override
+        public TypeTag getTag() {
+            return TypeTag.NONE;
+        }
+
+        @Override
+        public Type cloneWithMetadata(TypeMetadata metadata) {
+            throw new UnsupportedOperationException();
+        }
+
+        public Type resolve() {
+            return sigToType(content, 0, content.length);
+        }
+
     }
 
     private static final class InterimUsesDirective {

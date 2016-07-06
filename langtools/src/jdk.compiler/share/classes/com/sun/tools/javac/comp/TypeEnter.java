@@ -162,8 +162,6 @@ public class TypeEnter implements Completer {
         // if there remain any unimported toplevels (these must have
         // no classes at all), process their import statements as well.
         for (JCCompilationUnit tree : trees) {
-            if (tree.defs.nonEmpty() && tree.defs.head.hasTag(MODULEDEF))
-                continue;
             if (!tree.starImportScope.isFilled()) {
                 Env<AttrContext> topEnv = enter.topLevelEnv(tree);
                 finishImports(tree, () -> { completeClass.resolveImports(tree, topEnv); });
@@ -340,6 +338,11 @@ public class TypeEnter implements Completer {
                 // Process the package def and all import clauses.
                 if (tree.getPackage() != null)
                     checkClassPackageClash(tree.getPackage());
+
+                if (tree.getModuleDecl() != null) {
+                    // process module annotations
+                    annotate.annotateLater(tree.getModuleDecl().annotations, env, env.toplevel.modle, null);
+                }
 
                 for (JCImport imp : tree.getImports()) {
                     doImport(imp);
