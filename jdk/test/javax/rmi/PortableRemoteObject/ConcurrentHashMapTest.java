@@ -27,21 +27,20 @@
  * @summary test RMI-IIOP call with ConcurrentHashMap as an argument
  * @library /lib/testlibrary
  * @build jdk.testlibrary.*
- * @compile -addmods java.corba Test.java HelloInterface.java HelloServer.java HelloClient.java
+ * @compile --add-modules=java.corba Test.java HelloInterface.java HelloServer.java HelloClient.java
  *    HelloImpl.java _HelloImpl_Tie.java _HelloInterface_Stub.java ConcurrentHashMapTest.java
- * @run main/othervm -addmods java.corba -Djava.naming.provider.url=iiop://localhost:1050
+ * @run main/othervm --add-modules=java.corba -Djava.naming.provider.url=iiop://localhost:1050
+ *    -Djava.naming.factory.initial=com.sun.jndi.cosnaming.CNCtxFactory ConcurrentHashMapTest
+ * @run main/othervm/secure=java.lang.SecurityManager/policy=jtreg.test.policy
+ *    -addmods java.corba -Djava.naming.provider.url=iiop://localhost:1050
  *    -Djava.naming.factory.initial=com.sun.jndi.cosnaming.CNCtxFactory ConcurrentHashMapTest
  * @key intermittent
  */
 
 
-import java.io.DataInputStream;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.CountDownLatch;
 import jdk.testlibrary.JDKToolFinder;
 import jdk.testlibrary.JDKToolLauncher;
 
@@ -83,7 +82,7 @@ public class ConcurrentHashMapTest {
     }
 
     static void startOrbd() throws Exception {
-        System.out.println("\nStarting orbd on port 1050 ");
+        System.out.println("\nStarting orbd with NS port 1050 ");
 
         //orbd -ORBInitialHost localhost -ORBInitialPort 1050
         orbdLauncher.addToolArg("-ORBInitialHost").addToolArg("localhost")
@@ -98,12 +97,12 @@ public class ConcurrentHashMapTest {
 
     static void startRmiIiopServer() throws Exception {
         System.out.println("\nStarting RmiServer");
-        // java -cp .
+        // java -cp . -addmods java.corba
         // -Djava.naming.factory.initial=com.sun.jndi.cosnaming.CNCtxFactory
         // -Djava.naming.provider.url=iiop://localhost:1050 HelloServer
         List<String> commands = new ArrayList<>();
         commands.add(ConcurrentHashMapTest.JAVA);
-        commands.add("-addmods");
+        commands.add("--add-modules");
         commands.add("java.corba");
         commands.add("-Djava.naming.factory.initial=com.sun.jndi.cosnaming.CNCtxFactory");
         commands.add("-Djava.naming.provider.url=iiop://localhost:1050");
@@ -122,17 +121,15 @@ public class ConcurrentHashMapTest {
     }
 
     static void stopRmiIiopServer() throws Exception {
-        rmiServerProcess.destroy();
+        rmiServerProcess.destroyForcibly();
         rmiServerProcess.waitFor();
-        //rmiServerProcess.waitFor(30, TimeUnit.SECONDS);
         System.out.println("serverProcess exitCode:"
             + rmiServerProcess.exitValue());
     }
 
     static void stopOrbd() throws Exception {
-        orbdProcess.destroy();
+        orbdProcess.destroyForcibly();
         orbdProcess.waitFor();
-        //orbdProcess.waitFor(30, TimeUnit.SECONDS);
         System.out.println("orbd exitCode:"
             + orbdProcess.exitValue());
     }

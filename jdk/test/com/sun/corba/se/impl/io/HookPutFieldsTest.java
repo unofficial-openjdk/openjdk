@@ -25,8 +25,8 @@
  * @test
  * @bug 7095856
  * @summary OutputStreamHook doesn't handle null values
- * @compile -addmods java.corba HookPutFieldsTest.java
- * @run main/othervm -addmods java.corba HookPutFieldsTest
+ * @compile --add-modules=java.corba HookPutFieldsTest.java
+ * @run main/othervm --add-modules=java.corba HookPutFieldsTest
  */
 
 import java.net.InetAddress;
