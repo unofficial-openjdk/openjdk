@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,41 +20,26 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.vm.ci.hotspotvmconfig;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
-/**
- * Refers to a C++ type in the VM.
+/*
+ * @test
+ * @bug 8159470
+ * @summary Test that MethodHandle constants are checked
+ * @modules java.base/jdk.internal.misc
+ * @compile WithConfiguration.jcod
+ * @run main/othervm TestMethodHandleConstant
  */
-@Target(ElementType.FIELD)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface HotSpotVMType {
+public class TestMethodHandleConstant {
 
-    /**
-     * Types of information this annotation can return.
-     */
-    enum Type {
-        /**
-         * Returns the size of the type (C++ {@code sizeof()}).
-         */
-        SIZE;
+    public static void main(String[] args) {
+        try {
+          // This interface has bad constant pool entry for MethodHandle -> Method
+          String URI_DEFAULT
+            = WithConfiguration.autoDetect().getLocation();
+          throw new RuntimeException("FAILED, ICCE not thrown");
+        } catch (BootstrapMethodError icce) {
+          System.out.println("PASSED, expecting ICCE" + icce.getMessage());
+        }
     }
-
-    /**
-     * Specifies what type of information to return.
-     *
-     * @see Type
-     */
-    Type get();
-
-    /**
-     * Returns the name of the type.
-     *
-     * @return name of type
-     */
-    String name();
 }
+

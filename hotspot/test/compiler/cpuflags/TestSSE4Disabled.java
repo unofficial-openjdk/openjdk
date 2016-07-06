@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,35 +19,19 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
+ *
  */
-package jdk.vm.ci.hotspotvmconfig;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
-/**
- * Refers to a C++ flag in the VM.
+/*
+ * @test TestSSE4Disabled
+ * @bug 8158214
+ * @requires (vm.simpleArch == "x64")
+ * @summary Test correct execution without SSE 4.
+ * @run main/othervm -Xcomp -XX:UseSSE=3 TestSSE4Disabled
  */
-@Target(ElementType.FIELD)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface HotSpotVMFlag {
-
-    /**
-     * Returns the name of this flag.
-     *
-     * @return name of flag.
-     */
-    String name();
-
-    /**
-     * List of architectures where this constant is required. Names are derived from
-     * {@link HotSpotVMConfig#getHostArchitectureName()}. An empty list implies that the constant is
-     * required on all architectures.
-     */
-    @SuppressWarnings("javadoc")
-    String[] archs() default {};
-
-    boolean optional() default false;
+public class TestSSE4Disabled {
+    public static void main(String args[]) {
+        System.out.println("Passed");
+    }
 }
+

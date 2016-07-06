@@ -425,7 +425,7 @@ Parse::Parse(JVMState* caller, ciMethod* parse_method, float expected_uses)
   _iter.reset_to_method(method());
   _flow = method()->get_flow_analysis();
   if (_flow->failing()) {
-    C->record_method_not_compilable_all_tiers(_flow->failure_reason());
+    C->record_method_not_compilable(_flow->failure_reason());
   }
 
 #ifndef PRODUCT
@@ -662,7 +662,7 @@ void Parse::do_all_blocks() {
         // (Note that dead locals do not get phis built, ever.)
         ensure_phis_everywhere();
 
-        if (block->is_SEL_head() && UseLoopPredicate) {
+        if (block->is_SEL_head()) {
           // Add predicate to single entry (not irreducible) loop head.
           assert(!block->has_merged_backedge(), "only entry paths should be merged for now");
           // Need correct bci for predicate.
@@ -1118,7 +1118,7 @@ SafePointNode* Parse::create_entry_map() {
   // Check for really stupid bail-out cases.
   uint len = TypeFunc::Parms + method()->max_locals() + method()->max_stack();
   if (len >= 32760) {
-    C->record_method_not_compilable_all_tiers("too many local variables");
+    C->record_method_not_compilable("too many local variables");
     return NULL;
   }
 
@@ -1235,29 +1235,33 @@ void Parse::init_blocks() {
   // Create the blocks.
   _block_count = flow()->block_count();
   _blocks = NEW_RESOURCE_ARRAY(Block, _block_count);
-  Copy::zero_to_bytes(_blocks, sizeof(Block)*_block_count);
-
-  int rpo;
 
   // Initialize the structs.
-  for (rpo = 0; rpo < block_count(); rpo++) {
+  for (int rpo = 0; rpo < block_count(); rpo++) {
     Block* block = rpo_at(rpo);
-    block->init_node(this, rpo);
+    new(block) Block(this, rpo);
   }
 
   // Collect predecessor and successor information.
-  for (rpo = 0; rpo < block_count(); rpo++) {
+  for (int rpo = 0; rpo < block_count(); rpo++) {
     Block* block = rpo_at(rpo);
     block->init_graph(this);
   }
 }
 
 //-------------------------------init_node-------------------------------------
-void Parse::Block::init_node(Parse* outer, int rpo) {
+Parse::Block::Block(Parse* outer, int rpo) : _live_locals() {
   _flow = outer->flow()->rpo_at(rpo);
   _pred_count = 0;
   _preds_parsed = 0;
   _count = 0;
+  _is_parsed = false;
+  _is_handler = false;
+  _has_merged_backedge = false;
+  _start_map = NULL;
+  _num_successors = 0;
+  _all_successors = 0;
+  _successors = NULL;
   assert(pred_count() == 0 && preds_parsed() == 0, "sanity");
   assert(!(is_merged() || is_parsed() || is_handler() || has_merged_backedge()), "sanity");
   assert(_live_locals.size() == 0, "sanity");

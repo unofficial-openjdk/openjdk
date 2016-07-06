@@ -246,7 +246,7 @@ class Method : public Metadata {
   int code_size() const                  { return constMethod()->code_size(); }
 
   // method size in words
-  int method_size() const                { return sizeof(Method)/wordSize + is_native() ? 2 : 0; }
+  int method_size() const                { return sizeof(Method)/wordSize + ( is_native() ? 2 : 0 ); }
 
   // constant pool for Klass* holding this method
   ConstantPool* constants() const              { return constMethod()->constants(); }
@@ -637,6 +637,9 @@ class Method : public Metadata {
   // returns true if the method name is <clinit> and the method has
   // valid static initializer flags.
   bool is_static_initializer() const;
+
+  // returns true if the method name is <init>
+  bool is_object_initializer() const;
 
   // compiled code support
   // NOTE: code() is inherently racy as deopt can be clearing code

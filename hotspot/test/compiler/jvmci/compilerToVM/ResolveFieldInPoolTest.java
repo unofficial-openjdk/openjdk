@@ -25,7 +25,7 @@
 /*
  * @test
  * @bug 8138708
- * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9" | os.simpleArch == "aarch64")
+ * @requires (vm.simpleArch == "x64" | vm.simpleArch == "sparcv9" | vm.simpleArch == "aarch64")
  * @library /testlibrary /test/lib /
  * @library ../common/patches
  * @modules java.base/jdk.internal.misc
@@ -34,6 +34,7 @@
  *          java.base/jdk.internal.org.objectweb.asm.tree
  *          jdk.vm.ci/jdk.vm.ci.hotspot
  *          jdk.vm.ci/jdk.vm.ci.meta
+ *          jdk.vm.ci/jdk.vm.ci.runtime
  * @build jdk.vm.ci/jdk.vm.ci.hotspot.CompilerToVMHelper
  * @build sun.hotspot.WhiteBox
  *        compiler.jvmci.compilerToVM.ResolveFieldInPoolTest
@@ -107,6 +108,7 @@ public class ResolveFieldInPoolTest {
             HotSpotResolvedObjectType fieldToVerify
                     = CompilerToVMHelper.resolveFieldInPool(constantPoolCTVM,
                                                            index,
+                                                           entry.methods == null ? null : entry.methods[j],
                                                            entry.opcodes[j],
                                                            info);
             String msg = String.format("Object returned by resolveFieldInPool method"

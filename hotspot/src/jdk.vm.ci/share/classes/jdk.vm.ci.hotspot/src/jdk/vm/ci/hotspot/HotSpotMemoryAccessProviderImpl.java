@@ -23,7 +23,7 @@
 package jdk.vm.ci.hotspot;
 
 import static jdk.vm.ci.hotspot.UnsafeAccess.UNSAFE;
-import jdk.vm.ci.hotspot.HotSpotVMConfig.CompressEncoding;
+
 import jdk.vm.ci.meta.Constant;
 import jdk.vm.ci.meta.JavaConstant;
 import jdk.vm.ci.meta.JavaKind;
@@ -144,8 +144,18 @@ class HotSpotMemoryAccessProviderImpl implements HotSpotMemoryAccessProvider {
         return ret;
     }
 
-    @Override
-    public JavaConstant readUnsafeConstant(JavaKind kind, JavaConstant baseConstant, long displacement) {
+    /**
+     * Reads a value of this kind using a base address and a displacement. No bounds checking or
+     * type checking is performed. Returns {@code null} if the value is not available at this point.
+     *
+     * @param baseConstant the base address from which the value is read.
+     * @param displacement the displacement within the object in bytes
+     * @return the read value encapsulated in a {@link JavaConstant} object, or {@code null} if the
+     *         value cannot be read.
+     * @throws IllegalArgumentException if {@code kind} is {@code null}, {@link JavaKind#Void}, not
+     *             {@link JavaKind#Object} or not {@linkplain JavaKind#isPrimitive() primitive} kind
+     */
+    JavaConstant readUnsafeConstant(JavaKind kind, JavaConstant baseConstant, long displacement) {
         if (kind == null) {
             throw new IllegalArgumentException("null JavaKind");
         }
@@ -196,8 +206,7 @@ class HotSpotMemoryAccessProviderImpl implements HotSpotMemoryAccessProvider {
     }
 
     @Override
-    public JavaConstant readNarrowOopConstant(Constant base, long displacement, CompressEncoding encoding) {
-        assert encoding.equals(runtime.getConfig().getOopEncoding()) : "unexpected oop encoding: " + encoding + " != " + runtime.getConfig().getOopEncoding();
+    public JavaConstant readNarrowOopConstant(Constant base, long displacement) {
         return HotSpotObjectConstantImpl.forObject(readRawObject(base, displacement, true), true);
     }
 
@@ -217,7 +226,7 @@ class HotSpotMemoryAccessProviderImpl implements HotSpotMemoryAccessProvider {
     }
 
     @Override
-    public Constant readNarrowKlassPointerConstant(Constant base, long displacement, CompressEncoding encoding) {
+    public Constant readNarrowKlassPointerConstant(Constant base, long displacement) {
         HotSpotResolvedObjectTypeImpl klass = readKlass(base, displacement, true);
         if (klass == null) {
             return HotSpotCompressedNullConstant.COMPRESSED_NULL;

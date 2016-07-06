@@ -23,7 +23,7 @@
 
 /**
  * @test
- * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9" | os.simpleArch == "aarch64")
+ * @requires (vm.simpleArch == "x64" | vm.simpleArch == "sparcv9" | vm.simpleArch == "aarch64")
  * @modules jdk.vm.ci/jdk.vm.ci.hotspot
  *          jdk.vm.ci/jdk.vm.ci.code
  *          jdk.vm.ci/jdk.vm.ci.code.site
@@ -49,7 +49,6 @@ import jdk.vm.ci.code.site.Site;
 import jdk.vm.ci.common.JVMCIError;
 import jdk.vm.ci.hotspot.HotSpotCompiledCode.Comment;
 import jdk.vm.ci.hotspot.HotSpotReferenceMap;
-import jdk.vm.ci.hotspot.HotSpotVMConfig;
 import jdk.vm.ci.meta.Assumptions.Assumption;
 import jdk.vm.ci.meta.JavaKind;
 import jdk.vm.ci.meta.PlatformKind;
@@ -108,23 +107,6 @@ public class TestInvalidOopMap extends CodeInstallerTest {
 
         Location[] oops = new Location[]{Location.register(reg)};
         Location[] base = new Location[]{null};
-        int[] size = new int[]{kind.getSizeInBytes()};
-
-        test(new HotSpotReferenceMap(oops, base, size, 8));
-    }
-
-    @Test(expected = JVMCIError.class)
-    public void testInvalidNarrowDerivedOop() {
-        if (!HotSpotVMConfig.config().useCompressedOops) {
-            throw new JVMCIError("skipping test");
-        }
-
-        PlatformKind kind = arch.getPlatformKind(JavaKind.Int);
-        Register reg = getRegister(kind, 0);
-        Register baseReg = getRegister(arch.getPlatformKind(JavaKind.Object), 1);
-
-        Location[] oops = new Location[]{Location.register(reg)};
-        Location[] base = new Location[]{Location.register(baseReg)};
         int[] size = new int[]{kind.getSizeInBytes()};
 
         test(new HotSpotReferenceMap(oops, base, size, 8));

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,32 +20,32 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.vm.ci.hotspotvmconfig;
+import java.lang.instrument.*;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+public class GetObjectSizeClassAgent {
 
-/**
- * Refers to a C++ constant in the VM.
- */
-@Target(ElementType.FIELD)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface HotSpotVMConstant {
+    static Instrumentation instrumentation;
 
-    /**
-     * Returns the name of the constant.
-     *
-     * @return name of constant
-     */
-    String name();
+    public static void premain(String agentArgs, Instrumentation instrumentation) {
+        GetObjectSizeClassAgent.instrumentation = instrumentation;
+    }
 
-    /**
-     * List of architectures where this constant is required. Names are derived from
-     * {@link HotSpotVMConfig#getHostArchitectureName()}. An empty list implies that the constant is
-     * required on all architectures.
-     */
-    @SuppressWarnings("javadoc")
-    String[] archs() default {};
+    public static void main(String[] args) throws Exception {
+        long sizeA = instrumentation.getObjectSize(A.class);
+        long sizeB = instrumentation.getObjectSize(B.class);
+
+        if (sizeA != sizeB) {
+            throw new RuntimeException("java.lang.Class sizes disagree: " + sizeA + " vs. " + sizeB);
+        }
+
+        System.out.println("GetObjectSizeClass passed");
+    }
+
+    static class A {
+    }
+
+    static class B {
+        void m() {}
+    }
+
 }
