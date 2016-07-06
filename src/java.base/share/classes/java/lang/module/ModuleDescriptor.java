@@ -97,8 +97,8 @@ public class ModuleDescriptor
             PUBLIC,
 
             /**
-             * The dependence is strong in the static phase, during compilation,
-             * but is lazy in the dynamic phase, during execution.
+             * The dependence is mandatory in the static phase, during compilation,
+             * but is optional in the dynamic phase, during execution.
              */
             STATIC,
 
