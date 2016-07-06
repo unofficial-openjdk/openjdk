@@ -150,7 +150,7 @@ public:
 
 // ModuleClassPathList contains a linked list of ClassPathEntry's
 // that have been specified for a specific module.  Currently,
-// the only way to specify a module/path pair is via the -Xpatch
+// the only way to specify a module/path pair is via the --patch-module
 // command line option.
 class ModuleClassPathList : public CHeapObj<mtClass> {
 private:
@@ -213,8 +213,8 @@ class ClassLoader: AllStatic {
   static PerfCounter* _load_instance_class_failCounter;
 
   // The boot class path consists of 3 ordered pieces:
-  //  1. the module/path pairs specified to -Xpatch
-  //    -Xpatch:<module>=<file>(<pathsep><file>)*
+  //  1. the module/path pairs specified to --patch-module
+  //    --patch-module=<module>=<file>(<pathsep><file>)*
   //  2. the base piece
   //    [exploded build | jimage]
   //  3. boot loader append path
@@ -223,8 +223,8 @@ class ClassLoader: AllStatic {
   // The boot loader must obey this order when attempting
   // to load a class.
 
-  // Contains the module/path pairs specified to -Xpatch
-  static GrowableArray<ModuleClassPathList*>* _xpatch_entries;
+  // Contains the module/path pairs specified to --patch-module
+  static GrowableArray<ModuleClassPathList*>* _patch_mod_entries;
 
   // Contains the ClassPathEntry instances that include
   // both the base piece and the boot loader append path.
@@ -352,8 +352,8 @@ class ClassLoader: AllStatic {
     return _load_instance_class_failCounter;
   }
 
-  // Set up the module/path pairs as specified to -Xpatch
-  static void setup_xpatch_entries();
+  // Set up the module/path pairs as specified to --patch-module.
+  static void setup_patch_mod_entries();
 
   // Sets _has_jimage to TRUE if "modules" jimage file exists
   static void set_has_jimage();
