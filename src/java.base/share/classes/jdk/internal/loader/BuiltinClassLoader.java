@@ -374,8 +374,9 @@ public class BuiltinClassLoader
      * a .class file in a module or an I/O error occurs.
      */
     private URL findClassResourceOrNull(String name) {
-        int index = name.lastIndexOf(".class");
-        if (index > 0) {
+        int len = name.length();
+        if (len > 6 && name.endsWith(".class")) {
+            int index = len - 6;
             String cn = name.substring(0, index).replace("/", ".");
             LoadedModule module = findLoadedModule(cn);
             if (module != null) {
