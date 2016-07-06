@@ -22,15 +22,15 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.tools.jlink.plugin;
+package jdk.tools.jlink.internal;
 
 import java.util.List;
 
 /**
- * Implement this interface to develop a PostProcessor plugin.
- * PostProcessor plugins are called once the image has been generated and is executable.
+ * Plugin wishing to post-proces must implement this interface. PostProcessors
+ * are called once the image has been generated and is executable.
  **/
-public interface PostProcessorPlugin extends Plugin {
+public interface PostProcessor {
 
     /**
      * Post process an image.
