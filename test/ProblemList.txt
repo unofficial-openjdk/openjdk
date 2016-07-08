@@ -124,6 +124,10 @@ java/beans/Introspector/8132566/OverrideUserDefPropertyInfoTest.java 8132565 gen
 # jdk_lang
 
 java/lang/StringCoding/CheckEncodings.sh                        7008363 generic-all
+java/lang/invoke/VarHandles/VarHandleTestMethodHandleAccessBoolean.java	8160690 generic-all
+java/lang/invoke/VarHandles/VarHandleTestMethodHandleAccessByte.java	8160690 generic-all
+java/lang/invoke/VarHandles/VarHandleTestMethodHandleAccessChar.java	8160690 generic-all
+java/lang/invoke/VarHandles/VarHandleTestMethodHandleAccessShort.java	8160690 generic-all
 
 ############################################################################
 
@@ -166,6 +170,10 @@ java/net/MulticastSocket/SetLoopbackMode.java                   7122846 macosx-a
 java/net/MulticastSocket/Test.java                              7145658 macosx-all
 
 java/net/DatagramSocket/SendDatagramToBadAddress.java           7143960 macosx-all
+
+java/net/httpclient/http2/BasicTest.java                        8157408 linux-all
+java/net/httpclient/http2/ErrorTest.java                        8158127 solaris-all,windows-all
+java/net/httpclient/http2/TLSConnection.java                    8157482 macosx-all
 
 ############################################################################
 
@@ -210,8 +218,6 @@ sun/security/pkcs11/ec/TestKeyFactory.java                      7157786 generic-
 sun/security/krb5/auto/Unreachable.java                         7164518 macosx-all no PortUnreachableException on Mac
 
 sun/security/tools/keytool/ListKeychainStore.sh                 8156889 macosx-all
-
-sun/security/mscapi/ShortRSAKey1024.sh                          8153948 windows-all
 
 sun/security/tools/jarsigner/warnings/BadKeyUsageTest.java      8026393 generic-all
 
@@ -279,8 +285,6 @@ sun/security/krb5/auto/HttpNegotiateServer.java                 8038079 generic-
 
 sun/security/tools/keytool/autotest.sh                          8130302 generic-all
 
-sun/security/x509/URICertStore/ExtensionsWithLDAP.java          8134577 generic-all
-
 ############################################################################
 
 # jdk_sound
@@ -339,16 +343,11 @@ com/sun/jdi/GetLocalVariables4Test.sh                           8067354 windows-
 
 # jdk_time
 
-java/time/test/java/time/TestClock_System.java                  8158128 solaris-all
-
-
 ############################################################################
 
 # jdk_util
 
 java/util/spi/ResourceBundleControlProvider/UserDefaultControlTest.java 8062512 generic-all
-
-java/util/stream/test/org/openjdk/tests/java/util/stream/IntPrimitiveOpsTests.java 8130337 generic-all
 
 java/util/Arrays/ParallelPrefix.java                            8080165,8085982 generic-all
 
