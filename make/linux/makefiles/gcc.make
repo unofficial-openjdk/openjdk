@@ -73,6 +73,7 @@ endif
 ifeq ($(SHARK_BUILD), true)
 CFLAGS += $(LLVM_CFLAGS)
 endif
+CFLAGS += -std=gnu++98
 CFLAGS += $(VM_PICFLAG)
 CFLAGS += -fno-rtti
 CFLAGS += -fno-exceptions
@@ -82,6 +83,12 @@ CFLAGS += -fcheck-new
 # except 4.1.2 gives pointless warnings that can't be disabled (afaik)
 ifneq "$(shell expr \( $(CC_VER_MAJOR) \> 4 \) \| \( \( $(CC_VER_MAJOR) = 4 \) \& \( $(CC_VER_MINOR) \>= 3 \) \))" "0"
 CFLAGS += -fvisibility=hidden
+endif
+# GCC 6 has more aggressive dead-store elimination which causes the VM to crash
+# It also optimises away null pointer checks which are still needed.
+# We turn both of these optimisations off.
+ifneq "$(shell expr \( $(CC_VER_MAJOR) \>= 6 \))" "0"
+CFLAGS += -fno-delete-null-pointer-checks -fno-lifetime-dse
 endif
 
 ARCHFLAG = $(ARCHFLAG/$(BUILDARCH))
