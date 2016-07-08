@@ -36,7 +36,7 @@
 #   CFLAGS        (set $(OTHER_CFLAGS) instead)
 #   CPPFLAGS      (set $(OTHER_CPPFLAGS) instead)
 #   CXXFLAGS      (set $(OTHER_CXXFLAGS) instead)
-#   LDFLAGS       (set $(OTHER_LDFAGS) instead)
+#   LDFLAGS       (set $(OTHER_LDFLAGS) instead)
 #   LDLIBS        (set $(EXTRA_LIBS) instead)
 #   LDLIBS_COMMON (set $(EXTRA_LIBS) instead)
 
@@ -207,6 +207,12 @@ else
   CFLAGS_REQUIRED       =  $(CFLAGS_REQUIRED_$(ARCH))
   LDFLAGS_COMMON        += $(LDFLAGS_COMMON_$(ARCH))
 endif
+# GCC 6 has more aggressive dead-store elimination which causes the VM to crash
+# It also optimises away null pointer checks which are still needed.
+# We turn both of these optimisations off.
+ifeq ($(shell $(EXPR) $(CC_MAJORVER) \>= 6 ),1)
+ CFLAGS_REQUIRED += -fno-delete-null-pointer-checks -fno-lifetime-dse
+endif
 
 # If this is a --hash-style=gnu system, use --hash-style=both
 #   The gnu .hash section won't work on some Linux systems like SuSE 10.
@@ -273,7 +279,7 @@ CFLAGS_OPT      = $(CC_OPT)
 CFLAGS_DBG      = $(DEBUG_FLAG)
 CFLAGS_COMMON += $(CFLAGS_REQUIRED)
 
-CXXFLAGS_COMMON = $(GLOBAL_KPIC) -DCC_NOEX $(GCC_WARNINGS)
+CXXFLAGS_COMMON = -std=gnu++98 $(GLOBAL_KPIC) -DCC_NOEX $(GCC_WARNINGS)
 CXXFLAGS_OPT	= $(CC_OPT)
 CXXFLAGS_DBG	= $(DEBUG_FLAG)
 CXXFLAGS_COMMON += $(CFLAGS_REQUIRED)
