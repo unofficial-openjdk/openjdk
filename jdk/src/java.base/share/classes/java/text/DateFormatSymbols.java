@@ -221,7 +221,7 @@ public class DateFormatSymbols implements Serializable, Cloneable {
      * </ul>
      * The zone ID is <em>not</em> localized; it's one of the valid IDs of
      * the {@link java.util.TimeZone TimeZone} class that are not
-     * <a href="../java/util/TimeZone.html#CustomID">custom IDs</a>.
+     * <a href="../util/TimeZone.html#CustomID">custom IDs</a>.
      * All other entries are localized names.
      * @see java.util.TimeZone
      * @serial
@@ -418,7 +418,7 @@ public class DateFormatSymbols implements Serializable, Cloneable {
      * Gets short month strings. For example: "Jan", "Feb", etc.
      *
      * <p>If the language requires different forms for formatting and
-     * stand-alone usages, This method returns short month names in
+     * stand-alone usages, this method returns short month names in
      * the formatting form. For example, the preferred abbreviation
      * for January in the Catalan language is <em>de gen.</em> in the
      * formatting form, while it is <em>gen.</em> in the stand-alone
