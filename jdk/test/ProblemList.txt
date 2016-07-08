@@ -124,6 +124,10 @@ java/beans/Introspector/8132566/OverrideUserDefPropertyInfoTest.java 8132565 gen
 # jdk_lang
 
 java/lang/StringCoding/CheckEncodings.sh                        7008363 generic-all
+java/lang/invoke/VarHandles/VarHandleTestMethodHandleAccessBoolean.java	8160690 generic-all
+java/lang/invoke/VarHandles/VarHandleTestMethodHandleAccessByte.java	8160690 generic-all
+java/lang/invoke/VarHandles/VarHandleTestMethodHandleAccessChar.java	8160690 generic-all
+java/lang/invoke/VarHandles/VarHandleTestMethodHandleAccessShort.java	8160690 generic-all
 
 ############################################################################
 
@@ -166,6 +170,10 @@ java/net/MulticastSocket/SetLoopbackMode.java                   7122846 macosx-a
 java/net/MulticastSocket/Test.java                              7145658 macosx-all
 
 java/net/DatagramSocket/SendDatagramToBadAddress.java           7143960 macosx-all
+
+java/net/httpclient/http2/BasicTest.java                        8157408 linux-all
+java/net/httpclient/http2/ErrorTest.java                        8158127 solaris-all,windows-all
+java/net/httpclient/http2/TLSConnection.java                    8157482 macosx-all
 
 ############################################################################
 
@@ -338,9 +346,6 @@ com/sun/jdi/GetLocalVariables4Test.sh                           8067354 windows-
 ############################################################################
 
 # jdk_time
-
-java/time/test/java/time/TestClock_System.java                  8158128 solaris-all
-
 
 ############################################################################
 

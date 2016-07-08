@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,44 +22,21 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package jdk.tools.jlink.internal;
 
-package jdk.javadoc.internal.doclets.standard;
+import java.util.List;
 
-import java.util.Locale;
-import java.util.Set;
+/**
+ * Plugin wishing to post-proces must implement this interface. PostProcessors
+ * are called once the image has been generated and is executable.
+ **/
+public interface PostProcessor {
 
-import javax.lang.model.SourceVersion;
-
-import jdk.javadoc.doclet.Doclet;
-import jdk.javadoc.doclet.DocletEnvironment;
-import jdk.javadoc.doclet.Reporter;
-import jdk.javadoc.internal.doclets.formats.html.HtmlDoclet;
-
-public class Standard implements Doclet {
-
-    private final HtmlDoclet htmlDoclet;
-
-    public Standard() {
-        htmlDoclet = new HtmlDoclet();
-    }
-
-    public void init(Locale locale, Reporter reporter) {
-        htmlDoclet.init(locale, reporter);
-    }
-
-    public String getName() {
-        return "Standard";
-    }
-
-    public Set<Doclet.Option> getSupportedOptions() {
-        return htmlDoclet.getSupportedOptions();
-    }
-
-    public SourceVersion getSupportedSourceVersion() {
-        return htmlDoclet.sourceVersion();
-    }
-
-    public boolean run(DocletEnvironment root) {
-        return htmlDoclet.run(root);
-    }
+    /**
+     * Post process an image.
+     *
+     * @param image The executable image.
+     * @return The list of arguments to add to launchers (if any).
+     */
+    public List<String> process(ExecutableImage image);
 }
