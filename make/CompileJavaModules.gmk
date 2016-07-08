@@ -55,10 +55,6 @@ java.base_EXCLUDES += java/lang/doc-files
 # data files and shouldn't go in the product
 java.base_EXCLUDE_FILES += sun/text/resources/BreakIteratorRules.java
 
-ifeq ($(OPENJDK_TARGET_OS), macosx)
-  java.base_EXCLUDE_FILES += sun/nio/fs/GnomeFileTypeDetector.java
-endif
-
 ifneq ($(filter solaris macosx linux windows,$(OPENJDK_TARGET_OS)), )
   java.base_EXCLUDE_FILES += \
       sun/nio/ch/AbstractPollSelectorImpl.java \
@@ -207,11 +203,6 @@ endif
 
 ifdef BUILD_HEADLESS_ONLY
   java.desktop_EXCLUDES += sun/applet
-endif
-
-# Why is this in the open source tree?
-ifdef OPENJDK
-  java.desktop_EXCLUDES += sun/dc
 endif
 
 # Used on windows and macosx
