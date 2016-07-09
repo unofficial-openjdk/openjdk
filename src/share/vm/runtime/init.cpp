@@ -117,7 +117,7 @@ jint init_globals() {
   if (status != JNI_OK)
     return status;
 
-  classLoader_init2();  // after SymbolTable creation, set up -Xpatch entries
+  classLoader_init2();  // after SymbolTable creation, set up --patch-module entries
   CodeCacheExtensions::complete_step(CodeCacheExtensionsSteps::Universe);
   interpreter_init();  // before any methods loaded
   CodeCacheExtensions::complete_step(CodeCacheExtensionsSteps::Interpreter);
