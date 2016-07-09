@@ -155,15 +155,25 @@ public class GenModuleInfoSource {
                 String keyword = s[0].trim();
                 int nextIndex = keyword.length();
                 String exp = null;
+                String modifier = "";
                 int n = l.length();
                 switch (keyword) {
                     case "exports":
                         boolean inExportsTo = false;
-                        // assume package name immediately after exports
-                        exp = s[1].trim();
-                        if (s.length >= 3) {
+                        // exports <package-name> [to <target-module>]
+                        // exports dynamic <package-name> [to <target-module>]
+                        String token = s[1].trim();
+                        int nextTokenPos = 2;
+                        if (token.equals("dynamic") && s.length >= 3) {
+                            modifier = token;
+                            exp = s[2].trim();
+                            nextTokenPos = 3;
+                        } else {
+                            exp = token;
+                        }
+                        if (s.length > nextTokenPos) {
                             nextIndex = l.indexOf(exp, nextIndex) + exp.length();
-                            if (s[2].trim().equals("to")) {
+                            if (s[nextTokenPos].trim().equals("to")) {
                                 inExportsTo = true;
                                 n = l.indexOf("to", nextIndex) + "to".length();
                             } else {
@@ -199,24 +209,24 @@ public class GenModuleInfoSource {
         }
     }
 
-    private String injectExportTargets(String pn, String exp, int pos) {
+    private String injectExportTargets(String pn, String exports, int pos) {
         Set<String> targets = exportsTo.remove(pn);
         if (targets != null) {
             StringBuilder sb = new StringBuilder();
             // inject the extra targets after the given pos
-            sb.append(exp.substring(0, pos))
+            sb.append(exports.substring(0, pos))
               .append("\n\t")
               .append(targets.stream()
                              .collect(Collectors.joining(",", "", ",")))
               .append(" /* injected */");
-            if (pos < exp.length()) {
+            if (pos < exports.length()) {
                 // print the remaining statement followed "to"
                 sb.append("\n\t")
-                  .append(exp.substring(pos+1, exp.length()));
+                  .append(exports.substring(pos+1, exports.length()));
             }
             return sb.toString();
         } else {
-            return exp;
+            return exports;
         }
     }
 
