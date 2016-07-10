@@ -25,7 +25,6 @@
 
 package com.sun.crypto.provider;
 
-import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.KeyRep;
 import java.security.spec.InvalidKeySpecException;
@@ -73,7 +72,7 @@ final class PBEKey implements SecretKey {
     }
 
     public byte[] getEncoded() {
-        return (byte[])this.key.clone();
+        return this.key.clone();
     }
 
     public String getAlgorithm() {
@@ -122,7 +121,7 @@ final class PBEKey implements SecretKey {
          throws java.io.IOException, ClassNotFoundException
     {
         s.defaultReadObject();
-        key = (byte[])key.clone();
+        key = key.clone();
     }
 
 

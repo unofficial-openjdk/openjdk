@@ -407,7 +407,7 @@ final class P11Signature extends SignatureSpi {
         ensureInitialized();
         switch (type) {
         case T_UPDATE:
-            buffer[0] = (byte)b;
+            buffer[0] = b;
             engineUpdate(buffer, 0, 1);
             break;
         case T_DIGEST:

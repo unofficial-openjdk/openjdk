@@ -208,7 +208,7 @@ public class PKCS8Key implements PrivateKey {
                 throw new InstantiationException();
             }
 
-            Class keyClass = null;
+            Class<?> keyClass = null;
             try {
                 keyClass = Class.forName(classname);
             } catch (ClassNotFoundException e) {
@@ -331,9 +331,9 @@ public class PKCS8Key implements PrivateKey {
 
 
             BigInteger version = val.data.getBigInteger();
-            if (!version.equals(this.version)) {
+            if (!version.equals(PKCS8Key.version)) {
                 throw new IOException("version mismatch: (supported: " +
-                                      Debug.toHexString(this.version) +
+                                      Debug.toHexString(PKCS8Key.version) +
                                       ", parsed: " +
                                       Debug.toHexString(version));
             }

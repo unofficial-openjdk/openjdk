@@ -26,6 +26,8 @@
 BUILDDIR = ../..
 PACKAGE = java.security
 PRODUCT = sun
+JAVAC_MAX_WARNINGS = false
+JAVAC_LINT_OPTIONS = -Xlint:all,-deprecation
 include $(BUILDDIR)/common/Defs.gmk
 
 #

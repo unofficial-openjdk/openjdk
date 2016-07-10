@@ -129,7 +129,7 @@ public final class OCSPResponse {
     private static ResponseStatus[] rsvalues = ResponseStatus.values();
 
     private static final Debug DEBUG = Debug.getInstance("certpath");
-    private static final boolean dump = DEBUG.isOn("ocsp");
+    private static final boolean dump = Debug.isOn("ocsp");
     private static final ObjectIdentifier OCSP_BASIC_RESPONSE_OID =
         ObjectIdentifier.newInternal(new int[] { 1, 3, 6, 1, 5, 5, 7, 48, 1, 1});
     private static final ObjectIdentifier OCSP_NONCE_EXTENSION_OID =

@@ -75,7 +75,7 @@ import sun.security.util.*;
 class OCSPRequest {
 
     private static final Debug debug = Debug.getInstance("certpath");
-    private static final boolean dump = debug.isOn("ocsp");
+    private static final boolean dump = Debug.isOn("ocsp");
 
     // List of request CertIds
     private final List<CertId> certIds;

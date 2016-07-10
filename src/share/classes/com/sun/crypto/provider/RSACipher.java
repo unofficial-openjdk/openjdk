@@ -232,8 +232,8 @@ public final class RSACipher extends CipherSpi {
             init(opmode, key, random, null);
         } else {
             try {
-                OAEPParameterSpec spec = (OAEPParameterSpec)
-                    params.getParameterSpec(OAEPParameterSpec.class);
+                OAEPParameterSpec spec =
+                        params.getParameterSpec(OAEPParameterSpec.class);
                 init(opmode, key, random, spec);
             } catch (InvalidParameterSpecException ipse) {
                 InvalidAlgorithmParameterException iape =

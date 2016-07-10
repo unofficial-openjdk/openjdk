@@ -255,7 +255,7 @@ final class AESCrypt extends SymmetricCipher implements AESConstants
                     for (j = 0; j < 8; j++) {
                         tmp = AA[i][j];
                         AA[i][j] = AA[t][j];
-                        AA[t][j] = (byte) tmp;
+                        AA[t][j] = tmp;
                     }
                     pivot = AA[i][i];
                 }

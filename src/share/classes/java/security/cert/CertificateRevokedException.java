@@ -32,7 +32,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import javax.security.auth.x500.X500Principal;
 
 import sun.security.util.ObjectIdentifier;
@@ -151,8 +150,7 @@ public class CertificateRevokedException extends CertificateException {
             return null;
         } else {
             try {
-                Date invalidity =
-                    (Date) InvalidityDateExtension.toImpl(ext).get("DATE");
+                Date invalidity = InvalidityDateExtension.toImpl(ext).get("DATE");
                 return new Date(invalidity.getTime());
             } catch (IOException ioe) {
                 return null;

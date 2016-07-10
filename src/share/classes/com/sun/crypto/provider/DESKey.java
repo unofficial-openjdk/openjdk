@@ -79,7 +79,7 @@ final class DESKey implements SecretKey {
     public byte[] getEncoded() {
         // Return a copy of the key, rather than a reference,
         // so that the key data cannot be modified from outside
-        return (byte[])this.key.clone();
+        return this.key.clone();
     }
 
     public String getAlgorithm() {
@@ -127,7 +127,7 @@ final class DESKey implements SecretKey {
          throws java.io.IOException, ClassNotFoundException
     {
         s.defaultReadObject();
-        key = (byte[])key.clone();
+        key = key.clone();
     }
 
     /**

@@ -237,7 +237,8 @@ class URICertStore extends CertStoreSpi {
      * object of a certificate's Authority Information Access Extension.
      */
     static CertStore getInstance(AccessDescription ad) {
-        if (!ad.getAccessMethod().equals(AccessDescription.Ad_CAISSUERS_Id)) {
+        if (!ad.getAccessMethod().equals((Object)
+                AccessDescription.Ad_CAISSUERS_Id)) {
             return null;
         }
         GeneralNameInterface gn = ad.getAccessLocation().getName();
@@ -269,6 +270,7 @@ class URICertStore extends CertStoreSpi {
      *         match the specified selector
      * @throws CertStoreException if an exception occurs
      */
+    @SuppressWarnings("unchecked")
     public synchronized Collection<X509Certificate> engineGetCertificates
         (CertSelector selector) throws CertStoreException {
 
@@ -283,6 +285,7 @@ class URICertStore extends CertStoreSpi {
             }
             // Fetch the certificates via LDAP. LDAPCertStore has its own
             // caching mechanism, see the class description for more info.
+            // Safe cast since xsel is an X509 certificate selector.
             return (Collection<X509Certificate>)
                 ldapCertStore.getCertificates(xsel);
         }
@@ -328,6 +331,7 @@ class URICertStore extends CertStoreSpi {
             if (debug != null) {
                 debug.println("Downloading new certificates...");
             }
+            // Safe cast since factory is an X.509 certificate factory
             certs = (Collection<X509Certificate>)
                 factory.generateCertificates(in);
             return getMatchingCerts(certs, selector);
@@ -389,6 +393,7 @@ class URICertStore extends CertStoreSpi {
      *         match the specified selector
      * @throws CertStoreException if an exception occurs
      */
+    @SuppressWarnings("unchecked")
     public synchronized Collection<X509CRL> engineGetCRLs(CRLSelector selector)
         throws CertStoreException {
 
@@ -403,6 +408,7 @@ class URICertStore extends CertStoreSpi {
             }
             // Fetch the CRLs via LDAP. LDAPCertStore has its own
             // caching mechanism, see the class description for more info.
+            // Safe cast since xsel is an X509 certificate selector.
             return (Collection<X509CRL>) ldapCertStore.getCRLs(xsel);
         }
 

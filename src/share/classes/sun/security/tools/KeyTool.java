@@ -1196,7 +1196,7 @@ public final class KeyTool {
                     new CertificateVersion(CertificateVersion.V3));
         info.set(X509CertInfo.ALGORITHM_ID,
                     new CertificateAlgorithmId(
-                        AlgorithmId.getAlgorithmId(sigAlgName)));
+                        AlgorithmId.get(sigAlgName)));
         info.set(X509CertInfo.ISSUER, new CertificateIssuerName(issuer));
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(in));
@@ -1226,7 +1226,7 @@ public final class KeyTool {
         Iterator<PKCS10Attribute> attrs = req.getAttributes().getAttributes().iterator();
         while (attrs.hasNext()) {
             PKCS10Attribute attr = attrs.next();
-            if (attr.getAttributeId().equals(PKCS9Attribute.EXTENSION_REQUEST_OID)) {
+            if (attr.getAttributeId().equals((Object)PKCS9Attribute.EXTENSION_REQUEST_OID)) {
                 reqex = (CertificateExtensions)attr.getAttributeValue();
             }
         }
@@ -1265,7 +1265,7 @@ public final class KeyTool {
 
         Date firstDate = getStartDate(startDate);
         Date lastDate = (Date) firstDate.clone();
-        lastDate.setTime(lastDate.getTime() + (long)validity*1000*24*60*60);
+        lastDate.setTime(lastDate.getTime() + validity*1000*24*60*60);
         CertificateValidity interval = new CertificateValidity(firstDate,
                                                                lastDate);
 
@@ -2096,8 +2096,9 @@ public final class KeyTool {
         CRLDistributionPointsExtension ext =
                 X509CertImpl.toImpl(cert).getCRLDistributionPointsExtension();
         if (ext == null) return crls;
-        for (DistributionPoint o: (List<DistributionPoint>)
-                ext.get(CRLDistributionPointsExtension.POINTS)) {
+        List<DistributionPoint> distPoints =
+                ext.get(CRLDistributionPointsExtension.POINTS);
+        for (DistributionPoint o: distPoints) {
             GeneralNames names = o.getFullName();
             if (names != null) {
                 for (GeneralName name: names.names()) {
@@ -2202,7 +2203,7 @@ public final class KeyTool {
                 req.getSubjectName(), pkey.getFormat(), pkey.getAlgorithm());
         for (PKCS10Attribute attr: req.getAttributes().getAttributes()) {
             ObjectIdentifier oid = attr.getAttributeId();
-            if (oid.equals(PKCS9Attribute.EXTENSION_REQUEST_OID)) {
+            if (oid.equals((Object)PKCS9Attribute.EXTENSION_REQUEST_OID)) {
                 CertificateExtensions exts = (CertificateExtensions)attr.getAttributeValue();
                 if (exts != null) {
                     printExtensions(rb.getString("Extension.Request."), exts, out);
@@ -2317,7 +2318,7 @@ public final class KeyTool {
                 }
             }
             jf.close();
-            if (ss.size() == 0) {
+            if (ss.isEmpty()) {
                 out.println(rb.getString("Not.a.signed.jar.file"));
             }
         } else if (sslserver != null) {
@@ -3773,7 +3774,7 @@ public final class KeyTool {
                             }
                             String n = reqex.getNameByOid(findOidForExtName(type));
                             if (add) {
-                                Extension e = (Extension)reqex.get(n);
+                                Extension e = reqex.get(n);
                                 if (!e.isCritical() && action == 0
                                         || e.isCritical() && action == 1) {
                                     e = Extension.newExtension(

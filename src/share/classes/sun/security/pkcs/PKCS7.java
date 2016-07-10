@@ -154,12 +154,13 @@ public class PKCS7 {
         contentType = contentInfo.contentType;
         DerValue content = contentInfo.getContent();
 
-        if (contentType.equals(ContentInfo.SIGNED_DATA_OID)) {
+        if (contentType.equals((Object)ContentInfo.SIGNED_DATA_OID)) {
             parseSignedData(content);
-        } else if (contentType.equals(ContentInfo.OLD_SIGNED_DATA_OID)) {
+        } else if (contentType.equals((Object)ContentInfo.OLD_SIGNED_DATA_OID)) {
             // This is for backwards compatibility with JDK 1.1.x
             parseOldSignedData(content);
-        } else if (contentType.equals(ContentInfo.NETSCAPE_CERT_SEQUENCE_OID)){
+        } else if (contentType.equals((Object)
+                       ContentInfo.NETSCAPE_CERT_SEQUENCE_OID)){
             parseNetscapeCertChain(content);
         } else {
             throw new ParsingException("content type " + contentType +
@@ -488,9 +489,7 @@ public class PKCS7 {
                         byte[] encoded = certificates[i].getEncoded();
                         implCerts[i] = new X509CertImpl(encoded);
                     } catch (CertificateException ce) {
-                        IOException ie = new IOException(ce.getMessage());
-                        ie.initCause(ce);
-                        throw ie;
+                        throw new IOException(ce);
                     }
                 }
             }
@@ -512,9 +511,7 @@ public class PKCS7 {
                         byte[] encoded = crl.getEncoded();
                         implCRLs.add(new X509CRLImpl(encoded));
                     } catch (CRLException ce) {
-                        IOException ie = new IOException(ce.getMessage());
-                        ie.initCause(ce);
-                        throw ie;
+                        throw new IOException(ce);
                     }
                 }
             }
@@ -573,7 +570,7 @@ public class PKCS7 {
                 intResult.addElement(signerInfo);
             }
         }
-        if (intResult.size() != 0) {
+        if (!intResult.isEmpty()) {
 
             SignerInfo[] result = new SignerInfo[intResult.size()];
             intResult.copyInto(result);

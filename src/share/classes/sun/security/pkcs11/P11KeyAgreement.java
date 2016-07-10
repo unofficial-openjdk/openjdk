@@ -148,8 +148,8 @@ final class P11KeyAgreement extends KeyAgreementSpi {
             // just in case not, attempt conversion
             P11DHKeyFactory kf = new P11DHKeyFactory(token, "DH");
             try {
-                DHPublicKeySpec spec = (DHPublicKeySpec)kf.engineGetKeySpec
-                                                (key, DHPublicKeySpec.class);
+                DHPublicKeySpec spec = kf.engineGetKeySpec(
+                        key, DHPublicKeySpec.class);
 
                 // validate the Diffie-Hellman public key
                 KeyUtil.validate(spec);
