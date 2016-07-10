@@ -25,10 +25,8 @@
 
 package com.sun.tools.javac.file;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStreamWriter;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -43,7 +41,6 @@ import java.nio.charset.CodingErrorAction;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -322,8 +319,7 @@ public abstract class BaseFileManager implements JavaFileManager {
     private String defaultEncodingName;
     private String getDefaultEncodingName() {
         if (defaultEncodingName == null) {
-            defaultEncodingName =
-                new OutputStreamWriter(new ByteArrayOutputStream()).getEncoding();
+            defaultEncodingName = Charset.defaultCharset().name();
         }
         return defaultEncodingName;
     }
