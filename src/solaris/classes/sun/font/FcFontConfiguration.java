@@ -87,6 +87,7 @@ public class FcFontConfiguration extends FontConfiguration {
             return true;
         }
 
+        setFontConfiguration();
         readFcInfo();
         if (fcCompFonts == null) {
             fcCompFonts = FontManager.loadFontConfig();
