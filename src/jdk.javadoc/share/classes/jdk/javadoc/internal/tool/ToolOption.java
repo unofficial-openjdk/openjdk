@@ -201,7 +201,14 @@ public enum ToolOption {
         }
     },
 
-    RELEASE("-release", true) {
+    RELEASE("--release", true) {
+        @Override
+        public void process(Helper helper, String arg) {
+            Option.RELEASE.process(helper.getOptionHelper(), opt, arg);
+        }
+    },
+
+    RELEASE_OLD("-release", true) {
         @Override
         public void process(Helper helper, String arg) {
             Option.RELEASE.process(helper.getOptionHelper(), opt, arg);

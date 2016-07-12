@@ -276,7 +276,7 @@ public enum Option {
         }
     },
 
-    RELEASE("-release", "opt.arg.release", "opt.release", STANDARD, BASIC) {
+    RELEASE("--release -release", "opt.arg.release", "opt.release", STANDARD, BASIC) {
         @Override
         protected void help(Log log) {
             Iterable<PlatformProvider> providers =
@@ -588,7 +588,7 @@ public enum Option {
         }
     },
 
-    MULTIRELEASE("-multi-release", "opt.arg.multi-release", "opt.multi-release", HIDDEN, FILEMANAGER),
+    MULTIRELEASE("--multi-release -multi-release", "opt.arg.multi-release", "opt.multi-release", HIDDEN, FILEMANAGER),
 
     INHERIT_RUNTIME_ENVIRONMENT("--inherit-runtime-environment", "opt.inherit_runtime_environment",
             EXTENDED, BASIC) {

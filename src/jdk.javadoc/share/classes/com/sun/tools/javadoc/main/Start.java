@@ -367,7 +367,7 @@ public class Start extends ToolOption.Helper {
             ((BaseFileManager) fileManager).handleOptions(fileManagerOpts);
         }
 
-        String platformString = compOpts.get("-release");
+        String platformString = compOpts.get("--release");
 
         if (platformString != null) {
             if (compOpts.isSet("-source")) {
