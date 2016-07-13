@@ -403,7 +403,7 @@ class ServerSocketChannelImpl
     private static native void initIDs();
 
     static {
-        Util.load();
+        IOUtil.load();
         initIDs();
         nd = new SocketDispatcher();
     }

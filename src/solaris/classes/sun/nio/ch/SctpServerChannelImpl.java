@@ -416,7 +416,7 @@ public class SctpServerChannelImpl extends SctpServerChannel
         FileDescriptor newfd, InetSocketAddress[] isaa) throws IOException;
 
     static {
-        Util.load();   // loads nio & net native libraries
+        IOUtil.load();   // loads nio & net native libraries
         java.security.AccessController.doPrivileged(
                 new sun.security.action.LoadLibraryAction("sctp"));
         initIDs();

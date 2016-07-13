@@ -147,7 +147,7 @@ class FileDispatcherImpl extends FileDispatcher {
     }
 
     static {
-        Util.load();
+        IOUtil.load();
         fastFileTransfer = isFastFileTransferRequested();
     }
 
