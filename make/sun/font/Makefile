@@ -99,8 +99,11 @@ endif # PLATFORM
 ifeq ($(PLATFORM), linux)
   CXXFLAGS += $(CXXFLAGS_$(@F))
   CXXFLAGS_ExtensionSubtables.o = -fno-strict-aliasing
+ifeq "$(shell expr \( $(CC_VER_MAJOR) \> 4 \) \| \( \( $(CC_VER_MAJOR) = 4 \) \& \( $(CC_VER_MINOR) \>= 3 \) \))" "0"
+  # Gcc >= 4.3.  This flag is not known in gcc 4.1.2.
   CXXFLAGS_IndicRearrangementProcessor.o := -fno-strict-overflow
   CXXFLAGS_IndicRearrangementProcessor2.o := -fno-strict-overflow
+endif
 endif
 
 #In the non-OpenJDK mode we need to build T2K
