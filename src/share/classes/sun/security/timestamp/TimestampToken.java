@@ -119,6 +119,10 @@ public class TimestampToken {
         return serialNumber;
     }
 
+    public String getPolicyID() {
+        return policy.toString();
+    }
+
     /*
      * Parses the timestamp token info.
      *
