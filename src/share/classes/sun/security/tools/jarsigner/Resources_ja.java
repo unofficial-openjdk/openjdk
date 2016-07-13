@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,14 +23,14 @@
  * questions.
  */
 
-package sun.security.tools;
+package sun.security.tools.jarsigner;
 
 /**
  * <p> This class represents the <code>ResourceBundle</code>
  * for JarSigner.
  *
  */
-public class JarSignerResources_ja extends java.util.ListResourceBundle {
+public class Resources_ja extends java.util.ListResourceBundle {
 
     private static final Object[][] contents = {
 
@@ -229,6 +229,10 @@ public class JarSignerResources_ja extends java.util.ListResourceBundle {
                 "\u7F72\u540D\u8005\u306E\u8A3C\u660E\u66F8\u30C1\u30A7\u30FC\u30F3\u304C\u307E\u3060\u691C\u8A3C\u3055\u308C\u3066\u3044\u307E\u305B\u3093\u3002"},
         {"This.jar.contains.entries.whose.certificate.chain.is.not.validated.",
                  "\u3053\u306Ejar\u306B\u306F\u3001\u8A3C\u660E\u66F8\u30C1\u30A7\u30FC\u30F3\u304C\u307E\u3060\u691C\u8A3C\u3055\u308C\u3066\u3044\u306A\u3044\u30A8\u30F3\u30C8\u30EA\u304C\u542B\u307E\u308C\u3066\u3044\u307E\u3059\u3002"},
+        {"Unknown.password.type.", "\u4E0D\u660E\u306A\u30D1\u30B9\u30EF\u30FC\u30C9\u30FB\u30BF\u30A4\u30D7: "},
+        {"Cannot.find.environment.variable.",
+                "\u74B0\u5883\u5909\u6570\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093: "},
+        {"Cannot.find.file.", "\u30D5\u30A1\u30A4\u30EB\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093: "},
         {"no.timestamp.signing",
                 "-tsa\u307E\u305F\u306F-tsacert\u304C\u6307\u5B9A\u3055\u308C\u3066\u3044\u306A\u3044\u305F\u3081\u3001\u3053\u306Ejar\u306B\u306F\u30BF\u30A4\u30E0\u30B9\u30BF\u30F3\u30D7\u304C\u4ED8\u52A0\u3055\u308C\u3066\u3044\u307E\u305B\u3093\u3002\u30BF\u30A4\u30E0\u30B9\u30BF\u30F3\u30D7\u304C\u306A\u3044\u3068\u3001\u7F72\u540D\u8005\u8A3C\u660E\u66F8\u306E\u6709\u52B9\u671F\u9650(%1$tY-%1$tm-%1$td)\u5F8C\u307E\u305F\u306F\u5C06\u6765\u306E\u5931\u52B9\u65E5\u5F8C\u306B\u3001\u30E6\u30FC\u30B6\u30FC\u306F\u3053\u306Ejar\u3092\u691C\u8A3C\u3067\u304D\u306A\u3044\u53EF\u80FD\u6027\u304C\u3042\u308A\u307E\u3059\u3002"},
         {"no.timestamp.verifying",
@@ -242,6 +246,7 @@ public class JarSignerResources_ja extends java.util.ListResourceBundle {
      *
      * @return the contents of this <code>ResourceBundle</code>.
      */
+    @Override
     public Object[][] getContents() {
         return contents;
     }

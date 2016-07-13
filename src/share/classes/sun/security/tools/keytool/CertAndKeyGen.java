@@ -23,7 +23,7 @@
  * questions.
  */
 
-package sun.security.tools;
+package sun.security.tools.keytool;
 
 import java.io.IOException;
 import java.security.cert.X509Certificate;

@@ -23,7 +23,7 @@
  * questions.
  */
 
-package sun.security.tools;
+package sun.security.tools.jarsigner;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
