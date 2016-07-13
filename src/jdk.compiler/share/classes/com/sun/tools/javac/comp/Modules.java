@@ -605,7 +605,7 @@ public class Modules extends JCTree.Visitor {
 
             List<ModuleSymbol> toModules = null;
             if (tree.moduleNames != null) {
-                Set<ModuleSymbol> to = new HashSet<>();
+                Set<ModuleSymbol> to = new LinkedHashSet<>();
                 for (JCExpression n: tree.moduleNames) {
                     ModuleSymbol msym = lookupModule(n);
                     if (msym.kind != MDL) {
@@ -906,6 +906,10 @@ public class Modules extends JCTree.Visitor {
             allModulesCache = result;
 
         return result;
+    }
+
+    public boolean isInModuleGraph(ModuleSymbol msym) {
+        return allModulesCache == null || allModulesCache.contains(msym);
     }
 
     public void enableAllModules() {
@@ -1226,6 +1230,8 @@ public class Modules extends JCTree.Visitor {
             if (!d.hasTag(Tag.REQUIRES))
                 continue;
             JCRequires rd = (JCRequires) d;
+            if (rd.directive == null)
+                continue;
             Set<ModuleSymbol> nonSyntheticDeps = new HashSet<>();
             List<ModuleSymbol> queue = List.of(rd.directive.module);
             while (queue.nonEmpty()) {

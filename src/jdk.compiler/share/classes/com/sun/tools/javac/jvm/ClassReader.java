@@ -999,7 +999,9 @@ public class ClassReader {
 
             new AttributeReader(names.Deprecated, V45_3, CLASS_OR_MEMBER_ATTRIBUTE) {
                 protected void read(Symbol sym, int attrLen) {
-                    sym.flags_field |= DEPRECATED;
+                    Symbol s = sym.owner.kind == MDL ? sym.owner : sym;
+
+                    s.flags_field |= DEPRECATED;
                 }
             },
 
@@ -2546,6 +2548,8 @@ public class ClassReader {
                 List<Type> found = foundTypeVariables;
                 missingTypeVariables = List.nil();
                 foundTypeVariables = List.nil();
+                interimUses = List.nil();
+                interimProvides = List.nil();
                 filling = false;
                 ClassType ct = (ClassType)currentOwner.type;
                 ct.supertype_field =

@@ -1770,6 +1770,7 @@ public class ClassWriter extends ClassFile {
         acount += writeEnclosingMethodAttribute(c);
         if (c.owner.kind == MDL) {
             acount += writeModuleAttribute(c);
+            acount += writeFlagAttrs(c.owner.flags());
         }
         acount += writeExtraClassAttributes(c);
 

@@ -36,6 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -50,6 +51,7 @@ import com.sun.tools.classfile.ClassFile;
 import com.sun.tools.classfile.RuntimeInvisibleAnnotations_attribute;
 import com.sun.tools.classfile.RuntimeVisibleAnnotations_attribute;
 import toolbox.JavacTask;
+import toolbox.Task.OutputKind;
 
 public class AnnotationsOnModules extends ModuleTestBase {
 
@@ -174,6 +176,97 @@ public class AnnotationsOnModules extends ModuleTestBase {
             return false;
         }
 
+    }
+
+    @Test
+    public void testModuleDeprecation(Path base) throws Exception {
+        Path moduleSrc = base.resolve("module-src");
+        Path m1 = moduleSrc.resolve("m1");
+
+        tb.writeJavaFiles(m1,
+                          "@Deprecated module m1 { }");
+
+        Path m2 = moduleSrc.resolve("m2");
+
+        tb.writeJavaFiles(m2,
+                          "@Deprecated module m2 { }");
+
+        Path m3 = moduleSrc.resolve("m3");
+
+        Path modulePath = base.resolve("module-path");
+
+        Files.createDirectories(modulePath);
+
+        List<String> actual;
+        List<String> expected;
+
+        for (String suppress : new String[] {"", "@Deprecated ", "@SuppressWarnings(\"deprecation\") "}) {
+            tb.writeJavaFiles(m3,
+                              suppress + "module m3 {\n" +
+                              "    requires m1;\n" +
+                              "    exports api to m1, m2;\n" +
+                              "}",
+                              "package api; public class Api { }");
+            actual = new JavacTask(tb)
+                    .options("--module-source-path", moduleSrc.toString(),
+                             "-XDrawDiagnostics")
+                    .outdir(modulePath)
+                    .files(findJavaFiles(moduleSrc))
+                    .run()
+                    .writeAll()
+                    .getOutputLines(OutputKind.DIRECT);
+
+            if (suppress.isEmpty()) {
+                expected = Arrays.asList(
+                        "- compiler.note.deprecated.filename: module-info.java",
+                        "- compiler.note.deprecated.recompile");
+            } else {
+                expected = Arrays.asList("");
+            }
+
+            if (!expected.equals(actual)) {
+                throw new AssertionError("Unexpected output: " + actual + "; suppress: " + suppress);
+            }
+
+            actual = new JavacTask(tb)
+                    .options("--module-source-path", moduleSrc.toString(),
+                             "-XDrawDiagnostics",
+                             "-Xlint:deprecation")
+                    .outdir(modulePath)
+                    .files(findJavaFiles(moduleSrc))
+                    .run()
+                    .writeAll()
+                    .getOutputLines(OutputKind.DIRECT);
+
+            if (suppress.isEmpty()) {
+                expected = Arrays.asList(
+                        "module-info.java:2:14: compiler.warn.has.been.deprecated.module: m1",
+                        "module-info.java:3:20: compiler.warn.has.been.deprecated.module: m1",
+                        "module-info.java:3:24: compiler.warn.has.been.deprecated.module: m2",
+                        "3 warnings");
+            } else {
+                expected = Arrays.asList("");
+            }
+
+            if (!expected.equals(actual)) {
+                throw new AssertionError("Unexpected output: " + actual + "; suppress: " + suppress);
+            }
+
+            //load the deprecated module-infos from classfile:
+            actual = new JavacTask(tb)
+                    .options("--module-path", modulePath.toString(),
+                             "-XDrawDiagnostics",
+                             "-Xlint:deprecation")
+                    .outdir(modulePath.resolve("m3"))
+                    .files(findJavaFiles(moduleSrc.resolve("m3")))
+                    .run()
+                    .writeAll()
+                    .getOutputLines(OutputKind.DIRECT);
+
+            if (!expected.equals(actual)) {
+                throw new AssertionError("Unexpected output: " + actual + "; suppress: " + suppress);
+            }
+        }
     }
 
 }

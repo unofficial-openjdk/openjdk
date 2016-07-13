@@ -373,6 +373,11 @@ public class TreeInfo {
             return Position.NOPOS;
 
         switch(tree.getTag()) {
+            case MODULEDEF: {
+                JCModuleDecl md = (JCModuleDecl)tree;
+                return md.annotations.isEmpty() ? md.pos :
+                       md.annotations.head.pos;
+            }
             case PACKAGEDEF: {
                 JCPackageDecl pd = (JCPackageDecl)tree;
                 return pd.annotations.isEmpty() ? pd.pos :

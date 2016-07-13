@@ -2644,6 +2644,11 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         }
 
         @Override @DefinedBy(Api.COMPILER_TREE)
+        public List<? extends AnnotationTree> getAnnotations() {
+            return annotations;
+        }
+
+        @Override @DefinedBy(Api.COMPILER_TREE)
         public JCExpression getName() {
             return qualId;
         }
