@@ -80,6 +80,7 @@ public class Debug {
         System.err.println("policy        loading and granting");
         System.err.println("provider      security provider debugging");
         System.err.println("scl           permissions SecureClassLoader assigns");
+        System.err.println("ts            timestamping");
         System.err.println();
         System.err.println("The following can be used with access:");
         System.err.println();
