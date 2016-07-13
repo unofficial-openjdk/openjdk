@@ -1942,6 +1942,7 @@ assertEquals("yz", (String) d0.invokeExact(123, "x", "y", "z"));
      */
     public static
     MethodHandle dropArguments(MethodHandle target, int pos, List<Class<?>> valueTypes) {
+        valueTypes = copyTypes(valueTypes);
         MethodType oldType = target.type();  // get NPE
         int dropped = valueTypes.size();
         MethodType.checkSlotCount(dropped);
@@ -1955,6 +1956,11 @@ assertEquals("yz", (String) d0.invokeExact(123, "x", "y", "z"));
         if (ptypes.size() != inargs)  throw newIllegalArgumentException("valueTypes");
         MethodType newType = MethodType.methodType(oldType.returnType(), ptypes);
         return target.dropArguments(newType, pos, dropped);
+    }
+
+    private static List<Class<?>> copyTypes(List<Class<?>> types) {
+        Object[] a = types.toArray();
+        return Arrays.asList((Class<?>[]) Arrays.copyOf(a, a.length, Class[].class));
     }
 
     /**
