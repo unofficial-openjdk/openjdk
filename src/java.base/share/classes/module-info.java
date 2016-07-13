@@ -27,6 +27,7 @@
  * java.base defines and exports the core APIs of the Java SE platform.
  */
 
+@SuppressWarnings("deprecation")
 module java.base {
 
     exports java.io;
