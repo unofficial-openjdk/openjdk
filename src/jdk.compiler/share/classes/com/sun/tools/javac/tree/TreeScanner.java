@@ -73,6 +73,7 @@ public class TreeScanner extends Visitor {
 
     @Override
     public void visitModuleDef(JCModuleDecl tree) {
+        scan(tree.annotations);
         scan(tree.qualId);
         scan(tree.directives);
     }

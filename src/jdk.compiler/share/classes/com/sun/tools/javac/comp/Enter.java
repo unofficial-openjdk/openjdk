@@ -509,7 +509,9 @@ public class Enter extends JCTree.Visitor {
     public void visitModuleDef(JCModuleDecl tree) {
         Env<AttrContext> moduleEnv = moduleEnv(tree, env);
         typeEnvs.put(tree.sym, moduleEnv);
-        todo.append(moduleEnv);
+        if (modules.isInModuleGraph(tree.sym)) {
+            todo.append(moduleEnv);
+        }
     }
 
     /** Default class enter visitor method: do nothing.

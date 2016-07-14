@@ -42,6 +42,12 @@ import java.util.List;
  */
 public interface ModuleTree extends Tree {
     /**
+     * Returns the annotations associated with this module declaration.
+     * @return the annotations
+     */
+    List<? extends AnnotationTree> getAnnotations();
+
+    /**
      * Returns the name of the module.
      * @return the name of the module
      */

@@ -53,6 +53,7 @@ import javax.tools.StandardLocation;
 import com.sun.tools.javac.code.ClassFinder;
 import com.sun.tools.javac.code.Directive;
 import com.sun.tools.javac.code.Directive.ExportsDirective;
+import com.sun.tools.javac.code.Directive.ExportsFlag;
 import com.sun.tools.javac.code.Directive.RequiresDirective;
 import com.sun.tools.javac.code.Directive.RequiresFlag;
 import com.sun.tools.javac.code.Directive.UsesDirective;
@@ -108,6 +109,7 @@ import com.sun.tools.javac.util.Position;
 import static com.sun.tools.javac.code.Flags.ABSTRACT;
 import static com.sun.tools.javac.code.Flags.ENUM;
 import static com.sun.tools.javac.code.Flags.PUBLIC;
+import com.sun.tools.javac.tree.JCTree.JCImport;
 import static com.sun.tools.javac.tree.JCTree.Tag.MODULEDEF;
 
 /**
@@ -181,10 +183,10 @@ public class Modules extends JCTree.Visitor {
         java_se = names.fromString("java.se");
         java_ = names.fromString("java.");
 
-        addExportsOpt = options.get(Option.XADDEXPORTS);
-        addReadsOpt = options.get(Option.XADDREADS);
-        addModsOpt = options.get(Option.ADDMODS);
-        limitModsOpt = options.get(Option.LIMITMODS);
+        addExportsOpt = options.get(Option.ADD_EXPORTS);
+        addReadsOpt = options.get(Option.ADD_READS);
+        addModsOpt = options.get(Option.ADD_MODULES);
+        limitModsOpt = options.get(Option.LIMIT_MODULES);
     }
 
     int depth = -1;
@@ -254,9 +256,9 @@ public class Modules extends JCTree.Visitor {
 
     private void enterModule(JCCompilationUnit toplevel, ClassSymbol c, Set<ModuleSymbol> modules) {
         boolean isModuleInfo = toplevel.sourcefile.isNameCompatible("module-info", Kind.SOURCE);
-        boolean isModuleDecl = toplevel.defs.nonEmpty() && toplevel.defs.head.hasTag(MODULEDEF);
+        boolean isModuleDecl = toplevel.getModuleDecl() != null;
         if (isModuleInfo && isModuleDecl) {
-            JCModuleDecl decl = (JCModuleDecl) toplevel.defs.head;
+            JCModuleDecl decl = toplevel.getModuleDecl();
             Name name = TreeInfo.fullName(decl.qualId);
             ModuleSymbol sym;
             if (c != null) {
@@ -317,8 +319,8 @@ public class Modules extends JCTree.Visitor {
                     if (locn != null) {
                         Name name = names.fromString(fileManager.inferModuleName(locn));
                         ModuleSymbol msym;
-                        if (tree.defs.head.hasTag(MODULEDEF)) {
-                            JCModuleDecl decl = (JCModuleDecl) tree.defs.head;
+                        JCModuleDecl decl = tree.getModuleDecl();
+                        if (decl != null) {
                             msym = decl.sym;
                             if (msym.name != name) {
                                 log.error(decl.qualId, Errors.ModuleNameMismatch(msym.name, name));
@@ -410,17 +412,14 @@ public class Modules extends JCTree.Visitor {
     }
 
     private Location getModuleLocation(JCCompilationUnit tree) throws IOException {
-        switch (tree.defs.head.getTag()) {
-            case MODULEDEF:
-                return getModuleLocation(tree.sourcefile, null);
-
-            case PACKAGEDEF:
-                JCPackageDecl pkg = (JCPackageDecl) tree.defs.head;
-                return getModuleLocation(tree.sourcefile, TreeInfo.fullName(pkg.pid));
-
-            default:
-                // code in unnamed module
-                return null;
+        if (tree.getModuleDecl() != null) {
+            return getModuleLocation(tree.sourcefile, null);
+        } else if (tree.getPackage() != null) {
+            JCPackageDecl pkg = tree.getPackage();
+            return getModuleLocation(tree.sourcefile, TreeInfo.fullName(pkg.pid));
+        } else {
+            // code in unnamed module
+            return null;
         }
     }
 
@@ -510,7 +509,7 @@ public class Modules extends JCTree.Visitor {
                 if (ms == syms.unnamedModule || ms == msym)
                     continue;
                 Set<RequiresFlag> flags = (ms.flags_field & Flags.AUTOMATIC_MODULE) != 0 ?
-                        EnumSet.of(RequiresFlag.PUBLIC) : EnumSet.noneOf(RequiresFlag.class);
+                        EnumSet.of(RequiresFlag.TRANSITIVE) : EnumSet.noneOf(RequiresFlag.class);
                 RequiresDirective d = new RequiresDirective(ms, flags);
                 directives.add(d);
                 requires.add(d);
@@ -540,9 +539,10 @@ public class Modules extends JCTree.Visitor {
                 ModuleVisitor v = new ModuleVisitor();
                 JavaFileObject prev = log.useSource(tree.sourcefile);
                 try {
-                    tree.defs.head.accept(v);
+                    JCModuleDecl moduleDecl = tree.getModuleDecl();
+                    moduleDecl.accept(v);
                     completeModule(msym);
-                    checkCyclicDependencies((JCModuleDecl) tree.defs.head);
+                    checkCyclicDependencies(moduleDecl);
                 } finally {
                     log.useSource(prev);
                     msym.flags_field &= ~UNATTRIBUTED;
@@ -584,8 +584,10 @@ public class Modules extends JCTree.Visitor {
             } else {
                 allRequires.add(msym);
                 Set<RequiresFlag> flags = EnumSet.noneOf(RequiresFlag.class);
-                if (tree.isPublic)
-                    flags.add(RequiresFlag.PUBLIC);
+                if (tree.isTransitive)
+                    flags.add(RequiresFlag.TRANSITIVE);
+                if (tree.isStaticPhase)
+                    flags.add(RequiresFlag.STATIC_PHASE);
                 RequiresDirective d = new RequiresDirective(msym, flags);
                 tree.directive = d;
                 sym.requires = sym.requires.prepend(d);
@@ -603,7 +605,7 @@ public class Modules extends JCTree.Visitor {
 
             List<ModuleSymbol> toModules = null;
             if (tree.moduleNames != null) {
-                Set<ModuleSymbol> to = new HashSet<>();
+                Set<ModuleSymbol> to = new LinkedHashSet<>();
                 for (JCExpression n: tree.moduleNames) {
                     ModuleSymbol msym = lookupModule(n);
                     if (msym.kind != MDL) {
@@ -616,7 +618,9 @@ public class Modules extends JCTree.Visitor {
             }
 
             if (toModules == null || !toModules.isEmpty()) {
-                ExportsDirective d = new ExportsDirective(packge, toModules);
+                Set<ExportsFlag> flags = tree.isDynamicPhase
+                        ? EnumSet.of(ExportsFlag.DYNAMIC_PHASE) : Collections.emptySet();
+                ExportsDirective d = new ExportsDirective(packge, toModules, flags);
                 tree.directive = d;
                 sym.exports = sym.exports.prepend(d);
             }
@@ -664,7 +668,7 @@ public class Modules extends JCTree.Visitor {
             UsesProvidesVisitor v = new UsesProvidesVisitor(msym, env);
             JavaFileObject prev = log.useSource(env.toplevel.sourcefile);
             try {
-                env.toplevel.defs.head.accept(v);
+                env.toplevel.getModuleDecl().accept(v);
             } finally {
                 log.useSource(prev);
             }
@@ -904,6 +908,10 @@ public class Modules extends JCTree.Visitor {
         return result;
     }
 
+    public boolean isInModuleGraph(ModuleSymbol msym) {
+        return allModulesCache == null || allModulesCache.contains(msym);
+    }
+
     public void enableAllModules() {
         allModulesCache = new HashSet<>();
 
@@ -1015,7 +1023,7 @@ public class Modules extends JCTree.Visitor {
             Set<ModuleSymbol> s = retrieveRequiresPublic(d.module);
             Assert.checkNonNull(s, () -> "no entry in cache for " + d.module);
             readable.addAll(s);
-            if (d.flags.contains(RequiresFlag.PUBLIC)) {
+            if (d.flags.contains(RequiresFlag.TRANSITIVE)) {
                 requiresPublic.add(d.module);
                 requiresPublic.addAll(s);
             }
@@ -1089,6 +1097,11 @@ public class Modules extends JCTree.Visitor {
                                     ModuleSymbol exportsFrom,
                                     Collection<ExportsDirective> exports) {
         for (ExportsDirective d : exports) {
+            // "exports dynamic ..." are not effective at compile-time
+            if (d.flags.contains(ExportsFlag.DYNAMIC_PHASE)) {
+                continue;
+            }
+
             if (d.modules == null || d.modules.contains(msym)) {
                 Name packageName = d.packge.fullname;
                 ModuleSymbol previousModule = seenPackages.get(packageName);
@@ -1217,6 +1230,8 @@ public class Modules extends JCTree.Visitor {
             if (!d.hasTag(Tag.REQUIRES))
                 continue;
             JCRequires rd = (JCRequires) d;
+            if (rd.directive == null)
+                continue;
             Set<ModuleSymbol> nonSyntheticDeps = new HashSet<>();
             List<ModuleSymbol> queue = List.of(rd.directive.module);
             while (queue.nonEmpty()) {
