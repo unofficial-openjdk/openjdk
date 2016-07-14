@@ -3475,6 +3475,9 @@ JvmtiEnv::GetSystemProperty(const char* property, char** value_ptr) {
   jvmtiError err = JVMTI_ERROR_NONE;
   const char *value;
 
+  if (Arguments::is_internal_module_property(property)) {
+    return JVMTI_ERROR_NOT_AVAILABLE;
+  }
   value = Arguments::PropertyList_get_value(Arguments::system_properties(), property);
   if (value == NULL) {
     err =  JVMTI_ERROR_NOT_AVAILABLE;
