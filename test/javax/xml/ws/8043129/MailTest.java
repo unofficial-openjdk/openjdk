@@ -27,8 +27,8 @@
  * @summary JAF initialisation in SAAJ clashing with the one in javax.mail
  * @author mkos
  * @library javax.mail.jar
- * @compile -addmods java.xml.ws MailTest.java
- * @run main/othervm -addmods java.xml.ws MailTest
+ * @compile --add-modules=java.xml.ws MailTest.java
+ * @run main/othervm --add-modules=java.xml.ws MailTest
  */
 
 import javax.activation.CommandMap;
