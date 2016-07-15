@@ -90,13 +90,22 @@ else # PLATFORM unix
 
 endif # PLATFORM
 
-# Turn off aliasing with GCC for ExtensionSubtables.cpp
-# Turn off strict overflow with GCC for IndicRearrangementProcessor.cpp
+# Turn off aliasing with GCC for ExtensionSubtables.cpp (and others on GCC < 4.3)
+# Turn off strict overflow with GCC for IndicRearrangementProcessor.cpp on GCC >= 4.3
+# Ensure signed integers wrap with GCC for IndicRearrangementProcessor.cpp on GCC < 4.3
 ifeq ($(PLATFORM), linux)
   CXXFLAGS += $(CXXFLAGS_$(@F))
   CXXFLAGS_ExtensionSubtables.o = -fno-strict-aliasing
+ifeq "$(shell expr \( $(CC_VER_MAJOR) \> 4 \) \| \( \( $(CC_VER_MAJOR) = 4 \) \& \( $(CC_VER_MINOR) \>= 3 \) \))" "0"
+  # GCC >= 4.3.  This flag is not known in gcc 4.1.2.
   CXXFLAGS_IndicRearrangementProcessor.o := -fno-strict-overflow
   CXXFLAGS_IndicRearrangementProcessor2.o := -fno-strict-overflow
+else
+  CXXFLAGS_ContextualGlyphSubstProc.o = -fno-strict-aliasing
+  CXXFLAGS_IndicRearrangementProcessor.o := -fwrapv -fno-strict-aliasing
+  CXXFLAGS_IndicRearrangementProcessor2.o := -fwrapv
+  CXXFLAGS_MorphTables2.o = -fno-strict-aliasing
+endif
 endif
 
 #In the non-OpenJDK mode we need to build T2K
