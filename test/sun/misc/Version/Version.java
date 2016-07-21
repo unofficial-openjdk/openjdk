@@ -114,7 +114,7 @@ public class Version {
         regex +=   "([0-9]{1,2})";          // micro
         regex += ")?";                      // micro is optional
         regex += "(_";
-        regex +=   "([0-9]{2})";            // update
+        regex +=   "([0-9]{2,3})";          // update
         regex +=   "([a-z])?";              // special char (optional)
         regex += ")?";                      // _uu[c] is optional
         regex += ".*";                      // -<identifier>
@@ -132,33 +132,38 @@ public class Version {
         build = Integer.parseInt(m.group(9));
 
         VersionInfo vi = new VersionInfo(major, minor, micro, update, special, build);
-        System.out.printf("newVersionInfo: input=%s output=%s\n", version, vi);
+        System.out.printf("jdkVersionInfo: input=%s output=%s\n", version, vi);
         return vi;
     }
 
     private static VersionInfo jvmVersionInfo(String version) throws Exception {
-        // valid format of the version string is:
-        // <major>.<minor>-bxx[-<identifier>][-<debug_flavor>]
-        int major = 0;
-        int minor = 0;
-        int build = 0;
+        try {
+            // valid format of the version string is:
+            // <major>.<minor>-bxx[-<identifier>][-<debug_flavor>]
+            int major = 0;
+            int minor = 0;
+            int build = 0;
 
-        String regex = "^([0-9]{1,2})";     // major
-        regex += "\\.";                     // separator
-        regex += "([0-9]{1,2})";            // minor
-        regex += "(\\-b([0-9]{1,3}))";      // JVM -bxx
-        regex += ".*";
+            String regex = "^([0-9]{1,2})";     // major
+            regex += "\\.";                     // separator
+            regex += "([0-9]{1,2})";            // minor
+            regex += "(\\-b([0-9]{1,3}))";      // JVM -bxx
+            regex += ".*";
 
-        Pattern p = Pattern.compile(regex);
-        Matcher m = p.matcher(version);
-        m.matches();
+            Pattern p = Pattern.compile(regex);
+            Matcher m = p.matcher(version);
+            m.matches();
 
-        major = Integer.parseInt(m.group(1));
-        minor = Integer.parseInt(m.group(2));
-        build = Integer.parseInt(m.group(4));
+            major = Integer.parseInt(m.group(1));
+            minor = Integer.parseInt(m.group(2));
+            build = Integer.parseInt(m.group(4));
 
-        VersionInfo vi = new VersionInfo(major, minor, 0, 0, "", build);
-        System.out.printf("newVersionInfo: input=%s output=%s\n", version, vi);
-        return vi;
+            VersionInfo vi = new VersionInfo(major, minor, 0, 0, "", build);
+            System.out.printf("jvmVersionInfo: input=%s output=%s\n", version, vi);
+            return vi;
+        } catch (IllegalStateException e) {
+            // local builds may also follow the jdkVersionInfo format
+            return jdkVersionInfo(version);
+        }
     }
 }
