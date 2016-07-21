@@ -469,22 +469,18 @@ JvmtiExport::add_module_exports(Handle module, Handle pkg_name, Handle to_module
     return JVMTI_ERROR_NONE; // extra safety
   }
   assert(!module.is_null(), "module should always be set");
+  assert(!to_module.is_null(), "to_module should always be set");
   assert(!pkg_name.is_null(), "pkg_name should always be set");
 
   JavaValue result(T_VOID);
-  if (to_module == NULL) { // Invoke the addExportsToAll method
-      Symbol* name = vmSymbols::addExportsToAll_name();
-      Symbol* sign = vmSymbols::addExportsToAll_signature();
-      JavaCalls::call_static(&result,
-                             SystemDictionary::module_Modules_klass(),
-                             name, sign, module, pkg_name, THREAD);
-  } else { // Invoke the addExports method
-      Symbol* name = vmSymbols::addExports_name();
-      Symbol* sign = vmSymbols::addExports_signature();
-      JavaCalls::call_static(&result,
-                             SystemDictionary::module_Modules_klass(),
-                             name, sign, module, pkg_name, to_module, THREAD);
-  }
+  Symbol* name = vmSymbols::addExports_name();
+  Symbol* sign = vmSymbols::addExports_signature();
+
+  // Invoke the addExports method
+  JavaCalls::call_static(&result,
+                         SystemDictionary::module_Modules_klass(),
+                         name, sign, module, pkg_name, to_module, THREAD);
+
   if (HAS_PENDING_EXCEPTION) {
     Symbol* ex_name = PENDING_EXCEPTION->klass()->name();
     LogTarget(Trace, jvmti) log;

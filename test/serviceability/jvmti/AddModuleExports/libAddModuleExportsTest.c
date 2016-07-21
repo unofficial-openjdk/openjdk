@@ -174,6 +174,15 @@ jint check_add_module_exports(JNIEnv *env,
         return FAILED;
     }
 
+    // Export to NULL module
+    printf("Check #N3:\n");
+    err = (*jvmti)->AddModuleExports(jvmti, baseModule, pkg, NULL);
+    if (err != JVMTI_ERROR_NULL_POINTER) {
+        printf("#N3: jvmtiError from AddModuleExports: %d\n", err);
+        throw_exc(env, "Check #N3: failed to return JVMTI_ERROR_NULL_POINTER for to_module==NULL");
+        return FAILED;
+    }
+
     // Export a bad package
     printf("Check #I0:\n");
     err = (*jvmti)->AddModuleExports(jvmti, baseModule, bad_pkg, thisModule);
@@ -231,23 +240,6 @@ jint check_add_module_exports(JNIEnv *env,
     exported = is_exported(env, baseModule, pkg);
     if (exported != JNI_FALSE) {
         throw_exc(env, "Check #C3: unexpected export of jdk.internal.misc from base to all modules");
-        return FAILED;
-    }
-
-    // Add export of "jdk.internal.misc" to all modules
-    printf("Check #C4:\n");
-    err = (*jvmti)->AddModuleExports(jvmti, baseModule, pkg, NULL);
-    if (err != JVMTI_ERROR_NONE) {
-        printf("#C4: jvmtiError from AddModuleExports: %d\n", err);
-        throw_exc(env, "Check #C4: error in add export of jdk.internal.misc from base to all modules");
-        return FAILED;
-    }
-
-    // Check the "jdk.internal.misc" is exported to all modules
-    printf("Check #C5:\n");
-    exported = is_exported(env, baseModule, pkg);
-    if (exported == JNI_FALSE) {
-        throw_exc(env, "Check #C5: failed to export jdk.internal.misc from base to all modules");
         return FAILED;
     }
     return PASSED;
