@@ -292,7 +292,7 @@ final class P11SecretKeyFactory extends SecretKeyFactorySpi {
     }
 
     // see JCE spec
-    protected KeySpec engineGetKeySpec(SecretKey key, Class<?> keySpec)
+    protected KeySpec engineGetKeySpec(SecretKey key, Class keySpec)
             throws InvalidKeySpecException {
         token.ensureValid();
         if ((key == null) || (keySpec == null)) {

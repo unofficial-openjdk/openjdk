@@ -355,7 +355,7 @@ public class SecretKeyFactory {
      * (e.g., the given key has an algorithm or format not supported by this
      * secret-key factory).
      */
-    public final KeySpec getKeySpec(SecretKey key, Class<?> keySpec)
+    public final KeySpec getKeySpec(SecretKey key, Class keySpec)
             throws InvalidKeySpecException {
         if (serviceIterator == null) {
             return spi.engineGetKeySpec(key, keySpec);

@@ -88,7 +88,7 @@ public abstract class SecretKeyFactorySpi {
      * (e.g., the given key has an algorithm or format not supported by this
      * secret-key factory).
      */
-    protected abstract KeySpec engineGetKeySpec(SecretKey key, Class<?> keySpec)
+    protected abstract KeySpec engineGetKeySpec(SecretKey key, Class keySpec)
         throws InvalidKeySpecException;
 
     /**
