@@ -131,7 +131,7 @@ abstract class PBEKeyFactory extends SecretKeyFactorySpi {
      * inappropriate for the given key, or the given key cannot be processed
      * (e.g., the given key has an unrecognized algorithm or format).
      */
-    protected KeySpec engineGetKeySpec(SecretKey key, Class<?> keySpecCl)
+    protected KeySpec engineGetKeySpec(SecretKey key, Class keySpecCl)
         throws InvalidKeySpecException {
         if ((key instanceof SecretKey)
             && (validTypes.contains(key.getAlgorithm().toUpperCase()))

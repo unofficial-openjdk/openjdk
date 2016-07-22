@@ -86,7 +86,7 @@ public final class PBKDF2HmacSHA1Factory extends SecretKeyFactorySpi {
      * given key cannot be processed (e.g., the given key has an
      * unrecognized algorithm or format).
      */
-    protected KeySpec engineGetKeySpec(SecretKey key, Class<?> keySpecCl)
+    protected KeySpec engineGetKeySpec(SecretKey key, Class keySpecCl)
         throws InvalidKeySpecException {
         if (key instanceof javax.crypto.interfaces.PBEKey) {
             // Check if requested key spec is amongst the valid ones
