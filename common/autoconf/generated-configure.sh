@@ -5095,7 +5095,7 @@ VS_SDK_PLATFORM_NAME_2013=
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1468427332
+DATE_WHEN_GENERATED=1468500131
 
 ###############################################################################
 #
@@ -49810,15 +49810,11 @@ $as_echo "$supports" >&6; }
   if test "x$OPENJDK_TARGET_OS" = xsolaris; then
     CFLAGS_JDK="${CFLAGS_JDK} -D__solaris__"
     CXXFLAGS_JDK="${CXXFLAGS_JDK} -D__solaris__"
-    CFLAGS_JDKLIB_EXTRA='-xstrconst'
-    CFLAGS_JDK="${CFLAGS_JDK} -qchars=signed -qfullpath -qsaveopt"
-    CXXFLAGS_JDK="${CXXFLAGS_JDK} -qchars=signed -qfullpath -qsaveopt"
   fi
 
   if test "x$OPENJDK_TARGET_OS" = xsolaris; then
     CFLAGS_JDK="${CFLAGS_JDK} -D__solaris__"
     CXXFLAGS_JDK="${CXXFLAGS_JDK} -D__solaris__"
-    CFLAGS_JDKLIB_EXTRA='-xstrconst'
   fi
 
   CFLAGS_JDK="${CFLAGS_JDK} ${EXTRA_CFLAGS}"
@@ -50394,7 +50390,7 @@ $as_echo "$as_me: GCC >= 6 detected; adding ${NO_DELETE_NULL_POINTER_CHECKS_CFLA
     fi
   elif test "x$TOOLCHAIN_TYPE" = xsolstudio; then
     LDFLAGS_SOLSTUDIO="-Wl,-z,defs"
-    LDFLAGS_JDK="$LDFLAGS_JDK $LDFLAGS_SOLSTUDIO -xildoff -ztext"
+    LDFLAGS_JDK="$LDFLAGS_JDK $LDFLAGS_SOLSTUDIO -ztext"
     LDFLAGS_CXX_SOLSTUDIO="-norunpath"
     LDFLAGS_CXX_JDK="$LDFLAGS_CXX_JDK $LDFLAGS_CXX_SOLSTUDIO -xnolib"
     JVM_LDFLAGS="$JVM_LDFLAGS $LDFLAGS_SOLSTUDIO -library=%none -mt $LDFLAGS_CXX_SOLSTUDIO -z noversion"
@@ -50429,11 +50425,11 @@ $as_echo "$as_me: GCC >= 6 detected; adding ${NO_DELETE_NULL_POINTER_CHECKS_CFLA
 
   LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} ${SHARED_LIBRARY_FLAGS}"
   if test "x$TOOLCHAIN_TYPE" = xmicrosoft; then
-    LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} \
+    JAVA_BASE_LDFLAGS="${JAVA_BASE_LDFLAGS} \
         -libpath:${OUTPUT_ROOT}/support/modules_libs/java.base"
     JDKLIB_LIBS=""
   else
-    LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} \
+    JAVA_BASE_LDFLAGS="${JAVA_BASE_LDFLAGS} \
         -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)"
 
     if test "xTARGET" = "xTARGET"; then
@@ -50442,17 +50438,17 @@ $as_echo "$as_me: GCC >= 6 detected; adding ${NO_DELETE_NULL_POINTER_CHECKS_CFLA
       # Only add client/minimal dir if client/minimal is being built.
     # Default to server for other variants.
       if   [[ " $JVM_VARIANTS " =~ " server " ]]  ; then
-        LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/server"
+        JAVA_BASE_LDFLAGS="${JAVA_BASE_LDFLAGS} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/server"
       elif   [[ " $JVM_VARIANTS " =~ " client " ]]  ; then
-        LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/client"
+        JAVA_BASE_LDFLAGS="${JAVA_BASE_LDFLAGS} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/client"
       elif   [[ " $JVM_VARIANTS " =~ " minimal " ]]  ; then
-        LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/minimal"
+        JAVA_BASE_LDFLAGS="${JAVA_BASE_LDFLAGS} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/minimal"
     else
-        LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/server"
+        JAVA_BASE_LDFLAGS="${JAVA_BASE_LDFLAGS} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/server"
     fi
     elif test "xTARGET" = "xBUILD"; then
       # When building a buildjdk, it's always only the server variant
-      LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} \
+      JAVA_BASE_LDFLAGS="${JAVA_BASE_LDFLAGS} \
           -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/server"
     fi
 
@@ -50462,6 +50458,8 @@ $as_echo "$as_me: GCC >= 6 detected; adding ${NO_DELETE_NULL_POINTER_CHECKS_CFLA
     fi
 
   fi
+
+LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} ${JAVA_BASE_LDFLAGS}"
 
   # Set JVM_LIBS (per os)
   if test "x$OPENJDK_TARGET_OS" = xlinux; then
@@ -50627,15 +50625,11 @@ $as_echo "$supports" >&6; }
   if test "x$OPENJDK_TARGET_OS" = xsolaris; then
     OPENJDK_BUILD_CFLAGS_JDK="${OPENJDK_BUILD_CFLAGS_JDK} -D__solaris__"
     OPENJDK_BUILD_CXXFLAGS_JDK="${OPENJDK_BUILD_CXXFLAGS_JDK} -D__solaris__"
-    OPENJDK_BUILD_CFLAGS_JDKLIB_EXTRA='-xstrconst'
-    CFLAGS_JDK="${CFLAGS_JDK} -qchars=signed -qfullpath -qsaveopt"
-    CXXFLAGS_JDK="${CXXFLAGS_JDK} -qchars=signed -qfullpath -qsaveopt"
   fi
 
   if test "x$OPENJDK_TARGET_OS" = xsolaris; then
     OPENJDK_BUILD_CFLAGS_JDK="${OPENJDK_BUILD_CFLAGS_JDK} -D__solaris__"
     OPENJDK_BUILD_CXXFLAGS_JDK="${OPENJDK_BUILD_CXXFLAGS_JDK} -D__solaris__"
-    OPENJDK_BUILD_CFLAGS_JDKLIB_EXTRA='-xstrconst'
   fi
 
   OPENJDK_BUILD_CFLAGS_JDK="${OPENJDK_BUILD_CFLAGS_JDK} ${OPENJDK_BUILD_EXTRA_CFLAGS}"
@@ -50749,6 +50743,17 @@ $as_echo "$supports" >&6; }
 
   if test $OPENJDK_BUILD_COMPARABLE_ACTUAL_VERSION -ge $COMPARABLE_REFERENCE_VERSION ; then
     :
+
+  # These flags are required for GCC 6 builds as undefined behaviour in OpenJDK code
+  # runs afoul of the more aggressive versions of these optimisations.
+  # Notably, value range propagation now assumes that the this pointer of C++
+  # member functions is non-null.
+  NO_DELETE_NULL_POINTER_CHECKS_CFLAG="-fno-delete-null-pointer-checks"
+        NO_LIFETIME_DSE_CFLAG="-fno-lifetime-dse"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: GCC >= 6 detected; adding ${NO_DELETE_NULL_POINTER_CHECKS_CFLAG} and ${NO_LIFETIME_DSE_CFLAG}" >&5
+$as_echo "$as_me: GCC >= 6 detected; adding ${NO_DELETE_NULL_POINTER_CHECKS_CFLAG} and ${NO_LIFETIME_DSE_CFLAG}" >&6;}
+  OPENJDK_BUILD_CFLAGS_JDK="$OPENJDK_BUILD_CFLAGS_JDK ${NO_DELETE_NULL_POINTER_CHECKS_CFLAG} ${NO_LIFETIME_DSE_CFLAG}"
+  OPENJDK_BUILD_JVM_CFLAGS="$OPENJDK_BUILD_JVM_CFLAGS ${NO_DELETE_NULL_POINTER_CHECKS_CFLAG} ${NO_LIFETIME_DSE_CFLAG}"
 
   # These flags are required for GCC 6 builds as undefined behaviour in OpenJDK code
   # runs afoul of the more aggressive versions of these optimisations.
@@ -51211,7 +51216,7 @@ $as_echo "$as_me: GCC >= 6 detected; adding ${NO_DELETE_NULL_POINTER_CHECKS_CFLA
     fi
   elif test "x$TOOLCHAIN_TYPE" = xsolstudio; then
     LDFLAGS_SOLSTUDIO="-Wl,-z,defs"
-    OPENJDK_BUILD_LDFLAGS_JDK="$OPENJDK_BUILD_LDFLAGS_JDK $LDFLAGS_SOLSTUDIO -xildoff -ztext"
+    OPENJDK_BUILD_LDFLAGS_JDK="$OPENJDK_BUILD_LDFLAGS_JDK $LDFLAGS_SOLSTUDIO -ztext"
     LDFLAGS_CXX_SOLSTUDIO="-norunpath"
     OPENJDK_BUILD_LDFLAGS_CXX_JDK="$OPENJDK_BUILD_LDFLAGS_CXX_JDK $LDFLAGS_CXX_SOLSTUDIO -xnolib"
     OPENJDK_BUILD_JVM_LDFLAGS="$OPENJDK_BUILD_JVM_LDFLAGS $LDFLAGS_SOLSTUDIO -library=%none -mt $LDFLAGS_CXX_SOLSTUDIO -z noversion"
@@ -51246,11 +51251,11 @@ $as_echo "$as_me: GCC >= 6 detected; adding ${NO_DELETE_NULL_POINTER_CHECKS_CFLA
 
   OPENJDK_BUILD_LDFLAGS_JDKLIB="${OPENJDK_BUILD_LDFLAGS_JDKLIB} ${SHARED_LIBRARY_FLAGS}"
   if test "x$TOOLCHAIN_TYPE" = xmicrosoft; then
-    OPENJDK_BUILD_LDFLAGS_JDKLIB="${OPENJDK_BUILD_LDFLAGS_JDKLIB} \
+    OPENJDK_BUILD_JAVA_BASE_LDFLAGS="${OPENJDK_BUILD_JAVA_BASE_LDFLAGS} \
         -libpath:${OUTPUT_ROOT}/support/modules_libs/java.base"
     OPENJDK_BUILD_JDKLIB_LIBS=""
   else
-    OPENJDK_BUILD_LDFLAGS_JDKLIB="${OPENJDK_BUILD_LDFLAGS_JDKLIB} \
+    OPENJDK_BUILD_JAVA_BASE_LDFLAGS="${OPENJDK_BUILD_JAVA_BASE_LDFLAGS} \
         -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_BUILD_CPU_LIBDIR)"
 
     if test "xBUILD" = "xTARGET"; then
@@ -51259,17 +51264,17 @@ $as_echo "$as_me: GCC >= 6 detected; adding ${NO_DELETE_NULL_POINTER_CHECKS_CFLA
       # Only add client/minimal dir if client/minimal is being built.
     # Default to server for other variants.
       if   [[ " $JVM_VARIANTS " =~ " server " ]]  ; then
-        OPENJDK_BUILD_LDFLAGS_JDKLIB="${OPENJDK_BUILD_LDFLAGS_JDKLIB} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_BUILD_CPU_LIBDIR)/server"
+        OPENJDK_BUILD_JAVA_BASE_LDFLAGS="${OPENJDK_BUILD_JAVA_BASE_LDFLAGS} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_BUILD_CPU_LIBDIR)/server"
       elif   [[ " $JVM_VARIANTS " =~ " client " ]]  ; then
-        OPENJDK_BUILD_LDFLAGS_JDKLIB="${OPENJDK_BUILD_LDFLAGS_JDKLIB} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_BUILD_CPU_LIBDIR)/client"
+        OPENJDK_BUILD_JAVA_BASE_LDFLAGS="${OPENJDK_BUILD_JAVA_BASE_LDFLAGS} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_BUILD_CPU_LIBDIR)/client"
       elif   [[ " $JVM_VARIANTS " =~ " minimal " ]]  ; then
-        OPENJDK_BUILD_LDFLAGS_JDKLIB="${OPENJDK_BUILD_LDFLAGS_JDKLIB} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_BUILD_CPU_LIBDIR)/minimal"
+        OPENJDK_BUILD_JAVA_BASE_LDFLAGS="${OPENJDK_BUILD_JAVA_BASE_LDFLAGS} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_BUILD_CPU_LIBDIR)/minimal"
     else
-        OPENJDK_BUILD_LDFLAGS_JDKLIB="${OPENJDK_BUILD_LDFLAGS_JDKLIB} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_BUILD_CPU_LIBDIR)/server"
+        OPENJDK_BUILD_JAVA_BASE_LDFLAGS="${OPENJDK_BUILD_JAVA_BASE_LDFLAGS} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_BUILD_CPU_LIBDIR)/server"
     fi
     elif test "xBUILD" = "xBUILD"; then
       # When building a buildjdk, it's always only the server variant
-      OPENJDK_BUILD_LDFLAGS_JDKLIB="${OPENJDK_BUILD_LDFLAGS_JDKLIB} \
+      OPENJDK_BUILD_JAVA_BASE_LDFLAGS="${OPENJDK_BUILD_JAVA_BASE_LDFLAGS} \
           -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_BUILD_CPU_LIBDIR)/server"
     fi
 
@@ -51279,6 +51284,8 @@ $as_echo "$as_me: GCC >= 6 detected; adding ${NO_DELETE_NULL_POINTER_CHECKS_CFLA
     fi
 
   fi
+
+OPENJDK_BUILD_LDFLAGS_JDKLIB="${OPENJDK_BUILD_LDFLAGS_JDKLIB} ${OPENJDK_BUILD_JAVA_BASE_LDFLAGS}"
 
   # Set OPENJDK_BUILD_JVM_LIBS (per os)
   if test "x$OPENJDK_BUILD_OS" = xlinux; then
@@ -51344,7 +51351,7 @@ $as_echo "$as_me: GCC >= 6 detected; adding ${NO_DELETE_NULL_POINTER_CHECKS_CFLA
 
 
   LDFLAGS_TESTLIB="$LDFLAGS_JDKLIB"
-  LDFLAGS_TESTEXE="$LDFLAGS_JDKEXE"
+  LDFLAGS_TESTEXE="$LDFLAGS_JDKEXE $JAVA_BASE_LDFLAGS"
 
 
 
