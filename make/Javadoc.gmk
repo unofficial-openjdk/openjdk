@@ -424,8 +424,8 @@ $(COREAPI_OPTIONS_FILE): $(COREAPI_OVERVIEW)
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
           $(call OptionOnly,-Xdoclint:reference) ; \
-          $(call OptionOnly,-Xdoclint/package:-org.omg.*) ; \
-          $(call OptionPair,--system,none) ; \
+          $(call OptionOnly,-Xdoclint/package:-org.omg.*$(COMMA)jdk.internal.logging.*) ; \
+          $(call OptionPair,-system,none) ; \
 	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
 	  $(call OptionPair,--add-modules,$(COREAPI_MODULES)) ; \
 	  $(call OptionPair,-encoding,ISO-8859-1) ; \
