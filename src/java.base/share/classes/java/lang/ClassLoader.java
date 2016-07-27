@@ -217,6 +217,8 @@ public abstract class ClassLoader {
     // must be added *after* it.
     private final ClassLoader parent;
 
+    private final String name;
+
     // the unnamed module for this ClassLoader
     private final Module unnamedModule;
 
@@ -336,7 +338,8 @@ public abstract class ClassLoader {
         return null;
     }
 
-    private ClassLoader(Void unused, ClassLoader parent) {
+    private ClassLoader(Void unused, String name, ClassLoader parent) {
+        this.name = name;
         this.parent = parent;
         this.unnamedModule
             = SharedSecrets.getJavaLangReflectModuleAccess()
@@ -375,7 +378,28 @@ public abstract class ClassLoader {
      * @since  1.2
      */
     protected ClassLoader(ClassLoader parent) {
-        this(checkCreateClassLoader(), parent);
+        this(checkCreateClassLoader(), null, parent);
+    }
+
+    /**
+     * Creates a new class loader of the specified name and using the
+     * specified parent class loader for delegation.
+     *
+     * @param name
+     *        Class loader name; can be {@code null}
+     *
+     * @param parent
+     *        The parent class loader
+     *
+     * @throws  SecurityException
+     *          If a security manager exists and its
+     *          {@link SecurityManager#checkCreateClassLoader()}
+     *          method doesn't allow creation of a new class loader.
+     *
+     * @since  9
+     */
+    protected ClassLoader(String name, ClassLoader parent) {
+        this(checkCreateClassLoader(), name, parent);
     }
 
     /**
@@ -394,7 +418,20 @@ public abstract class ClassLoader {
      *          of a new class loader.
      */
     protected ClassLoader() {
-        this(checkCreateClassLoader(), getSystemClassLoader());
+        this(checkCreateClassLoader(), null, getSystemClassLoader());
+    }
+
+    /**
+     * Returns the name of this class loader or {@code null} if
+     * this class loader is not named.
+     *
+     * @return name of this class loader; or {@code null} if
+     * this class loader is not named.
+     *
+     * @since 9
+     */
+    public String getName() {
+        return name;
     }
 
     // -- Class --
