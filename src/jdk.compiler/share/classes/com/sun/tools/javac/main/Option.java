@@ -56,6 +56,7 @@ import com.sun.tools.javac.jvm.Profile;
 import com.sun.tools.javac.jvm.Target;
 import com.sun.tools.javac.platform.PlatformProvider;
 import com.sun.tools.javac.processing.JavacProcessingEnvironment;
+import com.sun.tools.javac.resources.CompilerProperties.Errors;
 import com.sun.tools.javac.util.Assert;
 import com.sun.tools.javac.util.JDK9Wrappers;
 import com.sun.tools.javac.util.Log;
@@ -190,7 +191,41 @@ public enum Option {
 
     SYSTEM("--system -system", "opt.arg.jdk", "opt.system", STANDARD, FILEMANAGER),
 
-    PATCH_MODULE("--patch-module -Xpatch:", "opt.arg.patch", "opt.patch", EXTENDED, FILEMANAGER),
+    PATCH_MODULE("--patch-module -Xpatch:", "opt.arg.patch", "opt.patch", EXTENDED, FILEMANAGER) {
+        // The deferred filemanager diagnostics mechanism assumes a single value per option,
+        // but --patch-module can be used multiple times, once per module. Therefore we compose
+        // a value for the option containing the last value specified for each module, and separate
+        // the the module=path pairs by an invalid path character, NULL.
+        // The standard file manager code knows to split apart the NULL-separated components.
+        @Override
+        public boolean process(OptionHelper helper, String option, String arg) {
+            if (!arg.contains("=")) { // could be more strict regeex, e.g. "(?i)[a-z0-9_.]+=.*"
+                helper.error(Errors.LocnInvalidArgForXpatch(arg));
+            }
+
+            String previous = helper.get(this);
+            if (previous == null) {
+                return super.process(helper, option, arg);
+            }
+
+            Map<String,String> map = new LinkedHashMap<>();
+            for (String s : previous.split("\0")) {
+                int sep = s.indexOf('=');
+                map.put(s.substring(0, sep), s.substring(sep + 1));
+            }
+
+            int sep = arg.indexOf('=');
+            map.put(arg.substring(0, sep), arg.substring(sep + 1));
+
+            StringBuilder sb = new StringBuilder();
+            map.forEach((m, p) -> {
+                if (sb.length() > 0)
+                    sb.append('\0');
+                sb.append(m).append('=').append(p);
+            });
+            return super.process(helper, option, sb.toString());
+        }
+    },
 
     BOOT_CLASS_PATH("--boot-class-path -bootclasspath", "opt.arg.path", "opt.bootclasspath", STANDARD, FILEMANAGER) {
         @Override

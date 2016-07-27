@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -660,6 +660,14 @@ public class Log extends AbstractLog {
      */
     public String localize(String key, Object... args) {
         return localize(PrefixKind.COMPILER_MISC, key, args);
+    }
+
+    public String localize(JCDiagnostic.DiagnosticInfo diagInfo) {
+        if (useRawMessages) {
+            return diagInfo.key();
+        } else {
+            return messages.getLocalizedString(diagInfo.key(), diagInfo.args);
+        }
     }
 
     /** Find a localized string in the resource bundle.

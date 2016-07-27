@@ -46,7 +46,6 @@ import javax.lang.model.element.TypeElement;
 import toolbox.JarTask;
 import toolbox.JavacTask;
 import toolbox.Task;
-import toolbox.ToolBox;
 
 public class ModulesAndClassPathTest extends ModuleTestBase {
 

@@ -1518,28 +1518,41 @@ public class Locations {
     boolean handleOption(Option option, String value) {
         switch (option) {
             case PATCH_MODULE:
-                Map<String, SearchPath> map = new LinkedHashMap<>();
-                int eq = value.indexOf('=');
-                if (eq > 0) {
-                    String mName = value.substring(0, eq);
-                    SearchPath mPatchPath = new SearchPath()
-                            .addFiles(value.substring(eq + 1));
-                    boolean ok = true;
-                    for (Path p: mPatchPath) {
-                        Path mi = p.resolve("module-info.class");
-                        if (Files.exists(mi)) {
-                            log.error(Errors.LocnModuleInfoNotAllowedOnPatchPath(mi));
-                            ok = false;
+                if (value == null) {
+                    patchMap = null;
+                } else {
+                    // Allow an extended syntax for --patch-module consisting of a series
+                    // of values separated by NULL characters. This is to facilitate
+                    // supporting deferred file manager options on the command line.
+                    // See Option.PATCH_MODULE for the code that composes these multiple
+                    // values.
+                    for (String v : value.split("\0")) {
+                        int eq = v.indexOf('=');
+                        if (eq > 0) {
+                            String mName = v.substring(0, eq);
+                            SearchPath mPatchPath = new SearchPath()
+                                    .addFiles(v.substring(eq + 1));
+                            boolean ok = true;
+                            for (Path p : mPatchPath) {
+                                Path mi = p.resolve("module-info.class");
+                                if (Files.exists(mi)) {
+                                    log.error(Errors.LocnModuleInfoNotAllowedOnPatchPath(mi));
+                                    ok = false;
+                                }
+                            }
+                            if (ok) {
+                                if (patchMap == null) {
+                                    patchMap = new LinkedHashMap<>();
+                                }
+                                patchMap.put(mName, mPatchPath);
+                            }
+                        } else {
+                            // Should not be able to get here;
+                            // this should be caught and handled in Option.PATCH_MODULE
+                            log.error(Errors.LocnInvalidArgForXpatch(value));
                         }
                     }
-                    if (ok && !mPatchPath.isEmpty()) {
-                        map.computeIfAbsent(mName, (_x) -> new SearchPath())
-                                .addAll(mPatchPath);
-                    }
-                } else {
-                    log.error(Errors.LocnInvalidArgForXpatch(value));
                 }
-                patchMap = map;
                 return true;
             default:
                 LocationHandler h = handlersForOption.get(option);
