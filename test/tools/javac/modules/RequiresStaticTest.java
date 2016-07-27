@@ -23,26 +23,26 @@
 
 /*
  * @test
- * @summary tests for "requires public"
+ * @summary tests for "requires static"
+ * @bug 8161906
  * @library /tools/lib
  * @modules
  *      jdk.compiler/com.sun.tools.javac.api
  *      jdk.compiler/com.sun.tools.javac.main
  * @build toolbox.ToolBox toolbox.JavacTask ModuleTestBase
- * @run main RequiresPublicTest
+ * @run main RequiresStaticTest
  */
+
+import toolbox.JavacTask;
+import toolbox.Task;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import toolbox.JavacTask;
-import toolbox.Task;
-import toolbox.ToolBox;
-
-public class RequiresPublicTest extends ModuleTestBase {
+public class RequiresStaticTest extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {
-        RequiresPublicTest t = new RequiresPublicTest();
+        RequiresStaticTest t = new RequiresStaticTest();
         t.runTests();
     }
 
@@ -50,7 +50,7 @@ public class RequiresPublicTest extends ModuleTestBase {
     public void testJavaSE_OK(Path base) throws Exception {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
-                "module m { requires java.se; }",
+                "module m { requires static java.se; }",
                 "import java.awt.Frame;\n"  // in java.se
                 + "class Test {\n"
                 + "    Frame f;\n"
@@ -69,7 +69,7 @@ public class RequiresPublicTest extends ModuleTestBase {
     public void testJavaSE_Fail(Path base) throws Exception {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
-                "module m { requires java.se; }",
+                "module m { requires static java.se; }",
                 "import com.sun.source.tree.Tree;\n" // not in java.se (in jdk.compiler)
                 + "class Test {\n"
                 + "    Tree t;\n"
@@ -106,8 +106,8 @@ public class RequiresPublicTest extends ModuleTestBase {
     @Test
     public void testComplex_Fail(Path base) throws Exception {
         Path src = getComplexSrc(base,
-                "import p5.C5; import p6.C6; import p7.C7;\n",
-                "C5 c5; C6 c6; C7 c7;\n");
+                "import p5.C5; import p6.C6; import p7.C7; import p8.C8;\n",
+                "C5 c5; C6 c6; C7 c7; C8 c8;\n");
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
 
@@ -124,11 +124,14 @@ public class RequiresPublicTest extends ModuleTestBase {
             "C1.java:5:10: compiler.err.not.def.access.package.cant.access: p5.C5, p5",
             "C1.java:5:24: compiler.err.not.def.access.package.cant.access: p6.C6, p6",
             "C1.java:5:38: compiler.err.not.def.access.package.cant.access: p7.C7, p7",
+            "C1.java:5:52: compiler.err.not.def.access.package.cant.access: p8.C8, p8",
             "C1.java:8:1: compiler.err.cant.resolve.location: kindname.class, C5, , , "
                 + "(compiler.misc.location: kindname.class, p1.C1, null)",
             "C1.java:8:8: compiler.err.cant.resolve.location: kindname.class, C6, , , "
                 + "(compiler.misc.location: kindname.class, p1.C1, null)",
             "C1.java:8:15: compiler.err.cant.resolve.location: kindname.class, C7, , , "
+                + "(compiler.misc.location: kindname.class, p1.C1, null)",
+            "C1.java:8:22: compiler.err.cant.resolve.location: kindname.class, C8, , , "
                 + "(compiler.misc.location: kindname.class, p1.C1, null)"
         };
 
@@ -140,9 +143,12 @@ public class RequiresPublicTest extends ModuleTestBase {
 
     /*
      * Set up the following module graph
-     *     m1 -> m2 => m3 => m4 -> m5
-     *              -> m6 => m7
-     * where -> is requires, => is requires public
+     *     m1 -> m2 => m3 -=-> m4 --> m5
+     *            \           /
+     *              \       /
+     *                v   v
+     *                  m6 => m7 --> m8
+     * where -> is requires, => is requires public, --> is requires static, -=-> is requires public static
      */
     Path getComplexSrc(Path base, String m1_extraImports, String m1_extraUses) throws Exception {
         Path src = base.resolve("src");
@@ -164,23 +170,23 @@ public class RequiresPublicTest extends ModuleTestBase {
         tb.writeJavaFiles(src_m2,
                 "module m2 {\n"
                 + "  requires public m3;\n"
-                + "  requires        m6;\n"
+                + "  requires static m6;\n"
                 + "  exports p2;\n"
                 + "}",
                 "package p2;\n"
-                + "public class C2 { }\n");
+                + "public class C2 {p7.C7 c7; p6.C6 c6; p4.C4 c4;}\n");
 
         Path src_m3 = src.resolve("m3");
         tb.writeJavaFiles(src_m3,
-                "module m3 { requires public m4; exports p3; }",
+                "module m3 { requires public static m4; exports p3; }",
                 "package p3;\n"
                 + "public class C3 { }\n");
 
         Path src_m4 = src.resolve("m4");
         tb.writeJavaFiles(src_m4,
-                "module m4 { requires m5; exports p4; }",
+                "module m4 { requires m5; requires static m6; exports p4; }",
                 "package p4;\n"
-                + "public class C4 { }\n");
+                + "public class C4 { p6.C6 c6; p7.C7 c7;}\n");
 
         Path src_m5 = src.resolve("m5");
         tb.writeJavaFiles(src_m5,
@@ -192,13 +198,19 @@ public class RequiresPublicTest extends ModuleTestBase {
         tb.writeJavaFiles(src_m6,
                 "module m6 { requires public m7; exports p6; }",
                 "package p6;\n"
-                + "public class C6 { }\n");
+                + "public class C6 { p7.C7 c7; }\n");
 
         Path src_m7 = src.resolve("m7");
         tb.writeJavaFiles(src_m7,
-                "module m7 { exports p7; }",
+                "module m7 { requires static m8; exports p7; }",
                 "package p7;\n"
-                + "public class C7 { }\n");
+                + "public class C7 { p8.C8 c8; }\n");
+
+        Path src_m8 = src.resolve("m8");
+        tb.writeJavaFiles(src_m8,
+                "module m8 { exports p8; }",
+                "package p8;\n"
+                        + "public class C8 { }\n");
 
         return src;
     }

@@ -35,6 +35,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -127,8 +128,9 @@ public class ModuleTestBase {
         tr.checkContains(actualProvides, moduleDescriptor.provides, "Lists of provides don't match");
     }
 
-    protected void compile(Path base) throws IOException {
+    protected void compile(Path base, String... options) throws IOException {
         new JavacTask(tb)
+                .options(options)
                 .files(findJavaFiles(base))
                 .run(Task.Expect.SUCCESS)
                 .writeAll();
@@ -141,6 +143,19 @@ public class ModuleTestBase {
 
     @Retention(RetentionPolicy.RUNTIME)
     @interface Test {
+    }
+
+    enum RequiresFlag {
+        PUBLIC("public", Module_attribute.ACC_TRANSITIVE),
+        STATIC("static", Module_attribute.ACC_STATIC_PHASE);
+
+        private final String token;
+        private final int mask;
+
+        RequiresFlag(String token, int mask) {
+            this.token = token;
+            this.mask = mask;
+        }
     }
 
     class ModuleDescriptor {
@@ -168,19 +183,26 @@ public class ModuleTestBase {
             content.append(name).append('{').append('\n');
         }
 
-        public ModuleDescriptor requires(String... requires) {
-            for (String require : requires) {
-                this.requires.add(Pair.of(require, 0));
-                content.append("    requires ").append(require).append(LINE_END);
-            }
+        public ModuleDescriptor requires(String module) {
+            this.requires.add(Pair.of(module, 0));
+            content.append("    requires ").append(module).append(LINE_END);
+
             return this;
         }
 
-        public ModuleDescriptor requiresPublic(String... requiresPublic) {
-            for (String require : requiresPublic) {
-                this.requires.add(new Pair<>(require, Module_attribute.ACC_TRANSITIVE));
-                content.append("    requires public ").append(require).append(LINE_END);
+        public ModuleDescriptor requires(String module, RequiresFlag... flags) {
+            int mask = Arrays.stream(flags)
+                    .map(f -> f.mask)
+                    .reduce((a, b) -> a | b)
+                    .get();
+            this.requires.add(new Pair<>(module, mask));
+
+            content.append("    requires ");
+            for (RequiresFlag flag : flags) {
+                content.append(flag.token).append(" ");
             }
+            content.append(module).append(LINE_END);
+
             return this;
         }
 

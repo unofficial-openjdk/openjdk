@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug 8158123
+ * @bug 8158123 8161906
  * @summary tests for module declarations
  * @library /tools/lib
  * @modules
@@ -250,6 +250,32 @@ public class ModuleInfoTest extends ModuleTestBase {
                 .getOutput(Task.OutputKind.DIRECT);
 
         if (!log.contains("module-info.java:1:35: compiler.err.duplicate.requires: m1"))
+            throw new Exception("expected output not found");
+    }
+
+    /**
+     * Verify that duplicate requires are detected.
+     */
+    @Test
+    public void testDuplicateRequiresPublicStatic(Path base) throws Exception {
+        Path src = base.resolve("src");
+        Path src_m1 = src.resolve("m1");
+        tb.writeFile(src_m1.resolve("module-info.java"), "module m1 { }");
+        Path src_m2 = src.resolve("m2");
+        tb.writeFile(src_m2.resolve("module-info.java"), "module m2 { requires public m1; requires static m1; }");
+
+        Path classes = base.resolve("classes");
+        Files.createDirectories(classes);
+
+        String log = new JavacTask(tb)
+                .options("-XDrawDiagnostics", "--module-source-path", src.toString())
+                .outdir(classes)
+                .files(findJavaFiles(src))
+                .run(Task.Expect.FAIL)
+                .writeAll()
+                .getOutput(Task.OutputKind.DIRECT);
+
+        if (!log.contains("module-info.java:1:49: compiler.err.duplicate.requires: m1"))
             throw new Exception("expected output not found");
     }
 
