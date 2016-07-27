@@ -180,7 +180,6 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
         Checks.requireModuleName(md.name());
         for (Requires req : md.requires()) {
             Checks.requireModuleName(req.name());
-            Checks.requireModifiers(req.modifiers());
         }
         for (Exports e : md.exports()) {
             Checks.requirePackageName(e.source());

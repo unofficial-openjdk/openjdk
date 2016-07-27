@@ -287,18 +287,10 @@ final class ModuleInfo {
                 mods = Collections.emptySet();
             } else {
                 mods = new HashSet<>();
-
-                boolean isTransitive = ((flags & ACC_TRANSITIVE) != 0);
-                boolean isStatic = (((flags) & ACC_STATIC_PHASE) != 0);
-                if (isTransitive && isStatic) {
-                    throw invalidModuleDescriptor("ACC_TRANSITIVE and"
-                                                  + "ACC_STATIC_PHASE set");
-                }
-                if (isTransitive)
+                if ((flags & ACC_TRANSITIVE) != 0)
                     mods.add(Requires.Modifier.PUBLIC);
-                else if (isStatic)
+                if ((flags & ACC_STATIC_PHASE) != 0)
                     mods.add(Requires.Modifier.STATIC);
-
                 if ((flags & ACC_SYNTHETIC) != 0)
                     mods.add(Requires.Modifier.SYNTHETIC);
                 if ((flags & ACC_MANDATED) != 0)

@@ -115,10 +115,12 @@ public class ModuleDescriptorTest {
         assertEquals(r.name(), "foo");
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class)
     public void testRequiresWithAllModifiers() {
-        // can't have PUBLIC and TRANSITIVE
-        requires(EnumSet.allOf(Modifier.class), "foo");
+        Requires r = requires(EnumSet.allOf(Modifier.class), "foo");
+        assertEquals(r, r);
+        assertTrue(r.compareTo(r) == 0);
+        assertEquals(r.modifiers(), EnumSet.of(PUBLIC, STATIC, SYNTHETIC, MANDATED));
+        assertEquals(r.name(), "foo");
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
