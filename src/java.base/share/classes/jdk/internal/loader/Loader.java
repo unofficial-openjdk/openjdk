@@ -344,25 +344,56 @@ public final class Loader extends SecureClassLoader {
 
     @Override
     public URL findResource(String name) {
-        for (ModuleReference mref : nameToModule.values()) {
-            try {
-                URL url = findResource(mref.descriptor().name(), name);
-                if (url != null)
-                    return url;
-            } catch (IOException ioe) { }
+        URL url = null;
+        String pn = ResourceHelper.getPackageName(name);
+        LoadedModule module = localPackageToModule.get(pn);
+        if (module != null) {
+            if (name.endsWith(".class") || isExported(module.mref(), pn)) {
+                try {
+                    url = findResource(module.name(), name);
+                } catch (IOException ioe) {
+                    // ignore
+                }
+            }
+        } else {
+            for (ModuleReference mref : nameToModule.values()) {
+                try {
+                    url = findResource(mref.descriptor().name(), name);
+                    if (url != null)
+                        break;
+                } catch (IOException ioe) {
+                    // ignore
+                }
+            }
         }
-        return null;
+        return url;
     }
 
     @Override
     public Enumeration<URL> findResources(String name) throws IOException {
         List<URL> urls = new ArrayList<>();
-        for (ModuleReference mref : nameToModule.values()) {
-            try {
-                URL url = findResource(mref.descriptor().name(), name);
-                if (url != null)
-                    urls.add(url);
-            } catch (IOException ioe) { }
+        String pn = ResourceHelper.getPackageName(name);
+        LoadedModule module = localPackageToModule.get(pn);
+        if (module != null) {
+            if (name.endsWith(".class") || isExported(module.mref(), pn)) {
+                try {
+                    URL url = findResource(module.name(), name);
+                    if (url != null)
+                        urls.add(url);
+                } catch (IOException ioe) {
+                    // ignore
+                }
+            }
+        } else {
+            for (ModuleReference mref : nameToModule.values()) {
+                try {
+                    URL url = findResource(mref.descriptor().name(), name);
+                    if (url != null)
+                        urls.add(url);
+                } catch (IOException ioe) {
+                    // ignore
+                }
+            }
         }
         return Collections.enumeration(urls);
     }
@@ -586,4 +617,20 @@ public final class Loader extends SecureClassLoader {
         }
     }
 
+    /**
+     * Returns true if the given module exports the given package
+     * unconditionally.
+     *
+     * @implNote This method currently iterates over each of the module
+     * exports. This will be replaced once the ModuleDescriptor.Exports
+     * API is updated.
+     */
+    private boolean isExported(ModuleReference mref, String pn) {
+        for (ModuleDescriptor.Exports e : mref.descriptor().exports()) {
+            if (!e.isQualified() && e.source().equals(pn)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

@@ -1258,6 +1258,12 @@ public abstract class ClassLoader {
      * Class loader implementations that support the loading from modules
      * should override this method.
      *
+     * @apiNote This method is the basis for the {@code Class} {@link
+     * Class#getResource getResource} and {@link Class#getResourceAsStream
+     * getResourceAsStream} methods. It is not subject to the rules for
+     * encapsulation specified by {@code Module} {@link
+     * Module#getResourceAsStream getResourceAsStream}.
+     *
      * @implSpec The default implementation attempts to find the resource by
      * invoking {@link #findResource(String)} when the {@code moduleName} is
      * {@code null}. It otherwise returns {@code null}.
@@ -1302,6 +1308,11 @@ public abstract class ClassLoader {
      * built-in to the virtual machine is searched.  That failing, this method
      * will invoke {@link #findResource(String)} to find the resource.  </p>
      *
+     * <p> Resources in named modules are subject to encapsulation specified in
+     * the {@code Module} {@link Module#getResourceAsStream getResourceAsStream}
+     * method. Additionally, this method does not find resources in packages of
+     * named modules unless the package is exported unconditionally. </p>
+     *
      * @apiNote Where several modules are defined to the same class loader,
      * and where more than one module contains a resource with the given name,
      * then the ordering that modules are searched is not specified and may be
@@ -1315,7 +1326,8 @@ public abstract class ClassLoader {
      *
      * @return  {@code URL} object for reading the resource; {@code null} if
      *          the resource could not be found, a {@code URL} could not be
-     *          constructed to locate the resource, or access to the resource
+     *          constructed to locate the resource, the resource is in a package
+     *          that is not exported unconditionally, or access to the resource
      *          is denied by the security manager.
      *
      * @since  1.1
@@ -1344,6 +1356,11 @@ public abstract class ClassLoader {
      * <p> The delegation order for searching is described in the documentation
      * for {@link #getResource(String)}.  </p>
      *
+     * <p> Resources in named modules are subject to encapsulation specified in
+     * the {@code Module} {@link Module#getResourceAsStream getResourceAsStream}
+     * method. Additionally, this method does not find resources in packages of
+     * named modules unless the package is exported unconditionally. </p>
+     *
      * @apiNote Where several modules are defined to the same class loader,
      * and where more than one module contains a resource with the given name,
      * then the ordering is not specified and may be very unpredictable.
@@ -1360,7 +1377,8 @@ public abstract class ClassLoader {
      * @return  An enumeration of {@link java.net.URL <tt>URL</tt>} objects for
      *          the resource. If no resources could  be found, the enumeration
      *          will be empty. Resources for which a {@code URL} cannot be
-     *          constructed, or where access to the resource is denied by the
+     *          constructed, are not in a package that is exported
+     *          unconditionally, or access to the resource is denied by the
      *          security manager, are not returned in the enumeration.
      *
      * @throws  IOException
@@ -1387,11 +1405,20 @@ public abstract class ClassLoader {
      * Finds the resource with the given name. Class loader implementations
      * should override this method to specify where to find resources.
      *
+     * <p> For resources in named modules then the method must implement the
+     * rules for encapsulation specified in the {@code Module} {@link
+     * Module#getResourceAsStream getResourceAsStream} method. Additionally,
+     * it must not find resources in packages of named modules unless the
+     * package is exported unconditionally. </p>
+     *
      * @param  name
      *         The resource name
      *
-     * @return  A <tt>URL</tt> object for reading the resource, or
-     *          <tt>null</tt> if the resource could not be found
+     * @return  {@code URL} object for reading the resource; {@code null} if
+     *          the resource could not be found, a {@code URL} could not be
+     *          constructed to locate the resource, the resource is in a package
+     *          that is not exported unconditionally, or access to the resource
+     *          is denied by the security manager.
      *
      * @since  1.2
      */
@@ -1405,11 +1432,21 @@ public abstract class ClassLoader {
      * implementations should override this method to specify where to load
      * resources from.
      *
+     * <p> For resources in named modules then the method must implement the
+     * rules for encapsulation specified in the {@code Module} {@link
+     * Module#getResourceAsStream getResourceAsStream} method. Additionally,
+     * it must not find resources in packages of named modules unless the
+     * package is exported unconditionally. </p>
+     *
      * @param  name
      *         The resource name
      *
      * @return  An enumeration of {@link java.net.URL <tt>URL</tt>} objects for
-     *          the resources
+     *          the resource. If no resources could  be found, the enumeration
+     *          will be empty. Resources for which a {@code URL} cannot be
+     *          constructed, are not in a package that is exported
+     *          unconditionally, or access to the resource is denied by the
+     *          security manager, are not returned in the enumeration.
      *
      * @throws  IOException
      *          If I/O errors occur
@@ -1449,12 +1486,17 @@ public abstract class ClassLoader {
      * classes.  This method locates the resource through the system class
      * loader (see {@link #getSystemClassLoader()}).
      *
+     * <p> Resources in named modules are subject to encapsulation specified in
+     * the {@code Module} {@link Module#getResourceAsStream getResourceAsStream}
+     * method. Additionally, this method does not find resources in packages of
+     * named modules unless the package is exported unconditionally. </p>
      * @param  name
      *         The resource name
      *
      * @return  A {@link java.net.URL <tt>URL</tt>} to the resource; {@code
      *          null} if the resource could not be found, a URL could not be
-     *          constructed to locate the resource, or access to the resource
+     *          constructed to locate the resource, the resource is in a package
+     *          that is not exported unconditionally, or access to the resource
      *          is denied by the security manager.
      *
      * @since  1.1
@@ -1476,13 +1518,19 @@ public abstract class ClassLoader {
      * <p> The search order is described in the documentation for {@link
      * #getSystemResource(String)}.  </p>
      *
+     * <p> Resources in named modules are subject to encapsulation specified in
+     * the {@code Module} {@link Module#getResourceAsStream getResourceAsStream}
+     * method. Additionally, this method does not find resources in packages of
+     * named modules unless the package is exported unconditionally. </p>
+     *
      * @param  name
      *         The resource name
      *
      * @return  An enumeration of {@link java.net.URL <tt>URL</tt>} objects for
-     *          the resource. If no resources could be found, the enumeration
+     *          the resource. If no resources could  be found, the enumeration
      *          will be empty. Resources for which a {@code URL} cannot be
-     *          constructed, or where access to the resource is denied by the
+     *          constructed, are not in a package that is exported
+     *          unconditionally, or access to the resource is denied by the
      *          security manager, are not returned in the enumeration.
      *
      * @throws  IOException
@@ -1506,12 +1554,18 @@ public abstract class ClassLoader {
      * <p> The search order is described in the documentation for {@link
      * #getResource(String)}.  </p>
      *
+     * <p> Resources in named modules are subject to encapsulation specified in
+     * the {@code Module} {@link Module#getResourceAsStream getResourceAsStream}
+     * method. Additionally, this method does not find resources in packages of
+     * named modules unless the package is exported unconditionally. </p>
+     *
      * @param  name
      *         The resource name
      *
-     * @return  An input stream for reading the resource; {@code null}
-     *          if the resource could not be found or access to the resource
-     *          is denied by the security manager.
+     * @return  An input stream for reading the resource; {@code null} if the
+     *          resource could not be found, the resource is in a package that
+     *          is not exported unconditionally, or access to the resource is
+     *          denied by the security manager.
      *
      * @since  1.1
      */
@@ -1529,12 +1583,18 @@ public abstract class ClassLoader {
      * used to load classes.  This method locates the resource through the
      * system class loader (see {@link #getSystemClassLoader()}).
      *
+     * <p> Resources in named modules are subject to encapsulation specified in
+     * the {@code Module} {@link Module#getResourceAsStream getResourceAsStream}
+     * method. Additionally, this method does not find resources in packages of
+     * named modules unless the package is exported unconditionally. </p>
+     *
      * @param  name
      *         The resource name
      *
-     * @return  An input stream for reading the resource; {@code null}
-     *          if the resource could not be found or access to the resource
-     *          is denied by the security manager.
+     * @return  An input stream for reading the resource; {@code null} if the
+     *          resource could not be found, the resource is in a package that
+     *          is not exported unconditionally, or access to the resource is
+     *          denied by the security manager.
      *
      * @since  1.1
      */

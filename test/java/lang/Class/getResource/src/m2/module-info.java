@@ -23,4 +23,5 @@
 
 module m2 {
     exports p2;
+    exports p2.impl to m1;
 }

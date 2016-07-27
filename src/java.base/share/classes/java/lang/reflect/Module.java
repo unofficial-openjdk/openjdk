@@ -52,6 +52,7 @@ import java.util.stream.Stream;
 
 import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.loader.BootLoader;
+import jdk.internal.loader.ResourceHelper;
 import jdk.internal.misc.JavaLangAccess;
 import jdk.internal.misc.JavaLangReflectModuleAccess;
 import jdk.internal.misc.SharedSecrets;
@@ -1107,11 +1108,35 @@ public final class Module implements AnnotatedElement {
 
 
     /**
-     * Returns an input stream for reading a resource in this module. Returns
-     * {@code null} if the resource is not in this module or access to the
-     * resource is denied by the security manager.
-     * The {@code name} is a {@code '/'}-separated path name that identifies
-     * the resource.
+     * Returns an input stream for reading a resource in this module. The
+     * {@code name} parameter is a {@code '/'}-separated path name that
+     * identifies the resource.
+     *
+     * <p> A resource in a named modules may be <em>encapsulated</em> so that
+     * it cannot be located by code in other modules. Whether a resource can be
+     * located or not is determined as follows:
+     *
+     * <ul>
+     *     <li> The <em>package name</em> of the resource is derived from the
+     *     subsequence of characters that proceeds the last {@code '/'} and then
+     *     replacing each {@code '/'} character in the subsequence with
+     *     {@code '.'}. For example, the package name derived for a resource
+     *     named "{@code a/b/c/foo.properties}" is "{@code a.b.c}". </li>
+     *
+     *     <li> If the package name is a package in the module then the package
+     *     must be exported to the module of the caller of this method. If the
+     *     package is not in the module then the resource is not encapsulated.
+     *     Resources in the unnamed package or "{@code META-INF}", for example,
+     *     are never encapsulated because they can never be packages in a named
+     *     module. </li>
+     *
+     *     <li> As a special case, resources ending with "{@code .class}" are
+     *     never encapsulated. </li>
+     * </ul>
+     *
+     * <p> This method returns {@code null} if the resource is not in this
+     * module, the resource is encapsulated and cannot be located by the caller,
+     * or access to the resource is denied by the security manager.
      *
      * @param  name
      *         The resource name
@@ -1123,8 +1148,22 @@ public final class Module implements AnnotatedElement {
      *
      * @see java.lang.module.ModuleReader#open(String)
      */
+    @CallerSensitive
     public InputStream getResourceAsStream(String name) throws IOException {
         Objects.requireNonNull(name);
+
+        if (isNamed() && !ResourceHelper.isSimpleResource(name)) {
+            Module caller = Reflection.getCallerClass().getModule();
+            if (caller != this && caller != Object.class.getModule()) {
+                // ignore packages added for proxies via addPackage
+                Set<String> packages = getDescriptor().packages();
+                String pn = ResourceHelper.getPackageName(name);
+                if (packages.contains(pn) && !isExported(pn, caller)) {
+                    // resource is in package not exported to caller
+                    return null;
+                }
+            }
+        }
 
         String mn = this.name;
 
