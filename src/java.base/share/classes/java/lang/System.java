@@ -2029,6 +2029,9 @@ public final class System {
             public Layer getBootLayer() {
                 return bootLayer;
             }
+            public void bindToLayer(ClassLoader loader, Layer layer) {
+                loader.bindToLayer(layer);
+            }
             public ServicesCatalog getServicesCatalog(ClassLoader cl) {
                 return cl.getServicesCatalog();
             }

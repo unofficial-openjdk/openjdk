@@ -40,32 +40,64 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
 
-        // create m1/myresource containing "m1"
-        Path file = directoryFor("m1").resolve(NAME);
-        Files.write(file, "m1".getBytes("UTF-8"));
+        // create resources in m1
+        createResource("m1", Paths.get("."));
+        createResource("m1", Paths.get("p1"));
+        createResource("m1", Paths.get("p1", "impl"));
 
-        // create m2/myresource containing "m2"
-        file = directoryFor("m2").resolve(NAME);
-        Files.write(file, "m2".getBytes("UTF-8"));
+        // create resources in m2
+        createResource("m2", Paths.get("."));
+        createResource("m2", Paths.get("p2"));
+        createResource("m2", Paths.get("p2", "impl"));
 
-        // check that m3/myresource does not exist
-        assertTrue(Files.notExists(directoryFor("m3").resolve(NAME)));
 
         // invoke ClassLoader getResource from the unnamed module
-        assertNotNull(Main.class.getClassLoader().getResource("/" + NAME));
+        ClassLoader thisLoader = Main.class.getClassLoader();
+        assertNotNull(thisLoader.getResource("/" + NAME));
+        assertNotNull(thisLoader.getResource("/p1/" + NAME));
+        assertNull(thisLoader.getResource("/p1/impl" + NAME));
+        assertNotNull(thisLoader.getResource("/p2/" + NAME));
+        assertNull(thisLoader.getResource("/p2/impl" + NAME));
 
-        // invoke ClassLoader getResource from modules m1-m3
+
+        // invoke ClassLoader getResource from modules m1
         assertNotNull(p1.Main.getResourceInClassLoader("/" + NAME));
+        assertNotNull(p1.Main.getResourceInClassLoader("/p1/" + NAME));
+        assertNull(p1.Main.getResourceInClassLoader("/p1/impl" + NAME));
+        assertNotNull(p1.Main.getResourceInClassLoader("/p2/" + NAME));
+        assertNull(p1.Main.getResourceInClassLoader("/p2/impl" + NAME));
+
+        // invoke ClassLoader getResource from modules m2
         assertNotNull(p2.Main.getResourceInClassLoader("/" + NAME));
-        assertNotNull(p3.Main.getResourceInClassLoader("/" + NAME));
+        assertNotNull(p2.Main.getResourceInClassLoader("/p1/" + NAME));
+        assertNull(p2.Main.getResourceInClassLoader("/p1/impl" + NAME));
+        assertNotNull(p2.Main.getResourceInClassLoader("/p2/" + NAME));
+        assertNull(p2.Main.getResourceInClassLoader("/p2/impl" + NAME));
+
 
         // invoke ClassLoader getResourceAsStream from the unnamed module
-        assertNotNull(Main.class.getClassLoader().getResourceAsStream("/" + NAME));
+        assertNotNull(thisLoader.getResourceAsStream("/" + NAME));
+        assertNotNull(thisLoader.getResourceAsStream("/p1/" + NAME));
+        assertNull(thisLoader.getResourceAsStream("/p1/impl" + NAME));
+        assertNotNull(thisLoader.getResourceAsStream("/p2/" + NAME));
+        assertNull(thisLoader.getResourceAsStream("/p2/impl" + NAME));
 
-        // invoke ClassLoader getResourceAsStream from modules m1-m3
+
+        // invoke ClassLoader getResource from modules m1
         assertNotNull(p1.Main.getResourceAsStreamInClassLoader("/" + NAME));
+        assertNotNull(p1.Main.getResourceAsStreamInClassLoader("/p1/" + NAME));
+        assertNull(p1.Main.getResourceAsStreamInClassLoader("/p1/impl" + NAME));
+        assertNotNull(p1.Main.getResourceAsStreamInClassLoader("/p2/" + NAME));
+        assertNull(p1.Main.getResourceAsStreamInClassLoader("/p2/impl" + NAME));
+
+
+        // invoke ClassLoader getResource from modules m2
         assertNotNull(p2.Main.getResourceAsStreamInClassLoader("/" + NAME));
-        assertNotNull(p3.Main.getResourceAsStreamInClassLoader("/" + NAME));
+        assertNotNull(p2.Main.getResourceAsStreamInClassLoader("/p1/" + NAME));
+        assertNull(p2.Main.getResourceAsStreamInClassLoader("/p1/impl" + NAME));
+        assertNotNull(p2.Main.getResourceAsStreamInClassLoader("/p2/" + NAME));
+        assertNull(p2.Main.getResourceAsStreamInClassLoader("/p2/impl" + NAME));
+
 
         // SecurityManager case
         System.setSecurityManager(new SecurityManager());
@@ -73,14 +105,21 @@ public class Main {
         assertNull(Main.class.getClassLoader().getResource("/" + NAME));
         assertNull(p1.Main.getResourceInClassLoader("/" + NAME));
         assertNull(p2.Main.getResourceInClassLoader("/" + NAME));
-        assertNull(p3.Main.getResourceInClassLoader("/" + NAME));
 
         assertNull(Main.class.getClassLoader().getResourceAsStream("/" + NAME));
         assertNull(p1.Main.getResourceAsStreamInClassLoader("/" + NAME));
         assertNull(p2.Main.getResourceAsStreamInClassLoader("/" + NAME));
-        assertNull(p3.Main.getResourceAsStreamInClassLoader("/" + NAME));
 
         System.out.println("Success!");
+    }
+
+    /**
+     * Create a resource in the sub-directory of the given exploded module
+     */
+    static void createResource(String mn, Path subdir) throws IOException {
+        Path dir = directoryFor(mn).resolve(subdir);
+        Path file = dir.resolve(NAME);
+        Files.write(file, mn.getBytes("UTF-8"));
     }
 
     /**

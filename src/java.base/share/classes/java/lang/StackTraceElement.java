@@ -43,6 +43,7 @@ public final class StackTraceElement implements java.io.Serializable {
     // Normally initialized by VM (public constructor added in 1.5)
     private String moduleName;
     private String moduleVersion;
+    private String classLoaderName;
     private String declaringClass;
     private String methodName;
     private String fileName;
@@ -72,7 +73,7 @@ public final class StackTraceElement implements java.io.Serializable {
      */
     public StackTraceElement(String declaringClass, String methodName,
                              String fileName, int lineNumber) {
-        this(null, null, declaringClass, methodName, fileName, lineNumber);
+        this(null, null, null, declaringClass, methodName, fileName, lineNumber);
     }
 
     /**
@@ -85,6 +86,9 @@ public final class StackTraceElement implements java.io.Serializable {
      * @param moduleVersion the module version if the class containing the
      *        execution point represented by the stack trace is in a named
      *        module that has a version; can be {@code null}
+     * @param classLoaderName the class loader name if the class loader of
+     *        the class containing the execution point represented by
+     *        the stack trace is named; can be {@code null}
      * @param declaringClass the fully qualified name of the class containing
      *        the execution point represented by the stack trace element
      * @param methodName the name of the method containing the execution point
@@ -102,14 +106,16 @@ public final class StackTraceElement implements java.io.Serializable {
      * @since 9
      */
     public StackTraceElement(String moduleName, String moduleVersion,
+                             String classLoaderName,
                              String declaringClass, String methodName,
                              String fileName, int lineNumber) {
-        this.moduleName     = moduleName;
-        this.moduleVersion  = moduleVersion;
-        this.declaringClass = Objects.requireNonNull(declaringClass, "Declaring class is null");
-        this.methodName     = Objects.requireNonNull(methodName, "Method name is null");
-        this.fileName       = fileName;
-        this.lineNumber     = lineNumber;
+        this.moduleName      = moduleName;
+        this.moduleVersion   = moduleVersion;
+        this.classLoaderName = classLoaderName;
+        this.declaringClass  = Objects.requireNonNull(declaringClass, "Declaring class is null");
+        this.methodName      = Objects.requireNonNull(methodName, "Method name is null");
+        this.fileName        = fileName;
+        this.lineNumber      = lineNumber;
     }
 
 
@@ -178,6 +184,21 @@ public final class StackTraceElement implements java.io.Serializable {
     }
 
     /**
+     * Returns the name of the class loader of the class containing the
+     * execution point represented by this stack trace element.
+     *
+     * @return the name of the class loader of the class containing the execution
+     *         point represented by this stack trace element; {@code null}
+     *         if the class loader name is not available.
+     *
+     * @since 9
+     * @see java.lang.ClassLoader#getName()
+     */
+    public String getClassLoaderName() {
+        return classLoaderName;
+    }
+
+    /**
      * Returns the fully qualified name of the class containing the
      * execution point represented by this stack trace element.
      *
@@ -239,7 +260,8 @@ public final class StackTraceElement implements java.io.Serializable {
      *   method containing the execution point is known to be a native method.
      * </ul>
      * If the execution point is not in a named module, {@code "my.module@9.0/"}
-     * will be omitted from the above.
+     * will be replaced with the class loader's name, if present; or it will be
+     * omitted from the above.
      *
      * @see    Throwable#printStackTrace()
      */
@@ -249,8 +271,13 @@ public final class StackTraceElement implements java.io.Serializable {
             mid = moduleName;
             if (moduleVersion != null)
                 mid += "@" + moduleVersion;
-            mid += "/";
+        } else if (classLoaderName != null) {
+            mid = "[" + classLoaderName + "]";
         }
+
+        if (!mid.isEmpty())
+            mid += "/";
+
         return getClassName() + "." + methodName + "(" + mid +
              (isNativeMethod() ? "Native Method)" :
               (fileName != null && lineNumber >= 0 ?
@@ -268,6 +295,7 @@ public final class StackTraceElement implements java.io.Serializable {
      *     a.getLineNumber() == b.getLineNumber()) &&
      *     equals(a.getModuleName(), b.getModuleName()) &&
      *     equals(a.getModuleVersion(), b.getModuleVersion()) &&
+     *     equals(a.getClassLoaderName(), b.getClassLoaderName()) &&
      *     equals(a.getClassName(), b.getClassName()) &&
      *     equals(a.getMethodName(), b.getMethodName())
      * }</pre>
@@ -288,6 +316,7 @@ public final class StackTraceElement implements java.io.Serializable {
         return e.declaringClass.equals(declaringClass) &&
             Objects.equals(moduleName, e.moduleName) &&
             Objects.equals(moduleVersion, e.moduleVersion) &&
+            Objects.equals(classLoaderName, e.classLoaderName) &&
             e.lineNumber == lineNumber &&
             Objects.equals(methodName, e.methodName) &&
             Objects.equals(fileName, e.fileName);
