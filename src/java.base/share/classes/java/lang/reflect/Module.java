@@ -870,25 +870,38 @@ public final class Module implements AnnotatedElement {
                                              Layer layer)
     {
         Map<String, Module> modules = new HashMap<>();
-        Map<String, ClassLoader> loaders = new HashMap<>();
+        Map<String, ClassLoader> moduleToLoader = new HashMap<>();
+
+        boolean isBootLayer = (Layer.boot() == null);
+        Set<ClassLoader> loaders = new HashSet<>();
+
+        // map each module to a class loader
+        for (ResolvedModule resolvedModule : cf.modules()) {
+            String name = resolvedModule.name();
+            ClassLoader loader = clf.apply(name);
+            if (loader != null) {
+                moduleToLoader.put(name, loader);
+                loaders.add(loader);
+            } else if (!isBootLayer) {
+                throw new IllegalArgumentException("loader can't be 'null'");
+            }
+        }
 
         // define each module in the configuration to the VM
         for (ResolvedModule resolvedModule : cf.modules()) {
             ModuleReference mref = resolvedModule.reference();
             ModuleDescriptor descriptor = mref.descriptor();
             String name = descriptor.name();
-            ClassLoader loader = clf.apply(name);
             URI uri = mref.location().orElse(null);
-
+            ClassLoader loader = moduleToLoader.get(resolvedModule.name());
             Module m;
             if (loader == null && name.equals("java.base") && Layer.boot() == null) {
                 m = Object.class.getModule();
             } else {
                 m = new Module(layer, loader, descriptor, uri);
             }
-
             modules.put(name, m);
-            loaders.put(name, loader);
+            moduleToLoader.put(name, loader);
         }
 
         // setup readability and exports
@@ -956,24 +969,32 @@ public final class Module implements AnnotatedElement {
             m.exports = exports;
         }
 
-        // register the modules in the service catalog if they provide services
-        for (ResolvedModule resolvedModule : cf.modules()) {
-            ModuleReference mref = resolvedModule.reference();
-            ModuleDescriptor descriptor = mref.descriptor();
-            Map<String, Provides> services = descriptor.provides();
-            if (!services.isEmpty()) {
-                String name = descriptor.name();
-                Module m = modules.get(name);
-                ClassLoader loader = loaders.get(name);
-                ServicesCatalog catalog;
-                if (loader == null) {
-                    catalog = BootLoader.getServicesCatalog();
-                } else {
-                    catalog = SharedSecrets.getJavaLangAccess()
-                                           .createOrGetServicesCatalog(loader);
+        // For the boot layer then register the modules in the class loader
+        // services catalog
+        if (isBootLayer) {
+            for (ResolvedModule resolvedModule : cf.modules()) {
+                ModuleReference mref = resolvedModule.reference();
+                ModuleDescriptor descriptor = mref.descriptor();
+                Map<String, Provides> services = descriptor.provides();
+                if (!services.isEmpty()) {
+                    String name = descriptor.name();
+                    Module m = modules.get(name);
+                    ClassLoader loader = moduleToLoader.get(name);
+                    ServicesCatalog catalog;
+                    if (loader == null) {
+                        catalog = BootLoader.getServicesCatalog();
+                    } else {
+                        catalog = SharedSecrets.getJavaLangAccess()
+                                .createOrGetServicesCatalog(loader);
+                    }
+                    catalog.register(m);
                 }
-                catalog.register(m);
             }
+        }
+
+        // ClassLoader::layers support
+        for (ClassLoader loader : loaders) {
+            SharedSecrets.getJavaLangAccess().bindToLayer(loader, layer);
         }
 
         return modules;

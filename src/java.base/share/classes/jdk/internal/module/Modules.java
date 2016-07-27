@@ -138,21 +138,24 @@ public class Modules {
      * Updates module m to provide a service
      */
     public static void addProvides(Module m, Class<?> service, Class<?> impl) {
-        // update ClassLoader catalog
-        PrivilegedAction<ClassLoader> pa = m::getClassLoader;
-        ClassLoader loader = AccessController.doPrivileged(pa);
-        ServicesCatalog catalog;
-        if (loader == null) {
-            catalog = BootLoader.getServicesCatalog();
-        } else {
-            catalog = SharedSecrets.getJavaLangAccess()
-                                   .createOrGetServicesCatalog(loader);
-        }
-        catalog.addProvider(m, service, impl);
-
-        // update Layer catalog
         Layer layer = m.getLayer();
+
+        if (layer == null || layer == Layer.boot()) {
+            // update ClassLoader catalog
+            PrivilegedAction<ClassLoader> pa = m::getClassLoader;
+            ClassLoader loader = AccessController.doPrivileged(pa);
+            ServicesCatalog catalog;
+            if (loader == null) {
+                catalog = BootLoader.getServicesCatalog();
+            } else {
+                catalog = SharedSecrets.getJavaLangAccess()
+                                       .createOrGetServicesCatalog(loader);
+            }
+            catalog.addProvider(m, service, impl);
+        }
+
         if (layer != null) {
+            // update Layer catalog
             SharedSecrets.getJavaLangReflectModuleAccess()
                     .getServicesCatalog(layer)
                     .addProvider(m, service, impl);

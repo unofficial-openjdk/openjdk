@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Layer;
 import java.lang.reflect.Module;
 import java.net.URL;
 import java.security.AccessController;
@@ -38,19 +39,21 @@ import java.security.CodeSource;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.security.cert.Certificate;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Set;
 import java.util.Stack;
-import java.util.NoSuchElementException;
 import java.util.Vector;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Stream;
 
 import jdk.internal.perf.PerfCounter;
@@ -217,6 +220,7 @@ public abstract class ClassLoader {
     // must be added *after* it.
     private final ClassLoader parent;
 
+    // class loader name
     private final String name;
 
     // the unnamed module for this ClassLoader
@@ -2679,6 +2683,43 @@ public abstract class ClassLoader {
     private static native AssertionStatusDirectives retrieveDirectives();
 
 
+    // -- Layers --
+
+    /**
+     * Returns a possible-empty stream of the layers with modules defined to
+     * this class loader.
+     *
+     * @return A stream of the layers with modules defined to this class loader
+     * @since 9
+     */
+    public Stream<Layer> layers() {
+        Collection<Layer> layers = this.layers;
+        if (layers == null) {
+            return Stream.empty();
+        } else {
+            return layers.stream();
+        }
+    }
+
+    private volatile Collection<Layer> layers; // move to CLV?
+
+    void bindToLayer(Layer layer) {
+        Collection<Layer> layers = this.layers;
+        if (layers == null) {
+            layers = new CopyOnWriteArrayList<>();
+            boolean set = trySetObjectField("layers", layers);
+            if (!set) {
+                // beaten by someone else
+                layers = this.layers;
+            }
+        }
+        layers.add(layer);
+    }
+
+
+    // -- Misc --
+
+
     /**
      * Returns the ServiceCatalog for modules defined to this class loader
      * or {@code null} if this class loader does not have a services catalog.
@@ -2705,7 +2746,7 @@ public abstract class ClassLoader {
     }
 
     // the ServiceCatalog for modules associated with this class loader.
-    private volatile ServicesCatalog servicesCatalog;
+    private volatile ServicesCatalog servicesCatalog;   // move to CLV?
 
     /**
      * Returns the ConcurrentHashMap used as a storage for ClassLoaderValue(s)
