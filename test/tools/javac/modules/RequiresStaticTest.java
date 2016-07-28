@@ -23,8 +23,8 @@
 
 /*
  * @test
+ * @bug 8161906 8161596
  * @summary tests for "requires static"
- * @bug 8161906
  * @library /tools/lib
  * @modules
  *      jdk.compiler/com.sun.tools.javac.api
@@ -33,11 +33,14 @@
  * @run main RequiresStaticTest
  */
 
-import toolbox.JavacTask;
-import toolbox.Task;
-
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
+import toolbox.JavaTask;
+import toolbox.JavacTask;
+import toolbox.Task;
+import toolbox.Task.OutputKind;
 
 public class RequiresStaticTest extends ModuleTestBase {
 
@@ -213,5 +216,176 @@ public class RequiresStaticTest extends ModuleTestBase {
                         + "public class C8 { }\n");
 
         return src;
+    }
+
+    @Test
+    public void testRequiresStatic(Path base) throws Exception {
+        Path src = base.resolve("src");
+        Path m1 = src.resolve("m1");
+        tb.writeJavaFiles(m1,
+                "module m1 { exports m1; }",
+                "package m1;" +
+                "public class Api { }\n");
+
+        Path classes = base.resolve("classes");
+        Path m1Classes = classes.resolve("m1");
+        Files.createDirectories(m1Classes);
+
+        new JavacTask(tb, Task.Mode.CMDLINE)
+                .files(findJavaFiles(m1))
+                .outdir(m1Classes)
+                .run()
+                .writeAll();
+
+        Path m3 = src.resolve("m3");
+        tb.writeJavaFiles(m3,
+                "module m3 { requires static m1; }",
+                "package m3;\n" +
+                "public class Test {\n" +
+                "    public static void main(String... args) {\n" +
+                "        try {\n" +
+                "           Class.forName(\"m1.Api\");\n" +
+                "        } catch (ClassNotFoundException e) {\n" +
+                "            System.err.println(\"ok\");\n" +
+                "        }\n" +
+                "    }\n" +
+                "}",
+                "package m3;\n" +
+                "public class ApiUse{\n" +
+                "    m1.Api api;\n" +
+                "}");
+
+        Path m3Classes = classes.resolve("m3");
+        Files.createDirectories(m3Classes);
+
+        new JavacTask(tb, Task.Mode.CMDLINE)
+                .options("-modulepath", m1Classes.toString())
+                .files(findJavaFiles(m3))
+                .outdir(m3Classes)
+                .run()
+                .writeAll();
+
+        String log = new JavaTask(tb)
+                .vmOptions("-modulepath", m3Classes.toString(), "-addmods", "m3")
+                .className("m3.Test")
+                .run()
+                .writeAll()
+                .getOutput(OutputKind.STDERR);
+
+        String expected = "ok" + System.getProperty("line.separator");
+
+        if (!expected.equals(log)) {
+            throw new AssertionError("Unexpected output: " + log);
+        }
+    }
+
+    @Test
+    public void testRequiresPublicStatic(Path base) throws Exception {
+        Path src = base.resolve("src");
+        Path m1 = src.resolve("m1");
+        tb.writeJavaFiles(m1,
+                "module m1 { exports m1; }",
+                "package m1;" +
+                "public class Api { }\n");
+
+        Path classes = base.resolve("classes");
+        Path m1Classes = classes.resolve("m1");
+        Files.createDirectories(m1Classes);
+
+        new JavacTask(tb, Task.Mode.CMDLINE)
+                .files(findJavaFiles(m1))
+                .outdir(m1Classes)
+                .run()
+                .writeAll();
+
+        Path m2 = src.resolve("m2");
+        tb.writeJavaFiles(m2,
+                "module m2 { requires public static m1; }");
+
+        Path m2Classes = classes.resolve("m2");
+        Files.createDirectories(m2Classes);
+
+        new JavacTask(tb, Task.Mode.CMDLINE)
+                .options("-modulepath", m1Classes.toString())
+                .files(findJavaFiles(m2))
+                .outdir(m2Classes)
+                .run()
+                .writeAll();
+
+        Path m3 = src.resolve("m3");
+        tb.writeJavaFiles(m3,
+                "module m3 { requires m2; }",
+                "package m3;\n" +
+                "public class Test {\n" +
+                "    public static void main(String... args) {\n" +
+                "        try {\n" +
+                "           Class.forName(\"m1.Api\");\n" +
+                "        } catch (ClassNotFoundException e) {\n" +
+                "            System.err.println(\"ok\");\n" +
+                "        }\n" +
+                "    }\n" +
+                "}",
+                "package m3;\n" +
+                "public class ApiUse{\n" +
+                "    m1.Api api;\n" +
+                "}");
+
+        Path m3Classes = classes.resolve("m3");
+        Files.createDirectories(m3Classes);
+
+        new JavacTask(tb, Task.Mode.CMDLINE)
+                .options("-modulepath", m1Classes.toString() + File.pathSeparator + m2Classes.toString())
+                .files(findJavaFiles(m3))
+                .outdir(m3Classes)
+                .run()
+                .writeAll();
+
+        String log = new JavaTask(tb)
+                .vmOptions("-modulepath", m2Classes.toString() + File.pathSeparator + m3Classes.toString(),
+                           "-addmods", "m3")
+                .className("m3.Test")
+                .run()
+                .writeAll()
+                .getOutput(OutputKind.STDERR);
+
+        String expected = "ok" + System.getProperty("line.separator");
+
+        if (!expected.equals(log)) {
+            throw new AssertionError("Unexpected output: " + log);
+        }
+    }
+
+    @Test
+    public void testRequiresStaticPublic(Path base) throws Exception {
+        Path src = base.resolve("src");
+        Path m1 = src.resolve("m1");
+        tb.writeJavaFiles(m1,
+                "module m1 { exports m1; }",
+                "package m1;" +
+                "public class Api { }\n");
+
+        Path classes = base.resolve("classes");
+        Path m1Classes = classes.resolve("m1");
+        Files.createDirectories(m1Classes);
+
+        new JavacTask(tb, Task.Mode.CMDLINE)
+                .files(findJavaFiles(m1))
+                .outdir(m1Classes)
+                .run()
+                .writeAll();
+
+        Path m2 = src.resolve("m2");
+        tb.writeJavaFiles(m2,
+                "module m2 { requires public static m1; }");
+
+        Path m2Classes = classes.resolve("m2");
+        Files.createDirectories(m2Classes);
+
+        new JavacTask(tb, Task.Mode.CMDLINE)
+                .options("-modulepath", m1Classes.toString())
+                .files(findJavaFiles(m2))
+                .outdir(m2Classes)
+                .run()
+                .writeAll();
     }
 }

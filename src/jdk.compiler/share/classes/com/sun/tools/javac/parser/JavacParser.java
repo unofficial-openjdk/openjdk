@@ -3211,12 +3211,24 @@ public class JavacParser implements Parser {
                 nextToken();
                 boolean isTransitive = false;
                 boolean isStaticPhase = false;
-                if (token.kind == PUBLIC) {
-                    isTransitive = true;
-                    nextToken();
-                }
-                if (token.kind == STATIC) {
-                    isStaticPhase = true;
+            loop:
+                while (true) {
+                    switch (token.kind) {
+                        case PUBLIC:
+                            if (isTransitive) {
+                                error(token.pos, "repeated.modifier");
+                            }
+                            isTransitive = true;
+                            break;
+                        case STATIC:
+                            if (isStaticPhase) {
+                                error(token.pos, "repeated.modifier");
+                            }
+                            isStaticPhase = true;
+                            break;
+                        default:
+                            break loop;
+                    }
                     nextToken();
                 }
                 JCExpression moduleName = qualident(false);
