@@ -26,6 +26,7 @@
 #include "classfile/classLoaderExt.hpp"
 #include "classfile/javaClasses.inline.hpp"
 #include "classfile/stringTable.hpp"
+#include "classfile/modules.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "classfile/vmSymbols.hpp"
 #include "interpreter/bytecodeStream.hpp"
@@ -202,6 +203,28 @@ JvmtiEnv::GetAllModules(jint* module_count_ptr, jobject** modules_ptr) {
     return jmc.get_all_modules(this, module_count_ptr, modules_ptr);
 } /* end GetAllModules */
 
+
+// class_loader - NULL is a valid value, must be pre-checked
+// package_name - pre-checked for NULL
+// module_ptr - pre-checked for NULL
+jvmtiError
+JvmtiEnv::GetNamedModule(jobject class_loader, const char* package_name, jobject* module_ptr) {
+  JavaThread* THREAD = JavaThread::current(); // pass to macros
+  ResourceMark rm(THREAD);
+
+  Handle h_loader (THREAD, JNIHandles::resolve(class_loader));
+  // Check that loader is a subclass of java.lang.ClassLoader.
+  if (h_loader.not_null() && !java_lang_ClassLoader::is_subclass(h_loader->klass())) {
+    return JVMTI_ERROR_ILLEGAL_ARGUMENT;
+  }
+  jobject module = Modules::get_named_module(h_loader, package_name, THREAD);
+  if (HAS_PENDING_EXCEPTION) {
+    CLEAR_PENDING_EXCEPTION;
+    return JVMTI_ERROR_INTERNAL; // unexpected exception
+  }
+  *module_ptr = module;
+  return JVMTI_ERROR_NONE;
+} /* end GetNamedModule */
 
 
 // module - pre-checked for NULL
