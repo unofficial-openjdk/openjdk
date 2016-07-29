@@ -30,7 +30,7 @@
  * to encapsulate the transport. This tests that the connectors are
  * created and that they have an "address" argument.
  *
- * @modules jdk.jdi
+ * @modules jdk.jdi/com.sun.tools.jdi
  * @build GeneratedConnectors NullTransportService
  * @run main/othervm GeneratedConnectors
  */
