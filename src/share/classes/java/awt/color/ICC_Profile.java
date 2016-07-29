@@ -863,11 +863,16 @@ public class ICC_Profile implements Serializable {
         case ColorSpace.CS_PYCC:
             synchronized(ICC_Profile.class) {
                 if (PYCCprofile == null) {
-                    ProfileDeferralInfo pInfo =
-                        new ProfileDeferralInfo("PYCC.pf",
-                                                ColorSpace.TYPE_3CLR, 3,
-                                                CLASS_DISPLAY);
-                    PYCCprofile = getDeferredInstance(pInfo);
+                    if (getProfileFile("PYCC.pf") != null) {
+                        ProfileDeferralInfo pInfo =
+                            new ProfileDeferralInfo("PYCC.pf",
+                                                    ColorSpace.TYPE_3CLR, 3,
+                                                    CLASS_DISPLAY);
+                        PYCCprofile = getDeferredInstance(pInfo);
+                    } else {
+                        throw new IllegalArgumentException(
+                                "Can't load standard profile: PYCC.pf");
+                    }
                 }
                 thisProfile = PYCCprofile;
             }
