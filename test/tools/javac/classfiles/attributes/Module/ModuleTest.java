@@ -137,12 +137,12 @@ public class ModuleTest extends ModuleTestBase {
                 .requires("m2", RequiresFlag.STATIC)
                 .requires("m3")
                 .requires("m4", RequiresFlag.PUBLIC)
-                //@ignore 8161596
-                //.requires("m3", RequiresFlag.STATIC, RequiresFlag.PUBLIC)
+                .requires("m5", RequiresFlag.STATIC, RequiresFlag.PUBLIC)
                 .write(base.resolve("m1"));
         tb.writeJavaFiles(base.resolve("m2"), "module m2 { }");
         tb.writeJavaFiles(base.resolve("m3"), "module m3 { }");
         tb.writeJavaFiles(base.resolve("m4"), "module m4 { }");
+        tb.writeJavaFiles(base.resolve("m5"), "module m5 { }");
         compile(base, "--module-source-path", base.toString(),
                 "-d", base.toString());
         testModuleAttribute(base.resolve("m1"), moduleDescriptor);
@@ -207,8 +207,7 @@ public class ModuleTest extends ModuleTestBase {
                 .uses("java.util.List")
                 .uses("java.nio.file.Path")
                 .provides("java.util.List", "pack2.D")
-                //@ignore 8161596
-                //.requires("jdk.jdeps", RequiresFlag.STATIC, RequiresFlag.PUBLIC)
+                .requires("jdk.jdeps", RequiresFlag.STATIC, RequiresFlag.PUBLIC)
                 .requires("m5", RequiresFlag.STATIC)
                 .requires("m6", RequiresFlag.PUBLIC)
                 .requires("java.compiler")
