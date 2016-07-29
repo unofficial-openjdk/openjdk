@@ -494,8 +494,8 @@ public class InstrumentationImpl implements Instrumentation {
 
     // WARNING: the native code knows the name & signature of this method
     private byte[]
-    transform(  ClassLoader         loader,
-                Module              module,
+    transform(  Module              module,
+                ClassLoader         loader,
                 String              classname,
                 Class<?>            classBeingRedefined,
                 ProtectionDomain    protectionDomain,
@@ -518,6 +518,7 @@ public class InstrumentationImpl implements Instrumentation {
             return null; // no manager, no transform
         } else {
             return mgr.transform(   module,
+                                    loader,
                                     classname,
                                     classBeingRedefined,
                                     protectionDomain,
