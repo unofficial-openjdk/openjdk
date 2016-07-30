@@ -124,6 +124,31 @@ public class PackageConflictTest extends ModuleTestBase {
     }
 
     @Test
+    public void testConflictInDependenciesDynamicExport(Path base) throws Exception {
+        Path m1 = base.resolve("m1");
+        Path m2 = base.resolve("m2");
+        Path m3 = base.resolve("m3");
+        tb.writeJavaFiles(m1,
+                "module m1 { exports test; }",
+                "package test; public class A { }");
+        tb.writeJavaFiles(m2,
+                "module m2 { exports dynamic test; }",
+                "package test; public class B { }");
+        tb.writeJavaFiles(m3,
+                "module m3 { requires m1; requires m2; }",
+                "package impl; public class Impl { }");
+        Path classes = base.resolve("classes");
+        Files.createDirectories(classes);
+
+        new JavacTask(tb)
+                .options("-XDrawDiagnostics", "--module-source-path", base.toString())
+                .outdir(classes)
+                .files(findJavaFiles(base))
+                .run(Task.Expect.SUCCESS)
+                .writeAll();
+    }
+
+    @Test
     public void testSimple2(Path base) throws Exception {
         Path modSrc = base.resolve("modSrc");
         Path modules = base.resolve("modules");

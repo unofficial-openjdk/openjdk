@@ -24,7 +24,7 @@
 /*
  * @test
  * @summary Module attribute tests
- * @bug 8080878 8161906
+ * @bug 8080878 8161906 8162713
  * @modules java.compiler
  *          jdk.compiler/com.sun.tools.javac.api
  *          jdk.compiler/com.sun.tools.javac.main
@@ -63,16 +63,30 @@ public class ModuleTest extends ModuleTestBase {
     }
 
     @Test
+    public void testDynamicExports(Path base) throws Exception {
+        ModuleDescriptor moduleDescriptor = new ModuleDescriptor("m1")
+                .exports("pack", ExportFlag.DYNAMIC)
+                .write(base);
+        tb.writeJavaFiles(base, "package pack; public class C extends java.util.ArrayList{ }");
+        compile(base);
+        testModuleAttribute(base, moduleDescriptor);
+    }
+
+    @Test
     public void testSeveralExports(Path base) throws Exception {
         ModuleDescriptor moduleDescriptor = new ModuleDescriptor("m1")
                 .exports("pack")
                 .exports("pack2")
-                .exports("pack3")
+                .exports("pack3", ExportFlag.DYNAMIC)
+                .exports("pack4")
+                .exports("pack5", ExportFlag.DYNAMIC)
                 .write(base);
         tb.writeJavaFiles(base,
                 "package pack; public class A { }",
                 "package pack2; public class B { }",
-                "package pack3; public class C { }");
+                "package pack3; public class C { }",
+                "package pack4; public class C { }",
+                "package pack5; public class C { }");
         compile(base);
         testModuleAttribute(base, moduleDescriptor);
     }
@@ -88,16 +102,30 @@ public class ModuleTest extends ModuleTestBase {
     }
 
     @Test
+    public void testQualifiedDynamicExports(Path base) throws Exception {
+        ModuleDescriptor moduleDescriptor = new ModuleDescriptor("m1")
+                .exportsTo("pack", "jdk.compiler", ExportFlag.DYNAMIC)
+                .write(base);
+        tb.writeJavaFiles(base, "package pack; public class A { }");
+        compile(base);
+        testModuleAttribute(base, moduleDescriptor);
+    }
+
+    @Test
     public void testSeveralQualifiedExports(Path base) throws Exception {
         ModuleDescriptor moduleDescriptor = new ModuleDescriptor("m1")
                 .exportsTo("pack", "jdk.compiler, jdk.jdeps")
                 .exportsTo("pack2", "jdk.jdeps")
                 .exportsTo("pack3", "jdk.compiler")
+                .exportsTo("pack4", "jdk.compiler, jdk.jdeps", ExportFlag.DYNAMIC)
+                .exportsTo("pack5", "jdk.compiler", ExportFlag.DYNAMIC)
                 .write(base);
         tb.writeJavaFiles(base,
                 "package pack; public class A {}",
                 "package pack2; public class B {}",
-                "package pack3; public class C {}");
+                "package pack3; public class C {}",
+                "package pack4; public class C {}",
+                "package pack5; public class C {}");
         compile(base);
         testModuleAttribute(base, moduleDescriptor);
     }
@@ -198,7 +226,9 @@ public class ModuleTest extends ModuleTestBase {
         Path m1 = base.resolve("m1");
         ModuleDescriptor moduleDescriptor = new ModuleDescriptor("m1")
                 .exports("pack1")
+                .exports("pack3", ExportFlag.DYNAMIC)
                 .exportsTo("packTo1", "m2")
+                .exportsTo("packTo3", "m3", ExportFlag.DYNAMIC)
                 .requires("jdk.compiler")
                 .requires("m2", RequiresFlag.PUBLIC)
                 .requires("m3", RequiresFlag.STATIC)
@@ -211,14 +241,20 @@ public class ModuleTest extends ModuleTestBase {
                 .requires("m5", RequiresFlag.STATIC)
                 .requires("m6", RequiresFlag.PUBLIC)
                 .requires("java.compiler")
+                .exportsTo("packTo4", "java.compiler", ExportFlag.DYNAMIC)
                 .exportsTo("packTo2", "java.compiler")
+                .exports("pack4", ExportFlag.DYNAMIC)
                 .exports("pack2")
                 .write(m1);
         tb.writeJavaFiles(m1, "package pack1; public class C extends java.util.ArrayList{ }",
-                "package pack2; public class D extends java.util.ArrayList{ }");
+                "package pack2; public class D extends java.util.ArrayList{ }",
+                "package pack3; public class D extends java.util.ArrayList{ }",
+                "package pack4; public class D extends java.util.ArrayList{ }");
         tb.writeJavaFiles(m1,
                 "package packTo1; public class T1 {}",
-                "package packTo2; public class T2 {}");
+                "package packTo2; public class T2 {}",
+                "package packTo3; public class T3 {}",
+                "package packTo4; public class T4 {}");
         tb.writeJavaFiles(base.resolve("m2"), "module m2 { }");
         tb.writeJavaFiles(base.resolve("m3"), "module m3 { }");
         tb.writeJavaFiles(base.resolve("m4"), "module m4 { }");
