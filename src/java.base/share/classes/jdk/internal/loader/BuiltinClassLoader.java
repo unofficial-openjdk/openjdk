@@ -117,7 +117,7 @@ public class BuiltinClassLoader
             if (mref.location().isPresent()) {
                 try {
                     url = mref.location().get().toURL();
-                } catch (MalformedURLException e) { }
+                } catch (MalformedURLException | IllegalArgumentException e) { }
             }
             this.loader = loader;
             this.mref = mref;
@@ -363,7 +363,7 @@ public class BuiltinClassLoader
         if (u != null) {
             try {
                 return u.toURL();
-            } catch (MalformedURLException e) { }
+            } catch (MalformedURLException | IllegalArgumentException e) { }
         }
         return null;
     }
