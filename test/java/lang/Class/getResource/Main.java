@@ -189,6 +189,23 @@ public class Main {
         in = p3.Main.getResourceAsStream(p2.Main.class, "/p2/impl/" + NAME);
         assertNull(in);
 
+        // Nulls
+        try {
+            Main.class.getResource(null);
+            assertTrue(false);
+        } catch (NullPointerException expected) { }
+        try {
+            Main.class.getResourceAsStream(null);
+            assertTrue(false);
+        } catch (NullPointerException expected) { }
+        try {
+            p1.Main.class.getResource(null);
+            assertTrue(false);
+        } catch (NullPointerException expected) { }
+        try {
+            p1.Main.class.getResourceAsStream(null);
+            assertTrue(false);
+        } catch (NullPointerException expected) { }
 
         // SecurityManager case
         System.setSecurityManager(new SecurityManager());

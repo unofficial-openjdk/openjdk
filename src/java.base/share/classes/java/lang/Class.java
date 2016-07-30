@@ -2494,6 +2494,7 @@ public final class Class<T> implements java.io.Serializable,
      * @return A {@link java.net.URL} object; {@code null} if no resource with
      *         this name is found, the resource cannot be located by a URL, or
      *         access to the resource is denied by the security manager.
+     * @throws NullPointerException If {@code name} is {@code null}
      * @since  1.1
      */
     @CallerSensitive
@@ -2651,9 +2652,6 @@ public final class Class<T> implements java.io.Serializable,
      * if name is absolute
      */
     private String resolveName(String name) {
-        if (name == null) {
-            return name;
-        }
         if (!name.startsWith("/")) {
             Class<?> c = this;
             while (c.isArray()) {
