@@ -31,7 +31,7 @@
  * created and that they have an "address" argument.
  *
  * @modules jdk.jdi/com.sun.tools.jdi
- * @build GeneratedConnectors NullTransportService
+ * @build GeneratedConnectors NullTransportService SimpleLaunchingConnector
  * @run main/othervm GeneratedConnectors
  */
 
