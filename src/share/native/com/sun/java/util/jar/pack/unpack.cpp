@@ -491,7 +491,6 @@ enum { CHUNK = (1 << 14), SMALL = (1 << 9) };
 
 // Call malloc.  Try to combine small blocks and free much later.
 void* unpacker::alloc_heap(size_t size, bool smallOK, bool temp) {
-  CHECK_0;
   if (!smallOK || size > SMALL) {
     void* res = must_malloc((int)size);
     (temp ? &tmallocs : &mallocs)->add(res);
@@ -2570,6 +2569,10 @@ void unpacker::putlayout(band** body) {
   int i;
   int prevBII = -1;
   int prevBCI = -1;
+  if (body == NULL) {
+    abort("putlayout: unexpected NULL for body");
+    return;
+  }
   for (i = 0; body[i] != null; i++) {
     band& b = *body[i];
     byte le_kind = b.le_kind;
