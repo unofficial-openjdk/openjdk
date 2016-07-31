@@ -64,7 +64,7 @@ void* must_malloc(size_t size) {
 
 void mkdirs(int oklen, char* path) {
 
-  if (strlen(path) <= oklen)  return;
+  if (strlen(path) <= (size_t)oklen)  return;
   char dir[PATH_MAX];
 
   strcpy(dir, path);
@@ -78,12 +78,13 @@ void mkdirs(int oklen, char* path) {
 
 #ifndef PRODUCT
 void breakpoint() { }  // hook for debugger
-void assert_failed(const char* p) {
+int assert_failed(const char* p) {
   char message[1<<12];
   sprintf(message, "@assert failed: %s\n", p);
   fprintf(stdout, 1+message);
   breakpoint();
   unpack_abort(message);
+  return 0;
 }
 #endif
 

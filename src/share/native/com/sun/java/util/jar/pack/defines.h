@@ -45,17 +45,17 @@
 #ifdef PRODUCT
 #define IF_PRODUCT(xxx) xxx
 #define NOT_PRODUCT(xxx)
-#define assert(p) (0)
-#define printcr false &&
+#define assert(p)
+#define PRINTCR(args)
 #define VERSION_STRING "%s version %s\n"
 #else
 #define IF_PRODUCT(xxx)
 #define NOT_PRODUCT(xxx) xxx
-#define assert(p) ((p) || (assert_failed(#p), 1))
-#define printcr u->verbose && u->printcr_if_verbose
+#define assert(p) ((p) || assert_failed(#p))
+#define PRINTCR(args)  u->verbose && u->printcr_if_verbose args
 #define VERSION_STRING "%s version non-product %s\n"
 extern "C" void breakpoint();
-extern void assert_failed(const char*);
+extern int assert_failed(const char*);
 #define BREAK (breakpoint())
 #endif
 
@@ -81,7 +81,7 @@ extern void assert_failed(const char*);
 
 #define lengthof(array) (sizeof(array)/sizeof(array[0]))
 
-#define NEW(T, n)    (T*) must_malloc(scale_size(n, sizeof(T)))
+#define NEW(T, n)    (T*) must_malloc((int)(scale_size(n, sizeof(T))))
 #define U_NEW(T, n)  (T*) u->alloc(scale_size(n, sizeof(T)))
 #define T_NEW(T, n)  (T*) u->temp_alloc(scale_size(n, sizeof(T)))
 
@@ -123,11 +123,8 @@ enum { false, true };
 
 #define null (0)
 
-#ifndef __sparc 
-#define intptr_t jlong
-#endif
-
-#define ptrlowbits(x)  ((int) (intptr_t)(x))
+/* Must cast to void *, then size_t, then int. */
+#define ptrlowbits(x)  ((int)(size_t)(void*)(x))
 
 /* Back and forth from jlong to pointer */
 #define ptr2jlong(x)  ((jlong)(size_t)(void*)(x))
