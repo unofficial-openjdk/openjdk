@@ -86,7 +86,11 @@ static unpacker* get_unpacker(JNIEnv *env, jobject pObj, bool noCreate=false) {
 static unpacker* get_unpacker() {
   //fprintf(stderr, "get_unpacker()\n");
   JavaVM* vm = null;
-  JNI_GetCreatedJavaVMs(&vm, 1, null);
+  jsize nVM = 0;
+  jint retval = JNI_GetCreatedJavaVMs(&vm, 1, &nVM);
+  // other VM implements may differ, thus for correctness, we need these checks
+  if (retval != JNI_OK || nVM != 1)
+    return null;
   void* envRaw = null;
   vm->GetEnv(&envRaw, JNI_VERSION_1_1);
   JNIEnv* env = (JNIEnv*) envRaw;
