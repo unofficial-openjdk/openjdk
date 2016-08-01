@@ -221,6 +221,13 @@ ifeq ($(CC_VERSION),msvc)
   # All builds get the same runtime setting
   CFLAGS_COMMON += $(MS_RUNTIME_OPTION) $(CFLAGS_$(COMPILER_VERSION))
 
+ifeq ($(ARCH_DATA_MODEL), 64)
+  ifeq ($(COMPILER_VERSION), VS2008)
+    MSVCRNN_DLL = msvcr90.dll
+    MSVCPNN_DLL = msvcp90.dll
+    MS_RUNTIME_LIBRARIES += $(MSVCRNN_DLL)
+  endif
+endif
 
   LDEBUG = /debug
   
@@ -269,6 +276,8 @@ CFLAGS_COMMON += $(COMPILER_WARNINGS_TO_IGNORE:%=-wd%)
 # Treat compiler warnings as errors, if requested
 #
 CFLAGS_COMMON += -W$(COMPILER_WARNING_LEVEL)
+# Turn off security warnings about using the standard C library function strcpy
+CFLAGS_COMMON += -D _CRT_SECURE_NO_DEPRECATE
 ifeq ($(COMPILER_WARNINGS_FATAL),true)
   CFLAGS_COMMON += -WX
 endif

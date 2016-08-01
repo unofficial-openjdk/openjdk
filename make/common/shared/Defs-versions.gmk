@@ -1,12 +1,12 @@
 #
-# Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 only, as
-# published by the Free Software Foundation.  Sun designates this
+# published by the Free Software Foundation.  Oracle designates this
 # particular file as subject to the "Classpath" exception as provided
-# by Sun in the LICENSE file that accompanied this code.
+# by Oracle in the LICENSE file that accompanied this code.
 #
 # This code is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,9 @@
 # 2 along with this work; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-# CA 95054 USA or visit www.sun.com if you need additional information or
-# have any questions.
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
 #
 
 #
@@ -44,6 +44,12 @@
 #
 # REQUIRED_CC_VER
 #   The primary C compiler version expected.
+#
+# REQUIRED_COMPILER_NAME
+#   The long descriptive name of the compiler we should use
+#
+# REQUIRED_COMPILER_VERSION
+#   The one word name that identifies the compilers being used.
 #
 # REQUIRED_CYGWIN_VER
 #   Windows only: If CYGWIN is used, the minimum CYGWIN version.
@@ -114,8 +120,10 @@ ifeq ($(PLATFORM), solaris)
   else
     REQUIRED_FREE_SPACE       = 1040000
   endif
+  REQUIRED_COMPILER_NAME      = Sun Studio 12
+  REQUIRED_COMPILER_VERSION   = SS12
   ifeq ($(CC_VERSION),sun)
-    REQUIRED_CC_VER           = 5.8
+    REQUIRED_CC_VER           = 5.9
   endif
   ifeq ($(CC_VERSION),gcc)
     REQUIRED_CC_VER           = 3.4.3
@@ -130,6 +138,8 @@ ifeq ($(PLATFORM), linux)
   REQUIRED_OS_VARIANT_VERSION = 9
   REQUIRED_FREE_SPACE         = 1460000
   REQUIRED_ALSA_VERSION       = 0.9.1
+  REQUIRED_COMPILER_NAME      = GCC4
+  REQUIRED_COMPILER_VERSION   = GCC4
   REQUIRED_GCC_VER            = 2.95
   ifeq ($(CC_VERSION),gcc)
     REQUIRED_CC_VER           = 4.3.0
@@ -154,6 +164,8 @@ ifeq ($(PLATFORM), windows)
   REQUIRED_FREE_SPACE         = 500000
   REQUIRED_DXSDK_VER          = 0x0900
   ifeq ($(CC_VERSION),msvc)
+    REQUIRED_COMPILER_NAME    = Visual Studio 10
+    REQUIRED_COMPILER_VERSION = VS2010
     REQUIRED_CC_VER=16.10.40219.01
     REQUIRED_LINK_VER=10.00.40219.01
   endif
