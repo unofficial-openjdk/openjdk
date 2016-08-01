@@ -1477,6 +1477,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_initJPEGImageReader
         JNU_ThrowByName( env,
                          "java/lang/OutOfMemoryError",
                          "Initializing Reader");
+        free(cinfo);
         return 0;
     }
 
@@ -1513,6 +1514,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_initJPEGImageReader
         JNU_ThrowByName(env,
                         "java/lang/OutOfMemoryError",
                         "Initializing Reader");
+        imageio_dispose((j_common_ptr)cinfo);
         return 0;
     }
     cinfo->src->bytes_in_buffer = 0;
@@ -1529,6 +1531,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_initJPEGImageReader
         JNU_ThrowByName( env,
                          "java/lang/OutOfMemoryError",
                          "Initializing Reader");
+        imageio_dispose((j_common_ptr)cinfo);
         return 0;
     }
     return (jlong) ret;
@@ -2517,8 +2520,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_initJPEGImageWriter
         JNU_ThrowByName( env,
                          "java/lang/OutOfMemoryError",
                          "Initializing Writer");
-        free(cinfo);
-        free(jerr);
+        imageio_dispose((j_common_ptr)cinfo);
         return 0;
     }
 
@@ -2536,8 +2538,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_initJPEGImageWriter
         JNU_ThrowByName( env,
                          "java/lang/OutOfMemoryError",
                          "Initializing Writer");
-        free(cinfo);
-        free(jerr);
+        imageio_dispose((j_common_ptr)cinfo);
         return 0;
     }
     return (jlong) ret;
