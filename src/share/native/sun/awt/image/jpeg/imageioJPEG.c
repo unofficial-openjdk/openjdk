@@ -380,9 +380,6 @@ typedef struct imageIODataStruct {
     pixelBuffer pixelBuf;     // Buffer for pixels
 
     jboolean abortFlag;       // Passed down from Java abort method
-
-    UINT8 scale[MAX_BANDS][NUM_INPUT_VALUES];
-    int bandSizes[MAX_BANDS]; // For scaling to-from non-8-bit images
 } imageIOData, *imageIODataPtr;
 
 /*
@@ -421,12 +418,6 @@ static imageIODataPtr initImageioData (JNIEnv *env,
 
     data->abortFlag = JNI_FALSE;
 
-    for (i = 0; i < MAX_BANDS; i ++) {
-        data->bandSizes[i] = 0;
-        for (j = 0; j < NUM_INPUT_VALUES; j++) {
-            data->scale[i][j] = 0;
-        }
-    }
     return data;
 }
 
@@ -1905,34 +1896,6 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
 
     (*env)->ReleaseIntArrayElements(env, srcBands, body, JNI_ABORT);
 
-    bandSize = (*env)->GetIntArrayElements(env, bandSizes, NULL);
-
-    for (i = 0; i < numBands; i++) {
-        if (bandSize[i] != JPEG_BAND_SIZE) {
-            mustScale = TRUE;
-            break;
-        }
-    }
-
-    if (mustScale) {
-        // Build any scale tables that aren't already OK
-        for (i = 0; i < numBands; i++) {
-            if (data->bandSizes[i] != bandSize[i]) {
-                data->bandSizes[i] = bandSize[i];
-                maxBandValue = (1 << bandSize[i]) - 1;
-                halfMaxBandValue = maxBandValue >> 1;
-                for (j = 0; j <= maxBandValue; j++) {
-                    data->scale[i][j] =
-                        (UINT8)((j*MAX_JPEG_BAND_VALUE
-                                 + halfMaxBandValue)/maxBandValue);
-                }
-            }
-        }
-    }
-
-    (*env)->ReleaseIntArrayElements(env, bandSizes,
-                                    bandSize, JNI_ABORT);
-
 #ifdef DEBUG_IIO_JPEG
     printf("---- in reader.read ----\n");
     printf("numBands is %d\n", numBands);
@@ -2074,15 +2037,8 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
 
             // Now mangle it into our buffer
             out = data->pixelBuf.buf.bp;
-            if (mustScale) {
-                for (in = scanLinePtr+sourceXStart*cinfo->num_components;
-                     in < pixelLimit;
-                     in += pixelStride) {
-                    for (i = 0; i < numBands; i++) {
-                        *out++ = data->scale[i][*(in+bands[i])];
-                    }
-                }
-            } else if (orderedBands && (pixelStride == numBands)) {
+
+            if (orderedBands && (pixelStride == numBands)) {
                 // Optimization: The component bands are ordered sequentially,
                 // so we can simply use memcpy() to copy the intermediate
                 // scanline buffer into the raster.
@@ -2680,9 +2636,9 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
     jint *scanData;
     jint *bandSize;
     int maxBandValue, halfMaxBandValue;
-    boolean mustScale = FALSE;
     imageIODataPtr data = (imageIODataPtr) ptr;
     j_compress_ptr cinfo;
+    UINT8** scale = NULL;
 
     /* verify the inputs */
 
@@ -2738,23 +2694,31 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
 
     for (i = 0; i < numBands; i++) {
         if (bandSize[i] != JPEG_BAND_SIZE) {
-            mustScale = TRUE;
-            break;
+            if (scale == NULL) {
+                scale = (UINT8**) calloc(numBands, sizeof(UINT8*));
+
+                if (scale == NULL) {
+                    JNU_ThrowByName( env, "java/lang/OutOfMemoryError",
+                                     "Writing JPEG Stream");
+                    return JNI_FALSE;
         }
     }
 
-    if (mustScale) {
-        // Build any scale tables that aren't already OK
-        for (i = 0; i < numBands; i++) {
-            if (data->bandSizes[i] != bandSize[i]) {
-                data->bandSizes[i] = bandSize[i];
                 maxBandValue = (1 << bandSize[i]) - 1;
+
+            scale[i] = (UINT8*) malloc((maxBandValue + 1) * sizeof(UINT8));
+
+            if (scale[i] == NULL) {
+                JNU_ThrowByName( env, "java/lang/OutOfMemoryError",
+                                 "Writing JPEG Stream");
+                return JNI_FALSE;
+            }
+
                 halfMaxBandValue = maxBandValue >> 1;
+
                 for (j = 0; j <= maxBandValue; j++) {
-                    data->scale[i][j] =
-                        (UINT8)((j*MAX_JPEG_BAND_VALUE
-                                 + halfMaxBandValue)/maxBandValue);
-                }
+                scale[i][j] = (UINT8)
+                    ((j*MAX_JPEG_BAND_VALUE + halfMaxBandValue)/maxBandValue);
             }
         }
     }
@@ -2954,25 +2918,22 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
         out = scanLinePtr;
         pixelLimit = in + ((pixelBufferSize > data->pixelBuf.byteBufferLength) ?
                            data->pixelBuf.byteBufferLength : pixelBufferSize);
-        if (mustScale) {
           for (; (in < pixelLimit) && (out < scanLineLimit); in += pixelStride) {
                 for (i = 0; i < numBands; i++) {
-                    *out++ = data->scale[i][*(in+i)];
+                if (scale !=NULL && scale[i] != NULL) {
+                    *out++ = scale[i][*(in+i)];
 #ifdef DEBUG_IIO_JPEG
                     if (in == data->pixelBuf.buf.bp){ // Just the first pixel
                         printf("in %d -> out %d, ", *(in+i), *(out-i-1));
                     }
 #endif
-                }
+
 #ifdef DEBUG_IIO_JPEG
                     if (in == data->pixelBuf.buf.bp){ // Just the first pixel
                         printf("\n");
                     }
 #endif
-            }
         } else {
-          for (; (in < pixelLimit) && (out < scanLineLimit); in += pixelStride) {
-                for (i = 0; i < numBands; i++) {
                     *out++ = *(in+i);
                 }
           }
@@ -2991,6 +2952,16 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
     } else {
         jpeg_abort((j_common_ptr)cinfo);
     }
+
+    if (scale != NULL) {
+        for (i = 0; i < numBands; i++) {
+            if (scale[i] != NULL) {
+                free(scale[i]);
+            }
+        }
+        free(scale);
+    }
+
     free(scanLinePtr);
     RELEASE_ARRAYS(env, data, NULL);
     return data->abortFlag;
