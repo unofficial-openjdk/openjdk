@@ -25,11 +25,25 @@
 
 package com.sun.java.util.jar.pack;
 
-import java.util.*;
-import java.util.jar.*;
-import java.util.zip.*;
-import java.util.logging.*;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FilterOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.Map;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.jar.JarInputStream;
+import java.util.jar.JarOutputStream;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.LogManager;
+import java.util.logging.LogRecord;
+import java.util.zip.ZipEntry;
 
 class Utils {
     static final String COM_PREFIX = "com.sun.java.util.jar.pack.";
