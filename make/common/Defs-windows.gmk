@@ -337,17 +337,9 @@ else
   #    BUILD_WIN_SA=1
   # on the make command.
   ifdef BUILD_WIN_SA
-    ifeq ($(ARCH), amd64)
-      INCLUDE_SA = true
-    else
-      INCLUDE_SA = true
-    endif
+    INCLUDE_SA = true
   else
-    ifeq ($(ARCH), amd64)
-      INCLUDE_SA = false
-    else
-      INCLUDE_SA = false
-    endif
+    INCLUDE_SA = false
   endif
 endif
 
