@@ -47,8 +47,6 @@ ifeq ($(PLATFORM), windows)
   # Fill in unknown values
   COMPILER_NAME=Unknown MSVC Compiler
   COMPILER_VERSION=
-  REQUIRED_CC_VER=16.10.40219.01
-  REQUIRED_LINK_VER=10.00.40219.01
   
   # unset any GNU Make settings of MFLAGS and MAKEFLAGS which may mess up nmake
   NMAKE          = MFLAGS= MAKEFLAGS= $(COMPILER_PATH)nmake -nologo

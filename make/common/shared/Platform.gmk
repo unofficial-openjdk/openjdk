@@ -51,8 +51,6 @@ PLATFORM_SHARED=done
 #     USER                        login name of user (minus blanks)
 #     PLATFORM                    windows, solaris, or linux
 #     VARIANT                     OPT or DBG, OPT is the default
-#     OS_NAME                     solaris, linux, or nt
-#     OS_VERSION                  specific version of os, 5.10, 2.4.9-e.3, etc.
 #     TEMP_DISK                   /tmp or C:/temp
 #     ARCH_DATA_MODEL             32 or 64
 #     ARCH                        sparc, sparcv9, i586, amd64, or ia64
@@ -71,27 +69,10 @@ PLATFORM_SHARED=done
 #     ISA_DIR                     solaris only: /sparcv9 or /amd64
 #     LIBARCH32                   solaris only: sparc or i386
 #     LIBARCH64                   solaris only: sparcv9 or amd64
-#     REQUIRED_WINDOWS_VERSION    windows only: specific version of windows 
 #     USING_CYGWIN                windows only: true or false
-#     WINDOWS_NT_VERSION_STRING   windows only: long version name
-#     REQUIRED_OS_VERSION         required OS version, e.g. 5.10, 2.4
 #     ISHIELD_TEMP_MIN            windows only: minimum disk space in temp area
-#     REQUIRED_ZIP_VER            required version of zip
-#     REQUIRED_UNZIP_VER          required version of unzip
-#     REQUIRED_DXSDK_VER          windows only: required version of DirectX
-#     LINUX_VERSION_INFO          linux only: location of linux release file
-#     REQUIRED_LINUX_VER          linux only: required version of linux
-#     REQUIRED_LINUX_FULLVER      linux only: required full version of linux
-#     REQUIRED_ALSA_VERSION       linux only: required version of ALSA
-#     REQUIRED_FREETYPE_VERSION   openjdk only: required version of freetype 
 
 SYSTEM_UNAME := $(shell uname)
-
-# Normal boot jdk is previous release, but a hard requirement is a 1.6 boot
-REQUIRED_BOOT_VER = 1.6
-
-# If we are using freetype, this is the required version
-REQUIRED_FREETYPE_VERSION=2.3.0
 
 #
 # Prune out all known SCM (Source Code Management) directories
@@ -111,8 +92,6 @@ endif
 # Platform settings specific to Solaris
 ifeq ($(SYSTEM_UNAME), SunOS)
   PLATFORM = solaris
-  OS_NAME = solaris
-  OS_VERSION := $(shell uname -r)
   # Solaris sparc build can be either 32-bit or 64-bit.
   #   Default to 32, but allow explicit setting to 32 or 64.
   ifndef ARCH_DATA_MODEL
@@ -164,12 +143,6 @@ ifeq ($(SYSTEM_UNAME), SunOS)
   endif
   # Suffix for file bundles used in previous release
   BUNDLE_FILE_SUFFIX=.tar
-  # Required Solaris version
-  ifeq ($(ARCH), amd64)
-    REQUIRED_OS_VERSION = 5.10
-  else
-    REQUIRED_OS_VERSION = 5.8
-  endif
   # How much RAM does this machine have (zones send an error to stderr):
   MB_OF_MEMORY:=$(shell /usr/sbin/prtconf 2>/dev/null | fgrep 'Memory size:' | expand | cut -d' ' -f3)
 endif
@@ -177,8 +150,6 @@ endif
 # Platform settings specific to Linux
 ifeq ($(SYSTEM_UNAME), Linux)
   PLATFORM = linux
-  OS_NAME = linux
-  OS_VERSION := $(shell uname -r)
   # Arch and OS name/version
   mach := $(shell uname -m)
   archExpr = case "$(mach)" in \
@@ -239,27 +210,6 @@ ifeq ($(SYSTEM_UNAME), Linux)
 
   # Suffix for file bundles used in previous release
   BUNDLE_FILE_SUFFIX=.tar.gz
-  LINUX_VERSION_INFO = /etc/redhat-release
-  ifeq ($(ARCH_DATA_MODEL), 32)
-    REQUIRED_LINUX_VER = Advanced Server
-    REQUIRED_LINUX_FULLVER = Advanced Server release 2.1AS
-    REQUIRED_OS_VERSION = 2.4.9-e.3
-  else
-    ifeq ($(ARCH), amd64)
-      LINUX_VERSION_INFO = /etc/SuSE-release
-      REQUIRED_LINUX_VER = 8.1
-      REQUIRED_LINUX_FULLVER = $(REQUIRED_LINUX_VER) SLSE AMD64
-      REQUIRED_OS_VERSION = 2.4.19-SMP
-    else
-      REQUIRED_LINUX_VER = Advanced Server
-      REQUIRED_LINUX_FULLVER = Advanced Server release 2.1AS 64 bit
-      REQUIRED_OS_VERSION = 2.4.19-SMP
-    endif
-  endif
-  ifneq ($(ARCH), ia64)
-    # ALSA 0.9.1 and above
-    REQUIRED_ALSA_VERSION = ^((0[.]9[.][1-9])|(1[.][0-9][.][0-9]))[0-9]*
-  endif
   # How much RAM does this machine have:
   MB_OF_MEMORY := $(shell free -m | fgrep Mem: | sed -e 's@\ \ *@ @g' | cut -d' ' -f2)
 endif
@@ -267,23 +217,15 @@ endif
 # Windows with and without CYGWIN will be slightly different
 ifeq ($(SYSTEM_UNAME), Windows_NT)
   PLATFORM = windows
-  OS_VERSION := $(shell uname -r)
-  WINDOWS_NT_VERSION_STRING=Windows_NT
-  REQUIRED_MKS_VER=6.1
 endif
 ifneq (,$(findstring CYGWIN,$(SYSTEM_UNAME)))
   PLATFORM = windows
-  OS_VERSION := 5
   USING_CYGWIN = true
   export USING_CYGWIN
-  WINDOWS_NT_VERSION_STRING=CYGWIN_NT
-  REQUIRED_CYGWIN_VER=4.0
 endif
 
 # Platform settings specific to Windows
 ifeq ($(PLATFORM), windows)
-  OS_NAME = nt
-  REQUIRED_OS_VERSION=5
   # Windows builds default to the appropriate for the underlaying
   # architecture.
   # Temporary disk area
@@ -339,7 +281,6 @@ ifeq ($(PLATFORM), windows)
     # If the user wants to perform a cross compile build then they must
     # - set ARCH_DATA_MODEL=64 and either
     #      + set ARCH to ia64 or amd64, or
-    REQUIRED_WINDOWS_VERSION=Server 2003 Enterprise x64 Edition
     ifeq ($(PROC_ARCH),X64)
       ARCH=amd64
     else
@@ -349,8 +290,6 @@ ifeq ($(PLATFORM), windows)
     # Value of Java os.arch property
     ARCHPROP=$(LIBARCH)
   else
-    REQUIRED_WINDOWS_VERSION=2000 or Unknown
-    #REQUIRED_WINDOWS_VERSION=XP Professional
     # LIBARCH is used to preserve the jre/lib/i386 directory name for 32-bit intel
     ARCH=i586
     LIBARCH=i386
@@ -396,7 +335,6 @@ ifeq ($(PLATFORM), windows)
   # ISHIELD_TEMP_MIN is the difference of an empty C:\TEMP vs. one after a
   #     bundles build on windows.
   ISHIELD_TEMP_MIN=250000
-  REQUIRED_DXSDK_VER = 0x0900
   # How much RAM does this machine have:
   MB_OF_MEMORY := $(shell \
     if [ -f "C:/cygwin/bin/free.exe" ] ; then \
@@ -438,10 +376,6 @@ else
   MAX_VM_MEMORY      := 384
   MIN_VM_MEMORY      := 128
 endif
-
-REQUIRED_ZIP_VER = 2.2
-REQUIRED_UNZIP_VER = 5.12
-REQUIRED_MAKE_VER = 3.78
 
 # Unix type settings (same for all unix platforms)
 ifneq ($(PLATFORM), windows)
