@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import static com.sun.java.util.jar.pack.Constants.*;
 
 /**
  * Represents an attribute in a class-file.
@@ -45,7 +46,7 @@ import java.util.Map;
  * attribute layouts.
  * @author John Rose
  */
-class Attribute implements Comparable, Constants {
+class Attribute implements Comparable {
     // Attribute instance fields.
 
     Layout def;     // the name and format of this attr
@@ -104,7 +105,6 @@ class Attribute implements Comparable, Constants {
         return this.def.compareTo(that.def);
     }
 
-    private static final byte[] noBytes = {};
     private static final Map<List<Attribute>, List<Attribute>> canonLists =
 	new HashMap<List<Attribute>, List<Attribute>>();
     private static final Map<Layout, Attribute> attributes =
@@ -116,7 +116,7 @@ class Attribute implements Comparable, Constants {
     // are used by trimToSize, in order to reduce footprint
     // of some common cases.  (Note that Code attributes are
     // always zero size.)
-    public static List getCanonList(List<Attribute> al) {
+    public static List<Attribute> getCanonList(List<Attribute> al) {
         synchronized (canonLists) {
             List<Attribute> cl = canonLists.get(al);
             if (cl == null) {
@@ -469,7 +469,9 @@ class Attribute implements Comparable, Constants {
             return ConstantPool.getUtf8Entry(name());
         }
 
-        public boolean isEmpty() { return layout == ""; }
+        public boolean isEmpty() {
+            return layout.isEmpty();
+        }
 
         public Layout(int ctype, String name, String layout) {
             this.ctype = ctype;
@@ -483,19 +485,19 @@ class Attribute implements Comparable, Constants {
                 } else {
                     String[] bodies = splitBodies(layout);
                     // Make the callables now, so they can be linked immediately.
-                    Element[] elems = new Element[bodies.length];
-                    this.elems = elems;
-                    for (int i = 0; i < elems.length; i++) {
+                    Element[] lelems = new Element[bodies.length];
+                    this.elems = lelems;
+                    for (int i = 0; i < lelems.length; i++) {
                         Element ce = this.new Element();
                         ce.kind = EK_CBLE;
                         ce.removeBand();
                         ce.bandIndex = NO_BAND_INDEX;
                         ce.layout = bodies[i];
-                        elems[i] = ce;
+                        lelems[i] = ce;
                     }
                     // Next fill them in.
-                    for (int i = 0; i < elems.length; i++) {
-                        Element ce = elems[i];
+                    for (int i = 0; i < lelems.length; i++) {
+                        Element ce = lelems[i];
                         ce.body = tokenizeLayout(this, i, bodies[i]);
                     }
                     //System.out.println(Arrays.asList(elems));
@@ -529,11 +531,12 @@ class Attribute implements Comparable, Constants {
         }
 
         public boolean equals(Object x) {
-            return x instanceof Layout && equals((Layout)x);
+            return ( x != null) && ( x.getClass() == Layout.class ) &&
+                    equals((Layout)x);
         }
         public boolean equals(Layout that) {
-            return this.name == that.name
-                && this.layout == that.layout
+            return this.name.equals(that.name)
+                && this.layout.equals(that.layout)
                 && this.ctype == that.ctype;
         }
         public int hashCode() {
@@ -593,14 +596,14 @@ class Attribute implements Comparable, Constants {
                 return str;
             }
             private String stringForDebug() {
-                Element[] body = this.body;
+                Element[] lbody = this.body;
                 switch (kind) {
                 case EK_CALL:
-                    body = null;
+                    lbody = null;
                     break;
                 case EK_CASE:
                     if (flagTest(EF_BACK))
-                        body = null;
+                        lbody = null;
                     break;
                 }
                 return layout
@@ -608,7 +611,7 @@ class Attribute implements Comparable, Constants {
                     + "<"+ (flags==0?"":""+flags)+kind+len
                     + (refKind==0?"":""+refKind) + ">"
                     + (value==0?"":"("+value+")")
-                    + (body==null?"": ""+Arrays.asList(body));
+                    + (lbody==null?"": ""+Arrays.asList(lbody));
             }
         }
 
@@ -617,16 +620,19 @@ class Attribute implements Comparable, Constants {
         }
         static private final Element[] noElems = {};
         public Element[] getCallables() {
-            if (hasCallables())
-                return elems;
-            else
+            if (hasCallables()) {
+                Element[] nelems = Arrays.copyOf(elems, elems.length);
+                return nelems;
+            } else
                 return noElems;  // no callables at all
         }
         public Element[] getEntryPoint() {
             if (hasCallables())
                 return elems[0].body;  // body of first callable
-            else
-                return elems;  // no callables; whole body
+            else {
+                Element[] nelems = Arrays.copyOf(elems, elems.length);
+                return nelems;  // no callables; whole body
+            }
         }
 
         /** Return a sequence of tokens from the given attribute bytes.
@@ -678,7 +684,7 @@ class Attribute implements Comparable, Constants {
         }
     }
 
-    void visitRefs(Holder holder, int mode, final Collection refs) {
+    void visitRefs(Holder holder, int mode, final Collection<Entry> refs) {
         if (mode == VRM_CLASSIC) {
             refs.add(getNameRef());
         }
@@ -724,7 +730,7 @@ class Attribute implements Comparable, Constants {
      */
     static public
     String normalizeLayoutString(String layout) {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         for (int i = 0, len = layout.length(); i < len; ) {
             char ch = layout.charAt(i++);
             if (ch <= ' ') {
@@ -836,14 +842,14 @@ class Attribute implements Comparable, Constants {
     */
     static //private
     Layout.Element[] tokenizeLayout(Layout self, int curCble, String layout) {
-        ArrayList<Layout.Element> col = new ArrayList<Layout.Element>(layout.length());
+        List<Layout.Element> col = new ArrayList<Layout.Element>(layout.length());
         tokenizeLayout(self, curCble, layout, col);
         Layout.Element[] res = new Layout.Element[col.size()];
         col.toArray(res);
         return res;
     }
     static //private
-    void tokenizeLayout(Layout self, int curCble, String layout, ArrayList<Layout.Element> col) {
+    void tokenizeLayout(Layout self, int curCble, String layout, List<Layout.Element> col) {
         boolean prevBCI = false;
         for (int len = layout.length(), i = 0; i < len; ) {
             int start = i;
@@ -901,7 +907,7 @@ class Attribute implements Comparable, Constants {
             case 'T': // union: 'T' any_int union_case* '(' ')' '[' body ']'
                 kind = EK_UN;
                 i = tokenizeSInt(e, layout, i);
-                ArrayList<Layout.Element> cases = new ArrayList<Layout.Element>();
+                List<Layout.Element> cases = new ArrayList<Layout.Element>();
                 for (;;) {
                     // Keep parsing cases until we hit the default case.
                     if (layout.charAt(i++) != '(')
@@ -1055,7 +1061,7 @@ class Attribute implements Comparable, Constants {
     }
     static //private
     String[] splitBodies(String layout) {
-        ArrayList<String> bodies = new ArrayList<String>();
+        List<String> bodies = new ArrayList<String>();
         // Parse several independent layout bodies:  "[foo][bar]...[baz]"
         for (int i = 0; i < layout.length(); i++) {
             if (layout.charAt(i++) != '[')
@@ -1160,7 +1166,7 @@ class Attribute implements Comparable, Constants {
     String expandCaseDashNotation(String layout) {
         int dash = findCaseDash(layout, 0);
         if (dash < 0)  return layout;  // no dashes (the common case)
-        StringBuffer result = new StringBuffer(layout.length() * 3);
+        StringBuilder result = new StringBuilder(layout.length() * 3);
         int sofar = 0;  // how far have we processed the layout?
         for (;;) {
             // for each dash, collect everything up to the dash

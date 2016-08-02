@@ -34,13 +34,14 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
+import static com.sun.java.util.jar.pack.Constants.*;
 
 /**
  * Representation of constant pool entries and indexes.
  * @author John Rose
  */
 abstract
-class ConstantPool implements Constants {
+class ConstantPool {
     private ConstantPool() {}  // do not instantiate
 
     static int verbose() {
@@ -156,9 +157,6 @@ class ConstantPool implements Constants {
 	    return null;
 	}
 
-	public boolean sameTagAs(Object o) {
-	    return (o instanceof Entry) && ((Entry)o).tag == tag;
-	}
 	public boolean eq(Entry that) {  // same reference
 	    assert(that != null);
 	    return this == that || this.equals(that);
@@ -220,9 +218,9 @@ class ConstantPool implements Constants {
 	    return value.hashCode();
 	}
 	public boolean equals(Object o) {
-	    if (!sameTagAs(o))  return false;
 	    // Use reference equality of interned strings:
-	    return ((Utf8Entry)o).value == value;
+            return (o != null && o.getClass() == Utf8Entry.class
+                    && ((Utf8Entry) o).value.equals(value));
 	}
 	public int compareTo(Object o) {
 	    int x = superCompareTo(o);
@@ -276,8 +274,9 @@ class ConstantPool implements Constants {
 	}
 
 	public boolean equals(Object o) {
-	    if (!sameTagAs(o))  return false;
-	    return (((NumberEntry)o).value).equals(value);
+            return (o != null && o.getClass() == NumberEntry.class
+                    && ((NumberEntry) o).value.equals(value));
+
 	}
 	public int compareTo(Object o) {
 	    int x = superCompareTo(o);
@@ -311,8 +310,8 @@ class ConstantPool implements Constants {
 	    return ref.hashCode() + tag;
 	}
 	public boolean equals(Object o) {
-	    if (!sameTagAs(o))  return false;
-	    return ((StringEntry)o).ref.eq(ref);
+            return (o != null && o.getClass() == StringEntry.class &&
+                    ((StringEntry)o).ref.eq(ref));
 	}
 	public int compareTo(Object o) {
 	    int x = superCompareTo(o);
@@ -343,8 +342,8 @@ class ConstantPool implements Constants {
 	    hashCode();  // force computation of valueHash
 	}
 	public boolean equals(Object o) {
-	    if (!sameTagAs(o))  return false;
-	    return ((ClassEntry)o).ref.eq(ref);
+            return (o != null && o.getClass() == ClassEntry.class
+                    && ((ClassEntry) o).ref.eq(ref));
 	}
 	public int compareTo(Object o) {
 	    int x = superCompareTo(o);
@@ -381,7 +380,9 @@ class ConstantPool implements Constants {
 	    return (nameRef.hashCode() + (hc2 << 8)) ^ hc2;
 	}
 	public boolean equals(Object o) {
-	    if (!sameTagAs(o))  return false;
+            if (o == null || o.getClass() != DescriptorEntry.class) {
+                return false;
+            }
 	    DescriptorEntry that = (DescriptorEntry)o;
 	    return this.nameRef.eq(that.nameRef)
 		&& this.typeRef.eq(that.typeRef);
@@ -440,7 +441,9 @@ class ConstantPool implements Constants {
 	    hashCode();  // force computation of valueHash
 	}
 	public boolean equals(Object o) {
-	    if (!sameTagAs(o))  return false;
+            if (o == null || o.getClass() != MemberEntry.class) {
+                return false;
+            }
 	    MemberEntry that = (MemberEntry)o;
 	    return this.classRef.eq(that.classRef)
 		&& this.descRef.eq(that.descRef);
@@ -512,8 +515,8 @@ class ConstantPool implements Constants {
 	}
 
 	public boolean equals(Object o) {
-	    if (!sameTagAs(o))  return false;
-	    return ((SignatureEntry)o).value == value;
+            return (o != null && o.getClass() == SignatureEntry.class &&
+                    ((SignatureEntry)o).value.equals(value));
 	}
 	public int compareTo(Object o) {
 	    int x = superCompareTo(o);
@@ -725,7 +728,7 @@ class ConstantPool implements Constants {
     protected static final ClassEntry[] noClassRefs = {};
 
     /** An Index is a mapping between CP entries and small integers. */
-    public static
+    public static final
     class Index extends AbstractList {
 	protected String debugName;
 	protected Entry[] cpMap;
@@ -895,7 +898,7 @@ class ConstantPool implements Constants {
     }
 
     public static
-    Index makeIndex(String debugName, Collection cpMapList) {
+    Index makeIndex(String debugName, Collection<Entry> cpMapList) {
 	return new Index(debugName, cpMapList);
     }
 
@@ -917,7 +920,7 @@ class ConstantPool implements Constants {
     public static
     Index[] partition(Index ix, int[] keys) {
 	// %%% Should move this into class Index.
-        ArrayList<List<Entry>> parts = new ArrayList<List<Entry>>();
+        List<List<Entry>> parts = new ArrayList<List<Entry>>();
 	Entry[] cpMap = ix.cpMap;
 	assert(keys.length == cpMap.length);
 	for (int i = 0; i < keys.length; i++) {
@@ -1097,12 +1100,12 @@ class ConstantPool implements Constants {
 
 	// Inverse of getOverloadingIndex
 	public MemberEntry getOverloadingForIndex(byte tag, ClassEntry classRef, String name, int which) {
-	    assert(name == name.intern());
+            assert(name.equals(name.intern()));
 	    Index ix = getMemberIndex(tag, classRef);
 	    int ord = 0;
 	    for (int i = 0; i < ix.cpMap.length; i++) {
 		MemberEntry e = (MemberEntry) ix.cpMap[i];
-		if (e.descRef.nameRef.stringValue() == name) {
+                if (e.descRef.nameRef.stringValue().equals(name)) {
 		    if (ord == which)  return e;
 		    ord++;
 		}
@@ -1136,10 +1139,10 @@ class ConstantPool implements Constants {
     public static
     void completeReferencesIn(Set<Entry> cpRefs, boolean flattenSigs) {
 	cpRefs.remove(null);
-	for (ListIterator work =
-		 new ArrayList(cpRefs).listIterator(cpRefs.size());
+        for (ListIterator<Entry> work =
+                 new ArrayList<Entry>(cpRefs).listIterator(cpRefs.size());
 	     work.hasPrevious(); ) {
-	    Entry e = (Entry) work.previous();
+            Entry e = work.previous();
 	    work.remove();          // pop stack
 	    assert(e != null);
 	    if (flattenSigs && e.tag == CONSTANT_Signature) {

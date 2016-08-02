@@ -70,7 +70,8 @@ public class PackerImpl  extends TLGlobals implements Pack200.Packer {
      * Get the set of options for the pack and unpack engines.
      * @return A sorted association of option key strings to option values.
      */
-    public SortedMap<String, String> properties() {
+    @SuppressWarnings("unchecked")
+    public SortedMap properties() {
         return props;
     }
 
@@ -157,8 +158,8 @@ public class PackerImpl  extends TLGlobals implements Pack200.Packer {
 
 
     // All the worker bees.....
-
     // The packer worker.
+    @SuppressWarnings("unchecked")
     private class DoPack {
         final int verbose = props.getInteger(Utils.DEBUG_VERBOSE);
 
@@ -181,11 +182,13 @@ public class PackerImpl  extends TLGlobals implements Pack200.Packer {
 	    unknownAttrCommand = uaMode.intern();
 	}
 
-	final HashMap attrDefs;
-	final HashMap attrCommands;
+        final Map<Attribute.Layout, Attribute> attrDefs;
+        final Map<Attribute.Layout, String> attrCommands;
 	{
-	    HashMap attrDefs     = new HashMap();
-	    HashMap attrCommands = new HashMap();
+            Map<Attribute.Layout, Attribute> lattrDefs   =
+		new HashMap<Attribute.Layout, Attribute>();
+            Map<Attribute.Layout, String>  lattrCommands =
+		new HashMap<Attribute.Layout, String>();
 	    String[] keys = {
 		Pack200.Packer.CLASS_ATTRIBUTE_PFX,
 		Pack200.Packer.FIELD_ATTRIBUTE_PFX,
@@ -200,8 +203,9 @@ public class PackerImpl  extends TLGlobals implements Pack200.Packer {
 	    };
 	    for (int i = 0; i < ctypes.length; i++) {
 		String pfx = keys[i];
-                Map<String, String> map = props.prefixMap(pfx);
-                for (String key : map.keySet()) {
+                Map<Object, Object> map = props.prefixMap(pfx);
+                for (Object k : map.keySet()) {
+                    String key = (String)k;
 		    assert(key.startsWith(pfx));
 		    String name = key.substring(pfx.length());
                     String layout = props.getProperty(key);
@@ -209,24 +213,18 @@ public class PackerImpl  extends TLGlobals implements Pack200.Packer {
 		    if (Pack200.Packer.STRIP.equals(layout) ||
 			Pack200.Packer.PASS.equals(layout) ||
 			Pack200.Packer.ERROR.equals(layout)) {
-			attrCommands.put(lkey, layout.intern());
+                        lattrCommands.put(lkey, layout.intern());
 		    } else {
-			Attribute.define(attrDefs, ctypes[i], name, layout);
+                        Attribute.define(lattrDefs, ctypes[i], name, layout);
 			if (verbose > 1) {
 			    Utils.log.fine("Added layout for "+Constants.ATTR_CONTEXT_NAME[i]+" attribute "+name+" = "+layout);
 			}
-			assert(attrDefs.containsKey(lkey));
+                        assert(lattrDefs.containsKey(lkey));
 		    }
 		}
 	    }
-	    if (attrDefs.size() > 0)
-		this.attrDefs = attrDefs;
-	    else
-		this.attrDefs = null;
-	    if (attrCommands.size() > 0)
-		this.attrCommands = attrCommands;
-	    else
-		this.attrCommands = null;
+            this.attrDefs = (lattrDefs.isEmpty()) ? null : lattrDefs;
+            this.attrCommands = (lattrCommands.isEmpty()) ? null : lattrCommands;
 	}
 
 	final boolean keepFileOrder
@@ -277,8 +275,8 @@ public class PackerImpl  extends TLGlobals implements Pack200.Packer {
 	{
 	    // Which class files will be passed through?
 	    passFiles = props.getProperties(Pack200.Packer.PASS_FILE_PFX);
-	    for (ListIterator i = passFiles.listIterator(); i.hasNext(); ) {
-		String file = (String) i.next();
+            for (ListIterator<String> i = passFiles.listIterator(); i.hasNext(); ) {
+                String file = i.next();
 		if (file == null) { i.remove(); continue; }
 		file = Utils.getJarEntryName(file);  // normalize '\\' to '/'
 		if (file.endsWith("/"))
@@ -335,7 +333,7 @@ public class PackerImpl  extends TLGlobals implements Pack200.Packer {
 	    pkg.reset();
 	}
 
-	class InFile {
+        final class InFile {
 	    final String name;
 	    final JarFile jf;
 	    final JarEntry je;
@@ -584,8 +582,8 @@ public class PackerImpl  extends TLGlobals implements Pack200.Packer {
 		// Package builder must have created a stub for each class.
 		assert(pkg.files.containsAll(pkg.getClassStubs()));
 		// Order of stubs in file list must agree with classes.
-		List res = pkg.files;
-		assert((res = new ArrayList(pkg.files))
+                List<Package.File> res = pkg.files;
+                assert((res = new ArrayList<Package.File>(pkg.files))
 		       .retainAll(pkg.getClassStubs()) || true);
 		assert(res.equals(pkg.getClassStubs()));
 	    }
