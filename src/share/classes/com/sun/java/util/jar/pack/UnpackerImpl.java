@@ -26,7 +26,6 @@
 package com.sun.java.util.jar.pack;
 
 import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeEvent;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -54,7 +53,7 @@ import java.util.zip.ZipEntry;
  */
 
 
-public class UnpackerImpl implements Pack200.Unpacker {
+public class UnpackerImpl extends TLGlobals implements Pack200.Unpacker {
     
     
     /**
@@ -62,7 +61,7 @@ public class UnpackerImpl implements Pack200.Unpacker {
      * @param listener  An object to be invoked when a property is changed.
      */
     public void addPropertyChangeListener(PropertyChangeListener listener) {
-	_props.addListener(listener);
+        props.addListener(listener);
     }
  
     
@@ -71,25 +70,19 @@ public class UnpackerImpl implements Pack200.Unpacker {
      * @param listener  The PropertyChange listener to be removed.
      */
     public void removePropertyChangeListener(PropertyChangeListener listener) {
-	_props.removeListener(listener);
+        props.removeListener(listener);
     }
     
-    public UnpackerImpl() {
-	_props = new PropMap();
-	//_props.getProperty() consults defaultProps invisibly.
-	//_props.putAll(defaultProps);
-    }
+    public UnpackerImpl() {}
     
-    // Private stuff.
-    final PropMap _props;
 
     
     /**
      * Get the set of options for the pack and unpack engines.
      * @return A sorted association of option key strings to option values.
      */
-    public SortedMap properties() {
-	return _props;
+    public SortedMap<String, String> properties() {
+        return props;
     }
     
     // Back-pointer to NativeUnpacker, when active.
@@ -115,19 +108,20 @@ public class UnpackerImpl implements Pack200.Unpacker {
      */
     public synchronized void unpack(InputStream in0, JarOutputStream out) throws IOException {
 	assert(Utils.currentInstance.get() == null);
-	TimeZone tz = (_props.getBoolean(Utils.PACK_DEFAULT_TIMEZONE)) ? null :
-	    TimeZone.getDefault();
+        TimeZone tz = (props.getBoolean(Utils.PACK_DEFAULT_TIMEZONE))
+                      ? null
+                      : TimeZone.getDefault();
 	
 	try {
 	    Utils.currentInstance.set(this);
 	    if (tz != null) TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
-	    final int verbose = _props.getInteger(Utils.DEBUG_VERBOSE);
+            final int verbose = props.getInteger(Utils.DEBUG_VERBOSE);
 	    BufferedInputStream in = new BufferedInputStream(in0);
 	    if (Utils.isJarMagic(Utils.readMagic(in))) {
 		if (verbose > 0)
 		    Utils.log.info("Copying unpacked JAR file...");
 		Utils.copyJarFile(new JarInputStream(in), out);
-	    } else if (_props.getBoolean(Utils.DEBUG_DISABLE_NATIVE)) {
+            } else if (props.getBoolean(Utils.DEBUG_DISABLE_NATIVE)) {
 		(new DoUnpack()).run(in, out);
 		in.close();
 		Utils.markJarFile(out);
@@ -156,36 +150,38 @@ public class UnpackerImpl implements Pack200.Unpacker {
 	// %%% Reconsider if native unpacker learns to memory-map the file.
 	FileInputStream instr = new FileInputStream(in);
 	unpack(instr, out);
-	if (_props.getBoolean(Utils.UNPACK_REMOVE_PACKFILE)) {
+        if (props.getBoolean(Utils.UNPACK_REMOVE_PACKFILE)) {
 	    in.delete();
 	}
     }
     
     private class DoUnpack {
-	final int verbose = _props.getInteger(Utils.DEBUG_VERBOSE);
+        final int verbose = props.getInteger(Utils.DEBUG_VERBOSE);
 	
 	{
-	    _props.setInteger(Pack200.Unpacker.PROGRESS, 0);
+            props.setInteger(Pack200.Unpacker.PROGRESS, 0);
 	}
 	
 	// Here's where the bits are read from disk:
 	final Package pkg = new Package();
 	
 	final boolean keepModtime
-	    = Pack200.Packer.KEEP.equals(_props.getProperty(Utils.UNPACK_MODIFICATION_TIME, Pack200.Packer.KEEP));
+            = Pack200.Packer.KEEP.equals(
+              props.getProperty(Utils.UNPACK_MODIFICATION_TIME, Pack200.Packer.KEEP));
 	final boolean keepDeflateHint
-	    = Pack200.Packer.KEEP.equals(_props.getProperty(Pack200.Unpacker.DEFLATE_HINT, Pack200.Packer.KEEP));
+            = Pack200.Packer.KEEP.equals(
+              props.getProperty(Pack200.Unpacker.DEFLATE_HINT, Pack200.Packer.KEEP));
 	final int modtime;
 	final boolean deflateHint;
 	{
 	    if (!keepModtime) {
-		modtime = _props.getTime(Utils.UNPACK_MODIFICATION_TIME);
+                modtime = props.getTime(Utils.UNPACK_MODIFICATION_TIME);
 	    } else {
 		modtime = pkg.default_modtime;
 	    }
 	    
 	    deflateHint = (keepDeflateHint) ? false :
-		_props.getBoolean(java.util.jar.Pack200.Unpacker.DEFLATE_HINT);
+                props.getBoolean(java.util.jar.Pack200.Unpacker.DEFLATE_HINT);
 	}
 	
 	// Checksum apparatus.
@@ -195,7 +191,7 @@ public class UnpackerImpl implements Pack200.Unpacker {
 	
 	public void run(BufferedInputStream in, JarOutputStream out) throws IOException {
 	    if (verbose > 0) {
-		_props.list(System.out);
+                props.list(System.out);
 	    }
 	    for (int seg = 1; ; seg++) {
 		unpackSegment(in, out);
@@ -208,25 +204,26 @@ public class UnpackerImpl implements Pack200.Unpacker {
 	}
 	
 	private void unpackSegment(InputStream in, JarOutputStream out) throws IOException {
-	    _props.setProperty(java.util.jar.Pack200.Unpacker.PROGRESS,"0");
+            props.setProperty(java.util.jar.Pack200.Unpacker.PROGRESS,"0");
 	    // Process the output directory or jar output.
 	    new PackageReader(pkg, in).read();
 	    
-	    if (_props.getBoolean("unpack.strip.debug"))    pkg.stripAttributeKind("Debug");
-	    if (_props.getBoolean("unpack.strip.compile"))  pkg.stripAttributeKind("Compile");
-	    _props.setProperty(java.util.jar.Pack200.Unpacker.PROGRESS,"50");
+            if (props.getBoolean("unpack.strip.debug"))    pkg.stripAttributeKind("Debug");
+            if (props.getBoolean("unpack.strip.compile"))  pkg.stripAttributeKind("Compile");
+            props.setProperty(java.util.jar.Pack200.Unpacker.PROGRESS,"50");
 	    pkg.ensureAllClassFiles();
 	    // Now write out the files.
-	    HashSet classesToWrite = new HashSet(pkg.getClasses());
+            HashSet<Package.Class> classesToWrite = new HashSet<Package.Class>(pkg.getClasses());
 	    for (Iterator i = pkg.getFiles().iterator(); i.hasNext(); ) {
 		Package.File file = (Package.File) i.next();
 		String name = file.nameString;
 		JarEntry je = new JarEntry(Utils.getJarEntryName(name));
 		boolean deflate;
 		
-		deflate = (keepDeflateHint) ? (((file.options & Constants.FO_DEFLATE_HINT) != 0) ||
-						   ((pkg.default_options & Constants.AO_DEFLATE_HINT) != 0)) :
-		    deflateHint;
+                deflate = (keepDeflateHint)
+                          ? (((file.options & Constants.FO_DEFLATE_HINT) != 0) ||
+                            ((pkg.default_options & Constants.AO_DEFLATE_HINT) != 0))
+                          : deflateHint;
 		
 		boolean needCRC = !deflate;  // STORE mode requires CRC
 		
@@ -264,7 +261,7 @@ public class UnpackerImpl implements Pack200.Unpacker {
 		    Utils.log.info("Writing "+Utils.zeString((ZipEntry)je));
 	    }
 	    assert(classesToWrite.isEmpty());
-	    _props.setProperty(java.util.jar.Pack200.Unpacker.PROGRESS,"100");
+            props.setProperty(java.util.jar.Pack200.Unpacker.PROGRESS,"100");
 	    pkg.reset();  // reset for the next segment, if any
 	}
     }

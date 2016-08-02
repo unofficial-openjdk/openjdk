@@ -25,7 +25,6 @@
 
 package com.sun.java.util.jar.pack;
 
-import java.lang.Error;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -56,7 +55,8 @@ import java.util.zip.GZIPOutputStream;
 /** Command line interface for Pack200.
  */
 class Driver {
-        private static final ResourceBundle RESOURCE= ResourceBundle.getBundle("com.sun.java.util.jar.pack.DriverResource");
+        private static final ResourceBundle RESOURCE =
+                ResourceBundle.getBundle("com.sun.java.util.jar.pack.DriverResource");
 
     public static void main(String[] ava) throws IOException {
         ArrayList<String> av = new ArrayList<String>(Arrays.asList(ava));
@@ -154,8 +154,9 @@ class Driver {
                     if (engProps.get(verboseProp) != null)
                         fileProps.list(System.out);
                     propIn.close();
-                    for (Map.Entry<Object,Object> me : fileProps.entrySet())
-                        engProps.put((String)me.getKey(), (String)me.getValue());
+                    for (Map.Entry<Object,Object> me : fileProps.entrySet()) {
+                        engProps.put((String) me.getKey(), (String) me.getValue());
+                    }
                 } else if (state == "--version") {
                         System.out.println(MessageFormat.format(RESOURCE.getString(DriverResource.VERSION), Driver.class.getName(), "1.32, 08/01/25"));
                     return;
@@ -707,7 +708,9 @@ class Driver {
         // Report number of arguments consumed.
         args.subList(0, argp.nextIndex()).clear();
         // Report any unconsumed partial argument.
-        while (pbp.hasPrevious())  args.add(0, pbp.previous());
+        while (pbp.hasPrevious()) {
+            args.add(0, pbp.previous());
+        }
         //System.out.println(args+" // "+properties+" -> "+resultString);
         return resultString;
     }

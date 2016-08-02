@@ -31,7 +31,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.util.Date;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Pack200;
 import java.util.zip.CRC32;
@@ -95,13 +94,13 @@ class NativeUnpack {
     NativeUnpack(UnpackerImpl p200) {
 	super();
 	_p200  = p200;
-	_props = p200._props;
+        _props = p200.props;
 	p200._nunp = this;
     }
 
     // for JNI callbacks
     static private Object currentInstance() {
-	UnpackerImpl p200 = (UnpackerImpl) Utils.currentInstance.get();
+        UnpackerImpl p200 = (UnpackerImpl) Utils.getTLGlobals();
 	return (p200 == null)? null: p200._nunp;
     }
     
