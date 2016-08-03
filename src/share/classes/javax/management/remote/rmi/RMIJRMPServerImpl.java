@@ -227,17 +227,14 @@ public class RMIJRMPServerImpl extends RMIServerImpl {
             allowedTypes = credentialsTypes;
         }
 
-        @Override
         public String getVersion() throws RemoteException {
             return impl.getVersion();
         }
 
-        @Override
         public RMIConnection newClient(Object credentials) throws IOException {
             return impl.newClient(credentials);
         }
 
-        @Override
         public void check(Method method, ObjectStreamClass descriptor,
                 int paramIndex, int callID) {
 
@@ -247,7 +244,6 @@ public class RMIJRMPServerImpl extends RMIServerImpl {
             }
         }
 
-        @Override
         public void checkProxyClass(Method method, String[] ifaces,
                 int paramIndex, int callID) {
             if (ifaces != null && ifaces.length > 0) {
@@ -259,7 +255,6 @@ public class RMIJRMPServerImpl extends RMIServerImpl {
             }
         }
 
-        @Override
         public void end(int callID) {
             /* Do nothing */
         }

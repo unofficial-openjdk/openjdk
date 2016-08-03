@@ -236,7 +236,6 @@ public final class JmxMBeanServer
         final MBeanInstantiator fInstantiator = instantiator;
         this.secureClr = new
             SecureClassLoaderRepository(AccessController.doPrivileged(new PrivilegedAction<ClassLoaderRepository>() {
-                @Override
                 public ClassLoaderRepository run() {
                     return fInstantiator.getClassLoaderRepository();
                 }
@@ -1257,7 +1256,6 @@ public final class JmxMBeanServer
         ClassLoader myLoader = outerShell.getClass().getClassLoader();
         final ModifiableClassLoaderRepository loaders = AccessController.doPrivileged(new PrivilegedAction<ModifiableClassLoaderRepository>() {
 
-            @Override
             public ModifiableClassLoaderRepository run() {
                 return instantiator.getClassLoaderRepository();
             }

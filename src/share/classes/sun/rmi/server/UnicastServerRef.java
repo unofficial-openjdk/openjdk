@@ -630,12 +630,10 @@ public class UnicastServerRef extends UnicastRef
             this.callID = callID;
         }
 
-        @Override
         public void validateDescriptor(ObjectStreamClass descriptor) {
             descriptorCheck.check(method, descriptor, parameterIndex, callID);
         }
 
-        @Override
         public void checkProxyInterfaceNames(String[] ifaces) {
             descriptorCheck.checkProxyClass(method, ifaces, parameterIndex, callID);
         }

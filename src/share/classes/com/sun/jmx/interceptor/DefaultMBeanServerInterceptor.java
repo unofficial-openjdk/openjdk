@@ -1870,7 +1870,6 @@ public class DefaultMBeanServerInterceptor implements MBeanServerInterceptor {
 
     private ModifiableClassLoaderRepository getInstantiatorCLR() {
         return AccessController.doPrivileged(new PrivilegedAction<ModifiableClassLoaderRepository>() {
-            @Override
             public ModifiableClassLoaderRepository run() {
                 return instantiator != null ? instantiator.getClassLoaderRepository() : null;
             }

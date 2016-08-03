@@ -133,7 +133,6 @@ public abstract class Transport {
      */
     private static void setContextClassLoader(final ClassLoader ccl) {
         AccessController.doPrivileged(new PrivilegedAction<Void> () {
-                @Override
                 public Void run() {
                     Thread.currentThread().setContextClassLoader(ccl);
                     return null;

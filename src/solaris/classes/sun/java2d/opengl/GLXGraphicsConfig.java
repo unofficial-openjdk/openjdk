@@ -92,7 +92,6 @@ public class GLXGraphicsConfig
         return this;
     }
 
-    @Override
     public SurfaceData createManagedSurface(int w, int h, int transparency) {
         return GLXSurfaceData.createData(this, w, h,
                                          getColorModel(transparency),
@@ -165,12 +164,10 @@ public class GLXGraphicsConfig
      * Returns true if the provided capability bit is present for this config.
      * See OGLContext.java for a list of supported capabilities.
      */
-    @Override
     public final boolean isCapPresent(int cap) {
         return ((oglCaps.getCaps() & cap) != 0);
     }
 
-    @Override
     public final long getNativeConfigInfo() {
         return pConfigInfo;
     }
@@ -180,7 +177,6 @@ public class GLXGraphicsConfig
      *
      * @see sun.java2d.pipe.hw.BufferedContextProvider#getContext
      */
-    @Override
     public final OGLContext getContext() {
         return context;
     }
@@ -394,7 +390,6 @@ public class GLXGraphicsConfig
      *
      * @see sun.java2d.pipe.hw.AccelGraphicsConfig#createCompatibleVolatileImage
      */
-    @Override
     public VolatileImage
         createCompatibleVolatileImage(int width, int height,
                                       int transparency, int type)
@@ -434,17 +429,14 @@ public class GLXGraphicsConfig
      *
      * @see sun.java2d.pipe.hw.AccelGraphicsConfig#getContextCapabilities
      */
-    @Override
     public ContextCapabilities getContextCapabilities() {
         return oglCaps;
     }
 
-    @Override
     public void addDeviceEventListener(AccelDeviceEventListener l) {
         AccelDeviceEventNotifier.addListener(l, screen.getScreen());
     }
 
-    @Override
     public void removeDeviceEventListener(AccelDeviceEventListener l) {
         AccelDeviceEventNotifier.removeListener(l);
     }

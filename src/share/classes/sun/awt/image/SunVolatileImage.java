@@ -262,7 +262,6 @@ public class SunVolatileImage extends VolatileImage
      *
      * @see sun.java2d.DestSurfaceProvider#getDestSurface
      */
-    @Override
     public Surface getDestSurface() {
         return volSurfaceManager.getPrimarySurfaceData();
     }

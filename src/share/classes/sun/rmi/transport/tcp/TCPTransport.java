@@ -676,7 +676,6 @@ public class TCPTransport extends Transport {
                           connectionCount.incrementAndGet() +
                           ")-" + remoteHost);
                 AccessController.doPrivileged(new PrivilegedAction<Void>() {
-                    @Override
                     public Void run() {
                         run0();
                         return null;

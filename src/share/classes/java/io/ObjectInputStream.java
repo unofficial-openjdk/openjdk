@@ -3571,7 +3571,6 @@ public class ObjectInputStream
     }
     static {
         SharedSecrets.setJavaObjectInputStreamAccess(new JavaObjectInputStreamAccess() {
-            @Override
             public void setValidator(ObjectInputStream ois, ObjectStreamClassValidator validator) {
                 ObjectInputStream.setValidator(ois, validator);
             }

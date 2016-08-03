@@ -160,7 +160,6 @@ final class Platform {
         try {
             // load the main library
             AccessController.doPrivileged(new PrivilegedAction<Void>() {
-                @Override
                 public Void run() {
                     System.loadLibrary(libNameMain);
                     return null;
@@ -182,7 +181,6 @@ final class Platform {
             final String lib = st.nextToken();
             try {
                 AccessController.doPrivileged(new PrivilegedAction<Void>() {
-                    @Override
                     public Void run() {
                         System.loadLibrary(lib);
                         return null;
