@@ -1893,7 +1893,7 @@ class BandStructure {
 	return testBit(archiveOptions, mask);
     }
 
-    protected List getPredefinedAttrs(int ctype) {
+    protected List<Attribute.Layout> getPredefinedAttrs(int ctype) {
 	assert(attrIndexLimit[ctype] != 0);
         List<Attribute.Layout> res =
 	    new ArrayList<Attribute.Layout>(attrIndexLimit[ctype]);
@@ -2651,7 +2651,7 @@ class BandStructure {
 
     // Utilities for reallocating:
     protected static Object[] realloc(Object[] a, int len) {
-	java.lang.Class elt = a.getClass().getComponentType();
+        java.lang.Class<?> elt = a.getClass().getComponentType();
 	Object[] na = (Object[]) java.lang.reflect.Array.newInstance(elt, len);
 	System.arraycopy(a, 0, na, 0, Math.min(a.length, len));
 	return na;

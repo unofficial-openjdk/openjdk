@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,7 +52,7 @@ class ClassReader {
     long inPos;
     DataInputStream in;
     Map<Attribute.Layout, Attribute> attrDefs;
-    Map attrCommands;
+    Map<Attribute.Layout, String> attrCommands;
     String unknownAttrCommand = "error";;
 
     ClassReader(Class cls, InputStream in) throws IOException {
@@ -82,7 +82,7 @@ class ClassReader {
         this.attrDefs = attrDefs;
     }
 
-    public void setAttrCommands(Map attrCommands) {
+    public void setAttrCommands(Map<Attribute.Layout, String> attrCommands) {
         this.attrCommands = attrCommands;
     }
 
@@ -346,8 +346,8 @@ class ClassReader {
             int length = readInt();
             // See if there is a special command that applies.
             if (attrCommands != null) {
-                Object lkey = Attribute.keyForLookup(ctype, name);
-                String cmd = (String) attrCommands.get(lkey);
+                Attribute.Layout lkey = Attribute.keyForLookup(ctype, name);
+                String cmd = attrCommands.get(lkey);
 		if ("pass".equals(cmd)) {
 		    String message1 = "passing attribute bitwise in " + h;
 		    throw new Attribute.FormatException(message1, ctype, name, cmd);

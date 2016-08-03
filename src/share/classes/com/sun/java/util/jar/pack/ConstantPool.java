@@ -73,7 +73,7 @@ class ConstantPool {
 	return e;
     }
     /** Factory for literal constants (String, Integer, etc.). */
-    public static synchronized LiteralEntry getLiteralEntry(Comparable value) {
+    public static synchronized LiteralEntry getLiteralEntry(Comparable<?> value) {
         Map<Object, LiteralEntry> literalEntries = Utils.getLiteralEntries();
         LiteralEntry e = literalEntries.get(value);
 	if (e == null) {
@@ -141,7 +141,7 @@ class ConstantPool {
 
     /** Entries in the constant pool. */
     public static abstract
-    class Entry implements Comparable {
+    class Entry implements Comparable<Object> {
 	protected final byte tag;	// a CONSTANT_foo code
 	protected int valueHash;	// cached hashCode
 
@@ -258,7 +258,7 @@ class ConstantPool {
 	    super(tag);
 	}
 
-	public abstract Comparable literalValue();
+        public abstract Comparable<?> literalValue();
     }
 
     public static
@@ -281,15 +281,17 @@ class ConstantPool {
 	public int compareTo(Object o) {
 	    int x = superCompareTo(o);
 	    if (x == 0) {
-		x = ((Comparable)value).compareTo(((NumberEntry)o).value);
+                @SuppressWarnings("unchecked")
+                Comparable<Number> compValue = (Comparable<Number>)value;
+                x = compValue.compareTo(((NumberEntry)o).value);
 	    }
 	    return x;
 	}
 	public Number numberValue() {
 	    return value;
 	}
-	public Comparable literalValue() {
-	    return (Comparable) value;
+        public Comparable<?> literalValue() {
+            return (Comparable<?>) value;
 	}
 	public String stringValue() {
 	    return value.toString();
@@ -320,7 +322,7 @@ class ConstantPool {
 	    }
 	    return x;
 	}
-	public Comparable literalValue() {
+        public Comparable<?> literalValue() {
 	    return ref.stringValue();
 	}
 	public String stringValue() {
@@ -729,7 +731,7 @@ class ConstantPool {
 
     /** An Index is a mapping between CP entries and small integers. */
     public static final
-    class Index extends AbstractList {
+    class Index extends AbstractList<Entry> {
 	protected String debugName;
 	protected Entry[] cpMap;
 	protected boolean flattenSigs;
@@ -759,7 +761,7 @@ class ConstantPool {
 	public int size() {
 	    return cpMap.length;
 	}
-	public Object get(int i) {
+        public Entry get(int i) {
 	    return cpMap[i];
 	}
 	public Entry getEntry(int i) {
@@ -804,13 +806,7 @@ class ConstantPool {
 	    assert(index >= 0);
 	    return index;
 	}
-	public boolean contains(Object e) {
-	    return findIndexOf((Entry)e) >= 0;
-	}
-	public int indexOf(Object e) {
-	    return findIndexOf((Entry)e);
-	}
-	public int lastIndexOf(Object e) {
+        public int lastIndexOf(Entry e) {
 	    return indexOf(e);
 	}
 
@@ -863,14 +859,14 @@ class ConstantPool {
 		indexValue[probe] = i;
 	    }
 	}
-	public Object[] toArray(Object[] a) {
+        public Entry[] toArray(Entry[] a) {
 	    int sz = size();
 	    if (a.length < sz)  return super.toArray(a);
 	    System.arraycopy(cpMap, 0, a, 0, sz);
 	    if (a.length > sz)  a[sz] = null;
 	    return a;
 	}
-	public Object[] toArray() {
+        public Entry[] toArray() {
 	    return toArray(new Entry[size()]);
 	}
 	public Object clone() {

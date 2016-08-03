@@ -70,8 +70,7 @@ public class PackerImpl  extends TLGlobals implements Pack200.Packer {
      * Get the set of options for the pack and unpack engines.
      * @return A sorted association of option key strings to option values.
      */
-    @SuppressWarnings("unchecked")
-    public SortedMap properties() {
+    public SortedMap<String, String> properties() {
         return props;
     }
 
@@ -159,7 +158,6 @@ public class PackerImpl  extends TLGlobals implements Pack200.Packer {
 
     // All the worker bees.....
     // The packer worker.
-    @SuppressWarnings("unchecked")
     private class DoPack {
         final int verbose = props.getInteger(Utils.DEBUG_VERBOSE);
 
@@ -203,9 +201,8 @@ public class PackerImpl  extends TLGlobals implements Pack200.Packer {
 	    };
 	    for (int i = 0; i < ctypes.length; i++) {
 		String pfx = keys[i];
-                Map<Object, Object> map = props.prefixMap(pfx);
-                for (Object k : map.keySet()) {
-                    String key = (String)k;
+                Map<String, String> map = props.prefixMap(pfx);
+                for (String key : map.keySet()) {
 		    assert(key.startsWith(pfx));
 		    String name = key.substring(pfx.length());
                     String layout = props.getProperty(key);
