@@ -80,7 +80,7 @@ public class ObjectStreamClass implements Serializable {
         NO_FIELDS;
 
     /** reflection factory for obtaining serialization constructors */
-    private static final ReflectionFactory reflFactory = (ReflectionFactory)
+    private static final ReflectionFactory reflFactory =
         AccessController.doPrivileged(
             new ReflectionFactory.GetReflectionFactoryAction());
 
@@ -222,10 +222,10 @@ public class ObjectStreamClass implements Serializable {
     public long getSerialVersionUID() {
         // REMIND: synchronize instead of relying on volatile?
         if (suid == null) {
-            suid = (Long) AccessController.doPrivileged(
-                new PrivilegedAction() {
-                    public Object run() {
-                        return Long.valueOf(computeDefaultSUID(cl));
+            suid = AccessController.doPrivileged(
+                new PrivilegedAction<Long>() {
+                    public Long run() {
+                        return computeDefaultSUID(cl);
                     }
                 }
             );
@@ -409,8 +409,8 @@ public class ObjectStreamClass implements Serializable {
             }
             if (interrupted) {
                 AccessController.doPrivileged(
-                    new PrivilegedAction() {
-                        public Object run() {
+                    new PrivilegedAction<Void>() {
+                        public Void run() {
                             Thread.currentThread().interrupt();
                             return null;
                         }
@@ -444,8 +444,8 @@ public class ObjectStreamClass implements Serializable {
         localDesc = this;
 
         if (serializable) {
-            AccessController.doPrivileged(new PrivilegedAction() {
-                public Object run() {
+            AccessController.doPrivileged(new PrivilegedAction<Void>() {
+                public Void run() {
                     if (isEnum) {
                         suid = Long.valueOf(0);
                         fields = NO_FIELDS;
@@ -838,7 +838,7 @@ public class ObjectStreamClass implements Serializable {
      * non-primitive types, and any other non-null type matches assignable
      * types only.  Returns matching field, or null if no match found.
      */
-    ObjectStreamField getField(String name, Class type) {
+    ObjectStreamField getField(String name, Class<?> type) {
         for (int i = 0; i < fields.length; i++) {
             ObjectStreamField f = fields[i];
             if (f.getName().equals(name)) {
@@ -847,7 +847,7 @@ public class ObjectStreamClass implements Serializable {
                 {
                     return f;
                 }
-                Class ftype = f.getType();
+                Class<?> ftype = f.getType();
                 if (ftype != null && type.isAssignableFrom(ftype)) {
                     return f;
                 }
@@ -1184,7 +1184,7 @@ public class ObjectStreamClass implements Serializable {
     private ClassDataSlot[] getClassDataLayout0()
         throws InvalidClassException
     {
-        ArrayList slots = new ArrayList();
+        ArrayList<ClassDataSlot> slots = new ArrayList<ClassDataSlot>();
         Class start = cl, end = cl;
 
         // locate closest non-serializable superclass
@@ -1232,8 +1232,7 @@ public class ObjectStreamClass implements Serializable {
 
         // order slots from superclass -> subclass
         Collections.reverse(slots);
-        return (ClassDataSlot[])
-            slots.toArray(new ClassDataSlot[slots.size()]);
+        return slots.toArray(new ClassDataSlot[slots.size()]);
     }
 
     /**
@@ -1370,9 +1369,9 @@ public class ObjectStreamClass implements Serializable {
      * Access checks are disabled on the returned constructor (if any), since
      * the defining class may still be non-public.
      */
-    private static Constructor getExternalizableConstructor(Class cl) {
+    private static Constructor getExternalizableConstructor(Class<?> cl) {
         try {
-            Constructor cons = cl.getDeclaredConstructor((Class[]) null);
+            Constructor cons = cl.getDeclaredConstructor((Class<?>[]) null);
             cons.setAccessible(true);
             return ((cons.getModifiers() & Modifier.PUBLIC) != 0) ?
                 cons : null;
@@ -1386,15 +1385,15 @@ public class ObjectStreamClass implements Serializable {
      * superclass, or null if none found.  Access checks are disabled on the
      * returned constructor (if any).
      */
-    private static Constructor getSerializableConstructor(Class cl) {
-        Class initCl = cl;
+    private static Constructor getSerializableConstructor(Class<?> cl) {
+        Class<?> initCl = cl;
         while (Serializable.class.isAssignableFrom(initCl)) {
             if ((initCl = initCl.getSuperclass()) == null) {
                 return null;
             }
         }
         try {
-            Constructor cons = initCl.getDeclaredConstructor((Class[]) null);
+            Constructor cons = initCl.getDeclaredConstructor((Class<?>[]) null);
             int mods = cons.getModifiers();
             if ((mods & Modifier.PRIVATE) != 0 ||
                 ((mods & (Modifier.PUBLIC | Modifier.PROTECTED)) == 0 &&
@@ -1416,12 +1415,12 @@ public class ObjectStreamClass implements Serializable {
      * null if no match found.  Access checks are disabled on the returned
      * method (if any).
      */
-    private static Method getInheritableMethod(Class cl, String name,
+    private static Method getInheritableMethod(Class<?> cl, String name,
                                                Class[] argTypes,
                                                Class returnType)
     {
         Method meth = null;
-        Class defCl = cl;
+        Class<?> defCl = cl;
         while (defCl != null) {
             try {
                 meth = defCl.getDeclaredMethod(name, argTypes);
@@ -1452,9 +1451,9 @@ public class ObjectStreamClass implements Serializable {
      * class, or null if none found.  Access checks are disabled on the
      * returned method (if any).
      */
-    private static Method getPrivateMethod(Class cl, String name,
-                                           Class[] argTypes,
-                                           Class returnType)
+    private static Method getPrivateMethod(Class<?> cl, String name,
+                                           Class<?>[] argTypes,
+                                           Class<?> returnType)
     {
         try {
             Method meth = cl.getDeclaredMethod(name, argTypes);
@@ -1628,7 +1627,7 @@ public class ObjectStreamClass implements Serializable {
 
         ObjectStreamField[] boundFields =
             new ObjectStreamField[serialPersistentFields.length];
-        Set fieldNames = new HashSet(serialPersistentFields.length);
+        Set<String> fieldNames = new HashSet<String>(serialPersistentFields.length);
 
         for (int i = 0; i < serialPersistentFields.length; i++) {
             ObjectStreamField spf = serialPersistentFields[i];
@@ -1666,7 +1665,7 @@ public class ObjectStreamClass implements Serializable {
      */
     private static ObjectStreamField[] getDefaultSerialFields(Class cl) {
         Field[] clFields = cl.getDeclaredFields();
-        ArrayList list = new ArrayList();
+        ArrayList<ObjectStreamField> list = new ArrayList<ObjectStreamField>();
         int mask = Modifier.STATIC | Modifier.TRANSIENT;
 
         for (int i = 0; i < clFields.length; i++) {
@@ -1676,7 +1675,7 @@ public class ObjectStreamClass implements Serializable {
         }
         int size = list.size();
         return (size == 0) ? NO_FIELDS :
-            (ObjectStreamField[]) list.toArray(new ObjectStreamField[size]);
+            list.toArray(new ObjectStreamField[size]);
     }
 
     /**
@@ -1749,11 +1748,9 @@ public class ObjectStreamClass implements Serializable {
             for (int i = 0; i < fields.length; i++) {
                 fieldSigs[i] = new MemberSignature(fields[i]);
             }
-            Arrays.sort(fieldSigs, new Comparator() {
-                public int compare(Object o1, Object o2) {
-                    String name1 = ((MemberSignature) o1).name;
-                    String name2 = ((MemberSignature) o2).name;
-                    return name1.compareTo(name2);
+            Arrays.sort(fieldSigs, new Comparator<MemberSignature>() {
+                public int compare(MemberSignature ms1, MemberSignature ms2) {
+                    return ms1.name.compareTo(ms2.name);
                 }
             });
             for (int i = 0; i < fieldSigs.length; i++) {
@@ -1782,11 +1779,9 @@ public class ObjectStreamClass implements Serializable {
             for (int i = 0; i < cons.length; i++) {
                 consSigs[i] = new MemberSignature(cons[i]);
             }
-            Arrays.sort(consSigs, new Comparator() {
-                public int compare(Object o1, Object o2) {
-                    String sig1 = ((MemberSignature) o1).signature;
-                    String sig2 = ((MemberSignature) o2).signature;
-                    return sig1.compareTo(sig2);
+            Arrays.sort(consSigs, new Comparator<MemberSignature>() {
+                public int compare(MemberSignature ms1, MemberSignature ms2) {
+                    return ms1.signature.compareTo(ms2.signature);
                 }
             });
             for (int i = 0; i < consSigs.length; i++) {
@@ -1807,10 +1802,8 @@ public class ObjectStreamClass implements Serializable {
             for (int i = 0; i < methods.length; i++) {
                 methSigs[i] = new MemberSignature(methods[i]);
             }
-            Arrays.sort(methSigs, new Comparator() {
-                public int compare(Object o1, Object o2) {
-                    MemberSignature ms1 = (MemberSignature) o1;
-                    MemberSignature ms2 = (MemberSignature) o2;
+            Arrays.sort(methSigs, new Comparator<MemberSignature>() {
+                public int compare(MemberSignature ms1, MemberSignature ms2) {
                     int comp = ms1.name.compareTo(ms2.name);
                     if (comp == 0) {
                         comp = ms1.signature.compareTo(ms2.signature);
@@ -1923,7 +1916,7 @@ public class ObjectStreamClass implements Serializable {
             writeKeys = new long[nfields]; 
             offsets = new int[nfields];
             typeCodes = new char[nfields];
-            ArrayList typeList = new ArrayList();
+            ArrayList<Class<?>> typeList = new ArrayList<Class<?>>();
             Set<Long> usedKeys = new HashSet<Long>();
 
             for (int i = 0; i < nfields; i++) {
@@ -1941,7 +1934,7 @@ public class ObjectStreamClass implements Serializable {
                 }
             }
 
-            types = (Class[]) typeList.toArray(new Class[typeList.size()]);
+            types = typeList.toArray(new Class<?>[typeList.size()]);
             numPrimFields = nfields - types.length;
         }
 

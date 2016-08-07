@@ -194,8 +194,8 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
 
     static {
         maxRedirects = java.security.AccessController.doPrivileged(
-                new sun.security.action.GetIntegerAction("http.maxRedirects",
-                defaultmaxRedirects)).intValue();
+            new sun.security.action.GetIntegerAction(
+                "http.maxRedirects", defaultmaxRedirects)).intValue();
         version = java.security.AccessController.doPrivileged(
                     new sun.security.action.GetPropertyAction("java.version"));
         String agent = java.security.AccessController.doPrivileged(
@@ -1130,12 +1130,15 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
                 if (HttpCapture.isLoggable("FINEST")) {
                     HttpCapture.finest("CookieHandler request for " + uri);
                 }
-                Map<String, List<String>> cookies = cookieHandler.get(uri, requests.getHeaders(EXCLUDE_HEADERS));
+                Map<String, List<String>> cookies
+                    = cookieHandler.get(
+                        uri, requests.getHeaders(EXCLUDE_HEADERS));
                 if (!cookies.isEmpty()) {
                     if (HttpCapture.isLoggable("FINEST")) {
                         HttpCapture.finest("Cookies retrieved: " + cookies.toString());
                     }
-                    for (Map.Entry<String, List<String>> entry : cookies.entrySet()) {
+                    for (Map.Entry<String, List<String>> entry :
+                             cookies.entrySet()) {
                         String key = entry.getKey();
                         // ignore all entries that don't have "Cookie"
                         // or "Cookie2" as keys
@@ -1532,23 +1535,20 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
      * original exception and with the same message. Right now,
      * there is no convenient APIs for doing so.
      */
-    private IOException getChainedException(IOException rememberedException) {
+    private IOException getChainedException(final IOException rememberedException) {
         try {
-            final IOException originalException = rememberedException;
-            final Class[] cls = new Class[1];
-            cls[0] = String.class;
-            final String[] args = new String[1];
-            args[0] = originalException.getMessage();
-            IOException chainedException = 
-                java.security.AccessController.doPrivileged
-                (new java.security.PrivilegedExceptionAction<IOException>() {
-                        public IOException run()
-                            throws Exception {
-                            Constructor ctr = originalException.getClass().getConstructor(cls);
-                            return (IOException)ctr.newInstance((Object[])args);
+            final Object[] args = { rememberedException.getMessage() };
+            IOException chainedException =
+                java.security.AccessController.doPrivileged(
+                    new java.security.PrivilegedExceptionAction<IOException>() {
+                        public IOException run() throws Exception {
+                            return (IOException)
+                                rememberedException.getClass()
+                                .getConstructor(new Class[] { String.class })
+                                .newInstance(args);
                         }
                     });
-            chainedException.initCause(originalException);
+            chainedException.initCause(rememberedException);
             return chainedException;
         } catch (Exception ignored) {
             return rememberedException;
@@ -2388,7 +2388,7 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
      * @since 1.4
      */
     @Override
-    public Map getHeaderFields() {
+    public Map<String, List<String>> getHeaderFields() {
         try {
             getInputStream();
         } catch (IOException e) {}
@@ -2518,7 +2518,7 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
      * @since 1.4
      */
     @Override
-    public synchronized Map getRequestProperties() {
+    public synchronized Map<String, List<String>> getRequestProperties() {
         if (connected)
             throw new IllegalStateException("Already connected");
 
@@ -2615,20 +2615,15 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
         return method;
     }
 
-    private MessageHeader mapToMessageHeader(Map map) {
+    private MessageHeader mapToMessageHeader(Map<String, List<String>> map) {
         MessageHeader headers = new MessageHeader();
         if (map == null || map.isEmpty()) {
             return headers;
         }
-        Set entries = map.entrySet();
-        Iterator itr1 = entries.iterator();
-        while (itr1.hasNext()) {
-            Map.Entry entry = (Map.Entry)itr1.next();
-            String key = (String)entry.getKey();
-            List values = (List)entry.getValue();
-            Iterator itr2 = values.iterator();
-            while (itr2.hasNext()) {
-                String value = (String)itr2.next();
+        for (Map.Entry<String, List<String>> entry : map.entrySet()) {
+            String key = entry.getKey();
+            List<String> values = entry.getValue();
+            for (String value : values) {
                 if (key == null) {
                     headers.prepend(key, value);
                 } else {

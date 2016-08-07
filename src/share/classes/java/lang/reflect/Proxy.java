@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.List;
 import java.util.WeakHashMap;
 import sun.misc.ProxyGenerator;
 import sun.reflect.CallerSensitive;
@@ -237,7 +238,8 @@ public class Proxy implements java.io.Serializable {
         { InvocationHandler.class };
 
     /** maps a class loader to the proxy class cache for that loader */
-    private static Map loaderToCache = new WeakHashMap();
+    private static Map<ClassLoader, Map<List<String>, Object>> loaderToCache
+        = new WeakHashMap<ClassLoader, Map<List<String>, Object>>();
 
     /** marks that a particular proxy class is currently being generated */
     private static Object pendingGenerationMarker = new Object();
@@ -247,8 +249,8 @@ public class Proxy implements java.io.Serializable {
     private static Object nextUniqueNumberLock = new Object();
 
     /** set of all generated proxy classes, for isProxyClass implementation */
-    private static Map proxyClasses =
-        Collections.synchronizedMap(new WeakHashMap());
+    private static Map<Class<?>, Void> proxyClasses =
+        Collections.synchronizedMap(new WeakHashMap<Class<?>, Void>());
 
     /**
      * the invocation handler for this proxy instance.
@@ -468,7 +470,8 @@ public class Proxy implements java.io.Serializable {
         /* collect interface names to use as key for proxy class cache */
         String[] interfaceNames = new String[interfaces.length];
 
-        Set interfaceSet = new HashSet();       // for detecting duplicates
+        // for detecting duplicates
+        Set<Class<?>> interfaceSet = new HashSet<Class<?>>();
 
         for (int i = 0; i < interfaces.length; i++) {
             /*
@@ -516,16 +519,16 @@ public class Proxy implements java.io.Serializable {
          * representation of a class makes for an implicit weak
          * reference to the class.
          */
-        Object key = Arrays.asList(interfaceNames);
+        List<String> key = Arrays.asList(interfaceNames);
 
         /*
          * Find or create the proxy class cache for the class loader.
          */
-        Map cache;
+        Map<List<String>, Object> cache;
         synchronized (loaderToCache) {
-            cache = (Map) loaderToCache.get(loader);
+            cache = loaderToCache.get(loader);
             if (cache == null) {
-                cache = new HashMap();
+                cache = new HashMap<List<String>, Object>();
                 loaderToCache.put(loader, cache);
             }
             /*
@@ -557,7 +560,7 @@ public class Proxy implements java.io.Serializable {
             do {
                 Object value = cache.get(key);
                 if (value instanceof Reference) {
-                    proxyClass = (Class) ((Reference) value).get();
+                    proxyClass = (Class<?>) ((Reference) value).get();
                 }
                 if (proxyClass != null) {
                     // proxy class already generated: return it
@@ -660,7 +663,7 @@ public class Proxy implements java.io.Serializable {
              */
             synchronized (cache) {
                 if (proxyClass != null) {
-                    cache.put(key, new WeakReference(proxyClass));
+                    cache.put(key, new WeakReference<Class<?>>(proxyClass));
                 } else {
                     cache.remove(key);
                 }

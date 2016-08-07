@@ -229,8 +229,9 @@ class ServerSocket {
         // SocketImpl.connect() is a protected method, therefore we need to use
         // getDeclaredMethod, therefore we need permission to access the member
         try {
-            AccessController.doPrivileged(new PrivilegedExceptionAction() {
-                    public Object run() throws NoSuchMethodException {
+            AccessController.doPrivileged(
+                new PrivilegedExceptionAction<Void>() {
+                    public Void run() throws NoSuchMethodException {
                         Class[] cl = new Class[2];
                         cl[0] = SocketAddress.class;
                         cl[1] = Integer.TYPE;

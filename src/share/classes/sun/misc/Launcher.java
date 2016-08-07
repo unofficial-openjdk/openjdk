@@ -136,9 +136,9 @@ public class Launcher {
                 // aa synthesized ACC via a call to the private method
                 // ExtClassLoader.getContext().
 
-                return (ExtClassLoader) AccessController.doPrivileged(
-                     new PrivilegedExceptionAction() {
-                        public Object run() throws IOException {
+                return AccessController.doPrivileged(
+                    new PrivilegedExceptionAction<ExtClassLoader>() {
+                        public ExtClassLoader run() throws IOException {
                             int len = dirs.length;
                             for (int i = 0; i < len; i++) {
                                 MetaIndex.registerDirectory(dirs[i]);
@@ -181,7 +181,7 @@ public class Launcher {
         }
 
         private static URL[] getExtURLs(File[] dirs) throws IOException {
-            Vector urls = new Vector();
+            Vector<URL> urls = new Vector<URL>();
             for (int i = 0; i < dirs.length; i++) {
                 String[] files = dirs[i].list();
                 if (files != null) {
@@ -263,9 +263,9 @@ public class Launcher {
             // when loading  classes. Specifically it prevent
             // accessClassInPackage.sun.* grants from being honored.
             //
-            return (AppClassLoader)
-                AccessController.doPrivileged(new PrivilegedAction() {
-                public Object run() {
+            return AccessController.doPrivileged(
+                new PrivilegedAction<AppClassLoader>() {
+                    public AppClassLoader run() {
                     URL[] urls =
                         (s == null) ? new URL[0] : pathToURLs(path);
                     return new AppClassLoader(urls, extcl);
@@ -354,7 +354,7 @@ public class Launcher {
                     public URL[] run() {
 			File[] classPath = getClassPath(bootClassPath);
                         int len = classPath.length;
-                        Set seenDirs = new HashSet();
+                        Set<File> seenDirs = new HashSet<File>();
                         for (int i = 0; i < len; i++) {
                             File curEntry = classPath[i];
                             // Negative test used to properly handle
@@ -514,8 +514,8 @@ class PathPermissions extends PermissionCollection {
         perms.add(new java.util.PropertyPermission("java.*",
             SecurityConstants.PROPERTY_READ_ACTION));
 
-        AccessController.doPrivileged(new PrivilegedAction() {
-            public Object run() {
+        AccessController.doPrivileged(new PrivilegedAction<Void>() {
+            public Void run() {
                 for (int i=0; i < path.length; i++) {
                     File f = path[i];
                     String path;
@@ -558,7 +558,7 @@ class PathPermissions extends PermissionCollection {
         return perms.implies(permission);
     }
 
-    public java.util.Enumeration elements() {
+    public java.util.Enumeration<Permission> elements() {
         if (perms == null)
             init();
         synchronized (perms) {

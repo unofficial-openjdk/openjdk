@@ -3024,8 +3024,8 @@ public final
     private static boolean initted = false;
     private static void checkInitted() {
         if (initted) return;
-        AccessController.doPrivileged(new PrivilegedAction() {
-                public Object run() {
+        AccessController.doPrivileged(new PrivilegedAction<Void>() {
+                public Void run() {
                     // Tests to ensure the system properties table is fully
                     // initialized. This is needed because reflection code is
                     // called very early in the initialization process (before
