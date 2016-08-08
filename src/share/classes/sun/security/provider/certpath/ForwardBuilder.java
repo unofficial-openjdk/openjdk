@@ -212,6 +212,11 @@ class ForwardBuilder extends Builder {
         X509CertSelector sel = null;
 
         if (currentState.isInitial()) {
+            if (targetCertConstraints.getBasicConstraints() == -2) {
+                // no need to continue: this means we never can match a CA cert
+                return;
+            }
+
             /* This means a CA is the target, so match on same stuff as
              * getMatchingEECerts
              */
