@@ -30,8 +30,6 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URLConnection;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
@@ -121,34 +119,9 @@ class URICertStore extends CertStoreSpi {
 
     // true if URI is ldap
     private boolean ldap = false;
+    private CertStoreHelper ldapHelper;
     private CertStore ldapCertStore;
     private String ldapPath;
-
-    /**
-     * Holder class to lazily load LDAPCertStoreHelper if present.
-     */
-    private static class LDAP {
-        private static final String CERT_STORE_HELPER =
-            "sun.security.provider.certpath.ldap.LDAPCertStoreHelper";
-        private static final CertStoreHelper helper =
-            AccessController.doPrivileged(
-                new PrivilegedAction<CertStoreHelper>() {
-                    public CertStoreHelper run() {
-                        try {
-                            Class<?> c = Class.forName(CERT_STORE_HELPER, true, null);
-                            return (CertStoreHelper)c.newInstance();
-                        } catch (ClassNotFoundException cnf) {
-                            return null;
-                        } catch (InstantiationException e) {
-                            throw new AssertionError(e);
-                        } catch (IllegalAccessException e) {
-                            throw new AssertionError(e);
-                        }
-                    }});
-        static CertStoreHelper helper() {
-            return helper;
-        }
-    }
 
     // Default maximum connect timeout in milliseconds (15 seconds)
     // allowed when downloading CRLs
@@ -192,10 +165,9 @@ class URICertStore extends CertStoreSpi {
         this.uri = ((URICertStoreParameters) params).uri;
         // if ldap URI, use an LDAPCertStore to fetch certs and CRLs
         if (uri.getScheme().toLowerCase(Locale.ENGLISH).equals("ldap")) {
-            if (LDAP.helper() == null)
-                throw new NoSuchAlgorithmException("LDAP not present");
             ldap = true;
-            ldapCertStore = LDAP.helper().getCertStore(uri);
+            ldapHelper = CertStoreHelper.getInstance("LDAP");
+            ldapCertStore = ldapHelper.getCertStore(uri);
             ldapPath = uri.getPath();
             // strip off leading '/'
             if (ldapPath.charAt(0) == '/') {
@@ -279,7 +251,7 @@ class URICertStore extends CertStoreSpi {
         if (ldap) {
             X509CertSelector xsel = (X509CertSelector) selector;
             try {
-                xsel = LDAP.helper().wrap(xsel, xsel.getSubject(), ldapPath);
+                xsel = ldapHelper.wrap(xsel, xsel.getSubject(), ldapPath);
             } catch (IOException ioe) {
                 throw new CertStoreException(ioe);
             }
@@ -402,7 +374,7 @@ class URICertStore extends CertStoreSpi {
         if (ldap) {
             X509CRLSelector xsel = (X509CRLSelector) selector;
             try {
-                xsel = LDAP.helper().wrap(xsel, null, ldapPath);
+                xsel = ldapHelper.wrap(xsel, null, ldapPath);
             } catch (IOException ioe) {
                 throw new CertStoreException(ioe);
             }
