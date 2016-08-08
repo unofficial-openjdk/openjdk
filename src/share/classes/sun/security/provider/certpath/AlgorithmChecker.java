@@ -270,7 +270,7 @@ final public class AlgorithmChecker extends PKIXCertPathChecker {
                 // Inherit DSA parameters from previous key
                 if (!(prevPubKey instanceof DSAPublicKey)) {
                     throw new CertPathValidatorException("Input key is not " +
-                         "of a appropriate type for inheriting parameters");
+                        "of a appropriate type for inheriting parameters");
                 }
 
                 DSAParams params = ((DSAPublicKey)prevPubKey).getParams();

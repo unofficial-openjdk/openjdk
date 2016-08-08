@@ -48,6 +48,9 @@ import javax.security.auth.x500.X500Principal;
 import sun.security.action.GetBooleanSecurityPropertyAction;
 import sun.security.util.Debug;
 
+import sun.security.x509.X509CertImpl;
+
+
 /**
  * This class implements the PKIX validation algorithm for certification
  * paths consisting exclusively of <code>X509Certificates</code>. It uses
@@ -163,6 +166,7 @@ public class PKIXCertPathValidator extends CertPathValidatorSpi {
                     debug.println("PKIXCertPathValidator.engineValidate() "
                         + "anchor.getTrustedCert() != null");
                 }
+
                 // if this trust anchor is not worth trying,
                 // we move on to the next one
                 if (!isWorthTrying(trustedCert, firstCert)) {
@@ -214,6 +218,9 @@ public class PKIXCertPathValidator extends CertPathValidatorSpi {
                                   X509Certificate firstCert)
         throws CertPathValidatorException
     {
+
+        boolean worthy = false;
+
         if (debug != null) {
             debug.println("PKIXCertPathValidator.isWorthTrying() checking "
                 + "if this trusted cert is worth trying ...");
@@ -223,19 +230,46 @@ public class PKIXCertPathValidator extends CertPathValidatorSpi {
             return true;
         }
 
-        // the subject of the trusted cert should match the
-        // issuer of the first cert in the certpath
+        AdaptableX509CertSelector issuerSelector =
+                        new AdaptableX509CertSelector();
 
-        X500Principal trustedSubject = trustedCert.getSubjectX500Principal();
-        if (trustedSubject.equals(firstCert.getIssuerX500Principal())) {
-            if (debug != null)
-                debug.println("YES - try this trustedCert");
-            return true;
-        } else {
-            if (debug != null)
-                debug.println("NO - don't try this trustedCert");
-            return false;
+        // check trusted certificate's key usage
+        boolean[] usages = trustedCert.getKeyUsage();
+        if (usages != null) {
+            usages[5] = true;    // keyCertSign
+            issuerSelector.setKeyUsage(usages);
         }
+
+        // check trusted certificate's subject
+        issuerSelector.setSubject(firstCert.getIssuerX500Principal());
+
+        // check the validity period
+        issuerSelector.setValidityPeriod(firstCert.getNotBefore(),
+                                                firstCert.getNotAfter());
+
+        /*
+         * Facilitate certification path construction with authority
+         * key identifier and subject key identifier.
+         */
+        try {
+            X509CertImpl firstCertImpl = X509CertImpl.toImpl(firstCert);
+            issuerSelector.parseAuthorityKeyIdentifierExtension(
+                        firstCertImpl.getAuthorityKeyIdentifierExtension());
+
+            worthy = issuerSelector.match(trustedCert);
+        } catch (Exception e) {
+            // It is not worth trying.
+        }
+
+        if (debug != null) {
+            if (worthy) {
+                debug.println("YES - try this trustedCert");
+            } else {
+                debug.println("NO - don't try this trustedCert");
+            }
+        }
+
+        return worthy;
     }
 
     /**
