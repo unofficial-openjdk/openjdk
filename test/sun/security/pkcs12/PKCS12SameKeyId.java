@@ -59,7 +59,7 @@ public class PKCS12SameKeyId {
         for (int i=0; i<SIZE; i++) {
             System.err.print(".");
             String cmd = "-keystore " + JKSFILE
-                    + " -storepass changeit -keypass changeit "
+                    + " -storepass changeit -keypass changeit -keyalg rsa "
                     + "-genkeypair -alias p" + i + " -dname CN=" + i;
             KeyTool.main(cmd.split(" "));
         }
