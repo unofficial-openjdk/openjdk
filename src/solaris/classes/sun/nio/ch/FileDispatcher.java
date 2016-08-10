@@ -36,7 +36,7 @@ class FileDispatcher extends NativeDispatcher
 {
 
     static {
-        Util.load();
+        IOUtil.load();
         init();
     }
 

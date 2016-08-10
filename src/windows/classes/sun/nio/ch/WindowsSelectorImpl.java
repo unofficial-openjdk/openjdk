@@ -583,6 +583,6 @@ final class WindowsSelectorImpl extends SelectorImpl {
     }
 
     static {
-        Util.load();
+        IOUtil.load();
     }
 }

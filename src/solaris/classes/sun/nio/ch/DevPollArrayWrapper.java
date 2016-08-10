@@ -279,6 +279,10 @@ class DevPollArrayWrapper {
     private native int poll0(long pollAddress, int numfds, long timeout,
                              int wfd);
     private static native void interrupt(int fd);
+
+    static {
+        IOUtil.load();
+    }
     private static native int fdLimit();
 
 }
