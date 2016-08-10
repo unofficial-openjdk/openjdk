@@ -158,6 +158,10 @@ class SystemProperty : public PathString {
   SystemProperty* next() const        { return _next; }
   void set_next(SystemProperty* next) { _next = next; }
 
+  bool is_readable() const {
+    return !_internal || strcmp(_key, "jdk.boot.class.path.append") == 0;
+  }
+
   // A system property should only have its value set
   // via an external interface if it is a writeable property.
   // The internal, non-writeable property jdk.boot.class.path.append
@@ -748,7 +752,9 @@ class Arguments : AllStatic {
                                       PropertyAppendable append, PropertyWriteable writeable,
                                       PropertyInternal internal);
   static const char* PropertyList_get_value(SystemProperty* plist, const char* key);
+  static const char* PropertyList_get_readable_value(SystemProperty* plist, const char* key);
   static int  PropertyList_count(SystemProperty* pl);
+  static int  PropertyList_readable_count(SystemProperty* pl);
   static const char* PropertyList_get_key_at(SystemProperty* pl,int index);
   static char* PropertyList_get_value_at(SystemProperty* pl,int index);
 

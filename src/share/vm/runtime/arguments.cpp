@@ -140,83 +140,6 @@ static bool match_option(const JavaVMOption *option, const char* name) {
   }
 }
 
-#define MODULE_PROPERTY_PREFIX "jdk.module"
-#define MODULE_PROPERTY_PREFIX_LEN 10
-#define ADDEXPORTS "addexports"
-#define ADDEXPORTS_LEN 10
-#define ADDREADS "addreads"
-#define ADDREADS_LEN 8
-#define PATCH "patch"
-#define PATCH_LEN 5
-#define ADDMODS "addmods"
-#define ADDMODS_LEN 7
-#define LIMITMODS "limitmods"
-#define LIMITMODS_LEN 9
-#define PATH "path"
-#define PATH_LEN 4
-#define UPGRADE_PATH "upgrade.path"
-#define UPGRADE_PATH_LEN 12
-
-// Return TRUE if option matches property.<digits> or matches property.<digits>=.
-static bool is_matching_numbered_property(const char* option, const char* property, size_t len) {
-  if (strncmp(option, property, len) == 0) {
-    // Check for digits.
-    const char* sptr = option + len;
-    if (isdigit(*sptr)) { // Make sure next char is a digit.
-      while (isdigit(*sptr)) {
-        sptr++;
-        if (*sptr == '=' || *sptr == '\0') {
-          return true;
-        }
-      }
-    }
-  }
-  return false;
-}
-
-// Return TRUE if option matches property or matches property=.
-static bool is_matching_property(const char* option, const char* property, size_t len) {
-  return (strncmp(option, property, len) == 0) && (option[len] == '=' || option[len] == '\0');
-}
-
-// Return true if option_end is the name of a module-related java property
-// with "-Djdk.module." removed.
-static bool is_internal_module_property_end(const char* option_end) {
-  // For the repeating properties such as (-Djdk.module.patch.0
-  // -Djdk.module.patch.1, etc) return true for "<property_name>.<digit>[=]".
-  if (is_matching_numbered_property(option_end, ADDEXPORTS ".", ADDEXPORTS_LEN + 1) ||
-      is_matching_numbered_property(option_end, ADDREADS ".", ADDREADS_LEN + 1) ||
-      is_matching_numbered_property(option_end, PATCH ".", PATCH_LEN + 1)) {
-      return true;
-  }
-  return (is_matching_property(option_end, ADDMODS, ADDMODS_LEN) ||
-          is_matching_property(option_end, LIMITMODS, LIMITMODS_LEN));
-}
-
-// Return true if the option is one of the module-related java properties
-// that can only be set using the proper module-related option.
-static bool is_module_property(const JavaVMOption *option) {
-  if (strncmp(option->optionString, "-D" MODULE_PROPERTY_PREFIX ".", MODULE_PROPERTY_PREFIX_LEN + 3) == 0) {
-    const char* option_end = option->optionString + MODULE_PROPERTY_PREFIX_LEN + 3;
-    return (is_internal_module_property_end(option_end) ||
-            is_matching_property(option_end, PATH, PATH_LEN) ||
-            is_matching_property(option_end, UPGRADE_PATH, UPGRADE_PATH_LEN));
-  }
-  return false;
-}
-
-// Return true if the option is one of the module-related java properties
-// that can only be set using the proper module-related option and cannot
-// be read by jvmti.
-// It's expected that the caller removed the leading "-D" from 'option'.
-bool Arguments::is_internal_module_property(const char* option) {
-  assert((strncmp(option, "-D", 2) != 0), "Unexpected leading -D");
-  if (strncmp(option, MODULE_PROPERTY_PREFIX ".", MODULE_PROPERTY_PREFIX_LEN + 1) == 0) {
-    return is_internal_module_property_end(option + MODULE_PROPERTY_PREFIX_LEN + 1);
-  }
-  return false;
-}
-
 // Return true if any of the strings in null-terminated array 'names' matches.
 // If tail_allowed is true, then the tail must begin with a colon; otherwise,
 // the option must match exactly.
@@ -236,6 +159,30 @@ static void logOption(const char* opt) {
   if (PrintVMOptions) {
     jio_fprintf(defaultStream::output_stream(), "VM option '%s'\n", opt);
   }
+}
+
+bool needs_module_property_warning = false;
+
+#define MODULE_PROPERTY_PREFIX "jdk.module"
+#define MODULE_PROPERTY_PREFIX_LEN 10
+#define MODULE_MAIN_PROPERTY "jdk.module.main"
+#define MODULE_MAIN_PROPERTY_LEN 15
+
+// Return TRUE if option matches property, or property=, or property..
+static bool matches_property_prefix(const char* option, const char* property, size_t len) {
+  return (strncmp(option, property, len) == 0) &&
+          (option[len] == '=' || option[len] == '.' || option[len] == '\0');
+}
+
+// Return true if the property is either "jdk.module" or starts with "jdk.module.",
+// but does not start with "jdk.module.main".
+// Return false if jdk.module.main because jdk.module.main and jdk.module.main.class
+// are valid non-internal system properties.
+// "property" should be passed without the leading "-D".
+bool Arguments::is_internal_module_property(const char* property) {
+  assert((strncmp(property, "-D", 2) != 0), "Unexpected leading -D");
+  return (matches_property_prefix(property, MODULE_PROPERTY_PREFIX, MODULE_PROPERTY_PREFIX_LEN) &&
+          !matches_property_prefix(property, MODULE_MAIN_PROPERTY, MODULE_MAIN_PROPERTY_LEN));
 }
 
 // Process java launcher properties.
@@ -3166,9 +3113,11 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* patch_m
           "-Djava.ext.dirs=%s is not supported.  Use -classpath instead.\n", value);
         return JNI_EINVAL;
       }
-      // Silently ignore module related properties.  They must be set using the modules
-      // options. For example: use "--add-modules java.sql", not "-Djdk.module.addmods=java.sql"
-      if (is_module_property(option)) {
+      // Check for module related properties.  They must be set using the modules
+      // options. For example: use "--add-modules=java.sql", not
+      // "-Djdk.module.addmods=java.sql"
+      if (is_internal_module_property(option->optionString + 2)) {
+        needs_module_property_warning = true;
         continue;
       }
 
@@ -3609,7 +3558,9 @@ jint Arguments::finalize_vm_init_args() {
   // This needs to be done here, to prevent overwriting possible values written
   // to the jdk.module.addmods property by -javaagent and other options.
   if (add_modules_value != NULL) {
-    append_to_addmods_property(add_modules_value);
+    if (!append_to_addmods_property(add_modules_value)) {
+      return JNI_ENOMEM;
+    }
   }
 
   Arguments::set_bootclassloader_append_index(((int)strlen(Arguments::get_sysclasspath()))+1);
@@ -4353,6 +4304,11 @@ jint Arguments::parse(const JavaVMInitArgs* initial_cmd_args) {
             hotspotrc, hotspotrc);
   }
 
+  if (needs_module_property_warning) {
+    warning("Ignoring system property options whose names start with '-Djdk.module'."
+            "  They are reserved for internal use.");
+  }
+
 #if defined(_ALLBSD_SOURCE) || defined(AIX)  // UseLargePages is not yet supported on BSD and AIX.
   UNSUPPORTED_OPTION(UseLargePages);
 #endif
@@ -4577,11 +4533,44 @@ int Arguments::PropertyList_count(SystemProperty* pl) {
   return count;
 }
 
+// Return the number of readable properties.
+int Arguments::PropertyList_readable_count(SystemProperty* pl) {
+  int count = 0;
+  while(pl != NULL) {
+    if (pl->is_readable()) {
+      count++;
+    }
+    pl = pl->next();
+  }
+  return count;
+}
+
 const char* Arguments::PropertyList_get_value(SystemProperty *pl, const char* key) {
   assert(key != NULL, "just checking");
   SystemProperty* prop;
   for (prop = pl; prop != NULL; prop = prop->next()) {
     if (strcmp(key, prop->key()) == 0) return prop->value();
+  }
+  return NULL;
+}
+
+// Return the value of the requested property provided that it is a readable property.
+const char* Arguments::PropertyList_get_readable_value(SystemProperty *pl, const char* key) {
+  assert(key != NULL, "just checking");
+  SystemProperty* prop;
+  // Return the property value if the keys match and the property is not internal or
+  // it's the special internal property "jdk.boot.class.path.append".
+  for (prop = pl; prop != NULL; prop = prop->next()) {
+    if (strcmp(key, prop->key()) == 0) {
+      if (!prop->internal()) {
+        return prop->value();
+      } else if (strcmp(key, "jdk.boot.class.path.append") == 0) {
+        return prop->value();
+      } else {
+        // Property is internal and not jdk.boot.class.path.append so return NULL.
+        return NULL;
+      }
+    }
   }
   return NULL;
 }
