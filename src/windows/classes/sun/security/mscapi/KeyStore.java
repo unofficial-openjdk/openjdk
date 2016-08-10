@@ -41,12 +41,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateFactory;
 import java.security.interfaces.RSAPrivateCrtKey;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Enumeration;
-import java.util.Iterator;
-import java.util.UUID;
+import java.util.*;
 
 import sun.security.action.GetPropertyAction;
 
@@ -141,7 +136,7 @@ abstract class KeyStore extends KeyStoreSpi {
                 key.getPrimeExponentQ().toByteArray(),
                 key.getCrtCoefficient().toByteArray());
 
-            privateKey = storePrivateKey(keyBlob,
+            privateKey = storePrivateKey(requireNonNull(keyBlob),
                 "{" + UUID.randomUUID().toString() + "}", keyBitLength);
         }
 
@@ -173,6 +168,26 @@ abstract class KeyStore extends KeyStoreSpi {
             }
             certChain = chain;
         }
+
+	/**
+	 * Checks that the supplied argument is not
+	 * {@code null}. If it is, then a
+	 * {@link NullPointerException} is thrown.
+	 * This method is designed as an aid for validating
+	 * input parameters to a method.
+	 *
+	 * @param o the object to check.
+	 * @return the object if it is not {@code null}.
+	 * @throws NullPointerException if the object is
+	 *         {@code null}.
+	 */
+	private <T> T requireNonNull(T o)
+	{
+	    if (o == null)
+		throw new NullPointerException();
+	    return o;
+	}
+
     };
 
     /*
