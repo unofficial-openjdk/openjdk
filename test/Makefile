@@ -519,7 +519,7 @@ jdk_security2: javax/crypto com/sun/crypto
 JDK_ALL_TARGETS += jdk_security3
 jdk_security3: com/sun/security lib/security javax/security sun/security
 	$(call SharedLibraryPermissions,sun/security)
-	$(call RunOthervmBatch)
+	$(call RunAgentvmBatch)
 
 # All security tests
 jdk_security: jdk_security1 jdk_security2 jdk_security3

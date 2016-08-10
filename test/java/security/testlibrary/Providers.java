@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2001, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,33 +21,16 @@
  * questions.
  */
 
-//
-// SunJSSE does not support dynamic system properties, no way to re-use
-// system properties in samevm/agentvm mode.
-//
+import java.security.Provider;
+import java.security.Security;
 
-/**
- * @test
- * @bug 4302026
- * @run main/othervm GetPeerHost
- * @summary make sure the server side doesn't do DNS lookup.
- */
-import javax.net.*;
-
-public class GetPeerHost {
-
-    public static void main(String[] argv) throws Exception {
-
-        String testRoot = System.getProperty("test.src", ".");
-        System.setProperty("javax.net.ssl.trustStore", testRoot
-                            + "/../../../../../../../etc/truststore");
-        GetPeerHostServer server = new GetPeerHostServer();
-        server.start();
-        GetPeerHostClient client = new GetPeerHostClient();
-        client.start();
-        server.join ();
-        if (!server.getPassStatus ()) {
-            throw new Exception ("The test failed");
+public class Providers {
+    public static void setAt(Provider p, int pos) throws Exception {
+        if (Security.getProvider(p.getName()) != null) {
+            Security.removeProvider(p.getName());
+        }
+        if (Security.insertProviderAt(p, pos) == -1) {
+            throw new Exception("cannot setAt");
         }
     }
 }

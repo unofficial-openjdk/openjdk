@@ -971,8 +971,9 @@ sun/security/pkcs11/ec/ReadCertificates.java			generic-all
 sun/security/pkcs11/ec/ReadPKCS12.java				generic-all
 sun/security/pkcs11/ec/TestCurves.java				generic-all
 sun/security/pkcs11/ec/TestECDSA.java				generic-all
-sun/security/pkcs11/ec/TestECGenSpec.java			generic-all
-sun/security/pkcs11/ec/TestKeyFactory.java			generic-all
+#sun/security/pkcs11/ec/TestECGenSpec.java                       solaris-i586
+#sun/security/pkcs11/ec/TestKeyFactory.java                      solaris-i586
+sun/security/pkcs11/sslecc/ClientJSSEServerJSSE.java            generic-all
 sun/security/ssl/com/sun/net/ssl/internal/www/protocol/https/HttpsURLConnection/CriticalSubjectAltName.java generic-all
 sun/security/validator/CertReplace.java				generic-all
 
@@ -998,17 +999,12 @@ sun/security/ssl/com/sun/net/ssl/internal/ssl/SSLSocketImpl/ClientTimeout.java s
 sun/security/ssl/com/sun/net/ssl/internal/ssl/SSLSocketImpl/ServerTimeout.java solaris-sparc
 sun/security/ssl/sun/net/www/protocol/https/HttpsURLConnection/ReadTimeout.java solaris-sparc
 sun/security/ssl/com/sun/net/ssl/internal/ssl/SSLSocketImpl/NotifyHandshakeTest.sh solaris-sparc
-sun/security/tools/keytool/AltProviderPath.sh 			solaris-sparc
 
 # OpenSolaris, fails to compile when run with -samevm
 sun/security/ssl/sun/net/www/protocol/https/HttpsURLConnection/CheckMethods.java generic-all
 
 # Solaris 10 sparc, passed/failed confusion? java.security.ProviderException: update() failed
 sun/security/ssl/com/sun/net/ssl/internal/ssl/SSLSocketImpl/AsyncSSLSocketClose.java generic-all
-
-# Seem really slow on Solaris sparc, being excluded just for timing reasons
-sun/security/tools/jarsigner/AlgOptions.sh			solaris-sparc
-sun/security/provider/PolicyFile/getinstance/getinstance.sh	solaris-sparc
 
 # Timed out, Solaris 10 64bit sparcv9
 com/sun/crypto/provider/Cipher/DES/PaddingTest.java		generic-all
@@ -1028,7 +1024,6 @@ sun/security/ssl/javax/net/ssl/NewAPIs/SessionTimeOutTests.java	generic-all
 lib/security/cacerts/VerifyCACerts.java				generic-all
 sun/security/ssl/javax/net/ssl/NewAPIs/SSLEngine/TestAllSuites.java generic-all
 sun/security/ssl/sanity/ciphersuites/CheckCipherSuites.java	generic-all
-sun/security/tools/jarsigner/oldsig.sh				generic-all
 
 # Various failures on Linux Fedora 9 X64, othervm mode
 #   Does not seem to run on windows machines? dll missing? 
@@ -1061,10 +1056,6 @@ java/security/Signature/SignWithOutputBuffer.java		generic-all
 java/security/Signature/TestInitSignWithMyOwnRandom.java	generic-all
 java/security/UnresolvedPermission/AccessorMethods.java		generic-all
 java/security/UnresolvedPermission/Equals.java			generic-all
-
-# Problems with windows x64
-sun/security/mscapi/IsSunMSCAPIAvailable.sh		 	windows-x64
-sun/security/mscapi/RSAEncryptDecrypt.sh		 	windows-x64
 
 # Do not seem to run on windows machines? dll missing? 
 sun/security/pkcs11/Cipher/ReinitCipher.java		 	windows-all
@@ -1112,13 +1103,6 @@ sun/security/pkcs11/tls/TestKeyMaterial.java		 	windows-all
 sun/security/pkcs11/tls/TestMasterSecret.java		 	windows-all
 sun/security/pkcs11/tls/TestPremaster.java		 	windows-all
 sun/security/pkcs11/tls/TestPRF.java			 	windows-all
-
-# Fails on OpenSolaris java.net.BindException: Address already in use
-sun/security/pkcs11/sslecc/ClientJSSEServerJSSE.java		generic-all
-
-# Timeout on solaris-sparcv9 or ArrayIndexOutOfBoundsException?
-sun/security/rsa/TestKeyPairGeneratorLength.java	 	solaris-all
-sun/security/rsa/TestSignatures.java			 	solaris-all
 
 # Timeout on solaris-sparc and i586 and x64, -client and -server
 sun/security/ssl/com/sun/net/ssl/internal/ssl/InputRecord/InterruptedIO.java solaris-all
