@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,8 +29,6 @@ import javax.security.sasl.*;
 import java.io.*;
 import java.util.Map;
 import java.util.StringTokenizer;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 
 import java.util.logging.Logger;
 import java.util.logging.Level;
@@ -63,7 +61,8 @@ public abstract class AbstractSaslImpl {
 
     protected String myClassName;
 
-    protected AbstractSaslImpl(Map props, String className) throws SaslException {
+    protected AbstractSaslImpl(Map<String, ?> props, String className)
+            throws SaslException {
         myClassName = className;
 
         // Parse properties  to set desired context options
@@ -157,7 +156,7 @@ public abstract class AbstractSaslImpl {
             throw new IllegalStateException("SASL authentication not completed");
         }
 
-        if (propName.equals(Sasl.QOP)) {
+        if (Sasl.QOP.equals(propName)) {
             if (privacy) {
                 return "auth-conf";
             } else if (integrity) {
@@ -165,11 +164,11 @@ public abstract class AbstractSaslImpl {
             } else {
                 return "auth";
             }
-        } else if (propName.equals(Sasl.MAX_BUFFER)) {
+        } else if (Sasl.MAX_BUFFER.equals(propName)) {
             return Integer.toString(recvMaxBufSize);
-        } else if (propName.equals(Sasl.RAW_SEND_SIZE)) {
+        } else if (Sasl.RAW_SEND_SIZE.equals(propName)) {
             return Integer.toString(rawSendSize);
-        } else if (propName.equals(MAX_SEND_BUF)) {
+        } else if (MAX_SEND_BUF.equals(propName)) {
             return Integer.toString(sendMaxBufSize);
         } else {
             return null;

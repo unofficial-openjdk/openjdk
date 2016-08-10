@@ -632,7 +632,7 @@ public class X509CRLSelector implements CRLSelector {
                 byte[] encoded = in.getOctetString();
                 CRLNumberExtension crlNumExt =
                     new CRLNumberExtension(Boolean.FALSE, encoded);
-                crlNum = (BigInteger)crlNumExt.get(CRLNumberExtension.NUMBER);
+                crlNum = crlNumExt.get(CRLNumberExtension.NUMBER);
             } catch (IOException ex) {
                 if (debug != null) {
                     debug.println("X509CRLSelector.match: exception in "

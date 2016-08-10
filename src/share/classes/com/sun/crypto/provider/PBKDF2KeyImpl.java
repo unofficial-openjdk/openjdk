@@ -169,7 +169,7 @@ final class PBKDF2KeyImpl implements javax.crypto.interfaces.PBEKey {
     }
 
     public byte[] getEncoded() {
-        return (byte[]) key.clone();
+        return key.clone();
     }
 
     public String getAlgorithm() {
@@ -181,7 +181,7 @@ final class PBKDF2KeyImpl implements javax.crypto.interfaces.PBEKey {
     }
 
     public char[] getPassword() {
-        return (char[]) passwd.clone();
+        return passwd.clone();
     }
 
     public byte[] getSalt() {
@@ -243,7 +243,7 @@ final class PBKDF2KeyImpl implements javax.crypto.interfaces.PBEKey {
     protected void finalize() throws Throwable {
         try {
             if (this.passwd != null) {
-                java.util.Arrays.fill(this.passwd, (char) '0');
+                java.util.Arrays.fill(this.passwd, '0');
                 this.passwd = null;
             }
             if (this.key != null) {

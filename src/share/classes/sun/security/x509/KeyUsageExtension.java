@@ -218,7 +218,7 @@ implements CertAttrSet<String> {
     /**
      * Get the attribute value.
      */
-    public Object get(String name) throws IOException {
+    public Boolean get(String name) throws IOException {
         if (name.equalsIgnoreCase(DIGITAL_SIGNATURE)) {
             return Boolean.valueOf(isSet(0));
         } else if (name.equalsIgnoreCase(NON_REPUDIATION)) {

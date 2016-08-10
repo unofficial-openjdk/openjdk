@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,21 +28,15 @@ package com.sun.security.sasl.digest;
 import java.util.Map;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
-import java.util.logging.Logger;
 import java.util.logging.Level;
 import java.math.BigInteger;
 import java.util.Random;
-import java.security.Provider;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.io.IOException;
 
 import java.security.MessageDigest;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.security.NoSuchAlgorithmException;
 import java.security.InvalidKeyException;
 import java.security.spec.KeySpec;
@@ -53,7 +47,6 @@ import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.Mac;
 import javax.crypto.SecretKeyFactory;
-import javax.crypto.BadPaddingException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.spec.IvParameterSpec;
@@ -175,8 +168,9 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
      *
      * @throws SaslException If invalid value found in props.
      */
-    protected DigestMD5Base(Map props, String className, int firstStep,
-        String digestUri, CallbackHandler cbh) throws SaslException {
+    protected DigestMD5Base(Map<String, ?> props, String className,
+        int firstStep, String digestUri, CallbackHandler cbh)
+        throws SaslException {
         super(props, className); // sets QOP, STENGTH and BUFFER_SIZE
 
         step = firstStep;
@@ -791,7 +785,7 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
                     }
                 } else if (realmChoices != null && i == realmIndex) {
                     // > 1 realm specified
-                    if (realmChoices.size() == 0) {
+                    if (realmChoices.isEmpty()) {
                         realmChoices.add(valueTable[i]); // add existing one
                     }
                     realmChoices.add(value);  // add new one
@@ -1603,7 +1597,7 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
         SecretKeyFactory desFactory =
             SecretKeyFactory.getInstance(desStrength);
 
-        if (desStrength.equals("des")) {
+        if ("des".equals(desStrength)) {
             spec = new DESKeySpec(subkey1, 0);
             if (logger.isLoggable(Level.FINEST)) {
                 traceOutput(DP_CLASS_NAME, "makeDesKeys",
@@ -1616,7 +1610,7 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
                     Boolean.valueOf(DESKeySpec.isParityAdjusted(subkey1, 0)));
             }
 
-        } else if (desStrength.equals("desede")) {
+        } else if ("desede".equals(desStrength)) {
 
             // Generate second subkey using second 7 bytes
             byte[] subkey2 = addDesParity(input, 7, 7);

@@ -27,7 +27,6 @@ package com.sun.security.sasl.gsskerb;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.logging.Logger;
 import java.util.logging.Level;
 import javax.security.sasl.*;
 
@@ -93,7 +92,7 @@ final class GssKrb5Client extends GssKrb5Base implements SaslClient {
      * with the server.
      */
     GssKrb5Client(String authzID, String protocol, String serverName,
-        Map props, CallbackHandler cbh) throws SaslException {
+        Map<String, ?> props, CallbackHandler cbh) throws SaslException {
 
         super(props, MY_CLASS_NAME);
 

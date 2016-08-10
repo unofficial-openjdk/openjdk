@@ -89,6 +89,8 @@ final class X509KeyManagerImpl extends X509ExtendedKeyManager
     // LinkedHashMap with a max size of 10
     // see LinkedHashMap JavaDocs
     private static class SizedMap<K,V> extends LinkedHashMap<K,V> {
+        private static final long serialVersionUID = -8211222668790986062L;
+
         @Override protected boolean removeEldestEntry(Map.Entry<K,V> eldest) {
             return size() > 10;
         }
@@ -183,7 +185,7 @@ final class X509KeyManagerImpl extends X509ExtendedKeyManager
                 return null;
             }
             entry = (PrivateKeyEntry)newEntry;
-            entryCacheMap.put(alias, new SoftReference(entry));
+            entryCacheMap.put(alias, new SoftReference<PrivateKeyEntry>(entry));
             return entry;
         } catch (Exception e) {
             // ignore
@@ -256,7 +258,7 @@ final class X509KeyManagerImpl extends X509ExtendedKeyManager
      */
     private String chooseAlias(List<KeyType> keyTypeList,
             Principal[] issuers, CheckType checkType) {
-        if (keyTypeList == null || keyTypeList.size() == 0) {
+        if (keyTypeList == null || keyTypeList.isEmpty()) {
             return null;
         }
 
@@ -330,7 +332,7 @@ final class X509KeyManagerImpl extends X509ExtendedKeyManager
                 // ignore
             }
         }
-        if (allResults == null || allResults.size() == 0) {
+        if (allResults == null || allResults.isEmpty()) {
             if (useDebug) {
                 debug.println("KeyMgr: no matching alias found");
             }
@@ -449,7 +451,7 @@ final class X509KeyManagerImpl extends X509ExtendedKeyManager
                 if (ku != null) {
                     String algorithm = cert.getPublicKey().getAlgorithm();
                     boolean kuSignature = getBit(ku, 0);
-                    if (algorithm.equals("RSA")) {
+                    if ("RSA".equals(algorithm)) {
                         // require either signature bit
                         // or if server also allow key encipherment bit
                         if (kuSignature == false) {
@@ -457,17 +459,17 @@ final class X509KeyManagerImpl extends X509ExtendedKeyManager
                                 return CheckResult.EXTENSION_MISMATCH;
                             }
                         }
-                    } else if (algorithm.equals("DSA")) {
+                    } else if ("DSA".equals(algorithm)) {
                         // require signature bit
                         if (kuSignature == false) {
                             return CheckResult.EXTENSION_MISMATCH;
                         }
-                    } else if (algorithm.equals("DH")) {
+                    } else if ("DH".equals(algorithm)) {
                         // require keyagreement bit
                         if (getBit(ku, 4) == false) {
                             return CheckResult.EXTENSION_MISMATCH;
                         }
-                    } else if (algorithm.equals("EC")) {
+                    } else if ("EC".equals(algorithm)) {
                         // require signature bit
                         if (kuSignature == false) {
                             return CheckResult.EXTENSION_MISMATCH;

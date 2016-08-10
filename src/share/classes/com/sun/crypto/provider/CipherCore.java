@@ -301,7 +301,7 @@ final class CipherCore {
      */
     byte[] getIV() {
         byte[] iv = cipher.getIV();
-        return (iv == null) ? null : (byte[])iv.clone();
+        return (iv == null) ? null : iv.clone();
     }
 
     /**
@@ -475,8 +475,7 @@ final class CipherCore {
         IvParameterSpec ivSpec = null;
         if (params != null) {
             try {
-                ivSpec = (IvParameterSpec)params.getParameterSpec
-                    (IvParameterSpec.class);
+                ivSpec = params.getParameterSpec(IvParameterSpec.class);
             } catch (InvalidParameterSpecException ipse) {
                 throw new InvalidAlgorithmParameterException("Wrong parameter "
                                                              + "type: IV "
@@ -832,7 +831,7 @@ final class CipherCore {
         buffered = 0;
         diffBlocksize = blockSize;
         if (cipherMode != ECB_MODE) {
-            ((FeedbackCipher)cipher).reset();
+            cipher.reset();
         }
         return totalLen;
     }

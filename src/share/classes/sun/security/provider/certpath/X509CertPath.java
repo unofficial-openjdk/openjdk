@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,6 @@
 
 package sun.security.provider.certpath;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -101,11 +100,12 @@ public class X509CertPath extends CertPath {
      * @exception CertificateException if <code>certs</code> contains an element
      *                      that is not an <code>X509Certificate</code>
      */
+    @SuppressWarnings("unchecked")
     public X509CertPath(List<? extends Certificate> certs) throws CertificateException {
         super("X.509");
 
         // Ensure that the List contains only X509Certificates
-        for (Object obj : (List<?>)certs) {
+        for (Certificate obj : certs) {
             if (obj instanceof X509Certificate == false) {
                 throw new CertificateException
                     ("List is not all X509Certificates: "
@@ -192,10 +192,8 @@ public class X509CertPath extends CertPath {
             return Collections.unmodifiableList(certList);
 
         } catch (IOException ioe) {
-            CertificateException ce = new CertificateException("IOException" +
-                " parsing PkiPath data: " + ioe);
-            ce.initCause(ioe);
-            throw ce;
+            throw new CertificateException("IOException parsing PkiPath data: "
+                    + ioe, ioe);
         }
     }
 
@@ -220,7 +218,7 @@ public class X509CertPath extends CertPath {
                 // Copy the entire input stream into an InputStream that does
                 // support mark
                 is = new ByteArrayInputStream(readAllBytes(is));
-            };
+            }
             PKCS7 pkcs7 = new PKCS7(is);
 
             X509Certificate[] certArray = pkcs7.getCertificates();
@@ -301,10 +299,8 @@ public class X509CertPath extends CertPath {
             return derout.toByteArray();
 
         } catch (IOException ioe) {
-           CertificateEncodingException ce = new CertificateEncodingException
-                ("IOException encoding PkiPath data: " + ioe);
-           ce.initCause(ioe);
-           throw ce;
+           throw new CertificateEncodingException("IOException encoding " +
+                   "PkiPath data: " + ioe, ioe);
         }
     }
 

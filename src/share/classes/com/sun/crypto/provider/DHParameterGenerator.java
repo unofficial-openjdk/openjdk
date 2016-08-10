@@ -25,7 +25,6 @@
 
 package com.sun.crypto.provider;
 
-import java.math.BigInteger;
 import java.security.*;
 import java.security.spec.*;
 import javax.crypto.spec.DHParameterSpec;
@@ -141,8 +140,7 @@ extends AlgorithmParameterGeneratorSpi {
             paramGen = AlgorithmParameterGenerator.getInstance("DSA");
             paramGen.init(this.primeSize, random);
             algParams = paramGen.generateParameters();
-            dsaParamSpec = (DSAParameterSpec)
-                algParams.getParameterSpec(DSAParameterSpec.class);
+            dsaParamSpec = algParams.getParameterSpec(DSAParameterSpec.class);
 
             DHParameterSpec dhParamSpec;
             if (this.exponentSize > 0) {

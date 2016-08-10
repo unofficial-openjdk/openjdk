@@ -129,7 +129,7 @@ abstract class P11Key implements Key, Length {
     // see JCA spec
     public final byte[] getEncoded() {
         byte[] b = getEncodedInternal();
-        return (b == null) ? null : (byte[])b.clone();
+        return (b == null) ? null : b.clone();
     }
 
     abstract byte[] getEncodedInternal();
@@ -217,7 +217,7 @@ abstract class P11Key implements Key, Length {
      * Return bit length of the key.
      */
     @Override
-    public int length() { 
+    public int length() {
         return keyLength;
     }
 
@@ -304,16 +304,16 @@ abstract class P11Key implements Key, Length {
     // we assume that all components of public keys are always accessible
     static PublicKey publicKey(Session session, long keyID, String algorithm,
             int keyLength, CK_ATTRIBUTE[] attributes) {
-        if (algorithm.equals("RSA")) {
+        if ("RSA".equals(algorithm)) {
             return new P11RSAPublicKey
                 (session, keyID, algorithm, keyLength, attributes);
-        } else if (algorithm.equals("DSA")) {
+        } else if ("DSA".equals(algorithm)) {
             return new P11DSAPublicKey
                 (session, keyID, algorithm, keyLength, attributes);
-        } else if (algorithm.equals("DH")) {
+        } else if ("DH".equals(algorithm)) {
             return new P11DHPublicKey
                 (session, keyID, algorithm, keyLength, attributes);
-        } else if (algorithm.equals("EC")) {
+        } else if ("EC".equals(algorithm)) {
             return new P11ECPublicKey
                 (session, keyID, algorithm, keyLength, attributes);
         } else {
@@ -333,7 +333,7 @@ abstract class P11Key implements Key, Length {
             return new P11PrivateKey
                 (session, keyID, algorithm, keyLength, attributes);
         } else {
-            if (algorithm.equals("RSA")) {
+            if ("RSA".equals(algorithm)) {
                 // XXX better test for RSA CRT keys (single getAttributes() call)
                 // we need to determine whether this is a CRT key
                 // see if we can obtain the public exponent
@@ -357,13 +357,13 @@ abstract class P11Key implements Key, Length {
                     return new P11RSAPrivateNonCRTKey
                             (session, keyID, algorithm, keyLength, attributes);
                 }
-            } else if (algorithm.equals("DSA")) {
+            } else if ("DSA".equals(algorithm)) {
                 return new P11DSAPrivateKey
                         (session, keyID, algorithm, keyLength, attributes);
-            } else if (algorithm.equals("DH")) {
+            } else if ("DH".equals(algorithm)) {
                 return new P11DHPrivateKey
                         (session, keyID, algorithm, keyLength, attributes);
-            } else if (algorithm.equals("EC")) {
+            } else if ("EC".equals(algorithm)) {
                 return new P11ECPrivateKey
                         (session, keyID, algorithm, keyLength, attributes);
             } else {
@@ -376,6 +376,8 @@ abstract class P11Key implements Key, Length {
     // class for sensitive and unextractable private keys
     private static final class P11PrivateKey extends P11Key
                                                 implements PrivateKey {
+        private static final long serialVersionUID = -2138581185214187615L;
+
         P11PrivateKey(Session session, long keyID, String algorithm,
                 int keyLength, CK_ATTRIBUTE[] attributes) {
             super(PRIVATE, session, keyID, algorithm, keyLength, attributes);
@@ -392,6 +394,7 @@ abstract class P11Key implements Key, Length {
     }
 
     private static class P11SecretKey extends P11Key implements SecretKey {
+        private static final long serialVersionUID = -7828241727014329084L;
         private volatile byte[] encoded;
         P11SecretKey(Session session, long keyID, String algorithm,
                 int keyLength, CK_ATTRIBUTE[] attributes) {
@@ -439,6 +442,8 @@ abstract class P11Key implements Key, Length {
 
     private static class P11TlsMasterSecretKey extends P11SecretKey
             implements TlsMasterSecret {
+        private static final long serialVersionUID = -1318560923770573441L;
+
         private final int majorVersion, minorVersion;
         P11TlsMasterSecretKey(Session session, long keyID, String algorithm,
                 int keyLength, CK_ATTRIBUTE[] attributes, int major, int minor) {
@@ -458,6 +463,8 @@ abstract class P11Key implements Key, Length {
     // RSA CRT private key
     private static final class P11RSAPrivateKey extends P11Key
                 implements RSAPrivateCrtKey {
+        private static final long serialVersionUID = 9215872438913515220L;
+
         private BigInteger n, e, d, p, q, pe, qe, coeff;
         private byte[] encoded;
         P11RSAPrivateKey(Session session, long keyID, String algorithm,
@@ -547,6 +554,8 @@ abstract class P11Key implements Key, Length {
     // RSA non-CRT private key
     private static final class P11RSAPrivateNonCRTKey extends P11Key
                 implements RSAPrivateKey {
+        private static final long serialVersionUID = 1137764983777411481L;
+
         private BigInteger n, d;
         private byte[] encoded;
         P11RSAPrivateNonCRTKey(Session session, long keyID, String algorithm,
@@ -599,6 +608,8 @@ abstract class P11Key implements Key, Length {
 
     private static final class P11RSAPublicKey extends P11Key
                                                 implements RSAPublicKey {
+        private static final long serialVersionUID = -826726289023854455L;
+
         private BigInteger n, e;
         private byte[] encoded;
         P11RSAPublicKey(Session session, long keyID, String algorithm,
@@ -651,6 +662,8 @@ abstract class P11Key implements Key, Length {
 
     private static final class P11DSAPublicKey extends P11Key
                                                 implements DSAPublicKey {
+        private static final long serialVersionUID = 5989753793316396637L;
+
         private BigInteger y;
         private DSAParams params;
         private byte[] encoded;
@@ -712,6 +725,8 @@ abstract class P11Key implements Key, Length {
 
     private static final class P11DSAPrivateKey extends P11Key
                                                 implements DSAPrivateKey {
+        private static final long serialVersionUID = 3119629997181999389L;
+
         private BigInteger x;
         private DSAParams params;
         private byte[] encoded;
@@ -768,6 +783,8 @@ abstract class P11Key implements Key, Length {
 
     private static final class P11DHPrivateKey extends P11Key
                                                 implements DHPrivateKey {
+        private static final long serialVersionUID = -1698576167364928838L;
+
         private BigInteger x;
         private DHParameterSpec params;
         private byte[] encoded;
@@ -825,6 +842,8 @@ abstract class P11Key implements Key, Length {
 
     private static final class P11DHPublicKey extends P11Key
                                                 implements DHPublicKey {
+        static final long serialVersionUID = -598383872153843657L;
+
         private BigInteger y;
         private DHParameterSpec params;
         private byte[] encoded;
@@ -887,6 +906,8 @@ abstract class P11Key implements Key, Length {
 
     private static final class P11ECPrivateKey extends P11Key
                                                 implements ECPrivateKey {
+        private static final long serialVersionUID = -7786054399510515515L;
+
         private BigInteger s;
         private ECParameterSpec params;
         private byte[] encoded;
@@ -941,6 +962,8 @@ abstract class P11Key implements Key, Length {
 
     private static final class P11ECPublicKey extends P11Key
                                                 implements ECPublicKey {
+        private static final long serialVersionUID = -6371481375154806089L;
+
         private ECPoint w;
         private ECParameterSpec params;
         private byte[] encoded;

@@ -116,6 +116,7 @@ class SubjectComber {
                     while (iterator.hasNext()) {
                         Object obj = iterator.next();
                         if (obj instanceof KerberosTicket) {
+                            @SuppressWarnings("unchecked")
                             KerberosTicket ticket = (KerberosTicket)obj;
                             if (DEBUG) {
                                 System.out.println("Found ticket for "

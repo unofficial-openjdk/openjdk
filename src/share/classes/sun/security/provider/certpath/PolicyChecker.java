@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -273,8 +273,8 @@ class PolicyChecker extends PKIXCertPathChecker {
                 = currCert.getPolicyConstraintsExtension();
             if (polConstExt == null)
                 return explicitPolicy;
-            int require = ((Integer)
-                polConstExt.get(PolicyConstraintsExtension.REQUIRE)).intValue();
+            int require =
+                polConstExt.get(PolicyConstraintsExtension.REQUIRE).intValue();
             if (debug != null) {
                 debug.println("PolicyChecker.mergeExplicitPolicy() "
                    + "require Index from cert = " + require);
@@ -327,8 +327,8 @@ class PolicyChecker extends PKIXCertPathChecker {
             if (polConstExt == null)
                 return policyMapping;
 
-            int inhibit = ((Integer)
-                polConstExt.get(PolicyConstraintsExtension.INHIBIT)).intValue();
+            int inhibit =
+                polConstExt.get(PolicyConstraintsExtension.INHIBIT).intValue();
             if (debug != null)
                 debug.println("PolicyChecker.mergePolicyMapping() "
                     + "inhibit Index from cert = " + inhibit);
@@ -375,8 +375,8 @@ class PolicyChecker extends PKIXCertPathChecker {
             if (inhAnyPolExt == null)
                 return inhibitAnyPolicy;
 
-            int skipCerts = ((Integer)
-                inhAnyPolExt.get(InhibitAnyPolicyExtension.SKIP_CERTS)).intValue();
+            int skipCerts =
+                inhAnyPolExt.get(InhibitAnyPolicyExtension.SKIP_CERTS).intValue();
             if (debug != null)
                 debug.println("PolicyChecker.mergeInhibitAnyPolicy() "
                     + "skipCerts Index from cert = " + skipCerts);
@@ -447,8 +447,7 @@ class PolicyChecker extends PKIXCertPathChecker {
                     + "policiesCritical = " + policiesCritical);
 
             try {
-                policyInfo = (List<PolicyInformation>)
-                    currCertPolicies.get(CertificatePoliciesExtension.POLICIES);
+                policyInfo = currCertPolicies.get(CertificatePoliciesExtension.POLICIES);
             } catch (IOException ioe) {
                 throw new CertPathValidatorException("Exception while "
                     + "retrieving policyOIDs", ioe);
@@ -748,8 +747,7 @@ class PolicyChecker extends PKIXCertPathChecker {
 
         List<CertificatePolicyMap> maps = null;
         try {
-            maps = (List<CertificatePolicyMap>)polMappingsExt.get
-                                        (PolicyMappingsExtension.MAP);
+            maps = polMappingsExt.get(PolicyMappingsExtension.MAP);
         } catch (IOException e) {
             if (debug != null) {
                 debug.println("PolicyChecker.processPolicyMappings() "
@@ -855,8 +853,7 @@ class PolicyChecker extends PKIXCertPathChecker {
     {
         List<PolicyInformation> policyInfo = null;
         try {
-            policyInfo = (List<PolicyInformation>)
-                currCertPolicies.get(CertificatePoliciesExtension.POLICIES);
+            policyInfo = currCertPolicies.get(CertificatePoliciesExtension.POLICIES);
         } catch (IOException ioe) {
             throw new CertPathValidatorException("Exception while "
                 + "retrieving policyOIDs", ioe);

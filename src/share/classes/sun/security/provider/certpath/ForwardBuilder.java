@@ -334,6 +334,9 @@ class ForwardBuilder extends Builder {
      * Download Certificates from the given AIA and add them to the
      * specified Collection.
      */
+    // cs.getCertificates(caSelector) returns a collection of X509Certificate's
+    // because of the selector, so the cast is safe
+    @SuppressWarnings("unchecked")
     private boolean getCerts(AuthorityInfoAccessExtension aiaExt,
         Collection<X509Certificate> certs) {
         if (Builder.USE_AIA == false) {

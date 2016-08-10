@@ -431,7 +431,7 @@ public class ProtectionDomain {
                 e = permissions.elements();   // domain vs policy
                 while (e.hasMoreElements()) {
                     Permission pdp = e.nextElement();
-                    Class pdpClass = pdp.getClass();
+                    Class<?> pdpClass = pdp.getClass();
                     String pdpActions = pdp.getActions();
                     String pdpName = pdp.getName();
                     for (int i = 0; i < plVector.size(); i++) {

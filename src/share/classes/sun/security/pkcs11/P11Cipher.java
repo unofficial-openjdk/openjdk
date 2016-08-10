@@ -266,7 +266,7 @@ final class P11Cipher extends CipherSpi {
 
     // see JCE spec
     protected byte[] engineGetIV() {
-        return (iv == null) ? null : (byte[]) iv.clone();
+        return (iv == null) ? null : iv.clone();
     }
 
     // see JCE spec
@@ -323,7 +323,7 @@ final class P11Cipher extends CipherSpi {
         byte[] ivValue;
         if (params != null) {
             try {
-                IvParameterSpec ivSpec = (IvParameterSpec)
+                IvParameterSpec ivSpec =
                         params.getParameterSpec(IvParameterSpec.class);
                 ivValue = ivSpec.getIV();
             } catch (InvalidParameterSpecException e) {

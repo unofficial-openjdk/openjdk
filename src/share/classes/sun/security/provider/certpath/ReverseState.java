@@ -368,6 +368,7 @@ class ReverseState implements State {
      * because some of them (e.g., subjKeyId) will
      * not have their contents modified by subsequent calls to updateState.
      */
+    @SuppressWarnings("unchecked") // Safe casts assuming clone() works correctly
     public Object clone() {
         try {
             ReverseState clonedState = (ReverseState) super.clone();

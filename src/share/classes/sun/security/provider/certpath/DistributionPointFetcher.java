@@ -112,8 +112,8 @@ class DistributionPointFetcher {
                 }
                 return Collections.emptySet();
             }
-            List<DistributionPoint> points = (List<DistributionPoint>)ext.get(
-                                        CRLDistributionPointsExtension.POINTS);
+            List<DistributionPoint> points =
+                    ext.get(CRLDistributionPointsExtension.POINTS);
             Set<X509CRL> results = new HashSet<X509CRL>();
             for (Iterator<DistributionPoint> t = points.iterator();
                  t.hasNext() && !Arrays.equals(reasonsMask, ALL_REASONS); ) {

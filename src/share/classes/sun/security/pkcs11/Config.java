@@ -550,9 +550,9 @@ final class Config {
 
     private boolean parseBoolean() throws IOException {
         String val = parseWord();
-        if (val.equals("true")) {
+        if ("true".equals(val)) {
             return true;
-        } else if (val.equals("false")) {
+        } else if ("false".equals(val)) {
             return false;
         } else {
             throw excToken("Expected boolean value, read:");
@@ -877,11 +877,11 @@ final class Config {
 
     private String parseOperation() throws IOException {
         String op = parseWord();
-        if (op.equals("*")) {
+        if ("*".equals(op)) {
             return TemplateManager.O_ANY;
-        } else if (op.equals("generate")) {
+        } else if ("generate".equals(op)) {
             return TemplateManager.O_GENERATE;
-        } else if (op.equals("import")) {
+        } else if ("import".equals(op)) {
             return TemplateManager.O_IMPORT;
         } else {
             throw excLine("Unknown operation " + op);
@@ -969,6 +969,7 @@ final class Config {
 }
 
 class ConfigurationException extends IOException {
+    private static final long serialVersionUID = 254492758807673194L;
     ConfigurationException(String msg) {
         super(msg);
     }
