@@ -51,22 +51,25 @@ import java.util.function.Supplier;
 public interface JavaLangModuleAccess {
 
     /**
-     * Returns {@code ModuleDescriptor.Requires} of the given modifier
+     * Returns a {@code ModuleDescriptor.Requires} of the given modifiers
      * and module name.
      */
     Requires newRequires(Set<Requires.Modifier> ms, String mn);
 
     /**
      * Returns an unqualified {@code ModuleDescriptor.Exports}
-     * of the given package name.
+     * of the given modifiers and package name source.
      */
-    Exports newExports(String source);
+    Exports newExports(Set<Exports.Modifier> ms,
+                       String source);
 
     /**
      * Returns a qualified {@code ModuleDescriptor.Exports}
-     * of the given package name and targets.
+     * of the given modifiers, package name source and targets.
      */
-    Exports newExports(String source, Set<String> targets);
+    Exports newExports(Set<Exports.Modifier> ms,
+                       String source,
+                       Set<String> targets);
 
     /**
      * Returns a {@code ModuleDescriptor.Provides}

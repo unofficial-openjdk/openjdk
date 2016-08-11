@@ -81,6 +81,9 @@ import java.util.TreeSet;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import jdk.internal.misc.VM;
 
 
@@ -905,7 +908,7 @@ public final class LauncherHelper {
 
         ModuleFinder finder = jdk.internal.module.ModuleBootstrap.finder();
 
-        int colon = optionFlag.indexOf(':');
+        int colon = optionFlag.indexOf('=');
         if (colon == -1) {
             finder.findAll().stream()
                 .sorted(Comparator.comparing(ModuleReference::descriptor))
@@ -936,7 +939,10 @@ public final class LauncherHelper {
                 Set<Exports> exports = new TreeSet<>(Comparator.comparing(Exports::source));
                 exports.addAll(md.exports());
                 for (Exports e : exports) {
-                    ostream.format("  exports %s", e.source());
+                    String modsAndSource = Stream.concat(toStringStream(e.modifiers()),
+                                                         Stream.of(e.source()))
+                                                 .collect(Collectors.joining(" "));
+                    ostream.format("  exports %s", modsAndSource);
                     if (e.isQualified()) {
                         formatCommaList(ostream, " to", e.targets());
                     } else {
@@ -955,6 +961,10 @@ public final class LauncherHelper {
                 }
             }
         }
+    }
+
+    static <T> Stream<String> toStringStream(Set<T> s) {
+        return s.stream().map(e -> e.toString().toLowerCase());
     }
 
     static String midAndLocation(ModuleDescriptor md, Optional<URI> location ) {
