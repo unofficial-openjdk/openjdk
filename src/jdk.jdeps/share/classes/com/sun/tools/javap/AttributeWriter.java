@@ -477,7 +477,6 @@ public class AttributeWriter extends BasicWriter
     @Override
     public Void visitMethodParameters(MethodParameters_attribute attr,
                                       Void ignore) {
-
         final String header = String.format(format, "Name", "Flags");
         println("MethodParameters:");
         indent(+1);
@@ -511,36 +510,48 @@ public class AttributeWriter extends BasicWriter
 
     protected void printRequiresTable(Module_attribute attr) {
         Module_attribute.RequiresEntry[] entries = attr.requires;
-        println(entries.length + "\t// " + "requires");
+        print(entries.length);
+        tab();
+        println("// " + "requires");
         indent(+1);
         for (Module_attribute.RequiresEntry e: entries) {
-            print("#" + e.requires_index + "," +
-                    String.format("%x", e.requires_flags)+ "\t// requires");
-            if ((e.requires_flags & Module_attribute.ACC_PUBLIC) != 0)
-                print(" public");
+            print("#" + e.requires_index + "," + String.format("%x", e.requires_flags));
+            tab();
+            print("// " + constantWriter.stringValue(e.requires_index));
+            if ((e.requires_flags & Module_attribute.ACC_TRANSITIVE) != 0)
+                print(" ACC_TRANSITIVE");
+            if ((e.requires_flags & Module_attribute.ACC_STATIC_PHASE) != 0)
+                print(" ACC_STATIC_PHASE");
             if ((e.requires_flags & Module_attribute.ACC_SYNTHETIC) != 0)
-                print(" synthetic");
+                print(" ACC_SYNTHETIC");
             if ((e.requires_flags & Module_attribute.ACC_MANDATED) != 0)
-                print(" mandated");
-            println(" " + constantWriter.stringValue(e.requires_index));
+                print(" ACC_MANDATED");
+            println();
         }
         indent(-1);
     }
 
     protected void printExportsTable(Module_attribute attr) {
         Module_attribute.ExportsEntry[] entries = attr.exports;
-        println(entries.length + "\t// " + "exports");
+        print(entries.length);
+        tab();
+        println("// " + "exports");
         indent(+1);
         for (Module_attribute.ExportsEntry e: entries) {
-            print("#" + e.exports_index + "\t// exports");
-            print(" " + constantWriter.stringValue(e.exports_index));
+            print("#" + e.exports_index + "," + String.format("%x", e.exports_flags));
+            tab();
+            print("// " + constantWriter.stringValue(e.exports_index));
+            if ((e.exports_flags & Module_attribute.ACC_DYNAMIC_PHASE) != 0)
+                print(" ACC_DYNAMIC_PHASE");
             if (e.exports_to_index.length == 0) {
                 println();
             } else {
                 println(" to ... " + e.exports_to_index.length);
                 indent(+1);
                 for (int to: e.exports_to_index) {
-                    println("#" + to + "\t// ... to " + constantWriter.stringValue(to));
+                    print("#" + to);
+                    tab();
+                    println("// ... to " + constantWriter.stringValue(to));
                 }
                 indent(-1);
             }
@@ -550,21 +561,29 @@ public class AttributeWriter extends BasicWriter
 
     protected void printUsesTable(Module_attribute attr) {
         int[] entries = attr.uses_index;
-        println(entries.length + "\t// " + "uses services");
+        print(entries.length);
+        tab();
+        println("// " + "uses");
         indent(+1);
         for (int e: entries) {
-            println("#" + e + "\t// uses " + constantWriter.stringValue(e));
+            print("#" + e);
+            tab();
+            println("// " + constantWriter.stringValue(e));
         }
         indent(-1);
     }
 
     protected void printProvidesTable(Module_attribute attr) {
         Module_attribute.ProvidesEntry[] entries = attr.provides;
-        println(entries.length + "\t// " + "provides services");
+        print(entries.length);
+        tab();
+        println("// " + "provides");
         indent(+1);
         for (Module_attribute.ProvidesEntry e: entries) {
             print("#" + e.provides_index + ",#" +
-                    e.with_index + "\t// provides ");
+                    e.with_index);
+            tab();
+            print("// ");
             print(constantWriter.stringValue(e.provides_index));
             print (" with ");
             println(constantWriter.stringValue(e.with_index));

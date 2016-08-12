@@ -82,7 +82,7 @@ public class PackageConflictTest extends ModuleTestBase {
         Files.createDirectories(classes);
 
         new JavacTask(tb)
-          .options("-Werror", "-modulesourcepath", base.toString())
+          .options("-Werror", "--module-source-path", base.toString())
           .outdir(classes)
           .files(findJavaFiles(base))
           .run()
@@ -107,7 +107,7 @@ public class PackageConflictTest extends ModuleTestBase {
         Files.createDirectories(classes);
 
         List<String> log = new JavacTask(tb)
-                       .options("-XDrawDiagnostics", "-modulesourcepath", base.toString())
+                       .options("-XDrawDiagnostics", "--module-source-path", base.toString())
                        .outdir(classes)
                        .files(findJavaFiles(base))
                        .run(Task.Expect.FAIL)
@@ -124,6 +124,31 @@ public class PackageConflictTest extends ModuleTestBase {
     }
 
     @Test
+    public void testConflictInDependenciesDynamicExport(Path base) throws Exception {
+        Path m1 = base.resolve("m1");
+        Path m2 = base.resolve("m2");
+        Path m3 = base.resolve("m3");
+        tb.writeJavaFiles(m1,
+                "module m1 { exports test; }",
+                "package test; public class A { }");
+        tb.writeJavaFiles(m2,
+                "module m2 { exports dynamic test; }",
+                "package test; public class B { }");
+        tb.writeJavaFiles(m3,
+                "module m3 { requires m1; requires m2; }",
+                "package impl; public class Impl { }");
+        Path classes = base.resolve("classes");
+        Files.createDirectories(classes);
+
+        new JavacTask(tb)
+                .options("-XDrawDiagnostics", "--module-source-path", base.toString())
+                .outdir(classes)
+                .files(findJavaFiles(base))
+                .run(Task.Expect.SUCCESS)
+                .writeAll();
+    }
+
+    @Test
     public void testSimple2(Path base) throws Exception {
         Path modSrc = base.resolve("modSrc");
         Path modules = base.resolve("modules");
@@ -137,7 +162,7 @@ public class PackageConflictTest extends ModuleTestBase {
                 .write(modSrc);
 
         String log = new JavacTask(tb)
-                .options("-XDrawDiagnostics", "-mp", modules.toString())
+                .options("-XDrawDiagnostics", "-p", modules.toString())
                 .outdir(Files.createDirectories(base.resolve("classes")))
                 .files(findJavaFiles(modSrc.resolve("M")))
                 .run(Task.Expect.FAIL)
@@ -162,7 +187,7 @@ public class PackageConflictTest extends ModuleTestBase {
                 .write(modSrc);
 
         String log = new JavacTask(tb)
-                .options("-XDrawDiagnostics", "-modulesourcepath", modSrc.toString())
+                .options("-XDrawDiagnostics", "--module-source-path", modSrc.toString())
                 .outdir(Files.createDirectories(base.resolve("classes")))
                 .files(findJavaFiles(modSrc))
                 .run(Task.Expect.SUCCESS)
@@ -189,7 +214,7 @@ public class PackageConflictTest extends ModuleTestBase {
                 .write(modSrc);
 
         String log = new JavacTask(tb)
-                .options("-XDrawDiagnostics", "-mp", modules.toString())
+                .options("-XDrawDiagnostics", "-p", modules.toString())
                 .outdir(Files.createDirectories(base.resolve("classes")))
                 .files(findJavaFiles(modSrc.resolve("M")))
                 .run(Task.Expect.SUCCESS)
@@ -220,7 +245,7 @@ public class PackageConflictTest extends ModuleTestBase {
                 .write(modSrc);
 
         List<String> log = new JavacTask(tb)
-                .options("-XDrawDiagnostics", "-mp", modules.toString())
+                .options("-XDrawDiagnostics", "-p", modules.toString())
                 .outdir(Files.createDirectories(base.resolve("classes")))
                 .files(findJavaFiles(modSrc.resolve("K")))
                 .run(Task.Expect.FAIL)
@@ -252,7 +277,7 @@ public class PackageConflictTest extends ModuleTestBase {
                 .classes("package p; public class DependsOnN { boolean f = pkg.A.flagN; } ")
                 .write(modSrc);
         new JavacTask(tb)
-                .options("-modulesourcepath", modSrc.toString())
+                .options("--module-source-path", modSrc.toString())
                 .outdir(Files.createDirectories(base.resolve("classes")))
                 .files(findJavaFiles(modSrc.resolve("K")))
                 .run(Task.Expect.SUCCESS)
@@ -265,7 +290,7 @@ public class PackageConflictTest extends ModuleTestBase {
 
         List<String> output = new JavacTask(tb)
                 .options("-XDrawDiagnostics",
-                        "-modulesourcepath", modSrc.toString())
+                        "--module-source-path", modSrc.toString())
                 .outdir(Files.createDirectories(base.resolve("classes")))
                 .files(findJavaFiles(modSrc.resolve("K")))
                 .run(Task.Expect.FAIL)

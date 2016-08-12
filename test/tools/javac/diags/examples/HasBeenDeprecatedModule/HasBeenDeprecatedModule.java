@@ -21,7 +21,5 @@
  * questions.
  */
 
-// key: compiler.err.locn.invalid.arg.for.xpatch
-// options: -Xpatch:blah
-
-class InvalidArgForXpatch {}
+//key: compiler.warn.has.been.deprecated.module
+//options: -Xlint:deprecation

@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -127,7 +128,7 @@ public abstract class BaseFileManager implements JavaFileManager {
 
     protected String classLoaderClass;
 
-    protected Locations locations;
+    protected final Locations locations;
 
     /**
      * A flag for clients to use to indicate that this file manager should
@@ -216,7 +217,10 @@ public abstract class BaseFileManager implements JavaFileManager {
             addReadsMethod.invoke(thisModule, targetModule);
         } catch (NoSuchMethodException e) {
             // ignore
-        } catch (Exception e) {
+        } catch (IllegalAccessException
+                | IllegalArgumentException
+                | SecurityException
+                | InvocationTargetException e) {
             throw new Abort(e);
         }
         return targetLoader;
@@ -232,7 +236,7 @@ public abstract class BaseFileManager implements JavaFileManager {
         OptionHelper helper = new GrumpyHelper(log) {
             @Override
             public String get(Option option) {
-                return options.get(option.getText());
+                return options.get(option);
             }
 
             @Override
@@ -251,23 +255,15 @@ public abstract class BaseFileManager implements JavaFileManager {
             }
         };
 
-        for (Option o: javacFileManagerOptions) {
-            if (o.matches(current))  {
-                if (o.hasArg()) {
-                    if (remaining.hasNext()) {
-                        if (!o.process(helper, current, remaining.next()))
-                            return true;
-                    }
-                } else {
-                    if (!o.process(helper, current))
-                        return true;
-                }
-                // operand missing, or process returned true
-                throw new IllegalArgumentException(current);
-            }
+        Option o = Option.lookup(current, javacFileManagerOptions);
+        if (o == null) {
+            return false;
         }
 
-        return false;
+        if (!o.handleOption(helper, current, remaining))
+            throw new IllegalArgumentException(current);
+
+        return true;
     }
     // where
         private static final Set<Option> javacFileManagerOptions =
@@ -275,11 +271,8 @@ public abstract class BaseFileManager implements JavaFileManager {
 
     @Override @DefinedBy(Api.COMPILER)
     public int isSupportedOption(String option) {
-        for (Option o : javacFileManagerOptions) {
-            if (o.matches(option))
-                return o.hasArg() ? 1 : 0;
-        }
-        return -1;
+        Option o = Option.lookup(option, javacFileManagerOptions);
+        return (o == null) ? -1 : o.hasArg() ? 1 : 0;
     }
 
     protected String multiReleaseValue;
@@ -316,7 +309,7 @@ public abstract class BaseFileManager implements JavaFileManager {
             try {
                 ok = ok & handleOption(e.getKey(), e.getValue());
             } catch (IllegalArgumentException ex) {
-                log.error(Errors.IllegalArgumentForOption(e.getKey().getText(), ex.getMessage()));
+                log.error(Errors.IllegalArgumentForOption(e.getKey().getPrimaryName(), ex.getMessage()));
                 ok = false;
             }
         }
@@ -341,12 +334,12 @@ public abstract class BaseFileManager implements JavaFileManager {
 
     @SuppressWarnings("cast")
     public CharBuffer decode(ByteBuffer inbuf, boolean ignoreEncodingErrors) {
-        String encodingName = getEncodingName();
+        String encName = getEncodingName();
         CharsetDecoder decoder;
         try {
-            decoder = getDecoder(encodingName, ignoreEncodingErrors);
+            decoder = getDecoder(encName, ignoreEncodingErrors);
         } catch (IllegalCharsetNameException | UnsupportedCharsetException e) {
-            log.error("unsupported.encoding", encodingName);
+            log.error("unsupported.encoding", encName);
             return (CharBuffer)CharBuffer.allocate(1).flip();
         }
 
@@ -382,7 +375,7 @@ public abstract class BaseFileManager implements JavaFileManager {
                     unmappable.append(String.format("%02X", inbuf.get()));
                 }
 
-                String charsetName = charset == null ? encodingName : charset.name();
+                String charsetName = charset == null ? encName : charset.name();
 
                 log.error(dest.limit(),
                           Errors.IllegalCharForEncoding(unmappable.toString(), charsetName));
