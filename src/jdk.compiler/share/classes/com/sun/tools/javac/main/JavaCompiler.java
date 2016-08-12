@@ -1011,6 +1011,7 @@ public class JavaCompiler {
 
     public List<JCCompilationUnit> initModules(List<JCCompilationUnit> roots) {
         modules.initModules(roots, Collections.emptySet(), Collections.emptySet());
+        enter.modulesInitialized = true;
         if (roots.isEmpty()) {
             enterDone = true;
         }
