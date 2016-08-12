@@ -1,13 +1,13 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  */
-
 /*
- * Copyright 2005 The Apache Software Foundation.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -24,10 +24,10 @@ import com.sun.org.apache.xerces.internal.impl.msg.XMLMessageFormatter;
 import com.sun.org.apache.xerces.internal.util.XML11Char;
 import com.sun.org.apache.xerces.internal.util.XMLChar;
 import com.sun.org.apache.xerces.internal.util.XMLStringBuffer;
-import com.sun.org.apache.xerces.internal.utils.XMLSecurityManager;
 import com.sun.org.apache.xerces.internal.utils.XMLSecurityManager.Limit;
 import com.sun.org.apache.xerces.internal.xni.QName;
 import com.sun.org.apache.xerces.internal.xni.XMLString;
+import com.sun.xml.internal.stream.Entity;
 import java.io.IOException;
 
 /**
@@ -307,23 +307,11 @@ public class XML11EntityScanner
             return null;
         }
 
+        int length = 0;
         do {
             ch = fCurrentEntity.ch[fCurrentEntity.position];
             if (XML11Char.isXML11Name(ch)) {
-                if (++fCurrentEntity.position == fCurrentEntity.count) {
-                    int length = fCurrentEntity.position - offset;
-                    invokeListeners(length);
-                    if (length == fCurrentEntity.ch.length) {
-                        // bad luck we have to resize our buffer
-                        char[] tmp = new char[fCurrentEntity.ch.length << 1];
-                        System.arraycopy(fCurrentEntity.ch, offset,
-                                         tmp, 0, length);
-                        fCurrentEntity.ch = tmp;
-                    }
-                    else {
-                        System.arraycopy(fCurrentEntity.ch, offset,
-                                         fCurrentEntity.ch, 0, length);
-                    }
+                if ((length = checkBeforeLoad(fCurrentEntity, offset, offset)) > 0) {
                     offset = 0;
                     if (load(length, false, false)) {
                         break;
@@ -331,20 +319,7 @@ public class XML11EntityScanner
                 }
             }
             else if (XML11Char.isXML11NameHighSurrogate(ch)) {
-                if (++fCurrentEntity.position == fCurrentEntity.count) {
-                    int length = fCurrentEntity.position - offset;
-                    invokeListeners(length);
-                    if (length == fCurrentEntity.ch.length) {
-                        // bad luck we have to resize our buffer
-                        char[] tmp = new char[fCurrentEntity.ch.length << 1];
-                        System.arraycopy(fCurrentEntity.ch, offset,
-                                         tmp, 0, length);
-                        fCurrentEntity.ch = tmp;
-                    }
-                    else {
-                        System.arraycopy(fCurrentEntity.ch, offset,
-                                         fCurrentEntity.ch, 0, length);
-                    }
+                if ((length = checkBeforeLoad(fCurrentEntity, offset, offset)) > 0) {
                     offset = 0;
                     if (load(length, false, false)) {
                         --fCurrentEntity.position;
@@ -358,20 +333,7 @@ public class XML11EntityScanner
                     --fCurrentEntity.position;
                     break;
                 }
-                if (++fCurrentEntity.position == fCurrentEntity.count) {
-                    int length = fCurrentEntity.position - offset;
-                    invokeListeners(length);
-                    if (length == fCurrentEntity.ch.length) {
-                        // bad luck we have to resize our buffer
-                        char[] tmp = new char[fCurrentEntity.ch.length << 1];
-                        System.arraycopy(fCurrentEntity.ch, offset,
-                                         tmp, 0, length);
-                        fCurrentEntity.ch = tmp;
-                    }
-                    else {
-                        System.arraycopy(fCurrentEntity.ch, offset,
-                                         fCurrentEntity.ch, 0, length);
-                    }
+                if ((length = checkBeforeLoad(fCurrentEntity, offset, offset)) > 0) {
                     offset = 0;
                     if (load(length, false, false)) {
                         break;
@@ -384,12 +346,13 @@ public class XML11EntityScanner
         }
         while (true);
 
-        int length = fCurrentEntity.position - offset;
+        length = fCurrentEntity.position - offset;
         fCurrentEntity.columnNumber += length;
 
         // return name
         String symbol = null;
         if (length > 0) {
+            checkLimit(Limit.MAX_NAME_LIMIT, fCurrentEntity, offset, length);
             symbol = fSymbolTable.addSymbol(fCurrentEntity.ch, offset, length);
         }
         return symbol;
@@ -632,6 +595,7 @@ public class XML11EntityScanner
         }
 
         int index = -1;
+        int length = 0;
         boolean sawIncompleteSurrogatePair = false;
         do {
             ch = fCurrentEntity.ch[fCurrentEntity.position];
@@ -644,22 +608,7 @@ public class XML11EntityScanner
                     //check prefix before further read
                     checkLimit(Limit.MAX_NAME_LIMIT, fCurrentEntity, offset, index - offset);
                 }
-                if (++fCurrentEntity.position == fCurrentEntity.count) {
-                    int length = fCurrentEntity.position - offset;
-                    //check localpart before loading more data
-                    checkLimit(Limit.MAX_NAME_LIMIT, fCurrentEntity, offset, length - index - 1);
-                    invokeListeners(length);
-                    if (length == fCurrentEntity.ch.length) {
-                        // bad luck we have to resize our buffer
-                        char[] tmp = new char[fCurrentEntity.ch.length << 1];
-                        System.arraycopy(fCurrentEntity.ch, offset,
-                                         tmp, 0, length);
-                        fCurrentEntity.ch = tmp;
-                    }
-                    else {
-                        System.arraycopy(fCurrentEntity.ch, offset,
-                                         fCurrentEntity.ch, 0, length);
-                    }
+                if ((length = checkBeforeLoad(fCurrentEntity, offset, index)) > 0) {
                     if (index != -1) {
                         index = index - offset;
                     }
@@ -670,20 +619,7 @@ public class XML11EntityScanner
                 }
             }
             else if (XML11Char.isXML11NameHighSurrogate(ch)) {
-                if (++fCurrentEntity.position == fCurrentEntity.count) {
-                    int length = fCurrentEntity.position - offset;
-                    invokeListeners(length);
-                    if (length == fCurrentEntity.ch.length) {
-                        // bad luck we have to resize our buffer
-                        char[] tmp = new char[fCurrentEntity.ch.length << 1];
-                        System.arraycopy(fCurrentEntity.ch, offset,
-                                         tmp, 0, length);
-                        fCurrentEntity.ch = tmp;
-                    }
-                    else {
-                        System.arraycopy(fCurrentEntity.ch, offset,
-                                         fCurrentEntity.ch, 0, length);
-                    }
+                if ((length = checkBeforeLoad(fCurrentEntity, offset, index)) > 0) {
                     if (index != -1) {
                         index = index - offset;
                     }
@@ -702,20 +638,7 @@ public class XML11EntityScanner
                     --fCurrentEntity.position;
                     break;
                 }
-                if (++fCurrentEntity.position == fCurrentEntity.count) {
-                    int length = fCurrentEntity.position - offset;
-                    invokeListeners(length);
-                    if (length == fCurrentEntity.ch.length) {
-                        // bad luck we have to resize our buffer
-                        char[] tmp = new char[fCurrentEntity.ch.length << 1];
-                        System.arraycopy(fCurrentEntity.ch, offset,
-                                         tmp, 0, length);
-                        fCurrentEntity.ch = tmp;
-                    }
-                    else {
-                        System.arraycopy(fCurrentEntity.ch, offset,
-                                         fCurrentEntity.ch, 0, length);
-                    }
+                if ((length = checkBeforeLoad(fCurrentEntity, offset, index)) > 0) {
                     if (index != -1) {
                         index = index - offset;
                     }
@@ -731,7 +654,7 @@ public class XML11EntityScanner
         }
         while (true);
 
-        int length = fCurrentEntity.position - offset;
+        length = fCurrentEntity.position - offset;
         fCurrentEntity.columnNumber += length;
 
         if (length > 0) {
@@ -935,6 +858,7 @@ public class XML11EntityScanner
      * @param quote   The quote character that signifies the end of the
      *                attribute value data.
      * @param content The content structure to fill.
+     * @param isNSURI a flag indicating whether the content is a Namespace URI
      *
      * @return Returns the next character on the input, if known. This
      *         value may be -1 but this does <em>note</em> designate
@@ -943,7 +867,7 @@ public class XML11EntityScanner
      * @throws IOException  Thrown if i/o error occurs.
      * @throws EOFException Thrown on end of file.
      */
-    public int scanLiteral(int quote, XMLString content)
+    public int scanLiteral(int quote, XMLString content, boolean isNSURI)
         throws IOException {
         // load more characters, if needed
         if (fCurrentEntity.position == fCurrentEntity.count) {
@@ -1042,6 +966,9 @@ public class XML11EntityScanner
         fCurrentEntity.columnNumber += length - newlines;
         if (fCurrentEntity.isGE) {
             checkLimit(Limit.TOTAL_ENTITY_SIZE_LIMIT, fCurrentEntity, offset, length);
+        }
+        if (isNSURI) {
+            checkLimit(Limit.MAX_NAME_LIMIT, fCurrentEntity, offset, length);
         }
         content.setValues(fCurrentEntity.ch, offset, length);
 
