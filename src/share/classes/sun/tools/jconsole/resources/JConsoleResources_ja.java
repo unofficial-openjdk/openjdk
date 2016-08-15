@@ -156,12 +156,9 @@ public class JConsoleResources_ja extends JConsoleResources {
         {"Detect Deadlock.toolTip", "\u30c7\u30c3\u30c9\u30ed\u30c3\u30af\u3057\u305f\u30b9\u30ec\u30c3\u30c9\u3092\u691c\u51fa\u3059\u308b"},
         {"Dimension is not supported:","\u5927\u304d\u3055\u306f\u30b5\u30dd\u30fc\u30c8\u3055\u308c\u3066\u3044\u307e\u305b\u3093:"},
         {"Discard chart", "\u56f3\u3092\u7834\u68c4\u3059\u308b"},
-        {"DurationDaysHoursMinutes","{0,choice,1#{0,number,integer} \u65e5 |1.0<{0,number,integer} \u65e5 }" +
-                                    "{1,choice,0<{1,number,integer} \u6642\u9593 |1#{1,number,integer} \u6642\u9593 |1<{1,number,integer} \u6642\u9593 }" +
-                                    "{2,choice,0<{2,number,integer} \u5206 |1#{2,number,integer} \u5206 |1.0<{2,number,integer} \u5206}"},
+        {"DurationDaysHoursMinutes","{0,choice,1#{0,number,integer} \u65e5 |1.0<{0,number,integer} \u65e5 }{1,choice,0<{1,number,integer} \u6642\u9593 |1#{1,number,integer} \u6642\u9593 |1<{1,number,integer} \u6642\u9593 }{2,choice,0<{2,number,integer} \u5206 |1#{2,number,integer} \u5206 |1.0<{2,number,integer} \u5206}"},
 
-        {"DurationHoursMinutes","{0,choice,1#{0,number,integer} \u6642\u9593 |1<{0,number,integer} \u6642\u9593 }" +
-                                "{1,choice,0<{1,number,integer} \u5206 |1#{1,number,integer} \u5206 |1.0<{1,number,integer} \u5206}"},
+        {"DurationHoursMinutes","{0,choice,1#{0,number,integer} \u6642\u9593 |1<{0,number,integer} \u6642\u9593 }{1,choice,0<{1,number,integer} \u5206 |1#{1,number,integer} \u5206 |1.0<{1,number,integer} \u5206}"},
 
         {"DurationMinutes","{0,choice,1#{0,number,integer} \u5206 |1.0<{0,number,integer} \u5206}"},
         {"DurationSeconds","{0} \u79d2"},
@@ -415,15 +412,11 @@ public class JConsoleResources_ja extends JConsoleResources {
         {"You cannot drop a class here", "\u30af\u30e9\u30b9\u3092\u3053\u3053\u306b\u30c9\u30ed\u30c3\u30d7\u3067\u304d\u307e\u305b\u3093"},
         {"collapse", "\u6298\u308a\u305f\u305f\u307f"},
         {"connectionFailed1","\u63a5\u7d9a\u306b\u5931\u6557\u3057\u307e\u3057\u305f: \u518d\u8a66\u884c\u3057\u307e\u3059\u304b?"},
-        {"connectionFailed2","{0} \u3078\u306e\u63a5\u7d9a\u304c\u6210\u529f\u3057\u307e\u305b\u3093\u3067\u3057\u305f\u3002<br>" +
-                             "\u3082\u3046\u4e00\u5ea6\u8a66\u3057\u307e\u3059\u304b?"},
+        {"connectionFailed2","{0} \u3078\u306e\u63a5\u7d9a\u304c\u6210\u529f\u3057\u307e\u305b\u3093\u3067\u3057\u305f\u3002<br>\u3082\u3046\u4e00\u5ea6\u8a66\u3057\u307e\u3059\u304b?"},
         {"connectionLost1","\u63a5\u7d9a\u304c\u5931\u308f\u308c\u307e\u3057\u305f: \u518d\u63a5\u7d9a\u3057\u307e\u3059\u304b?"},
-        {"connectionLost2","\u30ea\u30e2\u30fc\u30c8\u30d7\u30ed\u30bb\u30b9\u304c\u7d42\u4e86\u3057\u305f\u305f\u3081\u3001" +
-                           "{0} \u3078\u306e\u63a5\u7d9a\u304c\u5931\u308f\u308c\u307e\u3057\u305f\u3002<br>" +
-                           "\u518d\u63a5\u7d9a\u3057\u307e\u3059\u304b?"},
+        {"connectionLost2","\u30ea\u30e2\u30fc\u30c8\u30d7\u30ed\u30bb\u30b9\u304c\u7d42\u4e86\u3057\u305f\u305f\u3081\u3001{0} \u3078\u306e\u63a5\u7d9a\u304c\u5931\u308f\u308c\u307e\u3057\u305f\u3002<br>\u518d\u63a5\u7d9a\u3057\u307e\u3059\u304b?"},
         {"connectingTo1","{0} \u306b\u63a5\u7d9a\u3057\u3066\u3044\u307e\u3059"},
-        {"connectingTo2","\u73fe\u5728 {0} \u306b\u63a5\u7d9a\u3057\u3066\u3044\u307e\u3059\u3002<br>" +
-                         "\u3053\u308c\u306b\u306f\u5c11\u3057\u6642\u9593\u304c\u304b\u304b\u308a\u307e\u3059\u3002"},
+        {"connectingTo2","\u73fe\u5728 {0} \u306b\u63a5\u7d9a\u3057\u3066\u3044\u307e\u3059\u3002<br>\u3053\u308c\u306b\u306f\u5c11\u3057\u6642\u9593\u304c\u304b\u304b\u308a\u307e\u3059\u3002"},
         {"deadlockAllTab","\u3059\u3079\u3066"},
         {"deadlockTab","\u30c7\u30c3\u30c9\u30ed\u30c3\u30af"},
         {"deadlockTabN","\u30c7\u30c3\u30c9\u30ed\u30c3\u30af {0}"},

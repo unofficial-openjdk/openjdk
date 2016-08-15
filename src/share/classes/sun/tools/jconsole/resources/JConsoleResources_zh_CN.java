@@ -156,12 +156,9 @@ public class JConsoleResources_zh_CN extends JConsoleResources {
         {"Detect Deadlock.toolTip", "\u68c0\u6d4b\u5230\u6b7b\u9501\u7684\u7ebf\u7a0b"},
         {"Dimension is not supported:","\u4e0d\u652f\u6301\u7ef4\uff1a"},
         {"Discard chart", "\u653e\u5f03\u56fe\u8868"},
-        {"DurationDaysHoursMinutes","{0,choice,1#{0,number,integer} day |1.0<{0,number,integer} days }" +
-                                    "{1,choice,0<{1,number,integer} hours |1#{1,number,integer} hour |1<{1,number,integer} hours }" +
-                                    "{2,choice,0<{2,number,integer} minutes|1#{2,number,integer} minute|1.0<{2,number,integer} minutes}"},
+        {"DurationDaysHoursMinutes","{0,choice,1#{0,number,integer} day |1.0<{0,number,integer} days }{1,choice,0<{1,number,integer} hours |1#{1,number,integer} hour |1<{1,number,integer} hours }{2,choice,0<{2,number,integer} minutes|1#{2,number,integer} minute|1.0<{2,number,integer} minutes}"},
 
-        {"DurationHoursMinutes","{0,choice,1#{0,number,integer} hour |1<{0,number,integer} hours }" +
-                                "{1,choice,0<{1,number,integer} minutes|1#{1,number,integer} minute|1.0<{1,number,integer} minutes}"},
+        {"DurationHoursMinutes","{0,choice,1#{0,number,integer} hour |1<{0,number,integer} hours }{1,choice,0<{1,number,integer} minutes|1#{1,number,integer} minute|1.0<{1,number,integer} minutes}"},
 
         {"DurationMinutes","{0,choice,1#{0,number,integer} minute|1.0<{0,number,integer} minutes}"},
         {"DurationSeconds","{0} \u79d2"},
@@ -271,7 +268,7 @@ public class JConsoleResources_zh_CN extends JConsoleResources {
         {"Minimize All.mnemonic", 'M'},
         {"Minus Version", "\u8fd9\u662f {0} \u7248\u672c {1}"},
         {"Monitor locked",
-"   - \u5df2\u9501\u5b9a {0}" + cr},
+             "   - \u5df2\u9501\u5b9a {0}" + cr},
         {"Motif","\u4fee\u6539"},
         {"Name Build and Mode","{0}\uff08\u5185\u90e8\u7248\u672c {1}\u3001{2}\uff09"},
         {"Name and Build","{0}\uff08\u5185\u90e8\u7248\u672c {1}\uff09"},
@@ -415,15 +412,11 @@ public class JConsoleResources_zh_CN extends JConsoleResources {
         {"You cannot drop a class here", "\u60a8\u4e0d\u80fd\u5c06\u7c7b\u653e\u5728\u6b64\u5904"},
         {"collapse", "\u6298\u53e0"},
         {"connectionFailed1","\u8fde\u63a5\u5931\u8d25\uff1a\u662f\u5426\u91cd\u8bd5\uff1f"},
-        {"connectionFailed2","\u4e0e {0} \u7684\u8fde\u63a5\u672a\u6210\u529f\u3002<br>" +
-"\u662f\u5426\u8981\u91cd\u8bd5\uff1f"},
+        {"connectionFailed2","\u4e0e {0} \u7684\u8fde\u63a5\u672a\u6210\u529f\u3002<br>\u662f\u5426\u8981\u91cd\u8bd5\uff1f"},
         {"connectionLost1","\u8fde\u63a5\u65ad\u5f00\uff1a\u662f\u5426\u91cd\u65b0\u8fde\u63a5\uff1f"},
-        {"connectionLost2","\u4e0e {0} \u7684\u8fde\u63a5\u5df2\u65ad\u5f00" +
-                           "\u539f\u56e0\u662f\u5df2\u7ec8\u6b62\u8fdc\u7a0b\u8fdb\u7a0b\u3002<br>" +
-                           "\u662f\u5426\u8981\u91cd\u65b0\u8fde\u63a5\uff1f"},
+        {"connectionLost2","\u4e0e {0} \u7684\u8fde\u63a5\u5df2\u65ad\u5f00\u539f\u56e0\u662f\u5df2\u7ec8\u6b62\u8fdc\u7a0b\u8fdb\u7a0b\u3002<br>\u662f\u5426\u8981\u91cd\u65b0\u8fde\u63a5\uff1f"},
         {"connectingTo1","\u6b63\u5728\u8fde\u63a5\u81f3 {0}"},
-        {"connectingTo2","\u5f53\u524d\u6b63\u5728\u8fde\u63a5\u81f3 {0}\u3002<br>" +
-"\u8fd9\u5c06\u4f1a\u82b1\u8d39\u4e00\u4e9b\u65f6\u95f4\u3002"},
+        {"connectingTo2","\u5f53\u524d\u6b63\u5728\u8fde\u63a5\u81f3 {0}\u3002<br>\u8fd9\u5c06\u4f1a\u82b1\u8d39\u4e00\u4e9b\u65f6\u95f4\u3002"},
         {"deadlockAllTab","\u5168\u90e8"},
         {"deadlockTab","\u6b7b\u9501"},
         {"deadlockTabN","\u6b7b\u9501 {0}"},
@@ -441,7 +434,7 @@ public class JConsoleResources_zh_CN extends JConsoleResources {
              "  -version    \u8f93\u51fa\u7a0b\u5e8f\u7248\u672c" + cr +
              cr +
              "  connection = pid || host:port || JMX URL (service:jmx:<protocol>://...)" + cr +
-             "  pid       \u76ee\u6807\u8fdb\u7a0b\u7684\u8fdb\u7a0b ID"+ cr +
+             "  pid       \u76ee\u6807\u8fdb\u7a0b\u7684\u8fdb\u7a0b ID" + cr +
              "  host      \u8fdc\u7a0b\u4e3b\u673a\u540d\u6216 IP \u5730\u5740" + cr +
              "  port      \u7528\u4e8e\u8fdc\u7a0b\u8fde\u63a5\u7684\u7aef\u53e3\u53f7" + cr +
              cr +
