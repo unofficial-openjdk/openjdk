@@ -23,6 +23,7 @@
 
 /**
  * @test
+ * @modules java.sql java.transaction
  * @compile --add-modules=java.transaction
  *   test/transaction/InvalidTransactionExceptionTests.java
  *   test/transaction/TransactionRequiredExceptionTests.java

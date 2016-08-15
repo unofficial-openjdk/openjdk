@@ -22,6 +22,7 @@
  */
 
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -33,13 +34,15 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.function.Function;
 import jdk.tools.jlink.Jlink;
 import jdk.tools.jlink.Jlink.JlinkConfiguration;
 import jdk.tools.jlink.Jlink.PluginsConfiguration;
 import jdk.tools.jlink.builder.DefaultImageBuilder;
-import jdk.tools.jlink.plugin.ModulePool;
+import jdk.tools.jlink.plugin.ResourcePool;
+import jdk.tools.jlink.plugin.ResourcePoolBuilder;
 import jdk.tools.jlink.plugin.Plugin;
 import jdk.tools.jlink.internal.ExecutableImage;
 import jdk.tools.jlink.internal.PostProcessor;
@@ -100,8 +103,9 @@ public class IntegrationTest {
         }
 
         @Override
-        public void visit(ModulePool in, ModulePool out) {
+        public ResourcePool transform(ResourcePool in, ResourcePoolBuilder out) {
             in.transformAndCopy(Function.identity(), out);
+            return out.build();
         }
     }
 
@@ -199,6 +203,27 @@ public class IntegrationTest {
         File release = new File(output.toString(), "release");
         if (!release.exists()) {
             throw new AssertionError("release not generated");
+        }
+
+        Properties props = new Properties();
+        try (FileReader reader = new FileReader(release)) {
+            props.load(reader);
+        }
+
+        if (props.getProperty("JAVA_VERSION") == null) {
+            throw new AssertionError("release file does not contain JAVA_VERSION");
+        }
+
+        if (props.getProperty("OS_NAME") == null) {
+            throw new AssertionError("release file does not contain OS_NAME");
+        }
+
+        if (props.getProperty("OS_ARCH") == null) {
+            throw new AssertionError("release file does not contain OS_ARCH");
+        }
+
+        if (props.getProperty("OS_VERSION") == null) {
+            throw new AssertionError("release file does not contain OS_VERSION");
         }
 
         if (!Files.exists(output.resolve("toto.txt"))) {
