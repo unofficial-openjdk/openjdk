@@ -171,19 +171,16 @@ public final class SSLServerCertStore extends CertStoreSpi {
                         Collections.<X509Certificate>emptyList();
         private boolean exchangedServerCerts = false;
 
-        @Override
         public X509Certificate[] getAcceptedIssuers() {
             return new X509Certificate[0];
         }
 
-        @Override
         public void checkClientTrusted(X509Certificate[] chain,
                 String authType) throws CertificateException {
 
             throw new UnsupportedOperationException();
         }
 
-        @Override
         public void checkServerTrusted(X509Certificate[] chain,
                 String authType) throws CertificateException {
 

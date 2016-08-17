@@ -254,87 +254,70 @@ final class PropMap implements SortedMap<String, String>  {
         out.println("#]");
     }
 
-    @Override
     public int size() {
         return theMap.size();
     }
 
-    @Override
     public boolean isEmpty() {
         return theMap.isEmpty();
     }
 
-    @Override
     public boolean containsKey(Object key) {
         return theMap.containsKey(key);
     }
 
-    @Override
     public boolean containsValue(Object value) {
         return theMap.containsValue(value);
     }
 
-    @Override
     public String get(Object key) {
         return theMap.get(key);
     }
 
-    @Override
     public String remove(Object key) {
        return theMap.remove(key);
     }
 
-    @Override
     public void putAll(Map<? extends String, ? extends String> m) {
        theMap.putAll(m);
     }
 
-    @Override
     public void clear() {
         theMap.clear();
     }
 
-    @Override
     public Set<String> keySet() {
        return theMap.keySet();
     }
 
-    @Override
     public Collection<String> values() {
        return theMap.values();
     }
 
-    @Override
     public Set<Map.Entry<String, String>> entrySet() {
         return theMap.entrySet();
     }
 
-    @Override
     public Comparator<? super String> comparator() {
         return theMap.comparator();
     }
 
-    @Override
     public SortedMap<String, String> subMap(String fromKey, String toKey) {
         return theMap.subMap(fromKey, toKey);
     }
 
-    @Override
     public SortedMap<String, String> headMap(String toKey) {
         return theMap.headMap(toKey);
     }
 
-    @Override
     public SortedMap<String, String> tailMap(String fromKey) {
         return theMap.tailMap(fromKey);
     }
 
-    @Override
     public String firstKey() {
         return theMap.firstKey();
     }
 
-    @Override
     public String lastKey() {
        return theMap.lastKey();
     }
