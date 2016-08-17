@@ -75,7 +75,6 @@ public class Util {
     private static boolean readAllowCustomValueHandlerProperty () {
        return AccessController
         .doPrivileged(new PrivilegedAction<Boolean>() {
-            @Override
             public Boolean run() {
                 return Boolean.getBoolean(ALLOW_CREATEVALUEHANDLER_PROP);
             }
