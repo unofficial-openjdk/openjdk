@@ -304,8 +304,10 @@ public class Resolve {
         if (env.enclMethod != null && (env.enclMethod.mods.flags & ANONCONSTR) != 0)
             return true;
 
-        boolean isAccessible = false;
-        switch ((short)(c.flags() & AccessFlags)) {
+        boolean isAccessible;
+        short accessFlag = !env.info.ignoreAccessModifiers ?
+                (short)(c.flags() & AccessFlags) : PUBLIC;
+        switch (accessFlag) {
             case PRIVATE:
                 isAccessible =
                     env.enclClass.sym.outermostClass() ==
@@ -321,7 +323,6 @@ public class Resolve {
                 isAccessible = true;
                 break;
             case PUBLIC:
-                isAccessible = true;
                 if (allowModules && checkModuleAccess) {
                     ModuleSymbol currModule = env.toplevel.modle;
                     currModule.complete();
