@@ -32,6 +32,7 @@
  * @run main AnnotationsOnModules
  */
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -121,8 +122,10 @@ public class AnnotationsOnModules extends ModuleTestBase {
         Path m1 = moduleSrc.resolve("m1");
 
         tb.writeJavaFiles(m1,
-                          "import m1.A; @A @Deprecated module m1 { }",
-                          "package m1; import java.lang.annotation.*; @Target(ElementType.MODULE) public @interface A {}");
+                          "import m1.*; @A @Deprecated @E @E module m1 { }",
+                          "package m1; import java.lang.annotation.*; @Target(ElementType.MODULE) public @interface A {}",
+                          "package m1; import java.lang.annotation.*; @Target(ElementType.MODULE) @Repeatable(C.class) public @interface E {}",
+                          "package m1; import java.lang.annotation.*; @Target(ElementType.MODULE) public @interface C { public E[] value(); }");
 
         Path modulePath = base.resolve("module-path");
 
@@ -153,6 +156,16 @@ public class AnnotationsOnModules extends ModuleTestBase {
                 .files(findJavaFiles(src))
                 .run()
                 .writeAll();
+
+        new JavacTask(tb)
+                .options("--module-path", modulePath.toString() + File.pathSeparator + out.toString(),
+                         "--add-modules", "m1",
+                         "-processor", AP.class.getName(),
+                         "-proc:only")
+                .classes("m1/m1.A")
+                .files(findJavaFiles(src))
+                .run()
+                .writeAll();
     }
 
     @SupportedAnnotationTypes("*")
@@ -163,7 +176,7 @@ public class AnnotationsOnModules extends ModuleTestBase {
             ModuleElement m1 = processingEnv.getElementUtils().getModuleElement("m1");
             Set<String> actualAnnotations = new HashSet<>();
             Set<String> expectedAnnotations =
-                    new HashSet<>(Arrays.asList("@m1.A", "@java.lang.Deprecated"));
+                    new HashSet<>(Arrays.asList("@m1.A", "@java.lang.Deprecated", "@m1.C({@m1.E, @m1.E})"));
 
             for (AnnotationMirror am : m1.getAnnotationMirrors()) {
                 actualAnnotations.add(am.toString());
