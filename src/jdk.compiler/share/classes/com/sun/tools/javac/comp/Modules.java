@@ -758,7 +758,14 @@ public class Modules extends JCTree.Visitor {
         @Override
         public void visitProvides(JCProvides tree) {
             Type st = attr.attribType(tree.serviceName, env, syms.objectType);
-            Type it = attr.attribType(tree.implName, env, syms.objectType);
+            boolean prevIgnoreAccessModifiers = env.info.ignoreAccessModifiers;
+            Type it;
+            try {
+                env.info.ignoreAccessModifiers = true;
+                it = attr.attribType(tree.implName, env, syms.objectType);
+            } finally {
+                env.info.ignoreAccessModifiers = prevIgnoreAccessModifiers;
+            }
             ClassSymbol service = (ClassSymbol) st.tsym;
             ClassSymbol impl = (ClassSymbol) it.tsym;
             if (!types.isSubtype(it, st)) {
@@ -774,8 +781,6 @@ public class Modules extends JCTree.Visitor {
                 MethodSymbol constr = noArgsConstructor(impl);
                 if (constr == null) {
                     log.error(tree.implName.pos(), Errors.ServiceImplementationDoesntHaveANoArgsConstructor(impl));
-                } else if ((constr.flags() & PUBLIC) == 0) {
-                    log.error(tree.implName.pos(), Errors.ServiceImplementationNoArgsConstructorNotPublic(impl));
                 }
             }
             if (st.hasTag(CLASS) && it.hasTag(CLASS)) {
