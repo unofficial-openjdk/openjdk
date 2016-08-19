@@ -125,6 +125,11 @@ final class Resolver {
 
             // process dependences
             for (ModuleDescriptor.Requires requires : descriptor.requires()) {
+
+                // only required at compile-time
+                if (requires.modifiers().contains(Modifier.STATIC))
+                    continue;
+
                 String dn = requires.name();
 
                 // find dependence
@@ -519,6 +524,7 @@ final class Resolver {
                     // parent configuration
                     m2 = parent.findModule(dn).orElse(null);
                     if (m2 == null) {
+                        assert requires.modifiers().contains(Modifier.STATIC);
                         continue;
                     }
                 }

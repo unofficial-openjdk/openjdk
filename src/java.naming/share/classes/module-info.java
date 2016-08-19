@@ -23,6 +23,7 @@
  * questions.
  */
 
+@SuppressWarnings("deprecation")
 module java.naming {
     requires java.security.sasl;
 

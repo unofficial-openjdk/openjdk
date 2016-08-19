@@ -23,6 +23,7 @@
  * questions.
  */
 
+@SuppressWarnings("deprecation")
 module java.se.ee {
 
     requires public java.se;
