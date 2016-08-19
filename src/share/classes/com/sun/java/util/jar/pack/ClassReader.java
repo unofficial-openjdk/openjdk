@@ -424,7 +424,7 @@ class ClassReader {
                         readCode(m.code);
                     } catch (Instruction.FormatException iie) {
                         String message = iie.getMessage() + " in " + h;
-                        throw new ClassReader.ClassFormatException(message);
+                        throw new ClassReader.ClassFormatException(message, iie);
                     }
                 } else {
                     assert(h == cls);
@@ -475,9 +475,13 @@ class ClassReader {
         // (Later, ics may be transferred to the pkg.)
     }
 
-    class ClassFormatException extends IOException {
+    static class ClassFormatException extends IOException {
         public ClassFormatException(String message) {
             super(message);
+        }
+
+        public ClassFormatException(String message, Throwable cause) {
+            super(message, cause);
         }
     }
 }

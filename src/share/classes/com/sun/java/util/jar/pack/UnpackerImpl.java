@@ -106,7 +106,13 @@ public class UnpackerImpl extends TLGlobals implements Pack200.Unpacker {
      * @param out a JarOutputStream.
      * @exception IOException if an error is encountered.
      */
-    public synchronized void unpack(InputStream in0, JarOutputStream out) throws IOException {
+    public synchronized void unpack(InputStream in, JarOutputStream out) throws IOException {
+        if (in == null) {
+            throw new NullPointerException("null input");
+        }
+        if (out == null) {
+            throw new NullPointerException("null output");
+        }
         assert(Utils.currentInstance.get() == null);
         TimeZone tz = (props.getBoolean(Utils.PACK_DEFAULT_TIMEZONE))
                       ? null
@@ -116,18 +122,18 @@ public class UnpackerImpl extends TLGlobals implements Pack200.Unpacker {
             Utils.currentInstance.set(this);
             if (tz != null) TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
             final int verbose = props.getInteger(Utils.DEBUG_VERBOSE);
-            BufferedInputStream in = new BufferedInputStream(in0);
-            if (Utils.isJarMagic(Utils.readMagic(in))) {
+            BufferedInputStream in0 = new BufferedInputStream(in);
+            if (Utils.isJarMagic(Utils.readMagic(in0))) {
                 if (verbose > 0)
                     Utils.log.info("Copying unpacked JAR file...");
-                Utils.copyJarFile(new JarInputStream(in), out);
+                Utils.copyJarFile(new JarInputStream(in0), out);
             } else if (props.getBoolean(Utils.DEBUG_DISABLE_NATIVE)) {
-                (new DoUnpack()).run(in, out);
-                in.close();
+                (new DoUnpack()).run(in0, out);
+                in0.close();
                 Utils.markJarFile(out);
             } else {
-                (new NativeUnpack(this)).run(in, out);
-                in.close();
+                (new NativeUnpack(this)).run(in0, out);
+                in0.close();
                 Utils.markJarFile(out);
             }
         } finally {
@@ -146,6 +152,12 @@ public class UnpackerImpl extends TLGlobals implements Pack200.Unpacker {
      * @exception IOException if an error is encountered.
      */
     public synchronized void unpack(File in, JarOutputStream out) throws IOException {
+        if (in == null) {
+            throw new NullPointerException("null input");
+        }
+        if (out == null) {
+            throw new NullPointerException("null output");
+        }
         // Use the stream-based implementation.
         // %%% Reconsider if native unpacker learns to memory-map the file.
         FileInputStream instr = new FileInputStream(in);
