@@ -144,13 +144,12 @@ class Package {
     void choosePackageVersion() {
         assert(package_majver <= 0);  // do not call this twice
         int classver = getHighestClassVersion();
-        if (classver != 0 &&
-            (classver >>> 16) < JAVA6_MAX_CLASS_MAJOR_VERSION) {
-            // There are only old classfiles in this segment.
+        if (classver == 0 || (classver >>> 16) < JAVA6_MAX_CLASS_MAJOR_VERSION) {
+            // There are only old classfiles in this segment or resources
             package_majver = JAVA5_PACKAGE_MAJOR_VERSION;
             package_minver = JAVA5_PACKAGE_MINOR_VERSION;
         } else {
-            // Normal case.  Use the newest archive format.
+            // Normal case.  Use the newest archive format, when available
             package_majver = JAVA6_PACKAGE_MAJOR_VERSION;
             package_minver = JAVA6_PACKAGE_MINOR_VERSION;
         }

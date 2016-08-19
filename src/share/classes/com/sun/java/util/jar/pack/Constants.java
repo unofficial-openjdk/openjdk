@@ -51,7 +51,7 @@ class Constants {
 
     public final static short JAVA5_MAX_CLASS_MAJOR_VERSION = 49;
     public final static short JAVA5_MAX_CLASS_MINOR_VERSION = 0;
-    // NOTE: ASSUMED for now
+
     public final static short JAVA6_MAX_CLASS_MAJOR_VERSION = 50;
     public final static short JAVA6_MAX_CLASS_MINOR_VERSION = 0;
 
