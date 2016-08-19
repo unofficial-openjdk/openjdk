@@ -251,7 +251,9 @@ class ClassReader {
                     fixups[fptr++] = in.readUnsignedShort();
                     break;
                 default:
-                    throw new IOException("Bad constant pool tag "+tag);
+                    throw new ClassFormatException("Bad constant pool tag " +
+                            tag + " in File: " + cls.file.nameString +
+                            " at pos: " + inPos);
             }
         }
 
@@ -418,7 +420,12 @@ class ClassReader {
                 if ("Code".equals(a.name())) {
                     Class.Method m = (Class.Method) h;
                     m.code = new Code(m);
-                    readCode(m.code);
+                    try {
+                        readCode(m.code);
+                    } catch (Instruction.FormatException iie) {
+                        String message = iie.getMessage() + " in " + h;
+                        throw new ClassReader.ClassFormatException(message);
+                    }
                 } else {
                     assert(h == cls);
                     readInnerClasses(cls);
@@ -441,6 +448,7 @@ class ClassReader {
         code.max_locals = readUnsignedShort();
         code.bytes = new byte[readInt()];
         in.readFully(code.bytes);
+        Instruction.opcodeChecker(code.bytes);
         int nh = readUnsignedShort();
         code.setHandlerCount(nh);
         for (int i = 0; i < nh; i++) {
@@ -465,5 +473,11 @@ class ClassReader {
         }
         cls.innerClasses = ics;  // set directly; do not use setInnerClasses.
         // (Later, ics may be transferred to the pkg.)
+    }
+
+    class ClassFormatException extends IOException {
+        public ClassFormatException(String message) {
+            super(message);
+        }
     }
 }
