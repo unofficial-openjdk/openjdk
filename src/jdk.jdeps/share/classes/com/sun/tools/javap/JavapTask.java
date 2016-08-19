@@ -966,7 +966,7 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask, Messages {
             printLines(getMessage("main.opt." + name));
         }
 
-        log.println(getMessage("main.usage.foot"));
+        printLines(getMessage("main.usage.foot"));
     }
 
     private void showVersion(boolean full) {
