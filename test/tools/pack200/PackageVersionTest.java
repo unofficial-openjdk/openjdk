@@ -22,13 +22,14 @@
  * questions.
  */
 
-/**
-  * @test
-  * @bug 6712743
-  * @summary verify package versioning
-  * @compile -XDignore.symbol.file PackageVersionTest.java
-  * @run main PackageVersionTest
-  */
+/*
+ * @test
+ * @bug 6712743
+ * @summary verify package versions
+ * @compile -XDignore.symbol.file Utils.java PackageVersionTest.java
+ * @run main PackageVersionTest
+ * @author ksrini
+ */
 
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
@@ -69,24 +70,6 @@ public class PackageVersionTest {
                 JAVA5_PACKAGE_MINOR_VERSION);
     }
 
-    static void close(Closeable c) {
-        if (c == null) {
-            return;
-        }
-        try {
-            c.close();
-        } catch (IOException ignore) {}
-    }
-
-    static void close(JarFile jf) {
-        if (jf == null) {
-            return;
-        }
-	try {
-            jf.close();
-	} catch (IOException ignore) {}
-    }
-
     static void createClassFile(String name) {
         createJavaFile(name);
         String target = name.substring(name.length() - 1);
@@ -97,7 +80,7 @@ public class PackageVersionTest {
             name.substring(name.length() - 1),
             name + ".java"
         };
-        compileJava(javacCmds);
+        Utils.compiler(javacCmds);
     }
 
     static void createJavaFile(String name) {
@@ -112,22 +95,8 @@ public class PackageVersionTest {
         } catch (IOException ioe) {
             throw new RuntimeException("creation of test file failed");
         } finally {
-            close(ps);
-            close(fos);
-        }
-    }
-
-    static void compileJava(String... javacCmds) {
-        if (com.sun.tools.javac.Main.compile(javacCmds) != 0) {
-            throw new RuntimeException("compilation failed");
-        }
-    }
-
-    static void makeJar(String... jargs) {
-        sun.tools.jar.Main jarTool =
-                new sun.tools.jar.Main(System.out, System.err, "jartool");
-        if (!jarTool.run(jargs)) {
-            throw new RuntimeException("jar command failed");
+            Utils.close(ps);
+            Utils.close(fos);
         }
     }
 
@@ -140,7 +109,7 @@ public class PackageVersionTest {
             jarFileName.getName(),
             filename
         };
-        makeJar(jargs);
+        Utils.jar(jargs);
         JarFile jfin = null;
 
         try {
@@ -167,7 +136,7 @@ public class PackageVersionTest {
         } catch (IOException ioe) {
             throw new RuntimeException(ioe.getMessage());
         } finally {
-            close(jfin);
+            Utils.close(jfin);
         }
     }
 }
