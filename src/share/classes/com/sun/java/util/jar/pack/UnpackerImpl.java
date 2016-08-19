@@ -54,8 +54,8 @@ import java.util.zip.ZipEntry;
 
 
 public class UnpackerImpl extends TLGlobals implements Pack200.Unpacker {
-    
-    
+
+
     /**
      * Register a listener for changes to options.
      * @param listener  An object to be invoked when a property is changed.
@@ -63,8 +63,8 @@ public class UnpackerImpl extends TLGlobals implements Pack200.Unpacker {
     public void addPropertyChangeListener(PropertyChangeListener listener) {
         props.addListener(listener);
     }
- 
-    
+
+
     /**
      * Remove a listener for the PropertyChange event.
      * @param listener  The PropertyChange listener to be removed.
@@ -72,11 +72,11 @@ public class UnpackerImpl extends TLGlobals implements Pack200.Unpacker {
     public void removePropertyChangeListener(PropertyChangeListener listener) {
         props.removeListener(listener);
     }
-    
-    public UnpackerImpl() {}
-    
 
-    
+    public UnpackerImpl() {}
+
+
+
     /**
      * Get the set of options for the pack and unpack engines.
      * @return A sorted association of option key strings to option values.
@@ -84,17 +84,17 @@ public class UnpackerImpl extends TLGlobals implements Pack200.Unpacker {
     public SortedMap<String, String> properties() {
         return props;
     }
-    
+
     // Back-pointer to NativeUnpacker, when active.
     Object _nunp;
-    
-    
+
+
     public String toString() {
-	return Utils.getVersionString();
+        return Utils.getVersionString();
     }
-    
+
     //Driver routines
-    
+
     // The unpack worker...
     /**
      * Takes a packed-stream InputStream, and writes to a JarOutputStream. Internally
@@ -107,36 +107,36 @@ public class UnpackerImpl extends TLGlobals implements Pack200.Unpacker {
      * @exception IOException if an error is encountered.
      */
     public synchronized void unpack(InputStream in0, JarOutputStream out) throws IOException {
-	assert(Utils.currentInstance.get() == null);
+        assert(Utils.currentInstance.get() == null);
         TimeZone tz = (props.getBoolean(Utils.PACK_DEFAULT_TIMEZONE))
                       ? null
                       : TimeZone.getDefault();
-	
-	try {
-	    Utils.currentInstance.set(this);
-	    if (tz != null) TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+
+        try {
+            Utils.currentInstance.set(this);
+            if (tz != null) TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
             final int verbose = props.getInteger(Utils.DEBUG_VERBOSE);
-	    BufferedInputStream in = new BufferedInputStream(in0);
-	    if (Utils.isJarMagic(Utils.readMagic(in))) {
-		if (verbose > 0)
-		    Utils.log.info("Copying unpacked JAR file...");
-		Utils.copyJarFile(new JarInputStream(in), out);
+            BufferedInputStream in = new BufferedInputStream(in0);
+            if (Utils.isJarMagic(Utils.readMagic(in))) {
+                if (verbose > 0)
+                    Utils.log.info("Copying unpacked JAR file...");
+                Utils.copyJarFile(new JarInputStream(in), out);
             } else if (props.getBoolean(Utils.DEBUG_DISABLE_NATIVE)) {
-		(new DoUnpack()).run(in, out);
-		in.close();
-		Utils.markJarFile(out);
-	    } else {
-		(new NativeUnpack(this)).run(in, out);
-		in.close();
-		Utils.markJarFile(out);
-	    }
-	} finally {
-	    _nunp = null;
-	    Utils.currentInstance.set(null);
-	    if (tz != null) TimeZone.setDefault(tz);
-	}
+                (new DoUnpack()).run(in, out);
+                in.close();
+                Utils.markJarFile(out);
+            } else {
+                (new NativeUnpack(this)).run(in, out);
+                in.close();
+                Utils.markJarFile(out);
+            }
+        } finally {
+            _nunp = null;
+            Utils.currentInstance.set(null);
+            if (tz != null) TimeZone.setDefault(tz);
+        }
     }
-    
+
     /**
      * Takes an input File containing the pack file, and generates a JarOutputStream.
      * <p>
@@ -146,122 +146,122 @@ public class UnpackerImpl extends TLGlobals implements Pack200.Unpacker {
      * @exception IOException if an error is encountered.
      */
     public synchronized void unpack(File in, JarOutputStream out) throws IOException {
-	// Use the stream-based implementation.
-	// %%% Reconsider if native unpacker learns to memory-map the file.
-	FileInputStream instr = new FileInputStream(in);
-	unpack(instr, out);
+        // Use the stream-based implementation.
+        // %%% Reconsider if native unpacker learns to memory-map the file.
+        FileInputStream instr = new FileInputStream(in);
+        unpack(instr, out);
         if (props.getBoolean(Utils.UNPACK_REMOVE_PACKFILE)) {
-	    in.delete();
-	}
+            in.delete();
+        }
     }
-    
+
     private class DoUnpack {
         final int verbose = props.getInteger(Utils.DEBUG_VERBOSE);
-	
-	{
+
+        {
             props.setInteger(Pack200.Unpacker.PROGRESS, 0);
-	}
-	
-	// Here's where the bits are read from disk:
-	final Package pkg = new Package();
-	
-	final boolean keepModtime
+        }
+
+        // Here's where the bits are read from disk:
+        final Package pkg = new Package();
+
+        final boolean keepModtime
             = Pack200.Packer.KEEP.equals(
               props.getProperty(Utils.UNPACK_MODIFICATION_TIME, Pack200.Packer.KEEP));
-	final boolean keepDeflateHint
+        final boolean keepDeflateHint
             = Pack200.Packer.KEEP.equals(
               props.getProperty(Pack200.Unpacker.DEFLATE_HINT, Pack200.Packer.KEEP));
-	final int modtime;
-	final boolean deflateHint;
-	{
-	    if (!keepModtime) {
+        final int modtime;
+        final boolean deflateHint;
+        {
+            if (!keepModtime) {
                 modtime = props.getTime(Utils.UNPACK_MODIFICATION_TIME);
-	    } else {
-		modtime = pkg.default_modtime;
-	    }
-	    
-	    deflateHint = (keepDeflateHint) ? false :
+            } else {
+                modtime = pkg.default_modtime;
+            }
+
+            deflateHint = (keepDeflateHint) ? false :
                 props.getBoolean(java.util.jar.Pack200.Unpacker.DEFLATE_HINT);
-	}
-	
-	// Checksum apparatus.
-	final CRC32 crc = new CRC32();
-	final ByteArrayOutputStream bufOut = new ByteArrayOutputStream();
-	final OutputStream crcOut = new CheckedOutputStream(bufOut, crc);
-	
-	public void run(BufferedInputStream in, JarOutputStream out) throws IOException {
-	    if (verbose > 0) {
+        }
+
+        // Checksum apparatus.
+        final CRC32 crc = new CRC32();
+        final ByteArrayOutputStream bufOut = new ByteArrayOutputStream();
+        final OutputStream crcOut = new CheckedOutputStream(bufOut, crc);
+
+        public void run(BufferedInputStream in, JarOutputStream out) throws IOException {
+            if (verbose > 0) {
                 props.list(System.out);
-	    }
-	    for (int seg = 1; ; seg++) {
-		unpackSegment(in, out);
-		
-		// Try to get another segment.
-		if (!Utils.isPackMagic(Utils.readMagic(in)))  break;
-		if (verbose > 0)
-		    Utils.log.info("Finished segment #"+seg);
-	    }
-	}
-	
-	private void unpackSegment(InputStream in, JarOutputStream out) throws IOException {
+            }
+            for (int seg = 1; ; seg++) {
+                unpackSegment(in, out);
+
+                // Try to get another segment.
+                if (!Utils.isPackMagic(Utils.readMagic(in)))  break;
+                if (verbose > 0)
+                    Utils.log.info("Finished segment #"+seg);
+            }
+        }
+
+        private void unpackSegment(InputStream in, JarOutputStream out) throws IOException {
             props.setProperty(java.util.jar.Pack200.Unpacker.PROGRESS,"0");
-	    // Process the output directory or jar output.
-	    new PackageReader(pkg, in).read();
-	    
+            // Process the output directory or jar output.
+            new PackageReader(pkg, in).read();
+
             if (props.getBoolean("unpack.strip.debug"))    pkg.stripAttributeKind("Debug");
             if (props.getBoolean("unpack.strip.compile"))  pkg.stripAttributeKind("Compile");
             props.setProperty(java.util.jar.Pack200.Unpacker.PROGRESS,"50");
-	    pkg.ensureAllClassFiles();
-	    // Now write out the files.
+            pkg.ensureAllClassFiles();
+            // Now write out the files.
             Set<Package.Class> classesToWrite = new HashSet<Package.Class>(pkg.getClasses());
             for (Package.File file : pkg.getFiles()) {
-		String name = file.nameString;
-		JarEntry je = new JarEntry(Utils.getJarEntryName(name));
-		boolean deflate;
-		
+                String name = file.nameString;
+                JarEntry je = new JarEntry(Utils.getJarEntryName(name));
+                boolean deflate;
+
                 deflate = (keepDeflateHint)
                           ? (((file.options & Constants.FO_DEFLATE_HINT) != 0) ||
                             ((pkg.default_options & Constants.AO_DEFLATE_HINT) != 0))
                           : deflateHint;
-		
-		boolean needCRC = !deflate;  // STORE mode requires CRC
-		
-		if (needCRC)  crc.reset();
-		bufOut.reset();
-		if (file.isClassStub()) {
-		    Package.Class cls = file.getStubClass();
-		    assert(cls != null);
-		    new ClassWriter(cls, needCRC ? crcOut : bufOut).write();
-		    classesToWrite.remove(cls);  // for an error check
-		} else {
-		    // collect data & maybe CRC
-		    file.writeTo(needCRC ? crcOut : bufOut);
-		}
-		je.setMethod(deflate ? JarEntry.DEFLATED : JarEntry.STORED);
-		if (needCRC) {
-		    if (verbose > 0)
-			Utils.log.info("stored size="+bufOut.size()+" and crc="+crc.getValue());
-		    
-		    je.setMethod(JarEntry.STORED);
-		    je.setSize(bufOut.size());
-		    je.setCrc(crc.getValue());
-		}
-		if (keepModtime) {
-		    je.setTime(file.modtime);
-		    // Convert back to milliseconds
-		    je.setTime((long)file.modtime * 1000);
-		} else {
-		    je.setTime((long)modtime * 1000);
-		}
-		out.putNextEntry(je);
-		bufOut.writeTo(out);
-		out.closeEntry();
-		if (verbose > 0)
-		    Utils.log.info("Writing "+Utils.zeString((ZipEntry)je));
-	    }
-	    assert(classesToWrite.isEmpty());
+
+                boolean needCRC = !deflate;  // STORE mode requires CRC
+
+                if (needCRC)  crc.reset();
+                bufOut.reset();
+                if (file.isClassStub()) {
+                    Package.Class cls = file.getStubClass();
+                    assert(cls != null);
+                    new ClassWriter(cls, needCRC ? crcOut : bufOut).write();
+                    classesToWrite.remove(cls);  // for an error check
+                } else {
+                    // collect data & maybe CRC
+                    file.writeTo(needCRC ? crcOut : bufOut);
+                }
+                je.setMethod(deflate ? JarEntry.DEFLATED : JarEntry.STORED);
+                if (needCRC) {
+                    if (verbose > 0)
+                        Utils.log.info("stored size="+bufOut.size()+" and crc="+crc.getValue());
+
+                    je.setMethod(JarEntry.STORED);
+                    je.setSize(bufOut.size());
+                    je.setCrc(crc.getValue());
+                }
+                if (keepModtime) {
+                    je.setTime(file.modtime);
+                    // Convert back to milliseconds
+                    je.setTime((long)file.modtime * 1000);
+                } else {
+                    je.setTime((long)modtime * 1000);
+                }
+                out.putNextEntry(je);
+                bufOut.writeTo(out);
+                out.closeEntry();
+                if (verbose > 0)
+                    Utils.log.info("Writing "+Utils.zeString((ZipEntry)je));
+            }
+            assert(classesToWrite.isEmpty());
             props.setProperty(java.util.jar.Pack200.Unpacker.PROGRESS,"100");
-	    pkg.reset();  // reset for the next segment, if any
-	}
+            pkg.reset();  // reset for the next segment, if any
+        }
     }
 }

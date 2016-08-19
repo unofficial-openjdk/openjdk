@@ -105,11 +105,11 @@ class Attribute implements Comparable<Attribute> {
     }
 
     private static final Map<List<Attribute>, List<Attribute>> canonLists =
-	new HashMap<List<Attribute>, List<Attribute>>();
+        new HashMap<List<Attribute>, List<Attribute>>();
     private static final Map<Layout, Attribute> attributes =
-	new HashMap<Layout, Attribute>();
+        new HashMap<Layout, Attribute>();
     private static final Map<Layout, Attribute> standardDefs =
-	new HashMap<Layout, Attribute>();
+        new HashMap<Layout, Attribute>();
 
     // Canonicalized lists of trivial attrs (Deprecated, etc.)
     // are used by trimToSize, in order to reduce footprint

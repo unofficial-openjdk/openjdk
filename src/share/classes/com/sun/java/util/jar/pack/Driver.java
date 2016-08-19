@@ -177,14 +177,14 @@ class Driver {
         // Deal with remaining non-engine properties:
         for (String opt : avProps.keySet()) {
             String val = avProps.get(opt);
-	    if ("--repack".equals(opt)) {
-		doRepack = true;
-	    } else if ("--no-gzip".equals(opt)) {
-		doZip = (val == null);
-	    } else if ("--log-file=".equals(opt)) {
-		logFile = val;
-	    } else {
-		throw new InternalError(MessageFormat.format(
+            if ("--repack".equals(opt)) {
+                doRepack = true;
+            } else if ("--no-gzip".equals(opt)) {
+                doZip = (val == null);
+            } else if ("--log-file=".equals(opt)) {
+                logFile = val;
+            } else {
+                throw new InternalError(MessageFormat.format(
                         RESOURCE.getString(DriverResource.BAD_OPTION),
                         opt, avProps.get(opt)));
             }

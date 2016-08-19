@@ -348,15 +348,15 @@ class ClassReader {
             if (attrCommands != null) {
                 Attribute.Layout lkey = Attribute.keyForLookup(ctype, name);
                 String cmd = attrCommands.get(lkey);
-		if ("pass".equals(cmd)) {
-		    String message1 = "passing attribute bitwise in " + h;
-		    throw new Attribute.FormatException(message1, ctype, name, cmd);
-		} else if ("error".equals(cmd)) {
-		    String message2 = "attribute not allowed in " + h;
-		    throw new Attribute.FormatException(message2, ctype, name, cmd);
-		} else if ("strip".equals(cmd)) {
-		    skip(length, name + " attribute in " + h);
-		    continue;
+                if ("pass".equals(cmd)) {
+                    String message1 = "passing attribute bitwise in " + h;
+                    throw new Attribute.FormatException(message1, ctype, name, cmd);
+                } else if ("error".equals(cmd)) {
+                    String message2 = "attribute not allowed in " + h;
+                    throw new Attribute.FormatException(message2, ctype, name, cmd);
+                } else if ("strip".equals(cmd)) {
+                    skip(length, name + " attribute in " + h);
+                    continue;
                 }
             }
             // Find canonical instance of the requested attribute.

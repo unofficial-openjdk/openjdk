@@ -1104,24 +1104,24 @@ class Package {
         if (verbose > 0)
             Utils.log.info("Stripping "+what.toLowerCase()+" data and attributes...");
         if ("Debug".equals(what)) {
-	    strip("SourceFile");
-	    strip("LineNumberTable");
-	    strip("LocalVariableTable");
-	    strip("LocalVariableTypeTable");
-	} else if ("Compile".equals(what)) {
-	    // Keep the inner classes normally.
-	    // Although they have no effect on execution,
-	    // the Reflection API exposes them, and JCK checks them.
-	    // NO: // strip("InnerClasses");
-	    strip("Deprecated");
-	    strip("Synthetic");
-	} else if ("Exceptions".equals(what)) {
-	    // Keep the exceptions normally.
-	    // Although they have no effect on execution,
-	    // the Reflection API exposes them, and JCK checks them.
-	    strip("Exceptions");
-	} else if ("Constant".equals(what)) {
-	    stripConstantFields();
+            strip("SourceFile");
+            strip("LineNumberTable");
+            strip("LocalVariableTable");
+            strip("LocalVariableTypeTable");
+        } else if ("Compile".equals(what)) {
+            // Keep the inner classes normally.
+            // Although they have no effect on execution,
+            // the Reflection API exposes them, and JCK checks them.
+            // NO: // strip("InnerClasses");
+            strip("Deprecated");
+            strip("Synthetic");
+        } else if ("Exceptions".equals(what)) {
+            // Keep the exceptions normally.
+            // Although they have no effect on execution,
+            // the Reflection API exposes them, and JCK checks them.
+            strip("Exceptions");
+        } else if ("Constant".equals(what)) {
+            stripConstantFields();
         }
     }
 
