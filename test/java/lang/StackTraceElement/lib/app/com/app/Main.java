@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,27 +21,18 @@
  * questions.
  */
 
-package p1;
+package com.app;
 
-import java.io.InputStream;
-import java.net.URL;
+import java.lang.StackWalker.StackFrame;
 
 public class Main {
-    private Main() { }
-
-    public static URL getResource(String name) {
-        return Main.class.getResource(name);
+    public static void main(String... args) throws Exception {
+        StackFrame frame = Utils.makeStackFrame(Main.class, "main", "Main.java");
+        Utils.checkFrame("app", frame, caller());
     }
 
-    public static InputStream getResourceAsStream(String name) {
-        return Main.class.getResourceAsStream(name);
-    }
-
-    public static URL getResource(Class<?> c, String name) {
-        return c.getResource(name);
-    }
-
-    public static InputStream getResourceAsStream(Class<?> c, String name) {
-        return c.getResourceAsStream(name);
+    private static StackTraceElement caller() {
+        StackTraceElement[] stes = Thread.currentThread().getStackTrace();
+        return stes[2];
     }
 }

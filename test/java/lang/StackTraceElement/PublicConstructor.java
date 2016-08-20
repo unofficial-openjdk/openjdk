@@ -44,6 +44,7 @@ public class PublicConstructor {
         StackTraceElement ste2
             = new StackTraceElement("jdk.module",
                                     "9.0",
+                                    "app",
                                     "com.acme.Widget",
                                     "frobnicate",
                                     "Widget.java",
@@ -51,6 +52,7 @@ public class PublicConstructor {
         if (!(ste2.getClassName().equals("com.acme.Widget")  &&
                 ste2.getModuleName().equals("jdk.module") &&
                 ste2.getModuleVersion().equals("9.0") &&
+                ste2.getClassLoaderName().equals("app") &&
                 ste2.getFileName().equals("Widget.java") &&
                 ste2.getMethodName().equals("frobnicate") &&
                 ste2.getLineNumber() == 42))

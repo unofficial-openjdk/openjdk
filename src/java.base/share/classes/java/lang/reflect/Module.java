@@ -52,6 +52,7 @@ import java.util.stream.Stream;
 
 import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.loader.BootLoader;
+import jdk.internal.loader.ResourceHelper;
 import jdk.internal.misc.JavaLangAccess;
 import jdk.internal.misc.JavaLangReflectModuleAccess;
 import jdk.internal.misc.SharedSecrets;
@@ -869,25 +870,38 @@ public final class Module implements AnnotatedElement {
                                              Layer layer)
     {
         Map<String, Module> modules = new HashMap<>();
-        Map<String, ClassLoader> loaders = new HashMap<>();
+        Map<String, ClassLoader> moduleToLoader = new HashMap<>();
+
+        boolean isBootLayer = (Layer.boot() == null);
+        Set<ClassLoader> loaders = new HashSet<>();
+
+        // map each module to a class loader
+        for (ResolvedModule resolvedModule : cf.modules()) {
+            String name = resolvedModule.name();
+            ClassLoader loader = clf.apply(name);
+            if (loader != null) {
+                moduleToLoader.put(name, loader);
+                loaders.add(loader);
+            } else if (!isBootLayer) {
+                throw new IllegalArgumentException("loader can't be 'null'");
+            }
+        }
 
         // define each module in the configuration to the VM
         for (ResolvedModule resolvedModule : cf.modules()) {
             ModuleReference mref = resolvedModule.reference();
             ModuleDescriptor descriptor = mref.descriptor();
             String name = descriptor.name();
-            ClassLoader loader = clf.apply(name);
             URI uri = mref.location().orElse(null);
-
+            ClassLoader loader = moduleToLoader.get(resolvedModule.name());
             Module m;
             if (loader == null && name.equals("java.base") && Layer.boot() == null) {
                 m = Object.class.getModule();
             } else {
                 m = new Module(layer, loader, descriptor, uri);
             }
-
             modules.put(name, m);
-            loaders.put(name, loader);
+            moduleToLoader.put(name, loader);
         }
 
         // setup readability and exports
@@ -955,24 +969,32 @@ public final class Module implements AnnotatedElement {
             m.exports = exports;
         }
 
-        // register the modules in the service catalog if they provide services
-        for (ResolvedModule resolvedModule : cf.modules()) {
-            ModuleReference mref = resolvedModule.reference();
-            ModuleDescriptor descriptor = mref.descriptor();
-            Map<String, Provides> services = descriptor.provides();
-            if (!services.isEmpty()) {
-                String name = descriptor.name();
-                Module m = modules.get(name);
-                ClassLoader loader = loaders.get(name);
-                ServicesCatalog catalog;
-                if (loader == null) {
-                    catalog = BootLoader.getServicesCatalog();
-                } else {
-                    catalog = SharedSecrets.getJavaLangAccess()
-                                           .createOrGetServicesCatalog(loader);
+        // For the boot layer then register the modules in the class loader
+        // services catalog
+        if (isBootLayer) {
+            for (ResolvedModule resolvedModule : cf.modules()) {
+                ModuleReference mref = resolvedModule.reference();
+                ModuleDescriptor descriptor = mref.descriptor();
+                Map<String, Provides> services = descriptor.provides();
+                if (!services.isEmpty()) {
+                    String name = descriptor.name();
+                    Module m = modules.get(name);
+                    ClassLoader loader = moduleToLoader.get(name);
+                    ServicesCatalog catalog;
+                    if (loader == null) {
+                        catalog = BootLoader.getServicesCatalog();
+                    } else {
+                        catalog = SharedSecrets.getJavaLangAccess()
+                                .createOrGetServicesCatalog(loader);
+                    }
+                    catalog.register(m);
                 }
-                catalog.register(m);
             }
+        }
+
+        // ClassLoader::layers support
+        for (ClassLoader loader : loaders) {
+            SharedSecrets.getJavaLangAccess().bindToLayer(loader, layer);
         }
 
         return modules;
@@ -1107,11 +1129,35 @@ public final class Module implements AnnotatedElement {
 
 
     /**
-     * Returns an input stream for reading a resource in this module. Returns
-     * {@code null} if the resource is not in this module or access to the
-     * resource is denied by the security manager.
-     * The {@code name} is a {@code '/'}-separated path name that identifies
-     * the resource.
+     * Returns an input stream for reading a resource in this module. The
+     * {@code name} parameter is a {@code '/'}-separated path name that
+     * identifies the resource.
+     *
+     * <p> A resource in a named modules may be <em>encapsulated</em> so that
+     * it cannot be located by code in other modules. Whether a resource can be
+     * located or not is determined as follows:
+     *
+     * <ul>
+     *     <li> The <em>package name</em> of the resource is derived from the
+     *     subsequence of characters that proceeds the last {@code '/'} and then
+     *     replacing each {@code '/'} character in the subsequence with
+     *     {@code '.'}. For example, the package name derived for a resource
+     *     named "{@code a/b/c/foo.properties}" is "{@code a.b.c}". </li>
+     *
+     *     <li> If the package name is a package in the module then the package
+     *     must be exported to the module of the caller of this method. If the
+     *     package is not in the module then the resource is not encapsulated.
+     *     Resources in the unnamed package or "{@code META-INF}", for example,
+     *     are never encapsulated because they can never be packages in a named
+     *     module. </li>
+     *
+     *     <li> As a special case, resources ending with "{@code .class}" are
+     *     never encapsulated. </li>
+     * </ul>
+     *
+     * <p> This method returns {@code null} if the resource is not in this
+     * module, the resource is encapsulated and cannot be located by the caller,
+     * or access to the resource is denied by the security manager.
      *
      * @param  name
      *         The resource name
@@ -1123,8 +1169,22 @@ public final class Module implements AnnotatedElement {
      *
      * @see java.lang.module.ModuleReader#open(String)
      */
+    @CallerSensitive
     public InputStream getResourceAsStream(String name) throws IOException {
         Objects.requireNonNull(name);
+
+        if (isNamed() && !ResourceHelper.isSimpleResource(name)) {
+            Module caller = Reflection.getCallerClass().getModule();
+            if (caller != this && caller != Object.class.getModule()) {
+                // ignore packages added for proxies via addPackage
+                Set<String> packages = getDescriptor().packages();
+                String pn = ResourceHelper.getPackageName(name);
+                if (packages.contains(pn) && !isExported(pn, caller)) {
+                    // resource is in package not exported to caller
+                    return null;
+                }
+            }
+        }
 
         String mn = this.name;
 
