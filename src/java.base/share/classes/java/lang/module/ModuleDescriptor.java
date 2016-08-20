@@ -31,6 +31,7 @@ import java.io.PrintStream;
 import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -94,7 +95,7 @@ public class ModuleDescriptor
              * module</i> to have an implicitly declared dependence on the module
              * named by the {@code Requires}.
              */
-            PUBLIC,
+            TRANSITIVE,
 
             /**
              * The dependence is mandatory in the static phase, during compilation,
@@ -255,6 +256,14 @@ public class ModuleDescriptor
              * but is exported in the dynamic phase, during execution.
              */
             DYNAMIC,
+
+            /**
+             * Non-public members in ths package may be reflected on by APIs that
+             * bypass or suppress default Java language access control checks.
+             *
+             * @see java.lang.reflect.AccessibleObject#setAccessible(boolean)
+             */
+            PRIVATE,
 
             /**
              * The export was not explicitly or implicitly declared in the
@@ -854,9 +863,9 @@ public class ModuleDescriptor
     private ModuleDescriptor(String name,
                              boolean automatic,
                              boolean synthetic,
-                             Map<String, Requires> requires,
+                             Set<Requires> requires,
                              Set<String> uses,
-                             Map<String, Exports> exports,
+                             Set<Exports> exports,
                              Map<String, Provides> provides,
                              Version version,
                              String mainClass,
@@ -871,28 +880,19 @@ public class ModuleDescriptor
         this.automatic = automatic;
         this.synthetic = synthetic;
 
-        Set<Requires> rqs = new HashSet<>(requires.values());
-        assert (rqs.stream().map(Requires::name).sorted().distinct().count()
-                == rqs.size())
-            : "Module " + name + " has duplicate requires";
-        this.requires = emptyOrUnmodifiableSet(rqs);
+        assert (requires.stream().map(Requires::name).distinct().count()
+                == requires.size());
+        this.requires = emptyOrUnmodifiableSet(requires);
 
-        Set<Exports> exs = new HashSet<>(exports.values());
-        assert (exs.stream().map(Exports::source).sorted().distinct().count()
-                == exs.size())
-            : "Module " + name + " has duplicate exports";
-        this.exports = emptyOrUnmodifiableSet(exs);
-
+        this.exports = emptyOrUnmodifiableSet(exports);
         this.uses = emptyOrUnmodifiableSet(uses);
         this.provides = emptyOrUnmodifiableMap(provides);
-
         this.version = version;
         this.mainClass = mainClass;
         this.osName = osName;
         this.osArch = osArch;
         this.osVersion = osVersion;
         this.hashes = hashes;
-
         this.packages = emptyOrUnmodifiableSet(packages);
     }
 
@@ -938,7 +938,8 @@ public class ModuleDescriptor
                      String osArch,
                      String osVersion,
                      Set<String> packages,
-                     ModuleHashes hashes) {
+                     ModuleHashes hashes,
+                     boolean unused) {
         this.name = name;
         this.automatic = automatic;
         this.synthetic = synthetic;
@@ -947,7 +948,6 @@ public class ModuleDescriptor
         this.uses = uses;
         this.provides = provides;
         this.packages = packages;
-
         this.version = version;
         this.mainClass = mainClass;
         this.osName = osName;
@@ -1155,9 +1155,10 @@ public class ModuleDescriptor
         boolean synthetic;
         final Map<String, Requires> requires = new HashMap<>();
         final Set<String> uses = new HashSet<>();
-        final Map<String, Exports> exports = new HashMap<>();
+        final Map<String, Exports> unqualifiedExports = new HashMap<>();
+        final Map<String, Exports> qualifiedExports = new HashMap<>();
         final Map<String, Provides> provides = new HashMap<>();
-        Set<String> conceals = Collections.emptySet();
+        final Set<String> conceals = new HashSet<>();
         Version version;
         String osName;
         String osArch;
@@ -1220,7 +1221,7 @@ public class ModuleDescriptor
          * Adds a dependence on a module with the given (and possibly empty)
          * set of modifiers.
          *
-         * @param  mods
+         * @param  ms
          *         The set of modifiers
          * @param  mn
          *         The module name
@@ -1234,13 +1235,13 @@ public class ModuleDescriptor
          * @throws IllegalStateException
          *         If the dependence on the module has already been declared
          */
-        public Builder requires(Set<Requires.Modifier> mods, String mn) {
+        public Builder requires(Set<Requires.Modifier> ms, String mn) {
             if (name.equals(mn))
                 throw new IllegalArgumentException("Dependence on self");
             if (requires.containsKey(mn))
                 throw new IllegalStateException("Dependence upon " + mn
                                                 + " already declared");
-            requires.put(mn, new Requires(mods, mn)); // checks mn
+            requires.put(mn, new Requires(ms, mn)); // checks mn
             return this;
         }
 
@@ -1287,16 +1288,42 @@ public class ModuleDescriptor
         }
 
         /**
-         * Ensures that the given package name has not been declared as an
-         * exported or concealed package.
+         * Checks an unqualified and qualified export of the same package to
+         * ensure that the qualified export provides more access than the
+         * unqualified export.
+         *
+         * @param e1 unqualified export
+         * @param e2 qualified export
          */
-        private void ensureNotExportedOrConcealed(String pn) {
-            if (exports.containsKey(pn))
-                throw new IllegalStateException("Export of package "
-                                                + pn + " already declared");
-            if (conceals.contains(pn))
-                throw new IllegalStateException("Concealed package "
-                                                + pn + " already declared");
+        private void ensureQualifiedGtUnqualified(Exports e1, Exports e2) {
+            assert e1.source().equals(e2.source());
+            assert !e1.isQualified();
+            assert e2.isQualified();
+
+            boolean e1Private = e1.modifiers().contains(Exports.Modifier.PRIVATE);
+            boolean e1Dynamic = e1.modifiers().contains(Exports.Modifier.DYNAMIC);
+            boolean e2Private= e2.modifiers().contains(Exports.Modifier.PRIVATE);
+            boolean e2Dynamic = e2.modifiers().contains(Exports.Modifier.DYNAMIC);
+
+            boolean gt = false;
+            if (e1Dynamic) {
+                if (e1Private) {
+                    // exports dynamic private p && exports private p to m
+                    if (e2Private && !e2Dynamic) gt = true;
+                } else {
+                    // exports dynamic p && exports [dynamic] private p to m2
+                    // exports dynamic p && exports [private] p to m2
+                    if (e2Private || !e2Dynamic) gt = true;
+                }
+            } else {
+                // exports dynamic p && exports private p to m
+                if (!e1Private && e2Private && !e2Dynamic) gt = true;
+            }
+
+            if (!gt) {
+                String msg = "`exports " + e1 + "` conflicts with `exports " + e2 + "`";
+                throw new IllegalStateException(msg);
+            }
         }
 
         /**
@@ -1308,13 +1335,40 @@ public class ModuleDescriptor
          * @return This builder
          *
          * @throws IllegalStateException
-         *         If the package is already declared as an exported or
-         *         concealed package
+         *         If the package is already declared as a concealed package,
+         *         or the export conflicts with a declared exported package
          */
         public Builder exports(Exports e) {
-            String pn = e.source();
-            ensureNotExportedOrConcealed(pn);
-            exports.put(pn, e);
+            String source = e.source();
+            if (conceals.contains(source)) {
+                throw new IllegalStateException("Concealed package " + source
+                                                 + " already declared");
+            }
+
+            Exports e1 = unqualifiedExports.get(source);
+            Exports e2 = qualifiedExports.get(source);
+
+            if (e.isQualified()) {
+                if (e2 != null) {
+                    throw new IllegalStateException("Exported package " + source
+                                                     + " already declared");
+                }
+                if (e1 != null)
+                    ensureQualifiedGtUnqualified(e1, e);
+
+                qualifiedExports.put(source, e);
+
+            } else {
+                if (e1 != null) {
+                    throw new IllegalStateException("Exported package " + source
+                                                     + " already declared");
+                }
+                if (e2 != null)
+                    ensureQualifiedGtUnqualified(e, e2);
+
+                unqualifiedExports.put(source, e);
+            }
+
             return this;
         }
 
@@ -1322,7 +1376,7 @@ public class ModuleDescriptor
          * Adds an export, with the given (and possibly empty) set of modifiers,
          * to a set of target modules.
          *
-         * @param  mods
+         * @param  ms
          *         The set of modifiers
          * @param  pn
          *         The package name
@@ -1336,22 +1390,20 @@ public class ModuleDescriptor
          *         null} or is not a legal Java identifier, or the set of
          *         targets is empty
          * @throws IllegalStateException
-         *         If the package is already declared as an exported or
-         *         concealed package
+         *         If the package is already declared as a concealed package
+         *         or the export conflicts with a declared exported package
          */
-        public Builder exports(Set<Exports.Modifier> mods,
+        public Builder exports(Set<Exports.Modifier> ms,
                                String pn,
                                Set<String> targets)
         {
-            ensureNotExportedOrConcealed(pn);
-            exports.put(pn, new Exports(mods, pn, targets));
-            return this;
+            return exports(new Exports(ms, pn, targets));
         }
 
         /**
          * Adds an export with the given (and possibly empty) set of modifiers.
          *
-         * @param  mods
+         * @param  ms
          *         The set of modifiers
          * @param  pn
          *         The package name
@@ -1362,15 +1414,11 @@ public class ModuleDescriptor
          *         If the package name is {@code null} or is not a legal Java
          *         identifier
          * @throws IllegalStateException
-         *         If the package is already declared as an exported or
-         *         concealed package
+         *         If the package is already declared as a concealed package
+         *         or the export conflicts with a declared exported package
          */
-        public Builder exports(Set<Exports.Modifier> mods,
-                               String pn)
-        {
-            ensureNotExportedOrConcealed(pn);
-            exports.put(pn, new Exports(mods, pn));
-            return this;
+        public Builder exports(Set<Exports.Modifier> ms, String pn) {
+            return exports(new Exports(ms, pn));
         }
 
         /**
@@ -1388,14 +1436,11 @@ public class ModuleDescriptor
          *         null} or is not a legal Java identifier, or the set of
          *         targets is empty
          * @throws IllegalStateException
-         *         If the package is already declared as an exported or
-         *         concealed package
+         *         If the package is already declared as a concealed package
+         *         or the export conflicts with a declared exported package
          */
         public Builder exports(String pn, Set<String> targets) {
-            ensureNotExportedOrConcealed(pn);
-            // checks package name and targets
-            exports.put(pn, new Exports(Collections.emptySet(), pn, targets));
-            return this;
+            return exports(Collections.emptySet(), pn, targets);
         }
 
         /**
@@ -1412,8 +1457,8 @@ public class ModuleDescriptor
          *         If the package name or target module is {@code null} or is
          *         not a legal Java identifier
          * @throws IllegalStateException
-         *         If the package is already declared as an exported or
-         *         concealed package
+         *         If the package is already declared as a concealed package
+         *         or the export conflicts with a declared exported package
          */
         public Builder exports(String pn, String target) {
             return exports(pn, Collections.singleton(target));
@@ -1431,18 +1476,19 @@ public class ModuleDescriptor
          *         If the package name is {@code null} or is not a legal Java
          *         identifier
          * @throws IllegalStateException
-         *         If the package is already declared as an exported or
-         *         concealed package
+         *         If the package is already declared as a concealed package
+         *         or the export conflicts with a declared exported package
          */
         public Builder exports(String pn) {
-            ensureNotExportedOrConcealed(pn);
-            exports.put(pn, new Exports(Collections.emptySet(), pn));
-            return this;
+            return exports(Collections.emptySet(), pn);
         }
 
         // Used by ModuleInfo, after a packageFinder is invoked
         /* package */ Set<String> exportedPackages() {
-            return exports.keySet();
+            Set<String> exported = new HashSet<>();
+            exported.addAll(unqualifiedExports.keySet());
+            exported.addAll(qualifiedExports.keySet());
+            return exported;
         }
 
         /**
@@ -1550,9 +1596,15 @@ public class ModuleDescriptor
          */
         public Builder conceals(String pn) {
             Checks.requirePackageName(pn);
-            ensureNotExportedOrConcealed(pn);
-            if (conceals.isEmpty())
-                conceals = new HashSet<>();
+            if (conceals.contains(pn)) {
+                throw new IllegalStateException("Concealed package "
+                                                + pn + " already declared");
+            }
+            if (unqualifiedExports.containsKey(pn)
+                    || qualifiedExports.containsKey(pn)) {
+                throw new IllegalStateException("Exported package "
+                                                + pn + " already declared");
+            }
             conceals.add(pn);
             return this;
         }
@@ -1704,6 +1756,13 @@ public class ModuleDescriptor
 
             Set<String> packages = new HashSet<>(conceals);
             packages.addAll(exportedPackages());
+
+            Set<Exports> exports = new HashSet<>();
+            exports.addAll(unqualifiedExports.values());
+            exports.addAll(qualifiedExports.values());
+
+            Set<Requires> requires = new HashSet<>(this.requires.values());
+
             return new ModuleDescriptor(name,
                                         automatic,
                                         synthetic,
@@ -2069,7 +2128,13 @@ public class ModuleDescriptor
                                                 osArch,
                                                 osVersion,
                                                 packages,
-                                                hashes);
+                                                hashes,
+                                                false);
+                }
+
+                @Override
+                public Optional<ModuleHashes> hashes(ModuleDescriptor descriptor) {
+                    return descriptor.hashes();
                 }
 
                 @Override
@@ -2089,9 +2154,12 @@ public class ModuleDescriptor
                 }
 
                 @Override
-                public Optional<ModuleHashes> hashes(ModuleDescriptor descriptor) {
-                    return descriptor.hashes();
+                public ModuleFinder newModulePath(Runtime.Version version,
+                                                  boolean isLinkPhase,
+                                                  Path... entries) {
+                    return new ModulePath(version, isLinkPhase, entries);
                 }
+
             });
     }
 

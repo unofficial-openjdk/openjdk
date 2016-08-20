@@ -114,7 +114,7 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(Set.of(Modifier.PUBLIC), "m3")
+                .requires(Set.of(Modifier.TRANSITIVE), "m3")
                 .build();
 
         ModuleDescriptor descriptor3
@@ -169,7 +169,7 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(Set.of(Modifier.PUBLIC), "m1")
+                .requires(Set.of(Modifier.TRANSITIVE), "m1")
                 .build();
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
@@ -245,7 +245,7 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(Set.of(Modifier.PUBLIC), "m1")
+                .requires(Set.of(Modifier.TRANSITIVE), "m1")
                 .build();
 
         ModuleDescriptor descriptor3
@@ -309,7 +309,7 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(Set.of(Modifier.PUBLIC), "m1")
+                .requires(Set.of(Modifier.TRANSITIVE), "m1")
                 .build();
 
         ModuleFinder finder2 = ModuleUtils.finderOf(descriptor2);
@@ -371,7 +371,7 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(Set.of(Modifier.PUBLIC), "m1")
+                .requires(Set.of(Modifier.TRANSITIVE), "m1")
                 .build();
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
@@ -398,7 +398,7 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor3
             = new ModuleDescriptor.Builder("m3")
-                .requires(Set.of(Modifier.PUBLIC), "m2")
+                .requires(Set.of(Modifier.TRANSITIVE), "m2")
                 .build();
 
         ModuleDescriptor descriptor4
@@ -1128,7 +1128,7 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(Set.of(Modifier.PUBLIC), "m1")
+                .requires(Set.of(Modifier.TRANSITIVE), "m1")
                 .build();
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);

@@ -686,6 +686,8 @@ public interface Instrumentation {
      * modules that the package should be exported too. If the set is empty then
      * the package is exported unconditionally. </p>
      *
+     * <p> TBD: is this exports or exports all??? </p>
+     *
      * <p> The {@code extraProvides} parameter is the additional service providers
      * for the module to provide. The map key is the service type. The map value
      * is set of implementation types, each of which is a member of the module

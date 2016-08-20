@@ -326,7 +326,7 @@ public class BasicLayerTest {
         map.put("m1", loader1);
         map.put("m2", loader1);
         map.put("m3", loader2);
-        map.put("m3", loader2);
+        map.put("m4", loader2);
         Layer.empty().defineModules(cf, map::get);
 
         // same loader
@@ -384,7 +384,7 @@ public class BasicLayerTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(Set.of(Modifier.PUBLIC), "m1")
+                .requires(Set.of(Modifier.TRANSITIVE), "m1")
                 .build();
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
@@ -465,7 +465,7 @@ public class BasicLayerTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(Set.of(Modifier.PUBLIC), "m1")
+                .requires(Set.of(Modifier.TRANSITIVE), "m1")
                 .build();
 
         ModuleDescriptor descriptor3
@@ -533,7 +533,7 @@ public class BasicLayerTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(Set.of(Modifier.PUBLIC), "m1")
+                .requires(Set.of(Modifier.TRANSITIVE), "m1")
                 .build();
 
         ModuleFinder finder2 = ModuleUtils.finderOf(descriptor2);
@@ -601,7 +601,7 @@ public class BasicLayerTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(Set.of(Modifier.PUBLIC), "m1")
+                .requires(Set.of(Modifier.TRANSITIVE), "m1")
                 .build();
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
@@ -616,7 +616,7 @@ public class BasicLayerTest {
 
         ModuleDescriptor descriptor3
             = new ModuleDescriptor.Builder("m3")
-                .requires(Set.of(Modifier.PUBLIC), "m2")
+                .requires(Set.of(Modifier.TRANSITIVE), "m2")
                 .build();
 
         ModuleDescriptor descriptor4
@@ -783,12 +783,7 @@ public class BasicLayerTest {
         ClassLoader scl = ClassLoader.getSystemClassLoader();
 
         try {
-            Layer.boot().defineModules(cf, loader -> null );
-            assertTrue(false);
-        } catch (LayerInstantiationException e) { }
-
-        try {
-            Layer.boot().defineModules(cf, loader -> new ClassLoader() { });
+            Layer.boot().defineModules(cf, mn -> new ClassLoader() { });
             assertTrue(false);
         } catch (LayerInstantiationException e) { }
 
@@ -801,6 +796,26 @@ public class BasicLayerTest {
             Layer.boot().defineModulesWithManyLoaders(cf, scl);
             assertTrue(false);
         } catch (LayerInstantiationException e) { }
+    }
+
+
+    /**
+     * Attempt to create a Layer with a module defined to the boot loader
+     */
+    @Test(expectedExceptions = { LayerInstantiationException.class })
+    public void testLayerWithBootLoader() {
+        ModuleDescriptor descriptor
+            = new ModuleDescriptor.Builder("m1")
+                .build();
+
+        ModuleFinder finder = ModuleUtils.finderOf(descriptor);
+
+        Configuration cf = Layer.boot()
+            .configuration()
+            .resolveRequires(finder, ModuleFinder.of(), Set.of("m1"));
+        assertTrue(cf.modules().size() == 1);
+
+        Layer.boot().defineModules(cf, mn -> null );
     }
 
 

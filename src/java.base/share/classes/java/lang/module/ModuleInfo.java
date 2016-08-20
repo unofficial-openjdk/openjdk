@@ -288,7 +288,7 @@ final class ModuleInfo {
             } else {
                 mods = new HashSet<>();
                 if ((flags & ACC_TRANSITIVE) != 0)
-                    mods.add(Requires.Modifier.PUBLIC);
+                    mods.add(Requires.Modifier.TRANSITIVE);
                 if ((flags & ACC_STATIC_PHASE) != 0)
                     mods.add(Requires.Modifier.STATIC);
                 if ((flags & ACC_SYNTHETIC) != 0)
@@ -322,6 +322,8 @@ final class ModuleInfo {
                     mods = Collections.emptySet();
                 } else {
                     mods = new HashSet<>();
+                    if ((flags & ACC_PRIVATE) != 0)
+                        mods.add(Exports.Modifier.PRIVATE);
                     if ((flags & ACC_DYNAMIC_PHASE) != 0)
                         mods.add(Exports.Modifier.DYNAMIC);
                     if ((flags & ACC_SYNTHETIC) != 0)

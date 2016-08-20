@@ -336,8 +336,11 @@ public final class Layer {
      *         for this layer
      * @throws LayerInstantiationException
      *         If creating the {@code Layer} fails for any of the reasons
-     *         listed above or the layer cannot be created because the
-     *         configuration contains a module named "{@code java.base}"
+     *         listed above, the layer cannot be created because the
+     *         configuration contains a module named "{@code java.base}",
+     *         or the function to map a module name to a class loader returns
+     *         {@code null}
+     *
      * @throws SecurityException
      *         If {@code RuntimePermission("getClassLoader")} is denied by
      *         the security manager

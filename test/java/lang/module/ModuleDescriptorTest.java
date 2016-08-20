@@ -43,6 +43,7 @@ import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -100,18 +101,18 @@ public class ModuleDescriptorTest {
     }
 
     public void testRequiresWithOneModifier() {
-        Requires r = requires(EnumSet.of(PUBLIC), "foo");
+        Requires r = requires(EnumSet.of(TRANSITIVE), "foo");
         assertEquals(r, r);
         assertTrue(r.compareTo(r) == 0);
-        assertEquals(r.modifiers(), EnumSet.of(PUBLIC));
+        assertEquals(r.modifiers(), EnumSet.of(TRANSITIVE));
         assertEquals(r.name(), "foo");
     }
 
     public void testRequiresWithTwoModifiers() {
-        Requires r = requires(EnumSet.of(PUBLIC, SYNTHETIC), "foo");
+        Requires r = requires(EnumSet.of(TRANSITIVE, SYNTHETIC), "foo");
         assertEquals(r, r);
         assertTrue(r.compareTo(r) == 0);
-        assertEquals(r.modifiers(), EnumSet.of(PUBLIC, SYNTHETIC));
+        assertEquals(r.modifiers(), EnumSet.of(TRANSITIVE, SYNTHETIC));
         assertEquals(r.name(), "foo");
     }
 
@@ -119,7 +120,7 @@ public class ModuleDescriptorTest {
         Requires r = requires(EnumSet.allOf(Modifier.class), "foo");
         assertEquals(r, r);
         assertTrue(r.compareTo(r) == 0);
-        assertEquals(r.modifiers(), EnumSet.of(PUBLIC, STATIC, SYNTHETIC, MANDATED));
+        assertEquals(r.modifiers(), EnumSet.of(TRANSITIVE, STATIC, SYNTHETIC, MANDATED));
         assertEquals(r.name(), "foo");
     }
 
@@ -142,7 +143,7 @@ public class ModuleDescriptorTest {
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testRequiresSelfWithOneModifier() {
-        new Builder("m").requires(Set.of(PUBLIC), "m");
+        new Builder("m").requires(Set.of(TRANSITIVE), "m");
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
@@ -170,9 +171,9 @@ public class ModuleDescriptorTest {
     }
 
     public void testRequiresCompareWithDifferentModifiers() {
-        Requires r1 = requires(EnumSet.of(PUBLIC), "foo");
+        Requires r1 = requires(EnumSet.of(TRANSITIVE), "foo");
         Requires r2 = requires(EnumSet.of(SYNTHETIC), "foo");
-        int n = Integer.compare(1 << PUBLIC.ordinal(), 1 << SYNTHETIC.ordinal());
+        int n = Integer.compare(1 << TRANSITIVE.ordinal(), 1 << SYNTHETIC.ordinal());
         assertTrue(r1.compareTo(r2) == n);
         assertTrue(r2.compareTo(r1) == -n);
     }
@@ -192,6 +193,24 @@ public class ModuleDescriptorTest {
 
     // exports
 
+    private Set<Exports.Modifier> asModifiers(Set<String> modifiers) {
+        Set<Exports.Modifier> ms = new HashSet<>();
+        for (String modifier : modifiers) {
+            switch (modifier) {
+                case "dynamic" :
+                    ms.add(Exports.Modifier.DYNAMIC);
+                    break;
+                case "private" :
+                    ms.add(Exports.Modifier.PRIVATE);
+                    break;
+                default:
+                    throw new Error();
+
+            }
+        }
+        return ms;
+    }
+
     private Exports exports(String pn) {
         return new Builder("foo")
             .exports(pn)
@@ -199,6 +218,16 @@ public class ModuleDescriptorTest {
             .exports()
             .iterator()
             .next();
+    }
+
+    private Exports exports(Set<String> mods, String pn) {
+        Set<Exports.Modifier> ms = asModifiers(mods);
+        return new Builder("foo")
+                .exports(ms, pn)
+                .build()
+                .exports()
+                .iterator()
+                .next();
     }
 
     private Exports exports(String pn, String target) {
@@ -210,22 +239,24 @@ public class ModuleDescriptorTest {
             .next();
     }
 
-    private Exports exports(Set<Exports.Modifier> mods, String pn) {
+    private Exports exports(Set<String> mods, String pn, Set<String> targets) {
+        Set<Exports.Modifier> ms = asModifiers(mods);
         return new Builder("foo")
-            .exports(mods, pn)
-            .build()
-            .exports()
-            .iterator()
-            .next();
+                .exports(ms, pn, targets)
+                .build()
+                .exports()
+                .iterator()
+                .next();
     }
 
-    private Exports exports(Set<Exports.Modifier> mods, String pn, Set<String> targets) {
+    private Exports exports(Set<String> mods, String pn, String target) {
+        Set<Exports.Modifier> ms = asModifiers(mods);
         return new Builder("foo")
-            .exports(mods, pn, targets)
-            .build()
-            .exports()
-            .iterator()
-            .next();
+                .exports(ms, pn, Set.of(target))
+                .build()
+                .exports()
+                .iterator()
+                .next();
     }
 
 
@@ -276,7 +307,7 @@ public class ModuleDescriptorTest {
     }
 
     public void testExportsToAllWithModifier() {
-        Exports e = exports(Set.of(Exports.Modifier.DYNAMIC), "p");
+        Exports e = exports(Set.of("dynamic"), "p");
         assertEquals(e, e);
         assertTrue(e.modifiers().size() == 1);
         assertTrue(e.modifiers().contains(Exports.Modifier.DYNAMIC));
@@ -286,7 +317,7 @@ public class ModuleDescriptorTest {
     }
 
     public void testExportsToTargetWithModifier() {
-        Exports e = exports(Set.of(Exports.Modifier.DYNAMIC), "p", Set.of("bar"));
+        Exports e = exports(Set.of("dynamic"), "p", Set.of("bar"));
         assertEquals(e, e);
         assertTrue(e.modifiers().size() == 1);
         assertTrue(e.modifiers().contains(Exports.Modifier.DYNAMIC));
@@ -354,6 +385,85 @@ public class ModuleDescriptorTest {
             .toString();
         assertTrue(s.contains("p1"));
         assertTrue(s.contains("bar"));
+    }
+
+
+    // overlapping exports
+
+    @DataProvider(name = "moreAccess")
+    public Object[][] moreAccess() {
+        return new Object[][]{
+
+            { exports("p"), exports(Set.of("private"), "p", "m") },
+
+            { exports(Set.of("dynamic"), "p"), exports("p", "m") },
+            { exports(Set.of("dynamic"), "p"), exports(Set.of("private"), "p", "m") },
+            { exports(Set.of("dynamic"), "p"), exports(Set.of("dynamic", "private"), "p", "m") },
+
+            { exports(Set.of("dynamic", "private"), "p"), exports(Set.of("private"), "p", "m") },
+
+        };
+    }
+
+    @DataProvider(name = "lessOrEqualAccess")
+    public Object[][] lessOrEqualAccess() {
+        return new Object[][]{
+
+            { exports("p"), exports("p", "m") },
+            { exports("p"), exports(Set.of("dynamic"), "p", "m") },
+            { exports("p"), exports(Set.of("dynamic", "private"), "p", "m") },
+
+            { exports(Set.of("dynamic"), "p"), exports(Set.of("dynamic"), "p", "m") },
+
+            { exports(Set.of("private"), "p"), exports("p", "m") },
+            { exports(Set.of("private"), "p"), exports(Set.of("dynamic"), "p", "m") },
+            { exports(Set.of("private"), "p"), exports(Set.of("private"), "p", "m")},
+            { exports(Set.of("private"), "p"), exports(Set.of("dynamic", "private"), "p", "m")},
+
+            { exports(Set.of("dynamic", "private"), "p"), exports("p", "m") },
+            { exports(Set.of("dynamic", "private"), "p"), exports(Set.of("dynamic"), "p", "m") },
+            { exports(Set.of("dynamic", "private"), "p"), exports(Set.of("dynamic", "private"), "p", "m") },
+
+        };
+    }
+
+    @Test(dataProvider = "moreAccess")
+    public void testOverlappingExports1(Exports e1, Exports e2) {
+        assertEquals(e1.source(), e2.source());
+
+        Set<Exports> exports = new Builder("foo")
+                .exports(e1)
+                .exports(e2)
+                .build()
+                .exports();
+
+        assertTrue(exports.size() == 2);
+        Iterator<Exports> iterator = exports.iterator();
+        Exports e3 = iterator.next();
+        Exports e4 = iterator.next();
+        assertEquals(e3.source(), e1.source());
+        assertEquals(e4.source(), e1.source());
+        assertTrue(e3.isQualified() != e4.isQualified());
+    }
+
+    @Test(dataProvider = "moreAccess")
+    public void testOverlappingExports2(Exports e1, Exports e2) {
+        // reverse
+        testOverlappingExports1(e2, e1);
+    }
+
+    @Test(dataProvider = "lessOrEqualAccess",
+          expectedExceptions = IllegalStateException.class )
+    public void testOverlappingExports3(Exports e1, Exports e2) {
+        assertEquals(e1.source(), e2.source());
+        new Builder("foo").exports(e1).exports(e2);
+    }
+
+    @Test(dataProvider = "lessOrEqualAccess",
+          expectedExceptions = IllegalStateException.class )
+    public void testOverlappingExports4(Exports e1, Exports e2) {
+        // reverse
+        testOverlappingExports3(e2, e1);
     }
 
 

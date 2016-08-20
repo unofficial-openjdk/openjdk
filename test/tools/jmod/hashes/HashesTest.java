@@ -26,7 +26,8 @@
  * @summary Test the recording and checking of module hashes
  * @author Andrei Eremeev
  * @library /lib/testlibrary
- * @modules java.base/jdk.internal.module
+ * @modules java.base/jdk.internal.misc
+ *          java.base/jdk.internal.module
  *          jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jmod
  *          jdk.compiler
@@ -55,8 +56,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jdk.internal.module.ConfigurableModuleFinder;
+import jdk.internal.misc.SharedSecrets;
 import jdk.internal.module.ModuleHashes;
+
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -139,11 +141,8 @@ public class HashesTest {
     }
 
     private Optional<ModuleHashes> hashes(String name) throws Exception {
-        ModuleFinder finder = ModuleFinder.of(jmods.resolve(name + ".jmod"));
-        if (finder instanceof ConfigurableModuleFinder) {
-            ((ConfigurableModuleFinder) finder)
-                .configurePhase(ConfigurableModuleFinder.Phase.LINK_TIME);
-        }
+        ModuleFinder finder = SharedSecrets.getJavaLangModuleAccess()
+            .newModulePath(Runtime.version(), true, jmods.resolve(name + ".jmod"));
         ModuleReference mref = finder.find(name).orElseThrow(RuntimeException::new);
         ModuleReader reader = mref.open();
         try (InputStream in = reader.open("module-info.class").get()) {

@@ -514,7 +514,7 @@ public class ModuleSummary {
                 ms.descriptor().requires().stream()
                         .sorted(Comparator.comparing(Requires::name))
                         .forEach(r -> {
-                            boolean requiresPublic = r.modifiers().contains(Requires.Modifier.PUBLIC);
+                            boolean requiresPublic = r.modifiers().contains(Requires.Modifier.TRANSITIVE);
                             Selector sel = requiresPublic ? REQUIRES_PUBLIC : REQUIRES;
                             String req = String.format("<a class=\"%s\" href=\"#%s\">%s</a>",
                                                        sel, r.name(), r.name());

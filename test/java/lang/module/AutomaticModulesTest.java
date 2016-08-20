@@ -462,7 +462,7 @@ public class AutomaticModulesTest {
 
         ModuleDescriptor descriptor2
             =  new ModuleDescriptor.Builder("m2")
-                .requires(Set.of(Modifier.PUBLIC), "m3")
+                .requires(Set.of(Modifier.TRANSITIVE), "m3")
                 .requires("java.base")
                 .build();
 
