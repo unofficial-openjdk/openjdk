@@ -30,6 +30,7 @@ import java.io.FilePermission;
 import java.io.IOException;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
 import java.lang.module.ResolvedModule;
@@ -122,7 +123,7 @@ public final class Loader extends SecureClassLoader {
             if (mref.location().isPresent()) {
                 try {
                     url = mref.location().get().toURL();
-                } catch (MalformedURLException e) { }
+                } catch (MalformedURLException | IllegalArgumentException e) { }
             }
             this.mref = mref;
             this.url = url;
@@ -254,6 +255,12 @@ public final class Loader extends SecureClassLoader {
                 String target = resolvedModule.name();
                 ModuleDescriptor descriptor = other.reference().descriptor();
                 for (ModuleDescriptor.Exports e : descriptor.exports()) {
+
+                    // ignore
+                    if (e.modifiers().contains(Exports.Modifier.DYNAMIC)) {
+                        continue;
+                    }
+
                     boolean delegate;
                     if (e.isQualified()) {
                         // qualified export in same configuration
@@ -314,7 +321,8 @@ public final class Loader extends SecureClassLoader {
                         if (ouri.isPresent()) {
                             try {
                                 return ouri.get().toURL();
-                            } catch (MalformedURLException e) { }
+                            } catch (MalformedURLException |
+                                     IllegalArgumentException e) { }
                         }
                         return null;
                     }

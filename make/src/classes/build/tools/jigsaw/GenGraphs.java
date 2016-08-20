@@ -43,7 +43,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import static java.lang.module.ModuleDescriptor.Requires.Modifier.PUBLIC;
+import static java.lang.module.ModuleDescriptor.Requires.Modifier.TRANSITIVE;
 
 /**
  * Generate the DOT file for a module graph for each module in the JDK
@@ -173,7 +173,7 @@ public class GenGraphs {
             descriptors.forEach(md -> {
                 String mn = md.name();
                 Set<String> requiresPublic = md.requires().stream()
-                        .filter(d -> d.modifiers().contains(PUBLIC))
+                        .filter(d -> d.modifiers().contains(TRANSITIVE))
                         .map(d -> d.name())
                         .collect(Collectors.toSet());
 
@@ -222,7 +222,7 @@ public class GenGraphs {
             ModuleDescriptor descriptor = resolvedModule.reference().descriptor();
             String mn = descriptor.name();
             descriptor.requires().stream()
-                    .filter(d -> d.modifiers().contains(PUBLIC))
+                    .filter(d -> d.modifiers().contains(TRANSITIVE))
                     .map(d -> d.name())
                     .forEach(d -> builder.addEdge(mn, d));
         }

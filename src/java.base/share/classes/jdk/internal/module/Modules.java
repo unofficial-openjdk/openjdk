@@ -107,10 +107,18 @@ public class Modules {
 
     /**
      * Updates module m1 to export a package to module m2.
-     * Same as m1.addExports(pkg, m2) but without a caller check.
+     * Same as m1.addExports(pn, m2) but without a caller check.
      */
     public static void addExports(Module m1, String pn, Module m2) {
         JLRMA.addExports(m1, pn, m2);
+    }
+
+    /**
+     * Updates module m1 to export "private" a package to module m2.
+     * Same as m1.addExportsPrivate(pn, m2) but without a caller check.
+     */
+    public static void addExportsPrivate(Module m1, String pn, Module m2) {
+        JLRMA.addExportsPrivate(m1, pn, m2);
     }
 
     /**
@@ -125,6 +133,13 @@ public class Modules {
      */
     public static void addExportsToAllUnnamed(Module m, String pn) {
         JLRMA.addExportsToAllUnnamed(m, pn);
+    }
+
+    /**
+     * Updates module m to export "private" a package to all unnamed modules.
+     */
+    public static void addExportsPrivateToAllUnnamed(Module m, String pn) {
+        JLRMA.addExportsPrivateToAllUnnamed(m, pn);
     }
 
     /**

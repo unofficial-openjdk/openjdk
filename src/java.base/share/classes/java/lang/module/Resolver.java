@@ -26,6 +26,7 @@
 package java.lang.module;
 
 import java.io.PrintStream;
+import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Requires.Modifier;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -487,7 +488,7 @@ final class Resolver {
                 ResolvedModule m1 = p.findModule(name)
                     .orElseThrow(() -> new InternalError(name + " not found"));
                 for (ModuleDescriptor.Requires requires : descriptor.requires()) {
-                    if (requires.modifiers().contains(Modifier.PUBLIC)) {
+                    if (requires.modifiers().contains(Modifier.TRANSITIVE)) {
                         String dn = requires.name();
                         ResolvedModule m2 = p.findModule(dn)
                             .orElseThrow(() -> new InternalError(dn + " not found"));
@@ -533,7 +534,7 @@ final class Resolver {
                 reads.add(m2);
 
                 // m1 requires public m2
-                if (requires.modifiers().contains(Modifier.PUBLIC)) {
+                if (requires.modifiers().contains(Modifier.TRANSITIVE)) {
                     requiresPublic.add(m2);
                 }
 
@@ -652,6 +653,11 @@ final class Resolver {
                 ModuleDescriptor descriptor2 = endpoint.descriptor();
 
                 for (ModuleDescriptor.Exports export : descriptor2.exports()) {
+
+                    // exports dynamic ignored when checking exports
+                    if (export.modifiers().contains(Exports.Modifier.DYNAMIC)) {
+                        continue;
+                    }
 
                     if (export.isQualified()) {
                         if (!export.targets().contains(descriptor1.name()))

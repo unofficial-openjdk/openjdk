@@ -32,13 +32,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
+import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Requires;
+import java.net.URI;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -56,7 +60,6 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import jdk.internal.module.ConfigurableModuleFinder;
 import jdk.internal.perf.PerfCounter;
 
 
@@ -64,35 +67,39 @@ import jdk.internal.perf.PerfCounter;
  * A {@code ModuleFinder} that locates modules on the file system by searching
  * a sequence of directories or packaged modules.
  *
- * The {@code ModuleFinder} can be configured to work in either the run-time
+ * The {@code ModuleFinder} can be created to work in either the run-time
  * or link-time phases. In both cases it locates modular JAR and exploded
- * modules. When configured for link-time then it additionally locates
+ * modules. When created for link-time then it additionally locates
  * modules in JMOD files.
  */
 
-class ModulePath implements ConfigurableModuleFinder {
+class ModulePath implements ModuleFinder {
     private static final String MODULE_INFO = "module-info.class";
+
+    // the version to use for multi-release modular JARs
+    private final Runtime.Version releaseVersion;
+
+    // true for the link phase (supports modules packaged in JMOD format)
+    private final boolean isLinkPhase;
 
     // the entries on this module path
     private final Path[] entries;
     private int next;
 
-    // true if in the link phase
-    private boolean isLinkPhase;
-
     // map of module name to module reference map for modules already located
     private final Map<String, ModuleReference> cachedModules = new HashMap<>();
 
-    ModulePath(Path... entries) {
+    ModulePath(Runtime.Version version, boolean isLinkPhase, Path... entries) {
+        this.releaseVersion = version;
+        this.isLinkPhase = isLinkPhase;
         this.entries = entries.clone();
         for (Path entry : this.entries) {
             Objects.requireNonNull(entry);
         }
     }
 
-    @Override
-    public void configurePhase(Phase phase) {
-        isLinkPhase = (phase == Phase.LINK_TIME);
+    ModulePath(Path... entries) {
+        this(JarFile.runtimeVersion(), false, entries);
     }
 
     @Override
@@ -237,9 +244,13 @@ class ModulePath implements ConfigurableModuleFinder {
                 if (mref != null) {
                     // can have at most one version of a module in the directory
                     String name = mref.descriptor().name();
-                    if (nameToReference.put(name, mref) != null) {
+                    ModuleReference previous = nameToReference.put(name, mref);
+                    if (previous != null) {
+                        String fn1 = fileName(mref);
+                        String fn2 = fileName(previous);
                         throw new FindException("Two versions of module "
-                                                  + name + " found in " + dir);
+                                                 + name + " found in " + dir
+                                                 + " (" + fn1 + " and " + fn2 + ")");
                     }
                 }
             }
@@ -291,6 +302,25 @@ class ModulePath implements ConfigurableModuleFinder {
         }
     }
 
+
+    /**
+     * Returns a string with the file name of the module if possible.
+     * If the module location is not a file URI then return the URI
+     * as a string.
+     */
+    private String fileName(ModuleReference mref) {
+        URI uri = mref.location().orElse(null);
+        if (uri != null) {
+            if (uri.getScheme().equalsIgnoreCase("file")) {
+                Path file = Paths.get(uri);
+                return file.getFileName().toString();
+            } else {
+                return uri.toString();
+            }
+        } else {
+            return "<unknown>";
+        }
+    }
 
     // -- jmod files --
 
@@ -420,8 +450,7 @@ class ModulePath implements ConfigurableModuleFinder {
 
         // scan the entries in the JAR file to locate the .class and service
         // configuration file
-        Map<Boolean, Set<String>> map =
-            versionedStream(jf)
+        Map<Boolean, Set<String>> map = versionedEntries(jf)
               .map(JarEntry::getName)
               .filter(s -> (s.endsWith(".class") ^ s.startsWith(SERVICES_PREFIX)))
               .collect(Collectors.partitioningBy(s -> s.endsWith(".class"),
@@ -430,10 +459,11 @@ class ModulePath implements ConfigurableModuleFinder {
         Set<String> configFiles = map.get(Boolean.FALSE);
 
         // all packages are exported
+        Set<Exports.Modifier> mods = EnumSet.of(Exports.Modifier.PRIVATE);
         classFiles.stream()
             .map(c -> toPackageName(c))
             .distinct()
-            .forEach(builder::exports);
+            .forEach(pn -> builder.exports(mods, pn));
 
         // map names of service configuration files to service names
         Set<String> serviceNames = configFiles.stream()
@@ -504,12 +534,15 @@ class ModulePath implements ConfigurableModuleFinder {
         return mn;
     }
 
-    private Stream<JarEntry> versionedStream(JarFile jf) {
+    /**
+     * Returns a stream of entries for this JAR file. When the JAR file
+     * is a multi-release JAR then the entries correspond to the versioned
+     * entries.
+     */
+    private Stream<JarEntry> versionedEntries(JarFile jf) {
         if (jf.isMultiRelease()) {
-            // a stream of JarEntries whose names are base names and whose
-            // contents are from the corresponding versioned entries in
-            // a multi-release jar file
-            return jf.stream().map(JarEntry::getName)
+            return jf.stream()
+                    .map(JarEntry::getName)
                     .filter(name -> !name.startsWith("META-INF/versions/"))
                     .map(jf::getJarEntry);
         } else {
@@ -518,7 +551,7 @@ class ModulePath implements ConfigurableModuleFinder {
     }
 
     private Set<String> jarPackages(JarFile jf) {
-        return versionedStream(jf)
+        return versionedEntries(jf)
             .filter(e -> e.getName().endsWith(".class"))
             .map(e -> toPackageName(e.getName()))
             .filter(pkg -> pkg.length() > 0)   // module-info
@@ -537,7 +570,7 @@ class ModulePath implements ConfigurableModuleFinder {
         try (JarFile jf = new JarFile(file.toFile(),
                                       true,               // verify
                                       ZipFile.OPEN_READ,
-                                      JarFile.runtimeVersion()))
+                                      releaseVersion))
         {
             ModuleDescriptor md;
             JarEntry entry = jf.getJarEntry(MODULE_INFO);

@@ -2003,7 +2003,7 @@ class Main {
             for (Requires r : vd.requires()) {
                 if (rootRequires.contains(r)) {
                     continue;
-                } else if (r.modifiers().contains(Requires.Modifier.PUBLIC)) {
+                } else if (r.modifiers().contains(Requires.Modifier.TRANSITIVE)) {
                     fatalError(getMsg("error.versioned.info.requires.public"));
                     return false;
                 } else if (!isPlatformModule(r.name())) {

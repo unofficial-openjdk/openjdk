@@ -96,7 +96,7 @@ public final class ClassFileAttributes {
                 } else {
                     mods = new HashSet<>();
                     if ((flags & ACC_TRANSITIVE) != 0)
-                        mods.add(Requires.Modifier.PUBLIC);
+                        mods.add(Requires.Modifier.TRANSITIVE);
                     if ((flags & ACC_STATIC_PHASE) != 0)
                         mods.add(Requires.Modifier.STATIC);
                     if ((flags & ACC_SYNTHETIC) != 0)
@@ -123,6 +123,8 @@ public final class ClassFileAttributes {
                         mods = Collections.emptySet();
                     } else {
                         mods = new HashSet<>();
+                        if ((flags & ACC_PRIVATE) != 0)
+                            mods.add(Exports.Modifier.PRIVATE);
                         if ((flags & ACC_DYNAMIC_PHASE) != 0)
                             mods.add(Exports.Modifier.DYNAMIC);
                         if ((flags & ACC_SYNTHETIC) != 0)
@@ -194,7 +196,7 @@ public final class ClassFileAttributes {
             for (Requires md : descriptor.requires()) {
                 String dn = md.name();
                 int flags = 0;
-                if (md.modifiers().contains(Requires.Modifier.PUBLIC))
+                if (md.modifiers().contains(Requires.Modifier.TRANSITIVE))
                     flags |= ACC_TRANSITIVE;
                 if (md.modifiers().contains(Requires.Modifier.STATIC))
                     flags |= ACC_STATIC_PHASE;
@@ -217,6 +219,8 @@ public final class ClassFileAttributes {
                     attr.putShort(cw.newUTF8(pkg));
 
                     int flags = 0;
+                    if (e.modifiers().contains(Exports.Modifier.PRIVATE))
+                        flags |= ACC_PRIVATE;
                     if (e.modifiers().contains(Exports.Modifier.DYNAMIC))
                         flags |= ACC_DYNAMIC_PHASE;
                     if (e.modifiers().contains(Exports.Modifier.SYNTHETIC))

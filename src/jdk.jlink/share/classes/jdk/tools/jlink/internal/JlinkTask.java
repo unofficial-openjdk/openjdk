@@ -42,8 +42,6 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import jdk.internal.module.ConfigurableModuleFinder;
-import jdk.internal.module.ConfigurableModuleFinder.Phase;
 import jdk.tools.jlink.internal.TaskHelper.BadArgs;
 import static jdk.tools.jlink.internal.TaskHelper.JLINK_BUNDLE;
 import jdk.tools.jlink.internal.TaskHelper.Option;
@@ -54,6 +52,7 @@ import jdk.tools.jlink.Jlink.PluginsConfiguration;
 import jdk.tools.jlink.plugin.PluginException;
 import jdk.tools.jlink.builder.DefaultImageBuilder;
 import jdk.tools.jlink.plugin.Plugin;
+import jdk.internal.misc.SharedSecrets;
 
 /**
  * Implementation for the jlink tool.
@@ -325,12 +324,9 @@ public class JlinkTask {
                                                Set<String> limitMods,
                                                Set<String> addMods)
     {
-        ModuleFinder finder = ModuleFinder.of(paths.toArray(new Path[0]));
-
-        // jmods are located at link-time
-        if (finder instanceof ConfigurableModuleFinder) {
-            ((ConfigurableModuleFinder) finder).configurePhase(Phase.LINK_TIME);
-        }
+        Path[] entries = paths.toArray(new Path[0]);
+        ModuleFinder finder = SharedSecrets.getJavaLangModuleAccess()
+            .newModulePath(Runtime.version(), true, entries);
 
         // if limitmods is specified then limit the universe
         if (!limitMods.isEmpty()) {
