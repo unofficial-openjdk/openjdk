@@ -211,6 +211,8 @@ sun/rmi/rmic/newrmic/equivalence/run.sh                         8145980 generic-
 
 java/rmi/transport/dgcDeadLock/DGCDeadLock.java                 8029360 macosx-all
 
+sun/rmi/runtime/Log/6409194/NoConsoleOutput.java                8164124 windows-all
+
 ############################################################################
 
 # jdk_security
@@ -333,9 +335,6 @@ com/sun/jdi/JdbMethodExitTest.sh                                6902121 generic-
 com/sun/jdi/RepStep.java                                        8043571 generic-all
 
 com/sun/jdi/GetLocalVariables4Test.sh                           8067354 windows-all
-
-com/sun/jdi/ClassesByName2Test.java				8160833 generic-all
-com/sun/jdi/RedefineCrossEvent.java				8160833 generic-all
 
 com/sun/jdi/sde/SourceDebugExtensionTest.java                   8158066 windows-all
 
