@@ -89,6 +89,7 @@ public class SASymbolTableTest {
         long pid = p.getPid();
         System.out.println("Attaching agent " + pid);
         ProcessBuilder tool = ProcessTools.createJavaProcessBuilder(
+            "--add-modules=jdk.hotspot.agent",
             "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.oops=ALL-UNNAMED",
             "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.memory=ALL-UNNAMED",
             "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.runtime=ALL-UNNAMED",

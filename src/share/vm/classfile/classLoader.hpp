@@ -363,7 +363,7 @@ class ClassLoader: AllStatic {
   // Add a module's exploded directory to the boot loader's exploded module build list
   static void add_to_exploded_build_list(Symbol* module_name, TRAPS);
 
-  // Attempt load of individual class from either the xpatch or exploded modules build lists
+  // Attempt load of individual class from either the patched or exploded modules build lists
   static ClassFileStream* search_module_entries(const GrowableArray<ModuleClassPathList*>* const module_list,
                                                 const char* const class_name,
                                                 const char* const file_name, TRAPS);

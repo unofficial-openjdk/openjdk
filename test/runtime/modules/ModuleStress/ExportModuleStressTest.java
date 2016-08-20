@@ -62,7 +62,7 @@ public class ExportModuleStressTest {
         compiled = CompilerUtils.compile(
             SRC_DIR.resolve("jdk.translet"),
             MODS_DIR.resolve("jdk.translet"),
-            "-XaddExports:jdk.test/test=jdk.translet",
+            "--add-exports=jdk.test/test=jdk.translet",
             "-p", MODS_DIR.toString());
         if (!compiled) {
             throw new RuntimeException("Test failed to compile module jdk.translet");

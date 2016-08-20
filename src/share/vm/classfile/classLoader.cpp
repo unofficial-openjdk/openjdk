@@ -1341,7 +1341,7 @@ const char* ClassLoader::file_name_for_class_name(const char* class_name,
   return file_name;
 }
 
-// Search either the patch mod or exploded build entries for class
+// Search either the patch-module or exploded build entries for class
 ClassFileStream* ClassLoader::search_module_entries(const GrowableArray<ModuleClassPathList*>* const module_list,
                                                     const char* const class_name, const char* const file_name, TRAPS) {
   ClassFileStream* stream = NULL;
@@ -1366,7 +1366,7 @@ ClassFileStream* ClassLoader::search_module_entries(const GrowableArray<ModuleCl
     int num_of_entries = module_list->length();
     const Symbol* class_module_name = mod_entry->name();
 
-    // Loop through all the modules in either the patch mod or exploded entries looking for module
+    // Loop through all the modules in either the patch-module or exploded entries looking for module
     for (int i = 0; i < num_of_entries; i++) {
       ModuleClassPathList* module_cpl = module_list->at(i);
       Symbol* module_cpl_name = module_cpl->module_name();
@@ -1378,7 +1378,7 @@ ClassFileStream* ClassLoader::search_module_entries(const GrowableArray<ModuleCl
         while (e != NULL) {
           stream = e->open_stream(file_name, CHECK_NULL);
           // No context.check is required since CDS is not supported
-          // for an exploded modules build or if -Xpatch is specified.
+          // for an exploded modules build or if --patch-module is specified.
           if (NULL != stream) {
             return stream;
           }
@@ -1439,7 +1439,7 @@ instanceKlassHandle ClassLoader::load_class(Symbol* name, bool search_append_onl
   // Load Attempt #1: --patch-module
   // Determine the class' defining module.  If it appears in the _patch_mod_entries,
   // attempt to load the class from those locations specific to the module.
-  // Specifications to -Xpatch can contain a partial number of classes
+  // Specifications to --patch-module can contain a partial number of classes
   // that are part of the overall module definition.  So if a particular class is not
   // found within its module specification, the search should continue to Load Attempt #2.
   // Note: The --patch-module entries are never searched if the boot loader's
