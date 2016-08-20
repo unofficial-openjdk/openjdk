@@ -71,7 +71,7 @@ public class ModuleMetaData {
     }
 
     ModuleMetaData requiresPublic(String name) {
-        requires.put(name, new ModuleRequires(name, PUBLIC));
+        requires.put(name, new ModuleRequires(name, TRANSITIVE));
         return this;
     }
 

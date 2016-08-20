@@ -168,7 +168,7 @@ public class ModuleAnalyzer {
             requiresPublic.stream()
                 .filter(m -> !m.name().equals(JAVA_BASE))
                 .map(Module::name)
-                .forEach(mn -> builder.requires(Set.of(PUBLIC), mn));
+                .forEach(mn -> builder.requires(Set.of(TRANSITIVE), mn));
 
             requires.stream()
                 .filter(m -> !requiresPublic.contains(m))
@@ -303,7 +303,7 @@ public class ModuleAnalyzer {
                 builder.addNode(source);
                 Module from = source;
                 source.descriptor().requires().stream()
-                    .filter(req -> req.modifiers().contains(PUBLIC))
+                    .filter(req -> req.modifiers().contains(TRANSITIVE))
                     .map(ModuleDescriptor.Requires::name)
                     .map(configuration::findModule)
                     .flatMap(Optional::stream)
@@ -367,10 +367,10 @@ public class ModuleAnalyzer {
     private boolean matches(ModuleDescriptor md, ModuleDescriptor other) {
         // build requires public from ModuleDescriptor
         Set<ModuleDescriptor.Requires> reqPublic = md.requires().stream()
-            .filter(req -> req.modifiers().contains(PUBLIC))
+            .filter(req -> req.modifiers().contains(TRANSITIVE))
             .collect(toSet());
         Set<ModuleDescriptor.Requires> otherReqPublic = other.requires().stream()
-            .filter(req -> req.modifiers().contains(PUBLIC))
+            .filter(req -> req.modifiers().contains(TRANSITIVE))
             .collect(toSet());
 
         if (!reqPublic.equals(otherReqPublic)) {
@@ -422,7 +422,7 @@ public class ModuleAnalyzer {
                 .forEach(md -> {
                     String mn = md.name();
                     Set<String> requiresPublic = md.requires().stream()
-                        .filter(d -> d.modifiers().contains(PUBLIC))
+                        .filter(d -> d.modifiers().contains(TRANSITIVE))
                         .map(d -> d.name())
                         .collect(toSet());
 
@@ -449,7 +449,7 @@ public class ModuleAnalyzer {
             ModuleDescriptor md = module.descriptor();
             String mn = md.name();
             md.requires().stream()
-                    .filter(d -> d.modifiers().contains(PUBLIC))
+                    .filter(d -> d.modifiers().contains(TRANSITIVE))
                     .map(d -> d.name())
                     .forEach(d -> rpgbuilder.addEdge(mn, d));
         }
