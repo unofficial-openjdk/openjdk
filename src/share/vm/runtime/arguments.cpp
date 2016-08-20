@@ -2544,6 +2544,7 @@ bool Arguments::parse_uintx(const char* value,
 
 unsigned int addreads_count = 0;
 unsigned int addexports_count = 0;
+unsigned int addexports_private_count = 0;
 unsigned int patch_mod_count = 0;
 const char* add_modules_value = NULL;
 
@@ -2796,6 +2797,10 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* patch_m
       }
     } else if (match_option(option, "--add-exports=", &tail)) {
       if (!create_numbered_property("jdk.module.addexports", tail, addexports_count++)) {
+        return JNI_ENOMEM;
+      }
+    } else if (match_option(option, "--add-exports-private=", &tail)) {
+      if (!create_numbered_property("jdk.module.addexports.private", tail, addexports_private_count++)) {
         return JNI_ENOMEM;
       }
     } else if (match_option(option, "--add-modules=", &tail)) {
