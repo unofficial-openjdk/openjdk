@@ -32,7 +32,8 @@
 
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
-import static java.lang.module.ModuleDescriptor.Requires.Modifier;
+import java.lang.module.ModuleDescriptor.Exports;
+import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleFinder;
 import java.lang.reflect.Layer;
 import java.lang.reflect.LayerInstantiationException;
@@ -251,7 +252,7 @@ public class BasicLayerTest {
      * Exercise Layer defineModules with a configuration of two modules that
      * have the same module-private package.
      */
-    public void testSameConcealedPackage() {
+    public void testPackageConcealedBySelfAndOther() {
         ModuleDescriptor descriptor1
             =  new ModuleDescriptor.Builder("m1")
                 .requires("m2")
@@ -278,6 +279,92 @@ public class BasicLayerTest {
             Layer.empty().defineModules(cf, mn -> loader);
             assertTrue(false);
         } catch (LayerInstantiationException expected) { }
+    }
+
+
+    /**
+     * Exercise Layer defineModules with a configuration of two modules. One
+     * module has a concealed package p and reads another module that
+     * `exports dynamic p`.
+     */
+    public void testPackageConcealedBySelfAndExportsDynamicByOther() {
+        ModuleDescriptor descriptor1
+            =  new ModuleDescriptor.Builder("m1")
+                .requires("m2")
+                .conceals("p")
+                .build();
+
+        ModuleDescriptor descriptor2
+            = new ModuleDescriptor.Builder("m2")
+                .exports(Set.of(Exports.Modifier.DYNAMIC), "p")
+                .exports("q")
+                .build();
+
+        ModuleFinder finder
+            = ModuleUtils.finderOf(descriptor1, descriptor2);
+
+        Configuration cf = resolveRequires(finder, "m1");
+        assertTrue(cf.modules().size() == 2);
+
+        // one loader per module should be okay
+        Layer.empty().defineModules(cf, mn -> new ClassLoader() { });
+    }
+
+
+    /**
+     * Exercise Layer defineModules with a configuration of two modules. One
+     * modules exports p and reads another module that `exports dynamic p`.
+     */
+    public void testPackageExportedBySelfAndExportsDynamicByOther() {
+        ModuleDescriptor descriptor1
+            =  new ModuleDescriptor.Builder("m1")
+                .requires("m2")
+                .exports("p")
+                .build();
+
+        ModuleDescriptor descriptor2
+            = new ModuleDescriptor.Builder("m2")
+                .exports(Set.of(Exports.Modifier.DYNAMIC), "p")
+                .exports("q")
+                .build();
+
+        ModuleFinder finder
+            = ModuleUtils.finderOf(descriptor1, descriptor2);
+
+        Configuration cf = resolveRequires(finder, "m1");
+        assertTrue(cf.modules().size() == 2);
+
+        // one loader per module should be okay
+        Layer.empty().defineModules(cf, mn -> new ClassLoader() { });
+    }
+
+
+    /**
+     * Exercise Layer defineModules with a configuration of two modules. One
+     * module `exports dynamic p` and also reads another module that
+     * `exports dynamic p`.
+     */
+    public void testExportsDynamicBySelfAndOther() {
+        ModuleDescriptor descriptor1
+            =  new ModuleDescriptor.Builder("m1")
+                .requires("m2")
+                .exports(Set.of(Exports.Modifier.DYNAMIC), "p")
+                .build();
+
+        ModuleDescriptor descriptor2
+            = new ModuleDescriptor.Builder("m2")
+                .exports(Set.of(Exports.Modifier.DYNAMIC), "p")
+                .exports("q")
+                .build();
+
+        ModuleFinder finder
+            = ModuleUtils.finderOf(descriptor1, descriptor2);
+
+        Configuration cf = resolveRequires(finder, "m1");
+        assertTrue(cf.modules().size() == 2);
+
+        // one loader per module should be okay
+        Layer.empty().defineModules(cf, mn -> new ClassLoader() { });
     }
 
 
@@ -384,7 +471,7 @@ public class BasicLayerTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(Set.of(Modifier.TRANSITIVE), "m1")
+                .requires(Set.of(Requires.Modifier.TRANSITIVE), "m1")
                 .build();
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
@@ -465,7 +552,7 @@ public class BasicLayerTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(Set.of(Modifier.TRANSITIVE), "m1")
+                .requires(Set.of(Requires.Modifier.TRANSITIVE), "m1")
                 .build();
 
         ModuleDescriptor descriptor3
@@ -533,7 +620,7 @@ public class BasicLayerTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(Set.of(Modifier.TRANSITIVE), "m1")
+                .requires(Set.of(Requires.Modifier.TRANSITIVE), "m1")
                 .build();
 
         ModuleFinder finder2 = ModuleUtils.finderOf(descriptor2);
@@ -601,7 +688,7 @@ public class BasicLayerTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(Set.of(Modifier.TRANSITIVE), "m1")
+                .requires(Set.of(Requires.Modifier.TRANSITIVE), "m1")
                 .build();
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
@@ -616,7 +703,7 @@ public class BasicLayerTest {
 
         ModuleDescriptor descriptor3
             = new ModuleDescriptor.Builder("m3")
-                .requires(Set.of(Modifier.TRANSITIVE), "m2")
+                .requires(Set.of(Requires.Modifier.TRANSITIVE), "m2")
                 .build();
 
         ModuleDescriptor descriptor4
