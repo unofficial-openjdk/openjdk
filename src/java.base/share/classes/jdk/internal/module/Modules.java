@@ -129,6 +129,13 @@ public class Modules {
     }
 
     /**
+     * Updates a module m to export "private" a package to all modules.
+     */
+    public static void addExportsPrivateToAll(Module m, String pn) {
+        JLRMA.addExportsPrivateToAll(m, pn);
+    }
+
+    /**
      * Updates module m to export a package to all unnamed modules.
      */
     public static void addExportsToAllUnnamed(Module m, String pn) {

@@ -82,6 +82,11 @@ public interface JavaLangReflectModuleAccess {
     void addExportsToAll(Module m, String pkg);
 
     /**
+     * Updates a module m to export "private" a package to all modules.
+     */
+    void addExportsPrivateToAll(Module m, String pkg);
+
+    /**
      * Updates a module m to export a package to all unnamed modules.
      */
     void addExportsToAllUnnamed(Module m, String pkg);

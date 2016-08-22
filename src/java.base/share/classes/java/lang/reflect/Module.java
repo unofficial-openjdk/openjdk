@@ -1443,6 +1443,10 @@ public final class Module implements AnnotatedElement {
                     m.implAddExports(pn, Module.EVERYONE_MODULE, false, true);
                 }
                 @Override
+                public void addExportsPrivateToAll(Module m, String pn) {
+                    m.implAddExports(pn, Module.EVERYONE_MODULE, true, true);
+                }
+                @Override
                 public void addExportsToAllUnnamed(Module m, String pn) {
                     m.implAddExports(pn, Module.ALL_UNNAMED_MODULE, false, true);
                 }
