@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,26 +21,5 @@
  * questions.
  */
 
-/*
- * @test
- * @bug 8006582 8008658
- * @summary javac should generate method parameters correctly.
- * @modules jdk.jdeps/com.sun.tools.classfile
- * @build MethodParametersTester ClassFileVisitor ReflectionVisitor
- * @compile -parameters EnumTest.java
- * @run main MethodParametersTester EnumTest EnumTest.out
- */
-
-/** Test that parameter names are recorded for enum methods */
-enum EnumTest {
-    E1(0), E2(1, "x"), E3(2, "x", "y"), E4;
-
-    EnumTest() { }
-    EnumTest(int a, String... ba) { }
-    boolean ok(int c, String... dc) { return true; }
-
-    int valueOf(EnumTest A, EnumTest BA) { return 0; }
-}
-
-
-
+//key: compiler.warn.has.been.deprecated.module
+//options: -Xlint:deprecation

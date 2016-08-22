@@ -96,7 +96,9 @@ public class ModuleTestBase {
         for (Module_attribute.ExportsEntry export : module.exports) {
             String pkg = constantPool.getUTF8Value(export.exports_index);
             if (tr.checkTrue(moduleDescriptor.exports.containsKey(pkg), "Unexpected export " + pkg)) {
-                List<String> expectedTo = moduleDescriptor.exports.get(pkg);
+                Export expectedExport = moduleDescriptor.exports.get(pkg);
+                tr.checkEquals(expectedExport.mask, export.exports_flags, "Wrong export flags");
+                List<String> expectedTo = expectedExport.to;
                 tr.checkEquals(export.exports_to_count, expectedTo.size(), "Wrong amount of exports to");
                 List<String> actualTo = new ArrayList<>();
                 for (int toIdx : export.exports_to_index) {
@@ -145,6 +147,56 @@ public class ModuleTestBase {
     @interface Test {
     }
 
+    interface Mask {
+        int getMask();
+    }
+
+    enum RequiresFlag implements Mask {
+        PUBLIC("public", Module_attribute.ACC_TRANSITIVE),
+        STATIC("static", Module_attribute.ACC_STATIC_PHASE);
+
+        private final String token;
+        private final int mask;
+
+        RequiresFlag(String token, int mask) {
+            this.token = token;
+            this.mask = mask;
+        }
+
+        @Override
+        public int getMask() {
+            return mask;
+        }
+    }
+
+    enum ExportFlag implements Mask {
+        DYNAMIC("dynamic", Module_attribute.ACC_DYNAMIC_PHASE);
+
+        private final String token;
+        private final int mask;
+
+        ExportFlag(String token, int mask) {
+            this.token = token;
+            this.mask = mask;
+        }
+
+        @Override
+        public int getMask() {
+            return mask;
+        }
+    }
+
+    private class Export {
+        String pkg;
+        int mask;
+        List<String> to = new ArrayList<>();
+
+        public Export(String pkg, int mask) {
+            this.pkg = pkg;
+            this.mask = mask;
+        }
+    }
+
     class ModuleDescriptor {
 
         private final String name;
@@ -155,7 +207,7 @@ public class ModuleTestBase {
             requires.add(new Pair<>("java.base", Module_attribute.ACC_MANDATED));
         }
 
-        private final Map<String, List<String>> exports = new HashMap<>();
+        private final Map<String, Export> exports = new HashMap<>();
 
         //List of service and implementation
         private final List<Pair<String, String>> provides = new ArrayList<>();
@@ -170,37 +222,48 @@ public class ModuleTestBase {
             content.append(name).append('{').append('\n');
         }
 
-        public ModuleDescriptor requires(String... requires) {
-            for (String require : requires) {
-                this.requires.add(Pair.of(require, 0));
-                content.append("    requires ").append(require).append(LINE_END);
-            }
+        public ModuleDescriptor requires(String module) {
+            this.requires.add(Pair.of(module, 0));
+            content.append("    requires ").append(module).append(LINE_END);
+
             return this;
         }
 
-        public ModuleDescriptor requiresPublic(String... requiresPublic) {
-            for (String require : requiresPublic) {
-                this.requires.add(new Pair<>(require, Module_attribute.ACC_PUBLIC));
-                content.append("    requires public ").append(require).append(LINE_END);
+        public ModuleDescriptor requires(String module, RequiresFlag... flags) {
+            this.requires.add(new Pair<>(module, computeMask(flags)));
+
+            content.append("    requires ");
+            for (RequiresFlag flag : flags) {
+                content.append(flag.token).append(" ");
             }
+            content.append(module).append(LINE_END);
+
             return this;
         }
 
-        public ModuleDescriptor exports(String... exports) {
-            for (String export : exports) {
-                this.exports.putIfAbsent(export, new ArrayList<>());
-                content.append("    exports ").append(export).append(LINE_END);
+        public ModuleDescriptor exports(String pkg, ExportFlag... flags) {
+            this.exports.putIfAbsent(pkg, new Export(pkg, computeMask(flags)));
+            content.append("    exports ");
+            for (ExportFlag flag : flags) {
+                content.append(flag.token).append(" ");
             }
+            content.append(pkg).append(LINE_END);
             return this;
         }
 
-        public ModuleDescriptor exportsTo(String exports, String to) {
+        public ModuleDescriptor exportsTo(String pkg, String to, ExportFlag... flags) {
             List<String> tos = Pattern.compile(",")
                     .splitAsStream(to)
                     .map(String::trim)
                     .collect(Collectors.toList());
-            this.exports.computeIfAbsent(exports, k -> new ArrayList<>()).addAll(tos);
-            content.append("    exports ").append(exports).append(" to ").append(to).append(LINE_END);
+            this.exports.computeIfAbsent(pkg, k -> new Export(pkg, computeMask(flags)))
+                    .to.addAll(tos);
+
+            content.append("    exports ");
+            for (ExportFlag flag : flags) {
+                content.append(flag.token).append(" ");
+            }
+            content.append(pkg).append(" to ").append(to).append(LINE_END);
             return this;
         }
 
@@ -224,6 +287,13 @@ public class ModuleTestBase {
             tb.createDirectories(path);
             tb.writeJavaFiles(path, src);
             return this;
+        }
+
+        private int computeMask(Mask[] masks) {
+            return Arrays.stream(masks)
+                    .map(Mask::getMask)
+                    .reduce((a, b) -> a | b)
+                    .orElseGet(() -> 0);
         }
     }
 }

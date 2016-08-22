@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug 8158123
+ * @bug 8158123 8161906 8162713
  * @summary tests for module declarations
  * @library /tools/lib
  * @modules
@@ -154,6 +154,31 @@ public class ModuleInfoTest extends ModuleTestBase {
     }
 
     /**
+     * Verify that dynamic exports are reported as missing.
+     */
+    @Test
+    public void testExportsDynamicNotFound(Path base) throws Exception {
+        Path src = base.resolve("src");
+
+        tb.writeJavaFiles(src.resolve("m1"), "module m1 { requires m2; }", "package pack1; public class B { pack.A a; }");
+        tb.writeJavaFiles(src.resolve("m2"), "module m2 { exports dynamic pack; }","package pack; public class A { }");
+
+        Path classes = base.resolve("classes");
+        Files.createDirectories(classes);
+
+        String log = new JavacTask(tb)
+                .options("-XDrawDiagnostics", "--module-source-path", src.toString())
+                .outdir(classes)
+                .files(findJavaFiles(src))
+                .run(Task.Expect.FAIL)
+                .writeAll()
+                .getOutput(Task.OutputKind.DIRECT);
+
+        if (!log.contains("B.java:1:37: compiler.err.not.def.access.package.cant.access: pack.A, pack"))
+            throw new Exception("expected output not found");
+    }
+
+    /**
      * Verify that a simple loop is detected.
      */
     @Test
@@ -254,6 +279,32 @@ public class ModuleInfoTest extends ModuleTestBase {
     }
 
     /**
+     * Verify that duplicate requires are detected.
+     */
+    @Test
+    public void testDuplicateRequiresPublicStatic(Path base) throws Exception {
+        Path src = base.resolve("src");
+        Path src_m1 = src.resolve("m1");
+        tb.writeFile(src_m1.resolve("module-info.java"), "module m1 { }");
+        Path src_m2 = src.resolve("m2");
+        tb.writeFile(src_m2.resolve("module-info.java"), "module m2 { requires public m1; requires static m1; }");
+
+        Path classes = base.resolve("classes");
+        Files.createDirectories(classes);
+
+        String log = new JavacTask(tb)
+                .options("-XDrawDiagnostics", "--module-source-path", src.toString())
+                .outdir(classes)
+                .files(findJavaFiles(src))
+                .run(Task.Expect.FAIL)
+                .writeAll()
+                .getOutput(Task.OutputKind.DIRECT);
+
+        if (!log.contains("module-info.java:1:49: compiler.err.duplicate.requires: m1"))
+            throw new Exception("expected output not found");
+    }
+
+    /**
      * Verify that duplicate exported packages are detected.
      */
     @Test
@@ -273,6 +324,29 @@ public class ModuleInfoTest extends ModuleTestBase {
                 .getOutput(Task.OutputKind.DIRECT);
 
         if (!log.contains("module-info.java:1:32: compiler.err.duplicate.exports: p"))
+            throw new Exception("expected output not found");
+    }
+
+    /**
+     * Verify that duplicate exported packages are detected.
+     */
+    @Test
+    public void testDuplicateDynamicExports_packages(Path base) throws Exception {
+        Path src = base.resolve("src");
+        tb.writeJavaFiles(src, "module m1 { exports p; exports dynamic p; }");
+
+        Path classes = base.resolve("classes");
+        Files.createDirectories(classes);
+
+        String log = new JavacTask(tb)
+                .options("-XDrawDiagnostics")
+                .outdir(classes)
+                .files(findJavaFiles(src))
+                .run(Task.Expect.FAIL)
+                .writeAll()
+                .getOutput(Task.OutputKind.DIRECT);
+
+        if (!log.contains("module-info.java:1:40: compiler.err.duplicate.exports: p"))
             throw new Exception("expected output not found");
     }
 
@@ -304,6 +378,30 @@ public class ModuleInfoTest extends ModuleTestBase {
      * Verify that duplicate exported packages are detected.
      */
     @Test
+    public void testDuplicateDynamicExports_packages2(Path base) throws Exception {
+        Path src = base.resolve("src");
+        tb.writeJavaFiles(src.resolve("m1"), "module m1 { exports p; exports dynamic p to m2; }");
+        tb.writeJavaFiles(src.resolve("m2"), "module m2 { }");
+
+        Path classes = base.resolve("classes");
+        Files.createDirectories(classes);
+
+        String log = new JavacTask(tb)
+                .options("-XDrawDiagnostics", "--module-source-path", src.toString())
+                .outdir(classes)
+                .files(findJavaFiles(src))
+                .run(Task.Expect.FAIL)
+                .writeAll()
+                .getOutput(Task.OutputKind.DIRECT);
+
+        if (!log.contains("module-info.java:1:40: compiler.err.duplicate.exports: p"))
+            throw new Exception("expected output not found");
+    }
+
+    /**
+     * Verify that duplicate exported packages are detected.
+     */
+    @Test
     public void testDuplicateExports_modules(Path base) throws Exception {
         Path src = base.resolve("src");
         Path src_m1 = src.resolve("m1");
@@ -323,6 +421,32 @@ public class ModuleInfoTest extends ModuleTestBase {
                 .getOutput(Task.OutputKind.DIRECT);
 
         if (!log.contains("module-info.java:1:30: compiler.err.duplicate.exports: m1"))
+            throw new Exception("expected output not found");
+    }
+
+    /**
+     * Verify that duplicate exported packages are detected.
+     */
+    @Test
+    public void testDuplicateDynamicExports_modules(Path base) throws Exception {
+        Path src = base.resolve("src");
+        Path src_m1 = src.resolve("m1");
+        tb.writeFile(src_m1.resolve("module-info.java"), "module m1 { }");
+        Path src_m2 = src.resolve("m2");
+        tb.writeFile(src_m2.resolve("module-info.java"), "module m2 { exports dynamic p to m1, m1; }");
+
+        Path classes = base.resolve("classes");
+        Files.createDirectories(classes);
+
+        String log = new JavacTask(tb)
+                .options("-XDrawDiagnostics", "--module-source-path", src.toString())
+                .outdir(classes)
+                .files(findJavaFiles(src))
+                .run(Task.Expect.FAIL)
+                .writeAll()
+                .getOutput(Task.OutputKind.DIRECT);
+
+        if (!log.contains("module-info.java:1:38: compiler.err.duplicate.exports: m1"))
             throw new Exception("expected output not found");
     }
 
