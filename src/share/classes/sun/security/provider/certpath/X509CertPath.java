@@ -108,15 +108,17 @@ public class X509CertPath extends CertPath {
         //
         // Note; The certs parameter is not necessarily to be of Certificate
         // for some old code. For compatibility, to make sure the exception
-        // is CertificateException, rather than ClassCastException, please
-        // don't use
-        //     for (Certificate obj : certs)
-        for (Object obj : certs) {
-            if (obj instanceof X509Certificate == false) {
-                throw new CertificateException
-                    ("List is not all X509Certificates: "
-                    + obj.getClass().getName());
+        // is CertificateException, rather than ClassCastException
+        try {
+            for (Certificate cert : certs) {
+                if (cert instanceof X509Certificate == false) {
+                    throw new CertificateException
+                        ("List is not all X509Certificates: "
+                         + cert.getClass().getName());
+                }
             }
+        } catch (ClassCastException cce) {
+            throw new CertificateException("List is not all Certificates", cce);
         }
 
         // Assumes that the resulting List is thread-safe. This is true
