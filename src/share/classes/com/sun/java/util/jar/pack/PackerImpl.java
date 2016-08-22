@@ -98,10 +98,13 @@ public class PackerImpl  extends TLGlobals implements Pack200.Packer {
             } else {
                 (new DoPack()).run(in, out);
             }
+            // Close in only on success for compatibility :-(
+            in.close();
         } finally {
             Utils.currentInstance.set(null);
             if (tz != null) TimeZone.setDefault(tz);
-            in.close();
+            // Should be closed here
+            //in.close();
         }
     }
 
