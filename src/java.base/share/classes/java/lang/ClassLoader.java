@@ -1312,10 +1312,11 @@ public abstract class ClassLoader {
      * built-in to the virtual machine is searched.  That failing, this method
      * will invoke {@link #findResource(String)} to find the resource.  </p>
      *
-     * <p> Resources in named modules are subject to encapsulation specified in
-     * the {@code Module} {@link Module#getResourceAsStream getResourceAsStream}
-     * method. Additionally, this method does not find resources in packages of
-     * named modules unless the package is exported unconditionally. </p>
+     * <p> Resources in named modules are subject to the encapsulation rules
+     * specified by {@link Module#getResourceAsStream Module.getResourceAsStream}.
+     * Additionally, and aside from the special case that is resources ending
+     * with "{@code .class}", this method does not find resources in packages
+     * of named modules unless the package is exported unconditionally. </p>
      *
      * @apiNote Where several modules are defined to the same class loader,
      * and where more than one module contains a resource with the given name,
@@ -1360,10 +1361,11 @@ public abstract class ClassLoader {
      * <p> The delegation order for searching is described in the documentation
      * for {@link #getResource(String)}.  </p>
      *
-     * <p> Resources in named modules are subject to encapsulation specified in
-     * the {@code Module} {@link Module#getResourceAsStream getResourceAsStream}
-     * method. Additionally, this method does not find resources in packages of
-     * named modules unless the package is exported unconditionally. </p>
+     * <p> Resources in named modules are subject to the encapsulation rules
+     * specified by {@link Module#getResourceAsStream Module.getResourceAsStream}.
+     * Additionally, and aside from the special case that is resources ending
+     * with "{@code .class}", this method does not find resources in packages
+     * of named modules unless the package is exported unconditionally. </p>
      *
      * @apiNote Where several modules are defined to the same class loader,
      * and where more than one module contains a resource with the given name,
@@ -1412,8 +1414,8 @@ public abstract class ClassLoader {
      * <p> For resources in named modules then the method must implement the
      * rules for encapsulation specified in the {@code Module} {@link
      * Module#getResourceAsStream getResourceAsStream} method. Additionally,
-     * it must not find resources in packages of named modules unless the
-     * package is exported unconditionally. </p>
+     * it must not find non-"{@code .class}" resources in packages of named
+     * modules unless the package is exported unconditionally. </p>
      *
      * @param  name
      *         The resource name
@@ -1439,8 +1441,8 @@ public abstract class ClassLoader {
      * <p> For resources in named modules then the method must implement the
      * rules for encapsulation specified in the {@code Module} {@link
      * Module#getResourceAsStream getResourceAsStream} method. Additionally,
-     * it must not find resources in packages of named modules unless the
-     * package is exported unconditionally. </p>
+     * it must not find non-"{@code .class}" resources in packages of named
+     * modules unless the package is exported unconditionally. </p>
      *
      * @param  name
      *         The resource name
@@ -1490,10 +1492,12 @@ public abstract class ClassLoader {
      * classes.  This method locates the resource through the system class
      * loader (see {@link #getSystemClassLoader()}).
      *
-     * <p> Resources in named modules are subject to encapsulation specified in
-     * the {@code Module} {@link Module#getResourceAsStream getResourceAsStream}
-     * method. Additionally, this method does not find resources in packages of
-     * named modules unless the package is exported unconditionally. </p>
+     * <p> Resources in named modules are subject to the encapsulation rules
+     * specified by {@link Module#getResourceAsStream Module.getResourceAsStream}.
+     * Additionally, and aside from the special case that is resources ending
+     * with "{@code .class}", this method does not find resources in packages
+     * of named modules unless the package is exported unconditionally. </p>
+     *
      * @param  name
      *         The resource name
      *
@@ -1522,10 +1526,11 @@ public abstract class ClassLoader {
      * <p> The search order is described in the documentation for {@link
      * #getSystemResource(String)}.  </p>
      *
-     * <p> Resources in named modules are subject to encapsulation specified in
-     * the {@code Module} {@link Module#getResourceAsStream getResourceAsStream}
-     * method. Additionally, this method does not find resources in packages of
-     * named modules unless the package is exported unconditionally. </p>
+     * <p> Resources in named modules are subject to the encapsulation rules
+     * specified by {@link Module#getResourceAsStream Module.getResourceAsStream}.
+     * Additionally, and aside from the special case that is resources ending
+     * with "{@code .class}", this method does not find resources in packages
+     * of named modules unless the package is exported unconditionally. </p>
      *
      * @param  name
      *         The resource name
@@ -1558,10 +1563,11 @@ public abstract class ClassLoader {
      * <p> The search order is described in the documentation for {@link
      * #getResource(String)}.  </p>
      *
-     * <p> Resources in named modules are subject to encapsulation specified in
-     * the {@code Module} {@link Module#getResourceAsStream getResourceAsStream}
-     * method. Additionally, this method does not find resources in packages of
-     * named modules unless the package is exported unconditionally. </p>
+     * <p> Resources in named modules are subject to the encapsulation rules
+     * specified by {@link Module#getResourceAsStream Module.getResourceAsStream}.
+     * Additionally, and aside from the special case that is resources ending
+     * with "{@code .class}", this method does not find resources in packages
+     * of named modules unless the package is exported unconditionally. </p>
      *
      * @param  name
      *         The resource name
@@ -1587,10 +1593,11 @@ public abstract class ClassLoader {
      * used to load classes.  This method locates the resource through the
      * system class loader (see {@link #getSystemClassLoader()}).
      *
-     * <p> Resources in named modules are subject to encapsulation specified in
-     * the {@code Module} {@link Module#getResourceAsStream getResourceAsStream}
-     * method. Additionally, this method does not find resources in packages of
-     * named modules unless the package is exported unconditionally. </p>
+     * <p> Resources in named modules are subject to the encapsulation rules
+     * specified by {@link Module#getResourceAsStream Module.getResourceAsStream}.
+     * Additionally, and aside from the special case that is resources ending
+     * with "{@code .class}", this method does not find resources in packages
+     * of named modules unless the package is exported unconditionally. </p>
      *
      * @param  name
      *         The resource name
