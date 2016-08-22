@@ -1329,6 +1329,39 @@ public class ModuleDescriptor
         /**
          * Adds an export.
          *
+         * <p> A specific package may be exported both unconditionally and to
+         * a set of target modules for cases where the qualified export is a
+         * strict superset of the unconditional export. Specifically, for a
+         * package {@code p}, the following combinations are allowed: </p>
+         * <table border=1 cellpadding=5 summary="allowed">
+         *     <tr>
+         *         <th>Unconditional export</th>
+         *         <th>Qualified export</th>
+         *     </tr>
+         *     <tr>
+         *         <td>{@code exports p}</td>
+         *         <td>{@code exports private p to <target-modules>}
+         *     </tr>
+         *     <tr>
+         *         <td>{@code exports dynamic p}</td>
+         *         <td>{@code exports p to <target-modules>}
+         *     </tr>
+         *     <tr>
+         *         <td>{@code exports dynamic p}</td>
+         *         <td>{@code exports private p to <target-modules>}
+         *     </tr>
+         *     <tr>
+         *         <td>{@code exports dynamic p}</td>
+         *         <td>{@code exports dynamic private p to <target-modules>}
+         *     </tr>
+         *     <tr>
+         *         <td>{@code exports dynamic private p}</td>
+         *         <td>{@code exports private p to <target-modules>}
+         *     </tr>
+         * </table>
+         * <p> An export may otherwise not be added when the package has
+         * already been declared as exported. </p>
+         *
          * @param  e
          *         The export
          *
@@ -1337,6 +1370,7 @@ public class ModuleDescriptor
          * @throws IllegalStateException
          *         If the package is already declared as a concealed package,
          *         or the export conflicts with a declared exported package
+         *         as specified above
          */
         public Builder exports(Exports e) {
             String source = e.source();
@@ -1392,6 +1426,7 @@ public class ModuleDescriptor
          * @throws IllegalStateException
          *         If the package is already declared as a concealed package
          *         or the export conflicts with a declared exported package
+         *         (see {@link #exports(Exports) exports(Exports)}
          */
         public Builder exports(Set<Exports.Modifier> ms,
                                String pn,
@@ -1416,6 +1451,7 @@ public class ModuleDescriptor
          * @throws IllegalStateException
          *         If the package is already declared as a concealed package
          *         or the export conflicts with a declared exported package
+         *         (see {@link #exports(Exports) exports(Exports)}
          */
         public Builder exports(Set<Exports.Modifier> ms, String pn) {
             return exports(new Exports(ms, pn));
@@ -1438,6 +1474,7 @@ public class ModuleDescriptor
          * @throws IllegalStateException
          *         If the package is already declared as a concealed package
          *         or the export conflicts with a declared exported package
+         *         (see {@link #exports(Exports) exports(Exports)}
          */
         public Builder exports(String pn, Set<String> targets) {
             return exports(Collections.emptySet(), pn, targets);
@@ -1459,6 +1496,7 @@ public class ModuleDescriptor
          * @throws IllegalStateException
          *         If the package is already declared as a concealed package
          *         or the export conflicts with a declared exported package
+         *         (see {@link #exports(Exports) exports(Exports)}
          */
         public Builder exports(String pn, String target) {
             return exports(pn, Collections.singleton(target));
@@ -1478,6 +1516,7 @@ public class ModuleDescriptor
          * @throws IllegalStateException
          *         If the package is already declared as a concealed package
          *         or the export conflicts with a declared exported package
+         *         (see {@link #exports(Exports) exports(Exports)}
          */
         public Builder exports(String pn) {
             return exports(Collections.emptySet(), pn);
