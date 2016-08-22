@@ -21,7 +21,22 @@
  * questions.
  */
 
-module target {
-    exports p1;
-    exports p2;
+package p1;
+
+import java.lang.reflect.Module;
+
+/**
+ * Helper class in target module to allow test invoke addExports[Private]
+ */
+
+public class Helper {
+    Helper() { }
+
+    public static void addExports(String pn, Module who) {
+        Helper.class.getModule().addExports(pn, who);
+    }
+
+    public static void addExportsPrivate(String pn, Module who) {
+        Helper.class.getModule().addExportsPrivate(pn, who);
+    }
 }

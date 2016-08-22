@@ -21,7 +21,25 @@
  * questions.
  */
 
-module target {
-    exports p1;
-    exports p2;
+package p1;
+
+public class Public {
+
+    // public constructor
+    public Public() { }
+
+    // non-public constructor
+    private Public(Void ignore) { }
+
+    // public field
+    public static Object f1;
+
+    // non-public field
+    private static Object f2;
+
+    // public method
+    public static void foo() { }
+
+    // non-public method
+    private static void bar() { }
 }
