@@ -96,7 +96,7 @@ public class ModuleInfoBuilder {
     public boolean run() throws IOException {
         try {
             // pass 1: find API dependencies
-            Map<Archive, Set<Archive>> requiresPublic = computeRequiresPublic();
+            Map<Archive, Set<Archive>> requiresTransitive = computeRequiresTransitive();
 
             // pass 2: analyze all class dependences
             dependencyFinder.parse(automaticModules().stream());
@@ -105,13 +105,13 @@ public class ModuleInfoBuilder {
 
             boolean missingDeps = false;
             for (Module m : automaticModules()) {
-                Set<Archive> apiDeps = requiresPublic.containsKey(m)
-                                            ? requiresPublic.get(m)
+                Set<Archive> apiDeps = requiresTransitive.containsKey(m)
+                                            ? requiresTransitive.get(m)
                                             : Collections.emptySet();
 
                 Path file = outputdir.resolve(m.name()).resolve("module-info.java");
 
-                // computes requires and requires public
+                // computes requires and requires transitive
                 Module explicitModule = toExplicitModule(m, apiDeps);
                 if (explicitModule != null) {
                     automaticToExplicitModule.put(m, explicitModule);
@@ -136,7 +136,7 @@ public class ModuleInfoBuilder {
         return m == NOT_FOUND || m == REMOVED_JDK_INTERNALS;
     }
 
-    private Module toExplicitModule(Module module, Set<Archive> requiresPublic)
+    private Module toExplicitModule(Module module, Set<Archive> requiresTransitive)
         throws IOException
     {
         // done analysis
@@ -148,7 +148,7 @@ public class ModuleInfoBuilder {
         }
 
         Map<String, Boolean> requires = new HashMap<>();
-        requiresPublic.stream()
+        requiresTransitive.stream()
             .map(Archive::getModule)
             .forEach(m -> requires.put(m.name(), Boolean.TRUE));
 
@@ -227,9 +227,9 @@ public class ModuleInfoBuilder {
     }
 
     /**
-     * Compute 'requires public' dependences by analyzing API dependencies
+     * Compute 'requires transitive' dependences by analyzing API dependencies
      */
-    private Map<Archive, Set<Archive>> computeRequiresPublic() throws IOException {
+    private Map<Archive, Set<Archive>> computeRequiresTransitive() throws IOException {
         // parse the input modules
         dependencyFinder.parseExportedAPIs(automaticModules().stream());
 
