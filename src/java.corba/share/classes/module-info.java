@@ -25,8 +25,8 @@
 
 @Deprecated(since="9", forRemoval=true)
 module java.corba {
-    requires public java.desktop;
-    requires public java.rmi;
+    requires transitive java.desktop;
+    requires transitive java.rmi;
     requires java.logging;
     requires java.naming;
     requires java.transaction;
