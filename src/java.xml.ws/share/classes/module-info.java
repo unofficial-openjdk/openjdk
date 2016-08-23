@@ -24,9 +24,9 @@
  */
 
 module java.xml.ws {
-    requires public java.activation;
-    requires public java.xml;
-    requires public java.xml.bind;
+    requires transitive java.activation;
+    requires transitive java.xml;
+    requires transitive java.xml.bind;
     requires java.annotations.common;
     requires java.desktop;
     requires java.logging;

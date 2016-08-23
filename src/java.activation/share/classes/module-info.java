@@ -24,7 +24,7 @@
  */
 
 module java.activation {
-    requires public java.datatransfer;
+    requires transitive java.datatransfer;
     // dependence on java.beans.Beans to be eliminated
     requires java.desktop;
     requires java.logging;

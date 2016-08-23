@@ -24,8 +24,8 @@
  */
 
 module java.xml.bind {
-    requires public java.activation;
-    requires public java.xml;
+    requires transitive java.activation;
+    requires transitive java.xml;
     requires java.compiler;
     requires java.desktop;
     requires java.logging;
