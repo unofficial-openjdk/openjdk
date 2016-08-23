@@ -80,10 +80,10 @@ public class ModuleTest {
     @DataProvider(name = "modules")
     public Object[][] expected() {
         return new Object[][]{
-                { "m3", new ModuleMetaData("m3").requiresPublic("java.sql")
-                            .requiresPublic("m2")
+                { "m3", new ModuleMetaData("m3").requiresTransitive("java.sql")
+                            .requiresTransitive("m2")
                             .requires("java.logging")
-                            .requiresPublic("m1")
+                            .requiresTransitive("m1")
                             .reference("p3", "java.lang", "java.base")
                             .reference("p3", "java.sql", "java.sql")
                             .reference("p3", "java.util.logging", "java.logging")
@@ -91,7 +91,7 @@ public class ModuleTest {
                             .reference("p3", "p2", "m2")
                             .qualified("p3", "p2.internal", "m2")
                 },
-                { "m2", new ModuleMetaData("m2").requiresPublic("m1")
+                { "m2", new ModuleMetaData("m2").requiresTransitive("m1")
                             .reference("p2", "java.lang", "java.base")
                             .reference("p2", "p1", "m1")
                             .reference("p2.internal", "java.lang", "java.base")

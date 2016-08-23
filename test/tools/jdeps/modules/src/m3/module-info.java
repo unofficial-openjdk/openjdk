@@ -22,9 +22,9 @@
  */
 
 module m3 {
-    requires public java.sql;
-    requires public m2;
+    requires transitive java.sql;
+    requires transitive m2;
     requires java.logging;   // TODO: --gen-module-info to do transitive reduction
-    requires public m1;
+    requires transitive m1;
     exports p3;
 }

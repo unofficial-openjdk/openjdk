@@ -24,7 +24,7 @@
  */
 
 module jdk.compiler {
-    requires public java.compiler;
+    requires transitive java.compiler;
 
     exports com.sun.source.doctree;
     exports com.sun.source.tree;

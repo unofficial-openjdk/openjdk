@@ -24,8 +24,8 @@
  */
 
 module jdk.javadoc {
-    requires public java.compiler;
-    requires public jdk.compiler;
+    requires transitive java.compiler;
+    requires transitive jdk.compiler;
     requires java.xml;
 
     exports com.sun.javadoc;

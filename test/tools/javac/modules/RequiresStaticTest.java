@@ -151,7 +151,7 @@ public class RequiresStaticTest extends ModuleTestBase {
      *              \       /
      *                v   v
      *                  m6 => m7 --> m8
-     * where -> is requires, => is requires public, --> is requires static, -=-> is requires public static
+     * where -> is requires, => is requires transitive, --> is requires static, -=-> is requires transitive static
      */
     Path getComplexSrc(Path base, String m1_extraImports, String m1_extraUses) throws Exception {
         Path src = base.resolve("src");
@@ -172,7 +172,7 @@ public class RequiresStaticTest extends ModuleTestBase {
         Path src_m2 = src.resolve("m2");
         tb.writeJavaFiles(src_m2,
                 "module m2 {\n"
-                + "  requires public m3;\n"
+                + "  requires transitive m3;\n"
                 + "  requires static m6;\n"
                 + "  exports p2;\n"
                 + "}",
@@ -181,7 +181,7 @@ public class RequiresStaticTest extends ModuleTestBase {
 
         Path src_m3 = src.resolve("m3");
         tb.writeJavaFiles(src_m3,
-                "module m3 { requires public static m4; exports p3; }",
+                "module m3 { requires transitive static m4; exports p3; }",
                 "package p3;\n"
                 + "public class C3 { }\n");
 
@@ -199,7 +199,7 @@ public class RequiresStaticTest extends ModuleTestBase {
 
         Path src_m6 = src.resolve("m6");
         tb.writeJavaFiles(src_m6,
-                "module m6 { requires public m7; exports p6; }",
+                "module m6 { requires transitive m7; exports p6; }",
                 "package p6;\n"
                 + "public class C6 { p7.C7 c7; }\n");
 
@@ -280,7 +280,7 @@ public class RequiresStaticTest extends ModuleTestBase {
     }
 
     @Test
-    public void testRequiresPublicStatic(Path base) throws Exception {
+    public void testRequiresTransitiveStatic(Path base) throws Exception {
         Path src = base.resolve("src");
         Path m1 = src.resolve("m1");
         tb.writeJavaFiles(m1,
@@ -300,7 +300,7 @@ public class RequiresStaticTest extends ModuleTestBase {
 
         Path m2 = src.resolve("m2");
         tb.writeJavaFiles(m2,
-                "module m2 { requires public static m1; }");
+                "module m2 { requires transitive static m1; }");
 
         Path m2Classes = classes.resolve("m2");
         Files.createDirectories(m2Classes);
@@ -356,7 +356,7 @@ public class RequiresStaticTest extends ModuleTestBase {
     }
 
     @Test
-    public void testRequiresStaticPublic(Path base) throws Exception {
+    public void testRequiresStaticTransitive(Path base) throws Exception {
         Path src = base.resolve("src");
         Path m1 = src.resolve("m1");
         tb.writeJavaFiles(m1,
@@ -376,7 +376,7 @@ public class RequiresStaticTest extends ModuleTestBase {
 
         Path m2 = src.resolve("m2");
         tb.writeJavaFiles(m2,
-                "module m2 { requires public static m1; }");
+                "module m2 { requires transitive static m1; }");
 
         Path m2Classes = classes.resolve("m2");
         Files.createDirectories(m2Classes);

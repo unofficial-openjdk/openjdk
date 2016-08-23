@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -69,6 +69,7 @@ public class Names {
     public final Name provides;
     public final Name requires;
     public final Name to;
+    public final Name transitive;
     public final Name uses;
     public final Name with;
 
@@ -226,6 +227,7 @@ public class Names {
         provides = fromString("provides");
         requires = fromString("requires");
         to = fromString("to");
+        transitive = fromString("transitive");
         uses = fromString("uses");
         with = fromString("with");
 

@@ -22,7 +22,7 @@
  */
 
 module m2 {
-    requires public m1;
+    requires transitive m1;
     exports p2;
     exports p2.internal to m3;
 }

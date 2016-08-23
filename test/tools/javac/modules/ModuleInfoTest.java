@@ -228,12 +228,12 @@ public class ModuleInfoTest extends ModuleTestBase {
      * Verify that a multi-module loop is detected.
      */
     @Test
-    public void testRequiresPublicLoop(Path base) throws Exception {
+    public void testRequiresTransitiveLoop(Path base) throws Exception {
         Path src = base.resolve("src");
         Path src_m1 = src.resolve("m1");
         tb.writeFile(src_m1.resolve("module-info.java"), "module m1 { requires m2; }");
         Path src_m2 = src.resolve("m2");
-        tb.writeFile(src_m2.resolve("module-info.java"), "module m2 { requires public m3; }");
+        tb.writeFile(src_m2.resolve("module-info.java"), "module m2 { requires transitive m3; }");
         Path src_m3 = src.resolve("m3");
         tb.writeFile(src_m3.resolve("module-info.java"), "module m3 { requires m1; }");
 
@@ -248,7 +248,7 @@ public class ModuleInfoTest extends ModuleTestBase {
                 .writeAll()
                 .getOutput(Task.OutputKind.DIRECT);
 
-        if (!log.contains("module-info.java:1:29: compiler.err.cyclic.requires: m3"))
+        if (!log.contains("module-info.java:1:33: compiler.err.cyclic.requires: m3"))
             throw new Exception("expected output not found");
     }
 
@@ -282,12 +282,12 @@ public class ModuleInfoTest extends ModuleTestBase {
      * Verify that duplicate requires are detected.
      */
     @Test
-    public void testDuplicateRequiresPublicStatic(Path base) throws Exception {
+    public void testDuplicateRequiresTransitiveStatic(Path base) throws Exception {
         Path src = base.resolve("src");
         Path src_m1 = src.resolve("m1");
         tb.writeFile(src_m1.resolve("module-info.java"), "module m1 { }");
         Path src_m2 = src.resolve("m2");
-        tb.writeFile(src_m2.resolve("module-info.java"), "module m2 { requires public m1; requires static m1; }");
+        tb.writeFile(src_m2.resolve("module-info.java"), "module m2 { requires transitive m1; requires static m1; }");
 
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
@@ -300,7 +300,7 @@ public class ModuleInfoTest extends ModuleTestBase {
                 .writeAll()
                 .getOutput(Task.OutputKind.DIRECT);
 
-        if (!log.contains("module-info.java:1:49: compiler.err.duplicate.requires: m1"))
+        if (!log.contains("module-info.java:1:53: compiler.err.duplicate.requires: m1"))
             throw new Exception("expected output not found");
     }
 

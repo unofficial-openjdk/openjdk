@@ -127,10 +127,10 @@ public interface ModuleElement extends Element, QualifiedNameable {
      */
     interface RequiresDirective extends Directive {
         /**
-         * Returns whether or not this is a public dependency.
-         * @return whether or not this is a public dependency
+         * Returns whether or not this is a transitive dependency.
+         * @return whether or not this is a transitive dependency
          */
-        boolean isPublic();
+        boolean isTransitive();
 
         /**
          * Returns the module that is required

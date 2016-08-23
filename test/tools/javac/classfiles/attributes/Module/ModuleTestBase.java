@@ -152,7 +152,7 @@ public class ModuleTestBase {
     }
 
     enum RequiresFlag implements Mask {
-        PUBLIC("public", Module_attribute.ACC_TRANSITIVE),
+        TRANSITIVE("transitive", Module_attribute.ACC_TRANSITIVE),
         STATIC("static", Module_attribute.ACC_STATIC_PHASE);
 
         private final String token;

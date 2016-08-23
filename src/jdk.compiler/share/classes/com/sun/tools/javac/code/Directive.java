@@ -209,7 +209,7 @@ public abstract class Directive implements ModuleElement.Directive {
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
-        public boolean isPublic() {
+        public boolean isTransitive() {
             return flags.contains(RequiresFlag.TRANSITIVE);
         }
 

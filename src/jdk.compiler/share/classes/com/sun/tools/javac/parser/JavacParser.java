@@ -3209,16 +3209,31 @@ public class JavacParser implements Parser {
             int pos = token.pos;
             if (token.name() == names.requires) {
                 nextToken();
+                boolean isPublic = false;
                 boolean isTransitive = false;
                 boolean isStaticPhase = false;
             loop:
                 while (true) {
                     switch (token.kind) {
-                        case PUBLIC:
-                            if (isTransitive) {
+                        case IDENTIFIER:
+                            if (token.name() == names.transitive && !isTransitive) {
+                                Token t1 = S.token(1);
+                                if (t1.kind == SEMI || t1.kind == DOT) {
+                                    break loop;
+                                }
+                                if (isPublic || isTransitive) {
+                                    error(token.pos, "repeated.modifier");
+                                }
+                                isTransitive = true;
+                                break;
+                            } else {
+                                break loop;
+                            }
+                        case PUBLIC: // temporary
+                            if (isPublic || isTransitive) {
                                 error(token.pos, "repeated.modifier");
                             }
-                            isTransitive = true;
+                            isPublic = isTransitive = true;
                             break;
                         case STATIC:
                             if (isStaticPhase) {

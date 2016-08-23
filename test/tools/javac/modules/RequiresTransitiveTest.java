@@ -23,13 +23,13 @@
 
 /*
  * @test
- * @summary tests for "requires public"
+ * @summary tests for "requires transitive"
  * @library /tools/lib
  * @modules
  *      jdk.compiler/com.sun.tools.javac.api
  *      jdk.compiler/com.sun.tools.javac.main
  * @build toolbox.ToolBox toolbox.JavacTask ModuleTestBase
- * @run main RequiresPublicTest
+ * @run main RequiresTransitiveTest
  */
 
 import java.nio.file.Files;
@@ -39,10 +39,10 @@ import toolbox.JavacTask;
 import toolbox.Task;
 import toolbox.ToolBox;
 
-public class RequiresPublicTest extends ModuleTestBase {
+public class RequiresTransitiveTest extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {
-        RequiresPublicTest t = new RequiresPublicTest();
+        RequiresTransitiveTest t = new RequiresTransitiveTest();
         t.runTests();
     }
 
@@ -142,7 +142,7 @@ public class RequiresPublicTest extends ModuleTestBase {
      * Set up the following module graph
      *     m1 -> m2 => m3 => m4 -> m5
      *              -> m6 => m7
-     * where -> is requires, => is requires public
+     * where -> is requires, => is requires transitive
      */
     Path getComplexSrc(Path base, String m1_extraImports, String m1_extraUses) throws Exception {
         Path src = base.resolve("src");
@@ -163,7 +163,7 @@ public class RequiresPublicTest extends ModuleTestBase {
         Path src_m2 = src.resolve("m2");
         tb.writeJavaFiles(src_m2,
                 "module m2 {\n"
-                + "  requires public m3;\n"
+                + "  requires transitive m3;\n"
                 + "  requires        m6;\n"
                 + "  exports p2;\n"
                 + "}",
@@ -172,7 +172,7 @@ public class RequiresPublicTest extends ModuleTestBase {
 
         Path src_m3 = src.resolve("m3");
         tb.writeJavaFiles(src_m3,
-                "module m3 { requires public m4; exports p3; }",
+                "module m3 { requires transitive m4; exports p3; }",
                 "package p3;\n"
                 + "public class C3 { }\n");
 
@@ -190,7 +190,7 @@ public class RequiresPublicTest extends ModuleTestBase {
 
         Path src_m6 = src.resolve("m6");
         tb.writeJavaFiles(src_m6,
-                "module m6 { requires public m7; exports p6; }",
+                "module m6 { requires transitive m7; exports p6; }",
                 "package p6;\n"
                 + "public class C6 { }\n");
 

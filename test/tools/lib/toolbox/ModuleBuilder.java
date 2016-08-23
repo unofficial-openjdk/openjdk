@@ -72,14 +72,14 @@ public class ModuleBuilder {
     }
 
     /**
-     * Adds a "requires public" directive to the declaration.
+     * Adds a "requires transitive" directive to the declaration.
      * @param requires the name of the module that is required
      * @param modulePath a path in which to locate the modules
      *    if the declaration is compiled
      * @return this builder
      */
-    public ModuleBuilder requiresPublic(String requires, Path... modulePath) {
-        this.requires.add("requires public " + requires + ";");
+    public ModuleBuilder requiresTransitive(String requires, Path... modulePath) {
+        this.requires.add("requires transitive " + requires + ";");
         this.modulePath.addAll(Arrays.asList(modulePath));
         return this;
     }
@@ -111,7 +111,6 @@ public class ModuleBuilder {
     /**
      * Adds an unqualified "exports" directive to the declaration.
      * @param pkg the name of the package to be exported
-     * @param module the name of the module to which it is to be exported
      * @return this builder
      */
     public ModuleBuilder exports(String pkg) {

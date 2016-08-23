@@ -193,7 +193,7 @@ public class AutomaticModules extends ModuleTestBase {
         Files.createDirectories(depClasses);
 
         tb.writeJavaFiles(depSrc,
-                          "module m1 { requires public automatic; }",
+                          "module m1 { requires transitive automatic; }",
                           "package dep; public class Dep { api.Api api; }");
 
         new JavacTask(tb)

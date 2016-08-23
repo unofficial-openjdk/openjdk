@@ -1109,7 +1109,7 @@ public class Modules extends JCTree.Visitor {
                     Assert.checkNonNull(current.requires, () -> current + ".requires == null; " + msym);
                     requires = current.requires;
                     for (RequiresDirective rd : requires) {
-                        if (rd.isPublic())
+                        if (rd.isTransitive())
                             todo = todo.prepend(rd.module);
                     }
                 } else {
