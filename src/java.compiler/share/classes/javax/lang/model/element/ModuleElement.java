@@ -96,7 +96,7 @@ public interface ModuleElement extends Element, QualifiedNameable {
      * @since 9
      */
     enum DirectiveKind {
-        /** A "requires [public] module-name" directive. */
+        /** A "requires (static|transitive)* module-name" directive. */
         REQUIRES,
         /** An "exports package-name [to module-name-list]" directive. */
         EXPORTS,

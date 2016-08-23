@@ -1029,7 +1029,7 @@ public class Modules extends JCTree.Visitor {
         };
     }
 
-    private final Map<ModuleSymbol, Set<ModuleSymbol>> requiresPublicCache = new HashMap<>();
+    private final Map<ModuleSymbol, Set<ModuleSymbol>> requiresTransitiveCache = new HashMap<>();
 
     private void completeModule(ModuleSymbol msym) {
         if (inInitModules) {
@@ -1075,21 +1075,21 @@ public class Modules extends JCTree.Visitor {
         }
 
         Set<ModuleSymbol> readable = new LinkedHashSet<>();
-        Set<ModuleSymbol> requiresPublic = new HashSet<>();
+        Set<ModuleSymbol> requiresTransitive = new HashSet<>();
 
         for (RequiresDirective d : msym.requires) {
             d.module.complete();
             readable.add(d.module);
-            Set<ModuleSymbol> s = retrieveRequiresPublic(d.module);
+            Set<ModuleSymbol> s = retrieveRequiresTransitive(d.module);
             Assert.checkNonNull(s, () -> "no entry in cache for " + d.module);
             readable.addAll(s);
             if (d.flags.contains(RequiresFlag.TRANSITIVE)) {
-                requiresPublic.add(d.module);
-                requiresPublic.addAll(s);
+                requiresTransitive.add(d.module);
+                requiresTransitive.addAll(s);
             }
         }
 
-        requiresPublicCache.put(msym, requiresPublic);
+        requiresTransitiveCache.put(msym, requiresTransitive);
         initVisiblePackages(msym, readable);
         for (ExportsDirective d: msym.exports) {
             d.packge.modle = msym;
@@ -1097,12 +1097,12 @@ public class Modules extends JCTree.Visitor {
 
     }
 
-    private Set<ModuleSymbol> retrieveRequiresPublic(ModuleSymbol msym) {
-        Set<ModuleSymbol> requiresPublic = requiresPublicCache.get(msym);
+    private Set<ModuleSymbol> retrieveRequiresTransitive(ModuleSymbol msym) {
+        Set<ModuleSymbol> requiresTransitive = requiresTransitiveCache.get(msym);
 
-        if (requiresPublic == null) {
+        if (requiresTransitive == null) {
             //the module graph may contain cycles involving automatic modules or -XaddReads edges
-            requiresPublic = new HashSet<>();
+            requiresTransitive = new HashSet<>();
 
             Set<ModuleSymbol> seen = new HashSet<>();
             List<ModuleSymbol> todo = List.of(msym);
@@ -1112,7 +1112,7 @@ public class Modules extends JCTree.Visitor {
                 todo = todo.tail;
                 if (!seen.add(current))
                     continue;
-                requiresPublic.add(current);
+                requiresTransitive.add(current);
                 current.complete();
                 Iterable<? extends RequiresDirective> requires;
                 if (current != syms.unnamedModule) {
@@ -1129,10 +1129,10 @@ public class Modules extends JCTree.Visitor {
                 }
             }
 
-            requiresPublic.remove(msym);
+            requiresTransitive.remove(msym);
         }
 
-        return requiresPublic;
+        return requiresTransitive;
     }
 
     private void initVisiblePackages(ModuleSymbol msym, Collection<ModuleSymbol> readable) {

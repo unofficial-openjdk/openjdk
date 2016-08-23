@@ -187,7 +187,7 @@ public abstract class Directive implements ModuleElement.Directive {
     }
 
     /**
-     * 'requires' ['public'] ModuleName ';'
+     * 'requires' ('static' | 'transitive')* ModuleName ';'
      */
     public static class RequiresDirective extends Directive
             implements ModuleElement.RequiresDirective {
