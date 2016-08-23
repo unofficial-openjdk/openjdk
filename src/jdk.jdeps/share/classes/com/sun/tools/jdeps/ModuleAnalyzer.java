@@ -366,15 +366,15 @@ public class ModuleAnalyzer {
 
     private boolean matches(ModuleDescriptor md, ModuleDescriptor other) {
         // build requires transitive from ModuleDescriptor
-        Set<ModuleDescriptor.Requires> reqPublic = md.requires().stream()
+        Set<ModuleDescriptor.Requires> reqTransitive = md.requires().stream()
             .filter(req -> req.modifiers().contains(TRANSITIVE))
             .collect(toSet());
-        Set<ModuleDescriptor.Requires> otherReqPublic = other.requires().stream()
+        Set<ModuleDescriptor.Requires> otherReqTransitive = other.requires().stream()
             .filter(req -> req.modifiers().contains(TRANSITIVE))
             .collect(toSet());
 
-        if (!reqPublic.equals(otherReqPublic)) {
-            trace("mismatch requires transitive: %s%n", reqPublic);
+        if (!reqTransitive.equals(otherReqTransitive)) {
+            trace("mismatch requires transitive: %s%n", reqTransitive);
             return false;
         }
 
