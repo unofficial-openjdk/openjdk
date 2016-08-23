@@ -24,8 +24,8 @@
  */
 
 module java.se {
-    requires public java.compact3;
-    requires public java.datatransfer;
-    requires public java.desktop;
-    requires public java.httpclient;
+    requires transitive java.compact3;
+    requires transitive java.datatransfer;
+    requires transitive java.desktop;
+    requires transitive java.httpclient;
 }

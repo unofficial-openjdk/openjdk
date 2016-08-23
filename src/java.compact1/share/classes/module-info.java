@@ -24,7 +24,7 @@
  */
 
 module java.compact1 {
-    requires public java.logging;
-    requires public java.scripting;
+    requires transitive java.logging;
+    requires transitive java.scripting;
 }
 

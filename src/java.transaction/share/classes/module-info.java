@@ -24,7 +24,7 @@
  */
 
 module java.transaction {
-    requires public java.rmi;
+    requires transitive java.rmi;
     exports javax.transaction;
 }
 

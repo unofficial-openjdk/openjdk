@@ -24,7 +24,7 @@
  */
 
 module java.management {
-    requires public java.rmi;
+    requires transitive java.rmi;
     requires java.logging;
     requires java.naming;
 

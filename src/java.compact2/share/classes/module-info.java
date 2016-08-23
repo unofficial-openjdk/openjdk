@@ -24,9 +24,9 @@
  */
 
 module java.compact2 {
-    requires public java.compact1;
-    requires public java.rmi;
-    requires public java.sql;
-    requires public java.xml;
+    requires transitive java.compact1;
+    requires transitive java.rmi;
+    requires transitive java.sql;
+    requires transitive java.xml;
 }
 

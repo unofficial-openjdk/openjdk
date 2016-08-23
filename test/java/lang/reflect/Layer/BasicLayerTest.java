@@ -458,12 +458,12 @@ public class BasicLayerTest {
      * Test layers with implied readability.
      *
      * The test consists of three configurations:
-     * - Configuration/layer1: m1, m2 requires public m1
+     * - Configuration/layer1: m1, m2 requires transitive m1
      * - Configuration/layer2: m3 requires m1
      */
     public void testImpliedReadabilityWithLayers1() {
 
-        // cf1: m1 and m2, m2 requires public m1
+        // cf1: m1 and m2, m2 requires transitive m1
 
         ModuleDescriptor descriptor1
             = new ModuleDescriptor.Builder("m1")
@@ -530,7 +530,7 @@ public class BasicLayerTest {
      *
      * The test consists of three configurations:
      * - Configuration/layer1: m1
-     * - Configuration/layer2: m2 requires public m3, m3 requires m2
+     * - Configuration/layer2: m2 requires transitive m3, m3 requires m2
      */
     public void testImpliedReadabilityWithLayers2() {
 
@@ -548,7 +548,7 @@ public class BasicLayerTest {
         Layer layer1 = Layer.empty().defineModules(cf1, mn -> cl1);
 
 
-        // cf2: m2, m3: m2 requires public m1, m3 requires m2
+        // cf2: m2, m3: m2 requires transitive m1, m3 requires m2
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
@@ -597,7 +597,7 @@ public class BasicLayerTest {
      *
      * The test consists of three configurations:
      * - Configuration/layer1: m1
-     * - Configuration/layer2: m2 requires public m1
+     * - Configuration/layer2: m2 requires transitive m1
      * - Configuration/layer3: m3 requires m1
      */
     public void testImpliedReadabilityWithLayers3() {
@@ -616,7 +616,7 @@ public class BasicLayerTest {
         Layer layer1 = Layer.empty().defineModules(cf1, mn -> cl1);
 
 
-        // cf2: m2 requires public m1
+        // cf2: m2 requires transitive m1
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
@@ -675,12 +675,12 @@ public class BasicLayerTest {
      * Test layers with implied readability.
      *
      * The test consists of two configurations:
-     * - Configuration/layer1: m1, m2 requires public m1
-     * - Configuration/layer2: m3 requires public m2, m4 requires m3
+     * - Configuration/layer1: m1, m2 requires transitive m1
+     * - Configuration/layer2: m3 requires transitive m2, m4 requires m3
      */
     public void testImpliedReadabilityWithLayers4() {
 
-        // cf1: m1, m2 requires public m1
+        // cf1: m1, m2 requires transitive m1
 
         ModuleDescriptor descriptor1
             = new ModuleDescriptor.Builder("m1")
@@ -699,7 +699,7 @@ public class BasicLayerTest {
         Layer layer1 = Layer.empty().defineModules(cf1, mn -> cl1);
 
 
-        // cf2: m3 requires public m2, m4 requires m3
+        // cf2: m3 requires transitive m2, m4 requires m3
 
         ModuleDescriptor descriptor3
             = new ModuleDescriptor.Builder("m3")

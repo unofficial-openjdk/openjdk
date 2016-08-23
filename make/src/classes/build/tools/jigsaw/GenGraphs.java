@@ -172,14 +172,14 @@ public class GenGraphs {
             Graph<String> graph = gengraph(cf);
             descriptors.forEach(md -> {
                 String mn = md.name();
-                Set<String> requiresPublic = md.requires().stream()
+                Set<String> requiresTransitive = md.requires().stream()
                         .filter(d -> d.modifiers().contains(TRANSITIVE))
                         .map(d -> d.name())
                         .collect(Collectors.toSet());
 
                 graph.adjacentNodes(mn).forEach(dn -> {
                     String attr = dn.equals("java.base") ? REQUIRES_BASE
-                            : (requiresPublic.contains(dn) ? REEXPORTS : REQUIRES);
+                            : (requiresTransitive.contains(dn) ? REEXPORTS : REQUIRES);
                     int w = weightOf(mn, dn);
                     if (w > 1)
                         attr += "weight=" + w;
@@ -194,8 +194,8 @@ public class GenGraphs {
     /**
      * Returns a Graph of the given Configuration after transitive reduction.
      *
-     * Transitive reduction of requires public edge and requires edge have
-     * to be applied separately to prevent the requires public edges
+     * Transitive reduction of requires transitive edge and requires edge have
+     * to be applied separately to prevent the requires transitive edges
      * (e.g. U -> V) from being reduced by a path (U -> X -> Y -> V)
      * in which  V would not be re-exported from U.
      */
@@ -208,15 +208,15 @@ public class GenGraphs {
                     .map(ResolvedModule::name)
                     .forEach(target -> builder.addEdge(mn, target));
         }
-        Graph<String> rpg = requiresPublicGraph(cf);
+        Graph<String> rpg = requiresTransitiveGraph(cf);
         return builder.build().reduce(rpg);
     }
 
     /**
-     * Returns a Graph containing only requires public edges
+     * Returns a Graph containing only requires transitive edges
      * with transitive reduction.
      */
-    private Graph<String> requiresPublicGraph(Configuration cf) {
+    private Graph<String> requiresTransitiveGraph(Configuration cf) {
         Graph.Builder<String> builder = new Graph.Builder<>();
         for (ResolvedModule resolvedModule : cf.modules()) {
             ModuleDescriptor descriptor = resolvedModule.reference().descriptor();

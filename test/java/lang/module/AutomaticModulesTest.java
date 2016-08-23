@@ -449,7 +449,7 @@ public class AutomaticModulesTest {
     /**
      * Basic test of a configuration created with automatic modules
      *   m1 requires m2
-     *   m2 requires public m3*
+     *   m2 requires transitive m3*
      *   m3*
      *   m4*
      */

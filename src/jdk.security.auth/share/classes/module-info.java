@@ -24,7 +24,7 @@
  */
 
 module jdk.security.auth {
-    requires public java.naming;
+    requires transitive java.naming;
     requires java.security.jgss;
 
     exports com.sun.security.auth;

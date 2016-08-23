@@ -2004,7 +2004,7 @@ class Main {
                 if (rootRequires.contains(r)) {
                     continue;
                 } else if (r.modifiers().contains(Requires.Modifier.TRANSITIVE)) {
-                    fatalError(getMsg("error.versioned.info.requires.public"));
+                    fatalError(getMsg("error.versioned.info.requires.transitive"));
                     return false;
                 } else if (!isPlatformModule(r.name())) {
                     fatalError(getMsg("error.versioned.info.requires.added"));

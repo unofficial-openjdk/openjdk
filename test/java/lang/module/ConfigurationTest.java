@@ -103,11 +103,11 @@ public class ConfigurationTest {
 
 
     /**
-     * Basic test of "requires public":
-     *     m1 requires m2, m2 requires public m3
+     * Basic test of "requires transitive":
+     *     m1 requires m2, m2 requires transitive m3
      */
-    public void testRequiresPublic1() {
-        // m1 requires m2, m2 requires public m3
+    public void testRequiresTransitive1() {
+        // m1 requires m2, m2 requires transitive m3
         ModuleDescriptor descriptor1
             = new ModuleDescriptor.Builder("m1")
                 .requires("m2")
@@ -154,15 +154,15 @@ public class ConfigurationTest {
 
 
     /**
-     * Basic test of "requires public" with configurations.
+     * Basic test of "requires transitive" with configurations.
      *
      * The test consists of three configurations:
-     * - Configuration cf1: m1, m2 requires public m1
+     * - Configuration cf1: m1, m2 requires transitive m1
      * - Configuration cf2: m3 requires m2
      */
-    public void testRequiresPublic2() {
+    public void testRequiresTransitive2() {
 
-        // cf1: m1 and m2, m2 requires public m1
+        // cf1: m1 and m2, m2 requires transitive m1
 
         ModuleDescriptor descriptor1
             = new ModuleDescriptor.Builder("m1")
@@ -216,13 +216,13 @@ public class ConfigurationTest {
 
 
     /**
-     * Basic test of "requires public" with configurations.
+     * Basic test of "requires transitive" with configurations.
      *
      * The test consists of three configurations:
      * - Configuration cf1: m1
-     * - Configuration cf2: m2 requires public m1, m3 requires m2
+     * - Configuration cf2: m2 requires transitive m1, m3 requires m2
      */
-    public void testRequiresPublic3() {
+    public void testRequiresTransitive3() {
 
         // cf1: m1
 
@@ -242,7 +242,7 @@ public class ConfigurationTest {
         assertTrue(m1.reads().size() == 0);
 
 
-        // cf2: m2, m3: m2 requires public m1, m3 requires m2
+        // cf2: m2, m3: m2 requires transitive m1, m3 requires m2
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
@@ -279,14 +279,14 @@ public class ConfigurationTest {
 
 
     /**
-     * Basic test of "requires public" with configurations.
+     * Basic test of "requires transitive" with configurations.
      *
      * The test consists of three configurations:
      * - Configuration cf1: m1
-     * - Configuration cf2: m2 requires public m1
+     * - Configuration cf2: m2 requires transitive m1
      * - Configuraiton cf3: m3 requires m2
      */
-    public void testRequiresPublic4() {
+    public void testRequiresTransitive4() {
 
         // cf1: m1
 
@@ -306,7 +306,7 @@ public class ConfigurationTest {
         assertTrue(m1.reads().size() == 0);
 
 
-        // cf2: m2 requires public m1
+        // cf2: m2 requires transitive m1
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
@@ -356,15 +356,15 @@ public class ConfigurationTest {
 
 
     /**
-     * Basic test of "requires public" with configurations.
+     * Basic test of "requires transitive" with configurations.
      *
      * The test consists of two configurations:
-     * - Configuration cf1: m1, m2 requires public m1
-     * - Configuration cf2: m3 requires public m2, m4 requires m3
+     * - Configuration cf1: m1, m2 requires transitive m1
+     * - Configuration cf2: m3 requires transitive m2, m4 requires m3
      */
-    public void testRequiresPublic5() {
+    public void testRequiresTransitive5() {
 
-        // cf1: m1, m2 requires public m1
+        // cf1: m1, m2 requires transitive m1
 
         ModuleDescriptor descriptor1
             = new ModuleDescriptor.Builder("m1")
@@ -395,7 +395,7 @@ public class ConfigurationTest {
         assertTrue(m2.reads().contains(m1));
 
 
-        // cf2: m3 requires public m2, m4 requires m3
+        // cf2: m3 requires transitive m2, m4 requires m3
 
         ModuleDescriptor descriptor3
             = new ModuleDescriptor.Builder("m3")
@@ -1118,7 +1118,7 @@ public class ConfigurationTest {
      * module in the parent is read.
      *
      * The test consists of two configurations:
-     * - Configuration cf1: m1, m2 requires public m1
+     * - Configuration cf1: m1, m2 requires transitive m1
      * - Configuration cf2: m1, m3 requires m2
      */
     public void testOverriding2() {
