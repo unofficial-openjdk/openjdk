@@ -2782,8 +2782,13 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         }
 
         @Override @DefinedBy(Api.COMPILER_TREE)
-        public boolean isPublic() {
+        public boolean isTransitive() {
             return isTransitive;
+        }
+
+        @Override @DefinedBy(Api.COMPILER_TREE)
+        public boolean isStatic() {
+            return isStaticPhase;
         }
 
         @Override @DefinedBy(Api.COMPILER_TREE)

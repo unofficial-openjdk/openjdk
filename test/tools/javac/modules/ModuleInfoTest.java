@@ -160,8 +160,14 @@ public class ModuleInfoTest extends ModuleTestBase {
     public void testExportsDynamicNotFound(Path base) throws Exception {
         Path src = base.resolve("src");
 
-        tb.writeJavaFiles(src.resolve("m1"), "module m1 { requires m2; }", "package pack1; public class B { pack.A a; }");
-        tb.writeJavaFiles(src.resolve("m2"), "module m2 { exports dynamic pack; }","package pack; public class A { }");
+        tb.writeJavaFiles(src.resolve("m1"),
+                "module m1 { requires m2; }",
+                "package pack1; public class B { pack.A a; }"
+        );
+        tb.writeJavaFiles(src.resolve("m2"),
+                "module m2 { exports dynamic pack; }",
+                "package pack; public class A { }"
+        );
 
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
