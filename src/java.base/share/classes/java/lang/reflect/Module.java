@@ -411,7 +411,7 @@ public final class Module implements AnnotatedElement {
 
 
     /**
-     * Returns {@code true} if this module exports (or <em>exports all</em>)
+     * Returns {@code true} if this module exports (or <em>exports-private</em>)
      * the given package to at least the given module.
      *
      * <p> This method always returns {@code true} when invoked on an unnamed
@@ -434,8 +434,8 @@ public final class Module implements AnnotatedElement {
     }
 
     /**
-     * Returns {@code true} if this module exports "private" the given package
-     * to at least the given module.
+     * Returns {@code true} if this module <em>exports-private</em> the given
+     * package to at least the given module.
      *
      * <p> This method always returns {@code true} when invoked on an unnamed
      * module. </p>
@@ -447,8 +447,8 @@ public final class Module implements AnnotatedElement {
      * @param  other
      *         The other module
      *
-     * @return {@code true} if this module exports "private" the package to
-     *         at least the given module
+     * @return {@code true} if this module <em>exports-private</em>  the package
+     *         to at least the given module
      *
      * @see AccessibleObject#setAccessible(boolean)
      */
@@ -459,7 +459,7 @@ public final class Module implements AnnotatedElement {
     }
 
     /**
-     * Returns {@code true} if this module exports (or <em>exports all</em>)
+     * Returns {@code true} if this module exports (or <em>exports-private</em>)
      * the given package unconditionally.
      *
      * <p> This method always returns {@code true} when invoked on an unnamed
@@ -478,8 +478,8 @@ public final class Module implements AnnotatedElement {
     }
 
     /**
-     * Returns {@code true} if this module exports "private" the given package
-     * unconditionally.
+     * Returns {@code true} if this module <em>exports-private</em> the given
+     * package unconditionally.
      *
      * <p> This method always returns {@code true} when invoked on an unnamed
      * module. </p>
@@ -489,7 +489,7 @@ public final class Module implements AnnotatedElement {
      * @param  pn
      *         The package name
      *
-     * @return {@code true} if this module exports "private" the package
+     * @return {@code true} if this module <em>exports-private</em>  the package
      *         unconditionally
      */
     public boolean isExportedPrivate(String pn) {
@@ -606,9 +606,9 @@ public final class Module implements AnnotatedElement {
      * the given package to the given module.
      *
      * <p> This method has no effect if the package is already exported (or
-     * <em>exported all</em>) to the given module. It also has no effect if
-     * invoked on an unnamed module (as unnamed modules export all packages).
-     * </p>
+     * <em>exported private</em>) to the given module. It also has no effect if
+     * invoked on an unnamed module (as unnamed modules <em>exports-private</em>
+     * all packages). </p>
      *
      * @param  pn
      *         The package name
@@ -642,14 +642,15 @@ public final class Module implements AnnotatedElement {
 
     /**
      * If the caller's module is this module then update this module to
-     * export "private" the given package to the given module. Exporting
-     * a package with this method allows non-public members in the package to
-     * be reflected on by APIs that bypass or suppress default Java language
-     * access control checks.
+     * <em>exports-private</em> the given package to the given module.
+     * Exporting a package with this method allows non-public members in the
+     * package to be reflected on by the given module when using APIs that
+     * bypass or suppress default Java language access control checks.
      *
      * <p> This method has no effect if the package is already <em>exported
      * private</em> to the given module. It also has no effect if invoked on an
-     * unnamed module (as unnamed modules export all packages). </p>
+     * unnamed module (as unnamed modules <em>exports-private</em> all
+     * packages). </p>
      *
      * @param  pn
      *         The package name
@@ -707,8 +708,8 @@ public final class Module implements AnnotatedElement {
     }
 
     /**
-     * Updates the exports so that package {@code pn} is exported "private" to
-     * module {@code other}.
+     * Updates the exports so that package {@code pn} is <em>exports-private</em>
+     * to module {@code other}.
      *
      * @apiNote This method is for white-box testing.
      */
