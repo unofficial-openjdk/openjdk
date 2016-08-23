@@ -26,9 +26,9 @@
  * @bug 8006582 8037546 8138729
  * @summary javac should generate method parameters correctly.
  * @modules jdk.jdeps/com.sun.tools.classfile
- * @build Tester ClassFileVisitor ReflectionVisitor
+ * @build MethodParametersTester ClassFileVisitor ReflectionVisitor
  * @compile -parameters LambdaTest.java
- * @run main Tester LambdaTest LambdaTest.out
+ * @run main MethodParametersTester LambdaTest LambdaTest.out
  */
 
 /**

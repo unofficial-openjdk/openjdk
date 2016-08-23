@@ -65,7 +65,7 @@ public class SplitPackage {
     public void runTest() throws Exception {
         // Test jdeps classes
         runTest(null);
-        // Test jdeps --add-moduless
+        // Test jdeps --add-modules
         runTest(JAVA_ANNOTATIONS_COMMON, SPLIT_PKG_NAME);
     }
 

@@ -918,7 +918,6 @@ public enum Option {
     }
 
     public boolean hasArg() {
-//        return argsNameKey != null && !hasSuffix;
         return (argKind != ArgKind.NONE);
     }
 
@@ -1180,7 +1179,7 @@ public enum Option {
     }
 
     /**
-     * Returns the set of ptions supported by the command line tool.
+     * Returns the set of options supported by the command line tool.
      * @return the set of options.
      */
     static Set<Option> getJavaCompilerOptions() {

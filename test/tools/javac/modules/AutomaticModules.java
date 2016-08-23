@@ -273,9 +273,9 @@ public class AutomaticModules extends ModuleTestBase {
         Files.createDirectories(classes);
 
         List<String> log = new JavacTask(tb)
-                .options("-modulesourcepath", moduleSrc.toString(),
-                         "-modulepath", modulePath.toString(),
-                         "-addmods", "automaticB",
+                .options("--module-source-path", moduleSrc.toString(),
+                         "--module-path", modulePath.toString(),
+                         "--add-modules", "automaticB",
                          "-XDrawDiagnostics")
                 .outdir(classes)
                 .files(findJavaFiles(moduleSrc))
@@ -291,8 +291,8 @@ public class AutomaticModules extends ModuleTestBase {
         }
 
         log = new JavacTask(tb)
-                .options("-modulesourcepath", moduleSrc.toString(),
-                         "-modulepath", modulePath.toString(),
+                .options("--module-source-path", moduleSrc.toString(),
+                         "--module-path", modulePath.toString(),
                          "-XDrawDiagnostics")
                 .outdir(classes)
                 .files(findJavaFiles(moduleSrc))
