@@ -458,6 +458,10 @@ public class Pretty extends JCTree.Visitor {
     public void visitExports(JCExports tree) {
         try {
             print("exports ");
+            if (tree.isDynamicPhase)
+                print("dynamic ");
+            if (tree.isPrivate)
+                print("private ");
             printExpr(tree.qualid);
             if (tree.moduleNames != null) {
                 print(" to ");
@@ -486,8 +490,10 @@ public class Pretty extends JCTree.Visitor {
     public void visitRequires(JCRequires tree) {
         try {
             print("requires ");
+            if (tree.isStaticPhase)
+                print("static ");
             if (tree.isTransitive)
-                print("public ");
+                print("transitive ");
             printExpr(tree.moduleName);
             print(";");
         } catch (IOException e) {
