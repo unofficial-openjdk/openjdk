@@ -185,6 +185,26 @@ public class ModuleDescriptorTest {
         assertTrue(r2.compareTo(r1) == 0);
     }
 
+    public void testRequiresEqualsAndHashCode() {
+        Requires r1 = requires("foo");
+        Requires r2 = requires("foo");
+        assertEquals(r1, r2);
+        assertTrue(r1.hashCode() == r2.hashCode());
+
+        r1 = requires(EnumSet.allOf(Requires.Modifier.class), "foo");
+        r2 = requires(EnumSet.allOf(Requires.Modifier.class), "foo");
+        assertEquals(r1, r2);
+        assertTrue(r1.hashCode() == r2.hashCode());
+
+        r1 = requires("foo");
+        r2 = requires("bar");
+        assertNotEquals(r1, r2);
+
+        r1 = requires(EnumSet.allOf(Requires.Modifier.class), "foo");
+        r2 = requires(Set.of(), "foo");
+        assertNotEquals(r1, r2);
+    }
+
     public void testRequiresToString() {
         Requires r = requires(EnumSet.noneOf(Modifier.class), "foo");
         assertTrue(r.toString().contains("foo"));
@@ -373,6 +393,37 @@ public class ModuleDescriptorTest {
     @Test(expectedExceptions = NullPointerException.class )
     public void testExportsWithNullTargets() {
         new Builder("foo").exports("p", (Set<String>) null);
+    }
+
+    public void testExportsEqualsAndHashCode() {
+        Exports e1, e2;
+
+        e1 = exports("p");
+        e2 = exports("p");
+        assertEquals(e1, e2);
+        assertTrue(e1.hashCode() == e2.hashCode());
+
+        e1 = exports(Set.of("dynamic", "private"), "p");
+        e2 = exports(Set.of("dynamic", "private"), "p");
+        assertEquals(e1, e2);
+        assertTrue(e1.hashCode() == e2.hashCode());
+
+        e1 = exports(Set.of("dynamic", "private"), "p", "m");
+        e2 = exports(Set.of("dynamic", "private"), "p", "m");
+        assertEquals(e1, e2);
+        assertTrue(e1.hashCode() == e2.hashCode());
+
+        e1 = exports("p");
+        e2 = exports("q");
+        assertNotEquals(e1, e2);
+
+        e1 = exports(Set.of("dynamic", "private"), "p");
+        e2 = exports(Set.of(), "p");
+        assertNotEquals(e1, e2);
+
+        e1 = exports(Set.of("dynamic", "private"), "p", "m1");
+        e2 = exports(Set.of("dynamic", "private"), "p", "m2");
+        assertNotEquals(e1, e2);
     }
 
     public void testExportsToString() {
@@ -564,6 +615,22 @@ public class ModuleDescriptorTest {
         new Builder("foo").provides("p.S", (Set<String>) null);
     }
 
+    public void testProvidesEqualsAndHashCode() {
+        Provides p1, p2;
+
+        p1 = provides("p.S", "q.S1");
+        p2 = provides("p.S", "q.S1");
+        assertEquals(p1, p2);
+        assertTrue(p1.hashCode() == p2.hashCode());
+
+        p1 = provides("p.S", "q.S1");
+        p2 = provides("p.S", "q.S2");
+        assertNotEquals(p1, p2);
+
+        p1 = provides("p.S", "q.S1");
+        p2 = provides("p.S2", "q.S1");
+        assertNotEquals(p1, p2);
+    }
 
     // conceals
 

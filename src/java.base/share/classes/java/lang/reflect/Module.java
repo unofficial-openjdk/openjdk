@@ -1080,7 +1080,7 @@ public final class Module implements AnnotatedElement {
             }
             m.reads = reads;
 
-            // automatic modules reads all unnamed modules
+            // automatic modules read all unnamed modules
             if (descriptor.isAutomatic()) {
                 m.implAddReads(ALL_UNNAMED_MODULE, true);
             }

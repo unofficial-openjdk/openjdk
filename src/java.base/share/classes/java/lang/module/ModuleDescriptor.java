@@ -370,25 +370,25 @@ public class ModuleDescriptor
         /**
          * Computes a hash code for this module export.
          *
-         * <p> The hash code is based upon the package name, and for a
-         * qualified export, the set of modules names to which the package
-         * is exported. It satisfies the general contract of the {@link
-         * Object#hashCode Object.hashCode} method.
+         * <p> The hash code is based upon the modifiers, the package name,
+         * and for a qualified export, the set of modules names to which the
+         * package is exported. It satisfies the general contract of the
+         * {@link Object#hashCode Object.hashCode} method.
          *
          * @return The hash-code value for this module export
          */
         @Override
         public int hashCode() {
-            return hash(source, targets);
+            return hash(mods, source, targets);
         }
 
         /**
          * Tests this module export for equality with the given object.
          *
          * <p> If the given object is not an {@code Exports} then this method
-         * returns {@code false}. Two module exports objects are equal if the
-         * package names are equal and the set of target module names is equal.
-         * </p>
+         * returns {@code false}. Two module exports objects are equal if their
+         * set of modifiers is equals, the package names are equal and the set
+         * of target module names is equal. </p>
          *
          * <p> This method satisfies the general contract of the {@link
          * java.lang.Object#equals(Object) Object.equals} method. </p>
@@ -404,8 +404,9 @@ public class ModuleDescriptor
             if (!(ob instanceof Exports))
                 return false;
             Exports other = (Exports)ob;
-            return Objects.equals(this.source, other.source) &&
-                Objects.equals(this.targets, other.targets);
+            return Objects.equals(this.mods, other.mods)
+                    && Objects.equals(this.source, other.source)
+                    && Objects.equals(this.targets, other.targets);
         }
 
         /**
@@ -1302,25 +1303,24 @@ public class ModuleDescriptor
 
             boolean e1Private = e1.modifiers().contains(Exports.Modifier.PRIVATE);
             boolean e1Dynamic = e1.modifiers().contains(Exports.Modifier.DYNAMIC);
-            boolean e2Private= e2.modifiers().contains(Exports.Modifier.PRIVATE);
+            boolean e2Private = e2.modifiers().contains(Exports.Modifier.PRIVATE);
             boolean e2Dynamic = e2.modifiers().contains(Exports.Modifier.DYNAMIC);
 
-            boolean gt = false;
-            if (e1Dynamic) {
-                if (e1Private) {
-                    // exports dynamic private p && exports private p to m
-                    if (e2Private && !e2Dynamic) gt = true;
-                } else {
-                    // exports dynamic p && exports [dynamic] private p to m2
-                    // exports dynamic p && exports [private] p to m2
-                    if (e2Private || !e2Dynamic) gt = true;
-                }
+            boolean addPrivate = !e1Private && e2Private;
+            boolean dropPrivate = e1Private && !e2Private;
+            boolean addDynamic = !e1Dynamic && e2Dynamic;
+            boolean dropDynamic = e1Dynamic && !e2Dynamic;
+
+            boolean okay;
+            if (dropPrivate || addDynamic) {
+                // qualified export cannot drop private or add dynamic
+                okay = false;
             } else {
-                // exports dynamic p && exports private p to m
-                if (!e1Private && e2Private && !e2Dynamic) gt = true;
+                // qualified export can add private or drop dynamic
+                okay = (addPrivate || dropDynamic);
             }
 
-            if (!gt) {
+            if (!okay) {
                 String msg = "`exports " + e1 + "` conflicts with `exports " + e2 + "`";
                 throw new IllegalStateException(msg);
             }
