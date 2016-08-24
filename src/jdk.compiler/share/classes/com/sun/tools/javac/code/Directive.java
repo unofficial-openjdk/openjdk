@@ -119,6 +119,16 @@ public abstract class Directive implements ModuleElement.Directive {
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
+        public boolean isDynamic() {
+            return flags.contains(ExportsFlag.DYNAMIC_PHASE);
+        }
+
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
+        public boolean isPrivate() {
+            return flags.contains(ExportsFlag.PRIVATE_REFLECTION);
+        }
+
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
         public PackageElement getPackage() {
             return packge;
         }
@@ -207,6 +217,11 @@ public abstract class Directive implements ModuleElement.Directive {
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
         public ModuleElement.DirectiveKind getKind() {
             return ModuleElement.DirectiveKind.REQUIRES;
+        }
+
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
+        public boolean isStatic() {
+            return flags.contains(RequiresFlag.STATIC_PHASE);
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)

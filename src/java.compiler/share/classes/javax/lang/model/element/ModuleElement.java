@@ -127,6 +127,12 @@ public interface ModuleElement extends Element, QualifiedNameable {
      */
     interface RequiresDirective extends Directive {
         /**
+         * Returns whether or not this is a static dependency.
+         * @return whether or not this is a static dependency
+         */
+        boolean isStatic();
+
+        /**
          * Returns whether or not this is a transitive dependency.
          * @return whether or not this is a transitive dependency
          */
@@ -144,6 +150,18 @@ public interface ModuleElement extends Element, QualifiedNameable {
      * @since 9
      */
     interface ExportsDirective extends Directive {
+        /**
+         * Returns whether or not this is a dynamic exports.
+         * @return whether or not this is a dynamic exports
+         */
+        boolean isDynamic();
+
+        /**
+         * Returns whether or not this is a private exports.
+         * @return whether or not this is a private exports
+         */
+        boolean isPrivate();
+
         /**
          * Returns the package being exported.
          * @return the package being exported
