@@ -543,6 +543,8 @@ public class AttributeWriter extends BasicWriter
             print("// " + constantWriter.stringValue(e.exports_index));
             if ((e.exports_flags & Module_attribute.ACC_DYNAMIC_PHASE) != 0)
                 print(" ACC_DYNAMIC_PHASE");
+            if ((e.exports_flags & Module_attribute.ACC_PRIVATE_REFLECTION) != 0)
+                print(" ACC_PRIVATE_REFLECTION");
             if (e.exports_to_index.length == 0) {
                 println();
             } else {

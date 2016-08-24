@@ -519,7 +519,7 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
         JCExports t = (JCExports) node;
         JCExpression qualId = copy(t.qualid, p);
         List<JCExpression> moduleNames = copy(t.moduleNames, p);
-        return M.at(t.pos).Exports(qualId, t.isDynamicPhase, moduleNames);
+        return M.at(t.pos).Exports(qualId, t.isDynamicPhase, t.isPrivate, moduleNames);
     }
 
     @Override @DefinedBy(Api.COMPILER_TREE)

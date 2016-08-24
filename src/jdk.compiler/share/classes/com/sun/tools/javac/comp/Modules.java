@@ -655,8 +655,13 @@ public class Modules extends JCTree.Visitor {
             }
 
             if (toModules == null || !toModules.isEmpty()) {
-                Set<ExportsFlag> flags = tree.isDynamicPhase
-                        ? EnumSet.of(ExportsFlag.DYNAMIC_PHASE) : Collections.emptySet();
+                Set<ExportsFlag> flags = EnumSet.noneOf(ExportsFlag.class);
+                if (tree.isDynamicPhase) {
+                    flags.add(ExportsFlag.DYNAMIC_PHASE);
+                }
+                if (tree.isPrivate) {
+                    flags.add(ExportsFlag.PRIVATE_REFLECTION);
+                }
                 ExportsDirective d = new ExportsDirective(packge, toModules, flags);
                 tree.directive = d;
                 sym.exports = sym.exports.prepend(d);

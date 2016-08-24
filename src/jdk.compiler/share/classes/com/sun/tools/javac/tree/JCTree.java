@@ -2678,17 +2678,29 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
             implements ExportsTree {
         public JCExpression qualid;
         public boolean isDynamicPhase;
+        public boolean isPrivate;
         public List<JCExpression> moduleNames;
         public ExportsDirective directive;
 
-        protected JCExports(JCExpression qualId, boolean isDynamicPhase, List<JCExpression> moduleNames) {
+        protected JCExports(JCExpression qualId, boolean isDynamicPhase, boolean isPrivate, List<JCExpression> moduleNames) {
             this.qualid = qualId;
             this.isDynamicPhase = isDynamicPhase;
+            this.isPrivate = isPrivate;
             this.moduleNames = moduleNames;
         }
 
         @Override
         public void accept(Visitor v) { v.visitExports(this); }
+
+        @Override @DefinedBy(Api.COMPILER_TREE)
+        public boolean isDynamic() {
+            return isDynamicPhase;
+        }
+
+        @Override @DefinedBy(Api.COMPILER_TREE)
+        public boolean isPrivate() {
+            return isPrivate;
+        }
 
         @Override @DefinedBy(Api.COMPILER_TREE)
         public Kind getKind() {
@@ -2973,7 +2985,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         JCModifiers Modifiers(long flags, List<JCAnnotation> annotations);
         JCErroneous Erroneous(List<? extends JCTree> errs);
         JCModuleDecl ModuleDef(List<JCAnnotation> annotations, JCExpression qualId, List<JCDirective> directives);
-        JCExports Exports(JCExpression qualId, boolean isDynamicPhase, List<JCExpression> moduleNames);
+        JCExports Exports(JCExpression qualId, boolean isDynamicPhase, boolean isPrivate, List<JCExpression> moduleNames);
         JCProvides Provides(JCExpression serviceName, JCExpression implName);
         JCRequires Requires(boolean isTransitive, boolean isStaticPhase, JCExpression qualId);
         JCUses Uses(JCExpression qualId);

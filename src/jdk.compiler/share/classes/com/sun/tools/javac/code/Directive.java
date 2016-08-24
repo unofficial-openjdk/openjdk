@@ -76,7 +76,8 @@ public abstract class Directive implements ModuleElement.Directive {
 
     /** Flags for ExportsDirective. */
     public enum ExportsFlag {
-        DYNAMIC_PHASE(0x0040);
+        DYNAMIC_PHASE(0x0040),
+        PRIVATE_REFLECTION(0x0080);
 
         // overkill? move to ClassWriter?
         public static int value(Set<ExportsFlag> s) {

@@ -3221,7 +3221,7 @@ public class JavacParser implements Parser {
                                 if (t1.kind == SEMI || t1.kind == DOT) {
                                     break loop;
                                 }
-                                if (isPublic || isTransitive) {
+                                if (isPublic) { // temporary
                                     error(token.pos, "repeated.modifier");
                                 }
                                 isTransitive = true;
@@ -3252,18 +3252,31 @@ public class JavacParser implements Parser {
             } else if (token.name() == names.exports) {
                 nextToken();
                 boolean isDynamicPhase = false;
-                if (token.kind == IDENTIFIER && token.name() == names.dynamic) {
-                    // lookahead to see if dynamic is followed by a package name
-                    // (or if the token is itself the beginning of a package name)
-                    Token t1 = S.token(1);
-                    Token t2 = S.token(2);
-                    if (t1.kind == IDENTIFIER
-                            && (t2.kind == SEMI
-                                || t2.kind == DOT
-                                || t2.kind == IDENTIFIER && t2.name() == names.to)) {
-                        isDynamicPhase = true;
-                        nextToken();
+                boolean isPrivate = false;
+            loop:
+                while (true) {
+                    switch (token.kind) {
+                        case IDENTIFIER:
+                            if (token.name() == names.dynamic && !isDynamicPhase) {
+                                Token t1 = S.token(1);
+                                if (t1.kind == SEMI || t1.kind == DOT) {
+                                    break loop;
+                                }
+                                isDynamicPhase = true;
+                                break;
+                            } else {
+                                break loop;
+                            }
+                        case PRIVATE:
+                            if (isPrivate) {
+                                error(token.pos, "repeated.modifier");
+                            }
+                            isPrivate = true;
+                            break;
+                        default:
+                            break loop;
                     }
+                    nextToken();
                 }
                 JCExpression pkgName = qualident(false);
                 List<JCExpression> moduleNames = null;
@@ -3272,7 +3285,7 @@ public class JavacParser implements Parser {
                     moduleNames = qualidentList(false);
                 }
                 accept(SEMI);
-                defs.append(toP(F.at(pos).Exports(pkgName, isDynamicPhase, moduleNames)));
+                defs.append(toP(F.at(pos).Exports(pkgName, isDynamicPhase, isPrivate, moduleNames)));
             } else if (token.name() == names.provides) {
                 nextToken();
                 JCExpression serviceName = qualident(false);
