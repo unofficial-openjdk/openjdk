@@ -170,7 +170,8 @@ public class ModuleTestBase {
     }
 
     enum ExportFlag implements Mask {
-        DYNAMIC("dynamic", Module_attribute.ACC_DYNAMIC_PHASE);
+        DYNAMIC("dynamic", Module_attribute.ACC_DYNAMIC_PHASE),
+        PRIVATE("private", Module_attribute.ACC_PRIVATE_REFLECTION);
 
         private final String token;
         private final int mask;
