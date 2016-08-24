@@ -633,11 +633,22 @@ public class Modules extends JCTree.Visitor {
 
         @Override
         public void visitExports(JCExports tree) {
-            Name name = TreeInfo.fullName(tree.qualid);
-            PackageSymbol packge = syms.enterPackage(sym, name);
-            attr.setPackageSymbols(tree.qualid, packge);
-            if (!allExports.add(packge)) {
-                log.error(tree.qualid.pos(), Errors.DuplicateExports(packge));
+            PackageSymbol packge;
+
+            if (tree.qualid == null) {
+                if (!tree.isDynamicPhase) {
+                    log.error(tree.pos(), Errors.DefaultExportsMustBeDynamic);
+                }
+                // TODO: more validity checking:
+                // must not conflict with other default exports
+                packge = null;
+            } else {
+                Name name = TreeInfo.fullName(tree.qualid);
+                packge = syms.enterPackage(sym, name);
+                attr.setPackageSymbols(tree.qualid, packge);
+                if (!allExports.add(packge)) {
+                    log.error(tree.qualid.pos(), Errors.DuplicateExports(packge));
+                }
             }
 
             List<ModuleSymbol> toModules = null;
@@ -752,7 +763,7 @@ public class Modules extends JCTree.Visitor {
 
         @Override
         public void visitExports(JCExports tree) {
-            if (tree.directive.packge.members().isEmpty()) {
+            if (tree.directive.packge != null && tree.directive.packge.members().isEmpty()) {
                 log.error(tree.qualid.pos(), Errors.PackageEmptyOrNotFound(tree.directive.packge));
             }
             msym.directives = msym.directives.prepend(tree.directive);
@@ -1097,7 +1108,9 @@ public class Modules extends JCTree.Visitor {
         requiresTransitiveCache.put(msym, requiresTransitive);
         initVisiblePackages(msym, readable);
         for (ExportsDirective d: msym.exports) {
-            d.packge.modle = msym;
+            if (d.packge != null) {
+                d.packge.modle = msym;
+            }
         }
 
     }

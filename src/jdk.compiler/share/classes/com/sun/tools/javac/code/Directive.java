@@ -99,7 +99,7 @@ public abstract class Directive implements ModuleElement.Directive {
      */
     public static class ExportsDirective extends Directive
             implements ModuleElement.ExportsDirective {
-        public final PackageSymbol packge;
+        public final PackageSymbol packge;  // null for default
         public final Set<ExportsFlag> flags;
         public final List<ModuleSymbol> modules;
 

@@ -54,7 +54,7 @@ public interface ExportsTree extends DirectiveTree {
     boolean isPrivate();
 
     /**
-     * Returns the name of the package to be exported.
+     * Returns the name of the package to be exported, or null if this is a default exports directive.
      * @return  the name of the package to be exported
      */
     ExpressionTree getExportName();

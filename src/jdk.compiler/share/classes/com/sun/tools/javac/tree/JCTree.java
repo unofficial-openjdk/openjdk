@@ -2676,7 +2676,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
     public static class JCExports extends JCDirective
             implements ExportsTree {
-        public JCExpression qualid;
+        public JCExpression qualid; // null for default
         public boolean isDynamicPhase;
         public boolean isPrivate;
         public List<JCExpression> moduleNames;

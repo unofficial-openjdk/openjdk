@@ -3278,7 +3278,19 @@ public class JavacParser implements Parser {
                     }
                     nextToken();
                 }
-                JCExpression pkgName = qualident(false);
+                JCExpression pkgName;
+                switch (token.kind) {
+                    case DEFAULT:
+                        pkgName = null;
+                        nextToken();
+                        break;
+                    case IDENTIFIER:
+                        pkgName = qualident(false);
+                        break;
+                    default:
+                        reportSyntaxError(token.pos, "expected.identifier.or.default");
+                        pkgName = F.at(token.pos).Erroneous();
+                }
                 List<JCExpression> moduleNames = null;
                 if (token.kind == IDENTIFIER && token.name() == names.to) {
                     nextToken();

@@ -571,7 +571,11 @@ public class ClassWriter extends BasicWriter {
             if ((entry.exports_flags & Module_attribute.ACC_PRIVATE_REFLECTION) != 0)
                 print(" private");
             print(" ");
-            print(getUTF8Value(entry.exports_index).replace('/', '.'));
+            if (entry.exports_index == 0) {
+                print("default");
+            } else {
+                print(getUTF8Value(entry.exports_index).replace('/', '.'));
+            }
             boolean first = true;
             for (int i: entry.exports_to_index) {
                 String mname;

@@ -493,7 +493,13 @@ public class ModuleInfoTest extends ModuleTestBase {
                     .writeAll()
                     .getOutput(Task.OutputKind.DIRECT);
 
-            if (!log.matches("(?s)^module\\-info\\.java:\\d+:\\d+: compiler\\.err\\.expected: token\\.identifier.*"))
+            String expect_prefix = "(?s)^module\\-info\\.java:\\d+:\\d+: ";
+            String expect_message = moduleInfo.contains("exports @")
+                ? "compiler\\.err\\.expected\\.identifier\\.or\\.default"
+                : "compiler\\.err\\.expected: token\\.identifier";
+            String expect_suffix = ".*";
+            String expect = expect_prefix + expect_message + expect_suffix;
+            if (!log.matches(expect))
                 throw new Exception("expected output not found");
         }
     }

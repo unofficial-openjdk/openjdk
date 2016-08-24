@@ -163,7 +163,7 @@ public interface ModuleElement extends Element, QualifiedNameable {
         boolean isPrivate();
 
         /**
-         * Returns the package being exported.
+         * Returns the package being exported, or null if this is a default exports directive.
          * @return the package being exported
          */
         PackageElement getPackage();
