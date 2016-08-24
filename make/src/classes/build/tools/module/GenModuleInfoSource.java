@@ -223,13 +223,13 @@ public class GenModuleInfoSource {
         try (BufferedWriter bw = Files.newBufferedWriter(outfile);
              PrintWriter writer = new PrintWriter(bw)) {
             int lineNumber = 0;
+            String pn = null;
+            Set<Exports.Modifier> mods = null;
             for (String l : lines) {
                 lineNumber++;
                 String[] s = l.trim().split("\\s+");
                 String keyword = s[0].trim();
                 int nextIndex = keyword.length();
-                String pn = null;
-                Set<Exports.Modifier> mods = Collections.emptySet();
                 int n = l.length();
                 switch (keyword) {
                     case "exports":
@@ -243,17 +243,20 @@ public class GenModuleInfoSource {
 
                         String token = s[1].trim();
                         int nextTokenPos = 2;
-                        pn = token;
+                        pn = null;
+                        mods = Collections.emptySet();
 
-                        if (s.length >= 3 && (token.equals("private") || token.equals("dynamic"))) {
+                        if (token.equals("private") || token.equals("dynamic")) {
                             mods = Collections.singleton(Exports.Modifier.valueOf(token.toUpperCase()));
-                            pn = s[2].trim();
                             nextTokenPos = 3;
-                            if (token.equals("dynamic") &&
+                            pn = s.length >= 3 ? s[2].trim() : null;
+                            if (s.length < 3 || token.equals("dynamic") &&
                                     (pn.equals("private") || pn.equals("default"))) {
                                 throw new UnsupportedOperationException(sourcefile + ", line " +
                                     lineNumber);
                             }
+                        } else {
+                            pn = token;
                         }
 
                         if (s.length > nextTokenPos) {
