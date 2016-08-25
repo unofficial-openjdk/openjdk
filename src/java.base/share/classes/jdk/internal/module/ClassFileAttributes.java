@@ -113,7 +113,10 @@ public final class ClassFileAttributes {
             off += 2;
             if (exports_count > 0) {
                 for (int i=0; i<exports_count; i++) {
-                    String pkg = cr.readUTF8(off, buf).replace('/', '.');
+                    String pkg = null;
+                    int index = cr.readUnsignedShort(off);
+                    if (index != 0)
+                        pkg = cr.readUTF8(off, buf).replace('/', '.');
                     off += 2;
 
                     int flags = cr.readUnsignedShort(off);
@@ -142,9 +145,9 @@ public final class ClassFileAttributes {
                             off += 2;
                             targets.add(t);
                         }
-                        builder.exports(mods, pkg, targets);
+                        if (pkg != null) builder.exports(mods, pkg, targets);
                     } else {
-                        builder.exports(mods, pkg);
+                        if (pkg != null) builder.exports(mods, pkg);
                     }
                 }
             }

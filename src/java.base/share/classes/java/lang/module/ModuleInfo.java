@@ -314,7 +314,9 @@ final class ModuleInfo {
         if (exports_count > 0) {
             for (int i=0; i<exports_count; i++) {
                 int index = in.readUnsignedShort();
-                String pkg = cpool.getUtf8(index).replace('/', '.');
+                String pkg = null;
+                if (index != 0)
+                    pkg = cpool.getUtf8(index).replace('/', '.');
 
                 Set<Exports.Modifier> mods;
                 int flags = in.readUnsignedShort();
@@ -339,9 +341,9 @@ final class ModuleInfo {
                         int exports_to_index = in.readUnsignedShort();
                         targets.add(cpool.getUtf8(exports_to_index));
                     }
-                    builder.exports(mods, pkg, targets);
+                    if (pkg != null) builder.exports(mods, pkg, targets);
                 } else {
-                    builder.exports(mods, pkg);
+                    if (pkg != null) builder.exports(mods, pkg);
                 }
             }
         }
