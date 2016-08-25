@@ -1304,7 +1304,7 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor3
             =  new ModuleDescriptor.Builder("m3")
-                .exports("p", "m1")
+                .exports("p", Set.of("m1"))
                 .build();
 
         ModuleFinder finder

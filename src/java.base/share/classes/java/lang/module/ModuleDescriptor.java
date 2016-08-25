@@ -288,16 +288,29 @@ public class ModuleDescriptor
          */
         private Exports(Set<Modifier> ms, String source, Set<String> targets) {
             if (ms.isEmpty()) {
-                this.mods = Collections.emptySet();
+                ms = Collections.emptySet();
             } else {
-                this.mods = Collections.unmodifiableSet(EnumSet.copyOf(ms));
+                ms = Collections.unmodifiableSet(EnumSet.copyOf(ms));
             }
-            this.source = requirePackageName(source);
+
+            if (source != null) {
+                requirePackageName(source);
+            } else {
+                // exports dynamic default [private] to <targets>
+                if (!ms.contains(Modifier.DYNAMIC)) {
+                    throw new IllegalArgumentException("DYNAMIC modifier missing");
+                }
+            }
+
+            targets = Collections.unmodifiableSet(new HashSet<>(targets));
             if (targets.isEmpty()) {
                 throw new IllegalArgumentException("Empty target set");
             }
             targets.stream().forEach(Checks::requireModuleName);
-            this.targets = Collections.unmodifiableSet(new HashSet<>(targets));
+
+            this.mods = ms;
+            this.source = source;
+            this.targets = targets;
         }
 
         private Exports(Set<Modifier> ms,
@@ -314,11 +327,22 @@ public class ModuleDescriptor
          */
         private Exports(Set<Modifier> ms, String source) {
             if (ms.isEmpty()) {
-                this.mods = Collections.emptySet();
+                ms = Collections.emptySet();
             } else {
-                this.mods = Collections.unmodifiableSet(EnumSet.copyOf(ms));
+                ms = Collections.unmodifiableSet(EnumSet.copyOf(ms));
             }
-            this.source = requirePackageName(source);
+
+            if (source != null) {
+                requirePackageName(source);
+            } else {
+                // exports dynamic default [private] to <targets>
+                if (!ms.contains(Modifier.DYNAMIC)) {
+                    throw new IllegalArgumentException("DYNAMIC modifier missing");
+                }
+            }
+
+            this.mods = ms;
+            this.source = source;
             this.targets = Collections.emptySet();
         }
 
@@ -347,7 +371,7 @@ public class ModuleDescriptor
         }
 
         /**
-         * Returns the package name.
+         * Returns the package name or {@code null} if this is a default export.
          *
          * @return The package name
          */
@@ -440,12 +464,14 @@ public class ModuleDescriptor
         private final Set<String> providers;
 
         private Provides(String service, Set<String> providers) {
-            this.service = requireServiceTypeName(service);
-            if (providers.isEmpty())
+            providers = Collections.unmodifiableSet(new LinkedHashSet<>(providers));
+            if (providers.isEmpty()) {
                 throw new IllegalArgumentException("Empty providers set");
+            }
             providers.forEach(Checks::requireServiceProviderName);
-            this.providers =
-                Collections.unmodifiableSet(new LinkedHashSet<>(providers));
+
+            this.service = requireServiceTypeName(service);
+            this.providers = providers;
         }
 
         private Provides(String service, Set<String> providers, boolean unused) {
@@ -1103,20 +1129,25 @@ public class ModuleDescriptor
     }
 
     /**
-     * Returns the names of the packages defined in, but not exported by, this
-     * module.
+     * Returns the names of the packages defined in, but not explicitly exported
+     * by, this module.
+     *
+     * @apiNote Packages that are not explicitly exported may still be exported
+     * at run time when the module declares a default export.
      *
      * @return A possibly-empty unmodifiable set of the concealed packages
      */
     public Set<String> conceals() {
         Set<String> conceals = new HashSet<>(packages);
-        exports.stream().map(Exports::source).forEach(conceals::remove);
+        exports.stream().filter(e -> e.source() != null)
+                .map(Exports::source)
+                .forEach(conceals::remove);
         return emptyOrUnmodifiableSet(conceals);
     }
 
     /**
      * Returns the names of all the packages defined in this module, whether
-     * exported or concealed.
+     * explicitly exported or concealed.
      *
      * @return A possibly-empty unmodifiable set of the all packages
      */
@@ -1158,6 +1189,8 @@ public class ModuleDescriptor
         final Set<String> uses = new HashSet<>();
         final Map<String, Exports> unqualifiedExports = new HashMap<>();
         final Map<String, Exports> qualifiedExports = new HashMap<>();
+        Exports defaultUnqualified;
+        Exports defaultQualified;
         final Map<String, Provides> provides = new HashMap<>();
         final Set<String> conceals = new HashSet<>();
         Version version;
@@ -1331,8 +1364,12 @@ public class ModuleDescriptor
          *
          * <p> A specific package may be exported both unconditionally and to
          * a set of target modules for cases where the qualified export is a
-         * strict superset of the unconditional export. Specifically, for a
-         * package {@code p}, the following combinations are allowed: </p>
+         * <em>strict superset</em> of the unconditional export. A strict
+         * superset is where the qualified exports has {@code private} when
+         * the unconditional export doesn't, or where the unconditional
+         * export has {@code dynamic} and the qualified export doesn't. More
+         * specifically, for a package {@code p}, the following combinations
+         * are allowed: </p>
          * <table border=1 cellpadding=5 summary="allowed">
          *     <tr>
          *         <th>Unconditional export</th>
@@ -1340,23 +1377,27 @@ public class ModuleDescriptor
          *     </tr>
          *     <tr>
          *         <td>{@code exports p}</td>
-         *         <td>{@code exports private p to <target-modules>}
+         *         <td>{@code exports private p to <target-modules>}</td>
+         *     </tr>
+         *     <tr>
+         *         <td>{@code exports private p}</td>
+         *         <td>N/A</td>
          *     </tr>
          *     <tr>
          *         <td>{@code exports dynamic p}</td>
-         *         <td>{@code exports p to <target-modules>}
+         *         <td>{@code exports p to <target-modules>}</td>
          *     </tr>
          *     <tr>
          *         <td>{@code exports dynamic p}</td>
-         *         <td>{@code exports private p to <target-modules>}
+         *         <td>{@code exports private p to <target-modules>}</td>
          *     </tr>
          *     <tr>
          *         <td>{@code exports dynamic p}</td>
-         *         <td>{@code exports dynamic private p to <target-modules>}
+         *         <td>{@code exports dynamic private p to <target-modules>}</td>
          *     </tr>
          *     <tr>
          *         <td>{@code exports dynamic private p}</td>
-         *         <td>{@code exports private p to <target-modules>}
+         *         <td>{@code exports private p to <target-modules>}</td>
          *     </tr>
          * </table>
          * <p> An export may otherwise not be added when the package has
@@ -1481,28 +1522,6 @@ public class ModuleDescriptor
         }
 
         /**
-         * Adds an export to a target module.
-         *
-         * @param  pn
-         *         The package name
-         * @param  target
-         *         The target module name
-         *
-         * @return This builder
-         *
-         * @throws IllegalArgumentException
-         *         If the package name or target module is {@code null} or is
-         *         not a legal Java identifier
-         * @throws IllegalStateException
-         *         If the package is already declared as a concealed package
-         *         or the export conflicts with a declared exported package
-         *         (see {@link #exports(Exports) exports(Exports)}
-         */
-        public Builder exports(String pn, String target) {
-            return exports(pn, Collections.singleton(target));
-        }
-
-        /**
          * Adds an export.
          *
          * @param  pn
@@ -1521,6 +1540,76 @@ public class ModuleDescriptor
         public Builder exports(String pn) {
             return exports(Collections.emptySet(), pn);
         }
+
+        /**
+         * Adds a <em>default</em> export.
+         *
+         * @param  ms
+         *         The set of modifiers
+         *
+         * @return This builder
+         *
+         * @throws IllegalArgumentException
+         *         If set of modifiers does not contain {@code DYNAMIC}
+         * @throws IllegalStateException
+         *         If the default unqualified export has already been declared
+         *         or the export exports with the declared qualified export
+         */
+        public Builder exportsDefault(Set<Exports.Modifier> ms) {
+            if (defaultUnqualified != null) {
+                throw new IllegalStateException("default unqualified export"
+                        + " already declared");
+            }
+            if (defaultQualified != null) {
+                Set<Exports.Modifier> mods = defaultQualified.modifiers();
+                boolean isPrivate = mods.contains(Exports.Modifier.PRIVATE);
+                if (!isPrivate) {
+                    throw new IllegalStateException("default unqualified exports"
+                            + " conflicts with default qualified exports");
+                }
+            }
+
+            Exports e = new Exports(ms, null);
+            defaultUnqualified = e;
+            return this;
+        }
+
+        /**
+         * Adds a <em>default</em> export to a set of target modules.
+         *
+         * @param  ms
+         *         The set of modifiers
+         * @param  targets
+         *         The set of target modules names
+         *
+         * @return This builder
+         *
+         * @throws IllegalArgumentException
+         *         If set of modifiers does not contain {@code DYNAMIC}
+         * @throws IllegalStateException
+         *         If the default qualified export has already been declared
+         *         or the export exports with the declared unqualified export
+         */
+        public Builder exportsDefault(Set<Exports.Modifier> ms, Set<String> targets) {
+            if (defaultQualified != null) {
+                throw new IllegalStateException("default qualified export"
+                                                + " already declared");
+            }
+            if (defaultUnqualified != null) {
+                Set<Exports.Modifier> mods = defaultUnqualified.modifiers();
+                boolean isPrivate = mods.contains(Exports.Modifier.PRIVATE);
+                if (isPrivate) {
+                    throw new IllegalStateException("default qualified exports"
+                            + " conflicts with default unqualified exports");
+                }
+            }
+
+            // no check to ensure targets is not empty
+            Exports e = new Exports(ms, null, targets);
+            defaultQualified = e;
+            return this;
+        }
+
 
         // Used by ModuleInfo, after a packageFinder is invoked
         /* package */ Set<String> exportedPackages() {
@@ -1799,7 +1888,12 @@ public class ModuleDescriptor
             Set<Exports> exports = new HashSet<>();
             exports.addAll(unqualifiedExports.values());
             exports.addAll(qualifiedExports.values());
-
+            if (defaultUnqualified != null) {
+                exports.add(defaultUnqualified);
+            }
+            if (defaultQualified != null) {
+                exports.add(defaultQualified);
+            }
             Set<Requires> requires = new HashSet<>(this.requires.values());
 
             return new ModuleDescriptor(name,

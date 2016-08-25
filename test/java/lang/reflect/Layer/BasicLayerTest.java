@@ -381,7 +381,7 @@ public class BasicLayerTest {
                 .build();
         ModuleDescriptor descriptor2
             =  new ModuleDescriptor.Builder("m2")
-                .exports("p", "m1")
+                .exports("p", Set.of("m1"))
                 .build();
 
         // m3 reads m4, m4 exports p to m3
@@ -391,7 +391,7 @@ public class BasicLayerTest {
                 .build();
         ModuleDescriptor descriptor4
             =  new ModuleDescriptor.Builder("m4")
-                .exports("p", "m3")
+                .exports("p", Set.of("m3"))
                 .build();
 
         ModuleFinder finder

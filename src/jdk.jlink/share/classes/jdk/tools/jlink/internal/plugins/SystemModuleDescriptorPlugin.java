@@ -185,9 +185,11 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
             Checks.requireModuleName(req.name());
         }
         for (Exports e : md.exports()) {
-            Checks.requirePackageName(e.source());
+            String source = e.source();
+            if (source != null)
+                Checks.requirePackageName(e.source());
             if (e.isQualified())
-               e.targets().forEach(Checks::requireModuleName);
+                e.targets().forEach(Checks::requireModuleName);
         }
         for (Map.Entry<String, Provides> e : md.provides().entrySet()) {
             String service = e.getKey();

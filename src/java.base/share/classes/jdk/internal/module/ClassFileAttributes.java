@@ -145,9 +145,17 @@ public final class ClassFileAttributes {
                             off += 2;
                             targets.add(t);
                         }
-                        if (pkg != null) builder.exports(mods, pkg, targets);
+                        if (pkg == null) {
+                            builder.exportsDefault(mods, targets);
+                        } else {
+                            builder.exports(mods, pkg, targets);
+                        }
                     } else {
-                        if (pkg != null) builder.exports(mods, pkg);
+                        if (pkg == null) {
+                            builder.exportsDefault(mods);
+                        } else {
+                            builder.exports(mods, pkg);
+                        }
                     }
                 }
             }
@@ -218,8 +226,12 @@ public final class ClassFileAttributes {
             } else {
                 attr.putShort(descriptor.exports().size());
                 for (Exports e : descriptor.exports()) {
-                    String pkg = e.source().replace('.', '/');
-                    attr.putShort(cw.newUTF8(pkg));
+                    if (e.source() == null) {
+                        attr.putShort(0);
+                    } else {
+                        String pkg = e.source().replace('.', '/');
+                        attr.putShort(cw.newUTF8(pkg));
+                    }
 
                     int flags = 0;
                     if (e.modifiers().contains(Exports.Modifier.PRIVATE))

@@ -1089,8 +1089,19 @@ public final class Module implements AnnotatedElement {
             Map<String, Boolean> unqualifiedExports = new HashMap<>();
             Map<String, Map<Module, Boolean>> qualifiedExports = new HashMap<>();
 
+            Exports defaultUnqualified = null;
+            Exports defaultQualified = null;
+
             for (Exports export : descriptor.exports()) {
                 String source = export.source();
+                if (source == null) {
+                    if (export.targets().isEmpty()) {
+                        defaultUnqualified = export;
+                    } else {
+                        defaultQualified = export;
+                    }
+                    continue;
+                }
                 String sourceInternalForm = source.replace('.', '/');
 
                 boolean b = export.modifiers().contains(Exports.Modifier.PRIVATE);
@@ -1117,6 +1128,44 @@ public final class Module implements AnnotatedElement {
                     // unqualified export
                     addExportsToAll0(m, sourceInternalForm);
                     unqualifiedExports.put(source, value);
+                }
+            }
+
+            // exports dynamic [private] default
+            if (defaultUnqualified != null) {
+                Exports e = defaultUnqualified;
+                boolean b = e.modifiers().contains(Exports.Modifier.PRIVATE);
+                Boolean value = Boolean.valueOf(b);
+
+                for (String source : descriptor.packages()) {
+                    if (!unqualifiedExports.containsKey(source)) {
+                        String sourceInternalForm = source.replace('.', '/');
+                        addExportsToAll0(m, sourceInternalForm);
+                        unqualifiedExports.put(source, value);
+                    }
+                }
+            }
+
+            // exports dynamic [private] default to <targets>
+            if (defaultQualified != null) {
+                Exports e = defaultQualified;
+                boolean b = e.modifiers().contains(Exports.Modifier.PRIVATE);
+                Boolean value = Boolean.valueOf(b);
+
+                for (String source : descriptor.packages()) {
+                    if (!qualifiedExports.containsKey(source)) {
+                        String sourceInternalForm = source.replace('.', '/');
+                        Map<Module, Boolean> targets = new HashMap<>();
+                        for (String target : defaultQualified.targets()) {
+                            // only export to modules that are in this configuration
+                            Module m2 = modules.get(target);
+                            if (m2 != null) {
+                                addExports0(m, sourceInternalForm, m2);
+                                targets.put(m2, value);
+                            }
+                        }
+                        qualifiedExports.put(source, targets);
+                    }
                 }
             }
 

@@ -341,9 +341,17 @@ final class ModuleInfo {
                         int exports_to_index = in.readUnsignedShort();
                         targets.add(cpool.getUtf8(exports_to_index));
                     }
-                    if (pkg != null) builder.exports(mods, pkg, targets);
+                    if (pkg == null) {
+                        builder.exportsDefault(mods, targets);
+                    } else {
+                        builder.exports(mods, pkg, targets);
+                    }
                 } else {
-                    if (pkg != null) builder.exports(mods, pkg);
+                    if (pkg == null) {
+                        builder.exportsDefault(mods);
+                    } else {
+                        builder.exports(mods, pkg);
+                    }
                 }
             }
         }

@@ -991,9 +991,21 @@ public final class LauncherHelper {
                     ostream.format("  uses %s%n", s);
                 }
 
-                // sorted exports
+                // exports
+                Exports defaultUnqualified = null;
+                Exports defaultQualified = null;
                 Set<Exports> exports = new TreeSet<>(Comparator.comparing(Exports::source));
-                exports.addAll(md.exports());
+                for (Exports e : md.exports()) {
+                    if (e.source() == null) {
+                        if (e.targets().isEmpty()) {
+                            defaultUnqualified = e;
+                        } else {
+                            defaultQualified = e;
+                        }
+                    } else {
+                        exports.add(e);
+                    }
+                }
                 for (Exports e : exports) {
                     String modsAndSource = Stream.concat(toStringStream(e.modifiers()),
                                                          Stream.of(e.source()))
@@ -1004,6 +1016,15 @@ public final class LauncherHelper {
                     } else {
                         ostream.println();
                     }
+                }
+                if (defaultUnqualified != null) {
+                    String mods = toString(defaultUnqualified.modifiers());
+                    ostream.format("  exports %s default%n", mods);
+                }
+                if (defaultQualified != null) {
+                    String mods = toString(defaultQualified.modifiers());
+                    ostream.format("  exports %s default", mods);
+                    formatCommaList(ostream, " to", defaultQualified.targets());
                 }
 
                 // concealed packages
@@ -1017,6 +1038,10 @@ public final class LauncherHelper {
                 }
             }
         }
+    }
+
+    static <T> String toString(Set<T> s) {
+        return toStringStream(s).collect(Collectors.joining(" "));
     }
 
     static <T> Stream<String> toStringStream(Set<T> s) {

@@ -252,7 +252,7 @@ public class ModuleDescriptorTest {
 
     private Exports exports(String pn, String target) {
         return new Builder("foo")
-            .exports(pn, target)
+            .exports(pn, Set.of(target))
             .build()
             .exports()
             .iterator()
@@ -366,7 +366,7 @@ public class ModuleDescriptorTest {
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testExportsToTargetWithConcealedPackage() {
-        new Builder("foo").conceals("p").exports("p", "bar");
+        new Builder("foo").conceals("p").exports("p", Set.of("bar"));
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class )
@@ -383,11 +383,6 @@ public class ModuleDescriptorTest {
     @Test(expectedExceptions = NullPointerException.class )
     public void testExportsWithNullExports() {
         new Builder("foo").exports((Exports)null);
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class )
-    public void testExportsWithNullTarget() {
-        new Builder("foo").exports("p", (String) null);
     }
 
     @Test(expectedExceptions = NullPointerException.class )
@@ -428,7 +423,7 @@ public class ModuleDescriptorTest {
 
     public void testExportsToString() {
         String s = new Builder("foo")
-            .exports("p1", "bar")
+            .exports("p1", Set.of("bar"))
             .build()
             .exports()
             .iterator()
