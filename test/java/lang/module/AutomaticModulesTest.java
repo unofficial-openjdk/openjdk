@@ -230,17 +230,12 @@ public class AutomaticModulesTest {
     }
 
 
-    // META-INF/services configuration file/entries that are not legal
-    @DataProvider(name = "badproviders")
-    public Object[][] createProviders() {
+    // META-INF/services files that don't map to legal service names
+    @DataProvider(name = "badservices")
+    public Object[][] createBadServices() {
         return new Object[][] {
 
                 // service type         provider type
-
-                { "p.S",                "-" },
-                { "p.S",                ".S1" },
-                { "p.S",                "S1." },
-
                 { "-",                  "p.S1" },
                 { ".S",                 "p.S1" },
         };
@@ -250,8 +245,42 @@ public class AutomaticModulesTest {
      * Test JAR file with META-INF/services configuration file with bad
      * values or names.
      */
+    @Test(dataProvider = "badservices")
+    public void testBadServicesNames(String service, String provider)
+        throws IOException
+    {
+        Path tmpdir = Files.createTempDirectory(USER_DIR, "tmp");
+        Path services = tmpdir.resolve("META-INF").resolve("services");
+        Files.createDirectories(services);
+        Files.write(services.resolve(service), Set.of(provider));
+        Path dir = Files.createTempDirectory(USER_DIR, "mods");
+        JarUtils.createJarFile(dir.resolve("m.jar"), tmpdir);
+
+        Optional<ModuleReference> omref = ModuleFinder.of(dir).find("m");
+        assertTrue(omref.isPresent());
+        ModuleDescriptor descriptor = omref.get().descriptor();
+        assertTrue(descriptor.provides().isEmpty());
+    }
+
+
+    // META-INF/services configuration file entries that are not legal
+    @DataProvider(name = "badproviders")
+    public Object[][] createBadProviders() {
+        return new Object[][] {
+
+                // service type         provider type
+                { "p.S",                "-" },
+                { "p.S",                ".S1" },
+                { "p.S",                "S1." },
+        };
+    }
+
+    /**
+     * Test JAR file with META-INF/services configuration file with bad
+     * values or names.
+     */
     @Test(dataProvider = "badproviders", expectedExceptions = FindException.class)
-    public void testBadServicesConfiguration(String service, String provider)
+    public void testBadProvideNames(String service, String provider)
         throws IOException
     {
         Path tmpdir = Files.createTempDirectory(USER_DIR, "tmp");

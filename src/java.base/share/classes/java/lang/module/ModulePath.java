@@ -60,6 +60,7 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import jdk.internal.module.Checks;
 import jdk.internal.perf.PerfCounter;
 
 
@@ -469,6 +470,7 @@ class ModulePath implements ModuleFinder {
         Set<String> serviceNames = configFiles.stream()
             .map(this::toServiceName)
             .flatMap(Optional::stream)
+            .filter(Checks::isJavaIdentifier)
             .collect(Collectors.toSet());
 
         // parse each service configuration file

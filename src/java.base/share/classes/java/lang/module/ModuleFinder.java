@@ -255,13 +255,13 @@ public interface ModuleFinder {
      *     to the fully qualified name of the class. The packages of all
      *     classes are {@link ModuleDescriptor#exports() exported}. </p></li>
      *
-     *     <li><p> The contents of all entries starting with {@code
+     *     <li><p> The contents of entries starting with {@code
      *     META-INF/services/} are assumed to be service configuration files
-     *     (see {@link java.util.ServiceLoader}). The name of the file
-     *     (that follows {@code META-INF/services/}) is assumed to be the
-     *     fully-qualified binary name of a service type. The entries in the
-     *     file are assumed to be the fully-qualified binary names of
-     *     provider classes. </p></li>
+     *     (see {@link java.util.ServiceLoader}). If the name of a file
+     *     (that follows {@code META-INF/services/}) is a legal Java identifier
+     *     then it is assumed to be the fully-qualified binary name of a
+     *     service type. The entries in the file are assumed to be the
+     *     fully-qualified binary names of provider classes. </p></li>
      *
      *     <li><p> If the JAR file has a {@code Main-Class} attribute in its
      *     main manifest then its value is the {@link
