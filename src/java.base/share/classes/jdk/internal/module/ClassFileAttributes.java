@@ -96,7 +96,7 @@ public final class ClassFileAttributes {
                 } else {
                     mods = new HashSet<>();
                     if ((flags & ACC_TRANSITIVE) != 0)
-                        mods.add(Requires.Modifier.PUBLIC);
+                        mods.add(Requires.Modifier.TRANSITIVE);
                     if ((flags & ACC_STATIC_PHASE) != 0)
                         mods.add(Requires.Modifier.STATIC);
                     if ((flags & ACC_SYNTHETIC) != 0)
@@ -113,7 +113,10 @@ public final class ClassFileAttributes {
             off += 2;
             if (exports_count > 0) {
                 for (int i=0; i<exports_count; i++) {
-                    String pkg = cr.readUTF8(off, buf).replace('/', '.');
+                    String pkg = null;
+                    int index = cr.readUnsignedShort(off);
+                    if (index != 0)
+                        pkg = cr.readUTF8(off, buf).replace('/', '.');
                     off += 2;
 
                     int flags = cr.readUnsignedShort(off);
@@ -123,6 +126,8 @@ public final class ClassFileAttributes {
                         mods = Collections.emptySet();
                     } else {
                         mods = new HashSet<>();
+                        if ((flags & ACC_PRIVATE) != 0)
+                            mods.add(Exports.Modifier.PRIVATE);
                         if ((flags & ACC_DYNAMIC_PHASE) != 0)
                             mods.add(Exports.Modifier.DYNAMIC);
                         if ((flags & ACC_SYNTHETIC) != 0)
@@ -140,9 +145,17 @@ public final class ClassFileAttributes {
                             off += 2;
                             targets.add(t);
                         }
-                        builder.exports(mods, pkg, targets);
+                        if (pkg == null) {
+                            builder.exportsDefault(mods, targets);
+                        } else {
+                            builder.exports(mods, pkg, targets);
+                        }
                     } else {
-                        builder.exports(mods, pkg);
+                        if (pkg == null) {
+                            builder.exportsDefault(mods);
+                        } else {
+                            builder.exports(mods, pkg);
+                        }
                     }
                 }
             }
@@ -194,7 +207,7 @@ public final class ClassFileAttributes {
             for (Requires md : descriptor.requires()) {
                 String dn = md.name();
                 int flags = 0;
-                if (md.modifiers().contains(Requires.Modifier.PUBLIC))
+                if (md.modifiers().contains(Requires.Modifier.TRANSITIVE))
                     flags |= ACC_TRANSITIVE;
                 if (md.modifiers().contains(Requires.Modifier.STATIC))
                     flags |= ACC_STATIC_PHASE;
@@ -213,10 +226,16 @@ public final class ClassFileAttributes {
             } else {
                 attr.putShort(descriptor.exports().size());
                 for (Exports e : descriptor.exports()) {
-                    String pkg = e.source().replace('.', '/');
-                    attr.putShort(cw.newUTF8(pkg));
+                    if (e.source() == null) {
+                        attr.putShort(0);
+                    } else {
+                        String pkg = e.source().replace('.', '/');
+                        attr.putShort(cw.newUTF8(pkg));
+                    }
 
                     int flags = 0;
+                    if (e.modifiers().contains(Exports.Modifier.PRIVATE))
+                        flags |= ACC_PRIVATE;
                     if (e.modifiers().contains(Exports.Modifier.DYNAMIC))
                         flags |= ACC_DYNAMIC_PHASE;
                     if (e.modifiers().contains(Exports.Modifier.SYNTHETIC))

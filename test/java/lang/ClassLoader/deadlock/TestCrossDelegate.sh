@@ -106,6 +106,7 @@ done
 # run test
 ${TESTJAVA}${FS}bin${FS}java \
         ${TESTVMOPTS} \
+        --add-exports-private java.base/java.lang=ALL-UNNAMED \
         -verbose:class -Xlog:class+load -cp . \
         -Dtest.classes=${TESTCLASSES} \
         Starter cross

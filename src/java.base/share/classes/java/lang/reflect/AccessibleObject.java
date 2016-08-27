@@ -25,12 +25,13 @@
 
 package java.lang.reflect;
 
+import java.lang.annotation.Annotation;
 import java.security.AccessController;
 
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 import jdk.internal.reflect.ReflectionFactory;
-import java.lang.annotation.Annotation;
+import static sun.security.action.GetPropertyAction.privilegedGetProperty;
 
 /**
  * The AccessibleObject class is the base class for Field, Method and
@@ -81,8 +82,10 @@ public class AccessibleObject implements AnnotatedElement {
      * <p>This method cannot be used to enable access to an object that is a
      * {@link Member member} of a class in a different module to the caller and
      * where the class is in a package that is not exported to the caller's
-     * module. Additionally, this method cannot be used to enable access to
-     * non-public members of {@code AccessibleObject} or {@link Module}.
+     * module. Additionally, if the member is non-public or its declaring
+     * class is non-public, then this method can only be used to enable access
+     * if the package is {@link Module#isExportedPrivate exported-private} to
+     * the caller's module.
      *
      * <p>If there is a security manager, its
      * {@code checkPermission} method is first called with a
@@ -126,8 +129,10 @@ public class AccessibleObject implements AnnotatedElement {
      * <p>This method cannot be used to enable access to an object that is a
      * {@link Member member} of a class in a different module to the caller and
      * where the class is in a package that is not exported to the caller's
-     * module. Additionally, this method cannot be used to enable access to
-     * non-public members of {@code AccessibleObject} or {@link Module}.
+     * module. Additionally, if the member is non-public or its declaring
+     * class is non-public, then this method can only be used to enable access
+     * if the package is {@link Module#isExportedPrivate exported-private} to
+     * the caller's module.
      *
      * <p>If there is a security manager, its
      * {@code checkPermission} method is first called with a
@@ -161,36 +166,52 @@ public class AccessibleObject implements AnnotatedElement {
         Module callerModule = caller.getModule();
         Module declaringModule = declaringClass.getModule();
 
-        if (callerModule != declaringModule
-                && callerModule != Object.class.getModule()) {
+        if (callerModule == declaringModule) return;
+        if (callerModule == Object.class.getModule()) return;
+        if (!declaringModule.isNamed()) return;
 
-            // check exports to target module
-            String pn = packageName(declaringClass);
-            if (!declaringModule.isExported(pn, callerModule)) {
-                String msg = "Unable to make member of "
-                        + declaringClass + " accessible:  "
-                        + declaringModule + " does not export "
-                        + pn + " to " + callerModule;
-                Reflection.throwInaccessibleObjectException(msg);
-            }
+        // exports [dynamic] private [to <callerModule>]
+        String pn = packageName(declaringClass);
+        if (declaringModule.isExportedPrivate(pn, callerModule))
+            return;
 
+        // check if class/member are accessible
+        boolean isExported = declaringModule.isExported(pn, callerModule);
+        boolean isClassPublic = Modifier.isPublic(declaringClass.getModifiers());
+        int modifiers;
+        if (this instanceof Executable) {
+            modifiers = ((Executable) this).getModifiers();
+        } else {
+            modifiers = ((Field) this).getModifiers();
+        }
+        boolean isMemberPublic = Modifier.isPublic(modifiers);
+
+        if (!useStrictModeSet) {
+            String s = privilegedGetProperty("sun.reflect.enableStrictMode");
+            useStrictMode = (s != null) && s.equalsIgnoreCase("true");
+            useStrictModeSet = true;
+        }
+        if (useStrictMode) {
+            if (isExported && isClassPublic && isMemberPublic) return;
+        } else {
+            if (isExported) return;
         }
 
-        if (declaringClass == Module.class
-                || declaringClass == AccessibleObject.class) {
-            int modifiers;
-            if (this instanceof Executable) {
-                modifiers = ((Executable) this).getModifiers();
-            } else {
-                modifiers = ((Field) this).getModifiers();
-            }
-            if (!Modifier.isPublic(modifiers)) {
-                String msg = "Cannot make a non-public member of "
-                        + declaringClass + " accessible";
-                Reflection.throwInaccessibleObjectException(msg);
-            }
+        // not accessible
+        String msg = "Unable to make member of " + declaringClass + " accessible.";
+        if (!isExported) {
+            msg +=  " " + declaringModule + " does not export " + pn
+                    + " to " + callerModule;
+        } else if (!isClassPublic) {
+            msg = " " + declaringClass + " is not public";
+        } else if (!isMemberPublic) {
+            msg += " " + this + " is not public";
         }
+        Reflection.throwInaccessibleObjectException(msg);
     }
+
+    private static volatile boolean useStrictMode;
+    private static volatile boolean useStrictModeSet;
 
     /**
      * Returns the package name of the given class.

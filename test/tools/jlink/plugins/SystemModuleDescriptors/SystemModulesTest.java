@@ -61,9 +61,9 @@ public class SystemModulesTest {
         assertUnmodifiable(md.conceals(), "conceal");
         assertUnmodifiable(md.packages(), "package");
         assertUnmodifiable(md.requires(),
-                           jlma.newRequires(Set.of(Requires.Modifier.PUBLIC), "require"));
+                           jlma.newRequires(Set.of(Requires.Modifier.TRANSITIVE), "require"));
         for (Requires req : md.requires()) {
-            assertUnmodifiable(req.modifiers(), Requires.Modifier.PUBLIC);
+            assertUnmodifiable(req.modifiers(), Requires.Modifier.TRANSITIVE);
         }
 
         assertUnmodifiable(md.exports(), jlma.newExports(Set.of(), "export", Set.of()));

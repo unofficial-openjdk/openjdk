@@ -2003,8 +2003,8 @@ class Main {
             for (Requires r : vd.requires()) {
                 if (rootRequires.contains(r)) {
                     continue;
-                } else if (r.modifiers().contains(Requires.Modifier.PUBLIC)) {
-                    fatalError(getMsg("error.versioned.info.requires.public"));
+                } else if (r.modifiers().contains(Requires.Modifier.TRANSITIVE)) {
+                    fatalError(getMsg("error.versioned.info.requires.transitive"));
                     return false;
                 } else if (!isPlatformModule(r.name())) {
                     fatalError(getMsg("error.versioned.info.requires.added"));

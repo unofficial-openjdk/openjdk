@@ -107,10 +107,18 @@ public class Modules {
 
     /**
      * Updates module m1 to export a package to module m2.
-     * Same as m1.addExports(pkg, m2) but without a caller check.
+     * Same as m1.addExports(pn, m2) but without a caller check.
      */
     public static void addExports(Module m1, String pn, Module m2) {
         JLRMA.addExports(m1, pn, m2);
+    }
+
+    /**
+     * Updates module m1 to export "private" a package to module m2.
+     * Same as m1.addExportsPrivate(pn, m2) but without a caller check.
+     */
+    public static void addExportsPrivate(Module m1, String pn, Module m2) {
+        JLRMA.addExportsPrivate(m1, pn, m2);
     }
 
     /**
@@ -121,10 +129,24 @@ public class Modules {
     }
 
     /**
+     * Updates a module m to export "private" a package to all modules.
+     */
+    public static void addExportsPrivateToAll(Module m, String pn) {
+        JLRMA.addExportsPrivateToAll(m, pn);
+    }
+
+    /**
      * Updates module m to export a package to all unnamed modules.
      */
     public static void addExportsToAllUnnamed(Module m, String pn) {
         JLRMA.addExportsToAllUnnamed(m, pn);
+    }
+
+    /**
+     * Updates module m to export "private" a package to all unnamed modules.
+     */
+    public static void addExportsPrivateToAllUnnamed(Module m, String pn) {
+        JLRMA.addExportsPrivateToAllUnnamed(m, pn);
     }
 
     /**
@@ -138,21 +160,24 @@ public class Modules {
      * Updates module m to provide a service
      */
     public static void addProvides(Module m, Class<?> service, Class<?> impl) {
-        // update ClassLoader catalog
-        PrivilegedAction<ClassLoader> pa = m::getClassLoader;
-        ClassLoader loader = AccessController.doPrivileged(pa);
-        ServicesCatalog catalog;
-        if (loader == null) {
-            catalog = BootLoader.getServicesCatalog();
-        } else {
-            catalog = SharedSecrets.getJavaLangAccess()
-                                   .createOrGetServicesCatalog(loader);
-        }
-        catalog.addProvider(m, service, impl);
-
-        // update Layer catalog
         Layer layer = m.getLayer();
+
+        if (layer == null || layer == Layer.boot()) {
+            // update ClassLoader catalog
+            PrivilegedAction<ClassLoader> pa = m::getClassLoader;
+            ClassLoader loader = AccessController.doPrivileged(pa);
+            ServicesCatalog catalog;
+            if (loader == null) {
+                catalog = BootLoader.getServicesCatalog();
+            } else {
+                catalog = SharedSecrets.getJavaLangAccess()
+                                       .createOrGetServicesCatalog(loader);
+            }
+            catalog.addProvider(m, service, impl);
+        }
+
         if (layer != null) {
+            // update Layer catalog
             SharedSecrets.getJavaLangReflectModuleAccess()
                     .getServicesCatalog(layer)
                     .addProvider(m, service, impl);

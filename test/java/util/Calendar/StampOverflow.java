@@ -25,6 +25,7 @@
  * @test
  * @bug 4404619 6348819
  * @summary Make sure that Calendar doesn't cause nextStamp overflow.
+ * @modules java.base/java.util:private
  */
 
 import java.lang.reflect.*;

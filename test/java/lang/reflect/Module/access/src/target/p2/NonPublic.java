@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,23 +21,25 @@
  * questions.
  */
 
-package q;
+package p2;
 
-public class Internal {
+class NonPublic {
 
-    /**
-     * Public constructor
-     */
-    public Internal() { }
+    // public constructor
+    public NonPublic() { }
 
-    /**
-     * Public field
-     */
-    public static Object field;
+    // non-public constructor
+    private NonPublic(Void ignore) { }
 
-    /**
-     * Public method
-     */
-    public static void run() {
-    }
+    // public field
+    public static Object f1;
+
+    // non-public field
+    private static Object f2;
+
+    // public method
+    public static void foo() { }
+
+    // non-public method
+    private static void bar() { }
 }

@@ -52,6 +52,7 @@ import java.util.stream.Stream;
 
 import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.loader.BootLoader;
+import jdk.internal.loader.ResourceHelper;
 import jdk.internal.misc.JavaLangAccess;
 import jdk.internal.misc.JavaLangReflectModuleAccess;
 import jdk.internal.misc.SharedSecrets;
@@ -256,9 +257,6 @@ public final class Module implements AnnotatedElement {
     // special Module to mean exported to "everyone"
     private static final Module EVERYONE_MODULE = new Module(null);
 
-    // exported to all modules
-    private static final Set<Module> EVERYONE = Collections.singleton(EVERYONE_MODULE);
-
 
     // -- readability --
 
@@ -397,22 +395,29 @@ public final class Module implements AnnotatedElement {
     // -- exports --
 
     // the packages that are exported
-    private volatile Map<String, Set<Module>> exports;
+
+    // package name (key) -> exported-private? (value)
+    private volatile Map<String, Boolean> unqualifiedExports;
+
+    // package name (key) -> (target-module, exported-private?) (value)
+    private volatile Map<String, Map<Module, Boolean>> qualifiedExports;
+
 
     // additional exports added at run-time
-    // this module (1st key), other module (2nd key), exported packages (value)
+    // this module (1st key), other module (2nd key)
+    // (package name, exported-private?) (value)
     private static final WeakPairMap<Module, Module, Map<String, Boolean>>
         reflectivelyExports = new WeakPairMap<>();
 
 
     /**
-     * Returns {@code true} if this module exports the given package to at
-     * least the given module.
+     * Returns {@code true} if this module exports (or <em>exports-private</em>)
+     * the given package to at least the given module.
      *
-     * <p> This method always return {@code true} when invoked on an unnamed
+     * <p> This method always returns {@code true} when invoked on an unnamed
      * module. </p>
      *
-     * <p> This method does not check if the given module reads this module </p>
+     * <p> This method does not check if the given module reads this module. </p>
      *
      * @param  pn
      *         The package name
@@ -425,17 +430,42 @@ public final class Module implements AnnotatedElement {
     public boolean isExported(String pn, Module other) {
         Objects.requireNonNull(pn);
         Objects.requireNonNull(other);
-        return implIsExported(pn, other);
+        return implIsExported(pn, false, other);
     }
 
     /**
-     * Returns {@code true} if this module exports the given package
-     * unconditionally.
+     * Returns {@code true} if this module <em>exports-private</em> the given
+     * package to at least the given module.
      *
-     * <p> This method always return {@code true} when invoked on an unnamed
+     * <p> This method always returns {@code true} when invoked on an unnamed
      * module. </p>
      *
-     * <p> This method does not check if the given module reads this module </p>
+     * <p> This method does not check if the given module reads this module. </p>
+     *
+     * @param  pn
+     *         The package name
+     * @param  other
+     *         The other module
+     *
+     * @return {@code true} if this module <em>exports-private</em>  the package
+     *         to at least the given module
+     *
+     * @see AccessibleObject#setAccessible(boolean)
+     */
+    public boolean isExportedPrivate(String pn, Module other) {
+        Objects.requireNonNull(pn);
+        Objects.requireNonNull(other);
+        return implIsExported(pn, true, other);
+    }
+
+    /**
+     * Returns {@code true} if this module exports (or <em>exports-private</em>)
+     * the given package unconditionally.
+     *
+     * <p> This method always returns {@code true} when invoked on an unnamed
+     * module. </p>
+     *
+     * <p> This method does not check if the given module reads this module. </p>
      *
      * @param  pn
      *         The package name
@@ -444,26 +474,47 @@ public final class Module implements AnnotatedElement {
      */
     public boolean isExported(String pn) {
         Objects.requireNonNull(pn);
-        return implIsExported(pn, EVERYONE_MODULE);
+        return implIsExported(pn, false, EVERYONE_MODULE);
     }
+
+    /**
+     * Returns {@code true} if this module <em>exports-private</em> the given
+     * package unconditionally.
+     *
+     * <p> This method always returns {@code true} when invoked on an unnamed
+     * module. </p>
+     *
+     * <p> This method does not check if the given module reads this module. </p>
+     *
+     * @param  pn
+     *         The package name
+     *
+     * @return {@code true} if this module <em>exports-private</em>  the package
+     *         unconditionally
+     */
+    public boolean isExportedPrivate(String pn) {
+        Objects.requireNonNull(pn);
+        return implIsExported(pn, true, EVERYONE_MODULE);
+    }
+
 
     /**
      * Returns {@code true} if this module exports the given package to the
      * given module. If the other module is {@code EVERYONE_MODULE} then
      * this method tests if the package is exported unconditionally.
      */
-    private boolean implIsExported(String pn, Module other) {
+    private boolean implIsExported(String pn, boolean nonPublic, Module other) {
 
         // all packages are exported by unnamed modules
         if (!isNamed())
             return true;
 
         // exported via module declaration/descriptor
-        if (isExportedStatically(pn, other))
+        if (isExportedStatically(pn, nonPublic, other))
             return true;
 
         // exported via addExports
-        if (isExportedReflectively(pn, other))
+        if (isExportedReflectively(pn, nonPublic, other))
             return true;
 
         // not exported or not exported to other
@@ -474,40 +525,74 @@ public final class Module implements AnnotatedElement {
      * Returns {@code true} if this module statically exports the given
      * package to the given module.
      */
-    private boolean isExportedStatically(String pn, Module other) {
-        Map<String, Set<Module>> exports = this.exports;
-        if (exports != null) {
-            Set<Module> targets = exports.get(pn);
+    private boolean isExportedStatically(String pn, boolean nonPublic, Module other) {
 
-            if ((targets != null)
-                && (targets.contains(other) || targets.contains(EVERYONE_MODULE)))
-                return true;
+        // exported unconditionally?
+        Map<String, Boolean> unqualifiedExports = this.unqualifiedExports;
+        if (unqualifiedExports != null) {
+            Boolean b = unqualifiedExports.get(pn);
+            if (b != null) {
+                boolean exportedPrivate = b.booleanValue();
+                if (!nonPublic || exportedPrivate) return true;
+            }
         }
+
+        // qualified export
+        if (other != EVERYONE_MODULE && other != ALL_UNNAMED_MODULE) {
+            Map<String, Map<Module, Boolean>> qualifiedExports = this.qualifiedExports;
+            if (qualifiedExports != null) {
+                Map<Module, Boolean> targets = qualifiedExports.get(pn);
+                if (targets != null) {
+                    Boolean b = targets.get(other);
+                    if (b != null) {
+                        boolean exportedPrivate = b.booleanValue();
+                        if (!nonPublic || exportedPrivate) return true;
+                    }
+                }
+            }
+        }
+
         return false;
     }
+
 
     /**
      * Returns {@code true} if this module reflectively exports the given
      * package package to the given module.
      */
-    private boolean isExportedReflectively(String pn, Module other) {
+    private boolean isExportedReflectively(String pn, boolean all, Module other) {
         // exported to all modules
-        Map<String, ?> exports = reflectivelyExports.get(this, EVERYONE_MODULE);
-        if (exports != null && exports.containsKey(pn))
-            return true;
+        Map<String, Boolean> exports = reflectivelyExports.get(this, EVERYONE_MODULE);
+        if (exports != null) {
+            Boolean b = exports.get(pn);
+            if (b != null) {
+                boolean exportedPrivate = b.booleanValue();
+                if (!all || exportedPrivate) return true;
+            }
+        }
 
         if (other != EVERYONE_MODULE) {
 
             // exported to other
             exports = reflectivelyExports.get(this, other);
-            if (exports != null && exports.containsKey(pn))
-                return true;
+            if (exports != null) {
+                Boolean b = exports.get(pn);
+                if (b != null) {
+                    boolean exportedPrivate = b.booleanValue();
+                    if (!all || exportedPrivate) return true;
+                }
+            }
 
             // other is an unnamed module && exported to all unnamed
             if (!other.isNamed()) {
                 exports = reflectivelyExports.get(this, ALL_UNNAMED_MODULE);
-                if (exports != null && exports.containsKey(pn))
-                    return true;
+                if (exports != null) {
+                    Boolean b = exports.get(pn);
+                    if (b != null) {
+                        boolean exportedPrivate = b.booleanValue();
+                        if (!all || exportedPrivate) return true;
+                    }
+                }
             }
 
         }
@@ -518,11 +603,12 @@ public final class Module implements AnnotatedElement {
 
     /**
      * If the caller's module is this module then update this module to export
-     * package {@code pn} to the given module.
+     * the given package to the given module.
      *
-     * <p> This method has no effect if the package is already exported to the
-     * given module. It also has no effect if invoked on an unnamed module (as
-     * unnamed modules export all packages). </p>
+     * <p> This method has no effect if the package is already exported (or
+     * <em>exported private</em>) to the given module. It also has no effect if
+     * invoked on an unnamed module (as unnamed modules <em>exports-private</em>
+     * all packages). </p>
      *
      * @param  pn
      *         The package name
@@ -548,11 +634,56 @@ public final class Module implements AnnotatedElement {
             if (caller != this) {
                 throw new IllegalStateException(caller + " != " + this);
             }
-            implAddExports(pn, other, true);
+            implAddExports(pn, other, false, true);
         }
 
         return this;
     }
+
+    /**
+     * If the caller's module is this module then update this module to
+     * <em>exports-private</em> the given package to the given module.
+     * Exporting a package with this method allows non-public members in the
+     * package to be reflected on by the given module when using APIs that
+     * bypass or suppress default Java language access control checks.
+     *
+     * <p> This method has no effect if the package is already <em>exported
+     * private</em> to the given module. It also has no effect if invoked on an
+     * unnamed module (as unnamed modules <em>exports-private</em> all
+     * packages). </p>
+     *
+     * @param  pn
+     *         The package name
+     * @param  other
+     *         The module
+     *
+     * @return this module
+     *
+     * @throws IllegalArgumentException
+     *         If {@code pn} is {@code null}, or this is a named module and the
+     *         package {@code pn} is not a package in this module
+     * @throws IllegalStateException
+     *         If this is a named module and the caller is not this module
+     *
+     * @see AccessibleObject#setAccessible(boolean)
+     */
+    @CallerSensitive
+    public Module addExportsPrivate(String pn, Module other) {
+        if (pn == null)
+            throw new IllegalArgumentException("package is null");
+        Objects.requireNonNull(other);
+
+        if (isNamed()) {
+            Module caller = Reflection.getCallerClass().getModule();
+            if (caller != this) {
+                throw new IllegalStateException(caller + " != " + this);
+            }
+            implAddExports(pn, other, true, true);
+        }
+
+        return this;
+    }
+
 
     /**
      * Updates the exports so that package {@code pn} is exported to module
@@ -563,7 +694,7 @@ public final class Module implements AnnotatedElement {
     void implAddExportsNoSync(String pn, Module other) {
         if (other == null)
             other = EVERYONE_MODULE;
-        implAddExports(pn.replace('/', '.'), other, false);
+        implAddExports(pn.replace('/', '.'), other, false, false);
     }
 
     /**
@@ -573,7 +704,17 @@ public final class Module implements AnnotatedElement {
      * @apiNote This method is for white-box testing.
      */
     void implAddExports(String pn, Module other) {
-        implAddExports(pn, other, true);
+        implAddExports(pn, other, false, true);
+    }
+
+    /**
+     * Updates the exports so that package {@code pn} is <em>exports-private</em>
+     * to module {@code other}.
+     *
+     * @apiNote This method is for white-box testing.
+     */
+    void implAddExportsPrivate(String pn, Module other) {
+        implAddExports(pn, other, true, true);
     }
 
     /**
@@ -582,7 +723,10 @@ public final class Module implements AnnotatedElement {
      *
      * If {@code syncVM} is {@code true} then the VM is notified.
      */
-    private void implAddExports(String pn, Module other, boolean syncVM) {
+    private void implAddExports(String pn,
+                                Module other,
+                                boolean nonPublic,
+                                boolean syncVM) {
         Objects.requireNonNull(other);
         Objects.requireNonNull(pn);
 
@@ -591,7 +735,7 @@ public final class Module implements AnnotatedElement {
             return;
 
         // nothing to do if already exported to other
-        if (implIsExported(pn, other))
+        if (implIsExported(pn, nonPublic, other))
             return;
 
         // can only export a package in the module
@@ -613,17 +757,22 @@ public final class Module implements AnnotatedElement {
         }
 
         // add package name to reflectivelyExports if absent
-        reflectivelyExports
+        Map<String, Boolean> map = reflectivelyExports
             .computeIfAbsent(this, other,
-                             (m1, m2) -> new ConcurrentHashMap<>())
-            .putIfAbsent(pn, Boolean.TRUE);
+                             (m1, m2) -> new ConcurrentHashMap<>());
+
+        if (nonPublic) {
+            map.put(pn, Boolean.TRUE);  // may need to promote from FALSE to TRUE
+        } else {
+            map.putIfAbsent(pn, Boolean.FALSE);
+        }
     }
 
 
     // -- services --
 
     // additional service type (2nd key) that some module (1st key) uses
-    private static final WeakPairMap<Module, Class<?>, Boolean> transientUses
+    private static final WeakPairMap<Module, Class<?>, Boolean> reflectivelyUses
         = new WeakPairMap<>();
 
     /**
@@ -638,7 +787,7 @@ public final class Module implements AnnotatedElement {
      * Configuration#resolveRequiresAndUses resolveRequiresAndUses} to be
      * re-run. </p>
      *
-     * @param  st
+     * @param  service
      *         The service type
      *
      * @return this module
@@ -650,15 +799,15 @@ public final class Module implements AnnotatedElement {
      * @see ModuleDescriptor#uses()
      */
     @CallerSensitive
-    public Module addUses(Class<?> st) {
-        Objects.requireNonNull(st);
+    public Module addUses(Class<?> service) {
+        Objects.requireNonNull(service);
 
         if (isNamed()) {
             Module caller = Reflection.getCallerClass().getModule();
             if (caller != this) {
                 throw new IllegalStateException(caller + " != " + this);
             }
-            implAddUses(st);
+            implAddUses(service);
         }
 
         return this;
@@ -668,9 +817,9 @@ public final class Module implements AnnotatedElement {
      * Update this module to add a service dependence on the given service
      * type.
      */
-    void implAddUses(Class<?> st) {
-        if (!canUse(st)) {
-            transientUses.putIfAbsent(this, st, Boolean.TRUE);
+    void implAddUses(Class<?> service) {
+        if (!canUse(service)) {
+            reflectivelyUses.putIfAbsent(this, service, Boolean.TRUE);
         }
     }
 
@@ -680,15 +829,15 @@ public final class Module implements AnnotatedElement {
      * type. This method always returns {@code true} when invoked on an unnamed
      * module.
      *
-     * @param  st
+     * @param  service
      *         The service type
      *
      * @return {@code true} if this module uses service type {@code st}
      *
      * @see #addUses(Class)
      */
-    public boolean canUse(Class<?> st) {
-        Objects.requireNonNull(st);
+    public boolean canUse(Class<?> service) {
+        Objects.requireNonNull(service);
 
         if (!isNamed())
             return true;
@@ -697,11 +846,11 @@ public final class Module implements AnnotatedElement {
             return true;
 
         // uses was declared
-        if (descriptor.uses().contains(st.getName()))
+        if (descriptor.uses().contains(service.getName()))
             return true;
 
         // uses added via addUses
-        return transientUses.containsKeyPair(this, st);
+        return reflectivelyUses.containsKeyPair(this, service);
     }
 
 
@@ -869,25 +1018,38 @@ public final class Module implements AnnotatedElement {
                                              Layer layer)
     {
         Map<String, Module> modules = new HashMap<>();
-        Map<String, ClassLoader> loaders = new HashMap<>();
+        Map<String, ClassLoader> moduleToLoader = new HashMap<>();
+
+        boolean isBootLayer = (Layer.boot() == null);
+        Set<ClassLoader> loaders = new HashSet<>();
+
+        // map each module to a class loader
+        for (ResolvedModule resolvedModule : cf.modules()) {
+            String name = resolvedModule.name();
+            ClassLoader loader = clf.apply(name);
+            if (loader != null) {
+                moduleToLoader.put(name, loader);
+                loaders.add(loader);
+            } else if (!isBootLayer) {
+                throw new IllegalArgumentException("loader can't be 'null'");
+            }
+        }
 
         // define each module in the configuration to the VM
         for (ResolvedModule resolvedModule : cf.modules()) {
             ModuleReference mref = resolvedModule.reference();
             ModuleDescriptor descriptor = mref.descriptor();
             String name = descriptor.name();
-            ClassLoader loader = clf.apply(name);
             URI uri = mref.location().orElse(null);
-
+            ClassLoader loader = moduleToLoader.get(resolvedModule.name());
             Module m;
             if (loader == null && name.equals("java.base") && Layer.boot() == null) {
                 m = Object.class.getModule();
             } else {
                 m = new Module(layer, loader, descriptor, uri);
             }
-
             modules.put(name, m);
-            loaders.put(name, loader);
+            moduleToLoader.put(name, loader);
         }
 
         // setup readability and exports
@@ -918,61 +1080,127 @@ public final class Module implements AnnotatedElement {
             }
             m.reads = reads;
 
-            // automatic modules reads all unnamed modules
+            // automatic modules read all unnamed modules
             if (descriptor.isAutomatic()) {
                 m.implAddReads(ALL_UNNAMED_MODULE, true);
             }
 
             // exports
-            Map<String, Set<Module>> exports = new HashMap<>();
+            Map<String, Boolean> unqualifiedExports = new HashMap<>();
+            Map<String, Map<Module, Boolean>> qualifiedExports = new HashMap<>();
+
+            Exports defaultUnqualified = null;
+            Exports defaultQualified = null;
+
             for (Exports export : descriptor.exports()) {
                 String source = export.source();
+                if (source == null) {
+                    if (export.targets().isEmpty()) {
+                        defaultUnqualified = export;
+                    } else {
+                        defaultQualified = export;
+                    }
+                    continue;
+                }
                 String sourceInternalForm = source.replace('.', '/');
+
+                boolean b = export.modifiers().contains(Exports.Modifier.PRIVATE);
+                Boolean value = Boolean.valueOf(b);
 
                 if (export.isQualified()) {
 
                     // qualified export
-                    Set<Module> targets = new HashSet<>();
+                    Map<Module, Boolean> targets = new HashMap<>();
                     for (String target : export.targets()) {
                         // only export to modules that are in this configuration
                         Module m2 = modules.get(target);
                         if (m2 != null) {
-                            targets.add(m2);
                             addExports0(m, sourceInternalForm, m2);
+                            targets.put(m2, value);
                         }
                     }
                     if (!targets.isEmpty()) {
-                        exports.put(source, targets);
+                        qualifiedExports.put(source, targets);
                     }
 
                 } else {
 
                     // unqualified export
-                    exports.put(source, EVERYONE);
                     addExportsToAll0(m, sourceInternalForm);
+                    unqualifiedExports.put(source, value);
                 }
             }
-            m.exports = exports;
+
+            // exports dynamic [private] default
+            if (defaultUnqualified != null) {
+                Exports e = defaultUnqualified;
+                boolean b = e.modifiers().contains(Exports.Modifier.PRIVATE);
+                Boolean value = Boolean.valueOf(b);
+
+                for (String source : descriptor.packages()) {
+                    if (!unqualifiedExports.containsKey(source)) {
+                        String sourceInternalForm = source.replace('.', '/');
+                        addExportsToAll0(m, sourceInternalForm);
+                        unqualifiedExports.put(source, value);
+                    }
+                }
+            }
+
+            // exports dynamic [private] default to <targets>
+            if (defaultQualified != null) {
+                Exports e = defaultQualified;
+                boolean b = e.modifiers().contains(Exports.Modifier.PRIVATE);
+                Boolean value = Boolean.valueOf(b);
+
+                for (String source : descriptor.packages()) {
+                    if (!qualifiedExports.containsKey(source)) {
+                        String sourceInternalForm = source.replace('.', '/');
+                        Map<Module, Boolean> targets = new HashMap<>();
+                        for (String target : defaultQualified.targets()) {
+                            // only export to modules that are in this configuration
+                            Module m2 = modules.get(target);
+                            if (m2 != null) {
+                                addExports0(m, sourceInternalForm, m2);
+                                targets.put(m2, value);
+                            }
+                        }
+                        qualifiedExports.put(source, targets);
+                    }
+                }
+            }
+
+            if (!unqualifiedExports.isEmpty())
+                m.unqualifiedExports = unqualifiedExports;
+            if (!qualifiedExports.isEmpty())
+                m.qualifiedExports = qualifiedExports;
         }
 
-        // register the modules in the service catalog if they provide services
-        for (ResolvedModule resolvedModule : cf.modules()) {
-            ModuleReference mref = resolvedModule.reference();
-            ModuleDescriptor descriptor = mref.descriptor();
-            Map<String, Provides> services = descriptor.provides();
-            if (!services.isEmpty()) {
-                String name = descriptor.name();
-                Module m = modules.get(name);
-                ClassLoader loader = loaders.get(name);
-                ServicesCatalog catalog;
-                if (loader == null) {
-                    catalog = BootLoader.getServicesCatalog();
-                } else {
-                    catalog = SharedSecrets.getJavaLangAccess()
-                                           .createOrGetServicesCatalog(loader);
+        // For the boot layer then register the modules in the class loader
+        // services catalog
+        if (isBootLayer) {
+            for (ResolvedModule resolvedModule : cf.modules()) {
+                ModuleReference mref = resolvedModule.reference();
+                ModuleDescriptor descriptor = mref.descriptor();
+                Map<String, Provides> services = descriptor.provides();
+                if (!services.isEmpty()) {
+                    String name = descriptor.name();
+                    Module m = modules.get(name);
+                    ClassLoader loader = moduleToLoader.get(name);
+                    ServicesCatalog catalog;
+                    if (loader == null) {
+                        catalog = BootLoader.getServicesCatalog();
+                    } else {
+                        catalog = SharedSecrets.getJavaLangAccess()
+                                .createOrGetServicesCatalog(loader);
+                    }
+                    catalog.register(m);
                 }
-                catalog.register(m);
             }
+        }
+
+        // ClassLoader::layers support
+        for (ClassLoader loader : loaders) {
+            SharedSecrets.getJavaLangAccess().bindToLayer(loader, layer);
         }
 
         return modules;
@@ -1107,11 +1335,35 @@ public final class Module implements AnnotatedElement {
 
 
     /**
-     * Returns an input stream for reading a resource in this module. Returns
-     * {@code null} if the resource is not in this module or access to the
-     * resource is denied by the security manager.
-     * The {@code name} is a {@code '/'}-separated path name that identifies
-     * the resource.
+     * Returns an input stream for reading a resource in this module. The
+     * {@code name} parameter is a {@code '/'}-separated path name that
+     * identifies the resource.
+     *
+     * <p> A resource in a named modules may be <em>encapsulated</em> so that
+     * it cannot be located by code in other modules. Whether a resource can be
+     * located or not is determined as follows:
+     *
+     * <ul>
+     *     <li> The <em>package name</em> of the resource is derived from the
+     *     subsequence of characters that proceeds the last {@code '/'} and then
+     *     replacing each {@code '/'} character in the subsequence with
+     *     {@code '.'}. For example, the package name derived for a resource
+     *     named "{@code a/b/c/foo.properties}" is "{@code a.b.c}". </li>
+     *
+     *     <li> If the package name is a package in the module then the package
+     *     must be exported to the module of the caller of this method. If the
+     *     package is not in the module then the resource is not encapsulated.
+     *     Resources in the unnamed package or "{@code META-INF}", for example,
+     *     are never encapsulated because they can never be packages in a named
+     *     module. </li>
+     *
+     *     <li> As a special case, resources ending with "{@code .class}" are
+     *     never encapsulated. </li>
+     * </ul>
+     *
+     * <p> This method returns {@code null} if the resource is not in this
+     * module, the resource is encapsulated and cannot be located by the caller,
+     * or access to the resource is denied by the security manager.
      *
      * @param  name
      *         The resource name
@@ -1123,8 +1375,22 @@ public final class Module implements AnnotatedElement {
      *
      * @see java.lang.module.ModuleReader#open(String)
      */
+    @CallerSensitive
     public InputStream getResourceAsStream(String name) throws IOException {
         Objects.requireNonNull(name);
+
+        if (isNamed() && !ResourceHelper.isSimpleResource(name)) {
+            Module caller = Reflection.getCallerClass().getModule();
+            if (caller != this && caller != Object.class.getModule()) {
+                // ignore packages added for proxies via addPackage
+                Set<String> packages = getDescriptor().packages();
+                String pn = ResourceHelper.getPackageName(name);
+                if (packages.contains(pn) && !isExported(pn, caller)) {
+                    // resource is in package not exported to caller
+                    return null;
+                }
+            }
+        }
 
         String mn = this.name;
 
@@ -1216,15 +1482,27 @@ public final class Module implements AnnotatedElement {
                 }
                 @Override
                 public void addExports(Module m, String pn, Module other) {
-                    m.implAddExports(pn, other, true);
+                    m.implAddExports(pn, other, false, true);
+                }
+                @Override
+                public void addExportsPrivate(Module m, String pn, Module other) {
+                    m.implAddExports(pn, other, true, true);
                 }
                 @Override
                 public void addExportsToAll(Module m, String pn) {
-                    m.implAddExports(pn, Module.EVERYONE_MODULE, true);
+                    m.implAddExports(pn, Module.EVERYONE_MODULE, false, true);
+                }
+                @Override
+                public void addExportsPrivateToAll(Module m, String pn) {
+                    m.implAddExports(pn, Module.EVERYONE_MODULE, true, true);
                 }
                 @Override
                 public void addExportsToAllUnnamed(Module m, String pn) {
-                    m.implAddExports(pn, Module.ALL_UNNAMED_MODULE, true);
+                    m.implAddExports(pn, Module.ALL_UNNAMED_MODULE, false, true);
+                }
+                @Override
+                public void addExportsPrivateToAllUnnamed(Module m, String pn) {
+                    m.implAddExports(pn, Module.ALL_UNNAMED_MODULE, true, true);
                 }
                 @Override
                 public void addUses(Module m, Class<?> service) {

@@ -288,7 +288,7 @@ final class ModuleInfo {
             } else {
                 mods = new HashSet<>();
                 if ((flags & ACC_TRANSITIVE) != 0)
-                    mods.add(Requires.Modifier.PUBLIC);
+                    mods.add(Requires.Modifier.TRANSITIVE);
                 if ((flags & ACC_STATIC_PHASE) != 0)
                     mods.add(Requires.Modifier.STATIC);
                 if ((flags & ACC_SYNTHETIC) != 0)
@@ -314,7 +314,9 @@ final class ModuleInfo {
         if (exports_count > 0) {
             for (int i=0; i<exports_count; i++) {
                 int index = in.readUnsignedShort();
-                String pkg = cpool.getUtf8(index).replace('/', '.');
+                String pkg = null;
+                if (index != 0)
+                    pkg = cpool.getUtf8(index).replace('/', '.');
 
                 Set<Exports.Modifier> mods;
                 int flags = in.readUnsignedShort();
@@ -322,6 +324,8 @@ final class ModuleInfo {
                     mods = Collections.emptySet();
                 } else {
                     mods = new HashSet<>();
+                    if ((flags & ACC_PRIVATE) != 0)
+                        mods.add(Exports.Modifier.PRIVATE);
                     if ((flags & ACC_DYNAMIC_PHASE) != 0)
                         mods.add(Exports.Modifier.DYNAMIC);
                     if ((flags & ACC_SYNTHETIC) != 0)
@@ -337,9 +341,17 @@ final class ModuleInfo {
                         int exports_to_index = in.readUnsignedShort();
                         targets.add(cpool.getUtf8(exports_to_index));
                     }
-                    builder.exports(mods, pkg, targets);
+                    if (pkg == null) {
+                        builder.exportsDefault(mods, targets);
+                    } else {
+                        builder.exports(mods, pkg, targets);
+                    }
                 } else {
-                    builder.exports(mods, pkg);
+                    if (pkg == null) {
+                        builder.exportsDefault(mods);
+                    } else {
+                        builder.exports(mods, pkg);
+                    }
                 }
             }
         }

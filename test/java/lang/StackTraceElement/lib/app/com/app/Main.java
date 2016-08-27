@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,14 +21,18 @@
  * questions.
  */
 
-package p;
+package com.app;
 
-import java.lang.reflect.Module;
+import java.lang.StackWalker.StackFrame;
 
-public class Helper {
-    Helper() { }
+public class Main {
+    public static void main(String... args) throws Exception {
+        StackFrame frame = Utils.makeStackFrame(Main.class, "main", "Main.java");
+        Utils.checkFrame("app", frame, caller());
+    }
 
-    public static void exportPackage(String pn, Module who) {
-        Helper.class.getModule().addExports(pn, who);
+    private static StackTraceElement caller() {
+        StackTraceElement[] stes = Thread.currentThread().getStackTrace();
+        return stes[2];
     }
 }

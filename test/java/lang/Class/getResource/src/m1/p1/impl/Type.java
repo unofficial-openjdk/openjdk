@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,19 +21,6 @@
  * questions.
  */
 
-package p3;
+package p1.impl;
 
-import java.io.InputStream;
-import java.net.URL;
-
-public class Main {
-    private Main() { }
-
-    public static URL getResourceInClassLoader(String name) {
-        return Main.class.getClassLoader().getResource(name);
-    }
-
-    public static InputStream getResourceAsStreamInClassLoader(String name) {
-        return Main.class.getClassLoader().getResourceAsStream(name);
-    }
-}
+public class Type { }

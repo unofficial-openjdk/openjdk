@@ -31,7 +31,8 @@
 
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleDescriptor.Requires.Modifier;
+import java.lang.module.ModuleDescriptor.Exports;
+import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ResolutionException;
 import java.lang.module.ResolvedModule;
@@ -102,11 +103,11 @@ public class ConfigurationTest {
 
 
     /**
-     * Basic test of "requires public":
-     *     m1 requires m2, m2 requires public m3
+     * Basic test of "requires transitive":
+     *     m1 requires m2, m2 requires transitive m3
      */
-    public void testRequiresPublic1() {
-        // m1 requires m2, m2 requires public m3
+    public void testRequiresTransitive1() {
+        // m1 requires m2, m2 requires transitive m3
         ModuleDescriptor descriptor1
             = new ModuleDescriptor.Builder("m1")
                 .requires("m2")
@@ -114,7 +115,7 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(Set.of(Modifier.PUBLIC), "m3")
+                .requires(Set.of(Requires.Modifier.TRANSITIVE), "m3")
                 .build();
 
         ModuleDescriptor descriptor3
@@ -153,15 +154,15 @@ public class ConfigurationTest {
 
 
     /**
-     * Basic test of "requires public" with configurations.
+     * Basic test of "requires transitive" with configurations.
      *
      * The test consists of three configurations:
-     * - Configuration cf1: m1, m2 requires public m1
+     * - Configuration cf1: m1, m2 requires transitive m1
      * - Configuration cf2: m3 requires m2
      */
-    public void testRequiresPublic2() {
+    public void testRequiresTransitive2() {
 
-        // cf1: m1 and m2, m2 requires public m1
+        // cf1: m1 and m2, m2 requires transitive m1
 
         ModuleDescriptor descriptor1
             = new ModuleDescriptor.Builder("m1")
@@ -169,7 +170,7 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(Set.of(Modifier.PUBLIC), "m1")
+                .requires(Set.of(Requires.Modifier.TRANSITIVE), "m1")
                 .build();
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
@@ -215,13 +216,13 @@ public class ConfigurationTest {
 
 
     /**
-     * Basic test of "requires public" with configurations.
+     * Basic test of "requires transitive" with configurations.
      *
      * The test consists of three configurations:
      * - Configuration cf1: m1
-     * - Configuration cf2: m2 requires public m1, m3 requires m2
+     * - Configuration cf2: m2 requires transitive m1, m3 requires m2
      */
-    public void testRequiresPublic3() {
+    public void testRequiresTransitive3() {
 
         // cf1: m1
 
@@ -241,11 +242,11 @@ public class ConfigurationTest {
         assertTrue(m1.reads().size() == 0);
 
 
-        // cf2: m2, m3: m2 requires public m1, m3 requires m2
+        // cf2: m2, m3: m2 requires transitive m1, m3 requires m2
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(Set.of(Modifier.PUBLIC), "m1")
+                .requires(Set.of(Requires.Modifier.TRANSITIVE), "m1")
                 .build();
 
         ModuleDescriptor descriptor3
@@ -278,14 +279,14 @@ public class ConfigurationTest {
 
 
     /**
-     * Basic test of "requires public" with configurations.
+     * Basic test of "requires transitive" with configurations.
      *
      * The test consists of three configurations:
      * - Configuration cf1: m1
-     * - Configuration cf2: m2 requires public m1
+     * - Configuration cf2: m2 requires transitive m1
      * - Configuraiton cf3: m3 requires m2
      */
-    public void testRequiresPublic4() {
+    public void testRequiresTransitive4() {
 
         // cf1: m1
 
@@ -305,11 +306,11 @@ public class ConfigurationTest {
         assertTrue(m1.reads().size() == 0);
 
 
-        // cf2: m2 requires public m1
+        // cf2: m2 requires transitive m1
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(Set.of(Modifier.PUBLIC), "m1")
+                .requires(Set.of(Requires.Modifier.TRANSITIVE), "m1")
                 .build();
 
         ModuleFinder finder2 = ModuleUtils.finderOf(descriptor2);
@@ -355,15 +356,15 @@ public class ConfigurationTest {
 
 
     /**
-     * Basic test of "requires public" with configurations.
+     * Basic test of "requires transitive" with configurations.
      *
      * The test consists of two configurations:
-     * - Configuration cf1: m1, m2 requires public m1
-     * - Configuration cf2: m3 requires public m2, m4 requires m3
+     * - Configuration cf1: m1, m2 requires transitive m1
+     * - Configuration cf2: m3 requires transitive m2, m4 requires m3
      */
-    public void testRequiresPublic5() {
+    public void testRequiresTransitive5() {
 
-        // cf1: m1, m2 requires public m1
+        // cf1: m1, m2 requires transitive m1
 
         ModuleDescriptor descriptor1
             = new ModuleDescriptor.Builder("m1")
@@ -371,7 +372,7 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(Set.of(Modifier.PUBLIC), "m1")
+                .requires(Set.of(Requires.Modifier.TRANSITIVE), "m1")
                 .build();
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
@@ -394,11 +395,11 @@ public class ConfigurationTest {
         assertTrue(m2.reads().contains(m1));
 
 
-        // cf2: m3 requires public m2, m4 requires m3
+        // cf2: m3 requires transitive m2, m4 requires m3
 
         ModuleDescriptor descriptor3
             = new ModuleDescriptor.Builder("m3")
-                .requires(Set.of(Modifier.PUBLIC), "m2")
+                .requires(Set.of(Requires.Modifier.TRANSITIVE), "m2")
                 .build();
 
         ModuleDescriptor descriptor4
@@ -443,7 +444,7 @@ public class ConfigurationTest {
     public void testRequiresStatic1() {
         ModuleDescriptor descriptor1
             = new ModuleDescriptor.Builder("m1")
-                .requires(Set.of(Modifier.STATIC), "m2")
+                .requires(Set.of(Requires.Modifier.STATIC), "m2")
                 .build();
 
         ModuleFinder finder = ModuleUtils.finderOf(descriptor1);
@@ -466,7 +467,7 @@ public class ConfigurationTest {
     public void testRequiresStatic2() {
         ModuleDescriptor descriptor1
             = new ModuleDescriptor.Builder("m1")
-                .requires(Set.of(Modifier.STATIC), "m2")
+                .requires(Set.of(Requires.Modifier.STATIC), "m2")
                 .build();
 
         ModuleDescriptor descriptor2
@@ -493,7 +494,7 @@ public class ConfigurationTest {
     public void testRequiresStatic3() {
         ModuleDescriptor descriptor1
             = new ModuleDescriptor.Builder("m1")
-                .requires(Set.of(Modifier.STATIC), "m2")
+                .requires(Set.of(Requires.Modifier.STATIC), "m2")
                 .build();
 
         ModuleDescriptor descriptor2
@@ -531,7 +532,7 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(Set.of(Modifier.STATIC), "m3")
+                .requires(Set.of(Requires.Modifier.STATIC), "m3")
                 .build();
 
         ModuleDescriptor descriptor3
@@ -586,7 +587,7 @@ public class ConfigurationTest {
         ModuleDescriptor descriptor3
             = new ModuleDescriptor.Builder("m3")
                 .requires("m1")
-                .requires(Set.of(Modifier.STATIC), "m2")
+                .requires(Set.of(Requires.Modifier.STATIC), "m2")
                 .build();
 
         ModuleFinder finder2 = ModuleUtils.finderOf(descriptor3);
@@ -627,7 +628,7 @@ public class ConfigurationTest {
         ModuleDescriptor descriptor3
             = new ModuleDescriptor.Builder("m3")
                 .requires("m1")
-                .requires(Set.of(Modifier.STATIC), "m2")
+                .requires(Set.of(Requires.Modifier.STATIC), "m2")
                 .build();
 
         ModuleFinder finder2 = ModuleUtils.finderOf(descriptor3);
@@ -1117,7 +1118,7 @@ public class ConfigurationTest {
      * module in the parent is read.
      *
      * The test consists of two configurations:
-     * - Configuration cf1: m1, m2 requires public m1
+     * - Configuration cf1: m1, m2 requires transitive m1
      * - Configuration cf2: m1, m3 requires m2
      */
     public void testOverriding2() {
@@ -1128,7 +1129,7 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(Set.of(Modifier.PUBLIC), "m1")
+                .requires(Set.of(Requires.Modifier.TRANSITIVE), "m1")
                 .build();
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
@@ -1303,7 +1304,7 @@ public class ConfigurationTest {
 
         ModuleDescriptor descriptor3
             =  new ModuleDescriptor.Builder("m3")
-                .exports("p", "m1")
+                .exports("p", Set.of("m1"))
                 .build();
 
         ModuleFinder finder
@@ -1343,8 +1344,7 @@ public class ConfigurationTest {
      * Test the scenario where a module has a concealed package p and reads
      * a module that also has a concealed package p.
      */
-    public void testPackagePrivateToSelfAndOther() {
-
+    public void testPackageConcealedBySelfAndOther() {
         ModuleDescriptor descriptor1
             =  new ModuleDescriptor.Builder("m1")
                 .requires("m2")
@@ -1354,6 +1354,105 @@ public class ConfigurationTest {
         ModuleDescriptor descriptor2
             =  new ModuleDescriptor.Builder("m2")
                 .conceals("p")
+                .build();
+
+        ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);
+
+        Configuration cf = resolveRequires(finder, "m1");
+
+        assertTrue(cf.modules().size() == 2);
+        assertTrue(cf.findModule("m1").isPresent());
+        assertTrue(cf.findModule("m2").isPresent());
+
+        // m1 reads m2, m2 reads nothing
+        ResolvedModule m1 = cf.findModule("m1").get();
+        ResolvedModule m2 = cf.findModule("m2").get();
+        assertTrue(m1.reads().size() == 1);
+        assertTrue(m1.reads().contains(m2));
+        assertTrue(m2.reads().size() == 0);
+    }
+
+
+    /**
+     * Test the scenario where a module has a concealed package p and reads
+     * another module that `exports dynamic p`.
+     */
+    public void testPackageConcealedBySelfAndExportsDynamicByOther() {
+        ModuleDescriptor descriptor1
+            =  new ModuleDescriptor.Builder("m1")
+                .requires("m2")
+                .conceals("p")
+                .build();
+
+        ModuleDescriptor descriptor2
+            =  new ModuleDescriptor.Builder("m2")
+                .exports(Set.of(Exports.Modifier.DYNAMIC), "p")
+                .build();
+
+        ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);
+
+        Configuration cf = resolveRequires(finder, "m1");
+
+        assertTrue(cf.modules().size() == 2);
+        assertTrue(cf.findModule("m1").isPresent());
+        assertTrue(cf.findModule("m2").isPresent());
+
+        // m1 reads m2, m2 reads nothing
+        ResolvedModule m1 = cf.findModule("m1").get();
+        ResolvedModule m2 = cf.findModule("m2").get();
+        assertTrue(m1.reads().size() == 1);
+        assertTrue(m1.reads().contains(m2));
+        assertTrue(m2.reads().size() == 0);
+    }
+
+
+    /**
+     * Test the scenario where a module exports p and reads another module that
+     * `exports dynamic p`.
+     */
+    public void testPackageExportedBySelfAndExportsDynamicByOther() {
+        ModuleDescriptor descriptor1
+            =  new ModuleDescriptor.Builder("m1")
+                .requires("m2")
+                .exports("p")
+                .build();
+
+        ModuleDescriptor descriptor2
+            =  new ModuleDescriptor.Builder("m2")
+                .exports(Set.of(Exports.Modifier.DYNAMIC), "p")
+                .build();
+
+        ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);
+
+        Configuration cf = resolveRequires(finder, "m1");
+
+        assertTrue(cf.modules().size() == 2);
+        assertTrue(cf.findModule("m1").isPresent());
+        assertTrue(cf.findModule("m2").isPresent());
+
+        // m1 reads m2, m2 reads nothing
+        ResolvedModule m1 = cf.findModule("m1").get();
+        ResolvedModule m2 = cf.findModule("m2").get();
+        assertTrue(m1.reads().size() == 1);
+        assertTrue(m1.reads().contains(m2));
+        assertTrue(m2.reads().size() == 0);
+    }
+
+
+    /**
+     * Test the scenario where a module `exports dynamic p` and reads another
+     * module that also `exports dynamic p`.
+     */
+    public void testExportsDynamicBySelfAndOther() {
+        ModuleDescriptor descriptor1
+            =  new ModuleDescriptor.Builder("m1")
+                .requires("m2")
+                .exports(Set.of(Exports.Modifier.DYNAMIC), "p")
+                .build();
+
+        ModuleDescriptor descriptor2
+            =  new ModuleDescriptor.Builder("m2")
+                .exports(Set.of(Exports.Modifier.DYNAMIC), "p")
                 .build();
 
         ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);

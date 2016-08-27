@@ -299,7 +299,7 @@ public class ModuleSummary {
     static class HtmlDocument {
         final String title;
         final Map<String, ModuleSummary> modules;
-        boolean requiresPublicNote = false;
+        boolean requiresTransitiveNote = false;
         boolean aggregatorNote = false;
         boolean totalBytesNote = false;
         HtmlDocument(String title, Map<String, ModuleSummary> modules) {
@@ -510,16 +510,16 @@ public class ModuleSummary {
             public String requiresColumn() {
                 StringBuilder sb = new StringBuilder();
                 sb.append(String.format("<td>"));
-                boolean footnote = requiresPublicNote;
+                boolean footnote = requiresTransitiveNote;
                 ms.descriptor().requires().stream()
                         .sorted(Comparator.comparing(Requires::name))
                         .forEach(r -> {
-                            boolean requiresPublic = r.modifiers().contains(Requires.Modifier.PUBLIC);
-                            Selector sel = requiresPublic ? REQUIRES_PUBLIC : REQUIRES;
+                            boolean requiresTransitive = r.modifiers().contains(Requires.Modifier.TRANSITIVE);
+                            Selector sel = requiresTransitive ? REQUIRES_PUBLIC : REQUIRES;
                             String req = String.format("<a class=\"%s\" href=\"#%s\">%s</a>",
                                                        sel, r.name(), r.name());
-                            if (!requiresPublicNote && requiresPublic) {
-                                requiresPublicNote = true;
+                            if (!requiresTransitiveNote && requiresTransitive) {
+                                requiresTransitiveNote = true;
                                 req += "<sup>*</sup>";
                             }
                             sb.append(req).append("\n").append("<br>");
@@ -534,8 +534,8 @@ public class ModuleSummary {
                     sb.append("<br>");
                     sb.append("<i>+").append(indirectDeps).append(" transitive dependencies</i>");
                 }
-                if (footnote != requiresPublicNote) {
-                    sb.append("<br><br>").append("<i>* bold denotes requires public</i>");
+                if (footnote != requiresTransitiveNote) {
+                    sb.append("<br><br>").append("<i>* bold denotes requires transitive</i>");
                 }
                 sb.append("</td>");
                 return sb.toString();

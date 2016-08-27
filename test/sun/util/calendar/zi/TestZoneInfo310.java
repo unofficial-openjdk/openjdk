@@ -22,11 +22,11 @@
  */
 
 /*
- *@test
- *@bug 8007572 8008161
- *@summary Test whether the TimeZone generated from JSR310 tzdb is the same
- *as the one from the tz data from javazic
- * @modules java.base/sun.util.calendar
+ * @test
+ * @bug 8007572 8008161
+ * @summary Test whether the TimeZone generated from JSR310 tzdb is the same
+ * as the one from the tz data from javazic
+ * @modules java.base/sun.util.calendar:private
  */
 
 import java.io.File;

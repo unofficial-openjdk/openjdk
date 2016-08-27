@@ -28,8 +28,8 @@
  * accessibility, audio, imaging, printing, and JavaBeans.
  */
 module java.desktop {
-    requires public java.datatransfer;
-    requires public java.xml;
+    requires transitive java.datatransfer;
+    requires transitive java.xml;
     requires java.prefs;
 
     exports java.applet;
