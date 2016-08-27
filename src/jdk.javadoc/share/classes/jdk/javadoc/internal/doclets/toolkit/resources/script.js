@@ -23,6 +23,7 @@
  * questions.
  */
 
+var moduleSearchIndex;
 var packageSearchIndex;
 var typeSearchIndex;
 var memberSearchIndex;
@@ -36,6 +37,14 @@ function loadScripts(doc, tag) {
     }
     createElem(doc, tag, 'search.js');
     
+    $.get(pathtoroot + "module-search-index.zip")
+            .done(function() {
+                JSZipUtils.getBinaryContent(pathtoroot + "module-search-index.zip", function(e, data) {
+                    var zip = new JSZip(data);
+                    zip.load(data);
+                    moduleSearchIndex = JSON.parse(zip.file("module-search-index.json").asText());
+                });
+            });
     $.get(pathtoroot + "package-search-index.zip")
             .done(function() {
                 JSZipUtils.getBinaryContent(pathtoroot + "package-search-index.zip", function(e, data) {
