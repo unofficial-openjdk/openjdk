@@ -80,19 +80,15 @@ public class ModuleDescriptorTest {
             .next();
     }
 
+    private Requires requires(String mn) {
+        return requires(Collections.emptySet(), mn);
+    }
+
     public void testRequiresWithRequires() {
-        Requires r1 = requires(null, "foo");
+        Requires r1 = requires("foo");
         ModuleDescriptor descriptor = new Builder("m").requires(r1).build();
         Requires r2 = descriptor.requires().iterator().next();
         assertEquals(r1, r2);
-    }
-
-    public void testRequiresWithNullModifiers() {
-        Requires r = requires(null, "foo");
-        assertEquals(r, r);
-        assertTrue(r.compareTo(r) == 0);
-        assertTrue(r.modifiers().isEmpty());
-        assertEquals(r.name(), "foo");
     }
 
     public void testRequiresWithNoModifiers() {
@@ -123,19 +119,19 @@ public class ModuleDescriptorTest {
         Requires r = requires(EnumSet.allOf(Modifier.class), "foo");
         assertEquals(r, r);
         assertTrue(r.compareTo(r) == 0);
-        assertEquals(r.modifiers(), EnumSet.allOf(Modifier.class));
+        assertEquals(r.modifiers(), EnumSet.of(PUBLIC, STATIC, SYNTHETIC, MANDATED));
         assertEquals(r.name(), "foo");
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testRequiresWithDuplicatesRequires() {
-        Requires r = requires(null, "foo");
+        Requires r = requires("foo");
         new Builder("m").requires(r).requires(r);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testRequiresSelfWithRequires() {
-        Requires r = requires(null, "foo");
+        Requires r = requires("foo");
         new Builder("foo").requires(r);
     }
 
@@ -146,7 +142,7 @@ public class ModuleDescriptorTest {
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testRequiresSelfWithOneModifier() {
-        new Builder("m").requires(PUBLIC, "m");
+        new Builder("m").requires(Set.of(PUBLIC), "m");
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
@@ -214,6 +210,25 @@ public class ModuleDescriptorTest {
             .next();
     }
 
+    private Exports exports(Set<Exports.Modifier> mods, String pn) {
+        return new Builder("foo")
+            .exports(mods, pn)
+            .build()
+            .exports()
+            .iterator()
+            .next();
+    }
+
+    private Exports exports(Set<Exports.Modifier> mods, String pn, Set<String> targets) {
+        return new Builder("foo")
+            .exports(mods, pn, targets)
+            .build()
+            .exports()
+            .iterator()
+            .next();
+    }
+
+
     public void testExportsExports() {
         Exports e1 = exports("p");
         ModuleDescriptor descriptor = new Builder("m").exports(e1).build();
@@ -224,6 +239,7 @@ public class ModuleDescriptorTest {
     public void testExportsToAll() {
         Exports e = exports("p");
         assertEquals(e, e);
+        assertTrue(e.modifiers().isEmpty());
         assertEquals(e.source(), "p");
         assertFalse(e.isQualified());
         assertTrue(e.targets().isEmpty());
@@ -232,6 +248,7 @@ public class ModuleDescriptorTest {
     public void testExportsToTarget() {
         Exports e = exports("p", "bar");
         assertEquals(e, e);
+        assertTrue(e.modifiers().isEmpty());
         assertEquals(e.source(), "p");
         assertTrue(e.isQualified());
         assertTrue(e.targets().size() == 1);
@@ -250,12 +267,35 @@ public class ModuleDescriptorTest {
                 .iterator()
                 .next();
         assertEquals(e, e);
+        assertTrue(e.modifiers().isEmpty());
         assertEquals(e.source(), "p");
         assertTrue(e.isQualified());
         assertTrue(e.targets().size() == 2);
         assertTrue(e.targets().contains("bar"));
         assertTrue(e.targets().contains("gus"));
     }
+
+    public void testExportsToAllWithModifier() {
+        Exports e = exports(Set.of(Exports.Modifier.DYNAMIC), "p");
+        assertEquals(e, e);
+        assertTrue(e.modifiers().size() == 1);
+        assertTrue(e.modifiers().contains(Exports.Modifier.DYNAMIC));
+        assertEquals(e.source(), "p");
+        assertFalse(e.isQualified());
+        assertTrue(e.targets().isEmpty());
+    }
+
+    public void testExportsToTargetWithModifier() {
+        Exports e = exports(Set.of(Exports.Modifier.DYNAMIC), "p", Set.of("bar"));
+        assertEquals(e, e);
+        assertTrue(e.modifiers().size() == 1);
+        assertTrue(e.modifiers().contains(Exports.Modifier.DYNAMIC));
+        assertEquals(e.source(), "p");
+        assertTrue(e.isQualified());
+        assertTrue(e.targets().size() == 1);
+        assertTrue(e.targets().contains("bar"));
+    }
+
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testExportsWithDuplicate1() {
@@ -528,8 +568,11 @@ public class ModuleDescriptorTest {
 
     // isAutomatic
     public void testIsAutomatic() {
-        ModuleDescriptor descriptor = new Builder("foo").build();
-        assertFalse(descriptor.isAutomatic());
+        ModuleDescriptor descriptor1 = new Builder("foo").build();
+        assertFalse(descriptor1.isAutomatic());
+
+        ModuleDescriptor descriptor2 = new Builder("foo").automatic().build();
+        assertTrue(descriptor2.isAutomatic());
     }
 
     // isSynthetic
