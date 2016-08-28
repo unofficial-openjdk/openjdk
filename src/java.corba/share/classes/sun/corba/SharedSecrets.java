@@ -28,10 +28,6 @@ package sun.corba;
 import com.sun.corba.se.impl.io.ValueUtility;
 import jdk.internal.misc.Unsafe;
 
-import java.lang.reflect.Field;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-
 /** A repository of "shared secrets", which are a mechanism for
     calling implementation-private methods in another package without
     using reflection. A package-private class implements a public
@@ -43,22 +39,8 @@ import java.security.PrivilegedAction;
 
 // SharedSecrets cloned in corba repo to avoid build issues
 public class SharedSecrets {
-    private static final Unsafe unsafe = getUnsafe();
+    private static final Unsafe unsafe = Unsafe.getUnsafe();
     private static JavaCorbaAccess javaCorbaAccess;
-
-     private static Unsafe getUnsafe() {
-          PrivilegedAction<Unsafe> pa = () -> {
-               Class<?> unsafeClass = jdk.internal.misc.Unsafe.class ;
-               try {
-                    Field f = unsafeClass.getDeclaredField("theUnsafe");
-                    f.setAccessible(true);
-                    return (Unsafe) f.get(null);
-               } catch (Exception e) {
-                    throw new Error(e);
-               }
-          };
-          return AccessController.doPrivileged(pa);
-     }
 
     public static JavaCorbaAccess getJavaCorbaAccess() {
         if (javaCorbaAccess == null) {

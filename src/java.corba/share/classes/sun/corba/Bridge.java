@@ -26,7 +26,6 @@
 package sun.corba ;
 
 import java.lang.reflect.Field ;
-import java.lang.reflect.Method ;
 import java.lang.reflect.Constructor ;
 import java.lang.reflect.InvocationTargetException ;
 
@@ -76,81 +75,11 @@ public final class Bridge
         new BridgePermission( "getBridge" ) ;
     private static Bridge bridge = null ;
 
-    // latestUserDefinedLoader() is a private static method
-    // in ObjectInputStream in JDK 1.3 through 1.5.
-    // We use reflection in a doPrivileged block to get a
-    // Method reference and make it accessible.
-    private final Method latestUserDefinedLoaderMethod ;
     private final Unsafe unsafe ;
     private final ReflectionFactory reflectionFactory ;
 
-    private Method getLatestUserDefinedLoaderMethod()
-    {
-        return (Method) AccessController.doPrivileged(
-            new PrivilegedAction()
-            {
-                public Object run()
-                {
-                    Method result = null;
-
-                    try {
-                        Class io = ObjectInputStream.class;
-                        result = io.getDeclaredMethod(
-                            "latestUserDefinedLoader", NO_ARGS);
-                        result.setAccessible(true);
-                    } catch (NoSuchMethodException nsme) {
-                        Error err = new Error( "java.io.ObjectInputStream" +
-                            " latestUserDefinedLoader " + nsme );
-                        err.initCause(nsme) ;
-                        throw err ;
-                    }
-
-                    return result;
-                }
-            }
-        );
-    }
-
-    private Unsafe getUnsafe() {
-        Field fld = (Field)AccessController.doPrivileged(
-            new PrivilegedAction()
-            {
-                public Object run()
-                {
-                    Field fld = null ;
-
-                    try {
-                        Class unsafeClass = jdk.internal.misc.Unsafe.class ;
-                        fld = unsafeClass.getDeclaredField( "theUnsafe" ) ;
-                        fld.setAccessible( true ) ;
-                        return fld ;
-                    } catch (NoSuchFieldException exc) {
-                        Error err = new Error( "Could not access Unsafe" ) ;
-                        err.initCause( exc ) ;
-                        throw err ;
-                    }
-                }
-            }
-        ) ;
-
-        Unsafe unsafe = null;
-
-        try {
-            unsafe = (Unsafe)(fld.get( null )) ;
-        } catch (Throwable t) {
-            Error err = new Error( "Could not access Unsafe" ) ;
-            err.initCause( t ) ;
-            throw err ;
-        }
-
-        return unsafe ;
-    }
-
-
-    private Bridge()
-    {
-        latestUserDefinedLoaderMethod = getLatestUserDefinedLoaderMethod();
-        unsafe = getUnsafe() ;
+    private Bridge() {
+        unsafe = Unsafe.getUnsafe() ;
         reflectionFactory = (ReflectionFactory)AccessController.doPrivileged(
             new ReflectionFactory.GetReflectionFactoryAction());
     }
@@ -182,23 +111,8 @@ public final class Bridge
     /** Obtain the latest user defined ClassLoader from the call stack.
      * This is required by the RMI-IIOP specification.
      */
-    public final ClassLoader getLatestUserDefinedLoader()
-    {
-        try {
-            // Invoke the ObjectInputStream.latestUserDefinedLoader method
-            return (ClassLoader)latestUserDefinedLoaderMethod.invoke(null,
-                                                                     (Object[])NO_ARGS);
-        } catch (InvocationTargetException ite) {
-            Error err = new Error(
-                "sun.corba.Bridge.latestUserDefinedLoader: " + ite ) ;
-            err.initCause( ite ) ;
-            throw err ;
-        } catch (IllegalAccessException iae) {
-            Error err = new Error(
-                "sun.corba.Bridge.latestUserDefinedLoader: " + iae ) ;
-            err.initCause( iae ) ;
-            throw err ;
-        }
+    public final ClassLoader getLatestUserDefinedLoader() {
+        return jdk.internal.misc.VM.latestUserDefinedLoader();
     }
 
     /**
