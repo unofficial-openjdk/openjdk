@@ -198,15 +198,11 @@ public class AccessibleObject implements AnnotatedElement {
         }
 
         // not accessible
-        String msg = "Unable to make member of " + declaringClass + " accessible.";
-        if (!isExported) {
-            msg +=  " " + declaringModule + " does not export " + pn
-                    + " to " + callerModule;
-        } else if (!isClassPublic) {
-            msg = " " + declaringClass + " is not public";
-        } else if (!isMemberPublic) {
-            msg += " " + this + " is not public";
-        }
+        String msg = "Unable to make " + this + " accessible: ";
+        msg += declaringModule + " does not export ";
+        if (!isClassPublic || !isMemberPublic)
+            msg += "private ";
+        msg += pn + " to " + callerModule;
         Reflection.throwInaccessibleObjectException(msg);
     }
 
