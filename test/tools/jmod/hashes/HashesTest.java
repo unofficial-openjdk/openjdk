@@ -57,6 +57,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import jdk.internal.misc.SharedSecrets;
+import jdk.internal.misc.JavaLangModuleAccess;
 import jdk.internal.module.ModuleHashes;
 
 import org.testng.annotations.BeforeTest;
@@ -95,13 +96,6 @@ public class HashesTest {
         // compile org.bar and org.foo
         compileModule("org.bar", modSrc);
         compileModule("org.foo", modSrc);
-
-        try {
-            hashesMethod = ModuleDescriptor.class.getDeclaredMethod("hashes");
-            hashesMethod.setAccessible(true);
-        } catch (ReflectiveOperationException x) {
-            throw new InternalError(x);
-        }
     }
 
     @Test
@@ -147,8 +141,8 @@ public class HashesTest {
         ModuleReader reader = mref.open();
         try (InputStream in = reader.open("module-info.class").get()) {
             ModuleDescriptor md = ModuleDescriptor.read(in);
-            Optional<ModuleHashes> hashes =
-                (Optional<ModuleHashes>) hashesMethod.invoke(md);
+            JavaLangModuleAccess jmla = SharedSecrets.getJavaLangModuleAccess();
+            Optional<ModuleHashes> hashes = jmla.hashes(md);
             System.out.format("hashes in module %s %s%n", name,
                               hashes.isPresent() ? "present" : "absent");
             if (hashes.isPresent()) {

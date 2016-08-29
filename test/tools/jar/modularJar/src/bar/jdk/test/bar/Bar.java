@@ -26,10 +26,11 @@ package jdk.test.bar;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Requires;
-import java.lang.reflect.Method;
 import java.util.Optional;
 import java.util.StringJoiner;
 
+import jdk.internal.misc.SharedSecrets;
+import jdk.internal.misc.JavaLangModuleAccess;
 import jdk.internal.module.ModuleHashes;
 import jdk.test.bar.internal.Message;
 
@@ -65,10 +66,9 @@ public class Bar {
         if (!sj.toString().equals(""))
             System.out.println("conceals:" + sj.toString());
 
-        Method m = ModuleDescriptor.class.getDeclaredMethod("hashes");
-        m.setAccessible(true);
         ModuleDescriptor foo = jdk.test.foo.Foo.class.getModule().getDescriptor();
-        Optional<ModuleHashes> oHashes = (Optional<ModuleHashes>) m.invoke(foo);
+        JavaLangModuleAccess jlma = SharedSecrets.getJavaLangModuleAccess();
+        Optional<ModuleHashes> oHashes = jlma.hashes(foo);
         System.out.println("hashes:" + oHashes.get().hashFor("bar"));
     }
 }

@@ -506,6 +506,7 @@ public class Basic {
             .assertSuccess();
 
         java(mp, BAR.moduleName + "/" + BAR.mainClass,
+             "--add-exports", "java.base/jdk.internal.misc=bar",
              "--add-exports", "java.base/jdk.internal.module=bar")
             .assertSuccess()
             .resultChecker(r -> {
@@ -550,6 +551,7 @@ public class Basic {
             "-C", barClasses.toString(), ".").assertSuccess();
 
         java(mp, BAR.moduleName + "/" + BAR.mainClass,
+             "--add-exports", "java.base/jdk.internal.misc=bar",
              "--add-exports", "java.base/jdk.internal.module=bar")
             .assertFailure()
             .resultChecker(r -> {
@@ -816,6 +818,8 @@ public class Basic {
         commands.add("-d");
         commands.add(dest.toString());
         if (dest.toString().contains("bar")) {
+            commands.add("--add-exports");
+            commands.add("java.base/jdk.internal.misc=bar");
             commands.add("--add-exports");
             commands.add("java.base/jdk.internal.module=bar");
         }
