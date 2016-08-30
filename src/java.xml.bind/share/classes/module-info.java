@@ -87,7 +87,7 @@ module java.xml.bind {
         jdk.xml.bind;
     exports com.sun.xml.internal.bind.v2.model.impl to
         jdk.xml.bind;
-    exports com.sun.xml.internal.bind.v2.model.nav to
+    exports private com.sun.xml.internal.bind.v2.model.nav to
         java.xml.ws,
         jdk.xml.bind,
         jdk.xml.ws;
