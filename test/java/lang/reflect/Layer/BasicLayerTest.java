@@ -40,6 +40,7 @@ import java.lang.reflect.LayerInstantiationException;
 import java.lang.reflect.Module;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -883,6 +884,54 @@ public class BasicLayerTest {
             Layer.boot().defineModulesWithManyLoaders(cf, scl);
             assertTrue(false);
         } catch (LayerInstantiationException e) { }
+    }
+
+
+    /**
+     * Attempt to create a Layer with a module containing a "java." package.
+     * This should only be allowed when the module is defined to the platform
+     * class loader.
+     */
+    @Test(enabled = false)
+    public void testLayerWithJavaPackage() {
+        ModuleDescriptor descriptor
+            = new ModuleDescriptor.Builder("foo")
+                .conceals("java.foo")
+                .build();
+
+        ModuleFinder finder = ModuleUtils.finderOf(descriptor);
+
+        Configuration cf = Layer.boot()
+                .configuration()
+                .resolveRequires(finder, ModuleFinder.of(), Set.of("foo"));
+        assertTrue(cf.modules().size() == 1);
+
+        ClassLoader pcl = ClassLoader.getPlatformClassLoader();
+        ClassLoader scl = ClassLoader.getSystemClassLoader();
+
+        try {
+            Layer.boot().defineModules(cf, mn -> new ClassLoader() { });
+            assertTrue(false);
+        } catch (LayerInstantiationException e) { }
+
+        try {
+            Layer.boot().defineModulesWithOneLoader(cf, scl);
+            assertTrue(false);
+        } catch (LayerInstantiationException e) { }
+
+        try {
+            Layer.boot().defineModulesWithManyLoaders(cf, scl);
+            assertTrue(false);
+        } catch (LayerInstantiationException e) { }
+
+        // create layer with module defined to platform class loader
+        Layer layer = Layer.boot().defineModules(cf, mn -> pcl);
+        Optional<Module> om = layer.findModule("foo");
+        assertTrue(om.isPresent());
+        Module foo = om.get();
+        assertTrue(foo.getClassLoader() == pcl);
+        assertTrue(foo.getPackages().length == 1);
+        assertTrue(foo.getPackages()[0].equals("java.foo"));
     }
 
 

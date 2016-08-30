@@ -204,7 +204,8 @@ public final class Layer {
      * @throws LayerInstantiationException
      *         If all modules cannot be defined to the same class loader for any
      *         of the reasons listed above or the layer cannot be created because
-     *         the configuration contains a module named "{@code java.base}"
+     *         the configuration contains a module named "{@code java.base}" or
+     *         a module with a package name starting with "{@code java.}"
      * @throws SecurityException
      *         If {@code RuntimePermission("createClassLoader")} or
      *         {@code RuntimePermission("getClassLoader")} is denied by
@@ -267,7 +268,8 @@ public final class Layer {
      *         for this layer
      * @throws LayerInstantiationException
      *         If the layer cannot be created because the configuration contains
-     *         a module named "{@code java.base}"
+     *         a module named "{@code java.base}" or a module with a package
+     *         name starting with "{@code java.}"
      * @throws SecurityException
      *         If {@code RuntimePermission("createClassLoader")} or
      *         {@code RuntimePermission("getClassLoader")} is denied by
@@ -338,6 +340,9 @@ public final class Layer {
      *         If creating the {@code Layer} fails for any of the reasons
      *         listed above, the layer cannot be created because the
      *         configuration contains a module named "{@code java.base}",
+     *         a module with a package name starting with "{@code java.}" is
+     *         mapped to a class loader other than the {@link
+     *         ClassLoader#getPlatformClassLoader() platform class loader},
      *         or the function to map a module name to a class loader returns
      *         {@code null}
      *
