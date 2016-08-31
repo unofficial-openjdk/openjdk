@@ -170,7 +170,7 @@ final class ModuleInfo {
         if (suffix < 1)
             throw invalidModuleDescriptor("this_class not of form name/module-info");
         mn = mn.substring(0, suffix).replace('/', '.');
-        builder = new ModuleDescriptor.Builder(mn);
+        builder = new ModuleDescriptor.Builder(mn, false);
 
         int super_class = in.readUnsignedShort();
         if (super_class > 0)

@@ -37,6 +37,8 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
+import jdk.internal.misc.JavaLangModuleAccess;
+import jdk.internal.misc.SharedSecrets;
 import jdk.internal.org.objectweb.asm.Attribute;
 import jdk.internal.org.objectweb.asm.ByteVector;
 import jdk.internal.org.objectweb.asm.ClassReader;
@@ -60,6 +62,8 @@ public final class ClassFileAttributes {
      * }
      */
     public static class ModuleAttribute extends Attribute {
+        private static final JavaLangModuleAccess JLMA
+            = SharedSecrets.getJavaLangModuleAccess();
 
         private ModuleDescriptor descriptor;
 
@@ -80,8 +84,7 @@ public final class ClassFileAttributes {
                                  int codeOff,
                                  Label[] labels)
         {
-            ModuleDescriptor.Builder builder
-                = new ModuleDescriptor.Builder("xyzzy"); // Name never used
+            ModuleDescriptor.Builder builder = JLMA.newBuilder("unused", false);
             ModuleAttribute attr = new ModuleAttribute();
 
             // requires_count and requires[requires_count]
