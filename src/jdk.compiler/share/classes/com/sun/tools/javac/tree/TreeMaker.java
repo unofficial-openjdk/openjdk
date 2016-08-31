@@ -538,8 +538,9 @@ public class TreeMaker implements JCTree.Factory {
     }
 
     @Override
-    public JCModuleDecl ModuleDef(List<JCAnnotation> annotations, JCExpression qualid, List<JCDirective> directives) {
-        JCModuleDecl tree = new JCModuleDecl(annotations, qualid, directives);
+    public JCModuleDecl ModuleDef(List<JCAnnotation> annotations, boolean weak,
+            JCExpression qualid, List<JCDirective> directives) {
+        JCModuleDecl tree = new JCModuleDecl(annotations, weak, qualid, directives);
         tree.pos = pos;
         return tree;
     }

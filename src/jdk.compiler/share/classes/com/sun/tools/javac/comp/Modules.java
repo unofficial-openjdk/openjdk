@@ -109,7 +109,6 @@ import com.sun.tools.javac.util.Position;
 
 import static com.sun.tools.javac.code.Flags.ABSTRACT;
 import static com.sun.tools.javac.code.Flags.ENUM;
-import static com.sun.tools.javac.code.Flags.PUBLIC;
 
 /**
  *  TODO: fill in
@@ -597,7 +596,7 @@ public class Modules extends JCTree.Visitor {
     class ModuleVisitor extends JCTree.Visitor {
         private ModuleSymbol sym;
         private final Set<ModuleSymbol> allRequires = new HashSet<>();
-        private final Set<PackageSymbol> allExports = new HashSet<>();
+        private final Map<PackageSymbol,List<ExportsDirective>> allExports = new HashMap<>();
 
         @Override
         public void visitModuleDef(JCModuleDecl tree) {
@@ -609,6 +608,9 @@ public class Modules extends JCTree.Visitor {
             sym.requires = sym.requires.reverse();
             sym.exports = sym.exports.reverse();
             ensureJavaBase();
+            if (tree.weak) {
+                ensureExportsDynamicPrivateDefault();
+            }
         }
 
         @Override
@@ -646,9 +648,11 @@ public class Modules extends JCTree.Visitor {
                 Name name = TreeInfo.fullName(tree.qualid);
                 packge = syms.enterPackage(sym, name);
                 attr.setPackageSymbols(tree.qualid, packge);
-                if (!allExports.add(packge)) {
-                    log.error(tree.qualid.pos(), Errors.DuplicateExports(packge));
-                }
+            }
+
+            List<ExportsDirective> exportsForPackage = allExports.computeIfAbsent(packge, p -> List.nil());
+            for (ExportsDirective d : allExports.computeIfAbsent(packge, p -> List.nil())) {
+                checkDuplicateExports(tree, packge, d);
             }
 
             List<ModuleSymbol> toModules = null;
@@ -658,8 +662,13 @@ public class Modules extends JCTree.Visitor {
                     ModuleSymbol msym = lookupModule(n);
                     if (msym.kind != MDL) {
                         log.error(n.pos(), Errors.ModuleNotFound(msym));
-                    } else if (!to.add(msym)) {
-                        log.error(n.pos(), Errors.DuplicateExports(msym));
+                    } else {
+                        for (ExportsDirective d : exportsForPackage) {
+                            checkDuplicateExportsToModule(n, msym, d);
+                        }
+                        if (!to.add(msym)) {
+                            reportExportConflictToModule(n, msym);
+                        }
                     }
                 }
                 toModules = List.from(to);
@@ -676,7 +685,69 @@ public class Modules extends JCTree.Visitor {
                 ExportsDirective d = new ExportsDirective(packge, toModules, flags);
                 tree.directive = d;
                 sym.exports = sym.exports.prepend(d);
+
+                allExports.put(packge, exportsForPackage.prepend(d));
             }
+        }
+
+        /**
+         * Check if an exports tree conflicts with an earlier exports, represented by an exports directive
+         * @param tree the tree to check
+         * @param packge the package being exported, or null for exports default
+         * @param d the directive to compare against
+         */
+        private void checkDuplicateExports(JCExports tree, PackageSymbol packge, ExportsDirective d) {
+            if (tree.moduleNames == null) {
+                if (d.modules == null) {
+                    // both are unqualified: error
+                    reportExportConflict(tree, packge);
+                } else {
+                    // tree unqualified, directive qualified:
+                    // error if directive (i.e. qualified) does not remove dynamic or add private
+                    if (!(tree.isDynamicPhase && !d.isDynamic()
+                            || !tree.isPrivate && d.isPrivate())) {
+                        reportExportConflict(tree, packge);
+                    }
+                }
+            } else {
+                if (d.modules == null) {
+                    // tree qualified, directive unqualified:
+                    // error if tree (i.e. qualified) does not remove dynamic or add private
+                    if (!(d.isDynamic() && !tree.isDynamicPhase
+                            || !d.isPrivate() && tree.isPrivate)) {
+                        reportExportConflict(tree, packge);
+                    }
+                } else {
+                    // both are qualified: error if dynamic and private match
+                    if (tree.isDynamicPhase && d.isDynamic()
+                            && tree.isPrivate && d.isPrivate()) {
+                        reportExportConflict(tree, packge);
+                    }
+                }
+            }
+        }
+
+        private void reportExportConflict(JCExports tree, PackageSymbol packge) {
+            if (tree.qualid == null) {
+                log.error(tree.pos(), Errors.ConflictingDefaultExports);
+            } else {
+                log.error(tree.qualid.pos(), Errors.ConflictingExports(packge));
+            }
+        }
+
+        private void checkDuplicateExportsToModule(JCExpression name, ModuleSymbol msym,
+                ExportsDirective d) {
+            if (d.modules != null) {
+                for (ModuleSymbol other : d.modules) {
+                    if (msym == other) {
+                        reportExportConflictToModule(name, msym);
+                    }
+                }
+            }
+        }
+
+        private void reportExportConflictToModule(JCExpression name, ModuleSymbol msym) {
+            log.error(name.pos(), Errors.ConflictingExportsToModule(msym));
         }
 
         @Override
@@ -701,16 +772,23 @@ public class Modules extends JCTree.Visitor {
             sym.requires = sym.requires.prepend(d);
         }
 
+        private void ensureExportsDynamicPrivateDefault() {
+            for (ExportsDirective d : sym.exports) {
+                if (d.isDynamic() && d.isPrivate() && d.packge == null) {
+                    return;
+                }
+            }
+            Directive.ExportsDirective d =
+                    new Directive.ExportsDirective(null, null,
+                            EnumSet.of(ExportsFlag.DYNAMIC_PHASE, ExportsFlag.PRIVATE_REFLECTION, ExportsFlag.MANDATED));
+            sym.exports = sym.exports.prepend(d);
+        }
+
         private ModuleSymbol lookupModule(JCExpression moduleName) {
-            try {
             Name name = TreeInfo.fullName(moduleName);
             ModuleSymbol msym = moduleFinder.findModule(name);
             TreeInfo.setSymbol(moduleName, msym);
             return msym;
-            } catch (Throwable t) {
-                System.err.println("Module " + sym + "; lookup export " + moduleName);
-                throw t;
-            }
         }
     }
 

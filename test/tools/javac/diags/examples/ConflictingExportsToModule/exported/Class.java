@@ -21,9 +21,7 @@
  * questions.
  */
 
-// key: compiler.err.duplicate.exports
+package exported;
 
-module DuplicateExports {
-     exports exported;
-     exports exported;
+public class Class {
 }

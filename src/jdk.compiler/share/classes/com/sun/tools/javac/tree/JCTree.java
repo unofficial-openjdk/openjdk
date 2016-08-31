@@ -2630,12 +2630,15 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
     public static class JCModuleDecl extends JCTree implements ModuleTree {
         public List<JCAnnotation> annotations;
+        public boolean weak;
         public JCExpression qualId;
         public List<JCDirective> directives;
         public ModuleSymbol sym;
 
-        protected JCModuleDecl(List<JCAnnotation> annotations, JCExpression qualId, List<JCDirective> directives) {
+        protected JCModuleDecl(List<JCAnnotation> annotations, boolean weak,
+                JCExpression qualId, List<JCDirective> directives) {
             this.annotations = annotations;
+            this.weak = weak;
             this.qualId = qualId;
             this.directives = directives;
         }
@@ -2651,6 +2654,11 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         @Override @DefinedBy(Api.COMPILER_TREE)
         public List<? extends AnnotationTree> getAnnotations() {
             return annotations;
+        }
+
+        @Override @DefinedBy(Api.COMPILER_TREE)
+        public boolean isWeak() {
+            return weak;
         }
 
         @Override @DefinedBy(Api.COMPILER_TREE)
@@ -2984,7 +2992,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         JCAnnotation Annotation(JCTree annotationType, List<JCExpression> args);
         JCModifiers Modifiers(long flags, List<JCAnnotation> annotations);
         JCErroneous Erroneous(List<? extends JCTree> errs);
-        JCModuleDecl ModuleDef(List<JCAnnotation> annotations, JCExpression qualId, List<JCDirective> directives);
+        JCModuleDecl ModuleDef(List<JCAnnotation> annotations, boolean weak, JCExpression qualId, List<JCDirective> directives);
         JCExports Exports(JCExpression qualId, boolean isDynamicPhase, boolean isPrivate, List<JCExpression> moduleNames);
         JCProvides Provides(JCExpression serviceName, JCExpression implName);
         JCRequires Requires(boolean isTransitive, boolean isStaticPhase, JCExpression qualId);

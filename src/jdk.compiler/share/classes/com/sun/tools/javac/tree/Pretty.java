@@ -441,6 +441,10 @@ public class Pretty extends JCTree.Visitor {
     @Override
     public void visitModuleDef(JCModuleDecl tree) {
         try {
+            printAnnotations(tree.annotations);
+            if (tree.isWeak()) {
+                print("weak ");
+            }
             print("module ");
             printExpr(tree.qualId);
             if (tree.directives == null) {

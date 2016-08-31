@@ -71,6 +71,7 @@ public class Names {
     public final Name to;
     public final Name transitive;
     public final Name uses;
+    public final Name weak;
     public final Name with;
 
     // field and method names
@@ -229,6 +230,7 @@ public class Names {
         to = fromString("to");
         transitive = fromString("transitive");
         uses = fromString("uses");
+        weak = fromString("weak");
         with = fromString("with");
 
         // field and method names

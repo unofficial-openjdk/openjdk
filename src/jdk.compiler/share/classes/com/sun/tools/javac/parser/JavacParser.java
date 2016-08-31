@@ -51,7 +51,6 @@ import static com.sun.tools.javac.parser.Tokens.TokenKind.GT;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.IMPORT;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.LT;
 import static com.sun.tools.javac.tree.JCTree.Tag.*;
-import com.sun.tools.javac.util.JCDiagnostic.SimpleDiagnosticPosition;
 
 /** The parser maps a token sequence into an abstract syntax
  *  tree. It operates by recursive descent, with code derived
@@ -3150,16 +3149,25 @@ public class JavacParser implements Parser {
                 }
                 if (mods != null || token.kind != SEMI)
                     mods = modifiersOpt(mods);
-                if (token.kind == IDENTIFIER && token.name() == names.module && firstTypeDecl) {
-                    List<JCAnnotation> annotations = List.nil();
-                    if (mods != null) {
-                        checkNoMods(mods.flags);
-                        annotations = mods.annotations;
-                        mods = null;
+                if (firstTypeDecl && token.kind == IDENTIFIER) {
+                    boolean weak = false;
+                    if (token.name() == names.weak) {
+                        weak = true;
+                        nextToken();
                     }
-                    defs.append(moduleDecl(annotations, docComment));
-                    consumedToplevelDoc = true;
-                    break;
+                    if (token.kind == IDENTIFIER && token.name() == names.module) {
+                        List<JCAnnotation> annotations = List.nil();
+                        if (mods != null) {
+                            checkNoMods(mods.flags);
+                            annotations = mods.annotations;
+                            mods = null;
+                        }
+                        defs.append(moduleDecl(annotations, weak, docComment));
+                        consumedToplevelDoc = true;
+                        break;
+                    } else if (weak) {
+                        reportSyntaxError(token.pos, "expected.module");
+                    }
                 }
                 JCTree def = typeDeclaration(mods, docComment);
                 if (def instanceof JCExpressionStatement)
@@ -3185,7 +3193,7 @@ public class JavacParser implements Parser {
         return toplevel;
     }
 
-    JCModuleDecl moduleDecl(List<JCAnnotation> annotations, Comment dc) {
+    JCModuleDecl moduleDecl(List<JCAnnotation> annotations, boolean weak, Comment dc) {
         int pos = token.pos;
         if (!allowModules) {
             log.error(pos, Errors.ModulesNotSupportedInSource(source.name));
@@ -3201,7 +3209,7 @@ public class JavacParser implements Parser {
         accept(RBRACE);
         accept(EOF);
 
-        JCModuleDecl result = toP(F.at(pos).ModuleDef(annotations, name, directives));
+        JCModuleDecl result = toP(F.at(pos).ModuleDef(annotations, weak, name, directives));
         attach(result, dc);
         return result;
     }

@@ -314,7 +314,7 @@ public class ModuleInfoTest extends ModuleTestBase {
      * Verify that duplicate exported packages are detected.
      */
     @Test
-    public void testDuplicateExports_packages(Path base) throws Exception {
+    public void testConflictingExports_packages(Path base) throws Exception {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src, "module m1 { exports p; exports p; }");
 
@@ -329,7 +329,7 @@ public class ModuleInfoTest extends ModuleTestBase {
                 .writeAll()
                 .getOutput(Task.OutputKind.DIRECT);
 
-        if (!log.contains("module-info.java:1:32: compiler.err.duplicate.exports: p"))
+        if (!log.contains("module-info.java:1:32: compiler.err.conflicting.exports: p"))
             throw new Exception("expected output not found");
     }
 
@@ -337,7 +337,7 @@ public class ModuleInfoTest extends ModuleTestBase {
      * Verify that duplicate exported packages are detected.
      */
     @Test
-    public void testDuplicateDynamicExports_packages(Path base) throws Exception {
+    public void testConflictingDynamicExports_packages(Path base) throws Exception {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src, "module m1 { exports p; exports dynamic p; }");
 
@@ -352,7 +352,7 @@ public class ModuleInfoTest extends ModuleTestBase {
                 .writeAll()
                 .getOutput(Task.OutputKind.DIRECT);
 
-        if (!log.contains("module-info.java:1:40: compiler.err.duplicate.exports: p"))
+        if (!log.contains("module-info.java:1:40: compiler.err.conflicting.exports: p"))
             throw new Exception("expected output not found");
     }
 
@@ -360,7 +360,7 @@ public class ModuleInfoTest extends ModuleTestBase {
      * Verify that duplicate exported packages are detected.
      */
     @Test
-    public void testDuplicateExports_packages2(Path base) throws Exception {
+    public void testConflictingExports_packages2(Path base) throws Exception {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src.resolve("m1"), "module m1 { exports p; exports p to m2; }");
         tb.writeJavaFiles(src.resolve("m2"), "module m2 { }");
@@ -376,7 +376,7 @@ public class ModuleInfoTest extends ModuleTestBase {
                 .writeAll()
                 .getOutput(Task.OutputKind.DIRECT);
 
-        if (!log.contains("module-info.java:1:32: compiler.err.duplicate.exports: p"))
+        if (!log.contains("module-info.java:1:32: compiler.err.conflicting.exports: p"))
             throw new Exception("expected output not found");
     }
 
@@ -384,7 +384,7 @@ public class ModuleInfoTest extends ModuleTestBase {
      * Verify that duplicate exported packages are detected.
      */
     @Test
-    public void testDuplicateDynamicExports_packages2(Path base) throws Exception {
+    public void testConflictingDynamicExports_packages2(Path base) throws Exception {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src.resolve("m1"), "module m1 { exports p; exports dynamic p to m2; }");
         tb.writeJavaFiles(src.resolve("m2"), "module m2 { }");
@@ -400,7 +400,7 @@ public class ModuleInfoTest extends ModuleTestBase {
                 .writeAll()
                 .getOutput(Task.OutputKind.DIRECT);
 
-        if (!log.contains("module-info.java:1:40: compiler.err.duplicate.exports: p"))
+        if (!log.contains("module-info.java:1:40: compiler.err.conflicting.exports: p"))
             throw new Exception("expected output not found");
     }
 
@@ -408,7 +408,7 @@ public class ModuleInfoTest extends ModuleTestBase {
      * Verify that duplicate exported packages are detected.
      */
     @Test
-    public void testDuplicateExports_modules(Path base) throws Exception {
+    public void testConflictingExports_modules(Path base) throws Exception {
         Path src = base.resolve("src");
         Path src_m1 = src.resolve("m1");
         tb.writeFile(src_m1.resolve("module-info.java"), "module m1 { }");
@@ -426,7 +426,7 @@ public class ModuleInfoTest extends ModuleTestBase {
                 .writeAll()
                 .getOutput(Task.OutputKind.DIRECT);
 
-        if (!log.contains("module-info.java:1:30: compiler.err.duplicate.exports: m1"))
+        if (!log.contains("module-info.java:1:30: compiler.err.conflicting.exports.to.module: m1"))
             throw new Exception("expected output not found");
     }
 
@@ -434,12 +434,14 @@ public class ModuleInfoTest extends ModuleTestBase {
      * Verify that duplicate exported packages are detected.
      */
     @Test
-    public void testDuplicateDynamicExports_modules(Path base) throws Exception {
+    public void testConflictingDynamicExports_modules(Path base) throws Exception {
         Path src = base.resolve("src");
         Path src_m1 = src.resolve("m1");
         tb.writeFile(src_m1.resolve("module-info.java"), "module m1 { }");
         Path src_m2 = src.resolve("m2");
-        tb.writeFile(src_m2.resolve("module-info.java"), "module m2 { exports dynamic p to m1, m1; }");
+        tb.writeJavaFiles(src_m2,
+                "module m2 { exports dynamic p to m1, m1; }",
+                "package p; public class C { }");
 
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
@@ -452,7 +454,7 @@ public class ModuleInfoTest extends ModuleTestBase {
                 .writeAll()
                 .getOutput(Task.OutputKind.DIRECT);
 
-        if (!log.contains("module-info.java:1:38: compiler.err.duplicate.exports: m1"))
+        if (!log.contains("module-info.java:1:38: compiler.err.conflicting.exports.to.module: m1"))
             throw new Exception("expected output not found");
     }
 

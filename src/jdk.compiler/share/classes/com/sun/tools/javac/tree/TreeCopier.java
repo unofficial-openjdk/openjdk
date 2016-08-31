@@ -511,7 +511,7 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
         List<JCAnnotation> annotations = copy(t.annotations, p);
         JCExpression qualId = copy(t.qualId);
         List<JCDirective> directives = copy(t.directives);
-        return M.at(t.pos).ModuleDef(annotations, qualId, directives);
+        return M.at(t.pos).ModuleDef(annotations, t.weak, qualId, directives);
     }
 
     @Override @DefinedBy(Api.COMPILER_TREE)
