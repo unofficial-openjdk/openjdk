@@ -385,5 +385,7 @@ com/sun/jndi/ldap/DeadSSLLdapTimeoutTest.java                   8141370 linux-i5
 
 com/sun/corba/se/impl/io/HookPutFieldsTest.java			8164908	generic-all
 javax/rmi/PortableRemoteObject/ConcurrentHashMapTest.java	8164908 generic-all
+com/sun/corba/7130985/CorbaExceptionsCompileTest.java		8164908 generic-all
+sun/rmi/rmic/iiopCompilation/IIOPCompilation.java		8164908 generic-all
 
 ############################################################################
