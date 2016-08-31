@@ -56,6 +56,8 @@ module java.xml.ws {
     exports javax.xml.ws.spi.http;
     exports javax.xml.ws.wsaddressing;
 
+    exports private javax.xml.ws.wsaddressing to java.xml.bind;
+
     exports com.oracle.webservices.internal.api.databinding to
         jdk.xml.ws;
     exports com.sun.xml.internal.ws.addressing to
