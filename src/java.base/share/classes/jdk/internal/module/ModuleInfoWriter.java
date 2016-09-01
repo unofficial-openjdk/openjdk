@@ -27,9 +27,8 @@ package jdk.internal.module;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleDescriptor.Version;
 import java.nio.ByteBuffer;
-import java.util.Optional;
+import java.util.Set;
 
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.Opcodes;
@@ -57,7 +56,11 @@ public final class ModuleInfoWriter {
         cw.visit(Opcodes.V1_9, ACC_MODULE, name, null, null, null);
 
         cw.visitAttribute(new ModuleAttribute(md));
-        cw.visitAttribute(new ConcealedPackagesAttribute(md.conceals()));
+
+        Set<String> conceals = md.conceals();
+        if (conceals.size() > 0)
+            cw.visitAttribute(new ConcealedPackagesAttribute(md.conceals()));
+
         md.version().ifPresent(v -> cw.visitAttribute(new VersionAttribute(v)));
         md.mainClass().ifPresent(mc -> cw.visitAttribute(new MainClassAttribute(mc)));
 

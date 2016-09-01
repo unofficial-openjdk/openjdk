@@ -359,6 +359,7 @@ class ModulePath implements ModuleFinder {
     // -- JAR files --
 
     private static final String SERVICES_PREFIX = "META-INF/services/";
+    private static final String VERSIONS_PREFIX = "META-INF/versions/";
 
     /**
      * Returns a container with the service type corresponding to the name of
@@ -449,17 +450,16 @@ class ModulePath implements ModuleFinder {
         if (vs != null)
             builder.version(vs);
 
-        // scan the entries in the JAR file to locate the .class and service
-        // configuration file
-        Map<Boolean, Set<String>> map = versionedEntries(jf)
-              .map(JarEntry::getName)
-              .filter(s -> (s.endsWith(".class") ^ s.startsWith(SERVICES_PREFIX)))
+        // scan the names of the entries in the JAR file to locate the .class
+        // and service configuration files
+        Map<Boolean, Set<String>> map = jarEntryNames(jf)
+              .filter(e -> (e.endsWith(".class") ^ e.startsWith(SERVICES_PREFIX)))
               .collect(Collectors.partitioningBy(s -> s.endsWith(".class"),
                                                  Collectors.toSet()));
         Set<String> classFiles = map.get(Boolean.TRUE);
         Set<String> configFiles = map.get(Boolean.FALSE);
 
-        // all packages are exported
+        // all packages are exported-private
         Set<Exports.Modifier> mods = EnumSet.of(Exports.Modifier.PRIVATE);
         classFiles.stream()
             .map(c -> toPackageName(c))
@@ -541,25 +541,58 @@ class ModulePath implements ModuleFinder {
     }
 
     /**
-     * Returns a stream of entries for this JAR file. When the JAR file
-     * is a multi-release JAR then the entries correspond to the versioned
-     * entries.
+     * Returns a stream of the names of the entries in a JAR file. When the
+     * JAR file is a multi-release JAR then the stream includes the names of
+     * entries in the versioned section when those entries are applicable
+     * to the release version. Suppose this ModulePath was created with a
+     * a release version of 10. In that case, the stream will include the
+     * names of entries in META-INF/versions/10 and META-INF/versions/9.
+     * The return stream may contain duplicates.
      */
-    private Stream<JarEntry> versionedEntries(JarFile jf) {
+    private Stream<String> jarEntryNames(JarFile jf) {
         if (jf.isMultiRelease()) {
             return jf.stream()
                     .map(JarEntry::getName)
-                    .filter(name -> !name.startsWith("META-INF/versions/"))
-                    .map(jf::getJarEntry);
+                    .flatMap(name -> {
+                        if (name.startsWith(VERSIONS_PREFIX))
+                            name = toExternalEntryName(name);
+                        return (name != null) ? Stream.of(name) : Stream.empty();
+                    });
         } else {
-            return jf.stream();
+            return jf.stream()
+                    .map(JarEntry::getName)
+                    .filter(name -> !name.startsWith(VERSIONS_PREFIX));
         }
     }
 
+    /**
+     * Given the name of an entry in the versioned section of JAR file,
+     * returns the entry name, minus the META-INF/versions/N/ prefix, if
+     * the entry is applicable to the release version that this ModulePath
+     * was created with.
+     */
+    private String toExternalEntryName(String name) {
+        int prefixLen = VERSIONS_PREFIX.length();
+        if (name.length() > prefixLen) {
+            String tail = name.substring(VERSIONS_PREFIX.length());
+            int index = tail.indexOf('/');
+            if (index > 0) {
+                String vs = tail.substring(0, index);
+                try {
+                    int v = Integer.parseInt(vs);
+                    if (v > 8 && v <= releaseVersion.major()) {
+                        return tail.substring(index+1);
+                    }
+                } catch (NumberFormatException ignore) { }
+            }
+        }
+        return null;
+    }
+
     private Set<String> jarPackages(JarFile jf) {
-        return versionedEntries(jf)
-            .filter(e -> e.getName().endsWith(".class"))
-            .map(e -> toPackageName(e.getName()))
+        return jarEntryNames(jf)
+            .filter(e -> e.endsWith(".class"))
+            .map(e -> toPackageName(e))
             .filter(pkg -> pkg.length() > 0)   // module-info
             .collect(Collectors.toSet());
     }
