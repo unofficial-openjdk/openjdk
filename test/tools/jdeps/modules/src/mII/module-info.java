@@ -21,10 +21,8 @@
  * questions.
  */
 
-module m3 {
-    requires transitive java.sql;
-    requires transitive m2;
-    requires java.logging;   // TODO: --gen-module-info to do transitive reduction
-    requires transitive m1;
-    exports p3;
+module mII {
+    requires transitive mI;
+    exports p2;
+    exports p2.internal to mIII;
 }

@@ -21,8 +21,7 @@
  * questions.
  */
 
-module m2 {
-    requires transitive m1;
-    exports p2;
-    exports p2.internal to m3;
+module mI {
+    requires unsupported;
+    exports p1;
 }
