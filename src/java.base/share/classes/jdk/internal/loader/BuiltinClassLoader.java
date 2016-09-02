@@ -90,7 +90,7 @@ public class BuiltinClassLoader
 {
     static {
         if (!ClassLoader.registerAsParallelCapable())
-            throw new InternalError();
+            throw new InternalError("Unable to register as parallel capable");
     }
 
     // parent ClassLoader
@@ -194,31 +194,29 @@ public class BuiltinClassLoader
      */
     @Override
     public URL findResource(String mn, String name) throws IOException {
+        if (mn == null) {
+            // search class path
+            return findResourceOnClassPath(name);
+        }
+
         ModuleReference mref = nameToModule.get(mn);
         if (mref == null)
             return null;   // not defined to this class loader
 
         URL url;
-
         try {
             url = AccessController.doPrivileged(
                 new PrivilegedExceptionAction<URL>() {
                     @Override
                     public URL run() throws IOException {
-                        URI u = moduleReaderFor(mref).find(name).orElse(null);
-                        if (u != null) {
-                            try {
-                                return u.toURL();
-                            } catch (MalformedURLException e) { }
-                        }
-                        return null;
+                        return findResource(mref, name);
                     }
                 });
         } catch (PrivilegedActionException pae) {
             throw (IOException) pae.getCause();
         }
 
-        // check access to the URL
+        // check access before returning
         return checkURL(url);
     }
 
@@ -232,8 +230,9 @@ public class BuiltinClassLoader
         // Need URL to resource when running with a security manager so that
         // the right permission check is done.
         SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
 
+        // or search class path for unnamed module
+        if (sm != null || mn == null) {
             URL url = findResource(mn, name);
             return (url != null) ? url.openStream() : null;
 
@@ -258,42 +257,152 @@ public class BuiltinClassLoader
     }
 
     /**
-     * Finds the resource with the given name on the class path of this class
-     * loader.
+     * Finds the resource with the given name in the modules defined to this
+     * class loader or its class path.
      */
     @Override
     public URL findResource(String name) {
-        if (ucp != null) {
-            PrivilegedAction<URL> pa = () -> ucp.findResource(name, false);
-            URL url = AccessController.doPrivileged(pa);
+
+        // for .class resources then locate in module if possible
+        URL url = findClassResourceOrNull(name);
+
+        // search all modules
+        if (url == null) {
+            url = AccessController.doPrivileged(
+                new PrivilegedAction<URL>() {
+                    @Override
+                    public URL run() {
+                        for (ModuleReference mref : nameToModule.values()) {
+                            URL url = findResourceOrNull(mref, name);
+                            if (url != null) return url;
+                        }
+                        return null;
+                    }
+                });
+        }
+
+        if (url != null) {
+            // check access before returning
             return checkURL(url);
+        }
+
+        // search class path
+        return findResourceOnClassPath(name);
+    }
+
+    /**
+     * Returns an enumeration of URL objects to all the resources with the
+     * given name in modules defined to this class loader or on the class
+     * path of this loader.
+     */
+    @Override
+    public Enumeration<URL> findResources(String name) throws IOException {
+        List<URL> checked = new ArrayList<>();
+
+        // for .class resources then locate in module if possible
+        URL url = findClassResourceOrNull(name);
+
+        if (url != null) {
+            // check access
+            if (checkURL(url) != null) {
+                checked.add(url);
+            }
         } else {
+            List<URL> result = AccessController.doPrivileged(
+                new PrivilegedAction<List<URL>>() {
+                    @Override
+                    public List<URL> run() {
+                        List<URL> result = new ArrayList<>();
+                        for (ModuleReference mref : nameToModule.values()) {
+                            URL url = findResourceOrNull(mref, name);
+                            if (url != null) result.add(url);
+                        }
+                        return result;
+                    }
+                });
+
+                // check access
+                for (URL u : result) {
+                    if (checkURL(u) != null) {
+                        checked.add(u);
+                    }
+                }
+        }
+
+        if (ucp != null) {
+            PrivilegedAction<Enumeration<URL>> pa = () -> ucp.findResources(name, false);
+            Enumeration<URL> e = AccessController.doPrivileged(pa);
+            while (e.hasMoreElements()) {
+                url = checkURL(e.nextElement());
+                if (url != null) {
+                    checked.add(url);
+                }
+            }
+        }
+
+        return Collections.enumeration(checked); // checked URLs
+    }
+
+
+    /**
+     * Returns the URL to the given reference in the given module.
+     */
+    private URL findResource(ModuleReference mref, String name) throws IOException {
+        URI u = moduleReaderFor(mref).find(name).orElse(null);
+        if (u != null) {
+            try {
+                return u.toURL();
+            } catch (MalformedURLException e) { }
+        }
+        return null;
+    }
+
+    /**
+     * Returns the URL to the given reference in the given module. Returns
+     * {@code null} if not found or an I/O error occurs.
+     */
+    private URL findResourceOrNull(ModuleReference mref, String name) {
+        try {
+            return findResource(mref, name);
+        } catch (IOException ignore) {
             return null;
         }
     }
 
     /**
-     * Returns an enumeration of URL objects to all the resources with the
-     * given name on the class path of this class loader.
+     * Returns the URL to a .class file in a module. Returns {@code null} if not
+     * a .class file in a module or an I/O error occurs.
      */
-    @Override
-    public Enumeration<URL> findResources(String name) throws IOException {
-        if (ucp != null) {
-            List<URL> result = new ArrayList<>();
-            PrivilegedAction<Enumeration<URL>> pa = () -> ucp.findResources(name, false);
-            Enumeration<URL> e = AccessController.doPrivileged(pa);
-            while (e.hasMoreElements()) {
-                URL url = checkURL(e.nextElement());
-                if (url != null) {
-                    result.add(url);
+    private URL findClassResourceOrNull(String name) {
+        int len = name.length();
+        if (len > 6 && name.endsWith(".class")) {
+            int index = len - 6;
+            String cn = name.substring(0, index).replace("/", ".");
+            LoadedModule module = findLoadedModule(cn);
+            if (module != null) {
+                try {
+                    return findResource(module.name(), name);
+                } catch (IOException ioe) {
+                    // ignore
                 }
             }
-            return Collections.enumeration(result); // checked URLs
-        } else {
-            return Collections.emptyEnumeration();
         }
+        return null;
     }
 
+    /**
+     * Returns a URL to a resource of the given name on the class path.
+     */
+    private URL findResourceOnClassPath(String name) {
+        if (ucp == null)
+            return null;
+
+        PrivilegedAction<URL> pa = () -> ucp.findResource(name, false);
+        URL url = AccessController.doPrivileged(pa);
+
+        // check access before returning
+        return checkURL(url);
+    }
 
     // -- finding/loading classes
 
@@ -334,24 +443,30 @@ public class BuiltinClassLoader
     }
 
     /**
-     * Finds the class with the specified binary name in a given module.
-     * This method returns {@code null} if the class cannot be found.
+     * Finds the class with the specified binary name in a module.
+     * This method returns {@code null} if the class cannot be found
+     * or not defined in the specified module.
      */
     @Override
     protected Class<?> findClass(String mn, String cn) {
-        ModuleReference mref = nameToModule.get(mn);
-        if (mref == null)
-            return null;   // not defined to this class loader
+        if (mn != null) {
+            // find the candidate module for this class
+            LoadedModule loadedModule = findLoadedModule(mn, cn);
+            if (loadedModule == null) {
+                return null;
+            }
 
-        // find the candidate module for this class
-        LoadedModule loadedModule = findLoadedModule(cn);
-        if (loadedModule == null || !loadedModule.name().equals(mn)) {
-            return null;   // module name does not match
+            // attempt to load class in module defined to this loader
+            assert loadedModule.loader() == this;
+            return findClassInModuleOrNull(loadedModule, cn);
         }
 
-        // attempt to load class in module defined to this loader
-        assert loadedModule.loader() == this;
-        return findClassInModuleOrNull(loadedModule, cn);
+        // search class path
+        if (ucp != null) {
+            return findClassOnClassPathOrNull(cn);
+        }
+
+        return null;
     }
 
     /**
@@ -440,6 +555,21 @@ public class BuiltinClassLoader
     }
 
     /**
+     * Find the candidate loaded module for the given class name
+     * in the named module.  Returns {@code null} if the named module
+     * is not defined to this class loader or does not contain
+     * the API package for the class.
+     */
+    private LoadedModule findLoadedModule(String mn, String cn) {
+        LoadedModule loadedModule = findLoadedModule(cn);
+        if (loadedModule != null && mn.equals(loadedModule.name())) {
+            return loadedModule;
+        } else {
+            return null;
+        }
+    }
+
+    /**
      * Finds the class with the specified binary name if in a module
      * defined to this ClassLoader.
      *
@@ -457,20 +587,20 @@ public class BuiltinClassLoader
      */
     private Class<?> findClassOnClassPathOrNull(String cn) {
         return AccessController.doPrivileged(
-            new PrivilegedAction<Class<?>>() {
-                public Class<?> run() {
-                    String path = cn.replace('.', '/').concat(".class");
-                    Resource res = ucp.getResource(path, false);
-                    if (res != null) {
-                        try {
-                            return defineClass(cn, res);
-                        } catch (IOException ioe) {
-                            // TBD on how I/O errors should be propagated
+                new PrivilegedAction<Class<?>>() {
+                    public Class<?> run() {
+                        String path = cn.replace('.', '/').concat(".class");
+                        Resource res = ucp.getResource(path, false);
+                        if (res != null) {
+                            try {
+                                return defineClass(cn, res);
+                            } catch (IOException ioe) {
+                                // TBD on how I/O errors should be propagated
+                            }
                         }
+                        return null;
                     }
-                    return null;
-                }
-            });
+                });
     }
 
     /**

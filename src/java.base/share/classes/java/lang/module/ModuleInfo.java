@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,8 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.lang.module.ModuleDescriptor.Requires.Modifier;
+import java.lang.module.ModuleDescriptor.Requires;
+import java.lang.module.ModuleDescriptor.Exports;
 import java.nio.ByteBuffer;
 import java.nio.BufferUnderflowException;
 import java.util.Collections;
@@ -281,17 +282,19 @@ final class ModuleInfo {
             int index = in.readUnsignedShort();
             int flags = in.readUnsignedShort();
             String dn = cpool.getUtf8(index);
-            Set<Modifier> mods;
+            Set<Requires.Modifier> mods;
             if (flags == 0) {
                 mods = Collections.emptySet();
             } else {
                 mods = new HashSet<>();
-                if ((flags & ACC_PUBLIC) != 0)
-                    mods.add(Modifier.PUBLIC);
+                if ((flags & ACC_TRANSITIVE) != 0)
+                    mods.add(Requires.Modifier.PUBLIC);
+                if ((flags & ACC_STATIC_PHASE) != 0)
+                    mods.add(Requires.Modifier.STATIC);
                 if ((flags & ACC_SYNTHETIC) != 0)
-                    mods.add(Modifier.SYNTHETIC);
+                    mods.add(Requires.Modifier.SYNTHETIC);
                 if ((flags & ACC_MANDATED) != 0)
-                    mods.add(Modifier.MANDATED);
+                    mods.add(Requires.Modifier.MANDATED);
             }
             builder.requires(mods, dn);
             if (dn.equals("java.base"))
@@ -312,6 +315,21 @@ final class ModuleInfo {
             for (int i=0; i<exports_count; i++) {
                 int index = in.readUnsignedShort();
                 String pkg = cpool.getUtf8(index).replace('/', '.');
+
+                Set<Exports.Modifier> mods;
+                int flags = in.readUnsignedShort();
+                if (flags == 0) {
+                    mods = Collections.emptySet();
+                } else {
+                    mods = new HashSet<>();
+                    if ((flags & ACC_DYNAMIC_PHASE) != 0)
+                        mods.add(Exports.Modifier.DYNAMIC);
+                    if ((flags & ACC_SYNTHETIC) != 0)
+                        mods.add(Exports.Modifier.SYNTHETIC);
+                    if ((flags & ACC_MANDATED) != 0)
+                        mods.add(Exports.Modifier.MANDATED);
+                }
+
                 int exports_to_count = in.readUnsignedShort();
                 if (exports_to_count > 0) {
                     Set<String> targets = new HashSet<>(exports_to_count);
@@ -319,9 +337,9 @@ final class ModuleInfo {
                         int exports_to_index = in.readUnsignedShort();
                         targets.add(cpool.getUtf8(exports_to_index));
                     }
-                    builder.exports(pkg, targets);
+                    builder.exports(mods, pkg, targets);
                 } else {
-                    builder.exports(pkg);
+                    builder.exports(mods, pkg);
                 }
             }
         }
@@ -477,8 +495,6 @@ final class ModuleInfo {
                     "LineNumberTable",
                     "LocalVariableTable",
                     "LocalVariableTypeTable",
-                    "RuntimeVisibleAnnotations",
-                    "RuntimeInvisibleAnnotations",
                     "RuntimeVisibleParameterAnnotations",
                     "RuntimeInvisibleParameterAnnotations",
                     "RuntimeVisibleTypeAnnotations",

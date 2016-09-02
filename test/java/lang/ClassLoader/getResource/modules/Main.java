@@ -52,24 +52,20 @@ public class Main {
         assertTrue(Files.notExists(directoryFor("m3").resolve(NAME)));
 
         // invoke ClassLoader getResource from the unnamed module
-        assertNull(Main.class.getClassLoader().getResource("/" + NAME));
+        assertNotNull(Main.class.getClassLoader().getResource("/" + NAME));
 
         // invoke ClassLoader getResource from modules m1-m3
-        // Resources in a named module are private to that module.
-        // ClassLoader.getResource should not find resource in named modules.
-        assertNull(p1.Main.getResourceInClassLoader("/" + NAME));
-        assertNull(p2.Main.getResourceInClassLoader("/" + NAME));
-        assertNull(p3.Main.getResourceInClassLoader("/" + NAME));
+        assertNotNull(p1.Main.getResourceInClassLoader("/" + NAME));
+        assertNotNull(p2.Main.getResourceInClassLoader("/" + NAME));
+        assertNotNull(p3.Main.getResourceInClassLoader("/" + NAME));
 
         // invoke ClassLoader getResourceAsStream from the unnamed module
-        assertNull(Main.class.getClassLoader().getResourceAsStream("/" + NAME));
+        assertNotNull(Main.class.getClassLoader().getResourceAsStream("/" + NAME));
 
         // invoke ClassLoader getResourceAsStream from modules m1-m3
-        // Resources in a named module are private to that module.
-        // ClassLoader.getResourceAsStream should not find resource in named modules.
-        assertNull(p1.Main.getResourceAsStreamInClassLoader("/" + NAME));
-        assertNull(p2.Main.getResourceAsStreamInClassLoader("/" + NAME));
-        assertNull(p3.Main.getResourceAsStreamInClassLoader("/" + NAME));
+        assertNotNull(p1.Main.getResourceAsStreamInClassLoader("/" + NAME));
+        assertNotNull(p2.Main.getResourceAsStreamInClassLoader("/" + NAME));
+        assertNotNull(p3.Main.getResourceAsStreamInClassLoader("/" + NAME));
 
         // SecurityManager case
         System.setSecurityManager(new SecurityManager());
@@ -107,6 +103,10 @@ public class Main {
 
     static void assertNull(Object o) {
         assertTrue(o == null);
+    }
+
+    static void assertNotNull(Object o) {
+        assertTrue(o != null);
     }
 }
 

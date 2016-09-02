@@ -27,6 +27,7 @@ package java.lang.reflect;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.Annotation;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleDescriptor;
@@ -36,6 +37,8 @@ import java.lang.module.ModuleDescriptor.Version;
 import java.lang.module.ResolvedModule;
 import java.net.URI;
 import java.net.URL;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -49,9 +52,16 @@ import java.util.stream.Stream;
 
 import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.loader.BootLoader;
+import jdk.internal.misc.JavaLangAccess;
 import jdk.internal.misc.JavaLangReflectModuleAccess;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.module.ServicesCatalog;
+import jdk.internal.org.objectweb.asm.AnnotationVisitor;
+import jdk.internal.org.objectweb.asm.Attribute;
+import jdk.internal.org.objectweb.asm.ClassReader;
+import jdk.internal.org.objectweb.asm.ClassVisitor;
+import jdk.internal.org.objectweb.asm.ClassWriter;
+import jdk.internal.org.objectweb.asm.Opcodes;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 import sun.security.util.SecurityConstants;
@@ -83,7 +93,7 @@ import sun.security.util.SecurityConstants;
  * @see java.lang.Class#getModule
  */
 
-public final class Module {
+public final class Module implements AnnotatedElement {
 
     // the layer that contains this module, can be null
     private final Layer layer;
@@ -252,12 +262,11 @@ public final class Module {
 
     // -- readability --
 
-    // the modules that this module permanently reads
-    // (will be final when the modules are defined in reverse topology order)
+    // the modules that this module reads
     private volatile Set<Module> reads;
 
     // additional module (2nd key) that some module (1st key) reflectively reads
-    private static final WeakPairMap<Module, Module, Boolean> transientReads
+    private static final WeakPairMap<Module, Module, Boolean> reflectivelyReads
         = new WeakPairMap<>();
 
 
@@ -293,13 +302,13 @@ public final class Module {
         }
 
         // check if this module reads the other module reflectively
-        if (transientReads.containsKeyPair(this, other))
+        if (reflectivelyReads.containsKeyPair(this, other))
             return true;
 
         // if other is an unnamed module then check if this module reads
         // all unnamed modules
         if (!other.isNamed()
-            && transientReads.containsKeyPair(this, ALL_UNNAMED_MODULE))
+            && reflectivelyReads.containsKeyPair(this, ALL_UNNAMED_MODULE))
             return true;
 
         return false;
@@ -381,20 +390,19 @@ public final class Module {
         }
 
         // add reflective read
-        transientReads.putIfAbsent(this, other, Boolean.TRUE);
+        reflectivelyReads.putIfAbsent(this, other, Boolean.TRUE);
     }
 
 
     // -- exports --
 
-    // the packages that are permanently exported
-    // (will be final when the modules are defined in reverse topology order)
+    // the packages that are exported
     private volatile Map<String, Set<Module>> exports;
 
     // additional exports added at run-time
     // this module (1st key), other module (2nd key), exported packages (value)
     private static final WeakPairMap<Module, Module, Map<String, Boolean>>
-        transientExports = new WeakPairMap<>();
+        reflectivelyExports = new WeakPairMap<>();
 
 
     /**
@@ -451,7 +459,7 @@ public final class Module {
             return true;
 
         // exported via module declaration/descriptor
-        if (isExportedPermanently(pn, other))
+        if (isExportedStatically(pn, other))
             return true;
 
         // exported via addExports
@@ -463,10 +471,10 @@ public final class Module {
     }
 
     /**
-     * Returns {@code true} if this module permanently exports the given
+     * Returns {@code true} if this module statically exports the given
      * package to the given module.
      */
-    private boolean isExportedPermanently(String pn, Module other) {
+    private boolean isExportedStatically(String pn, Module other) {
         Map<String, Set<Module>> exports = this.exports;
         if (exports != null) {
             Set<Module> targets = exports.get(pn);
@@ -484,20 +492,20 @@ public final class Module {
      */
     private boolean isExportedReflectively(String pn, Module other) {
         // exported to all modules
-        Map<String, ?> exports = transientExports.get(this, EVERYONE_MODULE);
+        Map<String, ?> exports = reflectivelyExports.get(this, EVERYONE_MODULE);
         if (exports != null && exports.containsKey(pn))
             return true;
 
         if (other != EVERYONE_MODULE) {
 
             // exported to other
-            exports = transientExports.get(this, other);
+            exports = reflectivelyExports.get(this, other);
             if (exports != null && exports.containsKey(pn))
                 return true;
 
             // other is an unnamed module && exported to all unnamed
             if (!other.isNamed()) {
-                exports = transientExports.get(this, ALL_UNNAMED_MODULE);
+                exports = reflectivelyExports.get(this, ALL_UNNAMED_MODULE);
                 if (exports != null && exports.containsKey(pn))
                     return true;
             }
@@ -604,10 +612,10 @@ public final class Module {
             }
         }
 
-        // add package name to transientExports if absent
-        transientExports
+        // add package name to reflectivelyExports if absent
+        reflectivelyExports
             .computeIfAbsent(this, other,
-                             (_this, _other) -> new ConcurrentHashMap<>())
+                             (m1, m2) -> new ConcurrentHashMap<>())
             .putIfAbsent(pn, Boolean.TRUE);
     }
 
@@ -646,20 +654,26 @@ public final class Module {
         Objects.requireNonNull(st);
 
         if (isNamed()) {
-
             Module caller = Reflection.getCallerClass().getModule();
             if (caller != this) {
                 throw new IllegalStateException(caller + " != " + this);
             }
-
-            if (!canUse(st)) {
-                transientUses.putIfAbsent(this, st, Boolean.TRUE);
-            }
-
+            implAddUses(st);
         }
 
         return this;
     }
+
+    /**
+     * Update this module to add a service dependence on the given service
+     * type.
+     */
+    void implAddUses(Class<?> st) {
+        if (!canUse(st)) {
+            transientUses.putIfAbsent(this, st, Boolean.TRUE);
+        }
+    }
+
 
     /**
      * Indicates if this module has a service dependence on the given service
@@ -965,6 +979,130 @@ public final class Module {
     }
 
 
+    // -- annotations --
+
+    /**
+     * {@inheritDoc}
+     * This method returns {@code null} when invoked on an unnamed module.
+     */
+    @Override
+    public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+        return moduleInfoClass().getDeclaredAnnotation(annotationClass);
+    }
+
+    /**
+     * {@inheritDoc}
+     * This method returns an empty array when invoked on an unnamed module.
+     */
+    @Override
+    public Annotation[] getAnnotations() {
+        return moduleInfoClass().getAnnotations();
+    }
+
+    /**
+     * {@inheritDoc}
+     * This method returns an empty array when invoked on an unnamed module.
+     */
+    @Override
+    public Annotation[] getDeclaredAnnotations() {
+        return moduleInfoClass().getDeclaredAnnotations();
+    }
+
+    // cached class file with annotations
+    private volatile Class<?> moduleInfoClass;
+
+    private Class<?> moduleInfoClass() {
+        Class<?> clazz = this.moduleInfoClass;
+        if (clazz != null)
+            return clazz;
+
+        synchronized (this) {
+            clazz = this.moduleInfoClass;
+            if (clazz == null) {
+                if (isNamed()) {
+                    PrivilegedAction<Class<?>> pa = this::loadModuleInfoClass;
+                    clazz = AccessController.doPrivileged(pa);
+                }
+                if (clazz == null) {
+                    class DummyModuleInfo { }
+                    clazz = DummyModuleInfo.class;
+                }
+                this.moduleInfoClass = clazz;
+            }
+            return clazz;
+        }
+    }
+
+    private Class<?> loadModuleInfoClass() {
+        Class<?> clazz = null;
+        try (InputStream in = getResourceAsStream("module-info.class")) {
+            if (in != null)
+                clazz = loadModuleInfoClass(in);
+        } catch (Exception ignore) { }
+        return clazz;
+    }
+
+    /**
+     * Loads module-info.class as a package-private interface in a class loader
+     * that is a child of this module's class loader.
+     */
+    private Class<?> loadModuleInfoClass(InputStream in) throws IOException {
+        final String MODULE_INFO = "module-info";
+
+        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS
+                                         + ClassWriter.COMPUTE_FRAMES);
+
+        ClassVisitor cv = new ClassVisitor(Opcodes.ASM5, cw) {
+            @Override
+            public void visit(int version,
+                              int access,
+                              String name,
+                              String signature,
+                              String superName,
+                              String[] interfaces) {
+                cw.visit(version,
+                        Opcodes.ACC_INTERFACE
+                            + Opcodes.ACC_ABSTRACT
+                            + Opcodes.ACC_SYNTHETIC,
+                        MODULE_INFO,
+                        null,
+                        "java/lang/Object",
+                        null);
+            }
+            @Override
+            public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+                // keep annotations
+                return super.visitAnnotation(desc, visible);
+            }
+            @Override
+            public void visitAttribute(Attribute attr) {
+                // drop non-annotation attributes
+            }
+        };
+
+        ClassReader cr = new ClassReader(in);
+        cr.accept(cv, 0);
+        byte[] bytes = cw.toByteArray();
+
+        ClassLoader cl = new ClassLoader(loader) {
+            @Override
+            protected Class<?> findClass(String cn)throws ClassNotFoundException {
+                if (cn.equals(MODULE_INFO)) {
+                    return super.defineClass(cn, bytes, 0, bytes.length);
+                } else {
+                    throw new ClassNotFoundException(cn);
+                }
+            }
+        };
+
+        try {
+            return cl.loadClass(MODULE_INFO);
+        } catch (ClassNotFoundException e) {
+            throw new InternalError(e);
+        }
+    }
+
+
     // -- misc --
 
 
@@ -974,11 +1112,6 @@ public final class Module {
      * resource is denied by the security manager.
      * The {@code name} is a {@code '/'}-separated path name that identifies
      * the resource.
-     *
-     * <p> If this module is an unnamed module, and the {@code ClassLoader} for
-     * this module is not {@code null}, then this method is equivalent to
-     * invoking the {@link ClassLoader#getResourceAsStream(String)
-     * getResourceAsStream} method on the class loader for this module.
      *
      * @param  name
      *         The resource name
@@ -993,33 +1126,18 @@ public final class Module {
     public InputStream getResourceAsStream(String name) throws IOException {
         Objects.requireNonNull(name);
 
-        URL url = null;
+        String mn = this.name;
 
-        if (isNamed()) {
-            String mn = this.name;
-
-            // special-case built-in class loaders to avoid URL connection
-            if (loader == null) {
-                return BootLoader.findResourceAsStream(mn, name);
-            } else if (loader instanceof BuiltinClassLoader) {
-                return ((BuiltinClassLoader) loader).findResourceAsStream(mn, name);
-            }
-
-            // use SharedSecrets to invoke protected method
-            url = SharedSecrets.getJavaLangAccess().findResource(loader, mn, name);
-
-        } else {
-
-            // unnamed module
-            if (loader == null) {
-                url = BootLoader.findResource(name);
-            } else {
-                return loader.getResourceAsStream(name);
-            }
-
+        // special-case built-in class loaders to avoid URL connection
+        if (loader == null) {
+            return BootLoader.findResourceAsStream(mn, name);
+        } else if (loader instanceof BuiltinClassLoader) {
+            return ((BuiltinClassLoader) loader).findResourceAsStream(mn, name);
         }
 
-        // fallthrough to URL case
+        // locate resource in module
+        JavaLangAccess jla = SharedSecrets.getJavaLangAccess();
+        URL url = jla.findResource(loader, mn, name);
         if (url != null) {
             try {
                 return url.openStream();
@@ -1107,6 +1225,10 @@ public final class Module {
                 @Override
                 public void addExportsToAllUnnamed(Module m, String pn) {
                     m.implAddExports(pn, Module.ALL_UNNAMED_MODULE, true);
+                }
+                @Override
+                public void addUses(Module m, Class<?> service) {
+                    m.implAddUses(service);
                 }
                 @Override
                 public void addPackage(Module m, String pn) {

@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,24 +21,12 @@
  * questions.
  */
 
-package java.lang.module;
+package java.lang;
 
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.ServiceLoader;
 
-
-class Dependence {
-
-    private Dependence() { }
-
-    static <T> Stream<String> toStringStream(Set<T> s) {
-        return s.stream().map(e -> e.toString().toLowerCase());
+public interface TestProvider {
+    public static Iterable<TestProvider> providers() {
+        return ServiceLoader.load(TestProvider.class);
     }
-
-    static <M> String toString(Set<M> mods, String what) {
-        return (Stream.concat(toStringStream(mods), Stream.of(what)))
-                      .collect(Collectors.joining(" "));
-    }
-
 }

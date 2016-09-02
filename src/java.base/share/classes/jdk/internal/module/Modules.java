@@ -26,8 +26,11 @@
 package jdk.internal.module;
 
 import java.lang.module.ModuleDescriptor;
+import java.lang.reflect.Layer;
 import java.lang.reflect.Module;
 import java.net.URI;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Set;
 
 import jdk.internal.loader.BootLoader;
@@ -125,6 +128,38 @@ public class Modules {
     }
 
     /**
+     * Updates module m to use a service
+     */
+    public static void addUses(Module m, Class<?> service) {
+        JLRMA.addUses(m, service);
+    }
+
+    /**
+     * Updates module m to provide a service
+     */
+    public static void addProvides(Module m, Class<?> service, Class<?> impl) {
+        // update ClassLoader catalog
+        PrivilegedAction<ClassLoader> pa = m::getClassLoader;
+        ClassLoader loader = AccessController.doPrivileged(pa);
+        ServicesCatalog catalog;
+        if (loader == null) {
+            catalog = BootLoader.getServicesCatalog();
+        } else {
+            catalog = SharedSecrets.getJavaLangAccess()
+                                   .createOrGetServicesCatalog(loader);
+        }
+        catalog.addProvider(m, service, impl);
+
+        // update Layer catalog
+        Layer layer = m.getLayer();
+        if (layer != null) {
+            SharedSecrets.getJavaLangReflectModuleAccess()
+                    .getServicesCatalog(layer)
+                    .addProvider(m, service, impl);
+        }
+    }
+
+    /**
      * Adds a package to a module's content.
      *
      * This method is a no-op if the module already contains the package.
@@ -142,5 +177,4 @@ public class Modules {
         addReads(m, BootLoader.getUnnamedModule());
         addReads(m, ClassLoaders.appClassLoader().getUnnamedModule());
     }
-
 }

@@ -32,6 +32,7 @@
 
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
+import static java.lang.module.ModuleDescriptor.Requires.Modifier;
 import java.lang.module.ModuleFinder;
 import java.lang.reflect.Layer;
 import java.lang.reflect.LayerInstantiationException;
@@ -383,7 +384,7 @@ public class BasicLayerTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(ModuleDescriptor.Requires.Modifier.PUBLIC, "m1")
+                .requires(Set.of(Modifier.PUBLIC), "m1")
                 .build();
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
@@ -464,7 +465,7 @@ public class BasicLayerTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(ModuleDescriptor.Requires.Modifier.PUBLIC, "m1")
+                .requires(Set.of(Modifier.PUBLIC), "m1")
                 .build();
 
         ModuleDescriptor descriptor3
@@ -532,7 +533,7 @@ public class BasicLayerTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(ModuleDescriptor.Requires.Modifier.PUBLIC, "m1")
+                .requires(Set.of(Modifier.PUBLIC), "m1")
                 .build();
 
         ModuleFinder finder2 = ModuleUtils.finderOf(descriptor2);
@@ -600,7 +601,7 @@ public class BasicLayerTest {
 
         ModuleDescriptor descriptor2
             = new ModuleDescriptor.Builder("m2")
-                .requires(ModuleDescriptor.Requires.Modifier.PUBLIC, "m1")
+                .requires(Set.of(Modifier.PUBLIC), "m1")
                 .build();
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
@@ -615,7 +616,7 @@ public class BasicLayerTest {
 
         ModuleDescriptor descriptor3
             = new ModuleDescriptor.Builder("m3")
-                .requires(ModuleDescriptor.Requires.Modifier.PUBLIC, "m2")
+                .requires(Set.of(Modifier.PUBLIC), "m2")
                 .build();
 
         ModuleDescriptor descriptor4

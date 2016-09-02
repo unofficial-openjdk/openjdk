@@ -81,6 +81,11 @@ public interface JavaLangReflectModuleAccess {
     void addExportsToAllUnnamed(Module m, String pkg);
 
     /**
+     * Updates a module m to use a service.
+     */
+    void addUses(Module m, Class<?> service);
+
+    /**
      * Add a package to the given module.
      */
     void addPackage(Module m, String pkg);

@@ -442,21 +442,10 @@ public final class Class<T> implements java.io.Serializable,
 
         PrivilegedAction<ClassLoader> pa = module::getClassLoader;
         ClassLoader cl = AccessController.doPrivileged(pa);
-        if (module.isNamed() && cl != null) {
-            return cl.loadLocalClass(module, name);
-        }
-
-        final Class<?> c;
         if (cl != null) {
-            c = cl.loadLocalClass(name);
+            return cl.loadClass(module, name);
         } else {
-            c = BootLoader.loadClassOrNull(name);
-        }
-
-        if (c != null && c.getModule() == module) {
-            return c;
-        } else {
-            return null;
+            return BootLoader.loadClass(module, name);
         }
     }
 
@@ -2368,9 +2357,8 @@ public final class Class<T> implements java.io.Serializable,
 
     /**
      * Finds a resource with a given name. If this class is in a named {@link
-     * Module Module}, and the caller of this method is in the same module,
-     * then this method will attempt to find the resource in that module.
-     * Otherwise, the rules for searching resources
+     * Module Module} then this method will attempt to find the resource in
+     * that module. Otherwise, the rules for searching resources
      * associated with a given class are implemented by the defining
      * {@linkplain ClassLoader class loader} of the class.  This method
      * delegates to this object's class loader.  If this object was loaded by
@@ -2400,40 +2388,34 @@ public final class Class<T> implements java.io.Serializable,
      * </ul>
      *
      * @param  name name of the desired resource
-     * @return  A {@link java.io.InputStream} object or {@code null} if
-     *          no resource with this name is found
+     * @return  A {@link java.io.InputStream} object; {@code null} if no
+     *          resource with this name is found or access to the resource is
+     *          denied by the security manager.
      * @throws  NullPointerException If {@code name} is {@code null}
      * @since  1.1
      */
-    @CallerSensitive
     public InputStream getResourceAsStream(String name) {
         name = resolveName(name);
 
-        // if this Class and the caller are in the same named module
-        // then attempt to get an input stream to the resource in the
-        // module
         Module module = getModule();
         if (module.isNamed()) {
-            Class<?> caller = Reflection.getCallerClass();
-            if (caller != null && caller.getModule() == module) {
-                ClassLoader cl = getClassLoader0();
-                String mn = module.getName();
-                try {
+            String mn = module.getName();
+            ClassLoader cl = getClassLoader0();
+            try {
 
-                    // special-case built-in class loaders to avoid the
-                    // need for a URL connection
-                    if (cl == null) {
-                        return BootLoader.findResourceAsStream(mn, name);
-                    } else if (cl instanceof BuiltinClassLoader) {
-                        return ((BuiltinClassLoader) cl).findResourceAsStream(mn, name);
-                    } else {
-                        URL url = cl.findResource(mn, name);
-                        return (url != null) ? url.openStream() : null;
-                    }
-
-                } catch (IOException | SecurityException e) {
-                    return null;
+                // special-case built-in class loaders to avoid the
+                // need for a URL connection
+                if (cl == null) {
+                    return BootLoader.findResourceAsStream(mn, name);
+                } else if (cl instanceof BuiltinClassLoader) {
+                    return ((BuiltinClassLoader) cl).findResourceAsStream(mn, name);
+                } else {
+                    URL url = cl.findResource(mn, name);
+                    return (url != null) ? url.openStream() : null;
                 }
+
+            } catch (IOException | SecurityException e) {
+                return null;
             }
         }
 
@@ -2448,9 +2430,8 @@ public final class Class<T> implements java.io.Serializable,
 
     /**
      * Finds a resource with a given name. If this class is in a named {@link
-     * Module Module}, and the caller of this method is in the same module,
-     * then this method will attempt to find the resource in that module.
-     * Otherwise, the rules for searching resources
+     * Module Module} then this method will attempt to find the resource in
+     * that module. Otherwise, the rules for searching resources
      * associated with a given class are implemented by the defining
      * {@linkplain ClassLoader class loader} of the class.  This method
      * delegates to this object's class loader. If this object was loaded by
@@ -2479,32 +2460,26 @@ public final class Class<T> implements java.io.Serializable,
      * </ul>
      *
      * @param  name name of the desired resource
-     * @return A {@link java.net.URL} object; {@code null} if no
-     *         resource with this name is found or the resource cannot
-     *         be located by a URL.
+     * @return A {@link java.net.URL} object; {@code null} if no resource with
+     *         this name is found, the resource cannot be located by a URL, or
+     *         access to the resource is denied by the security manager.
      * @since  1.1
      */
-    @CallerSensitive
     public URL getResource(String name) {
         name = resolveName(name);
 
-        // if this Class and the caller are in the same named module
-        // then attempt to get URL to the resource in the module
         Module module = getModule();
         if (module.isNamed()) {
-            Class<?> caller = Reflection.getCallerClass();
-            if (caller != null && caller.getModule() == module) {
-                String mn = getModule().getName();
-                ClassLoader cl = getClassLoader0();
-                try {
-                    if (cl == null) {
-                        return BootLoader.findResource(mn, name);
-                    } else {
-                        return cl.findResource(mn, name);
-                    }
-                } catch (IOException ioe) {
-                    return null;
+            String mn = getModule().getName();
+            ClassLoader cl = getClassLoader0();
+            try {
+                if (cl == null) {
+                    return BootLoader.findResource(mn, name);
+                } else {
+                    return cl.findResource(mn, name);
                 }
+            } catch (IOException ioe) {
+                return null;
             }
         }
 

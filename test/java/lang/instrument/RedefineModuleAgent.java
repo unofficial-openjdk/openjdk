@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,24 +21,28 @@
  * questions.
  */
 
-package java.lang.module;
-
+import java.lang.instrument.Instrumentation;
+import java.lang.reflect.Module;
+import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
+/**
+ * Agent used by RedefineModuleTest
+ */
 
-class Dependence {
+public class RedefineModuleAgent {
 
-    private Dependence() { }
+    private static Instrumentation inst;
 
-    static <T> Stream<String> toStringStream(Set<T> s) {
-        return s.stream().map(e -> e.toString().toLowerCase());
+    public static void premain(String args, Instrumentation inst) throws Exception {
+        RedefineModuleAgent.inst = inst;
     }
 
-    static <M> String toString(Set<M> mods, String what) {
-        return (Stream.concat(toStringStream(mods), Stream.of(what)))
-                      .collect(Collectors.joining(" "));
+    static void redefineModule(Module module,
+                               Set<Module> extraReads,
+                               Map<String, Set<Module>> extraExports,
+                               Set<Class<?>> extraUses,
+                               Map<Class<?>, Set<Class<?>>> extraProvides) {
+        inst.redefineModule(module, extraReads, extraExports, extraUses, extraProvides);
     }
-
 }

@@ -97,6 +97,12 @@ public class ModuleDescriptor
             PUBLIC,
 
             /**
+             * The dependence is mandatory in the static phase, during compilation,
+             * but is optional in the dynamic phase, during execution.
+             */
+            STATIC,
+
+            /**
              * The dependence was not explicitly or implicitly declared in the
              * source of the module declaration.
              */
@@ -114,16 +120,15 @@ public class ModuleDescriptor
         private final String name;
 
         private Requires(Set<Modifier> ms, String mn) {
-            this(ms, mn, true);
+            this.mods = ms.isEmpty()
+                    ? Collections.emptySet()
+                    : Collections.unmodifiableSet(EnumSet.copyOf(ms));
+            this.name = requireModuleName(mn);
         }
-        private Requires(Set<Modifier> ms, String mn, boolean check) {
-            if (ms == null || ms.isEmpty()) {
-                mods = Collections.emptySet();
-            } else {
-                mods = check ? Collections.unmodifiableSet(EnumSet.copyOf(ms))
-                             : ms;
-            }
-            this.name = check ? requireModuleName(mn) : mn;
+
+        private Requires(Set<Modifier> ms, String mn, boolean unused) {
+            this.mods = ms;
+            this.name = mn;
         }
 
         /**
@@ -238,36 +243,89 @@ public class ModuleDescriptor
 
     public final static class Exports {
 
+        /**
+         * A modifier on a module export.
+         *
+         * @since 9
+         */
+        public static enum Modifier {
+
+            /**
+             * The package is concealed in the static phase, during compilation,
+             * but is exported in the dynamic phase, during execution.
+             */
+            DYNAMIC,
+
+            /**
+             * The export was not explicitly or implicitly declared in the
+             * source of the module declaration.
+             */
+            SYNTHETIC,
+
+            /**
+             * The export was implicitly declared in the source of the module
+             * declaration.
+             */
+            MANDATED;
+
+        }
+
+        private final Set<Modifier> mods;
         private final String source;
         private final Set<String> targets;  // empty if unqualified export
 
         /**
          * Constructs a qualified export.
          */
-        private Exports(String source, Set<String> targets) {
-            this(source, targets, true);
+        private Exports(Set<Modifier> ms, String source, Set<String> targets) {
+            if (ms.isEmpty()) {
+                this.mods = Collections.emptySet();
+            } else {
+                this.mods = Collections.unmodifiableSet(EnumSet.copyOf(ms));
+            }
+            this.source = requirePackageName(source);
+            if (targets.isEmpty()) {
+                throw new IllegalArgumentException("Empty target set");
+            }
+            targets.stream().forEach(Checks::requireModuleName);
+            this.targets = Collections.unmodifiableSet(new HashSet<>(targets));
         }
 
-        private Exports(String source, Set<String> targets, boolean check) {
-            this.source = check ? requirePackageName(source) : source;
-            targets = check ? Collections.unmodifiableSet(new HashSet<>(targets))
-                            : Collections.unmodifiableSet(targets);
-            if (targets.isEmpty())
-                throw new IllegalArgumentException("Empty target set");
-            if (check)
-                targets.stream().forEach(Checks::requireModuleName);
+        private Exports(Set<Modifier> ms,
+                        String source,
+                        Set<String> targets,
+                        boolean unused) {
+            this.mods = ms;
+            this.source = source;
             this.targets = targets;
         }
 
         /**
          * Constructs an unqualified export.
          */
-        private Exports(String source) {
-            this(source, true);
-        }
-        private Exports(String source, boolean check) {
-            this.source = check ? requirePackageName(source) : source;
+        private Exports(Set<Modifier> ms, String source) {
+            if (ms.isEmpty()) {
+                this.mods = Collections.emptySet();
+            } else {
+                this.mods = Collections.unmodifiableSet(EnumSet.copyOf(ms));
+            }
+            this.source = requirePackageName(source);
             this.targets = Collections.emptySet();
+        }
+
+        private Exports(Set<Modifier> ms, String source, boolean unused) {
+            this.mods = ms;
+            this.source = source;
+            this.targets = Collections.emptySet();
+        }
+
+        /**
+         * Returns the set of modifiers.
+         *
+         * @return A possibly-empty unmodifiable set of modifiers
+         */
+        public Set<Modifier> modifiers() {
+            return mods;
         }
 
         /**
@@ -348,10 +406,11 @@ public class ModuleDescriptor
          */
         @Override
         public String toString() {
+            String s = Dependence.toString(mods, source);
             if (targets.isEmpty())
-                return source;
+                return s;
             else
-                return source + " to " + targets;
+                return s + " to " + targets;
         }
 
     }
@@ -371,18 +430,16 @@ public class ModuleDescriptor
         private final Set<String> providers;
 
         private Provides(String service, Set<String> providers) {
-            this(service, providers, true);
-        }
-
-        private Provides(String service, Set<String> providers, boolean check) {
-            this.service = check ? requireServiceTypeName(service) : service;
-            providers = check
-                ? Collections.unmodifiableSet(new LinkedHashSet<>(providers))
-                : Collections.unmodifiableSet(providers);
+            this.service = requireServiceTypeName(service);
             if (providers.isEmpty())
                 throw new IllegalArgumentException("Empty providers set");
-            if (check)
-                providers.forEach(Checks::requireServiceProviderName);
+            providers.forEach(Checks::requireServiceProviderName);
+            this.providers =
+                Collections.unmodifiableSet(new LinkedHashSet<>(providers));
+        }
+
+        private Provides(String service, Set<String> providers, boolean unused) {
+            this.service = service;
             this.providers = providers;
         }
 
@@ -865,8 +922,8 @@ public class ModuleDescriptor
     }
 
     /**
-     * Creates a module descriptor from its components. This method is intended
-     * for use by the jlink plugin.
+     * Creates a module descriptor from its components.
+     * The arguments are pre-validated and sets are unmodifiable sets.
      */
     ModuleDescriptor(String name,
                      boolean automatic,
@@ -885,11 +942,11 @@ public class ModuleDescriptor
         this.name = name;
         this.automatic = automatic;
         this.synthetic = synthetic;
-        this.requires = Collections.unmodifiableSet(requires);
-        this.exports = Collections.unmodifiableSet(exports);
-        this.uses = Collections.unmodifiableSet(uses);
-        this.provides = Collections.unmodifiableMap(provides);
-        this.packages = Collections.unmodifiableSet(packages);
+        this.requires = requires;
+        this.exports = exports;
+        this.uses = uses;
+        this.provides = provides;
+        this.packages = packages;
 
         this.version = version;
         this.mainClass = mainClass;
@@ -1086,8 +1143,7 @@ public class ModuleDescriptor
      *         .build();
      * }</pre>
      *
-     * @apiNote A {@code Builder} cannot be used to create an {@link
-     * ModuleDescriptor#isAutomatic() automatic} or a {@link
+     * @apiNote A {@code Builder} cannot be used to create a {@link
      * ModuleDescriptor#isSynthetic() synthetic} module.
      *
      * @since 9
@@ -1130,7 +1186,7 @@ public class ModuleDescriptor
          *
          * @see ModuleDescriptor#isAutomatic()
          */
-        /* package */ Builder automatic() {
+        public Builder automatic() {
             this.automatic = true;
             return this;
         }
@@ -1207,26 +1263,6 @@ public class ModuleDescriptor
             return requires(EnumSet.noneOf(Requires.Modifier.class), mn);
         }
 
-        /**
-         * Adds a dependence on a module with the given modifier.
-         *
-         * @param  mod
-         *         The modifier
-         * @param  mn
-         *         The module name
-         *
-         * @return This builder
-         *
-         * @throws IllegalArgumentException
-         *         If the module name is {@code null}, is not a legal Java
-         *         identifier, or is equal to the module name that this builder
-         *         was initialized to build
-         * @throws IllegalStateException
-         *         If the dependence on the module has already been declared
-         */
-        public Builder requires(Requires.Modifier mod, String mn) {
-            return requires(EnumSet.of(mod), mn);
-        }
 
         /**
          * Adds a service dependence.
@@ -1283,6 +1319,61 @@ public class ModuleDescriptor
         }
 
         /**
+         * Adds an export, with the given (and possibly empty) set of modifiers,
+         * to a set of target modules.
+         *
+         * @param  mods
+         *         The set of modifiers
+         * @param  pn
+         *         The package name
+         * @param  targets
+         *         The set of target modules names
+         *
+         * @return This builder
+         *
+         * @throws IllegalArgumentException
+         *         If the package name or any of the target modules is {@code
+         *         null} or is not a legal Java identifier, or the set of
+         *         targets is empty
+         * @throws IllegalStateException
+         *         If the package is already declared as an exported or
+         *         concealed package
+         */
+        public Builder exports(Set<Exports.Modifier> mods,
+                               String pn,
+                               Set<String> targets)
+        {
+            ensureNotExportedOrConcealed(pn);
+            exports.put(pn, new Exports(mods, pn, targets));
+            return this;
+        }
+
+        /**
+         * Adds an export with the given (and possibly empty) set of modifiers.
+         *
+         * @param  mods
+         *         The set of modifiers
+         * @param  pn
+         *         The package name
+         *
+         * @return This builder
+         *
+         * @throws IllegalArgumentException
+         *         If the package name is {@code null} or is not a legal Java
+         *         identifier
+         * @throws IllegalStateException
+         *         If the package is already declared as an exported or
+         *         concealed package
+         */
+        public Builder exports(Set<Exports.Modifier> mods,
+                               String pn)
+        {
+            ensureNotExportedOrConcealed(pn);
+            exports.put(pn, new Exports(mods, pn));
+            return this;
+        }
+
+        /**
          * Adds an export to a set of target modules.
          *
          * @param  pn
@@ -1302,7 +1393,8 @@ public class ModuleDescriptor
          */
         public Builder exports(String pn, Set<String> targets) {
             ensureNotExportedOrConcealed(pn);
-            exports.put(pn, new Exports(pn, targets)); // checks pn and targets
+            // checks package name and targets
+            exports.put(pn, new Exports(Collections.emptySet(), pn, targets));
             return this;
         }
 
@@ -1344,7 +1436,7 @@ public class ModuleDescriptor
          */
         public Builder exports(String pn) {
             ensureNotExportedOrConcealed(pn);
-            exports.put(pn, new Exports(pn)); // checks pn
+            exports.put(pn, new Exports(Collections.emptySet(), pn));
             return this;
         }
 
@@ -1917,22 +2009,25 @@ public class ModuleDescriptor
 
                 @Override
                 public Requires newRequires(Set<Requires.Modifier> ms, String mn) {
-                    return new Requires(ms, mn, false);
+                    return new Requires(ms, mn, true);
                 }
 
                 @Override
-                public Exports newExports(String source, Set<String> targets) {
-                    return new Exports(source, targets, false);
+                public Exports newExports(Set<Exports.Modifier> ms,
+                                          String source,
+                                          Set<String> targets) {
+                    return new Exports(ms, source, targets, true);
                 }
 
                 @Override
-                public Exports newExports(String source) {
-                    return new Exports(source, false);
+                public Exports newExports(Set<Exports.Modifier> ms,
+                                          String source) {
+                    return new Exports(ms, source, true);
                 }
 
                 @Override
                 public Provides newProvides(String service, Set<String> providers) {
-                    return new Provides(service, providers, false);
+                    return new Provides(service, providers, true);
                 }
 
                 @Override

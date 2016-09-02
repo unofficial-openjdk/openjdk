@@ -62,6 +62,7 @@ import java.util.jar.JarEntry;
 import java.util.spi.ResourceBundleControlProvider;
 import java.util.spi.ResourceBundleProvider;
 
+import jdk.internal.loader.BootLoader;
 import jdk.internal.misc.JavaUtilResourceBundleAccess;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.reflect.CallerSensitive;
@@ -1206,9 +1207,9 @@ public abstract class ResourceBundle {
      * resource file using the generated properties file name.  It generates a
      * path name from the candidate bundle name by replacing all "." characters
      * with "/" and appending the string ".properties".  It attempts to find a
-     * "resource" with this name using {@link
-     * java.lang.ClassLoader#getResource(java.lang.String)
-     * ClassLoader.getResource}.  (Note that a "resource" in the sense of
+     * "resource" with this name from
+     * {@linkplain ClassLoader#getUnnamedModule() unnamed modules}.
+     * (Note that a "resource" in the sense of
      * <code>getResource</code> has nothing to do with the contents of a
      * resource bundle, it is just a container of data, such as a file.)  If it
      * finds a "resource", it attempts to create a new {@link
@@ -2437,19 +2438,17 @@ public abstract class ResourceBundle {
      *                 String bundleName = toBundleName(baseName, locale);
      *                 String resourceName = toResourceName(bundleName, format);
      *                 InputStream stream = null;
-     *                 if (reload) {
-     *                     URL url = loader.getResource(resourceName);
-     *                     if (url != null) {
-     *                         URLConnection connection = url.openConnection();
-     *                         if (connection != null) {
+     *                 URL url = loader.getResource(resourceName);
+     *                 if (url != null) {
+     *                     URLConnection connection = url.openConnection();
+     *                     if (connection != null) {
+     *                         if (reload) {
      *                             // Disable caches to get fresh data for
      *                             // reloading.
      *                             connection.setUseCaches(false);
-     *                             stream = connection.getInputStream();
      *                         }
+     *                         stream = connection.getInputStream();
      *                     }
-     *                 } else {
-     *                     stream = loader.getResourceAsStream(resourceName);
      *                 }
      *                 if (stream != null) {
      *                     BufferedInputStream bis = new BufferedInputStream(stream);
@@ -3041,19 +3040,18 @@ public abstract class ResourceBundle {
          * <li>If <code>format</code> is <code>"java.properties"</code>,
          * {@link #toResourceName(String, String) toResourceName(bundlename,
          * "properties")} is called to get the resource name.
-         * If <code>reload</code> is <code>true</code>, {@link
-         * ClassLoader#getResource(String) load.getResource} is called
-         * to get a {@link URL} for creating a {@link
-         * URLConnection}. This <code>URLConnection</code> is used to
+         * It will first search
+         * {@linkplain ClassLoader#findResource(String, String)
+         * the resource in an unnamed module} defined in this class loader and
+         * get a {@link URL} for creating a {@link URLConnection}.
+         * If not found, it will search the parent class loader for the resource.
+         * If <code>reload</code> is <code>true</code>,
+         * this <code>URLConnection</code> is used to
          * {@linkplain URLConnection#setUseCaches(boolean) disable the
-         * caches} of the underlying resource loading layers,
-         * and to {@linkplain URLConnection#getInputStream() get an
-         * <code>InputStream</code>}.
-         * Otherwise, {@link ClassLoader#getResourceAsStream(String)
-         * loader.getResourceAsStream} is called to get an {@link
-         * InputStream}. Then, a {@link
-         * PropertyResourceBundle} is constructed with the
-         * <code>InputStream</code>.</li>
+         * caches} of the underlying resource loading layers.
+         * Then {@link URLConnection#getInputStream()} is called to get an
+         * <code>InputStream</code> and construct a {@link PropertyResourceBundle}
+         * with the resulting <code>InputStream</code>.</li>
          *
          * <li>If <code>format</code> is neither <code>"java.class"</code>
          * nor <code>"java.properties"</code>, an
@@ -3167,7 +3165,7 @@ public abstract class ResourceBundle {
                     stream = AccessController.doPrivileged(
                         new PrivilegedExceptionAction<>() {
                             public InputStream run() throws IOException {
-                                URL url = loader.getResource(resourceName);
+                                URL url = getResourceInUnnamedModule(loader, resourceName);
                                 if (url == null) return null;
 
                                 URLConnection connection = url.openConnection();
@@ -3193,6 +3191,66 @@ public abstract class ResourceBundle {
                 throw new IllegalArgumentException("unknown format: " + format);
             }
             return bundle;
+        }
+
+
+        /**
+         * Returns a URL to a resource in
+         * {@linkplain ClassLoader#getUnnamedModule() unnamed module}
+         * for this class loader and its ancestors.
+         *
+         * <p>
+         * This method will first invoke {@link ClassLoader#findResource(String, String)
+         * findResource(null, name)} to find a resource in an unnamed module
+         * defined in this class loader.  If not found, this method will search
+         * the parent class loader for the resource; if the parent is
+         * {@code null} the path of the class loader built-in to the
+         * virtual machine is searched.
+         *
+         * @apiNote
+         * This method does not search parent class loader first, as
+         * {@link ClassLoader#getResource(String)} does; instead, it finds
+         * a resource in the search path local in this class loader,
+         * as resources are typically private to a module.
+         *
+         * @param  name
+         *         The resource name
+         *
+         * @throws IOException
+         *         If I/O errors occur
+         *
+         * @return  A URL to the resource; {@code null} if
+         *          the resource could not be found, a {@code URL} could not be
+         *          constructed to locate the resource, or access to the resource
+         *          is denied by the security manager.
+         *
+         */
+        private URL getResourceInUnnamedModule(ClassLoader loader, String name)
+            throws IOException
+        {
+            Objects.requireNonNull(loader);
+
+            // locate resource defined in the given loader
+            URL url = SharedSecrets.getJavaLangAccess()
+                                   .findResource(loader, null, name);
+            if (url != null)
+                return url;
+
+            // search parent class loaders
+            Deque<ClassLoader> ancestors = new LinkedList<>();
+            ClassLoader ld = loader;
+            while ((ld = ld.getParent()) != null) {
+                ancestors.push(ld);
+            }
+
+            // search from the boot loader and other ancestors
+            url = BootLoader.findResource(null, name);
+
+            while (url == null && (ld = ancestors.pop()) != null) {
+                url = SharedSecrets.getJavaLangAccess()
+                                   .findResource(ld, null, name);
+            }
+            return url;
         }
 
         /**
