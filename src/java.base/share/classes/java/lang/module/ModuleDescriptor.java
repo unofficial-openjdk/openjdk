@@ -261,8 +261,10 @@ public class ModuleDescriptor
             DYNAMIC,
 
             /**
-             * Non-public members in ths package may be reflected on by APIs that
-             * bypass or suppress default Java language access control checks.
+             * Indicates that all types in the package, and all their members,
+             * not just public types and their public members, may be accessed
+             * by APIs that bypass or suppress default Java language access
+             * control checks.
              *
              * @see java.lang.reflect.AccessibleObject#setAccessible(boolean)
              */
