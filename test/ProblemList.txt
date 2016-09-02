@@ -210,6 +210,9 @@ sun/rmi/rmic/newrmic/equivalence/run.sh                         8145980 generic-
 
 java/rmi/transport/dgcDeadLock/DGCDeadLock.java                 8029360 macosx-all
 
+# Needs investigation
+java/rmi/transport/dgcDeadLock/DGCDeadLock.java                 0000000 generic-all
+
 ############################################################################
 
 # jdk_security
