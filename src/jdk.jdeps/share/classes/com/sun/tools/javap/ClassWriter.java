@@ -568,7 +568,7 @@ public class ClassWriter extends BasicWriter {
             print("exports");
             if ((entry.exports_flags & Module_attribute.ACC_DYNAMIC_PHASE) != 0)
                 print(" dynamic");
-            if ((entry.exports_flags & Module_attribute.ACC_PRIVATE_REFLECTION) != 0)
+            if ((entry.exports_flags & Module_attribute.ACC_REFLECTION) != 0)
                 print(" private");
             print(" ");
             if (entry.exports_index == 0) {

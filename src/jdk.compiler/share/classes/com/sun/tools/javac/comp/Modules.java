@@ -680,7 +680,7 @@ public class Modules extends JCTree.Visitor {
                     flags.add(ExportsFlag.DYNAMIC_PHASE);
                 }
                 if (tree.isPrivate) {
-                    flags.add(ExportsFlag.PRIVATE_REFLECTION);
+                    flags.add(ExportsFlag.REFLECTION);
                 }
                 ExportsDirective d = new ExportsDirective(packge, toModules, flags);
                 tree.directive = d;
@@ -780,7 +780,7 @@ public class Modules extends JCTree.Visitor {
             }
             Directive.ExportsDirective d =
                     new Directive.ExportsDirective(null, null,
-                            EnumSet.of(ExportsFlag.DYNAMIC_PHASE, ExportsFlag.PRIVATE_REFLECTION, ExportsFlag.MANDATED));
+                            EnumSet.of(ExportsFlag.DYNAMIC_PHASE, ExportsFlag.REFLECTION, ExportsFlag.MANDATED));
             sym.exports = sym.exports.prepend(d);
         }
 

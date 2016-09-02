@@ -77,7 +77,7 @@ public abstract class Directive implements ModuleElement.Directive {
     /** Flags for ExportsDirective. */
     public enum ExportsFlag {
         DYNAMIC_PHASE(0x0040),
-        PRIVATE_REFLECTION(0x0080),
+        REFLECTION(0x0080),
         SYNTHETIC(0x1000),
         MANDATED(0x8000);
 
@@ -127,7 +127,7 @@ public abstract class Directive implements ModuleElement.Directive {
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
         public boolean isPrivate() {
-            return flags.contains(ExportsFlag.PRIVATE_REFLECTION);
+            return flags.contains(ExportsFlag.REFLECTION);
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
