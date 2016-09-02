@@ -31,7 +31,6 @@ import java.security.AccessController;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 import jdk.internal.reflect.ReflectionFactory;
-import static sun.security.action.GetPropertyAction.privilegedGetProperty;
 
 /**
  * The AccessibleObject class is the base class for Field, Method and
@@ -170,12 +169,12 @@ public class AccessibleObject implements AnnotatedElement {
         if (callerModule == Object.class.getModule()) return;
         if (!declaringModule.isNamed()) return;
 
-        // exports [dynamic] private [to <callerModule>]
+        // package is exported-private to caller
         String pn = packageName(declaringClass);
         if (declaringModule.isExportedPrivate(pn, callerModule))
             return;
 
-        // check if class/member are accessible
+        // package is exported to caller and class/member is public
         boolean isExported = declaringModule.isExported(pn, callerModule);
         boolean isClassPublic = Modifier.isPublic(declaringClass.getModifiers());
         int modifiers;
@@ -185,17 +184,8 @@ public class AccessibleObject implements AnnotatedElement {
             modifiers = ((Field) this).getModifiers();
         }
         boolean isMemberPublic = Modifier.isPublic(modifiers);
-
-        if (!useStrictModeSet) {
-            String s = privilegedGetProperty("sun.reflect.enableStrictMode");
-            useStrictMode = (s != null) && s.equalsIgnoreCase("true");
-            useStrictModeSet = true;
-        }
-        if (useStrictMode) {
-            if (isExported && isClassPublic && isMemberPublic) return;
-        } else {
-            if (isExported) return;
-        }
+        if (isExported && isClassPublic && isMemberPublic)
+            return;
 
         // not accessible
         String msg = "Unable to make " + this + " accessible: ";
@@ -206,8 +196,8 @@ public class AccessibleObject implements AnnotatedElement {
         Reflection.throwInaccessibleObjectException(msg);
     }
 
-    private static volatile boolean useStrictMode = true;
-    private static volatile boolean useStrictModeSet = true;
+    private static volatile boolean useStrictMode;
+    private static volatile boolean useStrictModeSet;
 
     /**
      * Returns the package name of the given class.
