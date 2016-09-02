@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,11 +36,12 @@ import java.io.IOException;
  *  deletion without notice.</b>
  */
 public class Module_attribute extends Attribute {
-    public static final int ACC_TRANSITIVE    =   0x10;
-    public static final int ACC_STATIC_PHASE  =   0x20;
-    public static final int ACC_DYNAMIC_PHASE =   0x40;
-    public static final int ACC_SYNTHETIC     = 0x1000;
-    public static final int ACC_MANDATED      = 0x8000;
+    public static final int ACC_TRANSITIVE          =   0x10;
+    public static final int ACC_STATIC_PHASE        =   0x20;
+    public static final int ACC_DYNAMIC_PHASE       =   0x40;
+    public static final int ACC_PRIVATE_REFLECTION  =   0x80;
+    public static final int ACC_SYNTHETIC           = 0x1000;
+    public static final int ACC_MANDATED            = 0x8000;
 
     Module_attribute(ClassReader cr, int name_index, int length) throws IOException {
         super(name_index, length);

@@ -21,11 +21,6 @@
  * questions.
  */
 
-package impl;
+// key: compiler.err.expected.module
 
-import exported.Service;
-
-public class ServiceImplementation implements Service {
-    ServiceImplementation() {
-    }
-}
+weak class ExpectedModule { }

@@ -966,7 +966,8 @@ public class ClassWriter extends ClassFile {
         List<ExportsDirective> exports = m.exports;
         databuf.appendChar(exports.size());
         for (ExportsDirective e: exports) {
-            databuf.appendChar(pool.put(names.fromUtf(externalize(e.packge.flatName()))));
+            databuf.appendChar(e.packge == null ? 0 :
+                    pool.put(names.fromUtf(externalize(e.packge.flatName()))));
             databuf.appendChar(ExportsFlag.value(e.flags));
             if (e.modules == null) {
                 databuf.appendChar(0);

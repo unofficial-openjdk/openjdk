@@ -21,7 +21,9 @@
  * questions.
  */
 
-package exported;
+// key: compiler.err.conflicting.default.exports
 
-public interface Service {
+module ConflictingDefaultExports {
+    exports dynamic default;
+    exports dynamic private default;
 }

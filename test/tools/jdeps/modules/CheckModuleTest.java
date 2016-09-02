@@ -100,7 +100,7 @@ public class CheckModuleTest {
             { "m4", new ModuleMetaData[] {
                         // original
                         new ModuleMetaData("m4")
-                            .requiresPublic("java.compiler")
+                            .requiresTransitive("java.compiler")
                             .requires("java.logging")
                             // unnused exports
                             .exports("p4.internal", Set.of("m6", "m7")),
@@ -115,21 +115,21 @@ public class CheckModuleTest {
             { "m5", new ModuleMetaData[] {
                         // original
                         new ModuleMetaData("m5")
-                            .requiresPublic("java.compiler")
-                            .requiresPublic("java.logging")
+                            .requiresTransitive("java.compiler")
+                            .requiresTransitive("java.logging")
                             .requires("java.sql")
-                            .requiresPublic("m4"),
+                            .requiresTransitive("m4"),
                         // suggested version
                         new ModuleMetaData("m5")
-                            .requiresPublic("java.compiler")
+                            .requiresTransitive("java.compiler")
                             .requires("java.logging")
-                            .requiresPublic("java.sql")
-                            .requiresPublic("m4"),
+                            .requiresTransitive("java.sql")
+                            .requiresTransitive("m4"),
                         // reduced version
                         new ModuleMetaData("m5")
-                            .requiresPublic("java.compiler")
-                            .requiresPublic("java.sql")
-                            .requiresPublic("m4"),
+                            .requiresTransitive("java.compiler")
+                            .requiresTransitive("java.sql")
+                            .requiresTransitive("m4"),
                     }
             },
         };

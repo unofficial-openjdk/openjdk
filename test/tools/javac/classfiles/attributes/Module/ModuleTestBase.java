@@ -152,7 +152,7 @@ public class ModuleTestBase {
     }
 
     enum RequiresFlag implements Mask {
-        PUBLIC("public", Module_attribute.ACC_TRANSITIVE),
+        TRANSITIVE("transitive", Module_attribute.ACC_TRANSITIVE),
         STATIC("static", Module_attribute.ACC_STATIC_PHASE);
 
         private final String token;
@@ -170,7 +170,8 @@ public class ModuleTestBase {
     }
 
     enum ExportFlag implements Mask {
-        DYNAMIC("dynamic", Module_attribute.ACC_DYNAMIC_PHASE);
+        DYNAMIC("dynamic", Module_attribute.ACC_DYNAMIC_PHASE),
+        PRIVATE("private", Module_attribute.ACC_PRIVATE_REFLECTION);
 
         private final String token;
         private final int mask;

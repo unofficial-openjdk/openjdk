@@ -555,20 +555,27 @@ public class ClassWriter extends BasicWriter {
         Module_attribute m = (Module_attribute) attr;
         for (Module_attribute.RequiresEntry entry: m.requires) {
             print("requires");
-            if ((entry.requires_flags & Module_attribute.ACC_TRANSITIVE) != 0)
-                print(" public");
             if ((entry.requires_flags & Module_attribute.ACC_STATIC_PHASE) != 0)
                 print(" static");
+            if ((entry.requires_flags & Module_attribute.ACC_TRANSITIVE) != 0)
+                print(" transitive");
             print(" ");
             print(getUTF8Value(entry.requires_index).replace('/', '.'));
             println(";");
         }
 
         for (Module_attribute.ExportsEntry entry: m.exports) {
-            print("exports ");
-            print(getUTF8Value(entry.exports_index).replace('/', '.'));
+            print("exports");
             if ((entry.exports_flags & Module_attribute.ACC_DYNAMIC_PHASE) != 0)
                 print(" dynamic");
+            if ((entry.exports_flags & Module_attribute.ACC_PRIVATE_REFLECTION) != 0)
+                print(" private");
+            print(" ");
+            if (entry.exports_index == 0) {
+                print("default");
+            } else {
+                print(getUTF8Value(entry.exports_index).replace('/', '.'));
+            }
             boolean first = true;
             for (int i: entry.exports_to_index) {
                 String mname;

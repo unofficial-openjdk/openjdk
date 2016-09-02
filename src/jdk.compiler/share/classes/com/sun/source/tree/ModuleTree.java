@@ -33,7 +33,8 @@ import java.util.List;
  *
  * For example:
  * <pre>
- *    module <em>module-name</em> {
+ *    <em>annotations</em>
+ *    [weak] module <em>module-name</em> {
  *        <em>directives</em>
  *    }
  * </pre>
@@ -46,6 +47,12 @@ public interface ModuleTree extends Tree {
      * @return the annotations
      */
     List<? extends AnnotationTree> getAnnotations();
+
+    /**
+     * Returns true if this is a "weak" module.
+     * @return true if this is a "weak" module
+     */
+    boolean isWeak();
 
     /**
      * Returns the name of the module.

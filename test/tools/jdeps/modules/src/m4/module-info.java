@@ -23,7 +23,7 @@
 
 module m4 {
     // not used in signature
-    requires public java.compiler;
+    requires transitive java.compiler;
 
     // unused dependence
     requires java.logging;

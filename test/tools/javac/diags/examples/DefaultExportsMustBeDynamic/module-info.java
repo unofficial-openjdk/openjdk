@@ -21,9 +21,8 @@
  * questions.
  */
 
-// key: compiler.err.service.implementation.no.args.constructor.not.public
+// key: compiler.err.default.exports.must.be.dynamic
 
-module ServiceImplementationNoArgsConstructorNotPublic {
-     exports exported;
-     provides exported.Service with impl.ServiceImplementation;
+module m {
+     exports default;
 }

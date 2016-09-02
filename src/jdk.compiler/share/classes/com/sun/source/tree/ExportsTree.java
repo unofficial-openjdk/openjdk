@@ -34,13 +34,27 @@ import java.util.List;
  * <pre>
  *    exports <em>package-name</em>;
  *    exports <em>package-name</em> to <em>module-name</em>;
+ *    exports dynamic <em>package-name</em> to <em>module-name</em>;
+ *    exports private <em>package-name</em> to <em>module-name</em>;
  * </pre>
  *
  * @since 9
  */
 public interface ExportsTree extends DirectiveTree {
     /**
-     * Returns the name of the package to be exported.
+     * Returns true if this is a "exports dynamic" directive.
+     * @return true if this is a "exports dynamic" directive
+     */
+    boolean isDynamic();
+
+    /**
+     * Returns true if this is a "exports private" directive.
+     * @return true if this is a "exports private" directive
+     */
+    boolean isPrivate();
+
+    /**
+     * Returns the name of the package to be exported, or null if this is a default exports directive.
      * @return  the name of the package to be exported
      */
     ExpressionTree getExportName();

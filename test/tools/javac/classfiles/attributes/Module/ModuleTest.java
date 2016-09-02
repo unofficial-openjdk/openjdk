@@ -140,9 +140,9 @@ public class ModuleTest extends ModuleTestBase {
     }
 
     @Test
-    public void testRequiresPublic(Path base) throws Exception {
+    public void testRequiresTransitive(Path base) throws Exception {
         ModuleDescriptor moduleDescriptor = new ModuleDescriptor("m1")
-                .requires("jdk.jdeps", RequiresFlag.PUBLIC)
+                .requires("jdk.jdeps", RequiresFlag.TRANSITIVE)
                 .write(base);
         compile(base);
         testModuleAttribute(base, moduleDescriptor);
@@ -160,12 +160,12 @@ public class ModuleTest extends ModuleTestBase {
     @Test
     public void testSeveralRequires(Path base) throws Exception {
         ModuleDescriptor moduleDescriptor = new ModuleDescriptor("m1")
-                .requires("jdk.jdeps", RequiresFlag.PUBLIC)
+                .requires("jdk.jdeps", RequiresFlag.TRANSITIVE)
                 .requires("jdk.compiler")
                 .requires("m2", RequiresFlag.STATIC)
                 .requires("m3")
-                .requires("m4", RequiresFlag.PUBLIC)
-                .requires("m5", RequiresFlag.STATIC, RequiresFlag.PUBLIC)
+                .requires("m4", RequiresFlag.TRANSITIVE)
+                .requires("m5", RequiresFlag.STATIC, RequiresFlag.TRANSITIVE)
                 .write(base.resolve("m1"));
         tb.writeJavaFiles(base.resolve("m2"), "module m2 { }");
         tb.writeJavaFiles(base.resolve("m3"), "module m3 { }");
@@ -230,16 +230,16 @@ public class ModuleTest extends ModuleTestBase {
                 .exportsTo("packTo1", "m2")
                 .exportsTo("packTo3", "m3", ExportFlag.DYNAMIC)
                 .requires("jdk.compiler")
-                .requires("m2", RequiresFlag.PUBLIC)
+                .requires("m2", RequiresFlag.TRANSITIVE)
                 .requires("m3", RequiresFlag.STATIC)
-                .requires("m4", RequiresFlag.PUBLIC, RequiresFlag.STATIC)
+                .requires("m4", RequiresFlag.TRANSITIVE, RequiresFlag.STATIC)
                 .provides("java.util.List", "pack1.C")
                 .uses("java.util.List")
                 .uses("java.nio.file.Path")
                 .provides("java.util.List", "pack2.D")
-                .requires("jdk.jdeps", RequiresFlag.STATIC, RequiresFlag.PUBLIC)
+                .requires("jdk.jdeps", RequiresFlag.STATIC, RequiresFlag.TRANSITIVE)
                 .requires("m5", RequiresFlag.STATIC)
-                .requires("m6", RequiresFlag.PUBLIC)
+                .requires("m6", RequiresFlag.TRANSITIVE)
                 .requires("java.compiler")
                 .exportsTo("packTo4", "java.compiler", ExportFlag.DYNAMIC)
                 .exportsTo("packTo2", "java.compiler")

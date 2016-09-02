@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,25 +21,9 @@
  * questions.
  */
 
-/** Defines the implementation of the
- *  {@link javax.tools.ToolProvider#getSystemDocumentationTool system documentation tool}
- *  and its command line equivalent, <em>javadoc</em>.
- */
-module jdk.javadoc {
-    requires transitive java.compiler;
-    requires transitive jdk.compiler;
-    requires java.xml;
+// key: compiler.err.conflicting.exports.to.module
 
-    exports com.sun.javadoc;
-    exports com.sun.tools.doclets;
-    exports com.sun.tools.doclets.standard;
-    exports com.sun.tools.javadoc;
-
-    exports jdk.javadoc.doclet;
-    exports jdk.javadoc.doclet.taglet;
-    exports jdk.javadoc.doclets;
-
-    provides javax.tools.DocumentationTool
-        with jdk.javadoc.internal.api.JavadocTool;
+module ConflictingExports {
+     exports exported to java.base;
+     exports private exported to java.base;
 }
-

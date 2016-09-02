@@ -242,7 +242,7 @@ class Module extends Archive {
             ModuleDescriptor.Builder builder = new ModuleDescriptor.Builder(m.name());
             requires.keySet().forEach(mn -> {
                 if (requires.get(mn).equals(Boolean.TRUE)) {
-                    builder.requires(Set.of(ModuleDescriptor.Requires.Modifier.PUBLIC), mn);
+                    builder.requires(Set.of(ModuleDescriptor.Requires.Modifier.TRANSITIVE), mn);
                 } else {
                     builder.requires(mn);
                 }
