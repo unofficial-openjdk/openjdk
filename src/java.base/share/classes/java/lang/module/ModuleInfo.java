@@ -324,7 +324,7 @@ final class ModuleInfo {
                     mods = Collections.emptySet();
                 } else {
                     mods = new HashSet<>();
-                    if ((flags & ACC_PRIVATE) != 0)
+                    if ((flags & ACC_REFLECTION) != 0)
                         mods.add(Exports.Modifier.PRIVATE);
                     if ((flags & ACC_DYNAMIC_PHASE) != 0)
                         mods.add(Exports.Modifier.DYNAMIC);

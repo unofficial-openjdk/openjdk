@@ -206,8 +206,8 @@ public class AccessibleObject implements AnnotatedElement {
         Reflection.throwInaccessibleObjectException(msg);
     }
 
-    private static volatile boolean useStrictMode;
-    private static volatile boolean useStrictModeSet;
+    private static volatile boolean useStrictMode = true;
+    private static volatile boolean useStrictModeSet = true;
 
     /**
      * Returns the package name of the given class.

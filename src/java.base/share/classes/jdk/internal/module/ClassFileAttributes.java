@@ -129,7 +129,7 @@ public final class ClassFileAttributes {
                         mods = Collections.emptySet();
                     } else {
                         mods = new HashSet<>();
-                        if ((flags & ACC_PRIVATE) != 0)
+                        if ((flags & ACC_REFLECTION) != 0)
                             mods.add(Exports.Modifier.PRIVATE);
                         if ((flags & ACC_DYNAMIC_PHASE) != 0)
                             mods.add(Exports.Modifier.DYNAMIC);
@@ -238,7 +238,7 @@ public final class ClassFileAttributes {
 
                     int flags = 0;
                     if (e.modifiers().contains(Exports.Modifier.PRIVATE))
-                        flags |= ACC_PRIVATE;
+                        flags |= ACC_REFLECTION;
                     if (e.modifiers().contains(Exports.Modifier.DYNAMIC))
                         flags |= ACC_DYNAMIC_PHASE;
                     if (e.modifiers().contains(Exports.Modifier.SYNTHETIC))
