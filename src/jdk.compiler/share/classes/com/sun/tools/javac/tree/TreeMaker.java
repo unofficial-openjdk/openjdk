@@ -538,15 +538,15 @@ public class TreeMaker implements JCTree.Factory {
     }
 
     @Override
-    public JCModuleDecl ModuleDef(JCExpression qualid, List<JCDirective> directives) {
-        JCModuleDecl tree = new JCModuleDecl(qualid, directives);
+    public JCModuleDecl ModuleDef(List<JCAnnotation> annotations, JCExpression qualid, List<JCDirective> directives) {
+        JCModuleDecl tree = new JCModuleDecl(annotations, qualid, directives);
         tree.pos = pos;
         return tree;
     }
 
     @Override
-    public JCExports Exports(JCExpression qualId, List<JCExpression> moduleNames) {
-        JCExports tree = new JCExports(qualId, moduleNames);
+    public JCExports Exports(JCExpression qualId, boolean isDynamicPhase, List<JCExpression> moduleNames) {
+        JCExports tree = new JCExports(qualId, isDynamicPhase, moduleNames);
         tree.pos = pos;
         return tree;
     }
@@ -559,8 +559,8 @@ public class TreeMaker implements JCTree.Factory {
     }
 
     @Override
-    public JCRequires Requires(boolean isPublic, JCExpression qualId) {
-        JCRequires tree = new JCRequires(isPublic, qualId);
+    public JCRequires Requires(boolean isPublic, boolean isStaticPhase, JCExpression qualId) {
+        JCRequires tree = new JCRequires(isPublic, isStaticPhase, qualId);
         tree.pos = pos;
         return tree;
     }

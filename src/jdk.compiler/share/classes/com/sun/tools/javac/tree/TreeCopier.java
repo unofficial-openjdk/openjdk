@@ -508,9 +508,10 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
     @Override @DefinedBy(Api.COMPILER_TREE)
     public JCTree visitModule(ModuleTree node, P p) {
         JCModuleDecl t = (JCModuleDecl) node;
+        List<JCAnnotation> annotations = copy(t.annotations, p);
         JCExpression qualId = copy(t.qualId);
         List<JCDirective> directives = copy(t.directives);
-        return M.at(t.pos).ModuleDef(qualId, directives);
+        return M.at(t.pos).ModuleDef(annotations, qualId, directives);
     }
 
     @Override @DefinedBy(Api.COMPILER_TREE)
@@ -518,7 +519,7 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
         JCExports t = (JCExports) node;
         JCExpression qualId = copy(t.qualid, p);
         List<JCExpression> moduleNames = copy(t.moduleNames, p);
-        return M.at(t.pos).Exports(qualId, moduleNames);
+        return M.at(t.pos).Exports(qualId, t.isDynamicPhase, moduleNames);
     }
 
     @Override @DefinedBy(Api.COMPILER_TREE)
@@ -533,7 +534,7 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
     public JCRequires visitRequires(RequiresTree node, P p) {
         JCRequires t = (JCRequires) node;
         JCExpression moduleName = copy(t.moduleName, p);
-        return M.at(t.pos).Requires(t.isPublic, moduleName);
+        return M.at(t.pos).Requires(t.isTransitive, t.isStaticPhase, moduleName);
     }
 
     @Override @DefinedBy(Api.COMPILER_TREE)

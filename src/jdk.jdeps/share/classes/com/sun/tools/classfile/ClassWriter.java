@@ -549,6 +549,7 @@ public class ClassWriter {
             out.writeShort(attr.exports.length);
             for (Module_attribute.ExportsEntry e: attr.exports) {
                 out.writeShort(e.exports_index);
+                out.writeShort(e.exports_flags);
                 out.writeShort(e.exports_to_index.length);
                 for (int index: e.exports_to_index)
                     out.writeShort(index);

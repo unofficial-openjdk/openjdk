@@ -261,7 +261,7 @@ public class AutomaticModules extends ModuleTestBase {
         Path moduleSrc = base.resolve("module-src");
 
         tb.writeJavaFiles(moduleSrc.resolve("m1"),
-                          "module m1 { requires automaticA; }",
+                          "module m1 { requires static automaticA; }",
                           "package impl; public class Impl { apiA.Api a; apiB.Api b; m2.M2 m;}");
 
         tb.writeJavaFiles(moduleSrc.resolve("m2"),

@@ -967,6 +967,7 @@ public class ClassWriter extends ClassFile {
         databuf.appendChar(exports.size());
         for (ExportsDirective e: exports) {
             databuf.appendChar(pool.put(names.fromUtf(externalize(e.packge.flatName()))));
+            databuf.appendChar(ExportsFlag.value(e.flags));
             if (e.modules == null) {
                 databuf.appendChar(0);
             } else {
@@ -1766,12 +1767,20 @@ public class ClassWriter extends ClassFile {
         acount += writeEnclosingMethodAttribute(c);
         if (c.owner.kind == MDL) {
             acount += writeModuleAttribute(c);
+            acount += writeFlagAttrs(c.owner.flags());
         }
         acount += writeExtraClassAttributes(c);
 
         poolbuf.appendInt(JAVA_MAGIC);
-        poolbuf.appendChar(target.minorVersion);
-        poolbuf.appendChar(target.majorVersion);
+
+        if (c.owner.kind == MDL) {
+            // temporarily overide to force use of v53 for module-info.class
+            poolbuf.appendChar(0);
+            poolbuf.appendChar(53);
+        } else {
+            poolbuf.appendChar(target.minorVersion);
+            poolbuf.appendChar(target.majorVersion);
+        }
 
         writePool(c.pool);
 

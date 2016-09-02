@@ -63,6 +63,7 @@ public class Names {
     public final Name _default;
     public final Name _super;
     public final Name _this;
+    public final Name dynamic;
     public final Name exports;
     public final Name module;
     public final Name provides;
@@ -167,6 +168,7 @@ public class Names {
     public final Name FIELD;
     public final Name LOCAL_VARIABLE;
     public final Name METHOD;
+    public final Name MODULE;
     public final Name PACKAGE;
     public final Name PARAMETER;
     public final Name TYPE;
@@ -218,6 +220,7 @@ public class Names {
         _default = fromString("default");
         _super = fromString("super");
         _this = fromString("this");
+        dynamic = fromString("dynamic");
         exports = fromString("exports");
         module = fromString("module");
         provides = fromString("provides");
@@ -323,6 +326,7 @@ public class Names {
         FIELD = fromString("FIELD");
         LOCAL_VARIABLE = fromString("LOCAL_VARIABLE");
         METHOD = fromString("METHOD");
+        MODULE = fromString("MODULE");
         PACKAGE = fromString("PACKAGE");
         PARAMETER = fromString("PARAMETER");
         TYPE = fromString("TYPE");

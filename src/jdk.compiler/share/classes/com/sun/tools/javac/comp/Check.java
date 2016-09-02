@@ -60,6 +60,7 @@ import static com.sun.tools.javac.code.TypeTag.*;
 import static com.sun.tools.javac.code.TypeTag.WILDCARD;
 
 import static com.sun.tools.javac.tree.JCTree.Tag.*;
+import com.sun.tools.javac.util.Log.DeferredDiagnosticHandler;
 
 /** Type checking helper class for the attribution phase.
  *
@@ -215,8 +216,13 @@ public class Check {
      *  @param sym        The deprecated symbol.
      */
     void warnDeprecated(DiagnosticPosition pos, Symbol sym) {
-        if (!lint.isSuppressed(LintCategory.DEPRECATION))
-            deprecationHandler.report(pos, "has.been.deprecated", sym, sym.location());
+        if (!lint.isSuppressed(LintCategory.DEPRECATION)) {
+            if (sym.kind == MDL) {
+                deprecationHandler.report(pos, "has.been.deprecated.module", sym);
+            } else {
+                deprecationHandler.report(pos, "has.been.deprecated", sym, sym.location());
+            }
+        }
     }
 
     /** Warn about unchecked operation.
@@ -3219,7 +3225,7 @@ public class Check {
     void checkDeprecated(final DiagnosticPosition pos, final Symbol other, final Symbol s) {
         if ((s.flags() & DEPRECATED) != 0 &&
                 (other.flags() & DEPRECATED) == 0 &&
-                s.outermostClass() != other.outermostClass()) {
+                (s.outermostClass() != other.outermostClass() || s.outermostClass() == null)) {
             deferredLintHandler.report(new DeferredLintHandler.LintLogger() {
                 @Override
                 public void report() {
@@ -3581,6 +3587,59 @@ public class Check {
                 log.error(pos, "bad.functional.intf.anno.1", ex.getDiagnostic());
             }
         }
+    }
+
+    /**
+     * Check for references to deprecated modules in module directives.
+     *
+     * @param tree
+     */
+    void checkDeprecatedModules(JCModuleDecl tree) {
+        ModuleSymbol msym = tree.sym;
+
+        class CheckVisitor extends JCTree.Visitor {
+            @Override
+            public void visitRequires(JCRequires tree) {
+                if (tree.directive != null) {
+                    checkDeprecated(tree.moduleName.pos(), msym, tree.directive.module);
+                }
+            }
+            @Override
+            public void visitExports(JCExports tree) {
+            if (tree.getModuleNames() != null) {
+                List<JCExpression> names = tree.getModuleNames();
+                List<ModuleSymbol> modules = tree.directive.modules;
+                while (modules.nonEmpty()) {
+                    DeferredDiagnosticHandler diag = new DeferredDiagnosticHandler(log);
+                    try {
+                        modules.head.complete();
+                    } finally {
+                        log.popDiagnosticHandler(diag);
+                        if (!diag.getDiagnostics().isEmpty()) {
+                            modules.head.completer = sym -> {
+                                for (JCDiagnostic d : diag.getDiagnostics()) {
+                                    log.report(d);
+                                }
+                            };
+                        }
+                    }
+                    checkDeprecated(names.head.pos(), msym, modules.head);
+                    names = names.tail;
+                    modules = modules.tail;
+                }
+            }
+            }
+            @Override
+            public void visitUses(JCUses that) {
+            }
+            @Override
+            public void visitProvides(JCProvides that) {
+            }
+        }
+
+        CheckVisitor v = new CheckVisitor();
+
+        tree.directives.forEach(directive -> directive.accept(v));
     }
 
     public void checkImportsResolvable(final JCCompilationUnit toplevel) {
