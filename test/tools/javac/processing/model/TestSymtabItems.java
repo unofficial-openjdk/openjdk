@@ -25,7 +25,7 @@
  * @test
  * @bug 7021183 7025809
  * @summary 269: assertion failure getting enclosing element of an undefined name
- * @modules jdk.compiler/com.sun.tools.javac.code
+ * @modules jdk.compiler/com.sun.tools.javac.code:private
  *          jdk.compiler/com.sun.tools.javac.file
  *          jdk.compiler/com.sun.tools.javac.main
  *          jdk.compiler/com.sun.tools.javac.model
