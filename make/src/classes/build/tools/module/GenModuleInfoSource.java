@@ -59,8 +59,6 @@ public class GenModuleInfoSource {
         "  --exports  <package-name>[/<module-name>]\n" +
         "  --exports-private  <package-name>\n" +
         "  --exports-private  <package-name>[/<module-name>]\n" +
-        "  --exports-dynamic  <package-name>\n" +
-        "  --exports-dynamic  <package-name>[/<module-name>]\n" +
         "  --uses     <service>\n" +
         "  --provides <service>/<provider-impl-classname>\n";
 
@@ -75,8 +73,7 @@ public class GenModuleInfoSource {
             if (option.startsWith("-")) {
                 String arg = args[++i];
                 if (option.equals("--exports") ||
-                    option.equals("--exports-private") ||
-                    option.equals("--exports-dynamic")) {
+                    option.equals("--exports-private")) {
                     Set<Exports.Modifier> modifiers = toModifiers(option);
                     int index = arg.indexOf('/');
                     if (index > 0) {
@@ -164,8 +161,6 @@ public class GenModuleInfoSource {
                 return Collections.emptySet();
             case "--exports-private":
                 return Collections.singleton(Exports.Modifier.PRIVATE);
-            case "--exports-dynamic":
-                return Collections.singleton(Exports.Modifier.DYNAMIC);
             default:
                 throw new IllegalArgumentException(option);
         }
@@ -236,25 +231,16 @@ public class GenModuleInfoSource {
                         boolean inExportsTo = false;
                         // exports <package-name> [to <target-module>]
                         // exports private <package-name> [to <target-module>]
-                        // exports dynamic <package-name> [to <target-module>]
-
-                        // TODO: unsupported for now
-                        // exports dynamic private <package-name> [to <target-module>]
 
                         String token = s[1].trim();
                         int nextTokenPos = 2;
                         pn = null;
                         mods = Collections.emptySet();
 
-                        if (token.equals("private") || token.equals("dynamic")) {
+                        if (token.equals("private")) {
                             mods = Collections.singleton(Exports.Modifier.valueOf(token.toUpperCase()));
-                            nextTokenPos = 3;
                             pn = s.length >= 3 ? s[2].trim() : null;
-                            if (s.length < 3 || token.equals("dynamic") &&
-                                    (pn.equals("private") || pn.equals("default"))) {
-                                throw new UnsupportedOperationException(sourcefile + ", line " +
-                                    lineNumber);
-                            }
+                            nextTokenPos = 3;
                         } else {
                             pn = token;
                         }
