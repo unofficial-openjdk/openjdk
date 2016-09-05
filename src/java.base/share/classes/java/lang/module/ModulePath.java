@@ -574,7 +574,7 @@ class ModulePath implements ModuleFinder {
     private String toExternalEntryName(String name) {
         int prefixLen = VERSIONS_PREFIX.length();
         if (name.length() > prefixLen) {
-            String tail = name.substring(VERSIONS_PREFIX.length());
+            String tail = name.substring(prefixLen);
             int index = tail.indexOf('/');
             if (index > 0) {
                 String vs = tail.substring(0, index);

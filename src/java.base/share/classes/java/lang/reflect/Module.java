@@ -642,9 +642,10 @@ public final class Module implements AnnotatedElement {
     /**
      * If the caller's module is this module then update this module to
      * <em>exports-private</em> the given package to the given module.
-     * Exporting a package with this method allows non-public members in the
-     * package to be reflected on by the given module when using APIs that
-     * bypass or suppress default Java language access control checks.
+     * Exporting a package with this method allows all types in the package,
+     * and all their members, not just public types and their public members,
+     * to be reflected on by the given module when using APIs that bypass or
+     * suppress default Java language access control checks.
      *
      * <p> This method has no effect if the package is already <em>exported
      * private</em> to the given module. It also has no effect if invoked on an
