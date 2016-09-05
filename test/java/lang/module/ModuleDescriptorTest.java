@@ -221,9 +221,6 @@ public class ModuleDescriptorTest {
         Set<Exports.Modifier> ms = new HashSet<>();
         for (String modifier : modifiers) {
             switch (modifier) {
-                case "dynamic" :
-                    ms.add(Exports.Modifier.DYNAMIC);
-                    break;
                 case "private" :
                     ms.add(Exports.Modifier.PRIVATE);
                     break;
@@ -331,20 +328,20 @@ public class ModuleDescriptorTest {
     }
 
     public void testExportsToAllWithModifier() {
-        Exports e = exports(Set.of("dynamic"), "p");
+        Exports e = exports(Set.of("private"), "p");
         assertEquals(e, e);
         assertTrue(e.modifiers().size() == 1);
-        assertTrue(e.modifiers().contains(Exports.Modifier.DYNAMIC));
+        assertTrue(e.modifiers().contains(Exports.Modifier.PRIVATE));
         assertEquals(e.source(), "p");
         assertFalse(e.isQualified());
         assertTrue(e.targets().isEmpty());
     }
 
     public void testExportsToTargetWithModifier() {
-        Exports e = exports(Set.of("dynamic"), "p", Set.of("bar"));
+        Exports e = exports(Set.of("private"), "p", Set.of("bar"));
         assertEquals(e, e);
         assertTrue(e.modifiers().size() == 1);
-        assertTrue(e.modifiers().contains(Exports.Modifier.DYNAMIC));
+        assertTrue(e.modifiers().contains(Exports.Modifier.PRIVATE));
         assertEquals(e.source(), "p");
         assertTrue(e.isQualified());
         assertTrue(e.targets().size() == 1);
@@ -402,13 +399,8 @@ public class ModuleDescriptorTest {
         assertEquals(e1, e2);
         assertTrue(e1.hashCode() == e2.hashCode());
 
-        e1 = exports(Set.of("dynamic", "private"), "p");
-        e2 = exports(Set.of("dynamic", "private"), "p");
-        assertEquals(e1, e2);
-        assertTrue(e1.hashCode() == e2.hashCode());
-
-        e1 = exports(Set.of("dynamic", "private"), "p", "m");
-        e2 = exports(Set.of("dynamic", "private"), "p", "m");
+        e1 = exports(Set.of("private"), "p");
+        e2 = exports(Set.of("private"), "p");
         assertEquals(e1, e2);
         assertTrue(e1.hashCode() == e2.hashCode());
 
@@ -416,12 +408,8 @@ public class ModuleDescriptorTest {
         e2 = exports("q");
         assertNotEquals(e1, e2);
 
-        e1 = exports(Set.of("dynamic", "private"), "p");
+        e1 = exports(Set.of("private"), "p");
         e2 = exports(Set.of(), "p");
-        assertNotEquals(e1, e2);
-
-        e1 = exports(Set.of("dynamic", "private"), "p", "m1");
-        e2 = exports(Set.of("dynamic", "private"), "p", "m2");
         assertNotEquals(e1, e2);
     }
 
@@ -446,12 +434,6 @@ public class ModuleDescriptorTest {
 
             { exports("p"), exports(Set.of("private"), "p", "m") },
 
-            { exports(Set.of("dynamic"), "p"), exports("p", "m") },
-            { exports(Set.of("dynamic"), "p"), exports(Set.of("private"), "p", "m") },
-            { exports(Set.of("dynamic"), "p"), exports(Set.of("dynamic", "private"), "p", "m") },
-
-            { exports(Set.of("dynamic", "private"), "p"), exports(Set.of("private"), "p", "m") },
-
         };
     }
 
@@ -460,19 +442,9 @@ public class ModuleDescriptorTest {
         return new Object[][]{
 
             { exports("p"), exports("p", "m") },
-            { exports("p"), exports(Set.of("dynamic"), "p", "m") },
-            { exports("p"), exports(Set.of("dynamic", "private"), "p", "m") },
-
-            { exports(Set.of("dynamic"), "p"), exports(Set.of("dynamic"), "p", "m") },
 
             { exports(Set.of("private"), "p"), exports("p", "m") },
-            { exports(Set.of("private"), "p"), exports(Set.of("dynamic"), "p", "m") },
             { exports(Set.of("private"), "p"), exports(Set.of("private"), "p", "m")},
-            { exports(Set.of("private"), "p"), exports(Set.of("dynamic", "private"), "p", "m")},
-
-            { exports(Set.of("dynamic", "private"), "p"), exports("p", "m") },
-            { exports(Set.of("dynamic", "private"), "p"), exports(Set.of("dynamic"), "p", "m") },
-            { exports(Set.of("dynamic", "private"), "p"), exports(Set.of("dynamic", "private"), "p", "m") },
 
         };
     }
@@ -740,7 +712,6 @@ public class ModuleDescriptorTest {
         ModuleDescriptor md2 = new Builder("foo").version("1.0").build();
         assertEquals(md2.toNameAndVersion(), "foo@1.0");
     }
-
 
     // isAutomatic
     public void testIsAutomatic() {

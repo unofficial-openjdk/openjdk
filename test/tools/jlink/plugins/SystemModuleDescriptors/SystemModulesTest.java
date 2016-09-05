@@ -68,7 +68,7 @@ public class SystemModulesTest {
 
         assertUnmodifiable(md.exports(), jlma.newExports(Set.of(), "export", Set.of()));
         for (Exports exp : md.exports()) {
-            assertUnmodifiable(exp.modifiers(), Exports.Modifier.DYNAMIC);
+            assertUnmodifiable(exp.modifiers(), Exports.Modifier.PRIVATE);
         }
 
         assertUnmodifiable(md.uses(), "use");

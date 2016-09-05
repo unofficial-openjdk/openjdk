@@ -656,11 +656,6 @@ final class Resolver {
 
                 for (ModuleDescriptor.Exports export : descriptor2.exports()) {
 
-                    // exports dynamic ignored when checking exports
-                    if (export.modifiers().contains(Exports.Modifier.DYNAMIC)) {
-                        continue;
-                    }
-
                     if (export.isQualified()) {
                         if (!export.targets().contains(descriptor1.name()))
                             continue;

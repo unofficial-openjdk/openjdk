@@ -885,7 +885,7 @@ public class BuiltinClassLoader
     private boolean isExported(ModuleReference mref, String pn) {
         for (ModuleDescriptor.Exports e : mref.descriptor().exports()) {
             String source = e.source();
-            if (!e.isQualified() && (source == null || source.equals(pn))) {
+            if (!e.isQualified() && source.equals(pn)) {
                 return true;
             }
         }

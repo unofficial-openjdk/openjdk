@@ -87,6 +87,10 @@ public final class ClassFileAttributes {
             ModuleDescriptor.Builder builder = JLMA.newBuilder("unused", false);
             ModuleAttribute attr = new ModuleAttribute();
 
+            // module_flags
+            int module_flags = cr.readUnsignedShort(off);
+            off += 2;
+
             // requires_count and requires[requires_count]
             int requires_count = cr.readUnsignedShort(off);
             off += 2;
@@ -116,10 +120,7 @@ public final class ClassFileAttributes {
             off += 2;
             if (exports_count > 0) {
                 for (int i=0; i<exports_count; i++) {
-                    String pkg = null;
-                    int index = cr.readUnsignedShort(off);
-                    if (index != 0)
-                        pkg = cr.readUTF8(off, buf).replace('/', '.');
+                    String pkg = cr.readUTF8(off, buf).replace('/', '.');
                     off += 2;
 
                     int flags = cr.readUnsignedShort(off);
@@ -131,8 +132,6 @@ public final class ClassFileAttributes {
                         mods = new HashSet<>();
                         if ((flags & ACC_REFLECTION) != 0)
                             mods.add(Exports.Modifier.PRIVATE);
-                        if ((flags & ACC_DYNAMIC_PHASE) != 0)
-                            mods.add(Exports.Modifier.DYNAMIC);
                         if ((flags & ACC_SYNTHETIC) != 0)
                             mods.add(Exports.Modifier.SYNTHETIC);
                         if ((flags & ACC_MANDATED) != 0)
@@ -148,17 +147,9 @@ public final class ClassFileAttributes {
                             off += 2;
                             targets.add(t);
                         }
-                        if (pkg == null) {
-                            builder.exportsDefault(mods, targets);
-                        } else {
-                            builder.exports(mods, pkg, targets);
-                        }
+                        builder.exports(mods, pkg, targets);
                     } else {
-                        if (pkg == null) {
-                            builder.exportsDefault(mods);
-                        } else {
-                            builder.exports(mods, pkg);
-                        }
+                        builder.exports(mods, pkg);
                     }
                 }
             }
@@ -203,6 +194,12 @@ public final class ClassFileAttributes {
             assert descriptor != null;
             ByteVector attr = new ByteVector();
 
+            // module_flags
+            int module_flags = 0;
+            if (descriptor.isSynthetic())
+                module_flags |= ACC_SYNTHETIC;
+            attr.putShort(module_flags);
+
             // requires_count
             attr.putShort(descriptor.requires().size());
 
@@ -229,18 +226,12 @@ public final class ClassFileAttributes {
             } else {
                 attr.putShort(descriptor.exports().size());
                 for (Exports e : descriptor.exports()) {
-                    if (e.source() == null) {
-                        attr.putShort(0);
-                    } else {
-                        String pkg = e.source().replace('.', '/');
-                        attr.putShort(cw.newUTF8(pkg));
-                    }
+                    String pkg = e.source().replace('.', '/');
+                    attr.putShort(cw.newUTF8(pkg));
 
                     int flags = 0;
                     if (e.modifiers().contains(Exports.Modifier.PRIVATE))
                         flags |= ACC_REFLECTION;
-                    if (e.modifiers().contains(Exports.Modifier.DYNAMIC))
-                        flags |= ACC_DYNAMIC_PHASE;
                     if (e.modifiers().contains(Exports.Modifier.SYNTHETIC))
                         flags |= ACC_SYNTHETIC;
                     if (e.modifiers().contains(Exports.Modifier.MANDATED))

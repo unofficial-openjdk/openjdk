@@ -255,12 +255,6 @@ public final class Loader extends SecureClassLoader {
                 String target = resolvedModule.name();
                 ModuleDescriptor descriptor = other.reference().descriptor();
                 for (ModuleDescriptor.Exports e : descriptor.exports()) {
-
-                    // ignore
-                    if (e.modifiers().contains(Exports.Modifier.DYNAMIC)) {
-                        continue;
-                    }
-
                     boolean delegate;
                     if (e.isQualified()) {
                         // qualified export in same configuration
@@ -636,7 +630,7 @@ public final class Loader extends SecureClassLoader {
     private boolean isExported(ModuleReference mref, String pn) {
         for (ModuleDescriptor.Exports e : mref.descriptor().exports()) {
             String source = e.source();
-            if (!e.isQualified() && (source == null || source.equals(pn))) {
+            if (!e.isQualified() && source.equals(pn)) {
                 return true;
             }
         }

@@ -982,7 +982,7 @@ public final class LauncherHelper {
                 }
 
                 ModuleDescriptor md = mref.descriptor();
-                ostream.println(midAndLocation(md, mref.location()));
+                ostream.println("module " + midAndLocation(md, mref.location()));
 
                 for (Requires d : md.requires()) {
                     ostream.format("  requires %s%n", d);
@@ -992,20 +992,8 @@ public final class LauncherHelper {
                 }
 
                 // exports
-                Exports defaultUnqualified = null;
-                Exports defaultQualified = null;
                 Set<Exports> exports = new TreeSet<>(Comparator.comparing(Exports::source));
-                for (Exports e : md.exports()) {
-                    if (e.source() == null) {
-                        if (e.targets().isEmpty()) {
-                            defaultUnqualified = e;
-                        } else {
-                            defaultQualified = e;
-                        }
-                    } else {
-                        exports.add(e);
-                    }
-                }
+                exports.addAll(md.exports());
                 for (Exports e : exports) {
                     String modsAndSource = Stream.concat(toStringStream(e.modifiers()),
                                                          Stream.of(e.source()))
@@ -1016,15 +1004,6 @@ public final class LauncherHelper {
                     } else {
                         ostream.println();
                     }
-                }
-                if (defaultUnqualified != null) {
-                    String mods = toString(defaultUnqualified.modifiers());
-                    ostream.format("  exports %s default%n", mods);
-                }
-                if (defaultQualified != null) {
-                    String mods = toString(defaultQualified.modifiers());
-                    ostream.format("  exports %s default", mods);
-                    formatCommaList(ostream, " to", defaultQualified.targets());
                 }
 
                 // concealed packages

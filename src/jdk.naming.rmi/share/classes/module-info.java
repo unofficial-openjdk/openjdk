@@ -30,7 +30,7 @@ module jdk.naming.rmi {
         with com.sun.jndi.rmi.registry.RegistryContextFactory;
 
     // temporary export until NamingManager.getURLContext uses services
-    exports dynamic com.sun.jndi.url.rmi to java.naming;
-    exports dynamic com.sun.jndi.rmi.registry to java.rmi;
+    exports com.sun.jndi.url.rmi to java.naming;
+    exports com.sun.jndi.rmi.registry to java.rmi;
 }
 
