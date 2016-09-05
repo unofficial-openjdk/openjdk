@@ -70,8 +70,8 @@ module java.corba {
     exports com.sun.corba.se.impl.util to jdk.rmic;
 
     // JNDI CosNaming provider
-    exports dynamic com.sun.jndi.cosnaming to java.naming;
-    exports dynamic com.sun.jndi.url.corbaname to java.naming;
-    exports dynamic com.sun.jndi.url.iiop to java.naming;
-    exports dynamic com.sun.jndi.url.iiopname to java.naming;
+    exports com.sun.jndi.cosnaming to java.naming;
+    exports com.sun.jndi.url.corbaname to java.naming;
+    exports com.sun.jndi.url.iiop to java.naming;
+    exports com.sun.jndi.url.iiopname to java.naming;
 }
