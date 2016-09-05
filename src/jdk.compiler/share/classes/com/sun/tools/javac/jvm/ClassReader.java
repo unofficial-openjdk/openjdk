@@ -1240,6 +1240,8 @@ public class ClassReader {
                         ModuleSymbol msym = (ModuleSymbol) sym.owner;
                         ListBuffer<Directive> directives = new ListBuffer<>();
 
+                        int module_flags = nextChar();
+
                         ListBuffer<RequiresDirective> requires = new ListBuffer<>();
                         int nrequires = nextChar();
                         for (int i = 0; i < nrequires; i++) {

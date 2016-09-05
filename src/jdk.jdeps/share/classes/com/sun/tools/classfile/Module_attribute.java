@@ -45,6 +45,7 @@ public class Module_attribute extends Attribute {
 
     Module_attribute(ClassReader cr, int name_index, int length) throws IOException {
         super(name_index, length);
+        int module_flags = cr.readUnsignedShort();
         requires_count = cr.readUnsignedShort();
         requires = new RequiresEntry[requires_count];
         for (int i = 0; i < requires_count; i++)
