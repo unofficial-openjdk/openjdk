@@ -158,6 +158,10 @@ class SystemProperty : public PathString {
   SystemProperty* next() const        { return _next; }
   void set_next(SystemProperty* next) { _next = next; }
 
+  bool is_readable() const {
+    return !_internal || strcmp(_key, "jdk.boot.class.path.append") == 0;
+  }
+
   // A system property should only have its value set
   // via an external interface if it is a writeable property.
   // The internal, non-writeable property jdk.boot.class.path.append
@@ -378,6 +382,9 @@ class Arguments : AllStatic {
   // -Xbootclasspath/p was supported.
   static PathString *_system_boot_class_path;
 
+  // Set if a modular java runtime image is present vs. a build with exploded modules
+  static bool _has_jimage;
+
   // temporary: to emit warning if the default ext dirs are not empty.
   // remove this variable when the warning is no longer needed.
   static char* _ext_dirs;
@@ -425,11 +432,6 @@ class Arguments : AllStatic {
   static bool _java_compiler;
   static void set_java_compiler(bool arg) { _java_compiler = arg; }
   static bool java_compiler()   { return _java_compiler; }
-
-  // Capture the index location of -Xbootclasspath\a within sysclasspath.
-  // Used when setting up the bootstrap search path in order to
-  // mark the boot loader's append path observability boundary.
-  static int _bootclassloader_append_index;
 
   // -Xdebug flag
   static bool _xdebug_mode;
@@ -690,17 +692,6 @@ class Arguments : AllStatic {
   static size_t min_heap_size()             { return _min_heap_size; }
   static void  set_min_heap_size(size_t v)  { _min_heap_size = v;  }
 
-  // -Xbootclasspath/a
-  static int  bootclassloader_append_index() {
-    return _bootclassloader_append_index;
-  }
-  static void set_bootclassloader_append_index(int value) {
-    // Set only if the index has not been set yet
-    if (_bootclassloader_append_index == -1) {
-      _bootclassloader_append_index = value;
-    }
-  }
-
   // -Xrun
   static AgentLibrary* libraries()          { return _libraryList.first(); }
   static bool init_libraries_at_startup()   { return !_libraryList.is_empty(); }
@@ -748,7 +739,9 @@ class Arguments : AllStatic {
                                       PropertyAppendable append, PropertyWriteable writeable,
                                       PropertyInternal internal);
   static const char* PropertyList_get_value(SystemProperty* plist, const char* key);
+  static const char* PropertyList_get_readable_value(SystemProperty* plist, const char* key);
   static int  PropertyList_count(SystemProperty* pl);
+  static int  PropertyList_readable_count(SystemProperty* pl);
   static const char* PropertyList_get_key_at(SystemProperty* pl,int index);
   static char* PropertyList_get_value_at(SystemProperty* pl,int index);
 
@@ -762,19 +755,21 @@ class Arguments : AllStatic {
 
   // Set up the underlying pieces of the system boot class path
   static void add_patch_mod_prefix(const char *module_name, const char *path, bool* patch_mod_javabase);
-  static void set_sysclasspath(const char *value) {
+  static void set_sysclasspath(const char *value, bool has_jimage) {
+    // During start up, set by os::set_boot_path()
+    assert(get_sysclasspath() == NULL, "System boot class path previously set");
     _system_boot_class_path->set_value(value);
-    set_jdkbootclasspath_append();
+    _has_jimage = has_jimage;
   }
   static void append_sysclasspath(const char *value) {
     _system_boot_class_path->append_value(value);
-    set_jdkbootclasspath_append();
+    _jdk_boot_class_path_append->append_value(value);
   }
-  static void set_jdkbootclasspath_append();
 
   static GrowableArray<ModulePatchPath*>* get_patch_mod_prefix() { return _patch_mod_prefix; }
   static char* get_sysclasspath() { return _system_boot_class_path->value(); }
   static char* get_jdk_boot_class_path_append() { return _jdk_boot_class_path_append->value(); }
+  static bool has_jimage() { return _has_jimage; }
 
   static char* get_java_home()    { return _java_home->value(); }
   static char* get_dll_dir()      { return _sun_boot_library_path->value(); }

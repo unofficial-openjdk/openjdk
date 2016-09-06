@@ -21,24 +21,28 @@
  * questions.
  *
  */
+
+/*
+ * @test
+ * @library /testlibrary /test/lib /
+ * @modules java.base/jdk.internal.misc
+ *          java.management
+ * @ignore 8146128
+ * @build compiler.cpuflags.TestAESIntrinsicsOnSupportedConfig
+ *        compiler.codegen.aes.TestAESMain
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
+ *                   -XX:+WhiteBoxAPI -Xbatch
+ *                   compiler.cpuflags.TestAESIntrinsicsOnSupportedConfig
+ */
+
+package compiler.cpuflags;
+
 import jdk.test.lib.OutputAnalyzer;
 import jdk.test.lib.Platform;
 import jdk.test.lib.ProcessTools;
 
-/*
- * @test
- * @library /testlibrary /test/lib /compiler/whitebox
- *          /compiler/testlibrary /compiler/codegen/7184394
- * @modules java.base/jdk.internal.misc
- *          java.management
- * @ignore 8146128
- * @build TestAESIntrinsicsOnSupportedConfig TestAESMain
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                  sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
- *                   -XX:+WhiteBoxAPI -Xbatch
- *                   TestAESIntrinsicsOnSupportedConfig
- */
 public class TestAESIntrinsicsOnSupportedConfig extends AESIntrinsicsBase {
 
     /**

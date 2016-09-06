@@ -24,27 +24,28 @@
 /*
  * @test
  * @bug 8136421
- * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9" | os.simpleArch == "aarch64")
+ * @requires (vm.simpleArch == "x64" | vm.simpleArch == "sparcv9" | vm.simpleArch == "aarch64")
  * @library /testlibrary /
  * @modules java.base/jdk.internal.misc
  * @modules jdk.vm.ci/jdk.vm.ci.hotspot
  *          jdk.vm.ci/jdk.vm.ci.code
  *          jdk.vm.ci/jdk.vm.ci.meta
  *          jdk.vm.ci/jdk.vm.ci.runtime
+ *
  * @build compiler.jvmci.common.JVMCIHelpers
  *        compiler.jvmci.events.JvmciShutdownEventListener
  *        compiler.jvmci.events.JvmciShutdownEventTest
- * @run main jdk.test.lib.FileInstaller ../common/services/ ./META-INF/services/
- * @run main jdk.test.lib.FileInstaller ./JvmciShutdownEventTest.config
+ * @run driver jdk.test.lib.FileInstaller ../common/services/ ./META-INF/services/
+ * @run driver jdk.test.lib.FileInstaller ./JvmciShutdownEventTest.config
  *     ./META-INF/services/jdk.vm.ci.hotspot.services.HotSpotVMEventListener
- * @run main ClassFileInstaller
- *     compiler.jvmci.common.JVMCIHelpers$EmptyHotspotCompiler
- *     compiler.jvmci.common.JVMCIHelpers$EmptyCompilerFactory
- *     compiler.jvmci.events.JvmciShutdownEventListener
+ * @run driver ClassFileInstaller
+ *      compiler.jvmci.common.JVMCIHelpers$EmptyHotspotCompiler
+ *      compiler.jvmci.common.JVMCIHelpers$EmptyCompilerFactory
+ *      compiler.jvmci.common.JVMCIHelpers$EmptyCompilationRequestResult
+ *      compiler.jvmci.common.JVMCIHelpers$EmptyVMEventListener
+ *      compiler.jvmci.events.JvmciShutdownEventListener
  * @run main/othervm compiler.jvmci.events.JvmciShutdownEventTest
  */
-
- // as soon as CODETOOLS-7901589 fixed, '@run main/othervm' at L43 should be replaced w/ '@run driver'
 
 package compiler.jvmci.events;
 

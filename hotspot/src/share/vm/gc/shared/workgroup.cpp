@@ -44,11 +44,6 @@ void  AbstractWorkGang::initialize_workers() {
     vm_exit_out_of_memory(0, OOM_MALLOC_ERROR, "Cannot create GangWorker array.");
   }
 
-  _active_workers = ParallelGCThreads;
-  if (UseDynamicNumberOfGCThreads && !FLAG_IS_CMDLINE(ParallelGCThreads)) {
-    _active_workers = 1U;
-  }
-
   add_workers(true);
 }
 
@@ -60,6 +55,10 @@ AbstractGangWorker* AbstractWorkGang::install_worker(uint worker_id) {
 }
 
 void AbstractWorkGang::add_workers(bool initializing) {
+  add_workers(_active_workers, initializing);
+}
+
+void AbstractWorkGang::add_workers(uint active_workers, bool initializing) {
 
   os::ThreadType worker_type;
   if (are_ConcurrentGC_threads()) {
@@ -67,14 +66,17 @@ void AbstractWorkGang::add_workers(bool initializing) {
   } else {
     worker_type = os::pgc_thread;
   }
+  uint previous_created_workers = _created_workers;
 
   _created_workers = WorkerManager::add_workers(this,
-                                                _active_workers,
+                                                active_workers,
                                                 _total_workers,
                                                 _created_workers,
                                                 worker_type,
                                                 initializing);
   _active_workers = MIN2(_created_workers, _active_workers);
+
+  WorkerManager::log_worker_creation(this, previous_created_workers, _active_workers, _created_workers, initializing);
 }
 
 AbstractGangWorker* AbstractWorkGang::worker(uint i) const {
@@ -268,11 +270,14 @@ void WorkGang::run_task(AbstractGangTask* task) {
 }
 
 void WorkGang::run_task(AbstractGangTask* task, uint num_workers) {
-  guarantee(num_workers <= active_workers(),
-            "Trying to execute task %s with %u workers which is more than the amount of active workers %u.",
-            task->name(), num_workers, active_workers());
+  guarantee(num_workers <= total_workers(),
+            "Trying to execute task %s with %u workers which is more than the amount of total workers %u.",
+            task->name(), num_workers, total_workers());
   guarantee(num_workers > 0, "Trying to execute task %s with zero workers", task->name());
+  uint old_num_workers = _active_workers;
+  update_active_workers(num_workers);
   _dispatcher->coordinator_execute_on_workers(task, num_workers);
+  update_active_workers(old_num_workers);
 }
 
 AbstractGangWorker::AbstractGangWorker(AbstractWorkGang* gang, uint id) {

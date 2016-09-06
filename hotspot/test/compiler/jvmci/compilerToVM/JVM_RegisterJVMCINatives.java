@@ -25,7 +25,7 @@
 /*
  * @test
  * @bug 8136421
- * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9" | os.simpleArch == "aarch64")
+ * @requires (vm.simpleArch == "x64" | vm.simpleArch == "sparcv9" | vm.simpleArch == "aarch64")
  * @library /testlibrary /
  * @modules java.base/jdk.internal.misc
  * @modules jdk.vm.ci/jdk.vm.ci.hotspot
@@ -43,8 +43,8 @@
 
 package compiler.jvmci.compilerToVM;
 
-import jdk.vm.ci.runtime.JVMCI;
 import jdk.test.lib.Asserts;
+import jdk.vm.ci.runtime.JVMCI;
 
 import java.lang.reflect.Method;
 

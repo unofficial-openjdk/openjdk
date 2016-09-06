@@ -107,77 +107,9 @@
 #include "utilities/hashtable.hpp"
 #include "utilities/macros.hpp"
 
-#ifdef TARGET_OS_FAMILY_linux
-# include "vmStructs_linux.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_solaris
-# include "vmStructs_solaris.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_windows
-# include "vmStructs_windows.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_aix
-# include "vmStructs_aix.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_bsd
-# include "vmStructs_bsd.hpp"
-#endif
-
-#ifdef TARGET_ARCH_x86
-# include "vmStructs_x86.hpp"
-#endif
-#ifdef TARGET_ARCH_sparc
-# include "vmStructs_sparc.hpp"
-#endif
-#ifdef TARGET_ARCH_zero
-# include "vmStructs_zero.hpp"
-#endif
-#ifdef TARGET_ARCH_arm
-# include "vmStructs_arm.hpp"
-#endif
-#ifdef TARGET_ARCH_ppc
-# include "vmStructs_ppc.hpp"
-#endif
-#ifdef TARGET_ARCH_aarch64
-# include "vmStructs_aarch64.hpp"
-#endif
-
-#ifdef TARGET_OS_ARCH_linux_x86
-# include "vmStructs_linux_x86.hpp"
-#endif
-#ifdef TARGET_OS_ARCH_linux_sparc
-# include "vmStructs_linux_sparc.hpp"
-#endif
-#ifdef TARGET_OS_ARCH_linux_zero
-# include "vmStructs_linux_zero.hpp"
-#endif
-#ifdef TARGET_OS_ARCH_solaris_x86
-# include "vmStructs_solaris_x86.hpp"
-#endif
-#ifdef TARGET_OS_ARCH_solaris_sparc
-# include "vmStructs_solaris_sparc.hpp"
-#endif
-#ifdef TARGET_OS_ARCH_windows_x86
-# include "vmStructs_windows_x86.hpp"
-#endif
-#ifdef TARGET_OS_ARCH_linux_arm
-# include "vmStructs_linux_arm.hpp"
-#endif
-#ifdef TARGET_OS_ARCH_linux_ppc
-# include "vmStructs_linux_ppc.hpp"
-#endif
-#ifdef TARGET_OS_ARCH_linux_aarch64
-# include "vmStructs_linux_aarch64.hpp"
-#endif
-#ifdef TARGET_OS_ARCH_aix_ppc
-# include "vmStructs_aix_ppc.hpp"
-#endif
-#ifdef TARGET_OS_ARCH_bsd_x86
-# include "vmStructs_bsd_x86.hpp"
-#endif
-#ifdef TARGET_OS_ARCH_bsd_zero
-# include "vmStructs_bsd_zero.hpp"
-#endif
+#include CPU_HEADER(vmStructs)
+#include OS_HEADER(vmStructs)
+#include OS_CPU_HEADER(vmStructs)
 
 #if INCLUDE_ALL_GCS
 #include "gc/cms/compactibleFreeListSpace.hpp"
@@ -2024,15 +1956,21 @@ typedef CompactHashtable<Symbol*, char>       SymbolCompactHashTable;
   declare_c2_type(StorePConditionalNode, LoadStoreNode)                   \
   declare_c2_type(StoreLConditionalNode, LoadStoreNode)                   \
   declare_c2_type(CompareAndSwapNode, LoadStoreConditionalNode)           \
+  declare_c2_type(CompareAndSwapBNode, CompareAndSwapNode)                \
+  declare_c2_type(CompareAndSwapSNode, CompareAndSwapNode)                \
   declare_c2_type(CompareAndSwapLNode, CompareAndSwapNode)                \
   declare_c2_type(CompareAndSwapINode, CompareAndSwapNode)                \
   declare_c2_type(CompareAndSwapPNode, CompareAndSwapNode)                \
   declare_c2_type(CompareAndSwapNNode, CompareAndSwapNode)                \
+  declare_c2_type(WeakCompareAndSwapBNode, CompareAndSwapNode)            \
+  declare_c2_type(WeakCompareAndSwapSNode, CompareAndSwapNode)            \
   declare_c2_type(WeakCompareAndSwapLNode, CompareAndSwapNode)            \
   declare_c2_type(WeakCompareAndSwapINode, CompareAndSwapNode)            \
   declare_c2_type(WeakCompareAndSwapPNode, CompareAndSwapNode)            \
   declare_c2_type(WeakCompareAndSwapNNode, CompareAndSwapNode)            \
   declare_c2_type(CompareAndExchangeNode, LoadStoreNode)                  \
+  declare_c2_type(CompareAndExchangeBNode, CompareAndExchangeNode)        \
+  declare_c2_type(CompareAndExchangeSNode, CompareAndExchangeNode)        \
   declare_c2_type(CompareAndExchangeLNode, CompareAndExchangeNode)        \
   declare_c2_type(CompareAndExchangeINode, CompareAndExchangeNode)        \
   declare_c2_type(CompareAndExchangePNode, CompareAndExchangeNode)        \
@@ -2705,7 +2643,7 @@ typedef CompactHashtable<Symbol*, char>       SymbolCompactHashTable;
   /* DEFAULT_CACHE_LINE_SIZE (globalDefinitions.hpp) */                   \
   /***************************************************/                   \
                                                                           \
-  declare_constant(DEFAULT_CACHE_LINE_SIZE)                               \
+  declare_preprocessor_constant("DEFAULT_CACHE_LINE_SIZE", DEFAULT_CACHE_LINE_SIZE) \
                                                                           \
   declare_constant(Deoptimization::Unpack_deopt)                          \
   declare_constant(Deoptimization::Unpack_exception)                      \

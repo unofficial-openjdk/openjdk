@@ -1387,7 +1387,6 @@ Instruction* LIRGenerator::instruction_for_vreg(int reg_num) {
 void LIRGenerator::set_vreg_flag(int vreg_num, VregFlag f) {
   if (_vreg_flags.size_in_bits() == 0) {
     BitMap2D temp(100, num_vreg_flags);
-    temp.clear();
     _vreg_flags = temp;
   }
   _vreg_flags.at_put_grow(vreg_num, f, true);
@@ -3435,7 +3434,7 @@ void LIRGenerator::increment_event_counter_impl(CodeEmitInfo* info,
   __ load(counter, result);
   __ add(result, LIR_OprFact::intConst(InvocationCounter::count_increment), result);
   __ store(result, counter);
-  if (notify) {
+  if (notify && (!backedge || UseOnStackReplacement)) {
     LIR_Opr meth = LIR_OprFact::metadataConst(method->constant_encoding());
     // The bci for info can point to cmp for if's we want the if bci
     CodeStub* overflow = new CounterOverflowStub(info, bci, meth);

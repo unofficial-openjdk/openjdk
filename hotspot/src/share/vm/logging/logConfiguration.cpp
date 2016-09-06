@@ -415,17 +415,8 @@ void LogConfiguration::describe_available(outputStream* out){
 void LogConfiguration::describe_current_configuration(outputStream* out){
   out->print_cr("Log output configuration:");
   for (size_t i = 0; i < _n_outputs; i++) {
-    out->print("#" SIZE_FORMAT ": %s ", i, _outputs[i]->name());
-    out->print_raw(_outputs[i]->config_string());
-    out->print(" ");
-    char delimiter[2] = {0};
-    for (size_t d = 0; d < LogDecorators::Count; d++) {
-      LogDecorators::Decorator decorator = static_cast<LogDecorators::Decorator>(d);
-      if (_outputs[i]->decorators().is_decorator(decorator)) {
-        out->print("%s%s", delimiter, LogDecorators::name(decorator));
-        *delimiter = ',';
-      }
-    }
+    out->print("#" SIZE_FORMAT ": ", i);
+    _outputs[i]->describe(out);
     out->cr();
   }
 }
@@ -484,13 +475,13 @@ void LogConfiguration::print_command_line_help(FILE* out) {
               " -Xlog:gc::uptime,tid\n"
               "\t Log messages tagged with 'gc' tag using 'info' level to output 'stdout', using 'uptime' and 'tid' decorations.\n\n"
 
-              " -Xlog:gc*=info,rt*=off\n"
-              "\t Log messages tagged with at least 'gc' using 'info' level, but turn off logging of messages tagged with 'rt'.\n"
-              "\t (Messages tagged with both 'gc' and 'rt' will not be logged.)\n\n"
+              " -Xlog:gc*=info,safepoint*=off\n"
+              "\t Log messages tagged with at least 'gc' using 'info' level, but turn off logging of messages tagged with 'safepoint'.\n"
+              "\t (Messages tagged with both 'gc' and 'safepoint' will not be logged.)\n\n"
 
-              " -Xlog:disable -Xlog:rt=trace:rttrace.txt\n"
+              " -Xlog:disable -Xlog:safepoint=trace:safepointtrace.txt\n"
               "\t Turn off all logging, including warnings and errors,\n"
-              "\t and then enable messages tagged with 'rt' using 'trace' level to file 'rttrace.txt'.\n");
+              "\t and then enable messages tagged with 'safepoint' using 'trace' level to file 'safepointtrace.txt'.\n");
 }
 
 void LogConfiguration::rotate_all_outputs() {

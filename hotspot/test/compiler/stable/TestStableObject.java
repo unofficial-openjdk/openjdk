@@ -58,6 +58,7 @@
 package compiler.stable;
 
 import jdk.internal.vm.annotation.Stable;
+
 import java.lang.reflect.InvocationTargetException;
 
 public class TestStableObject {
@@ -102,7 +103,7 @@ public class TestStableObject {
         public static final DefaultValue c = new DefaultValue();
         public static Object get() { return c.v; }
         public static void test() throws Exception {
-            Object val1 = get();
+                            Object val1 = get();
             c.v = Values.A; Object val2 = get();
             assertEquals(val1, null);
             assertEquals(val2, Values.A);
@@ -132,7 +133,7 @@ public class TestStableObject {
         public static final DefaultStaticValue c = new DefaultStaticValue();
         public static Object get() { return c.v; }
         public static void test() throws Exception {
-            Object val1 = get();
+                            Object val1 = get();
             c.v = Values.A; Object val2 = get();
             assertEquals(val1, null);
             assertEquals(val2, Values.A);
@@ -182,24 +183,24 @@ public class TestStableObject {
         public static void test() throws Exception {
             {
                 c.v = new Object[1]; c.v[0] = Values.A; Object val1 = get();
-                c.v[0] = Values.B; Object val2 = get();
+                                     c.v[0] = Values.B; Object val2 = get();
                 assertEquals(val1, Values.A);
                 assertEquals(val2, (isStableEnabled ? Values.A : Values.B));
 
                 c.v = new Object[1]; c.v[0] = Values.C; Object val3 = get();
                 assertEquals(val3, (isStableEnabled ? (isStableEnabled ? Values.A : Values.B)
-                        : Values.C));
+                                                    : Values.C));
             }
 
             {
                 c.v = new Object[20]; c.v[10] = Values.A; Object val1 = get1();
-                c.v[10] = Values.B; Object val2 = get1();
+                                      c.v[10] = Values.B; Object val2 = get1();
                 assertEquals(val1, Values.A);
                 assertEquals(val2, (isStableEnabled ? Values.A : Values.B));
 
                 c.v = new Object[20]; c.v[10] = Values.C; Object val3 = get1();
                 assertEquals(val3, (isStableEnabled ? (isStableEnabled ? Values.A : Values.B)
-                        : Values.C));
+                                                    : Values.C));
             }
 
             {
@@ -222,17 +223,17 @@ public class TestStableObject {
         public static void test() throws Exception {
             {
                 c.v = new Object[1][1]; c.v[0][0] = Values.A; Object val1 = get();
-                c.v[0][0] = Values.B; Object val2 = get();
+                                        c.v[0][0] = Values.B; Object val2 = get();
                 assertEquals(val1, Values.A);
                 assertEquals(val2, (isStableEnabled ? Values.A : Values.B));
 
                 c.v = new Object[1][1]; c.v[0][0] = Values.C; Object val3 = get();
                 assertEquals(val3, (isStableEnabled ? (isStableEnabled ? Values.A : Values.B)
-                        : Values.C));
+                                                    : Values.C));
 
                 c.v[0] = new Object[1]; c.v[0][0] = Values.D; Object val4 = get();
                 assertEquals(val4, (isStableEnabled ? (isStableEnabled ? Values.A : Values.B)
-                        : Values.D));
+                                                    : Values.D));
             }
 
             {
@@ -262,21 +263,21 @@ public class TestStableObject {
         public static void test() throws Exception {
             {
                 c.v = new Object[1][1][1]; c.v[0][0][0] = Values.A; Object val1 = get();
-                c.v[0][0][0] = Values.B; Object val2 = get();
+                                           c.v[0][0][0] = Values.B; Object val2 = get();
                 assertEquals(val1, Values.A);
                 assertEquals(val2, (isStableEnabled ? Values.A : Values.B));
 
                 c.v = new Object[1][1][1]; c.v[0][0][0] = Values.C; Object val3 = get();
                 assertEquals(val3, (isStableEnabled ? (isStableEnabled ? Values.A : Values.B)
-                        : Values.C));
+                                                    : Values.C));
 
                 c.v[0] = new Object[1][1]; c.v[0][0][0] = Values.D; Object val4 = get();
                 assertEquals(val4, (isStableEnabled ? (isStableEnabled ? Values.A : Values.B)
-                        : Values.D));
+                                                    : Values.D));
 
                 c.v[0][0] = new Object[1]; c.v[0][0][0] = Values.E; Object val5 = get();
                 assertEquals(val5, (isStableEnabled ? (isStableEnabled ? Values.A : Values.B)
-                        : Values.E));
+                                                    : Values.E));
             }
 
             {
@@ -313,25 +314,25 @@ public class TestStableObject {
         public static void test() throws Exception {
             {
                 c.v = new Object[1][1][1][1]; c.v[0][0][0][0] = Values.A; Object val1 = get();
-                c.v[0][0][0][0] = Values.B; Object val2 = get();
+                                              c.v[0][0][0][0] = Values.B; Object val2 = get();
                 assertEquals(val1, Values.A);
                 assertEquals(val2, (isStableEnabled ? Values.A : Values.B));
 
                 c.v = new Object[1][1][1][1]; c.v[0][0][0][0] = Values.C; Object val3 = get();
                 assertEquals(val3, (isStableEnabled ? (isStableEnabled ? Values.A : Values.B)
-                        : Values.C));
+                                                    : Values.C));
 
                 c.v[0] = new Object[1][1][1]; c.v[0][0][0][0] = Values.D; Object val4 = get();
                 assertEquals(val4, (isStableEnabled ? (isStableEnabled ? Values.A : Values.B)
-                        : Values.D));
+                                                    : Values.D));
 
                 c.v[0][0] = new Object[1][1]; c.v[0][0][0][0] = Values.E; Object val5 = get();
                 assertEquals(val5, (isStableEnabled ? (isStableEnabled ? Values.A : Values.B)
-                        : Values.E));
+                                                    : Values.E));
 
                 c.v[0][0][0] = new Object[1]; c.v[0][0][0][0] = Values.F; Object val6 = get();
                 assertEquals(val6, (isStableEnabled ? (isStableEnabled ? Values.A : Values.B)
-                        : Values.F));
+                                                    : Values.F));
             }
 
             {
@@ -372,7 +373,7 @@ public class TestStableObject {
         public static void test() throws Exception {
             {
                 c.v = new Object[1]; ((Object[])c.v)[0] = Values.A; Object val1 = get();
-                ((Object[])c.v)[0] = Values.B; Object val2 = get();
+                                     ((Object[])c.v)[0] = Values.B; Object val2 = get();
 
                 assertEquals(val1, Values.A);
                 assertEquals(val2, Values.B);
@@ -399,7 +400,7 @@ public class TestStableObject {
         public static void test() throws Exception {
             {
                 c.v = new Object[1][1]; ((Object[][])c.v)[0][0] = Values.A; Object val1 = get();
-                ((Object[][])c.v)[0][0] = Values.B; Object val2 = get();
+                                        ((Object[][])c.v)[0][0] = Values.B; Object val2 = get();
 
                 assertEquals(val1, Values.A);
                 assertEquals(val2, Values.B);
@@ -407,7 +408,7 @@ public class TestStableObject {
 
             {
                 c.v = new Object[1][1]; c.v[0] = new Object[0]; Object[] val1 = get1();
-                c.v[0] = new Object[0]; Object[] val2 = get1();
+                                        c.v[0] = new Object[0]; Object[] val2 = get1();
 
                 assertTrue((isStableEnabled ? (val1 == val2) : (val1 != val2)));
             }
@@ -435,7 +436,7 @@ public class TestStableObject {
         public static void test() throws Exception {
             {
                 c.v = new Object[1][1][1]; ((Object[][][])c.v)[0][0][0] = Values.A; Object val1 = get();
-                ((Object[][][])c.v)[0][0][0] = Values.B; Object val2 = get();
+                                           ((Object[][][])c.v)[0][0][0] = Values.B; Object val2 = get();
 
                 assertEquals(val1, Values.A);
                 assertEquals(val2, Values.B);
@@ -443,14 +444,14 @@ public class TestStableObject {
 
             {
                 c.v = new Object[1][1][1]; c.v[0][0] = new Object[0]; Object[] val1 = get1();
-                c.v[0][0] = new Object[0]; Object[] val2 = get1();
+                                           c.v[0][0] = new Object[0]; Object[] val2 = get1();
 
                 assertTrue((isStableEnabled ? (val1 == val2) : (val1 != val2)));
             }
 
             {
                 c.v = new Object[1][1][1]; c.v[0] = new Object[0][0]; Object[][] val1 = get2();
-                c.v[0] = new Object[0][0]; Object[][] val2 = get2();
+                                           c.v[0] = new Object[0][0]; Object[][] val2 = get2();
 
                 assertTrue((isStableEnabled ? (val1 == val2) : (val1 != val2)));
             }
@@ -480,7 +481,7 @@ public class TestStableObject {
         public static void test() throws Exception {
             {
                 c.v = new A(); c.v.a = Values.A; A val1 = get();
-                c.v.a = Values.B; A val2 = get();
+                               c.v.a = Values.B; A val2 = get();
 
                 assertEquals(val1.a, Values.B);
                 assertEquals(val2.a, Values.B);
@@ -488,7 +489,7 @@ public class TestStableObject {
 
             {
                 c.v = new A(); c.v.a = Values.A; Object val1 = get1();
-                c.v.a = Values.B; Object val2 = get1();
+                               c.v.a = Values.B; Object val2 = get1();
                 c.v = new A(); c.v.a = Values.C; Object val3 = get1();
 
                 assertEquals(val1, Values.A);
@@ -514,8 +515,8 @@ public class TestStableObject {
         public static void test() throws Exception {
             {
                 c.v = new A(); c.v.next = new A();   c.v.next.next  = c.v;
-                c.v.a = Values.A; c.v.next.a = Values.A; A val1 = get();
-                c.v.a = Values.B; c.v.next.a = Values.B; A val2 = get();
+                               c.v.a = Values.A; c.v.next.a = Values.A; A val1 = get();
+                               c.v.a = Values.B; c.v.next.a = Values.B; A val2 = get();
 
                 assertEquals(val1.a, Values.B);
                 assertEquals(val2.a, Values.B);
@@ -523,10 +524,10 @@ public class TestStableObject {
 
             {
                 c.v = new A(); c.v.next = c.v;
-                c.v.a = Values.A; Object val1 = get1();
-                c.v.a = Values.B; Object val2 = get1();
+                               c.v.a = Values.A; Object val1 = get1();
+                               c.v.a = Values.B; Object val2 = get1();
                 c.v = new A(); c.v.next = c.v;
-                c.v.a = Values.C; Object val3 = get1();
+                               c.v.a = Values.C; Object val3 = get1();
 
                 assertEquals(val1, Values.A);
                 assertEquals(val2, (isStableEnabled ? Values.A : Values.B));
@@ -552,8 +553,8 @@ public class TestStableObject {
         public static void test() throws Exception {
             {
                 c.v = new A(); c.v.left = c.v.right = c.v;
-                c.v.a = Values.A; Object val1 = get(); Object val2 = get1();
-                c.v.a = Values.B; Object val3 = get(); Object val4 = get1();
+                               c.v.a = Values.A; Object val1 = get(); Object val2 = get1();
+                               c.v.a = Values.B; Object val3 = get(); Object val4 = get1();
 
                 assertEquals(val1, Values.A);
                 assertEquals(val3, (isStableEnabled ? Values.A : Values.B));
@@ -583,8 +584,8 @@ public class TestStableObject {
             {
                 A elem = new A();
                 c.v = new A[] { elem, elem }; c.v[0].left = c.v[0].right = c.v;
-                elem.a = Values.A; Object val1 = get(); Object val2 = get1();
-                elem.a = Values.B; Object val3 = get(); Object val4 = get1();
+                               elem.a = Values.A; Object val1 = get(); Object val2 = get1();
+                               elem.a = Values.B; Object val3 = get(); Object val4 = get1();
 
                 assertEquals(val1, Values.A);
                 assertEquals(val3, (isStableEnabled ? Values.A : Values.B));

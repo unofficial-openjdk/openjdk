@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -468,9 +468,6 @@ public:
   // Check for Node being a loop-breaking test
   Node *is_loop_exit(Node *iff) const;
 
-  // Returns true if ctrl is executed on every complete iteration
-  bool dominates_backedge(Node* ctrl);
-
   // Remove simplistic dead code from loop body
   void DCE_loop_body();
 
@@ -523,8 +520,8 @@ public:
   // Return TRUE if "iff" is a range check.
   bool is_range_check_if(IfNode *iff, PhaseIdealLoop *phase, Invariance& invar) const;
 
-  // Compute loop exact trip count if possible
-  void compute_exact_trip_count( PhaseIdealLoop *phase );
+  // Compute loop trip count if possible
+  void compute_trip_count(PhaseIdealLoop* phase);
 
   // Compute loop trip count from profile data
   void compute_profile_trip_cnt( PhaseIdealLoop *phase );

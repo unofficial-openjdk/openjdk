@@ -35,7 +35,6 @@
 #include "logging/log.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/filemap.hpp"
-#include "mutex_bsd.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "os_bsd.inline.hpp"
 #include "os_share_bsd.hpp"
@@ -2717,7 +2716,8 @@ void os::hint_no_preempt() {}
 //      - sets target osthread state to continue
 //      - sends signal to end the sigsuspend loop in the SR_handler
 //
-//  Note that the SR_lock plays no role in this suspend/resume protocol.
+//  Note that the SR_lock plays no role in this suspend/resume protocol,
+//  but is checked for NULL in SR_handler as a thread termination indicator.
 
 static void resume_clear_context(OSThread *osthread) {
   osthread->set_ucontext(NULL);
@@ -2747,9 +2747,22 @@ static void SR_handler(int sig, siginfo_t* siginfo, ucontext_t* context) {
   // after sigsuspend.
   int old_errno = errno;
 
-  Thread* thread = Thread::current();
-  OSThread* osthread = thread->osthread();
+  Thread* thread = Thread::current_or_null_safe();
+  assert(thread != NULL, "Missing current thread in SR_handler");
+
+  // On some systems we have seen signal delivery get "stuck" until the signal
+  // mask is changed as part of thread termination. Check that the current thread
+  // has not already terminated (via SR_lock()) - else the following assertion
+  // will fail because the thread is no longer a JavaThread as the ~JavaThread
+  // destructor has completed.
+
+  if (thread->SR_lock() == NULL) {
+    return;
+  }
+
   assert(thread->is_VM_thread() || thread->is_Java_thread(), "Must be VMThread or JavaThread");
+
+  OSThread* osthread = thread->osthread();
 
   os::SuspendResume::State current = osthread->sr.state();
   if (current == os::SuspendResume::SR_SUSPEND_REQUEST) {
@@ -3491,13 +3504,15 @@ jint os::init_2(void) {
 
   // Check minimum allowable stack size for thread creation and to initialize
   // the java system classes, including StackOverflowError - depends on page
-  // size.  Add a page for compiler2 recursion in main thread.
-  // Add in 2*BytesPerWord times page size to account for VM stack during
+  // size.  Add two 4K pages for compiler2 recursion in main thread.
+  // Add in 4*BytesPerWord 4K pages to account for VM stack during
   // class initialization depending on 32 or 64 bit VM.
   os::Bsd::min_stack_allowed = MAX2(os::Bsd::min_stack_allowed,
                                     JavaThread::stack_guard_zone_size() +
                                     JavaThread::stack_shadow_zone_size() +
-                                    (2*BytesPerWord COMPILER2_PRESENT(+1)) * Bsd::page_size());
+                                    (4*BytesPerWord COMPILER2_PRESENT(+2)) * 4 * K);
+
+  os::Bsd::min_stack_allowed = align_size_up(os::Bsd::min_stack_allowed, os::vm_page_size());
 
   size_t threadStackSizeInBytes = ThreadStackSize * K;
   if (threadStackSizeInBytes != 0 &&

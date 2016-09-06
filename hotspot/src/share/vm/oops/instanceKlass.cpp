@@ -27,6 +27,7 @@
 #include "classfile/classFileStream.hpp"
 #include "classfile/javaClasses.hpp"
 #include "classfile/systemDictionary.hpp"
+#include "classfile/systemDictionaryShared.hpp"
 #include "classfile/verifier.hpp"
 #include "classfile/vmSymbols.hpp"
 #include "code/dependencyContext.hpp"
@@ -66,6 +67,7 @@
 #include "services/threadService.hpp"
 #include "utilities/dtrace.hpp"
 #include "utilities/macros.hpp"
+#include "utilities/stringUtils.hpp"
 #include "logging/log.hpp"
 #ifdef COMPILER1
 #include "c1/c1_Compiler.hpp"
@@ -597,6 +599,8 @@ bool InstanceKlass::link_class_impl(
 
         // also sets rewritten
         this_k->rewrite_class(CHECK_false);
+      } else if (this_k->is_shared()) {
+        SystemDictionaryShared::check_verification_constraints(this_k, CHECK_false);
       }
 
       // relocate jsrs and link methods after they are all rewritten
@@ -606,7 +610,12 @@ bool InstanceKlass::link_class_impl(
       // methods have been rewritten since rewrite may
       // fabricate new Method*s.
       // also does loader constraint checking
-      if (!this_k()->is_shared()) {
+      //
+      // initialize_vtable and initialize_itable need to be rerun for
+      // a shared class if the class is not loaded by the NULL classloader.
+      ClassLoaderData * loader_data = this_k->class_loader_data();
+      if (!(this_k->is_shared() &&
+            loader_data->is_the_null_class_loader_data())) {
         ResourceMark rm(THREAD);
         this_k->vtable()->initialize_vtable(true, CHECK_false);
         this_k->itable()->initialize_itable(true, CHECK_false);
@@ -1961,6 +1970,11 @@ void InstanceKlass::remove_unshareable_info() {
     m->remove_unshareable_info();
   }
 
+  // cached_class_file might be pointing to a malloc'ed buffer allocated by
+  // event-based tracing code at CDS dump time. It's not usable at runtime
+  // so let's clear it.
+  set_cached_class_file(NULL);
+
   // do array classes also.
   array_klasses_do(remove_unshareable_in_class);
 }
@@ -2182,39 +2196,21 @@ const char* InstanceKlass::signature_name() const {
   return dest;
 }
 
-const jbyte* InstanceKlass::package_from_name(const Symbol* name, int& length) {
-  ResourceMark rm;
-  length = 0;
+// Used to obtain the package name from a fully qualified class name.
+Symbol* InstanceKlass::package_from_name(const Symbol* name, TRAPS) {
   if (name == NULL) {
     return NULL;
   } else {
-    const jbyte* base_name = name->base();
-    const jbyte* last_slash = UTF8::strrchr(base_name, name->utf8_length(), '/');
-
-    if (last_slash == NULL) {
-      // No package name
+    if (name->utf8_length() <= 0) {
       return NULL;
-    } else {
-      // Skip over '['s
-      if (*base_name == '[') {
-        do {
-          base_name++;
-        } while (*base_name == '[');
-        if (*base_name != 'L') {
-          // Fully qualified class names should not contain a 'L'.
-          // Set length to -1 to indicate that the package name
-          // could not be obtained due to an error condition.
-          // In this situtation, is_same_class_package returns false.
-          length = -1;
-          return NULL;
-        }
-      }
-
-      // Found the package name, look it up in the symbol table.
-      length = last_slash - base_name;
-      assert(length > 0, "Bad length for package name");
-      return base_name;
     }
+    ResourceMark rm;
+    const char* package_name = ClassLoader::package_from_name((const char*) name->as_C_string());
+    if (package_name == NULL) {
+      return NULL;
+    }
+    Symbol* pkg_name = SymbolTable::new_symbol(package_name, THREAD);
+    return pkg_name;
   }
 }
 
@@ -2230,11 +2226,13 @@ ModuleEntry* InstanceKlass::module() const {
 }
 
 void InstanceKlass::set_package(ClassLoaderData* loader_data, TRAPS) {
-  int length = 0;
-  const jbyte* base_name = package_from_name(name(), length);
 
-  if (base_name != NULL && loader_data != NULL) {
-    TempNewSymbol pkg_name = SymbolTable::new_symbol((const char*)base_name, length, CHECK);
+  // ensure java/ packages only loaded by boot or platform builtin loaders
+  check_prohibited_package(name(), loader_data->class_loader(), CHECK);
+
+  TempNewSymbol pkg_name = package_from_name(name(), CHECK);
+
+  if (pkg_name != NULL && loader_data != NULL) {
 
     // Find in class loader's package entry table.
     _package_entry = loader_data->packages()->lookup_only(pkg_name);
@@ -2331,20 +2329,18 @@ bool InstanceKlass::is_same_class_package(oop class_loader1, const Symbol* class
   if (class_loader1 != class_loader2) {
     return false;
   } else if (class_name1 == class_name2) {
-    return true;                // skip painful bytewise comparison
+    return true;
   } else {
     ResourceMark rm;
 
-    // The Symbol*'s are in UTF8 encoding. Since we only need to check explicitly
-    // for ASCII characters ('/', 'L', '['), we can keep them in UTF8 encoding.
-    // Otherwise, we just compare jbyte values between the strings.
-    int length1 = 0;
-    int length2 = 0;
-    const jbyte *name1 = package_from_name(class_name1, length1);
-    const jbyte *name2 = package_from_name(class_name2, length2);
+    bool bad_class_name = false;
+    const char* name1 = ClassLoader::package_from_name((const char*) class_name1->as_C_string(), &bad_class_name);
+    if (bad_class_name) {
+      return false;
+    }
 
-    if ((length1 < 0) || (length2 < 0)) {
-      // error occurred parsing package name.
+    const char* name2 = ClassLoader::package_from_name((const char*) class_name2->as_C_string(), &bad_class_name);
+    if (bad_class_name) {
       return false;
     }
 
@@ -2354,13 +2350,13 @@ bool InstanceKlass::is_same_class_package(oop class_loader1, const Symbol* class
       return name1 == name2;
     }
 
-    // Check that package part is identical
-    return UTF8::equal(name1, length1, name2, length2);
+    // Check that package is identical
+    return (strcmp(name1, name2) == 0);
   }
 }
 
 // Returns true iff super_method can be overridden by a method in targetclassname
-// See JSL 3rd edition 8.4.6.1
+// See JLS 3rd edition 8.4.6.1
 // Assumes name-signature match
 // "this" is InstanceKlass of super_method which must exist
 // note that the InstanceKlass of the method in the targetclassname has not always been created yet
@@ -2385,6 +2381,31 @@ Klass* InstanceKlass::compute_enclosing_class_impl(instanceKlassHandle self,
   ...
 }
 */
+
+// Only boot and platform class loaders can define classes in "java/" packages.
+void InstanceKlass::check_prohibited_package(Symbol* class_name,
+                                                Handle class_loader,
+                                                TRAPS) {
+  const char* javapkg = "java/";
+  ResourceMark rm(THREAD);
+  if (!class_loader.is_null() &&
+      !SystemDictionary::is_platform_class_loader(class_loader) &&
+      class_name != NULL &&
+      strncmp(class_name->as_C_string(), javapkg, strlen(javapkg)) == 0) {
+    TempNewSymbol pkg_name = InstanceKlass::package_from_name(class_name, CHECK);
+    assert(pkg_name != NULL, "Error in parsing package name starting with 'java/'");
+    char* name = pkg_name->as_C_string();
+    const char* class_loader_name = InstanceKlass::cast(class_loader()->klass())->name()->as_C_string();
+    StringUtils::replace_no_expand(name, "/", ".");
+    const char* msg_text1 = "Class loader (instance of): ";
+    const char* msg_text2 = " tried to load prohibited package name: ";
+    size_t len = strlen(msg_text1) + strlen(class_loader_name) + strlen(msg_text2) + strlen(name) + 1;
+    char* message = NEW_RESOURCE_ARRAY_IN_THREAD(THREAD, char, len);
+    jio_snprintf(message, len, "%s%s%s%s", msg_text1, class_loader_name, msg_text2, name);
+    THROW_MSG(vmSymbols::java_lang_SecurityException(), message);
+  }
+  return;
+}
 
 // tell if two classes have the same enclosing class (at package level)
 bool InstanceKlass::is_same_package_member_impl(const InstanceKlass* class1,
@@ -3027,7 +3048,11 @@ void InstanceKlass::print_loading_log(LogLevel::type type,
   if (cfs != NULL) {
     if (cfs->source() != NULL) {
       if (module_name != NULL) {
-        log->print(" source: jrt:/%s", module_name);
+        if (ClassLoader::is_jrt(cfs->source())) {
+          log->print(" source: jrt:/%s", module_name);
+        } else {
+          log->print(" source: %s", cfs->source());
+        }
       } else {
         log->print(" source: %s", cfs->source());
       }

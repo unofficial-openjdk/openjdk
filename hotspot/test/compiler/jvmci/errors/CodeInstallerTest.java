@@ -23,11 +23,10 @@
 
 package compiler.jvmci.errors;
 
-import java.lang.reflect.Method;
-
 import jdk.vm.ci.code.Architecture;
 import jdk.vm.ci.code.CodeCacheProvider;
 import jdk.vm.ci.code.Register;
+import jdk.vm.ci.code.RegisterArray;
 import jdk.vm.ci.code.StackSlot;
 import jdk.vm.ci.code.site.DataPatch;
 import jdk.vm.ci.code.site.Site;
@@ -40,8 +39,9 @@ import jdk.vm.ci.meta.PlatformKind;
 import jdk.vm.ci.meta.ResolvedJavaMethod;
 import jdk.vm.ci.runtime.JVMCI;
 import jdk.vm.ci.runtime.JVMCIBackend;
-
 import org.junit.Assert;
+
+import java.lang.reflect.Method;
 
 public class CodeInstallerTest {
 
@@ -80,11 +80,11 @@ public class CodeInstallerTest {
 
     protected Register getRegister(PlatformKind kind, int index) {
         int idx = index;
-        Register[] allRegs = arch.getAvailableValueRegisters();
-        for (int i = 0; i < allRegs.length; i++) {
-            if (arch.canStoreValue(allRegs[i].getRegisterCategory(), kind)) {
+        RegisterArray allRegs = arch.getAvailableValueRegisters();
+        for (Register reg : allRegs) {
+            if (arch.canStoreValue(reg.getRegisterCategory(), kind)) {
                 if (idx-- == 0) {
-                    return allRegs[i];
+                    return reg;
                 }
             }
         }

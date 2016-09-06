@@ -35,11 +35,9 @@ import jdk.vm.ci.code.InvalidInstalledCodeException;
 import jdk.vm.ci.code.TargetDescription;
 import jdk.vm.ci.common.InitTimer;
 import jdk.vm.ci.common.JVMCIError;
-import jdk.vm.ci.hotspotvmconfig.HotSpotVMField;
 import jdk.vm.ci.meta.JavaType;
 import jdk.vm.ci.meta.ResolvedJavaMethod;
 import jdk.vm.ci.meta.ResolvedJavaType;
-import jdk.internal.misc.Unsafe;
 
 /**
  * Calls from Java into HotSpot. The behavior of all the methods in this class that take a native
@@ -267,8 +265,10 @@ final class CompilerToVM {
     native HotSpotResolvedObjectTypeImpl resolveTypeInPool(HotSpotConstantPool constantPool, int cpi) throws LinkageError;
 
     /**
-     * Looks up and attempts to resolve the {@code JVM_CONSTANT_Field} entry at index {@code cpi} in
-     * {@code constantPool}. The values returned in {@code info} are:
+     * Looks up and attempts to resolve the {@code JVM_CONSTANT_Field} entry for at index
+     * {@code cpi} in {@code constantPool}. For some opcodes, checks are performed that require the
+     * {@code method} that contains {@code opcode} to be specified. The values returned in
+     * {@code info} are:
      *
      * <pre>
      *     [(int) flags,   // only valid if field is resolved
@@ -281,7 +281,7 @@ final class CompilerToVM {
      * @param info an array in which the details of the field are returned
      * @return the type defining the field if resolution is successful, 0 otherwise
      */
-    native HotSpotResolvedObjectTypeImpl resolveFieldInPool(HotSpotConstantPool constantPool, int cpi, byte opcode, long[] info);
+    native HotSpotResolvedObjectTypeImpl resolveFieldInPool(HotSpotConstantPool constantPool, int cpi, HotSpotResolvedJavaMethodImpl method, byte opcode, long[] info);
 
     /**
      * Converts {@code cpci} from an index into the cache for {@code constantPool} to an index
@@ -338,9 +338,22 @@ final class CompilerToVM {
     native void resetCompilationStatistics();
 
     /**
-     * Initializes the fields of {@code config}.
+     * Reads the database of VM info. The return value encodes the info in a nested object array
+     * that is described by the pseudo Java object {@code info} below:
+     *
+     * <pre>
+     *     info = [
+     *         VMField[] vmFields,
+     *         [String name, Long size, ...] vmTypeSizes,
+     *         [String name, Long value, ...] vmConstants,
+     *         [String name, Long value, ...] vmAddresses,
+     *         VMFlag[] vmFlags
+     *     ]
+     * </pre>
+     *
+     * @return VM info as encoded above
      */
-    native long initializeConfiguration(HotSpotVMConfig config);
+    native Object[] readConfiguration();
 
     /**
      * Resolves the implementation of {@code method} for virtual dispatches on objects of dynamic
@@ -428,7 +441,6 @@ final class CompilerToVM {
      * <li>{@link HotSpotVMConfig#localVariableTableElementLengthOffset}</li>
      * <li>{@link HotSpotVMConfig#localVariableTableElementNameCpIndexOffset}</li>
      * <li>{@link HotSpotVMConfig#localVariableTableElementDescriptorCpIndexOffset}</li>
-     * <li>{@link HotSpotVMConfig#localVariableTableElementSignatureCpIndexOffset}
      * <li>{@link HotSpotVMConfig#localVariableTableElementSlotOffset}
      * <li>{@link HotSpotVMConfig#localVariableTableElementStartBciOffset}
      * </ul>
@@ -545,20 +557,18 @@ final class CompilerToVM {
     native HotSpotResolvedJavaMethodImpl getResolvedJavaMethod(Object base, long displacement);
 
     /**
-     * Read a HotSpot ConstantPool* value from the memory location described by {@code base} plus
-     * {@code displacement} and return the {@link HotSpotConstantPool} wrapping it. This method does
-     * no checking that the memory location actually contains a valid pointer and may crash the VM
-     * if an invalid location is provided. If the {@code base} is null then {@code displacement} is
-     * used by itself. If {@code base} is a {@link HotSpotResolvedJavaMethodImpl},
-     * {@link HotSpotConstantPool} or {@link HotSpotResolvedObjectTypeImpl} then the metaspace
-     * pointer is fetched from that object and added to {@code displacement}. Any other non-null
-     * object type causes an {@link IllegalArgumentException} to be thrown.
+     * Gets the {@code ConstantPool*} associated with {@code object} and returns a
+     * {@link HotSpotConstantPool} wrapping it.
      *
-     * @param base an object to read from or null
-     * @param displacement
-     * @return null or the resolved method for this location
+     * @param object a {@link HotSpotResolvedJavaMethodImpl} or
+     *            {@link HotSpotResolvedObjectTypeImpl} object
+     * @return a {@link HotSpotConstantPool} wrapping the {@code ConstantPool*} associated with
+     *         {@code object}
+     * @throws NullPointerException if {@code object == null}
+     * @throws IllegalArgumentException if {@code object} is neither a
+     *             {@link HotSpotResolvedJavaMethodImpl} nor a {@link HotSpotResolvedObjectTypeImpl}
      */
-    native HotSpotConstantPool getConstantPool(Object base, long displacement);
+    native HotSpotConstantPool getConstantPool(Object object);
 
     /**
      * Read a HotSpot Klass* value from the memory location described by {@code base} plus

@@ -160,7 +160,8 @@ Node *MemNode::optimize_simple_memory_chain(Node *mchain, const TypeOopPtr *t_oo
           }
         }
       } else if (proj_in->is_MemBar()) {
-        if (ArrayCopyNode::may_modify(t_oop, proj_in->as_MemBar(), phase)) {
+        ArrayCopyNode* ac = NULL;
+        if (ArrayCopyNode::may_modify(t_oop, proj_in->as_MemBar(), phase, ac)) {
           break;
         }
         result = proj_in->in(TypeFunc::Memory);
@@ -657,7 +658,8 @@ Node* MemNode::find_previous_store(PhaseTransform* phase) {
           continue;         // (a) advance through independent call memory
         }
       } else if (mem->is_Proj() && mem->in(0)->is_MemBar()) {
-        if (ArrayCopyNode::may_modify(addr_t, mem->in(0)->as_MemBar(), phase)) {
+        ArrayCopyNode* ac = NULL;
+        if (ArrayCopyNode::may_modify(addr_t, mem->in(0)->as_MemBar(), phase, ac)) {
           break;
         }
         mem = mem->in(0)->in(TypeFunc::Memory);
@@ -1711,9 +1713,6 @@ const Type* LoadNode::Value(PhaseGVN* phase) const {
       }
     }
   } else if (tp->base() == Type::InstPtr) {
-    ciEnv* env = C->env();
-    const TypeInstPtr* tinst = tp->is_instptr();
-    ciKlass* klass = tinst->klass();
     assert( off != Type::OffsetBot ||
             // arrays can be cast to Objects
             tp->is_oopptr()->klass()->is_java_lang_Object() ||
@@ -1721,9 +1720,11 @@ const Type* LoadNode::Value(PhaseGVN* phase) const {
             C->has_unsafe_access(),
             "Field accesses must be precise" );
     // For oop loads, we expect the _type to be precise.
-    // Optimizations for constant objects
+
+    // Optimize loads from constant fields.
+    const TypeInstPtr* tinst = tp->is_instptr();
     ciObject* const_oop = tinst->const_oop();
-    if (const_oop != NULL && const_oop->is_instance()) {
+    if (!is_mismatched_access() && off != Type::OffsetBot && const_oop != NULL && const_oop->is_instance()) {
       const Type* con_type = Type::make_constant_from_field(const_oop->as_instance(), off, is_unsigned(), memory_type());
       if (con_type != NULL) {
         return con_type;

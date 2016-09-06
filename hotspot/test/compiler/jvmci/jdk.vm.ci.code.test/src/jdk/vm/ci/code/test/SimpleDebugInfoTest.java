@@ -23,7 +23,7 @@
 
 /**
  * @test
- * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9") & os.arch != "aarch64"
+ * @requires (vm.simpleArch == "x64" | vm.simpleArch == "sparcv9") & os.arch != "aarch64"
  * @library /
  * @modules jdk.vm.ci/jdk.vm.ci.hotspot
  *          jdk.vm.ci/jdk.vm.ci.meta
@@ -32,22 +32,20 @@
  *          jdk.vm.ci/jdk.vm.ci.runtime
  *          jdk.vm.ci/jdk.vm.ci.amd64
  *          jdk.vm.ci/jdk.vm.ci.sparc
- * @compile CodeInstallationTest.java DebugInfoTest.java TestAssembler.java amd64/AMD64TestAssembler.java sparc/SPARCTestAssembler.java
+ * @compile CodeInstallationTest.java DebugInfoTest.java TestAssembler.java TestHotSpotVMConfig.java amd64/AMD64TestAssembler.java sparc/SPARCTestAssembler.java
  * @run junit/othervm -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI jdk.vm.ci.code.test.SimpleDebugInfoTest
  */
 
 package jdk.vm.ci.code.test;
 
-import org.junit.Assume;
-import org.junit.Test;
-
 import jdk.vm.ci.code.Register;
 import jdk.vm.ci.hotspot.HotSpotConstant;
-import jdk.vm.ci.hotspot.HotSpotVMConfig;
 import jdk.vm.ci.meta.JavaConstant;
 import jdk.vm.ci.meta.JavaKind;
 import jdk.vm.ci.meta.ResolvedJavaType;
 import jdk.vm.ci.meta.Value;
+import org.junit.Assume;
+import org.junit.Test;
 
 public class SimpleDebugInfoTest extends DebugInfoTest {
 
@@ -255,7 +253,7 @@ public class SimpleDebugInfoTest extends DebugInfoTest {
 
     @Test
     public void testRegNarrowObject() {
-        Assume.assumeTrue(HotSpotVMConfig.config().useCompressedOops);
+        Assume.assumeTrue(config.useCompressedOops);
         ResolvedJavaType type = metaAccess.lookupJavaType(objectOnStack());
         DebugInfoCompiler compiler = (asm, values) -> {
             HotSpotConstant wide = (HotSpotConstant) constantReflection.asJavaClass(type);
@@ -269,7 +267,7 @@ public class SimpleDebugInfoTest extends DebugInfoTest {
 
     @Test
     public void testStackNarrowObject() {
-        Assume.assumeTrue(HotSpotVMConfig.config().useCompressedOops);
+        Assume.assumeTrue(config.useCompressedOops);
         ResolvedJavaType type = metaAccess.lookupJavaType(objectOnStack());
         DebugInfoCompiler compiler = (asm, values) -> {
             HotSpotConstant wide = (HotSpotConstant) constantReflection.asJavaClass(type);

@@ -38,7 +38,6 @@
 #include "logging/log.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/filemap.hpp"
-#include "mutex_windows.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "os_share_windows.hpp"
 #include "os_windows.inline.hpp"
@@ -319,9 +318,6 @@ extern "C" void breakpoint() {
 // only supported on Windows XP or later.
 //
 int os::get_native_stack(address* stack, int frames, int toSkip) {
-#ifdef _NMT_NOINLINE_
-  toSkip++;
-#endif
   int captured = RtlCaptureStackBackTrace(toSkip + 1, frames, (PVOID*)stack, NULL);
   for (int index = captured; index < frames; index ++) {
     stack[index] = NULL;
@@ -3898,6 +3894,13 @@ int os::win32::exit_process_or_thread(Ept what, int exit_code) {
     DWORD res;
     HANDLE hproc, hthr;
 
+    // We only attempt to register threads until a process exiting
+    // thread manages to set the process_exiting flag. Any threads
+    // that come through here after the process_exiting flag is set
+    // are unregistered and will be caught in the SuspendThread()
+    // infinite loop below.
+    bool registered = false;
+
     // The first thread that reached this point, initializes the critical section.
     if (!InitOnceExecuteOnce(&init_once_crit_sect, init_crit_sect_call, &crit_sect, NULL)) {
       warning("crit_sect initialization failed in %s: %d\n", __FILE__, __LINE__);
@@ -3957,12 +3960,21 @@ int os::win32::exit_process_or_thread(Ept what, int exit_code) {
                              0, FALSE, DUPLICATE_SAME_ACCESS)) {
           warning("DuplicateHandle failed (%u) in %s: %d\n",
                   GetLastError(), __FILE__, __LINE__);
+
+          // We can't register this thread (no more handles) so this thread
+          // may be racing with a thread that is calling exit(). If the thread
+          // that is calling exit() has managed to set the process_exiting
+          // flag, then this thread will be caught in the SuspendThread()
+          // infinite loop below which closes that race. A small timing
+          // window remains before the process_exiting flag is set, but it
+          // is only exposed when we are out of handles.
         } else {
           ++handle_count;
-        }
+          registered = true;
 
-        // The current exiting thread has stored its handle in the array, and now
-        // should leave the critical section before calling _endthreadex().
+          // The current exiting thread has stored its handle in the array, and now
+          // should leave the critical section before calling _endthreadex().
+        }
 
       } else if (what != EPT_THREAD && handle_count > 0) {
         jlong start_time, finish_time, timeout_left;
@@ -4012,10 +4024,11 @@ int os::win32::exit_process_or_thread(Ept what, int exit_code) {
       LeaveCriticalSection(&crit_sect);
     }
 
-    if (OrderAccess::load_acquire(&process_exiting) != 0 &&
+    if (!registered &&
+        OrderAccess::load_acquire(&process_exiting) != 0 &&
         process_exiting != (jint)GetCurrentThreadId()) {
-      // Some other thread is about to call exit(), so we
-      // don't let the current thread proceed to exit() or _endthreadex()
+      // Some other thread is about to call exit(), so we don't let
+      // the current unregistered thread proceed to exit() or _endthreadex()
       while (true) {
         SuspendThread(GetCurrentThread());
         // Avoid busy-wait loop, if SuspendThread() failed.
@@ -4027,7 +4040,7 @@ int os::win32::exit_process_or_thread(Ept what, int exit_code) {
   // We are here if either
   // - there's no 'race at exit' bug on this OS release;
   // - initialization of the critical section failed (unlikely);
-  // - the current thread has stored its handle and left the critical section;
+  // - the current thread has registered itself and left the critical section;
   // - the process-exiting thread has raised the flag and left the critical section.
   if (what == EPT_THREAD) {
     _endthreadex((unsigned)exit_code);
@@ -4183,13 +4196,16 @@ jint os::init_2(void) {
 
   // Check minimum allowable stack size for thread creation and to initialize
   // the java system classes, including StackOverflowError - depends on page
-  // size.  Add a page for compiler2 recursion in main thread.
-  // Add in 2*BytesPerWord times page size to account for VM stack during
+  // size.  Add two 4K pages for compiler2 recursion in main thread.
+  // Add in 4*BytesPerWord 4K pages to account for VM stack during
   // class initialization depending on 32 or 64 bit VM.
   size_t min_stack_allowed =
-            (size_t)(JavaThread::stack_yellow_zone_size() + JavaThread::stack_red_zone_size() +
+            (size_t)(JavaThread::stack_guard_zone_size() +
                      JavaThread::stack_shadow_zone_size() +
-                     (2*BytesPerWord COMPILER2_PRESENT(+1)) * os::vm_page_size());
+                     (4*BytesPerWord COMPILER2_PRESENT(+2)) * 4 * K);
+
+  min_stack_allowed = align_size_up(min_stack_allowed, os::vm_page_size());
+
   if (actual_reserve_size < min_stack_allowed) {
     tty->print_cr("\nThe stack size specified is too small, "
                   "Specify at least %dk",
@@ -5247,6 +5263,12 @@ int os::fork_and_exec(char* cmd) {
 
 static int mallocDebugIntervalCounter = 0;
 static int mallocDebugCounter = 0;
+
+// For debugging possible bugs inside HeapWalk (a ring buffer)
+#define SAVE_COUNT 8
+static PROCESS_HEAP_ENTRY saved_heap_entries[SAVE_COUNT];
+static int saved_heap_entry_index;
+
 bool os::check_heap(bool force) {
   if (++mallocDebugCounter < MallocVerifyStart && !force) return true;
   if (++mallocDebugIntervalCounter >= MallocVerifyInterval || force) {
@@ -5267,13 +5289,28 @@ bool os::check_heap(bool force) {
     if (HeapLock(heap) != 0) {
       PROCESS_HEAP_ENTRY phe;
       phe.lpData = NULL;
+      memset(saved_heap_entries, 0, sizeof(saved_heap_entries));
+      saved_heap_entry_index = 0;
+      int count = 0;
+
       while (HeapWalk(heap, &phe) != 0) {
+        count ++;
         if ((phe.wFlags & PROCESS_HEAP_ENTRY_BUSY) &&
             !HeapValidate(heap, 0, phe.lpData)) {
           tty->print_cr("C heap has been corrupted (time: %d allocations)", mallocDebugCounter);
-          tty->print_cr("corrupted block near address %#x, length %d", phe.lpData, phe.cbData);
+          tty->print_cr("corrupted block near address %#x, length %d, count %d", phe.lpData, phe.cbData, count);
           HeapUnlock(heap);
           fatal("corrupted C heap");
+        } else {
+          // Save previous seen entries in a ring buffer. We have seen strange
+          // heap corruption fatal errors that produced mdmp files, but when we load
+          // these mdmp files in WinDBG, "!heap -triage" shows no error.
+          // We can examine the saved_heap_entries[] array in the mdmp file to
+          // diagnose such seemingly spurious errors reported by HeapWalk.
+          saved_heap_entries[saved_heap_entry_index++] = phe;
+          if (saved_heap_entry_index >= SAVE_COUNT) {
+            saved_heap_entry_index = 0;
+          }
         }
       }
       DWORD err = GetLastError();

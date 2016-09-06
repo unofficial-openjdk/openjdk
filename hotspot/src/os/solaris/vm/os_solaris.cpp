@@ -35,7 +35,6 @@
 #include "logging/log.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/filemap.hpp"
-#include "mutex_solaris.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "os_share_solaris.hpp"
 #include "os_solaris.inline.hpp"
@@ -79,7 +78,6 @@
 # include <link.h>
 # include <poll.h>
 # include <pthread.h>
-# include <pwd.h>
 # include <schedctl.h>
 # include <setjmp.h>
 # include <signal.h>
@@ -1320,36 +1318,8 @@ bool os::getTimesSecs(double* process_real_time,
 }
 
 bool os::supports_vtime() { return true; }
-
-bool os::enable_vtime() {
-  int fd = ::open("/proc/self/ctl", O_WRONLY);
-  if (fd == -1) {
-    return false;
-  }
-
-  long cmd[] = { PCSET, PR_MSACCT };
-  int res = ::write(fd, cmd, sizeof(long) * 2);
-  ::close(fd);
-  if (res != sizeof(long) * 2) {
-    return false;
-  }
-  return true;
-}
-
-bool os::vtime_enabled() {
-  int fd = ::open("/proc/self/status", O_RDONLY);
-  if (fd == -1) {
-    return false;
-  }
-
-  pstatus_t status;
-  int res = os::read(fd, (void*) &status, sizeof(pstatus_t));
-  ::close(fd);
-  if (res != sizeof(pstatus_t)) {
-    return false;
-  }
-  return status.pr_flags & PR_MSACCT;
-}
+bool os::enable_vtime() { return false; }
+bool os::vtime_enabled() { return false; }
 
 double os::elapsedVTime() {
   return (double)gethrvtime() / (double)hrtime_hz;
@@ -4477,13 +4447,15 @@ jint os::init_2(void) {
 
   // Check minimum allowable stack size for thread creation and to initialize
   // the java system classes, including StackOverflowError - depends on page
-  // size.  Add a page for compiler2 recursion in main thread.
-  // Add in 2*BytesPerWord times page size to account for VM stack during
+  // size.  Add two 4K pages for compiler2 recursion in main thread.
+  // Add in 4*BytesPerWord 4K pages to account for VM stack during
   // class initialization depending on 32 or 64 bit VM.
   os::Solaris::min_stack_allowed = MAX2(os::Solaris::min_stack_allowed,
                                         JavaThread::stack_guard_zone_size() +
                                         JavaThread::stack_shadow_zone_size() +
-                                        (2*BytesPerWord COMPILER2_PRESENT(+1)) * page_size);
+                                        (4*BytesPerWord COMPILER2_PRESENT(+2)) * 4 * K);
+
+  os::Solaris::min_stack_allowed = align_size_up(os::Solaris::min_stack_allowed, os::vm_page_size());
 
   size_t threadStackSizeInBytes = ThreadStackSize * K;
   if (threadStackSizeInBytes != 0 &&

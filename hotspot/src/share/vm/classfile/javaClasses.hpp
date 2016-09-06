@@ -275,7 +275,6 @@ class java_lang_Class : AllStatic {
   static int static_oop_field_count(oop java_class);
   static void set_static_oop_field_count(oop java_class, int size);
 
-
   static GrowableArray<Klass*>* fixup_mirror_list() {
     return _fixup_mirror_list;
   }
@@ -413,7 +412,6 @@ class java_lang_ThreadGroup : AllStatic {
   static int _maxPriority_offset;
   static int _destroyed_offset;
   static int _daemon_offset;
-  static int _vmAllowSuspension_offset;
   static int _nthreads_offset;
   static int _ngroups_offset;
 
@@ -439,8 +437,6 @@ class java_lang_ThreadGroup : AllStatic {
   static bool is_destroyed(oop java_thread_group);
   // Daemon
   static bool is_daemon(oop java_thread_group);
-  // vmAllowSuspension
-  static bool is_vmAllowSuspension(oop java_thread_group);
   // Debugging
   friend class JavaClasses;
 };
@@ -781,9 +777,6 @@ class java_lang_reflect_Module {
     static Handle create(Handle loader, Handle module_name, TRAPS);
 
     // Testers
-    static bool is_subclass(Klass* klass) {
-      return klass->is_subclass_of(SystemDictionary::reflect_Module_klass());
-    }
     static bool is_instance(oop obj);
 
     // Accessors

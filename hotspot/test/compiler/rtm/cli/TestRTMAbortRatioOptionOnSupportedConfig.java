@@ -27,15 +27,19 @@
  * @bug 8031320
  * @summary Verify RTMAbortRatio option processing on CPU with rtm
  *          support and on VM with rtm locking support.
- * @library /testlibrary /test/lib /compiler/testlibrary
+ * @library /testlibrary /test/lib /
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @build TestRTMAbortRatioOptionOnSupportedConfig
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
+ *
+ * @build compiler.rtm.cli.TestRTMAbortRatioOptionOnSupportedConfig
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
- *                   -XX:+WhiteBoxAPI TestRTMAbortRatioOptionOnSupportedConfig
+ *                   -XX:+WhiteBoxAPI
+ *                   compiler.rtm.cli.TestRTMAbortRatioOptionOnSupportedConfig
  */
+
+package compiler.rtm.cli;
 
 public class TestRTMAbortRatioOptionOnSupportedConfig
         extends RTMLockingAwareTest {

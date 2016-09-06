@@ -25,7 +25,7 @@
 /*
  * @test
  * @bug 8138708
- * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9" | os.simpleArch == "aarch64")
+ * @requires (vm.simpleArch == "x64" | vm.simpleArch == "sparcv9" | vm.simpleArch == "aarch64")
  * @library /testlibrary /test/lib /
  * @library ../common/patches
  * @modules java.base/jdk.internal.misc
@@ -34,11 +34,13 @@
  *          java.base/jdk.internal.org.objectweb.asm.tree
  *          jdk.vm.ci/jdk.vm.ci.hotspot
  *          jdk.vm.ci/jdk.vm.ci.meta
+ *          jdk.vm.ci/jdk.vm.ci.runtime
+ *
  * @build jdk.vm.ci/jdk.vm.ci.hotspot.CompilerToVMHelper
  * @build sun.hotspot.WhiteBox
  *        compiler.jvmci.compilerToVM.ResolveFieldInPoolTest
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
  *                   -XX:+WhiteBoxAPI -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI
  *                   compiler.jvmci.compilerToVM.ResolveFieldInPoolTest
@@ -46,21 +48,23 @@
 
 package compiler.jvmci.compilerToVM;
 
-import compiler.jvmci.compilerToVM.ConstantPoolTestsHelper.DummyClasses;
 import compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes;
-import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.*;
 import compiler.jvmci.compilerToVM.ConstantPoolTestCase.TestedCPEntry;
 import compiler.jvmci.compilerToVM.ConstantPoolTestCase.Validator;
-import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.Map;
+import compiler.jvmci.compilerToVM.ConstantPoolTestsHelper.DummyClasses;
+import jdk.internal.misc.Unsafe;
 import jdk.internal.org.objectweb.asm.Opcodes;
+import jdk.test.lib.Asserts;
+import jdk.test.lib.Utils;
 import jdk.vm.ci.hotspot.CompilerToVMHelper;
 import jdk.vm.ci.hotspot.HotSpotResolvedObjectType;
 import jdk.vm.ci.meta.ConstantPool;
-import jdk.test.lib.Asserts;
-import jdk.test.lib.Utils;
-import jdk.internal.misc.Unsafe;
+
+import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
+
+import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.CONSTANT_FIELDREF;
 
 /**
  * Test for {@code jdk.vm.ci.hotspot.CompilerToVM.resolveFieldInPool} method
@@ -107,6 +111,7 @@ public class ResolveFieldInPoolTest {
             HotSpotResolvedObjectType fieldToVerify
                     = CompilerToVMHelper.resolveFieldInPool(constantPoolCTVM,
                                                            index,
+                                                           entry.methods == null ? null : entry.methods[j],
                                                            entry.opcodes[j],
                                                            info);
             String msg = String.format("Object returned by resolveFieldInPool method"

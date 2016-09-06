@@ -64,7 +64,7 @@ _jvmciModes = {
 _jdkDebugLevels = ['release', 'fastdebug', 'slowdebug']
 
 # TODO: add client once/if it can be built on 64-bit platforms
-_jdkJvmVariants = ['server']
+_jdkJvmVariants = ['server', 'client']
 
 """
 Translation table from mx_jvmci:8 --vmbuild values to mx_jvmci:9 --jdk-debug-level values.
@@ -186,7 +186,8 @@ To build hotspot and import it into the JDK: "mx make hotspot import-hotspot"
             # Might be building with JDK8 which has cacerts under jre/
             srcCerts = join(mx.get_jdk(tag='default').home, 'jre', 'lib', 'security', 'cacerts')
         dstCerts = join(jdkImageDir, 'lib', 'security', 'cacerts')
-        shutil.copyfile(srcCerts, dstCerts)
+        if srcCerts != dstCerts:
+            shutil.copyfile(srcCerts, dstCerts)
 
         _create_jdk_bundle(jdkBuildDir, _vm.debugLevel, jdkImageDir)
 

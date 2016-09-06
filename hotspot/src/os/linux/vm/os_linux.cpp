@@ -35,7 +35,6 @@
 #include "logging/log.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/filemap.hpp"
-#include "mutex_linux.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "os_linux.inline.hpp"
 #include "os_share_linux.hpp"
@@ -142,7 +141,6 @@ int (*os::Linux::_pthread_setname_np)(pthread_t, const char*) = NULL;
 Mutex* os::Linux::_createThread_lock = NULL;
 pthread_t os::Linux::_main_thread;
 int os::Linux::_page_size = -1;
-const int os::Linux::_vm_default_page_size = (8 * K);
 bool os::Linux::_supports_fast_thread_cpu_time = false;
 uint32_t os::Linux::_os_version = 0;
 const char * os::Linux::_glibc_version = NULL;
@@ -1743,11 +1741,11 @@ void * os::dll_load(const char *filename, char *ebuf, int ebuflen) {
   }
 
   typedef struct {
-    Elf32_Half  code;         // Actual value as defined in elf.h
-    Elf32_Half  compat_class; // Compatibility of archs at VM's sense
-    char        elf_class;    // 32 or 64 bit
-    char        endianess;    // MSB or LSB
-    char*       name;         // String representation
+    Elf32_Half    code;         // Actual value as defined in elf.h
+    Elf32_Half    compat_class; // Compatibility of archs at VM's sense
+    unsigned char elf_class;    // 32 or 64 bit
+    unsigned char endianess;    // MSB or LSB
+    char*         name;         // String representation
   } arch_t;
 
 #ifndef EM_486
@@ -3973,7 +3971,8 @@ void os::hint_no_preempt() {}
 //      - sets target osthread state to continue
 //      - sends signal to end the sigsuspend loop in the SR_handler
 //
-//  Note that the SR_lock plays no role in this suspend/resume protocol.
+//  Note that the SR_lock plays no role in this suspend/resume protocol,
+//  but is checked for NULL in SR_handler as a thread termination indicator.
 
 static void resume_clear_context(OSThread *osthread) {
   osthread->set_ucontext(NULL);
@@ -4006,8 +4005,20 @@ static void SR_handler(int sig, siginfo_t* siginfo, ucontext_t* context) {
 
   Thread* thread = Thread::current_or_null_safe();
   assert(thread != NULL, "Missing current thread in SR_handler");
-  OSThread* osthread = thread->osthread();
+
+  // On some systems we have seen signal delivery get "stuck" until the signal
+  // mask is changed as part of thread termination. Check that the current thread
+  // has not already terminated (via SR_lock()) - else the following assertion
+  // will fail because the thread is no longer a JavaThread as the ~JavaThread
+  // destructor has completed.
+
+  if (thread->SR_lock() == NULL) {
+    return;
+  }
+
   assert(thread->is_VM_thread() || thread->is_Java_thread(), "Must be VMThread or JavaThread");
+
+  OSThread* osthread = thread->osthread();
 
   os::SuspendResume::State current = osthread->sr.state();
   if (current == os::SuspendResume::SR_SUSPEND_REQUEST) {
@@ -4784,13 +4795,15 @@ jint os::init_2(void) {
 
   // Check minimum allowable stack size for thread creation and to initialize
   // the java system classes, including StackOverflowError - depends on page
-  // size.  Add a page for compiler2 recursion in main thread.
-  // Add in 2*BytesPerWord times page size to account for VM stack during
+  // size.  Add two 4K pages for compiler2 recursion in main thread.
+  // Add in 4*BytesPerWord 4K pages to account for VM stack during
   // class initialization depending on 32 or 64 bit VM.
   os::Linux::min_stack_allowed = MAX2(os::Linux::min_stack_allowed,
                                       JavaThread::stack_guard_zone_size() +
                                       JavaThread::stack_shadow_zone_size() +
-                                      (2*BytesPerWord COMPILER2_PRESENT(+1)) * Linux::vm_default_page_size());
+                                      (4*BytesPerWord COMPILER2_PRESENT(+2)) * 4 * K);
+
+  os::Linux::min_stack_allowed = align_size_up(os::Linux::min_stack_allowed, os::vm_page_size());
 
   size_t threadStackSizeInBytes = ThreadStackSize * K;
   if (threadStackSizeInBytes != 0 &&

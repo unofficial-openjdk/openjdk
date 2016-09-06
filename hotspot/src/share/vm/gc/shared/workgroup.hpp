@@ -156,22 +156,27 @@ class AbstractWorkGang : public CHeapObj<mtInternal> {
     return _active_workers;
   }
 
-  void set_active_workers(uint v) {
+  uint update_active_workers(uint v) {
     assert(v <= _total_workers,
            "Trying to set more workers active than there are");
     _active_workers = MIN2(v, _total_workers);
     add_workers(false /* exit_on_failure */);
     assert(v != 0, "Trying to set active workers to 0");
-    assert(UseDynamicNumberOfGCThreads || _active_workers == _total_workers,
-           "Unless dynamic should use total workers");
     log_info(gc, task)("GC Workers: using %d out of %d", _active_workers, _total_workers);
+    return _active_workers;
   }
 
   // Add GC workers as needed.
   void add_workers(bool initializing);
 
+  // Add GC workers as needed to reach the specified number of workers.
+  void add_workers(uint active_workers, bool initializing);
+
   // Return the Ith worker.
   AbstractGangWorker* worker(uint i) const;
+
+  // Base name (without worker id #) of threads.
+  const char* group_name() { return name(); }
 
   void threads_do(ThreadClosure* tc) const;
 
@@ -214,7 +219,8 @@ public:
   virtual void run_task(AbstractGangTask* task);
   // Run a task with the given number of workers, returns
   // when the task is done. The number of workers must be at most the number of
-  // active workers.
+  // active workers.  Additional workers may be created if an insufficient
+  // number currently exists.
   void run_task(AbstractGangTask* task, uint num_workers);
 
 protected:

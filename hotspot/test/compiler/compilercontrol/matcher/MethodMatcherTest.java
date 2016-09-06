@@ -21,12 +21,26 @@
  * questions.
  */
 
+/*
+ * @test
+ * @bug 8135068
+ * @summary Tests CompilerCommand's method matcher
+ * @modules java.base/jdk.internal.misc
+ * @library /testlibrary /test/lib /
+ *
+ * @build compiler.compilercontrol.matcher.MethodMatcherTest
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
+ *           -XX:+WhiteBoxAPI compiler.compilercontrol.matcher.MethodMatcherTest
+ */
+
 package compiler.compilercontrol.matcher;
 
-import jdk.test.lib.Pair;
 import compiler.compilercontrol.share.method.MethodDescriptor;
 import compiler.compilercontrol.share.method.MethodGenerator;
-import pool.PoolHelper;
+import compiler.compilercontrol.share.pool.PoolHelper;
+import jdk.test.lib.Pair;
 import sun.hotspot.WhiteBox;
 
 import java.lang.reflect.Executable;
@@ -36,18 +50,6 @@ import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/*
- * @test
- * @bug 8135068
- * @summary Tests CompilerCommand's method matcher
- * @modules java.base/jdk.internal.misc
- * @library /testlibrary /test/lib /compiler/whitebox ../share /
- * @build compiler.compilercontrol.matcher.MethodMatcherTest
- * @run driver ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
- *           -XX:+WhiteBoxAPI compiler.compilercontrol.matcher.MethodMatcherTest
- */
 public class MethodMatcherTest {
     private static final WhiteBox WB = WhiteBox.getWhiteBox();
     private static final PoolHelper POOL = new PoolHelper();

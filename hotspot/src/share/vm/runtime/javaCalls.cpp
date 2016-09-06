@@ -285,6 +285,14 @@ void JavaCalls::call_static(JavaValue* result, KlassHandle klass, Symbol* name, 
 }
 
 
+void JavaCalls::call_static(JavaValue* result, KlassHandle klass, Symbol* name, Symbol* signature, Handle arg1, Handle arg2, Handle arg3, TRAPS) {
+  JavaCallArguments args; // One oop argument
+  args.push_oop(arg1);
+  args.push_oop(arg2);
+  args.push_oop(arg3);
+  call_static(result, klass, name, signature, &args, CHECK);
+}
+
 // -------------------------------------------------
 // Implementation of JavaCalls (low level)
 
@@ -372,14 +380,16 @@ void JavaCalls::call_helper(JavaValue* result, const methodHandle& method, JavaC
   }
 
   // Check that there are shadow pages available before changing thread state
-  // to Java
-  if (!os::stack_shadow_pages_available(THREAD, method)) {
+  // to Java. Calculate current_stack_pointer here to make sure
+  // stack_shadow_pages_available() and bang_stack_shadow_pages() use the same sp.
+  address sp = os::current_stack_pointer();
+  if (!os::stack_shadow_pages_available(THREAD, method, sp)) {
     // Throw stack overflow exception with preinitialized exception.
     Exceptions::throw_stack_overflow_exception(THREAD, __FILE__, __LINE__, method);
     return;
   } else {
     // Touch pages checked if the OS needs them to be touched to be mapped.
-    os::map_stack_shadow_pages();
+    os::map_stack_shadow_pages(sp);
   }
 
 #if INCLUDE_JVMCI

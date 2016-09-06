@@ -24,7 +24,7 @@
 /*
  * @test
  * @bug 8136421
- * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9" | os.simpleArch == "aarch64")
+ * @requires (vm.simpleArch == "x64" | vm.simpleArch == "sparcv9" | vm.simpleArch == "aarch64")
  * @library / /testlibrary /test/lib
  * @library ../common/patches
  * @modules java.base/jdk.internal.misc
@@ -40,6 +40,7 @@
 
 package compiler.jvmci.compilerToVM;
 
+import compiler.jvmci.common.CTVMUtilities;
 import compiler.jvmci.common.testcases.AbstractClass;
 import compiler.jvmci.common.testcases.AbstractClassExtender;
 import compiler.jvmci.common.testcases.MultipleImplementer1;
@@ -49,15 +50,15 @@ import compiler.jvmci.common.testcases.SingleImplementer;
 import compiler.jvmci.common.testcases.SingleImplementerInterface;
 import compiler.jvmci.common.testcases.SingleSubclass;
 import compiler.jvmci.common.testcases.SingleSubclassedClass;
-import compiler.jvmci.common.CTVMUtilities;
-import java.util.HashSet;
-import java.util.Set;
+import jdk.internal.misc.Unsafe;
+import jdk.test.lib.Asserts;
+import jdk.test.lib.Utils;
 import jdk.vm.ci.hotspot.CompilerToVMHelper;
 import jdk.vm.ci.hotspot.HotSpotResolvedJavaMethod;
 import jdk.vm.ci.hotspot.HotSpotResolvedObjectType;
-import jdk.test.lib.Asserts;
-import jdk.test.lib.Utils;
-import jdk.internal.misc.Unsafe;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class ResolveMethodTest {
     private static final Unsafe UNSAFE = Utils.getUnsafe();
