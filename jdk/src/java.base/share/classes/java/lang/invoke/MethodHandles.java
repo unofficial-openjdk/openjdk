@@ -29,6 +29,7 @@ import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.Opcodes;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
+import jdk.internal.vm.annotation.ForceInline;
 import sun.invoke.util.ValueConversions;
 import sun.invoke.util.VerifyAccess;
 import sun.invoke.util.Wrapper;
@@ -76,7 +77,7 @@ public class MethodHandles {
 
     private MethodHandles() { }  // do not instantiate
 
-    private static final MemberName.Factory IMPL_NAMES = MemberName.getFactory();
+    static final MemberName.Factory IMPL_NAMES = MemberName.getFactory();
 
     // See IMPL_LOOKUP below.
 
@@ -104,6 +105,7 @@ public class MethodHandles {
      * @return a lookup object for the caller of this method, with private access
      */
     @CallerSensitive
+    @ForceInline // to ensure Reflection.getCallerClass optimization
     public static Lookup lookup() {
         return new Lookup(Reflection.getCallerClass());
     }
@@ -951,8 +953,6 @@ assertEquals("", (String) MH_newString.invokeExact());
                 return invoker(type);
             if ("invokeExact".equals(name))
                 return exactInvoker(type);
-            if ("invokeBasic".equals(name))
-                return basicInvoker(type);
             assert(!MemberName.isMethodHandleInvokeName(name));
             return null;
         }
@@ -1207,11 +1207,16 @@ assertEquals(""+l, (String) MH_this.invokeExact(subl)); // Listie method
          * the following conditions:
          * <ul>
          * <li>if the field is declared {@code final}, then the write, atomic
-         *     update, and numeric atomic update access modes are unsupported.
+         *     update, numeric atomic update, and bitwise atomic update access
+         *     modes are unsupported.
          * <li>if the field type is anything other than {@code byte},
-         *     {@code short}, {@code char}, {@code int} or {@code long},
+         *     {@code short}, {@code char}, {@code int}, {@code long},
          *     {@code float}, or {@code double} then numeric atomic update
          *     access modes are unsupported.
+         * <li>if the field type is anything other than {@code boolean},
+         *     {@code byte}, {@code short}, {@code char}, {@code int} or
+         *     {@code long} then bitwise atomic update access modes are
+         *     unsupported.
          * </ul>
          * <p>
          * If the field is declared {@code volatile} then the returned VarHandle
@@ -1326,11 +1331,16 @@ assertEquals(""+l, (String) MH_this.invokeExact(subl)); // Listie method
          * the following conditions:
          * <ul>
          * <li>if the field is declared {@code final}, then the write, atomic
-         *     update, and numeric atomic update access modes are unsupported.
+         *     update, numeric atomic update, and bitwise atomic update access
+         *     modes are unsupported.
          * <li>if the field type is anything other than {@code byte},
-         *     {@code short}, {@code char}, {@code int} or {@code long},
+         *     {@code short}, {@code char}, {@code int}, {@code long},
          *     {@code float}, or {@code double}, then numeric atomic update
          *     access modes are unsupported.
+         * <li>if the field type is anything other than {@code boolean},
+         *     {@code byte}, {@code short}, {@code char}, {@code int} or
+         *     {@code long} then bitwise atomic update access modes are
+         *     unsupported.
          * </ul>
          * <p>
          * If the field is declared {@code volatile} then the returned VarHandle
@@ -1631,11 +1641,16 @@ return mh1;
          * the following conditions:
          * <ul>
          * <li>if the field is declared {@code final}, then the write, atomic
-         *     update, and numeric atomic update access modes are unsupported.
+         *     update, numeric atomic update, and bitwise atomic update access
+         *     modes are unsupported.
          * <li>if the field type is anything other than {@code byte},
-         *     {@code short}, {@code char}, {@code int} or {@code long},
+         *     {@code short}, {@code char}, {@code int}, {@code long},
          *     {@code float}, or {@code double} then numeric atomic update
          *     access modes are unsupported.
+         * <li>if the field type is anything other than {@code boolean},
+         *     {@code byte}, {@code short}, {@code char}, {@code int} or
+         *     {@code long} then bitwise atomic update access modes are
+         *     unsupported.
          * </ul>
          * <p>
          * If the field is declared {@code volatile} then the returned VarHandle
@@ -2353,9 +2368,13 @@ return mh1;
      * the following conditions:
      * <ul>
      * <li>if the component type is anything other than {@code byte},
-     *     {@code short}, {@code char}, {@code int} or {@code long},
+     *     {@code short}, {@code char}, {@code int}, {@code long},
      *     {@code float}, or {@code double} then numeric atomic update access
      *     modes are unsupported.
+     * <li>if the field type is anything other than {@code boolean},
+     *     {@code byte}, {@code short}, {@code char}, {@code int} or
+     *     {@code long} then bitwise atomic update access modes are
+     *     unsupported.
      * </ul>
      * <p>
      * If the component type is {@code float} or {@code double} then numeric
@@ -2426,12 +2445,17 @@ return mh1;
      * If access is aligned then following access modes are supported and are
      * guaranteed to support atomic access:
      * <ul>
-     * <li>read write access modes for all {@code T};
+     * <li>read write access modes for all {@code T}, with the exception of
+     *     access modes {@code get} and {@code set} for {@code long} and
+     *     {@code double} on 32-bit platforms.
      * <li>atomic update access modes for {@code int}, {@code long},
      *     {@code float} or {@code double}.
      *     (Future major platform releases of the JDK may support additional
      *     types for certain currently unsupported access modes.)
      * <li>numeric atomic update access modes for {@code int} and {@code long}.
+     *     (Future major platform releases of the JDK may support additional
+     *     numeric types for certain currently unsupported access modes.)
+     * <li>bitwise atomic update access modes for {@code int} and {@code long}.
      *     (Future major platform releases of the JDK may support additional
      *     numeric types for certain currently unsupported access modes.)
      * </ul>
@@ -2508,12 +2532,17 @@ return mh1;
      * If access is aligned then following access modes are supported and are
      * guaranteed to support atomic access:
      * <ul>
-     * <li>read write access modes for all {@code T};
+     * <li>read write access modes for all {@code T}, with the exception of
+     *     access modes {@code get} and {@code set} for {@code long} and
+     *     {@code double} on 32-bit platforms.
      * <li>atomic update access modes for {@code int}, {@code long},
      *     {@code float} or {@code double}.
      *     (Future major platform releases of the JDK may support additional
      *     types for certain currently unsupported access modes.)
      * <li>numeric atomic update access modes for {@code int} and {@code long}.
+     *     (Future major platform releases of the JDK may support additional
+     *     numeric types for certain currently unsupported access modes.)
+     * <li>bitwise atomic update access modes for {@code int} and {@code long}.
      *     (Future major platform releases of the JDK may support additional
      *     numeric types for certain currently unsupported access modes.)
      * </ul>
@@ -3115,7 +3144,7 @@ assert((int)twice.invokeExact(21) == 42);
         return dropArguments(zero(type.returnType()), 0, type.parameterList());
     }
 
-    private static final MethodHandle[] IDENTITY_MHS = new MethodHandle[Wrapper.values().length];
+    private static final MethodHandle[] IDENTITY_MHS = new MethodHandle[Wrapper.COUNT];
     private static MethodHandle makeIdentity(Class<?> ptype) {
         MethodType mtype = methodType(ptype, ptype);
         LambdaForm lform = LambdaForm.identityForm(BasicType.basicType(ptype));
@@ -3133,7 +3162,7 @@ assert((int)twice.invokeExact(21) == 42);
         assert(btw == Wrapper.OBJECT);
         return makeZero(rtype);
     }
-    private static final MethodHandle[] ZERO_MHS = new MethodHandle[Wrapper.values().length];
+    private static final MethodHandle[] ZERO_MHS = new MethodHandle[Wrapper.COUNT];
     private static MethodHandle makeZero(Class<?> rtype) {
         MethodType mtype = methodType(rtype);
         LambdaForm lform = LambdaForm.zeroForm(BasicType.basicType(rtype));
@@ -3268,6 +3297,15 @@ assertEquals("yz", (String) d0.invokeExact(123, "x", "y", "z"));
      */
     public static
     MethodHandle dropArguments(MethodHandle target, int pos, List<Class<?>> valueTypes) {
+        return dropArguments0(target, pos, copyTypes(valueTypes.toArray()));
+    }
+
+    private static List<Class<?>> copyTypes(Object[] array) {
+        return Arrays.asList(Arrays.copyOf(array, array.length, Class[].class));
+    }
+
+    private static
+    MethodHandle dropArguments0(MethodHandle target, int pos, List<Class<?>> valueTypes) {
         MethodType oldType = target.type();  // get NPE
         int dropped = dropArgumentChecks(oldType, pos, valueTypes);
         MethodType newType = oldType.insertParameterTypes(pos, valueTypes);
@@ -3342,12 +3380,13 @@ assertEquals("xz", (String) d12.invokeExact("x", 12, true, "z"));
      */
     public static
     MethodHandle dropArguments(MethodHandle target, int pos, Class<?>... valueTypes) {
-        return dropArguments(target, pos, Arrays.asList(valueTypes));
+        return dropArguments0(target, pos, copyTypes(valueTypes));
     }
 
     // private version which allows caller some freedom with error handling
     private static MethodHandle dropArgumentsToMatch(MethodHandle target, int skip, List<Class<?>> newTypes, int pos,
                                       boolean nullOnFailure) {
+        newTypes = copyTypes(newTypes.toArray());
         List<Class<?>> oldTypes = target.type().parameterList();
         int match = oldTypes.size();
         if (skip != 0) {
@@ -3379,11 +3418,11 @@ assertEquals("xz", (String) d12.invokeExact("x", 12, true, "z"));
         // target: ( S*[skip],        M*[match]  )
         MethodHandle adapter = target;
         if (add > 0) {
-            adapter = dropArguments(adapter, skip+ match, addTypes);
+            adapter = dropArguments0(adapter, skip+ match, addTypes);
         }
         // adapter: (S*[skip],        M*[match], A*[add] )
         if (pos > 0) {
-            adapter = dropArguments(adapter, skip, newTypes.subList(0, pos));
+            adapter = dropArguments0(adapter, skip, newTypes.subList(0, pos));
        }
         // adapter: (S*[skip], P*[pos], M*[match], A*[add] )
         return adapter;
@@ -3427,7 +3466,8 @@ assertEquals("xy", h3.invoke("x", "y", 1, "a", "b", "c"));
      * @return a possibly adapted method handle
      * @throws NullPointerException if either argument is null
      * @throws IllegalArgumentException if any element of {@code newTypes} is {@code void.class},
-     *         or if either index is out of range in its corresponding list,
+     *         or if {@code skip} is negative or greater than the arity of the target,
+     *         or if {@code pos} is negative or greater than the newTypes list size,
      *         or if the non-skipped target parameter types match the new types at {@code pos}
      * @since 9
      */
@@ -3786,7 +3826,7 @@ System.out.println((int) f0.invokeExact("x", "y")); // 2
         int filterValues = filterType.parameterCount();
         if (filterValues == 0
                 ? (rtype != void.class)
-                : (rtype != filterType.parameterType(0)))
+                : (rtype != filterType.parameterType(0) || filterValues != 1))
             throw newIllegalArgumentException("target and filter types do not match", targetType, filterType);
     }
 
@@ -3888,10 +3928,14 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
         int foldVals = rtype == void.class ? 0 : 1;
         int afterInsertPos = foldPos + foldVals;
         boolean ok = (targetType.parameterCount() >= afterInsertPos + foldArgs);
-        if (ok && !(combinerType.parameterList()
-                    .equals(targetType.parameterList().subList(afterInsertPos,
-                                                               afterInsertPos + foldArgs))))
-            ok = false;
+        if (ok) {
+            for (int i = 0; i < foldArgs; i++) {
+                if (combinerType.parameterType(i) != targetType.parameterType(i + afterInsertPos)) {
+                    ok = false;
+                    break;
+                }
+            }
+        }
         if (ok && foldVals != 0 && combinerType.returnType() != targetType.parameterType(foldPos))
             ok = false;
         if (!ok)
@@ -4289,7 +4333,7 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
                 step.set(i, dropArgumentsToMatch(identityOrVoid(t), 0, commonParameterSequence, i));
             }
             if (pred.get(i) == null) {
-                pred.set(i, dropArguments(constant(boolean.class, true), 0, commonParameterSequence));
+                pred.set(i, dropArguments0(constant(boolean.class, true), 0, commonParameterSequence));
             }
             if (fini.get(i) == null) {
                 fini.set(i, empty(methodType(t, commonParameterSequence)));
@@ -4314,7 +4358,7 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
         return hs.stream().map(h -> {
             int pc = h.type().parameterCount();
             int tpsize = targetParams.size();
-            return pc < tpsize ? dropArguments(h, pc, targetParams.subList(pc, tpsize)) : h;
+            return pc < tpsize ? dropArguments0(h, pc, targetParams.subList(pc, tpsize)) : h;
         }).collect(Collectors.toList());
     }
 
@@ -4568,7 +4612,8 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
      *     // assume MH_decrement is a handle to x-1 of type int
      *     MethodHandle[]
      *         indexVar = {start, MH_increment}, // i = start; i = i+1
-     *         loopLimit = {end, null, MH_lessThan, returnVar }, // i<end
+     *         loopLimit = {end, null,
+     *                       filterArgument(MH_lessThan, 0, MH_decrement), returnVar}, // i-1<end
      *         bodyClause = {init,
      *                       filterArgument(dropArguments(body, 1, int.class), 0, MH_decrement}; // v = body(i-1, v)
      *     return loop(indexVar, loopLimit, bodyClause);
@@ -4604,12 +4649,12 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
         MethodHandle actualBody = body == null ? dropArguments(defaultResultHandle, 0, int.class) : body;
         MethodHandle returnVar = dropArguments(defaultResultHandle, 0, int.class, int.class);
         MethodHandle actualEnd = end == null ? constant(int.class, 0) : end;
+        MethodHandle decr = MethodHandleImpl.getConstantHandle(MethodHandleImpl.MH_decrementCounter);
         MethodHandle[] indexVar = {start, MethodHandleImpl.getConstantHandle(MethodHandleImpl.MH_countedLoopStep)};
         MethodHandle[] loopLimit = {actualEnd, null,
-                MethodHandleImpl.getConstantHandle(MethodHandleImpl.MH_countedLoopPred), returnVar};
-        MethodHandle[] bodyClause = {actualInit,
-                filterArgument(dropArguments(actualBody, 1, int.class), 0,
-                        MethodHandleImpl.getConstantHandle(MethodHandleImpl.MH_decrementCounter))};
+                filterArgument(MethodHandleImpl.getConstantHandle(MethodHandleImpl.MH_countedLoopPred), 0, decr),
+                returnVar};
+        MethodHandle[] bodyClause = {actualInit, filterArgument(dropArguments(actualBody, 1, int.class), 0, decr)};
         return loop(indexVar, loopLimit, bodyClause);
     }
 

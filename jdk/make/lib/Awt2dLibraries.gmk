@@ -23,6 +23,8 @@
 # questions.
 #
 
+$(eval $(call IncludeCustomExtension, jdk, lib/Awt2dLibraries-pre.gmk))
+
 WIN_AWT_LIB := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/libawt/awt.lib
 
 ################################################################################
@@ -54,9 +56,6 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBMLIB_IMAGE, \
     OPTIMIZATION := HIGHEST, \
     CFLAGS := $(CFLAGS_JDKLIB) \
         $(BUILD_LIBMLIB_CFLAGS), \
-    DISABLED_WARNINGS_gcc := parentheses array-bounds, \
-    DISABLED_WARNINGS_clang := parentheses, \
-    DISABLED_WARNINGS_solstudio := E_STATEMENT_NOT_REACHED, \
     MAPFILE := $(BUILD_LIBMLIB_IMAGE_MAPFILE), \
     LDFLAGS := $(LDFLAGS_JDKLIB) \
         $(call SET_SHARED_LIBRARY_ORIGIN), \
@@ -117,7 +116,6 @@ ifeq ($(OPENJDK_TARGET_OS)-$(OPENJDK_TARGET_CPU_ARCH), solaris-sparc)
       CFLAGS := -xarch=sparcvis \
           $(LIBMLIB_IMAGE_V_CFLAGS) \
           $(CFLAGS_JDKLIB), \
-      DISABLED_WARNINGS_solstudio := E_STATEMENT_NOT_REACHED, \
       MAPFILE := $(BUILD_LIBMLIB_IMAGE_MAPFILE), \
       LDFLAGS := $(LDFLAGS_JDKLIB) \
           $(call SET_SHARED_LIBRARY_ORIGIN), \
@@ -145,8 +143,6 @@ endif
 
 ifeq ($(OPENJDK_TARGET_OS), windows)
   LIBAWT_DIRS += $(JDK_TOPDIR)/src/java.desktop/share/native/common/awt/utility
-else
-  LIBAWT_EXFILES := java2d/ShaderList.c
 endif
 
 ifneq ($(filter $(OPENJDK_TARGET_OS), solaris linux macosx aix), )
@@ -212,11 +208,7 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
     LIBAWT_CFLAGS += -DMLIB_OS64BIT
   endif
 
-  ifdef OPENJDK
-    LIBAWT_RC_FLAGS := -I $(JDK_TOPDIR)/src/java.base/windows/native/launcher/icons
-  else
-    LIBAWT_RC_FLAGS := -I $(JDK_TOPDIR)/src/closed/java.base/windows/native/launcher/icons
-  endif
+  LIBAWT_RC_FLAGS ?= -I $(JDK_TOPDIR)/src/java.base/windows/native/launcher/icons
   LIBAWT_VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/java.desktop/windows/native/libawt/windows/awt.rc
 endif
 
@@ -352,8 +344,6 @@ ifeq ($(findstring $(OPENJDK_TARGET_OS),windows macosx),)
       BUILD_LIBAWT_XAWT_awt_Font.c_CFLAGS := -w
       # initializing a declared 'extern'
       BUILD_LIBAWT_XAWT_debug_mem.c_CFLAGS := -w
-      # decimal constant is unsigned only in ISO C90 (JAVASE_EMBEDDED)
-      BUILD_LIBAWT_XAWT_XToolkit.c_CFLAGS := -w
    endif
 
     $(eval $(call SetupNativeCompilation,BUILD_LIBAWT_XAWT, \
@@ -426,7 +416,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBLCMS, \
         $(LCMS_CFLAGS), \
     CFLAGS_solaris := -xc99=no_lib, \
     CFLAGS_windows := -DCMS_IS_WINDOWS_, \
-    DISABLED_WARNINGS_gcc := format-nonliteral type-limits, \
+    DISABLED_WARNINGS_gcc := format-nonliteral type-limits misleading-indentation, \
     DISABLED_WARNINGS_clang := tautological-compare, \
     DISABLED_WARNINGS_solstudio := E_STATEMENT_NOT_REACHED, \
     MAPFILE := $(JDK_TOPDIR)/make/mapfiles/liblcms/mapfile-vers, \
@@ -453,13 +443,6 @@ TARGETS += $(BUILD_LIBLCMS)
 $(BUILD_LIBLCMS): $(BUILD_LIBAWT)
 
 ################################################################################
-
-ifdef OPENJDK
-  BUILD_LIBJAVAJPEG_MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libjpeg/mapfile-vers
-else
-  BUILD_LIBJAVAJPEG_MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libjpeg/mapfile-vers-closed
-  LIBJAVAJPEG_SRC += $(JDK_TOPDIR)/src/closed/java.desktop/share/native/libjavajpeg
-endif
 
 LIBJAVAJPEG_SRC += $(JDK_TOPDIR)/src/java.desktop/share/native/libjavajpeg
 
@@ -507,10 +490,8 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJAVAJPEG, \
     CFLAGS := $(CFLAGS_JDKLIB) $(BUILD_LIBJAVAJPEG_HEADERS) \
         $(LIBJAVA_HEADER_FLAGS) \
         -I$(SUPPORT_OUTPUTDIR)/headers/java.desktop, \
-    DISABLED_WARNINGS_gcc := clobbered parentheses array-bounds, \
-    DISABLED_WARNINGS_clang := logical-op-parentheses, \
-    DISABLED_WARNINGS_microsoft := 4267, \
-    MAPFILE := $(BUILD_LIBJAVAJPEG_MAPFILE), \
+    DISABLED_WARNINGS_gcc := clobbered, \
+    MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libjpeg/mapfile-vers, \
     LDFLAGS := $(LDFLAGS_JDKLIB) \
         $(call SET_SHARED_LIBRARY_ORIGIN), \
     LIBS := $(LIBJPEG_LIBS) $(JDKLIB_LIBS), \
@@ -645,15 +626,10 @@ LIBFONTMANAGER_CFLAGS += $(HARFBUZZ_CFLAGS)
 
 #### End harfbuzz configuration
 
-ifndef OPENJDK
-  LIBFONTMANAGER_CFLAGS += -I$(JDK_TOPDIR)/src/closed/java.desktop/share/native/libt2k
-  BUILD_LIBFONTMANAGER_MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libfontmanager/mapfile-vers
-  LIBFONTMANAGER_EXCLUDE_FILES += freetypeScaler.c
-else
-  LIBFONTMANAGER_CFLAGS += $(FREETYPE_CFLAGS)
-  BUILD_LIBFONTMANAGER_MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libfontmanager/mapfile-vers.openjdk
-  BUILD_LIBFONTMANAGER_FONTLIB := $(FREETYPE_LIBS)
-endif
+LIBFONTMANAGER_CFLAGS += $(FREETYPE_CFLAGS)
+# This may be overridden in a custom makefile
+BUILD_LIBFONTMANAGER_MAPFILE ?= $(JDK_TOPDIR)/make/mapfiles/libfontmanager/mapfile-vers
+BUILD_LIBFONTMANAGER_FONTLIB += $(FREETYPE_LIBS)
 
 LIBFONTMANAGER_OPTIMIZATION := HIGH
 
@@ -931,7 +907,7 @@ ifndef BUILD_HEADLESS_ONLY
     LIBSPLASHSCREEN_LDFLAGS := -delayload:user32.dll
     LIBSPLASHSCREEN_LIBS += kernel32.lib user32.lib gdi32.lib delayimp.lib $(WIN_JAVA_LIB) jvm.lib
   else
-    LIBSPLASHSCREEN_LIBS += $(X_LIBS) -lX11 -lXext $(LIBM) -lpthread
+    LIBSPLASHSCREEN_LIBS += $(X_LIBS) -lX11 -lXext $(LIBM) -lpthread -ldl
   endif
 
   $(eval $(call SetupNativeCompilation,BUILD_LIBSPLASHSCREEN, \
@@ -943,7 +919,7 @@ ifndef BUILD_HEADLESS_ONLY
       OPTIMIZATION := LOW, \
       CFLAGS := $(LIBSPLASHSCREEN_CFLAGS) $(CFLAGS_JDKLIB) \
                 $(GIFLIB_CFLAGS) $(LIBJPEG_CFLAGS) $(PNG_CFLAGS), \
-      DISABLED_WARNINGS_gcc := sign-compare type-limits unused-result maybe-uninitialized, \
+      DISABLED_WARNINGS_gcc := sign-compare type-limits unused-result maybe-uninitialized shift-negative-value, \
       DISABLED_WARNINGS_clang := incompatible-pointer-types, \
       DISABLED_WARNINGS_solstudio := E_NEWLINE_NOT_LAST E_DECLARATION_IN_CODE \
           E_STATEMENT_NOT_REACHED, \

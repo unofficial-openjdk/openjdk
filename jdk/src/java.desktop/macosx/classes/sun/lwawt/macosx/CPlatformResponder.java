@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +34,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.KeyEvent;
+import java.util.Locale;
 
 /**
  * Translates NSEvents/NPCocoaEvents into AWT events.
@@ -134,6 +135,7 @@ final class CPlatformResponder {
         int jkeyCode = KeyEvent.VK_UNDEFINED;
         int jkeyLocation = KeyEvent.KEY_LOCATION_UNKNOWN;
         boolean postsTyped = false;
+        boolean spaceKeyTyped = false;
 
         char testChar = KeyEvent.CHAR_UNDEFINED;
         boolean isDeadChar = (chars!= null && chars.length() == 0);
@@ -150,6 +152,11 @@ final class CPlatformResponder {
         } else {
             if (chars != null && chars.length() > 0) {
                 testChar = chars.charAt(0);
+
+                //Check if String chars contains SPACE character.
+                if (chars.trim().isEmpty()) {
+                    spaceKeyTyped = true;
+                }
             }
 
             char testCharIgnoringModifiers = charsIgnoringModifiers != null && charsIgnoringModifiers.length() > 0 ?
@@ -170,13 +177,23 @@ final class CPlatformResponder {
                 }
             }
 
+            // If Pinyin Simplified input method is selected, CAPS_LOCK key is supposed to switch
+            // input to latin letters.
+            // It is necessary to use testCharIgnoringModifiers instead of testChar for event
+            // generation in such case to avoid uppercase letters in text components.
+            LWCToolkit lwcToolkit = (LWCToolkit)Toolkit.getDefaultToolkit();
+            if (lwcToolkit.getLockingKeyState(KeyEvent.VK_CAPS_LOCK) &&
+                    Locale.SIMPLIFIED_CHINESE.equals(lwcToolkit.getDefaultKeyboardLocale())) {
+                testChar = testCharIgnoringModifiers;
+            }
+
             jkeyCode = out[0];
             jkeyLocation = out[1];
             jeventType = isNpapiCallback ? NSEvent.npToJavaEventType(eventType) :
                                            NSEvent.nsToJavaEventType(eventType);
         }
 
-        char javaChar = NSEvent.nsToJavaChar(testChar, modifierFlags);
+        char javaChar = NSEvent.nsToJavaChar(testChar, modifierFlags, spaceKeyTyped);
         // Some keys may generate a KEY_TYPED, but we can't determine
         // what that character is. That's likely a bug, but for now we
         // just check for CHAR_UNDEFINED.

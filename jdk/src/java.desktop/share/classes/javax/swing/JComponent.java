@@ -55,6 +55,7 @@ import javax.accessibility.*;
 
 import sun.awt.AWTAccessor;
 import sun.awt.SunToolkit;
+import sun.swing.SwingAccessor;
 import sun.swing.SwingUtilities2;
 
 /**
@@ -375,6 +376,21 @@ public abstract class JComponent extends Container implements Serializable,
      */
     private transient Object aaHint;
     private transient Object lcdRenderingHint;
+
+    static {
+        SwingAccessor.setJComponentAccessor(new SwingAccessor.JComponentAccessor() {
+
+            @Override
+            public boolean getFlag(JComponent comp, int aFlag) {
+                return comp.getFlag(aFlag);
+            }
+
+            @Override
+            public void compWriteObjectNotify(JComponent comp) {
+                comp.compWriteObjectNotify();
+            }
+        });
+    }
 
     static Graphics safelyGetGraphics(Component c) {
         return safelyGetGraphics(c, SwingUtilities.getRoot(c));
@@ -844,9 +860,10 @@ public abstract class JComponent extends Container implements Serializable,
                     Rectangle cr;
 
                     cr = comp.getBounds(tmpRect);
-
-                    boolean hitClip = g.hitClip(cr.x, cr.y, cr.width,
-                                                cr.height);
+                    Shape clip = g.getClip();
+                    boolean hitClip = (clip != null)
+                            ? clip.intersects(cr.x, cr.y, cr.width, cr.height)
+                            : true;
 
                     if (hitClip) {
                         if (checkSiblings && i > 0) {

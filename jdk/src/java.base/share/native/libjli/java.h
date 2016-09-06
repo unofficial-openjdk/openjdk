@@ -161,6 +161,7 @@ void SetJavaLauncherProp(void);
 jint ReadKnownVMs(const char *jvmcfg, jboolean speculative);
 char *CheckJvmType(int *argc, char ***argv, jboolean speculative);
 void AddOption(char *str, void *info);
+jboolean IsWhiteSpaceOption(const char* name);
 
 enum ergo_policy {
    DEFAULT_POLICY = 0,
@@ -251,6 +252,13 @@ typedef struct {
 
 #define NULL_CHECK(NC_check_pointer) \
     NULL_CHECK_RETURN_VALUE(NC_check_pointer, )
+
+#define CHECK_EXCEPTION_RETURN_VALUE(CER_value) \
+    do { \
+        if ((*env)->ExceptionOccurred(env)) { \
+            return CER_value; \
+        } \
+    } while (JNI_FALSE)
 
 #define CHECK_EXCEPTION_RETURN() \
     do { \

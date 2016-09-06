@@ -412,7 +412,7 @@ public class TIFFField implements Cloneable {
 
     /**
      * Creates a {@code TIFFField} from a TIFF native image
-     * metadata node. If the value of the <tt>"number"</tt> attribute
+     * metadata node. If the value of the {@code "number"} attribute
      * of the node is not found in {@code tagSet} then a new
      * {@code TIFFTag} with name {@code TIFFTag.UNKNOWN_TAG_NAME}
      * will be created and assigned to the field.
@@ -420,20 +420,22 @@ public class TIFFField implements Cloneable {
      * @param tagSet The {@code TIFFTagSet} to which the
      * {@code TIFFTag} of the field belongs.
      * @param node A native TIFF image metadata {@code TIFFField} node.
-     * @throws NullPointerException if {@code node} is
-     * {@code null}.
-     * @throws IllegalArgumentException if the name of the node is not
-     * {@code "TIFFField"}.
-     * @throws NullPointerException if the node does not contain any data.
-     * @throws IllegalArgumentException if the combination of node attributes
-     * and data is not legal per the {@link #TIFFField(TIFFTag,int,int,Object)}
-     * constructor specification.
+     * @throws IllegalArgumentException If the {@code Node} parameter content
+     * does not adhere to the {@code TIFFField} element structure defined by
+     * the <a href="../../metadata/doc-files/tiff_metadata.html#ImageMetadata">
+     * TIFF native image metadata format specification</a>, or if the
+     * combination of node attributes and data is not legal per the
+     * {@link #TIFFField(TIFFTag,int,int,Object)} constructor specification.
+     * Note that a cause might be set on such an exception.
      * @return A new {@code TIFFField}.
      */
     public static TIFFField createFromMetadataNode(TIFFTagSet tagSet,
                                                    Node node) {
         if (node == null) {
-            throw new NullPointerException("node == null!");
+            // This method is specified to throw only IllegalArgumentExceptions
+            // so we create an IAE with a NullPointerException as its cause.
+            throw new IllegalArgumentException(new NullPointerException
+                ("node == null!"));
         }
         String name = node.getNodeName();
         if (!name.equals("TIFFField")) {
@@ -487,7 +489,17 @@ public class TIFFField implements Cloneable {
             tag = new TIFFTag(TIFFTag.UNKNOWN_TAG_NAME, tagNumber, 1 << type);
         }
 
-        return new TIFFField(tag, type, count, data);
+        TIFFField field;
+        try {
+            field = new TIFFField(tag, type, count, data);
+        } catch (NullPointerException npe) {
+            // This method is specified to throw only IllegalArgumentExceptions
+            // so we catch the NullPointerException and set it as the cause of
+            // the IAE which is thrown.
+            throw new IllegalArgumentException(npe);
+        }
+
+        return field;
     }
 
     /**
@@ -517,18 +529,18 @@ public class TIFFField implements Cloneable {
      * @param count The number of data values.
      * @param data The actual data content of the field.
      *
-     * @throws NullPointerException if {@code tag&nbsp;==&nbsp;null}.
+     * @throws NullPointerException if {@code tag == null}.
      * @throws IllegalArgumentException if {@code type} is not
      * one of the {@code TIFFTag.TIFF_*} data type constants.
      * @throws IllegalArgumentException if {@code type} is an unacceptable
      * data type for the supplied {@code TIFFTag}.
-     * @throws IllegalArgumentException if {@code count&nbsp;&lt;&nbsp;0}.
-     * @throws IllegalArgumentException if {@code count&nbsp;&lt;&nbsp;1}
+     * @throws IllegalArgumentException if {@code count < 0}.
+     * @throws IllegalArgumentException if {@code count < 1}
      * and {@code type} is {@code TIFF_RATIONAL} or
      * {@code TIFF_SRATIONAL}.
-     * @throws IllegalArgumentException if {@code count&nbsp;&ne;&nbsp;1}
+     * @throws IllegalArgumentException if {@code count != 1}
      * and {@code type} is {@code TIFF_IFD_POINTER}.
-     * @throws NullPointerException if {@code data&nbsp;==&nbsp;null}.
+     * @throws NullPointerException if {@code data == null}.
      * @throws IllegalArgumentException if {@code data} is an instance of
      * a class incompatible with the specified type.
      * @throws IllegalArgumentException if the size of the data array is wrong.
@@ -632,12 +644,12 @@ public class TIFFField implements Cloneable {
      * @param type One of the {@code TIFFTag.TIFF_*} constants
      * indicating the data type of the field as written to the TIFF stream.
      * @param count The number of data values.
-     * @throws NullPointerException if {@code tag&nbsp;==&nbsp;null}.
+     * @throws NullPointerException if {@code tag == null}.
      * @throws IllegalArgumentException if {@code type} is not
      * one of the {@code TIFFTag.TIFF_*} data type constants.
      * @throws IllegalArgumentException if {@code type} is an unacceptable
      * data type for the supplied {@code TIFFTag}.
-     * @throws IllegalArgumentException if {@code count&nbsp;&lt;&nbsp;0}.
+     * @throws IllegalArgumentException if {@code count < 0}.
      * @see #TIFFField(TIFFTag,int,int,Object)
      */
     public TIFFField(TIFFTag tag, int type, int count) {
@@ -649,16 +661,16 @@ public class TIFFField implements Cloneable {
      * value.
      * The field will have type
      * {@link TIFFTag#TIFF_SHORT  TIFF_SHORT} if
-     * {@code val&nbsp;&lt;&nbsp;65536} and type
+     * {@code val < 65536} and type
      * {@link TIFFTag#TIFF_LONG TIFF_LONG} otherwise.  The count
      * of the field will be unity.
      *
      * @param tag The tag to associate with this field.
      * @param value The value to associate with this field.
-     * @throws NullPointerException if {@code tag&nbsp;==&nbsp;null}.
+     * @throws NullPointerException if {@code tag == null}.
      * @throws IllegalArgumentException if the derived type is unacceptable
      * for the supplied {@code TIFFTag}.
-     * @throws IllegalArgumentException if {@code value&nbsp;&lt;&nbsp;0}.
+     * @throws IllegalArgumentException if {@code value < 0}.
      */
     public TIFFField(TIFFTag tag, int value) {
         if(tag == null) {
@@ -705,19 +717,26 @@ public class TIFFField implements Cloneable {
      * @param offset The IFD offset.
      * @param dir The directory.
      *
-     * @throws NullPointerException if {@code tag&nbsp;==&nbsp;null}.
-     * @throws IllegalArgumentException if {@code type} is neither
-     * {@code TIFFTag.TIFF_LONG} nor {@code TIFFTag.TIFF_IFD_POINTER}.
+     * @throws NullPointerException if {@code tag == null}.
      * @throws IllegalArgumentException if {@code type} is an unacceptable
      * data type for the supplied {@code TIFFTag}.
-     * @throws IllegalArgumentException if {@code offset} is non-positive.
-     * @throws NullPointerException if {@code dir&nbsp;==&nbsp;null}.
+     * @throws IllegalArgumentException if {@code type} is neither
+     * {@code TIFFTag.TIFF_LONG} nor {@code TIFFTag.TIFF_IFD_POINTER}.
+     * @throws IllegalArgumentException if {@code offset <= 0}.
+     * @throws NullPointerException if {@code dir == null}.
      *
      * @see #TIFFField(TIFFTag,int,int,Object)
      */
     public TIFFField(TIFFTag tag, int type, long offset, TIFFDirectory dir) {
-        this(tag, type, 1, new long[] {offset});
-        if (type != TIFFTag.TIFF_LONG && type != TIFFTag.TIFF_IFD_POINTER) {
+        if (tag == null) {
+            throw new NullPointerException("tag == null!");
+        } else if (type < TIFFTag.MIN_DATATYPE || type > TIFFTag.MAX_DATATYPE) {
+            throw new IllegalArgumentException("Unknown data type "+type);
+        } else if (!tag.isDataTypeOK(type)) {
+            throw new IllegalArgumentException("Illegal data type " + type
+                + " for " + tag.getName() + " tag");
+        } else if (type != TIFFTag.TIFF_LONG
+                   && type != TIFFTag.TIFF_IFD_POINTER) {
             throw new IllegalArgumentException("type " + type
                 + " is neither TIFFTag.TIFF_LONG nor TIFFTag.TIFF_IFD_POINTER");
         } else if (offset <= 0) {
@@ -726,6 +745,13 @@ public class TIFFField implements Cloneable {
         } else if (dir == null) {
             throw new NullPointerException("dir == null");
         }
+
+        this.tag = tag;
+        this.tagNumber = tag.getNumber();
+        this.type = type;
+        this.count = 1;
+        this.data = new long[] {offset};
+
         this.dir = dir;
     }
 
@@ -739,7 +765,7 @@ public class TIFFField implements Cloneable {
     }
 
     /**
-     * Retrieves the tag number in the range {@code [0,&nbsp;65535]}.
+     * Retrieves the tag number in the range {@code [0,65535]}.
      *
      * @return The tag number.
      */
@@ -804,7 +830,7 @@ public class TIFFField implements Cloneable {
      *
      * @throws IllegalArgumentException if {@code dataType} is not
      * one of the {@code TIFFTag.TIFF_*} data type constants.
-     * @throws IllegalArgumentException if {@code count&nbsp;&lt;&nbsp;0}.
+     * @throws IllegalArgumentException if {@code count < 0}.
      */
     public static Object createArrayForType(int dataType, int count) {
         if(count < 0) {

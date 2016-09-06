@@ -37,10 +37,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import jdk.tools.jlink.internal.PathModuleEntry;
+import jdk.tools.jlink.internal.PathResourcePoolEntry;
 import jdk.tools.jlink.plugin.PluginException;
-import jdk.tools.jlink.plugin.ModuleEntry;
-import jdk.tools.jlink.plugin.ModulePool;
+import jdk.tools.jlink.plugin.ResourcePool;
+import jdk.tools.jlink.plugin.ResourcePoolBuilder;
+import jdk.tools.jlink.plugin.ResourcePoolEntry;
 import jdk.tools.jlink.plugin.Plugin;
 import jdk.tools.jlink.internal.Utils;
 
@@ -57,19 +58,17 @@ public class FileCopierPlugin implements Plugin {
         Path source;
         Path target;
     }
-    public static final String FAKE_MODULE = "$jlink-file-copier";
-
     private final List<CopiedFile> files = new ArrayList<>();
 
     /**
      * Symbolic link to another path.
      */
-    public static abstract class SymImageFile extends PathModuleEntry {
+    public static abstract class SymImageFile extends PathResourcePoolEntry {
 
         private final String targetPath;
 
         public SymImageFile(String targetPath, String module, String path,
-                ModuleEntry.Type type, Path file) {
+                ResourcePoolEntry.Type type, Path file) {
             super(module, path, type, file);
             this.targetPath = targetPath;
         }
@@ -82,7 +81,7 @@ public class FileCopierPlugin implements Plugin {
     private static final class SymImageFileImpl extends SymImageFile {
 
         public SymImageFileImpl(String targetPath, Path file, String module,
-                String path, ModuleEntry.Type type) {
+                String path, ResourcePoolEntry.Type type) {
             super(targetPath, module, path, type, file);
         }
     }
@@ -90,11 +89,11 @@ public class FileCopierPlugin implements Plugin {
     private static final class DirectoryCopy implements FileVisitor<Path> {
 
         private final Path source;
-        private final ModulePool pool;
+        private final ResourcePoolBuilder pool;
         private final String targetDir;
         private final List<SymImageFile> symlinks = new ArrayList<>();
 
-        DirectoryCopy(Path source, ModulePool pool, String targetDir) {
+        DirectoryCopy(Path source, ResourcePoolBuilder pool, String targetDir) {
             this.source = source;
             this.pool = pool;
             this.targetDir = targetDir;
@@ -128,7 +127,7 @@ public class FileCopierPlugin implements Plugin {
                 }
                 SymImageFileImpl impl = new SymImageFileImpl(symTarget.toString(),
                         file, path, Objects.requireNonNull(file.getFileName()).toString(),
-                        ModuleEntry.Type.OTHER);
+                        ResourcePoolEntry.Type.OTHER);
                 symlinks.add(impl);
             } else {
                 addFile(pool, file, path);
@@ -152,14 +151,14 @@ public class FileCopierPlugin implements Plugin {
         }
     }
 
-    private static void addFile(ModulePool pool, Path file, String path)
+    private static void addFile(ResourcePoolBuilder pool, Path file, String path)
             throws IOException {
         Objects.requireNonNull(pool);
         Objects.requireNonNull(file);
         Objects.requireNonNull(path);
-        ModuleEntry impl = ModuleEntry.create(
-                "/" + FAKE_MODULE + "/other/" + path,
-                ModuleEntry.Type.OTHER, file);
+        ResourcePoolEntry impl = ResourcePoolEntry.create(
+                "/java.base/other/" + path,
+                ResourcePoolEntry.Type.OTHER, file);
         try {
             pool.add(impl);
         } catch (Exception ex) {
@@ -211,7 +210,7 @@ public class FileCopierPlugin implements Plugin {
     }
 
     @Override
-    public void visit(ModulePool in, ModulePool out) {
+    public ResourcePool transform(ResourcePool in, ResourcePoolBuilder out) {
         in.transformAndCopy((file) -> {
             return file;
         }, out);
@@ -238,6 +237,8 @@ public class FileCopierPlugin implements Plugin {
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
         }
+
+        return out.build();
     }
 
     @Override

@@ -28,7 +28,6 @@ package sun.lwawt.macosx;
 import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.lang.reflect.Field;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
@@ -37,43 +36,37 @@ import javax.swing.JSlider;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import sun.lwawt.macosx.CFRetainedResource;
+import static javax.accessibility.AccessibleContext.ACCESSIBLE_ACTIVE_DESCENDANT_PROPERTY;
+import static javax.accessibility.AccessibleContext.ACCESSIBLE_CARET_PROPERTY;
+import static javax.accessibility.AccessibleContext.ACCESSIBLE_SELECTION_PROPERTY;
+import static javax.accessibility.AccessibleContext.ACCESSIBLE_TEXT_PROPERTY;
+import sun.awt.AWTAccessor;
+
 
 class CAccessible extends CFRetainedResource implements Accessible {
-    static Field getNativeAXResourceField() {
-        try {
-            final Field field = AccessibleContext.class.getDeclaredField("nativeAXResource");
-            field.setAccessible(true);
-            return field;
-        } catch (final Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    private static Field nativeAXResourceField = getNativeAXResourceField();
 
     public static CAccessible getCAccessible(final Accessible a) {
         if (a == null) return null;
         AccessibleContext context = a.getAccessibleContext();
-        try {
-            final CAccessible cachedCAX = (CAccessible) nativeAXResourceField.get(context);
-            if (cachedCAX != null) return cachedCAX;
-
-            final CAccessible newCAX = new CAccessible(a);
-            nativeAXResourceField.set(context, newCAX);
-            return newCAX;
-        }  catch (final Exception e) {
-            e.printStackTrace();
-            return null;
+        AWTAccessor.AccessibleContextAccessor accessor
+                = AWTAccessor.getAccessibleContextAccessor();
+        final CAccessible cachedCAX = (CAccessible) accessor.getNativeAXResource(context);
+        if (cachedCAX != null) {
+            return cachedCAX;
         }
+        final CAccessible newCAX = new CAccessible(a);
+        accessor.setNativeAXResource(context, newCAX);
+        return newCAX;
     }
 
     private static native void unregisterFromCocoaAXSystem(long ptr);
     private static native void valueChanged(long ptr);
+    private static native void selectedTextChanged(long ptr);
     private static native void selectionChanged(long ptr);
 
     private Accessible accessible;
+
+    private AccessibleContext activeDescendant;
 
     private CAccessible(final Accessible accessible) {
         super(0L, true); // real pointer will be poked in by native
@@ -98,9 +91,9 @@ class CAccessible extends CFRetainedResource implements Accessible {
     }
 
     public void addNotificationListeners(Component c) {
-        AXTextChangeNotifier listener = new AXTextChangeNotifier();
         if (c instanceof Accessible) {
-            AccessibilityEventMonitor.addPropertyChangeListener(listener, (Accessible)c);
+            AccessibleContext ac = ((Accessible)c).getAccessibleContext();
+            ac.addPropertyChangeListener(new AXChangeNotifier());
         }
         if (c instanceof JProgressBar) {
             JProgressBar pb = (JProgressBar) c;
@@ -112,16 +105,23 @@ class CAccessible extends CFRetainedResource implements Accessible {
     }
 
 
-    private class AXTextChangeNotifier implements PropertyChangeListener {
+    private class AXChangeNotifier implements PropertyChangeListener {
 
         @Override
         public void propertyChange(PropertyChangeEvent e) {
             String name = e.getPropertyName();
             if ( ptr != 0 ) {
-                if (name.compareTo(AccessibleContext.ACCESSIBLE_CARET_PROPERTY) == 0) {
-                    selectionChanged(ptr);
-                } else if (name.compareTo(AccessibleContext.ACCESSIBLE_TEXT_PROPERTY) == 0 ) {
+                if (name.compareTo(ACCESSIBLE_CARET_PROPERTY) == 0) {
+                    selectedTextChanged(ptr);
+                } else if (name.compareTo(ACCESSIBLE_TEXT_PROPERTY) == 0 ) {
                     valueChanged(ptr);
+                } else if (name.compareTo(ACCESSIBLE_SELECTION_PROPERTY) == 0 ) {
+                    selectionChanged(ptr);
+                }  else if (name.compareTo(ACCESSIBLE_ACTIVE_DESCENDANT_PROPERTY) == 0 ) {
+                    Object nv = e.getNewValue();
+                    if (nv instanceof AccessibleContext) {
+                        activeDescendant = (AccessibleContext)nv;
+                    }
                 }
             }
         }
@@ -137,4 +137,9 @@ class CAccessible extends CFRetainedResource implements Accessible {
     static Accessible getSwingAccessible(final Accessible a) {
         return (a instanceof CAccessible) ? ((CAccessible)a).accessible : a;
     }
+
+    static AccessibleContext getActiveDescendant(final Accessible a) {
+        return (a instanceof CAccessible) ? ((CAccessible)a).activeDescendant : null;
+    }
+
 }

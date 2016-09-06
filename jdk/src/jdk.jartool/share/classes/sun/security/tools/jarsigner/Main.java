@@ -70,7 +70,6 @@ import sun.security.util.*;
  * @author Roland Schemers
  * @author Jan Luehe
  */
-@SuppressWarnings("deprecation")
 public class Main {
 
     // for i18n
@@ -98,7 +97,6 @@ public class Main {
     static final String VERSION = "1.0";
 
     static final int IN_KEYSTORE = 0x01;        // signer is in keystore
-    static final int IN_SCOPE = 0x02;
     static final int NOT_ALIAS = 0x04;          // alias list is NOT empty and
                                                 // signer is not in alias list
     static final int SIGNED_BY_ALIAS = 0x08;    // signer is in alias list
@@ -118,7 +116,8 @@ public class Main {
     boolean protectedPath; // protected authentication path
     String storetype; // keystore type
     String providerName; // provider name
-    Vector<String> providers = null; // list of providers
+    List<String> providers = null; // list of provider names
+    List<String> providerClasses = null; // list of provider classes
     // arguments for provider constructors
     HashMap<String,String> providerArgs = new HashMap<>();
     char[] keypass; // private key password
@@ -174,30 +173,36 @@ public class Main {
 
             // Try to load and install the specified providers
             if (providers != null) {
-                ClassLoader cl = ClassLoader.getSystemClassLoader();
-                Enumeration<String> e = providers.elements();
-                while (e.hasMoreElements()) {
-                    String provName = e.nextElement();
-                    Class<?> provClass;
-                    if (cl != null) {
-                        provClass = cl.loadClass(provName);
-                    } else {
-                        provClass = Class.forName(provName);
+                for (String provName: providers) {
+                    try {
+                        KeyStoreUtil.loadProviderByName(provName,
+                                providerArgs.get(provName));
+                        if (debug) {
+                            System.out.println("loadProviderByName: " + provName);
+                        }
+                    } catch (IllegalArgumentException e) {
+                        throw new Exception(String.format(rb.getString(
+                                "provider.name.not.found"), provName));
                     }
+                }
+            }
 
-                    Object obj = provClass.newInstance();
-                    if (!(obj instanceof Provider)) {
-                        MessageFormat form = new MessageFormat(rb.getString
-                            ("provName.not.a.provider"));
-                        Object[] source = {provName};
-                        throw new Exception(form.format(source));
+            if (providerClasses != null) {
+                ClassLoader cl = ClassLoader.getSystemClassLoader();
+                for (String provClass: providerClasses) {
+                    try {
+                        KeyStoreUtil.loadProviderByClass(provClass,
+                                providerArgs.get(provClass), cl);
+                        if (debug) {
+                            System.out.println("loadProviderByClass: " + provClass);
+                        }
+                    } catch (ClassCastException cce) {
+                        throw new Exception(String.format(rb.getString(
+                                "provclass.not.a.provider"), provClass));
+                    } catch (IllegalArgumentException e) {
+                        throw new Exception(String.format(rb.getString(
+                                "provider.class.not.found"), provClass), e.getCause());
                     }
-                    Provider p = (Provider) obj;
-                    String provArg = providerArgs.get(provName);
-                    if (provArg != null) {
-                        p = p.configure(provArg);
-                    }
-                    Security.addProvider(p);
                 }
             }
 
@@ -335,11 +340,26 @@ public class Main {
             } else if (collator.compare(flags, "-providerName") ==0) {
                 if (++n == args.length) usageNoArg();
                 providerName = args[n];
-            } else if ((collator.compare(flags, "-provider") == 0) ||
-                        (collator.compare(flags, "-providerClass") == 0)) {
+            } else if (collator.compare(flags, "-provider") == 0 ||
+                        collator.compare(flags, "-providerClass") == 0) {
+                if (++n == args.length) usageNoArg();
+                if (providerClasses == null) {
+                    providerClasses = new ArrayList<>(3);
+                }
+                providerClasses.add(args[n]);
+
+                if (args.length > (n+1)) {
+                    flags = args[n+1];
+                    if (collator.compare(flags, "-providerArg") == 0) {
+                        if (args.length == (n+2)) usageNoArg();
+                        providerArgs.put(args[n], args[n+2]);
+                        n += 2;
+                    }
+                }
+            } else if (collator.compare(flags, "-addprovider") == 0) {
                 if (++n == args.length) usageNoArg();
                 if (providers == null) {
-                    providers = new Vector<String>(3);
+                    providers = new ArrayList<>(3);
                 }
                 providers.add(args[n]);
 
@@ -584,9 +604,14 @@ public class Main {
                 (".providerName.name.provider.name"));
         System.out.println();
         System.out.println(rb.getString
-                (".providerClass.class.name.of.cryptographic.service.provider.s"));
+                (".add.provider.option"));
         System.out.println(rb.getString
-                (".providerArg.arg.master.class.file.and.constructor.argument"));
+                (".providerArg.option.1"));
+        System.out.println();
+        System.out.println(rb.getString
+                (".providerClass.option"));
+        System.out.println(rb.getString
+                (".providerArg.option.2"));
         System.out.println();
         System.out.println(rb.getString
                 (".strict.treat.warnings.as.errors"));
@@ -649,14 +674,13 @@ public class Main {
                     hasUnsignedEntry |= !je.isDirectory() && !isSigned
                                         && !signatureRelated(name);
 
-                    int inStoreOrScope = inKeyStore(signers);
+                    int inStoreWithAlias = inKeyStore(signers);
 
-                    boolean inStore = (inStoreOrScope & IN_KEYSTORE) != 0;
-                    boolean inScope = (inStoreOrScope & IN_SCOPE) != 0;
+                    boolean inStore = (inStoreWithAlias & IN_KEYSTORE) != 0;
 
-                    notSignedByAlias |= (inStoreOrScope & NOT_ALIAS) != 0;
+                    notSignedByAlias |= (inStoreWithAlias & NOT_ALIAS) != 0;
                     if (keystore != null) {
-                        aliasNotInStore |= isSigned && (!inStore && !inScope);
+                        aliasNotInStore |= isSigned && !inStore;
                     }
 
                     // Only used when -verbose provided
@@ -670,8 +694,7 @@ public class Main {
                         sb.append(isSigned ? rb.getString("s") : rb.getString("SPACE"))
                                 .append(inManifest ? rb.getString("m") : rb.getString("SPACE"))
                                 .append(inStore ? rb.getString("k") : rb.getString("SPACE"))
-                                .append(inScope ? rb.getString("i") : rb.getString("SPACE"))
-                                .append((inStoreOrScope & NOT_ALIAS) != 0 ? 'X' : ' ')
+                                .append((inStoreWithAlias & NOT_ALIAS) != 0 ? 'X' : ' ')
                                 .append(rb.getString("SPACE"));
                         sb.append('|');
                     }
@@ -773,8 +796,6 @@ public class Main {
                     ".m.entry.is.listed.in.manifest"));
                 System.out.println(rb.getString(
                     ".k.at.least.one.certificate.was.found.in.keystore"));
-                System.out.println(rb.getString(
-                    ".i.at.least.one.certificate.was.found.in.identity.scope"));
                 if (ckaliases.size() > 0) {
                     System.out.println(rb.getString(
                         ".X.not.signed.by.specified.alias.es."));
@@ -1049,8 +1070,6 @@ public class Main {
             if (alias != null) {
                 if (alias.startsWith("(")) {
                     result |= IN_KEYSTORE;
-                } else if (alias.startsWith("[")) {
-                    result |= IN_SCOPE;
                 }
                 if (ckaliases.contains(alias.substring(1, alias.length() - 1))) {
                     result |= SIGNED_BY_ALIAS;

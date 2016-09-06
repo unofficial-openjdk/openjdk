@@ -36,7 +36,6 @@ import sun.invoke.util.Wrapper;
 import java.lang.invoke.LambdaForm.NamedFunction;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.reflect.Field;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
@@ -308,7 +307,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
         /*non-public*/ char fieldTypeChar(int i) {
             return typeChars.charAt(i);
         }
-        Object fieldSignature() {
+        String fieldSignature() {
             return typeChars;
         }
         public Class<? extends BoundMethodHandle> fieldHolder() {
@@ -498,6 +497,10 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
                         String shortTypes = LambdaForm.shortenSignature(types);
                         String className = SPECIES_CLASS_PREFIX + shortTypes;
                         Class<?> c = BootLoader.loadClassOrNull(className);
+                        if (TRACE_RESOLVE) {
+                            System.out.println("[BMH_RESOLVE] " + shortTypes +
+                                    (c != null ? " (success)" : " (fail)") );
+                        }
                         if (c != null) {
                             return c.asSubclass(BoundMethodHandle.class);
                         } else {
@@ -587,26 +590,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
             return bmhClass;
         }
 
-        /**
-         * @implNote this method is used by GenerateBMHClassesPlugin to enable
-         * ahead-of-time generation of BMH classes at link time. It does
-         * added validation since this string may be user provided.
-         */
-        static Map.Entry<String, byte[]> generateConcreteBMHClassBytes(
-                final String types) {
-            for (char c : types.toCharArray()) {
-                if ("LIJFD".indexOf(c) < 0) {
-                    throw new IllegalArgumentException("All characters must "
-                            + "correspond to a basic field type: LIJFD");
-                }
-            }
-            String shortTypes = LambdaForm.shortenSignature(types);
-            final String className  = speciesInternalClassName(shortTypes);
-            return Map.entry(className,
-                    generateConcreteBMHClassBytes(shortTypes, types, className));
-        }
-
-        private static String speciesInternalClassName(String shortTypes) {
+        static String speciesInternalClassName(String shortTypes) {
             return SPECIES_PREFIX_PATH + shortTypes;
         }
 
@@ -865,7 +849,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
         }
     }
 
-    private static final Lookup LOOKUP = Lookup.IMPL_LOOKUP;
+    static final Lookup LOOKUP = Lookup.IMPL_LOOKUP;
 
     /**
      * All subclasses must provide such a value describing their type signature.

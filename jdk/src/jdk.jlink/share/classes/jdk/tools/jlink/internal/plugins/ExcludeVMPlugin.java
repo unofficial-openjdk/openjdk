@@ -36,8 +36,10 @@ import java.util.TreeSet;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import jdk.tools.jlink.plugin.Plugin;
-import jdk.tools.jlink.plugin.ModulePool;
-import jdk.tools.jlink.plugin.ModuleEntry;
+import jdk.tools.jlink.plugin.ResourcePool;
+import jdk.tools.jlink.plugin.ResourcePoolBuilder;
+import jdk.tools.jlink.plugin.ResourcePoolModule;
+import jdk.tools.jlink.plugin.ResourcePoolEntry;
 import jdk.tools.jlink.plugin.PluginException;
 
 /**
@@ -97,28 +99,35 @@ public final class ExcludeVMPlugin implements Plugin {
      * e.g.: /java.base/native/amd64/server/libjvm.so
      * /java.base/native/server/libjvm.dylib
      */
-    private List<ModuleEntry> getVMs(ModulePool in) {
-        String jvmlib = jvmlib();
-        List<ModuleEntry> ret = in.findModule("java.base").get().entries().filter((t) -> {
-            return t.getPath().endsWith("/" + jvmlib);
+    private List<ResourcePoolEntry> getVMs(ResourcePoolModule javaBase, String[] jvmlibs) {
+        List<ResourcePoolEntry> ret = javaBase.entries().filter((t) -> {
+            String path = t.path();
+            for (String jvmlib : jvmlibs) {
+                return t.path().endsWith("/" + jvmlib);
+            }
+            return false;
         }).collect(Collectors.toList());
         return ret;
     }
 
     @Override
-    public void visit(ModulePool in, ModulePool out) {
-        String jvmlib = jvmlib();
+    public ResourcePool transform(ResourcePool in, ResourcePoolBuilder out) {
+        ResourcePoolModule javaBase = in.moduleView().findModule("java.base").get();
+        String[] jvmlibs = jvmlibs(javaBase.descriptor().osName().get());
         TreeSet<Jvm> existing = new TreeSet<>(new JvmComparator());
         TreeSet<Jvm> removed = new TreeSet<>(new JvmComparator());
         if (!keepAll) {
             // First retrieve all available VM names and removed VM
-            List<ModuleEntry> jvms = getVMs(in);
+            List<ResourcePoolEntry> jvms = getVMs(javaBase, jvmlibs);
             for (Jvm jvm : Jvm.values()) {
-                for (ModuleEntry md : jvms) {
-                    if (md.getPath().endsWith("/" + jvm.getName() + "/" + jvmlib)) {
-                        existing.add(jvm);
-                        if (isRemoved(md)) {
-                            removed.add(jvm);
+                for (ResourcePoolEntry md : jvms) {
+                    String mdPath = md.path();
+                    for (String jvmlib : jvmlibs) {
+                        if (mdPath.endsWith("/" + jvm.getName() + "/" + jvmlib)) {
+                            existing.add(jvm);
+                            if (isRemoved(md)) {
+                                removed.add(jvm);
+                            }
                         }
                     }
                 }
@@ -134,8 +143,8 @@ public final class ExcludeVMPlugin implements Plugin {
         // Rewrite the jvm.cfg file.
         in.transformAndCopy((file) -> {
             if (!keepAll) {
-                if (file.getType().equals(ModuleEntry.Type.NATIVE_LIB)) {
-                    if (file.getPath().endsWith(JVM_CFG)) {
+                if (file.type().equals(ResourcePoolEntry.Type.NATIVE_LIB)) {
+                    if (file.path().endsWith(JVM_CFG)) {
                         try {
                             file = handleJvmCfgFile(file, existing, removed);
                         } catch (IOException ex) {
@@ -148,10 +157,11 @@ public final class ExcludeVMPlugin implements Plugin {
             return file;
         }, out);
 
+        return out.build();
     }
 
-    private boolean isRemoved(ModuleEntry file) {
-        return !predicate.test(file.getPath());
+    private boolean isRemoved(ResourcePoolEntry file) {
+        return !predicate.test(file.path());
     }
 
     @Override
@@ -206,7 +216,7 @@ public final class ExcludeVMPlugin implements Plugin {
         predicate = ResourceFilter.excludeFilter(exclude);
     }
 
-    private ModuleEntry handleJvmCfgFile(ModuleEntry orig,
+    private ResourcePoolEntry handleJvmCfgFile(ResourcePoolEntry orig,
             TreeSet<Jvm> existing,
             TreeSet<Jvm> removed) throws IOException {
         if (keepAll) {
@@ -215,7 +225,7 @@ public final class ExcludeVMPlugin implements Plugin {
         StringBuilder builder = new StringBuilder();
         // Keep comments
         try (BufferedReader reader
-                = new BufferedReader(new InputStreamReader(orig.stream(),
+                = new BufferedReader(new InputStreamReader(orig.content(),
                         StandardCharsets.UTF_8))) {
             reader.lines().forEach((s) -> {
                 if (s.startsWith("#")) {
@@ -242,24 +252,24 @@ public final class ExcludeVMPlugin implements Plugin {
 
         byte[] content = builder.toString().getBytes(StandardCharsets.UTF_8);
 
-        return orig.create(content);
+        return orig.copyWithContent(content);
     }
 
-    private static String jvmlib() {
-        String lib = "libjvm.so";
-        if (isWindows()) {
-            lib = "jvm.dll";
-        } else if (isMac()) {
-            lib = "libjvm.dylib";
+    private static String[] jvmlibs(String osName) {
+        if (isWindows(osName)) {
+            return new String[] { "jvm.dll" };
+        } else if (isMac(osName)) {
+            return new String[] { "libjvm.dylib", "libjvm.a" };
+        } else {
+            return new String[] { "libjvm.so", "libjvm.a" };
         }
-        return lib;
     }
 
-    private static boolean isWindows() {
-        return System.getProperty("os.name").startsWith("Windows");
+    private static boolean isWindows(String osName) {
+        return osName.startsWith("Windows");
     }
 
-    private static boolean isMac() {
-        return System.getProperty("os.name").startsWith("Mac OS");
+    private static boolean isMac(String osName) {
+        return osName.startsWith("Mac OS") || osName.startsWith("Darwin");
     }
 }

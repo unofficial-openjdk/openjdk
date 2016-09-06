@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,14 +26,17 @@
  * @summary Verify the defining class loader of each module never delegates
  *          to its child class loader. Also sanity check java.compact2
  *          requires.
- * @run testng/othervm -Djdk.launcher.addmods=ALL-SYSTEM VerifyModuleDelegation
+ * @modules java.compact2
+ * @run testng/othervm --add-modules=ALL-SYSTEM VerifyModuleDelegation
  */
 
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
 import java.lang.reflect.Layer;
+import java.lang.reflect.Module;
 import java.util.Set;
+import static java.util.stream.Collectors.toSet;
 
 import static java.lang.module.ModuleDescriptor.Requires.Modifier.*;
 
@@ -51,15 +54,16 @@ public class VerifyModuleDelegation {
 
     private static final ModuleDescriptor COMPACT2
         = new ModuleDescriptor.Builder(JAVA_COMPACT2)
-            .requires(MANDATED, JAVA_BASE)
-            .requires(PUBLIC, JAVA_COMPACT1)
-            .requires(PUBLIC, "java.rmi")
-            .requires(PUBLIC, "java.sql")
-            .requires(PUBLIC, "java.xml")
+            .requires(Set.of(MANDATED), JAVA_BASE)
+            .requires(Set.of(PUBLIC), JAVA_COMPACT1)
+            .requires(Set.of(PUBLIC), "java.rmi")
+            .requires(Set.of(PUBLIC), "java.sql")
+            .requires(Set.of(PUBLIC), "java.xml")
             .build();
 
-    private static final Set<ModuleReference> MREFS
-            = ModuleFinder.ofSystem().findAll();
+    private static final Set<ModuleDescriptor> MREFS
+            = Layer.boot().modules().stream().map(Module::getDescriptor)
+                .collect(toSet());
 
     private void check(ModuleDescriptor md, ModuleDescriptor ref) {
         assertTrue(md.requires().size() == ref.requires().size());
@@ -69,7 +73,7 @@ public class VerifyModuleDelegation {
     @Test
     public void checkJavaBase() {
         ModuleDescriptor md =
-                MREFS.stream().map(ModuleReference::descriptor)
+                MREFS.stream()
                      .filter(d -> d.name().equals(JAVA_BASE))
                      .findFirst().orElseThrow(Error::new);
 
@@ -78,7 +82,7 @@ public class VerifyModuleDelegation {
     @Test
     public void checkCompact2() {
         ModuleDescriptor md =
-                MREFS.stream().map(ModuleReference::descriptor)
+                MREFS.stream()
                      .filter(d -> d.name().equals(JAVA_COMPACT2))
                      .findFirst().orElseThrow(Error::new);
         check(md, COMPACT2);
@@ -87,7 +91,7 @@ public class VerifyModuleDelegation {
     @Test
     public void checkLoaderDelegation() {
         Layer boot = Layer.boot();
-        MREFS.stream().map(ModuleReference::descriptor)
+        MREFS.stream()
              .forEach(md -> md.requires().stream().forEach(req ->
                  {
                      // check if M requires D and D's loader must be either the

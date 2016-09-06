@@ -229,21 +229,6 @@ public class JmodNegativeTest {
         }
     }
 
-    @Test(enabled = false)  // TODO: jmod should check for duplicates before creating.
-    public void testDuplicates() throws IOException {
-        Path jmod = MODS_DIR.resolve("testDuplicates.jmod");
-        FileUtils.deleteFileIfExistsWithRetry(jmod);
-        String cp = EXPLODED_DIR.resolve("foo").resolve("classes").toString();
-
-        jmod("create",
-             "--class-path", cp + pathSeparator + cp,
-             jmod.toString())
-            .assertFailure()
-            .resultChecker(r ->
-                assertContains(r.output, "Error: duplicate resource found, etc..")
-            );
-    }
-
     @Test
     public void testEmptyFileInClasspath() throws IOException {
         Path jmod = MODS_DIR.resolve("testEmptyFileInClasspath.jmod");
@@ -329,7 +314,7 @@ public class JmodNegativeTest {
         jmod("create",
              "--class-path", cp,
              "--hash-modules", ".*",
-             "--modulepath", emptyDir.toString(),
+             "--module-path", emptyDir.toString(),
             jmod.toString())
             .resultChecker(r ->
                 assertContains(r.output, "No hashes recorded: " +
@@ -350,7 +335,7 @@ public class JmodNegativeTest {
             jmod("create",
                  "--class-path", cp,
                  "--hash-modules", ".*",
-                 "--modulepath", MODS_DIR.toString(),
+                 "--module-path", MODS_DIR.toString(),
                  jmod.toString())
                 .assertFailure();
         } finally {
@@ -368,7 +353,7 @@ public class JmodNegativeTest {
 
         jmod("create",
              "--hash-modules", ".*",
-             "--modulepath", file.toString(),
+             "--module-path", file.toString(),
              jmod.toString())
             .assertFailure()
             .resultChecker(r ->
@@ -385,7 +370,7 @@ public class JmodNegativeTest {
         List<Supplier<JmodResult>> tasks = Arrays.asList(
                 () -> jmod("create",
                            "--hash-modules", "anyPattern",
-                           "--modulepath", "doesNotExist",
+                           "--module-path", "doesNotExist",
                            "output.jmod"),
                 () -> jmod("create",
                            "--class-path", "doesNotExist",
@@ -433,7 +418,7 @@ public class JmodNegativeTest {
         List<Supplier<JmodResult>> tasks = Arrays.asList(
             () -> jmod("create",
                        "--hash-modules", "anyPattern",
-                       "--modulepath","empty" + pathSeparator + "doesNotExist",
+                       "--module-path","empty" + pathSeparator + "doesNotExist",
                        "output.jmod"),
             () -> jmod("create",
                        "--class-path", "empty" + pathSeparator + "doesNotExist",
@@ -482,7 +467,7 @@ public class JmodNegativeTest {
                            "--class-path", "aFile.txt",
                            "output.jmod"),
                 () -> jmod("create",
-                           "--modulepath", "aFile.txt",
+                           "--module-path", "aFile.txt",
                            "output.jmod"),
                 () -> jmod("create",
                            "--cmds", "aFile.txt",

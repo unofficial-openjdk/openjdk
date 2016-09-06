@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,28 +49,29 @@ import java.nio.file.StandardOpenOption;
  * run main/othervm SAAJFactoryTest saaj.factory.Valid -
  *      scenario14 javax.xml.soap.MessageFactory=saaj.factory.Valid saaj.factory.Valid2 -
  *
- * @compile -addmods java.xml.ws saaj/factory/Invalid.java saaj/factory/Valid.java
+ * @modules java.xml.ws
+ * @compile saaj/factory/Invalid.java saaj/factory/Valid.java
  *     saaj/factory/Valid2.java saaj/factory/Valid3.java SAAJFactoryTest.java
  *
- * @run main/othervm -addmods java.xml.ws
+ * @run main/othervm
  *      SAAJFactoryTest com.sun.xml.internal.messaging.saaj.soap.ver1_1.SOAPMessageFactory1_1Impl - scenario2 - -
- * @run main/othervm -addmods java.xml.ws -Djavax.xml.soap.MessageFactory=saaj.factory.Valid
+ * @run main/othervm -Djavax.xml.soap.MessageFactory=saaj.factory.Valid
  *      SAAJFactoryTest saaj.factory.Valid - scenario5 - -
- * @run main/othervm -addmods java.xml.ws -Djavax.xml.soap.MessageFactory=saaj.factory.NonExisting
+ * @run main/othervm -Djavax.xml.soap.MessageFactory=saaj.factory.NonExisting
  *      SAAJFactoryTest - javax.xml.soap.SOAPException scenario6 - -
- * @run main/othervm -addmods java.xml.ws -Djavax.xml.soap.MessageFactory=saaj.factory.Invalid
+ * @run main/othervm -Djavax.xml.soap.MessageFactory=saaj.factory.Invalid
  *      SAAJFactoryTest - javax.xml.soap.SOAPException scenario7 - -
- * @run main/othervm  -addmods java.xml.ws
+ * @run main/othervm
  *      SAAJFactoryTest saaj.factory.Valid - scenario8 - saaj.factory.Valid
- * @run main/othervm -addmods java.xml.ws
+ * @run main/othervm
  *      SAAJFactoryTest saaj.factory.Valid - scenario9 - saaj.factory.Valid
- * @run main/othervm -addmods java.xml.ws
+ * @run main/othervm
  *      SAAJFactoryTest - javax.xml.soap.SOAPException scenario10 - saaj.factory.NonExisting
- * @run main/othervm -addmods java.xml.ws
+ * @run main/othervm
  *      SAAJFactoryTest - javax.xml.soap.SOAPException scenario11 - saaj.factory.Invalid scenario11 - saaj.factory.Invalid
- * @run main/othervm  -addmods java.xml.ws
+ * @run main/othervm
  *      SAAJFactoryTest com.sun.xml.internal.messaging.saaj.soap.ver1_1.SOAPMessageFactory1_1Impl - scenario12 - -
- * @run main/othervm -addmods java.xml.ws
+ * @run main/othervm
  *      SAAJFactoryTest saaj.factory.Valid - scenario15 - saaj.factory.Valid
  */
 public class SAAJFactoryTest {
@@ -206,4 +207,3 @@ public class SAAJFactoryTest {
     }
 
 }
-

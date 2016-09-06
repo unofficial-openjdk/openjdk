@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,8 @@ import java.security.PrivilegedAction;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import jdk.internal.ref.CleanerFactory;
+import sun.java2d.marlin.ArrayCacheConst.CacheStats;
 import static sun.java2d.marlin.MarlinUtils.logInfo;
 import sun.java2d.marlin.stats.Histogram;
 import sun.java2d.marlin.stats.Monitor;
@@ -41,26 +43,22 @@ import sun.awt.util.ThreadGroupUtils;
  */
 public final class RendererStats implements MarlinConst {
 
-    // singleton
-    private static volatile RendererStats singleton = null;
+    static RendererStats createInstance(final Object parent, final String name)
+    {
+        final RendererStats stats = new RendererStats(name);
 
-    static RendererStats getInstance() {
-        if (singleton == null) {
-            singleton = new RendererStats();
-        }
-        return singleton;
+        // Keep a strong reference to dump it later:
+        RendererStatsHolder.getInstance().add(parent, stats);
+
+        return stats;
     }
 
     public static void dumpStats() {
-        if (singleton != null) {
-            singleton.dump();
-        }
+        RendererStatsHolder.dumpStats();
     }
 
-    /* RendererContext collection as hard references
-       (only used for debugging purposes) */
-    final ConcurrentLinkedQueue<RendererContext> allContexts
-        = new ConcurrentLinkedQueue<RendererContext>();
+    // context name (debugging purposes)
+    final String name;
     // stats
     final StatLong stat_cache_rowAA
         = new StatLong("cache.rowAA");
@@ -118,7 +116,7 @@ public final class RendererStats implements MarlinConst {
     final StatLong stat_array_stroker_polystack_curveTypes
         = new StatLong("array.stroker.polystack.curveTypes.d_byte");
     final StatLong stat_array_marlincache_rowAAChunk
-        = new StatLong("array.marlincache.rowAAChunk.d_byte");
+        = new StatLong("array.marlincache.rowAAChunk.resize");
     final StatLong stat_array_marlincache_touchedTile
         = new StatLong("array.marlincache.touchedTile.int");
     final StatLong stat_array_renderer_alphaline
@@ -136,6 +134,10 @@ public final class RendererStats implements MarlinConst {
     final StatLong stat_array_renderer_aux_edgePtrs
         = new StatLong("array.renderer.aux_edgePtrs.int");
     // histograms
+    final Histogram hist_rdr_edges_count
+        = new Histogram("renderer.edges.count");
+    final Histogram hist_rdr_poly_stack_curves
+        = new Histogram("renderer.polystack.curves");
     final Histogram hist_rdr_crossings
         = new Histogram("renderer.crossings");
     final Histogram hist_rdr_crossings_ratio
@@ -181,6 +183,8 @@ public final class RendererStats implements MarlinConst {
         stat_rdr_crossings_sorts,
         stat_rdr_crossings_bsearch,
         stat_rdr_crossings_msorts,
+        hist_rdr_edges_count,
+        hist_rdr_poly_stack_curves,
         hist_rdr_crossings,
         hist_rdr_crossings_ratio,
         hist_rdr_crossings_adds,
@@ -208,8 +212,6 @@ public final class RendererStats implements MarlinConst {
     // monitors
     final Monitor mon_pre_getAATileGenerator
         = new Monitor("MarlinRenderingEngine.getAATileGenerator()");
-    final Monitor mon_npi_currentSegment
-        = new Monitor("NormalizingPathIterator.currentSegment()");
     final Monitor mon_rdr_addLine
         = new Monitor("Renderer.addLine()");
     final Monitor mon_rdr_endRendering
@@ -227,7 +229,6 @@ public final class RendererStats implements MarlinConst {
     // all monitors
     final Monitor[] monitors = new Monitor[]{
         mon_pre_getAATileGenerator,
-        mon_npi_currentSegment,
         mon_rdr_addLine,
         mon_rdr_endRendering,
         mon_rdr_endRendering_Y,
@@ -236,97 +237,145 @@ public final class RendererStats implements MarlinConst {
         mon_ptg_getAlpha,
         mon_debug
     };
+    // offheap stats
+    long totalOffHeapInitial = 0L;
+     // live accumulator
+    long totalOffHeap = 0L;
+    long totalOffHeapMax = 0L;
+    // cache stats
+    CacheStats[] cacheStats = null;
 
-    private RendererStats() {
-        super();
-
-        AccessController.doPrivileged(
-            (PrivilegedAction<Void>) () -> {
-                final Thread hook = new Thread(
-                    ThreadGroupUtils.getRootThreadGroup(),
-                    new Runnable() {
-                        @Override
-                        public void run() {
-                            dump();
-                        }
-                    },
-                    "MarlinStatsHook"
-                );
-                hook.setContextClassLoader(null);
-                Runtime.getRuntime().addShutdownHook(hook);
-
-                if (useDumpThread) {
-                    final Timer statTimer = new Timer("RendererStats");
-                    statTimer.scheduleAtFixedRate(new TimerTask() {
-                        @Override
-                        public void run() {
-                            dump();
-                        }
-                    }, statDump, statDump);
-                }
-                return null;
-            }
-        );
+    private RendererStats(final String name) {
+        this.name = name;
     }
 
     void dump() {
-        if (doStats) {
-            ArrayCache.dumpStats();
-        }
-        final RendererContext[] all = allContexts.toArray(
-                                          new RendererContext[allContexts.size()]);
-        for (RendererContext rdrCtx : all) {
-            logInfo("RendererContext: " + rdrCtx.name);
+        logInfo("RendererContext: " + name);
 
-            if (doMonitors) {
+        if (DO_MONITORS) {
+            for (Monitor monitor : monitors) {
+                if (monitor.count != 0) {
+                    logInfo(monitor.toString());
+                }
+            }
+            // As getAATileGenerator percents:
+            final long total = mon_pre_getAATileGenerator.sum;
+            if (total != 0L) {
                 for (Monitor monitor : monitors) {
-                    if (monitor.count != 0) {
-                        logInfo(monitor.toString());
-                    }
+                    logInfo(monitor.name + " : "
+                            + ((100d * monitor.sum) / total) + " %");
                 }
-                // As getAATileGenerator percents:
-                final long total = mon_pre_getAATileGenerator.sum;
-                if (total != 0L) {
-                    for (Monitor monitor : monitors) {
-                        logInfo(monitor.name + " : "
-                                + ((100d * monitor.sum) / total) + " %");
-                    }
+            }
+            if (DO_FLUSH_MONITORS) {
+                for (Monitor m : monitors) {
+                    m.reset();
                 }
-                if (doFlushMonitors) {
-                    for (Monitor m : monitors) {
-                        m.reset();
+            }
+        }
+
+        if (DO_STATS) {
+            for (StatLong stat : statistics) {
+                if (stat.count != 0) {
+                    logInfo(stat.toString());
+                    if (DO_FLUSH_STATS) {
+                        stat.reset();
                     }
                 }
             }
 
-            if (doStats) {
-                for (StatLong stat : statistics) {
-                    if (stat.count != 0) {
-                        logInfo(stat.toString());
+            logInfo("OffHeap footprint: initial: " + totalOffHeapInitial
+                + " bytes - max: " + totalOffHeapMax + " bytes");
+            if (DO_FLUSH_STATS) {
+                totalOffHeapMax = 0L;
+            }
+
+            logInfo("Array caches for RendererContext: " + name);
+
+            long totalInitialBytes = totalOffHeapInitial;
+            long totalCacheBytes   = 0L;
+
+            if (cacheStats != null) {
+                for (CacheStats stat : cacheStats) {
+                    totalCacheBytes   += stat.dumpStats();
+                    totalInitialBytes += stat.getTotalInitialBytes();
+                    if (DO_FLUSH_STATS) {
                         stat.reset();
                     }
                 }
-                // IntArrayCaches stats:
-                final RendererContext.ArrayCachesHolder holder
-                    = rdrCtx.getArrayCachesHolder();
+            }
+            logInfo("Heap footprint: initial: " + totalInitialBytes
+                    + " bytes - cache: " + totalCacheBytes + " bytes");
+        }
+    }
 
-                logInfo("Array caches for thread: " + rdrCtx.name);
+    static final class RendererStatsHolder {
 
-                for (IntArrayCache cache : holder.intArrayCaches) {
-                    cache.dumpStats();
-                }
+        // singleton
+        private static volatile RendererStatsHolder SINGLETON = null;
 
-                logInfo("Dirty Array caches for thread: " + rdrCtx.name);
+        static synchronized RendererStatsHolder getInstance() {
+            if (SINGLETON == null) {
+                SINGLETON = new RendererStatsHolder();
+            }
+            return SINGLETON;
+        }
 
-                for (IntArrayCache cache : holder.dirtyIntArrayCaches) {
-                    cache.dumpStats();
+        static void dumpStats() {
+            if (SINGLETON != null) {
+                SINGLETON.dump();
+            }
+        }
+
+        /* RendererStats collection as hard references
+           (only used for debugging purposes) */
+        private final ConcurrentLinkedQueue<RendererStats> allStats
+            = new ConcurrentLinkedQueue<RendererStats>();
+
+        private RendererStatsHolder() {
+            AccessController.doPrivileged(
+                (PrivilegedAction<Void>) () -> {
+                    final Thread hook = new Thread(
+                        ThreadGroupUtils.getRootThreadGroup(),
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                dump();
+                            }
+                        },
+                        "MarlinStatsHook"
+                    );
+                    hook.setContextClassLoader(null);
+                    Runtime.getRuntime().addShutdownHook(hook);
+
+                    if (USE_DUMP_THREAD) {
+                        final Timer statTimer = new Timer("RendererStats");
+                        statTimer.scheduleAtFixedRate(new TimerTask() {
+                            @Override
+                            public void run() {
+                                dump();
+                            }
+                        }, DUMP_INTERVAL, DUMP_INTERVAL);
+                    }
+                    return null;
                 }
-                for (FloatArrayCache cache : holder.dirtyFloatArrayCaches) {
-                    cache.dumpStats();
-                }
-                for (ByteArrayCache cache : holder.dirtyByteArrayCaches) {
-                    cache.dumpStats();
-                }
+            );
+        }
+
+        void add(final Object parent, final RendererStats stats) {
+            allStats.add(stats);
+
+            // Register a cleaning function to ensure removing dead entries:
+            CleanerFactory.cleaner().register(parent, () -> remove(stats));
+        }
+
+        void remove(final RendererStats stats) {
+            stats.dump(); // dump anyway
+            allStats.remove(stats);
+        }
+
+        void dump() {
+            for (RendererStats stats : allStats) {
+                stats.dump();
             }
         }
     }

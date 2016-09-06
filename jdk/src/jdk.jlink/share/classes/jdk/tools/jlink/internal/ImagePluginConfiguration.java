@@ -37,7 +37,7 @@ import jdk.tools.jlink.Jlink;
 import jdk.tools.jlink.plugin.Plugin;
 import jdk.tools.jlink.plugin.PluginException;
 import jdk.tools.jlink.plugin.Plugin.Category;
-import jdk.tools.jlink.plugin.ModulePool;
+import jdk.tools.jlink.plugin.ResourcePool;
 
 /**
  * Plugins configuration.
@@ -93,8 +93,7 @@ public final class ImagePluginConfiguration {
 
         List<Plugin> orderedPlugins = new ArrayList<>();
         plugins.entrySet().stream().forEach((entry) -> {
-            // Sort according to plugin constraints
-            orderedPlugins.addAll(PluginOrderingGraph.sort(entry.getValue()));
+            orderedPlugins.addAll(entry.getValue());
         });
         Plugin lastSorter = null;
         for (Plugin plugin : orderedPlugins) {
@@ -123,7 +122,7 @@ public final class ImagePluginConfiguration {
                 }
 
                 @Override
-                public void storeFiles(ModulePool files) {
+                public void storeFiles(ResourcePool files) {
                     throw new PluginException("No directory setup to store files");
                 }
             };

@@ -22,6 +22,7 @@
  */
 
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -33,13 +34,15 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.function.Function;
 import jdk.tools.jlink.Jlink;
 import jdk.tools.jlink.Jlink.JlinkConfiguration;
 import jdk.tools.jlink.Jlink.PluginsConfiguration;
 import jdk.tools.jlink.builder.DefaultImageBuilder;
-import jdk.tools.jlink.plugin.ModulePool;
+import jdk.tools.jlink.plugin.ResourcePool;
+import jdk.tools.jlink.plugin.ResourcePoolBuilder;
 import jdk.tools.jlink.plugin.Plugin;
 import jdk.tools.jlink.internal.ExecutableImage;
 import jdk.tools.jlink.internal.PostProcessor;
@@ -100,62 +103,9 @@ public class IntegrationTest {
         }
 
         @Override
-        public void visit(ModulePool in, ModulePool out) {
+        public ResourcePool transform(ResourcePool in, ResourcePoolBuilder out) {
             in.transformAndCopy(Function.identity(), out);
-        }
-    }
-
-    public static class MyPlugin1 implements Plugin {
-
-        Integer index;
-        Set<String> after;
-        Set<String> before;
-
-        private MyPlugin1(Integer index, Set<String> after, Set<String> before) {
-            this.index = index;
-            this.after = after;
-            this.before = before;
-        }
-
-        @Override
-        public Set<String> isAfter() {
-            return after;
-        }
-
-        @Override
-        public Set<String> isBefore() {
-            return before;
-        }
-
-        @Override
-        public String getName() {
-            return NAME + index;
-        }
-
-        @Override
-        public void visit(ModulePool in, ModulePool out) {
-            System.err.println(NAME + index);
-            ordered.add(index);
-            in.transformAndCopy((file) -> {
-                return file;
-            }, out);
-        }
-
-        @Override
-        public String getDescription() {
-            return null;
-        }
-
-        @Override
-        public String getOption() {
-            return null;
-        }
-        static final String NAME = "myprovider";
-        static final String INDEX = "INDEX";
-
-        @Override
-        public void configure(Map<String, String> config) {
-            throw new UnsupportedOperationException("Shouldn't be called");
+            return out.build();
         }
     }
 
@@ -168,8 +118,6 @@ public class IntegrationTest {
         }
         apitest();
         test();
-        testOrder();
-        testCycleOrder();
     }
 
     private static void apitest() throws Exception {
@@ -257,114 +205,30 @@ public class IntegrationTest {
             throw new AssertionError("release not generated");
         }
 
+        Properties props = new Properties();
+        try (FileReader reader = new FileReader(release)) {
+            props.load(reader);
+        }
+
+        if (props.getProperty("JAVA_VERSION") == null) {
+            throw new AssertionError("release file does not contain JAVA_VERSION");
+        }
+
+        if (props.getProperty("OS_NAME") == null) {
+            throw new AssertionError("release file does not contain OS_NAME");
+        }
+
+        if (props.getProperty("OS_ARCH") == null) {
+            throw new AssertionError("release file does not contain OS_ARCH");
+        }
+
+        if (props.getProperty("OS_VERSION") == null) {
+            throw new AssertionError("release file does not contain OS_VERSION");
+        }
+
         if (!Files.exists(output.resolve("toto.txt"))) {
             throw new AssertionError("Post processing not called");
         }
 
-    }
-
-    private static void testOrder() throws Exception {
-        Jlink jlink = new Jlink();
-        Path output = Paths.get("integrationout2");
-        List<Path> modulePaths = new ArrayList<>();
-        File jmods
-                = JImageGenerator.getJModsDir(new File(System.getProperty("test.jdk")));
-        modulePaths.add(jmods.toPath());
-        Set<String> mods = new HashSet<>();
-        mods.add("java.management");
-        Set<String> limits = new HashSet<>();
-        limits.add("java.management");
-        JlinkConfiguration config = new Jlink.JlinkConfiguration(output,
-                modulePaths, mods, limits, null);
-
-        List<Plugin> lst = new ArrayList<>();
-
-        // Order is Plug1>Plug2>Plug3
-        // Plug1
-
-
-        // TRANSFORMER 3, must be after 2.
-        {
-            Set<String> after = new HashSet<>();
-            after.add(MyPlugin1.NAME+"2");
-            lst.add(new MyPlugin1(3, after, Collections.emptySet()));
-        }
-
-        // TRANSFORMER 2, must be after 1.
-        {
-            Set<String> after = new HashSet<>();
-            after.add(MyPlugin1.NAME+"1");
-            lst.add(new MyPlugin1(2, after, Collections.emptySet()));
-        }
-
-        // TRANSFORMER 1
-        {
-            Set<String> before = new HashSet<>();
-            before.add(MyPlugin1.NAME+"2");
-            lst.add(new MyPlugin1(1, Collections.emptySet(), before));
-        }
-
-        // Image builder
-        DefaultImageBuilder builder = new DefaultImageBuilder(output);
-        PluginsConfiguration plugins
-                = new Jlink.PluginsConfiguration(lst, builder, null);
-
-        jlink.build(config, plugins);
-
-        if (ordered.isEmpty()) {
-            throw new AssertionError("Plugins not called");
-        }
-        List<Integer> clone = new ArrayList<>();
-        clone.addAll(ordered);
-        Collections.sort(clone);
-        if (!clone.equals(ordered)) {
-            throw new AssertionError("Ordered is not properly sorted" + ordered);
-        }
-    }
-
-    private static void testCycleOrder() throws Exception {
-        Jlink jlink = new Jlink();
-        Path output = Paths.get("integrationout3");
-        List<Path> modulePaths = new ArrayList<>();
-        File jmods
-                = JImageGenerator.getJModsDir(new File(System.getProperty("test.jdk")));
-        modulePaths.add(jmods.toPath());
-        Set<String> mods = new HashSet<>();
-        mods.add("java.management");
-        Set<String> limits = new HashSet<>();
-        limits.add("java.management");
-        JlinkConfiguration config = new Jlink.JlinkConfiguration(output,
-                modulePaths, mods, limits, null);
-
-        List<Plugin> lst = new ArrayList<>();
-
-        // packager 1
-        {
-            Set<String> before = new HashSet<>();
-            before.add(MyPlugin1.NAME+"2");
-            lst.add(new MyPlugin1(1, Collections.emptySet(), before));
-        }
-
-        // packager 2
-        {
-            Set<String> before = new HashSet<>();
-            before.add(MyPlugin1.NAME+"1");
-            lst.add(new MyPlugin1(2, Collections.emptySet(), before));
-        }
-
-        // Image builder
-        DefaultImageBuilder builder = new DefaultImageBuilder(output);
-        PluginsConfiguration plugins
-                = new Jlink.PluginsConfiguration(lst, builder, null);
-        boolean failed = false;
-        try {
-            jlink.build(config, plugins);
-            failed = true;
-        } catch (Exception ex) {
-            // XXX OK
-        }
-        if (failed) {
-            throw new AssertionError("Should have failed");
-        }
     }
 }
