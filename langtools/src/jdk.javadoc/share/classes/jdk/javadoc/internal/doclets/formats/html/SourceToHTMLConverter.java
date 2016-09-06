@@ -40,11 +40,13 @@ import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTag;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTree;
 import jdk.javadoc.internal.doclets.formats.html.markup.StringContent;
 import jdk.javadoc.internal.doclets.toolkit.Content;
+import jdk.javadoc.internal.doclets.toolkit.Messages;
 import jdk.javadoc.internal.doclets.toolkit.util.DocFile;
+import jdk.javadoc.internal.doclets.toolkit.util.DocFileIOException;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPath;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPaths;
-import jdk.javadoc.internal.doclets.toolkit.util.DocletAbortException;
 import jdk.javadoc.internal.doclets.toolkit.util.DocletConstants;
+import jdk.javadoc.internal.doclets.toolkit.util.SimpleDocletException;
 import jdk.javadoc.internal.doclets.toolkit.util.Utils;
 
 /**
@@ -73,11 +75,12 @@ public class SourceToHTMLConverter {
     private static final String NEW_LINE = DocletConstants.NL;
 
     private final ConfigurationImpl configuration;
+    private final Messages messages;
     private final Utils utils;
 
     private final DocletEnvironment docEnv;
 
-    private DocPath outputdir;
+    private final DocPath outputdir;
 
     /**
      * Relative path from the documentation root to the file that is being
@@ -88,6 +91,7 @@ public class SourceToHTMLConverter {
     private SourceToHTMLConverter(ConfigurationImpl configuration, DocletEnvironment rd,
             DocPath outputdir) {
         this.configuration  = configuration;
+        this.messages = configuration.getMessages();
         this.utils = configuration.utils;
         this.docEnv = rd;
         this.outputdir = outputdir;
@@ -99,23 +103,25 @@ public class SourceToHTMLConverter {
      * @param configuration the configuration.
      * @param docEnv the DocletEnvironment to convert.
      * @param outputdir the name of the directory to output to.
+     * @throws DocFileIOException if there is a problem generating an output file
+     * @throws SimpleDocletException if there is a problem reading a source file
      */
     public static void convertRoot(ConfigurationImpl configuration, DocletEnvironment docEnv,
-            DocPath outputdir) {
+            DocPath outputdir) throws DocFileIOException, SimpleDocletException {
         new SourceToHTMLConverter(configuration, docEnv, outputdir).generate();
     }
 
-    void generate() {
+    void generate() throws DocFileIOException, SimpleDocletException {
         if (docEnv == null || outputdir == null) {
             return;
         }
-        for (PackageElement pkg : utils.getSpecifiedPackages()) {
+        for (PackageElement pkg : configuration.getSpecifiedPackages()) {
             // If -nodeprecated option is set and the package is marked as deprecated,
             // do not convert the package files to HTML.
             if (!(configuration.nodeprecated && utils.isDeprecated(pkg)))
                 convertPackage(pkg, outputdir);
         }
-        for (TypeElement te : utils.getSpecifiedClasses()) {
+        for (TypeElement te : configuration.getSpecifiedClasses()) {
             // If -nodeprecated option is set and the class is marked as deprecated
             // or the containing package is deprecated, do not convert the
             // package files to HTML.
@@ -126,12 +132,15 @@ public class SourceToHTMLConverter {
     }
 
     /**
-     * Convert the Classes in the given Package to an HTML.
+     * Convert the Classes in the given Package to an HTML file.
      *
      * @param pkg the Package to convert.
      * @param outputdir the name of the directory to output to.
+     * @throws DocFileIOException if there is a problem generating an output file
+     * @throws SimpleDocletException if there is a problem reading a source file
      */
-    public void convertPackage(PackageElement pkg, DocPath outputdir) {
+    public void convertPackage(PackageElement pkg, DocPath outputdir)
+            throws DocFileIOException, SimpleDocletException {
         if (pkg == null) {
             return;
         }
@@ -149,16 +158,20 @@ public class SourceToHTMLConverter {
      * Convert the given Class to an HTML.
      *
      * @param te the class to convert.
-     * @param outputdir the name of the directory to output to.
+     * @param outputdir the name of the directory to output to
+     * @throws DocFileIOException if there is a problem generating the output file
+     * @throws SimpleDocletException if there is a problem reading the source file
      */
-    public void convertClass(TypeElement te, DocPath outputdir) {
+    public void convertClass(TypeElement te, DocPath outputdir)
+            throws DocFileIOException, SimpleDocletException {
         if (te == null) {
             return;
         }
+        FileObject fo = utils.getFileObject(te);
+        if (fo == null)
+            return;
+
         try {
-            FileObject fo = utils.getFileObject(te);
-            if (fo == null)
-                return;
             Reader r = fo.openReader(true);
             int lineno = 1;
             String line;
@@ -179,7 +192,8 @@ public class SourceToHTMLConverter {
             body.addContent((configuration.allowTag(HtmlTag.MAIN)) ? HtmlTree.MAIN(div) : div);
             writeToFile(body, outputdir.resolve(DocPath.forClass(utils, te)));
         } catch (IOException e) {
-            throw new DocletAbortException(e);
+            String message = configuration.resources.getText("doclet.exception.read.file", fo.getName());
+            throw new SimpleDocletException(message, e);
         }
     }
 
@@ -189,7 +203,7 @@ public class SourceToHTMLConverter {
      * @param body the documentation content to be written to the file.
      * @param path the path for the file.
      */
-    private void writeToFile(Content body, DocPath path) throws IOException {
+    private void writeToFile(Content body, DocPath path) throws DocFileIOException {
         Content htmlDocType = configuration.isOutputHtml5()
                 ? DocType.HTML5
                 : DocType.TRANSITIONAL;
@@ -200,10 +214,12 @@ public class SourceToHTMLConverter {
         Content htmlTree = HtmlTree.HTML(configuration.getLocale().getLanguage(),
                 head, body);
         Content htmlDocument = new HtmlDocument(htmlDocType, htmlTree);
-        configuration.message.notice("doclet.Generating_0", path.getPath());
+        messages.notice("doclet.Generating_0", path.getPath());
         DocFile df = DocFile.createFileForOutput(configuration, path);
         try (Writer w = df.openWriter()) {
             htmlDocument.write(w, true);
+        } catch (IOException e) {
+            throw new DocFileIOException(df, DocFileIOException.Mode.WRITE, e);
         }
 
     }
@@ -284,9 +300,10 @@ public class SourceToHTMLConverter {
     }
 
     /**
-     * Given a <code>Doc</code>, return an anchor name for it.
+     * Given an element, return an anchor name for it.
      *
-     * @param d the <code>Doc</code> to check.
+     * @param utils the utility class, used to get the line number of the element
+     * @param e the element to check.
      * @return the name of the anchor.
      */
     public static String getAnchorName(Utils utils, Element e) {

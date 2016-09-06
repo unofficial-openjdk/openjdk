@@ -61,6 +61,14 @@ import jdk.jshell.TaskFactory.ParseTask;
 import jdk.jshell.TreeDissector.ExpressionInfo;
 import jdk.jshell.Wrap.Range;
 import jdk.jshell.Snippet.Status;
+import jdk.jshell.spi.ExecutionControl.ClassBytecodes;
+import jdk.jshell.spi.ExecutionControl.ClassInstallException;
+import jdk.jshell.spi.ExecutionControl.EngineTerminationException;
+import jdk.jshell.spi.ExecutionControl.InternalException;
+import jdk.jshell.spi.ExecutionControl.NotImplementedException;
+import jdk.jshell.spi.ExecutionControl.ResolutionException;
+import jdk.jshell.spi.ExecutionControl.RunException;
+import jdk.jshell.spi.ExecutionControl.UserException;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static java.util.Collections.singletonList;
@@ -541,15 +549,23 @@ class Eval {
         if (si.status().isDefined()) {
             if (si.isExecutable()) {
                 try {
-                value = state.executionControl().invoke(si.classFullName(), DOIT_METHOD_NAME);
+                    value = state.executionControl().invoke(si.classFullName(), DOIT_METHOD_NAME);
                     value = si.subKind().hasValue()
                             ? expunge(value)
                             : "";
-                } catch (EvalException ex) {
-                    exception = translateExecutionException(ex);
-                } catch (JShellException ex) {
-                    // UnresolvedReferenceException
-                    exception = ex;
+                } catch (ResolutionException ex) {
+                    DeclarationSnippet sn = (DeclarationSnippet) state.maps.getSnippetDeadOrAlive(ex.id());
+                    exception = new UnresolvedReferenceException(sn, translateExceptionStack(ex));
+                } catch (UserException ex) {
+                    exception = new EvalException(translateExceptionMessage(ex),
+                            ex.causeExceptionClass(),
+                            translateExceptionStack(ex));
+                } catch (RunException ex) {
+                    // StopException - no-op
+                } catch (InternalException ex) {
+                    state.debug(ex, "invoke");
+                } catch (EngineTerminationException ex) {
+                    state.closeDown();
                 }
             } else if (si.subKind() == SubKind.VAR_DECLARATION_SUBKIND) {
                 switch (((VarSnippet) si).typeName()) {
@@ -700,15 +716,25 @@ class Eval {
 
     /**
      * If there are classes to load, loads by calling the execution engine.
-     * @param classnames names of the classes to load.
+     * @param classbytecoes names of the classes to load.
      */
-    private void load(Collection<String> classnames) {
-        if (!classnames.isEmpty()) {
-            state.executionControl().load(classnames);
+    private void load(Collection<ClassBytecodes> classbytecoes) {
+        if (!classbytecoes.isEmpty()) {
+            ClassBytecodes[] cbcs = classbytecoes.toArray(new ClassBytecodes[classbytecoes.size()]);
+            try {
+                state.executionControl().load(cbcs);
+                state.classTracker.markLoaded(cbcs);
+            } catch (ClassInstallException ex) {
+                state.classTracker.markLoaded(cbcs, ex.installed());
+            } catch (NotImplementedException ex) {
+                state.debug(ex, "Seriously?!? load not implemented");
+            } catch (EngineTerminationException ex) {
+                state.closeDown();
+            }
         }
     }
 
-    private EvalException translateExecutionException(EvalException ex) {
+    private StackTraceElement[] translateExceptionStack(Exception ex) {
         StackTraceElement[] raw = ex.getStackTrace();
         int last = raw.length;
         do {
@@ -735,11 +761,14 @@ class Eval {
                 elems[i] = r;
             }
         }
+        return elems;
+    }
+
+    private String translateExceptionMessage(Exception ex) {
         String msg = ex.getMessage();
-        if (msg.equals("<none>")) {
-            msg = null;
-        }
-        return new EvalException(msg, ex.getExceptionClassName(), elems);
+        return msg.equals("<none>")
+                ? null
+                : msg;
     }
 
     private boolean isWrap(StackTraceElement ste) {

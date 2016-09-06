@@ -127,7 +127,7 @@ public class JdepsConfiguration implements AutoCloseable {
             }
         }
 
-        // all roots specified in -addmods or -m are included
+        // all roots specified in --add-modules or -m are included
         // as the initial set for analysis.
         roots.stream()
              .map(nameToModule::get)
@@ -342,7 +342,7 @@ public class JdepsConfiguration implements AutoCloseable {
 
         SystemModuleFinder(String javaHome) throws IOException {
             if (javaHome == null) {
-                // -system none
+                // --system none
                 this.fileSystem = null;
                 this.root = null;
                 this.systemModules = Collections.emptyMap();
@@ -514,7 +514,7 @@ public class JdepsConfiguration implements AutoCloseable {
         }
 
         /*
-         * This method is for -check option to find all target modules specified
+         * This method is for --check option to find all target modules specified
          * in qualified exports.
          *
          * Include all system modules and modules found on modulepath

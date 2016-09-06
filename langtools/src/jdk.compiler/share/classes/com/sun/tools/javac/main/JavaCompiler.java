@@ -27,6 +27,7 @@ package com.sun.tools.javac.main;
 
 import java.io.*;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -425,8 +426,8 @@ public class JavaCompiler {
 
         verboseCompilePolicy = options.isSet("verboseCompilePolicy");
 
-        if (options.isSet("shouldStopPolicy") &&
-            CompileState.valueOf(options.get("shouldStopPolicy")) == CompileState.ATTR)
+        if (options.isSet("shouldstop.at") &&
+            CompileState.valueOf(options.get("shouldstop.at")) == CompileState.ATTR)
             compilePolicy = CompilePolicy.ATTR_ONLY;
         else
             compilePolicy = CompilePolicy.decode(options.get("compilePolicy"));
@@ -439,17 +440,17 @@ public class JavaCompiler {
             : null;
 
         shouldStopPolicyIfError =
-            options.isSet("shouldStopPolicy") // backwards compatible
-            ? CompileState.valueOf(options.get("shouldStopPolicy"))
-            : options.isSet("shouldStopPolicyIfError")
-            ? CompileState.valueOf(options.get("shouldStopPolicyIfError"))
+            options.isSet("shouldstop.at") // backwards compatible
+            ? CompileState.valueOf(options.get("shouldstop.at"))
+            : options.isSet("shouldstop.ifError")
+            ? CompileState.valueOf(options.get("shouldstop.ifError"))
             : CompileState.INIT;
         shouldStopPolicyIfNoError =
-            options.isSet("shouldStopPolicyIfNoError")
-            ? CompileState.valueOf(options.get("shouldStopPolicyIfNoError"))
+            options.isSet("shouldstop.ifNoError")
+            ? CompileState.valueOf(options.get("shouldstop.ifNoError"))
             : CompileState.GENERATE;
 
-        if (options.isUnset("oldDiags"))
+        if (options.isUnset("diags.legacy"))
             log.setDiagnosticFormatter(RichDiagnosticFormatter.instance(context));
 
         PlatformDescription platformProvider = context.get(PlatformDescription.class);
@@ -891,13 +892,20 @@ public class JavaCompiler {
 
         // forcibly set the equivalent of -Xlint:-options, so that no further
         // warnings about command line options are generated from this point on
-        options.put(XLINT_CUSTOM.text + "-" + LintCategory.OPTIONS.option, "true");
-        options.remove(XLINT_CUSTOM.text + LintCategory.OPTIONS.option);
+        options.put(XLINT_CUSTOM.primaryName + "-" + LintCategory.OPTIONS.option, "true");
+        options.remove(XLINT_CUSTOM.primaryName + LintCategory.OPTIONS.option);
 
         start_msec = now();
 
         try {
             initProcessAnnotations(processors);
+
+            for (String className : classnames) {
+                int sep = className.indexOf('/');
+                if (sep != -1) {
+                    modules.addExtraAddModules(className.substring(0, sep));
+                }
+            }
 
             // These method calls must be chained to avoid memory leaks
             processAnnotations(
@@ -1009,15 +1017,10 @@ public class JavaCompiler {
     }
 
     public List<JCCompilationUnit> initModules(List<JCCompilationUnit> roots) {
-        List<JCCompilationUnit> result = initModules(roots, null);
+        modules.initModules(roots);
         if (roots.isEmpty()) {
             enterDone = true;
         }
-        return result;
-    }
-
-    List<JCCompilationUnit> initModules(List<JCCompilationUnit> roots, ClassSymbol c) {
-        modules.enter(roots, c);
         return roots;
     }
 
@@ -1262,8 +1265,8 @@ public class JavaCompiler {
     static boolean explicitAnnotationProcessingRequested(Options options) {
         return
             options.isSet(PROCESSOR) ||
-            options.isSet(PROCESSORPATH) ||
-            options.isSet(PROCESSORMODULEPATH) ||
+            options.isSet(PROCESSOR_PATH) ||
+            options.isSet(PROCESSOR_MODULE_PATH) ||
             options.isSet(PROC, "only") ||
             options.isSet(XPRINT);
     }

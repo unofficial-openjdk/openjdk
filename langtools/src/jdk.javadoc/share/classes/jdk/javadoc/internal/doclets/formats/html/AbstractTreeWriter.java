@@ -25,7 +25,6 @@
 
 package jdk.javadoc.internal.doclets.formats.html;
 
-import java.io.*;
 import java.util.*;
 
 import javax.lang.model.element.TypeElement;
@@ -37,7 +36,6 @@ import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTree;
 import jdk.javadoc.internal.doclets.toolkit.Content;
 import jdk.javadoc.internal.doclets.toolkit.util.ClassTree;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPath;
-import jdk.javadoc.internal.doclets.toolkit.util.DocletAbortException;
 
 
 /**
@@ -67,12 +65,9 @@ public abstract class AbstractTreeWriter extends HtmlDocletWriter {
      * @param configuration  The current configuration
      * @param filename   File to be generated.
      * @param classtree  Tree built by {@link ClassTree}.
-     * @throws IOException
-     * @throws DocletAbortException
      */
     protected AbstractTreeWriter(ConfigurationImpl configuration,
-                                 DocPath filename, ClassTree classtree)
-                                 throws IOException {
+                                 DocPath filename, ClassTree classtree) {
         super(configuration, filename);
         this.classtree = classtree;
     }
@@ -121,7 +116,7 @@ public abstract class AbstractTreeWriter extends HtmlDocletWriter {
                            HtmlTree div, boolean isEnums) {
         if (!sset.isEmpty()) {
             TypeElement firstTypeElement = sset.first();
-            Content headingContent = getResource(heading);
+            Content headingContent = contents.getContent(heading);
             Content sectionHeading = HtmlTree.HEADING(HtmlConstants.CONTENT_HEADING, true,
                     headingContent);
             HtmlTree htmlTree;
@@ -162,7 +157,7 @@ public abstract class AbstractTreeWriter extends HtmlDocletWriter {
                             isFirst = false;
                             if (utils.isInterface(typeElement)) {
                                 contentTree.addContent(" (");
-                                contentTree.addContent(getResource("doclet.also"));
+                                contentTree.addContent(contents.also);
                                 contentTree.addContent(" extends ");
                             } else {
                                 contentTree.addContent(" (implements ");
@@ -196,7 +191,7 @@ public abstract class AbstractTreeWriter extends HtmlDocletWriter {
      * @return a content tree for the tree label
      */
     protected Content getNavLinkTree() {
-        Content li = HtmlTree.LI(HtmlStyle.navBarCell1Rev, treeLabel);
+        Content li = HtmlTree.LI(HtmlStyle.navBarCell1Rev, contents.treeLabel);
         return li;
     }
 }

@@ -55,6 +55,7 @@ import com.sun.tools.javac.file.BaseFileManager;
 import com.sun.tools.javac.file.PathFileObject;
 import com.sun.tools.javac.jvm.ClassFile.NameAndType;
 import com.sun.tools.javac.jvm.ClassFile.Version;
+import com.sun.tools.javac.main.Option;
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.DefinedBy.Api;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
@@ -67,7 +68,7 @@ import static com.sun.tools.javac.code.TypeTag.TYPEVAR;
 import static com.sun.tools.javac.jvm.ClassFile.*;
 import static com.sun.tools.javac.jvm.ClassFile.Version.*;
 
-import static com.sun.tools.javac.main.Option.*;
+import static com.sun.tools.javac.main.Option.PARAMETERS;
 
 /** This class provides operations to read a classfile into an internal
  *  representation. The internal representation is anchored in a
@@ -236,7 +237,7 @@ public class ClassReader {
         log = Log.instance(context);
 
         Options options = Options.instance(context);
-        verbose         = options.isSet(VERBOSE);
+        verbose         = options.isSet(Option.VERBOSE);
 
         Source source = Source.instance(context);
         allowSimplifiedVarargs = source.allowSimplifiedVarargs();
@@ -565,6 +566,11 @@ public class ClassReader {
      * class name is of the form module-name.module-info.
      */
     Name readModuleInfoName(int i) {
+        if (majorVersion < Version.V53.major) {
+            throw badClassFile("anachronistic.module.info",
+                    Integer.toString(majorVersion),
+                    Integer.toString(minorVersion));
+        }
         int classIndex = poolIdx[i];
         if (buf[classIndex] == CONSTANT_Class) {
             int utf8Index = poolIdx[getChar(classIndex + 1)];

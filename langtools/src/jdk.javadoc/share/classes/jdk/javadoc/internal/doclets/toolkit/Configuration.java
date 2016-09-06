@@ -27,15 +27,13 @@ package jdk.javadoc.internal.doclets.toolkit;
 
 import java.io.*;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ModuleElement;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.util.ElementFilter;
 import javax.tools.JavaFileManager;
-import javax.tools.JavaFileManager.Location;
 import javax.tools.JavaFileObject;
 
 import com.sun.source.util.DocTreePath;
@@ -46,12 +44,12 @@ import jdk.javadoc.internal.doclets.toolkit.builders.BuilderFactory;
 import jdk.javadoc.internal.doclets.toolkit.taglets.TagletManager;
 import jdk.javadoc.internal.doclets.toolkit.util.DocFile;
 import jdk.javadoc.internal.doclets.toolkit.util.DocFileFactory;
-import jdk.javadoc.internal.doclets.toolkit.util.DocletAbortException;
+import jdk.javadoc.internal.doclets.toolkit.util.DocFileIOException;
 import jdk.javadoc.internal.doclets.toolkit.util.DocletConstants;
 import jdk.javadoc.internal.doclets.toolkit.util.Extern;
 import jdk.javadoc.internal.doclets.toolkit.util.Group;
-import jdk.javadoc.internal.doclets.toolkit.util.MessageRetriever;
 import jdk.javadoc.internal.doclets.toolkit.util.MetaKeywords;
+import jdk.javadoc.internal.doclets.toolkit.util.SimpleDocletException;
 import jdk.javadoc.internal.doclets.toolkit.util.TypeElementCatalog;
 import jdk.javadoc.internal.doclets.toolkit.util.Utils;
 import jdk.javadoc.internal.doclets.toolkit.util.VisibleMemberMap.GetterSetter;
@@ -76,21 +74,6 @@ import static javax.tools.Diagnostic.Kind.*;
 public abstract class Configuration {
 
     /**
-     * Exception used to report a problem during setOptions.
-     */
-    public static class Fault extends Exception {
-        private static final long serialVersionUID = 0;
-
-        Fault(String msg) {
-            super(msg);
-        }
-
-        Fault(String msg, Exception cause) {
-            super(msg, cause);
-        }
-    }
-
-    /**
      * The factory for builders.
      */
     protected BuilderFactory builderFactory;
@@ -108,7 +91,7 @@ public abstract class Configuration {
     /**
      * The default path to the builder XML.
      */
-    private static final String DEFAULT_BUILDER_XML = "resources/doclet.xml";
+    public static final String DEFAULT_BUILDER_XML = "resources/doclet.xml";
 
     /**
      * The path to Taglets
@@ -167,17 +150,17 @@ public abstract class Configuration {
     public final MetaKeywords metakeywords;
 
     /**
-     * The list of doc-file subdirectories to exclude
+     * The set of doc-file subdirectories to exclude
      */
     protected Set<String> excludedDocFileDirs;
 
     /**
-     * The list of qualifiers to exclude
+     * The set of qualifiers to exclude
      */
     protected Set<String> excludedQualifiers;
 
     /**
-     * The Root of the generated Program Structure from the Doclet API.
+     * The doclet environment.
      */
     public DocletEnvironment docEnv;
 
@@ -266,15 +249,6 @@ public abstract class Configuration {
     public TypeElementCatalog typeElementCatalog;
 
     /**
-     * Message Retriever for the doclet, to retrieve message from the resource
-     * file for this Configuration, which is common for 1.1 and standard
-     * doclets.
-     *
-     * TODO:  Make this private!!!
-     */
-    public MessageRetriever message = null;
-
-    /**
      * True if user wants to suppress time stamp in output.
      * Default is false.
      */
@@ -309,34 +283,34 @@ public abstract class Configuration {
 
     private List<GroupContainer> groups;
 
+    public abstract Messages getMessages();
+    public abstract Resources getResources();
+
     /**
      * Return the build date for the doclet.
+     *
+     * @return the build date
      */
     public abstract String getDocletSpecificBuildDate();
 
     /**
-     * This method should be defined in all those doclets(configurations),
+     * This method should be defined in all those doclets (configurations),
      * which want to derive themselves from this Configuration. This method
      * can be used to finish up the options setup.
+     *
+     * @return true if successful and false otherwise
      */
 
     public abstract boolean finishOptionSettings();
 
-    /**
-     * Return the doclet specific {@link MessageRetriever}
-     * @return the doclet specific MessageRetriever.
-     */
-    public abstract MessageRetriever getDocletSpecificMsg();
-
     public CommentUtils cmtUtils;
-    public SortedSet<ModuleElement> modules;
 
     /**
      * A sorted set of packages specified on the command-line merged with a
      * collection of packages that contain the classes specified on the
      * command-line.
      */
-    public SortedSet<PackageElement> packages;
+    public SortedSet<PackageElement> packages = null;
 
     protected final List<Doclet.Option> optionsProcessed;
 
@@ -350,15 +324,21 @@ public abstract class Configuration {
     public DocFileFactory docFileFactory;
 
     /**
-     * A sorted set of modules containing the packages.
+     * A sorted map, giving the (specified|included|other) packages for each module.
      */
-    public Map<ModuleElement, Set<PackageElement>> modulePackages;
+    public SortedMap<ModuleElement, Set<PackageElement>> modulePackages;
 
+   /**
+    * The list of known modules, that should be documented.
+    */
+    public SortedSet<ModuleElement> modules;
+
+    protected static final String sharedResourceBundleName =
+            "jdk.javadoc.internal.doclets.toolkit.resources.doclets";
     /**
      * Constructor. Constructs the message retriever with resource file.
      */
     public Configuration() {
-        message = new MessageRetriever(this, "jdk.javadoc.internal.doclets.toolkit.resources.doclets");
         excludedDocFileDirs = new HashSet<>();
         excludedQualifiers = new HashSet<>();
         setTabWidth(DocletConstants.DEFAULT_TAB_STOP_LENGTH);
@@ -386,25 +366,39 @@ public abstract class Configuration {
 
     private void initModules() {
         // Build the modules structure used by the doclet
+        modules = new TreeSet<>(utils.makeModuleComparator());
+        modules.addAll(getSpecifiedModules());
+
         modulePackages = new TreeMap<>(utils.makeModuleComparator());
         for (PackageElement p: packages) {
             ModuleElement mdle = docEnv.getElementUtils().getModuleOf(p);
             if (mdle != null && !mdle.isUnnamed()) {
-                Set<PackageElement> s = modulePackages.get(mdle);
-                if (s == null)
-                    modulePackages.put(mdle, s = new TreeSet<>(utils.makePackageComparator()));
+                Set<PackageElement> s = modulePackages
+                        .computeIfAbsent(mdle, m -> new TreeSet<>(utils.makePackageComparator()));
                 s.add(p);
             }
         }
-        modules = new TreeSet<>(utils.makeModuleComparator());
+
+        for (PackageElement p: docEnv.getIncludedPackageElements()) {
+            ModuleElement mdle = docEnv.getElementUtils().getModuleOf(p);
+            if (mdle != null && !mdle.isUnnamed()) {
+                Set<PackageElement> s = modulePackages
+                        .computeIfAbsent(mdle, m -> new TreeSet<>(utils.makePackageComparator()));
+                s.add(p);
+            }
+        }
+
         modules.addAll(modulePackages.keySet());
-        showModules = (modulePackages.size() > 1);
+        showModules = !modules.isEmpty();
+        for (Set<PackageElement> pkgs : modulePackages.values()) {
+            packages.addAll(pkgs);
+        }
     }
 
     private void initPackages() {
         packages = new TreeSet<>(utils.makePackageComparator());
-        packages.addAll(utils.getSpecifiedPackages());
-        for (TypeElement aClass : utils.getSpecifiedClasses()) {
+        packages.addAll(getSpecifiedPackages());
+        for (TypeElement aClass : getSpecifiedClasses()) {
             packages.add(utils.containingPackage(aClass));
         }
     }
@@ -578,7 +572,7 @@ public abstract class Configuration {
                         sourcetab = -1;
                     }
                     if (sourcetab <= 0) {
-                        message.warning("doclet.sourcetab_warning");
+                        getMessages().warning("doclet.sourcetab_warning");
                         setTabWidth(DocletConstants.DEFAULT_TAB_STOP_LENGTH);
                     }
                     return true;
@@ -634,8 +628,8 @@ public abstract class Configuration {
      * when this is called all the option have been set, this method,
      * initializes certain components before anything else is started.
      */
-    private void finishOptionSettings0() throws Fault {
-        ensureOutputDirExists();
+    private void finishOptionSettings0() throws DocletException {
+        initDestDirectory();
         if (urlForLink != null && pkglistUrlForLink != null)
             extern.link(urlForLink, pkglistUrlForLink, reporter, false);
         if (urlForLinkOffline != null && pkglistUrlForLinkOffline != null)
@@ -643,7 +637,7 @@ public abstract class Configuration {
         if (docencoding == null) {
             docencoding = encoding;
         }
-        typeElementCatalog = new TypeElementCatalog(utils.getSpecifiedClasses(), this);
+        typeElementCatalog = new TypeElementCatalog(getSpecifiedClasses(), this);
         initTagletManager(customTagStrs);
         groups.stream().forEach((grp) -> {
             group.checkPackageGroups(grp.value1, grp.value2);
@@ -654,49 +648,48 @@ public abstract class Configuration {
      * Set the command line options supported by this configuration.
      *
      * @return true if the options are set successfully
-     * @throws DocletAbortException
+     * @throws DocletException if there is a problem while setting the options
      */
-    public boolean setOptions() throws Fault {
-        try {
-            initPackages();
-            initModules();
-            finishOptionSettings0();
-            if (!finishOptionSettings())
-                return false;
+    public boolean setOptions() throws DocletException {
+        initPackages();
+        initModules();
+        finishOptionSettings0();
+        if (!finishOptionSettings())
+            return false;
 
-        } catch (Fault f) {
-            throw new DocletAbortException(f.getMessage());
-        }
         return true;
     }
 
-    private void ensureOutputDirExists() throws Fault {
-        DocFile destDir = DocFile.createFileForDirectory(this, destDirName);
-        if (!destDir.exists()) {
-            //Create the output directory (in case it doesn't exist yet)
-            if (!destDirName.isEmpty())
+    private void initDestDirectory() throws DocletException {
+        if (!destDirName.isEmpty()) {
+            DocFile destDir = DocFile.createFileForDirectory(this, destDirName);
+            if (!destDir.exists()) {
+                //Create the output directory (in case it doesn't exist yet)
                 reporter.print(NOTE, getText("doclet.dest_dir_create", destDirName));
-            destDir.mkdirs();
-        } else if (!destDir.isDirectory()) {
-            throw new Fault(getText(
-                "doclet.destination_directory_not_directory_0",
-                destDir.getPath()));
-        } else if (!destDir.canWrite()) {
-            throw new Fault(getText(
-                "doclet.destination_directory_not_writable_0",
-                destDir.getPath()));
+                destDir.mkdirs();
+            } else if (!destDir.isDirectory()) {
+                throw new SimpleDocletException(getText(
+                        "doclet.destination_directory_not_directory_0",
+                        destDir.getPath()));
+            } else if (!destDir.canWrite()) {
+                throw new SimpleDocletException(getText(
+                        "doclet.destination_directory_not_writable_0",
+                        destDir.getPath()));
+            }
         }
+        DocFileFactory.getFactory(this).setDestDir(destDirName);
     }
 
     /**
      * Initialize the taglet manager.  The strings to initialize the simple custom tags should
      * be in the following format:  "[tag name]:[location str]:[heading]".
+     *
      * @param customTagStrs the set two dimensional arrays of strings.  These arrays contain
      * either -tag or -taglet arguments.
      */
     private void initTagletManager(Set<List<String>> customTagStrs) {
         tagletManager = tagletManager == null ?
-            new TagletManager(nosince, showversion, showauthor, javafx, message) :
+            new TagletManager(nosince, showversion, showauthor, javafx, this) :
             tagletManager;
         for (List<String> args : customTagStrs) {
             if (args.get(0).equals("-taglet")) {
@@ -721,7 +714,8 @@ public abstract class Configuration {
             } else if (tokens.size() >= 3) {
                 tagletManager.addNewSimpleCustomTag(tokens.get(0), tokens.get(2), tokens.get(1));
             } else {
-                message.error("doclet.Error_invalid_custom_tag_argument", args.get(1));
+                Messages messages = getMessages();
+                messages.error("doclet.Error_invalid_custom_tag_argument", args.get(1));
             }
         }
     }
@@ -814,7 +808,7 @@ public abstract class Configuration {
                 if (!checkOutputFileEncoding(docencoding)) {
                     return false;
                 }
-            };
+            }
         }
         if (!docencodingfound && (encoding != null && !encoding.isEmpty())) {
             if (!checkOutputFileEncoding(encoding)) {
@@ -853,6 +847,7 @@ public abstract class Configuration {
     /**
      * Return true if the given doc-file subdirectory should be excluded and
      * false otherwise.
+     *
      * @param docfilesubdir the doc-files subdirectory to check.
      * @return true if the directory is excluded.
      */
@@ -862,7 +857,9 @@ public abstract class Configuration {
 
     /**
      * Return true if the given qualifier should be excluded and false otherwise.
+     *
      * @param qualifier the qualifier to check.
+     * @return true if the qualifier should be excluded
      */
     public boolean shouldExcludeQualifier(String qualifier){
         if (excludedQualifiers.contains("all") ||
@@ -883,6 +880,7 @@ public abstract class Configuration {
     /**
      * Return the qualified name of the Element if its qualifier is not excluded.
      * Otherwise return the unqualified Element name.
+     *
      * @param te the TypeElement to check.
      * @return the class name
      */
@@ -893,123 +891,100 @@ public abstract class Configuration {
                 : utils.getFullyQualifiedName(te);
     }
 
-    public String getText(String key) {
-        // Check the doclet specific properties file.
-        MessageRetriever docletMessage = getDocletSpecificMsg();
-        if (docletMessage.containsKey(key)) {
-            return docletMessage.getText(key);
+    // cache these, as they are repeatedly called.
+    private Set<TypeElement> specifiedClasses = null;
+    private Set<PackageElement> specifiedPackages = null;
+    private Set<ModuleElement> specifiedModules = null;
+
+    public Set<TypeElement> getSpecifiedClasses() {
+        if (specifiedClasses == null) {
+            specifiedClasses = new LinkedHashSet<>(
+                ElementFilter.typesIn(docEnv.getSpecifiedElements()));
         }
-        // Check the shared properties file.
-        return message.getText(key);
+        return specifiedClasses;
     }
 
-    public String getText(String key, String a1) {
-        // Check the doclet specific properties file.
-        MessageRetriever docletMessage = getDocletSpecificMsg();
-        if (docletMessage.containsKey(key)) {
-            return docletMessage.getText(key, a1);
+    public Set<PackageElement> getSpecifiedPackages() {
+        if (specifiedPackages == null) {
+            specifiedPackages = new LinkedHashSet<>(
+                    ElementFilter.packagesIn(docEnv.getSpecifiedElements()));
         }
-        // Check the shared properties file.
-        return message.getText(key, a1);
+        return specifiedPackages;
     }
 
-    public String getText(String key, String a1, String a2) {
-        // Check the doclet specific properties file.
-        MessageRetriever docletMessage = getDocletSpecificMsg();
-        if (docletMessage.containsKey(key)) {
-            return docletMessage.getText(key, a1, a2);
+    public Set<ModuleElement> getSpecifiedModules() {
+        if (specifiedModules == null) {
+            specifiedModules = new LinkedHashSet<>(
+                    ElementFilter.modulesIn(docEnv.getSpecifiedElements()));
         }
-        // Check the shared properties file.
-        return message.getText(key, a1, a2);
+        return specifiedModules;
     }
-
-    public String getText(String key, String a1, String a2, String a3) {
-        // Check the doclet specific properties file.
-        MessageRetriever docletMessage = getDocletSpecificMsg();
-        if (docletMessage.containsKey(key)) {
-            return docletMessage.getText(key, a1, a2, a3);
-        }
-        // Check the shared properties file.
-        return message.getText(key, a1, a2, a3);
-    }
-
-    public abstract Content newContent();
 
     /**
-     * Get the configuration string as a content.
+     * Convenience method to obtain a resource from the doclet's
+     * {@link Resources resources}.
+     * Equivalent to <code>getResources.getText(key);</code>.
      *
-     * @param key the key to look for in the configuration file
+     * @param key the key for the desired string
+     * @return the string for the given key
+     * @throws MissingResourceException if the key is not found in either
+     *  bundle.
+     */
+    public abstract String getText(String key);
+
+    /**
+     * Convenience method to obtain a resource from the doclet's
+     * {@link Resources resources}.
+     * Equivalent to <code>getResources.getText(key, args);</code>.
+     *
+     * @param key the key for the desired string
+     * @param args values to be substituted into the resulting string
+     * @return the string for the given key
+     * @throws MissingResourceException if the key is not found in either
+     *  bundle.
+     */
+    public abstract String getText(String key, String... args);
+
+    /**
+     * Convenience method to obtain a resource from the doclet's
+     * {@link Resources resources} as a {@code Content} object.
+     *
+     * @param key the key for the desired string
      * @return a content tree for the text
      */
-    public Content getResource(String key) {
-        Content c = newContent();
-        c.addContent(getText(key));
-        return c;
-    }
+    public abstract Content getContent(String key);
 
     /**
-     * Get the configuration string as a content.
+     * Convenience method to obtain a resource from the doclet's
+     * {@link Resources resources} as a {@code Content} object.
      *
-     * @param key the key to look for in the configuration file
+     * @param key the key for the desired string
      * @param o   string or content argument added to configuration text
      * @return a content tree for the text
      */
-    public Content getResource(String key, Object o) {
-        return getResource(key, o, null, null);
-    }
+    public abstract Content getContent(String key, Object o);
 
     /**
-     * Get the configuration string as a content.
+     * Convenience method to obtain a resource from the doclet's
+     * {@link Resources resources} as a {@code Content} object.
      *
-     * @param key the key to look for in the configuration file
+     * @param key the key for the desired string
      * @param o1 resource argument
      * @param o2 resource argument
      * @return a content tree for the text
      */
-    public Content getResource(String key, Object o1, Object o2) {
-        return getResource(key, o1, o2, null);
-    }
+    public abstract Content getContent(String key, Object o1, Object o2);
 
     /**
      * Get the configuration string as a content.
      *
-     * @param key the key to look for in the configuration file
+     * @param key the key for the desired string
      * @param o0  string or content argument added to configuration text
      * @param o1  string or content argument added to configuration text
      * @param o2  string or content argument added to configuration text
      * @return a content tree for the text
      */
-    public Content getResource(String key, Object o0, Object o1, Object o2) {
-        Content c = newContent();
-        Pattern p = Pattern.compile("\\{([012])\\}");
-        String text = getText(key);
-        Matcher m = p.matcher(text);
-        int start = 0;
-        while (m.find(start)) {
-            c.addContent(text.substring(start, m.start()));
-
-            Object o = null;
-            switch (m.group(1).charAt(0)) {
-                case '0': o = o0; break;
-                case '1': o = o1; break;
-                case '2': o = o2; break;
-            }
-
-            if (o == null) {
-                c.addContent("{" + m.group(1) + "}");
-            } else if (o instanceof String) {
-                c.addContent((String) o);
-            } else if (o instanceof Content) {
-                c.addContent((Content) o);
-            }
-
-            start = m.end();
-        }
-
-        c.addContent(text.substring(start));
-        return c;
-    }
-
+    public abstract Content getContent(String key, Object o0, Object o1, Object o2);
 
     /**
      * Return true if the TypeElement element is getting documented, depending upon
@@ -1029,6 +1004,7 @@ public abstract class Configuration {
 
     /**
      * Return the doclet specific instance of a writer factory.
+     *
      * @return the {@link WriterFactory} for the doclet.
      */
     public abstract WriterFactory getWriterFactory();
@@ -1037,9 +1013,9 @@ public abstract class Configuration {
      * Return the input stream to the builder XML.
      *
      * @return the input steam to the builder XML.
-     * @throws FileNotFoundException when the given XML file cannot be found.
+     * @throws DocFileIOException when the given XML file cannot be found or opened.
      */
-    public InputStream getBuilderXML() throws IOException {
+    public InputStream getBuilderXML() throws DocFileIOException {
         return builderXMLPath == null ?
             Configuration.class.getResourceAsStream(DEFAULT_BUILDER_XML) :
             DocFile.createFileForInput(this, builderXMLPath).openInputStream();
@@ -1047,6 +1023,7 @@ public abstract class Configuration {
 
     /**
      * Return the Locale for this document.
+     *
      * @return the current locale
      */
     public abstract Locale getLocale();
@@ -1060,6 +1037,7 @@ public abstract class Configuration {
 
     /**
      * Return the current file manager.
+     *
      * @return JavaFileManager
      */
     public abstract JavaFileManager getFileManager();
@@ -1084,14 +1062,13 @@ public abstract class Configuration {
         protected Option(Configuration config, String keyName, String name, int argCount) {
             c = config;
             this.name = name;
-            String key = keyName + "name";
-            String oname = getOptionsMessage(key);
-            if (oname.isEmpty()) {
-                this.parameters = "<MISSING KEY>";
+            String desc = getOptionsMessage(keyName + "description");
+            if (desc.isEmpty()) {
                 this.description = "<MISSING KEY>";
+                this.parameters = "<MISSING KEY>";
             } else {
+                this.description = desc;
                 this.parameters = getOptionsMessage(keyName + "parameters");
-                this.description = getOptionsMessage(keyName + "description");
             }
             this.argCount = argCount;
         }
@@ -1110,7 +1087,7 @@ public abstract class Configuration {
 
         private String getOptionsMessage(String key) {
             try {
-                return c.getDocletSpecificMsg().getText(key, (Object[]) null);
+                return c.getResources().getText(key);
             } catch (MissingResourceException ignore) {
                 return "";
             }
@@ -1143,10 +1120,8 @@ public abstract class Configuration {
         @Override
         public String toString() {
             String opt = name + (name.endsWith(":") ? "" : " ") + parameters;
-            int optlen = opt.length();
-            int spaces = 32 - optlen;
-            StringBuffer sb = new StringBuffer("  ").append(opt);
-            for (int i = 0; i < spaces; i++) {
+            StringBuffer sb = new StringBuffer("  ").append(opt).append(" ");
+            for (int i = opt.length(); i < 32; i++) {
                 sb.append(" ");
             }
             sb.append(description);
@@ -1216,6 +1191,4 @@ public abstract class Configuration {
             this.value2 = value2;
         }
     }
-
-    public abstract Location getLocationForPackage(PackageElement pd);
 }

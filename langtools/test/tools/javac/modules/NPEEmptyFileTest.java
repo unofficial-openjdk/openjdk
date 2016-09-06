@@ -23,7 +23,7 @@
 
 /**
  * @test
- * @summary NPE while compiling empty javafile with -modulesourcepath option
+ * @summary NPE while compiling empty source file with --module-source-path option
  * @library /tools/lib
  * @modules
  *      jdk.compiler/com.sun.tools.javac.api
@@ -51,7 +51,7 @@ public class NPEEmptyFileTest extends ModuleTestBase {
         Path emptyJavaFile = base.resolve("Test.java");
         tb.writeFile(emptyJavaFile, "");
         new JavacTask(tb, Task.Mode.EXEC)
-                .options("-modulesourcepath", modules.toString(),
+                .options("--module-source-path", modules.toString(),
                         "-d", modules.toString(), emptyJavaFile.toString())
                 .run()
                 .writeAll();

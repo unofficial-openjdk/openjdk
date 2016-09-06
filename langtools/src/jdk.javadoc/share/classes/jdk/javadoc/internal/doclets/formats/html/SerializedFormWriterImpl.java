@@ -25,7 +25,6 @@
 
 package jdk.javadoc.internal.doclets.formats.html;
 
-import java.io.*;
 import java.util.*;
 
 import javax.lang.model.element.TypeElement;
@@ -39,8 +38,8 @@ import jdk.javadoc.internal.doclets.toolkit.Content;
 import jdk.javadoc.internal.doclets.toolkit.SerializedFormWriter;
 import jdk.javadoc.internal.doclets.toolkit.SerializedFormWriter.SerialFieldWriter;
 import jdk.javadoc.internal.doclets.toolkit.SerializedFormWriter.SerialMethodWriter;
+import jdk.javadoc.internal.doclets.toolkit.util.DocFileIOException;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPaths;
-import jdk.javadoc.internal.doclets.toolkit.util.DocletAbortException;
 
 /**
  * Generate the Serialized Form Information Page.
@@ -64,13 +63,10 @@ public class SerializedFormWriterImpl extends SubWriterHolderWriter
 
     /**
      * @param configuration the configuration data for the doclet
-     * @throws IOException
-     * @throws DocletAbortException
      */
-    public SerializedFormWriterImpl(ConfigurationImpl configuration)
-            throws IOException {
+    public SerializedFormWriterImpl(ConfigurationImpl configuration) {
         super(configuration, DocPaths.SERIALIZED_FORM);
-        visibleClasses = configuration.docEnv.getIncludedClasses();
+        visibleClasses = configuration.docEnv.getIncludedTypeElements();
     }
 
     /**
@@ -136,8 +132,8 @@ public class SerializedFormWriterImpl extends SubWriterHolderWriter
      */
     public Content getPackageHeader(String packageName) {
         Content heading = HtmlTree.HEADING(HtmlConstants.PACKAGE_HEADING, true,
-                packageLabel);
-        heading.addContent(getSpace());
+                contents.packageLabel);
+        heading.addContent(Contents.SPACE);
         heading.addContent(packageName);
         return heading;
     }
@@ -183,9 +179,9 @@ public class SerializedFormWriterImpl extends SubWriterHolderWriter
 
         //Print the heading.
         Content className = superClassLink == null ?
-            configuration.getResource(
+            configuration.getContent(
             "doclet.Class_0_implements_serializable", classLink) :
-            configuration.getResource(
+            configuration.getContent(
             "doclet.Class_0_extends_implements_serializable", classLink,
             superClassLink);
         li.addContent(HtmlTree.HEADING(HtmlConstants.SERIALIZED_MEMBER_HEADING,
@@ -277,7 +273,8 @@ public class SerializedFormWriterImpl extends SubWriterHolderWriter
     /**
      * {@inheritDoc}
      */
-    public void printDocument(Content serializedTree) throws IOException {
+    @Override
+    public void printDocument(Content serializedTree) throws DocFileIOException {
         printHtmlDocument(null, true, serializedTree);
     }
 

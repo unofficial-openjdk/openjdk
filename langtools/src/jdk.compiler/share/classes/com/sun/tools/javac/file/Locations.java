@@ -42,6 +42,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.ProviderNotFoundException;
+import java.nio.file.spi.FileSystemProvider;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -84,7 +85,7 @@ import com.sun.tools.javac.util.StringUtils;
 
 import static javax.tools.StandardLocation.PLATFORM_CLASS_PATH;
 
-import static com.sun.tools.javac.main.Option.BOOTCLASSPATH;
+import static com.sun.tools.javac.main.Option.BOOT_CLASS_PATH;
 import static com.sun.tools.javac.main.Option.DJAVA_ENDORSED_DIRS;
 import static com.sun.tools.javac.main.Option.DJAVA_EXT_DIRS;
 import static com.sun.tools.javac.main.Option.ENDORSEDDIRS;
@@ -315,26 +316,30 @@ public class Locations {
 
             if (fsInfo.isFile(file)) {
                 /* File is an ordinary file. */
-                if (!isArchive(file)
-                        && !file.getFileName().toString().endsWith(".jmod")
-                        && !file.endsWith("modules")) {
-                    /* Not a recognized extension; open it to see if
-                     it looks like a valid zip file. */
-                    try {
-                        // TODO: use of ZipFile should be updated
-                        ZipFile z = new ZipFile(file.toFile());
-                        z.close();
-                        if (warn) {
-                            log.warning(Lint.LintCategory.PATH,
-                                    "unexpected.archive.file", file);
+                if (   !file.getFileName().toString().endsWith(".jmod")
+                    && !file.endsWith("modules")) {
+                    if (!isArchive(file)) {
+                        /* Not a recognized extension; open it to see if
+                         it looks like a valid zip file. */
+                        try {
+                            FileSystems.newFileSystem(file, null).close();
+                            if (warn) {
+                                log.warning(Lint.LintCategory.PATH,
+                                        "unexpected.archive.file", file);
+                            }
+                        } catch (IOException | ProviderNotFoundException e) {
+                            // FIXME: include e.getLocalizedMessage in warning
+                            if (warn) {
+                                log.warning(Lint.LintCategory.PATH,
+                                        "invalid.archive.file", file);
+                            }
+                            return;
                         }
-                    } catch (IOException e) {
-                        // FIXME: include e.getLocalizedMessage in warning
-                        if (warn) {
-                            log.warning(Lint.LintCategory.PATH,
-                                    "invalid.archive.file", file);
+                    } else {
+                        if (fsInfo.getJarFSProvider() == null) {
+                            log.error(Errors.NoZipfsForArchive(file));
+                            return ;
                         }
-                        return;
                     }
                 }
             }
@@ -580,8 +585,7 @@ public class Locations {
     private class ClassPathLocationHandler extends SimpleLocationHandler {
 
         ClassPathLocationHandler() {
-            super(StandardLocation.CLASS_PATH,
-                    Option.CLASSPATH, Option.CP);
+            super(StandardLocation.CLASS_PATH, Option.CLASS_PATH);
         }
 
         @Override
@@ -649,7 +653,7 @@ public class Locations {
 
         BootClassPathLocationHandler() {
             super(StandardLocation.PLATFORM_CLASS_PATH,
-                    Option.BOOTCLASSPATH, Option.XBOOTCLASSPATH,
+                    Option.BOOT_CLASS_PATH, Option.XBOOTCLASSPATH,
                     Option.XBOOTCLASSPATH_PREPEND,
                     Option.XBOOTCLASSPATH_APPEND,
                     Option.ENDORSEDDIRS, Option.DJAVA_ENDORSED_DIRS,
@@ -669,7 +673,7 @@ public class Locations {
 
             option = canonicalize(option);
             optionValues.put(option, value);
-            if (option == BOOTCLASSPATH) {
+            if (option == BOOT_CLASS_PATH) {
                 optionValues.remove(XBOOTCLASSPATH_PREPEND);
                 optionValues.remove(XBOOTCLASSPATH_APPEND);
             }
@@ -682,7 +686,7 @@ public class Locations {
         private Option canonicalize(Option option) {
             switch (option) {
                 case XBOOTCLASSPATH:
-                    return Option.BOOTCLASSPATH;
+                    return Option.BOOT_CLASS_PATH;
                 case DJAVA_ENDORSED_DIRS:
                     return Option.ENDORSEDDIRS;
                 case DJAVA_EXT_DIRS:
@@ -713,7 +717,7 @@ public class Locations {
         SearchPath computePath() throws IOException {
             SearchPath path = new SearchPath();
 
-            String bootclasspathOpt = optionValues.get(BOOTCLASSPATH);
+            String bootclasspathOpt = optionValues.get(BOOT_CLASS_PATH);
             String endorseddirsOpt = optionValues.get(ENDORSEDDIRS);
             String extdirsOpt = optionValues.get(EXTDIRS);
             String xbootclasspathPrependOpt = optionValues.get(XBOOTCLASSPATH_PREPEND);
@@ -773,39 +777,19 @@ public class Locations {
         private Collection<Path> systemClasses() throws IOException {
             // Return "modules" jimage file if available
             if (Files.isRegularFile(thisSystemModules)) {
-                return addAdditionalBootEntries(Collections.singleton(thisSystemModules));
+                return Collections.singleton(thisSystemModules);
             }
 
             // Exploded module image
             Path modules = javaHome.resolve("modules");
             if (Files.isDirectory(modules.resolve("java.base"))) {
                 try (Stream<Path> listedModules = Files.list(modules)) {
-                    return addAdditionalBootEntries(listedModules.collect(Collectors.toList()));
+                    return listedModules.collect(Collectors.toList());
                 }
             }
 
             // not a modular image that we know about
             return null;
-        }
-
-        //ensure bootclasspath prepends/appends are reflected in the systemClasses
-        private Collection<Path> addAdditionalBootEntries(Collection<Path> modules) throws IOException {
-            String files = System.getProperty("sun.boot.class.path");
-            if (files == null)
-                return modules;
-
-            Set<Path> paths = new LinkedHashSet<>();
-
-            // The JVM no longer supports -Xbootclasspath/p:, so any interesting
-            // entries should be appended to the set of modules.
-
-            paths.addAll(modules);
-
-            for (String s : files.split(Pattern.quote(File.pathSeparator))) {
-                paths.add(getPath(s));
-            }
-
-            return paths;
         }
 
         private void lazy() {
@@ -826,7 +810,7 @@ public class Locations {
      * SYSTEM_MODULES and MODULE_PATH.
      *
      * The Location can be specified to accept overriding classes from the
-     * {@code -Xpatch:<module>=<path> } parameter.
+     * {@code --patch-module <module>=<path> } parameter.
      */
     private class ModuleLocationHandler extends LocationHandler implements Location {
         protected final String name;
@@ -1075,6 +1059,9 @@ public class Locations {
                     } catch (IOException e) {
                         log.error(Errors.LocnCantReadFile(p));
                         return null;
+                    } catch (ProviderNotFoundException e) {
+                        log.error(Errors.NoZipfsForArchive(p));
+                        return null;
                     }
 
                     //automatic module:
@@ -1126,13 +1113,9 @@ public class Locations {
                                     fs.close();
                             }
                         }
-                    } catch (ProviderNotFoundException e) {
-                        // will be thrown if the file is not a valid zip file
-                        log.error(Errors.LocnCantReadFile(p));
-                        return null;
                     } catch (ModuleNameReader.BadClassFile e) {
                         log.error(Errors.LocnBadModuleInfo(p));
-                    } catch (IOException e) {
+                    } catch (IOException | ProviderNotFoundException e) {
                         log.error(Errors.LocnCantReadFile(p));
                         return null;
                     }
@@ -1161,7 +1144,7 @@ public class Locations {
 
         ModuleSourcePathLocationHandler() {
             super(StandardLocation.MODULE_SOURCE_PATH,
-                    Option.MODULESOURCEPATH);
+                    Option.MODULE_SOURCE_PATH);
         }
 
         @Override
@@ -1493,16 +1476,16 @@ public class Locations {
         BasicLocationHandler[] handlers = {
             new BootClassPathLocationHandler(),
             new ClassPathLocationHandler(),
-            new SimpleLocationHandler(StandardLocation.SOURCE_PATH, Option.SOURCEPATH),
-            new SimpleLocationHandler(StandardLocation.ANNOTATION_PROCESSOR_PATH, Option.PROCESSORPATH),
-            new SimpleLocationHandler(StandardLocation.ANNOTATION_PROCESSOR_MODULE_PATH, Option.PROCESSORMODULEPATH),
+            new SimpleLocationHandler(StandardLocation.SOURCE_PATH, Option.SOURCE_PATH),
+            new SimpleLocationHandler(StandardLocation.ANNOTATION_PROCESSOR_PATH, Option.PROCESSOR_PATH),
+            new SimpleLocationHandler(StandardLocation.ANNOTATION_PROCESSOR_MODULE_PATH, Option.PROCESSOR_MODULE_PATH),
             new OutputLocationHandler(StandardLocation.CLASS_OUTPUT, Option.D),
             new OutputLocationHandler(StandardLocation.SOURCE_OUTPUT, Option.S),
             new OutputLocationHandler(StandardLocation.NATIVE_HEADER_OUTPUT, Option.H),
             new ModuleSourcePathLocationHandler(),
             // TODO: should UPGRADE_MODULE_PATH be merged with SYSTEM_MODULES?
-            new ModulePathLocationHandler(StandardLocation.UPGRADE_MODULE_PATH, Option.UPGRADEMODULEPATH),
-            new ModulePathLocationHandler(StandardLocation.MODULE_PATH, Option.MODULEPATH, Option.MP),
+            new ModulePathLocationHandler(StandardLocation.UPGRADE_MODULE_PATH, Option.UPGRADE_MODULE_PATH),
+            new ModulePathLocationHandler(StandardLocation.MODULE_PATH, Option.MODULE_PATH),
             new SystemModulesLocationHandler(),
         };
 
@@ -1518,29 +1501,42 @@ public class Locations {
 
     boolean handleOption(Option option, String value) {
         switch (option) {
-            case XPATCH:
-                Map<String, SearchPath> map = new LinkedHashMap<>();
-                int eq = value.indexOf('=');
-                if (eq > 0) {
-                    String mName = value.substring(0, eq);
-                    SearchPath mPatchPath = new SearchPath()
-                            .addFiles(value.substring(eq + 1));
-                    boolean ok = true;
-                    for (Path p: mPatchPath) {
-                        Path mi = p.resolve("module-info.class");
-                        if (Files.exists(mi)) {
-                            log.error(Errors.LocnModuleInfoNotAllowedOnPatchPath(mi));
-                            ok = false;
+            case PATCH_MODULE:
+                if (value == null) {
+                    patchMap = null;
+                } else {
+                    // Allow an extended syntax for --patch-module consisting of a series
+                    // of values separated by NULL characters. This is to facilitate
+                    // supporting deferred file manager options on the command line.
+                    // See Option.PATCH_MODULE for the code that composes these multiple
+                    // values.
+                    for (String v : value.split("\0")) {
+                        int eq = v.indexOf('=');
+                        if (eq > 0) {
+                            String mName = v.substring(0, eq);
+                            SearchPath mPatchPath = new SearchPath()
+                                    .addFiles(v.substring(eq + 1));
+                            boolean ok = true;
+                            for (Path p : mPatchPath) {
+                                Path mi = p.resolve("module-info.class");
+                                if (Files.exists(mi)) {
+                                    log.error(Errors.LocnModuleInfoNotAllowedOnPatchPath(mi));
+                                    ok = false;
+                                }
+                            }
+                            if (ok) {
+                                if (patchMap == null) {
+                                    patchMap = new LinkedHashMap<>();
+                                }
+                                patchMap.put(mName, mPatchPath);
+                            }
+                        } else {
+                            // Should not be able to get here;
+                            // this should be caught and handled in Option.PATCH_MODULE
+                            log.error(Errors.LocnInvalidArgForXpatch(value));
                         }
                     }
-                    if (ok && !mPatchPath.isEmpty()) {
-                        map.computeIfAbsent(mName, (_x) -> new SearchPath())
-                                .addAll(mPatchPath);
-                    }
-                } else {
-                    log.error(Errors.LocnInvalidArgForXpatch(value));
                 }
-                patchMap = map;
                 return true;
             default:
                 LocationHandler h = handlersForOption.get(option);

@@ -27,6 +27,7 @@ package jdk.jshell;
 
 import jdk.jshell.SourceCodeAnalysis.Completeness;
 import com.sun.source.tree.AssignmentTree;
+import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.ErroneousTree;
 import com.sun.source.tree.ExpressionTree;
@@ -39,6 +40,7 @@ import com.sun.source.tree.NewClassTree;
 import com.sun.source.tree.Scope;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.Tree.Kind;
+import com.sun.source.tree.TypeParameterTree;
 import com.sun.source.tree.VariableTree;
 import com.sun.source.util.JavacTask;
 import com.sun.source.util.SourcePositions;
@@ -53,8 +55,6 @@ import com.sun.tools.javac.code.Symbol.VarSymbol;
 import com.sun.tools.javac.code.Symtab;
 import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.Type.ClassType;
-import com.sun.tools.javac.util.DefinedBy;
-import com.sun.tools.javac.util.DefinedBy.Api;
 import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
 import com.sun.tools.javac.util.Pair;
@@ -91,6 +91,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -168,13 +169,13 @@ class SourceCodeAnalysisImpl extends SourceCodeAnalysis {
         MaskCommentsAndModifiers mcm = new MaskCommentsAndModifiers(srcInput, false);
         if (mcm.endsWithOpenComment()) {
             proc.debug(DBG_COMPA, "Incomplete (open comment): %s\n", srcInput);
-            return new CompletionInfo(DEFINITELY_INCOMPLETE, srcInput.length(), null, srcInput + '\n');
+            return new CompletionInfoImpl(DEFINITELY_INCOMPLETE, null, srcInput + '\n');
         }
         String cleared = mcm.cleared();
         String trimmedInput = Util.trimEnd(cleared);
         if (trimmedInput.isEmpty()) {
             // Just comment or empty
-            return new CompletionInfo(Completeness.EMPTY, srcInput.length(), srcInput, "");
+            return new CompletionInfoImpl(Completeness.EMPTY, srcInput, "");
         }
         CaInfo info = ca.scan(trimmedInput);
         Completeness status = info.status;
@@ -192,12 +193,12 @@ class SourceCodeAnalysisImpl extends SourceCodeAnalysis {
                             + mcm.mask().substring(nonCommentNonWhiteLength);
                     proc.debug(DBG_COMPA, "Complete: %s\n", compileSource);
                     proc.debug(DBG_COMPA, "   nothing remains.\n");
-                    return new CompletionInfo(status, unitEndPos, compileSource, "");
+                    return new CompletionInfoImpl(status, compileSource, "");
                 } else {
                     String remain = srcInput.substring(unitEndPos);
                     proc.debug(DBG_COMPA, "Complete: %s\n", src);
                     proc.debug(DBG_COMPA, "          remaining: %s\n", remain);
-                    return new CompletionInfo(status, unitEndPos, src, remain);
+                    return new CompletionInfoImpl(status, src, remain);
                 }
             case COMPLETE_WITH_SEMI:
                 // The unit is the whole non-coment/white input plus semicolon
@@ -206,19 +207,19 @@ class SourceCodeAnalysisImpl extends SourceCodeAnalysis {
                         + mcm.mask().substring(nonCommentNonWhiteLength);
                 proc.debug(DBG_COMPA, "Complete with semi: %s\n", compileSource);
                 proc.debug(DBG_COMPA, "   nothing remains.\n");
-                return new CompletionInfo(status, unitEndPos, compileSource, "");
+                return new CompletionInfoImpl(status, compileSource, "");
             case DEFINITELY_INCOMPLETE:
                 proc.debug(DBG_COMPA, "Incomplete: %s\n", srcInput);
-                return new CompletionInfo(status, unitEndPos, null, srcInput + '\n');
+                return new CompletionInfoImpl(status, null, srcInput + '\n');
             case CONSIDERED_INCOMPLETE:
                 proc.debug(DBG_COMPA, "Considered incomplete: %s\n", srcInput);
-                return new CompletionInfo(status, unitEndPos, null, srcInput + '\n');
+                return new CompletionInfoImpl(status, null, srcInput + '\n');
             case EMPTY:
                 proc.debug(DBG_COMPA, "Detected empty: %s\n", srcInput);
-                return new CompletionInfo(status, unitEndPos, srcInput, "");
+                return new CompletionInfoImpl(status, srcInput, "");
             case UNKNOWN:
                 proc.debug(DBG_COMPA, "Detected error: %s\n", srcInput);
-                return new CompletionInfo(status, unitEndPos, srcInput, "");
+                return new CompletionInfoImpl(status, srcInput, "");
         }
         throw new InternalError();
     }
@@ -267,6 +268,7 @@ class SourceCodeAnalysisImpl extends SourceCodeAnalysis {
             case IMPORT:
                 codeWrap = proc.outerMap.wrapImport(Wrap.simpleWrap(code + "any.any"), null);
                 break;
+            case CLASS:
             case METHOD:
                 codeWrap = proc.outerMap.wrapInTrialClass(Wrap.classMemberWrap(code));
                 break;
@@ -380,10 +382,46 @@ class SourceCodeAnalysisImpl extends SourceCodeAnalysis {
                         addElements(membersOf(at, at.getElements().getPackageElement("").asType(), false), it.isStatic() ? STATIC_ONLY.and(accessibility) : accessibility, smartFilter, result);
                     }
                     break;
-                case ERRONEOUS:
-                case EMPTY_STATEMENT: {
+                case CLASS: {
+                    Predicate<Element> accept = accessibility.and(IS_TYPE);
+                    addScopeElements(at, scope, IDENTITY, accept, smartFilter, result);
+                    addElements(primitivesOrVoid(at), TRUE, smartFilter, result);
+                    break;
+                }
+                case BLOCK:
+                case EMPTY_STATEMENT:
+                case ERRONEOUS: {
                     boolean staticOnly = ReplResolve.isStatic(((JavacScope)scope).getEnv());
                     Predicate<Element> accept = accessibility.and(staticOnly ? STATIC_ONLY : TRUE);
+                    if (isClass(tp)) {
+                        ClassTree clazz = (ClassTree) tp.getParentPath().getLeaf();
+                        if (clazz.getExtendsClause() == tp.getLeaf()) {
+                            accept = accept.and(IS_TYPE);
+                            smartFilter = smartFilter.and(el -> el.getKind() == ElementKind.CLASS);
+                        } else {
+                            Predicate<Element> f = smartFilterFromList(at, tp, clazz.getImplementsClause(), tp.getLeaf());
+                            if (f != null) {
+                                accept = accept.and(IS_TYPE);
+                                smartFilter = f.and(el -> el.getKind() == ElementKind.INTERFACE);
+                            }
+                        }
+                    } else if (isTypeParameter(tp)) {
+                        TypeParameterTree tpt = (TypeParameterTree) tp.getParentPath().getLeaf();
+                        Predicate<Element> f = smartFilterFromList(at, tp, tpt.getBounds(), tp.getLeaf());
+                        if (f != null) {
+                            accept = accept.and(IS_TYPE);
+                            smartFilter = f;
+                            if (!tpt.getBounds().isEmpty() && tpt.getBounds().get(0) != tp.getLeaf()) {
+                                smartFilter = smartFilter.and(el -> el.getKind() == ElementKind.INTERFACE);
+                            }
+                        }
+                    } else if (isVariable(tp)) {
+                        VariableTree var = (VariableTree) tp.getParentPath().getLeaf();
+                        if (var.getType() == tp.getLeaf()) {
+                            accept = accept.and(IS_TYPE);
+                        }
+                    }
+
                     addScopeElements(at, scope, IDENTITY, accept, smartFilter, result);
 
                     Tree parent = tp.getParentPath().getLeaf();
@@ -411,6 +449,23 @@ class SourceCodeAnalysisImpl extends SourceCodeAnalysis {
         }
         anchor[0] = cursor;
         return result;
+    }
+
+    private static final Set<Kind> CLASS_KINDS = EnumSet.of(
+            Kind.ANNOTATION_TYPE, Kind.CLASS, Kind.ENUM, Kind.INTERFACE
+    );
+
+    private Predicate<Element> smartFilterFromList(AnalyzeTask at, TreePath base, Collection<? extends Tree> types, Tree current) {
+        Set<Element> existingEls = new HashSet<>();
+
+        for (Tree type : types) {
+            if (type == current) {
+                return el -> !existingEls.contains(el);
+            }
+            existingEls.add(at.trees().getElement(new TreePath(base, type)));
+        }
+
+        return null;
     }
 
     @Override
@@ -477,7 +532,7 @@ class SourceCodeAnalysisImpl extends SourceCodeAnalysis {
         TreePath[] deepest = new TreePath[1];
 
         new TreePathScanner<Void, Void>() {
-            @Override @DefinedBy(Api.COMPILER_TREE)
+            @Override
             public Void scan(Tree tree, Void p) {
                 if (tree == null)
                     return null;
@@ -495,7 +550,7 @@ class SourceCodeAnalysisImpl extends SourceCodeAnalysis {
 
                 return null;
             }
-            @Override @DefinedBy(Api.COMPILER_TREE)
+            @Override
             public Void visitErroneous(ErroneousTree node, Void p) {
                 return scan(node.getErrorTrees(), null);
             }
@@ -514,6 +569,21 @@ class SourceCodeAnalysisImpl extends SourceCodeAnalysis {
         Tree parent = tp.getParentPath().getLeaf();
         return parent.getKind() == Kind.METHOD &&
                 ((MethodTree)parent).getThrows().contains(tp.getLeaf());
+    }
+
+    private boolean isClass(TreePath tp) {
+        return tp.getParentPath() != null &&
+               CLASS_KINDS.contains(tp.getParentPath().getLeaf().getKind());
+    }
+
+    private boolean isTypeParameter(TreePath tp) {
+        return tp.getParentPath() != null &&
+               tp.getParentPath().getLeaf().getKind() == Kind.TYPE_PARAMETER;
+    }
+
+    private boolean isVariable(TreePath tp) {
+        return tp.getParentPath() != null &&
+               tp.getParentPath().getLeaf().getKind() == Kind.VARIABLE;
     }
 
     private ImportTree findImport(TreePath tp) {
@@ -550,6 +620,7 @@ class SourceCodeAnalysisImpl extends SourceCodeAnalysis {
     private final Predicate<Element> IS_PACKAGE = el -> el.getKind() == ElementKind.PACKAGE;
     private final Predicate<Element> IS_CLASS = el -> el.getKind().isClass();
     private final Predicate<Element> IS_INTERFACE = el -> el.getKind().isInterface();
+    private final Predicate<Element> IS_TYPE = IS_CLASS.or(IS_INTERFACE).or(el -> el.getKind() == ElementKind.TYPE_PARAMETER);
     private final Predicate<Element> IS_VOID = el -> el.asType().getKind() == TypeKind.VOID;
     private final Predicate<Element> STATIC_ONLY = el -> {
         ElementKind kind = el.getKind();
@@ -583,11 +654,16 @@ class SourceCodeAnalysisImpl extends SourceCodeAnalysis {
         for (Element c : elements) {
             if (!accept.test(c))
                 continue;
+            if (c.getKind() == ElementKind.METHOD &&
+                c.getSimpleName().contentEquals(Util.DOIT_METHOD_NAME) &&
+                ((ExecutableElement) c).getParameters().isEmpty()) {
+                continue;
+            }
             String simpleName = simpleName(c);
             if (c.getKind() == ElementKind.CONSTRUCTOR || c.getKind() == ElementKind.METHOD) {
                 simpleName += paren.apply(hasParams.contains(simpleName));
             }
-            result.add(new Suggestion(simpleName, smart.test(c)));
+            result.add(new SuggestionImpl(simpleName, smart.test(c)));
         }
     }
 
@@ -754,11 +830,23 @@ class SourceCodeAnalysisImpl extends SourceCodeAnalysis {
         };
         @SuppressWarnings("unchecked")
         List<Element> result = Util.stream(scopeIterable)
-                             .flatMap(s -> Util.stream((Iterable<Element>)s.getLocalElements()))
+                             .flatMap(s -> localElements(s))
                              .flatMap(el -> Util.stream((Iterable<Element>)elementConvertor.apply(el)))
                              .collect(toCollection(ArrayList :: new));
         result.addAll(listPackages(at, ""));
         return result;
+    }
+
+    private Stream<Element> localElements(Scope scope) {
+        @SuppressWarnings("unchecked")
+        Stream<Element> elements = Util.stream((Iterable<Element>)scope.getLocalElements());
+
+        if (scope.getEnclosingScope() != null &&
+            scope.getEnclosingClass() != scope.getEnclosingScope().getEnclosingClass()) {
+            elements = Stream.concat(elements, scope.getEnclosingClass().getEnclosedElements().stream());
+        }
+
+        return elements;
     }
 
     @SuppressWarnings("fallthrough")
@@ -1106,6 +1194,11 @@ class SourceCodeAnalysisImpl extends SourceCodeAnalysis {
                     fm.setLocationFromPaths(StandardLocation.SOURCE_PATH, sources);
                 } catch (IOException ex) {
                     proc.debug(ex, "SourceCodeAnalysisImpl.SourceCache.<init>(...)");
+                    try {
+                        fm.close();
+                    } catch (IOException closeEx) {
+                        proc.debug(closeEx, "SourceCodeAnalysisImpl.SourceCache.close()");
+                    }
                     fm = null;
                 }
                 this.fm = fm;
@@ -1155,7 +1248,7 @@ class SourceCodeAnalysisImpl extends SourceCodeAnalysis {
             Trees trees = Trees.instance(source.fst);
 
             new TreePathScanner<Void, Void>() {
-                @Override @DefinedBy(Api.COMPILER_TREE)
+                @Override
                 public Void visitMethod(MethodTree node, Void p) {
                     Element currentMethod = trees.getElement(getCurrentPath());
 
@@ -1610,4 +1703,98 @@ class SourceCodeAnalysisImpl extends SourceCodeAnalysis {
             }
         }
     }
+
+    /**
+     * A candidate for continuation of the given user's input.
+     */
+    private static class SuggestionImpl implements Suggestion {
+
+        private final String continuation;
+        private final boolean matchesType;
+
+        /**
+         * Create a {@code Suggestion} instance.
+         *
+         * @param continuation a candidate continuation of the user's input
+         * @param matchesType does the candidate match the target type
+         */
+        public SuggestionImpl(String continuation, boolean matchesType) {
+            this.continuation = continuation;
+            this.matchesType = matchesType;
+        }
+
+        /**
+         * The candidate continuation of the given user's input.
+         *
+         * @return the continuation string
+         */
+        @Override
+        public String continuation() {
+            return continuation;
+        }
+
+        /**
+         * Indicates whether input continuation matches the target type and is thus
+         * more likely to be the desired continuation. A matching continuation is
+         * preferred.
+         *
+         * @return {@code true} if this suggested continuation matches the
+         * target type; otherwise {@code false}
+         */
+        @Override
+        public boolean matchesType() {
+            return matchesType;
+        }
+    }
+
+    /**
+     * The result of {@code analyzeCompletion(String input)}.
+     * Describes the completeness and position of the first snippet in the given input.
+     */
+    private static class CompletionInfoImpl implements CompletionInfo {
+
+        private final Completeness completeness;
+        private final String source;
+        private final String remaining;
+
+        CompletionInfoImpl(Completeness completeness, String source, String remaining) {
+            this.completeness = completeness;
+            this.source = source;
+            this.remaining = remaining;
+        }
+
+        /**
+         * The analyzed completeness of the input.
+         *
+         * @return an enum describing the completeness of the input string.
+         */
+        @Override
+        public Completeness completeness() {
+            return completeness;
+        }
+
+        /**
+         * Input remaining after the complete part of the source.
+         *
+         * @return the portion of the input string that remains after the
+         * complete Snippet
+         */
+        @Override
+        public String remaining() {
+            return remaining;
+        }
+
+        /**
+         * Source code for the first Snippet of code input. For example, first
+         * statement, or first method declaration. Trailing semicolons will be
+         * added, as needed.
+         *
+         * @return the source of the first encountered Snippet
+         */
+        @Override
+        public String source() {
+            return source;
+        }
+    }
+
 }

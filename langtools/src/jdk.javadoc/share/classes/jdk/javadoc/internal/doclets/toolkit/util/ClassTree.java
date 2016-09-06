@@ -44,6 +44,7 @@ import javax.lang.model.type.TypeMirror;
 
 import jdk.javadoc.doclet.DocletEnvironment;
 import jdk.javadoc.internal.doclets.toolkit.Configuration;
+import jdk.javadoc.internal.doclets.toolkit.Messages;
 
 /**
  * Build Class Hierarchy for all the Classes. This class builds the Class
@@ -105,24 +106,27 @@ public class ClassTree {
      * true.
      */
     public ClassTree(Configuration configuration, boolean noDeprecated) {
-        configuration.message.notice("doclet.Building_Tree");
         this.configuration = configuration;
         this.utils = configuration.utils;
+
+        Messages messages = configuration.getMessages();
+        messages.notice("doclet.Building_Tree");
+
         comparator = utils.makeClassUseComparator();
         baseAnnotationTypes = new TreeSet<>(comparator);
         baseEnums = new TreeSet<>(comparator);
         baseClasses = new TreeSet<>(comparator);
         baseInterfaces = new TreeSet<>(comparator);
-        buildTree(configuration.docEnv.getIncludedClasses());
+        buildTree(configuration.docEnv.getIncludedTypeElements());
     }
 
     /**
      * Constructor. Build the Tree using the Root of this Javadoc run.
      *
-     * @param root Root of the Document.
+     * @param docEnv the DocletEnvironment.
      * @param configuration The current configuration of the doclet.
      */
-    public ClassTree(DocletEnvironment root, Configuration configuration) {
+    public ClassTree(DocletEnvironment docEnv, Configuration configuration) {
         this.configuration = configuration;
         this.utils = configuration.utils;
         comparator = utils.makeClassUseComparator();
@@ -130,7 +134,7 @@ public class ClassTree {
         baseEnums = new TreeSet<>(comparator);
         baseClasses = new TreeSet<>(comparator);
         baseInterfaces = new TreeSet<>(comparator);
-        buildTree(configuration.docEnv.getIncludedClasses());
+        buildTree(configuration.docEnv.getIncludedTypeElements());
     }
 
     /**

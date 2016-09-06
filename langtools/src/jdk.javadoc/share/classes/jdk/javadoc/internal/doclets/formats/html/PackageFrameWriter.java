@@ -25,7 +25,6 @@
 
 package jdk.javadoc.internal.doclets.formats.html;
 
-import java.io.*;
 import java.util.*;
 
 import javax.lang.model.element.PackageElement;
@@ -38,9 +37,9 @@ import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTree;
 import jdk.javadoc.internal.doclets.formats.html.markup.StringContent;
 import jdk.javadoc.internal.doclets.toolkit.Configuration;
 import jdk.javadoc.internal.doclets.toolkit.Content;
+import jdk.javadoc.internal.doclets.toolkit.util.DocFileIOException;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPath;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPaths;
-import jdk.javadoc.internal.doclets.toolkit.util.DocletAbortException;
 
 
 /**
@@ -61,7 +60,7 @@ public class PackageFrameWriter extends HtmlDocletWriter {
     /**
      * The package being documented.
      */
-    private PackageElement packageElement;
+    private final PackageElement packageElement;
 
     /**
      * The classes to be documented.  Use this to filter out classes
@@ -80,13 +79,12 @@ public class PackageFrameWriter extends HtmlDocletWriter {
      * @param configuration the configuration of the doclet.
      * @param packageElement PackageElement under consideration.
      */
-    public PackageFrameWriter(ConfigurationImpl configuration, PackageElement packageElement)
-            throws IOException {
+    public PackageFrameWriter(ConfigurationImpl configuration, PackageElement packageElement) {
         super(configuration, DocPath.forPackage(packageElement).resolve(DocPaths.PACKAGE_FRAME));
         this.packageElement = packageElement;
-        if (utils.getSpecifiedPackages().isEmpty()) {
+        if (configuration.getSpecifiedPackages().isEmpty()) {
             documentedClasses = new TreeSet<>(utils.makeGeneralPurposeComparator());
-            documentedClasses.addAll(configuration.docEnv.getIncludedClasses());
+            documentedClasses.addAll(configuration.docEnv.getIncludedTypeElements());
         }
     }
 
@@ -96,36 +94,29 @@ public class PackageFrameWriter extends HtmlDocletWriter {
      *
      * @param configuration the current configuration of the doclet.
      * @param packageElement The package for which "pacakge-frame.html" is to be generated.
+     * @throws DocFileIOException if there is a problem generating the package summary page
      */
-    public static void generate(ConfigurationImpl configuration, PackageElement packageElement) {
-        PackageFrameWriter packgen;
-        try {
-            packgen = new PackageFrameWriter(configuration, packageElement);
-            String pkgName = configuration.utils.getPackageName(packageElement);
-            HtmlTree body = packgen.getBody(false, packgen.getWindowTitle(pkgName));
-            Content pkgNameContent = new StringContent(pkgName);
-            HtmlTree htmlTree = (configuration.allowTag(HtmlTag.MAIN))
-                    ? HtmlTree.MAIN()
-                    : body;
-            Content heading = HtmlTree.HEADING(HtmlConstants.TITLE_HEADING, HtmlStyle.bar,
-                    packgen.getTargetPackageLink(packageElement, "classFrame", pkgNameContent));
-            htmlTree.addContent(heading);
-            HtmlTree div = new HtmlTree(HtmlTag.DIV);
-            div.addStyle(HtmlStyle.indexContainer);
-            packgen.addClassListing(div);
-            htmlTree.addContent(div);
-            if (configuration.allowTag(HtmlTag.MAIN)) {
-                body.addContent(htmlTree);
-            }
-            packgen.printHtmlDocument(
-                    configuration.metakeywords.getMetaKeywords(packageElement), false, body);
-            packgen.close();
-        } catch (IOException exc) {
-            configuration.standardmessage.error(
-                    "doclet.exception_encountered",
-                    exc.toString(), DocPaths.PACKAGE_FRAME.getPath());
-            throw new DocletAbortException(exc);
+    public static void generate(ConfigurationImpl configuration, PackageElement packageElement)
+            throws DocFileIOException {
+        PackageFrameWriter packgen = new PackageFrameWriter(configuration, packageElement);
+        String pkgName = configuration.utils.getPackageName(packageElement);
+        HtmlTree body = packgen.getBody(false, packgen.getWindowTitle(pkgName));
+        Content pkgNameContent = new StringContent(pkgName);
+        HtmlTree htmlTree = (configuration.allowTag(HtmlTag.MAIN))
+                ? HtmlTree.MAIN()
+                : body;
+        Content heading = HtmlTree.HEADING(HtmlConstants.TITLE_HEADING, HtmlStyle.bar,
+                packgen.getTargetPackageLink(packageElement, "classFrame", pkgNameContent));
+        htmlTree.addContent(heading);
+        HtmlTree div = new HtmlTree(HtmlTag.DIV);
+        div.addStyle(HtmlStyle.indexContainer);
+        packgen.addClassListing(div);
+        htmlTree.addContent(div);
+        if (configuration.allowTag(HtmlTag.MAIN)) {
+            body.addContent(htmlTree);
         }
+        packgen.printHtmlDocument(
+                configuration.metakeywords.getMetaKeywords(packageElement), false, body);
     }
 
     /**
@@ -137,39 +128,39 @@ public class PackageFrameWriter extends HtmlDocletWriter {
      */
     protected void addClassListing(HtmlTree contentTree) {
         Configuration config = configuration;
-        if (utils.isIncluded(packageElement)) {
+        if (utils.isSpecified(packageElement)) {
             addClassKindListing(utils.getInterfaces(packageElement),
-                getResource("doclet.Interfaces"), contentTree);
+                contents.interfaces, contentTree);
             addClassKindListing(utils.getOrdinaryClasses(packageElement),
-                getResource("doclet.Classes"), contentTree);
+                contents.classes, contentTree);
             addClassKindListing(utils.getEnums(packageElement),
-                getResource("doclet.Enums"), contentTree);
+                contents.enums, contentTree);
             addClassKindListing(utils.getExceptions(packageElement),
-                getResource("doclet.Exceptions"), contentTree);
+                contents.exceptions, contentTree);
             addClassKindListing(utils.getErrors(packageElement),
-                getResource("doclet.Errors"), contentTree);
+                contents.errors, contentTree);
             addClassKindListing(utils.getAnnotationTypes(packageElement),
-                getResource("doclet.AnnotationTypes"), contentTree);
+                contents.annotationTypes, contentTree);
         } else {
             addClassKindListing(config.typeElementCatalog.interfaces(packageElement),
-                getResource("doclet.Interfaces"), contentTree);
+                contents.interfaces, contentTree);
             addClassKindListing(config.typeElementCatalog.ordinaryClasses(packageElement),
-                getResource("doclet.Classes"), contentTree);
+                contents.classes, contentTree);
             addClassKindListing(config.typeElementCatalog.enums(packageElement),
-                getResource("doclet.Enums"), contentTree);
+                contents.enums, contentTree);
             addClassKindListing(config.typeElementCatalog.exceptions(packageElement),
-                getResource("doclet.Exceptions"), contentTree);
+                contents.exceptions, contentTree);
             addClassKindListing(config.typeElementCatalog.errors(packageElement),
-                getResource("doclet.Errors"), contentTree);
+                contents.errors, contentTree);
             addClassKindListing(config.typeElementCatalog.annotationTypes(packageElement),
-                getResource("doclet.AnnotationTypes"), contentTree);
+                contents.annotationTypes, contentTree);
         }
     }
 
     /**
      * Add specific class kind listing. Also add label to the listing.
      *
-     * @param arr Array of specific class kinds, namely Class or Interface or Exception or Error
+     * @param list list of specific class kinds, namely Class or Interface or Exception or Error
      * @param labelContent content tree of the label to be added
      * @param contentTree the content tree to which the class kind listing will be added
      */

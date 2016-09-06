@@ -32,13 +32,19 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 
+import jdk.javadoc.doclet.Doclet;
 import jdk.javadoc.doclet.DocletEnvironment;
+import jdk.javadoc.doclets.StandardDoclet;
+import jdk.javadoc.internal.doclets.formats.html.HtmlDoclet;
 import jdk.javadoc.internal.doclets.toolkit.builders.AbstractBuilder;
 import jdk.javadoc.internal.doclets.toolkit.builders.BuilderFactory;
 import jdk.javadoc.internal.doclets.toolkit.util.ClassTree;
+import jdk.javadoc.internal.doclets.toolkit.util.DocFileIOException;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPaths;
-import jdk.javadoc.internal.doclets.toolkit.util.DocletAbortException;
+import jdk.javadoc.internal.doclets.toolkit.util.InternalException;
 import jdk.javadoc.internal.doclets.toolkit.util.PackageListWriter;
+import jdk.javadoc.internal.doclets.toolkit.util.ResourceIOException;
+import jdk.javadoc.internal.doclets.toolkit.util.SimpleDocletException;
 import jdk.javadoc.internal.doclets.toolkit.util.Utils;
 
 import static javax.tools.Diagnostic.Kind.*;
@@ -53,12 +59,15 @@ import static javax.tools.Diagnostic.Kind.*;
  *
  * @author Jamie Ho
  */
-public abstract class AbstractDoclet {
+public abstract class AbstractDoclet implements Doclet {
 
     /**
      * The global configuration information for this run.
      */
-    public Configuration configuration;
+    private Configuration configuration;
+
+    protected Messages messages;
+
     /*
      *  a handle to our utility methods
      */
@@ -76,7 +85,7 @@ public abstract class AbstractDoclet {
      */
     private boolean isValidDoclet() {
         if (!getClass().getName().equals(TOOLKIT_DOCLET_NAME)) {
-            configuration.message.error("doclet.Toolkit_Usage_Violation",
+            messages.error("doclet.Toolkit_Usage_Violation",
                 TOOLKIT_DOCLET_NAME);
             return false;
         }
@@ -86,52 +95,89 @@ public abstract class AbstractDoclet {
     /**
      * The method that starts the execution of the doclet.
      *
-     * @param root   the {@link DocletEnvironment} that points to the source to document.
+     * @param docEnv   the {@link DocletEnvironment}.
      * @return true if the doclet executed without error.  False otherwise.
      */
-    public boolean startDoclet(DocletEnvironment root) {
+    @Override
+    public boolean run(DocletEnvironment docEnv) {
         configuration = configuration();
-        configuration.docEnv = root;
+        configuration.docEnv = docEnv;
         configuration.cmtUtils = new CommentUtils(configuration);
         configuration.utils = new Utils(configuration);
         utils = configuration.utils;
         configuration.workArounds = new WorkArounds(configuration);
+        messages = configuration.getMessages();
+
         if (!isValidDoclet()) {
             return false;
         }
 
+        boolean dumpOnError = false;  // set true to always show stack traces
+
         try {
-            startGeneration(root);
-        } catch (Configuration.Fault f) {
-            configuration.reporter.print(ERROR, f.getMessage());
-            return false;
-        } catch (DocletAbortException e) {
-            Throwable cause = e.getCause();
-            if (cause != null) {
-                if (cause.getLocalizedMessage() != null) {
-                    configuration.reporter.print(ERROR, cause.getLocalizedMessage());
-                } else {
-                    configuration.reporter.print(ERROR, cause.toString());
-                }
+            startGeneration(docEnv);
+            return true;
+
+        } catch (DocFileIOException e) {
+            switch (e.mode) {
+                case READ:
+                    messages.error("doclet.exception.read.file",
+                            e.fileName.getPath(), e.getCause());
+                    break;
+                case WRITE:
+                    messages.error("doclet.exception.write.file",
+                            e.fileName.getPath(), e.getCause());
             }
-            return false;
-        } catch (Exception exc) {
-            return false;
+            dumpStack(dumpOnError, e);
+
+        } catch (ResourceIOException e) {
+            messages.error("doclet.exception.read.resource",
+                    e.resource.getPath(), e.getCause());
+            dumpStack(dumpOnError, e);
+
+        } catch (SimpleDocletException e) {
+            configuration.reporter.print(ERROR, e.getMessage());
+            dumpStack(dumpOnError, e);
+
+        } catch (InternalException e) {
+            configuration.reporter.print(ERROR, e.getMessage());
+            reportInternalError(e.getCause());
+
+        } catch (DocletException | RuntimeException | Error e) {
+            messages.error("doclet.internal.exception", e);
+            reportInternalError(e);
         }
-        return true;
+
+        return false;
+    }
+
+    private void reportInternalError(Throwable t) {
+        if (getClass().equals(StandardDoclet.class) || getClass().equals(HtmlDoclet.class)) {
+            System.err.println(configuration.getResources().getText("doclet.internal.report.bug"));
+        }
+        dumpStack(true, t);
+    }
+
+    private void dumpStack(boolean enabled, Throwable t) {
+        if (enabled && t != null) {
+            t.printStackTrace(System.err);
+        }
     }
 
     /**
      * Returns the SourceVersion indicating the features supported by this doclet.
+     *
      * @return SourceVersion
      */
-    public SourceVersion sourceVersion() {
+    @Override
+    public SourceVersion getSupportedSourceVersion() {
         return SourceVersion.RELEASE_9;
     }
 
 
     /**
      * Create the configuration instance and returns it.
+     *
      * @return the configuration of the doclet.
      */
     public abstract Configuration configuration();
@@ -143,38 +189,39 @@ public abstract class AbstractDoclet {
      * first and then can be used in the later generation.
      *
      * @see jdk.doclet.DocletEnvironment
+     * @throws DocletException if there is a problem while generating the documentation
      */
-    private void startGeneration(DocletEnvironment root) throws Configuration.Fault, Exception {
-        if (root.getIncludedClasses().isEmpty()) {
-            configuration.message.
-                error("doclet.No_Public_Classes_To_Document");
+    private void startGeneration(DocletEnvironment docEnv) throws DocletException {
+        if (docEnv.getIncludedTypeElements().isEmpty()) {
+            messages.error("doclet.No_Public_Classes_To_Document");
             return;
         }
         if (!configuration.setOptions()) {
             return;
         }
-        configuration.getDocletSpecificMsg().notice("doclet.build_version",
+        messages.notice("doclet.build_version",
             configuration.getDocletSpecificBuildDate());
         ClassTree classtree = new ClassTree(configuration, configuration.nodeprecated);
 
-        generateClassFiles(root, classtree);
-        configuration.utils.copyDocFiles(DocPaths.DOC_FILES);
+        generateClassFiles(docEnv, classtree);
 
         PackageListWriter.generate(configuration);
         generatePackageFiles(classtree);
         generateModuleFiles();
 
-        generateOtherFiles(root, classtree);
+        generateOtherFiles(docEnv, classtree);
         configuration.tagletManager.printReport();
     }
 
     /**
      * Generate additional documentation that is added to the API documentation.
      *
-     * @param root     the DocletEnvironment of source to document.
-     * @param classtree the data structure representing the class tree.
+     * @param docEnv     the DocletEnvironment
+     * @param classtree the data structure representing the class tree
+     * @throws DocletException if there is a problem while generating the documentation
      */
-    protected void generateOtherFiles(DocletEnvironment root, ClassTree classtree) throws Exception {
+    protected void generateOtherFiles(DocletEnvironment docEnv, ClassTree classtree)
+            throws DocletException {
         BuilderFactory builderFactory = configuration.getBuilderFactory();
         AbstractBuilder constantsSummaryBuilder = builderFactory.getConstantsSummaryBuilder();
         constantsSummaryBuilder.build();
@@ -185,47 +232,59 @@ public abstract class AbstractDoclet {
     /**
      * Generate the module documentation.
      *
+     * @throws DocletException if there is a problem while generating the documentation
+     *
      */
-    protected abstract void generateModuleFiles() throws Exception;
+    protected abstract void generateModuleFiles() throws DocletException;
 
     /**
      * Generate the package documentation.
      *
-     * @param classtree the data structure representing the class tree.
+     * @param classtree the data structure representing the class tree
+     * @throws DocletException if there is a problem while generating the documentation
      */
-    protected abstract void generatePackageFiles(ClassTree classtree) throws Exception;
+    protected abstract void generatePackageFiles(ClassTree classtree) throws DocletException;
 
     /**
      * Generate the class documentation.
      *
-     * @param classtree the data structure representing the class tree.
+     * @param arr the set of types to be documented
+     * @param classtree the data structure representing the class tree
+     * @throws DocletException if there is a problem while generating the documentation
      */
-    protected abstract void generateClassFiles(SortedSet<TypeElement> arr, ClassTree classtree);
+    protected abstract void generateClassFiles(SortedSet<TypeElement> arr, ClassTree classtree)
+            throws DocletException;
 
     /**
      * Iterate through all classes and construct documentation for them.
      *
-     * @param root      the DocletEnvironment of source to document.
-     * @param classtree the data structure representing the class tree.
+     * @param docEnv      the DocletEnvironment
+     * @param classtree the data structure representing the class tree
+     * @throws DocletException if there is a problem while generating the documentation
      */
-    protected void generateClassFiles(DocletEnvironment root, ClassTree classtree) {
+    protected void generateClassFiles(DocletEnvironment docEnv, ClassTree classtree)
+            throws DocletException {
         generateClassFiles(classtree);
         SortedSet<PackageElement> packages = new TreeSet<>(utils.makePackageComparator());
-        packages.addAll(utils.getSpecifiedPackages());
-        packages.stream().forEach((pkg) -> {
-            generateClassFiles(utils.getAllClasses(pkg), classtree);
+        packages.addAll(configuration.getSpecifiedPackages());
+        configuration.modulePackages.values().stream().forEach(pset -> {
+            packages.addAll(pset);
         });
+        for (PackageElement pkg : packages) {
+            generateClassFiles(utils.getAllClasses(pkg), classtree);
+        }
     }
 
     /**
      * Generate the class files for single classes specified on the command line.
      *
-     * @param classtree the data structure representing the class tree.
+     * @param classtree the data structure representing the class tree
+     * @throws DocletException if there is a problem while generating the documentation
      */
-    private void generateClassFiles(ClassTree classtree) {
+    private void generateClassFiles(ClassTree classtree) throws DocletException {
         SortedSet<PackageElement> packages = configuration.typeElementCatalog.packages();
-        packages.stream().forEach((pkg) -> {
+        for (PackageElement pkg : packages) {
             generateClassFiles(configuration.typeElementCatalog.allClasses(pkg), classtree);
-        });
+        }
     }
 }

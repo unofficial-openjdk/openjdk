@@ -28,11 +28,13 @@ package jdk.javadoc.internal.doclets.toolkit.util;
 import java.util.*;
 
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ModuleElement;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 
 import jdk.javadoc.doclet.DocletEnvironment;
 import jdk.javadoc.internal.doclets.toolkit.Configuration;
+import jdk.javadoc.internal.doclets.toolkit.Messages;
 
 /**
  * Build the mapping of each Unicode character with it's member lists
@@ -98,11 +100,14 @@ public class IndexBuilder {
                         boolean classesOnly) {
         this.configuration  = configuration;
         this.utils = configuration.utils;
+
+        Messages messages = configuration.getMessages();
         if (classesOnly) {
-            configuration.message.notice("doclet.Building_Index_For_All_Classes");
+            messages.notice("doclet.Building_Index_For_All_Classes");
         } else {
-            configuration.message.notice("doclet.Building_Index");
+            messages.notice("doclet.Building_Index");
         }
+
         this.noDeprecated = noDeprecated;
         this.classesOnly = classesOnly;
         this.javafx = configuration.javafx;
@@ -118,11 +123,11 @@ public class IndexBuilder {
      * given on the command line. Form separate list of those members depending
      * upon their names.
      *
-     * @param root Root of the documemt.
+     * @param docEnv the doclet environment
      */
-    protected void buildIndexMap(DocletEnvironment root)  {
-        Set<PackageElement> packages = utils.getSpecifiedPackages();
-        Set<TypeElement> classes = root.getIncludedClasses();
+    protected void buildIndexMap(DocletEnvironment docEnv)  {
+        Set<PackageElement> packages = configuration.getSpecifiedPackages();
+        Set<TypeElement> classes = docEnv.getIncludedTypeElements();
         if (!classesOnly) {
             if (packages.isEmpty()) {
                 Set<PackageElement> set = new HashSet<>();
@@ -143,6 +148,9 @@ public class IndexBuilder {
                 if (shouldAddToIndexMap(aClass)) {
                     putMembersInIndexMap(aClass);
                 }
+            }
+            if (configuration.showModules) {
+                addModulesToIndexMap();
             }
         }
     }
@@ -182,6 +190,22 @@ public class IndexBuilder {
                         c -> new TreeSet<>(comparator));
                 list.add(element);
             }
+        }
+    }
+
+    /**
+     * Add all the modules to index map.
+     */
+    protected void addModulesToIndexMap() {
+        for (ModuleElement mdle : configuration.modules) {
+            String mdleName = mdle.getSimpleName().toString();
+            char ch = (mdleName.length() == 0)
+                    ? '*'
+                    : Character.toUpperCase(mdleName.charAt(0));
+            Character unicode = ch;
+            SortedSet<Element> list = indexmap.computeIfAbsent(unicode,
+                    c -> new TreeSet<>(comparator));
+            list.add(mdle);
         }
     }
 

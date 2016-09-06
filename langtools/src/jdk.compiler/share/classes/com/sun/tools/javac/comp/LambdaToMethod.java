@@ -68,6 +68,8 @@ import static com.sun.tools.javac.tree.JCTree.Tag.*;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.type.TypeKind;
 
+import com.sun.tools.javac.main.Option;
+
 /**
  * This pass desugars lambda expressions into static methods
  *
@@ -104,7 +106,10 @@ public class LambdaToMethod extends TreeTranslator {
     private KlassInfo kInfo;
 
     /** dump statistics about lambda code generation */
-    private boolean dumpLambdaToMethodStats;
+    private final boolean dumpLambdaToMethodStats;
+
+    /** force serializable representation, for stress testing **/
+    private final boolean forceSerializable;
 
     /** Flag for alternate metafactories indicating the lambda object is intended to be serializable */
     public static final int FLAG_SERIALIZABLE = 1 << 0;
@@ -139,8 +144,9 @@ public class LambdaToMethod extends TreeTranslator {
         transTypes = TransTypes.instance(context);
         analyzer = new LambdaAnalyzerPreprocessor();
         Options options = Options.instance(context);
-        dumpLambdaToMethodStats = options.isSet("dumpLambdaToMethodStats");
+        dumpLambdaToMethodStats = options.isSet("debug.dumpLambdaToMethodStats");
         attr = Attr.instance(context);
+        forceSerializable = options.isSet("forceSerializable");
     }
     // </editor-fold>
 
@@ -1825,6 +1831,9 @@ public class LambdaToMethod extends TreeTranslator {
 
             /** does this functional expression require serialization support? */
             boolean isSerializable() {
+                if (forceSerializable) {
+                    return true;
+                }
                 for (Type target : tree.targets) {
                     if (types.asSuper(target, syms.serializableType.tsym) != null) {
                         return true;
