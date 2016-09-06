@@ -38,14 +38,14 @@ import java.io.IOException;
 public class Module_attribute extends Attribute {
     public static final int ACC_TRANSITIVE      =   0x10;
     public static final int ACC_STATIC_PHASE    =   0x20;
-    public static final int ACC_DYNAMIC_PHASE   =   0x40;
+    public static final int ACC_WEAK            =   0x20;
     public static final int ACC_REFLECTION      =   0x80;
     public static final int ACC_SYNTHETIC       = 0x1000;
     public static final int ACC_MANDATED        = 0x8000;
 
     Module_attribute(ClassReader cr, int name_index, int length) throws IOException {
         super(name_index, length);
-        int module_flags = cr.readUnsignedShort();
+        module_flags = cr.readUnsignedShort();
         requires_count = cr.readUnsignedShort();
         requires = new RequiresEntry[requires_count];
         for (int i = 0; i < requires_count; i++)
@@ -65,11 +65,13 @@ public class Module_attribute extends Attribute {
     }
 
     public Module_attribute(int name_index,
+            int module_flags,
             RequiresEntry[] requires,
             ExportsEntry[] exports,
             int[] uses,
             ProvidesEntry[] provides) {
         super(name_index, 2);
+        this.module_flags = module_flags;
         requires_count = requires.length;
         this.requires = requires;
         exports_count = exports.length;
@@ -91,6 +93,7 @@ public class Module_attribute extends Attribute {
         return visitor.visitModule(this, data);
     }
 
+    public final int module_flags;
     public final int requires_count;
     public final RequiresEntry[] requires;
     public final int exports_count;

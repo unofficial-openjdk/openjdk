@@ -64,24 +64,6 @@ public class ReportNonExistentPackageTest extends ModuleTestBase {
     }
 
     @Test
-    public void testExportDynamicUnknownPackage(Path base) throws Exception {
-        Path src = base.resolve("src");
-        tb.writeJavaFiles(src, "module m { exports dynamic p1; }");
-        Path classes = base.resolve("classes");
-        Files.createDirectories(classes);
-
-        String log = new JavacTask(tb)
-                .options("-XDrawDiagnostics")
-                .outdir(classes)
-                .files(findJavaFiles(src))
-                .run(Task.Expect.FAIL)
-                .writeAll()
-                .getOutput(Task.OutputKind.DIRECT);
-        if (!log.contains("module-info.java:1:28: compiler.err.package.empty.or.not.found: p1"))
-            throw new Exception("expected output not found");
-    }
-
-    @Test
     public void testExportEmptyPackage(Path base) throws Exception {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,

@@ -546,8 +546,8 @@ public class TreeMaker implements JCTree.Factory {
     }
 
     @Override
-    public JCExports Exports(JCExpression qualId, boolean isDynamicPhase, boolean isPrivate, List<JCExpression> moduleNames) {
-        JCExports tree = new JCExports(qualId, isDynamicPhase, isPrivate, moduleNames);
+    public JCExports Exports(JCExpression qualId, boolean isPrivate, List<JCExpression> moduleNames) {
+        JCExports tree = new JCExports(qualId, isPrivate, moduleNames);
         tree.pos = pos;
         return tree;
     }

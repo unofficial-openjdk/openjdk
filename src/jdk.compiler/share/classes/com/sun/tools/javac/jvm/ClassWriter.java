@@ -952,7 +952,7 @@ public class ClassWriter extends ClassFile {
         ModuleSymbol m = (ModuleSymbol) c.owner;
 
         int alenIdx = writeAttr(names.Module);
-        databuf.appendChar(0); // module_flags
+        databuf.appendChar(ModuleFlags.value(m.flags)); // module_flags
 
         ListBuffer<RequiresDirective> requires = new ListBuffer<>();
         for (RequiresDirective r: m.requires) {
@@ -968,8 +968,7 @@ public class ClassWriter extends ClassFile {
         List<ExportsDirective> exports = m.exports;
         databuf.appendChar(exports.size());
         for (ExportsDirective e: exports) {
-            databuf.appendChar(e.packge == null ? 0 :
-                    pool.put(names.fromUtf(externalize(e.packge.flatName()))));
+            databuf.appendChar(pool.put(names.fromUtf(externalize(e.packge.flatName()))));
             databuf.appendChar(ExportsFlag.value(e.flags));
             if (e.modules == null) {
                 databuf.appendChar(0);

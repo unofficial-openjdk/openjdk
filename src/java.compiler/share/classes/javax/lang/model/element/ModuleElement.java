@@ -150,11 +150,6 @@ public interface ModuleElement extends Element, QualifiedNameable {
      * @since 9
      */
     interface ExportsDirective extends Directive {
-        /**
-         * Returns whether or not this is a dynamic exports.
-         * @return whether or not this is a dynamic exports
-         */
-        boolean isDynamic();
 
         /**
          * Returns whether or not this is a private exports.

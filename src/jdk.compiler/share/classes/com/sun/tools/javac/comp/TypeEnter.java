@@ -828,6 +828,7 @@ public class TypeEnter implements Completer {
             // name as a top-level package.
             if (checkClash &&
                 sym.owner.kind == PCK && sym.owner != env.toplevel.modle.unnamedPackage &&
+                !sym.name.isEmpty() &&
                 syms.packageExists(env.toplevel.modle, sym.fullname)) {
                 log.error(tree.pos, "clash.with.pkg.of.same.name", Kinds.kindName(sym), sym);
             }

@@ -41,11 +41,6 @@ import java.util.List;
  * @since 9
  */
 public interface ExportsTree extends DirectiveTree {
-    /**
-     * Returns true if this is a "exports dynamic" directive.
-     * @return true if this is a "exports dynamic" directive
-     */
-    boolean isDynamic();
 
     /**
      * Returns true if this is a "exports private" directive.

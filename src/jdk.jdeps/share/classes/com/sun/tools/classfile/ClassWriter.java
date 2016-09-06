@@ -541,7 +541,7 @@ public class ClassWriter {
 
         @Override
         public Void visitModule(Module_attribute attr, ClassOutputStream out) {
-            out.writeShort(0);  // module_flags
+            out.writeShort(attr.module_flags);
 
             out.writeShort(attr.requires.length);
             for (Module_attribute.RequiresEntry e: attr.requires) {

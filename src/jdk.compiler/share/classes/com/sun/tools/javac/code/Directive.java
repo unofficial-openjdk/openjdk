@@ -76,7 +76,6 @@ public abstract class Directive implements ModuleElement.Directive {
 
     /** Flags for ExportsDirective. */
     public enum ExportsFlag {
-        DYNAMIC_PHASE(0x0040),
         REFLECTION(0x0080),
         SYNTHETIC(0x1000),
         MANDATED(0x8000);
@@ -118,11 +117,6 @@ public abstract class Directive implements ModuleElement.Directive {
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
         public ModuleElement.DirectiveKind getKind() {
             return ModuleElement.DirectiveKind.EXPORTS;
-        }
-
-        @Override @DefinedBy(Api.LANGUAGE_MODEL)
-        public boolean isDynamic() {
-            return flags.contains(ExportsFlag.DYNAMIC_PHASE);
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)

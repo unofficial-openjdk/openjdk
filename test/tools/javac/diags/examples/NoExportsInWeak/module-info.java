@@ -21,8 +21,8 @@
  * questions.
  */
 
-// key: compiler.err.default.exports.must.be.dynamic
+// key: compiler.err.no.exports.in.weak
 
-module m {
-     exports default;
+weak module NoExportsInWeak {
+    exports p;
 }

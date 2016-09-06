@@ -462,15 +462,8 @@ public class Pretty extends JCTree.Visitor {
     public void visitExports(JCExports tree) {
         try {
             print("exports ");
-            if (tree.isDynamicPhase)
-                print("dynamic ");
             if (tree.isPrivate)
                 print("private ");
-            if (tree.qualid == null) {
-                print("default");
-            } else {
-                print(tree.qualid);
-            }
             printExpr(tree.qualid);
             if (tree.moduleNames != null) {
                 print(" to ");

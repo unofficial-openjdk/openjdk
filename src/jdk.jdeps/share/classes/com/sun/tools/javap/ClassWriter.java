@@ -163,6 +163,10 @@ public class ClassWriter extends BasicWriter {
         writeModifiers(flags.getClassModifiers());
 
         if (classFile.access_flags.is(AccessFlags.ACC_MODULE) && name.endsWith(".module-info")) {
+            Attribute attr = classFile.attributes.get(Attribute.Module);
+            if (attr instanceof Module_attribute && (((Module_attribute) attr).module_flags & Module_attribute.ACC_WEAK) != 0) {
+                print("weak ");
+            }
             print("module ");
             print(name.replace(".module-info", ""));
         } else {
@@ -566,16 +570,10 @@ public class ClassWriter extends BasicWriter {
 
         for (Module_attribute.ExportsEntry entry: m.exports) {
             print("exports");
-            if ((entry.exports_flags & Module_attribute.ACC_DYNAMIC_PHASE) != 0)
-                print(" dynamic");
             if ((entry.exports_flags & Module_attribute.ACC_REFLECTION) != 0)
                 print(" private");
             print(" ");
-            if (entry.exports_index == 0) {
-                print("default");
-            } else {
-                print(getUTF8Value(entry.exports_index).replace('/', '.'));
-            }
+            print(getUTF8Value(entry.exports_index).replace('/', '.'));
             boolean first = true;
             for (int i: entry.exports_to_index) {
                 String mname;
