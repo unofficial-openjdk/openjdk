@@ -23,6 +23,9 @@
  * questions.
  */
 
+/**
+ * Defines the Java binding of the OMG CORBA APIs, and the RMI-IIOP API.
+ */
 @Deprecated(since="9", forRemoval=true)
 module java.corba {
     requires public java.desktop;
