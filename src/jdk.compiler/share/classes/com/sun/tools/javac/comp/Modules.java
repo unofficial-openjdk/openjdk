@@ -709,10 +709,8 @@ public class Modules extends JCTree.Visitor {
                         reportExportConflict(tree, packge);
                     }
                 } else {
-                    // both are qualified: error if dynamic and private match
-                    if (!(tree.isPrivate ^ d.isPrivate())) {
-                        reportExportConflict(tree, packge);
-                    }
+                    // both are qualified: error
+                    reportExportConflict(tree, packge);
                 }
             }
         }
