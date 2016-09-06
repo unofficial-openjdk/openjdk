@@ -778,7 +778,7 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
     }
     if (failing())  return;
     if (cg == NULL) {
-      record_method_not_compilable_all_tiers("cannot parse method");
+      record_method_not_compilable("cannot parse method");
       return;
     }
     JVMState* jvms = build_start_state(start(), tf());
@@ -2794,20 +2794,30 @@ void Compile::final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc) {
   case Op_StoreL:
   case Op_StoreIConditional:
   case Op_StoreLConditional:
+  case Op_CompareAndSwapB:
+  case Op_CompareAndSwapS:
   case Op_CompareAndSwapI:
   case Op_CompareAndSwapL:
   case Op_CompareAndSwapP:
   case Op_CompareAndSwapN:
+  case Op_WeakCompareAndSwapB:
+  case Op_WeakCompareAndSwapS:
   case Op_WeakCompareAndSwapI:
   case Op_WeakCompareAndSwapL:
   case Op_WeakCompareAndSwapP:
   case Op_WeakCompareAndSwapN:
+  case Op_CompareAndExchangeB:
+  case Op_CompareAndExchangeS:
   case Op_CompareAndExchangeI:
   case Op_CompareAndExchangeL:
   case Op_CompareAndExchangeP:
   case Op_CompareAndExchangeN:
+  case Op_GetAndAddS:
+  case Op_GetAndAddB:
   case Op_GetAndAddI:
   case Op_GetAndAddL:
+  case Op_GetAndSetS:
+  case Op_GetAndSetB:
   case Op_GetAndSetI:
   case Op_GetAndSetL:
   case Op_GetAndSetP:
@@ -3804,6 +3814,7 @@ bool Compile::Constant::operator==(const Constant& other) {
   if (can_be_reused() != other.can_be_reused())  return false;
   // For floating point values we compare the bit pattern.
   switch (type()) {
+  case T_INT:
   case T_FLOAT:   return (_v._value.i == other._v._value.i);
   case T_LONG:
   case T_DOUBLE:  return (_v._value.j == other._v._value.j);
@@ -3818,6 +3829,7 @@ bool Compile::Constant::operator==(const Constant& other) {
 
 static int type_to_size_in_bytes(BasicType t) {
   switch (t) {
+  case T_INT:     return sizeof(jint   );
   case T_LONG:    return sizeof(jlong  );
   case T_FLOAT:   return sizeof(jfloat );
   case T_DOUBLE:  return sizeof(jdouble);
@@ -3886,6 +3898,7 @@ void Compile::ConstantTable::emit(CodeBuffer& cb) {
     Constant con = _constants.at(i);
     address constant_addr = NULL;
     switch (con.type()) {
+    case T_INT:    constant_addr = _masm.int_constant(   con.get_jint()   ); break;
     case T_LONG:   constant_addr = _masm.long_constant(  con.get_jlong()  ); break;
     case T_FLOAT:  constant_addr = _masm.float_constant( con.get_jfloat() ); break;
     case T_DOUBLE: constant_addr = _masm.double_constant(con.get_jdouble()); break;

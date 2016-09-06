@@ -4673,6 +4673,7 @@ void ClassFileParser::verify_legal_utf8(const unsigned char* buffer,
 }
 
 // Unqualified names may not contain the characters '.', ';', '[', or '/'.
+// In class names, '/' separates unqualified names.  This is verified in this function also.
 // Method names also may not contain the characters '<' or '>', unless <init>
 // or <clinit>.  Note that method names may not be <init> or <clinit> in this
 // method.  Because these names have been checked as special cases before
@@ -4698,8 +4699,16 @@ bool ClassFileParser::verify_unqualified_name(const char* name,
       if (ch == ';' || ch == '[' ) {
         return false;   // do not permit '.', ';', or '['
       }
-      if (type != ClassFileParser::LegalClass && ch == '/') {
-        return false;   // do not permit '/' unless it's class name
+      if (ch == '/') {
+        // check for '//' or leading or trailing '/' which are not legal
+        // unqualified name must not be empty
+        if (type == ClassFileParser::LegalClass) {
+          if (p == name || p+1 >= name+length || *(p+1) == '/') {
+           return false;
+          }
+        } else {
+          return false;   // do not permit '/' unless it's class name
+        }
       }
       if (type == ClassFileParser::LegalMethod && (ch == '<' || ch == '>')) {
         return false;   // do not permit '<' or '>' in method names
@@ -5347,15 +5356,7 @@ void ClassFileParser::fill_instance_klass(InstanceKlass* ik, bool changed_by_loa
   if (!is_internal()) {
     if (log_is_enabled(Info, class, load)) {
       ResourceMark rm;
-      const char* module_name = NULL;
-      static const size_t modules_image_name_len = strlen(MODULES_IMAGE_NAME);
-      size_t stream_len = strlen(_stream->source());
-      // See if _stream->source() ends in "modules"
-      if (module_entry->is_named() && modules_image_name_len < stream_len &&
-        (strncmp(_stream->source() + stream_len - modules_image_name_len,
-                 MODULES_IMAGE_NAME, modules_image_name_len) == 0)) {
-        module_name = module_entry->name()->as_C_string();
-      }
+      const char* module_name = (module_entry->name() == NULL) ? UNNAMED_MODULE : module_entry->name()->as_C_string();
 
       if (log_is_enabled(Info, class, load)) {
         ik->print_loading_log(LogLevel::Info, _loader_data, module_name, _stream);
@@ -5405,7 +5406,6 @@ ClassFileParser::ClassFileParser(ClassFileStream* stream,
                                  Symbol* name,
                                  ClassLoaderData* loader_data,
                                  Handle protection_domain,
-                                 TempNewSymbol* parsed_name,
                                  const Klass* host_klass,
                                  GrowableArray<Handle>* cp_patches,
                                  Publicity pub_level,
@@ -5415,7 +5415,6 @@ ClassFileParser::ClassFileParser(ClassFileStream* stream,
   _loader_data(loader_data),
   _host_klass(host_klass),
   _cp_patches(cp_patches),
-  _parsed_name(parsed_name),
   _super_klass(),
   _cp(NULL),
   _fields(NULL),
@@ -5656,15 +5655,6 @@ void ClassFileParser::parse_stream(const ClassFileStream* const stream,
   Symbol* const class_name_in_cp = cp->klass_name_at(_this_class_index);
   assert(class_name_in_cp != NULL, "class_name can't be null");
 
-  if (_parsed_name != NULL) {
-    // It's important to set parsed_name *before* resolving the super class.
-    // (it's used for cleanup by the caller if parsing fails)
-    *_parsed_name = class_name_in_cp;
-    // parsed_name is returned and can be used if there's an error, so add to
-    // its reference count.  Caller will decrement the refcount.
-    (*_parsed_name)->increment_refcount();
-  }
-
   // Update _class_name which could be null previously
   // to reflect the name in the constant pool
   _class_name = class_name_in_cp;
@@ -5690,6 +5680,10 @@ void ClassFileParser::parse_stream(const ClassFileStream* const stream,
     );
     return;
   }
+
+  // Verification prevents us from creating names with dots in them, this
+  // asserts that that's the case.
+  assert(is_internal_format(_class_name), "external class name format used internally");
 
   if (!is_internal()) {
     if (log_is_enabled(Debug, class, preorder)){
@@ -5899,3 +5893,20 @@ const ClassFileStream* ClassFileParser::clone_stream() const {
 
   return _stream->clone();
 }
+// ----------------------------------------------------------------------------
+// debugging
+
+#ifdef ASSERT
+
+// return true if class_name contains no '.' (internal format is '/')
+bool ClassFileParser::is_internal_format(Symbol* class_name) {
+  if (class_name != NULL) {
+    ResourceMark rm;
+    char* name = class_name->as_C_string();
+    return strchr(name, '.') == NULL;
+  } else {
+    return true;
+  }
+}
+
+#endif

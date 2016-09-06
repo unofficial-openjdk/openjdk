@@ -27,22 +27,28 @@
  * @bug 8031320
  * @summary Verify that UseRTMDeopt affects uncommon trap installation in
  *          copmpiled methods with synchronized block.
- * @library /testlibrary /test/lib /compiler/testlibrary
+ * @library /testlibrary /test/lib /
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @build TestUseRTMDeopt
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
+ * @build compiler.rtm.locking.TestUseRTMDeopt
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
- *                   -XX:+WhiteBoxAPI TestUseRTMDeopt
+ *                   -XX:+WhiteBoxAPI
+ *                   compiler.rtm.locking.TestUseRTMDeopt
  */
 
-import jdk.test.lib.*;
+package compiler.rtm.locking;
+
+import compiler.testlibrary.rtm.AbortProvoker;
+import compiler.testlibrary.rtm.AbortType;
+import compiler.testlibrary.rtm.RTMTestBase;
+import compiler.testlibrary.rtm.predicate.SupportedCPU;
+import compiler.testlibrary.rtm.predicate.SupportedVM;
+import jdk.test.lib.Asserts;
+import jdk.test.lib.OutputAnalyzer;
 import jdk.test.lib.cli.CommandLineOptionTest;
 import jdk.test.lib.cli.predicate.AndPredicate;
-import rtm.*;
-import rtm.predicate.SupportedCPU;
-import rtm.predicate.SupportedVM;
 
 /**
  * Test verifies that usage of UseRTMDeopt option affects uncommon traps usage

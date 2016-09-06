@@ -222,7 +222,6 @@ class LibraryCallKit : public GraphKit {
   Node* round_double_node(Node* n);
   bool runtime_math(const TypeFunc* call_type, address funcAddr, const char* funcName);
   bool inline_math_native(vmIntrinsics::ID id);
-  bool inline_trig(vmIntrinsics::ID id);
   bool inline_math(vmIntrinsics::ID id);
   template <typename OverflowOp>
   bool inline_math_overflow(Node* arg1, Node* arg2);
@@ -645,6 +644,8 @@ bool LibraryCallKit::try_to_inline(int predicate) {
   case vmIntrinsics::_putDoubleOpaque:          return inline_unsafe_access( is_store, T_DOUBLE,   Opaque, false);
 
   case vmIntrinsics::_compareAndSwapObject:             return inline_unsafe_load_store(T_OBJECT, LS_cmp_swap,      Volatile);
+  case vmIntrinsics::_compareAndSwapByte:               return inline_unsafe_load_store(T_BYTE,   LS_cmp_swap,      Volatile);
+  case vmIntrinsics::_compareAndSwapShort:              return inline_unsafe_load_store(T_SHORT,  LS_cmp_swap,      Volatile);
   case vmIntrinsics::_compareAndSwapInt:                return inline_unsafe_load_store(T_INT,    LS_cmp_swap,      Volatile);
   case vmIntrinsics::_compareAndSwapLong:               return inline_unsafe_load_store(T_LONG,   LS_cmp_swap,      Volatile);
 
@@ -652,6 +653,14 @@ bool LibraryCallKit::try_to_inline(int predicate) {
   case vmIntrinsics::_weakCompareAndSwapObjectAcquire:  return inline_unsafe_load_store(T_OBJECT, LS_cmp_swap_weak, Acquire);
   case vmIntrinsics::_weakCompareAndSwapObjectRelease:  return inline_unsafe_load_store(T_OBJECT, LS_cmp_swap_weak, Release);
   case vmIntrinsics::_weakCompareAndSwapObjectVolatile: return inline_unsafe_load_store(T_OBJECT, LS_cmp_swap_weak, Volatile);
+  case vmIntrinsics::_weakCompareAndSwapByte:           return inline_unsafe_load_store(T_BYTE,   LS_cmp_swap_weak, Relaxed);
+  case vmIntrinsics::_weakCompareAndSwapByteAcquire:    return inline_unsafe_load_store(T_BYTE,   LS_cmp_swap_weak, Acquire);
+  case vmIntrinsics::_weakCompareAndSwapByteRelease:    return inline_unsafe_load_store(T_BYTE,   LS_cmp_swap_weak, Release);
+  case vmIntrinsics::_weakCompareAndSwapByteVolatile:   return inline_unsafe_load_store(T_BYTE,   LS_cmp_swap_weak, Volatile);
+  case vmIntrinsics::_weakCompareAndSwapShort:          return inline_unsafe_load_store(T_SHORT,  LS_cmp_swap_weak, Relaxed);
+  case vmIntrinsics::_weakCompareAndSwapShortAcquire:   return inline_unsafe_load_store(T_SHORT,  LS_cmp_swap_weak, Acquire);
+  case vmIntrinsics::_weakCompareAndSwapShortRelease:   return inline_unsafe_load_store(T_SHORT,  LS_cmp_swap_weak, Release);
+  case vmIntrinsics::_weakCompareAndSwapShortVolatile:  return inline_unsafe_load_store(T_SHORT,  LS_cmp_swap_weak, Volatile);
   case vmIntrinsics::_weakCompareAndSwapInt:            return inline_unsafe_load_store(T_INT,    LS_cmp_swap_weak, Relaxed);
   case vmIntrinsics::_weakCompareAndSwapIntAcquire:     return inline_unsafe_load_store(T_INT,    LS_cmp_swap_weak, Acquire);
   case vmIntrinsics::_weakCompareAndSwapIntRelease:     return inline_unsafe_load_store(T_INT,    LS_cmp_swap_weak, Release);
@@ -664,6 +673,12 @@ bool LibraryCallKit::try_to_inline(int predicate) {
   case vmIntrinsics::_compareAndExchangeObjectVolatile: return inline_unsafe_load_store(T_OBJECT, LS_cmp_exchange,  Volatile);
   case vmIntrinsics::_compareAndExchangeObjectAcquire:  return inline_unsafe_load_store(T_OBJECT, LS_cmp_exchange,  Acquire);
   case vmIntrinsics::_compareAndExchangeObjectRelease:  return inline_unsafe_load_store(T_OBJECT, LS_cmp_exchange,  Release);
+  case vmIntrinsics::_compareAndExchangeByteVolatile:   return inline_unsafe_load_store(T_BYTE,   LS_cmp_exchange,  Volatile);
+  case vmIntrinsics::_compareAndExchangeByteAcquire:    return inline_unsafe_load_store(T_BYTE,   LS_cmp_exchange,  Acquire);
+  case vmIntrinsics::_compareAndExchangeByteRelease:    return inline_unsafe_load_store(T_BYTE,   LS_cmp_exchange,  Release);
+  case vmIntrinsics::_compareAndExchangeShortVolatile:  return inline_unsafe_load_store(T_SHORT,  LS_cmp_exchange,  Volatile);
+  case vmIntrinsics::_compareAndExchangeShortAcquire:   return inline_unsafe_load_store(T_SHORT,  LS_cmp_exchange,  Acquire);
+  case vmIntrinsics::_compareAndExchangeShortRelease:   return inline_unsafe_load_store(T_SHORT,  LS_cmp_exchange,  Release);
   case vmIntrinsics::_compareAndExchangeIntVolatile:    return inline_unsafe_load_store(T_INT,    LS_cmp_exchange,  Volatile);
   case vmIntrinsics::_compareAndExchangeIntAcquire:     return inline_unsafe_load_store(T_INT,    LS_cmp_exchange,  Acquire);
   case vmIntrinsics::_compareAndExchangeIntRelease:     return inline_unsafe_load_store(T_INT,    LS_cmp_exchange,  Release);
@@ -671,8 +686,13 @@ bool LibraryCallKit::try_to_inline(int predicate) {
   case vmIntrinsics::_compareAndExchangeLongAcquire:    return inline_unsafe_load_store(T_LONG,   LS_cmp_exchange,  Acquire);
   case vmIntrinsics::_compareAndExchangeLongRelease:    return inline_unsafe_load_store(T_LONG,   LS_cmp_exchange,  Release);
 
+  case vmIntrinsics::_getAndAddByte:                    return inline_unsafe_load_store(T_BYTE,   LS_get_add,       Volatile);
+  case vmIntrinsics::_getAndAddShort:                   return inline_unsafe_load_store(T_SHORT,  LS_get_add,       Volatile);
   case vmIntrinsics::_getAndAddInt:                     return inline_unsafe_load_store(T_INT,    LS_get_add,       Volatile);
   case vmIntrinsics::_getAndAddLong:                    return inline_unsafe_load_store(T_LONG,   LS_get_add,       Volatile);
+
+  case vmIntrinsics::_getAndSetByte:                    return inline_unsafe_load_store(T_BYTE,   LS_get_set,       Volatile);
+  case vmIntrinsics::_getAndSetShort:                   return inline_unsafe_load_store(T_SHORT,  LS_get_set,       Volatile);
   case vmIntrinsics::_getAndSetInt:                     return inline_unsafe_load_store(T_INT,    LS_get_set,       Volatile);
   case vmIntrinsics::_getAndSetLong:                    return inline_unsafe_load_store(T_LONG,   LS_get_set,       Volatile);
   case vmIntrinsics::_getAndSetObject:                  return inline_unsafe_load_store(T_OBJECT, LS_get_set,       Volatile);
@@ -1383,18 +1403,20 @@ bool LibraryCallKit::inline_string_copy(bool compress) {
          (!compress && src_elem == T_BYTE && (dst_elem == T_BYTE || dst_elem == T_CHAR)),
          "Unsupported array types for inline_string_copy");
 
-  // Range checks
-  generate_string_range_check(src, src_offset, length, compress && src_elem == T_BYTE);
-  generate_string_range_check(dst, dst_offset, length, !compress && dst_elem == T_BYTE);
-  if (stopped()) {
-    return true;
+  // Convert char[] offsets to byte[] offsets
+  bool convert_src = (compress && src_elem == T_BYTE);
+  bool convert_dst = (!compress && dst_elem == T_BYTE);
+  if (convert_src) {
+    src_offset = _gvn.transform(new LShiftINode(src_offset, intcon(1)));
+  } else if (convert_dst) {
+    dst_offset = _gvn.transform(new LShiftINode(dst_offset, intcon(1)));
   }
 
-  // Convert char[] offsets to byte[] offsets
-  if (compress && src_elem == T_BYTE) {
-    src_offset = _gvn.transform(new LShiftINode(src_offset, intcon(1)));
-  } else if (!compress && dst_elem == T_BYTE) {
-    dst_offset = _gvn.transform(new LShiftINode(dst_offset, intcon(1)));
+  // Range checks
+  generate_string_range_check(src, src_offset, length, convert_src);
+  generate_string_range_check(dst, dst_offset, length, convert_dst);
+  if (stopped()) {
+    return true;
   }
 
   Node* src_start = array_element_address(src, src_offset, src_elem);
@@ -1667,94 +1689,6 @@ bool LibraryCallKit::inline_math(vmIntrinsics::ID id) {
   default:  fatal_unexpected_iid(id);  break;
   }
   set_result(_gvn.transform(n));
-  return true;
-}
-
-//------------------------------inline_trig----------------------------------
-// Inline sin/cos/tan instructions, if possible.  If rounding is required, do
-// argument reduction which will turn into a fast/slow diamond.
-bool LibraryCallKit::inline_trig(vmIntrinsics::ID id) {
-  Node* arg = round_double_node(argument(0));
-  Node* n = NULL;
-
-  n = _gvn.transform(n);
-
-  // Rounding required?  Check for argument reduction!
-  if (Matcher::strict_fp_requires_explicit_rounding) {
-    static const double     pi_4 =  0.7853981633974483;
-    static const double neg_pi_4 = -0.7853981633974483;
-    // pi/2 in 80-bit extended precision
-    // static const unsigned char pi_2_bits_x[] = {0x35,0xc2,0x68,0x21,0xa2,0xda,0x0f,0xc9,0xff,0x3f,0x00,0x00,0x00,0x00,0x00,0x00};
-    // -pi/2 in 80-bit extended precision
-    // static const unsigned char neg_pi_2_bits_x[] = {0x35,0xc2,0x68,0x21,0xa2,0xda,0x0f,0xc9,0xff,0xbf,0x00,0x00,0x00,0x00,0x00,0x00};
-    // Cutoff value for using this argument reduction technique
-    //static const double    pi_2_minus_epsilon =  1.564660403643354;
-    //static const double neg_pi_2_plus_epsilon = -1.564660403643354;
-
-    // Pseudocode for sin:
-    // if (x <= Math.PI / 4.0) {
-    //   if (x >= -Math.PI / 4.0) return  fsin(x);
-    //   if (x >= -Math.PI / 2.0) return -fcos(x + Math.PI / 2.0);
-    // } else {
-    //   if (x <=  Math.PI / 2.0) return  fcos(x - Math.PI / 2.0);
-    // }
-    // return StrictMath.sin(x);
-
-    // Pseudocode for cos:
-    // if (x <= Math.PI / 4.0) {
-    //   if (x >= -Math.PI / 4.0) return  fcos(x);
-    //   if (x >= -Math.PI / 2.0) return  fsin(x + Math.PI / 2.0);
-    // } else {
-    //   if (x <=  Math.PI / 2.0) return -fsin(x - Math.PI / 2.0);
-    // }
-    // return StrictMath.cos(x);
-
-    // Actually, sticking in an 80-bit Intel value into C2 will be tough; it
-    // requires a special machine instruction to load it.  Instead we'll try
-    // the 'easy' case.  If we really need the extra range +/- PI/2 we'll
-    // probably do the math inside the SIN encoding.
-
-    // Make the merge point
-    RegionNode* r = new RegionNode(3);
-    Node* phi = new PhiNode(r, Type::DOUBLE);
-
-    // Flatten arg so we need only 1 test
-    Node *abs = _gvn.transform(new AbsDNode(arg));
-    // Node for PI/4 constant
-    Node *pi4 = makecon(TypeD::make(pi_4));
-    // Check PI/4 : abs(arg)
-    Node *cmp = _gvn.transform(new CmpDNode(pi4,abs));
-    // Check: If PI/4 < abs(arg) then go slow
-    Node *bol = _gvn.transform(new BoolNode( cmp, BoolTest::lt ));
-    // Branch either way
-    IfNode *iff = create_and_xform_if(control(),bol, PROB_STATIC_FREQUENT, COUNT_UNKNOWN);
-    set_control(opt_iff(r,iff));
-
-    // Set fast path result
-    phi->init_req(2, n);
-
-    // Slow path - non-blocking leaf call
-    Node* call = NULL;
-    switch (id) {
-    case vmIntrinsics::_dtan:
-      call = make_runtime_call(RC_LEAF, OptoRuntime::Math_D_D_Type(),
-                               CAST_FROM_FN_PTR(address, SharedRuntime::dtan),
-                               "Tan", NULL, arg, top());
-      break;
-    }
-    assert(control()->in(0) == call, "");
-    Node* slow_result = _gvn.transform(new ProjNode(call, TypeFunc::Parms));
-    r->init_req(1, control());
-    phi->init_req(1, slow_result);
-
-    // Post-merge
-    set_control(_gvn.transform(r));
-    record_for_igvn(r);
-    n = _gvn.transform(phi);
-
-    C->set_has_split_ifs(true); // Has chance for split-if optimization
-  }
-  set_result(n);
   return true;
 }
 
@@ -2384,8 +2318,13 @@ bool LibraryCallKit::inline_unsafe_access(bool is_store, const BasicType type, c
   Compile::AliasType* alias_type = C->alias_type(adr_type);
   assert(alias_type->index() != Compile::AliasIdxBot, "no bare pointers here");
 
-  assert(alias_type->adr_type() == TypeRawPtr::BOTTOM || alias_type->adr_type() == TypeOopPtr::BOTTOM ||
-         alias_type->basic_type() != T_ILLEGAL, "field, array element or unknown");
+  // Only field, array element or unknown locations are supported.
+  if (alias_type->adr_type() != TypeRawPtr::BOTTOM &&
+      alias_type->adr_type() != TypeOopPtr::BOTTOM &&
+      alias_type->basic_type() == T_ILLEGAL) {
+    return false;
+  }
+
   bool mismatched = false;
   BasicType bt = alias_type->basic_type();
   if (bt != T_ILLEGAL) {
@@ -2403,6 +2342,8 @@ bool LibraryCallKit::inline_unsafe_access(bool is_store, const BasicType type, c
       return false;
     }
     mismatched = (bt != type);
+  } else if (alias_type->adr_type() == TypeOopPtr::BOTTOM) {
+    mismatched = true; // conservatively mark all "wide" on-heap accesses as mismatched
   }
 
   // First guess at the value type.
@@ -2761,12 +2702,6 @@ bool LibraryCallKit::inline_unsafe_load_store(const BasicType type, const LoadSt
       ShouldNotReachHere();
   }
 
-  // Null check receiver.
-  receiver = null_check(receiver);
-  if (stopped()) {
-    return true;
-  }
-
   // Build field offset expression.
   // We currently rely on the cookies produced by Unsafe.xxxFieldOffset
   // to be plain byte offsets, which are also the same as those accepted
@@ -2778,8 +2713,6 @@ bool LibraryCallKit::inline_unsafe_load_store(const BasicType type, const LoadSt
   const TypePtr *adr_type = _gvn.type(adr)->isa_ptr();
 
   Compile::AliasType* alias_type = C->alias_type(adr_type);
-  assert(alias_type->adr_type() == TypeRawPtr::BOTTOM || alias_type->adr_type() == TypeOopPtr::BOTTOM ||
-         alias_type->basic_type() != T_ILLEGAL, "field, array element or unknown");
   BasicType bt = alias_type->basic_type();
   if (bt != T_ILLEGAL &&
       ((bt == T_OBJECT || bt == T_ARRAY) != (type == T_OBJECT))) {
@@ -2809,6 +2742,12 @@ bool LibraryCallKit::inline_unsafe_load_store(const BasicType type, const LoadSt
       break;
     default:
       ShouldNotReachHere();
+  }
+
+  // Null check receiver.
+  receiver = null_check(receiver);
+  if (stopped()) {
+    return true;
   }
 
   int alias_idx = C->get_alias_index(adr_type);
@@ -2849,6 +2788,48 @@ bool LibraryCallKit::inline_unsafe_load_store(const BasicType type, const LoadSt
   // longs, and Object. Adding others should be straightforward.
   Node* load_store = NULL;
   switch(type) {
+  case T_BYTE:
+    switch(kind) {
+      case LS_get_add:
+        load_store = _gvn.transform(new GetAndAddBNode(control(), mem, adr, newval, adr_type));
+        break;
+      case LS_get_set:
+        load_store = _gvn.transform(new GetAndSetBNode(control(), mem, adr, newval, adr_type));
+        break;
+      case LS_cmp_swap_weak:
+        load_store = _gvn.transform(new WeakCompareAndSwapBNode(control(), mem, adr, newval, oldval, mo));
+        break;
+      case LS_cmp_swap:
+        load_store = _gvn.transform(new CompareAndSwapBNode(control(), mem, adr, newval, oldval, mo));
+        break;
+      case LS_cmp_exchange:
+        load_store = _gvn.transform(new CompareAndExchangeBNode(control(), mem, adr, newval, oldval, adr_type, mo));
+        break;
+      default:
+        ShouldNotReachHere();
+    }
+    break;
+  case T_SHORT:
+    switch(kind) {
+      case LS_get_add:
+        load_store = _gvn.transform(new GetAndAddSNode(control(), mem, adr, newval, adr_type));
+        break;
+      case LS_get_set:
+        load_store = _gvn.transform(new GetAndSetSNode(control(), mem, adr, newval, adr_type));
+        break;
+      case LS_cmp_swap_weak:
+        load_store = _gvn.transform(new WeakCompareAndSwapSNode(control(), mem, adr, newval, oldval, mo));
+        break;
+      case LS_cmp_swap:
+        load_store = _gvn.transform(new CompareAndSwapSNode(control(), mem, adr, newval, oldval, mo));
+        break;
+      case LS_cmp_exchange:
+        load_store = _gvn.transform(new CompareAndExchangeSNode(control(), mem, adr, newval, oldval, adr_type, mo));
+        break;
+      default:
+        ShouldNotReachHere();
+    }
+    break;
   case T_INT:
     switch(kind) {
       case LS_get_add:
@@ -3238,7 +3219,7 @@ bool LibraryCallKit::inline_native_isInterrupted() {
   // drop through to next case
   set_control( _gvn.transform(new IfTrueNode(iff_bit)));
 
-#ifndef TARGET_OS_FAMILY_windows
+#ifndef _WINDOWS
   // (c) Or, if interrupt bit is set and clear_int is false, use 2nd fast path.
   Node* clr_arg = argument(1);
   Node* cmp_arg = _gvn.transform(new CmpINode(clr_arg, intcon(0)));
@@ -3255,7 +3236,7 @@ bool LibraryCallKit::inline_native_isInterrupted() {
 #else
   // To return true on Windows you must read the _interrupted field
   // and check the event state i.e. take the slow path.
-#endif // TARGET_OS_FAMILY_windows
+#endif // _WINDOWS
 
   // (d) Otherwise, go to the slow path.
   slow_region->add_req(control());

@@ -27,15 +27,28 @@ import compiler.jvmci.common.testcases.MultipleAbstractImplementer;
 import compiler.jvmci.common.testcases.MultipleImplementer2;
 import compiler.jvmci.common.testcases.MultipleImplementersInterface;
 import compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes;
-import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.*;
 import compiler.jvmci.compilerToVM.ConstantPoolTestCase.TestedCPEntry;
-import java.util.HashMap;
-import java.util.Map;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.org.objectweb.asm.Opcodes;
-import sun.hotspot.WhiteBox;
 import jdk.internal.reflect.ConstantPool;
 import jdk.internal.reflect.ConstantPool.Tag;
+import jdk.vm.ci.meta.MetaAccessProvider;
+import jdk.vm.ci.meta.ResolvedJavaMethod;
+import jdk.vm.ci.meta.ResolvedJavaType;
+import jdk.vm.ci.runtime.JVMCI;
+import sun.hotspot.WhiteBox;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.CONSTANT_CLASS;
+import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.CONSTANT_FIELDREF;
+import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.CONSTANT_INTERFACEMETHODREF;
+import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.CONSTANT_INVOKEDYNAMIC;
+import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.CONSTANT_METHODHANDLE;
+import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.CONSTANT_METHODREF;
+import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.CONSTANT_METHODTYPE;
+import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.CONSTANT_STRING;
 
 /**
  * Class contains hard-coded constant pool tables for dummy classes used for
@@ -44,6 +57,7 @@ import jdk.internal.reflect.ConstantPool.Tag;
 public class ConstantPoolTestsHelper {
 
     public static final int NO_CP_CACHE_PRESENT = Integer.MAX_VALUE;
+    private static final MetaAccessProvider metaAccess = JVMCI.getRuntime().getHostJVMCIBackend().getMetaAccess();
 
     public enum DummyClasses {
         DUMMY_CLASS(MultipleImplementer2.class, CP_MAP_FOR_CLASS),
@@ -74,6 +88,45 @@ public class ConstantPoolTestsHelper {
             }
             return NO_CP_CACHE_PRESENT;
         }
+    }
+
+    /**
+     * Obtain a resolved Java method declared by a given type.
+     *
+     * @param type the declaring type
+     * @param the method's name
+     *
+     * Currently, the lookup is based only on the method's name
+     * but not on the method's signature (i.e., the first method
+     * with a matching name declared on {@code type} is returned).
+     */
+    private static ResolvedJavaMethod getMethod(ResolvedJavaType type, String methodName) {
+        if (methodName.equals("<clinit>")) {
+            return type.getClassInitializer();
+        }
+
+        if (methodName.equals("<init>")) {
+            ResolvedJavaMethod[] initializers = type.getDeclaredConstructors();
+            if (initializers.length >= 0) {
+                return initializers[0];
+            } else {
+                throw new IllegalArgumentException();
+            }
+        }
+
+        for (ResolvedJavaMethod method : type.getDeclaredMethods()) {
+            if (method.getName().equals(methodName)) {
+                return method;
+            }
+        }
+
+        throw new IllegalArgumentException();
+    }
+
+    private static ResolvedJavaType getType(Class<?> clazz) {
+        ResolvedJavaType type = metaAccess.lookupJavaType(clazz);
+        type.initialize();
+        return type;
     }
 
     private static final Map<ConstantTypes, TestedCPEntry[]> CP_MAP_FOR_CLASS = new HashMap<>();
@@ -141,6 +194,7 @@ public class ConstantPoolTestsHelper {
                     new TestedCPEntry("compiler/jvmci/common/testcases/MultipleImplementer2",
                                       "objectField",
                                       "Ljava/lang/Object;",
+                                      new ResolvedJavaMethod[] { getMethod(getType(MultipleImplementer2.class), "<init>"), null },
                                       new byte[] {(byte) Opcodes.PUTFIELD | (byte) Opcodes.GETFIELD},
                                       Opcodes.ACC_FINAL),
                     new TestedCPEntry("compiler/jvmci/common/testcases/MultipleImplementer2",
@@ -296,6 +350,7 @@ public class ConstantPoolTestsHelper {
                     new TestedCPEntry("compiler/jvmci/common/testcases/MultipleAbstractImplementer",
                                       "objectField",
                                       "Ljava/lang/Object;",
+                                      new ResolvedJavaMethod[] { getMethod(getType(MultipleAbstractImplementer.class), "<init>"), null },
                                       new byte[] {(byte) Opcodes.PUTFIELD | (byte) Opcodes.GETFIELD},
                                       Opcodes.ACC_FINAL),
                     new TestedCPEntry("compiler/jvmci/common/testcases/MultipleAbstractImplementer",
@@ -401,6 +456,7 @@ public class ConstantPoolTestsHelper {
                     new TestedCPEntry("compiler/jvmci/common/testcases/MultipleImplementersInterface",
                                       "OBJECT_CONSTANT",
                                       "Ljava/lang/Object;",
+                                      new ResolvedJavaMethod[] { getMethod(getType(MultipleImplementersInterface.class), "<clinit>"), null },
                                       new byte[] {(byte) Opcodes.PUTSTATIC, (byte) Opcodes.GETSTATIC},
                                       Opcodes.ACC_STATIC | Opcodes.ACC_FINAL | Opcodes.ACC_PUBLIC),
                 }

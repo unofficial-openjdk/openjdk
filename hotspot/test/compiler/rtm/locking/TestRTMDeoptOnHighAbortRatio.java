@@ -27,23 +27,31 @@
  * @bug 8031320
  * @summary Verify that on high abort ratio method will be recompiled
  *          without rtm locking.
- * @library /testlibrary /test/lib /compiler/testlibrary
+ * @library /testlibrary /test/lib /
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @build TestRTMDeoptOnHighAbortRatio
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
+ * @build compiler.rtm.locking.TestRTMDeoptOnHighAbortRatio
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
- *                   -XX:+WhiteBoxAPI TestRTMDeoptOnHighAbortRatio
+ *                   -XX:+WhiteBoxAPI
+ *                   compiler.rtm.locking.TestRTMDeoptOnHighAbortRatio
  */
 
-import java.util.List;
-import jdk.test.lib.*;
+package compiler.rtm.locking;
+
+import compiler.testlibrary.rtm.AbortProvoker;
+import compiler.testlibrary.rtm.AbortType;
+import compiler.testlibrary.rtm.RTMLockingStatistics;
+import compiler.testlibrary.rtm.RTMTestBase;
+import compiler.testlibrary.rtm.predicate.SupportedCPU;
+import compiler.testlibrary.rtm.predicate.SupportedVM;
+import jdk.test.lib.Asserts;
+import jdk.test.lib.OutputAnalyzer;
 import jdk.test.lib.cli.CommandLineOptionTest;
 import jdk.test.lib.cli.predicate.AndPredicate;
-import rtm.*;
-import rtm.predicate.SupportedCPU;
-import rtm.predicate.SupportedVM;
+
+import java.util.List;
 
 /**
  * Test verifies that on high abort ratio method wil be deoptimized with

@@ -27,22 +27,25 @@
  * @bug 8031320
  * @summary Verify UseRTMDeopt option processing on CPUs without rtm support
  *          or on VMs without rtm locking support.
- * @library /testlibrary /test/lib /compiler/testlibrary
+ * @library /testlibrary /test/lib /
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @build TestUseRTMDeoptOptionOnUnsupportedConfig
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
+ *
+ * @build compiler.rtm.cli.TestUseRTMDeoptOptionOnUnsupportedConfig
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
- *                   -XX:+WhiteBoxAPI TestUseRTMDeoptOptionOnUnsupportedConfig
+ *                   -XX:+WhiteBoxAPI
+ *                   compiler.rtm.cli.TestUseRTMDeoptOptionOnUnsupportedConfig
  */
 
-import jdk.test.lib.cli.CommandLineOptionTest;
+package compiler.rtm.cli;
 
+import compiler.testlibrary.rtm.predicate.SupportedCPU;
+import compiler.testlibrary.rtm.predicate.SupportedVM;
+import jdk.test.lib.cli.CommandLineOptionTest;
 import jdk.test.lib.cli.predicate.AndPredicate;
 import jdk.test.lib.cli.predicate.NotPredicate;
-import rtm.predicate.SupportedCPU;
-import rtm.predicate.SupportedVM;
 
 public class TestUseRTMDeoptOptionOnUnsupportedConfig
         extends RTMGenericCommandLineOptionTest {

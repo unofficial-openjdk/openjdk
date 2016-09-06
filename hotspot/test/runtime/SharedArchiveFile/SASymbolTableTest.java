@@ -24,6 +24,9 @@
 /*
  * @test SASymbolTableTest
  * @summary Walk symbol table using SA, with and without CDS.
+ * Started failing on 2016.06.24 due to 8160376 on MacOS X so quarantine
+ * it on that platform:
+ * @requires os.family != "mac"
  * @library /testlibrary
  * @modules java.base/jdk.internal.misc
  *          jdk.hotspot.agent/sun.jvm.hotspot.oops
@@ -86,10 +89,11 @@ public class SASymbolTableTest {
         long pid = p.getPid();
         System.out.println("Attaching agent " + pid);
         ProcessBuilder tool = ProcessTools.createJavaProcessBuilder(
-            "-XaddExports:jdk.hotspot.agent/sun.jvm.hotspot.oops=ALL-UNNAMED",
-            "-XaddExports:jdk.hotspot.agent/sun.jvm.hotspot.memory=ALL-UNNAMED",
-            "-XaddExports:jdk.hotspot.agent/sun.jvm.hotspot.runtime=ALL-UNNAMED",
-            "-XaddExports:jdk.hotspot.agent/sun.jvm.hotspot.tools=ALL-UNNAMED",
+            "--add-modules=jdk.hotspot.agent",
+            "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.oops=ALL-UNNAMED",
+            "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.memory=ALL-UNNAMED",
+            "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.runtime=ALL-UNNAMED",
+            "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.tools=ALL-UNNAMED",
             "SASymbolTableTestAgent",
             Long.toString(pid));
         OutputAnalyzer output = ProcessTools.executeProcess(tool);

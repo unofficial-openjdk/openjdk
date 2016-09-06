@@ -24,7 +24,7 @@
 /*
  * @test
  * @bug 8136421
- * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9" | os.simpleArch == "aarch64")
+ * @requires (vm.simpleArch == "x64" | vm.simpleArch == "sparcv9" | vm.simpleArch == "aarch64")
  * @library / /testlibrary /test/lib
  * @library ../common/patches
  * @modules java.base/jdk.internal.misc
@@ -43,13 +43,14 @@ import compiler.jvmci.common.testcases.DoNotExtendClass;
 import compiler.jvmci.common.testcases.MultipleImplementersInterfaceExtender;
 import compiler.jvmci.common.testcases.SingleImplementer;
 import compiler.jvmci.common.testcases.SingleImplementerInterface;
-import java.util.HashSet;
-import java.util.Set;
+import jdk.test.lib.Asserts;
+import jdk.test.lib.Utils;
 import jdk.vm.ci.hotspot.CompilerToVMHelper;
 import jdk.vm.ci.hotspot.HotSpotResolvedJavaMethod;
 import jdk.vm.ci.hotspot.HotSpotResolvedObjectType;
-import jdk.test.lib.Asserts;
-import jdk.test.lib.Utils;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class GetClassInitializerTest {
 

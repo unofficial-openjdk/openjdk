@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+* Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 *
 * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,8 @@
  * @test TestTargetSurvivorRatioFlag
  * @key gc
  * @summary Verify that option TargetSurvivorRatio affects survivor space occupancy after minor GC.
+ * @requires (vm.opt.ExplicitGCInvokesConcurrent == null) | (vm.opt.ExplicitGCInvokesConcurrent == false)
+ * @requires (vm.opt.UseJVMCICompiler == null) | (vm.opt.UseJVMCICompiler == false)
  * @library /testlibrary /test/lib
  * @modules java.base/jdk.internal.misc
  *          java.management
@@ -130,7 +132,7 @@ public class TestTargetSurvivorRatioFlag {
         LinkedList<String> vmOptions = new LinkedList<>(options);
         Collections.addAll(vmOptions,
                 "-Xbootclasspath/a:.",
-                "-XaddExports:java.base/jdk.internal.misc=ALL-UNNAMED",
+                "--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED",
                 "-XX:+UnlockDiagnosticVMOptions",
                 "-XX:+WhiteBoxAPI",
                 "-XX:+UseAdaptiveSizePolicy",

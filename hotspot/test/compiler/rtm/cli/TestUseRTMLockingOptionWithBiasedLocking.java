@@ -27,21 +27,25 @@
  * @bug 8031320
  * @summary Verify processing of UseRTMLocking and UseBiasedLocking
  *          options combination on CPU and VM with rtm support.
- * @library /testlibrary /test/lib /compiler/testlibrary
+ * @library /testlibrary /test/lib /
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @build TestUseRTMLockingOptionWithBiasedLocking
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
+ *
+ * @build compiler.rtm.cli.TestUseRTMLockingOptionWithBiasedLocking
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
- *                   -XX:+WhiteBoxAPI TestUseRTMLockingOptionWithBiasedLocking
+ *                   -XX:+WhiteBoxAPI
+ *                   compiler.rtm.cli.TestUseRTMLockingOptionWithBiasedLocking
  */
 
-import jdk.test.lib.*;
-import jdk.test.lib.cli.*;
+package compiler.rtm.cli;
+
+import compiler.testlibrary.rtm.predicate.SupportedCPU;
+import compiler.testlibrary.rtm.predicate.SupportedVM;
+import jdk.test.lib.ExitCode;
+import jdk.test.lib.cli.CommandLineOptionTest;
 import jdk.test.lib.cli.predicate.AndPredicate;
-import rtm.predicate.SupportedCPU;
-import rtm.predicate.SupportedVM;
 
 public class TestUseRTMLockingOptionWithBiasedLocking
         extends CommandLineOptionTest {

@@ -23,7 +23,7 @@
 
 /**
  * @test
- * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9" | os.simpleArch == "aarch64")
+ * @requires (vm.simpleArch == "x64" | vm.simpleArch == "sparcv9" | vm.simpleArch == "aarch64")
  * @library ../../../../../
  * @modules jdk.vm.ci/jdk.vm.ci.meta
  *          jdk.vm.ci/jdk.vm.ci.runtime
@@ -34,8 +34,11 @@
 
 package jdk.vm.ci.runtime.test;
 
-import static org.junit.Assume.assumeTrue;
+import jdk.vm.ci.meta.ResolvedJavaMethod;
+import org.junit.Assert;
+import org.junit.Test;
 
+import javax.tools.ToolProvider;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -53,12 +56,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
-import javax.tools.ToolProvider;
-
-import jdk.vm.ci.meta.ResolvedJavaMethod;
-
-import org.junit.Assert;
-import org.junit.Test;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * Tests that {@link ResolvedJavaMethod}s are safe in the context of class redefinition being used

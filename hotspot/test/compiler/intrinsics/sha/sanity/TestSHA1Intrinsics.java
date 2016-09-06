@@ -25,12 +25,14 @@
  * @test
  * @bug 8035968
  * @summary Verify that SHA-1 intrinsic is actually used.
- * @library /testlibrary /test/lib /compiler/testlibrary ../
+ * @library /testlibrary /test/lib /
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @build TestSHA intrinsics.Verifier TestSHA1Intrinsics
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
+ *
+ * @build compiler.testlibrary.intrinsics.Verifier
+ *        compiler.intrinsics.sha.sanity.TestSHA1Intrinsics
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
  *                   -XX:+WhiteBoxAPI -Xbatch -XX:CompileThreshold=500
  *                   -XX:Tier4InvocationThreshold=500
@@ -38,7 +40,8 @@
  *                   -XX:CompileOnly=sun/security/provider/DigestBase
  *                   -XX:CompileOnly=sun/security/provider/SHA
  *                   -XX:+UseSHA1Intrinsics
- *                   -Dalgorithm=SHA-1 TestSHA1Intrinsics
+ *                   -Dalgorithm=SHA-1
+ *                   compiler.intrinsics.sha.sanity.TestSHA1Intrinsics
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
  *                   -XX:+WhiteBoxAPI -Xbatch -XX:CompileThreshold=500
  *                   -XX:Tier4InvocationThreshold=500
@@ -46,11 +49,15 @@
  *                   -XX:CompileOnly=sun/security/provider/DigestBase
  *                   -XX:CompileOnly=sun/security/provider/SHA
  *                   -XX:-UseSHA1Intrinsics
- *                   -Dalgorithm=SHA-1 TestSHA1Intrinsics
+ *                   -Dalgorithm=SHA-1
+ *                   compiler.intrinsics.sha.sanity.TestSHA1Intrinsics
  * @run main/othervm -DverificationStrategy=VERIFY_INTRINSIC_USAGE
- *                   intrinsics.Verifier positive.log negative.log
+ *                   compiler.testlibrary.intrinsics.Verifier positive.log negative.log
  */
-import sha.predicate.IntrinsicPredicates;
+
+package compiler.intrinsics.sha.sanity;
+
+import compiler.testlibrary.sha.predicate.IntrinsicPredicates;
 
 public class TestSHA1Intrinsics {
     public static void main(String args[]) throws Exception {

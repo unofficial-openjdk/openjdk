@@ -23,7 +23,7 @@
 
 /**
  * @test
- * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9" | os.simpleArch == "aarch64")
+ * @requires (vm.simpleArch == "x64" | vm.simpleArch == "sparcv9" | vm.simpleArch == "aarch64")
  * @modules jdk.vm.ci/jdk.vm.ci.hotspot
  *          jdk.vm.ci/jdk.vm.ci.code
  *          jdk.vm.ci/jdk.vm.ci.code.site
@@ -51,7 +51,6 @@ import jdk.vm.ci.hotspot.HotSpotCompiledCode.Comment;
 import jdk.vm.ci.hotspot.HotSpotConstant;
 import jdk.vm.ci.meta.Assumptions.Assumption;
 import jdk.vm.ci.meta.VMConstant;
-
 import org.junit.Test;
 
 /**

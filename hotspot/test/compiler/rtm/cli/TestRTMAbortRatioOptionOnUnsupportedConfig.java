@@ -27,20 +27,24 @@
  * @bug 8031320
  * @summary Verify RTMAbortRatio option processing on CPU without rtm
  *          support or on VM that does not support rtm locking.
- * @library /testlibrary /test/lib /compiler/testlibrary
+ * @library /testlibrary /test/lib /
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @build TestRTMAbortRatioOptionOnUnsupportedConfig
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
+ *
+ * @build compiler.rtm.cli.TestRTMAbortRatioOptionOnUnsupportedConfig
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
- *                   -XX:+WhiteBoxAPI TestRTMAbortRatioOptionOnUnsupportedConfig
+ *                   -XX:+WhiteBoxAPI
+ *                   compiler.rtm.cli.TestRTMAbortRatioOptionOnUnsupportedConfig
  */
 
+package compiler.rtm.cli;
+
+import compiler.testlibrary.rtm.predicate.SupportedCPU;
+import compiler.testlibrary.rtm.predicate.SupportedVM;
 import jdk.test.lib.cli.predicate.AndPredicate;
 import jdk.test.lib.cli.predicate.NotPredicate;
-import rtm.predicate.SupportedCPU;
-import rtm.predicate.SupportedVM;
 
 public class TestRTMAbortRatioOptionOnUnsupportedConfig
         extends RTMGenericCommandLineOptionTest {

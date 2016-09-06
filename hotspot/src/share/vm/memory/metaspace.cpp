@@ -2933,7 +2933,7 @@ void Metaspace::allocate_metaspace_compressed_klass_ptrs(char* requested_addr, a
   // Don't use large pages for the class space.
   bool large_pages = false;
 
-#ifndef AARCH64
+#if !(defined(AARCH64) || defined(AIX))
   ReservedSpace metaspace_rs = ReservedSpace(compressed_class_space_size(),
                                              _reserve_alignment,
                                              large_pages,
@@ -2945,18 +2945,25 @@ void Metaspace::allocate_metaspace_compressed_klass_ptrs(char* requested_addr, a
   // bits.
   if ((uint64_t)requested_addr + compressed_class_space_size() < 4*G) {
     metaspace_rs = ReservedSpace(compressed_class_space_size(),
-                                             _reserve_alignment,
-                                             large_pages,
-                                             requested_addr);
+                                 _reserve_alignment,
+                                 large_pages,
+                                 requested_addr);
   }
 
   if (! metaspace_rs.is_reserved()) {
-    // Try to align metaspace so that we can decode a compressed klass
-    // with a single MOVK instruction.  We can do this iff the
+    // Aarch64: Try to align metaspace so that we can decode a compressed
+    // klass with a single MOVK instruction.  We can do this iff the
     // compressed class base is a multiple of 4G.
-    for (char *a = (char*)align_ptr_up(requested_addr, 4*G);
+    // Aix: Search for a place where we can find memory. If we need to load
+    // the base, 4G alignment is helpful, too.
+    size_t increment = AARCH64_ONLY(4*)G;
+    for (char *a = (char*)align_ptr_up(requested_addr, increment);
          a < (char*)(1024*G);
-         a += 4*G) {
+         a += increment) {
+      if (a == (char *)(32*G)) {
+        // Go faster from here on. Zero-based is no longer possible.
+        increment = 4*G;
+      }
 
 #if INCLUDE_CDS
       if (UseSharedSpaces
@@ -3099,10 +3106,6 @@ void Metaspace::ergo_initialize() {
 
   assert(MetaspaceSize <= MaxMetaspaceSize, "MetaspaceSize should be limited by MaxMetaspaceSize");
 
-  if (MetaspaceSize < 256*K) {
-    vm_exit_during_initialization("Too small initial Metaspace size");
-  }
-
   MinMetaspaceExpansion = align_size_down_bounded(MinMetaspaceExpansion, _commit_alignment);
   MaxMetaspaceExpansion = align_size_down_bounded(MaxMetaspaceExpansion, _commit_alignment);
 
@@ -3161,39 +3164,47 @@ void Metaspace::global_initialize() {
 #endif // _LP64
 #endif // INCLUDE_CDS
   } else {
-    // If using shared space, open the file that contains the shared space
-    // and map in the memory before initializing the rest of metaspace (so
-    // the addresses don't conflict)
-    address cds_address = NULL;
-    if (UseSharedSpaces) {
 #if INCLUDE_CDS
+    if (UseSharedSpaces) {
+      // If using shared space, open the file that contains the shared space
+      // and map in the memory before initializing the rest of metaspace (so
+      // the addresses don't conflict)
+      address cds_address = NULL;
       FileMapInfo* mapinfo = new FileMapInfo();
 
-      // Open the shared archive file, read and validate the header. If
-      // initialization fails, shared spaces [UseSharedSpaces] are
-      // disabled and the file is closed.
-      // Map in spaces now also
-      if (mapinfo->initialize() && MetaspaceShared::map_shared_spaces(mapinfo)) {
-        cds_total = FileMapInfo::shared_spaces_size();
-        cds_address = (address)mapinfo->header()->region_addr(0);
-#ifdef _LP64
-        if (using_class_space()) {
-          char* cds_end = (char*)(cds_address + cds_total);
-          cds_end = (char *)align_ptr_up(cds_end, _reserve_alignment);
-          // If UseCompressedClassPointers is set then allocate the metaspace area
-          // above the heap and above the CDS area (if it exists).
-          allocate_metaspace_compressed_klass_ptrs(cds_end, cds_address);
-          // Map the shared string space after compressed pointers
-          // because it relies on compressed class pointers setting to work
-          mapinfo->map_string_regions();
-        }
-#endif // _LP64
+      if (JvmtiExport::should_post_class_file_load_hook()) {
+        // Currently CDS does not support JVMTI CFLH when loading shared class.
+        // If JvmtiExport::should_post_class_file_load_hook is already enabled,
+        // just disable UseSharedSpaces.
+        FileMapInfo::fail_continue("Tool agent requires sharing to be disabled.");
+        delete mapinfo;
       } else {
-        assert(!mapinfo->is_open() && !UseSharedSpaces,
-               "archive file not closed or shared spaces not disabled.");
+        // Open the shared archive file, read and validate the header. If
+        // initialization fails, shared spaces [UseSharedSpaces] are
+        // disabled and the file is closed.
+        // Map in spaces now also
+        if (mapinfo->initialize() && MetaspaceShared::map_shared_spaces(mapinfo)) {
+          cds_total = FileMapInfo::shared_spaces_size();
+          cds_address = (address)mapinfo->header()->region_addr(0);
+#ifdef _LP64
+          if (using_class_space()) {
+            char* cds_end = (char*)(cds_address + cds_total);
+            cds_end = (char *)align_ptr_up(cds_end, _reserve_alignment);
+            // If UseCompressedClassPointers is set then allocate the metaspace area
+            // above the heap and above the CDS area (if it exists).
+            allocate_metaspace_compressed_klass_ptrs(cds_end, cds_address);
+            // Map the shared string space after compressed pointers
+            // because it relies on compressed class pointers setting to work
+            mapinfo->map_string_regions();
+          }
+#endif // _LP64
+        } else {
+          assert(!mapinfo->is_open() && !UseSharedSpaces,
+                 "archive file not closed or shared spaces not disabled.");
+        }
       }
-#endif // INCLUDE_CDS
     }
+#endif // INCLUDE_CDS
 
 #ifdef _LP64
     if (!UseSharedSpaces && using_class_space()) {

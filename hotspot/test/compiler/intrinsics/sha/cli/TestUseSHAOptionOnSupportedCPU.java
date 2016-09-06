@@ -24,16 +24,24 @@
 /**
  * @test
  * @bug 8035968
- * @summary Verify UseSHA option processing on supported CPU,
- * @library /testlibrary /test/lib /compiler/testlibrary testcases
+ * @summary Verify UseSHA option processing on supported CPU.
+ * @library /testlibrary /test/lib testcases /
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @build TestUseSHAOptionOnSupportedCPU
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
+ *
+ * @build compiler.intrinsics.sha.cli.TestUseSHAOptionOnSupportedCPU
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
- *                   -XX:+WhiteBoxAPI TestUseSHAOptionOnSupportedCPU
+ *                   -XX:+WhiteBoxAPI
+ *                   compiler.intrinsics.sha.cli.TestUseSHAOptionOnSupportedCPU
  */
+
+package compiler.intrinsics.sha.cli;
+
+import compiler.intrinsics.sha.cli.testcases.GenericTestCaseForSupportedCPU;
+import compiler.intrinsics.sha.cli.testcases.UseSHASpecificTestCaseForSupportedCPU;
+
 public class TestUseSHAOptionOnSupportedCPU {
     public static void main(String args[]) throws Throwable {
         new SHAOptionsBase(

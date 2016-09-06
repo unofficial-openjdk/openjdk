@@ -58,6 +58,7 @@
 package compiler.stable;
 
 import jdk.internal.vm.annotation.Stable;
+
 import java.lang.reflect.InvocationTargetException;
 
 public class TestStableShort {
@@ -100,7 +101,7 @@ public class TestStableShort {
         public static final DefaultValue c = new DefaultValue();
         public static short get() { return c.v; }
         public static void test() throws Exception {
-            short val1 = get();
+                     short val1 = get();
             c.v = 1; short val2 = get();
             assertEquals(val1, 0);
             assertEquals(val2, 1);
@@ -130,7 +131,7 @@ public class TestStableShort {
         public static final DefaultStaticValue c = new DefaultStaticValue();
         public static short get() { return c.v; }
         public static void test() throws Exception {
-            short val1 = get();
+                     short val1 = get();
             c.v = 1; short val2 = get();
             assertEquals(val1, 0);
             assertEquals(val2, 1);
@@ -180,24 +181,24 @@ public class TestStableShort {
         public static void test() throws Exception {
             {
                 c.v = new short[1]; c.v[0] = 1; short val1 = get();
-                c.v[0] = 2; short val2 = get();
+                                    c.v[0] = 2; short val2 = get();
                 assertEquals(val1, 1);
                 assertEquals(val2, (isStableEnabled ? 1 : 2));
 
                 c.v = new short[1]; c.v[0] = 3; short val3 = get();
                 assertEquals(val3, (isStableEnabled ? (isStableEnabled ? 1 : 2)
-                        : 3));
+                                                    : 3));
             }
 
             {
                 c.v = new short[20]; c.v[10] = 1; short val1 = get1();
-                c.v[10] = 2; short val2 = get1();
+                                     c.v[10] = 2; short val2 = get1();
                 assertEquals(val1, 1);
                 assertEquals(val2, (isStableEnabled ? 1 : 2));
 
                 c.v = new short[20]; c.v[10] = 3; short val3 = get1();
                 assertEquals(val3, (isStableEnabled ? (isStableEnabled ? 1 : 2)
-                        : 3));
+                                                    : 3));
             }
 
             {
@@ -220,17 +221,17 @@ public class TestStableShort {
         public static void test() throws Exception {
             {
                 c.v = new short[1][1]; c.v[0][0] = 1; short val1 = get();
-                c.v[0][0] = 2; short val2 = get();
+                                       c.v[0][0] = 2; short val2 = get();
                 assertEquals(val1, 1);
                 assertEquals(val2, (isStableEnabled ? 1 : 2));
 
                 c.v = new short[1][1]; c.v[0][0] = 3; short val3 = get();
                 assertEquals(val3, (isStableEnabled ? (isStableEnabled ? 1 : 2)
-                        : 3));
+                                                    : 3));
 
                 c.v[0] = new short[1]; c.v[0][0] = 4; short val4 = get();
                 assertEquals(val4, (isStableEnabled ? (isStableEnabled ? 1 : 2)
-                        : 4));
+                                                    : 4));
             }
 
             {
@@ -260,21 +261,21 @@ public class TestStableShort {
         public static void test() throws Exception {
             {
                 c.v = new short[1][1][1]; c.v[0][0][0] = 1; short val1 = get();
-                c.v[0][0][0] = 2; short val2 = get();
+                                          c.v[0][0][0] = 2; short val2 = get();
                 assertEquals(val1, 1);
                 assertEquals(val2, (isStableEnabled ? 1 : 2));
 
                 c.v = new short[1][1][1]; c.v[0][0][0] = 3; short val3 = get();
                 assertEquals(val3, (isStableEnabled ? (isStableEnabled ? 1 : 2)
-                        : 3));
+                                                    : 3));
 
                 c.v[0] = new short[1][1]; c.v[0][0][0] = 4; short val4 = get();
                 assertEquals(val4, (isStableEnabled ? (isStableEnabled ? 1 : 2)
-                        : 4));
+                                                    : 4));
 
                 c.v[0][0] = new short[1]; c.v[0][0][0] = 5; short val5 = get();
                 assertEquals(val5, (isStableEnabled ? (isStableEnabled ? 1 : 2)
-                        : 5));
+                                                    : 5));
             }
 
             {
@@ -311,25 +312,25 @@ public class TestStableShort {
         public static void test() throws Exception {
             {
                 c.v = new short[1][1][1][1]; c.v[0][0][0][0] = 1; short val1 = get();
-                c.v[0][0][0][0] = 2; short val2 = get();
+                                             c.v[0][0][0][0] = 2; short val2 = get();
                 assertEquals(val1, 1);
                 assertEquals(val2, (isStableEnabled ? 1 : 2));
 
                 c.v = new short[1][1][1][1]; c.v[0][0][0][0] = 3; short val3 = get();
                 assertEquals(val3, (isStableEnabled ? (isStableEnabled ? 1 : 2)
-                        : 3));
+                                                    : 3));
 
                 c.v[0] = new short[1][1][1]; c.v[0][0][0][0] = 4; short val4 = get();
                 assertEquals(val4, (isStableEnabled ? (isStableEnabled ? 1 : 2)
-                        : 4));
+                                                    : 4));
 
                 c.v[0][0] = new short[1][1]; c.v[0][0][0][0] = 5; short val5 = get();
                 assertEquals(val5, (isStableEnabled ? (isStableEnabled ? 1 : 2)
-                        : 5));
+                                                    : 5));
 
                 c.v[0][0][0] = new short[1]; c.v[0][0][0][0] = 6; short val6 = get();
                 assertEquals(val6, (isStableEnabled ? (isStableEnabled ? 1 : 2)
-                        : 6));
+                                                    : 6));
             }
 
             {
@@ -370,7 +371,7 @@ public class TestStableShort {
         public static void test() throws Exception {
             {
                 c.v = new short[1]; ((short[])c.v)[0] = 1; short val1 = get();
-                ((short[])c.v)[0] = 2; short val2 = get();
+                                    ((short[])c.v)[0] = 2; short val2 = get();
 
                 assertEquals(val1, 1);
                 assertEquals(val2, 2);
@@ -397,7 +398,7 @@ public class TestStableShort {
         public static void test() throws Exception {
             {
                 c.v = new short[1][1]; ((short[][])c.v)[0][0] = 1; short val1 = get();
-                ((short[][])c.v)[0][0] = 2; short val2 = get();
+                                       ((short[][])c.v)[0][0] = 2; short val2 = get();
 
                 assertEquals(val1, 1);
                 assertEquals(val2, 2);
@@ -405,7 +406,7 @@ public class TestStableShort {
 
             {
                 c.v = new short[1][1]; c.v[0] = new short[0]; short[] val1 = get1();
-                c.v[0] = new short[0]; short[] val2 = get1();
+                                       c.v[0] = new short[0]; short[] val2 = get1();
 
                 assertTrue((isStableEnabled ? (val1 == val2) : (val1 != val2)));
             }
@@ -433,7 +434,7 @@ public class TestStableShort {
         public static void test() throws Exception {
             {
                 c.v = new short[1][1][1]; ((short[][][])c.v)[0][0][0] = 1; short val1 = get();
-                ((short[][][])c.v)[0][0][0] = 2; short val2 = get();
+                                          ((short[][][])c.v)[0][0][0] = 2; short val2 = get();
 
                 assertEquals(val1, 1);
                 assertEquals(val2, 2);
@@ -441,14 +442,14 @@ public class TestStableShort {
 
             {
                 c.v = new short[1][1][1]; c.v[0][0] = new short[0]; short[] val1 = get1();
-                c.v[0][0] = new short[0]; short[] val2 = get1();
+                                          c.v[0][0] = new short[0]; short[] val2 = get1();
 
                 assertTrue((isStableEnabled ? (val1 == val2) : (val1 != val2)));
             }
 
             {
                 c.v = new short[1][1][1]; c.v[0] = new short[0][0]; short[][] val1 = get2();
-                c.v[0] = new short[0][0]; short[][] val2 = get2();
+                                          c.v[0] = new short[0][0]; short[][] val2 = get2();
 
                 assertTrue((isStableEnabled ? (val1 == val2) : (val1 != val2)));
             }
@@ -478,7 +479,7 @@ public class TestStableShort {
         public static void test() throws Exception {
             {
                 c.v = new A(); c.v.a = 1; A val1 = get();
-                c.v.a = 2; A val2 = get();
+                               c.v.a = 2; A val2 = get();
 
                 assertEquals(val1.a, 2);
                 assertEquals(val2.a, 2);
@@ -486,7 +487,7 @@ public class TestStableShort {
 
             {
                 c.v = new A(); c.v.a = 1; short val1 = get1();
-                c.v.a = 2; short val2 = get1();
+                               c.v.a = 2; short val2 = get1();
                 c.v = new A(); c.v.a = 3; short val3 = get1();
 
                 assertEquals(val1, 1);
@@ -512,8 +513,8 @@ public class TestStableShort {
         public static void test() throws Exception {
             {
                 c.v = new A(); c.v.next = new A();   c.v.next.next  = c.v;
-                c.v.a = 1; c.v.next.a = 1; A val1 = get();
-                c.v.a = 2; c.v.next.a = 2; A val2 = get();
+                               c.v.a = 1; c.v.next.a = 1; A val1 = get();
+                               c.v.a = 2; c.v.next.a = 2; A val2 = get();
 
                 assertEquals(val1.a, 2);
                 assertEquals(val2.a, 2);
@@ -521,10 +522,10 @@ public class TestStableShort {
 
             {
                 c.v = new A(); c.v.next = c.v;
-                c.v.a = 1; short val1 = get1();
-                c.v.a = 2; short val2 = get1();
+                               c.v.a = 1; short val1 = get1();
+                               c.v.a = 2; short val2 = get1();
                 c.v = new A(); c.v.next = c.v;
-                c.v.a = 3; short val3 = get1();
+                               c.v.a = 3; short val3 = get1();
 
                 assertEquals(val1, 1);
                 assertEquals(val2, (isStableEnabled ? 1 : 2));
@@ -550,8 +551,8 @@ public class TestStableShort {
         public static void test() throws Exception {
             {
                 c.v = new A(); c.v.left = c.v.right = c.v;
-                c.v.a = 1; short val1 = get(); short val2 = get1();
-                c.v.a = 2; short val3 = get(); short val4 = get1();
+                               c.v.a = 1; short val1 = get(); short val2 = get1();
+                               c.v.a = 2; short val3 = get(); short val4 = get1();
 
                 assertEquals(val1, 1);
                 assertEquals(val3, (isStableEnabled ? 1 : 2));
@@ -581,8 +582,8 @@ public class TestStableShort {
             {
                 A elem = new A();
                 c.v = new A[] { elem, elem }; c.v[0].left = c.v[0].right = c.v;
-                elem.a = 1; short val1 = get(); short val2 = get1();
-                elem.a = 2; short val3 = get(); short val4 = get1();
+                               elem.a = 1; short val1 = get(); short val2 = get1();
+                               elem.a = 2; short val3 = get(); short val4 = get1();
 
                 assertEquals(val1, 1);
                 assertEquals(val3, (isStableEnabled ? 1 : 2));

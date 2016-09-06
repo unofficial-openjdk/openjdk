@@ -24,7 +24,7 @@
 /*
  * @test
  * @bug 8136421
- * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9" | os.simpleArch == "aarch64")
+ * @requires (vm.simpleArch == "x64" | vm.simpleArch == "sparcv9" | vm.simpleArch == "aarch64")
  * @library / /testlibrary /test/lib
  * @library ../common/patches
  * @modules java.base/jdk.internal.misc
@@ -42,11 +42,12 @@
 package compiler.jvmci.compilerToVM;
 
 import compiler.jvmci.common.CTVMUtilities;
-import java.lang.reflect.Method;
+import jdk.test.lib.Asserts;
 import jdk.vm.ci.hotspot.CompilerToVMHelper;
 import jdk.vm.ci.hotspot.HotSpotStackFrameReference;
 import jdk.vm.ci.meta.ResolvedJavaMethod;
-import jdk.test.lib.Asserts;
+
+import java.lang.reflect.Method;
 
 public class GetNextStackFrameTest {
     private static final int RECURSION_AMOUNT = 3;

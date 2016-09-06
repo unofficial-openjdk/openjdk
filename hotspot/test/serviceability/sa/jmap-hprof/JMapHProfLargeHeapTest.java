@@ -43,6 +43,9 @@ import jdk.test.lib.ProcessTools;
  * @bug 6313383
  * @key regression
  * @summary Regression test for hprof export issue due to large heaps (>2G)
+ * Started failing on 2016.06.24 due to 8160376 on MacOS X so quarantine
+ * it on that platform:
+ * @requires os.family != "mac"
  * @library /testlibrary
  * @modules java.base/jdk.internal.misc
  *          java.compiler
@@ -84,7 +87,7 @@ public class JMapHProfLargeHeapTest {
             String expectedFormat) throws Exception, IOException,
             InterruptedException, FileNotFoundException {
         ProcessBuilder procBuilder = ProcessTools.createJavaProcessBuilder(
-                "-XaddExports:java.management/sun.management=ALL-UNNAMED", vmArgs, "JMapHProfLargeHeapProc", String.valueOf(heapSize));
+                "--add-exports=java.management/sun.management=ALL-UNNAMED", vmArgs, "JMapHProfLargeHeapProc", String.valueOf(heapSize));
         procBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
         Process largeHeapProc = procBuilder.start();
 

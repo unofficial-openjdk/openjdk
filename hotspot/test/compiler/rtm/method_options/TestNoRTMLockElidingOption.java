@@ -27,23 +27,31 @@
  * @bug 8031320
  * @summary Verify that NoRTMLockEliding option could be applied to
  *          specified method and that such method will not use rtm.
- * @library /testlibrary /test/lib /compiler/testlibrary
+ * @library /testlibrary /test/lib /
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @build TestNoRTMLockElidingOption
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
+ * @build compiler.rtm.method_options.TestNoRTMLockElidingOption
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
- *                   -XX:+WhiteBoxAPI TestNoRTMLockElidingOption
+ *                   -XX:+WhiteBoxAPI
+ *                   compiler.rtm.method_options.TestNoRTMLockElidingOption
  */
 
-import java.util.List;
-import jdk.test.lib.*;
+package compiler.rtm.method_options;
+
+import compiler.testlibrary.rtm.AbortProvoker;
+import compiler.testlibrary.rtm.AbortType;
+import compiler.testlibrary.rtm.RTMLockingStatistics;
+import compiler.testlibrary.rtm.RTMTestBase;
+import compiler.testlibrary.rtm.predicate.SupportedCPU;
+import compiler.testlibrary.rtm.predicate.SupportedVM;
+import jdk.test.lib.Asserts;
+import jdk.test.lib.OutputAnalyzer;
 import jdk.test.lib.cli.CommandLineOptionTest;
 import jdk.test.lib.cli.predicate.AndPredicate;
-import rtm.*;
-import rtm.predicate.SupportedCPU;
-import rtm.predicate.SupportedVM;
+
+import java.util.List;
 
 /**
  * Test verifies that method tagged with option <i>NoRTMLockElidingOption</i>

@@ -25,7 +25,7 @@
 /*
  * @test
  * @bug 8136421
- * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9" | os.simpleArch == "aarch64")
+ * @requires (vm.simpleArch == "x64" | vm.simpleArch == "sparcv9" | vm.simpleArch == "aarch64")
  * @summary Testing compiler.jvmci.CompilerToVM.lookupKlassInPool method
  * @library /testlibrary /test/lib /
  * @library ../common/patches
@@ -34,12 +34,14 @@
  *          java.base/jdk.internal.org.objectweb.asm
  *          java.base/jdk.internal.org.objectweb.asm.tree
  *          jdk.vm.ci/jdk.vm.ci.hotspot
+ *          jdk.vm.ci/jdk.vm.ci.runtime
  *          jdk.vm.ci/jdk.vm.ci.meta
+ *
  * @build jdk.vm.ci/jdk.vm.ci.hotspot.CompilerToVMHelper
  * @build sun.hotspot.WhiteBox
  *        compiler.jvmci.compilerToVM.LookupKlassInPoolTest
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:.
  *                   -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI
  *                   -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI
@@ -48,16 +50,18 @@
 
 package compiler.jvmci.compilerToVM;
 
-import compiler.jvmci.compilerToVM.ConstantPoolTestsHelper.DummyClasses;
 import compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes;
-import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.*;
 import compiler.jvmci.compilerToVM.ConstantPoolTestCase.TestedCPEntry;
 import compiler.jvmci.compilerToVM.ConstantPoolTestCase.Validator;
-import java.util.HashMap;
-import java.util.Map;
+import compiler.jvmci.compilerToVM.ConstantPoolTestsHelper.DummyClasses;
 import jdk.vm.ci.hotspot.CompilerToVMHelper;
 import jdk.vm.ci.hotspot.HotSpotResolvedObjectType;
 import jdk.vm.ci.meta.ConstantPool;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.CONSTANT_CLASS;
 
 /**
  * Test for {@code jdk.vm.ci.hotspot.CompilerToVM.lookupKlassInPool} method
