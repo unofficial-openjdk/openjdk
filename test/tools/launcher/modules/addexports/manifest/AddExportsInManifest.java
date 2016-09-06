@@ -114,7 +114,15 @@ public class AddExportsInManifest {
         runExpectingFail("Main-Class=Test2,Add-Exports=java.base/jdk.internal.misc",
                          "InaccessibleObjectException");
 
+        // run with leading and trailing spaces
+        runExpectingPass("Main-Class=Test1,Add-Exports=  java.base/jdk.internal.misc");
+        runExpectingPass("Main-Class=Test1,Add-Exports=java.base/jdk.internal.misc  ");
 
+        // run with multiple values
+        runExpectingPass("Main-Class=Test1,Add-Exports=java.base/jdk.internal.misc"
+                + " java.base/jdk.internal.loader");
+        runExpectingPass("Main-Class=Test1,Add-Exports=java.base/jdk.internal.loader"
+                + " java.base/jdk.internal.misc");
     }
 
     /**
@@ -123,6 +131,16 @@ public class AddExportsInManifest {
     public void testWithAddExportsPrivate() throws Exception {
         runExpectingPass("Main-Class=Test1,Add-Exports-Private=java.base/jdk.internal.misc");
         runExpectingPass("Main-Class=Test2,Add-Exports-Private=java.base/jdk.internal.misc");
+
+        // run with leading and trailing spaces
+        runExpectingPass("Main-Class=Test1,Add-Exports-Private=  java.base/jdk.internal.misc");
+        runExpectingPass("Main-Class=Test1,Add-Exports-Private=java.base/jdk.internal.misc  ");
+
+        // run with multiple values
+        runExpectingPass("Main-Class=Test1,Add-Exports-Private=java.base/jdk.internal.misc"
+                + " java.base/jdk.internal.loader");
+        runExpectingPass("Main-Class=Test1,Add-Exports-Private=java.base/jdk.internal.loader"
+                + " java.base/jdk.internal.misc");
     }
 
     /**

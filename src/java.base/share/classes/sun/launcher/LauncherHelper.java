@@ -483,10 +483,10 @@ public final class LauncherHelper {
 
     /**
      * Process Add-Exports or Add-Exports-All value. The value is
-     * {@code <module>/<package>(,<module>/<package>)*}.
+     * {@code <module>/<package> ( <module>/<package>)*}.
      */
     static void addExports(String value, boolean nonPublic, Set<String> values) {
-        for (String moduleAndPackage : value.split(",")) {
+        for (String moduleAndPackage : value.split(" ")) {
             String[] s = moduleAndPackage.trim().split("/");
             if (s.length == 2) {
 
