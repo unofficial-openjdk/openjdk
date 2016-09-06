@@ -119,6 +119,17 @@
 java/beans/Introspector/8132566/OverridePropertyInfoTest.java   8132565 generic-all
 java/beans/Introspector/8132566/OverrideUserDefPropertyInfoTest.java 8132565 generic-all
 
+java/beans/XMLEncoder/java_util_Collections_CheckedCollection.java  8165263 generic-all
+java/beans/XMLEncoder/java_util_Collections_CheckedList.java        8165263 generic-all
+java/beans/XMLEncoder/java_util_Collections_CheckedMap.java         8165263 generic-all
+java/beans/XMLEncoder/java_util_Collections_CheckedRandomAccessList.java   8165263 generic-all
+java/beans/XMLEncoder/java_util_Collections_CheckedSet.java         8165263 generic-all
+java/beans/XMLEncoder/java_util_Collections_CheckedSortedMap.java   8165263 generic-all
+java/beans/XMLEncoder/java_util_Collections_CheckedSortedSet.java   8165263 generic-all
+java/beans/XMLEncoder/java_util_EnumMap.java          8165263 generic-all
+java/beans/XMLEncoder/java_util_JumboEnumSet.java     8165263 generic-all
+java/beans/XMLEncoder/java_util_RegularEnumSet.java   8165263 generic-all
+
 ############################################################################
 
 # jdk_lang
