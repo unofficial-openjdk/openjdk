@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,19 +27,22 @@ import static catalog.CatalogTestUtils.catalogUriResolver;
 import static catalog.ResolutionChecker.checkUriResolution;
 import static catalog.ResolutionChecker.expectExceptionOnUri;
 
+import javax.xml.catalog.CatalogResolver;
 import javax.xml.catalog.CatalogException;
-import javax.xml.catalog.CatalogUriResolver;
 
 import org.testng.annotations.DataProvider;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 /*
  * @test
  * @bug 8077931
+ * @library /javax/xml/jaxp/libs
+ * @run testng/othervm -DrunSecMngr=true catalog.DelegateUriTest
+ * @run testng/othervm catalog.DelegateUriTest
  * @summary Get matched URIs from delegateURI entries.
- * @compile ../../libs/catalog/CatalogTestUtils.java
- * @compile ../../libs/catalog/ResolutionChecker.java
  */
+@Listeners({jaxp.library.FilePolicy.class})
 public class DelegateUriTest {
 
     @Test(dataProvider = "uri-matchedUri")
@@ -48,7 +51,7 @@ public class DelegateUriTest {
     }
 
     @DataProvider(name = "uri-matchedUri")
-    private Object[][] data() {
+    public Object[][] data() {
         return new Object[][] {
                 // The matched URI of the specified URI reference is defined in
                 // a delegate catalog file of the current catalog file.
@@ -78,7 +81,7 @@ public class DelegateUriTest {
     }
 
     @DataProvider(name = "uri-expectedExceptionClass")
-    private Object[][] dataOnException() {
+    public Object[][] dataOnException() {
         return new Object[][] {
                 // The matched delegateURI entry of the specified URI reference
                 // defines a non-existing delegate catalog file. That should
@@ -92,7 +95,7 @@ public class DelegateUriTest {
                         CatalogException.class } };
     }
 
-    private CatalogUriResolver createResolver() {
+    private CatalogResolver createResolver() {
         return catalogUriResolver("delegateUri.xml");
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,18 +35,25 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
 import org.testng.annotations.DataProvider;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
 
 /*
+ * @test
+ * @library /javax/xml/jaxp/libs /javax/xml/jaxp/unittest
+ * @compile DocumentExtFunc.java
+ * @run testng/othervm -DrunSecMngr=true transform.XSLTFunctionsTest
+ * @run testng/othervm transform.XSLTFunctionsTest
  * @summary This class contains tests for XSLT functions.
  */
 
+//@Listeners({jaxp.library.BasePolicy.class}) //uncomment this line after 8161454 is resolved
 public class XSLTFunctionsTest {
 
     /**
-     * @bug 8062518
+     * @bug 8062518 8153082
      * Verifies that a reference to the DTM created by XSLT document function is
      * actually read from the DTM by an extension function.
      * @param xml Content of xml file to process
@@ -65,6 +72,7 @@ public class XSLTFunctionsTest {
 
         // Create factory and transformer
         TransformerFactory tf = TransformerFactory.newInstance();
+        tf.setFeature("http://www.oracle.com/xml/jaxp/properties/enableExtensionFunctions", true);
         Transformer t = tf.newTransformer( xslsrc );
         t.setErrorListener(tf.getErrorListener());
 
@@ -126,3 +134,4 @@ public class XSLTFunctionsTest {
     static final String documentTesteExpectedResult = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                                                     + "<root>[Test:Doc][Test:External Doc]</root>";
 }
+
