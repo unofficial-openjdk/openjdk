@@ -30,15 +30,17 @@
  * @run main ExcludeVMPluginTest
  */
 import java.io.ByteArrayInputStream;
+import java.net.URI;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
-import jdk.tools.jlink.internal.ModulePoolImpl;
+import jdk.tools.jlink.internal.ResourcePoolManager;
 
 import jdk.tools.jlink.internal.plugins.ExcludeVMPlugin;
 import jdk.tools.jlink.plugin.Plugin;
-import jdk.tools.jlink.plugin.ModulePool;
-import jdk.tools.jlink.plugin.ModuleEntry;
-import jdk.tools.jlink.plugin.TransformerPlugin;
+import jdk.tools.jlink.plugin.ResourcePool;
+import jdk.tools.jlink.plugin.ResourcePoolEntry;
 
 public class ExcludeVMPluginTest {
 
@@ -164,52 +166,68 @@ public class ExcludeVMPluginTest {
     private void doCheckVM(String vm, String[] input, String jvmcfg, String[] expectedOutput, String expectdJvmCfg) throws Exception {
         // Create a pool with jvm.cfg and the input paths.
         byte[] jvmcfgContent = jvmcfg.getBytes();
-        ModulePool pool = new ModulePoolImpl();
-        pool.add(ModuleEntry.create("/java.base/native/jvm.cfg",
-                ModuleEntry.Type.NATIVE_LIB, jvmcfgContent));
-        for (String in : input) {
-            pool.add(ModuleEntry.create(in,
-                    ModuleEntry.Type.NATIVE_LIB, new byte[0]));
-        }
-        ModulePool out = new ModulePoolImpl();
+        ResourcePoolManager poolMgr = new ResourcePoolManager();
+        poolMgr.add(
+            ResourcePoolEntry.create("/java.base/native/jvm.cfg",
+                ResourcePoolEntry.Type.NATIVE_LIB, jvmcfgContent));
 
-        TransformerPlugin p = new ExcludeVMPlugin();
+        // java.base/module-info.class is used by exclude vm plugin
+        // to get current osName(). We read it from jrt-fs and add a
+        // ResourcePoolEntry
+        poolMgr.add(
+            ResourcePoolEntry.create("/java.base/module-info.class",
+                ResourcePoolEntry.Type.CLASS_OR_RESOURCE, getJavaBaseModuleInfo()));
+        for (String in : input) {
+            poolMgr.add(ResourcePoolEntry.create(in,
+                    ResourcePoolEntry.Type.NATIVE_LIB, new byte[0]));
+        }
+        ResourcePoolManager outMgr = new ResourcePoolManager();
+
+        Plugin p = new ExcludeVMPlugin();
         Map<String, String> config = new HashMap<>();
         if (vm != null) {
             config.put(ExcludeVMPlugin.NAME, vm);
         }
         p.configure(config);
-        p.visit(pool, out);
+        ResourcePool out = p.transform(poolMgr.resourcePool(), outMgr.resourcePoolBuilder());
 
-        String newContent = new String(out.findEntry("/java.base/native/jvm.cfg").get().stream().readAllBytes());
+        String newContent = new String(out.findEntry("/java.base/native/jvm.cfg").get().contentBytes());
 
         if (!expectdJvmCfg.equals(newContent)) {
             throw new Exception("Got content " + newContent + " expected " + expectdJvmCfg);
         }
 
-        if (out.getEntryCount() != (expectedOutput.length + 1)) {
+        // Apart from native resources, we should find jvm.cfg and
+        // java.base/module-info.class. So, we add 2 here to the
+        // expected count!
+        if (out.entryCount() != (expectedOutput.length + 2)) {
             out.entries().forEach(m -> {
-                System.err.println(m.getPath());
+                System.err.println(m.path());
             });
-            throw new Exception("Invalid output size " + out.getEntryCount() + " expected " + (expectedOutput.length + 1));
+            throw new Exception("Invalid output size " + out.entryCount() + " expected " + (expectedOutput.length + 2));
         }
 
         out.entries().forEach(md -> {
-            if (md.getPath().equals("/java.base/native/jvm.cfg")) {
+            if (md.path().equals("/java.base/native/jvm.cfg") ||
+                md.path().equals("/java.base/module-info.class")) {
                 return;
             }
             boolean contained = false;
             for (String o : expectedOutput) {
-                if (md.getPath().equals(o)) {
+                if (md.path().equals(o)) {
                     contained = true;
                     break;
                 }
             }
             if (!contained) {
-                throw new RuntimeException(md.getPath() + " not expected");
+                throw new RuntimeException(md.path() + " not expected");
             }
         });
+    }
 
+    // read java.base/module-info.class from jrt-fs
+    private static Path getJavaBaseModuleInfo() {
+        return Paths.get(URI.create("jrt:/modules/java.base/module-info.class"));
     }
 
     private static boolean isWindows() {

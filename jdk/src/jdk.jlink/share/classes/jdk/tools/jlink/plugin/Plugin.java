@@ -57,28 +57,18 @@ public interface Plugin {
         SORTER("SORTER"),
         COMPRESSOR("COMPRESSOR"),
         METAINFO_ADDER("METAINFO_ADDER"),
-        VERIFIER("VERIFIER", true),
-        PROCESSOR("PROCESSOR", true),
-        PACKAGER("PACKAGER", true);
+        VERIFIER("VERIFIER"),
+        PROCESSOR("PROCESSOR"),
+        PACKAGER("PACKAGER");
 
         private final String name;
-        private final boolean postProcessor;
-
-        Category(String name, boolean postProcessor) {
-            this.name = name;
-            this.postProcessor = postProcessor;
-        }
 
         Category(String name) {
-            this(name, false);
+            this.name = name;
         }
 
         public String getName() {
             return name;
-        }
-
-        public boolean isPostProcessor() {
-            return postProcessor;
         }
     }
 
@@ -114,24 +104,6 @@ public interface Plugin {
      */
     public default Set<State> getState() {
         return EnumSet.of(State.FUNCTIONAL);
-    }
-
-    /**
-     * The set of plugin names that must be located, within the stack of plugins,
-     * before this plugin.
-     * @return The set of names. By default this set is empty.
-     */
-    public default Set<String> isBefore() {
-        return Collections.emptySet();
-    }
-
-    /**
-     * The set of plugin names that must be located, within the stack of plugins,
-     * after this plugin.
-     * @return The set of names. By default this set is empty.
-     */
-    public default Set<String> isAfter() {
-        return Collections.emptySet();
     }
 
     /**
@@ -209,4 +181,15 @@ public interface Plugin {
      */
     public default void configure(Map<String, String> config) {
     }
+
+    /**
+     * Visit the content of the modules that are composing the image.
+     *
+     * @param in Read only content.
+     * @param out The pool to fill with content. This pool must contain
+     * the result of the visit.
+     *
+     * @throws PluginException
+     */
+    public ResourcePool transform(ResourcePool in, ResourcePoolBuilder out);
 }

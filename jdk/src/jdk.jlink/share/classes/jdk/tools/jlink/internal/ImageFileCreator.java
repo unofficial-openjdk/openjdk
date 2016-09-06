@@ -25,10 +25,8 @@
 package jdk.tools.jlink.internal;
 
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
@@ -44,11 +42,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import jdk.tools.jlink.internal.Archive.Entry;
 import jdk.tools.jlink.internal.Archive.Entry.EntryType;
-import jdk.tools.jlink.internal.ModulePoolImpl.CompressedModuleData;
-import jdk.tools.jlink.plugin.ExecutableImage;
+import jdk.tools.jlink.internal.ResourcePoolManager.CompressedModuleData;
 import jdk.tools.jlink.plugin.PluginException;
-import jdk.tools.jlink.plugin.ModulePool;
-import jdk.tools.jlink.plugin.ModuleEntry;
+import jdk.tools.jlink.plugin.ResourcePool;
+import jdk.tools.jlink.plugin.ResourcePoolEntry;
 
 /**
  * An image (native endian.)
@@ -73,7 +70,7 @@ public final class ImageFileCreator {
     private final Map<String, List<Entry>> entriesForModule = new HashMap<>();
     private final ImagePluginStack plugins;
     private ImageFileCreator(ImagePluginStack plugins) {
-        this.plugins = plugins;
+        this.plugins = Objects.requireNonNull(plugins);
     }
 
     public static ExecutableImage create(Set<Archive> archives,
@@ -144,7 +141,7 @@ public final class ImageFileCreator {
                                     }));
             ByteOrder order = ByteOrder.nativeOrder();
             BasicImageWriter writer = new BasicImageWriter(order);
-            ModulePoolImpl pool = createPools(archives, entriesForModule, order, writer);
+            ResourcePoolManager pool = createPoolManager(archives, entriesForModule, order, writer);
             try (OutputStream fos = Files.newOutputStream(jimageFile);
                     BufferedOutputStream bos = new BufferedOutputStream(fos);
                     DataOutputStream out = new DataOutputStream(bos)) {
@@ -162,52 +159,61 @@ public final class ImageFileCreator {
             ByteOrder byteOrder)
             throws IOException {
         BasicImageWriter writer = new BasicImageWriter(byteOrder);
-        ModulePoolImpl allContent = createPools(archives,
+        ResourcePoolManager allContent = createPoolManager(archives,
                 entriesForModule, byteOrder, writer);
-        ModulePoolImpl result = generateJImage(allContent,
+        ResourcePool result = generateJImage(allContent,
              writer, plugins, plugins.getJImageFileOutputStream());
 
         //Handle files.
         try {
-            plugins.storeFiles(allContent, result, writer);
+            plugins.storeFiles(allContent.resourcePool(), result, writer);
         } catch (Exception ex) {
+            if (JlinkTask.DEBUG) {
+                ex.printStackTrace();
+            }
             throw new IOException(ex);
         }
     }
 
-    private static ModulePoolImpl generateJImage(ModulePoolImpl allContent,
+    private static ResourcePool generateJImage(ResourcePoolManager allContent,
             BasicImageWriter writer,
             ImagePluginStack pluginSupport,
             DataOutputStream out
     ) throws IOException {
-        ModulePoolImpl resultResources;
+        ResourcePool resultResources;
         try {
             resultResources = pluginSupport.visitResources(allContent);
         } catch (PluginException pe) {
+            if (JlinkTask.DEBUG) {
+                pe.printStackTrace();
+            }
             throw pe;
         } catch (Exception ex) {
+            if (JlinkTask.DEBUG) {
+                ex.printStackTrace();
+            }
             throw new IOException(ex);
         }
         Set<String> duplicates = new HashSet<>();
         long[] offset = new long[1];
 
-        List<ModuleEntry> content = new ArrayList<>();
+        List<ResourcePoolEntry> content = new ArrayList<>();
         List<String> paths = new ArrayList<>();
                  // the order of traversing the resources and the order of
         // the module content being written must be the same
         resultResources.entries().forEach(res -> {
-            if (res.getType().equals(ModuleEntry.Type.CLASS_OR_RESOURCE)) {
-                String path = res.getPath();
+            if (res.type().equals(ResourcePoolEntry.Type.CLASS_OR_RESOURCE)) {
+                String path = res.path();
                 content.add(res);
-                long uncompressedSize = res.getLength();
+                long uncompressedSize = res.contentLength();
                 long compressedSize = 0;
                 if (res instanceof CompressedModuleData) {
                     CompressedModuleData comp
                             = (CompressedModuleData) res;
-                    compressedSize = res.getLength();
+                    compressedSize = res.contentLength();
                     uncompressedSize = comp.getUncompressedSize();
                 }
-                long onFileSize = res.getLength();
+                long onFileSize = res.contentLength();
 
                 if (duplicates.contains(path)) {
                     System.err.format("duplicate resource \"%s\", skipping%n",
@@ -232,9 +238,9 @@ public final class ImageFileCreator {
         out.write(bytes, 0, bytes.length);
 
         // write module content
-        for (ModuleEntry res : content) {
+        content.stream().forEach((res) -> {
             res.write(out);
-        }
+        });
 
         tree.addContent(out);
 
@@ -243,11 +249,11 @@ public final class ImageFileCreator {
         return resultResources;
     }
 
-    private static ModulePoolImpl createPools(Set<Archive> archives,
+    private static ResourcePoolManager createPoolManager(Set<Archive> archives,
             Map<String, List<Entry>> entriesForModule,
             ByteOrder byteOrder,
             BasicImageWriter writer) throws IOException {
-        ModulePoolImpl resources = new ModulePoolImpl(byteOrder, new StringTable() {
+        ResourcePoolManager resources = new ResourcePoolManager(byteOrder, new StringTable() {
 
             @Override
             public int addString(String str) {
@@ -277,25 +283,10 @@ public final class ImageFileCreator {
                     path = "/" + mn + "/" + entry.path();
                 }
 
-                resources.add(new ArchiveEntryModuleEntry(mn, path, entry));
+                resources.add(new ArchiveEntryResourcePoolEntry(mn, path, entry));
             }
         }
         return resources;
-    }
-
-    private static final int BUF_SIZE = 8192;
-
-    private static byte[] readAllBytes(InputStream is) throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        byte[] buf = new byte[BUF_SIZE];
-        while (true) {
-            int n = is.read(buf);
-            if (n < 0) {
-                break;
-            }
-            baos.write(buf, 0, n);
-        }
-        return baos.toByteArray();
     }
 
     /**

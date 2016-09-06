@@ -30,6 +30,8 @@ import java.io.File;
 import java.lang.reflect.Constructor;
 import java.util.*;
 import java.security.*;
+import static sun.security.util.SecurityConstants.PROVIDER_VER;
+
 
 /**
  * OracleUcrypto provider main class.
@@ -196,7 +198,7 @@ public final class UcryptoProvider extends Provider {
     }
 
     public UcryptoProvider() {
-        super("OracleUcrypto", 9.0d, "Provider using Oracle Ucrypto API");
+        super("OracleUcrypto", PROVIDER_VER, "Provider using Oracle Ucrypto API");
 
         AccessController.doPrivileged(new PrivilegedAction<>() {
             public Void run() {
@@ -235,13 +237,14 @@ public final class UcryptoProvider extends Provider {
 
     @Override
     public Provider configure(String configArg) throws InvalidParameterException {
-        // default policy entry only grants read access to default config
-        if (!defConfigName.equals(configArg)) {
-            throw new InvalidParameterException("Ucrypto provider can only be " +
-                "configured with default configuration file");
+        try {
+            init(configArg);
+        } catch (UcryptoException ue) {
+            InvalidParameterException ipe =
+                    new InvalidParameterException("Error using " + configArg);
+            ipe.initCause(ue.getCause());
+            throw ipe;
         }
-        // re-read the config
-        init(defConfigName);
         return this;
     }
 

@@ -33,13 +33,11 @@ import java.security.MessageDigest;
 import java.security.Key;
 import java.security.PublicKey;
 import java.security.PrivateKey;
-import java.security.Security;
 import java.security.Signature;
 import java.security.Timestamp;
 import java.security.UnrecoverableEntryException;
 import java.security.UnrecoverableKeyException;
 import java.security.Principal;
-import java.security.Provider;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.CertStoreException;
@@ -128,8 +126,10 @@ public final class Main {
     // them through the command line.
 
     private Set<Pair <String, String>> providers = null;
+    private Set<Pair <String, String>> providerClasses = null;
     private String storetype = null;
     private boolean hasStoretypeOption = false;
+    private boolean hasSrcStoretypeOption = false;
     private String srcProviderName = null;
     private String providerName = null;
     private String pathlist = null;
@@ -153,6 +153,7 @@ public final class Main {
     private boolean trustcacerts = false;
     private boolean protectedPath = false;
     private boolean srcprotectedPath = false;
+    private boolean cacerts = false;
     private CertificateFactory cf = null;
     private KeyStore caks = null; // "cacerts" keystore
     private char[] srcstorePass = null;
@@ -166,57 +167,57 @@ public final class Main {
     enum Command {
         CERTREQ("Generates.a.certificate.request",
             ALIAS, SIGALG, FILEOUT, KEYPASS, KEYSTORE, DNAME,
-            STOREPASS, STORETYPE, PROVIDERNAME, PROVIDERCLASS,
-            PROVIDERARG, PROVIDERPATH, V, PROTECTED),
+            STOREPASS, STORETYPE, PROVIDERNAME, ADDPROVIDER,
+            PROVIDERCLASS, PROVIDERPATH, V, PROTECTED),
         CHANGEALIAS("Changes.an.entry.s.alias",
-            ALIAS, DESTALIAS, KEYPASS, KEYSTORE, STOREPASS,
-            STORETYPE, PROVIDERNAME, PROVIDERCLASS, PROVIDERARG,
+            ALIAS, DESTALIAS, KEYPASS, KEYSTORE, CACERTS, STOREPASS,
+            STORETYPE, PROVIDERNAME, ADDPROVIDER, PROVIDERCLASS,
             PROVIDERPATH, V, PROTECTED),
         DELETE("Deletes.an.entry",
-            ALIAS, KEYSTORE, STOREPASS, STORETYPE,
-            PROVIDERNAME, PROVIDERCLASS, PROVIDERARG,
+            ALIAS, KEYSTORE, CACERTS, STOREPASS, STORETYPE,
+            PROVIDERNAME, ADDPROVIDER, PROVIDERCLASS,
             PROVIDERPATH, V, PROTECTED),
         EXPORTCERT("Exports.certificate",
-            RFC, ALIAS, FILEOUT, KEYSTORE, STOREPASS,
-            STORETYPE, PROVIDERNAME, PROVIDERCLASS, PROVIDERARG,
+            RFC, ALIAS, FILEOUT, KEYSTORE, CACERTS, STOREPASS,
+            STORETYPE, PROVIDERNAME, ADDPROVIDER, PROVIDERCLASS,
             PROVIDERPATH, V, PROTECTED),
         GENKEYPAIR("Generates.a.key.pair",
             ALIAS, KEYALG, KEYSIZE, SIGALG, DESTALIAS, DNAME,
             STARTDATE, EXT, VALIDITY, KEYPASS, KEYSTORE,
-            STOREPASS, STORETYPE, PROVIDERNAME, PROVIDERCLASS,
-            PROVIDERARG, PROVIDERPATH, V, PROTECTED),
+            STOREPASS, STORETYPE, PROVIDERNAME, ADDPROVIDER,
+            PROVIDERCLASS, PROVIDERPATH, V, PROTECTED),
         GENSECKEY("Generates.a.secret.key",
             ALIAS, KEYPASS, KEYALG, KEYSIZE, KEYSTORE,
-            STOREPASS, STORETYPE, PROVIDERNAME, PROVIDERCLASS,
-            PROVIDERARG, PROVIDERPATH, V, PROTECTED),
+            STOREPASS, STORETYPE, PROVIDERNAME, ADDPROVIDER,
+            PROVIDERCLASS, PROVIDERPATH, V, PROTECTED),
         GENCERT("Generates.certificate.from.a.certificate.request",
             RFC, INFILE, OUTFILE, ALIAS, SIGALG, DNAME,
             STARTDATE, EXT, VALIDITY, KEYPASS, KEYSTORE,
-            STOREPASS, STORETYPE, PROVIDERNAME, PROVIDERCLASS,
-            PROVIDERARG, PROVIDERPATH, V, PROTECTED),
+            STOREPASS, STORETYPE, PROVIDERNAME, ADDPROVIDER,
+            PROVIDERCLASS, PROVIDERPATH, V, PROTECTED),
         IMPORTCERT("Imports.a.certificate.or.a.certificate.chain",
             NOPROMPT, TRUSTCACERTS, PROTECTED, ALIAS, FILEIN,
-            KEYPASS, KEYSTORE, STOREPASS, STORETYPE,
-            PROVIDERNAME, PROVIDERCLASS, PROVIDERARG,
+            KEYPASS, KEYSTORE, CACERTS, STOREPASS, STORETYPE,
+            PROVIDERNAME, ADDPROVIDER, PROVIDERCLASS,
             PROVIDERPATH, V),
         IMPORTPASS("Imports.a.password",
             ALIAS, KEYPASS, KEYALG, KEYSIZE, KEYSTORE,
-            STOREPASS, STORETYPE, PROVIDERNAME, PROVIDERCLASS,
-            PROVIDERARG, PROVIDERPATH, V, PROTECTED),
+            STOREPASS, STORETYPE, PROVIDERNAME, ADDPROVIDER,
+            PROVIDERCLASS, PROVIDERPATH, V, PROTECTED),
         IMPORTKEYSTORE("Imports.one.or.all.entries.from.another.keystore",
             SRCKEYSTORE, DESTKEYSTORE, SRCSTORETYPE,
             DESTSTORETYPE, SRCSTOREPASS, DESTSTOREPASS,
             SRCPROTECTED, DESTPROTECTED, SRCPROVIDERNAME, DESTPROVIDERNAME,
             SRCALIAS, DESTALIAS, SRCKEYPASS, DESTKEYPASS,
-            NOPROMPT, PROVIDERCLASS, PROVIDERARG, PROVIDERPATH,
+            NOPROMPT, ADDPROVIDER, PROVIDERCLASS, PROVIDERPATH,
             V),
         KEYPASSWD("Changes.the.key.password.of.an.entry",
             ALIAS, KEYPASS, NEW, KEYSTORE, STOREPASS,
-            STORETYPE, PROVIDERNAME, PROVIDERCLASS, PROVIDERARG,
+            STORETYPE, PROVIDERNAME, ADDPROVIDER, PROVIDERCLASS,
             PROVIDERPATH, V),
         LIST("Lists.entries.in.a.keystore",
-            RFC, ALIAS, KEYSTORE, STOREPASS, STORETYPE,
-            PROVIDERNAME, PROVIDERCLASS, PROVIDERARG,
+            RFC, ALIAS, KEYSTORE, CACERTS, STOREPASS, STORETYPE,
+            PROVIDERNAME, ADDPROVIDER, PROVIDERCLASS,
             PROVIDERPATH, V, PROTECTED),
         PRINTCERT("Prints.the.content.of.a.certificate",
             RFC, FILEIN, SSLSERVER, JARFILE, V),
@@ -225,27 +226,27 @@ public final class Main {
         PRINTCRL("Prints.the.content.of.a.CRL.file",
             FILEIN, V),
         STOREPASSWD("Changes.the.store.password.of.a.keystore",
-            NEW, KEYSTORE, STOREPASS, STORETYPE, PROVIDERNAME,
-            PROVIDERCLASS, PROVIDERARG, PROVIDERPATH, V),
+            NEW, KEYSTORE, CACERTS, STOREPASS, STORETYPE, PROVIDERNAME,
+            ADDPROVIDER, PROVIDERCLASS, PROVIDERPATH, V),
 
         // Undocumented start here, KEYCLONE is used a marker in -help;
 
         KEYCLONE("Clones.a.key.entry",
             ALIAS, DESTALIAS, KEYPASS, NEW, STORETYPE,
-            KEYSTORE, STOREPASS, PROVIDERNAME, PROVIDERCLASS,
-            PROVIDERARG, PROVIDERPATH, V),
+            KEYSTORE, STOREPASS, PROVIDERNAME, ADDPROVIDER,
+            PROVIDERCLASS, PROVIDERPATH, V),
         SELFCERT("Generates.a.self.signed.certificate",
             ALIAS, SIGALG, DNAME, STARTDATE, VALIDITY, KEYPASS,
             STORETYPE, KEYSTORE, STOREPASS, PROVIDERNAME,
-            PROVIDERCLASS, PROVIDERARG, PROVIDERPATH, V),
+            ADDPROVIDER, PROVIDERCLASS, PROVIDERPATH, V),
         GENCRL("Generates.CRL",
             RFC, FILEOUT, ID,
             ALIAS, SIGALG, EXT, KEYPASS, KEYSTORE,
-            STOREPASS, STORETYPE, PROVIDERNAME, PROVIDERCLASS,
-            PROVIDERARG, PROVIDERPATH, V, PROTECTED),
+            STOREPASS, STORETYPE, PROVIDERNAME, ADDPROVIDER,
+            PROVIDERCLASS, PROVIDERPATH, V, PROTECTED),
         IDENTITYDB("Imports.entries.from.a.JDK.1.1.x.style.identity.database",
             FILEIN, STORETYPE, KEYSTORE, STOREPASS, PROVIDERNAME,
-            PROVIDERCLASS, PROVIDERARG, PROVIDERPATH, V);
+            ADDPROVIDER, PROVIDERCLASS, PROVIDERPATH, V);
 
         final String description;
         final Option[] options;
@@ -289,48 +290,49 @@ public final class Main {
 
     enum Option {
         ALIAS("alias", "<alias>", "alias.name.of.the.entry.to.process"),
-        DESTALIAS("destalias", "<destalias>", "destination.alias"),
+        DESTALIAS("destalias", "<alias>", "destination.alias"),
         DESTKEYPASS("destkeypass", "<arg>", "destination.key.password"),
-        DESTKEYSTORE("destkeystore", "<destkeystore>", "destination.keystore.name"),
+        DESTKEYSTORE("destkeystore", "<keystore>", "destination.keystore.name"),
         DESTPROTECTED("destprotected", null, "destination.keystore.password.protected"),
-        DESTPROVIDERNAME("destprovidername", "<destprovidername>", "destination.keystore.provider.name"),
+        DESTPROVIDERNAME("destprovidername", "<name>", "destination.keystore.provider.name"),
         DESTSTOREPASS("deststorepass", "<arg>", "destination.keystore.password"),
-        DESTSTORETYPE("deststoretype", "<deststoretype>", "destination.keystore.type"),
-        DNAME("dname", "<dname>", "distinguished.name"),
+        DESTSTORETYPE("deststoretype", "<type>", "destination.keystore.type"),
+        DNAME("dname", "<name>", "distinguished.name"),
         EXT("ext", "<value>", "X.509.extension"),
-        FILEOUT("file", "<filename>", "output.file.name"),
-        FILEIN("file", "<filename>", "input.file.name"),
+        FILEOUT("file", "<file>", "output.file.name"),
+        FILEIN("file", "<file>", "input.file.name"),
         ID("id", "<id:reason>", "Serial.ID.of.cert.to.revoke"),
-        INFILE("infile", "<filename>", "input.file.name"),
-        KEYALG("keyalg", "<keyalg>", "key.algorithm.name"),
+        INFILE("infile", "<file>", "input.file.name"),
+        KEYALG("keyalg", "<alg>", "key.algorithm.name"),
         KEYPASS("keypass", "<arg>", "key.password"),
-        KEYSIZE("keysize", "<keysize>", "key.bit.size"),
+        KEYSIZE("keysize", "<size>", "key.bit.size"),
         KEYSTORE("keystore", "<keystore>", "keystore.name"),
+        CACERTS("cacerts", null, "access.the.cacerts.keystore"),
         NEW("new", "<arg>", "new.password"),
         NOPROMPT("noprompt", null, "do.not.prompt"),
-        OUTFILE("outfile", "<filename>", "output.file.name"),
+        OUTFILE("outfile", "<file>", "output.file.name"),
         PROTECTED("protected", null, "password.through.protected.mechanism"),
-        PROVIDERARG("providerarg", "<arg>", "provider.argument"),
-        PROVIDERCLASS("providerclass", "<providerclass>", "provider.class.name"),
-        PROVIDERNAME("providername", "<providername>", "provider.name"),
-        PROVIDERPATH("providerpath", "<pathlist>", "provider.classpath"),
+        PROVIDERCLASS("providerclass", "<class>\n[-providerarg <arg>]", "provider.class.option"),
+        ADDPROVIDER("addprovider", "<name>\n[-providerarg <arg>]", "addprovider.option"),
+        PROVIDERNAME("providername", "<name>", "provider.name"),
+        PROVIDERPATH("providerpath", "<list>", "provider.classpath"),
         RFC("rfc", null, "output.in.RFC.style"),
-        SIGALG("sigalg", "<sigalg>", "signature.algorithm.name"),
-        SRCALIAS("srcalias", "<srcalias>", "source.alias"),
+        SIGALG("sigalg", "<alg>", "signature.algorithm.name"),
+        SRCALIAS("srcalias", "<alias>", "source.alias"),
         SRCKEYPASS("srckeypass", "<arg>", "source.key.password"),
-        SRCKEYSTORE("srckeystore", "<srckeystore>", "source.keystore.name"),
+        SRCKEYSTORE("srckeystore", "<keystore>", "source.keystore.name"),
         SRCPROTECTED("srcprotected", null, "source.keystore.password.protected"),
-        SRCPROVIDERNAME("srcprovidername", "<srcprovidername>", "source.keystore.provider.name"),
+        SRCPROVIDERNAME("srcprovidername", "<name>", "source.keystore.provider.name"),
         SRCSTOREPASS("srcstorepass", "<arg>", "source.keystore.password"),
-        SRCSTORETYPE("srcstoretype", "<srcstoretype>", "source.keystore.type"),
+        SRCSTORETYPE("srcstoretype", "<type>", "source.keystore.type"),
         SSLSERVER("sslserver", "<server[:port]>", "SSL.server.host.and.port"),
-        JARFILE("jarfile", "<filename>", "signed.jar.file"),
-        STARTDATE("startdate", "<startdate>", "certificate.validity.start.date.time"),
+        JARFILE("jarfile", "<file>", "signed.jar.file"),
+        STARTDATE("startdate", "<date>", "certificate.validity.start.date.time"),
         STOREPASS("storepass", "<arg>", "keystore.password"),
-        STORETYPE("storetype", "<storetype>", "keystore.type"),
+        STORETYPE("storetype", "<type>", "keystore.type"),
         TRUSTCACERTS("trustcacerts", null, "trust.certificates.from.cacerts"),
         V("v", null, "verbose.output"),
-        VALIDITY("validity", "<valDays>", "validity.number.of.days");
+        VALIDITY("validity", "<days>", "validity.number.of.days");
 
         final String name, arg, description;
         Option(String name, String arg, String description) {
@@ -343,8 +345,6 @@ public final class Main {
             return "-" + name;
         }
     };
-
-    private static final Class<?>[] PARAM_STRING = { String.class };
 
     private static final String NONE = "NONE";
     private static final String P11KEYSTORE = "PKCS11";
@@ -474,14 +474,16 @@ public final class Main {
                 help = true;
             } else if (collator.compare(flags, "-conf") == 0) {
                 i++;
-            }
-
-            /*
-             * specifiers
-             */
-            else if (collator.compare(flags, "-keystore") == 0 ||
-                    collator.compare(flags, "-destkeystore") == 0) {
+            } else if (collator.compare(flags, "-keystore") == 0) {
                 ksfname = args[++i];
+                if (new File(ksfname).getCanonicalPath().equals(
+                        new File(KeyStoreUtil.getCacerts()).getCanonicalPath())) {
+                    System.err.println(rb.getString("warning.cacerts.option"));
+                }
+            } else if (collator.compare(flags, "-destkeystore") == 0) {
+                ksfname = args[++i];
+            } else if (collator.compare(flags, "-cacerts") == 0) {
+                cacerts = true;
             } else if (collator.compare(flags, "-storepass") == 0 ||
                     collator.compare(flags, "-deststorepass") == 0) {
                 storePass = getPass(modifier, args[++i]);
@@ -495,7 +497,7 @@ public final class Main {
                 passwords.add(srcstorePass);
             } else if (collator.compare(flags, "-srcstoretype") == 0) {
                 srcstoretype = args[++i];
-                hasStoretypeOption = true;
+                hasSrcStoretypeOption = true;
             } else if (collator.compare(flags, "-srckeypass") == 0) {
                 srckeyPass = getPass(modifier, args[++i]);
                 passwords.add(srckeyPass);
@@ -549,10 +551,10 @@ public final class Main {
                 jarfile = args[++i];
             } else if (collator.compare(flags, "-srckeystore") == 0) {
                 srcksfname = args[++i];
-            } else if ((collator.compare(flags, "-provider") == 0) ||
-                        (collator.compare(flags, "-providerclass") == 0)) {
-                if (providers == null) {
-                    providers = new HashSet<Pair <String, String>> (3);
+            } else if (collator.compare(flags, "-provider") == 0 ||
+                        collator.compare(flags, "-providerclass") == 0) {
+                if (providerClasses == null) {
+                    providerClasses = new HashSet<Pair <String, String>> (3);
                 }
                 String providerClass = args[++i];
                 String providerArg = null;
@@ -565,8 +567,25 @@ public final class Main {
                         i += 2;
                     }
                 }
-                providers.add(
+                providerClasses.add(
                         Pair.of(providerClass, providerArg));
+            } else if (collator.compare(flags, "-addprovider") == 0) {
+                if (providers == null) {
+                    providers = new HashSet<Pair <String, String>> (3);
+                }
+                String provider = args[++i];
+                String providerArg = null;
+
+                if (args.length > (i+1)) {
+                    flags = args[i+1];
+                    if (collator.compare(flags, "-providerarg") == 0) {
+                        if (args.length == (i+2)) errorNeedArgument(flags);
+                        providerArg = args[i+2];
+                        i += 2;
+                    }
+                }
+                providers.add(
+                        Pair.of(provider, providerArg));
             }
 
             /*
@@ -617,11 +636,19 @@ public final class Main {
         return cmd != PRINTCERT && cmd != PRINTCERTREQ;
     }
 
-
     /**
      * Execute the commands.
      */
     void doCommands(PrintStream out) throws Exception {
+
+        if (cacerts) {
+            if (ksfname != null || storetype != null) {
+                throw new IllegalArgumentException(rb.getString
+                        ("the.keystore.or.storetype.option.cannot.be.used.with.the.cacerts.option"));
+            }
+            ksfname = KeyStoreUtil.getCacerts();
+        }
+
         if (storetype == null) {
             storetype = KeyStore.getDefaultType();
         }
@@ -703,6 +730,20 @@ public final class Main {
 
         // Try to load and install specified provider
         if (providers != null) {
+            for (Pair<String, String> provider : providers) {
+                try {
+                    KeyStoreUtil.loadProviderByName(
+                            provider.fst, provider.snd);
+                    if (debug) {
+                        System.out.println("loadProviderByName: " + provider.fst);
+                    }
+                } catch (IllegalArgumentException e) {
+                    throw new Exception(String.format(rb.getString(
+                            "provider.name.not.found"), provider.fst));
+                }
+            }
+        }
+        if (providerClasses != null) {
             ClassLoader cl = null;
             if (pathlist != null) {
                 String path = null;
@@ -717,30 +758,20 @@ public final class Main {
             } else {
                 cl = ClassLoader.getSystemClassLoader();
             }
-
-            for (Pair <String, String> provider: providers) {
-                String provName = provider.fst;
-                Class<?> provClass;
-                if (cl != null) {
-                    provClass = cl.loadClass(provName);
-                } else {
-                    provClass = Class.forName(provName);
+            for (Pair<String, String> provider : providerClasses) {
+                try {
+                    KeyStoreUtil.loadProviderByClass(
+                            provider.fst, provider.snd, cl);
+                    if (debug) {
+                        System.out.println("loadProviderByClass: " + provider.fst);
+                    }
+                } catch (ClassCastException cce) {
+                    throw new Exception(String.format(rb.getString(
+                            "provclass.not.a.provider"), provider.fst));
+                } catch (IllegalArgumentException e) {
+                    throw new Exception(String.format(rb.getString(
+                            "provider.class.not.found"), provider.fst), e.getCause());
                 }
-
-                @SuppressWarnings("deprecation")
-                Object obj = provClass.newInstance();
-                if (!(obj instanceof Provider)) {
-                    MessageFormat form = new MessageFormat
-                        (rb.getString("provName.not.a.provider"));
-                    Object[] source = {provName};
-                    throw new Exception(form.format(source));
-                }
-                Provider p = (Provider) obj;
-                String provArg = provider.snd;
-                if (provArg != null) {
-                    p = p.configure(provArg);
-                }
-                Security.addProvider(p);
             }
         }
 
@@ -1919,7 +1950,7 @@ public final class Main {
         try {
             // Probe for keystore type when filename is available
             if (srcksfile != null && is != null && srcProviderName == null &&
-                hasStoretypeOption == false) {
+                hasSrcStoretypeOption == false) {
                 store = KeyStore.getInstance(srcksfile, srcstorePass);
             } else {
                 if (srcProviderName == null) {
@@ -3600,8 +3631,8 @@ public final class Main {
                 if (time != null) {
                     if (time.matches("\\d\\d:\\d\\d:\\d\\d")) {
                         c.set(Calendar.HOUR_OF_DAY, Integer.valueOf(time.substring(0, 2)));
-                        c.set(Calendar.MINUTE, Integer.valueOf(time.substring(0, 2)));
-                        c.set(Calendar.SECOND, Integer.valueOf(time.substring(0, 2)));
+                        c.set(Calendar.MINUTE, Integer.valueOf(time.substring(3, 5)));
+                        c.set(Calendar.SECOND, Integer.valueOf(time.substring(6, 8)));
                         c.set(Calendar.MILLISECOND, 0);
                     } else {
                         throw ioe;
@@ -4132,27 +4163,40 @@ public final class Main {
             System.err.println(rb.getString("Options."));
             System.err.println();
 
-            // Left and right sides of the options list
+            // Left and right sides of the options list. Both might
+            // contain "\n" and span multiple lines
             String[] left = new String[command.options.length];
             String[] right = new String[command.options.length];
 
-            // Check if there's an unknown option
-            boolean found = false;
-
             // Length of left side of options list
             int lenLeft = 0;
-            for (int j=0; j<left.length; j++) {
+
+            for (int j = 0; j < command.options.length; j++) {
                 Option opt = command.options[j];
                 left[j] = opt.toString();
-                if (opt.arg != null) left[j] += " " + opt.arg;
-                if (left[j].length() > lenLeft) {
-                    lenLeft = left[j].length();
+                if (opt.arg != null) {
+                    left[j] += " " + opt.arg;
+                }
+                String[] lefts = left[j].split("\n");
+                for (String s : lefts) {
+                    if (s.length() > lenLeft) {
+                        lenLeft = s.length();
+                    }
                 }
                 right[j] = rb.getString(opt.description);
             }
-            for (int j=0; j<left.length; j++) {
-                System.err.printf(" %-" + lenLeft + "s  %s\n",
-                        left[j], right[j]);
+            for (int j = 0; j < left.length; j++) {
+                String[] lefts = left[j].split("\n");
+                String[] rights = right[j].split("\n");
+                for (int i = 0; i < lefts.length && i < rights.length; i++) {
+                    String s1 = i < lefts.length ? lefts[i] : "";
+                    String s2 = i < rights.length ? rights[i] : "";
+                    if (i == 0) {
+                        System.err.printf(" %-" + lenLeft + "s  %s\n", s1, s2);
+                    } else {
+                        System.err.printf("   %-" + lenLeft + "s  %s\n", s1, s2);
+                    }
+                }
             }
             System.err.println();
             System.err.println(rb.getString(

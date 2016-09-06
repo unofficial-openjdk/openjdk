@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,11 +27,11 @@
  *    an outstanding I/O operation on directory completes after the
  *    directory has been closed
  */
-
 import java.nio.file.ClosedWatchServiceException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import static java.nio.file.StandardWatchEventKinds.*;
@@ -50,13 +50,14 @@ public class LotsOfCancels {
         // one to bash on cancel, the other to poll the events
         ExecutorService pool = Executors.newCachedThreadPool();
         try {
-            Path top = Files.createTempDirectory("work");
-            top.toFile().deleteOnExit();
+            Path testDir = Paths.get(System.getProperty("test.dir", "."));
+            Path top = Files.createTempDirectory(testDir, "LotsOfCancels");
             for (int i=1; i<=16; i++) {
+                int id = i;
                 Path dir = Files.createDirectory(top.resolve("dir-" + i));
                 WatchService watcher = FileSystems.getDefault().newWatchService();
-                pool.submit(() -> handle(dir, watcher));
-                pool.submit(() -> poll(watcher));
+                pool.submit(() -> handle(id, dir, watcher));
+                pool.submit(() -> poll(id, watcher));
             }
         } finally {
             pool.shutdown();
@@ -74,7 +75,8 @@ public class LotsOfCancels {
      * Stress the given WatchService, specifically the cancel method, in
      * the given directory. Closes the WatchService when done.
      */
-    static void handle(Path dir, WatchService watcher) {
+    static void handle(int id, Path dir, WatchService watcher) {
+        System.out.printf("begin handle %d%n", id);
         try {
             try {
                 Path file = dir.resolve("anyfile");
@@ -85,12 +87,15 @@ public class LotsOfCancels {
                     key.cancel();
                 }
             } finally {
+                System.out.printf("WatchService %d closing ...%n", id);
                 watcher.close();
+                System.out.printf("WatchService %d closed %n", id);
             }
         } catch (Exception e) {
             e.printStackTrace();
             failed = true;
         }
+        System.out.printf("end handle %d%n", id);
     }
 
     /**
@@ -98,7 +103,8 @@ public class LotsOfCancels {
      * queue drained, it also hogs a CPU core which seems necessary to
      * tickle the original bug.
      */
-    static void poll(WatchService watcher) {
+    static void poll(int id, WatchService watcher) {
+        System.out.printf("begin poll %d%n", id);
         try {
             for (;;) {
                 WatchKey key = watcher.take();
@@ -108,12 +114,12 @@ public class LotsOfCancels {
                 }
             }
         } catch (ClosedWatchServiceException expected) {
-            // nothing to do
+            // nothing to do but print
+            System.out.printf("poll %d expected exception %s%n", id, expected);
         } catch (Exception e) {
             e.printStackTrace();
             failed = true;
         }
+        System.out.printf("end poll %d%n", id);
     }
-
 }
-

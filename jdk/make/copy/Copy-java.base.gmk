@@ -166,18 +166,7 @@ TARGETS += $(JVMCFG)
 POLICY_SRC := $(JDK_TOPDIR)/src/java.base/share/conf/security/java.policy
 POLICY_DST := $(CONF_DST_DIR)/security/java.policy
 
-POLICY_SRC_LIST :=
-
-ifeq ($(OPENJDK_TARGET_OS), windows)
-  POLICY_SRC_LIST += $(JDK_TOPDIR)/src/java.base/$(OPENJDK_TARGET_OS)/conf/security/java.policy
-endif
-
-# Allow imported modules to modify the java.policy
-ifneq ($(IMPORT_MODULES_CONF), )
-  POLICY_SRC_LIST += $(wildcard $(IMPORT_MODULES_CONF)/java.base/security/java.policy.extra)
-endif
-
-POLICY_SRC_LIST += $(POLICY_SRC)
+POLICY_SRC_LIST := $(POLICY_SRC)
 
 $(POLICY_DST): $(POLICY_SRC_LIST)
 	$(MKDIR) -p $(@D)
@@ -189,8 +178,32 @@ TARGETS += $(POLICY_DST)
 
 ################################################################################
 
+DEF_POLICY_SRC := $(JDK_TOPDIR)/src/java.base/share/lib/security/default.policy
+DEF_POLICY_DST := $(LIB_DST_DIR)/security/default.policy
+
+DEF_POLICY_SRC_LIST := $(DEF_POLICY_SRC)
+
+ifneq ($(filter $(OPENJDK_TARGET_OS), windows solaris), )
+  DEF_POLICY_SRC_LIST += $(JDK_TOPDIR)/src/java.base/$(OPENJDK_TARGET_OS)/lib/security/default.policy
+endif
+
+# Allow imported modules to modify the java.policy
+ifneq ($(IMPORT_MODULES_CONF), )
+  DEF_POLICY_SRC_LIST += $(wildcard $(IMPORT_MODULES_CONF)/java.base/security/java.policy.extra)
+endif
+
+$(DEF_POLICY_DST): $(DEF_POLICY_SRC_LIST)
+	$(MKDIR) -p $(@D)
+	$(RM) $@ $@.tmp
+	$(foreach f,$(DEF_POLICY_SRC_LIST),$(CAT) $(f) >> $@.tmp;)
+	$(MV) $@.tmp $@
+
+TARGETS += $(DEF_POLICY_DST)
+
+################################################################################
+
 ifeq ($(CACERTS_FILE), )
-  CACERTS_FILE := $(JDK_TOPDIR)/src/java.base/share/conf/security/cacerts
+  CACERTS_FILE := $(JDK_TOPDIR)/src/java.base/share/lib/security/cacerts
 endif
 
 CACERTS_DST := $(LIB_DST_DIR)/security/cacerts

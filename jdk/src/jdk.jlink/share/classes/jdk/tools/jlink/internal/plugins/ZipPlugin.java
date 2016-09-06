@@ -28,20 +28,21 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.zip.Deflater;
-import jdk.tools.jlink.internal.ModulePoolImpl;
-import jdk.tools.jlink.plugin.ModuleEntry;
-import jdk.tools.jlink.plugin.ModulePool;
-import jdk.tools.jlink.plugin.TransformerPlugin;
+import jdk.tools.jlink.internal.ResourcePoolManager;
+import jdk.tools.jlink.internal.ResourcePoolManager.ResourcePoolImpl;
+import jdk.tools.jlink.plugin.ResourcePool;
+import jdk.tools.jlink.plugin.ResourcePoolBuilder;
+import jdk.tools.jlink.plugin.ResourcePoolEntry;
+import jdk.tools.jlink.plugin.Plugin;
 
 /**
  *
  * ZIP Compression plugin
  */
-public final class ZipPlugin implements TransformerPlugin {
+public final class ZipPlugin implements Plugin {
 
     public static final String NAME = "zip";
     private Predicate<String> predicate;
@@ -113,18 +114,20 @@ public final class ZipPlugin implements TransformerPlugin {
     }
 
     @Override
-    public void visit(ModulePool in, ModulePool out) {
+    public ResourcePool transform(ResourcePool in, ResourcePoolBuilder out) {
         in.transformAndCopy((resource) -> {
-            ModuleEntry res = resource;
-            if (resource.getType().equals(ModuleEntry.Type.CLASS_OR_RESOURCE)
-                    && predicate.test(resource.getPath())) {
+            ResourcePoolEntry res = resource;
+            if (resource.type().equals(ResourcePoolEntry.Type.CLASS_OR_RESOURCE)
+                    && predicate.test(resource.path())) {
                 byte[] compressed;
-                compressed = compress(resource.getBytes());
-                res = ModulePoolImpl.newCompressedResource(resource,
+                compressed = compress(resource.contentBytes());
+                res = ResourcePoolManager.newCompressedResource(resource,
                         ByteBuffer.wrap(compressed), getName(), null,
-                        ((ModulePoolImpl) in).getStringTable(), in.getByteOrder());
+                        ((ResourcePoolImpl)in).getStringTable(), in.byteOrder());
             }
             return res;
         }, out);
+
+        return out.build();
     }
 }

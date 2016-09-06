@@ -666,6 +666,10 @@ public class JmodTask {
                     throws IOException
                 {
                     Path relPath = top.relativize(file);
+                    if (relPath.toString().equals(MODULE_INFO)
+                            && !Section.CLASSES.equals(section))
+                        warning("warn.ignore.entry", MODULE_INFO, section);
+
                     if (!relPath.toString().equals(MODULE_INFO)
                             && !matches(relPath, excludes)) {
                         try (InputStream in = Files.newInputStream(file)) {
@@ -693,9 +697,17 @@ public class JmodTask {
             String name = Paths.get(prefix, other).toString()
                                .replace(File.separatorChar, '/');
             ZipEntry ze = new ZipEntry(name);
-            zos.putNextEntry(ze);
-            in.transferTo(zos);
-            zos.closeEntry();
+            try {
+                zos.putNextEntry(ze);
+                in.transferTo(zos);
+                zos.closeEntry();
+            } catch (ZipException x) {
+                if (x.getMessage().contains("duplicate entry")) {
+                    warning("warn.ignore.duplicate.entry", name, prefix);
+                    return;
+                }
+                throw x;
+            }
         }
 
         class JarEntryConsumer implements Consumer<JarEntry>, Predicate<JarEntry> {
@@ -1169,7 +1181,7 @@ public class JmodTask {
         }
     }
 
-    private final OptionParser parser = new OptionParser();
+    private final OptionParser parser = new OptionParser("hp");
 
     private void handleOptions(String[] args) {
         parser.formatHelpWith(new JmodHelpFormatter());
@@ -1206,7 +1218,7 @@ public class JmodTask {
                         .withValuesConvertedBy(new PatternConverter());
 
         OptionSpec<Void> help
-                = parser.accepts("help", getMessage("main.opt.help"))
+                = parser.acceptsAll(Set.of("h", "help"), getMessage("main.opt.help"))
                         .forHelp();
 
         OptionSpec<Path> libs
@@ -1220,9 +1232,9 @@ public class JmodTask {
                         .withRequiredArg()
                         .describedAs(getMessage("main.opt.main-class.arg"));
 
-        OptionSpec<Path> modulePath  // TODO: short version of --mp ??
-                = parser.acceptsAll(Arrays.asList("mp", "modulepath"),
-                                    getMessage("main.opt.modulepath"))
+        OptionSpec<Path> modulePath
+                = parser.acceptsAll(Set.of("p", "module-path"),
+                                    getMessage("main.opt.module-path"))
                         .withRequiredArg()
                         .withValuesSeparatedBy(File.pathSeparatorChar)
                         .withValuesConvertedBy(DirPathConverter.INSTANCE);

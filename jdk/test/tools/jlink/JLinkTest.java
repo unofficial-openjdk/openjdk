@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import jdk.tools.jlink.plugin.Plugin;
-import jdk.tools.jlink.plugin.TransformerPlugin;
 import jdk.tools.jlink.internal.PluginRepository;
 import tests.Helper;
 import tests.JImageGenerator;
@@ -53,15 +52,19 @@ import tests.JImageGenerator.InMemoryFile;
  *          jdk.jlink/jdk.tools.jimage
  *          jdk.compiler
  * @build tests.*
- * @run main/othervm -verbose:gc -Xmx1g JLinkTest
+ * @run main/othervm -Xmx1g JLinkTest
  */
 public class JLinkTest {
     // number of built-in plugins from jdk.jlink module
     private static int getNumJlinkPlugins() {
         ModuleDescriptor desc = Plugin.class.getModule().getDescriptor();
         return desc.provides().
-                    get(TransformerPlugin.class.getName()).
+                    get(Plugin.class.getName()).
                     providers().size();
+    }
+
+    private static boolean isOfJLinkModule(Plugin p) {
+        return p.getClass().getModule() == Plugin.class.getModule();
     }
 
     public static void main(String[] args) throws Exception {
@@ -72,20 +75,27 @@ public class JLinkTest {
             return;
         }
         helper.generateDefaultModules();
-        int numPlugins = getNumJlinkPlugins();
+        // expected num. of plugins from jdk.jlink module
+        int expectedJLinkPlugins = getNumJlinkPlugins();
+        int totalPlugins = 0;
         {
             // number of built-in plugins
             List<Plugin> builtInPlugins = new ArrayList<>();
             builtInPlugins.addAll(PluginRepository.getPlugins(Layer.boot()));
+            totalPlugins = builtInPlugins.size();
+            // actual num. of plugins loaded from jdk.jlink module
+            int actualJLinkPlugins = 0;
             for (Plugin p : builtInPlugins) {
                 p.getState();
                 p.getType();
+                if (isOfJLinkModule(p)) {
+                    actualJLinkPlugins++;
+                }
             }
-            // Note: other boot layer modules may provide jlink plugins.
-            // We should at least see the builtin plugins from jdk.jlink.
-            if (builtInPlugins.size() < numPlugins) {
-                throw new AssertionError("Found plugins doesn't match expected number : " +
-                        numPlugins + "\n" + builtInPlugins);
+            if (expectedJLinkPlugins != actualJLinkPlugins) {
+                throw new AssertionError("Actual plugins loaded from jdk.jlink: " +
+                        actualJLinkPlugins + " which doesn't match expected number : " +
+                        expectedJLinkPlugins);
             }
         }
 
@@ -108,7 +118,7 @@ public class JLinkTest {
                     .output(helper.createNewImageDir(moduleName))
                     .addMods("leaf1")
                     .option("")
-                    .call().assertFailure("Error: no value given for --modulepath");
+                    .call().assertFailure("Error: no value given for --module-path");
         }
 
         {
@@ -118,6 +128,25 @@ public class JLinkTest {
             JImageGenerator.addFiles(jmod, new InMemoryFile(className, new byte[0]));
             Path image = helper.generateDefaultImage(moduleName).assertSuccess();
             helper.checkImage(image, moduleName, new String[] {"/" + moduleName + "/" + className}, null);
+        }
+
+        {
+            String moduleName = "m"; // 8163382
+            Path jmod = helper.generateDefaultJModule(moduleName).assertSuccess();
+            JImageGenerator.getJLinkTask()
+                    .modulePath(helper.defaultModulePath())
+                    .output(helper.createNewImageDir(moduleName))
+                    .addMods("m")
+                    .option("")
+                    .call().assertSuccess();
+            moduleName = "mod";
+            jmod = helper.generateDefaultJModule(moduleName).assertSuccess();
+            JImageGenerator.getJLinkTask()
+                    .modulePath(helper.defaultModulePath())
+                    .output(helper.createNewImageDir(moduleName))
+                    .addMods("m")
+                    .option("")
+                    .call().assertSuccess();
         }
 
         {
@@ -150,9 +179,9 @@ public class JLinkTest {
             long number = Stream.of(output.split("\\R"))
                     .filter((s) -> s.matches("Plugin Name:.*"))
                     .count();
-            if (number != numPlugins) {
+            if (number != totalPlugins) {
                 System.err.println(output);
-                throw new AssertionError("Found: " + number + " expected " + numPlugins);
+                throw new AssertionError("Found: " + number + " expected " + totalPlugins);
             }
         }
 
@@ -221,7 +250,7 @@ public class JLinkTest {
         // @file
         {
             Path path = Paths.get("embedded.properties");
-            Files.write(path, Collections.singletonList("--strip-debug --addmods " +
+            Files.write(path, Collections.singletonList("--strip-debug --add-modules " +
                     "toto.unknown --compress UNKNOWN\n"));
             String[] userOptions = {"@", path.toAbsolutePath().toString()};
             String moduleName = "configembeddednocompresscomposite2";

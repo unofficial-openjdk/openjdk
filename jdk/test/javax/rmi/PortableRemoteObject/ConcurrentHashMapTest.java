@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,13 +26,14 @@
  * @bug 8068721
  * @summary test RMI-IIOP call with ConcurrentHashMap as an argument
  * @library /lib/testlibrary
+ * @modules java.corba
  * @build jdk.testlibrary.*
- * @compile -addmods java.corba Test.java HelloInterface.java HelloServer.java HelloClient.java
+ * @compile Test.java HelloInterface.java HelloServer.java HelloClient.java
  *    HelloImpl.java _HelloImpl_Tie.java _HelloInterface_Stub.java ConcurrentHashMapTest.java
- * @run main/othervm -addmods java.corba -Djava.naming.provider.url=iiop://localhost:1050
+ * @run main/othervm -Djava.naming.provider.url=iiop://localhost:1050
  *    -Djava.naming.factory.initial=com.sun.jndi.cosnaming.CNCtxFactory ConcurrentHashMapTest
  * @run main/othervm/secure=java.lang.SecurityManager/policy=jtreg.test.policy
- *    -addmods java.corba -Djava.naming.provider.url=iiop://localhost:1050
+ *    -Djava.naming.provider.url=iiop://localhost:1050
  *    -Djava.naming.factory.initial=com.sun.jndi.cosnaming.CNCtxFactory ConcurrentHashMapTest
  * @key intermittent
  */
@@ -97,12 +98,12 @@ public class ConcurrentHashMapTest {
 
     static void startRmiIiopServer() throws Exception {
         System.out.println("\nStarting RmiServer");
-        // java -cp . -addmods java.corba
+        // java -cp . --add-modules java.corba
         // -Djava.naming.factory.initial=com.sun.jndi.cosnaming.CNCtxFactory
         // -Djava.naming.provider.url=iiop://localhost:1050 HelloServer
         List<String> commands = new ArrayList<>();
         commands.add(ConcurrentHashMapTest.JAVA);
-        commands.add("-addmods");
+        commands.add("--add-modules");
         commands.add("java.corba");
         commands.add("-Djava.naming.factory.initial=com.sun.jndi.cosnaming.CNCtxFactory");
         commands.add("-Djava.naming.provider.url=iiop://localhost:1050");

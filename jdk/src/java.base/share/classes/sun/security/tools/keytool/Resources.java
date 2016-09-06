@@ -127,16 +127,26 @@ public class Resources extends java.util.ListResourceBundle {
                 "key bit size"}, //-keysize
         {"keystore.name",
                 "keystore name"}, //-keystore
+        {"access.the.cacerts.keystore",
+                "access the cacerts keystore"}, // -cacerts
+        {"warning.cacerts.option",
+                "Warning: use -cacerts option to access cacerts keystore"},
         {"new.password",
                 "new password"}, //-new
         {"do.not.prompt",
                 "do not prompt"}, //-noprompt
         {"password.through.protected.mechanism",
                 "password through protected mechanism"}, //-protected
-        {"provider.argument",
-                "provider argument"}, //-providerarg
-        {"provider.class.name",
-                "provider class name"}, //-providerclass
+
+        // The following 2 values should span 2 lines, the first for the
+        // option itself, the second for its -providerArg value.
+        {"addprovider.option",
+                "add security provider by name (e.g. SunPKCS11)\n" +
+                        "configure argument for -addprovider"}, //-addprovider
+        {"provider.class.option",
+                "add security provider by fully-qualified class name\n" +
+                        "configure argument for -providerclass"}, //-providerclass
+
         {"provider.name",
                 "provider name"}, //-providername
         {"provider.classpath",
@@ -188,6 +198,8 @@ public class Resources extends java.util.ListResourceBundle {
         {"Command.option.flag.needs.an.argument.", "Command option {0} needs an argument."},
         {"Warning.Different.store.and.key.passwords.not.supported.for.PKCS12.KeyStores.Ignoring.user.specified.command.value.",
                 "Warning:  Different store and key passwords not supported for PKCS12 KeyStores. Ignoring user-specified {0} value."},
+        {"the.keystore.or.storetype.option.cannot.be.used.with.the.cacerts.option",
+            "The -keystore or -storetype option cannot be used with the -cacerts option"},
         {".keystore.must.be.NONE.if.storetype.is.{0}",
                 "-keystore must be NONE if -storetype is {0}"},
         {"Too.many.retries.program.terminated",
@@ -209,7 +221,9 @@ public class Resources extends java.util.ListResourceBundle {
         {"Illegal.startdate.value", "Illegal startdate value"},
         {"Validity.must.be.greater.than.zero",
                 "Validity must be greater than zero"},
-        {"provName.not.a.provider", "{0} not a provider"},
+        {"provclass.not.a.provider", "%s not a provider"},
+        {"provider.name.not.found", "Provider named \"%s\" not found"},
+        {"provider.class.not.found", "Provider \"%s\" not found"},
         {"Usage.error.no.command.provided", "Usage error: no command provided"},
         {"Source.keystore.file.exists.but.is.empty.", "Source keystore file exists, but is empty: "},
         {"Please.specify.srckeystore", "Please specify -srckeystore"},

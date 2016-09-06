@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,30 +35,41 @@ import jdk.testlibrary.ProcessTools;
  */
 public final class JpsBase {
 
-    private static final String shortProcessName;
-    private static final String fullProcessName;
-
     /**
      * The jps output should contain processes' names
      * (except when jps is started in quite mode).
      * The expected name of the test process is prepared here.
      */
-    static {
+
+    private static String getShortProcessName() {
         URL url = JpsBase.class.getResource("JpsBase.class");
         boolean isJar = url.getProtocol().equals("jar");
+        return (isJar) ? JpsBase.class.getSimpleName() + ".jar" : JpsBase.class.getSimpleName();
+    }
 
+    private static String getFullProcessName() {
+        URL url = JpsBase.class.getResource("JpsBase.class");
+        boolean isJar = url.getProtocol().equals("jar");
         if (isJar) {
-            shortProcessName = JpsBase.class.getSimpleName() + ".jar";
             String urlPath = url.getPath();
             File jar = new File(urlPath.substring(urlPath.indexOf("file:") + 5, urlPath.indexOf("jar!") + 3));
-            fullProcessName = jar.getAbsolutePath();
-        } else {
-            shortProcessName = JpsBase.class.getSimpleName();
-            fullProcessName = JpsBase.class.getName();
+            return jar.getAbsolutePath();
         }
+
+        return JpsBase.class.getName();
+    }
+
+    private static boolean userDirSanityCheck(String fullProcessName) {
+        String userDir = System.getProperty("user.dir");
+        if (!fullProcessName.startsWith(userDir)) {
+            System.err.printf("Test skipped. user.dir '%s' is not a prefix of '%s'\n", userDir, fullProcessName);
+            return false;
+        }
+        return true;
     }
 
     public static void main(String[] args) throws Exception {
+        System.out.printf("INFO: user.dir:  '%s''\n", System.getProperty("user.dir"));
         long pid = ProcessTools.getProcessId();
 
         List<List<JpsHelper.JpsArg>> combinations = JpsHelper.JpsArg.generateCombinations();
@@ -83,8 +94,13 @@ public final class JpsBase {
                     // or the full path name to the application's JAR file:
                     // 30673 /tmp/jtreg/jtreg-workdir/scratch/JpsBase.jar ...
                     isFull = true;
-                    pattern = "^" + pid + "\\s+" + replaceSpecialChars(fullProcessName) + ".*";
-                    output.shouldMatch(pattern);
+                    String fullProcessName = getFullProcessName();
+                    // Skip the test if user.dir is not a prefix of the current path
+                    // It's possible if the test is run from symlinked dir or windows alias drive
+                    if (userDirSanityCheck(fullProcessName)) {
+                        pattern = "^" + pid + "\\s+" + replaceSpecialChars(fullProcessName) + ".*";
+                        output.shouldMatch(pattern);
+                    }
                     break;
                 case m:
                     // If '-m' is specified output should contain the arguments passed to the main method:
@@ -120,6 +136,7 @@ public final class JpsBase {
                 // Output should only contain lines with pids after the first line with pid.
                 JpsHelper.verifyJpsOutput(output, "^\\d+\\s+.*");
                 if (!isFull) {
+                    String shortProcessName = getShortProcessName();
                     pattern = "^" + pid + "\\s+" + replaceSpecialChars(shortProcessName);
                     if (combination.isEmpty()) {
                         // If no arguments are specified output should only contain

@@ -24,9 +24,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import jdk.tools.jlink.plugin.ModulePool;
+import jdk.tools.jlink.plugin.ResourcePool;
+import jdk.tools.jlink.plugin.ResourcePoolBuilder;
 import jdk.tools.jlink.internal.PluginRepository;
-import jdk.tools.jlink.plugin.TransformerPlugin;
+import jdk.tools.jlink.plugin.Plugin;
 
 import tests.Helper;
 
@@ -46,7 +47,7 @@ import tests.Helper;
  */
 public class JLinkOptionsTest {
 
-    private static class TestPlugin implements TransformerPlugin {
+    private static class TestPlugin implements Plugin {
         private final String name;
         private final String option;
 
@@ -62,8 +63,8 @@ public class JLinkOptionsTest {
         }
 
         @Override
-        public void visit(ModulePool in, ModulePool out) {
-
+        public ResourcePool transform(ResourcePool in, ResourcePoolBuilder out) {
+            return out.build();
         }
 
         @Override

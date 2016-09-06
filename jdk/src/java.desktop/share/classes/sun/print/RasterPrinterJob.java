@@ -683,7 +683,21 @@ public abstract class RasterPrinterJob extends PrinterJob {
         float iw = (float)(page.getPaper().getImageableWidth()/DPI);
         float iy = (float)(page.getPaper().getImageableY()/DPI);
         float ih = (float)(page.getPaper().getImageableHeight()/DPI);
-        if (ix < 0) ix = 0f; if (iy < 0) iy = 0f;
+
+        if (ix < 0) ix = 0; if (iy < 0) iy = 0;
+        if (iw <= 0) iw = (float)(page.getPaper().getWidth()/DPI) - (ix*2);
+
+        // If iw is still negative, it means ix is too large to print
+        // anything inside printable area if we have to leave the same margin
+        // in the right side of paper so we go back to default mpa values
+        if (iw < 0) iw = 0;
+
+        if (ih <= 0) ih = (float)(page.getPaper().getHeight()/DPI) - (iy*2);
+
+        // If ih is still negative, it means iy is too large to print
+        // anything inside printable area if we have to leave the same margin
+        // in the bottom side of paper so we go back to default mpa values
+        if (ih < 0) ih = 0;
         try {
             pageAttributes.add(new MediaPrintableArea(ix, iy, iw, ih,
                                                   MediaPrintableArea.INCH));
@@ -1257,6 +1271,12 @@ public abstract class RasterPrinterJob extends PrinterJob {
         JobSheets jobSheets = (JobSheets)attributes.get(JobSheets.class);
         if (jobSheets != null) {
             noJobSheet = jobSheets == JobSheets.NONE;
+        } else {
+            JobSheets js = (JobSheets)getPrintService().
+                                      getDefaultAttributeValue(JobSheets.class);
+            if (js != null && js.equals(JobSheets.NONE)) {
+                noJobSheet = true;
+            }
         }
 
         JobName jobName = (JobName)attributes.get(JobName.class);
@@ -1613,6 +1633,9 @@ public abstract class RasterPrinterJob extends PrinterJob {
              (!f.isFile() || !f.canWrite())) ||
             ((pFile != null) &&
              (!pFile.exists() || (pFile.exists() && !pFile.canWrite())))) {
+            if (f.exists()) {
+                f.delete();
+            }
             throw new PrinterException("Cannot write to file:"+
                                        dest);
         }

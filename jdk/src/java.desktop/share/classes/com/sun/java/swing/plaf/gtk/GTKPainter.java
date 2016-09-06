@@ -649,10 +649,19 @@ class GTKPainter extends SynthPainter {
             y += insets.top;
             if (orientation == JSeparator.HORIZONTAL) {
                 w -= (insets.left + insets.right);
-                detail = "hseparator";
             } else {
                 h -= (insets.top + insets.bottom);
-                detail = "vseparator";
+            }
+            if (GTKLookAndFeel.is3()) {
+                if (id == Region.POPUP_MENU_SEPARATOR) {
+                    detail = "menuitem";
+                    h -= (insets.top + insets.bottom);
+                } else {
+                    detail = "separator";
+                }
+            } else {
+                detail = orientation == JSeparator.HORIZONTAL ?
+                                                    "hseparator" : "vseparator";
             }
             synchronized (UNIXToolkit.GTK_LOCK) {
                 if (! ENGINE.paintCachedImage(g, x, y, w, h, id, state,
@@ -1339,14 +1348,14 @@ class GTKPainter extends SynthPainter {
             Graphics g, int state, int x, int y, int w, int h) {
         ENGINE.paintExpander(g, context, Region.TREE,
                 GTKLookAndFeel.synthStateToGTKState(context.getRegion(), state),
-                ExpanderStyle.EXPANDED, "treeview", x, y, w, h);
+                ExpanderStyle.EXPANDED, "expander", x, y, w, h);
     }
 
     public void paintTreeCollapsedIcon(SynthContext context,
             Graphics g, int state, int x, int y, int w, int h) {
         ENGINE.paintExpander(g, context, Region.TREE,
                 GTKLookAndFeel.synthStateToGTKState(context.getRegion(), state),
-                ExpanderStyle.COLLAPSED, "treeview", x, y, w, h);
+                ExpanderStyle.COLLAPSED, "expander", x, y, w, h);
     }
 
     public void paintCheckBoxIcon(SynthContext context,
@@ -1381,8 +1390,13 @@ class GTKPainter extends SynthPainter {
         if (gtkState == SynthConstants.MOUSE_OVER) {
             shadow = ShadowType.IN;
         }
+        if (!GTKLookAndFeel.is3()) {
+            x += 3;
+            y += 3;
+            w = h = 7;
+        }
         ENGINE.paintArrow(g, context, Region.MENU_ITEM, gtkState, shadow,
-                dir, "menuitem", x + 3, y + 3, 7, 7);
+                dir, "menuitem", x, y, w, h);
     }
 
     public void paintCheckBoxMenuItemCheckIcon(SynthContext context,

@@ -177,12 +177,28 @@ void setOSNameAndVersion(java_props_t *sprops) {
         OSVerStruct (*procInfoFn)(id rec, SEL sel) = (OSVerStruct(*)(id, SEL))objc_msgSend_stret;
         OSVerStruct osVer = procInfoFn([NSProcessInfo processInfo],
                                        @selector(operatingSystemVersion));
-        NSString *nsVerStr = [NSString stringWithFormat:@"%ld.%ld.%ld",
-                (long)osVer.majorVersion, (long)osVer.minorVersion, (long)osVer.patchVersion];
+        NSString *nsVerStr;
+        if (osVer.patchVersion == 0) { // Omit trailing ".0"
+            nsVerStr = [NSString stringWithFormat:@"%ld.%ld",
+                    (long)osVer.majorVersion, (long)osVer.minorVersion];
+        } else {
+            nsVerStr = [NSString stringWithFormat:@"%ld.%ld.%ld",
+                    (long)osVer.majorVersion, (long)osVer.minorVersion, (long)osVer.patchVersion];
+        }
         // Copy out the char*
         osVersionCStr = strdup([nsVerStr UTF8String]);
     }
-
+    // Fallback if running on pre-10.9 Mac OS
+    if (osVersionCStr == NULL) {
+        NSDictionary *version = [NSDictionary dictionaryWithContentsOfFile :
+                                 @"/System/Library/CoreServices/SystemVersion.plist"];
+        if (version != NULL) {
+            NSString *nsVerStr = [version objectForKey : @"ProductVersion"];
+            if (nsVerStr != NULL) {
+                osVersionCStr = strdup([nsVerStr UTF8String]);
+            }
+        }
+    }
     if (osVersionCStr == NULL) {
         osVersionCStr = strdup("Unknown");
     }
@@ -190,7 +206,9 @@ void setOSNameAndVersion(java_props_t *sprops) {
 }
 
 
-static Boolean getProxyInfoForProtocol(CFDictionaryRef inDict, CFStringRef inEnabledKey, CFStringRef inHostKey, CFStringRef inPortKey, CFStringRef *outProxyHost, int *ioProxyPort) {
+static Boolean getProxyInfoForProtocol(CFDictionaryRef inDict, CFStringRef inEnabledKey,
+                                       CFStringRef inHostKey, CFStringRef inPortKey,
+                                       CFStringRef *outProxyHost, int *ioProxyPort) {
     /* See if the proxy is enabled. */
     CFNumberRef cf_enabled = CFDictionaryGetValue(inDict, inEnabledKey);
     if (cf_enabled == NULL) {

@@ -60,8 +60,6 @@ import java.nio.charset.Charset;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.text.Normalizer;
 import java.text.MessageFormat;
 import java.util.ResourceBundle;
@@ -584,15 +582,17 @@ public final class LauncherHelper {
         Class<?> mainClass = null;
         ClassLoader scl = ClassLoader.getSystemClassLoader();
         try {
-            mainClass = scl.loadClass(cn);
+            mainClass = Class.forName(cn, false, scl);
         } catch (NoClassDefFoundError | ClassNotFoundException cnfe) {
             if (System.getProperty("os.name", "").contains("OS X")
                     && Normalizer.isNormalized(cn, Normalizer.Form.NFD)) {
                 try {
-                    // On Mac OS X since all names with diacretic symbols are given as decomposed it
-                    // is possible that main class name comes incorrectly from the command line
-                    // and we have to re-compose it
-                    mainClass = scl.loadClass(Normalizer.normalize(cn, Normalizer.Form.NFC));
+                    // On Mac OS X since all names with diacretic symbols are
+                    // given as decomposed it is possible that main class name
+                    // comes incorrectly from the command line and we have
+                    // to re-compose it
+                    String ncn = Normalizer.normalize(cn, Normalizer.Form.NFC);
+                    mainClass = Class.forName(ncn, false, scl);
                 } catch (NoClassDefFoundError | ClassNotFoundException cnfe1) {
                     abort(cnfe, "java.launcher.cls.error1", cn);
                 }
@@ -903,7 +903,7 @@ public final class LauncherHelper {
 
         ModuleFinder finder = jdk.internal.module.ModuleBootstrap.finder();
 
-        int colon = optionFlag.indexOf(':');
+        int colon = optionFlag.indexOf('=');
         if (colon == -1) {
             finder.findAll().stream()
                 .sorted(Comparator.comparing(ModuleReference::descriptor))

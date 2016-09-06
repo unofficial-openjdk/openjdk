@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,25 +25,24 @@
 
 package java.lang.invoke;
 
-import jdk.internal.misc.JavaLangInvokeAccess;
-import jdk.internal.misc.SharedSecrets;
 import sun.invoke.util.BytecodeDescriptor;
 import sun.invoke.util.VerifyAccess;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.lang.reflect.Member;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Module;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import static java.lang.invoke.MethodHandleNatives.Constants.*;
-import static java.lang.invoke.MethodHandleStatics.*;
 import java.util.Objects;
+
+import static java.lang.invoke.MethodHandleNatives.Constants.*;
+import static java.lang.invoke.MethodHandleStatics.newIllegalArgumentException;
+import static java.lang.invoke.MethodHandleStatics.newInternalError;
 
 /**
  * A {@code MemberName} is a compact symbolic datum which fully characterizes
@@ -79,7 +78,7 @@ import java.util.Objects;
     private int      flags;       // modifier bits; see reflect.Modifier
     //@Injected JVM_Method* vmtarget;
     //@Injected int         vmindex;
-    private Object   resolution;  // if null, this guy is resolved
+    Object   resolution;  // if null, this guy is resolved
 
     /** Return the declaring class of this member.
      *  In the case of a bare name and type, the declaring class will be null.
@@ -344,7 +343,6 @@ import java.util.Objects;
     }
 
     /** Utility method to query if this member is a method handle invocation (invoke or invokeExact).
-     *  Also returns true for the non-public MH.invokeBasic.
      */
     public boolean isMethodHandleInvoke() {
         final int bits = MH_INVOKE_MODS &~ Modifier.PUBLIC;
@@ -359,7 +357,6 @@ import java.util.Objects;
         switch (name) {
         case "invoke":
         case "invokeExact":
-        case "invokeBasic":  // internal sig-poly method
             return true;
         default:
             return false;
@@ -498,6 +495,13 @@ import java.util.Objects;
         int mode = (ALL_ACCESS|MethodHandles.Lookup.PACKAGE|MethodHandles.Lookup.MODULE);
         return VerifyAccess.isMemberAccessible(this.getDeclaringClass(), this.getDeclaringClass(), flags,
                                                lookupClass, mode);
+    }
+
+    /**
+     * Check if MemberName is a call to a method named {@code name} in class {@code declaredClass}.
+     */
+    public boolean refersTo(Class<?> declc, String n) {
+        return clazz == declc && getName().equals(n);
     }
 
     /** Initialize a query.   It is not resolved. */
@@ -822,7 +826,7 @@ import java.util.Objects;
         return resolution == null;
     }
 
-    private void initResolved(boolean isResolved) {
+    void initResolved(boolean isResolved) {
         assert(this.resolution == null);  // not initialized yet!
         if (!isResolved)
             this.resolution = this;
@@ -995,7 +999,9 @@ import java.util.Objects;
                     Collections.addAll(result, buf0);
                 }
             }
-            result.addAll(Arrays.asList(buf).subList(0, bufCount));
+            for (int i = 0; i < bufCount; i++) {
+                result.add(buf[i]);
+            }
             // Signature matching is not the same as type matching, since
             // one signature might correspond to several types.
             // So if matchType is a Class or MethodType, refilter the results.
@@ -1142,28 +1148,5 @@ import java.util.Objects;
                 buf[i] = new MemberName();
             return buf;
         }
-    }
-
-    static {
-        // StackFrameInfo stores Member and this provides the shared secrets
-        // for stack walker to access MemberName information.
-        SharedSecrets.setJavaLangInvokeAccess(new JavaLangInvokeAccess() {
-            @Override
-            public Object newMemberName() {
-                return new MemberName();
-            }
-
-            @Override
-            public String getName(Object mname) {
-                MemberName memberName = (MemberName)mname;
-                return memberName.getName();
-            }
-
-            @Override
-            public boolean isNative(Object mname) {
-                MemberName memberName = (MemberName)mname;
-                return memberName.isNative();
-            }
-        });
     }
 }

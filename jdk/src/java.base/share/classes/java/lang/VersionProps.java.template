@@ -26,6 +26,9 @@
 package java.lang;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 class VersionProps {
 
@@ -42,6 +45,18 @@ class VersionProps {
     private static final String java_runtime_version =
         "@@VERSION_STRING@@";
 
+    private static final String VERSION_NUMBER =
+        "@@VERSION_NUMBER@@";
+
+    private static final String VERSION_BUILD =
+        "@@VERSION_BUILD@@";
+
+    private static final String VERSION_PRE =
+        "@@VERSION_PRE@@";
+
+    private static final String VERSION_OPT =
+        "@@VERSION_OPT@@";
+
     static {
         init();
     }
@@ -50,6 +65,60 @@ class VersionProps {
         System.setProperty("java.version", java_version);
         System.setProperty("java.runtime.version", java_runtime_version);
         System.setProperty("java.runtime.name", java_runtime_name);
+    }
+
+    private static int parseVersionNumber(String version, int prevIndex, int index) {
+        if (index - prevIndex > 1 &&
+            Character.digit(version.charAt(prevIndex), 10) <= 0)
+            throw new IllegalArgumentException("Leading zeros not supported (" +
+                    version.substring(prevIndex, index) + ")");
+        return Integer.parseInt(version, prevIndex, index, 10);
+    }
+
+    // This method is reflectively used by regression tests.
+    static List<Integer> parseVersionNumbers(String version) {
+        List<Integer> verNumbers = new ArrayList<>(4);
+        int prevIndex = 0;
+        int index = version.indexOf('.');
+        while (index > 0) {
+            verNumbers.add(parseVersionNumber(version, prevIndex, index));
+            prevIndex = index + 1; // Skip the period
+            index = version.indexOf('.', prevIndex);
+        }
+        verNumbers.add(parseVersionNumber(version, prevIndex, version.length()));
+
+        if (verNumbers.get(0) == 0 || verNumbers.get(verNumbers.size() - 1) == 0)
+            throw new IllegalArgumentException("Leading/trailing zeros not supported (" +
+                    verNumbers + ")");
+
+        return verNumbers;
+    }
+
+    static List<Integer> versionNumbers() {
+        return parseVersionNumbers(VERSION_NUMBER);
+    }
+
+    static Optional<String> pre() {
+        return optionalOf(VERSION_PRE);
+    }
+
+    static Optional<Integer> build() {
+        return VERSION_BUILD.isEmpty() ?
+                Optional.empty() :
+                Optional.of(Integer.parseInt(VERSION_BUILD));
+    }
+
+    static Optional<String> optional() {
+        return optionalOf(VERSION_OPT);
+    }
+
+    // Treat empty strings as value not being present
+    private static Optional<String> optionalOf(String value) {
+        if (!value.isEmpty()) {
+            return Optional.of(value);
+        } else {
+            return Optional.empty();
+        }
     }
 
     /**
@@ -97,10 +166,6 @@ class VersionProps {
 
         ps.print(java_runtime_name + " (" + jdk_debug_level + "build " + java_runtime_version);
 
-        if (java_runtime_name.indexOf("Embedded") != -1 && isHeadless) {
-            // embedded builds report headless state
-            ps.print(", headless");
-        }
         ps.println(')');
 
         /* Third line: JVM information. */

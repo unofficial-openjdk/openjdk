@@ -25,7 +25,8 @@
 # @summary (almost) all keytool behaviors
 # @author Weijun Wang
 # @run shell/timeout=600 standard.sh
-#
+# @key intermittent
+
 # This test is always excecuted.
 #
 # set a few environment variables so that the shell-script can run stand-alone
@@ -57,9 +58,9 @@ case "$OS" in
     ;;
 esac
 
-EXTRAOPTS="-XaddExports:java.base/sun.security.tools.keytool=ALL-UNNAMED \
- -XaddExports:java.base/sun.security.util=ALL-UNNAMED \
- -XaddExports:java.base/sun.security.x509=ALL-UNNAMED"
+EXTRAOPTS="--add-exports java.base/sun.security.tools.keytool=ALL-UNNAMED \
+ --add-exports java.base/sun.security.util=ALL-UNNAMED \
+ --add-exports java.base/sun.security.x509=ALL-UNNAMED"
 
 ${COMPILEJAVA}${FS}bin${FS}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} ${EXTRAOPTS} -d . -XDignore.symbol.file ${TESTSRC}${FS}KeyToolTest.java || exit 10
 
