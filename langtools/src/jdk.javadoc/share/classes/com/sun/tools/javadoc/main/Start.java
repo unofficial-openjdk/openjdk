@@ -160,7 +160,7 @@ public class Start extends ToolOption.Helper {
         if (log instanceof Messager)
             messager = (Messager) log;
         else {
-            PrintWriter out = context.get(Log.outKey);
+            PrintWriter out = context.get(Log.errKey);
             messager = (out == null) ? new Messager(context, javadocName)
                     : new Messager(context, javadocName, out, out, out);
         }
@@ -367,7 +367,7 @@ public class Start extends ToolOption.Helper {
             ((BaseFileManager) fileManager).handleOptions(fileManagerOpts);
         }
 
-        String platformString = compOpts.get("-release");
+        String platformString = compOpts.get("--release");
 
         if (platformString != null) {
             if (compOpts.isSet("-source")) {

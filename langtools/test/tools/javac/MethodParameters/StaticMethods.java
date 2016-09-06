@@ -26,9 +26,9 @@
  * @bug 8006582
  * @summary javac should generate method parameters correctly.
  * @modules jdk.jdeps/com.sun.tools.classfile
- * @build Tester ClassFileVisitor ReflectionVisitor
+ * @build MethodParametersTester ClassFileVisitor ReflectionVisitor
  * @compile -parameters StaticMethods.java
- * @run main Tester StaticMethods StaticMethods.out
+ * @run main MethodParametersTester StaticMethods StaticMethods.out
  */
 
 public class StaticMethods {

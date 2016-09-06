@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,6 @@
 
 package jdk.javadoc.internal.doclets.formats.html;
 
-import java.io.*;
 import java.util.*;
 
 import javax.lang.model.element.PackageElement;
@@ -36,6 +35,7 @@ import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTag;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTree;
 import jdk.javadoc.internal.doclets.formats.html.markup.RawHtml;
 import jdk.javadoc.internal.doclets.toolkit.Content;
+import jdk.javadoc.internal.doclets.toolkit.util.DocFileIOException;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPath;
 
 /**
@@ -65,7 +65,7 @@ public abstract class AbstractPackageIndexWriter extends HtmlDocletWriter {
      * @param filename Name of the package index file to be generated.
      */
     public AbstractPackageIndexWriter(ConfigurationImpl configuration,
-                                      DocPath filename) throws IOException {
+                                      DocPath filename) {
         super(configuration, filename);
         packages = configuration.packages;
     }
@@ -109,8 +109,9 @@ public abstract class AbstractPackageIndexWriter extends HtmlDocletWriter {
      *
      * @param title the title of the window.
      * @param includeScript boolean set true if windowtitle script is to be included
+     * @throws DocFileIOException if there is a problem building the package index file
      */
-    protected void buildPackageIndexFile(String title, boolean includeScript) throws IOException {
+    protected void buildPackageIndexFile(String title, boolean includeScript) throws DocFileIOException {
         String windowOverview = configuration.getText(title);
         Content body = getBody(includeScript, getWindowTitle(windowOverview));
         addNavigationBarHeader(body);
@@ -127,8 +128,7 @@ public abstract class AbstractPackageIndexWriter extends HtmlDocletWriter {
      *
      * @param body the document tree to which the overview will be added
      */
-    protected void addOverview(Content body) throws IOException {
-    }
+    protected void addOverview(Content body) { }
 
     /**
      * Adds the frame or non-frame package index to the documentation tree.
@@ -190,8 +190,9 @@ public abstract class AbstractPackageIndexWriter extends HtmlDocletWriter {
      *
      * @return a Content object to be added to the documentation tree
      */
+    @Override
     protected Content getNavLinkContents() {
-        Content li = HtmlTree.LI(HtmlStyle.navBarCell1Rev, overviewLabel);
+        Content li = HtmlTree.LI(HtmlStyle.navBarCell1Rev, contents.overviewLabel);
         return li;
     }
 

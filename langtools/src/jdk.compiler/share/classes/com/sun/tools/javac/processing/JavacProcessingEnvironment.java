@@ -26,12 +26,10 @@
 package com.sun.tools.javac.processing;
 
 import java.io.Closeable;
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
-import java.lang.reflect.Constructor;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
@@ -1506,7 +1504,6 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
             }
             public void visitClassDef(JCClassDecl node) {
                 if (node.sym != null) {
-                    node.sym.reset();
                     node.sym.completer = new ImplicitCompleter(topLevel);
                 }
                 node.sym = null;
@@ -1605,7 +1602,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
 
     /**
      * Convert import-style string for supported annotations into a
-     * regex matching that string.  If the string is a valid
+     * regex matching that string.  If the string is not a valid
      * import-style string, return a regex that won't match anything.
      */
     private static Pattern importStringToPattern(String s, Processor p, Log log) {

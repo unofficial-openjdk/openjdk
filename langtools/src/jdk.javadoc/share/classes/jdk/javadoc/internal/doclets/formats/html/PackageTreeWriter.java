@@ -25,8 +25,6 @@
 
 package jdk.javadoc.internal.doclets.formats.html;
 
-import java.io.*;
-
 import javax.lang.model.element.PackageElement;
 
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlConstants;
@@ -35,9 +33,9 @@ import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTag;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTree;
 import jdk.javadoc.internal.doclets.toolkit.Content;
 import jdk.javadoc.internal.doclets.toolkit.util.ClassTree;
+import jdk.javadoc.internal.doclets.toolkit.util.DocFileIOException;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPath;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPaths;
-import jdk.javadoc.internal.doclets.toolkit.util.DocletAbortException;
 
 
 /**
@@ -76,14 +74,11 @@ public class PackageTreeWriter extends AbstractTreeWriter {
      * @param packageElement the current package
      * @param prev the previous package
      * @param next the next package
-     * @throws IOException
-     * @throws DocletAbortException
      */
     public PackageTreeWriter(ConfigurationImpl configuration,
                              DocPath path,
                              PackageElement packageElement,
-                             PackageElement prev, PackageElement next)
-                      throws IOException {
+                             PackageElement prev, PackageElement next) {
         super(configuration, path,
               new ClassTree(configuration.typeElementCatalog.allClasses(packageElement), configuration));
         this.packageElement = packageElement;
@@ -101,36 +96,27 @@ public class PackageTreeWriter extends AbstractTreeWriter {
      * @param next     Next package in the alpha-ordered list.
      * @param noDeprecated  If true, do not generate any information for
      * deprecated classe or interfaces.
-     * @throws DocletAbortException
+     * @throws DocFileIOException if there is a problem generating the package tree page
      */
     public static void generate(ConfigurationImpl configuration,
                                 PackageElement pkg, PackageElement prev,
-                                PackageElement next, boolean noDeprecated) {
-        PackageTreeWriter packgen;
+                                PackageElement next, boolean noDeprecated)
+            throws DocFileIOException {
         DocPath path = DocPath.forPackage(pkg).resolve(DocPaths.PACKAGE_TREE);
-        try {
-            packgen = new PackageTreeWriter(configuration, path, pkg,
-                prev, next);
-            packgen.generatePackageTreeFile();
-            packgen.close();
-        } catch (IOException exc) {
-            configuration.standardmessage.error(
-                        "doclet.exception_encountered",
-                        exc.toString(), path.getPath());
-            throw new DocletAbortException(exc);
-        }
+        PackageTreeWriter packgen = new PackageTreeWriter(configuration, path, pkg, prev, next);
+        packgen.generatePackageTreeFile();
     }
 
     /**
      * Generate a separate tree file for each package.
-     * @throws java.io.IOException
+     * @throws DocFileIOException if there is a problem generating the package tree file
      */
-    protected void generatePackageTreeFile() throws IOException {
+    protected void generatePackageTreeFile() throws DocFileIOException {
         HtmlTree body = getPackageTreeHeader();
         HtmlTree htmlTree = (configuration.allowTag(HtmlTag.MAIN))
                 ? HtmlTree.MAIN()
                 : body;
-        Content headContent = getResource("doclet.Hierarchy_For_Package",
+        Content headContent = contents.getContent("doclet.Hierarchy_For_Package",
                 utils.getPackageName(packageElement));
         Content heading = HtmlTree.HEADING(HtmlConstants.TITLE_HEADING, false,
                 HtmlStyle.title, headContent);
@@ -187,7 +173,7 @@ public class PackageTreeWriter extends AbstractTreeWriter {
      */
     protected void addLinkToMainTree(Content div) {
         Content span = HtmlTree.SPAN(HtmlStyle.packageHierarchyLabel,
-                getResource("doclet.Package_Hierarchies"));
+                contents.packageHierarchies);
         div.addContent(span);
         HtmlTree ul = new HtmlTree (HtmlTag.UL);
         ul.addStyle(HtmlStyle.horizontal);
@@ -200,6 +186,7 @@ public class PackageTreeWriter extends AbstractTreeWriter {
      *
      * @return a content tree for the link
      */
+    @Override
     protected Content getNavLinkPrevious() {
         if (prev == null) {
             return getNavLinkPrevious(null);
@@ -214,6 +201,7 @@ public class PackageTreeWriter extends AbstractTreeWriter {
      *
      * @return a content tree for the link
      */
+    @Override
     protected Content getNavLinkNext() {
         if (next == null) {
             return getNavLinkNext(null);
@@ -231,7 +219,7 @@ public class PackageTreeWriter extends AbstractTreeWriter {
     @Override
     protected Content getNavLinkModule() {
         Content linkContent = getModuleLink(utils.elementUtils.getModuleOf(packageElement),
-                moduleLabel);
+                contents.moduleLabel);
         Content li = HtmlTree.LI(linkContent);
         return li;
     }
@@ -241,9 +229,10 @@ public class PackageTreeWriter extends AbstractTreeWriter {
      *
      * @return a content tree for the package link
      */
+    @Override
     protected Content getNavLinkPackage() {
         Content linkContent = getHyperLink(DocPaths.PACKAGE_SUMMARY,
-                packageLabel);
+                contents.packageLabel);
         Content li = HtmlTree.LI(linkContent);
         return li;
     }

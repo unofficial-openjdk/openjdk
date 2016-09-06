@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,21 +25,21 @@
 
 package jdk.javadoc.internal.doclets.formats.html;
 
-import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
 import java.util.TreeSet;
+
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlStyle;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTag;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTree;
 import jdk.javadoc.internal.doclets.formats.html.markup.StringContent;
 import jdk.javadoc.internal.doclets.toolkit.Content;
+import jdk.javadoc.internal.doclets.toolkit.util.DocFileIOException;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPath;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPaths;
-import jdk.javadoc.internal.doclets.toolkit.util.DocletAbortException;
 import jdk.javadoc.internal.doclets.toolkit.util.IndexBuilder;
 
 
@@ -69,20 +69,24 @@ public class SplitIndexWriter extends AbstractIndexWriter {
      */
     protected int next;
 
-    private List<Character> indexElements;
+    private final List<Character> indexElements;
 
     /**
      * Construct the SplitIndexWriter. Uses path to this file and relative path
      * from this file.
      *
+     * @param configuration the configuration for this doclet
      * @param path       Path to the file which is getting generated.
      * @param indexbuilder Unicode based Index from {@link IndexBuilder}
+     * @param elements the collection of characters for which to generate index files
+     * @param prev  the previous character that was indexed
+     * @param next  the next character to be indexed
      */
     public SplitIndexWriter(ConfigurationImpl configuration,
                             DocPath path,
                             IndexBuilder indexbuilder,
                             Collection<Character> elements,
-                            int prev, int next) throws IOException {
+                            int prev, int next) {
         super(configuration, path, indexbuilder);
         this.indexElements = new ArrayList<>(elements);
         this.prev = prev;
@@ -93,35 +97,26 @@ public class SplitIndexWriter extends AbstractIndexWriter {
      * Generate separate index files, for each Unicode character, listing all
      * the members starting with the particular unicode character.
      *
+     * @param configuration the configuration for this doclet
      * @param indexbuilder IndexBuilder built by {@link IndexBuilder}
-     * @throws DocletAbortException
+     * @throws DocFileIOException if there is a problem generating the index files
      */
     public static void generate(ConfigurationImpl configuration,
-                                IndexBuilder indexbuilder) {
-        SplitIndexWriter indexgen;
-        DocPath filename = DocPath.empty;
+                                IndexBuilder indexbuilder) throws DocFileIOException {
         DocPath path = DocPaths.INDEX_FILES;
-        try {
-            Set<Character> keys = new TreeSet<>(indexbuilder.getIndexMap().keySet());
-            keys.addAll(configuration.tagSearchIndexKeys);
-            ListIterator<Character> li = new ArrayList<>(keys).listIterator();
-            while (li.hasNext()) {
-                Object ch = li.next();
-                filename = DocPaths.indexN(li.nextIndex());
-                indexgen = new SplitIndexWriter(configuration,
-                        path.resolve(filename),
-                        indexbuilder, keys, li.previousIndex(), li.nextIndex());
-                indexgen.generateIndexFile((Character) ch);
-                if (!li.hasNext()) {
-                    indexgen.createSearchIndexFiles();
-                }
-                indexgen.close();
+        Set<Character> keys = new TreeSet<>(indexbuilder.getIndexMap().keySet());
+        keys.addAll(configuration.tagSearchIndexKeys);
+        ListIterator<Character> li = new ArrayList<>(keys).listIterator();
+        while (li.hasNext()) {
+            Object ch = li.next();
+            DocPath filename = DocPaths.indexN(li.nextIndex());
+            SplitIndexWriter indexgen = new SplitIndexWriter(configuration,
+                    path.resolve(filename),
+                    indexbuilder, keys, li.previousIndex(), li.nextIndex());
+            indexgen.generateIndexFile((Character) ch);
+            if (!li.hasNext()) {
+                indexgen.createSearchIndexFiles();
             }
-        } catch (IOException exc) {
-            configuration.standardmessage.error(
-                        "doclet.exception_encountered",
-                        exc.toString(), filename.getPath());
-            throw new DocletAbortException(exc);
         }
     }
 
@@ -131,8 +126,9 @@ public class SplitIndexWriter extends AbstractIndexWriter {
      *
      * @param unicode Unicode character referring to the character for the
      * index.
+     * @throws DocFileIOException if there is a problem generating an index file
      */
-    protected void generateIndexFile(Character unicode) throws IOException {
+    protected void generateIndexFile(Character unicode) throws DocFileIOException {
         String title = configuration.getText("doclet.Window_Split_Index",
                 unicode.toString());
         HtmlTree body = getBody(true, getWindowTitle(title));
@@ -178,7 +174,7 @@ public class SplitIndexWriter extends AbstractIndexWriter {
             int j = i + 1;
             contentTree.addContent(getHyperLink(DocPaths.indexN(j),
                     new StringContent(indexElements.get(i).toString())));
-            contentTree.addContent(getSpace());
+            contentTree.addContent(Contents.SPACE);
         }
     }
 
@@ -187,8 +183,9 @@ public class SplitIndexWriter extends AbstractIndexWriter {
      *
      * @return a content tree for the link
      */
+    @Override
     public Content getNavLinkPrevious() {
-        Content prevletterLabel = getResource("doclet.Prev_Letter");
+        Content prevletterLabel = contents.prevLetter;
         if (prev == -1) {
             return HtmlTree.LI(prevletterLabel);
         }
@@ -204,8 +201,9 @@ public class SplitIndexWriter extends AbstractIndexWriter {
      *
      * @return a content tree for the link
      */
+    @Override
     public Content getNavLinkNext() {
-        Content nextletterLabel = getResource("doclet.Next_Letter");
+        Content nextletterLabel = contents.nextLetter;
         if (next == -1) {
             return HtmlTree.LI(nextletterLabel);
         }

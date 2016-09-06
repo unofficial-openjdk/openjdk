@@ -25,12 +25,11 @@
 
 package com.sun.tools.javac.file;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStreamWriter;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -43,7 +42,6 @@ import java.nio.charset.CodingErrorAction;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -130,7 +128,7 @@ public abstract class BaseFileManager implements JavaFileManager {
 
     protected String classLoaderClass;
 
-    protected Locations locations;
+    protected final Locations locations;
 
     /**
      * A flag for clients to use to indicate that this file manager should
@@ -219,7 +217,10 @@ public abstract class BaseFileManager implements JavaFileManager {
             addReadsMethod.invoke(thisModule, targetModule);
         } catch (NoSuchMethodException e) {
             // ignore
-        } catch (Exception e) {
+        } catch (IllegalAccessException
+                | IllegalArgumentException
+                | SecurityException
+                | InvocationTargetException e) {
             throw new Abort(e);
         }
         return targetLoader;
@@ -322,8 +323,7 @@ public abstract class BaseFileManager implements JavaFileManager {
     private String defaultEncodingName;
     private String getDefaultEncodingName() {
         if (defaultEncodingName == null) {
-            defaultEncodingName =
-                new OutputStreamWriter(new ByteArrayOutputStream()).getEncoding();
+            defaultEncodingName = Charset.defaultCharset().name();
         }
         return defaultEncodingName;
     }
@@ -334,12 +334,12 @@ public abstract class BaseFileManager implements JavaFileManager {
 
     @SuppressWarnings("cast")
     public CharBuffer decode(ByteBuffer inbuf, boolean ignoreEncodingErrors) {
-        String encodingName = getEncodingName();
+        String encName = getEncodingName();
         CharsetDecoder decoder;
         try {
-            decoder = getDecoder(encodingName, ignoreEncodingErrors);
+            decoder = getDecoder(encName, ignoreEncodingErrors);
         } catch (IllegalCharsetNameException | UnsupportedCharsetException e) {
-            log.error("unsupported.encoding", encodingName);
+            log.error("unsupported.encoding", encName);
             return (CharBuffer)CharBuffer.allocate(1).flip();
         }
 
@@ -375,7 +375,7 @@ public abstract class BaseFileManager implements JavaFileManager {
                     unmappable.append(String.format("%02X", inbuf.get()));
                 }
 
-                String charsetName = charset == null ? encodingName : charset.name();
+                String charsetName = charset == null ? encName : charset.name();
 
                 log.error(dest.limit(),
                           Errors.IllegalCharForEncoding(unmappable.toString(), charsetName));

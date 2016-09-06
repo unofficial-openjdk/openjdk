@@ -203,10 +203,17 @@ public enum ToolOption {
         }
     },
 
-    RELEASE("-release", true) {
+    RELEASE("--release", true) {
         @Override
         public void process(Helper helper, String arg) {
             helper.setCompilerOpt(opt, arg);
+        }
+    },
+
+    RELEASE_OLD("-release", true) {
+        @Override
+        public void process(Helper helper, String arg) {
+            helper.setCompilerOpt("--release", arg);
         }
     },
 

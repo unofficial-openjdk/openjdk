@@ -39,8 +39,6 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.type.TypeVariable;
 import javax.lang.model.util.SimpleTypeVisitor9;
 
-import com.sun.tools.javac.util.DefinedBy;
-import com.sun.tools.javac.util.DefinedBy.Api;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlStyle;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTree;
 import jdk.javadoc.internal.doclets.toolkit.Content;
@@ -80,7 +78,7 @@ public abstract class AbstractExecutableMemberWriter extends AbstractMemberWrite
         Content typeParameters = getTypeParameters(member);
         if (!typeParameters.isEmpty()) {
             htmltree.addContent(typeParameters);
-            htmltree.addContent(writer.getSpace());
+            htmltree.addContent(Contents.SPACE);
         }
     }
 
@@ -115,7 +113,7 @@ public abstract class AbstractExecutableMemberWriter extends AbstractMemberWrite
      * Add the summary link for the member.
      *
      * @param context the id of the context where the link will be printed
-     * @param te the classDoc that we should link to
+     * @param te the type element being linked to
      * @param member the member being linked to
      * @param tdSummary the content tree to which the link will be added
      */
@@ -157,7 +155,7 @@ public abstract class AbstractExecutableMemberWriter extends AbstractMemberWrite
                 param.asType()).varargs(isVarArg));
         tree.addContent(link);
         if(name(param).length() > 0) {
-            tree.addContent(writer.getSpace());
+            tree.addContent(Contents.SPACE);
             tree.addContent(name(param));
         }
     }
@@ -173,11 +171,11 @@ public abstract class AbstractExecutableMemberWriter extends AbstractMemberWrite
     protected void addReceiverAnnotations(ExecutableElement member, TypeMirror rcvrType,
             List<? extends AnnotationMirror> annotationMirrors, Content tree) {
         writer.addReceiverAnnotationInfo(member, rcvrType, annotationMirrors, tree);
-        tree.addContent(writer.getSpace());
+        tree.addContent(Contents.SPACE);
         tree.addContent(utils.getTypeName(rcvrType, false));
         LinkInfoImpl linkInfo = new LinkInfoImpl(configuration, RECEIVER_TYPE, rcvrType);
         tree.addContent(writer.getTypeParameterLinks(linkInfo));
-        tree.addContent(writer.getSpace());
+        tree.addContent(Contents.SPACE);
         tree.addContent("this");
     }
 
@@ -314,27 +312,27 @@ public abstract class AbstractExecutableMemberWriter extends AbstractMemberWrite
             SimpleTypeVisitor9<Boolean, Void> stv = new SimpleTypeVisitor9<Boolean, Void>() {
                 boolean foundTypeVariable = false;
 
-                @Override @DefinedBy(Api.LANGUAGE_MODEL)
+                @Override
                 public Boolean visitArray(ArrayType t, Void p) {
                     visit(t.getComponentType());
                     buf.append(utils.getDimension(t));
                     return foundTypeVariable;
                 }
 
-                @Override @DefinedBy(Api.LANGUAGE_MODEL)
+                @Override
                 public Boolean visitTypeVariable(TypeVariable t, Void p) {
                     buf.append(utils.asTypeElement(t).getQualifiedName());
                     foundTypeVariable = true;
                     return foundTypeVariable;
                 }
 
-                @Override @DefinedBy(Api.LANGUAGE_MODEL)
+                @Override
                 public Boolean visitDeclared(DeclaredType t, Void p) {
                     buf.append(utils.getQualifiedTypeName(t));
                     return foundTypeVariable;
                 }
 
-                @Override @DefinedBy(Api.LANGUAGE_MODEL)
+                @Override
                 protected Boolean defaultAction(TypeMirror e, Void p) {
                     buf.append(e);
                     return foundTypeVariable;

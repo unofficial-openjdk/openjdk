@@ -63,6 +63,7 @@ import com.sun.tools.javac.platform.PlatformUtils;
 import com.sun.tools.javac.resources.CompilerProperties.Errors;
 import com.sun.tools.javac.resources.CompilerProperties.Warnings;
 import com.sun.tools.javac.util.Context;
+import com.sun.tools.javac.util.JCDiagnostic;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
 import com.sun.tools.javac.util.Log;
@@ -161,6 +162,11 @@ public class Arguments {
         @Override
         public void error(String key, Object... args) {
             Arguments.this.error(key, args);
+        }
+
+        @Override
+        public void error(JCDiagnostic.Error error) {
+            Arguments.this.error(error);
         }
 
         @Override
@@ -766,6 +772,22 @@ public class Arguments {
         }
     }
 
+    void error(JCDiagnostic.Error error) {
+        errors = true;
+        switch (errorMode) {
+            case ILLEGAL_ARGUMENT: {
+                String msg = log.localize(error);
+                throw new PropagatedException(new IllegalArgumentException(msg));
+            }
+            case ILLEGAL_STATE: {
+                String msg = log.localize(error);
+                throw new PropagatedException(new IllegalStateException(msg));
+            }
+            case LOG:
+                report(error);
+        }
+    }
+
     void error(String key, Object... args) {
         errors = true;
         switch (errorMode) {
@@ -789,6 +811,11 @@ public class Arguments {
     private void report(String key, Object... args) {
         // Would be good to have support for -XDrawDiagnostics here
         log.printRawLines(ownName + ": " + log.localize(PrefixKind.JAVAC, key, args));
+    }
+
+    private void report(JCDiagnostic.Error error) {
+        // Would be good to have support for -XDrawDiagnostics here
+        log.printRawLines(ownName + ": " + log.localize(error));
     }
 
     private JavaFileManager getFileManager() {

@@ -80,7 +80,7 @@ public class RequiresPublicTest extends ModuleTestBase {
         String log = new JavacTask(tb, Task.Mode.CMDLINE)
                 .options("-XDrawDiagnostics")
                 .files(findJavaFiles(src))
-                .outdir(classes.toString()) // should allow Path here
+                .outdir(classes)
                 .run(Task.Expect.FAIL)
                 .writeAll()
                 .getOutput(Task.OutputKind.DIRECT);

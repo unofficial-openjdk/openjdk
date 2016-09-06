@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2006, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,17 +41,14 @@ import javax.tools.ToolProvider;
 import com.sun.tools.javac.api.JavacTaskImpl;
 import com.sun.tools.javac.code.Symbol.CompletionFailure;
 import com.sun.tools.javac.code.Symtab;
-import com.sun.tools.javac.comp.Modules;
 import com.sun.tools.javac.main.JavaCompiler;
-import com.sun.tools.javac.util.List;
 
 public class T6400303 {
     public static void main(String... args) {
         javax.tools.JavaCompiler tool = ToolProvider.getSystemJavaCompiler();
         JavacTaskImpl task = (JavacTaskImpl)tool.getTask(null, null, null, null, null, null);
         Symtab syms = Symtab.instance(task.getContext());
-        //initialize unnamed module:
-        Modules.instance(task.getContext()).enter(List.nil(), syms.errSymbol);
+        task.ensureEntered();
         JavaCompiler compiler = JavaCompiler.instance(task.getContext());
         try {
             compiler.resolveIdent(syms.unnamedModule, "Test$1").complete();

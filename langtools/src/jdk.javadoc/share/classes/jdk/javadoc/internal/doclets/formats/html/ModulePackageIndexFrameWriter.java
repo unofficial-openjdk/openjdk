@@ -25,7 +25,6 @@
 
 package jdk.javadoc.internal.doclets.formats.html;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -41,9 +40,9 @@ import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTree;
 import jdk.javadoc.internal.doclets.formats.html.markup.RawHtml;
 import jdk.javadoc.internal.doclets.formats.html.markup.StringContent;
 import jdk.javadoc.internal.doclets.toolkit.Content;
+import jdk.javadoc.internal.doclets.toolkit.util.DocFileIOException;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPath;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPaths;
-import jdk.javadoc.internal.doclets.toolkit.util.DocletAbortException;
 
 /**
  * Generate the module package index for the left-hand frame in the generated output.
@@ -65,30 +64,20 @@ public class ModulePackageIndexFrameWriter extends AbstractModuleIndexWriter {
      * @param configuration the configuration object
      * @param filename Name of the package index file to be generated.
      */
-    public ModulePackageIndexFrameWriter(ConfigurationImpl configuration,
-                                   DocPath filename) throws IOException {
+    public ModulePackageIndexFrameWriter(ConfigurationImpl configuration, DocPath filename)  {
         super(configuration, filename);
     }
 
     /**
      * Generate the module package index file.
-     * @throws DocletAbortException
+     * @throws DocFileIOException
      * @param configuration the configuration object
      * @param mdle the module being documented
      */
-    public static void generate(ConfigurationImpl configuration, ModuleElement mdle) {
-        ModulePackageIndexFrameWriter modpackgen;
+    public static void generate(ConfigurationImpl configuration, ModuleElement mdle) throws DocFileIOException {
         DocPath filename = DocPaths.moduleFrame(mdle);
-        try {
-            modpackgen = new ModulePackageIndexFrameWriter(configuration, filename);
-            modpackgen.buildModulePackagesIndexFile("doclet.Window_Overview", false, mdle);
-            modpackgen.close();
-        } catch (IOException exc) {
-            configuration.standardmessage.error(
-                        "doclet.exception_encountered",
-                        exc.toString(), filename);
-            throw new DocletAbortException(exc);
-        }
+        ModulePackageIndexFrameWriter modpackgen = new ModulePackageIndexFrameWriter(configuration, filename);
+        modpackgen.buildModulePackagesIndexFile("doclet.Window_Overview", false, mdle);
     }
 
     /**
@@ -99,13 +88,13 @@ public class ModulePackageIndexFrameWriter extends AbstractModuleIndexWriter {
         Content profNameContent = new StringContent(mdle.getQualifiedName().toString());
         Content heading = HtmlTree.HEADING(HtmlConstants.PACKAGE_HEADING, true,
                 getTargetModuleLink("classFrame", profNameContent, mdle));
-        heading.addContent(getSpace());
-        heading.addContent(packagesLabel);
+        heading.addContent(Contents.SPACE);
+        heading.addContent(contents.packagesLabel);
         HtmlTree htmlTree = (configuration.allowTag(HtmlTag.MAIN))
                 ? HtmlTree.MAIN(HtmlStyle.indexContainer, heading)
                 : HtmlTree.DIV(HtmlStyle.indexContainer, heading);
         HtmlTree ul = new HtmlTree(HtmlTag.UL);
-        ul.setTitle(packagesLabel);
+        ul.setTitle(contents.packagesLabel);
         List<PackageElement> packages = new ArrayList<>(modules.get(mdle));
         for (PackageElement pkg : packages) {
             if ((!(configuration.nodeprecated && utils.isDeprecated(pkg)))) {
@@ -124,13 +113,13 @@ public class ModulePackageIndexFrameWriter extends AbstractModuleIndexWriter {
         Content moduleNameContent = new StringContent(mdle.getQualifiedName().toString());
         Content heading = HtmlTree.HEADING(HtmlConstants.PACKAGE_HEADING, true,
                 getTargetModuleLink("classFrame", moduleNameContent, mdle));
-        heading.addContent(getSpace());
-        heading.addContent(packagesLabel);
+        heading.addContent(Contents.SPACE);
+        heading.addContent(contents.packagesLabel);
         HtmlTree htmlTree = (configuration.allowTag(HtmlTag.MAIN))
                 ? HtmlTree.MAIN(HtmlStyle.indexContainer, heading)
                 : HtmlTree.DIV(HtmlStyle.indexContainer, heading);
         HtmlTree ul = new HtmlTree(HtmlTag.UL);
-        ul.setTitle(packagesLabel);
+        ul.setTitle(contents.packagesLabel);
         Set<PackageElement> modulePackages = configuration.modulePackages.get(mdle);
         for (PackageElement pkg: modulePackages) {
             if ((!(configuration.nodeprecated && utils.isDeprecated(pkg)))) {
@@ -198,7 +187,7 @@ public class ModulePackageIndexFrameWriter extends AbstractModuleIndexWriter {
      */
     protected void addAllClassesLink(Content ul) {
         Content linkContent = getHyperLink(DocPaths.ALLCLASSES_FRAME,
-                allclassesLabel, "", "packageFrame");
+                contents.allClassesLabel, "", "packageFrame");
         Content li = HtmlTree.LI(linkContent);
         ul.addContent(li);
     }
@@ -211,7 +200,7 @@ public class ModulePackageIndexFrameWriter extends AbstractModuleIndexWriter {
      */
     protected void addAllPackagesLink(Content ul) {
         Content linkContent = getHyperLink(DocPaths.OVERVIEW_FRAME,
-                allpackagesLabel, "", "packageListFrame");
+                contents.allPackagesLabel, "", "packageListFrame");
         Content li = HtmlTree.LI(linkContent);
         ul.addContent(li);
     }
@@ -224,7 +213,7 @@ public class ModulePackageIndexFrameWriter extends AbstractModuleIndexWriter {
      */
     protected void addAllModulesLink(Content ul) {
         Content linkContent = getHyperLink(DocPaths.MODULE_OVERVIEW_FRAME,
-                allmodulesLabel, "", "packageListFrame");
+                contents.allModulesLabel, "", "packageListFrame");
         Content li = HtmlTree.LI(linkContent);
         ul.addContent(li);
     }
@@ -233,7 +222,7 @@ public class ModulePackageIndexFrameWriter extends AbstractModuleIndexWriter {
      * {@inheritDoc}
      */
     protected void addNavigationBarFooter(Content body) {
-        Content p = HtmlTree.P(getSpace());
+        Content p = HtmlTree.P(Contents.SPACE);
         body.addContent(p);
     }
 }

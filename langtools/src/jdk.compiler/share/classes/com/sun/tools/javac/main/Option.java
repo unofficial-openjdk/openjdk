@@ -56,6 +56,7 @@ import com.sun.tools.javac.jvm.Profile;
 import com.sun.tools.javac.jvm.Target;
 import com.sun.tools.javac.platform.PlatformProvider;
 import com.sun.tools.javac.processing.JavacProcessingEnvironment;
+import com.sun.tools.javac.resources.CompilerProperties.Errors;
 import com.sun.tools.javac.util.Assert;
 import com.sun.tools.javac.util.JDK9Wrappers;
 import com.sun.tools.javac.util.Log;
@@ -105,19 +106,19 @@ public enum Option {
         @Override
         protected void help(Log log) {
             super.help(log);
-            log.printRawLines(WriterKind.NOTICE,
+            log.printRawLines(WriterKind.STDOUT,
                               String.format(LINT_KEY_FORMAT,
                                             "all",
                                             log.localize(PrefixKind.JAVAC, "opt.Xlint.all")));
             for (LintCategory lc : LintCategory.values()) {
                 if (lc.hidden) continue;
-                log.printRawLines(WriterKind.NOTICE,
+                log.printRawLines(WriterKind.STDOUT,
                                   String.format(LINT_KEY_FORMAT,
                                                 lc.option,
                                                 log.localize(PrefixKind.JAVAC,
                                                              "opt.Xlint.desc." + lc.option)));
             }
-            log.printRawLines(WriterKind.NOTICE,
+            log.printRawLines(WriterKind.STDOUT,
                               String.format(LINT_KEY_FORMAT,
                                             "none",
                                             log.localize(PrefixKind.JAVAC, "opt.Xlint.none")));
@@ -190,7 +191,41 @@ public enum Option {
 
     SYSTEM("--system -system", "opt.arg.jdk", "opt.system", STANDARD, FILEMANAGER),
 
-    PATCH_MODULE("--patch-module -Xpatch:", "opt.arg.patch", "opt.patch", EXTENDED, FILEMANAGER),
+    PATCH_MODULE("--patch-module -Xpatch:", "opt.arg.patch", "opt.patch", EXTENDED, FILEMANAGER) {
+        // The deferred filemanager diagnostics mechanism assumes a single value per option,
+        // but --patch-module can be used multiple times, once per module. Therefore we compose
+        // a value for the option containing the last value specified for each module, and separate
+        // the the module=path pairs by an invalid path character, NULL.
+        // The standard file manager code knows to split apart the NULL-separated components.
+        @Override
+        public boolean process(OptionHelper helper, String option, String arg) {
+            if (!arg.contains("=")) { // could be more strict regeex, e.g. "(?i)[a-z0-9_.]+=.*"
+                helper.error(Errors.LocnInvalidArgForXpatch(arg));
+            }
+
+            String previous = helper.get(this);
+            if (previous == null) {
+                return super.process(helper, option, arg);
+            }
+
+            Map<String,String> map = new LinkedHashMap<>();
+            for (String s : previous.split("\0")) {
+                int sep = s.indexOf('=');
+                map.put(s.substring(0, sep), s.substring(sep + 1));
+            }
+
+            int sep = arg.indexOf('=');
+            map.put(arg.substring(0, sep), arg.substring(sep + 1));
+
+            StringBuilder sb = new StringBuilder();
+            map.forEach((m, p) -> {
+                if (sb.length() > 0)
+                    sb.append('\0');
+                sb.append(m).append('=').append(p);
+            });
+            return super.process(helper, option, sb.toString());
+        }
+    },
 
     BOOT_CLASS_PATH("--boot-class-path -bootclasspath", "opt.arg.path", "opt.bootclasspath", STANDARD, FILEMANAGER) {
         @Override
@@ -276,7 +311,7 @@ public enum Option {
         }
     },
 
-    RELEASE("-release", "opt.arg.release", "opt.release", STANDARD, BASIC) {
+    RELEASE("--release -release", "opt.arg.release", "opt.release", STANDARD, BASIC) {
         @Override
         protected void help(Log log) {
             Iterable<PlatformProvider> providers =
@@ -316,7 +351,7 @@ public enum Option {
         public boolean process(OptionHelper helper, String option) {
             Log log = helper.getLog();
             String ownName = helper.getOwnName();
-            log.printLines(PrefixKind.JAVAC, "version", ownName,  JavaCompiler.version());
+            log.printLines(WriterKind.STDOUT, PrefixKind.JAVAC, "version", ownName,  JavaCompiler.version());
             return super.process(helper, option);
         }
     },
@@ -326,23 +361,8 @@ public enum Option {
         public boolean process(OptionHelper helper, String option) {
             Log log = helper.getLog();
             String ownName = helper.getOwnName();
-            log.printLines(PrefixKind.JAVAC, "fullVersion", ownName,  JavaCompiler.fullVersion());
+            log.printLines(WriterKind.STDOUT, PrefixKind.JAVAC, "fullVersion", ownName,  JavaCompiler.fullVersion());
             return super.process(helper, option);
-        }
-    },
-
-    DIAGS("-XDdiags=", null, HIDDEN, INFO) {
-        @Override
-        public boolean process(OptionHelper helper, String option) {
-            option = option.substring(option.indexOf('=') + 1);
-            String diagsOption = option.contains("%") ?
-                "-XDdiagsFormat=" :
-                "-XDdiags=";
-            diagsOption += option;
-            if (XD.matches(diagsOption))
-                return XD.process(helper, diagsOption);
-            else
-                return false;
         }
     },
 
@@ -352,9 +372,9 @@ public enum Option {
         public boolean process(OptionHelper helper, String option) {
             Log log = helper.getLog();
             String ownName = helper.getOwnName();
-            log.printLines(PrefixKind.JAVAC, "msg.usage.header", ownName);
+            log.printLines(WriterKind.STDOUT, PrefixKind.JAVAC, "msg.usage.header", ownName);
             showHelp(log, OptionKind.STANDARD);
-            log.printNewline();
+            log.printNewline(WriterKind.STDOUT);
             return super.process(helper, option);
         }
     },
@@ -394,8 +414,8 @@ public enum Option {
         public boolean process(OptionHelper helper, String option) {
             Log log = helper.getLog();
             showHelp(log, OptionKind.EXTENDED);
-            log.printNewline();
-            log.printLines(PrefixKind.JAVAC, "msg.usage.nonstandard.footer");
+            log.printNewline(WriterKind.STDOUT);
+            log.printLines(WriterKind.STDOUT, PrefixKind.JAVAC, "msg.usage.nonstandard.footer");
             return super.process(helper, option);
         }
     },
@@ -489,6 +509,39 @@ public enum Option {
 
     XDIAGS("-Xdiags:", "opt.diags", EXTENDED, BASIC, ONEOF, "compact", "verbose"),
 
+    XDEBUG("-Xdebug:", null, HIDDEN, BASIC) {
+        @Override
+        public boolean process(OptionHelper helper, String option) {
+            String p = option.substring(option.indexOf(':') + 1).trim();
+            String[] subOptions = p.split(";");
+            for (String subOption : subOptions) {
+                subOption = "debug." + subOption.trim();
+                XD.process(helper, subOption, subOption);
+            }
+            return false;
+        }
+    },
+
+    XSHOULDSTOP("-Xshouldstop:", null, HIDDEN, BASIC) {
+        @Override
+        public boolean process(OptionHelper helper, String option) {
+            String p = option.substring(option.indexOf(':') + 1).trim();
+            String[] subOptions = p.split(";");
+            for (String subOption : subOptions) {
+                subOption = "shouldstop." + subOption.trim();
+                XD.process(helper, subOption, subOption);
+            }
+            return false;
+        }
+    },
+
+    DIAGS("-diags:", null, HIDDEN, BASIC) {
+        @Override
+        public boolean process(OptionHelper helper, String option) {
+            return HiddenGroup.DIAGS.process(helper, option);
+        }
+    },
+
     /* This is a back door to the compiler's option table.
      * -XDx=y sets the option x to the value y.
      * -XDx sets the option x to the value x.
@@ -500,10 +553,14 @@ public enum Option {
         }
         @Override
         public boolean process(OptionHelper helper, String option) {
-            option = option.substring(primaryName.length());
-            int eq = option.indexOf('=');
-            String key = (eq < 0) ? option : option.substring(0, eq);
-            String value = (eq < 0) ? option : option.substring(eq+1);
+            return process(helper, option, option.substring(primaryName.length()));
+        }
+
+        @Override
+        public boolean process(OptionHelper helper, String option, String arg) {
+            int eq = arg.indexOf('=');
+            String key = (eq < 0) ? arg : arg.substring(0, eq);
+            String value = (eq < 0) ? arg : arg.substring(eq+1);
             helper.put(key, value);
             return false;
         }
@@ -588,7 +645,7 @@ public enum Option {
         }
     },
 
-    MULTIRELEASE("-multi-release", "opt.arg.multi-release", "opt.multi-release", HIDDEN, FILEMANAGER),
+    MULTIRELEASE("--multi-release -multi-release", "opt.arg.multi-release", "opt.multi-release", HIDDEN, FILEMANAGER),
 
     INHERIT_RUNTIME_ENVIRONMENT("--inherit-runtime-environment", "opt.inherit_runtime_environment",
             EXTENDED, BASIC) {
@@ -694,6 +751,26 @@ public enum Option {
         ONEOF,
         /** The expected value is one of more of the set of choices. */
         ANYOF
+    }
+
+    enum HiddenGroup {
+        DIAGS("diags");
+
+        final String text;
+
+        HiddenGroup(String text) {
+            this.text = text;
+        }
+
+        public boolean process(OptionHelper helper, String option) {
+            String p = option.substring(option.indexOf(':') + 1).trim();
+            String[] subOptions = p.split(";");
+            for (String subOption : subOptions) {
+                subOption = text + "." + subOption.trim();
+                XD.process(helper, subOption, subOption);
+            }
+            return false;
+        }
     }
 
     /**
@@ -841,7 +918,6 @@ public enum Option {
     }
 
     public boolean hasArg() {
-//        return argsNameKey != null && !hasSuffix;
         return (argKind != ArgKind.NONE);
     }
 
@@ -1011,22 +1087,22 @@ public enum Option {
         if (synopses.length() < DEFAULT_SYNOPSIS_WIDTH
                 && !descr.contains("\n")
                 && (SMALL_INDENT.length() + DEFAULT_SYNOPSIS_WIDTH + 1 + descr.length() <= DEFAULT_MAX_LINE_LENGTH)) {
-            log.printRawLines(WriterKind.NOTICE, String.format(COMPACT_FORMAT, synopses, descr));
+            log.printRawLines(WriterKind.STDOUT, String.format(COMPACT_FORMAT, synopses, descr));
             return;
         }
 
         // If option synopses fit on a single line of reasonable length, show that;
         // otherwise, show 1 per line
         if (synopses.length() <= DEFAULT_MAX_LINE_LENGTH) {
-            log.printRawLines(WriterKind.NOTICE, SMALL_INDENT + synopses);
+            log.printRawLines(WriterKind.STDOUT, SMALL_INDENT + synopses);
         } else {
             for (String name: names) {
-                log.printRawLines(WriterKind.NOTICE, SMALL_INDENT + helpSynopsis(name, log));
+                log.printRawLines(WriterKind.STDOUT, SMALL_INDENT + helpSynopsis(name, log));
             }
         }
 
         // Finally, show the description
-        log.printRawLines(WriterKind.NOTICE, LARGE_INDENT + descr.replace("\n", "\n" + LARGE_INDENT));
+        log.printRawLines(WriterKind.STDOUT, LARGE_INDENT + descr.replace("\n", "\n" + LARGE_INDENT));
     }
 
     /**
@@ -1103,7 +1179,7 @@ public enum Option {
     }
 
     /**
-     * Returns the set of ptions supported by the command line tool.
+     * Returns the set of options supported by the command line tool.
      * @return the set of options.
      */
     static Set<Option> getJavaCompilerOptions() {

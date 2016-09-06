@@ -239,7 +239,14 @@ public class TypeEnter implements Completer {
         public final List<Env<AttrContext>> completeEnvs(List<Env<AttrContext>> envs) {
             boolean firstToComplete = queue.isEmpty();
 
-            doCompleteEnvs(envs);
+            Phase prevTopLevelPhase = topLevelPhase;
+
+            try {
+                topLevelPhase = this;
+                doCompleteEnvs(envs);
+            } finally {
+                topLevelPhase = prevTopLevelPhase;
+            }
 
             if (firstToComplete) {
                 List<Env<AttrContext>> out = queue.toList();
@@ -276,6 +283,7 @@ public class TypeEnter implements Completer {
     }
 
     private final ImportsPhase completeClass = new ImportsPhase();
+    private Phase topLevelPhase;
 
     /**Analyze import clauses.
      */
@@ -339,13 +347,17 @@ public class TypeEnter implements Completer {
                 if (tree.getPackage() != null)
                     checkClassPackageClash(tree.getPackage());
 
-                if (tree.getModuleDecl() != null) {
-                    // process module annotations
-                    annotate.annotateLater(tree.getModuleDecl().annotations, env, env.toplevel.modle, null);
-                }
-
                 for (JCImport imp : tree.getImports()) {
                     doImport(imp);
+                }
+
+                if (tree.getModuleDecl() != null) {
+                    JCModuleDecl decl = tree.getModuleDecl();
+
+                    //check @Deprecated:
+                    markDeprecated(decl.sym, decl.annotations, env);
+                    // process module annotations
+                    annotate.annotateLater(decl.annotations, env, env.toplevel.modle, null);
                 }
             } finally {
                 this.env = prevEnv;
@@ -741,13 +753,7 @@ public class TypeEnter implements Completer {
                 }
             }
 
-            // Annotations.
-            // In general, we cannot fully process annotations yet,  but we
-            // can attribute the annotation types and then check to see if the
-            // @Deprecated annotation is present.
-            attr.attribAnnotationTypes(tree.mods.annotations, baseEnv);
-            if (hasDeprecatedAnnotation(tree.mods.annotations))
-                sym.flags_field |= DEPRECATED;
+            markDeprecated(sym, tree.mods.annotations, baseEnv);
 
             chk.checkNonCyclicDecl(tree);
         }
@@ -761,21 +767,17 @@ public class TypeEnter implements Completer {
                 return superType;
             }
 
-            /**
-             * Check if a list of annotations contains a reference to
-             * java.lang.Deprecated.
-             **/
-            private boolean hasDeprecatedAnnotation(List<JCAnnotation> annotations) {
-                for (List<JCAnnotation> al = annotations; !al.isEmpty(); al = al.tail) {
-                    JCAnnotation a = al.head;
-                    if (a.annotationType.type == syms.deprecatedType && a.args.isEmpty())
-                        return true;
-                }
-                return false;
-            }
-
         @Override
         public void complete(Symbol sym) throws CompletionFailure {
+            Assert.check((topLevelPhase instanceof ImportsPhase) ||
+                         (topLevelPhase == this));
+
+            if (topLevelPhase != this) {
+                //only do the processing based on dependencies in the HierarchyPhase:
+                sym.completer = this;
+                return ;
+            }
+
             Env<AttrContext> env = typeEnvs.get((ClassSymbol) sym);
 
             super.doCompleteEnvs(List.of(env));
@@ -1108,5 +1110,30 @@ public class TypeEnter implements Completer {
         }
         List<JCExpression> typeargs = typarams.nonEmpty() ? make.Types(typarams) : null;
         return make.Exec(make.Apply(typeargs, meth, make.Idents(params)));
+    }
+
+    /**
+     * Mark sym deprecated if annotations contain @Deprecated annotation.
+     */
+    public void markDeprecated(Symbol sym, List<JCAnnotation> annotations, Env<AttrContext> env) {
+        // In general, we cannot fully process annotations yet,  but we
+        // can attribute the annotation types and then check to see if the
+        // @Deprecated annotation is present.
+        attr.attribAnnotationTypes(annotations, env);
+        if (hasDeprecatedAnnotation(annotations))
+            sym.flags_field |= DEPRECATED;
+    }
+
+    /**
+     * Check if a list of annotations contains a reference to
+     * java.lang.Deprecated.
+     **/
+    private boolean hasDeprecatedAnnotation(List<JCAnnotation> annotations) {
+        for (List<JCAnnotation> al = annotations; !al.isEmpty(); al = al.tail) {
+            JCAnnotation a = al.head;
+            if (a.annotationType.type == syms.deprecatedType && a.args.isEmpty())
+                return true;
+        }
+        return false;
     }
 }

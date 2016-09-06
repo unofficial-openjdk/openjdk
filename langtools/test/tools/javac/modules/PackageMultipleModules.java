@@ -39,7 +39,6 @@ import java.util.List;
 
 import toolbox.JavacTask;
 import toolbox.Task;
-import toolbox.ToolBox;
 
 public class PackageMultipleModules extends ModuleTestBase {
 

@@ -68,6 +68,8 @@ import static com.sun.tools.javac.code.TypeTag.TYPEVAR;
 import static com.sun.tools.javac.jvm.ClassFile.*;
 import static com.sun.tools.javac.jvm.ClassFile.Version.*;
 
+import static com.sun.tools.javac.main.Option.PARAMETERS;
+
 /** This class provides operations to read a classfile into an internal
  *  representation. The internal representation is anchored in a
  *  ClassSymbol which contains in its scope symbol representations
@@ -241,7 +243,7 @@ public class ClassReader {
         allowSimplifiedVarargs = source.allowSimplifiedVarargs();
         allowModules     = source.allowModules();
 
-        saveParameterNames = options.isSet("save-parameter-names");
+        saveParameterNames = options.isSet(PARAMETERS);
 
         profile = Profile.instance(context);
 
@@ -564,6 +566,11 @@ public class ClassReader {
      * class name is of the form module-name.module-info.
      */
     Name readModuleInfoName(int i) {
+        if (majorVersion < Version.V53.major) {
+            throw badClassFile("anachronistic.module.info",
+                    Integer.toString(majorVersion),
+                    Integer.toString(minorVersion));
+        }
         int classIndex = poolIdx[i];
         if (buf[classIndex] == CONSTANT_Class) {
             int utf8Index = poolIdx[getChar(classIndex + 1)];
@@ -999,7 +1006,9 @@ public class ClassReader {
 
             new AttributeReader(names.Deprecated, V45_3, CLASS_OR_MEMBER_ATTRIBUTE) {
                 protected void read(Symbol sym, int attrLen) {
-                    sym.flags_field |= DEPRECATED;
+                    Symbol s = sym.owner.kind == MDL ? sym.owner : sym;
+
+                    s.flags_field |= DEPRECATED;
                 }
             },
 
@@ -2443,6 +2452,9 @@ public class ClassReader {
         // reset and read rest of classinfo
         bp = startbp;
         int n = nextChar();
+        if ((flags & MODULE) != 0 && n > 0) {
+            throw badClassFile("module.info.invalid.super.class");
+        }
         if (ct.supertype_field == null)
             ct.supertype_field = (n == 0)
                 ? Type.noType
@@ -2543,6 +2555,8 @@ public class ClassReader {
                 List<Type> found = foundTypeVariables;
                 missingTypeVariables = List.nil();
                 foundTypeVariables = List.nil();
+                interimUses = List.nil();
+                interimProvides = List.nil();
                 filling = false;
                 ClassType ct = (ClassType)currentOwner.type;
                 ct.supertype_field =

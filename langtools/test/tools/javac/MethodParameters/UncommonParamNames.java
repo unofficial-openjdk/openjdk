@@ -26,9 +26,9 @@
  * @bug 8006582
  * @summary javac should generate method parameters correctly.
  * @modules jdk.jdeps/com.sun.tools.classfile
- * @build Tester ClassFileVisitor ReflectionVisitor
+ * @build MethodParametersTester ClassFileVisitor ReflectionVisitor
  * @compile -parameters UncommonParamNames.java
- * @run main Tester UncommonParamNames UncommonParamNames.out
+ * @run main MethodParametersTester UncommonParamNames UncommonParamNames.out
  */
 
 /** Test uncommon parameter names */

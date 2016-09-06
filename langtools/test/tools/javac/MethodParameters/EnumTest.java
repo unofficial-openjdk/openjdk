@@ -26,9 +26,9 @@
  * @bug 8006582 8008658
  * @summary javac should generate method parameters correctly.
  * @modules jdk.jdeps/com.sun.tools.classfile
- * @build Tester ClassFileVisitor ReflectionVisitor
+ * @build MethodParametersTester ClassFileVisitor ReflectionVisitor
  * @compile -parameters EnumTest.java
- * @run main Tester EnumTest EnumTest.out
+ * @run main MethodParametersTester EnumTest EnumTest.out
  */
 
 /** Test that parameter names are recorded for enum methods */
