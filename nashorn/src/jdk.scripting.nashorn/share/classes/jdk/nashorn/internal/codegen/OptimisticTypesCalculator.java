@@ -79,7 +79,7 @@ final class OptimisticTypesCalculator extends SimpleNodeVisitor {
 
     @Override
     public boolean enterPropertyNode(final PropertyNode propertyNode) {
-        if(propertyNode.getKeyName().equals(ScriptObject.PROTO_PROPERTY_NAME)) {
+        if(ScriptObject.PROTO_PROPERTY_NAME.equals(propertyNode.getKeyName())) {
             tagNeverOptimistic(propertyNode.getValue());
         }
         return super.enterPropertyNode(propertyNode);
@@ -99,7 +99,9 @@ final class OptimisticTypesCalculator extends SimpleNodeVisitor {
                     tagNeverOptimistic(binaryNode.rhs());
                 }
             }
-        } else if(binaryNode.isTokenType(TokenType.INSTANCEOF)) {
+        } else if(binaryNode.isTokenType(TokenType.INSTANCEOF)
+                || binaryNode.isTokenType(TokenType.EQ_STRICT)
+                || binaryNode.isTokenType(TokenType.NE_STRICT)) {
             tagNeverOptimistic(binaryNode.lhs());
             tagNeverOptimistic(binaryNode.rhs());
         }
