@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,6 +44,7 @@ import sun.security.jca.ProviderList;
 import sun.security.util.ECUtil;
 
 import static sun.security.ssl.SunJSSE.cryptoProvider;
+import static sun.security.util.SecurityConstants.PROVIDER_VER;
 
 /**
  * This class contains a few static methods for interaction with the JCA/JCE
@@ -90,7 +91,7 @@ final class JsseJce {
         private static final long serialVersionUID = -3284138292032213752L;
 
         SunCertificates(final Provider p) {
-            super("SunCertificates", 9.0d, "SunJSSE internal");
+            super("SunCertificates", PROVIDER_VER, "SunJSSE internal");
             AccessController.doPrivileged(new PrivilegedAction<Object>() {
                 @Override
                 public Object run() {
@@ -275,6 +276,15 @@ final class JsseJce {
         }
     }
 
+    static AlgorithmParameters getAlgorithmParameters(String algorithm)
+            throws NoSuchAlgorithmException {
+        if (cryptoProvider == null) {
+            return AlgorithmParameters.getInstance(algorithm);
+        } else {
+            return AlgorithmParameters.getInstance(algorithm, cryptoProvider);
+        }
+    }
+
     static SecureRandom getSecureRandom() throws KeyManagementException {
         if (cryptoProvider == null) {
             return new SecureRandom();
@@ -394,6 +404,7 @@ final class JsseJce {
                 JsseJce.getKeyAgreement("ECDH");
                 JsseJce.getKeyFactory("EC");
                 JsseJce.getKeyPairGenerator("EC");
+                JsseJce.getAlgorithmParameters("EC");
             } catch (Exception e) {
                 mediator = false;
             }

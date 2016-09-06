@@ -56,7 +56,7 @@ public class ResourcesTest {
     public void compileAll() throws Exception {
         boolean compiled;
 
-        // javac -modulesource mods -d mods src/**
+        // javac --module-source-path mods -d mods src/**
         compiled = CompilerUtils
             .compile(SRC_DIR,
                      MODS_DIR,

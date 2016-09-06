@@ -23,6 +23,10 @@
  * questions.
  */
 
+/**
+ * Defines the Java Naming and Directory Interface (JNDI) API.
+ */
+@SuppressWarnings("deprecation")
 module java.naming {
     requires java.security.sasl;
 

@@ -20,7 +20,9 @@
  *
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
+
 package java.net.http;
 
 import java.io.Closeable;
@@ -81,7 +83,7 @@ import static javax.net.ssl.SSLEngineResult.HandshakeStatus.*;
  * the channel to be closed, and the error is reported to the user's
  * Consumer<Throwable>
  */
-public class AsyncSSLDelegate implements Closeable, AsyncConnection {
+class AsyncSSLDelegate implements Closeable, AsyncConnection {
 
     // outgoing buffers put in this queue first and may remain here
     // while SSL handshaking happening.

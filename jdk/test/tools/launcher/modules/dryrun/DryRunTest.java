@@ -23,9 +23,10 @@
 
 /**
  * @test
+ * @bug 8159596
  * @library /lib/testlibrary
- * @modules jdk.jartool/sun.tools.jar
- *          jdk.compiler
+ * @modules jdk.compiler
+ *          jdk.jartool/sun.tools.jar
  * @build DryRunTest CompilerUtils jdk.testlibrary.ProcessTools
  * @run testng DryRunTest
  * @summary Test java --dry-run
@@ -59,6 +60,7 @@ public class DryRunTest {
 
     // the module main class
     private static final String MAIN_CLASS = "jdk.test.Main";
+    private static final String MAIN_CLINIT_CLASS = "jdk.test.MainWithClinit";
 
 
     @BeforeTest
@@ -98,10 +100,24 @@ public class DryRunTest {
         String dir = MODS_DIR.toString();
         String mid = TEST_MODULE + "/" + MAIN_CLASS;
 
-        // java --module-path mods -module $TESTMODULE/$MAINCLASS
         // no resolution failure
-        int exitValue = exec("--dry-run", "--module-path", dir, "--module", mid);
+        int exitValue = exec("--dry-run", "--module-path", dir, "-m", mid);
         assertTrue(exitValue == 0);
+    }
+
+    /**
+     * Test dryrun that does not invoke <clinit> of the main class
+     */
+    public void testMainClinit() throws Exception {
+        String dir = MODS_DIR.toString();
+        String mid = TEST_MODULE + "/" + MAIN_CLINIT_CLASS;
+
+        int exitValue = exec("--dry-run", "--module-path", dir, "-m", mid);
+        assertTrue(exitValue == 0);
+
+        // expect the test to fail if main class is initialized
+        exitValue = exec("--module-path", dir, "-m", mid);
+        assertTrue(exitValue != 0);
     }
 
     /**
@@ -113,7 +129,7 @@ public class DryRunTest {
 
         int exitValue = exec("--dry-run", "--module-path", dir,
                              "--add-modules", "non.existence",
-                             "--module", mid);
+                             "-m", mid);
         assertTrue(exitValue != 0);
     }
 
@@ -126,15 +142,15 @@ public class DryRunTest {
                         LIBS_DIR.resolve(M_MODULE + ".jar").toString();
 
         // test pass with m.jar:test.jar
-        int exitValue = exec("--class-path", libs, MAIN_CLASS);
+        int exitValue = exec("-classpath", libs, MAIN_CLASS);
         assertTrue(exitValue == 0);
 
         // m.jar is not on classpath and fails with p.Lib not found
-        exitValue = exec("--class-path", testJar.toString(), MAIN_CLASS);
+        exitValue = exec("-classpath", testJar.toString(), MAIN_CLASS);
         assertTrue(exitValue != 0);
 
         // dry pass passes since main is not executed
-        exitValue = exec("--dry-run", "--class-path", testJar.toString(), MAIN_CLASS);
+        exitValue = exec("--dry-run", "-classpath", testJar.toString(), MAIN_CLASS);
         assertTrue(exitValue == 0);
     }
 
@@ -147,7 +163,7 @@ public class DryRunTest {
                         LIBS_DIR.resolve(TEST_MODULE + ".jar").toString();
         String mid = TEST_MODULE + "/" + MAIN_CLASS;
 
-        // test main method with and without --add-modules m
+        // test main method with and without --add-modules mm
         int exitValue = exec("--module-path", LIBS_DIR.toString(),
                              "-m", mid);
         assertTrue(exitValue != 0);
@@ -177,7 +193,7 @@ public class DryRunTest {
         String mid = TEST_MODULE + "/" + MAIN_CLASS;
 
         // resolution failure
-        int exitValue = exec("--dry-run", "--module-path", subdir, "--module", mid);
+        int exitValue = exec("--dry-run", "--module-path", subdir, "-m", mid);
         assertTrue(exitValue != 0);
     }
 

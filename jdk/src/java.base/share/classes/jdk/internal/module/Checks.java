@@ -25,9 +25,6 @@
 
 package jdk.internal.module;
 
-import java.util.Set;
-import java.lang.module.ModuleDescriptor.Requires;
-
 public final class Checks {
 
     private Checks() { }
@@ -101,14 +98,6 @@ public final class Checks {
 
     public static String requireServiceProviderName(String id) {
         return requireJavaIdentifier("service provider name", id);
-    }
-
-    public static void requireModifiers(Set<Requires.Modifier> mods) {
-        if (mods.contains(Requires.Modifier.PUBLIC)
-            && mods.contains(Requires.Modifier.STATIC)) {
-            throw new IllegalArgumentException("PUBLIC and STATIC"
-                                               + " not allowed together");
-        }
     }
 
 }

@@ -74,7 +74,7 @@ import sun.print.SunPageSelection;
 import java.awt.event.KeyEvent;
 import java.net.URISyntaxException;
 import java.lang.reflect.Field;
-
+import java.net.MalformedURLException;
 
 /**
  * A class which implements a cross-platform print dialog.
@@ -932,12 +932,18 @@ public class ServiceDialog extends JDialog implements ActionListener {
                 allowedToPrintToFile() : false;
 
             // setup Destination (print-to-file) widgets
-            if (psCurrent.isAttributeCategorySupported(dstCategory)) {
-                dstSupported = true;
-            }
             Destination dst = (Destination)asCurrent.get(dstCategory);
             if (dst != null) {
-                dstSelected = true;
+                try {
+                     dst.getURI().toURL();
+                     if (psCurrent.isAttributeValueSupported(dst, docFlavor,
+                                                             asCurrent)) {
+                         dstSupported = true;
+                         dstSelected = true;
+                     }
+                 } catch (MalformedURLException ex) {
+                     dstSupported = true;
+                 }
             }
             cbPrintToFile.setEnabled(dstSupported && dstAllowed);
             cbPrintToFile.setSelected(dstSelected && dstAllowed
@@ -971,6 +977,7 @@ public class ServiceDialog extends JDialog implements ActionListener {
         private JFormattedTextField tfRangeFrom, tfRangeTo;
         private JLabel lblRangeTo;
         private boolean prSupported;
+        private boolean prPgRngSupported;
 
         public PrintRangePanel() {
             super();
@@ -1084,7 +1091,7 @@ public class ServiceDialog extends JDialog implements ActionListener {
         public void focusGained(FocusEvent e) {}
 
         private void setupRangeWidgets() {
-            boolean rangeEnabled = (rbPages.isSelected() && prSupported);
+            boolean rangeEnabled = (rbPages.isSelected() && prPgRngSupported);
             tfRangeFrom.setEnabled(rangeEnabled);
             tfRangeTo.setEnabled(rangeEnabled);
             lblRangeTo.setEnabled(rangeEnabled);
@@ -1130,6 +1137,9 @@ public class ServiceDialog extends JDialog implements ActionListener {
             if (psCurrent.isAttributeCategorySupported(prCategory) ||
                    isAWT) {
                 prSupported = true;
+                prPgRngSupported = psCurrent.isAttributeValueSupported(prAll,
+                                                                     docFlavor,
+                                                                     asCurrent);
             }
 
             SunPageSelection select = SunPageSelection.ALL;
@@ -1169,7 +1179,7 @@ public class ServiceDialog extends JDialog implements ActionListener {
             tfRangeFrom.setValue(min);
             tfRangeTo.setValue(max);
             rbAll.setEnabled(prSupported);
-            rbPages.setEnabled(prSupported);
+            rbPages.setEnabled(prPgRngSupported);
             setupRangeWidgets();
         }
     }
@@ -1294,8 +1304,16 @@ public class ServiceDialog extends JDialog implements ActionListener {
                 if (sc == null) {
                     sc = SheetCollate.UNCOLLATED;
                 }
+                if (sc != null &&
+                    !psCurrent.isAttributeValueSupported(sc, docFlavor, asCurrent)) {
+                    scSupported = false;
+                }
+            } else {
+                if (!psCurrent.isAttributeValueSupported(sc, docFlavor, asCurrent)) {
+                    scSupported = false;
+                }
             }
-            cbCollate.setSelected(sc == SheetCollate.COLLATED);
+            cbCollate.setSelected(sc == SheetCollate.COLLATED && scSupported);
             updateCollateCB();
         }
     }
@@ -2745,10 +2763,10 @@ public class ServiceDialog extends JDialog implements ActionListener {
             if (js == null) {
                 js = (JobSheets)psCurrent.getDefaultAttributeValue(jsCategory);
                 if (js == null) {
-                    js = JobSheets.NONE;
+                    js = JobSheets.STANDARD;
                 }
             }
-            cbJobSheets.setSelected(js != JobSheets.NONE);
+            cbJobSheets.setSelected(js != JobSheets.NONE && jsSupported);
             cbJobSheets.setEnabled(jsSupported);
 
             // setup JobPriority spinner

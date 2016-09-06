@@ -123,7 +123,6 @@ public class ModuleDescriptor
             this.mods = ms.isEmpty()
                     ? Collections.emptySet()
                     : Collections.unmodifiableSet(EnumSet.copyOf(ms));
-            Checks.requireModifiers(mods);
             this.name = requireModuleName(mn);
         }
 
@@ -1219,9 +1218,7 @@ public class ModuleDescriptor
 
         /**
          * Adds a dependence on a module with the given (and possibly empty)
-         * set of modifiers. The set of modifiers cannot contain both {@link
-         * Requires.Modifier#PUBLIC PUBLIC} and {@link Requires.Modifier#STATIC
-         * STATIC}.
+         * set of modifiers.
          *
          * @param  mods
          *         The set of modifiers
@@ -1231,10 +1228,9 @@ public class ModuleDescriptor
          * @return This builder
          *
          * @throws IllegalArgumentException
-         *         If the set of modifiers contains both {@code PUBLIC} and
-         *         {@code STATIC}, or the module name is {@code null}, is not a
-         *         legal Java identifier, or is equal to the module name that
-         *         this builder was initialized to build
+         *         If the module name is {@code null}, is not a legal Java
+         *         identifier, or is equal to the module name that this builder
+         *         was initialized to build
          * @throws IllegalStateException
          *         If the dependence on the module has already been declared
          */

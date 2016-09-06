@@ -108,8 +108,8 @@ static void checkArg(const char *arg) {
             // expect an argument
             expectingNoDashArg = JNI_TRUE;
 
-            if (JLI_StrCmp(arg, "jar") == 0 ||
-                JLI_StrCmp(arg, "m") == 0) {
+            if (JLI_StrCmp(arg, "-jar") == 0 ||
+                JLI_StrCmp(arg, "-m") == 0) {
                 // This is tricky, we do expect NoDashArg
                 // But that is considered main class to stop expansion
                 expectingNoDashArg = JNI_FALSE;
@@ -127,7 +127,7 @@ static void checkArg(const char *arg) {
         expectingNoDashArg = JNI_FALSE;
     }
     // only update on java mode and not yet found main class
-    if (firstAppArgIndex == -1 && idx != 0) {
+    if (firstAppArgIndex == NOT_FOUND && idx != 0) {
         firstAppArgIndex = (int) idx;
     }
 }

@@ -131,7 +131,7 @@ const keyTable[] =
     {0x3A, NO,  KL_UNKNOWN,  java_awt_event_KeyEvent_VK_ALT},       // ****
     {0x3B, NO,  KL_UNKNOWN,  java_awt_event_KeyEvent_VK_CONTROL},   // ****
     {0x3C, NO,  KL_UNKNOWN,  java_awt_event_KeyEvent_VK_UNDEFINED},
-    {0x3D, NO,  KL_UNKNOWN,  java_awt_event_KeyEvent_VK_UNDEFINED},
+    {0x3D, NO,  KL_UNKNOWN,  java_awt_event_KeyEvent_VK_ALT_GRAPH},
     {0x3E, NO,  KL_UNKNOWN,  java_awt_event_KeyEvent_VK_UNDEFINED},
     {0x3F, NO,  KL_UNKNOWN,  java_awt_event_KeyEvent_VK_UNDEFINED}, // the 'fn' key on PowerBooks
     {0x40, NO,  KL_STANDARD, java_awt_event_KeyEvent_VK_F17},
@@ -278,6 +278,16 @@ const nsKeyToJavaModifierTable[] =
         java_awt_event_KeyEvent_VK_CONTROL
     },
     {
+        NSCommandKeyMask,
+        //kCGSFlagsMaskAppleLeftCommandKey,
+        //kCGSFlagsMaskAppleRightCommandKey,
+        55,
+        54,
+        java_awt_event_InputEvent_META_DOWN_MASK,
+        java_awt_event_InputEvent_META_MASK,
+        java_awt_event_KeyEvent_VK_META
+    },
+    {
         NSAlternateKeyMask,
         //kCGSFlagsMaskAppleLeftAlternateKey,
         //kCGSFlagsMaskAppleRightAlternateKey,
@@ -293,17 +303,7 @@ const nsKeyToJavaModifierTable[] =
         61,
         java_awt_event_InputEvent_ALT_DOWN_MASK | java_awt_event_InputEvent_ALT_GRAPH_DOWN_MASK,
         java_awt_event_InputEvent_ALT_MASK | java_awt_event_InputEvent_ALT_GRAPH_MASK,
-        java_awt_event_KeyEvent_VK_ALT
-    },
-    {
-        NSCommandKeyMask,
-        //kCGSFlagsMaskAppleLeftCommandKey,
-        //kCGSFlagsMaskAppleRightCommandKey,
-        55,
-        54,
-        java_awt_event_InputEvent_META_DOWN_MASK,
-        java_awt_event_InputEvent_META_MASK,
-        java_awt_event_KeyEvent_VK_META
+        java_awt_event_KeyEvent_VK_ALT | java_awt_event_KeyEvent_VK_ALT_GRAPH
     },
     // NSNumericPadKeyMask
     {
@@ -319,6 +319,7 @@ const nsKeyToJavaModifierTable[] =
 };
 
 static BOOL leftAltKeyPressed;
+static BOOL altGRPressed = NO;
 
 /*
  * Almost all unicode characters just go from NS to Java with no translation.
@@ -349,7 +350,7 @@ const charTable[] = {
     {0, 0, 0}
 };
 
-unichar NsCharToJavaChar(unichar nsChar, NSUInteger modifiers)
+unichar NsCharToJavaChar(unichar nsChar, NSUInteger modifiers, BOOL spaceKeyTyped)
 {
     const struct _char *cur;
     // Mask off just the keyboard modifiers from the event modifier mask.
@@ -382,6 +383,11 @@ unichar NsCharToJavaChar(unichar nsChar, NSUInteger modifiers)
         return java_awt_event_KeyEvent_CHAR_UNDEFINED;
     }
 
+    // nsChar receives value 0 when SPACE key is typed.
+    if (nsChar == 0 && spaceKeyTyped == YES) {
+        return java_awt_event_KeyEvent_VK_SPACE;
+    }
+	
     // otherwise return character unchanged
     return nsChar;
 }
@@ -556,14 +562,22 @@ jint NsKeyModifiersToJavaModifiers(NSUInteger nsFlags, BOOL isExtMods)
 {
     jint javaModifiers = 0;
     const struct _nsKeyToJavaModifier* cur;
-
+	
     for (cur = nsKeyToJavaModifierTable; cur->nsMask != 0; ++cur) {
         if ((cur->nsMask & nsFlags) != 0) {
+			
+            if (cur->nsMask == NSAlternateKeyMask) {
+                if (leftAltKeyPressed == YES) {
+                    javaModifiers |= isExtMods? cur->javaExtMask : cur->javaMask;
+                    if (altGRPressed == NO)
+                        break;
+                    } else {
+                        leftAltKeyPressed = YES;
+                        altGRPressed = YES;
+                        continue;
+                    }
+                }
             javaModifiers |= isExtMods ? cur->javaExtMask : cur->javaMask;
-            if (cur->nsMask == NSAlternateKeyMask && leftAltKeyPressed == NO) {
-                continue;
-            }
-            break;
         }
     }
 
@@ -757,13 +771,13 @@ JNF_COCOA_EXIT(env);
  */
 JNIEXPORT jint JNICALL
 Java_sun_lwawt_macosx_NSEvent_nsToJavaChar
-(JNIEnv *env, jclass cls, jchar nsChar, jint modifierFlags)
+(JNIEnv *env, jclass cls, jchar nsChar, jint modifierFlags, jboolean spaceKeyTyped)
 {
     jchar javaChar = 0;
 
 JNF_COCOA_ENTER(env);
 
-    javaChar = NsCharToJavaChar(nsChar, modifierFlags);
+    javaChar = NsCharToJavaChar(nsChar, modifierFlags, spaceKeyTyped);
 
 JNF_COCOA_EXIT(env);
 

@@ -25,8 +25,7 @@
  * @bug 5042453
  * @summary Ipv6 address throws Non-numeric port number error
  * @modules java.corba/com.sun.jndi.cosnaming
- * @compile --add-modules=java.corba IiopUrlIPv6.java
- * @run main/othervm --add-modules=java.corba IiopUrlIPv6
+ * @run main/othervm IiopUrlIPv6
  */
 
 import com.sun.jndi.cosnaming.*;

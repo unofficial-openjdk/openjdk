@@ -27,8 +27,8 @@
  * @summary Four helper classes missing in Sun JDK
  * @library /lib/testlibrary
  * @build jdk.testlibrary.*
- * @compile --add-modules=java.corba CorbaExceptionsCompileTest.java
- * @run main/othervm --add-modules=java.corba CorbaExceptionsCompileTest
+ * @modules java.corba
+ * @run main CorbaExceptionsCompileTest
  */
 
 import java.io.*;

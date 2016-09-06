@@ -49,7 +49,6 @@ import static jdk.tools.jlink.internal.TaskHelper.JLINK_BUNDLE;
 import jdk.tools.jlink.internal.TaskHelper.Option;
 import jdk.tools.jlink.internal.TaskHelper.OptionsHelper;
 import jdk.tools.jlink.internal.ImagePluginStack.ImageProvider;
-import jdk.tools.jlink.plugin.ExecutableImage;
 import jdk.tools.jlink.Jlink.JlinkConfiguration;
 import jdk.tools.jlink.Jlink.PluginsConfiguration;
 import jdk.tools.jlink.plugin.PluginException;
@@ -62,7 +61,7 @@ import jdk.tools.jlink.plugin.Plugin;
  * ## Should use jdk.joptsimple some day.
  */
 public class JlinkTask {
-    private static final boolean DEBUG = Boolean.getBoolean("jlink.debug");
+    static final boolean DEBUG = Boolean.getBoolean("jlink.debug");
 
     private static <T extends Throwable> void fail(Class<T> type,
             String format,
@@ -82,7 +81,7 @@ public class JlinkTask {
     private static final TaskHelper taskHelper
             = new TaskHelper(JLINK_BUNDLE);
 
-    static Option<?>[] recognizedOptions = {
+    private static final Option<?>[] recognizedOptions = {
         new Option<JlinkTask>(false, (task, opt, arg) -> {
             task.options.help = true;
         }, "--help", "-h"),
@@ -185,8 +184,8 @@ public class JlinkTask {
                 optionsHelper.showHelp(PROGNAME);
                 return EXIT_OK;
             }
-            if (optionsHelper.listPlugins()) {
-                optionsHelper.listPlugins(true);
+            if (optionsHelper.shouldListPlugins()) {
+                optionsHelper.listPlugins();
                 return EXIT_OK;
             }
             if (options.version || options.fullVersion) {
@@ -326,7 +325,6 @@ public class JlinkTask {
                                                Set<String> limitMods,
                                                Set<String> addMods)
     {
-
         ModuleFinder finder = ModuleFinder.of(paths.toArray(new Path[0]));
 
         // jmods are located at link-time

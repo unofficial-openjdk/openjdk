@@ -104,7 +104,7 @@ public class RunWithAutomaticModules {
         assertTrue(compiled);
 
 
-        // launch the test. Need -addmods because nothing explicitly depends on logging
+        // launch the test. Need --add-mdoules because nothing explicitly depends on logging
 
         int exitValue
             = executeTestJava("--module-path", MODS_DIR.toString(),

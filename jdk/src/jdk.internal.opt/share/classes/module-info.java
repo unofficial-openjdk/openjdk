@@ -23,6 +23,9 @@
  * questions.
  */
 
+/**
+ * Internal option processing API
+ */
 module jdk.internal.opt {
-    exports jdk.internal.joptsimple to jdk.jlink;
+    exports jdk.internal.joptsimple to jdk.jlink, jdk.jshell;
 }

@@ -24,4 +24,3 @@
 module test {
     requires m;
 }
-

@@ -38,8 +38,8 @@ import java.util.Iterator;
 
 /*
  * @test
- * @compile --add-modules=java.xml.ws XmlTest.java
- * @run main/othervm --add-modules=java.xml.ws XmlTest
+ * @modules java.xml.ws
+ * @run main XmlTest
  * @summary tests JAF DataHandler can be instantiated; test serialize and
  *   deserialize SOAP message containing xml attachment
  */

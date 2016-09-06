@@ -72,7 +72,6 @@ static jboolean dryRun = JNI_FALSE;       /* initialize VM and exit */
 static char     *showSettings = NULL;     /* print but continue */
 static char     *listModules = NULL;
 
-
 static const char *_program_name;
 static const char *_launcher_name;
 static jboolean _is_java_args = JNI_FALSE;
@@ -453,7 +452,8 @@ JavaMain(void * _args)
     ret = 1;
 
     /*
-     * Get the application's main class.
+     * Get the application's main class. It also checks if the main
+     * method exists.
      *
      * See bugid 5030265.  The Main-Class name has already been parsed
      * from the manifest, but not parsed properly for UTF-8 support.
@@ -485,6 +485,16 @@ JavaMain(void * _args)
      */
     appClass = GetApplicationClass(env);
     NULL_CHECK_RETURN_VALUE(appClass, -1);
+
+    /* Build platform specific argument array */
+    mainArgs = CreateApplicationArgs(env, argv, argc);
+    CHECK_EXCEPTION_NULL_LEAVE(mainArgs);
+
+    if (dryRun) {
+        ret = 0;
+        LEAVE();
+    }
+
     /*
      * PostJVMInit uses the class name as the application name for GUI purposes,
      * for example, on OSX this sets the application name in the menu bar for
@@ -494,6 +504,7 @@ JavaMain(void * _args)
      */
     PostJVMInit(env, appClass, vm);
     CHECK_EXCEPTION_LEAVE(1);
+
     /*
      * The LoadMainClass not only loads the main class, it will also ensure
      * that the main method's signature is correct, therefore further checking
@@ -504,22 +515,15 @@ JavaMain(void * _args)
                                        "([Ljava/lang/String;)V");
     CHECK_EXCEPTION_NULL_LEAVE(mainID);
 
-    /* Build platform specific argument array */
-    mainArgs = CreateApplicationArgs(env, argv, argc);
-    CHECK_EXCEPTION_NULL_LEAVE(mainArgs);
+    /* Invoke main method. */
+    (*env)->CallStaticVoidMethod(env, mainClass, mainID, mainArgs);
 
-    if (dryRun) {
-        ret = 0;
-    } else {
-        /* Invoke main method. */
-        (*env)->CallStaticVoidMethod(env, mainClass, mainID, mainArgs);
+    /*
+     * The launcher's exit code (in the absence of calls to
+     * System.exit) will be non-zero if main threw an exception.
+     */
+    ret = (*env)->ExceptionOccurred(env) == NULL ? 0 : 1;
 
-        /*
-         * The launcher's exit code (in the absence of calls to
-         * System.exit) will be non-zero if main threw an exception.
-         */
-        ret = (*env)->ExceptionOccurred(env) == NULL ? 0 : 1;
-    }
     LEAVE();
 }
 
@@ -958,7 +962,7 @@ AddLongFormOption(const char *option, const char *arg)
     char *def;
     size_t def_len;
 
-    def_len = JLI_StrLen(option)+1+JLI_StrLen(arg)+1;
+    def_len = JLI_StrLen(option) + 1 + JLI_StrLen(arg) + 1;
     def = JLI_MemAlloc(def_len);
     JLI_Snprintf(def, def_len, format, option, arg);
     AddOption(def, NULL);
@@ -1193,11 +1197,8 @@ GetOpt(int *pargc, char ***pargv, char **poption, char **pvalue) {
             value = *argv;
             argv++; --argc;
         }
-        if (IsLauncherMainOption(arg)) {
-            kind = LAUNCHER_MAIN_OPTION;
-        } else {
-            kind = LAUNCHER_OPTION_WITH_ARGUMENT;
-        }
+        kind = IsLauncherMainOption(arg) ? LAUNCHER_MAIN_OPTION
+                                         : LAUNCHER_OPTION_WITH_ARGUMENT;
     } else if (IsModuleOption(arg)) {
         kind = VM_LONG_OPTION_WITH_ARGUMENT;
         if (has_arg) {
@@ -1310,7 +1311,7 @@ ParseArguments(int *pargc, char ***pargv,
             // set listModules to --list-modules=<module-names> if argument is specified
             if (JLI_StrCmp(arg, "--list-modules") == 0 && has_arg) {
                 static const char format[] = "%s=%s";
-                size_t buflen = JLI_StrLen(option)+2+JLI_StrLen(value);
+                size_t buflen = JLI_StrLen(option) + 2 + JLI_StrLen(value);
                 listModules = JLI_MemAlloc(buflen);
                 JLI_Snprintf(listModules, buflen, format, option, value);
             }

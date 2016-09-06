@@ -348,6 +348,7 @@ typedef enum {
     JVMTI_ERROR_INVALID_METHODID = 23,
     JVMTI_ERROR_INVALID_LOCATION = 24,
     JVMTI_ERROR_INVALID_FIELDID = 25,
+    JVMTI_ERROR_INVALID_MODULE = 26,
     JVMTI_ERROR_NO_MORE_FRAMES = 31,
     JVMTI_ERROR_OPAQUE_FRAME = 32,
     JVMTI_ERROR_TYPE_MISMATCH = 34,
@@ -1217,8 +1218,11 @@ typedef struct jvmtiInterface_1_ {
     jmethodID method,
     jlocation location);
 
-  /*   40 :  RESERVED */
-  void *reserved40;
+  /*   40 : Get Named Module */
+  jvmtiError (JNICALL *GetNamedModule) (jvmtiEnv* env,
+    jobject class_loader,
+    const char* package_name,
+    jobject* module_ptr);
 
   /*   41 : Set Field Access Watch */
   jvmtiError (JNICALL *SetFieldAccessWatch) (jvmtiEnv* env,
@@ -1496,17 +1500,27 @@ typedef struct jvmtiInterface_1_ {
     const jthread* request_list,
     jvmtiError* results);
 
-  /*   94 :  RESERVED */
-  void *reserved94;
+  /*   94 : Add Module Reads */
+  jvmtiError (JNICALL *AddModuleReads) (jvmtiEnv* env,
+    jobject module,
+    jobject to_module);
 
-  /*   95 :  RESERVED */
-  void *reserved95;
+  /*   95 : Add Module Exports */
+  jvmtiError (JNICALL *AddModuleExports) (jvmtiEnv* env,
+    jobject module,
+    const char* pkg_name,
+    jobject to_module);
 
-  /*   96 :  RESERVED */
-  void *reserved96;
+  /*   96 : Add Module Uses */
+  jvmtiError (JNICALL *AddModuleUses) (jvmtiEnv* env,
+    jobject module,
+    jclass service);
 
-  /*   97 :  RESERVED */
-  void *reserved97;
+  /*   97 : Add Module Provides */
+  jvmtiError (JNICALL *AddModuleProvides) (jvmtiEnv* env,
+    jobject module,
+    jclass service,
+    jclass impl_class);
 
   /*   98 :  RESERVED */
   void *reserved98;
@@ -2144,6 +2158,34 @@ struct _jvmtiEnv {
   jvmtiError GetAllModules(jint* module_count_ptr,
             jobject** modules_ptr) {
     return functions->GetAllModules(this, module_count_ptr, modules_ptr);
+  }
+
+  jvmtiError GetNamedModule(jobject class_loader,
+            const char* package_name,
+            jobject* module_ptr) {
+    return functions->GetNamedModule(this, class_loader, package_name, module_ptr);
+  }
+
+  jvmtiError AddModuleReads(jobject module,
+            jobject to_module) {
+    return functions->AddModuleReads(this, module, to_module);
+  }
+
+  jvmtiError AddModuleExports(jobject module,
+            const char* pkg_name,
+            jobject to_module) {
+    return functions->AddModuleExports(this, module, pkg_name, to_module);
+  }
+
+  jvmtiError AddModuleUses(jobject module,
+            jclass service) {
+    return functions->AddModuleUses(this, module, service);
+  }
+
+  jvmtiError AddModuleProvides(jobject module,
+            jclass service,
+            jclass impl_class) {
+    return functions->AddModuleProvides(this, module, service, impl_class);
   }
 
   jvmtiError GetLoadedClasses(jint* class_count_ptr,
