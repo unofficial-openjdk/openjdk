@@ -205,11 +205,6 @@ ifdef BUILD_HEADLESS_ONLY
   java.desktop_EXCLUDES += sun/applet
 endif
 
-# Why is this in the open source tree?
-ifdef OPENJDK
-  java.desktop_EXCLUDES += sun/dc
-endif
-
 # Used on windows and macosx
 ifeq ($(filter $(OPENJDK_TARGET_OS), windows macosx), )
   java.desktop_EXCLUDE_FILES += sun/awt/AWTCharset.java
@@ -414,6 +409,8 @@ jdk.jconsole_CLEAN_FILES := $(wildcard \
 
 ################################################################################
 
+jdk.jdeps_COPY := .txt
+
 jdk.jdeps_CLEAN_FILES := $(wildcard \
     $(JDK_TOPDIR)/src/jdk.jdeps/share/classes/com/sun/tools/jdeps/resources/*.properties \
     $(JDK_TOPDIR)/src/jdk.jdeps/share/classes/com/sun/tools/javap/resources/*.properties)
@@ -505,9 +502,9 @@ $(eval $(call SetupJavaCompilation, $(MODULE), \
     HEADERS := $(SUPPORT_OUTPUTDIR)/headers, \
     ADD_JAVAC_FLAGS := \
         $($(MODULE)_ADD_JAVAC_FLAGS) \
-        -modulesourcepath $(MODULESOURCEPATH) \
-        -modulepath $(MODULEPATH) \
-        -system none, \
+        --module-source-path $(MODULESOURCEPATH) \
+        --module-path $(MODULEPATH) \
+        --system none, \
 ))
 
 TARGETS += $($(MODULE)) $($(MODULE)_COPY_EXTRA)

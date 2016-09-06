@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -116,8 +116,10 @@ JMODS := $(wildcard $(IMAGES_OUTPUTDIR)/jmods/*.jmod)
 JIMAGE_TARGET_FILE := bin/java$(EXE_SUFFIX)
 
 JLINK_ORDER_RESOURCES := **module-info.class
+JLINK_JLI_CLASSES :=
 ifeq ($(ENABLE_GENERATE_CLASSLIST), true)
   JLINK_ORDER_RESOURCES += @$(SUPPORT_OUTPUTDIR)/classlist/classlist
+  JLINK_JLI_CLASSES := --generate-jli-classes=@$(SUPPORT_OUTPUTDIR)/classlist/jli_trace.out
 endif
 JLINK_ORDER_RESOURCES += \
     /java.base/java/** \
@@ -127,10 +129,11 @@ JLINK_ORDER_RESOURCES += \
     /jdk.localedata/** \
     #
 
-JLINK_TOOL := $(JLINK) --modulepath $(IMAGES_OUTPUTDIR)/jmods \
+JLINK_TOOL := $(JLINK) --module-path $(IMAGES_OUTPUTDIR)/jmods \
     --endian $(OPENJDK_BUILD_CPU_ENDIAN) \
     --release-info $(BASE_RELEASE_FILE) \
     --order-resources=$(call CommaList, $(JLINK_ORDER_RESOURCES)) \
+    $(JLINK_JLI_CLASSES) \
     #
 
 ifeq ($(JLINK_KEEP_PACKAGED_MODULES), true)
@@ -142,7 +145,7 @@ $(JDK_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS) \
 	$(ECHO) Creating jdk jimage
 	$(RM) -r $(JDK_IMAGE_DIR)
 	$(JLINK_TOOL) --output $(JDK_IMAGE_DIR) \
-	    --addmods $(JDK_MODULES_LIST) $(JLINK_EXTRA_OPTS)
+	    --add-modules $(JDK_MODULES_LIST) $(JLINK_EXTRA_OPTS)
 	$(TOUCH) $@
 
 $(JRE_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS) \
@@ -150,7 +153,7 @@ $(JRE_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS) \
 	$(ECHO) Creating jre jimage
 	$(RM) -r $(JRE_IMAGE_DIR)
 	$(JLINK_TOOL) --output $(JRE_IMAGE_DIR) \
-	    --addmods $(JRE_MODULES_LIST)
+	    --add-modules $(JRE_MODULES_LIST)
 	$(TOUCH) $@
 
 JRE_COMPACT1_IMAGE_DIR := $(JRE_IMAGE_DIR)-compact1
@@ -161,7 +164,7 @@ $(JRE_COMPACT1_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS) \
     $(call DependOnVariable, JRE_COMPACT1_MODULES_LIST) $(BASE_RELEASE_FILE)
 	$(ECHO) Creating jre compact1 jimage
 	$(RM) -r $(JRE_COMPACT1_IMAGE_DIR)
-	$(JLINK_TOOL) --addmods $(JRE_COMPACT1_MODULES_LIST) \
+	$(JLINK_TOOL) --add-modules $(JRE_COMPACT1_MODULES_LIST) \
 	    --output $(JRE_COMPACT1_IMAGE_DIR)
 	$(TOUCH) $@
 
@@ -169,7 +172,7 @@ $(JRE_COMPACT2_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS) \
     $(call DependOnVariable, JRE_COMPACT2_MODULES_LIST) $(BASE_RELEASE_FILE)
 	$(ECHO) Creating jre compact2 jimage
 	$(RM) -r $(JRE_COMPACT2_IMAGE_DIR)
-	$(JLINK_TOOL) --addmods $(JRE_COMPACT2_MODULES_LIST) \
+	$(JLINK_TOOL) --add-modules $(JRE_COMPACT2_MODULES_LIST) \
 	    --output $(JRE_COMPACT2_IMAGE_DIR)
 	$(TOUCH) $@
 
@@ -177,7 +180,7 @@ $(JRE_COMPACT3_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS) \
     $(call DependOnVariable, JRE_COMPACT3_MODULES_LIST) $(BASE_RELEASE_FILE)
 	$(ECHO) Creating jre compact3 jimage
 	$(RM) -r $(JRE_COMPACT3_IMAGE_DIR)
-	$(JLINK_TOOL) --addmods $(JRE_COMPACT3_MODULES_LIST) \
+	$(JLINK_TOOL) --add-modules $(JRE_COMPACT3_MODULES_LIST) \
 	    --output $(JRE_COMPACT3_IMAGE_DIR)
 	$(TOUCH) $@
 
@@ -207,12 +210,6 @@ ifneq ($(OPENJDK_TARGET_OS), windows)
       tnameserv.1 \
       unpack200.1
 
-  ifndef OPENJDK
-    ifneq ($(OPENJDK_TARGET_OS), solaris)
-      JRE_MAN_PAGES += javaws.1
-    endif
-  endif
-
   JDK_MAN_PAGES += \
       $(JRE_MAN_PAGES) \
       appletviewer.1 \
@@ -231,7 +228,6 @@ ifneq ($(OPENJDK_TARGET_OS), windows)
       jmap.1 \
       jps.1 \
       jrunscript.1 \
-      jsadebugd.1 \
       jstack.1 \
       jstat.1 \
       jstatd.1 \
