@@ -82,7 +82,7 @@ JNLP_FIRST_COPYRIGHT_YEAR = 1998
 PLUGIN2_FIRST_COPYRIGHT_YEAR = 2007
 JDKNET_FIRST_COPYRIGHT_YEAR = 2014
 JACCESSAPI_FIRST_COPYRIGHT_YEAR = 2002
-
+JSOBJECT_FIRST_COPYRIGHT_YEAR = 1993
 
 # Oracle name
 FULL_COMPANY_NAME = Oracle and/or its affiliates
@@ -290,19 +290,15 @@ $(call CopyrightLine,$(COPYRIGHT_URL),$(FIRST_COPYRIGHT_YEAR),)\
 
 # Common javadoc options used by all bundles
 
-ifdef OPENJDK
-  ADDITIONAL_JAVADOCFLAGS = \
-      -Xdocrootparent $(DOCS_BASE_URL)
-else
-  ADDITIONAL_JAVADOCFLAGS =
-endif
+# This flag may be overridden from a custom makefile
+DOCROOTPARENT_FLAG = -Xdocrootparent $(DOCS_BASE_URL)
 
 define COMMON_JAVADOCFLAGS
     $(call OptionOnly,-XDignore.symbol.file=true) ; \
     $(call OptionOnly,-quiet) ; \
     $(call OptionOnly,-use) ; \
     $(call OptionOnly,-keywords) ; \
-    $(call OptionOnly,$(ADDITIONAL_JAVADOCFLAGS))
+    $(call OptionOnly,$(DOCROOTPARENT_FLAG))
 endef
 
 # Common javadoc tags used by all bundles
@@ -428,10 +424,10 @@ $(COREAPI_OPTIONS_FILE): $(COREAPI_OVERVIEW)
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
           $(call OptionOnly,-Xdoclint:reference) ; \
-          $(call OptionOnly,-Xdoclint/package:-org.omg.*) ; \
-          $(call OptionPair,-system,none) ; \
-	  $(call OptionPair,-modulesourcepath,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
-	  $(call OptionPair,-addmods,$(COREAPI_MODULES)) ; \
+          $(call OptionOnly,-Xdoclint/package:-org.omg.*$(COMMA)jdk.internal.logging.*) ; \
+          $(call OptionPair,--system,none) ; \
+	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
+	  $(call OptionPair,--add-modules,$(COREAPI_MODULES)) ; \
 	  $(call OptionPair,-encoding,ISO-8859-1) ; \
 	  $(call OptionOnly,-splitIndex) ; \
 	  $(call OptionPair,-overview,$(COREAPI_OVERVIEW)) ; \
@@ -492,9 +488,9 @@ $(DOCLETAPI_OPTIONS_FILE):
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:all) ; \
-          $(call OptionPair,-system,none) ; \
-	  $(call OptionPair,-modulesourcepath,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
-	  $(call OptionPair,-addmods,$(DOCLETAPI_MODULES)) ; \
+          $(call OptionPair,--system,none) ; \
+	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
+	  $(call OptionPair,--add-modules,$(DOCLETAPI_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
 	  $(call OptionOnly,-breakiterator) ; \
 	  $(call OptionPair,-doctitle,$(DOCLETAPI_DOCTITLE)) ; \
@@ -554,9 +550,9 @@ $(OLD_DOCLETAPI_OPTIONS_FILE):
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:all) ; \
-          $(call OptionPair,-system,none) ; \
-	  $(call OptionPair,-modulesourcepath,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
-	  $(call OptionPair,-addmods,$(OLD_DOCLETAPI_MODULES)) ; \
+          $(call OptionPair,--system,none) ; \
+	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
+	  $(call OptionPair,--add-modules,$(OLD_DOCLETAPI_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
 	  $(call OptionOnly,-breakiterator) ; \
 	  $(call OptionPair,-doctitle,$(OLD_DOCLETAPI_DOCTITLE)) ; \
@@ -580,14 +576,14 @@ $(OLD_DOCLETAPI_PACKAGES_FILE): $(call PackageDependencies,$(OLD_DOCLETAPI_PKGS)
 ALL_OTHER_TARGETS += tagletapidocs
 TAGLETAPI_DOCDIR := $(OLD_DOCLET_DIR)/taglet
 TAGLETAPI2COREAPI := ../../../$(JDKJRE2COREAPI)
+TAGLETAPI_DOCTITLE := Taglet API
+TAGLETAPI_WINDOWTITLE := Taglet API
+TAGLETAPI_HEADER := <strong>Taglet API</strong>
 TAGLETAPI_BOTTOM := $(call CommonTrademarkBottom,$(TAGLETAPI_FIRST_COPYRIGHT_YEAR))
 # TAGLETAPI_FILE is located in NON_CORE_PKGS.gmk
 
-# Temporary directory (special generation rules)
-TAGLETAPI_TEMPDIR = $(DOCSTMPDIR)/taglets_temp
-
 # The index.html, options, and packages files
-TAGLETAPI_INDEX_FILE = $(TAGLETAPI_DOCDIR)/com/sun/tools/doclets/Taglet.html
+TAGLETAPI_INDEX_FILE = $(TAGLETAPI_DOCDIR)/index.html
 TAGLETAPI_OPTIONS_FILE = $(DOCSTMPDIR)/tagletapi.options
 TAGLETAPI_PACKAGES_FILE = $(DOCSTMPDIR)/tagletapi.packages
 
@@ -596,20 +592,12 @@ TAGLETAPI_MODULES = jdk.javadoc
 
 tagletapidocs: $(TAGLETAPI_INDEX_FILE)
 
-# Set relative location to core api document root
-$(TAGLETAPI_INDEX_FILE): GET2DOCSDIR=$(TAGLETAPI2COREAPI)/..
-
 # Run javadoc if the index file is out of date or missing
 $(TAGLETAPI_INDEX_FILE): $(TAGLETAPI_OPTIONS_FILE) $(TAGLETAPI_PACKAGES_FILE) $(COREAPI_INDEX_FILE)
 	$(prep-javadoc)
-	$(RM) -r $(TAGLETAPI_TEMPDIR)
-	$(MKDIR) -p $(TAGLETAPI_TEMPDIR)
 	$(call JavadocSummary,$(TAGLETAPI_OPTIONS_FILE),$(TAGLETAPI_PACKAGES_FILE))
-	$(JAVADOC_CMD_SMALL) -d $(TAGLETAPI_TEMPDIR) \
+	$(JAVADOC_CMD_SMALL) -d $(@D) \
 	    @$(TAGLETAPI_OPTIONS_FILE) @$(TAGLETAPI_PACKAGES_FILE)
-	cp -r $(TAGLETAPI_TEMPDIR)/com $(TAGLETAPI_DOCDIR)
-	cp $(TAGLETAPI_TEMPDIR)/stylesheet.css $(TAGLETAPI_DOCDIR)
-	$(RM) -r $(TAGLETAPI_TEMPDIR)
 
 # Create file with javadoc options in it
 $(TAGLETAPI_OPTIONS_FILE):
@@ -617,10 +605,14 @@ $(TAGLETAPI_OPTIONS_FILE):
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:all) ; \
-          $(call OptionPair,-system,none) ; \
-	  $(call OptionPair,-modulesourcepath,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
-	  $(call OptionPair,-addmods,$(TAGLETAPI_MODULES)) ; \
+          $(call OptionPair,--system,none) ; \
+	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
+	  $(call OptionPair,--add-modules,$(TAGLETAPI_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
+	  $(call OptionOnly,-breakiterator) ; \
+	  $(call OptionPair,-doctitle,$(TAGLETAPI_DOCTITLE)) ; \
+	  $(call OptionPair,-windowtitle,$(TAGLETAPI_WINDOWTITLE) $(DRAFT_WINTITLE)); \
+	  $(call OptionPair,-header,$(TAGLETAPI_HEADER)$(DRAFT_HEADER)) ; \
 	  $(call OptionOnly,-nonavbar) ; \
 	  $(call OptionOnly,-noindex) ; \
 	  $(call OptionPair,-bottom,$(TAGLETAPI_BOTTOM)$(DRAFT_BOTTOM)) ; \
@@ -675,9 +667,9 @@ $(DOMAPI_OPTIONS_FILE):
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
-          $(call OptionPair,-system,none) ; \
-	  $(call OptionPair,-modulesourcepath,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
-	  $(call OptionPair,-addmods,$(DOMAPI_MODULES)) ; \
+          $(call OptionPair,--system,none) ; \
+	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
+	  $(call OptionPair,--add-modules,$(DOMAPI_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
 	  $(call OptionOnly,-splitIndex) ; \
 	  $(call OptionPair,-doctitle,$(DOMAPI_DOCTITLE)) ; \
@@ -744,9 +736,9 @@ $(JDI_OPTIONS_FILE): $(JDI_OVERVIEW)
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
-          $(call OptionPair,-system,none) ; \
-	  $(call OptionPair,-modulesourcepath,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
-	  $(call OptionPair,-addmods,$(JDI_MODULES)) ; \
+          $(call OptionPair,--system,none) ; \
+	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
+	  $(call OptionPair,--add-modules,$(JDI_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
 	  $(call OptionPair,-overview,$(JDI_OVERVIEW)) ; \
 	  $(call OptionPair,-doctitle,$(JDI_DOCTITLE)) ; \
@@ -837,9 +829,9 @@ $(JAAS_OPTIONS_FILE): $(JAAS_OVERVIEW)
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
-          $(call OptionPair,-system,none) ; \
-	  $(call OptionPair,-modulesourcepath,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
-	  $(call OptionPair,-addmods,$(JAAS_MODULES)) ; \
+          $(call OptionPair,--system,none) ; \
+	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
+	  $(call OptionPair,--add-modules,$(JAAS_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
 	  $(call OptionPair,-overview,$(JAAS_OVERVIEW)) ; \
 	  $(call OptionPair,-doctitle,$(JAAS_DOCTITLE)) ; \
@@ -896,9 +888,9 @@ $(JGSS_OPTIONS_FILE): $(JGSS_OVERVIEW)
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
-          $(call OptionPair,-system,none) ; \
-	  $(call OptionPair,-modulesourcepath,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
-	  $(call OptionPair,-addmods,$(JGSS_MODULES)) ; \
+          $(call OptionPair,--system,none) ; \
+	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
+	  $(call OptionPair,--add-modules,$(JGSS_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
 	  $(call OptionOnly,-nodeprecatedlist) ; \
 	  $(call OptionPair,-overview,$(JGSS_OVERVIEW)) ; \
@@ -955,9 +947,9 @@ $(SMARTCARDIO_OPTIONS_FILE):
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
-          $(call OptionPair,-system,none) ; \
-	  $(call OptionPair,-modulesourcepath,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
-	  $(call OptionPair,-addmods,$(SMARTCARDIO_MODULES)) ; \
+          $(call OptionPair,--system,none) ; \
+	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
+	  $(call OptionPair,--add-modules,$(SMARTCARDIO_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
 	  $(call OptionOnly,-nodeprecatedlist) ; \
 	  $(call OptionPair,-doctitle,$(SMARTCARDIO_DOCTITLE)) ; \
@@ -1012,9 +1004,9 @@ $(HTTPSERVER_OPTIONS_FILE):
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
-          $(call OptionPair,-system,none) ; \
-	  $(call OptionPair,-modulesourcepath,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
-	  $(call OptionPair,-addmods,$(HTTPSERVER_MODULES)) ; \
+          $(call OptionPair,--system,none) ; \
+	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
+	  $(call OptionPair,--add-modules,$(HTTPSERVER_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
 	  $(call OptionOnly,-nodeprecatedlist) ; \
 	  $(call OptionPair,-doctitle,$(HTTPSERVER_DOCTITLE)) ; \
@@ -1031,6 +1023,64 @@ $(HTTPSERVER_PACKAGES_FILE): $(call PackageDependencies,$(HTTPSERVER_PKGS))
 
 #############################################################
 #
+# jsobjectdocs
+#
+
+ALL_OTHER_TARGETS += jsobjectdocs
+
+JSOBJECT_DOCDIR := $(JRE_API_DOCSDIR)/plugin/jsobject
+JSOBJECT2COREAPI := ../../$(JDKJRE2COREAPI)
+JSOBJECT_DOCTITLE := Java$(TRADEMARK) JSObject Doc
+JSOBJECT_WINDOWTITLE := Java JSObject Doc
+JSOBJECT_HEADER := <strong>Java JSObject Doc</strong>
+JSOBJECT_BOTTOM := $(call CommonBottom,$(JSOBJECT_FIRST_COPYRIGHT_YEAR))
+# JSOBJECT_PKGS is located in NON_CORE_PKGS.gmk
+
+JSOBJECT_INDEX_HTML = $(JSOBJECT_DOCDIR)/index.html
+JSOBJECT_OPTIONS_FILE = $(DOCSTMPDIR)/jsobject.options
+JSOBJECT_PACKAGES_FILE = $(DOCSTMPDIR)/jsobject.packages
+
+# The modules required to be documented
+JSOBJECT_MODULES = jdk.jsobject
+
+jsobjectdocs: $(JSOBJECT_INDEX_HTML)
+
+# Set relative location to core api document root
+$(JSOBJECT_INDEX_HTML): GET2DOCSDIR=$(JSOBJECT2COREAPI)/..
+
+# Run javadoc if the index file is out of date or missing
+$(JSOBJECT_INDEX_HTML): $(JSOBJECT_OPTIONS_FILE) $(JSOBJECT_PACKAGES_FILE) $(COREAPI_INDEX_FILE)
+	$(prep-javadoc)
+	$(call JavadocSummary,$(JSOBJECT_OPTIONS_FILE),$(JSOBJECT_PACKAGES_FILE))
+	$(JAVADOC_CMD_SMALL) -d $(@D) \
+	    @$(JSOBJECT_OPTIONS_FILE) @$(JSOBJECT_PACKAGES_FILE)
+
+# Create file with javadoc options in it
+$(JSOBJECT_OPTIONS_FILE):
+	$(prep-target)
+	@($(call COMMON_JAVADOCFLAGS) ; \
+          $(call COMMON_JAVADOCTAGS) ; \
+	  $(call OptionOnly,-Xdoclint:none) ; \
+          $(call OptionPair,--system,none) ; \
+	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
+	  $(call OptionPair,--add-modules,$(JSOBJECT_MODULES)) ; \
+	  $(call OptionPair,-encoding,ascii) ; \
+	  $(call OptionOnly,-nodeprecatedlist) ; \
+	  $(call OptionPair,-doctitle,$(JSOBJECT_DOCTITLE)) ; \
+	  $(call OptionPair,-windowtitle,$(JSOBJECT_WINDOWTITLE) $(DRAFT_WINTITLE)); \
+	  $(call OptionPair,-header,$(JSOBJECT_HEADER)$(DRAFT_HEADER)); \
+	  $(call OptionPair,-bottom,$(JSOBJECT_BOTTOM)$(DRAFT_BOTTOM)); \
+	  $(call OptionTrip,-linkoffline,$(JSOBJECT2COREAPI),$(COREAPI_DOCSDIR)/); \
+	) >> $@
+
+# Create a file with the package names in it
+$(JSOBJECT_PACKAGES_FILE): $(call PackageDependencies,$(JSOBJECT_PKGS))
+	$(prep-target)
+	$(call PackageFilter,$(JSOBJECT_PKGS))
+
+
+#############################################################
+#
 # mgmtdocs
 #
 
@@ -1038,8 +1088,6 @@ ALL_OTHER_TARGETS += mgmtdocs
 
 MGMT_DOCDIR := $(JRE_API_DOCSDIR)/management/extension
 MGMT2COREAPI := ../../$(JDKJRE2COREAPI)
-JVM_MIB_NAME := JVM-MANAGEMENT-MIB.mib
-JVM_MIB_SRC := $(JDK_TOPDIR)/src/closed/jdk.snmp/share/classes/sun/management/snmp/$(JVM_MIB_NAME)
 MGMT_DOCTITLE := Monitoring and Management Interface for the Java$(TRADEMARK) Platform
 MGMT_WINDOWTITLE := Monitoring and Management Interface for the Java Platform
 MGMT_HEADER := <strong>Monitoring and Management Interface for the Java Platform</strong>
@@ -1063,11 +1111,6 @@ $(MGMT_INDEX_FILE): GET2DOCSDIR=$(MGMT2COREAPI)/..
 # Run javadoc if the index file is out of date or missing
 $(MGMT_INDEX_FILE): $(MGMT_OPTIONS_FILE) $(MGMT_PACKAGES_FILE) $(COREAPI_INDEX_FILE)
 	$(prep-javadoc)
-	@if [ -f $(JVM_MIB_SRC) ] ; then \
-	  $(CP) $(JVM_MIB_SRC) $(@D)/.. ; \
-	else \
-	  $(ECHO) "WARNING: File $(JVM_MIB_NAME) not available."; \
-	fi
 	$(call JavadocSummary,$(MGMT_OPTIONS_FILE),$(MGMT_PACKAGES_FILE))
 	$(JAVADOC_CMD_SMALL) -d $(@D) \
 	    @$(MGMT_OPTIONS_FILE) @$(MGMT_PACKAGES_FILE)
@@ -1078,9 +1121,9 @@ $(MGMT_OPTIONS_FILE): $(MGMT_OVERVIEW)
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
-          $(call OptionPair,-system,none) ; \
-	  $(call OptionPair,-modulesourcepath,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
-	  $(call OptionPair,-addmods,$(MGMT_MODULES)) ; \
+          $(call OptionPair,--system,none) ; \
+	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
+	  $(call OptionPair,--add-modules,$(MGMT_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
 	  $(call OptionOnly,-nodeprecatedlist) ; \
 	  $(call OptionPair,-overview,$(MGMT_OVERVIEW)) ; \
@@ -1136,9 +1179,9 @@ $(ATTACH_OPTIONS_FILE):
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
-          $(call OptionPair,-system,none) ; \
-	  $(call OptionPair,-modulesourcepath,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
-	  $(call OptionPair,-addmods,$(ATTACH_MODULES)) ; \
+          $(call OptionPair,--system,none) ; \
+	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
+	  $(call OptionPair,--add-modules,$(ATTACH_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
 	  $(call OptionOnly,-nodeprecatedlist) ; \
 	  $(call OptionPair,-doctitle,$(ATTACH_DOCTITLE)) ; \
@@ -1193,9 +1236,9 @@ $(JCONSOLE_OPTIONS_FILE):
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
-          $(call OptionPair,-system,none) ; \
-	  $(call OptionPair,-modulesourcepath,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
-	  $(call OptionPair,-addmods,$(JCONSOLE_MODULES)) ; \
+          $(call OptionPair,--system,none) ; \
+	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
+	  $(call OptionPair,--add-modules,$(JCONSOLE_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
 	  $(call OptionOnly,-nodeprecatedlist) ; \
 	  $(call OptionPair,-doctitle,$(JCONSOLE_DOCTITLE)) ; \
@@ -1223,8 +1266,7 @@ JSHELLAPI_DOCTITLE := JShell API
 JSHELLAPI_WINDOWTITLE := JShell API
 JSHELLAPI_HEADER := <strong>JSHELL API</strong>
 JSHELLAPI_BOTTOM := $(call CommonBottom,$(JSHELLAPI_FIRST_COPYRIGHT_YEAR))
-JSHELLAPI_GROUPNAME := Packages
-JSHELLAPI_REGEXP := jdk.jshell.*
+JSHELLAPI_OVERVIEW := $(LANGTOOLS_TOPDIR)/src/jdk.jshell/share/classes/jdk/jshell/overview.html
 # JSHELLAPI_PKGS is located in NON_CORE_PKGS.gmk
 
 JSHELLAPI_INDEX_HTML = $(JSHELLAPI_DOCDIR)/index.html
@@ -1252,15 +1294,15 @@ $(JSHELLAPI_OPTIONS_FILE):
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:all) ; \
-          $(call OptionPair,-system,none) ; \
-	  $(call OptionPair,-modulesourcepath,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
-	  $(call OptionPair,-addmods,$(JSHELLAPI_MODULES)) ; \
+          $(call OptionPair,--system,none) ; \
+	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
+	  $(call OptionPair,--add-modules,$(JSHELLAPI_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
+	  $(call OptionPair,-overview,$(JSHELLAPI_OVERVIEW)) ; \
 	  $(call OptionPair,-doctitle,$(JSHELLAPI_DOCTITLE)) ; \
 	  $(call OptionPair,-windowtitle,$(JSHELLAPI_WINDOWTITLE) $(DRAFT_WINTITLE)); \
 	  $(call OptionPair,-header,$(JSHELLAPI_HEADER)$(DRAFT_HEADER)) ; \
 	  $(call OptionPair,-bottom,$(JSHELLAPI_BOTTOM)$(DRAFT_BOTTOM)) ; \
-	  $(call OptionTrip,-group,$(JSHELLAPI_GROUPNAME),$(JSHELLAPI_REGEXP)); \
 	  $(call OptionTrip,-linkoffline,$(JSHELLAPI2COREAPI),$(COREAPI_DOCSDIR)/); \
 	) >> $@
 
@@ -1311,9 +1353,9 @@ $(TREEAPI_OPTIONS_FILE):
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:all) ; \
-          $(call OptionPair,-system,none) ; \
-	  $(call OptionPair,-modulesourcepath,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
-	  $(call OptionPair,-addmods,$(TREEAPI_MODULES)) ; \
+          $(call OptionPair,--system,none) ; \
+	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
+	  $(call OptionPair,--add-modules,$(TREEAPI_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
 	  $(call OptionPair,-doctitle,$(TREEAPI_DOCTITLE)) ; \
 	  $(call OptionPair,-windowtitle,$(TREEAPI_WINDOWTITLE) $(DRAFT_WINTITLE)); \
@@ -1370,9 +1412,9 @@ $(NASHORNAPI_OPTIONS_FILE):
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:all) ; \
-          $(call OptionPair,-system,none) ; \
-	  $(call OptionPair,-modulesourcepath,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
-	  $(call OptionPair,-addmods,$(NASHORNAPI_MODULES)) ; \
+          $(call OptionPair,--system,none) ; \
+	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
+	  $(call OptionPair,--add-modules,$(NASHORNAPI_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
 	  $(call OptionPair,-doctitle,$(NASHORNAPI_DOCTITLE)) ; \
 	  $(call OptionPair,-windowtitle,$(NASHORNAPI_WINDOWTITLE) $(DRAFT_WINTITLE)); \
@@ -1429,9 +1471,9 @@ $(DYNALINKAPI_OPTIONS_FILE):
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:all) ; \
-          $(call OptionPair,-system,none) ; \
-	  $(call OptionPair,-modulesourcepath,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
-	  $(call OptionPair,-addmods,$(DYNALINKAPI_MODULES)) ; \
+          $(call OptionPair,--system,none) ; \
+	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
+	  $(call OptionPair,--add-modules,$(DYNALINKAPI_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
 	  $(call OptionPair,-doctitle,$(DYNALINKAPI_DOCTITLE)) ; \
 	  $(call OptionPair,-windowtitle,$(DYNALINKAPI_WINDOWTITLE) $(DRAFT_WINTITLE)); \
@@ -1485,9 +1527,9 @@ $(SCTPAPI_OPTIONS_FILE):
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
-          $(call OptionPair,-system,none) ; \
-	  $(call OptionPair,-modulesourcepath,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
-	  $(call OptionPair,-addmods,$(SCTPAPI_MODULES)) ; \
+          $(call OptionPair,--system,none) ; \
+	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
+	  $(call OptionPair,--add-modules,$(SCTPAPI_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
 	  $(call OptionOnly,-nodeprecatedlist) ; \
 	  $(call OptionPair,-doctitle,$(SCTPAPI_DOCTITLE)) ; \
@@ -1542,9 +1584,9 @@ $(JACCESSAPI_OPTIONS_FILE):
 	@($(call COMMON_JAVADOCFLAGS) ; \
 	  $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:all) ; \
-          $(call OptionPair,-system,none) ; \
-	  $(call OptionPair,-modulesourcepath,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
-	  $(call OptionPair,-addmods,$(JACCESSAPI_MODULES)) ; \
+          $(call OptionPair,--system,none) ; \
+	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
+	  $(call OptionPair,--add-modules,$(JACCESSAPI_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
 	  $(call OptionOnly,-nodeprecatedlist) ; \
 	  $(call OptionPair,-doctitle,$(JACCESSAPI_DOCTITLE)) ; \
@@ -1599,9 +1641,9 @@ $(JDKNET_OPTIONS_FILE):
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
-          $(call OptionPair,-system,none) ; \
-	  $(call OptionPair,-modulesourcepath,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
-	  $(call OptionPair,-addmods,$(JDKNET_MODULES)) ; \
+          $(call OptionPair,--system,none) ; \
+	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
+	  $(call OptionPair,--add-modules,$(JDKNET_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
 	  $(call OptionOnly,-nodeprecatedlist) ; \
 	  $(call OptionPair,-doctitle,$(JDKNET_DOCTITLE)) ; \
@@ -1622,7 +1664,7 @@ $(JDKNET_PACKAGES_FILE): $(call PackageDependencies,$(JDKNET_PKGS))
 #
 # TODO: Need to decide when the plugin API is ready to publish as experimental API.
 # This target is temporarily added for internal use for now.
-#        
+#
 
 ALL_OTHER_TARGETS += jlinkdocs
 
@@ -1660,9 +1702,9 @@ $(JLINK_PLUGIN_OPTIONS_FILE):
 	@($(call COMMON_JAVADOCFLAGS) ; \
           $(call COMMON_JAVADOCTAGS) ; \
 	  $(call OptionOnly,-Xdoclint:none) ; \
-          $(call OptionPair,-system,none) ; \
-	  $(call OptionPair,-modulesourcepath,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
-	  $(call OptionPair,-addmods,$(JLINK_PLUGIN_MODULES)) ; \
+          $(call OptionPair,--system,none) ; \
+	  $(call OptionPair,--module-source-path,$(RELEASEDOCS_MODULESOURCEPATH)) ; \
+	  $(call OptionPair,--add-modules,$(JLINK_PLUGIN_MODULES)) ; \
 	  $(call OptionPair,-encoding,ascii) ; \
 	  $(call OptionOnly,-nodeprecatedlist) ; \
 	  $(call OptionPair,-doctitle,$(JLINK_PLUGIN_DOCTITLE)) ; \
@@ -1705,3 +1747,7 @@ $(JAVADOC_ARCHIVE): $(COREAPI_INDEX_FILE)
 #############################################################
 .PHONY: all docs coredocs otherdocs \
      $(ALL_OTHER_TARGETS) zip-docs
+
+################################################################################
+
+$(eval $(call IncludeCustomExtension, , Javadoc-post.gmk))

@@ -84,6 +84,7 @@ public class WhiteBox {
   public native long getVMAllocationGranularity();
   public native long getVMLargePageSize();
   public native long getHeapSpaceAlignment();
+  public native long getHeapAlignment();
 
   private native boolean isObjectInOldGen0(Object o);
   public         boolean isObjectInOldGen(Object o) {
@@ -376,6 +377,7 @@ public class WhiteBox {
   public native void freeMetaspace(ClassLoader classLoader, long addr, long size);
   public native long incMetaspaceCapacityUntilGC(long increment);
   public native long metaspaceCapacityUntilGC();
+  public native boolean metaspaceShouldConcurrentCollect();
 
   // Don't use these methods directly
   // Use sun.hotspot.gc.GC class instead.

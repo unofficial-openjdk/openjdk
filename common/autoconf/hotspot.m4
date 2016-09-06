@@ -161,10 +161,7 @@ AC_DEFUN_ONCE([HOTSPOT_SETUP_DTRACE],
     INCLUDE_DTRACE=false
     AC_MSG_RESULT([no, forced])
   elif test "x$enable_dtrace" = "xauto" || test "x$enable_dtrace" = "x"; then
-    if test "x$OPENJDK_TARGET_OS" = "xlinux" && test "x$OPENJDK" != "xtrue"; then
-      INCLUDE_DTRACE=false
-      AC_MSG_RESULT([no, non-open linux build])
-    elif test "x$DTRACE_DEP_MISSING" = "xtrue"; then
+    if test "x$DTRACE_DEP_MISSING" = "xtrue"; then
       INCLUDE_DTRACE=false
       AC_MSG_RESULT([no, missing dependencies])
     else
@@ -201,8 +198,8 @@ AC_DEFUN_ONCE([HOTSPOT_SETUP_JVM_FEATURES],
     AC_MSG_ERROR([Specified JVM feature 'management' requires feature 'nmt'])
   fi
 
-  if HOTSPOT_CHECK_JVM_FEATURE(jvmci) && ! HOTSPOT_CHECK_JVM_FEATURE(compiler2); then
-    AC_MSG_ERROR([Specified JVM feature 'jvmci' requires feature 'compiler2'])
+  if HOTSPOT_CHECK_JVM_FEATURE(jvmci) && ! (HOTSPOT_CHECK_JVM_FEATURE(compiler1) || HOTSPOT_CHECK_JVM_FEATURE(compiler2)); then
+    AC_MSG_ERROR([Specified JVM feature 'jvmci' requires feature 'compiler2' or 'compiler1'])
   fi
 
   if HOTSPOT_CHECK_JVM_FEATURE(compiler2) && ! HOTSPOT_CHECK_JVM_FEATURE(all-gcs); then
@@ -242,7 +239,7 @@ AC_DEFUN_ONCE([HOTSPOT_SETUP_JVM_FEATURES],
     fi
   fi
 
-  # Only enable jvmci on x86_64, sparcv9 and aarch64, and only on server.
+  # Only enable jvmci on x86_64, sparcv9 and aarch64.
   if test "x$OPENJDK_TARGET_CPU" = "xx86_64" || \
       test "x$OPENJDK_TARGET_CPU" = "xsparcv9" || \
       test "x$OPENJDK_TARGET_CPU" = "xaarch64" ; then
@@ -256,7 +253,7 @@ AC_DEFUN_ONCE([HOTSPOT_SETUP_JVM_FEATURES],
 
   # Enable features depending on variant.
   JVM_FEATURES_server="compiler1 compiler2 $NON_MINIMAL_FEATURES $JVM_FEATURES $JVM_FEATURES_jvmci"
-  JVM_FEATURES_client="compiler1 $NON_MINIMAL_FEATURES $JVM_FEATURES"
+  JVM_FEATURES_client="compiler1 $NON_MINIMAL_FEATURES $JVM_FEATURES $JVM_FEATURES_jvmci"
   JVM_FEATURES_core="$NON_MINIMAL_FEATURES $JVM_FEATURES"
   JVM_FEATURES_minimal="compiler1 minimal $JVM_FEATURES"
   JVM_FEATURES_zero="zero $NON_MINIMAL_FEATURES $JVM_FEATURES"
@@ -333,7 +330,7 @@ AC_DEFUN_ONCE([HOTSPOT_ENABLE_DISABLE_GTEST],
     AC_MSG_RESULT([no, forced])
     BUILD_GTEST="false"
   elif test "x$enable_hotspot_gtest" = "x"; then
-    if test "x$GTEST_DIR_EXISTS" = "xtrue"; then
+    if test "x$GTEST_DIR_EXISTS" = "xtrue" && test "x$OPENJDK_TARGET_OS" != "xaix"; then
       AC_MSG_RESULT([yes])
       BUILD_GTEST="true"
     else
