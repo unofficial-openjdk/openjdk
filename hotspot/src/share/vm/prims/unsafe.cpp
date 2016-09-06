@@ -32,7 +32,7 @@
 #include "prims/jni.h"
 #include "prims/jvm.h"
 #include "prims/unsafe.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/globals.hpp"
 #include "runtime/interfaceSupport.hpp"
 #include "runtime/orderAccess.inline.hpp"
@@ -861,6 +861,13 @@ Unsafe_DefineAnonymousClass_impl(JNIEnv *env,
   }
 
   const Klass* host_klass = java_lang_Class::as_Klass(JNIHandles::resolve_non_null(host_class));
+
+  // Make sure it's the real host class, not another anonymous class.
+  while (host_klass != NULL && host_klass->is_instance_klass() &&
+         InstanceKlass::cast(host_klass)->is_anonymous()) {
+    host_klass = InstanceKlass::cast(host_klass)->host_klass();
+  }
+
   // Primitive types have NULL Klass* fields in their java.lang.Class instances.
   if (host_klass == NULL) {
     THROW_0(vmSymbols::java_lang_IllegalArgumentException());
@@ -1040,7 +1047,7 @@ UNSAFE_ENTRY(void, Unsafe_Park(JNIEnv *env, jobject unsafe, jboolean isAbsolute,
 
   if (event.should_commit()) {
     oop obj = thread->current_park_blocker();
-    event.set_klass((obj != NULL) ? obj->klass() : NULL);
+    event.set_parkedClass((obj != NULL) ? obj->klass() : NULL);
     event.set_timeout(time);
     event.set_address((obj != NULL) ? (TYPE_ADDRESS) cast_from_oop<uintptr_t>(obj) : 0);
     event.commit();

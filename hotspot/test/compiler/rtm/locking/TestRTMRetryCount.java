@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,24 +26,31 @@
  * @test
  * @bug 8031320
  * @summary Verify that RTMRetryCount affects actual amount of retries.
- * @library /testlibrary /test/lib /
+ * @library /test/lib /
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @build TestRTMRetryCount
+ * @build sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
  *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
- *                   -XX:+WhiteBoxAPI TestRTMRetryCount
+ *                   -XX:+WhiteBoxAPI
+ *                   compiler.rtm.locking.TestRTMRetryCount
  */
 
-import java.util.List;
+package compiler.rtm.locking;
 
-import jdk.test.lib.*;
-import jdk.test.lib.cli.CommandLineOptionTest;
-import jdk.test.lib.cli.predicate.AndPredicate;
-import compiler.testlibrary.rtm.*;
+import compiler.testlibrary.rtm.BusyLock;
+import compiler.testlibrary.rtm.CompilableTest;
+import compiler.testlibrary.rtm.RTMLockingStatistics;
+import compiler.testlibrary.rtm.RTMTestBase;
 import compiler.testlibrary.rtm.predicate.SupportedCPU;
 import compiler.testlibrary.rtm.predicate.SupportedVM;
+import jdk.test.lib.Asserts;
+import jdk.test.lib.process.OutputAnalyzer;
+import jdk.test.lib.cli.CommandLineOptionTest;
+import jdk.test.lib.cli.predicate.AndPredicate;
+
+import java.util.List;
 
 /**
  * Test verifies that RTMRetryCount option actually affects amount of

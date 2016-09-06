@@ -204,11 +204,13 @@ ciEnv::ciEnv(Arena* arena) : _ciEnv_arena(mtCompiler) {
 }
 
 ciEnv::~ciEnv() {
-  CompilerThread* current_thread = CompilerThread::current();
-  _factory->remove_symbols();
-  // Need safepoint to clear the env on the thread.  RedefineClasses might
-  // be reading it.
-  GUARDED_VM_ENTRY(current_thread->set_env(NULL);)
+  GUARDED_VM_ENTRY(
+      CompilerThread* current_thread = CompilerThread::current();
+      _factory->remove_symbols();
+      // Need safepoint to clear the env on the thread.  RedefineClasses might
+      // be reading it.
+      current_thread->set_env(NULL);
+  )
 }
 
 // ------------------------------------------------------------------
@@ -1147,10 +1149,10 @@ void ciEnv::record_failure(const char* reason) {
 
 void ciEnv::report_failure(const char* reason) {
   // Create and fire JFR event
-  EventCompilerFailure event;
+  EventCompilationFailure event;
   if (event.should_commit()) {
-    event.set_compileID(compile_id());
-    event.set_failure(reason);
+    event.set_compileId(compile_id());
+    event.set_failureMessage(reason);
     event.commit();
   }
 }

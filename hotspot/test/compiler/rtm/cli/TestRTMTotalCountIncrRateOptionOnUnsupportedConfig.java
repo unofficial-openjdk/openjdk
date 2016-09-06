@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,26 +22,29 @@
  *
  */
 
-import jdk.test.lib.cli.predicate.AndPredicate;
-import jdk.test.lib.cli.predicate.NotPredicate;
-import compiler.testlibrary.rtm.predicate.SupportedCPU;
-import compiler.testlibrary.rtm.predicate.SupportedVM;
-
 /**
  * @test
  * @bug 8031320
  * @summary Verify RTMTotalCountIncrRate option processing on CPU without
  *          rtm support and/or on VM without rtm locking support.
- * @library /testlibrary /test/lib /
+ * @library /test/lib /
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @build TestRTMTotalCountIncrRateOptionOnUnsupportedConfig
+ *
+ * @build sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
  *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
  *                   -XX:+WhiteBoxAPI
- *                   TestRTMTotalCountIncrRateOptionOnUnsupportedConfig
+ *                   compiler.rtm.cli.TestRTMTotalCountIncrRateOptionOnUnsupportedConfig
  */
+
+package compiler.rtm.cli;
+
+import compiler.testlibrary.rtm.predicate.SupportedCPU;
+import compiler.testlibrary.rtm.predicate.SupportedVM;
+import jdk.test.lib.cli.predicate.AndPredicate;
+import jdk.test.lib.cli.predicate.NotPredicate;
 
 public class TestRTMTotalCountIncrRateOptionOnUnsupportedConfig
         extends RTMGenericCommandLineOptionTest {

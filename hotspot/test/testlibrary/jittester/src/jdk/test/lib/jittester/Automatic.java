@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,7 @@
 
 package jdk.test.lib.jittester;
 
-import jdk.test.lib.Pair;
+import jdk.test.lib.util.Pair;
 import jdk.test.lib.jittester.factories.IRNodeBuilder;
 import jdk.test.lib.jittester.types.TypeKlass;
 import jdk.test.lib.jittester.utils.FixedTrees;
@@ -120,16 +120,30 @@ public class Automatic {
             String name = "Test_" + counter;
             Pair<IRNode, IRNode> irTree = generateIRTree(name);
             System.out.printf(" %8d |", counter);
+            long maxWaitTime = TimeUnit.MINUTES.toMillis(MINUTES_TO_WAIT);
             double generationTime = System.currentTimeMillis() - start;
             System.out.printf(" %8.0f |", generationTime);
             start = System.currentTimeMillis();
-            for (TestsGenerator generator : generators) {
-                generator.accept(irTree.first, irTree.second);
+            Thread generatorThread = new Thread(() -> {
+                for (TestsGenerator generator : generators) {
+                        generator.accept(irTree.first, irTree.second);
+                }
+            });
+            generatorThread.start();
+            try {
+                generatorThread.join(maxWaitTime);
+            } catch (InterruptedException ie) {
+                throw new Error("Test generation interrupted: " + ie, ie);
             }
-            double runningTime = System.currentTimeMillis() - start;
-            System.out.printf(" %8.0f |%n", runningTime);
-            if (runningTime < TimeUnit.MINUTES.toMillis(MINUTES_TO_WAIT)) {
-                ++counter;
+            if (generatorThread.isAlive()) {
+                // maxTime reached, so, proceed to next test generation
+                generatorThread.interrupt();
+            } else {
+                double runningTime = System.currentTimeMillis() - start;
+                System.out.printf(" %8.0f |%n", runningTime);
+                if (runningTime < maxWaitTime) {
+                    ++counter;
+                }
             }
         } while (counter < ProductionParams.numberOfTests.value());
     }

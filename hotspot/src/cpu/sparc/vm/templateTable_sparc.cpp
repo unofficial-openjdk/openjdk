@@ -705,9 +705,6 @@ void TemplateTable::aload_0_internal(RewriteControl rc) {
     // get next byte
     __ ldub(at_bcp(Bytecodes::length_for(Bytecodes::_aload_0)), G3_scratch);
 
-    // do actual aload_0
-    aload(0);
-
     // if _getfield then wait with rewrite
     __ cmp_and_br_short(G3_scratch, (int)Bytecodes::_getfield, Assembler::equal, Assembler::pn, done);
 
@@ -738,9 +735,10 @@ void TemplateTable::aload_0_internal(RewriteControl rc) {
     __ bind(rewrite);
     patch_bytecode(Bytecodes::_aload_0, G4_scratch, G3_scratch, false);
     __ bind(done);
-  } else {
-    aload(0);
   }
+
+  // Do actual aload_0 (must do this after patch_bytecode which might call VM and GC might change oop).
+  aload(0);
 }
 
 void TemplateTable::istore() {
@@ -1636,7 +1634,7 @@ void TemplateTable::branch(bool is_jsr, bool is_wide) {
                                                  in_bytes(InvocationCounter::counter_offset()));
         Address mask(G4_scratch, in_bytes(MethodData::backedge_mask_offset()));
         __ increment_mask_and_jump(mdo_backedge_counter, increment, mask, G3_scratch, O0,
-                                   Assembler::notZero, &Lforward);
+                                   (UseOnStackReplacement ? Assembler::notZero : Assembler::always), &Lforward);
         __ ba_short(Loverflow);
       }
 
@@ -1647,7 +1645,7 @@ void TemplateTable::branch(bool is_jsr, bool is_wide) {
               in_bytes(InvocationCounter::counter_offset()));
       Address mask(G3_method_counters, in_bytes(MethodCounters::backedge_mask_offset()));
       __ increment_mask_and_jump(backedge_counter, increment, mask, G4_scratch, O0,
-                                 Assembler::notZero, &Lforward);
+                                 (UseOnStackReplacement ? Assembler::notZero : Assembler::always), &Lforward);
       __ bind(Loverflow);
 
       // notify point for loop, pass branch bytecode

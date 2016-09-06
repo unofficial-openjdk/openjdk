@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,10 +21,10 @@
  * questions.
  */
 
-package pool;
+package compiler.compilercontrol.share.pool;
 
-import jdk.test.lib.Pair;
-import pool.MethodHolder;
+import jdk.test.lib.util.Pair;
+
 import java.lang.reflect.Executable;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,12 +53,12 @@ public class PoolHelper extends MethodHolder {
     static {
         METHODS = new ArrayList<>();
         List<MethodHolder> holders = new ArrayList<>();
-        holders.add(new pool.sub.Klass());
-        holders.add(new pool.sub.KlassDup());
-        holders.add(new pool.subpack.Klass());
-        holders.add(new pool.subpack.KlassDup());
-        holders.add(new pool.sub.Klass.Internal());
-        holders.add(new pool.subpack.KlassDup.Internal());
+        holders.add(new compiler.compilercontrol.share.pool.sub.Klass());
+        holders.add(new compiler.compilercontrol.share.pool.sub.KlassDup());
+        holders.add(new compiler.compilercontrol.share.pool.subpack.Klass());
+        holders.add(new compiler.compilercontrol.share.pool.subpack.KlassDup());
+        holders.add(new compiler.compilercontrol.share.pool.sub.Klass.Internal());
+        holders.add(new compiler.compilercontrol.share.pool.subpack.KlassDup.Internal());
         for (MethodHolder holder : holders) {
             METHODS.addAll(holder.getAllMethods());
         }

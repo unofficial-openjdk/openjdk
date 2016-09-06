@@ -26,14 +26,17 @@
  * @summary Test selection of GC when no GC option is specified
  * @bug 8068582
  * @key gc
- * @library /testlibrary
+ * @library /test/lib
  * @requires vm.gc=="null"
  * @modules java.base/jdk.internal.misc
  *          java.management
  * @run driver TestSelectDefaultGC
  */
 
-import jdk.test.lib.*;
+import jdk.test.lib.Platform;
+import jdk.test.lib.process.OutputAnalyzer;
+import jdk.test.lib.process.ProcessTools;
+
 import java.util.regex.*;
 
 public class TestSelectDefaultGC {
@@ -55,14 +58,10 @@ public class TestSelectDefaultGC {
         output.shouldHaveExitValue(0);
 
         final boolean isServer = actAsServer;
-        final boolean isEmbedded = Platform.isEmbedded();
 
         // Verify GC selection
-        // G1 is default for non-embedded server class machines
-        assertVMOption(output, "UseG1GC",            isServer && !isEmbedded);
-        // Parallel is default for embedded server class machines
-        assertVMOption(output, "UseParallelGC",      isServer && isEmbedded);
-        assertVMOption(output, "UseParallelOldGC",   isServer && isEmbedded);
+        // G1 is default for server class machines
+        assertVMOption(output, "UseG1GC",            isServer);
         // Serial is default for non-server class machines
         assertVMOption(output, "UseSerialGC",        !isServer);
         // CMS is never default

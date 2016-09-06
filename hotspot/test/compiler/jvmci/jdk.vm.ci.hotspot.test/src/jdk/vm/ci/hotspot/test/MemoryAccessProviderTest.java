@@ -25,7 +25,7 @@
  * @test
  * @bug 8152341
  * @requires (vm.simpleArch == "x64" | vm.simpleArch == "sparcv9" | vm.simpleArch == "aarch64")
- * @library /testlibrary /test/lib /compiler/jvmci/jdk.vm.ci.hotspot.test/src
+ * @library /test/lib /compiler/jvmci/jdk.vm.ci.hotspot.test/src
  * @modules jdk.vm.ci/jdk.vm.ci.meta
  *          jdk.vm.ci/jdk.vm.ci.common
  *          jdk.vm.ci/jdk.vm.ci.runtime
@@ -38,12 +38,11 @@
 package jdk.vm.ci.hotspot.test;
 
 import jdk.vm.ci.meta.Constant;
-import org.testng.annotations.Test;
-import org.testng.Assert;
-import jdk.vm.ci.meta.JavaConstant;
 import jdk.vm.ci.meta.JavaKind;
 import jdk.vm.ci.meta.MemoryAccessProvider;
 import jdk.vm.ci.runtime.JVMCI;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 public class MemoryAccessProviderTest {
     private static final MemoryAccessProvider PROVIDER = JVMCI.getRuntime().getHostJVMCIBackend().getConstantReflection().getMemoryAccessProvider();

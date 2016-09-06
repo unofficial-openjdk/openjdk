@@ -35,7 +35,6 @@
 #include "logging/log.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/filemap.hpp"
-#include "mutex_linux.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "os_linux.inline.hpp"
 #include "os_share_linux.hpp"
@@ -43,7 +42,7 @@
 #include "prims/jvm.h"
 #include "prims/jvm_misc.hpp"
 #include "runtime/arguments.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/extendedPC.hpp"
 #include "runtime/globals.hpp"
 #include "runtime/interfaceSupport.hpp"
@@ -1742,11 +1741,11 @@ void * os::dll_load(const char *filename, char *ebuf, int ebuflen) {
   }
 
   typedef struct {
-    Elf32_Half  code;         // Actual value as defined in elf.h
-    Elf32_Half  compat_class; // Compatibility of archs at VM's sense
-    char        elf_class;    // 32 or 64 bit
-    char        endianess;    // MSB or LSB
-    char*       name;         // String representation
+    Elf32_Half    code;         // Actual value as defined in elf.h
+    Elf32_Half    compat_class; // Compatibility of archs at VM's sense
+    unsigned char elf_class;    // 32 or 64 bit
+    unsigned char endianess;    // MSB or LSB
+    char*         name;         // String representation
   } arch_t;
 
 #ifndef EM_486
@@ -3972,7 +3971,8 @@ void os::hint_no_preempt() {}
 //      - sets target osthread state to continue
 //      - sends signal to end the sigsuspend loop in the SR_handler
 //
-//  Note that the SR_lock plays no role in this suspend/resume protocol.
+//  Note that the SR_lock plays no role in this suspend/resume protocol,
+//  but is checked for NULL in SR_handler as a thread termination indicator.
 
 static void resume_clear_context(OSThread *osthread) {
   osthread->set_ucontext(NULL);
@@ -4005,8 +4005,20 @@ static void SR_handler(int sig, siginfo_t* siginfo, ucontext_t* context) {
 
   Thread* thread = Thread::current_or_null_safe();
   assert(thread != NULL, "Missing current thread in SR_handler");
-  OSThread* osthread = thread->osthread();
+
+  // On some systems we have seen signal delivery get "stuck" until the signal
+  // mask is changed as part of thread termination. Check that the current thread
+  // has not already terminated (via SR_lock()) - else the following assertion
+  // will fail because the thread is no longer a JavaThread as the ~JavaThread
+  // destructor has completed.
+
+  if (thread->SR_lock() == NULL) {
+    return;
+  }
+
   assert(thread->is_VM_thread() || thread->is_Java_thread(), "Must be VMThread or JavaThread");
+
+  OSThread* osthread = thread->osthread();
 
   os::SuspendResume::State current = osthread->sr.state();
   if (current == os::SuspendResume::SR_SUSPEND_REQUEST) {
@@ -5160,10 +5172,6 @@ int os::stat(const char *path, struct stat *sbuf) {
   }
   os::native_path(strcpy(pathbuf, path));
   return ::stat(pathbuf, sbuf);
-}
-
-bool os::check_heap(bool force) {
-  return true;
 }
 
 // Is a (classpath) directory empty?

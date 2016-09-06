@@ -28,7 +28,6 @@ import jdk.vm.ci.code.InvalidInstalledCodeException;
 import jdk.vm.ci.code.TargetDescription;
 import jdk.vm.ci.meta.ConstantPool;
 import jdk.vm.ci.meta.ResolvedJavaMethod;
-import jdk.vm.ci.meta.SpeculationLog;
 
 /**
  * A simple "proxy" class to get test access to CompilerToVM package-private methods
@@ -274,8 +273,8 @@ public class CompilerToVMHelper {
         return CTVM.getResolvedJavaMethod(base, displacement);
     }
 
-    public static HotSpotConstantPool getConstantPool(Object base, long displacement) {
-        return CTVM.getConstantPool(base, displacement);
+    public static HotSpotConstantPool getConstantPool(Object object) {
+        return CTVM.getConstantPool(object);
     }
 
     public static HotSpotResolvedObjectType getResolvedJavaType(Object base,

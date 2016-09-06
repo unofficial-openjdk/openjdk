@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,14 +22,16 @@
  *
  */
 
-import java.util.List;
-import java.util.LinkedList;
+package compiler.rtm.cli;
 
-import jdk.test.lib.ExitCode;
-import jdk.test.lib.cli.*;
-import jdk.test.lib.cli.predicate.AndPredicate;
 import compiler.testlibrary.rtm.predicate.SupportedCPU;
 import compiler.testlibrary.rtm.predicate.SupportedVM;
+import jdk.test.lib.process.ExitCode;
+import jdk.test.lib.cli.CommandLineOptionTest;
+import jdk.test.lib.cli.predicate.AndPredicate;
+
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Base for all RTM-related CLI tests on options whose processing depends

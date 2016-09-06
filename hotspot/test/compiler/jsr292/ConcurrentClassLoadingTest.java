@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,12 +25,17 @@
  * @test
  * @bug 8022595
  * @summary JSR292: deadlock during class loading of MethodHandles, MethodHandleImpl & MethodHandleNatives
- * @library /testlibrary
+ * @library /test/lib /
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @run main/othervm ConcurrentClassLoadingTest
+ *
+ * @run main/othervm compiler.jsr292.ConcurrentClassLoadingTest
  */
+
+package compiler.jsr292;
+
 import jdk.test.lib.Utils;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

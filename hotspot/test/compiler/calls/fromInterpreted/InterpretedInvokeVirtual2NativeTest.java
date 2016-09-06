@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,13 +23,14 @@
 
 /*
  * @test
+ * @summary check calls from interpreted to native using InvokeVirtual
  * @modules java.base/jdk.internal.misc
- * @library /test/lib /testlibrary /
- * @build compiler.calls.common.InvokeVirtual
+ * @library /test/lib /
+ *
+ * @build sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
  *    sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xbootclasspath/a:.
  *    -XX:CompileCommand=exclude,compiler.calls.common.InvokeVirtual::caller  compiler.calls.common.InvokeVirtual
  *    -checkCallerCompileLevel 0 -nativeCallee
- * @summary check calls from interpreted to native using InvokeVirtual
  */

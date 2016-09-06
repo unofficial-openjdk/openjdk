@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,7 +45,7 @@
 #include "oops/instanceRefKlass.hpp"
 #include "oops/oop.inline.hpp"
 #include "prims/jvmtiExport.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/biasedLocking.hpp"
 #include "runtime/fprofiler.hpp"
 #include "runtime/synchronizer.hpp"
@@ -340,7 +340,7 @@ void G1PrepareCompactClosure::free_humongous_region(HeapRegion* hr) {
   hr->set_containing_set(NULL);
   _humongous_regions_removed++;
 
-  _g1h->free_humongous_region(hr, &dummy_free_list, false /* par */);
+  _g1h->free_humongous_region(hr, &dummy_free_list, false /* skip_remset */);
   prepare_for_compaction(hr, end);
   dummy_free_list.remove_all();
 }

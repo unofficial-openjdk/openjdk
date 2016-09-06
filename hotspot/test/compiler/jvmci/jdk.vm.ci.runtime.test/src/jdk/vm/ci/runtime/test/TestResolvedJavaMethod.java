@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,16 +28,17 @@
  * @modules jdk.vm.ci/jdk.vm.ci.meta
  *          jdk.vm.ci/jdk.vm.ci.runtime
  *          java.base/jdk.internal.misc
- * @build jdk.vm.ci.runtime.test.TestResolvedJavaMethod
  * @run junit/othervm -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI jdk.vm.ci.runtime.test.TestResolvedJavaMethod
  */
 
 package jdk.vm.ci.runtime.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import jdk.vm.ci.meta.ConstantPool;
+import jdk.vm.ci.meta.ExceptionHandler;
+import jdk.vm.ci.meta.ResolvedJavaMethod;
+import jdk.vm.ci.meta.ResolvedJavaType;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
@@ -56,13 +57,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import jdk.vm.ci.meta.ConstantPool;
-import jdk.vm.ci.meta.ExceptionHandler;
-import jdk.vm.ci.meta.ResolvedJavaMethod;
-import jdk.vm.ci.meta.ResolvedJavaType;
-
-import org.junit.Assert;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Tests for {@link ResolvedJavaMethod}.
@@ -421,6 +419,25 @@ public class TestResolvedJavaMethod extends MethodUniverse {
         assertTrue(ResolvedJavaMethod.isSignaturePolymorphic(methodHandleType, "linkToInterface", metaAccess));
         assertFalse(ResolvedJavaMethod.isSignaturePolymorphic(methodHandleType, "type", metaAccess));
         assertFalse(ResolvedJavaMethod.isSignaturePolymorphic(metaAccess.lookupJavaType(Object.class), "toString", metaAccess));
+    }
+
+    /**
+     * All public non-final methods should be available in the vtable.
+     */
+    @Test
+    public void testVirtualMethodTableAccess() {
+        for (Class<?> c : classes) {
+            if (c.isPrimitive() || c.isInterface()) {
+                continue;
+            }
+            ResolvedJavaType receiverType = metaAccess.lookupJavaType(c);
+            for (Method m : c.getMethods()) {
+                ResolvedJavaMethod method = metaAccess.lookupJavaMethod(m);
+                if (!method.isStatic() && !method.isFinal() && !method.getDeclaringClass().isLeaf() && !method.getDeclaringClass().isInterface()) {
+                    assertTrue(method + " not available in " + receiverType, method.isInVirtualMethodTable(receiverType));
+                }
+            }
+        }
     }
 
     private Method findTestMethod(Method apiMethod) {

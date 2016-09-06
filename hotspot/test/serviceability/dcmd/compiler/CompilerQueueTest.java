@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,25 +24,22 @@
 /*
  * @test CompilerQueueTest
  * @bug 8054889
- * @library /testlibrary /test/lib /
+ * @library /test/lib /
  * @modules java.base/jdk.internal.misc
  *          java.compiler
  *          java.management
  *          jdk.jvmstat/sun.jvmstat.monitor
- * @build jdk.test.lib.*
- *        jdk.test.lib.dcmd.*
- *        sun.hotspot.WhiteBox
- *        compiler.testlibrary.CompilerUtils
+ * @summary Test of diagnostic command Compiler.queue
+ * @build sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
  *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run testng/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -Xmixed -XX:+WhiteBoxAPI CompilerQueueTest
  * @run testng/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -Xmixed -XX:-TieredCompilation -XX:+WhiteBoxAPI CompilerQueueTest
  * @run testng/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -Xint -XX:+WhiteBoxAPI CompilerQueueTest
- * @summary Test of diagnostic command Compiler.queue
  */
 
 import compiler.testlibrary.CompilerUtils;
-import jdk.test.lib.OutputAnalyzer;
+import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.dcmd.CommandExecutor;
 import jdk.test.lib.dcmd.JMXExecutor;
 import org.testng.annotations.Test;
@@ -107,7 +104,7 @@ public class CompilerQueueTest {
             boolean added = WB.enqueueMethodForCompilation(testcase.method, testcase.level);
             // Set results to false for those methods we must to find
             // We will also assert if we find any test method we don't expect
-            Assert.assertTrue(WB.isMethodQueuedForCompilation(testcase.method));
+            Assert.assertEquals(added, WB.isMethodQueuedForCompilation(testcase.method));
             testcase.check = false;
         }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,15 +25,17 @@
  * @test
  * @bug 8026844
  * @summary Test repeating multiplyExact
- * @library /testlibrary
+ * @library /test/lib /
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @compile MulExactIRepeatTest.java Verify.java
- * @run main MulExactIRepeatTest
  *
+ * @run main compiler.intrinsics.mathexact.MulExactIRepeatTest
  */
 
+package compiler.intrinsics.mathexact;
+
 import jdk.test.lib.Utils;
+
 import java.util.Random;
 
 public class MulExactIRepeatTest {

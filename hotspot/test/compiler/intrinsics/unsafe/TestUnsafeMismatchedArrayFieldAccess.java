@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,16 +25,18 @@
 /**
  * @test
  * @bug 8142386
- * @modules java.base/jdk.internal.misc
- * @library /testlibrary /test/lib
  * @summary Unsafe access to an array is wrongly marked as mismatched
- * @run main/othervm -XX:-UseOnStackReplacement -XX:-BackgroundCompilation -XX:-TieredCompilation TestUnsafeMismatchedArrayFieldAccess
+ * @modules java.base/jdk.internal.misc
+ * @library /test/lib
  *
+ * @run main/othervm -XX:-UseOnStackReplacement -XX:-BackgroundCompilation -XX:-TieredCompilation
+ *      compiler.intrinsics.unsafe.TestUnsafeMismatchedArrayFieldAccess
  */
 
-import java.lang.reflect.*;
-import jdk.test.lib.Utils;
+package compiler.intrinsics.unsafe;
+
 import jdk.internal.misc.Unsafe;
+import jdk.test.lib.Utils;
 
 public class TestUnsafeMismatchedArrayFieldAccess {
 

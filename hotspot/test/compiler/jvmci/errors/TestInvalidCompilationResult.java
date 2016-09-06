@@ -31,7 +31,6 @@
  *          jdk.vm.ci/jdk.vm.ci.runtime
  *          jdk.vm.ci/jdk.vm.ci.common
  * @compile CodeInstallerTest.java
- * @build compiler.jvmci.errors.TestInvalidCompilationResult
  * @run junit/othervm -da:jdk.vm.ci... -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI compiler.jvmci.errors.TestInvalidCompilationResult
  */
 
@@ -51,7 +50,6 @@ import jdk.vm.ci.hotspot.HotSpotCompiledCode.Comment;
 import jdk.vm.ci.hotspot.HotSpotConstant;
 import jdk.vm.ci.meta.Assumptions.Assumption;
 import jdk.vm.ci.meta.VMConstant;
-
 import org.junit.Test;
 
 /**

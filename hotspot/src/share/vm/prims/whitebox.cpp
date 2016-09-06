@@ -350,6 +350,11 @@ WB_ENTRY(jlong, WB_GetHeapSpaceAlignment(JNIEnv* env, jobject o))
   return (jlong)alignment;
 WB_END
 
+WB_ENTRY(jlong, WB_GetHeapAlignment(JNIEnv* env, jobject o))
+  size_t alignment = Universe::heap()->collector_policy()->heap_alignment();
+  return (jlong)alignment;
+WB_END
+
 #if INCLUDE_ALL_GCS
 WB_ENTRY(jboolean, WB_G1IsHumongous(JNIEnv* env, jobject o, jobject obj))
   G1CollectedHeap* g1 = G1CollectedHeap::heap();
@@ -401,14 +406,21 @@ WB_ENTRY(jint, WB_G1RegionSize(JNIEnv* env, jobject o))
 WB_END
 
 WB_ENTRY(jlong, WB_PSVirtualSpaceAlignment(JNIEnv* env, jobject o))
-  ParallelScavengeHeap* ps = ParallelScavengeHeap::heap();
-  size_t alignment = ps->gens()->virtual_spaces()->alignment();
-  return (jlong)alignment;
+#if INCLUDE_ALL_GCS
+  if (UseParallelGC) {
+    return ParallelScavengeHeap::heap()->gens()->virtual_spaces()->alignment();
+  }
+#endif // INCLUDE_ALL_GCS
+  THROW_MSG_0(vmSymbols::java_lang_RuntimeException(), "WB_PSVirtualSpaceAlignment: Parallel GC is not enabled");
 WB_END
 
 WB_ENTRY(jlong, WB_PSHeapGenerationAlignment(JNIEnv* env, jobject o))
-  size_t alignment = ParallelScavengeHeap::heap()->generation_alignment();
-  return (jlong)alignment;
+#if INCLUDE_ALL_GCS
+  if (UseParallelGC) {
+    return ParallelScavengeHeap::heap()->generation_alignment();
+  }
+#endif // INCLUDE_ALL_GCS
+  THROW_MSG_0(vmSymbols::java_lang_RuntimeException(), "WB_PSHeapGenerationAlignment: Parallel GC is not enabled");
 WB_END
 
 WB_ENTRY(jobject, WB_G1AuxiliaryMemoryUsage(JNIEnv* env))
@@ -667,7 +679,7 @@ WB_ENTRY(jboolean, WB_IsMethodQueuedForCompilation(JNIEnv* env, jobject o, jobje
 WB_END
 
 WB_ENTRY(jboolean, WB_IsIntrinsicAvailable(JNIEnv* env, jobject o, jobject method, jobject compilation_context, jint compLevel))
-  if (compLevel < CompLevel_none || compLevel > CompLevel_highest_tier) {
+  if (compLevel < CompLevel_none || compLevel > MIN2((CompLevel) TieredStopAtLevel, CompLevel_highest_tier)) {
     return false; // Intrinsic is not available on a non-existent compilation level.
   }
   jmethodID method_id, compilation_context_id;
@@ -677,6 +689,7 @@ WB_ENTRY(jboolean, WB_IsIntrinsicAvailable(JNIEnv* env, jobject o, jobject metho
 
   DirectiveSet* directive;
   AbstractCompiler* comp = CompileBroker::compiler((int)compLevel);
+  assert(comp != NULL, "compiler not available");
   if (compilation_context != NULL) {
     compilation_context_id = reflected_method_to_jmid(thread, env, compilation_context);
     CHECK_JNI_EXCEPTION_(env, JNI_FALSE);
@@ -686,7 +699,7 @@ WB_ENTRY(jboolean, WB_IsIntrinsicAvailable(JNIEnv* env, jobject o, jobject metho
     // Calling with NULL matches default directive
     directive = DirectivesStack::getDefaultDirective(comp);
   }
-  bool result = CompileBroker::compiler(compLevel)->is_intrinsic_available(mh, directive);
+  bool result = comp->is_intrinsic_available(mh, directive);
   DirectivesStack::release(directive);
   return result;
 WB_END
@@ -1693,6 +1706,7 @@ static JNINativeMethod methods[] = {
   {CC"getVMAllocationGranularity",       CC"()J",                   (void*)&WB_GetVMAllocationGranularity },
   {CC"getVMLargePageSize",               CC"()J",                   (void*)&WB_GetVMLargePageSize},
   {CC"getHeapSpaceAlignment",            CC"()J",                   (void*)&WB_GetHeapSpaceAlignment},
+  {CC"getHeapAlignment",                 CC"()J",                   (void*)&WB_GetHeapAlignment},
   {CC"isClassAlive0",                    CC"(Ljava/lang/String;)Z", (void*)&WB_IsClassAlive      },
   {CC"parseCommandLine0",
       CC"(Ljava/lang/String;C[Lsun/hotspot/parser/DiagnosticCommand;)[Ljava/lang/Object;",

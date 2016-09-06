@@ -35,7 +35,6 @@
 #include "logging/log.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/filemap.hpp"
-#include "mutex_solaris.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "os_share_solaris.hpp"
 #include "os_solaris.inline.hpp"
@@ -43,7 +42,7 @@
 #include "prims/jvm.h"
 #include "prims/jvm_misc.hpp"
 #include "runtime/arguments.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/extendedPC.hpp"
 #include "runtime/globals.hpp"
 #include "runtime/interfaceSupport.hpp"
@@ -79,7 +78,6 @@
 # include <link.h>
 # include <poll.h>
 # include <pthread.h>
-# include <pwd.h>
 # include <schedctl.h>
 # include <setjmp.h>
 # include <signal.h>
@@ -1320,36 +1318,8 @@ bool os::getTimesSecs(double* process_real_time,
 }
 
 bool os::supports_vtime() { return true; }
-
-bool os::enable_vtime() {
-  int fd = ::open("/proc/self/ctl", O_WRONLY);
-  if (fd == -1) {
-    return false;
-  }
-
-  long cmd[] = { PCSET, PR_MSACCT };
-  int res = ::write(fd, cmd, sizeof(long) * 2);
-  ::close(fd);
-  if (res != sizeof(long) * 2) {
-    return false;
-  }
-  return true;
-}
-
-bool os::vtime_enabled() {
-  int fd = ::open("/proc/self/status", O_RDONLY);
-  if (fd == -1) {
-    return false;
-  }
-
-  pstatus_t status;
-  int res = os::read(fd, (void*) &status, sizeof(pstatus_t));
-  ::close(fd);
-  if (res != sizeof(pstatus_t)) {
-    return false;
-  }
-  return status.pr_flags & PR_MSACCT;
-}
+bool os::enable_vtime() { return false; }
+bool os::vtime_enabled() { return false; }
 
 double os::elapsedVTime() {
   return (double)gethrvtime() / (double)hrtime_hz;
@@ -4618,10 +4588,6 @@ void os::make_polling_page_readable(void) {
     fatal("Could not enable polling page");
   }
 }
-
-// OS interface.
-
-bool os::check_heap(bool force) { return true; }
 
 // Is a (classpath) directory empty?
 bool os::dir_is_empty(const char* path) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,14 +28,16 @@
  * @modules jdk.vm.ci/jdk.vm.ci.meta
  *          jdk.vm.ci/jdk.vm.ci.runtime
  *          java.base/jdk.internal.misc
- * @build jdk.vm.ci.runtime.test.RedefineClassTest
  * @run junit/othervm -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI jdk.vm.ci.runtime.test.RedefineClassTest
  */
 
 package jdk.vm.ci.runtime.test;
 
-import static org.junit.Assume.assumeTrue;
+import jdk.vm.ci.meta.ResolvedJavaMethod;
+import org.junit.Assert;
+import org.junit.Test;
 
+import javax.tools.ToolProvider;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -53,12 +55,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
-import javax.tools.ToolProvider;
-
-import jdk.vm.ci.meta.ResolvedJavaMethod;
-
-import org.junit.Assert;
-import org.junit.Test;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * Tests that {@link ResolvedJavaMethod}s are safe in the context of class redefinition being used

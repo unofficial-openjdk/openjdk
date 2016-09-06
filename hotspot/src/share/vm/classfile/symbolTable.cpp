@@ -34,7 +34,7 @@
 #include "memory/filemap.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/oop.inline.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/mutexLocker.hpp"
 #include "utilities/hashtable.inline.hpp"
 
@@ -236,6 +236,29 @@ Symbol* SymbolTable::lookup(int index, const char* name,
     }
     return sym;
   }
+}
+
+u4 SymbolTable::encode_shared(Symbol* sym) {
+  assert(DumpSharedSpaces, "called only during dump time");
+  uintx base_address = uintx(MetaspaceShared::shared_rs()->base());
+  uintx offset = uintx(sym) - base_address;
+  assert(offset < 0x7fffffff, "sanity");
+  return u4(offset);
+}
+
+Symbol* SymbolTable::decode_shared(u4 offset) {
+  assert(!DumpSharedSpaces, "called only during runtime");
+  uintx base_address = _shared_table.base_address();
+  Symbol* sym = (Symbol*)(base_address + offset);
+
+#ifndef PRODUCT
+  const char* s = (const char*)sym->bytes();
+  int len = sym->utf8_length();
+  unsigned int hash = hash_symbol(s, len);
+  assert(sym == lookup_shared(s, len, hash), "must be shared symbol");
+#endif
+
+  return sym;
 }
 
 // Pick hashing algorithm.

@@ -43,7 +43,8 @@ import java.util.Random;
  * @summary Switches gc log level on fly while stressing memory/gc
  * @key gc
  * @key stress
- * @library /testlibrary /test/lib /
+ * @requires !vm.flightRecorder
+ * @library /test/lib /
  * @modules java.management java.base/jdk.internal.misc
  *
  * @run main/othervm -Xmx256M -Xms256M

@@ -25,24 +25,23 @@
  * @test
  * @bug 8151664
  * @requires (vm.simpleArch == "x64" | vm.simpleArch == "sparcv9" | vm.simpleArch == "aarch64")
- * @library /testlibrary /test/lib /
+ * @library /test/lib /
  * @modules java.base/jdk.internal.misc
  * @modules java.base/jdk.internal.vm.annotation
  *          jdk.vm.ci/jdk.vm.ci.hotspot
  *          jdk.vm.ci/jdk.vm.ci.meta
  *          jdk.vm.ci/jdk.vm.ci.runtime
+ *
  * @compile StableFieldTest.java
- * @run main ClassFileInstaller compiler.jvmci.meta.StableFieldTest
+ * @run driver ClassFileInstaller compiler.jvmci.meta.StableFieldTest
  * @run main/othervm -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI -Xbootclasspath/a:. compiler.jvmci.meta.StableFieldTest
  */
 
 package compiler.jvmci.meta;
 
-import java.lang.reflect.Field;
 import jdk.internal.vm.annotation.Stable;
 import jdk.vm.ci.hotspot.HotSpotResolvedJavaField;
 import jdk.vm.ci.meta.MetaAccessProvider;
-import jdk.vm.ci.meta.ResolvedJavaField;
 import jdk.vm.ci.runtime.JVMCI;
 
 public class StableFieldTest {

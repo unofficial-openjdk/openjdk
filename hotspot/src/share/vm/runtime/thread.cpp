@@ -57,7 +57,7 @@
 #include "prims/jvmtiThreadState.hpp"
 #include "prims/privilegedStack.hpp"
 #include "runtime/arguments.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/biasedLocking.hpp"
 #include "runtime/commandLineFlagConstraintList.hpp"
 #include "runtime/commandLineFlagWriteableList.hpp"
@@ -374,10 +374,13 @@ Thread::~Thread() {
   delete handle_area();
   delete metadata_handles();
 
+  // SR_handler uses this as a termination indicator -
+  // needs to happen before os::free_thread()
+  delete _SR_lock;
+  _SR_lock = NULL;
+
   // osthread() can be NULL, if creation of thread failed.
   if (osthread() != NULL) os::free_thread(osthread());
-
-  delete _SR_lock;
 
   // clear Thread::current if thread is deleting itself.
   // Needed to ensure JNI correctly detects non-attached threads.
@@ -3772,6 +3775,14 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
 
   // cache the system class loader
   SystemDictionary::compute_java_system_loader(CHECK_(JNI_ERR));
+
+#if INCLUDE_JVMCI
+  if (EnableJVMCI && UseJVMCICompiler && (!UseInterpreter || !BackgroundCompilation)) {
+    // 8145270: Force initialization of JVMCI runtime otherwise requests for blocking
+    // compilations via JVMCI will not actually block until JVMCI is initialized.
+    JVMCIRuntime::force_initialization(CHECK_JNI_ERR);
+  }
+#endif
 
   // Always call even when there are not JVMTI environments yet, since environments
   // may be attached late and JVMTI must track phases of VM execution

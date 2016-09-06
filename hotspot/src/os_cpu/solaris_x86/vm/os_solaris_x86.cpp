@@ -33,13 +33,12 @@
 #include "interpreter/interpreter.hpp"
 #include "jvm_solaris.h"
 #include "memory/allocation.inline.hpp"
-#include "mutex_solaris.inline.hpp"
 #include "os_share_solaris.hpp"
 #include "prims/jniFastGetField.hpp"
 #include "prims/jvm.h"
 #include "prims/jvm_misc.hpp"
 #include "runtime/arguments.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/extendedPC.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/interfaceSupport.hpp"
@@ -74,7 +73,6 @@
 # include <sys/socket.h>
 # include <sys/trap.h>
 # include <sys/lwp.h>
-# include <pwd.h>
 # include <poll.h>
 # include <sys/lwp.h>
 # include <procfs.h>     //  see comment in <sys/procfs.h>
@@ -294,15 +292,19 @@ extern "C" intptr_t *_get_current_fp();  // in .il file
 
 frame os::current_frame() {
   intptr_t* fp = _get_current_fp();  // it's inlined so want current fp
+  // fp is for os::current_frame. We want the fp for our caller.
   frame myframe((intptr_t*)os::current_stack_pointer(),
                 (intptr_t*)fp,
                 CAST_FROM_FN_PTR(address, os::current_frame));
-  if (os::is_first_C_frame(&myframe)) {
+  frame caller_frame = os::get_sender_for_C_frame(&myframe);
+
+  if (os::is_first_C_frame(&caller_frame)) {
     // stack is not walkable
     frame ret; // This will be a null useless frame
     return ret;
   } else {
-    return os::get_sender_for_C_frame(&myframe);
+    // return frame for our caller's caller
+    return os::get_sender_for_C_frame(&caller_frame);
   }
 }
 

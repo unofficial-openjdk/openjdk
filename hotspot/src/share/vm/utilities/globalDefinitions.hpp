@@ -73,7 +73,6 @@
 #define ATTRIBUTE_SCANF(fmt, vargs)
 #endif
 
-
 #include "utilities/macros.hpp"
 
 // This file holds all globally used constants & types, class (forward)
@@ -328,11 +327,12 @@ inline address_word  castable_address(void* x)                { return address_w
 // and then additions like
 //       ... top() + size ...
 // are safe because we know that top() is at least size below end().
-inline size_t pointer_delta(const void* left,
-                            const void* right,
+inline size_t pointer_delta(const volatile void* left,
+                            const volatile void* right,
                             size_t element_size) {
   return (((uintptr_t) left) - ((uintptr_t) right)) / element_size;
 }
+
 // A version specialized for HeapWord*'s.
 inline size_t pointer_delta(const HeapWord* left, const HeapWord* right) {
   return pointer_delta(left, right, sizeof(HeapWord));
@@ -456,24 +456,7 @@ enum RTMState {
 // Allow targets to reduce the default size of the code cache.
 #define CODE_CACHE_DEFAULT_LIMIT CODE_CACHE_SIZE_LIMIT
 
-#ifdef TARGET_ARCH_x86
-# include "globalDefinitions_x86.hpp"
-#endif
-#ifdef TARGET_ARCH_sparc
-# include "globalDefinitions_sparc.hpp"
-#endif
-#ifdef TARGET_ARCH_zero
-# include "globalDefinitions_zero.hpp"
-#endif
-#ifdef TARGET_ARCH_arm
-# include "globalDefinitions_arm.hpp"
-#endif
-#ifdef TARGET_ARCH_ppc
-# include "globalDefinitions_ppc.hpp"
-#endif
-#ifdef TARGET_ARCH_aarch64
-# include "globalDefinitions_aarch64.hpp"
-#endif
+#include CPU_HEADER(globalDefinitions)
 
 #ifndef INCLUDE_RTM_OPT
 #define INCLUDE_RTM_OPT 0
@@ -532,6 +515,10 @@ inline void* align_ptr_up(const void* ptr, size_t alignment) {
 
 inline void* align_ptr_down(void* ptr, size_t alignment) {
   return (void*)align_size_down((intptr_t)ptr, (intptr_t)alignment);
+}
+
+inline volatile void* align_ptr_down(volatile void* ptr, size_t alignment) {
+  return (volatile void*)align_size_down((intptr_t)ptr, (intptr_t)alignment);
 }
 
 // Align metaspace objects by rounding up to natural word boundary
@@ -951,7 +938,7 @@ enum CompLevel {
   CompLevel_full_profile      = 3,         // C1, invocation & backedge counters + mdo
   CompLevel_full_optimization = 4,         // C2, Shark or JVMCI
 
-#if defined(COMPILER2) || defined(SHARK) || INCLUDE_JVMCI
+#if defined(COMPILER2) || defined(SHARK)
   CompLevel_highest_tier      = CompLevel_full_optimization,  // pure C2 and tiered or JVMCI and tiered
 #elif defined(COMPILER1)
   CompLevel_highest_tier      = CompLevel_simple,             // pure C1 or JVMCI

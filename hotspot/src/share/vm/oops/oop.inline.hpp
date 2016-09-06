@@ -36,7 +36,7 @@
 #include "oops/klass.inline.hpp"
 #include "oops/markOop.inline.hpp"
 #include "oops/oop.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/orderAccess.inline.hpp"
 #include "runtime/os.hpp"
 #include "utilities/macros.hpp"
@@ -258,8 +258,8 @@ int oopDesc::size_given_klass(Klass* klass)  {
     }
   }
 
-  assert(s % MinObjAlignment == 0, "alignment check");
-  assert(s > 0, "Bad size calculated");
+  assert(s % MinObjAlignment == 0, "Oop size is not properly aligned: %d", s);
+  assert(s > 0, "Oop size must be greater than zero, not %d", s);
   return s;
 }
 

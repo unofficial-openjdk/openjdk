@@ -1,28 +1,23 @@
 package compiler.jvmci.compilerToVM;
 
+import jdk.test.lib.Asserts;
+import jdk.test.lib.util.Pair;
+import jdk.test.lib.Utils;
 import jdk.vm.ci.code.InstalledCode;
 import jdk.vm.ci.code.InvalidInstalledCodeException;
 import jdk.vm.ci.hotspot.CompilerToVMHelper;
-import jdk.test.lib.Asserts;
-import jdk.test.lib.Utils;
-import jdk.test.lib.Pair;
 import sun.hotspot.code.NMethod;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Executable;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /*
  * @test
  * @bug 8136421
  * @requires (vm.simpleArch == "x64" | vm.simpleArch == "sparcv9" | vm.simpleArch == "aarch64")
- * @library /testlibrary /test/lib /
+ * @library /test/lib /
  * @library ../common/patches
  * @ignore 8139383
  * @modules java.base/jdk.internal.misc
@@ -30,11 +25,9 @@ import java.util.Map;
  *          java.base/jdk.internal.org.objectweb.asm.tree
  *          jdk.vm.ci/jdk.vm.ci.hotspot
  *          jdk.vm.ci/jdk.vm.ci.code
- * @build jdk.vm.ci/jdk.vm.ci.hotspot.CompilerToVMHelper
- * @build compiler.jvmci.compilerToVM.ExecuteInstalledCodeTest
- * @build sun.hotspot.WhiteBox
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
+ * @build jdk.vm.ci/jdk.vm.ci.hotspot.CompilerToVMHelper sun.hotspot.WhiteBox
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:.
  *                   -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI
  *                   -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI

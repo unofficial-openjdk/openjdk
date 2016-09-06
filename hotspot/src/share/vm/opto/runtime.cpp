@@ -59,7 +59,8 @@
 #include "opto/mulnode.hpp"
 #include "opto/runtime.hpp"
 #include "opto/subnode.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "prims/jvmtiThreadState.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/fprofiler.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/interfaceSupport.hpp"
@@ -1450,6 +1451,11 @@ address OptoRuntime::rethrow_C(oopDesc* exception, JavaThread* thread, address r
     ShouldNotReachHere();
   }
 #endif
+
+  JvmtiThreadState *state = thread->jvmti_thread_state();
+  if (state != NULL) {
+    state->set_exception_detected();
+  }
 
   thread->set_vm_result(exception);
   // Frame not compiled (handles deoptimization blob)

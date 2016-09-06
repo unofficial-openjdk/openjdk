@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,36 +21,36 @@
  * questions.
  */
 
-import compiler.whitebox.CompilerWhiteBoxTest;
-
 /*
  * @test DeoptimizeFramesTest
  * @bug 8028595
- * @library /testlibrary /test/lib /
- * @modules java.base/jdk.internal.misc
- * @modules java.management
- * @build DeoptimizeFramesTest
- * @run driver ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
- *                   -XX:+WhiteBoxAPI -Xmixed -XX:-UseCounterDecay
- *                   -XX:CompileCommand=compileonly,DeoptimizeFramesTest$TestCaseImpl::method
- *                   -XX:+IgnoreUnrecognizedVMOptions -XX:-DeoptimizeRandom -XX:-DeoptimizeALot
- *                   DeoptimizeFramesTest true
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
- *                   -XX:+WhiteBoxAPI -Xmixed -XX:-UseCounterDecay
- *                   -XX:CompileCommand=compileonly,DeoptimizeFramesTest$TestCaseImpl::method
- *                   -XX:+IgnoreUnrecognizedVMOptions -XX:-DeoptimizeRandom -XX:-DeoptimizeALot
- *                   DeoptimizeFramesTest false
  * @summary testing of WB::deoptimizeFrames()
+ * @library /test/lib /
+ * @modules java.base/jdk.internal.misc
+ *          java.management
+ * @build sun.hotspot.WhiteBox
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
+ *                   -XX:+WhiteBoxAPI -Xmixed -XX:-UseCounterDecay
+ *                   -XX:CompileCommand=compileonly,compiler.whitebox.DeoptimizeFramesTest$TestCaseImpl::method
+ *                   -XX:+IgnoreUnrecognizedVMOptions -XX:-DeoptimizeRandom -XX:-DeoptimizeALot
+ *                   compiler.whitebox.DeoptimizeFramesTest true
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
+ *                   -XX:+WhiteBoxAPI -Xmixed -XX:-UseCounterDecay
+ *                   -XX:CompileCommand=compileonly,compiler.whitebox.DeoptimizeFramesTest$TestCaseImpl::method
+ *                   -XX:+IgnoreUnrecognizedVMOptions -XX:-DeoptimizeRandom -XX:-DeoptimizeALot
+ *                   compiler.whitebox.DeoptimizeFramesTest false
  */
+
+package compiler.whitebox;
+
+import jdk.test.lib.Asserts;
+import sun.hotspot.code.NMethod;
+
 import java.lang.reflect.Executable;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Phaser;
-
-import sun.hotspot.code.NMethod;
-import jdk.test.lib.Asserts;
-import jdk.test.lib.InfiniteLoop;
 
 public class DeoptimizeFramesTest extends CompilerWhiteBoxTest {
     private final boolean makeNotEntrant;

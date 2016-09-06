@@ -28,7 +28,7 @@
 #include "gc/shared/workerManager.hpp"
 #include "memory/allocation.hpp"
 #include "memory/allocation.inline.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/os.hpp"
 #include "runtime/semaphore.hpp"
 #include "runtime/thread.inline.hpp"
@@ -66,6 +66,7 @@ void AbstractWorkGang::add_workers(uint active_workers, bool initializing) {
   } else {
     worker_type = os::pgc_thread;
   }
+  uint previous_created_workers = _created_workers;
 
   _created_workers = WorkerManager::add_workers(this,
                                                 active_workers,
@@ -74,6 +75,8 @@ void AbstractWorkGang::add_workers(uint active_workers, bool initializing) {
                                                 worker_type,
                                                 initializing);
   _active_workers = MIN2(_created_workers, _active_workers);
+
+  WorkerManager::log_worker_creation(this, previous_created_workers, _active_workers, _created_workers, initializing);
 }
 
 AbstractGangWorker* AbstractWorkGang::worker(uint i) const {
@@ -271,8 +274,10 @@ void WorkGang::run_task(AbstractGangTask* task, uint num_workers) {
             "Trying to execute task %s with %u workers which is more than the amount of total workers %u.",
             task->name(), num_workers, total_workers());
   guarantee(num_workers > 0, "Trying to execute task %s with zero workers", task->name());
-  add_workers(num_workers, false);
+  uint old_num_workers = _active_workers;
+  update_active_workers(num_workers);
   _dispatcher->coordinator_execute_on_workers(task, num_workers);
+  update_active_workers(old_num_workers);
 }
 
 AbstractGangWorker::AbstractGangWorker(AbstractWorkGang* gang, uint id) {

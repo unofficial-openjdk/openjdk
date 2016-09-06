@@ -871,12 +871,17 @@ void java_lang_Class::fixup_module_field(KlassHandle k, Handle module) {
 
 int  java_lang_Class::oop_size(oop java_class) {
   assert(_oop_size_offset != 0, "must be set");
-  return java_class->int_field(_oop_size_offset);
+  int size = java_class->int_field(_oop_size_offset);
+  assert(size > 0, "Oop size must be greater than zero, not %d", size);
+  return size;
 }
+
 void java_lang_Class::set_oop_size(oop java_class, int size) {
   assert(_oop_size_offset != 0, "must be set");
+  assert(size > 0, "Oop size must be greater than zero, not %d", size);
   java_class->int_field_put(_oop_size_offset, size);
 }
+
 int  java_lang_Class::static_oop_field_count(oop java_class) {
   assert(_static_oop_field_count_offset != 0, "must be set");
   return java_class->int_field(_static_oop_field_count_offset);
@@ -3236,15 +3241,6 @@ intptr_t java_lang_invoke_MemberName::vmindex(oop mname) {
 void java_lang_invoke_MemberName::set_vmindex(oop mname, intptr_t index) {
   assert(is_instance(mname), "wrong type");
   mname->address_field_put(_vmindex_offset, (address) index);
-}
-
-bool java_lang_invoke_MemberName::equals(oop mn1, oop mn2) {
-  if (mn1 == mn2) {
-     return true;
-  }
-  return (vmtarget(mn1) == vmtarget(mn2) && flags(mn1) == flags(mn2) &&
-          vmindex(mn1) == vmindex(mn2) &&
-          clazz(mn1) == clazz(mn2));
 }
 
 oop java_lang_invoke_LambdaForm::vmentry(oop lform) {

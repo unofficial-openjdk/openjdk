@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,14 +24,16 @@
 /**
  * @test
  * @bug 8073154
- * @build TestProfileReturnTypePrinting
  * @run main/othervm -XX:TypeProfileLevel=020
- *                   -XX:CompileOnly=TestProfileReturnTypePrinting.testMethod
+ *                   -XX:CompileCommand=compileonly,compiler.print.TestProfileReturnTypePrinting::testMethod
  *                   -XX:+IgnoreUnrecognizedVMOptions -XX:+PrintLIR
- *                   TestProfileReturnTypePrinting
+ *                   compiler.print.TestProfileReturnTypePrinting
  * @summary Verify that c1's LIR that contains ProfileType node could be dumped
  *          without a crash disregard to an exact class knowledge.
  */
+
+package compiler.print;
+
 public class TestProfileReturnTypePrinting {
     private static final int ITERATIONS = 1_000_000;
 

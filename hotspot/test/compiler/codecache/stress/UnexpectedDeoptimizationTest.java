@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,22 +24,29 @@
 
 /*
  * @test UnexpectedDeoptimizationTest
- * @library /testlibrary /test/lib
+ * @key stress
+ * @summary stressing code cache by forcing unexpected deoptimizations
+ * @library /test/lib /
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @build UnexpectedDeoptimizationTest
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
+ *
+ * @build sun.hotspot.WhiteBox
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
- *                   -XX:CompileCommand=dontinline,Helper$TestCase::method
- *                   -XX:+WhiteBoxAPI -XX:-SegmentedCodeCache -XX:-DeoptimizeRandom
- *                   UnexpectedDeoptimizationTest
+ *                   -XX:+WhiteBoxAPI -XX:-DeoptimizeRandom
+ *                   -XX:CompileCommand=dontinline,compiler.codecache.stress.Helper$TestCase::method
+ *                   -XX:-SegmentedCodeCache
+ *                   compiler.codecache.stress.UnexpectedDeoptimizationTest
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
- *                   -XX:CompileCommand=dontinline,Helper$TestCase::method
- *                   -XX:+WhiteBoxAPI -XX:+SegmentedCodeCache -XX:-DeoptimizeRandom
- *                   UnexpectedDeoptimizationTest
- * @summary stressing code cache by forcing unexpected deoptimizations
+ *                   -XX:+WhiteBoxAPI -XX:-DeoptimizeRandom
+ *                   -XX:CompileCommand=dontinline,compiler.codecache.stress.Helper$TestCase::method
+ *                   -XX:+SegmentedCodeCache
+ *                   compiler.codecache.stress.UnexpectedDeoptimizationTest
  */
+
+package compiler.codecache.stress;
+
 public class UnexpectedDeoptimizationTest implements Runnable {
 
     public static void main(String[] args) {

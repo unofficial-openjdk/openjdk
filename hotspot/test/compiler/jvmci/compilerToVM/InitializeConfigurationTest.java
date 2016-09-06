@@ -25,31 +25,21 @@
  * @test
  * @bug 8136421
  * @requires (vm.simpleArch == "x64" | vm.simpleArch == "sparcv9" | vm.simpleArch == "aarch64")
- * @library / /testlibrary
+ * @library / /test/lib
  * @library ../common/patches
  * @modules java.base/jdk.internal.misc
  * @modules jdk.vm.ci/jdk.vm.ci.hotspot
  * @build jdk.vm.ci/jdk.vm.ci.hotspot.CompilerToVMHelper
- * @build compiler.jvmci.compilerToVM.InitializeConfigurationTest
  * @run main/othervm -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI
  *                   compiler.jvmci.compilerToVM.InitializeConfigurationTest
  */
 
 package compiler.jvmci.compilerToVM;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Objects;
-import java.util.function.Consumer;
-import jdk.vm.ci.hotspot.CompilerToVMHelper;
+import jdk.test.lib.Asserts;
 import jdk.vm.ci.hotspot.HotSpotJVMCIRuntime;
 import jdk.vm.ci.hotspot.HotSpotVMConfigAccess;
 import jdk.vm.ci.hotspot.HotSpotVMConfigStore;
-import jdk.test.lib.Asserts;
-import jdk.test.lib.Utils;
-import jdk.internal.misc.Unsafe;
 
 public class InitializeConfigurationTest {
     public static void main(String args[]) {

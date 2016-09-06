@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,31 +21,40 @@
  * questions.
  */
 
+/*
+ * @test ThresholdNotificationsTest
+ * @summary testing of getUsageThreshold()
+ * @library /test/lib /
+ * @modules java.base/jdk.internal.misc
+ *          java.management
+ *
+ * @build sun.hotspot.WhiteBox
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
+ * @run main/othervm -XX:+UnlockDiagnosticVMOptions -Xbootclasspath/a:. -XX:-UseCodeCacheFlushing
+ *     -XX:+WhiteBoxAPI -XX:-MethodFlushing -XX:CompileCommand=compileonly,null::*
+ *     -XX:+SegmentedCodeCache
+ *     compiler.codecache.jmx.ThresholdNotificationsTest
+ * @run main/othervm -XX:+UnlockDiagnosticVMOptions -Xbootclasspath/a:. -XX:-UseCodeCacheFlushing
+ *     -XX:+WhiteBoxAPI -XX:-MethodFlushing -XX:CompileCommand=compileonly,null::*
+ *     -XX:-SegmentedCodeCache
+ *     compiler.codecache.jmx.ThresholdNotificationsTest
+ */
+
+package compiler.codecache.jmx;
+
 import jdk.test.lib.Asserts;
 import jdk.test.lib.Utils;
-import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryNotificationInfo;
-import java.lang.management.MemoryPoolMXBean;
+import sun.hotspot.code.BlobType;
+
 import javax.management.ListenerNotFoundException;
 import javax.management.Notification;
 import javax.management.NotificationEmitter;
 import javax.management.NotificationListener;
-import sun.hotspot.code.BlobType;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryNotificationInfo;
+import java.lang.management.MemoryPoolMXBean;
 
-/*
- * @test ThresholdNotificationsTest
- * @library /testlibrary /test/lib
- * @modules java.base/jdk.internal.misc
- *          java.management
- * @build ThresholdNotificationsTest
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *     sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:-UseCodeCacheFlushing
- *     -XX:-MethodFlushing -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI
- *     -XX:+SegmentedCodeCache -XX:CompileCommand=compileonly,null::*
- *     ThresholdNotificationsTest
- * @summary testing of getUsageThreshold()
- */
 public class ThresholdNotificationsTest implements NotificationListener {
 
     private final static long WAIT_TIME = 10000L;
@@ -54,7 +63,9 @@ public class ThresholdNotificationsTest implements NotificationListener {
 
     public static void main(String[] args) {
         for (BlobType bt : BlobType.getAvailable()) {
-            new ThresholdNotificationsTest(bt).runTest();
+            if (CodeCacheUtils.isCodeHeapPredictable(bt)) {
+                new ThresholdNotificationsTest(bt).runTest();
+            }
         }
     }
 
@@ -80,8 +91,8 @@ public class ThresholdNotificationsTest implements NotificationListener {
     }
 
     protected void runTest() {
-        int iterationsCount =
-            Integer.getInteger("jdk.test.lib.iterations", 1);
+        int iterationsCount
+                = Integer.getInteger("jdk.test.lib.iterations", 1);
         MemoryPoolMXBean bean = btype.getMemoryPool();
         ((NotificationEmitter) ManagementFactory.getMemoryMXBean()).
                 addNotificationListener(this, null, null);

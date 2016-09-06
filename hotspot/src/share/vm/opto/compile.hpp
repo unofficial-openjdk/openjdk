@@ -264,6 +264,7 @@ class Compile : public Phase {
 
     BasicType type()      const    { return _type; }
 
+    jint    get_jint()    const    { return _v._value.i; }
     jlong   get_jlong()   const    { return _v._value.j; }
     jfloat  get_jfloat()  const    { return _v._value.f; }
     jdouble get_jdouble() const    { return _v._value.d; }
@@ -320,6 +321,14 @@ class Compile : public Phase {
     Constant add(MachConstantNode* n, BasicType type, jvalue value);
     Constant add(Metadata* metadata);
     Constant add(MachConstantNode* n, MachOper* oper);
+    Constant add(MachConstantNode* n, jint i) {
+      jvalue value; value.i = i;
+      return add(n, T_INT, value);
+    }
+    Constant add(MachConstantNode* n, jlong j) {
+      jvalue value; value.j = j;
+      return add(n, T_LONG, value);
+    }
     Constant add(MachConstantNode* n, jfloat f) {
       jvalue value; value.f = f;
       return add(n, T_FLOAT, value);
@@ -720,7 +729,7 @@ class Compile : public Phase {
     if (event.should_commit()) {
       event.set_starttime(C->_latest_stage_start_counter);
       event.set_phase((u1) cpt);
-      event.set_compileID(C->_compile_id);
+      event.set_compileId(C->_compile_id);
       event.set_phaseLevel(level);
       event.commit();
     }
@@ -739,7 +748,7 @@ class Compile : public Phase {
     if (event.should_commit()) {
       event.set_starttime(C->_latest_stage_start_counter);
       event.set_phase((u1) PHASE_END);
-      event.set_compileID(C->_compile_id);
+      event.set_compileId(C->_compile_id);
       event.set_phaseLevel(level);
       event.commit();
     }
