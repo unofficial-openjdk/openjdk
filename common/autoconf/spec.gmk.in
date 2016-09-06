@@ -108,7 +108,6 @@ OPENJDK_BUILD_CPU_ENDIAN:=@OPENJDK_BUILD_CPU_ENDIAN@
 REQUIRED_OS_NAME:=@REQUIRED_OS_NAME@
 REQUIRED_OS_VERSION:=@REQUIRED_OS_VERSION@
 
-@SET_OPENJDK@
 LIBM:=@LIBM@
 LIBDL:=@LIBDL@
 
@@ -176,8 +175,8 @@ VERSION_NUMBER_FOUR_POSITIONS := @VERSION_NUMBER_FOUR_POSITIONS@
 VERSION_STRING := @VERSION_STRING@
 # The short version string, without trailing zeroes and just PRE, if present.
 VERSION_SHORT := @VERSION_SHORT@
-# The Java specification version. It should be equal to version number.
-VERSION_SPECIFICATION := @VERSION_NUMBER@
+# The Java specification version. It usually equals to the major version number.
+VERSION_SPECIFICATION := @VERSION_MAJOR@
 # A GA version is defined by the PRE string being empty. Rather than testing for
 # that, this variable defines it with true/false.
 VERSION_IS_GA := @VERSION_IS_GA@
@@ -251,8 +250,6 @@ SUPPORT_HEADLESS:=@SUPPORT_HEADLESS@
 
 # Legacy support
 USE_NEW_HOTSPOT_BUILD:=@USE_NEW_HOTSPOT_BUILD@
-
-MACOSX_UNIVERSAL=@MACOSX_UNIVERSAL@
 
 # JDK_OUTPUTDIR specifies where a working jvm is built.
 # You can run $(JDK_OUTPUTDIR)/bin/java
@@ -392,8 +389,6 @@ CFLAGS_WARNINGS_ARE_ERRORS:=@CFLAGS_WARNINGS_ARE_ERRORS@
 WARNINGS_AS_ERRORS := @WARNINGS_AS_ERRORS@
 
 CFLAGS_CCACHE:=@CFLAGS_CCACHE@
-NO_NULL_POINTER_CHECK_FLAG=@NO_NULL_POINTER_CHECK_CFLAG@
-NO_LIFETIME_DSE_CFLAG=@NO_LIFETIME_DSE_CFLAG@
 CXXSTD_CXXFLAG=@CXXSTD_CXXFLAG@
 
 # Tools that potentially need to be cross compilation aware.
@@ -578,7 +573,7 @@ SJAVAC_SERVER_JAVA=@FIXPATH@ @FIXPATH_DETACH_FLAG@ $(SJAVAC_SERVER_JAVA_CMD) \
 JAVAC_FLAGS?=@JAVAC_FLAGS@
 
 
-BUILD_JAVA_FLAGS:=-Xms64M -Xmx1100M
+BUILD_JAVA_FLAGS := @BOOTCYCLE_JVM_ARGS_BIG@
 BUILD_JAVA=@FIXPATH@ $(BUILD_JDK)/bin/java $(BUILD_JAVA_FLAGS)
 
 # Use ?= as this can be overridden from bootcycle-spec.gmk

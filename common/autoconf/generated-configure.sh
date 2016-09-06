@@ -644,6 +644,7 @@ SJAVAC_SERVER_JAVA
 JAVA_TOOL_FLAGS_SMALL
 JAVA_FLAGS_SMALL
 JAVA_FLAGS_JAVAC
+BOOTCYCLE_JVM_ARGS_BIG
 JAVA_FLAGS_BIG
 JAVA_FLAGS
 TEST_JOBS
@@ -748,8 +749,6 @@ CXXFLAGS_JDKLIB
 CFLAGS_JDKEXE
 CFLAGS_JDKLIB
 MACOSX_VERSION_MIN
-NO_LIFETIME_DSE_CFLAG
-NO_NULL_POINTER_CHECK_CFLAG
 CXXSTD_CXXFLAG
 CXX_O_FLAG_SIZE
 CXX_O_FLAG_NONE
@@ -975,7 +974,6 @@ JVM_VARIANTS
 DEBUG_LEVEL
 HOTSPOT_DEBUG_LEVEL
 JDK_VARIANT
-SET_OPENJDK
 USERNAME
 CANONICAL_TOPDIR
 ORIGINAL_TOPDIR
@@ -4092,6 +4090,9 @@ ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
 
 
 
+# FLAGS_SETUP_GCC6_COMPILER_FLAGS([PREFIX])
+# Arguments:
+# $1 - Optional prefix for each variable defined.
 
 
 #
@@ -4913,7 +4914,7 @@ TOOLCHAIN_DESCRIPTION_xlc="IBM XL C/C++"
 TOOLCHAIN_MINIMUM_VERSION_clang="3.2"
 TOOLCHAIN_MINIMUM_VERSION_gcc="4.3"
 TOOLCHAIN_MINIMUM_VERSION_microsoft=""
-TOOLCHAIN_MINIMUM_VERSION_solstudio="5.12"
+TOOLCHAIN_MINIMUM_VERSION_solstudio="5.13"
 TOOLCHAIN_MINIMUM_VERSION_xlc=""
 
 # Prepare the system so that TOOLCHAIN_CHECK_COMPILER_VERSION can be called.
@@ -5094,7 +5095,7 @@ VS_SDK_PLATFORM_NAME_2013=
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1467039751
+DATE_WHEN_GENERATED=1472782028
 
 ###############################################################################
 #
@@ -16591,41 +16592,17 @@ else
 fi
 
 
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for presence of closed sources" >&5
-$as_echo_n "checking for presence of closed sources... " >&6; }
-  if test -d "$SRC_ROOT/jdk/src/closed"; then
-    CLOSED_SOURCE_PRESENT=yes
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking if custom source is suppressed (openjdk-only)" >&5
+$as_echo_n "checking if custom source is suppressed (openjdk-only)... " >&6; }
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_openjdk_only" >&5
+$as_echo "$enable_openjdk_only" >&6; }
+  if test "x$enable_openjdk_only" = "xyes"; then
+    SUPPRESS_CUSTOM_EXTENSIONS="true"
+  elif test "x$enable_openjdk_only" = "xno"; then
+    SUPPRESS_CUSTOM_EXTENSIONS="false"
   else
-    CLOSED_SOURCE_PRESENT=no
+    as_fn_error $? "Invalid value for --enable-openjdk-only: $enable_openjdk_only" "$LINENO" 5
   fi
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $CLOSED_SOURCE_PRESENT" >&5
-$as_echo "$CLOSED_SOURCE_PRESENT" >&6; }
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking if closed source is suppressed (openjdk-only)" >&5
-$as_echo_n "checking if closed source is suppressed (openjdk-only)... " >&6; }
-  SUPPRESS_CLOSED_SOURCE="$enable_openjdk_only"
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $SUPPRESS_CLOSED_SOURCE" >&5
-$as_echo "$SUPPRESS_CLOSED_SOURCE" >&6; }
-
-  if test "x$CLOSED_SOURCE_PRESENT" = xno; then
-    OPENJDK=true
-    if test "x$SUPPRESS_CLOSED_SOURCE" = "xyes"; then
-      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: No closed source present, --enable-openjdk-only makes no sense" >&5
-$as_echo "$as_me: WARNING: No closed source present, --enable-openjdk-only makes no sense" >&2;}
-    fi
-  else
-    if test "x$SUPPRESS_CLOSED_SOURCE" = "xyes"; then
-      OPENJDK=true
-    else
-      OPENJDK=false
-    fi
-  fi
-
-  if test "x$OPENJDK" = "xtrue"; then
-    SET_OPENJDK="OPENJDK=true"
-  fi
-
-
 
   # custom-make-dir is deprecated. Please use your custom-hook.m4 to override
   # the IncludeCustomExtension macro.
@@ -43791,8 +43768,12 @@ $as_echo "$as_me: Rewriting OBJDUMP to \"$new_complete\"" >&6;}
   fi
 
 
-  # Restore old path.
-  PATH="$OLD_PATH"
+  # Restore old path, except for the microsoft toolchain, which requires VS_PATH
+  # to remain in place. Otherwise the compiler will not work in some siutations
+  # in later configure checks.
+  if test "x$TOOLCHAIN_TYPE" != "xmicrosoft"; then
+    PATH="$OLD_PATH"
+  fi
 
   # Restore the flags to the user specified values.
   # This is necessary since AC_PROG_CC defaults CFLAGS to "-g -O2"
@@ -47256,6 +47237,28 @@ $as_echo "$as_me: WARNING: C compiler version number has a part larger than 9999
     BUILD_SYSROOT_CFLAGS="$SYSROOT_CFLAGS"
     BUILD_SYSROOT_LDFLAGS="$SYSROOT_LDFLAGS"
     BUILD_AR="$AR"
+
+
+  if test "x$CC_VERSION_NUMBER" != "x$CXX_VERSION_NUMBER"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: C and C++ compiler have different version numbers, $CC_VERSION_NUMBER vs $CXX_VERSION_NUMBER." >&5
+$as_echo "$as_me: WARNING: C and C++ compiler have different version numbers, $CC_VERSION_NUMBER vs $CXX_VERSION_NUMBER." >&2;}
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: This typically indicates a broken setup, and is not supported" >&5
+$as_echo "$as_me: WARNING: This typically indicates a broken setup, and is not supported" >&2;}
+  fi
+
+  # We only check CC_VERSION_NUMBER since we assume CXX_VERSION_NUMBER is equal.
+  if  [[ "[$]CC_VERSION_NUMBER" =~ (.*\.){3} ]] ; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: C compiler version number has more than three parts (X.Y.Z): $CC_VERSION_NUMBER. Comparisons might be wrong." >&5
+$as_echo "$as_me: WARNING: C compiler version number has more than three parts (X.Y.Z): $CC_VERSION_NUMBER. Comparisons might be wrong." >&2;}
+  fi
+
+  if  [[  "[$]CC_VERSION_NUMBER" =~ [0-9]{6} ]] ; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: C compiler version number has a part larger than 99999: $CC_VERSION_NUMBER. Comparisons might be wrong." >&5
+$as_echo "$as_me: WARNING: C compiler version number has a part larger than 99999: $CC_VERSION_NUMBER. Comparisons might be wrong." >&2;}
+  fi
+
+  OPENJDK_BUILD_COMPARABLE_ACTUAL_VERSION=`$AWK -F. '{ printf("%05d%05d%05d\n", $1, $2, $3) }' <<< "$CC_VERSION_NUMBER"`
+
   fi
 
 
@@ -49625,9 +49628,9 @@ $as_echo "$supports" >&6; }
       fi
       C_O_FLAG_NONE="-O0"
     elif test "x$TOOLCHAIN_TYPE" = xxlc; then
-      C_O_FLAG_HIGHEST_JVM="-O3"
-      C_O_FLAG_HIGHEST="-O3"
-      C_O_FLAG_HI="-O3 -qstrict"
+      C_O_FLAG_HIGHEST_JVM="-O3 -qhot=level=1 -qinline -qinlglue"
+      C_O_FLAG_HIGHEST="-O3 -qhot=level=1 -qinline -qinlglue"
+      C_O_FLAG_HI="-O3 -qinline -qinlglue"
       C_O_FLAG_NORM="-O2"
       C_O_FLAG_DEBUG="-qnoopt"
       # FIXME: Value below not verified.
@@ -49805,20 +49808,17 @@ $as_echo "$supports" >&6; }
 
 
     CXXFLAGS_JDK="${CXXFLAGS_JDK} ${CXXSTD_CXXFLAG}"
+    JVM_CFLAGS="${JVM_CFLAGS} ${CXXSTD_CXXFLAG}"
 
   fi
   if test "x$OPENJDK_TARGET_OS" = xsolaris; then
     CFLAGS_JDK="${CFLAGS_JDK} -D__solaris__"
     CXXFLAGS_JDK="${CXXFLAGS_JDK} -D__solaris__"
-    CFLAGS_JDKLIB_EXTRA='-xstrconst'
-    CFLAGS_JDK="${CFLAGS_JDK} -qchars=signed -qfullpath -qsaveopt"
-    CXXFLAGS_JDK="${CXXFLAGS_JDK} -qchars=signed -qfullpath -qsaveopt"
   fi
 
   if test "x$OPENJDK_TARGET_OS" = xsolaris; then
     CFLAGS_JDK="${CFLAGS_JDK} -D__solaris__"
     CXXFLAGS_JDK="${CXXFLAGS_JDK} -D__solaris__"
-    CFLAGS_JDKLIB_EXTRA='-xstrconst'
   fi
 
   CFLAGS_JDK="${CFLAGS_JDK} ${EXTRA_CFLAGS}"
@@ -49937,542 +49937,12 @@ $as_echo "$supports" >&6; }
   # runs afoul of the more aggressive versions of these optimisations.
   # Notably, value range propagation now assumes that the this pointer of C++
   # member functions is non-null.
-  NO_NULL_POINTER_CHECK_CFLAG="-fno-delete-null-pointer-checks"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # Execute function body
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # Execute function body
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking if the C compiler supports \"$NO_NULL_POINTER_CHECK_CFLAG -Werror\"" >&5
-$as_echo_n "checking if the C compiler supports \"$NO_NULL_POINTER_CHECK_CFLAG -Werror\"... " >&6; }
-  supports=yes
-
-  saved_cflags="$CFLAGS"
-  CFLAGS="$CFLAGS $NO_NULL_POINTER_CHECK_CFLAG -Werror"
-  ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int i;
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-
-else
-  supports=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-  ac_ext=cpp
-ac_cpp='$CXXCPP $CPPFLAGS'
-ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
-
-  CFLAGS="$saved_cflags"
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $supports" >&5
-$as_echo "$supports" >&6; }
-  if test "x$supports" = "xyes" ; then
-    :
-    C_COMP_SUPPORTS="yes"
-  else
-    :
-    C_COMP_SUPPORTS="no"
-  fi
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # Execute function body
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking if the C++ compiler supports \"$NO_NULL_POINTER_CHECK_CFLAG -Werror\"" >&5
-$as_echo_n "checking if the C++ compiler supports \"$NO_NULL_POINTER_CHECK_CFLAG -Werror\"... " >&6; }
-  supports=yes
-
-  saved_cxxflags="$CXXFLAGS"
-  CXXFLAGS="$CXXFLAG $NO_NULL_POINTER_CHECK_CFLAG -Werror"
-  ac_ext=cpp
-ac_cpp='$CXXCPP $CPPFLAGS'
-ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
-
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int i;
-_ACEOF
-if ac_fn_cxx_try_compile "$LINENO"; then :
-
-else
-  supports=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-  ac_ext=cpp
-ac_cpp='$CXXCPP $CPPFLAGS'
-ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
-
-  CXXFLAGS="$saved_cxxflags"
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $supports" >&5
-$as_echo "$supports" >&6; }
-  if test "x$supports" = "xyes" ; then
-    :
-    CXX_COMP_SUPPORTS="yes"
-  else
-    :
-    CXX_COMP_SUPPORTS="no"
-  fi
-
-
-
-
-
-
-
-
-
-
-
-
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking if both compilers support \"$NO_NULL_POINTER_CHECK_CFLAG -Werror\"" >&5
-$as_echo_n "checking if both compilers support \"$NO_NULL_POINTER_CHECK_CFLAG -Werror\"... " >&6; }
-  supports=no
-  if test "x$C_COMP_SUPPORTS" = "xyes" -a "x$CXX_COMP_SUPPORTS" = "xyes"; then supports=yes; fi
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $supports" >&5
-$as_echo "$supports" >&6; }
-  if test "x$supports" = "xyes" ; then
-    :
-
-  else
-    :
-    NO_NULL_POINTER_CHECK_CFLAG=""
-  fi
-
-
-
-
-
-
-
-  NO_LIFETIME_DSE_CFLAG="-fno-lifetime-dse"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # Execute function body
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # Execute function body
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking if the C compiler supports \"$NO_LIFETIME_DSE_CFLAG -Werror\"" >&5
-$as_echo_n "checking if the C compiler supports \"$NO_LIFETIME_DSE_CFLAG -Werror\"... " >&6; }
-  supports=yes
-
-  saved_cflags="$CFLAGS"
-  CFLAGS="$CFLAGS $NO_LIFETIME_DSE_CFLAG -Werror"
-  ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int i;
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-
-else
-  supports=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-  ac_ext=cpp
-ac_cpp='$CXXCPP $CPPFLAGS'
-ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
-
-  CFLAGS="$saved_cflags"
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $supports" >&5
-$as_echo "$supports" >&6; }
-  if test "x$supports" = "xyes" ; then
-    :
-    C_COMP_SUPPORTS="yes"
-  else
-    :
-    C_COMP_SUPPORTS="no"
-  fi
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # Execute function body
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking if the C++ compiler supports \"$NO_LIFETIME_DSE_CFLAG -Werror\"" >&5
-$as_echo_n "checking if the C++ compiler supports \"$NO_LIFETIME_DSE_CFLAG -Werror\"... " >&6; }
-  supports=yes
-
-  saved_cxxflags="$CXXFLAGS"
-  CXXFLAGS="$CXXFLAG $NO_LIFETIME_DSE_CFLAG -Werror"
-  ac_ext=cpp
-ac_cpp='$CXXCPP $CPPFLAGS'
-ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
-
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int i;
-_ACEOF
-if ac_fn_cxx_try_compile "$LINENO"; then :
-
-else
-  supports=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-  ac_ext=cpp
-ac_cpp='$CXXCPP $CPPFLAGS'
-ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
-
-  CXXFLAGS="$saved_cxxflags"
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $supports" >&5
-$as_echo "$supports" >&6; }
-  if test "x$supports" = "xyes" ; then
-    :
-    CXX_COMP_SUPPORTS="yes"
-  else
-    :
-    CXX_COMP_SUPPORTS="no"
-  fi
-
-
-
-
-
-
-
-
-
-
-
-
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking if both compilers support \"$NO_LIFETIME_DSE_CFLAG -Werror\"" >&5
-$as_echo_n "checking if both compilers support \"$NO_LIFETIME_DSE_CFLAG -Werror\"... " >&6; }
-  supports=no
-  if test "x$C_COMP_SUPPORTS" = "xyes" -a "x$CXX_COMP_SUPPORTS" = "xyes"; then supports=yes; fi
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $supports" >&5
-$as_echo "$supports" >&6; }
-  if test "x$supports" = "xyes" ; then
-    :
-
-  else
-    :
-    NO_LIFETIME_DSE_CFLAG=""
-  fi
-
-
-
-
-
-
-  CFLAGS_JDK="${CFLAGS_JDK} ${NO_NULL_POINTER_CHECK_CFLAG} ${NO_LIFETIME_DSE_CFLAG}"
-
-
+  NO_DELETE_NULL_POINTER_CHECKS_CFLAG="-fno-delete-null-pointer-checks"
+        NO_LIFETIME_DSE_CFLAG="-fno-lifetime-dse"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: GCC >= 6 detected; adding ${NO_DELETE_NULL_POINTER_CHECKS_CFLAG} and ${NO_LIFETIME_DSE_CFLAG}" >&5
+$as_echo "$as_me: GCC >= 6 detected; adding ${NO_DELETE_NULL_POINTER_CHECKS_CFLAG} and ${NO_LIFETIME_DSE_CFLAG}" >&6;}
+  CFLAGS_JDK="$CFLAGS_JDK ${NO_DELETE_NULL_POINTER_CHECKS_CFLAG} ${NO_LIFETIME_DSE_CFLAG}"
+  JVM_CFLAGS="$JVM_CFLAGS ${NO_DELETE_NULL_POINTER_CHECKS_CFLAG} ${NO_LIFETIME_DSE_CFLAG}"
 
   else
     :
@@ -50634,8 +50104,8 @@ $as_echo "$supports" >&6; }
   elif test "x$OPENJDK_TARGET_OS" = xaix; then
     JVM_CFLAGS="$JVM_CFLAGS -DAIX"
     # We may need '-qminimaltoc' or '-qpic=large -bbigtoc' if the TOC overflows.
-    JVM_CFLAGS="$JVM_CFLAGS -qtune=balanced -qhot=level=1 -qinline \
-        -qinlglue -qalias=noansi -qstrict -qtls=default -qlanglvl=c99vla \
+    JVM_CFLAGS="$JVM_CFLAGS -qtune=balanced \
+        -qalias=noansi -qstrict -qtls=default -qlanglvl=c99vla \
         -qlanglvl=noredefmac -qnortti -qnoeh -qignerrno"
   elif test "x$OPENJDK_TARGET_OS" = xbsd; then
     COMMON_CCXXFLAGS_JDK="$COMMON_CCXXFLAGS_JDK -D_ALLBSD_SOURCE"
@@ -50924,7 +50394,7 @@ $as_echo "$supports" >&6; }
     fi
   elif test "x$TOOLCHAIN_TYPE" = xsolstudio; then
     LDFLAGS_SOLSTUDIO="-Wl,-z,defs"
-    LDFLAGS_JDK="$LDFLAGS_JDK $LDFLAGS_SOLSTUDIO -xildoff -ztext"
+    LDFLAGS_JDK="$LDFLAGS_JDK $LDFLAGS_SOLSTUDIO -ztext"
     LDFLAGS_CXX_SOLSTUDIO="-norunpath"
     LDFLAGS_CXX_JDK="$LDFLAGS_CXX_JDK $LDFLAGS_CXX_SOLSTUDIO -xnolib"
     JVM_LDFLAGS="$JVM_LDFLAGS $LDFLAGS_SOLSTUDIO -library=%none -mt $LDFLAGS_CXX_SOLSTUDIO -z noversion"
@@ -50959,11 +50429,11 @@ $as_echo "$supports" >&6; }
 
   LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} ${SHARED_LIBRARY_FLAGS}"
   if test "x$TOOLCHAIN_TYPE" = xmicrosoft; then
-    LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} \
+    JAVA_BASE_LDFLAGS="${JAVA_BASE_LDFLAGS} \
         -libpath:${OUTPUT_ROOT}/support/modules_libs/java.base"
     JDKLIB_LIBS=""
   else
-    LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} \
+    JAVA_BASE_LDFLAGS="${JAVA_BASE_LDFLAGS} \
         -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)"
 
     if test "xTARGET" = "xTARGET"; then
@@ -50972,17 +50442,17 @@ $as_echo "$supports" >&6; }
       # Only add client/minimal dir if client/minimal is being built.
     # Default to server for other variants.
       if   [[ " $JVM_VARIANTS " =~ " server " ]]  ; then
-        LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/server"
+        JAVA_BASE_LDFLAGS="${JAVA_BASE_LDFLAGS} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/server"
       elif   [[ " $JVM_VARIANTS " =~ " client " ]]  ; then
-        LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/client"
+        JAVA_BASE_LDFLAGS="${JAVA_BASE_LDFLAGS} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/client"
       elif   [[ " $JVM_VARIANTS " =~ " minimal " ]]  ; then
-        LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/minimal"
+        JAVA_BASE_LDFLAGS="${JAVA_BASE_LDFLAGS} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/minimal"
     else
-        LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/server"
+        JAVA_BASE_LDFLAGS="${JAVA_BASE_LDFLAGS} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/server"
     fi
     elif test "xTARGET" = "xBUILD"; then
       # When building a buildjdk, it's always only the server variant
-      LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} \
+      JAVA_BASE_LDFLAGS="${JAVA_BASE_LDFLAGS} \
           -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/server"
     fi
 
@@ -50992,6 +50462,8 @@ $as_echo "$supports" >&6; }
     fi
 
   fi
+
+LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} ${JAVA_BASE_LDFLAGS}"
 
   # Set JVM_LIBS (per os)
   if test "x$OPENJDK_TARGET_OS" = xlinux; then
@@ -51151,20 +50623,17 @@ $as_echo "$supports" >&6; }
 
 
     OPENJDK_BUILD_CXXFLAGS_JDK="${OPENJDK_BUILD_CXXFLAGS_JDK} ${OPENJDK_BUILD_CXXSTD_CXXFLAG}"
+    OPENJDK_BUILD_JVM_CFLAGS="${OPENJDK_BUILD_JVM_CFLAGS} ${OPENJDK_BUILD_CXXSTD_CXXFLAG}"
 
   fi
   if test "x$OPENJDK_TARGET_OS" = xsolaris; then
     OPENJDK_BUILD_CFLAGS_JDK="${OPENJDK_BUILD_CFLAGS_JDK} -D__solaris__"
     OPENJDK_BUILD_CXXFLAGS_JDK="${OPENJDK_BUILD_CXXFLAGS_JDK} -D__solaris__"
-    OPENJDK_BUILD_CFLAGS_JDKLIB_EXTRA='-xstrconst'
-    CFLAGS_JDK="${CFLAGS_JDK} -qchars=signed -qfullpath -qsaveopt"
-    CXXFLAGS_JDK="${CXXFLAGS_JDK} -qchars=signed -qfullpath -qsaveopt"
   fi
 
   if test "x$OPENJDK_TARGET_OS" = xsolaris; then
     OPENJDK_BUILD_CFLAGS_JDK="${OPENJDK_BUILD_CFLAGS_JDK} -D__solaris__"
     OPENJDK_BUILD_CXXFLAGS_JDK="${OPENJDK_BUILD_CXXFLAGS_JDK} -D__solaris__"
-    OPENJDK_BUILD_CFLAGS_JDKLIB_EXTRA='-xstrconst'
   fi
 
   OPENJDK_BUILD_CFLAGS_JDK="${OPENJDK_BUILD_CFLAGS_JDK} ${OPENJDK_BUILD_EXTRA_CFLAGS}"
@@ -51278,6 +50747,17 @@ $as_echo "$supports" >&6; }
 
   if test $OPENJDK_BUILD_COMPARABLE_ACTUAL_VERSION -ge $COMPARABLE_REFERENCE_VERSION ; then
     :
+
+  # These flags are required for GCC 6 builds as undefined behaviour in OpenJDK code
+  # runs afoul of the more aggressive versions of these optimisations.
+  # Notably, value range propagation now assumes that the this pointer of C++
+  # member functions is non-null.
+  NO_DELETE_NULL_POINTER_CHECKS_CFLAG="-fno-delete-null-pointer-checks"
+        NO_LIFETIME_DSE_CFLAG="-fno-lifetime-dse"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: GCC >= 6 detected; adding ${NO_DELETE_NULL_POINTER_CHECKS_CFLAG} and ${NO_LIFETIME_DSE_CFLAG}" >&5
+$as_echo "$as_me: GCC >= 6 detected; adding ${NO_DELETE_NULL_POINTER_CHECKS_CFLAG} and ${NO_LIFETIME_DSE_CFLAG}" >&6;}
+  OPENJDK_BUILD_CFLAGS_JDK="$OPENJDK_BUILD_CFLAGS_JDK ${NO_DELETE_NULL_POINTER_CHECKS_CFLAG} ${NO_LIFETIME_DSE_CFLAG}"
+  OPENJDK_BUILD_JVM_CFLAGS="$OPENJDK_BUILD_JVM_CFLAGS ${NO_DELETE_NULL_POINTER_CHECKS_CFLAG} ${NO_LIFETIME_DSE_CFLAG}"
 
   else
     :
@@ -51439,8 +50919,8 @@ $as_echo "$supports" >&6; }
   elif test "x$OPENJDK_BUILD_OS" = xaix; then
     OPENJDK_BUILD_JVM_CFLAGS="$OPENJDK_BUILD_JVM_CFLAGS -DAIX"
     # We may need '-qminimaltoc' or '-qpic=large -bbigtoc' if the TOC overflows.
-    OPENJDK_BUILD_JVM_CFLAGS="$OPENJDK_BUILD_JVM_CFLAGS -qtune=balanced -qhot=level=1 -qinline \
-        -qinlglue -qalias=noansi -qstrict -qtls=default -qlanglvl=c99vla \
+    OPENJDK_BUILD_JVM_CFLAGS="$OPENJDK_BUILD_JVM_CFLAGS -qtune=balanced \
+        -qalias=noansi -qstrict -qtls=default -qlanglvl=c99vla \
         -qlanglvl=noredefmac -qnortti -qnoeh -qignerrno"
   elif test "x$OPENJDK_BUILD_OS" = xbsd; then
     OPENJDK_BUILD_COMMON_CCXXFLAGS_JDK="$OPENJDK_BUILD_COMMON_CCXXFLAGS_JDK -D_ALLBSD_SOURCE"
@@ -51729,7 +51209,7 @@ $as_echo "$supports" >&6; }
     fi
   elif test "x$TOOLCHAIN_TYPE" = xsolstudio; then
     LDFLAGS_SOLSTUDIO="-Wl,-z,defs"
-    OPENJDK_BUILD_LDFLAGS_JDK="$OPENJDK_BUILD_LDFLAGS_JDK $LDFLAGS_SOLSTUDIO -xildoff -ztext"
+    OPENJDK_BUILD_LDFLAGS_JDK="$OPENJDK_BUILD_LDFLAGS_JDK $LDFLAGS_SOLSTUDIO -ztext"
     LDFLAGS_CXX_SOLSTUDIO="-norunpath"
     OPENJDK_BUILD_LDFLAGS_CXX_JDK="$OPENJDK_BUILD_LDFLAGS_CXX_JDK $LDFLAGS_CXX_SOLSTUDIO -xnolib"
     OPENJDK_BUILD_JVM_LDFLAGS="$OPENJDK_BUILD_JVM_LDFLAGS $LDFLAGS_SOLSTUDIO -library=%none -mt $LDFLAGS_CXX_SOLSTUDIO -z noversion"
@@ -51764,11 +51244,11 @@ $as_echo "$supports" >&6; }
 
   OPENJDK_BUILD_LDFLAGS_JDKLIB="${OPENJDK_BUILD_LDFLAGS_JDKLIB} ${SHARED_LIBRARY_FLAGS}"
   if test "x$TOOLCHAIN_TYPE" = xmicrosoft; then
-    OPENJDK_BUILD_LDFLAGS_JDKLIB="${OPENJDK_BUILD_LDFLAGS_JDKLIB} \
+    OPENJDK_BUILD_JAVA_BASE_LDFLAGS="${OPENJDK_BUILD_JAVA_BASE_LDFLAGS} \
         -libpath:${OUTPUT_ROOT}/support/modules_libs/java.base"
     OPENJDK_BUILD_JDKLIB_LIBS=""
   else
-    OPENJDK_BUILD_LDFLAGS_JDKLIB="${OPENJDK_BUILD_LDFLAGS_JDKLIB} \
+    OPENJDK_BUILD_JAVA_BASE_LDFLAGS="${OPENJDK_BUILD_JAVA_BASE_LDFLAGS} \
         -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_BUILD_CPU_LIBDIR)"
 
     if test "xBUILD" = "xTARGET"; then
@@ -51777,17 +51257,17 @@ $as_echo "$supports" >&6; }
       # Only add client/minimal dir if client/minimal is being built.
     # Default to server for other variants.
       if   [[ " $JVM_VARIANTS " =~ " server " ]]  ; then
-        OPENJDK_BUILD_LDFLAGS_JDKLIB="${OPENJDK_BUILD_LDFLAGS_JDKLIB} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_BUILD_CPU_LIBDIR)/server"
+        OPENJDK_BUILD_JAVA_BASE_LDFLAGS="${OPENJDK_BUILD_JAVA_BASE_LDFLAGS} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_BUILD_CPU_LIBDIR)/server"
       elif   [[ " $JVM_VARIANTS " =~ " client " ]]  ; then
-        OPENJDK_BUILD_LDFLAGS_JDKLIB="${OPENJDK_BUILD_LDFLAGS_JDKLIB} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_BUILD_CPU_LIBDIR)/client"
+        OPENJDK_BUILD_JAVA_BASE_LDFLAGS="${OPENJDK_BUILD_JAVA_BASE_LDFLAGS} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_BUILD_CPU_LIBDIR)/client"
       elif   [[ " $JVM_VARIANTS " =~ " minimal " ]]  ; then
-        OPENJDK_BUILD_LDFLAGS_JDKLIB="${OPENJDK_BUILD_LDFLAGS_JDKLIB} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_BUILD_CPU_LIBDIR)/minimal"
+        OPENJDK_BUILD_JAVA_BASE_LDFLAGS="${OPENJDK_BUILD_JAVA_BASE_LDFLAGS} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_BUILD_CPU_LIBDIR)/minimal"
     else
-        OPENJDK_BUILD_LDFLAGS_JDKLIB="${OPENJDK_BUILD_LDFLAGS_JDKLIB} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_BUILD_CPU_LIBDIR)/server"
+        OPENJDK_BUILD_JAVA_BASE_LDFLAGS="${OPENJDK_BUILD_JAVA_BASE_LDFLAGS} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_BUILD_CPU_LIBDIR)/server"
     fi
     elif test "xBUILD" = "xBUILD"; then
       # When building a buildjdk, it's always only the server variant
-      OPENJDK_BUILD_LDFLAGS_JDKLIB="${OPENJDK_BUILD_LDFLAGS_JDKLIB} \
+      OPENJDK_BUILD_JAVA_BASE_LDFLAGS="${OPENJDK_BUILD_JAVA_BASE_LDFLAGS} \
           -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_BUILD_CPU_LIBDIR)/server"
     fi
 
@@ -51797,6 +51277,8 @@ $as_echo "$supports" >&6; }
     fi
 
   fi
+
+OPENJDK_BUILD_LDFLAGS_JDKLIB="${OPENJDK_BUILD_LDFLAGS_JDKLIB} ${OPENJDK_BUILD_JAVA_BASE_LDFLAGS}"
 
   # Set OPENJDK_BUILD_JVM_LIBS (per os)
   if test "x$OPENJDK_BUILD_OS" = xlinux; then
@@ -51862,7 +51344,7 @@ $as_echo "$supports" >&6; }
 
 
   LDFLAGS_TESTLIB="$LDFLAGS_JDKLIB"
-  LDFLAGS_TESTEXE="$LDFLAGS_JDKEXE"
+  LDFLAGS_TESTEXE="$LDFLAGS_JDKEXE $JAVA_BASE_LDFLAGS"
 
 
 
@@ -53312,11 +52794,7 @@ $as_echo "yes, forced" >&6; }
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, forced" >&5
 $as_echo "no, forced" >&6; }
   elif test "x$enable_dtrace" = "xauto" || test "x$enable_dtrace" = "x"; then
-    if test "x$OPENJDK_TARGET_OS" = "xlinux" && test "x$OPENJDK" != "xtrue"; then
-      INCLUDE_DTRACE=false
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, non-open linux build" >&5
-$as_echo "no, non-open linux build" >&6; }
-    elif test "x$DTRACE_DEP_MISSING" = "xtrue"; then
+    if test "x$DTRACE_DEP_MISSING" = "xtrue"; then
       INCLUDE_DTRACE=false
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, missing dependencies" >&5
 $as_echo "no, missing dependencies" >&6; }
@@ -53356,8 +52834,8 @@ $as_echo "$JVM_FEATURES" >&6; }
     as_fn_error $? "Specified JVM feature 'management' requires feature 'nmt'" "$LINENO" 5
   fi
 
-  if   [[ " $JVM_FEATURES " =~ " jvmci " ]]   && !   [[ " $JVM_FEATURES " =~ " compiler2 " ]]  ; then
-    as_fn_error $? "Specified JVM feature 'jvmci' requires feature 'compiler2'" "$LINENO" 5
+  if   [[ " $JVM_FEATURES " =~ " jvmci " ]]   && ! (  [[ " $JVM_FEATURES " =~ " compiler1 " ]]   ||   [[ " $JVM_FEATURES " =~ " compiler2 " ]]  ); then
+    as_fn_error $? "Specified JVM feature 'jvmci' requires feature 'compiler2' or 'compiler1'" "$LINENO" 5
   fi
 
   if   [[ " $JVM_FEATURES " =~ " compiler2 " ]]   && !   [[ " $JVM_FEATURES " =~ " all-gcs " ]]  ; then
@@ -53397,7 +52875,7 @@ $as_echo "$JVM_FEATURES" >&6; }
     fi
   fi
 
-  # Only enable jvmci on x86_64, sparcv9 and aarch64, and only on server.
+  # Only enable jvmci on x86_64, sparcv9 and aarch64.
   if test "x$OPENJDK_TARGET_CPU" = "xx86_64" || \
       test "x$OPENJDK_TARGET_CPU" = "xsparcv9" || \
       test "x$OPENJDK_TARGET_CPU" = "xaarch64" ; then
@@ -53411,7 +52889,7 @@ $as_echo "$JVM_FEATURES" >&6; }
 
   # Enable features depending on variant.
   JVM_FEATURES_server="compiler1 compiler2 $NON_MINIMAL_FEATURES $JVM_FEATURES $JVM_FEATURES_jvmci"
-  JVM_FEATURES_client="compiler1 $NON_MINIMAL_FEATURES $JVM_FEATURES"
+  JVM_FEATURES_client="compiler1 $NON_MINIMAL_FEATURES $JVM_FEATURES $JVM_FEATURES_jvmci"
   JVM_FEATURES_core="$NON_MINIMAL_FEATURES $JVM_FEATURES"
   JVM_FEATURES_minimal="compiler1 minimal $JVM_FEATURES"
   JVM_FEATURES_zero="zero $NON_MINIMAL_FEATURES $JVM_FEATURES"
@@ -53468,7 +52946,7 @@ $as_echo "yes, forced" >&6; }
 $as_echo "no, forced" >&6; }
     BUILD_GTEST="false"
   elif test "x$enable_hotspot_gtest" = "x"; then
-    if test "x$GTEST_DIR_EXISTS" = "xtrue"; then
+    if test "x$GTEST_DIR_EXISTS" = "xtrue" && test "x$OPENJDK_TARGET_OS" != "xaix"; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
       BUILD_GTEST="true"
@@ -53595,11 +53073,9 @@ $as_echo "yes" >&6; }
     NEEDS_LIB_CUPS=true
   fi
 
-  # Check if freetype is needed
-  if test "x$OPENJDK" = "xtrue"; then
+  # A custom hook may have set this already
+  if test "x$NEEDS_LIB_FREETYPE" = "x"; then
     NEEDS_LIB_FREETYPE=true
-  else
-    NEEDS_LIB_FREETYPE=false
   fi
 
   # Check if alsa is needed
@@ -64612,12 +64088,16 @@ fi
 
 
 
-  if test "$OPENJDK_TARGET_OS" = "solaris"; then
+  if test "$OPENJDK_TARGET_OS" = "solaris" && test "x$BUILD_GTEST" = "xtrue"; then
     # Find the root of the Solaris Studio installation from the compiler path
     SOLARIS_STUDIO_DIR="$(dirname $CC)/.."
     STLPORT_LIB="$SOLARIS_STUDIO_DIR/lib/stlport4$OPENJDK_TARGET_CPU_ISADIR/libstlport.so.1"
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libstlport.so.1" >&5
 $as_echo_n "checking for libstlport.so.1... " >&6; }
+    if ! test -f "$STLPORT_LIB" && test "x$OPENJDK_TARGET_CPU_ISADIR" = "x/sparcv9"; then
+      # SS12u3 has libstlport under 'stlport4/v9' instead of 'stlport4/sparcv9'
+      STLPORT_LIB="$SOLARIS_STUDIO_DIR/lib/stlport4/v9/libstlport.so.1"
+    fi
     if test -f "$STLPORT_LIB"; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes, $STLPORT_LIB" >&5
 $as_echo "yes, $STLPORT_LIB" >&6; }
@@ -65074,6 +64554,23 @@ $as_echo_n "checking flags for boot jdk java command ... " >&6; }
   fi
 
 
+  # Force en-US environment
+
+  $ECHO "Check if jvm arg is ok: -Duser.language=en -Duser.country=US" >&5
+  $ECHO "Command: $JAVA -Duser.language=en -Duser.country=US -version" >&5
+  OUTPUT=`$JAVA -Duser.language=en -Duser.country=US -version 2>&1`
+  FOUND_WARN=`$ECHO "$OUTPUT" | $GREP -i warn`
+  FOUND_VERSION=`$ECHO $OUTPUT | $GREP " version \""`
+  if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
+    boot_jdk_jvmargs="$boot_jdk_jvmargs -Duser.language=en -Duser.country=US"
+    JVM_ARG_OK=true
+  else
+    $ECHO "Arg failed:" >&5
+    $ECHO "$OUTPUT" >&5
+    JVM_ARG_OK=false
+  fi
+
+
   # Apply user provided options.
 
   $ECHO "Check if jvm arg is ok: $with_boot_jdk_jvmargs" >&5
@@ -65118,25 +64615,32 @@ $as_echo_n "checking flags for boot jdk java command for big workloads... " >&6;
     JVM_ARG_OK=false
   fi
 
+  BOOTCYCLE_JVM_ARGS_BIG=-Xms64M
 
-  # Maximum amount of heap memory.
-  # Maximum stack size.
-  JVM_MAX_HEAP=`expr $MEMORY_SIZE / 2`
+  # Maximum amount of heap memory and stack size.
+  JVM_HEAP_LIMIT_32="1024"
+  # Running a 64 bit JVM allows for and requires a bigger heap
+  JVM_HEAP_LIMIT_64="1600"
+  STACK_SIZE_32=768
+  STACK_SIZE_64=1536
+  JVM_HEAP_LIMIT_GLOBAL=`expr $MEMORY_SIZE / 2`
+  if test "$JVM_HEAP_LIMIT_GLOBAL" -lt "$JVM_HEAP_LIMIT_32"; then
+    JVM_HEAP_LIMIT_32=$JVM_HEAP_LIMIT_GLOBAL
+  fi
+  if test "$JVM_HEAP_LIMIT_GLOBAL" -lt "$JVM_HEAP_LIMIT_64"; then
+    JVM_HEAP_LIMIT_64=$JVM_HEAP_LIMIT_GLOBAL
+  fi
+  if test "$JVM_HEAP_LIMIT_GLOBAL" -lt "512"; then
+    JVM_HEAP_LIMIT_32=512
+    JVM_HEAP_LIMIT_64=512
+  fi
+
   if test "x$BOOT_JDK_BITS" = "x32"; then
-    if test "$JVM_MAX_HEAP" -gt "1100"; then
-      JVM_MAX_HEAP=1100
-    elif test "$JVM_MAX_HEAP" -lt "512"; then
-      JVM_MAX_HEAP=512
-    fi
-    STACK_SIZE=768
+    STACK_SIZE=$STACK_SIZE_32
+    JVM_MAX_HEAP=$JVM_HEAP_LIMIT_32
   else
-    # Running a 64 bit JVM allows for and requires a bigger heap
-    if test "$JVM_MAX_HEAP" -gt "1600"; then
-      JVM_MAX_HEAP=1600
-    elif test "$JVM_MAX_HEAP" -lt "512"; then
-      JVM_MAX_HEAP=512
-    fi
-    STACK_SIZE=1536
+    STACK_SIZE=$STACK_SIZE_64
+    JVM_MAX_HEAP=$JVM_HEAP_LIMIT_64
   fi
 
   $ECHO "Check if jvm arg is ok: -Xmx${JVM_MAX_HEAP}M" >&5
@@ -65173,6 +64677,21 @@ $as_echo_n "checking flags for boot jdk java command for big workloads... " >&6;
 $as_echo "$boot_jdk_jvmargs_big" >&6; }
 
   JAVA_FLAGS_BIG=$boot_jdk_jvmargs_big
+
+
+  if test "x$OPENJDK_TARGET_CPU_BITS" = "x32"; then
+    BOOTCYCLE_MAX_HEAP=$JVM_HEAP_LIMIT_32
+    BOOTCYCLE_STACK_SIZE=$STACK_SIZE_32
+  else
+    BOOTCYCLE_MAX_HEAP=$JVM_HEAP_LIMIT_64
+    BOOTCYCLE_STACK_SIZE=$STACK_SIZE_64
+  fi
+  BOOTCYCLE_JVM_ARGS_BIG="$BOOTCYCLE_JVM_ARGS_BIG -Xmx${BOOTCYCLE_MAX_HEAP}M"
+  BOOTCYCLE_JVM_ARGS_BIG="$BOOTCYCLE_JVM_ARGS_BIG -XX:ThreadStackSize=$BOOTCYCLE_STACK_SIZE"
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking flags for bootcycle boot jdk java command for big workloads" >&5
+$as_echo_n "checking flags for bootcycle boot jdk java command for big workloads... " >&6; }
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $BOOTCYCLE_JVM_ARGS_BIG" >&5
+$as_echo "$BOOTCYCLE_JVM_ARGS_BIG" >&6; }
 
 
   # By default, the main javac compilations use big
@@ -66131,6 +65650,10 @@ $as_echo "no, does not work effectively with icecc" >&6; }
   elif test "x$TOOLCHAIN_TYPE" = xsolstudio; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, does not work with Solaris Studio" >&5
 $as_echo "no, does not work with Solaris Studio" >&6; }
+    USE_PRECOMPILED_HEADER=0
+  elif test "x$TOOLCHAIN_TYPE" = xxlc; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, does not work with xlc" >&5
+$as_echo "no, does not work with xlc" >&6; }
     USE_PRECOMPILED_HEADER=0
   else
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
