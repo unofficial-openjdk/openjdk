@@ -789,23 +789,25 @@ public class Check {
         if (!TreeInfo.isDiamond(tree) ||
                 t.isErroneous()) {
             return checkClassType(tree.clazz.pos(), t, true);
-        } else if (tree.def != null && !allowDiamondWithAnonymousClassCreation) {
-            log.error(tree.clazz.pos(),
-                    Errors.CantApplyDiamond1(t, Fragments.DiamondAndAnonClassNotSupportedInSource(source.name)));
-            return types.createErrorType(t);
-        } else if (t.tsym.type.getTypeArguments().isEmpty()) {
-            log.error(tree.clazz.pos(),
-                "cant.apply.diamond.1",
-                t, diags.fragment("diamond.non.generic", t));
-            return types.createErrorType(t);
-        } else if (tree.typeargs != null &&
-                tree.typeargs.nonEmpty()) {
-            log.error(tree.clazz.pos(),
-                "cant.apply.diamond.1",
-                t, diags.fragment("diamond.and.explicit.params", t));
-            return types.createErrorType(t);
         } else {
-            return t;
+            if (tree.def != null && !allowDiamondWithAnonymousClassCreation) {
+                log.error(DiagnosticFlag.SOURCE_LEVEL, tree.clazz.pos(),
+                        Errors.CantApplyDiamond1(t, Fragments.DiamondAndAnonClassNotSupportedInSource(source.name)));
+            }
+            if (t.tsym.type.getTypeArguments().isEmpty()) {
+                log.error(tree.clazz.pos(),
+                    "cant.apply.diamond.1",
+                    t, diags.fragment("diamond.non.generic", t));
+                return types.createErrorType(t);
+            } else if (tree.typeargs != null &&
+                    tree.typeargs.nonEmpty()) {
+                log.error(tree.clazz.pos(),
+                    "cant.apply.diamond.1",
+                    t, diags.fragment("diamond.and.explicit.params", t));
+                return types.createErrorType(t);
+            } else {
+                return t;
+            }
         }
     }
 
@@ -1152,10 +1154,6 @@ public class Check {
         case TYP:
             if (sym.isLocal()) {
                 mask = LocalClassFlags;
-                if (sym.name.isEmpty()) { // Anonymous class
-                    // JLS: Anonymous classes are final.
-                    implicit |= FINAL;
-                }
                 if ((sym.owner.flags_field & STATIC) == 0 &&
                     (flags & ENUM) != 0)
                     log.error(pos, "enums.must.be.static");
@@ -3200,6 +3198,21 @@ public class Check {
             s.attribute(syms.deprecatedType.tsym) == null) {
             log.warning(LintCategory.DEP_ANN,
                     pos, "missing.deprecated.annotation");
+        }
+        // Note: @Deprecated has no effect on local variables, parameters and package decls.
+        if (lint.isEnabled(LintCategory.DEPRECATION)) {
+            if (!syms.deprecatedType.isErroneous() && s.attribute(syms.deprecatedType.tsym) != null) {
+                switch (s.getKind()) {
+                    case LOCAL_VARIABLE:
+                    case PACKAGE:
+                    case PARAMETER:
+                    case RESOURCE_VARIABLE:
+                    case EXCEPTION_PARAMETER:
+                        log.warning(LintCategory.DEPRECATION, pos,
+                                "deprecated.annotation.has.no.effect", Kinds.kindName(s));
+                        break;
+                }
+            }
         }
     }
 

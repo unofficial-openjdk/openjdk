@@ -23,9 +23,11 @@
 
 /**
  * @test
+ * @bug 8155026
  * @summary Test automatic modules
  * @library /tools/lib
  * @modules
+ *      java.desktop
  *      jdk.compiler/com.sun.tools.javac.api
  *      jdk.compiler/com.sun.tools.javac.main
  * @build toolbox.ToolBox toolbox.JavacTask toolbox.JarTask ModuleTestBase
@@ -34,11 +36,12 @@
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 
 import toolbox.JarTask;
 import toolbox.JavacTask;
 import toolbox.Task;
-import toolbox.ToolBox;
 
 public class AutomaticModules extends ModuleTestBase {
 
@@ -86,11 +89,11 @@ public class AutomaticModules extends ModuleTestBase {
         Files.createDirectories(classes);
 
         tb.writeJavaFiles(m1,
-                          "module m1 { requires test.api; }",
+                          "module m1 { requires test.api; requires java.desktop; }",
                           "package impl; public class Impl { public void e(api.Api api) { api.actionPerformed(null); } }");
 
         new JavacTask(tb)
-                .options("-modulesourcepath", moduleSrc.toString(), "-modulepath", modulePath.toString(), "-addmods", "java.desktop")
+                .options("--module-source-path", moduleSrc.toString(), "--module-path", modulePath.toString())
                 .outdir(classes)
                 .files(findJavaFiles(moduleSrc))
                 .run()
@@ -148,7 +151,7 @@ public class AutomaticModules extends ModuleTestBase {
                           "package impl; public class Impl { public void e(api.Api api) { api.run(\"\"); } }");
 
         new JavacTask(tb)
-                .options("-modulesourcepath", moduleSrc.toString(), "-modulepath", modulePath.toString(), "-classpath", baseJar.toString())
+                .options("--module-source-path", moduleSrc.toString(), "--module-path", modulePath.toString(), "--class-path", baseJar.toString())
                 .outdir(classes)
                 .files(findJavaFiles(moduleSrc))
                 .run()
@@ -194,7 +197,7 @@ public class AutomaticModules extends ModuleTestBase {
                           "package dep; public class Dep { api.Api api; }");
 
         new JavacTask(tb)
-                .options("-modulepath", modulePath.toString())
+                .options("--module-path", modulePath.toString())
                 .outdir(depClasses)
                 .files(findJavaFiles(depSrc))
                 .run()
@@ -218,10 +221,91 @@ public class AutomaticModules extends ModuleTestBase {
                           "package test; public class Test { }");
 
         new JavacTask(tb)
-                .options("-modulepath", modulePath.toString())
+                .options("--module-path", modulePath.toString())
                 .outdir(testClasses)
                 .files(findJavaFiles(testSrc))
                 .run()
                 .writeAll();
+    }
+
+    @Test
+    public void testAutomaticAndNamedModules(Path base) throws Exception {
+        Path modulePath = base.resolve("module-path");
+
+        Files.createDirectories(modulePath);
+
+        for (char c : new char[] {'A', 'B'}) {
+            Path automaticSrc = base.resolve("automaticSrc" + c);
+            tb.writeJavaFiles(automaticSrc, "package api" + c + "; public class Api {}");
+            Path automaticClasses = base.resolve("automaticClasses" + c);
+            tb.createDirectories(automaticClasses);
+
+            String automaticLog = new JavacTask(tb)
+                                    .outdir(automaticClasses)
+                                    .files(findJavaFiles(automaticSrc))
+                                    .run()
+                                    .writeAll()
+                                    .getOutput(Task.OutputKind.DIRECT);
+
+            if (!automaticLog.isEmpty())
+                throw new Exception("expected output not found: " + automaticLog);
+
+            Path automaticJar = modulePath.resolve("automatic" + c + "-1.0.jar");
+
+            new JarTask(tb, automaticJar)
+              .baseDir(automaticClasses)
+              .files("api" + c + "/Api.class")
+              .run();
+        }
+
+        Path moduleSrc = base.resolve("module-src");
+
+        tb.writeJavaFiles(moduleSrc.resolve("m1"),
+                          "module m1 { requires automaticA; }",
+                          "package impl; public class Impl { apiA.Api a; apiB.Api b; m2.M2 m;}");
+
+        tb.writeJavaFiles(moduleSrc.resolve("m2"),
+                          "module m2 { exports m2; }",
+                          "package m2; public class M2 { }");
+
+        Path classes = base.resolve("classes");
+
+        Files.createDirectories(classes);
+
+        List<String> log = new JavacTask(tb)
+                .options("--module-source-path", moduleSrc.toString(),
+                         "--module-path", modulePath.toString(),
+                         "--add-modules", "automaticB",
+                         "-XDrawDiagnostics")
+                .outdir(classes)
+                .files(findJavaFiles(moduleSrc))
+                .run(Task.Expect.FAIL)
+                .writeAll()
+                .getOutputLines(Task.OutputKind.DIRECT);
+
+        List<String> expected = Arrays.asList("Impl.java:1:61: compiler.err.not.def.access.package.cant.access: m2.M2, m2",
+                                              "1 error");
+
+        if (!expected.equals(log)) {
+            throw new Exception("expected output not found: " + log);
+        }
+
+        log = new JavacTask(tb)
+                .options("--module-source-path", moduleSrc.toString(),
+                         "--module-path", modulePath.toString(),
+                         "-XDrawDiagnostics")
+                .outdir(classes)
+                .files(findJavaFiles(moduleSrc))
+                .run(Task.Expect.FAIL)
+                .writeAll()
+                .getOutputLines(Task.OutputKind.DIRECT);
+
+        expected = Arrays.asList("Impl.java:1:51: compiler.err.doesnt.exist: apiB",
+                                 "Impl.java:1:61: compiler.err.not.def.access.package.cant.access: m2.M2, m2",
+                                 "2 errors");
+
+        if (!expected.equals(log)) {
+            throw new Exception("expected output not found: " + log);
+        }
     }
 }

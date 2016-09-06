@@ -116,4 +116,9 @@ public abstract class TestRunner {
             throw new Exception(errorCount + " errors found");
         }
     }
+
+    protected void error(String message) {
+        out.println("Error: " + message);
+        errorCount++;
+    }
 }

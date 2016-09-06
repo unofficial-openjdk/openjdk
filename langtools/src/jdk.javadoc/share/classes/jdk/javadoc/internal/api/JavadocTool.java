@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,8 +49,6 @@ import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.file.BaseFileManager;
 import com.sun.tools.javac.util.ClientCodeException;
 import com.sun.tools.javac.util.Context;
-import com.sun.tools.javac.util.DefinedBy;
-import com.sun.tools.javac.util.DefinedBy.Api;
 import com.sun.tools.javac.util.Log;
 import jdk.javadoc.internal.tool.ToolOption;
 
@@ -64,7 +62,7 @@ import jdk.javadoc.internal.tool.ToolOption;
  * or deletion without notice.</b></p>
  */
 public class JavadocTool implements DocumentationTool {
-    @Override @DefinedBy(Api.COMPILER)
+    @Override
     public DocumentationTask getTask(
             Writer out,
             JavaFileManager fileManager,
@@ -107,11 +105,11 @@ public class JavadocTool implements DocumentationTool {
                 context.put(DiagnosticListener.class, ccw.wrap(diagnosticListener));
 
             if (out == null)
-                context.put(Log.outKey, new PrintWriter(System.err, true));
+                context.put(Log.errKey, new PrintWriter(System.err, true));
             else if (out instanceof PrintWriter)
-                context.put(Log.outKey, ((PrintWriter) out));
+                context.put(Log.errKey, ((PrintWriter) out));
             else
-                context.put(Log.outKey, new PrintWriter(out, true));
+                context.put(Log.errKey, new PrintWriter(out, true));
 
             if (fileManager == null) {
                 fileManager = getStandardFileManager(diagnosticListener, null, null);
@@ -129,7 +127,7 @@ public class JavadocTool implements DocumentationTool {
     }
 
     // TODO: used shared static method in JavacFileManager
-    @Override @DefinedBy(Api.COMPILER)
+    @Override
     public StandardJavaFileManager getStandardFileManager(
             DiagnosticListener<? super JavaFileObject> diagnosticListener,
             Locale locale,
@@ -141,11 +139,11 @@ public class JavadocTool implements DocumentationTool {
         PrintWriter pw = (charset == null)
                 ? new PrintWriter(System.err, true)
                 : new PrintWriter(new OutputStreamWriter(System.err, charset), true);
-        context.put(Log.outKey, pw);
+        context.put(Log.errKey, pw);
         return new JavacFileManager(context, true, charset);
     }
 
-    @Override @DefinedBy(Api.COMPILER)
+    @Override
     public int run(InputStream in, OutputStream out, OutputStream err, String... arguments) {
         PrintWriter err_pw = new PrintWriter(err == null ? System.err : err, true);
         PrintWriter out_pw = new PrintWriter(out == null ? System.out : out);
@@ -157,13 +155,13 @@ public class JavadocTool implements DocumentationTool {
         }
     }
 
-    @Override @DefinedBy(Api.COMPILER)
+    @Override
     public Set<SourceVersion> getSourceVersions() {
         return Collections.unmodifiableSet(
                 EnumSet.range(SourceVersion.RELEASE_3, SourceVersion.latest()));
     }
 
-    @Override @DefinedBy(Api.COMPILER)
+    @Override
     public int isSupportedOption(String option) {
         if (option == null)
             throw new NullPointerException();
