@@ -34,7 +34,6 @@ import com.sun.tools.classfile.CharacterRangeTable_attribute;
 import com.sun.tools.classfile.CharacterRangeTable_attribute.Entry;
 import com.sun.tools.classfile.Code_attribute;
 import com.sun.tools.classfile.CompilationID_attribute;
-import com.sun.tools.classfile.ConcealedPackages_attribute;
 import com.sun.tools.classfile.ConstantPool;
 import com.sun.tools.classfile.ConstantPoolException;
 import com.sun.tools.classfile.ConstantValue_attribute;
@@ -51,6 +50,7 @@ import com.sun.tools.classfile.LocalVariableTypeTable_attribute;
 import com.sun.tools.classfile.MainClass_attribute;
 import com.sun.tools.classfile.MethodParameters_attribute;
 import com.sun.tools.classfile.Module_attribute;
+import com.sun.tools.classfile.Packages_attribute;
 import com.sun.tools.classfile.RuntimeInvisibleAnnotations_attribute;
 import com.sun.tools.classfile.RuntimeInvisibleParameterAnnotations_attribute;
 import com.sun.tools.classfile.RuntimeInvisibleTypeAnnotations_attribute;
@@ -237,7 +237,7 @@ public class AttributeWriter extends BasicWriter
         return null;
     }
 
-    private String getJavaPackage(ConcealedPackages_attribute attr, int index) {
+    private String getJavaPackage(Packages_attribute attr, int index) {
         try {
             return getJavaName(attr.getPackage(index, constant_pool));
         } catch (ConstantPoolException e) {
@@ -246,8 +246,8 @@ public class AttributeWriter extends BasicWriter
     }
 
     @Override
-    public Void visitConcealedPackages(ConcealedPackages_attribute attr, Void ignore) {
-        println("ConcealedPackages: ");
+    public Void visitPackages(Packages_attribute attr, Void ignore) {
+        println("Packages: ");
         indent(+1);
         for (int i = 0; i < attr.packages_count; i++) {
             print("#" + attr.packages_index[i]);

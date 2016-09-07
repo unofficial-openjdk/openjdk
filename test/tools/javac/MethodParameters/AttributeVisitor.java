@@ -34,7 +34,6 @@ class AttributeVisitor<R, P> implements Attribute.Visitor<R, P> {
     public R visitCharacterRangeTable(CharacterRangeTable_attribute attr, P p) { return null; }
     public R visitCode(Code_attribute attr, P p) { return null; }
     public R visitCompilationID(CompilationID_attribute attr, P p) { return null; }
-    public R visitConcealedPackages(ConcealedPackages_attribute attr, P p) { return null; }
     public R visitConstantValue(ConstantValue_attribute attr, P p) { return null; }
     public R visitDeprecated(Deprecated_attribute attr, P p) { return null; }
     public R visitEnclosingMethod(EnclosingMethod_attribute attr, P p) { return null; }
@@ -47,6 +46,7 @@ class AttributeVisitor<R, P> implements Attribute.Visitor<R, P> {
     public R visitMainClass(MainClass_attribute attr, P p) { return null; }
     public R visitMethodParameters(MethodParameters_attribute attr, P p) { return null; }
     public R visitModule(Module_attribute attr, P p) { return null; }
+    public R visitPackages(Packages_attribute attr, P p) { return null; }
     public R visitRuntimeVisibleAnnotations(RuntimeVisibleAnnotations_attribute attr, P p) { return null; }
     public R visitRuntimeInvisibleAnnotations(RuntimeInvisibleAnnotations_attribute attr, P p) { return null; }
     public R visitRuntimeVisibleParameterAnnotations(RuntimeVisibleParameterAnnotations_attribute attr, P p) { return null; }

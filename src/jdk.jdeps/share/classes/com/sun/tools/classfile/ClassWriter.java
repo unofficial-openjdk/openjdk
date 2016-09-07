@@ -419,7 +419,7 @@ public class ClassWriter {
         }
 
         @Override
-        public Void visitConcealedPackages(ConcealedPackages_attribute attr, ClassOutputStream out) {
+        public Void visitPackages(Packages_attribute attr, ClassOutputStream out) {
             out.writeShort(attr.packages_count);
             for (int i: attr.packages_index)
                 out.writeShort(i);
