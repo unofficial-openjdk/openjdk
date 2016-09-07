@@ -53,8 +53,8 @@ public final class ModuleInfoExtender {
     // the input stream to read the original module-info.class
     private final InputStream in;
 
-    // the packages in the ConcealedPackages attribute
-    private Set<String> conceals;
+    // the packages in the Packages attribute
+    private Set<String> packages;
 
     // the value of the Version attribute
     private Version version;
@@ -75,10 +75,10 @@ public final class ModuleInfoExtender {
     }
 
     /**
-     * Sets the set of packages for the ConcealedPackages attribute
+     * Sets the set of packages for the Packages attribute
      */
-    public ModuleInfoExtender conceals(Set<String> packages) {
-        this.conceals = Collections.unmodifiableSet(packages);
+    public ModuleInfoExtender packages(Set<String> packages) {
+        this.packages = Collections.unmodifiableSet(packages);
         return this;
     }
 
@@ -171,8 +171,8 @@ public final class ModuleInfoExtender {
 
         ClassReader cr = new ClassReader(in);
 
-        if (conceals != null)
-            cv.addAttribute(new ConcealedPackagesAttribute(conceals));
+        if (packages != null)
+            cv.addAttribute(new PackagesAttribute(packages));
         if (version != null)
             cv.addAttribute(new VersionAttribute(version));
         if (mainClass != null)
@@ -186,7 +186,7 @@ public final class ModuleInfoExtender {
 
         // prototypes of attributes that should be parsed
         attrs.add(new ModuleAttribute());
-        attrs.add(new ConcealedPackagesAttribute());
+        attrs.add(new PackagesAttribute());
         attrs.add(new VersionAttribute());
         attrs.add(new MainClassAttribute());
         attrs.add(new TargetPlatformAttribute());

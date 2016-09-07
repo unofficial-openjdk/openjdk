@@ -313,13 +313,13 @@ public final class ClassFileAttributes {
     }
 
     /**
-     * ConcealedPackages attribute.
+     * Packages attribute.
      *
      * <pre> {@code
      *
-     * ConcealedPackages_attribute {
+     * Packages_attribute {
      *   // index to CONSTANT_utf8_info structure in constant pool representing
-     *   // the string "ConcealedPackages"
+     *   // the string "Packages"
      *   u2 attribute_name_index;
      *   u4 attribute_length;
      *
@@ -331,15 +331,15 @@ public final class ClassFileAttributes {
      *
      * }</pre>
      */
-    public static class ConcealedPackagesAttribute extends Attribute {
+    public static class PackagesAttribute extends Attribute {
         private final Set<String> packages;
 
-        public ConcealedPackagesAttribute(Set<String> packages) {
-            super(CONCEALED_PACKAGES);
+        public PackagesAttribute(Set<String> packages) {
+            super(PACKAGES);
             this.packages = packages;
         }
 
-        public ConcealedPackagesAttribute() {
+        public PackagesAttribute() {
             this(null);
         }
 
@@ -363,7 +363,7 @@ public final class ClassFileAttributes {
                 off += 2;
             }
 
-            return new ConcealedPackagesAttribute(packages);
+            return new PackagesAttribute(packages);
         }
 
         @Override

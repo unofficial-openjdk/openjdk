@@ -432,7 +432,7 @@ public class JmodTask {
         /**
          * Writes the updated module-info.class to the ZIP output stream.
          *
-         * The updated module-info.class will have a ConcealedPackages attribute
+         * The updated module-info.class will have a Packages attribute
          * with the set of module-private/non-exported packages.
          *
          * If --module-version, --main-class, or other options were provided
@@ -457,7 +457,7 @@ public class JmodTask {
             try (InputStream in = miSupplier.get()) {
                 ModuleInfoExtender extender = ModuleInfoExtender.newExtender(in);
 
-                // Add (or replace) the ConcealedPackages attribute
+                // Add (or replace) the Packages attribute
                 if (packages != null) {
                     Set<String> exported = descriptor.exports().stream()
                         .map(ModuleDescriptor.Exports::source)
@@ -465,7 +465,7 @@ public class JmodTask {
                     Set<String> concealed = packages.stream()
                         .filter(p -> !exported.contains(p))
                         .collect(Collectors.toSet());
-                    extender.conceals(concealed);
+                    extender.packages(concealed);
                 }
 
                 // --main-class

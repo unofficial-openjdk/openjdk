@@ -59,7 +59,7 @@ import static jdk.internal.module.ClassFileConstants.*;
 
 final class ModuleInfo {
 
-    // supplies the set of packages when ConcealedPackages not present
+    // supplies the set of packages when Packages attribute not present
     private final Supplier<Set<String>> packageFinder;
 
     // indicates if the Hashes attribute should be parsed
@@ -192,7 +192,7 @@ final class ModuleInfo {
         Set<String> attributes = new HashSet<>();
 
         Builder builder = null;
-        Set<String> conceals = null;
+        Set<String> packages = null;
         String version = null;
         String mainClass = null;
         String[] osValues = null;
@@ -215,8 +215,8 @@ final class ModuleInfo {
                     builder = readModuleAttribute(mn, in, cpool);
                     break;
 
-                case CONCEALED_PACKAGES :
-                    conceals = readConcealedPackagesAttribute(in, cpool);
+                case PACKAGES :
+                    packages = readPackagesAttribute(in, cpool);
                     break;
 
                 case VERSION :
@@ -255,25 +255,23 @@ final class ModuleInfo {
             throw invalidModuleDescriptor(MODULE + " attribute not found");
         }
 
-        // If the ConcealedPackages attribute is not present then the
-        // packageFinder is used to to find any non-exported packages.
-        if (conceals == null && packageFinder != null) {
-            Set<String> pkgs;
+        // If the Packages attribute is not present then the packageFinder is
+        // used to find the set of packages
+        if (packages == null && packageFinder != null) {
             try {
-                pkgs = new HashSet<>(packageFinder.get());
+                packages = new HashSet<>(packageFinder.get());
             } catch (UncheckedIOException x) {
                 throw x.getCause();
             }
-            pkgs.removeAll(builder.exportedPackages());
-            conceals = pkgs;
         }
-        if (conceals != null) {
+        if (packages != null) {
+            packages.removeAll(builder.exportedPackages());
             if (builder.isWeakModule()) {
                 Set<Exports.Modifier> ms = EnumSet.of(Exports.Modifier.PRIVATE);
                 Builder b = builder;
-                conceals.forEach(p -> b.exports(ms, p));
+                packages.forEach(p -> b.exports(ms, p));
             } else {
-                builder.conceals(conceals);
+                builder.conceals(packages);
             }
         }
 
@@ -416,9 +414,9 @@ final class ModuleInfo {
     }
 
     /**
-     * Reads the ConcealedPackages attribute
+     * Reads the Packages attribute
      */
-    private Set<String> readConcealedPackagesAttribute(DataInput in, ConstantPool cpool)
+    private Set<String> readPackagesAttribute(DataInput in, ConstantPool cpool)
         throws IOException
     {
         Set<String> conceals = new HashSet<>();
@@ -511,7 +509,7 @@ final class ModuleInfo {
         if (name.equals(MODULE) ||
                 name.equals(SOURCE_FILE) ||
                 name.equals(SDE) ||
-                name.equals(CONCEALED_PACKAGES) ||
+                name.equals(PACKAGES) ||
                 name.equals(VERSION) ||
                 name.equals(MAIN_CLASS) ||
                 name.equals(TARGET_PLATFORM) ||

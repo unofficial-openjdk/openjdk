@@ -2050,8 +2050,8 @@ class Main {
         InputStream is = new ByteArrayInputStream(miBytes);
         ModuleInfoExtender extender = ModuleInfoExtender.newExtender(is);
 
-        // Add (or replace) the ConcealedPackages attribute
-        extender.conceals(conceals);
+        // Add (or replace) the Packages attribute
+        extender.packages(conceals);
 
         // --main-class
         if (ename != null)

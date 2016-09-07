@@ -895,7 +895,7 @@ public class ModuleDescriptorTest {
 
     public void testReadsWithPackageFinder() {
         // TBD: Need way to write a module-info.class without a
-        // ConcealedPackages attribute
+        // Packages attribute
     }
 
     @Test(expectedExceptions = InvalidModuleDescriptorException.class)

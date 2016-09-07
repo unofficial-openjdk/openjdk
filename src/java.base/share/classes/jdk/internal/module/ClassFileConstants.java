@@ -38,7 +38,7 @@ public class ClassFileConstants {
     public static final String SYNTHETIC          = "Synthetic";
     public static final String SDE                = "SourceDebugExtension";
 
-    public static final String CONCEALED_PACKAGES = "ConcealedPackages";
+    public static final String PACKAGES           = "Packages";
     public static final String VERSION            = "Version";
     public static final String MAIN_CLASS         = "MainClass";
     public static final String TARGET_PLATFORM    = "TargetPlatform";

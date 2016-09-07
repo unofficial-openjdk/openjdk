@@ -60,7 +60,7 @@ import jdk.tools.jlink.plugin.ResourcePoolEntry;
 
 /**
  * Jlink plugin to reconstitute module descriptors for system modules.
- * It will extend module-info.class with ConcealedPackages attribute,
+ * It will extend module-info.class with Packages attribute,
  * if not present. It also determines the number of packages of
  * the boot layer at link time.
  *
@@ -132,7 +132,7 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                 int packages = md.exports().size() + md.conceals().size();
                 if (md.conceals().isEmpty() &&
                         packages != module.packages().size()) {
-                    // add ConcealedPackages attribute if not exist
+                    // add Packages attribute if not exist
                     bain.reset();
                     ModuleInfoRewriter minfoWriter =
                         new ModuleInfoRewriter(bain, mbuilder.conceals());
@@ -163,14 +163,14 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
     }
 
     /*
-     * Add ConcealedPackages attribute
+     * Add Packages attribute
      */
     class ModuleInfoRewriter extends ByteArrayOutputStream {
         final ModuleInfoExtender extender;
         ModuleInfoRewriter(InputStream in, Set<String> conceals) throws IOException {
             this.extender = ModuleInfoExtender.newExtender(in);
-            // Add ConcealedPackages attribute
-            this.extender.conceals(conceals);
+            // Add Packages attribute
+            this.extender.packages(conceals);
             this.extender.write(this);
         }
 
@@ -466,7 +466,7 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
 
             /*
              * Returns the set of concealed packages from ModuleDescriptor, if present
-             * or compute it if the module does not have ConcealedPackages attribute
+             * or compute it if the module does not have Packages attribute
              */
             Set<String> conceals() {
                 Set<String> conceals = md.conceals();

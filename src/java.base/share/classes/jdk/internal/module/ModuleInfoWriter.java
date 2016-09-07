@@ -57,9 +57,9 @@ public final class ModuleInfoWriter {
 
         cw.visitAttribute(new ModuleAttribute(md));
 
-        Set<String> conceals = md.conceals();
-        if (conceals.size() > 0)
-            cw.visitAttribute(new ConcealedPackagesAttribute(md.conceals()));
+        // for tests, only write the Packages attribute when there are concealed packages
+        if (md.conceals().size() > 0)
+            cw.visitAttribute(new PackagesAttribute(md.packages()));
 
         md.version().ifPresent(v -> cw.visitAttribute(new VersionAttribute(v)));
         md.mainClass().ifPresent(mc -> cw.visitAttribute(new MainClassAttribute(mc)));

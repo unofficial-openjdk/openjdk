@@ -55,7 +55,7 @@ import jdk.internal.perf.PerfCounter;
  * run-time image.
  *
  * The modules linked into the run-time image are assumed to have the
- * ConcealedPackages attribute.
+ * Packages attribute.
  */
 
 class SystemModuleFinder implements ModuleFinder {
