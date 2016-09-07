@@ -229,7 +229,7 @@ public interface ModuleFinder {
      *
      *         <li><p> If the name matches the regular expression {@code
      *         "-(\\d+(\\.|$))"} then the module name will be derived from the
-     *         subsequence proceeding the hyphen of the first occurrence. The
+     *         subsequence preceding the hyphen of the first occurrence. The
      *         subsequence after the hyphen is parsed as a {@link
      *         ModuleDescriptor.Version} and ignored if it cannot be parsed as
      *         a {@code Version}. </p></li>

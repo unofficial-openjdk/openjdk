@@ -1296,7 +1296,7 @@ public final class Module implements AnnotatedElement {
      *
      * <ul>
      *     <li> The <em>package name</em> of the resource is derived from the
-     *     subsequence of characters that proceeds the last {@code '/'} and then
+     *     subsequence of characters that precedes the last {@code '/'} and then
      *     replacing each {@code '/'} character in the subsequence with
      *     {@code '.'}. For example, the package name derived for a resource
      *     named "{@code a/b/c/foo.properties}" is "{@code a.b.c}". </li>
