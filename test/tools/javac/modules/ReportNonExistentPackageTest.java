@@ -103,4 +103,45 @@ public class ReportNonExistentPackageTest extends ModuleTestBase {
         if (!log.contains("module-info.java:1:20: compiler.err.package.empty.or.not.found: p1"))
             throw new Exception("expected output not found");
     }
+
+    @Test
+    public void testExportPrivateEmptyPackage(Path base) throws Exception {
+        Path src = base.resolve("src");
+        tb.writeJavaFiles(src,
+                "module m { exports private p; }");
+        Path classes = base.resolve("classes");
+        Files.createDirectories(classes);
+
+        String log = new JavacTask(tb)
+                .options("-XDrawDiagnostics")
+                .outdir(classes)
+                .files(findJavaFiles(src))
+                .run(Task.Expect.FAIL)
+                .writeAll()
+                .getOutput(Task.OutputKind.DIRECT);
+        if (!log.contains("module-info.java:1:28: compiler.err.package.empty.or.not.found: p"))
+            throw new Exception("expected output not found, actual output: " + log);
+    }
+
+    @Test
+    public void testExportPrivateOnlyWithResources(Path base) throws Exception {
+        Path src = base.resolve("src");
+        tb.writeJavaFiles(src,
+                "module m { exports private p; }");
+        Path resource = src.resolve("p").resolve("resource.properties");
+        Files.createDirectories(resource.getParent());
+        Files.newOutputStream(resource).close();
+        Path classes = base.resolve("classes");
+        Files.createDirectories(classes);
+
+        String log = new JavacTask(tb)
+                .sourcepath(src.toString())
+                .outdir(classes)
+                .files(findJavaFiles(src))
+                .run()
+                .writeAll()
+                .getOutput(Task.OutputKind.DIRECT);
+        if (!log.equals(""))
+            throw new Exception("expected output not found, actual output: " + log);
+    }
 }

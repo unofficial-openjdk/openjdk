@@ -813,7 +813,8 @@ public class Modules extends JCTree.Visitor {
 
         @Override
         public void visitExports(JCExports tree) {
-            if (tree.directive.packge != null && tree.directive.packge.members().isEmpty()) {
+            if (tree.directive.packge.members().isEmpty() &&
+                (!tree.directive.isPrivate() || (tree.directive.packge.flags() & Flags.HAS_RESOURCE) == 0)) {
                 log.error(tree.qualid.pos(), Errors.PackageEmptyOrNotFound(tree.directive.packge));
             }
             msym.directives = msym.directives.prepend(tree.directive);
