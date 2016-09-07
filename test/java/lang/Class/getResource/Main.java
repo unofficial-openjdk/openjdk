@@ -24,7 +24,6 @@
 import java.lang.module.Configuration;
 import java.lang.module.ResolvedModule;
 import java.lang.reflect.Layer;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -44,14 +43,16 @@ public class Main {
     public static void main(String[] args) throws IOException {
 
         // create resources in m1
-        createResource("m1", Paths.get("."));
-        createResource("m1", Paths.get("p1"));
-        createResource("m1", Paths.get("p1", "impl"));
+        createResource("m1", Paths.get("."), "m1");
+        createResource("m1", Paths.get("p1"), "m1/p1");
+        createResource("m1", Paths.get("p1", "impl"), "m1/p1.impl");
+        createResource("m1", Paths.get("p1", "resources"), "m1/p1.resources");
 
         // create resources in m2
-        createResource("m2", Paths.get("."));
-        createResource("m2", Paths.get("p2"));
-        createResource("m2", Paths.get("p2", "impl"));
+        createResource("m2", Paths.get("."), "m2");
+        createResource("m2", Paths.get("p2"), "m2/p2");
+        createResource("m2", Paths.get("p2", "impl"), "m2/p2.impl");
+        createResource("m2", Paths.get("p2", "resources"), "m2/p2.resources");
 
 
         // invoke Class getResource from an unnamed module.
@@ -59,15 +60,22 @@ public class Main {
         assertNotNull(url);
 
         url = Main.class.getResource("/p1/" + NAME);
-        assertEquals(readAllAsString(url), "m1");
+        assertNull(url);
 
         url = Main.class.getResource("/p1/impl/" + NAME);
         assertNull(url);
 
+        url = Main.class.getResource("/p1/resources/" + NAME);
+        assertEquals(readAllAsString(url), "m1/p1.resources");
+
         url = Main.class.getResource("/p2/" + NAME);
-        assertEquals(readAllAsString(url), "m2");
+        assertNull(url);
 
         url = Main.class.getResource("/p2/impl/" + NAME);
+        assertNull(url);
+
+        // m1: exports private p1.resources
+        url = Main.class.getResource("/p2/resources/" + NAME);
         assertNull(url);
 
 
@@ -76,50 +84,56 @@ public class Main {
         assertEquals(readAllAsString(url), "m1");
 
         url = p1.Main.getResource("/p1/" + NAME);
-        assertEquals(readAllAsString(url), "m1");
+        assertEquals(readAllAsString(url), "m1/p1");
 
         url = p1.Main.getResource("/p1/impl/" + NAME);
-        assertEquals(readAllAsString(url), "m1");
+        assertEquals(readAllAsString(url), "m1/p1.impl");
+
+        url = p1.Main.getResource("/p1/resources/" + NAME);
+        assertEquals(readAllAsString(url), "m1/p1.resources");
+
+        // m2: not a named package
+        url = p1.Main.getResource(p2.Main.class, "/" + NAME);
+        assertEquals(readAllAsString(url), "m2");
 
         url = p1.Main.getResource(p2.Main.class, "/p2/" + NAME);
-        assertEquals(readAllAsString(url), "m2");
+        assertNull(url);
 
+        // m2: exports p2.impl to m1
         url = p1.Main.getResource(p2.Main.class, "/p2/impl/" + NAME);
-        assertEquals(readAllAsString(url), "m2");
+        assertNull(url);
+
+        // m2: exports private p2.resources to m1;
+        url = p1.Main.getResource(p2.Main.class, "/p2/resources/" + NAME);
+        assertEquals(readAllAsString(url), "m2/p2.resources");
 
 
         // invoke Class getResource from module m2
         url = p2.Main.getResource("/" + NAME);
         assertEquals(readAllAsString(url), "m2");
 
-        url = p2.Main.getResource(p1.Main.class, "/p1/" + NAME);
+        url = p2.Main.getResource("/p2/" + NAME);
+        assertEquals(readAllAsString(url), "m2/p2");
+
+        url = p2.Main.getResource("/p2/impl/" + NAME);
+        assertEquals(readAllAsString(url), "m2/p2.impl");
+
+        url = p2.Main.getResource("/p2/resources/" + NAME);
+        assertEquals(readAllAsString(url), "m2/p2.resources");
+
+        // m1: not a named package
+        url = p2.Main.getResource(p1.Main.class, "/" + NAME);
         assertEquals(readAllAsString(url), "m1");
+
+        url = p2.Main.getResource(p1.Main.class, "/p1/" + NAME);
+        assertNull(url);
 
         url = p2.Main.getResource(p1.Main.class, "/p1/impl/" + NAME);
         assertNull(url);
 
-        url = p2.Main.getResource("/p2/" + NAME);
-        assertEquals(readAllAsString(url), "m2");
-
-        url = p2.Main.getResource("/p2/impl/" + NAME);
-        assertEquals(readAllAsString(url), "m2");
-
-
-        // invoke Class getResource from module m3
-        url = p3.Main.getResource("/" + NAME);
-        assertNull(url);
-
-        url = p3.Main.getResource(p1.Main.class, "/p1/" + NAME);
-        assertEquals(readAllAsString(url), "m1");
-
-        url = p3.Main.getResource(p1.Main.class, "/p1/impl/" + NAME);
-        assertNull(url);
-
-        url = p3.Main.getResource(p2.Main.class, "/p2/" + NAME);
-        assertEquals(readAllAsString(url), "m2");
-
-        url = p3.Main.getResource(p2.Main.class, "/p2/impl/" + NAME);
-        assertNull(url);
+        // m1: exports private p1.resources;
+        url = p2.Main.getResource(p1.Main.class, "/p1/resources/" + NAME);
+        assertEquals(readAllAsString(url), "m1/p1.resources");
 
 
         // invoke Class getResourceAsStream from an unnamed module.
@@ -127,15 +141,21 @@ public class Main {
         assertNotNull(in);
 
         in = Main.class.getResourceAsStream("/p1/" + NAME);
-        assertEquals(readAllAsString(in), "m1");
+        assertNull(in);
 
         in = Main.class.getResourceAsStream("/p1/impl/" + NAME);
         assertNull(in);
 
+        in = Main.class.getResourceAsStream("/p1/resources/" + NAME);
+        assertEquals(readAllAsString(in), "m1/p1.resources");
+
         in = Main.class.getResourceAsStream("/p2/" + NAME);
-        assertEquals(readAllAsString(in), "m2");
+        assertNull(in);
 
         in = Main.class.getResourceAsStream("/p2/impl/" + NAME);
+        assertNull(in);
+
+        in = Main.class.getResourceAsStream("/p2/resources/" + NAME);
         assertNull(in);
 
 
@@ -144,50 +164,52 @@ public class Main {
         assertEquals(readAllAsString(in), "m1");
 
         in = p1.Main.getResourceAsStream("/p1/" + NAME);
-        assertEquals(readAllAsString(in), "m1");
+        assertEquals(readAllAsString(in), "m1/p1");
 
         in = p1.Main.getResourceAsStream("/p1/impl/" + NAME);
-        assertEquals(readAllAsString(in), "m1");
+        assertEquals(readAllAsString(in), "m1/p1.impl");
+
+        in = p1.Main.getResourceAsStream("/p1/resources/" + NAME);
+        assertEquals(readAllAsString(in), "m1/p1.resources");
+
+        in = p1.Main.getResourceAsStream(p2.Main.class, "/" + NAME);
+        assertEquals(readAllAsString(in), "m2");
 
         in = p1.Main.getResourceAsStream(p2.Main.class, "/p2/" + NAME);
-        assertEquals(readAllAsString(in), "m2");
+        assertNull(in);
 
         in = p1.Main.getResourceAsStream(p2.Main.class, "/p2/impl/" + NAME);
-        assertEquals(readAllAsString(in), "m2");
+        assertNull(in);
+
+        in = p1.Main.getResourceAsStream(p2.Main.class, "/p2/resources/" + NAME);
+        assertEquals(readAllAsString(in), "m2/p2.resources");
 
 
         // invoke Class getResourceAsStream from module m2
         in = p2.Main.getResourceAsStream("/" + NAME);
         assertEquals(readAllAsString(in), "m2");
 
-        in = p2.Main.getResourceAsStream(p1.Main.class, "/p1/" + NAME);
+        in = p2.Main.getResourceAsStream("/p2/" + NAME);
+        assertEquals(readAllAsString(in), "m2/p2");
+
+        in = p2.Main.getResourceAsStream("/p2/impl/" + NAME);
+        assertEquals(readAllAsString(in), "m2/p2.impl");
+
+        in = p2.Main.getResourceAsStream("/p2/resources/" + NAME);
+        assertEquals(readAllAsString(in), "m2/p2.resources");
+
+        in = p2.Main.getResourceAsStream(p1.Main.class, "/" + NAME);
         assertEquals(readAllAsString(in), "m1");
+
+        in = p2.Main.getResourceAsStream(p1.Main.class, "/p1/" + NAME);
+        assertNull(in);
 
         in = p2.Main.getResourceAsStream(p1.Main.class, "/p1/impl/" + NAME);
         assertNull(in);
 
-        in = p2.Main.getResourceAsStream("/p2/" + NAME);
-        assertEquals(readAllAsString(in), "m2");
+        in = p2.Main.getResourceAsStream(p1.Main.class, "/p1/resources/" + NAME);
+        assertEquals(readAllAsString(in), "m1/p1.resources");
 
-        in = p2.Main.getResourceAsStream("/p2/impl/" + NAME);
-        assertEquals(readAllAsString(in), "m2");
-
-
-        // invoke Class getResourceAsStream from module m3
-        in = p3.Main.getResourceAsStream("/" + NAME);
-        assertNull(url);
-
-        in = p3.Main.getResourceAsStream(p1.Main.class, "/p1/" + NAME);
-        assertEquals(readAllAsString(in), "m1");
-
-        in = p3.Main.getResourceAsStream(p1.Main.class, "/p1/impl/" + NAME);
-        assertNull(in);
-
-        in = p3.Main.getResourceAsStream(p2.Main.class, "/p2/" + NAME);
-        assertEquals(readAllAsString(in), "m2");
-
-        in = p3.Main.getResourceAsStream(p2.Main.class, "/p2/impl/" + NAME);
-        assertNull(in);
 
         // Nulls
         try {
@@ -213,12 +235,10 @@ public class Main {
         assertNull(Main.class.getResource("/" + NAME));
         assertNull(p1.Main.getResource("/" + NAME));
         assertNull(p2.Main.getResource("/" + NAME));
-        assertNull(p3.Main.getResource("/" + NAME));
 
         assertNull(Main.class.getResourceAsStream("/" + NAME));
         assertNull(p1.Main.getResourceAsStream("/" + NAME));
         assertNull(p2.Main.getResourceAsStream("/" + NAME));
-        assertNull(p3.Main.getResourceAsStream("/" + NAME));
 
         System.out.println("Success!");
     }
@@ -226,10 +246,10 @@ public class Main {
     /**
      * Create a resource in the sub-directory of the given exploded module
      */
-    static void createResource(String mn, Path subdir) throws IOException {
+    static void createResource(String mn, Path subdir, String msg) throws IOException {
         Path dir = directoryFor(mn).resolve(subdir);
         Path file = dir.resolve(NAME);
-        Files.write(file, mn.getBytes("UTF-8"));
+        Files.write(file, msg.getBytes("UTF-8"));
     }
 
     /**

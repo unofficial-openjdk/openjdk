@@ -1314,9 +1314,9 @@ public abstract class ClassLoader {
      *
      * <p> Resources in named modules are subject to the encapsulation rules
      * specified by {@link Module#getResourceAsStream Module.getResourceAsStream}.
-     * Additionally, and aside from the special case that is resources ending
-     * with "{@code .class}", this method does not find resources in packages
-     * of named modules unless the package is exported unconditionally. </p>
+     * Additionally, and except for the special case where the resource has a
+     * name ending with "{@code .class}", this method will only find resources in
+     * packages of named modules when the package is exported-private. </p>
      *
      * @apiNote Where several modules are defined to the same class loader,
      * and where more than one module contains a resource with the given name,
@@ -1332,8 +1332,8 @@ public abstract class ClassLoader {
      * @return  {@code URL} object for reading the resource; {@code null} if
      *          the resource could not be found, a {@code URL} could not be
      *          constructed to locate the resource, the resource is in a package
-     *          that is not exported unconditionally, or access to the resource
-     *          is denied by the security manager.
+     *          that is not unconditionally exported-private, or access to the
+     *          resource is denied by the security manager.
      *
      * @since  1.1
      */
@@ -1363,9 +1363,9 @@ public abstract class ClassLoader {
      *
      * <p> Resources in named modules are subject to the encapsulation rules
      * specified by {@link Module#getResourceAsStream Module.getResourceAsStream}.
-     * Additionally, and aside from the special case that is resources ending
-     * with "{@code .class}", this method does not find resources in packages
-     * of named modules unless the package is exported unconditionally. </p>
+     * Additionally, and except for the special case where the resource has a
+     * name ending with "{@code .class}", this method will only find resources in
+     * packages of named modules when the package is exported-private. </p>
      *
      * @apiNote Where several modules are defined to the same class loader,
      * and where more than one module contains a resource with the given name,
@@ -1383,8 +1383,8 @@ public abstract class ClassLoader {
      * @return  An enumeration of {@link java.net.URL <tt>URL</tt>} objects for
      *          the resource. If no resources could  be found, the enumeration
      *          will be empty. Resources for which a {@code URL} cannot be
-     *          constructed, are not in a package that is exported
-     *          unconditionally, or access to the resource is denied by the
+     *          constructed, are not in a package that is unconditionally
+     *          exported-private, or access to the resource is denied by the
      *          security manager, are not returned in the enumeration.
      *
      * @throws  IOException
@@ -1415,7 +1415,7 @@ public abstract class ClassLoader {
      * rules for encapsulation specified in the {@code Module} {@link
      * Module#getResourceAsStream getResourceAsStream} method. Additionally,
      * it must not find non-"{@code .class}" resources in packages of named
-     * modules unless the package is exported unconditionally. </p>
+     * modules unless the package is unconditionally exported-private. </p>
      *
      * @param  name
      *         The resource name
@@ -1423,8 +1423,8 @@ public abstract class ClassLoader {
      * @return  {@code URL} object for reading the resource; {@code null} if
      *          the resource could not be found, a {@code URL} could not be
      *          constructed to locate the resource, the resource is in a package
-     *          that is not exported unconditionally, or access to the resource
-     *          is denied by the security manager.
+     *          that is not unconditionally exported-private, or access to the
+     *          resource is denied by the security manager.
      *
      * @since  1.2
      */
@@ -1442,7 +1442,7 @@ public abstract class ClassLoader {
      * rules for encapsulation specified in the {@code Module} {@link
      * Module#getResourceAsStream getResourceAsStream} method. Additionally,
      * it must not find non-"{@code .class}" resources in packages of named
-     * modules unless the package is exported unconditionally. </p>
+     * modules unless the package is unconditionally exported-private. </p>
      *
      * @param  name
      *         The resource name
@@ -1450,8 +1450,8 @@ public abstract class ClassLoader {
      * @return  An enumeration of {@link java.net.URL <tt>URL</tt>} objects for
      *          the resource. If no resources could  be found, the enumeration
      *          will be empty. Resources for which a {@code URL} cannot be
-     *          constructed, are not in a package that is exported
-     *          unconditionally, or access to the resource is denied by the
+     *          constructed, are not in a package that is unconditionally
+     *          exported-private, or access to the resource is denied by the
      *          security manager, are not returned in the enumeration.
      *
      * @throws  IOException
@@ -1494,9 +1494,9 @@ public abstract class ClassLoader {
      *
      * <p> Resources in named modules are subject to the encapsulation rules
      * specified by {@link Module#getResourceAsStream Module.getResourceAsStream}.
-     * Additionally, and aside from the special case that is resources ending
-     * with "{@code .class}", this method does not find resources in packages
-     * of named modules unless the package is exported unconditionally. </p>
+     * Additionally, and except for the special case where the resource has a
+     * name ending with "{@code .class}", this method will only find resources in
+     * packages of named modules when the package is exported-private. </p>
      *
      * @param  name
      *         The resource name
@@ -1504,8 +1504,8 @@ public abstract class ClassLoader {
      * @return  A {@link java.net.URL <tt>URL</tt>} to the resource; {@code
      *          null} if the resource could not be found, a URL could not be
      *          constructed to locate the resource, the resource is in a package
-     *          that is not exported unconditionally, or access to the resource
-     *          is denied by the security manager.
+     *          that is not unconditionally exported-private or access to the
+     *          resource is denied by the security manager.
      *
      * @since  1.1
      */
@@ -1528,9 +1528,9 @@ public abstract class ClassLoader {
      *
      * <p> Resources in named modules are subject to the encapsulation rules
      * specified by {@link Module#getResourceAsStream Module.getResourceAsStream}.
-     * Additionally, and aside from the special case that is resources ending
-     * with "{@code .class}", this method does not find resources in packages
-     * of named modules unless the package is exported unconditionally. </p>
+     * Additionally, and except for the special case where the resource has a
+     * name ending with "{@code .class}", this method will only find resources in
+     * packages of named modules when the package is exported-private. </p>
      *
      * @param  name
      *         The resource name
@@ -1538,8 +1538,8 @@ public abstract class ClassLoader {
      * @return  An enumeration of {@link java.net.URL <tt>URL</tt>} objects for
      *          the resource. If no resources could  be found, the enumeration
      *          will be empty. Resources for which a {@code URL} cannot be
-     *          constructed, are not in a package that is exported
-     *          unconditionally, or access to the resource is denied by the
+     *          constructed, are not in a package that is unconditionally
+     *          exported-private, or access to the resource is denied by the
      *          security manager, are not returned in the enumeration.
      *
      * @throws  IOException
@@ -1565,17 +1565,17 @@ public abstract class ClassLoader {
      *
      * <p> Resources in named modules are subject to the encapsulation rules
      * specified by {@link Module#getResourceAsStream Module.getResourceAsStream}.
-     * Additionally, and aside from the special case that is resources ending
-     * with "{@code .class}", this method does not find resources in packages
-     * of named modules unless the package is exported unconditionally. </p>
+     * Additionally, and except for the special case where the resource has a
+     * name ending with "{@code .class}", this method will only find resources in
+     * packages of named modules when the package is exported-private. </p>
      *
      * @param  name
      *         The resource name
      *
      * @return  An input stream for reading the resource; {@code null} if the
      *          resource could not be found, the resource is in a package that
-     *          is not exported unconditionally, or access to the resource is
-     *          denied by the security manager.
+     *          is not unconditionally exported-private, or access to the
+     *          resource is denied by the security manager.
      *
      * @since  1.1
      */
@@ -1595,17 +1595,17 @@ public abstract class ClassLoader {
      *
      * <p> Resources in named modules are subject to the encapsulation rules
      * specified by {@link Module#getResourceAsStream Module.getResourceAsStream}.
-     * Additionally, and aside from the special case that is resources ending
-     * with "{@code .class}", this method does not find resources in packages
-     * of named modules unless the package is exported unconditionally. </p>
+     * Additionally, and except for the special case where the resource has a
+     * name ending with "{@code .class}", this method will only find resources in
+     * packages of named modules when the package is exported-private. </p>
      *
      * @param  name
      *         The resource name
      *
      * @return  An input stream for reading the resource; {@code null} if the
      *          resource could not be found, the resource is in a package that
-     *          is not exported unconditionally, or access to the resource is
-     *          denied by the security manager.
+     *          is not unconditionally exported-private, or access to the
+     *          resource is denied by the security manager.
      *
      * @since  1.1
      */

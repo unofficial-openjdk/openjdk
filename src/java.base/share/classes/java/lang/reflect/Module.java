@@ -1302,11 +1302,11 @@ public final class Module implements AnnotatedElement {
      *     named "{@code a/b/c/foo.properties}" is "{@code a.b.c}". </li>
      *
      *     <li> If the package name is a package in the module then the package
-     *     must be exported to the module of the caller of this method. If the
-     *     package is not in the module then the resource is not encapsulated.
-     *     Resources in the unnamed package or "{@code META-INF}", for example,
-     *     are never encapsulated because they can never be packages in a named
-     *     module. </li>
+     *     must be {@link #isExportedPrivate exported-private} to the module of
+     *     the caller of this method. If the package is not in the module then
+     *     the resource is not encapsulated. Resources in the unnamed package
+     *     or "{@code META-INF}", for example, are never encapsulated because
+     *     they can never be packages in a named module. </li>
      *
      *     <li> As a special case, resources ending with "{@code .class}" are
      *     never encapsulated. </li>

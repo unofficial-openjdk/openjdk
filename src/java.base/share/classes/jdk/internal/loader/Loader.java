@@ -350,7 +350,7 @@ public final class Loader extends SecureClassLoader {
         String pn = ResourceHelper.getPackageName(name);
         LoadedModule module = localPackageToModule.get(pn);
         if (module != null) {
-            if (name.endsWith(".class") || isExported(module.mref(), pn)) {
+            if (name.endsWith(".class") || isExportedPrivate(module.mref(), pn)) {
                 try {
                     url = findResource(module.name(), name);
                 } catch (IOException ioe) {
@@ -377,7 +377,7 @@ public final class Loader extends SecureClassLoader {
         String pn = ResourceHelper.getPackageName(name);
         LoadedModule module = localPackageToModule.get(pn);
         if (module != null) {
-            if (name.endsWith(".class") || isExported(module.mref(), pn)) {
+            if (name.endsWith(".class") || isExportedPrivate(module.mref(), pn)) {
                 try {
                     URL url = findResource(module.name(), name);
                     if (url != null)
@@ -627,10 +627,11 @@ public final class Loader extends SecureClassLoader {
      * exports. This will be replaced once the ModuleDescriptor.Exports
      * API is updated.
      */
-    private boolean isExported(ModuleReference mref, String pn) {
+    private boolean isExportedPrivate(ModuleReference mref, String pn) {
         for (ModuleDescriptor.Exports e : mref.descriptor().exports()) {
             String source = e.source();
-            if (!e.isQualified() && source.equals(pn)) {
+            if (!e.isQualified() && source.equals(pn)
+                    && e.modifiers().contains(Exports.Modifier.PRIVATE)) {
                 return true;
             }
         }
