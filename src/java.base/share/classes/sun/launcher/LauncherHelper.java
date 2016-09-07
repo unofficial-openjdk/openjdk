@@ -473,30 +473,20 @@ public final class LauncherHelper {
      * Add-Exports and Add-Exports-All attributes
      */
     static void addExports(String exports, String exportsPrivate) {
-        // set of all values, to ensure no duplicates
-        Set<String> values = new HashSet<>();
         if (exports != null)
-            addExports(exports, false, values);
+            addExports(exports, false);
         if (exportsPrivate != null)
-            addExports(exportsPrivate, true, values);
+            addExports(exportsPrivate, true);
     }
 
     /**
-     * Process Add-Exports or Add-Exports-All value. The value is
+     * Process the Add-Exports or Add-Exports-All value. The value is
      * {@code <module>/<package> ( <module>/<package>)*}.
      */
-    static void addExports(String value, boolean nonPublic, Set<String> values) {
+    static void addExports(String value, boolean nonPublic) {
         for (String moduleAndPackage : value.split(" ")) {
             String[] s = moduleAndPackage.trim().split("/");
             if (s.length == 2) {
-
-                // ensure that module/package is specified at most once
-                boolean added = values.add(moduleAndPackage);
-                if (!added) {
-                    abort(null, "java.launcher.jar.error4", moduleAndPackage,
-                            ADD_EXPORTS, ADD_EXPORTS_PRIVATE);
-                }
-
                 String mn = s[0];
                 String pn = s[1];
                 Layer.boot().findModule(mn).ifPresent(m -> {

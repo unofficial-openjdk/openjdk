@@ -123,6 +123,10 @@ public class AddExportsInManifest {
                 + " java.base/jdk.internal.loader");
         runExpectingPass("Main-Class=Test1,Add-Exports=java.base/jdk.internal.loader"
                 + " java.base/jdk.internal.misc");
+
+        // run with duplicate values
+        runExpectingPass("Main-Class=Test1,Add-Exports=java.base/jdk.internal.misc"
+                + " java.base/jdk.internal.misc");
     }
 
     /**
@@ -140,6 +144,10 @@ public class AddExportsInManifest {
         runExpectingPass("Main-Class=Test1,Add-Exports-Private=java.base/jdk.internal.misc"
                 + " java.base/jdk.internal.loader");
         runExpectingPass("Main-Class=Test1,Add-Exports-Private=java.base/jdk.internal.loader"
+                + " java.base/jdk.internal.misc");
+
+        // run with duplicate values
+        runExpectingPass("Main-Class=Test1,Add-Exports-Private=java.base/jdk.internal.misc"
                 + " java.base/jdk.internal.misc");
     }
 
