@@ -1082,7 +1082,8 @@ public class Modules extends JCTree.Visitor {
             @Override
             public void complete(Symbol sym) throws CompletionFailure {
                 ModuleSymbol msym = (ModuleSymbol) sym;
-                Set<ModuleSymbol> allModules = allModules();
+                Set<ModuleSymbol> allModules = new HashSet<>(allModules());
+                allModules.remove(syms.unnamedModule);
                 for (ModuleSymbol m : allModules) {
                     m.complete();
                 }
