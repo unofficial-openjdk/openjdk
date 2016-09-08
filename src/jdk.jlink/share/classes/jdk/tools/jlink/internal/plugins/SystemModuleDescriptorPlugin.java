@@ -115,27 +115,26 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
         // generate the byte code to create ModuleDescriptors
         // skip parsing module-info.class and skip name check
         in.moduleView().modules().forEach(module -> {
-            Optional<ResourcePoolEntry> optData = module.findEntry("module-info.class");
-            if (! optData.isPresent()) {
+            ResourcePoolEntry data = module.findEntry("module-info.class").orElseThrow(
                 // automatic module not supported yet
-                throw new PluginException("module-info.class not found for " +
-                                          module.name() + " module");
-            }
-            ResourcePoolEntry data = optData.get();
+                () ->  new PluginException("module-info.class not found for " +
+                                           module.name() + " module")
+            );
+
             assert module.name().equals(data.moduleName());
             try {
                 ByteArrayInputStream bain = new ByteArrayInputStream(data.contentBytes());
                 ModuleDescriptor md = ModuleDescriptor.read(bain);
                 validateNames(md);
 
-                ModuleDescriptorBuilder mbuilder = generator.module(md, module.packages());
-                int packages = md.exports().size() + md.conceals().size();
-                if (md.conceals().isEmpty() &&
-                        packages != module.packages().size()) {
+                Set<String> packages = module.packages();
+
+                ModuleDescriptorBuilder mbuilder = generator.module(md, packages);
+                if (md.packages().isEmpty() && packages.size() > 0) {
                     // add Packages attribute if not exist
                     bain.reset();
                     ModuleInfoRewriter minfoWriter =
-                        new ModuleInfoRewriter(bain, mbuilder.conceals());
+                        new ModuleInfoRewriter(bain, module.packages());
                     // replace with the overridden version
                     data = data.copyWithContent(minfoWriter.getBytes());
                 }
@@ -167,10 +166,10 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
      */
     class ModuleInfoRewriter extends ByteArrayOutputStream {
         final ModuleInfoExtender extender;
-        ModuleInfoRewriter(InputStream in, Set<String> conceals) throws IOException {
+        ModuleInfoRewriter(InputStream in, Set<String> packages) throws IOException {
             this.extender = ModuleInfoExtender.newExtender(in);
             // Add Packages attribute
-            this.extender.packages(conceals);
+            this.extender.packages(packages);
             this.extender.write(this);
         }
 
@@ -464,30 +463,6 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
             }
 
-            /*
-             * Returns the set of concealed packages from ModuleDescriptor, if present
-             * or compute it if the module does not have Packages attribute
-             */
-            Set<String> conceals() {
-                Set<String> conceals = md.conceals();
-                if (conceals.isEmpty() && md.exports().size() != packages.size()) {
-                    Set<String> exports = md.exports().stream()
-                                            .map(Exports::source)
-                                            .collect(Collectors.toSet());
-                    conceals = packages.stream()
-                                       .filter(pn -> !exports.contains(pn))
-                                       .collect(Collectors.toSet());
-                }
-
-                if (conceals.size() + md.exports().size() != packages.size() &&
-                    // jdk.localedata may have concealed packages that don't exist
-                    !md.name().equals("jdk.localedata")) {
-                    throw new AssertionError(md.name() + ": conceals=" + conceals.size() +
-                            ", exports=" + md.exports().size() + ", packages=" + packages.size());
-                }
-                return conceals;
-            }
-
             void build() {
                 newBuilder(md.name(), md.requires().size(),
                            md.exports().size(),
@@ -629,7 +604,7 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
             }
 
             /*
-             * Invoke Builder.conceals(String pn)
+             * Invoke Builder.packages(String pn)
              */
             void packages(Set<String> packages) {
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
