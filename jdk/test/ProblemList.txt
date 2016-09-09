@@ -213,8 +213,6 @@ java/rmi/transport/dgcDeadLock/DGCDeadLock.java                 8029360 macosx-a
 
 sun/security/pkcs11/ec/TestKeyFactory.java                      8026976 generic-all
 
-sun/security/krb5/auto/Unreachable.java                         7164518 macosx-all
-
 sun/security/tools/keytool/ListKeychainStore.sh                 8156889 macosx-all
 
 sun/security/tools/jarsigner/warnings/BadKeyUsageTest.java      8026393 generic-all
@@ -332,9 +330,6 @@ com/sun/jdi/GetLocalVariables4Test.sh                           8067354 windows-
 
 com/sun/jdi/sde/SourceDebugExtensionTest.java                   8158066 windows-all
 
-com/sun/jdi/ClassesByName2Test.java				8160833 generic-all
-com/sun/jdi/RedefineCrossEvent.java				8160833 generic-all
-
 ############################################################################
 
 # jdk_time
@@ -365,7 +360,7 @@ sun/tools/jhsdb/HeapDumpTest.java                               8160376 macosx-a
 
 sun/tools/jhsdb/heapconfig/JMapHeapConfigTest.java              8160376 macosx-all
 
-sun/tools/jps/TestJpsJar.java                                   8160923 generic-all
+sun/tools/jps/TestJpsJar.java                                   8165500 generic-all
 
 sun/tools/jps/TestJpsJarRelative.java                           6456333 generic-all
 
