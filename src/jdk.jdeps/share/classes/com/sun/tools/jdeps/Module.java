@@ -239,7 +239,7 @@ class Module extends Archive {
         private StrictModule(Module m, Map<String, Boolean> requires) {
             super(m.name(), m.location, m.descriptor, m.exports, m.isSystem, m.reader());
 
-            ModuleDescriptor.Builder builder = new ModuleDescriptor.Builder(m.name());
+            ModuleDescriptor.Builder builder = ModuleDescriptor.module(m.name());
             requires.keySet().forEach(mn -> {
                 if (requires.get(mn).equals(Boolean.TRUE)) {
                     builder.requires(Set.of(ModuleDescriptor.Requires.Modifier.TRANSITIVE), mn);

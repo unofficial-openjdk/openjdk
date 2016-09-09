@@ -403,7 +403,7 @@ public class JdepsConfiguration implements AutoCloseable {
         }
 
         private ModuleDescriptor dropHashes(ModuleDescriptor md) {
-            ModuleDescriptor.Builder builder = new ModuleDescriptor.Builder(md.name());
+            ModuleDescriptor.Builder builder = ModuleDescriptor.module(md.name());
             md.requires().forEach(builder::requires);
             md.exports().forEach(builder::exports);
             md.provides().values().stream().forEach(builder::provides);
