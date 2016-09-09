@@ -259,14 +259,14 @@ public class RequiresStaticTest extends ModuleTestBase {
         Files.createDirectories(m3Classes);
 
         new JavacTask(tb, Task.Mode.CMDLINE)
-                .options("-modulepath", m1Classes.toString())
+                .options("--module-path", m1Classes.toString())
                 .files(findJavaFiles(m3))
                 .outdir(m3Classes)
                 .run()
                 .writeAll();
 
         String log = new JavaTask(tb)
-                .vmOptions("-modulepath", m3Classes.toString(), "-addmods", "m3")
+                .vmOptions("--module-path", m3Classes.toString(), "--add-modules", "m3")
                 .className("m3.Test")
                 .run()
                 .writeAll()
@@ -306,7 +306,7 @@ public class RequiresStaticTest extends ModuleTestBase {
         Files.createDirectories(m2Classes);
 
         new JavacTask(tb, Task.Mode.CMDLINE)
-                .options("-modulepath", m1Classes.toString())
+                .options("--module-path", m1Classes.toString())
                 .files(findJavaFiles(m2))
                 .outdir(m2Classes)
                 .run()
@@ -334,15 +334,15 @@ public class RequiresStaticTest extends ModuleTestBase {
         Files.createDirectories(m3Classes);
 
         new JavacTask(tb, Task.Mode.CMDLINE)
-                .options("-modulepath", m1Classes.toString() + File.pathSeparator + m2Classes.toString())
+                .options("--module-path", m1Classes.toString() + File.pathSeparator + m2Classes.toString())
                 .files(findJavaFiles(m3))
                 .outdir(m3Classes)
                 .run()
                 .writeAll();
 
         String log = new JavaTask(tb)
-                .vmOptions("-modulepath", m2Classes.toString() + File.pathSeparator + m3Classes.toString(),
-                           "-addmods", "m3")
+                .vmOptions("--module-path", m2Classes.toString() + File.pathSeparator + m3Classes.toString(),
+                           "--add-modules", "m3")
                 .className("m3.Test")
                 .run()
                 .writeAll()
@@ -382,7 +382,7 @@ public class RequiresStaticTest extends ModuleTestBase {
         Files.createDirectories(m2Classes);
 
         new JavacTask(tb, Task.Mode.CMDLINE)
-                .options("-modulepath", m1Classes.toString())
+                .options("--module-path", m1Classes.toString())
                 .files(findJavaFiles(m2))
                 .outdir(m2Classes)
                 .run()
