@@ -69,7 +69,7 @@ public class CheckRead {
         // Packages:          p1
         // Packages exported: p1 is exported unqualifiedly
         ModuleDescriptor descriptor_m1 =
-                new ModuleDescriptor.Builder("m1")
+                ModuleDescriptor.module("m1")
                         .requires("java.base")
                         .requires("m3")
                         .exports("p1")
@@ -80,7 +80,7 @@ public class CheckRead {
         // Packages:          p2
         // Packages exported: p2 is exported to m1
         ModuleDescriptor descriptor_m2 =
-                new ModuleDescriptor.Builder("m2")
+                ModuleDescriptor.module("m2")
                         .requires("java.base")
                         .exports("p2", Set.of("m1"))
                         .build();
@@ -90,7 +90,7 @@ public class CheckRead {
         // Packages:          p3
         // Packages exported: none
         ModuleDescriptor descriptor_m3 =
-                new ModuleDescriptor.Builder("m3")
+                ModuleDescriptor.module("m3")
                         .requires("java.base")
                         .requires("m2")
                         .conceals("p3")

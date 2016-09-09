@@ -70,7 +70,7 @@ public class ExpQualOther {
         // Packages:          p1
         // Packages exported: p1 is exported unqualifiedly
         ModuleDescriptor descriptor_m1 =
-                new ModuleDescriptor.Builder("m1")
+                ModuleDescriptor.module("m1")
                         .requires("java.base")
                         .requires("m2")
                         .requires("m3")
@@ -82,7 +82,7 @@ public class ExpQualOther {
         // Packages:          p2
         // Packages exported: p2 is exported to m3
         ModuleDescriptor descriptor_m2 =
-                new ModuleDescriptor.Builder("m2")
+                ModuleDescriptor.module("m2")
                         .requires("java.base")
                         .exports("p2", Set.of("m3"))
                         .build();
@@ -92,7 +92,7 @@ public class ExpQualOther {
         // Packages:          p3
         // Packages exported: none
         ModuleDescriptor descriptor_m3 =
-                new ModuleDescriptor.Builder("m3")
+                ModuleDescriptor.module("m3")
                         .requires("java.base")
                         .requires("m2")
                         .conceals("p3")

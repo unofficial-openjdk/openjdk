@@ -68,7 +68,7 @@ public class DiffCL_PkgNotExp {
         // Packages:          p1
         // Packages exported: p1 is exported unqualifiedly
         ModuleDescriptor descriptor_m1 =
-                new ModuleDescriptor.Builder("m1")
+                ModuleDescriptor.module("m1")
                         .requires("java.base")
                         .requires("m2")
                         .exports("p1")
@@ -79,7 +79,7 @@ public class DiffCL_PkgNotExp {
         // Packages:          p2
         // Packages exported: none
         ModuleDescriptor descriptor_m2 =
-                new ModuleDescriptor.Builder("m2")
+                ModuleDescriptor.module("m2")
                         .requires("java.base")
                         .conceals("p2")
                         .build();
