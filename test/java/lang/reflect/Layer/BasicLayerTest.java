@@ -109,18 +109,18 @@ public class BasicLayerTest {
      */
     public void testLayerOnEmpty() {
         ModuleDescriptor descriptor1
-            = new ModuleDescriptor.Builder("m1")
+            = ModuleDescriptor.module("m1")
                 .requires("m2")
                 .exports("p1")
                 .build();
 
         ModuleDescriptor descriptor2
-            = new ModuleDescriptor.Builder("m2")
+            = ModuleDescriptor.module("m2")
                 .requires("m3")
                 .build();
 
         ModuleDescriptor descriptor3
-            = new ModuleDescriptor.Builder("m3")
+            = ModuleDescriptor.module("m3")
                 .build();
 
         ModuleFinder finder
@@ -190,14 +190,14 @@ public class BasicLayerTest {
      */
     public void testLayerOnBoot() {
         ModuleDescriptor descriptor1
-            = new ModuleDescriptor.Builder("m1")
+            = ModuleDescriptor.module("m1")
                 .requires("m2")
                 .requires("java.base")
                 .exports("p1")
                 .build();
 
         ModuleDescriptor descriptor2
-            = new ModuleDescriptor.Builder("m2")
+            = ModuleDescriptor.module("m2")
                 .requires("java.base")
                 .build();
 
@@ -254,13 +254,13 @@ public class BasicLayerTest {
      */
     public void testPackageConcealedBySelfAndOther() {
         ModuleDescriptor descriptor1
-            =  new ModuleDescriptor.Builder("m1")
+            =  ModuleDescriptor.module("m1")
                 .requires("m2")
                 .conceals("p")
                 .build();
 
         ModuleDescriptor descriptor2
-            = new ModuleDescriptor.Builder("m2")
+            = ModuleDescriptor.module("m2")
                 .conceals("p")
                 .build();
 
@@ -290,21 +290,21 @@ public class BasicLayerTest {
 
         // m1 reads m2, m2 exports p to m1
         ModuleDescriptor descriptor1
-            =  new ModuleDescriptor.Builder("m1")
+            =  ModuleDescriptor.module("m1")
                 .requires("m2")
                 .build();
         ModuleDescriptor descriptor2
-            =  new ModuleDescriptor.Builder("m2")
+            =  ModuleDescriptor.module("m2")
                 .exports("p", Set.of("m1"))
                 .build();
 
         // m3 reads m4, m4 exports p to m3
         ModuleDescriptor descriptor3
-            =  new ModuleDescriptor.Builder("m3")
+            =  ModuleDescriptor.module("m3")
                 .requires("m4")
                 .build();
         ModuleDescriptor descriptor4
-            =  new ModuleDescriptor.Builder("m4")
+            =  ModuleDescriptor.module("m4")
                 .exports("p", Set.of("m3"))
                 .build();
 
@@ -351,7 +351,7 @@ public class BasicLayerTest {
         assertTrue(base.conceals().contains("sun.launcher"));
 
         ModuleDescriptor descriptor
-            = new ModuleDescriptor.Builder("m1")
+            = ModuleDescriptor.module("m1")
                .requires("java.base")
                .conceals("sun.launcher")
                .build();
@@ -380,11 +380,11 @@ public class BasicLayerTest {
         // cf1: m1 and m2, m2 requires transitive m1
 
         ModuleDescriptor descriptor1
-            = new ModuleDescriptor.Builder("m1")
+            = ModuleDescriptor.module("m1")
                 .build();
 
         ModuleDescriptor descriptor2
-            = new ModuleDescriptor.Builder("m2")
+            = ModuleDescriptor.module("m2")
                 .requires(Set.of(Requires.Modifier.TRANSITIVE), "m1")
                 .build();
 
@@ -399,7 +399,7 @@ public class BasicLayerTest {
         // cf2: m3, m3 requires m2
 
         ModuleDescriptor descriptor3
-            = new ModuleDescriptor.Builder("m3")
+            = ModuleDescriptor.module("m3")
                 .requires("m2")
                 .build();
 
@@ -451,7 +451,7 @@ public class BasicLayerTest {
         // cf1: m1
 
         ModuleDescriptor descriptor1
-            = new ModuleDescriptor.Builder("m1")
+            = ModuleDescriptor.module("m1")
                 .build();
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1);
@@ -465,12 +465,12 @@ public class BasicLayerTest {
         // cf2: m2, m3: m2 requires transitive m1, m3 requires m2
 
         ModuleDescriptor descriptor2
-            = new ModuleDescriptor.Builder("m2")
+            = ModuleDescriptor.module("m2")
                 .requires(Set.of(Requires.Modifier.TRANSITIVE), "m1")
                 .build();
 
         ModuleDescriptor descriptor3
-            = new ModuleDescriptor.Builder("m3")
+            = ModuleDescriptor.module("m3")
                 .requires("m2")
                 .build();
 
@@ -519,7 +519,7 @@ public class BasicLayerTest {
         // cf1: m1
 
         ModuleDescriptor descriptor1
-            = new ModuleDescriptor.Builder("m1")
+            = ModuleDescriptor.module("m1")
                 .build();
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1);
@@ -533,7 +533,7 @@ public class BasicLayerTest {
         // cf2: m2 requires transitive m1
 
         ModuleDescriptor descriptor2
-            = new ModuleDescriptor.Builder("m2")
+            = ModuleDescriptor.module("m2")
                 .requires(Set.of(Requires.Modifier.TRANSITIVE), "m1")
                 .build();
 
@@ -548,7 +548,7 @@ public class BasicLayerTest {
         // cf3: m3 requires m2
 
         ModuleDescriptor descriptor3
-            = new ModuleDescriptor.Builder("m3")
+            = ModuleDescriptor.module("m3")
                 .requires("m2")
                 .build();
 
@@ -597,11 +597,11 @@ public class BasicLayerTest {
         // cf1: m1, m2 requires transitive m1
 
         ModuleDescriptor descriptor1
-            = new ModuleDescriptor.Builder("m1")
+            = ModuleDescriptor.module("m1")
                 .build();
 
         ModuleDescriptor descriptor2
-            = new ModuleDescriptor.Builder("m2")
+            = ModuleDescriptor.module("m2")
                 .requires(Set.of(Requires.Modifier.TRANSITIVE), "m1")
                 .build();
 
@@ -616,12 +616,12 @@ public class BasicLayerTest {
         // cf2: m3 requires transitive m2, m4 requires m3
 
         ModuleDescriptor descriptor3
-            = new ModuleDescriptor.Builder("m3")
+            = ModuleDescriptor.module("m3")
                 .requires(Set.of(Requires.Modifier.TRANSITIVE), "m2")
                 .build();
 
         ModuleDescriptor descriptor4
-            = new ModuleDescriptor.Builder("m4")
+            = ModuleDescriptor.module("m4")
                 .requires("m3")
                 .build();
 
@@ -677,7 +677,7 @@ public class BasicLayerTest {
     public void testModuleAlreadyDefinedToLoader() {
 
         ModuleDescriptor md
-            = new ModuleDescriptor.Builder("m")
+            = ModuleDescriptor.module("m")
                 .requires("java.base")
                 .build();
 
@@ -706,13 +706,13 @@ public class BasicLayerTest {
     public void testPackageAlreadyInNamedModule() {
 
         ModuleDescriptor md1
-            = new ModuleDescriptor.Builder("m1")
+            = ModuleDescriptor.module("m1")
                 .conceals("p")
                 .requires("java.base")
                 .build();
 
         ModuleDescriptor md2
-            = new ModuleDescriptor.Builder("m2")
+            = ModuleDescriptor.module("m2")
                 .conceals("p")
                 .requires("java.base")
                 .build();
@@ -751,7 +751,7 @@ public class BasicLayerTest {
         assertFalse(c.getModule().isNamed());  // in unnamed module
 
         ModuleDescriptor md
-            = new ModuleDescriptor.Builder("m")
+            = ModuleDescriptor.module("m")
                 .conceals(c.getPackageName())
                 .requires("java.base")
                 .build();
@@ -770,7 +770,7 @@ public class BasicLayerTest {
      */
     public void testLayerWithJavaBase() {
         ModuleDescriptor descriptor
-            = new ModuleDescriptor.Builder("java.base")
+            = ModuleDescriptor.module("java.base")
                 .exports("java.lang")
                 .build();
 
@@ -808,7 +808,7 @@ public class BasicLayerTest {
     @Test(enabled = false)
     public void testLayerWithJavaPackage() {
         ModuleDescriptor descriptor
-            = new ModuleDescriptor.Builder("foo")
+            = ModuleDescriptor.module("foo")
                 .conceals("java.foo")
                 .build();
 
@@ -854,7 +854,7 @@ public class BasicLayerTest {
     @Test(expectedExceptions = { LayerInstantiationException.class })
     public void testLayerWithBootLoader() {
         ModuleDescriptor descriptor
-            = new ModuleDescriptor.Builder("m1")
+            = ModuleDescriptor.module("m1")
                 .build();
 
         ModuleFinder finder = ModuleUtils.finderOf(descriptor);
@@ -875,7 +875,7 @@ public class BasicLayerTest {
     public void testIncorrectParent1() {
 
         ModuleDescriptor descriptor1
-            = new ModuleDescriptor.Builder("m1")
+            = ModuleDescriptor.module("m1")
                 .requires("java.base")
                 .build();
 
@@ -896,7 +896,7 @@ public class BasicLayerTest {
     public void testIncorrectParent2() {
 
         ModuleDescriptor descriptor1
-            = new ModuleDescriptor.Builder("m1")
+            = ModuleDescriptor.module("m1")
                 .build();
 
         ModuleFinder finder = ModuleUtils.finderOf(descriptor1);

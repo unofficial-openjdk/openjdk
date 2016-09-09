@@ -267,10 +267,10 @@ public class LayerAndLoadersTest {
     public void testOverlappingPackages() {
 
         ModuleDescriptor descriptor1
-            = new ModuleDescriptor.Builder("m1").exports("p").build();
+            = ModuleDescriptor.module("m1").exports("p").build();
 
         ModuleDescriptor descriptor2
-            = new ModuleDescriptor.Builder("m2").exports("p").build();
+            = ModuleDescriptor.module("m2").exports("p").build();
 
         ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);
 
@@ -301,10 +301,10 @@ public class LayerAndLoadersTest {
     public void testSplitDelegation() {
 
         ModuleDescriptor descriptor1
-            = new ModuleDescriptor.Builder("m1").exports("p").build();
+            = ModuleDescriptor.module("m1").exports("p").build();
 
         ModuleDescriptor descriptor2
-            = new ModuleDescriptor.Builder("m2").exports("p").build();
+            = ModuleDescriptor.module("m2").exports("p").build();
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
 
@@ -316,10 +316,10 @@ public class LayerAndLoadersTest {
         checkLayer(layer1, "m1", "m2");
 
         ModuleDescriptor descriptor3
-            = new ModuleDescriptor.Builder("m3").requires("m1").build();
+            = ModuleDescriptor.module("m3").requires("m1").build();
 
         ModuleDescriptor descriptor4
-            = new ModuleDescriptor.Builder("m4").requires("m2").build();
+            = ModuleDescriptor.module("m4").requires("m2").build();
 
         ModuleFinder finder2 = ModuleUtils.finderOf(descriptor3, descriptor4);
 

@@ -84,12 +84,14 @@ public final class ClassFileAttributes {
                                  int codeOff,
                                  Label[] labels)
         {
-            ModuleDescriptor.Builder builder = JLMA.newBuilder("unused", false);
             ModuleAttribute attr = new ModuleAttribute();
 
             // module_flags
             int module_flags = cr.readUnsignedShort(off);
+            boolean weak = ((module_flags & ACC_WEAK) != 0);
             off += 2;
+
+            ModuleDescriptor.Builder builder = JLMA.newBuilder("m", weak, false);
 
             // requires_count and requires[requires_count]
             int requires_count = cr.readUnsignedShort(off);
@@ -196,6 +198,8 @@ public final class ClassFileAttributes {
 
             // module_flags
             int module_flags = 0;
+            if (descriptor.isWeak())
+                module_flags |= ACC_WEAK;
             if (descriptor.isSynthetic())
                 module_flags |= ACC_SYNTHETIC;
             attr.putShort(module_flags);
@@ -221,7 +225,7 @@ public final class ClassFileAttributes {
             }
 
             // exports_count and exports[exports_count];
-            if (descriptor.exports().isEmpty()) {
+            if (descriptor.isWeak() || descriptor.exports().isEmpty()) {
                 attr.putShort(0);
             } else {
                 attr.putShort(descriptor.exports().size());
@@ -277,37 +281,6 @@ public final class ClassFileAttributes {
                 }
             }
 
-            return attr;
-        }
-    }
-
-    /**
-     * Synthetic attribute.
-     */
-    static class SyntheticAttribute extends Attribute {
-        SyntheticAttribute() {
-            super(SYNTHETIC);
-        }
-
-        @Override
-        protected Attribute read(ClassReader cr,
-                                 int off,
-                                 int len,
-                                 char[] buf,
-                                 int codeOff,
-                                 Label[] labels)
-        {
-            return new SyntheticAttribute();
-        }
-
-        @Override
-        protected ByteVector write(ClassWriter cw,
-                                   byte[] code,
-                                   int len,
-                                   int maxStack,
-                                   int maxLocals)
-        {
-            ByteVector attr = new ByteVector();
             return attr;
         }
     }

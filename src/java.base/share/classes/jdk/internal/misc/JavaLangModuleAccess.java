@@ -52,12 +52,14 @@ import java.util.function.Supplier;
 public interface JavaLangModuleAccess {
 
     /**
-     * Initializes a new builder with the given module name.
+     * Creates a new builder with the given module name.
      *
+     * @param weak
+     *        Indicates whether the module is weak
      * @param strict
      *        Indicates whether module names are checked or not
      */
-    ModuleDescriptor.Builder newBuilder(String mn, boolean strict);
+    ModuleDescriptor.Builder newBuilder(String mn, boolean weak, boolean strict);
 
     /**
      * Returns a {@code ModuleDescriptor.Requires} of the given modifiers
@@ -100,6 +102,7 @@ public interface JavaLangModuleAccess {
      * Returns a new {@code ModuleDescriptor} instance.
      */
     ModuleDescriptor newModuleDescriptor(String name,
+                                         boolean weak,
                                          boolean automatic,
                                          boolean synthetic,
                                          Set<Requires> requires,

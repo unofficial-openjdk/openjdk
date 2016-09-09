@@ -415,7 +415,7 @@ public final class Module implements AnnotatedElement {
      * the given package to at least the given module.
      *
      * <p> This method always returns {@code true} when invoked on an unnamed
-     * module. </p>
+     * module or a weak module. </p>
      *
      * <p> This method does not check if the given module reads this module. </p>
      *
@@ -438,7 +438,7 @@ public final class Module implements AnnotatedElement {
      * package to at least the given module.
      *
      * <p> This method always returns {@code true} when invoked on an unnamed
-     * module. </p>
+     * module or a weak module</p>
      *
      * <p> This method does not check if the given module reads this module. </p>
      *
@@ -463,7 +463,7 @@ public final class Module implements AnnotatedElement {
      * the given package unconditionally.
      *
      * <p> This method always returns {@code true} when invoked on an unnamed
-     * module. </p>
+     * module or a weak module. </p>
      *
      * <p> This method does not check if the given module reads this module. </p>
      *
@@ -505,8 +505,8 @@ public final class Module implements AnnotatedElement {
      */
     private boolean implIsExported(String pn, boolean nonPublic, Module other) {
 
-        // all packages are exported-private by unnamed modules
-        if (!isNamed())
+        // all packages are exported-private by unnamed and weak modules
+        if (name == null || descriptor.isWeak())
             return true;
 
         // exported via module declaration/descriptor
@@ -606,8 +606,8 @@ public final class Module implements AnnotatedElement {
      *
      * <p> This method has no effect if the package is already exported (or
      * <em>exported private</em>) to the given module. It also has no effect if
-     * invoked on an unnamed module (as unnamed modules <em>exports-private</em>
-     * all packages). </p>
+     * invoked on an unnamed module or a weak module (as unnamed modules and
+     * weak modules <em>exports-private</em> all packages). </p>
      *
      * @param  pn
      *         The package name
@@ -628,7 +628,7 @@ public final class Module implements AnnotatedElement {
             throw new IllegalArgumentException("package is null");
         Objects.requireNonNull(other);
 
-        if (isNamed()) {
+        if (isNamed() && !descriptor.isWeak()) {
             Module caller = Reflection.getCallerClass().getModule();
             if (caller != this) {
                 throw new IllegalStateException(caller + " != " + this);
@@ -649,8 +649,8 @@ public final class Module implements AnnotatedElement {
      *
      * <p> This method has no effect if the package is already <em>exported
      * private</em> to the given module. It also has no effect if invoked on an
-     * unnamed module (as unnamed modules <em>exports-private</em> all
-     * packages). </p>
+     * unnamed module or a weak module (as unnamed modules and weak modules
+     * <em>exports-private</em> all packages). </p>
      *
      * @param  pn
      *         The package name
@@ -673,7 +673,7 @@ public final class Module implements AnnotatedElement {
             throw new IllegalArgumentException("package is null");
         Objects.requireNonNull(other);
 
-        if (isNamed()) {
+        if (isNamed() && !descriptor.isWeak()) {
             Module caller = Reflection.getCallerClass().getModule();
             if (caller != this) {
                 throw new IllegalStateException(caller + " != " + this);
@@ -730,8 +730,8 @@ public final class Module implements AnnotatedElement {
         Objects.requireNonNull(other);
         Objects.requireNonNull(pn);
 
-        // unnamed modules export all packages
-        if (!isNamed())
+        // unnamed modules and weak modules export-private all packages
+        if (!isNamed() || descriptor.isWeak())
             return;
 
         // nothing to do if already exported to other
@@ -1085,6 +1085,15 @@ public final class Module implements AnnotatedElement {
                 m.implAddReads(ALL_UNNAMED_MODULE, true);
             }
 
+            // weak modules export all packages
+            if (descriptor.isWeak()) {
+                assert descriptor.exports().isEmpty();
+                for (String source : descriptor.packages()) {
+                    String sourceInternalForm = source.replace('.', '/');
+                    addExportsToAll0(m, sourceInternalForm);
+                }
+            }
+
             // exports
             Map<String, Boolean> unqualifiedExports = new HashMap<>();
             Map<String, Map<Module, Boolean>> qualifiedExports = new HashMap<>();
@@ -1099,7 +1108,9 @@ public final class Module implements AnnotatedElement {
                 if (export.isQualified()) {
 
                     // qualified export
-                    Map<Module, Boolean> targets = new HashMap<>();
+                    Map<Module, Boolean> targets = qualifiedExports.get(source);
+                    if (targets == null)
+                        targets = new HashMap<>();
                     for (String target : export.targets()) {
                         // only export to modules that are in this configuration
                         Module m2 = modules.get(target);
@@ -1109,7 +1120,7 @@ public final class Module implements AnnotatedElement {
                         }
                     }
                     if (!targets.isEmpty()) {
-                        qualifiedExports.put(source, targets);
+                        qualifiedExports.putIfAbsent(source, targets);
                     }
 
                 } else {

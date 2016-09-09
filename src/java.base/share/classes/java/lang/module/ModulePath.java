@@ -444,8 +444,7 @@ class ModulePath implements ModuleFinder {
 
         // Builder throws IAE if module name is empty or invalid
         ModuleDescriptor.Builder builder
-            = new ModuleDescriptor.Builder(mn)
-                .automatic()
+            = ModuleDescriptor.automaticModule(mn)
                 .requires(Set.of(Requires.Modifier.MANDATED), "java.base");
         if (vs != null)
             builder.version(vs);

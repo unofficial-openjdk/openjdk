@@ -641,7 +641,7 @@ public class ModuleFinderTest {
             vs = mid.substring(i+1);
         }
         ModuleDescriptor.Builder builder
-                = new ModuleDescriptor.Builder(mn).requires("java.base");
+            = ModuleDescriptor.module(mn).requires("java.base");
         if (vs != null)
             builder.version(vs);
         return builder.build();

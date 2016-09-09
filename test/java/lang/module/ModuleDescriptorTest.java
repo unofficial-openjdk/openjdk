@@ -77,7 +77,7 @@ public class ModuleDescriptorTest {
     // requires
 
     private Requires requires(Set<Modifier> mods, String mn) {
-        return new Builder("m")
+        return ModuleDescriptor.module("m")
             .requires(mods, mn)
             .build()
             .requires()
@@ -91,7 +91,7 @@ public class ModuleDescriptorTest {
 
     public void testRequiresWithRequires() {
         Requires r1 = requires("foo");
-        ModuleDescriptor descriptor = new Builder("m").requires(r1).build();
+        ModuleDescriptor descriptor = ModuleDescriptor.module("m").requires(r1).build();
         Requires r2 = descriptor.requires().iterator().next();
         assertEquals(r1, r2);
     }
@@ -131,28 +131,28 @@ public class ModuleDescriptorTest {
     @Test(expectedExceptions = IllegalStateException.class)
     public void testRequiresWithDuplicatesRequires() {
         Requires r = requires("foo");
-        new Builder("m").requires(r).requires(r);
+        ModuleDescriptor.module("m").requires(r).requires(r);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testRequiresSelfWithRequires() {
         Requires r = requires("foo");
-        new Builder("foo").requires(r);
+        ModuleDescriptor.module("foo").requires(r);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testRequiresSelfWithNoModifier() {
-        new Builder("m").requires("m");
+        ModuleDescriptor.module("m").requires("m");
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testRequiresSelfWithOneModifier() {
-        new Builder("m").requires(Set.of(TRANSITIVE), "m");
+        ModuleDescriptor.module("m").requires(Set.of(TRANSITIVE), "m");
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testRequiresSelfWithAllModifiers() {
-        new Builder("m").requires(EnumSet.allOf(Modifier.class), "m");
+        ModuleDescriptor.module("m").requires(EnumSet.allOf(Modifier.class), "m");
     }
 
     @Test(dataProvider = "invalidjavaidentifiers",
@@ -163,7 +163,7 @@ public class ModuleDescriptorTest {
 
     @Test(expectedExceptions = NullPointerException.class)
     public void testRequiresWithNullRequires() {
-        new Builder("m").requires((Requires) null);
+        ModuleDescriptor.module("m").requires((Requires) null);
     }
 
     public void testRequiresCompare() {
@@ -233,7 +233,7 @@ public class ModuleDescriptorTest {
     }
 
     private Exports exports(String pn) {
-        return new Builder("foo")
+        return ModuleDescriptor.module("foo")
             .exports(pn)
             .build()
             .exports()
@@ -243,7 +243,7 @@ public class ModuleDescriptorTest {
 
     private Exports exports(Set<String> mods, String pn) {
         Set<Exports.Modifier> ms = asModifiers(mods);
-        return new Builder("foo")
+        return ModuleDescriptor.module("foo")
                 .exports(ms, pn)
                 .build()
                 .exports()
@@ -252,7 +252,7 @@ public class ModuleDescriptorTest {
     }
 
     private Exports exports(String pn, String target) {
-        return new Builder("foo")
+        return ModuleDescriptor.module("foo")
             .exports(pn, Set.of(target))
             .build()
             .exports()
@@ -262,7 +262,7 @@ public class ModuleDescriptorTest {
 
     private Exports exports(Set<String> mods, String pn, Set<String> targets) {
         Set<Exports.Modifier> ms = asModifiers(mods);
-        return new Builder("foo")
+        return ModuleDescriptor.module("foo")
                 .exports(ms, pn, targets)
                 .build()
                 .exports()
@@ -272,7 +272,7 @@ public class ModuleDescriptorTest {
 
     private Exports exports(Set<String> mods, String pn, String target) {
         Set<Exports.Modifier> ms = asModifiers(mods);
-        return new Builder("foo")
+        return ModuleDescriptor.module("foo")
                 .exports(ms, pn, Set.of(target))
                 .build()
                 .exports()
@@ -283,7 +283,7 @@ public class ModuleDescriptorTest {
 
     public void testExportsExports() {
         Exports e1 = exports("p");
-        ModuleDescriptor descriptor = new Builder("m").exports(e1).build();
+        ModuleDescriptor descriptor = ModuleDescriptor.module("m").exports(e1).build();
         Exports e2 = descriptor.exports().iterator().next();
         assertEquals(e1, e2);
     }
@@ -312,7 +312,7 @@ public class ModuleDescriptorTest {
         targets.add("bar");
         targets.add("gus");
         Exports e
-            = new Builder("foo")
+            = ModuleDescriptor.module("foo")
                 .exports("p", targets)
                 .build()
                 .exports()
@@ -352,43 +352,43 @@ public class ModuleDescriptorTest {
     @Test(expectedExceptions = IllegalStateException.class)
     public void testExportsWithDuplicate1() {
         Exports e = exports("p");
-        new Builder("foo").exports(e).exports(e);
+        ModuleDescriptor.module("foo").exports(e).exports(e);
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testExportsWithDuplicate2() {
-        new Builder("foo").exports("p").exports("p");
+        ModuleDescriptor.module("foo").exports("p").exports("p");
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testExportsWithConcealedPackage() {
-        new Builder("foo").conceals("p").exports("p");
+        ModuleDescriptor.module("foo").conceals("p").exports("p");
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testExportsToTargetWithConcealedPackage() {
-        new Builder("foo").conceals("p").exports("p", Set.of("bar"));
+        ModuleDescriptor.module("foo").conceals("p").exports("p", Set.of("bar"));
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class )
     public void testExportsWithEmptySet() {
-        new Builder("foo").exports("p", Collections.emptySet());
+        ModuleDescriptor.module("foo").exports("p", Collections.emptySet());
     }
 
     @Test(dataProvider = "invalidjavaidentifiers",
           expectedExceptions = IllegalArgumentException.class )
     public void testExportsWithBadName(String pn, String ignore) {
-        new Builder("foo").exports(pn);
+        ModuleDescriptor.module("foo").exports(pn);
     }
 
     @Test(expectedExceptions = NullPointerException.class )
     public void testExportsWithNullExports() {
-        new Builder("foo").exports((Exports)null);
+        ModuleDescriptor.module("foo").exports((Exports) null);
     }
 
     @Test(expectedExceptions = NullPointerException.class )
     public void testExportsWithNullTargets() {
-        new Builder("foo").exports("p", (Set<String>) null);
+        ModuleDescriptor.module("foo").exports("p", (Set<String>) null);
     }
 
     public void testExportsEqualsAndHashCode() {
@@ -414,7 +414,7 @@ public class ModuleDescriptorTest {
     }
 
     public void testExportsToString() {
-        String s = new Builder("foo")
+        String s = ModuleDescriptor.module("foo")
             .exports("p1", Set.of("bar"))
             .build()
             .exports()
@@ -428,32 +428,44 @@ public class ModuleDescriptorTest {
 
     // overlapping exports
 
-    @DataProvider(name = "moreAccess")
-    public Object[][] moreAccess() {
+    @DataProvider(name = "exportsAllowed")
+    public Object[][] exportsAllowed() {
         return new Object[][]{
 
             { exports("p"), exports(Set.of("private"), "p", "m") },
 
+            { exports("p", "m1"), exports(Set.of("private"), "p", "m2") },
+
         };
     }
 
-    @DataProvider(name = "lessOrEqualAccess")
-    public Object[][] lessOrEqualAccess() {
+    @DataProvider(name = "exportsNotAllowed")
+    public Object[][] exportsNotAllowed() {
         return new Object[][]{
 
+            { exports("p"), exports("p") },
             { exports("p"), exports("p", "m") },
 
-            { exports(Set.of("private"), "p"), exports("p", "m") },
-            { exports(Set.of("private"), "p"), exports(Set.of("private"), "p", "m")},
+            { exports(Set.of("private"), "p"), exports(Set.of("private"), "p") },
+            { exports(Set.of("private"), "p"), exports(Set.of("private"), "p", "m") },
+
+            { exports("p", "m"), exports("p", "m") },
+            { exports("p", "m"), exports(Set.of("private"), "p", "m")},
+
+            { exports(Set.of("private"), "p", "m"), exports(Set.of("private"), "p", "m")},
+
+            { exports("p", "m1"), exports("p", "m2") },
+
+            { exports(Set.of("private"), "p", "m1"), exports(Set.of("private"), "p", "m2")},
 
         };
     }
 
-    @Test(dataProvider = "moreAccess")
+    @Test(dataProvider = "exportsAllowed")
     public void testOverlappingExports1(Exports e1, Exports e2) {
         assertEquals(e1.source(), e2.source());
 
-        Set<Exports> exports = new Builder("foo")
+        Set<Exports> exports = ModuleDescriptor.module("foo")
                 .exports(e1)
                 .exports(e2)
                 .build()
@@ -465,23 +477,22 @@ public class ModuleDescriptorTest {
         Exports e4 = iterator.next();
         assertEquals(e3.source(), e1.source());
         assertEquals(e4.source(), e1.source());
-        assertTrue(e3.isQualified() != e4.isQualified());
     }
 
-    @Test(dataProvider = "moreAccess")
+    @Test(dataProvider = "exportsAllowed")
     public void testOverlappingExports2(Exports e1, Exports e2) {
         // reverse
         testOverlappingExports1(e2, e1);
     }
 
-    @Test(dataProvider = "lessOrEqualAccess",
+    @Test(dataProvider = "exportsNotAllowed",
           expectedExceptions = IllegalStateException.class )
     public void testOverlappingExports3(Exports e1, Exports e2) {
         assertEquals(e1.source(), e2.source());
-        new Builder("foo").exports(e1).exports(e2);
+        ModuleDescriptor.module("foo").exports(e1).exports(e2);
     }
 
-    @Test(dataProvider = "lessOrEqualAccess",
+    @Test(dataProvider = "exportsNotAllowed",
           expectedExceptions = IllegalStateException.class )
     public void testOverlappingExports4(Exports e1, Exports e2) {
         // reverse
@@ -493,7 +504,7 @@ public class ModuleDescriptorTest {
 
     public void testUses() {
         Set<String> uses
-            = new Builder("foo")
+            = ModuleDescriptor.module("foo")
                 .uses("p.S")
                 .uses("q.S")
                 .build()
@@ -505,20 +516,20 @@ public class ModuleDescriptorTest {
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testUsesWithDuplicate() {
-        new Builder("foo").uses("p.S").uses("p.S");
+        ModuleDescriptor.module("foo").uses("p.S").uses("p.S");
     }
 
     @Test(dataProvider = "invalidjavaidentifiers",
           expectedExceptions = IllegalArgumentException.class )
     public void testUsesWithBadName(String service, String ignore) {
-        new Builder("foo").uses(service);
+        ModuleDescriptor.module("foo").uses(service);
     }
 
 
     // provides
 
     private Provides provides(String st, String pc) {
-        return new Builder("foo")
+        return ModuleDescriptor.module("foo")
             .provides(st, pc)
             .build()
             .provides()
@@ -529,7 +540,9 @@ public class ModuleDescriptorTest {
 
     public void testProvidesWithProvides() {
         Provides p1 = provides("p.S", "q.S1");
-        ModuleDescriptor descriptor = new Builder("m").provides(p1).build();
+        ModuleDescriptor descriptor = ModuleDescriptor.module("m")
+                .provides(p1)
+                .build();
         Provides p2 = descriptor.provides().get("p.S");
         assertEquals(p1, p2);
     }
@@ -540,7 +553,7 @@ public class ModuleDescriptorTest {
         pns.add("q.P2");
 
         Map<String, Provides> map
-            = new Builder("foo")
+            = ModuleDescriptor.module("foo")
                 .provides("p.S", pns)
                 .build()
                 .provides();
@@ -556,34 +569,34 @@ public class ModuleDescriptorTest {
     @Test(expectedExceptions = IllegalStateException.class )
     public void testProvidesWithDuplicateProvides() {
         Provides p = provides("p.S", "q.S2");
-        new Builder("m").provides("p.S", "q.S1").provides(p);
+        ModuleDescriptor.module("m").provides("p.S", "q.S1").provides(p);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class )
     public void testProvidesWithEmptySet() {
-        new Builder("foo").provides("p.Service", Collections.emptySet());
+        ModuleDescriptor.module("foo").provides("p.Service", Collections.emptySet());
     }
 
     @Test(dataProvider = "invalidjavaidentifiers",
           expectedExceptions = IllegalArgumentException.class )
     public void testProvidesWithBadService(String service, String ignore) {
-        new Builder("foo").provides(service, "p.Provider");
+        ModuleDescriptor.module("foo").provides(service, "p.Provider");
     }
 
     @Test(dataProvider = "invalidjavaidentifiers",
           expectedExceptions = IllegalArgumentException.class )
     public void testProvidesWithBadProvider(String provider, String ignore) {
-        new Builder("foo").provides("p.Service", provider);
+        ModuleDescriptor.module("foo").provides("p.Service", provider);
     }
 
     @Test(expectedExceptions = NullPointerException.class )
     public void testProvidesWithNullProvides() {
-        new Builder("foo").provides((Provides)null);
+        ModuleDescriptor.module("foo").provides((Provides) null);
     }
 
     @Test(expectedExceptions = NullPointerException.class )
     public void testProvidesWithNullProviders() {
-        new Builder("foo").provides("p.S", (Set<String>) null);
+        ModuleDescriptor.module("foo").provides("p.S", (Set<String>) null);
     }
 
     public void testProvidesEqualsAndHashCode() {
@@ -606,41 +619,49 @@ public class ModuleDescriptorTest {
     // conceals
 
     public void testConceals() {
-        Set<String> conceals
-            = new Builder("foo").conceals("p").conceals("q").build().conceals();
+        Set<String> conceals = ModuleDescriptor.module("foo")
+                .conceals("p")
+                .conceals("q")
+                .build()
+                .conceals();
         assertTrue(conceals.size() == 2);
         assertTrue(conceals.contains("p"));
         assertTrue(conceals.contains("q"));
     }
 
     public void testConcealsWithEmptySet() {
-        Set<String> conceals
-            = new Builder("foo").conceals(Collections.emptySet()).build().conceals();
+        Set<String> conceals = ModuleDescriptor.module("foo")
+                .conceals(Collections.emptySet())
+                .build()
+                .conceals();
         assertTrue(conceals.size() == 0);
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testConcealsWithDuplicate() {
-        new Builder("foo").conceals("p").conceals("p");
+        ModuleDescriptor.module("foo").conceals("p").conceals("p");
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testConcealsWithExportedPackage() {
-        new Builder("foo").exports("p").conceals("p");
+        ModuleDescriptor.module("foo").exports("p").conceals("p");
     }
 
     @Test(dataProvider = "invalidjavaidentifiers",
           expectedExceptions = IllegalArgumentException.class )
     public void testConcealsWithBadName(String pn, String ignore) {
-        new Builder("foo").conceals(pn);
+        ModuleDescriptor.module("foo").conceals(pn);
     }
 
 
     // packages
 
     public void testPackages() {
-        Set<String> packages
-            = new Builder("foo").exports("p").conceals("q").build().packages();
+        Set<String> packages = ModuleDescriptor.module("foo")
+                .exports("p")
+                .conceals("q")
+                .build()
+                .packages();
         assertTrue(packages.size() == 2);
         assertTrue(packages.contains("p"));
         assertTrue(packages.contains("q"));
@@ -650,14 +671,14 @@ public class ModuleDescriptorTest {
     // name
 
     public void testModuleName() {
-        String mn = new Builder("foo").build().name();
+        String mn = ModuleDescriptor.module("foo").build().name();
         assertEquals(mn, "foo");
     }
 
     @Test(dataProvider = "invalidjavaidentifiers",
           expectedExceptions = IllegalArgumentException.class )
     public void testBadModuleName(String mn, String ignore) {
-        new Builder(mn);
+        ModuleDescriptor.module(mn);
     }
 
 
@@ -665,69 +686,119 @@ public class ModuleDescriptorTest {
 
     public void testVersion1() {
         Version v1 = Version.parse("1.0");
-        Version v2 = new Builder("foo").version(v1).build().version().get();
+        Version v2 = ModuleDescriptor.module("foo")
+                .version(v1)
+                .build()
+                .version()
+                .get();
         assertEquals(v1, v2);
     }
 
     public void testVersion2() {
         String vs = "1.0";
-        Version v1 = new Builder("foo").version(vs).build().version().get();
+        Version v1 = ModuleDescriptor.module("foo")
+                .version(vs)
+                .build()
+                .version()
+                .get();
         Version v2 = Version.parse(vs);
         assertEquals(v1, v2);
     }
 
     @Test(expectedExceptions = NullPointerException.class )
     public void testNullVersion1() {
-        new Builder("foo").version((Version)null);
+        ModuleDescriptor.module("foo").version((Version) null);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class )
     public void testNullVersion2() {
-        new Builder("foo").version((String)null);
+        ModuleDescriptor.module("foo").version((String) null);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class )
     public void testEmptyVersion() {
-        new Builder("foo").version("");
-    }
-
-    @Test(expectedExceptions = IllegalStateException.class)
-    public void testDuplicateVersion1() {
-        Version v = Version.parse("2.0");
-        new Builder("foo").version("1.0").version(v);
-    }
-
-    @Test(expectedExceptions = IllegalStateException.class)
-    public void testDuplicateVersion2() {
-        new Builder("foo").version("1.0").version("2.0");
+        ModuleDescriptor.module("foo").version("");
     }
 
 
     // toNameAndVersion
 
     public void testToNameAndVersion() {
-        ModuleDescriptor md1 = new Builder("foo").build();
+        ModuleDescriptor md1 = ModuleDescriptor.module("foo").build();
         assertEquals(md1.toNameAndVersion(), "foo");
 
-        ModuleDescriptor md2 = new Builder("foo").version("1.0").build();
+        ModuleDescriptor md2 = ModuleDescriptor.module("foo").version("1.0").build();
         assertEquals(md2.toNameAndVersion(), "foo@1.0");
     }
 
-    // isAutomatic
+
+    // weak modules
+
+    public void testWeakModules() {
+        ModuleDescriptor descriptor = ModuleDescriptor.weakModule("m")
+                .requires("java.base")
+                .conceals("p")
+                .build();
+        assertTrue(descriptor.isWeak());
+        assertTrue(descriptor.conceals().isEmpty());
+
+        assertTrue(descriptor.exports().size() == 1);
+        Exports e = descriptor.exports().iterator().next();
+        assertFalse(e.isQualified());
+        assertEquals(e.source(), "p");
+        assertTrue(e.modifiers().size() == 1);
+        assertTrue(e.modifiers().contains(Exports.Modifier.PRIVATE));
+        assertTrue(e.targets().isEmpty());
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testExportsOnWeakModule1() {
+        ModuleDescriptor.weakModule("foo").exports("p");
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testExportsOnWeakModule2() {
+        ModuleDescriptor.weakModule("foo").exports("p", Set.of("bar"));
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testExportsOnWeakModule3() {
+        Exports e = exports("p");
+        ModuleDescriptor.weakModule("foo").exports(e);
+    }
+
+    public void testIsWeak() {
+        assertFalse(ModuleDescriptor.module("m").build().isWeak());
+        assertFalse(ModuleDescriptor.automaticModule("m").build().isWeak());
+        assertTrue(ModuleDescriptor.weakModule("m").build().isWeak());
+    }
+
+
+    // automatic modules
+
     public void testIsAutomatic() {
-        ModuleDescriptor descriptor1 = new Builder("foo").build();
+        ModuleDescriptor descriptor1 = ModuleDescriptor.module("foo").build();
         assertFalse(descriptor1.isAutomatic());
 
-        ModuleDescriptor descriptor2 = new Builder("foo").automatic().build();
-        assertTrue(descriptor2.isAutomatic());
+        ModuleDescriptor descriptor2 = ModuleDescriptor.weakModule("foo").build();
+        assertFalse(descriptor2.isAutomatic());
+
+        ModuleDescriptor descriptor3 = ModuleDescriptor.automaticModule("foo").build();
+        assertTrue(descriptor3.isAutomatic());
     }
 
     // isSynthetic
     public void testIsSynthetic() {
         assertFalse(Object.class.getModule().getDescriptor().isSynthetic());
 
-        ModuleDescriptor descriptor = new Builder("foo").build();
-        assertFalse(descriptor.isSynthetic());
+        ModuleDescriptor descriptor1 = ModuleDescriptor.module("foo").build();
+        assertFalse(descriptor1.isSynthetic());
+
+        ModuleDescriptor descriptor2 = ModuleDescriptor.weakModule("foo").build();
+        assertFalse(descriptor2.isSynthetic());
+
+        ModuleDescriptor descriptor3 = ModuleDescriptor.automaticModule("foo").build();
+        assertFalse(descriptor3.isSynthetic());
     }
 
 
@@ -735,91 +806,70 @@ public class ModuleDescriptorTest {
 
     public void testMainClass() {
         String mainClass
-            = new Builder("foo").mainClass("p.Main").build().mainClass().get();
+            = ModuleDescriptor.module("foo").mainClass("p.Main").build().mainClass().get();
         assertEquals(mainClass, "p.Main");
     }
 
     @Test(dataProvider = "invalidjavaidentifiers",
           expectedExceptions = IllegalArgumentException.class )
     public void testMainClassWithBadName(String mainClass, String ignore) {
-        Builder builder = new Builder("foo");
+        Builder builder = ModuleDescriptor.module("foo");
         builder.mainClass(mainClass);
-    }
-
-    @Test(expectedExceptions = IllegalStateException.class)
-    public void testDuplicateMainClass() {
-        new Builder("foo").mainClass("p.Main").mainClass("p.Main");
     }
 
 
     // osName
 
     public void testOsName() {
-        String osName = new Builder("foo").osName("Linux").build().osName().get();
+        String osName = ModuleDescriptor.module("foo").osName("Linux").build().osName().get();
         assertEquals(osName, "Linux");
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testNullOsName() {
-        new Builder("foo").osName(null);
+        ModuleDescriptor.module("foo").osName(null);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testEmptyOsName() {
-        new Builder("foo").osName("");
-    }
-
-    @Test(expectedExceptions = IllegalStateException.class)
-    public void testDuplicateOsName() {
-        new Builder("foo").osName("Linux").osName("Linux");
+        ModuleDescriptor.module("foo").osName("");
     }
 
 
     // osArch
 
     public void testOsArch() {
-        String osArch = new Builder("foo").osName("arm").build().osName().get();
+        String osArch = ModuleDescriptor.module("foo").osName("arm").build().osName().get();
         assertEquals(osArch, "arm");
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testNullOsArch() {
-        new Builder("foo").osArch(null);
+        ModuleDescriptor.module("foo").osArch(null);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testEmptyOsArch() {
-        new Builder("foo").osArch("");
-    }
-
-    @Test(expectedExceptions = IllegalStateException.class)
-    public void testDuplicateOsArch() {
-        new Builder("foo").osArch("arm").osArch("arm");
+        ModuleDescriptor.module("foo").osArch("");
     }
 
 
     // osVersion
 
     public void testOsVersion() {
-        String osVersion = new Builder("foo").osName("11.2").build().osName().get();
+        String osVersion = ModuleDescriptor.module("foo").osName("11.2").build().osName().get();
         assertEquals(osVersion, "11.2");
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testNullOsVersion() {
-        new Builder("foo").osVersion(null);
+        ModuleDescriptor.module("foo").osVersion(null);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testEmptyOsVersion() {
-        new Builder("foo").osVersion("");
+        ModuleDescriptor.module("foo").osVersion("");
     }
-
-    @Test(expectedExceptions = IllegalStateException.class)
-    public void testDuplicateOsVersion() {
-        new Builder("foo").osVersion("11.2").osVersion("11.2");
-    }
-
 
     // reads
 
@@ -918,7 +968,7 @@ public class ModuleDescriptorTest {
     @Test(expectedExceptions = InvalidModuleDescriptorException.class)
     public void testReadOfJavaBaseWithRequires() {
         ModuleDescriptor descriptor
-            = new ModuleDescriptor.Builder("java.base")
+            = ModuleDescriptor.module("java.base")
                 .requires("other")
                 .build();
         ByteBuffer bb = ModuleInfoWriter.toByteBuffer(descriptor);
@@ -928,7 +978,7 @@ public class ModuleDescriptorTest {
     // The requires table must have an entry for java.base
     @Test(expectedExceptions = InvalidModuleDescriptorException.class)
     public void testReadWithEmptyRequires() {
-        ModuleDescriptor descriptor = new ModuleDescriptor.Builder("m1").build();
+        ModuleDescriptor descriptor = ModuleDescriptor.module("m1").build();
         ByteBuffer bb = ModuleInfoWriter.toByteBuffer(descriptor);
         ModuleDescriptor.read(bb);
     }
@@ -937,7 +987,7 @@ public class ModuleDescriptorTest {
     @Test(expectedExceptions = InvalidModuleDescriptorException.class)
     public void testReadWithNoRequiresBase() {
         ModuleDescriptor descriptor
-            = new ModuleDescriptor.Builder("m1")
+            = ModuleDescriptor.module("m1")
                 .requires("m2")
                 .build();
         ByteBuffer bb = ModuleInfoWriter.toByteBuffer(descriptor);
@@ -979,22 +1029,22 @@ public class ModuleDescriptorTest {
     // equals/hashCode/compareTo/toString
 
     public void testEqualsAndHashCode() {
-        ModuleDescriptor md1 = new Builder("foo").build();
-        ModuleDescriptor md2 = new Builder("foo").build();
+        ModuleDescriptor md1 = ModuleDescriptor.module("foo").build();
+        ModuleDescriptor md2 = ModuleDescriptor.module("foo").build();
         assertEquals(md1, md1);
         assertEquals(md1.hashCode(), md2.hashCode());
     }
 
     public void testCompare() {
-        ModuleDescriptor md1 = new Builder("foo").build();
-        ModuleDescriptor md2 = new Builder("bar").build();
+        ModuleDescriptor md1 = ModuleDescriptor.module("foo").build();
+        ModuleDescriptor md2 = ModuleDescriptor.module("bar").build();
         int n = "foo".compareTo("bar");
         assertTrue(md1.compareTo(md2) == n);
         assertTrue(md2.compareTo(md1) == -n);
     }
 
     public void testToString() {
-        String s = new Builder("m1").requires("m2").exports("p1").build().toString();
+        String s = ModuleDescriptor.module("m1").requires("m2").exports("p1").build().toString();
         assertTrue(s.contains("m1"));
         assertTrue(s.contains("m2"));
         assertTrue(s.contains("p1"));

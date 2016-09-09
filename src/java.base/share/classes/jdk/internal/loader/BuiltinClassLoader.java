@@ -884,7 +884,10 @@ public class BuiltinClassLoader
      * API is updated.
      */
     private boolean isExportedPrivate(ModuleReference mref, String pn) {
-        for (ModuleDescriptor.Exports e : mref.descriptor().exports()) {
+        ModuleDescriptor descriptor = mref.descriptor();
+        if (descriptor.isWeak())
+            return true;
+        for (ModuleDescriptor.Exports e : descriptor.exports()) {
             String source = e.source();
             if (!e.isQualified() && source.equals(pn)
                     && e.modifiers().contains(Exports.Modifier.PRIVATE)) {

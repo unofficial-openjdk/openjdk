@@ -972,6 +972,8 @@ public final class LauncherHelper {
                 }
 
                 ModuleDescriptor md = mref.descriptor();
+                if (md.isWeak())
+                    ostream.print("weak ");
                 ostream.println("module " + midAndLocation(md, mref.location()));
 
                 for (Requires d : md.requires()) {
@@ -998,7 +1000,7 @@ public final class LauncherHelper {
 
                 // concealed packages
                 new TreeSet<>(md.conceals())
-                    .forEach(p -> ostream.format("  conceals %s%n", p));
+                    .forEach(p -> ostream.format("  contains %s%n", p));
 
                 Map<String, Provides> provides = md.provides();
                 for (Provides ps : provides.values()) {

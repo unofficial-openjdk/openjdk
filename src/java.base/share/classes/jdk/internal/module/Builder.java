@@ -71,8 +71,7 @@ final class Builder {
     String algorithm;
     Map<String, String> hashes;
 
-    Builder(String name, int reqs, int exports,
-            int provides, int packages) {
+    Builder(String name, int reqs, int exports, int provides, int packages) {
         this.name = name;
         this.requires = reqs > 0 ? new HashSet<>(reqs) : Collections.emptySet();
         this.exports  = exports > 0 ? new HashSet<>(exports) : Collections.emptySet();
@@ -254,6 +253,7 @@ final class Builder {
         }
 
         return jlma.newModuleDescriptor(name,
+                                        false,    // weak
                                         false,    // automatic
                                         false,    // assume not synthetic for now
                                         requires,

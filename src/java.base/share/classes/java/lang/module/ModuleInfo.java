@@ -266,18 +266,8 @@ final class ModuleInfo {
         }
         if (packages != null) {
             packages.removeAll(builder.exportedPackages());
-            if (builder.isWeakModule()) {
-                Set<Exports.Modifier> ms = EnumSet.of(Exports.Modifier.PRIVATE);
-                Builder b = builder;
-                packages.forEach(p -> b.exports(ms, p));
-            } else {
-                builder.conceals(packages);
-            }
+            builder.conceals(packages);
         }
-
-        // Was the Synthetic attribute present?
-        if (attributes.contains(SYNTHETIC))
-            builder.synthetic(true);
 
         if (version != null)
             builder.version(version);
@@ -301,12 +291,14 @@ final class ModuleInfo {
     private Builder readModuleAttribute(String mn, DataInput in, ConstantPool cpool)
         throws IOException
     {
-        Builder builder = new Builder(mn, false);
+        Builder builder = new ModuleDescriptor.Builder(mn, /*strict*/ false);
 
         int module_flags = in.readUnsignedShort();
-        if ((module_flags & ACC_WEAK) != 0) {
-            builder.weakModule();
-        }
+        boolean weak = ((module_flags & ACC_WEAK) != 0);
+        if (weak)
+            builder.weak(true);
+        if ((module_flags & ACC_SYNTHETIC) != 0)
+            builder.synthetic(true);
 
         int requires_count = in.readUnsignedShort();
         boolean requiresJavaBase = false;
@@ -344,7 +336,7 @@ final class ModuleInfo {
 
         int exports_count = in.readUnsignedShort();
         if (exports_count > 0) {
-            if (builder.isWeakModule()) {
+            if (weak) {
                 throw invalidModuleDescriptor("The exports table for a weak"
                                               + " module must be 0 length");
             }
@@ -523,8 +515,8 @@ final class ModuleInfo {
      * Return true if the given attribute name is the name of a pre-defined
      * attribute that is not allowed in the class file.
      *
-     * Except for Module, InnerClasses, Synthetic, SourceFile, SourceDebugExtension,
-     * and Deprecated, none of the pre-defined attributes in JVMS 4.7 may appear.
+     * Except for Module, InnerClasses, SourceFile, SourceDebugExtension, and
+     * Deprecated, none of the pre-defined attributes in JVMS 4.7 may appear.
      */
     private static boolean isAttributeDisallowed(String name) {
         Set<String> notAllowed = predefinedNotAllowed;
@@ -543,6 +535,7 @@ final class ModuleInfo {
                     "RuntimeInvisibleParameterAnnotations",
                     "RuntimeVisibleTypeAnnotations",
                     "RuntimeInvisibleTypeAnnotations",
+                    "Synthetic",
                     "AnnotationDefault",
                     "BootstrapMethods",
                     "MethodParameters");

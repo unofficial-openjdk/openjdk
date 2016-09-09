@@ -50,7 +50,7 @@ final class ResourcePoolConfiguration {
         ModuleDescriptor md = mod.descriptor();
 
         // drop hashes
-        ModuleDescriptor.Builder builder = new ModuleDescriptor.Builder(md.name());
+        ModuleDescriptor.Builder builder = ModuleDescriptor.module(md.name());
         md.requires().stream()
           .forEach(builder::requires);
         md.exports().stream()

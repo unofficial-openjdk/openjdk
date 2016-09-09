@@ -361,7 +361,7 @@ public class AutomaticModulesTest {
      */
     public void testConfiguration1() throws Exception {
         ModuleDescriptor descriptor1
-            = new ModuleDescriptor.Builder("a")
+            = ModuleDescriptor.module("a")
                 .requires("b")
                 .requires("c")
                 .requires("java.base")
@@ -421,13 +421,13 @@ public class AutomaticModulesTest {
      */
     public void testInConfiguration2() throws IOException {
         ModuleDescriptor descriptor1
-            = new ModuleDescriptor.Builder("a")
+            = ModuleDescriptor.module("a")
                 .requires("b")
                 .requires("java.base")
                 .build();
 
         ModuleDescriptor descriptor2
-            = new ModuleDescriptor.Builder("b")
+            = ModuleDescriptor.module("b")
                 .requires("c")
                 .requires("java.base")
                 .build();
@@ -494,13 +494,13 @@ public class AutomaticModulesTest {
      */
     public void testInConfiguration3() throws IOException {
         ModuleDescriptor descriptor1
-            = new ModuleDescriptor.Builder("a")
+            = ModuleDescriptor.module("a")
                 .requires("b")
                 .requires("java.base")
                 .build();
 
         ModuleDescriptor descriptor2
-            = new ModuleDescriptor.Builder("b")
+            = ModuleDescriptor.module("b")
                 .requires(Set.of(Modifier.TRANSITIVE), "c")
                 .requires("java.base")
                 .build();
@@ -569,7 +569,7 @@ public class AutomaticModulesTest {
      */
     public void testInLayer() throws IOException {
         ModuleDescriptor descriptor
-            = new ModuleDescriptor.Builder("a")
+            = ModuleDescriptor.module("a")
                 .requires("b")
                 .requires("c")
                 .build();
