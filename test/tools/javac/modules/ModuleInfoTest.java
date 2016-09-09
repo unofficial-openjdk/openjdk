@@ -341,10 +341,10 @@ public class ModuleInfoTest extends ModuleTestBase {
                                           "module-info.java:1:38: compiler.err.conflicting.exports: p");
         verifyConflictingExports_packages(base,
                                           "exports p to m2; exports private p to m3;",
-                                          "module-info.java:1:46: compiler.err.conflicting.exports: p");
+                                          null);
         verifyConflictingExports_packages(base,
                                           "exports private p to m2; exports p to m3;",
-                                          "module-info.java:1:46: compiler.err.conflicting.exports: p");
+                                          null);
         verifyConflictingExports_packages(base,
                                           "exports private p to m2; exports private p to m3;",
                                           "module-info.java:1:54: compiler.err.conflicting.exports: p");
