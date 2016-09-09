@@ -985,28 +985,7 @@ public final class Module implements AnnotatedElement {
     // -- creating Module objects --
 
     /**
-     * Find the runtime Module corresponding to the given ResolvedModule
-     * in the given parent Layer (or its parents).
-     */
-    private static Module find(ResolvedModule resolvedModule, Layer layer) {
-        Configuration cf = resolvedModule.configuration();
-        String dn = resolvedModule.name();
-
-        Module m = null;
-        while (layer != null) {
-            if (layer.configuration() == cf) {
-                Optional<Module> om = layer.findModule(dn);
-                m = om.get();
-                assert m.getLayer() == layer;
-                break;
-            }
-            layer = layer.parent().orElse(null);
-        }
-        return m;
-    }
-
-    /**
-     * Defines each of the module in the given configuration to the runtime.
+     * Defines all module in a configuration to the runtime.
      *
      * @return a map of module name to runtime {@code Module}
      *
@@ -1017,7 +996,7 @@ public final class Module implements AnnotatedElement {
                                              Function<String, ClassLoader> clf,
                                              Layer layer)
     {
-        Map<String, Module> modules = new HashMap<>();
+        Map<String, Module> nameToModule = new HashMap<>();
         Map<String, ClassLoader> moduleToLoader = new HashMap<>();
 
         boolean isBootLayer = (Layer.boot() == null);
@@ -1043,12 +1022,13 @@ public final class Module implements AnnotatedElement {
             URI uri = mref.location().orElse(null);
             ClassLoader loader = moduleToLoader.get(resolvedModule.name());
             Module m;
-            if (loader == null && name.equals("java.base") && Layer.boot() == null) {
+            if (loader == null && isBootLayer && name.equals("java.base")) {
+                // java.base is already defined to the VM
                 m = Object.class.getModule();
             } else {
                 m = new Module(layer, loader, descriptor, uri);
             }
-            modules.put(name, m);
+            nameToModule.put(name, m);
             moduleToLoader.put(name, loader);
         }
 
@@ -1058,7 +1038,7 @@ public final class Module implements AnnotatedElement {
             ModuleDescriptor descriptor = mref.descriptor();
 
             String mn = descriptor.name();
-            Module m = modules.get(mn);
+            Module m = nameToModule.get(mn);
             assert m != null;
 
             // reads
@@ -1067,7 +1047,7 @@ public final class Module implements AnnotatedElement {
                 Module m2;
                 if (d.configuration() == cf) {
                     String dn = d.reference().descriptor().name();
-                    m2 = modules.get(dn);
+                    m2 = nameToModule.get(dn);
                     assert m2 != null;
                 } else {
                     m2 = find(d, layer.parent().orElse(null));
@@ -1085,56 +1065,8 @@ public final class Module implements AnnotatedElement {
                 m.implAddReads(ALL_UNNAMED_MODULE, true);
             }
 
-            // weak modules export all packages
-            if (descriptor.isWeak()) {
-                assert descriptor.exports().isEmpty();
-                for (String source : descriptor.packages()) {
-                    String sourceInternalForm = source.replace('.', '/');
-                    addExportsToAll0(m, sourceInternalForm);
-                }
-            }
-
             // exports
-            Map<String, Boolean> unqualifiedExports = new HashMap<>();
-            Map<String, Map<Module, Boolean>> qualifiedExports = new HashMap<>();
-
-            for (Exports export : descriptor.exports()) {
-                String source = export.source();
-                String sourceInternalForm = source.replace('.', '/');
-
-                boolean b = export.modifiers().contains(Exports.Modifier.PRIVATE);
-                Boolean value = Boolean.valueOf(b);
-
-                if (export.isQualified()) {
-
-                    // qualified export
-                    Map<Module, Boolean> targets = qualifiedExports.get(source);
-                    if (targets == null)
-                        targets = new HashMap<>();
-                    for (String target : export.targets()) {
-                        // only export to modules that are in this configuration
-                        Module m2 = modules.get(target);
-                        if (m2 != null) {
-                            addExports0(m, sourceInternalForm, m2);
-                            targets.put(m2, value);
-                        }
-                    }
-                    if (!targets.isEmpty()) {
-                        qualifiedExports.putIfAbsent(source, targets);
-                    }
-
-                } else {
-
-                    // unqualified export
-                    addExportsToAll0(m, sourceInternalForm);
-                    unqualifiedExports.put(source, value);
-                }
-            }
-
-            if (!unqualifiedExports.isEmpty())
-                m.unqualifiedExports = unqualifiedExports;
-            if (!qualifiedExports.isEmpty())
-                m.qualifiedExports = qualifiedExports;
+            initExports(descriptor, nameToModule, m);
         }
 
         // For the boot layer then register the modules in the class loader
@@ -1146,7 +1078,7 @@ public final class Module implements AnnotatedElement {
                 Map<String, Provides> services = descriptor.provides();
                 if (!services.isEmpty()) {
                     String name = descriptor.name();
-                    Module m = modules.get(name);
+                    Module m = nameToModule.get(name);
                     ClassLoader loader = moduleToLoader.get(name);
                     ServicesCatalog catalog;
                     if (loader == null) {
@@ -1165,7 +1097,88 @@ public final class Module implements AnnotatedElement {
             SharedSecrets.getJavaLangAccess().bindToLayer(loader, layer);
         }
 
-        return modules;
+        return nameToModule;
+    }
+
+
+    /**
+     * Find the runtime Module corresponding to the given ResolvedModule
+     * in the given parent Layer (or its parents).
+     */
+    private static Module find(ResolvedModule resolvedModule, Layer layer) {
+        Configuration cf = resolvedModule.configuration();
+        String dn = resolvedModule.name();
+
+        Module m = null;
+        while (layer != null) {
+            if (layer.configuration() == cf) {
+                Optional<Module> om = layer.findModule(dn);
+                m = om.get();
+                assert m.getLayer() == layer;
+                break;
+            }
+            layer = layer.parent().orElse(null);
+        }
+        return m;
+    }
+
+    /**
+     * Initialize the exports for a module.
+     */
+    private static void initExports(ModuleDescriptor descriptor,
+                                    Map<String, Module> nameToModule,
+                                    Module m)
+    {
+        // The VM doesn't know about weak modules so need to export all packages
+        if (descriptor.isWeak()) {
+            assert descriptor.exports().isEmpty();
+            for (String source : descriptor.packages()) {
+                String sourceInternalForm = source.replace('.', '/');
+                addExportsToAll0(m, sourceInternalForm);
+            }
+            return;
+        }
+
+        Map<String, Boolean> unqualifiedExports = new HashMap<>();
+        Map<String, Map<Module, Boolean>> qualifiedExports = new HashMap<>();
+
+        for (Exports export : descriptor.exports()) {
+            String source = export.source();
+            String sourceInternalForm = source.replace('.', '/');
+
+            boolean b = export.modifiers().contains(Exports.Modifier.PRIVATE);
+            Boolean nonPublic = Boolean.valueOf(b);
+
+            if (export.isQualified()) {
+
+                // qualified export
+                Map<Module, Boolean> targets = qualifiedExports.get(source);
+                if (targets == null)
+                    targets = new HashMap<>();
+                for (String target : export.targets()) {
+                    // only export to modules that are in this configuration
+                    Module m2 = nameToModule.get(target);
+                    if (m2 != null) {
+                        addExports0(m, sourceInternalForm, m2);
+                        targets.put(m2, nonPublic);
+                    }
+                }
+                if (!targets.isEmpty()) {
+                    qualifiedExports.putIfAbsent(source, targets);
+                }
+
+            } else {
+
+                // unqualified export
+                addExportsToAll0(m, sourceInternalForm);
+                unqualifiedExports.put(source, nonPublic);
+            }
+        }
+
+        if (!unqualifiedExports.isEmpty())
+            m.unqualifiedExports = unqualifiedExports;
+        if (!qualifiedExports.isEmpty())
+            m.qualifiedExports = qualifiedExports;
     }
 
 
