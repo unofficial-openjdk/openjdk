@@ -2146,6 +2146,13 @@ void java_lang_StackTraceElement::fill_in(Handle element,
   oop classname = StringTable::intern((char*) str, CHECK);
   java_lang_StackTraceElement::set_declaringClass(element(), classname);
 
+  oop loader = holder->class_loader();
+  if (loader != NULL) {
+    oop loader_name = java_lang_ClassLoader::name(loader);
+    if (loader_name != NULL)
+      java_lang_StackTraceElement::set_classLoaderName(element(), loader_name);
+  }
+
   // The method can be NULL if the requested class version is gone
   Symbol* sym = !method.is_null() ? method->name() : holder->constants()->symbol_at(cpref);
 
@@ -3438,6 +3445,7 @@ oop java_security_AccessControlContext::create(objArrayHandle context, bool isPr
 bool java_lang_ClassLoader::offsets_computed = false;
 int  java_lang_ClassLoader::_loader_data_offset = -1;
 int  java_lang_ClassLoader::parallelCapable_offset = -1;
+int  java_lang_ClassLoader::name_offset = -1;
 int  java_lang_ClassLoader::unnamedModule_offset = -1;
 
 ClassLoaderData** java_lang_ClassLoader::loader_data_addr(oop loader) {
@@ -3458,6 +3466,9 @@ void java_lang_ClassLoader::compute_offsets() {
   compute_optional_offset(parallelCapable_offset,
     k1, vmSymbols::parallelCapable_name(), vmSymbols::concurrenthashmap_signature());
 
+  compute_offset(name_offset,
+    k1, vmSymbols::name_name(), vmSymbols::string_signature());
+
   compute_offset(unnamedModule_offset,
     k1, vmSymbols::unnamedModule_name(), vmSymbols::module_signature());
 
@@ -3467,6 +3478,11 @@ void java_lang_ClassLoader::compute_offsets() {
 oop java_lang_ClassLoader::parent(oop loader) {
   assert(is_instance(loader), "loader must be oop");
   return loader->obj_field(parent_offset);
+}
+
+oop java_lang_ClassLoader::name(oop loader) {
+  assert(is_instance(loader), "loader must be oop");
+  return loader->obj_field(name_offset);
 }
 
 bool java_lang_ClassLoader::isAncestor(oop loader, oop cl) {
@@ -3632,6 +3648,7 @@ int java_lang_StackTraceElement::fileName_offset;
 int java_lang_StackTraceElement::lineNumber_offset;
 int java_lang_StackTraceElement::moduleName_offset;
 int java_lang_StackTraceElement::moduleVersion_offset;
+int java_lang_StackTraceElement::classLoaderName_offset;
 int java_lang_StackFrameInfo::_declaringClass_offset;
 int java_lang_StackFrameInfo::_memberName_offset;
 int java_lang_StackFrameInfo::_bci_offset;
@@ -3674,6 +3691,10 @@ void java_lang_StackTraceElement::set_moduleName(oop element, oop value) {
 
 void java_lang_StackTraceElement::set_moduleVersion(oop element, oop value) {
   element->obj_field_put(moduleVersion_offset, value);
+}
+
+void java_lang_StackTraceElement::set_classLoaderName(oop element, oop value) {
+  element->obj_field_put(classLoaderName_offset, value);
 }
 
 // Support for java_lang_StackFrameInfo
@@ -3795,6 +3816,7 @@ void JavaClasses::compute_hard_coded_offsets() {
   // java_lang_StackTraceElement
   java_lang_StackTraceElement::moduleName_offset = java_lang_StackTraceElement::hc_moduleName_offset * x + header;
   java_lang_StackTraceElement::moduleVersion_offset = java_lang_StackTraceElement::hc_moduleVersion_offset * x + header;
+  java_lang_StackTraceElement::classLoaderName_offset = java_lang_StackTraceElement::hc_classLoaderName_offset * x + header;
   java_lang_StackTraceElement::declaringClass_offset = java_lang_StackTraceElement::hc_declaringClass_offset  * x + header;
   java_lang_StackTraceElement::methodName_offset = java_lang_StackTraceElement::hc_methodName_offset * x + header;
   java_lang_StackTraceElement::fileName_offset   = java_lang_StackTraceElement::hc_fileName_offset   * x + header;

@@ -82,7 +82,7 @@ public class UmodUpkgDiffCL_ExpQualOther {
         ModuleDescriptor descriptor_m2 =
                 new ModuleDescriptor.Builder("m2")
                         .requires("java.base")
-                        .exports("p6", "m1")
+                        .exports("p6", Set.of("m1"))
                         .build();
 
         // Set up a ModuleFinder containing all modules for this layer.

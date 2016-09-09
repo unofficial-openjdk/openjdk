@@ -82,7 +82,7 @@ public class DiffCL_CheckRead {
         ModuleDescriptor descriptor_m2 =
                 new ModuleDescriptor.Builder("m2")
                         .requires("java.base")
-                        .exports("p2", "m1")
+                        .exports("p2", Set.of("m1"))
                         .build();
 
         // Define module:     m3

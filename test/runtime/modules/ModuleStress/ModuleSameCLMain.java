@@ -68,7 +68,7 @@ public class ModuleSameCLMain {
         ModuleDescriptor descriptor_m2 =
                 new ModuleDescriptor.Builder("m2")
                         .requires("java.base")
-                        .exports("p2", "m1")
+                        .exports("p2", Set.of("m1"))
                         .build();
 
         // Set up a ModuleFinder containing all modules for this layer.

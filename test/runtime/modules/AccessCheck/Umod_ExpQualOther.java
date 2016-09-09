@@ -82,7 +82,7 @@ public class Umod_ExpQualOther {
         ModuleDescriptor descriptor_m2 =
                 new ModuleDescriptor.Builder("m2")
                         .requires("java.base")
-                        .exports("p2", "m3")
+                        .exports("p2", Set.of("m3"))
                         .build();
 
         // Define module:     m3
