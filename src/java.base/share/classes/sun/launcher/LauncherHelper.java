@@ -976,6 +976,16 @@ public final class LauncherHelper {
                     ostream.print("weak ");
                 ostream.println("module " + midAndLocation(md, mref.location()));
 
+                // unqualified exports (sorted by package)
+                Set<Exports> exports = new TreeSet<>(Comparator.comparing(Exports::source));
+                md.exports().stream().filter(e -> !e.isQualified()).forEach(exports::add);
+                for (Exports e : exports) {
+                    String modsAndSource = Stream.concat(toStringStream(e.modifiers()),
+                            Stream.of(e.source()))
+                            .collect(Collectors.joining(" "));
+                    ostream.format("  exports %s%n", modsAndSource);
+                }
+
                 for (Requires d : md.requires()) {
                     ostream.format("  requires %s%n", d);
                 }
@@ -983,30 +993,26 @@ public final class LauncherHelper {
                     ostream.format("  uses %s%n", s);
                 }
 
-                // exports
-                Set<Exports> exports = new TreeSet<>(Comparator.comparing(Exports::source));
-                exports.addAll(md.exports());
-                for (Exports e : exports) {
-                    String modsAndSource = Stream.concat(toStringStream(e.modifiers()),
-                                                         Stream.of(e.source()))
-                                                 .collect(Collectors.joining(" "));
-                    ostream.format("  exports %s", modsAndSource);
+                Map<String, Provides> provides = md.provides();
+                for (Provides ps : provides.values()) {
+                    for (String impl : ps.providers())
+                        ostream.format("  provides %s with %s%n", ps.service(), impl);
+                }
+
+                // qualified exports
+                for (Exports e : md.exports()) {
                     if (e.isQualified()) {
+                        String modsAndSource = Stream.concat(toStringStream(e.modifiers()),
+                                Stream.of(e.source()))
+                                .collect(Collectors.joining(" "));
+                        ostream.format("  exports %s", modsAndSource);
                         formatCommaList(ostream, " to", e.targets());
-                    } else {
-                        ostream.println();
                     }
                 }
 
                 // concealed packages
                 new TreeSet<>(md.conceals())
                     .forEach(p -> ostream.format("  contains %s%n", p));
-
-                Map<String, Provides> provides = md.provides();
-                for (Provides ps : provides.values()) {
-                    for (String impl : ps.providers())
-                        ostream.format("  provides %s with %s%n", ps.service(), impl);
-                }
             }
         }
     }
