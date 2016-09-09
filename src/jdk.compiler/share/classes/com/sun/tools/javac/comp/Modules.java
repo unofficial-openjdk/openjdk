@@ -392,6 +392,7 @@ public class Modules extends JCTree.Visitor {
                             if (moduleOverride != null) {
                                 checkNoAllModulePath();
                                 defaultModule = moduleFinder.findModule(names.fromString(moduleOverride));
+                                defaultModule.sourceLocation = StandardLocation.SOURCE_PATH;
                             } else {
                                 // Question: why not do findAllModules and initVisiblePackages here?
                                 // i.e. body of unnamedModuleCompleter
@@ -432,7 +433,9 @@ public class Modules extends JCTree.Visitor {
 
             if (defaultModule != syms.unnamedModule) {
                 syms.unnamedModule.completer = getUnnamedModuleCompleter();
-                syms.unnamedModule.sourceLocation = StandardLocation.SOURCE_PATH;
+                if (moduleOverride == null) {
+                    syms.unnamedModule.sourceLocation = StandardLocation.SOURCE_PATH;
+                }
                 syms.unnamedModule.classLocation = StandardLocation.CLASS_PATH;
             }
 
@@ -1096,7 +1099,7 @@ public class Modules extends JCTree.Visitor {
         Set<ModuleSymbol> requiresPublic = requiresPublicCache.get(msym);
 
         if (requiresPublic == null) {
-            //the module graph may contain cycles involving automatic modules or -XaddReads edges
+            //the module graph may contain cycles involving automatic modules or --add-reads edges
             requiresPublic = new HashSet<>();
 
             Set<ModuleSymbol> seen = new HashSet<>();
@@ -1203,7 +1206,7 @@ public class Modules extends JCTree.Visitor {
             }
 
             // Terminology comes from
-            //  -XaddExports:module/package=target,...
+            //  --add-exports module/package=target,...
             // Compare to
             //  module module { exports package to target, ... }
             String moduleName = em.group(1);
@@ -1256,7 +1259,7 @@ public class Modules extends JCTree.Visitor {
             }
 
             // Terminology comes from
-            //  -XaddReads:target-module=source-module,...
+            //  --add-reads target-module=source-module,...
             // Compare to
             //  module target-module { requires source-module; ... }
             String targetName = rm.group(1);
