@@ -21,6 +21,16 @@
  * questions.
  */
 
-module m3 {
-    requires m4;
+package p4;
+
+public class Foo {
+    private final String name;
+
+    private Foo(String name) {
+        this.name = name;
+    }
+
+    public static Foo create(String name) {
+        return new Foo(name);
+    }
 }

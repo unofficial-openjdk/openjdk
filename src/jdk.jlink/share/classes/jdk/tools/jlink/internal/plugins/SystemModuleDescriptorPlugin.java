@@ -31,15 +31,12 @@ import java.io.InputStream;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.IntSupplier;
-import java.util.stream.Collectors;
 
 import jdk.internal.misc.JavaLangModuleAccess;
 import jdk.internal.misc.SharedSecrets;
@@ -51,6 +48,7 @@ import jdk.internal.org.objectweb.asm.MethodVisitor;
 import jdk.internal.org.objectweb.asm.Opcodes;
 
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
+
 import jdk.tools.jlink.plugin.PluginException;
 import jdk.tools.jlink.plugin.ResourcePool;
 import jdk.tools.jlink.plugin.Plugin;
@@ -115,10 +113,11 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
         // generate the byte code to create ModuleDescriptors
         // skip parsing module-info.class and skip name check
         in.moduleView().modules().forEach(module -> {
+
             ResourcePoolEntry data = module.findEntry("module-info.class").orElseThrow(
                 // automatic module not supported yet
                 () ->  new PluginException("module-info.class not found for " +
-                                           module.name() + " module")
+                    module.name() + " module")
             );
 
             assert module.name().equals(data.moduleName());
@@ -128,10 +127,10 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                 validateNames(md);
 
                 Set<String> packages = module.packages();
+                ModuleDescriptorBuilder mbuilder = generator.module(md, module.packages());
 
-                ModuleDescriptorBuilder mbuilder = generator.module(md, packages);
+                // add Packages attribute if not exist
                 if (md.packages().isEmpty() && packages.size() > 0) {
-                    // add Packages attribute if not exist
                     bain.reset();
                     ModuleInfoRewriter minfoWriter =
                         new ModuleInfoRewriter(bain, module.packages());
@@ -439,6 +438,7 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
             static final String STRING_SIG = "(Ljava/lang/String;)" + BUILDER_TYPE;
             static final String STRING_STRING_SIG =
                 "(Ljava/lang/String;Ljava/lang/String;)" + BUILDER_TYPE;
+            static final String BOOLEAN_SIG = "(Z)" + BUILDER_TYPE;
 
             final ModuleDescriptor md;
             final Set<String> packages;
@@ -448,26 +448,9 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                 this.packages = packages;
             }
 
-            void newBuilder(String name, int reqs, int exports, int provides,
-                            int packages) {
-                mv.visitTypeInsn(NEW, MODULE_DESCRIPTOR_BUILDER);
-                mv.visitInsn(DUP);
-                mv.visitLdcInsn(name);
-                pushInt(initialCapacity(reqs));
-                pushInt(initialCapacity(exports));
-                pushInt(initialCapacity(provides));
-                pushInt(initialCapacity(packages));
-                mv.visitMethodInsn(INVOKESPECIAL, MODULE_DESCRIPTOR_BUILDER,
-                                   "<init>", "(Ljava/lang/String;IIII)V", false);
-                mv.visitVarInsn(ASTORE, BUILDER_VAR);
-                mv.visitVarInsn(ALOAD, BUILDER_VAR);
-            }
-
             void build() {
-                newBuilder(md.name(), md.requires().size(),
-                           md.exports().size(),
-                           md.provides().size(),
-                           packages.size());
+                // new jdk.internal.module.Builder
+                newBuilder();
 
                 // requires
                 for (ModuleDescriptor.Requires req : md.requires()) {
@@ -503,6 +486,45 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                 });
 
                 putModuleDescriptor();
+            }
+
+            void newBuilder() {
+                mv.visitTypeInsn(NEW, MODULE_DESCRIPTOR_BUILDER);
+                mv.visitInsn(DUP);
+                mv.visitLdcInsn(md.name());
+                pushInt(initialCapacity(md.requires().size()));
+                pushInt(initialCapacity(md.exports().size()));
+                pushInt(initialCapacity(md.provides().size()));
+                mv.visitMethodInsn(INVOKESPECIAL, MODULE_DESCRIPTOR_BUILDER,
+                    "<init>", "(Ljava/lang/String;III)V", false);
+                mv.visitVarInsn(ASTORE, BUILDER_VAR);
+                mv.visitVarInsn(ALOAD, BUILDER_VAR);
+
+                if (md.isWeak()) {
+                    setModuleBit("weak", true);
+                }
+                if (md.isAutomatic()) {
+                    setModuleBit("automatic", true);
+                }
+                if (md.isSynthetic()) {
+                    setModuleBit("synthetic", true);
+                }
+            }
+
+
+            /*
+             * Invoke Builder.<methodName>(boolean value)
+             */
+            void setModuleBit(String methodName, boolean value) {
+                mv.visitVarInsn(ALOAD, BUILDER_VAR);
+                if (value) {
+                    mv.visitInsn(ICONST_1);
+                } else {
+                    mv.visitInsn(ICONST_0);
+                }
+                mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
+                                   methodName, BOOLEAN_SIG, false);
+                mv.visitInsn(POP);
             }
 
             /*

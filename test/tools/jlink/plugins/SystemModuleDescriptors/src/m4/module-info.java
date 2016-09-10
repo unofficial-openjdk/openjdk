@@ -21,6 +21,5 @@
  * questions.
  */
 
-module m3 {
-    requires m4;
+weak module m4 {
 }
