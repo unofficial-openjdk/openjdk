@@ -171,36 +171,80 @@ public class AutomaticModulesTest {
                            "p/C1.class", "p/C2.class", "q/C1.class");
 
         ModuleFinder finder = ModuleFinder.of(dir);
+        Optional<ModuleReference> mref = finder.find("m");
+        assertTrue(mref.isPresent(), "m not found");
 
-        Configuration parent = Layer.boot().configuration();
-        Configuration cf = resolve(parent, finder, "m");
+        ModuleDescriptor descriptor = mref.get().descriptor();
 
-        ModuleDescriptor descriptor = findDescriptor(cf, "m");
+        assertTrue(descriptor.packages().size() == 2);
+        assertTrue(descriptor.packages().contains("p"));
+        assertTrue(descriptor.packages().contains("q"));
 
         Set<String> exports = descriptor.exports().stream()
                 .map(Exports::source)
                 .collect(Collectors.toSet());
-
         assertTrue(exports.size() == 2);
         assertTrue(exports.contains("p"));
         assertTrue(exports.contains("q"));
-        assertTrue(descriptor.conceals().isEmpty());
     }
-
 
     /**
-     * Test class file in JAR file where the entry does not correspond to a
+     * Test class files in JAR file where the entry does not correspond to a
      * legal package name.
      */
-    @Test(expectedExceptions = FindException.class)
     public void testBadPackage() throws IOException {
         Path dir = Files.createTempDirectory(USER_DIR, "mods");
-        createDummyJarFile(dir.resolve("m.jar"), "p-/T.class");
+        createDummyJarFile(dir.resolve("m.jar"), "p/C1.class", "p-/C2.class");
 
-        // should throw FindException
-        ModuleFinder.of(dir).findAll();
+        ModuleFinder finder = ModuleFinder.of(dir);
+        Optional<ModuleReference> mref = finder.find("m");
+        assertTrue(mref.isPresent(), "m not found");
+
+        ModuleDescriptor descriptor = mref.get().descriptor();
+
+        assertTrue(descriptor.packages().size() == 1);
+        assertTrue(descriptor.packages().contains("p"));
+
+        Set<String> exports = descriptor.exports().stream()
+                .map(Exports::source)
+                .collect(Collectors.toSet());
+        assertTrue(exports.size() == 1);
+        assertTrue(exports.contains("p"));
     }
 
+    /**
+     * Test non-class resources in a JAR file.
+     */
+    public void testNonClassResources() throws IOException {
+        Path dir = Files.createTempDirectory(USER_DIR, "mods");
+        createDummyJarFile(dir.resolve("m.jar"),
+                "LICENSE",
+                "README",
+                "WEB-INF/tags",
+                "p/Type.class",
+                "p/resources/m.properties");
+
+        ModuleFinder finder = ModuleFinder.of(dir);
+        Optional<ModuleReference> mref = finder.find("m");
+        assertTrue(mref.isPresent(), "m not found");
+
+        ModuleDescriptor descriptor = mref.get().descriptor();
+
+        assertTrue(descriptor.packages().size() == 2);
+        assertTrue(descriptor.packages().contains("p"));
+        assertTrue(descriptor.packages().contains("p.resources"));
+    }
+
+    /**
+     * Test .class file in unnamed package (top-level directory)
+     */
+    @Test(expectedExceptions = FindException.class)
+    public void testClassInUnnamedPackage() throws IOException {
+        Path dir = Files.createTempDirectory(USER_DIR, "mods");
+        createDummyJarFile(dir.resolve("m.jar"), "Mojo.class");
+        ModuleFinder finder = ModuleFinder.of(dir);
+        finder.findAll();
+    }
 
     /**
      * Test JAR file with META-INF/services configuration file
