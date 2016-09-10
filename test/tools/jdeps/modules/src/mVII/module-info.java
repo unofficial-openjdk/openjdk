@@ -21,9 +21,9 @@
  * questions.
  */
 
-module m7 {
+module mVII {
     // only use classes that have no direct or indirect dependency
     // to sun.misc.Unsafe
     requires unsafe;
-    requires m6;
+    requires mVI;
 }

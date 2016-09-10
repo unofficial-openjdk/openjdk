@@ -31,5 +31,5 @@ module m4 {
     exports p4;
 
     // unuused qualified exports
-    exports p4.internal to m6,m7;
+    exports p4.internal to mVI,mVII;
 }

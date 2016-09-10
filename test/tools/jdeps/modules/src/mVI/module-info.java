@@ -21,7 +21,7 @@
  * questions.
  */
 
-module m6 {
+module mVI {
     requires unsafe;
 
     // no dependency on sun.misc.Unsafe directly or indirectly

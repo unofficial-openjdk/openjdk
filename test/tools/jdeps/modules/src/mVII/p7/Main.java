@@ -23,7 +23,7 @@
 
 package p7;
 
-// Only use classes in unsafe and m6 modules with no
+// Only use classes in unsafe and mVI modules with no
 // direct or indirect dependency on sun.misc.Unsafe
 public class Main {
     public static void main(String... args) {
