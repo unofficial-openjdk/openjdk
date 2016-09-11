@@ -97,6 +97,7 @@ import jdk.internal.joptsimple.OptionParser;
 import jdk.internal.joptsimple.OptionSet;
 import jdk.internal.joptsimple.OptionSpec;
 import jdk.internal.joptsimple.ValueConverter;
+import jdk.internal.loader.ResourceHelper;
 import jdk.internal.misc.JavaLangModuleAccess;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.module.ModuleHashes;
@@ -459,13 +460,7 @@ public class JmodTask {
 
                 // Add (or replace) the Packages attribute
                 if (packages != null) {
-                    Set<String> exported = descriptor.exports().stream()
-                        .map(ModuleDescriptor.Exports::source)
-                        .collect(Collectors.toSet());
-                    Set<String> concealed = packages.stream()
-                        .filter(p -> !exported.contains(p))
-                        .collect(Collectors.toSet());
-                    extender.packages(concealed);
+                    extender.packages(packages);
                 }
 
                 // --main-class
@@ -578,10 +573,11 @@ public class JmodTask {
         Set<String> findPackages(Path dir) {
             try {
                 return Files.find(dir, Integer.MAX_VALUE,
-                        ((path, attrs) -> attrs.isRegularFile() &&
-                                path.toString().endsWith(".class")))
-                        .map(path -> toPackageName(dir.relativize(path)))
-                        .filter(pkg -> pkg.length() > 0)   // module-info
+                                  ((path, attrs) -> attrs.isRegularFile()))
+                        .map(dir::relativize)
+                        .filter(path -> isResource(path.toString()))
+                        .map(path -> toPackageName(path))
+                        .filter(pkg -> pkg.length() > 0)
                         .distinct()
                         .collect(Collectors.toSet());
             } catch (IOException ioe) {
@@ -594,21 +590,29 @@ public class JmodTask {
          */
         Set<String> findPackages(JarFile jf) {
             return jf.stream()
-                     .filter(e -> e.getName().endsWith(".class"))
+                     .filter(e -> !e.isDirectory() && isResource(e.getName()))
                      .map(e -> toPackageName(e))
-                     .filter(pkg -> pkg.length() > 0)   // module-info
+                     .filter(pkg -> pkg.length() > 0)
                      .distinct()
                      .collect(Collectors.toSet());
         }
 
+        /**
+         * Returns true if it's a .class or a resource with an effective
+         * package name.
+         */
+        boolean isResource(String name) {
+            return name.endsWith(".class") || !ResourceHelper.isSimpleResource(name);
+        }
+
+
         String toPackageName(Path path) {
             String name = path.toString();
-            assert name.endsWith(".class");
             int index = name.lastIndexOf(File.separatorChar);
             if (index != -1)
                 return name.substring(0, index).replace(File.separatorChar, '.');
 
-            if (!name.equals(MODULE_INFO)) {
+            if (name.endsWith(".class") && !name.equals(MODULE_INFO)) {
                 IOException e = new IOException(name  + " in the unnamed package");
                 throw new UncheckedIOException(e);
             }
@@ -617,12 +621,15 @@ public class JmodTask {
 
         String toPackageName(ZipEntry entry) {
             String name = entry.getName();
-            assert name.endsWith(".class");
             int index = name.lastIndexOf("/");
             if (index != -1)
                 return name.substring(0, index).replace('/', '.');
-            else
-                return "";
+
+            if (name.endsWith(".class") && !name.equals(MODULE_INFO)) {
+                IOException e = new IOException(name  + " in the unnamed package");
+                throw new UncheckedIOException(e);
+            }
+            return "";
         }
 
         void processClasses(ZipOutputStream zos, List<Path> classpaths)

@@ -27,24 +27,21 @@ package jdk.tools.jlink.internal;
 import java.lang.module.ModuleDescriptor;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Stream;
 import jdk.internal.jimage.decompressor.CompressedResourceHeader;
+import jdk.internal.loader.ResourceHelper;
 import jdk.tools.jlink.plugin.ResourcePool;
 import jdk.tools.jlink.plugin.ResourcePoolBuilder;
 import jdk.tools.jlink.plugin.ResourcePoolEntry;
 import jdk.tools.jlink.plugin.ResourcePoolModule;
 import jdk.tools.jlink.plugin.ResourcePoolModuleView;
 import jdk.tools.jlink.plugin.PluginException;
-import jdk.tools.jlink.internal.plugins.FileCopierPlugin;
 
 /**
  * A manager for pool of resources.
@@ -60,6 +57,14 @@ public class ResourcePoolManager {
         }
         ByteBuffer bb = ByteBuffer.wrap(content.get().contentBytes());
         return ModuleDescriptor.read(bb);
+    }
+
+    /**
+     * Returns true if a resource has an effective package.
+     */
+    public static boolean isNamedPackageResource(String path) {
+        return (path.endsWith(".class") && !path.endsWith("module-info.class")) ||
+                !ResourceHelper.isSimpleResource(path);
     }
 
     class ResourcePoolModuleImpl implements ResourcePoolModule {
@@ -102,11 +107,10 @@ public class ResourcePoolManager {
             Set<String> pkgs = new HashSet<>();
             moduleContent.values().stream().filter(m -> m.type().
                     equals(ResourcePoolEntry.Type.CLASS_OR_RESOURCE)).forEach(res -> {
-                // Module metadata only contains packages with .class files
-                if (ImageFileCreator.isClassPackage(res.path())) {
-                    String[] split = ImageFileCreator.splitPath(res.path());
-                    String pkg = split[1];
-                    if (pkg != null && !pkg.isEmpty()) {
+                String name = ImageFileCreator.resourceName(res.path());
+                if (isNamedPackageResource(name)) {
+                    String pkg = ImageFileCreator.toPackage(name);
+                    if (!pkg.isEmpty()) {
                         pkgs.add(pkg);
                     }
                 }

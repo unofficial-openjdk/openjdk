@@ -121,6 +121,10 @@ module java.base {
         jdk.jlink;
     exports jdk.internal.jimage.decompressor to
         jdk.jlink;
+    exports jdk.internal.loader to
+        java.instrument,
+        jdk.jartool,
+        jdk.jlink;
     exports jdk.internal.logger to
         java.logging;
     exports jdk.internal.org.objectweb.asm to
@@ -139,8 +143,6 @@ module java.base {
         jdk.scripting.nashorn;
     exports jdk.internal.org.objectweb.asm.signature to
         jdk.scripting.nashorn;
-    exports jdk.internal.loader to
-        java.instrument;
     exports jdk.internal.math to
         java.desktop;
     exports jdk.internal.module to
