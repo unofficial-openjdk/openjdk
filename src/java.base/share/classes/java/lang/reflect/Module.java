@@ -438,7 +438,7 @@ public final class Module implements AnnotatedElement {
      * package to at least the given module.
      *
      * <p> This method always returns {@code true} when invoked on an unnamed
-     * module or a weak module</p>
+     * module or a weak module. </p>
      *
      * <p> This method does not check if the given module reads this module. </p>
      *
@@ -482,7 +482,7 @@ public final class Module implements AnnotatedElement {
      * package unconditionally.
      *
      * <p> This method always returns {@code true} when invoked on an unnamed
-     * module. </p>
+     * module or weak module. </p>
      *
      * <p> This method does not check if the given module reads this module. </p>
      *
@@ -781,7 +781,7 @@ public final class Module implements AnnotatedElement {
      * for use by frameworks that invoke {@link java.util.ServiceLoader
      * ServiceLoader} on behalf of other modules or where the framework is
      * passed a reference to the service type by other code. This method is
-     * a no-op when invoked on an unnamed module.
+     * a no-op when invoked on an unnamed module or an automatic module.
      *
      * <p> This method does not cause {@link
      * Configuration#resolveRequiresAndUses resolveRequiresAndUses} to be
@@ -802,7 +802,7 @@ public final class Module implements AnnotatedElement {
     public Module addUses(Class<?> service) {
         Objects.requireNonNull(service);
 
-        if (isNamed()) {
+        if (isNamed() && !descriptor.isAutomatic()) {
             Module caller = Reflection.getCallerClass().getModule();
             if (caller != this) {
                 throw new IllegalStateException(caller + " != " + this);
@@ -827,7 +827,7 @@ public final class Module implements AnnotatedElement {
     /**
      * Indicates if this module has a service dependence on the given service
      * type. This method always returns {@code true} when invoked on an unnamed
-     * module.
+     * module or an automatic module.
      *
      * @param  service
      *         The service type

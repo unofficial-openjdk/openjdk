@@ -178,7 +178,7 @@ public final class Layer {
      * <ul>
      *
      *     <li><p> <em>Overlapping packages</em>: Two or more modules in the
-     *     configuration have the same package (exported or concealed). </p></li>
+     *     configuration have the same package. </p></li>
      *
      *     <li><p> <em>Split delegation</em>: The resulting class loader would
      *     need to delegate to more than one class loader in order to load types
@@ -309,8 +309,8 @@ public final class Layer {
      *
      * <ul>
      *
-     *     <li><p> Two or more modules with the same package (exported or
-     *     concealed) are mapped to the same class loader. </p></li>
+     *     <li><p> Two or more modules with the same package are mapped to the
+     *     same class loader. </p></li>
      *
      *     <li><p> A module is mapped to a class loader that already has a
      *     module of the same name defined to it. </p></li>
