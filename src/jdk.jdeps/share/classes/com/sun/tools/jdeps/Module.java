@@ -26,6 +26,7 @@
 package com.sun.tools.jdeps;
 
 import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleDescriptor.Exports;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
@@ -250,7 +251,11 @@ class Module extends Archive {
             m.descriptor.exports().forEach(e -> builder.exports(e));
             m.descriptor.uses().forEach(s -> builder.uses(s));
             m.descriptor.provides().values().forEach(p -> builder.provides(p));
-            builder.conceals(m.descriptor.conceals());
+
+            Set<String> concealed = new HashSet<>(m.descriptor.packages());
+            m.descriptor.exports().stream().map(Exports::source).forEach(concealed::remove);
+            concealed.forEach(builder::contains);
+
             this.md = builder.build();
         }
 
