@@ -2142,9 +2142,11 @@ void java_lang_StackTraceElement::fill_in(Handle element,
 
   // Fill in class name
   ResourceMark rm(THREAD);
+
   const char* str = holder->external_name();
   oop classname = StringTable::intern((char*) str, CHECK);
   java_lang_StackTraceElement::set_declaringClass(element(), classname);
+  java_lang_StackTraceElement::set_declaringClassObject(element(), holder->java_mirror());
 
   oop loader = holder->class_loader();
   if (loader != NULL) {
@@ -3642,13 +3644,14 @@ int java_lang_System::static_in_offset;
 int java_lang_System::static_out_offset;
 int java_lang_System::static_err_offset;
 int java_lang_System::static_security_offset;
-int java_lang_StackTraceElement::declaringClass_offset;
 int java_lang_StackTraceElement::methodName_offset;
 int java_lang_StackTraceElement::fileName_offset;
 int java_lang_StackTraceElement::lineNumber_offset;
 int java_lang_StackTraceElement::moduleName_offset;
 int java_lang_StackTraceElement::moduleVersion_offset;
 int java_lang_StackTraceElement::classLoaderName_offset;
+int java_lang_StackTraceElement::declaringClass_offset;
+int java_lang_StackTraceElement::declaringClassObject_offset;
 int java_lang_StackFrameInfo::_declaringClass_offset;
 int java_lang_StackFrameInfo::_memberName_offset;
 int java_lang_StackFrameInfo::_bci_offset;
@@ -3695,6 +3698,10 @@ void java_lang_StackTraceElement::set_moduleVersion(oop element, oop value) {
 
 void java_lang_StackTraceElement::set_classLoaderName(oop element, oop value) {
   element->obj_field_put(classLoaderName_offset, value);
+}
+
+void java_lang_StackTraceElement::set_declaringClassObject(oop element, oop value) {
+  element->obj_field_put(declaringClassObject_offset, value);
 }
 
 // Support for java_lang_StackFrameInfo
@@ -3814,9 +3821,10 @@ void JavaClasses::compute_hard_coded_offsets() {
   java_lang_System::static_security_offset = java_lang_System::hc_static_security_offset * x;
 
   // java_lang_StackTraceElement
+  java_lang_StackTraceElement::declaringClassObject_offset = java_lang_StackTraceElement::hc_declaringClassObject_offset * x + header;
+  java_lang_StackTraceElement::classLoaderName_offset = java_lang_StackTraceElement::hc_classLoaderName_offset * x + header;
   java_lang_StackTraceElement::moduleName_offset = java_lang_StackTraceElement::hc_moduleName_offset * x + header;
   java_lang_StackTraceElement::moduleVersion_offset = java_lang_StackTraceElement::hc_moduleVersion_offset * x + header;
-  java_lang_StackTraceElement::classLoaderName_offset = java_lang_StackTraceElement::hc_classLoaderName_offset * x + header;
   java_lang_StackTraceElement::declaringClass_offset = java_lang_StackTraceElement::hc_declaringClass_offset  * x + header;
   java_lang_StackTraceElement::methodName_offset = java_lang_StackTraceElement::hc_methodName_offset * x + header;
   java_lang_StackTraceElement::fileName_offset   = java_lang_StackTraceElement::hc_fileName_offset   * x + header;
