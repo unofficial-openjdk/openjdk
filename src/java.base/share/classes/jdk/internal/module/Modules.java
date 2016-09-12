@@ -75,7 +75,7 @@ public class Modules {
 
     /**
      * Define a new module to the VM. The module has the given set of
-     * concealed packages and is defined to the given class loader.
+     * packages and is defined to the given class loader.
      *
      * The resulting Module is in a larval state in that it does not not read
      * any other module and does not have any exports.
@@ -85,7 +85,7 @@ public class Modules {
                                       Set<String> packages)
     {
         ModuleDescriptor descriptor = ModuleDescriptor.module(name)
-                .conceals(packages)
+                .contains(packages)
                 .build();
 
         return JLRMA.defineModule(loader, descriptor, null);

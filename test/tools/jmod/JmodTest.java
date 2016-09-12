@@ -276,15 +276,15 @@ public class JmodTest {
              .assertSuccess()
              .resultChecker(r -> {
                  // Expect similar output: "foo,  requires mandated java.base
-                 // exports jdk.test.foo,  conceals jdk.test.foo.internal"
+                 // exports jdk.test.foo,  contains jdk.test.foo.internal"
                  Pattern p = Pattern.compile("\\s+foo\\s+requires\\s+mandated\\s+java.base");
                  assertTrue(p.matcher(r.output).find(),
                            "Expecting to find \"foo, requires java.base\"" +
                                 "in output, but did not: [" + r.output + "]");
                  p = Pattern.compile(
-                        "exports\\s+jdk.test.foo\\s+conceals\\s+jdk.test.foo.internal");
+                        "exports\\s+jdk.test.foo\\s+contains\\s+jdk.test.foo.internal");
                  assertTrue(p.matcher(r.output).find(),
-                           "Expecting to find \"exports ..., conceals ...\"" +
+                           "Expecting to find \"exports ..., contains ...\"" +
                                 "in output, but did not: [" + r.output + "]");
              });
     }

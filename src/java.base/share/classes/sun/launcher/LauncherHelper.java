@@ -1010,9 +1010,10 @@ public final class LauncherHelper {
                     }
                 }
 
-                // concealed packages
-                new TreeSet<>(md.conceals())
-                    .forEach(p -> ostream.format("  contains %s%n", p));
+                // non-exported packages
+                Set<String> concealed = new TreeSet<>(md.packages());
+                md.exports().stream().map(Exports::source).forEach(concealed::remove);
+                concealed.forEach(p -> ostream.format("  contains %s%n", p));
             }
         }
     }

@@ -242,7 +242,7 @@ public final class Loader extends SecureClassLoader {
                     }
                     assert layer != null;
 
-                    // find the class loader for the module in the layer
+                    // find the class loader for the module
                     // For now we use the platform loader for modules defined to the
                     // boot loader
                     assert layer.findModule(mn).isPresent();
@@ -272,8 +272,19 @@ public final class Loader extends SecureClassLoader {
                             throw new IllegalArgumentException("Package "
                                 + pn + " cannot be imported from multiple loaders");
                         }
-
                     }
+                }
+
+                // weak modules export all packages to the target module
+                if (descriptor.isWeak()) {
+                    ClassLoader ldr = loader;
+                    descriptor.packages().forEach(pn -> {
+                        ClassLoader l = remotePackageToLoader.putIfAbsent(pn, ldr);
+                        if (l != null && l != ldr) {
+                            throw new IllegalArgumentException("Package "
+                                    + pn + " cannot be imported from multiple loaders");
+                        }
+                    });
                 }
             }
 

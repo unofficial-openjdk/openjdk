@@ -45,6 +45,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static jdk.internal.module.Checks.*;
 import static java.util.Objects.*;
@@ -233,9 +235,17 @@ public class ModuleDescriptor
          */
         @Override
         public String toString() {
-            return Dependence.toString(mods, name);
+            return toString(mods, name);
         }
 
+        private <T> Stream<String> toStringStream(Set<T> s) {
+            return s.stream().map(e -> e.toString().toLowerCase());
+        }
+
+        private <M> String toString(Set<M> mods, String what) {
+            return (Stream.concat(toStringStream(mods), Stream.of(what)))
+                    .collect(Collectors.joining(" "));
+        }
     }
 
 
@@ -395,16 +405,24 @@ public class ModuleDescriptor
          */
         @Override
         public String toString() {
-            String s = Dependence.toString(mods, source);
+            String s = toString(mods, source);
             if (targets.isEmpty())
                 return s;
             else
                 return s + " to " + targets;
         }
 
+        private <T> Stream<String> toStringStream(Set<T> s) {
+            return s.stream().map(e -> e.toString().toLowerCase());
+        }
+
+        private <M> String toString(Set<M> mods, String what) {
+            return (Stream.concat(toStringStream(mods), Stream.of(what)))
+                    .collect(Collectors.joining(" "));
+        }
     }
 
-
+
 
     /**
      * <p> A service that a module provides one or more implementations of. </p>
@@ -1097,20 +1115,8 @@ public class ModuleDescriptor
     }
 
     /**
-     * Returns the names of the packages defined in, but not explicitly exported
-     * by, this module.
-     *
-     * @return A possibly-empty unmodifiable set of the concealed packages
-     */
-    public Set<String> conceals() {
-        Set<String> conceals = new HashSet<>(packages);
-        exports.stream().map(Exports::source).forEach(conceals::remove);
-        return emptyOrUnmodifiableSet(conceals);
-    }
-
-    /**
-     * Returns the names of all the packages defined in this module, whether
-     * explicitly exported or concealed.
+     * Returns the names of all packages defined in this module, whether
+     * exported or not.
      *
      * @return A possibly-empty unmodifiable set of the all packages
      */
@@ -1155,11 +1161,11 @@ public class ModuleDescriptor
         boolean automatic;
         boolean synthetic;
         final Map<String, Requires> requires = new HashMap<>();
-        final Set<String> uses = new HashSet<>();
         final Map<String, Exports> unqualifiedExports = new HashMap<>();
         final Map<String, Set<Exports>> qualifiedExports = new HashMap<>();
+        final Set<String> nonExportedPackages = new HashSet<>();
+        final Set<String> uses = new HashSet<>();
         final Map<String, Provides> provides = new HashMap<>();
-        final Set<String> conceals = new HashSet<>();
         Version version;
         String osName;
         String osArch;
@@ -1195,7 +1201,6 @@ public class ModuleDescriptor
         /* package */ boolean isAutomatic() {
             return automatic;
         }
-
 
         /**
          * Adds a dependence on a module.
@@ -1265,30 +1270,6 @@ public class ModuleDescriptor
             return requires(EnumSet.noneOf(Requires.Modifier.class), mn);
         }
 
-
-        /**
-         * Adds a service dependence.
-         *
-         * @param  service
-         *         The service type
-         *
-         * @return This builder
-         *
-         * @throws IllegalArgumentException
-         *         If the service type is {@code null} or is not a legal Java
-         *         identifier
-         * @throws IllegalStateException
-         *         If a dependency on the service type has already been declared
-         */
-        public Builder uses(String service) {
-            if (uses.contains(requireServiceTypeName(service)))
-                throw new IllegalStateException("Dependence upon service "
-                                                + service + " already declared");
-            uses.add(service);
-            return this;
-        }
-
-
         /**
          * Adds an export.
          *
@@ -1320,10 +1301,10 @@ public class ModuleDescriptor
          * @return This builder
          *
          * @throws IllegalStateException
-         *         If the package is already declared as a concealed package,
-         *         the export conflicts with a declared exported package as
-         *         specified above, or this builder was initialized to create
-         *         a weak module
+         *         If the package is already declared as a package with the
+         *         {@link #contains contains} method, the export conflicts with
+         *         a declared exported package as specified above, or this
+         *         builder was initialized to create a weak module
          */
         public Builder exports(Exports e) {
             // weak modules don't have exports
@@ -1331,10 +1312,10 @@ public class ModuleDescriptor
                 throw new IllegalStateException("Weak modules do not declare exports");
             }
 
-            // can't be concealed and exported
+            // can't be exported and non-exported
             String source = e.source();
-            if (conceals.contains(source)) {
-                throw new IllegalStateException("Concealed package " + source
+            if (nonExportedPackages.contains(source)) {
+                throw new IllegalStateException("Package " + source
                                                  + " already declared");
             }
 
@@ -1408,10 +1389,11 @@ public class ModuleDescriptor
          *         null} or is not a legal Java identifier, or the set of
          *         targets is empty
          * @throws IllegalStateException
-         *         If the package is already declared as a concealed package,
-         *         the export conflicts with a declared exported package
-         *         (see {@link #exports(Exports) exports(Exports)}), or this
-         *         builder was initialized to create a weak module
+         *         If the package is already declared as a package with the
+         *         {@link #contains contains} method, the export conflicts with
+         *         a declared exported package (see {@link #exports(Exports)
+         *         exports(Exports)}), or this builder was initialized to
+         *         create a weak module
          */
         public Builder exports(Set<Exports.Modifier> ms,
                                String pn,
@@ -1443,10 +1425,11 @@ public class ModuleDescriptor
          *         If the package name is {@code null} or is not a legal Java
          *         identifier
          * @throws IllegalStateException
-         *         If the package is already declared as a concealed package,
-         *         the export conflicts with a declared exported package
-         *         (see {@link #exports(Exports) exports(Exports)}), or this
-         *         builder was initialized to create a weak module
+         *         If the package is already declared as a package with the
+         *         {@link #contains contains} method, the export conflicts with
+         *         a declared exported package (see {@link #exports(Exports)
+         *         exports(Exports)}), or this builder was initialized to
+         *         create a weak module
          */
         public Builder exports(Set<Exports.Modifier> ms, String pn) {
             Exports e = new Exports(ms, requirePackageName(pn), Collections.emptySet());
@@ -1468,10 +1451,11 @@ public class ModuleDescriptor
          *         null} or is not a legal Java identifier, or the set of
          *         targets is empty
          * @throws IllegalStateException
-         *         If the package is already declared as a concealed package,
-         *         the export conflicts with a declared exported package
-         *         (see {@link #exports(Exports) exports(Exports)}), or this
-         *         builder was initialized to create a weak module
+         *         If the package is already declared as a package with the
+         *         {@link #contains contains} method, the export conflicts with
+         *         a declared exported package (see {@link #exports(Exports)
+         *         exports(Exports)}), or this builder was initialized to
+         *         create a weak module
          */
         public Builder exports(String pn, Set<String> targets) {
             return exports(Collections.emptySet(), pn, targets);
@@ -1489,10 +1473,11 @@ public class ModuleDescriptor
          *         If the package name is {@code null} or is not a legal Java
          *         identifier
          * @throws IllegalStateException
-         *         If the package is already declared as a concealed package,
-         *         the export conflicts with a declared exported package
-         *         (see {@link #exports(Exports) exports(Exports)}), or this
-         *         builder was initialized to create a weak module
+         *         If the package is already declared as a package with the
+         *         {@link #contains contains} method, the export conflicts with
+         *         a declared exported package (see {@link #exports(Exports)
+         *         exports(Exports)}), or this builder was initialized to
+         *         create a weak module
          */
         public Builder exports(String pn) {
             return exports(Collections.emptySet(), pn);
@@ -1504,6 +1489,28 @@ public class ModuleDescriptor
             exported.addAll(unqualifiedExports.keySet());
             exported.addAll(qualifiedExports.keySet());
             return exported;
+        }
+
+        /**
+         * Adds a service dependence.
+         *
+         * @param  service
+         *         The service type
+         *
+         * @return This builder
+         *
+         * @throws IllegalArgumentException
+         *         If the service type is {@code null} or is not a legal Java
+         *         identifier
+         * @throws IllegalStateException
+         *         If a dependency on the service type has already been declared
+         */
+        public Builder uses(String service) {
+            if (uses.contains(requireServiceTypeName(service)))
+                throw new IllegalStateException("Dependence upon service "
+                        + service + " already declared");
+            uses.add(service);
+            return this;
         }
 
         /**
@@ -1584,10 +1591,10 @@ public class ModuleDescriptor
         }
 
         /**
-         * Adds a set of (possible empty) concealed packages.
+         * Adds a (possible empty) set of packages to the module
          *
          * @param  pns
-         *         The set of package names of the concealed packages
+         *         The set of package names
          *
          * @return This builder
          *
@@ -1595,16 +1602,16 @@ public class ModuleDescriptor
          *         If any of the package names is {@code null} or is not a
          *         legal Java identifier
          * @throws IllegalStateException
-         *         If any of packages are already declared as a concealed or
-         *         exported package
+         *         If any of packages are already declared as packages or
+         *         exported packages
          */
-        public Builder conceals(Set<String> pns) {
-            pns.forEach(this::conceals);
+        public Builder contains(Set<String> pns) {
+            pns.forEach(this::contains);
             return this;
         }
 
         /**
-         * Adds a concealed package.
+         * Adds a package to the module.
          *
          * @param  pn
          *         The package name
@@ -1615,21 +1622,21 @@ public class ModuleDescriptor
          *         If the package name is {@code null}, or is not a legal Java
          *         identifier
          * @throws IllegalStateException
-         *         If the package is already declared as a concealed or exported
+         *         If the package is already declared as a package or exported
          *         package
          */
-        public Builder conceals(String pn) {
+        public Builder contains(String pn) {
             Checks.requirePackageName(pn);
-            if (conceals.contains(pn)) {
-                throw new IllegalStateException("Concealed package "
-                                                + pn + " already declared");
+            if (nonExportedPackages.contains(pn)) {
+                throw new IllegalStateException("Package " + pn
+                                                + " already declared");
             }
             if (unqualifiedExports.containsKey(pn)
                     || qualifiedExports.containsKey(pn)) {
                 throw new IllegalStateException("Exported package "
                                                 + pn + " already declared");
             }
-            conceals.add(pn);
+            nonExportedPackages.add(pn);
             return this;
         }
 
@@ -1745,10 +1752,6 @@ public class ModuleDescriptor
 
         /**
          * Builds and returns a {@code ModuleDescriptor} from its components.
-         * When building a weak module then all packages added using the
-         * {@link #conceals conceals} methods are transformed so that the
-         * resulting module descriptor exports all packages with the
-         * {@link Exports.Modifier#PRIVATE PRIVATE} modifier.
          *
          * @return The module descriptor
          */
@@ -1757,18 +1760,11 @@ public class ModuleDescriptor
 
             Set<String> packages;
             Set<Exports> exports = new HashSet<>();
-            if (weak) {
-                packages = conceals;
-                Set<Exports.Modifier> ms = EnumSet.of(Exports.Modifier.PRIVATE);
-                packages.stream()
-                        .map(pn -> new Exports(ms, pn, Collections.emptySet()))
-                        .forEach(exports::add);
-            } else {
-                packages = new HashSet<>(conceals);
-                packages.addAll(exportedPackages());
-                exports.addAll(unqualifiedExports.values());
-                qualifiedExports.values().forEach(e -> exports.addAll(e));
-            }
+            packages = new HashSet<>(nonExportedPackages);
+            packages.addAll(exportedPackages());
+
+            exports.addAll(unqualifiedExports.values());
+            qualifiedExports.values().forEach(e -> exports.addAll(e));
 
             return new ModuleDescriptor(name,
                                         weak,
@@ -1944,28 +1940,24 @@ public class ModuleDescriptor
 
     /**
      * Instantiates a builder to build a module descriptor for a weak module.
-     * A weak module does not declare any module exports but is treated as if
-     * every package is <em>exported-private</em>. That is, the resulting
-     * module descriptor exports all packages with the {@link
-     * Exports.Modifier#PRIVATE PRIVATE} modifier.
+     * A weak module does not declare any module exports but the resulting
+     * module descriptor is treated as if all packages are
+     * <em>exported-private</em>.
      *
-     * <p> As an example, consider the module descriptor for a weak module
-     * "{@code m}" that is created as follows: </p>
-     * <pre>{@code    ModuleDescriptor descriptor = ModuleDescriptor.weakModule("m")
+     * <p> As an example, the following creates a module descriptor for a weak
+     * name "{@code m}" containing two packages: </p>
+     * <pre>{@code
+     *     ModuleDescriptor descriptor = ModuleDescriptor.weakModule("m")
      *         .requires("java.base")
-     *         .conceals("p")
-     *         .conceals("q")
-     *         .build(); }</pre>
-     * <p> Invoking the {@link #exports() exports} method on the resulting
-     * module descriptor returns a set of two unqualified exports, one for each
-     * package. The set of modifiers will contain the {@code PRIVATE} modifier.
-     * Invoking the {@link #conceals conceals} method on the module descriptor
-     * returns an empty set. </p>
+     *         .contains("p")
+     *         .contains("q")
+     *         .build();
+     * }</pre>
      *
      * @param  name
      *         The module name
      *
-     * @return A new build that builds a weak module
+     * @return A new builder that builds a weak module
      *
      * @throws IllegalArgumentException
      *         If the module name is {@code null} or is not a legal Java
@@ -1976,16 +1968,16 @@ public class ModuleDescriptor
     }
 
     /**
-     * Instantiates a builder to build a module descriptor for automatic
+     * Instantiates a builder to build a module descriptor for an automatic
      * module. Automatic modules receive special treatment during resolution
-     * (see {@link Configuration}) so that they reads all other modules. When
-     * created in the Java virtual machine as a {@link java.lang.reflect.Module}
-     * then the module reads every unnamed module in the Java virtual machine.
+     * (see {@link Configuration}) so that they read all other modules. When
+     * Instantiated in the Java virtual machine as a {@link java.lang.reflect.Module}
+     * then the Module reads every unnamed module in the Java virtual machine.
      *
      * @param  name
      *         The module name
      *
-     * @return A new build that builds an automatic module
+     * @return A new builder that builds an automatic module
      *
      * @throws IllegalArgumentException
      *         If the module name is {@code null} or is not a legal Java
@@ -2003,11 +1995,9 @@ public class ModuleDescriptor
      * as a module descriptor.
      *
      * <p> If the descriptor encoded in the input stream does not indicate a
-     * set of concealed packages then the {@code packageFinder} will be
-     * invoked.  The packages it returns, except for those indicated as
-     * exported in the encoded descriptor, will be considered to be concealed.
-     * If the {@code packageFinder} throws an {@link UncheckedIOException} then
-     * {@link IOException} cause will be re-thrown. </p>
+     * set of packages in the module then the {@code packageFinder} will be
+     * invoked. If the {@code packageFinder} throws an {@link UncheckedIOException}
+     * then {@link IOException} cause will be re-thrown. </p>
      *
      * <p> If there are bytes following the module descriptor then it is
      * implementation specific as to whether those bytes are read, ignored,
@@ -2019,12 +2009,12 @@ public class ModuleDescriptor
      *
      * @apiNote The {@code packageFinder} parameter is for use when reading
      * module descriptors from legacy module-artifact formats that do not
-     * record the set of concealed packages in the descriptor itself.
+     * record the set of packages in the descriptor itself.
      *
      * @param  in
      *         The input stream
      * @param  packageFinder
-     *         A supplier that can produce a set of package names
+     *         A supplier that can produce the set of packages
      *
      * @return The module descriptor
      *
@@ -2064,10 +2054,7 @@ public class ModuleDescriptor
      * as a module descriptor.
      *
      * <p> If the descriptor encoded in the byte buffer does not indicate a
-     * set of concealed packages then the {@code packageFinder} will be
-     * invoked.  The packages it returns, except for those indicated as
-     * exported in the encoded descriptor, will be considered to be
-     * concealed. </p>
+     * set of packages then the {@code packageFinder} will be invoked. </p>
      *
      * <p> The module descriptor is read from the buffer stating at index
      * {@code p}, where {@code p} is the buffer's {@link ByteBuffer#position()
@@ -2083,12 +2070,12 @@ public class ModuleDescriptor
      *
      * @apiNote The {@code packageFinder} parameter is for use when reading
      * module descriptors from legacy module-artifact formats that do not
-     * record the set of concealed packages in the descriptor itself.
+     * record the set of packages in the descriptor itself.
      *
      * @param  bb
      *         The byte buffer
      * @param  packageFinder
-     *         A supplier that can produce a set of package names
+     *         A supplier that can produce the set of packages
      *
      * @return The module descriptor
      *

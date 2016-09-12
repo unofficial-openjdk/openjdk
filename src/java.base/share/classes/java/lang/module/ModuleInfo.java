@@ -257,16 +257,29 @@ final class ModuleInfo {
 
         // If the Packages attribute is not present then the packageFinder is
         // used to find the set of packages
+        boolean usedPackageFinder = false;
         if (packages == null && packageFinder != null) {
             try {
                 packages = new HashSet<>(packageFinder.get());
             } catch (UncheckedIOException x) {
                 throw x.getCause();
             }
+            usedPackageFinder = true;
         }
         if (packages != null) {
-            packages.removeAll(builder.exportedPackages());
-            builder.conceals(packages);
+            for (String pn : builder.exportedPackages()) {
+                if (!packages.contains(pn)) {
+                    String tail;
+                    if (usedPackageFinder) {
+                        tail = " not found by package finder";
+                    } else {
+                        tail = " missing from Packages attribute";
+                    }
+                    throw invalidModuleDescriptor("Exported package " + pn + tail);
+                }
+                packages.remove(pn);
+            }
+            builder.contains(packages);
         }
 
         if (version != null)
@@ -411,14 +424,14 @@ final class ModuleInfo {
     private Set<String> readPackagesAttribute(DataInput in, ConstantPool cpool)
         throws IOException
     {
-        Set<String> conceals = new HashSet<>();
+        Set<String> packages = new HashSet<>();
         int package_count = in.readUnsignedShort();
         for (int i=0; i<package_count; i++) {
             int index = in.readUnsignedShort();
             String pn = cpool.getUtf8(index).replace('/', '.');
-            conceals.add(pn);
+            packages.add(pn);
         }
-        return conceals;
+        return packages;
     }
 
     /**

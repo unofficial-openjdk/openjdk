@@ -340,6 +340,29 @@ public class LayerAndLoadersTest {
 
 
     /**
+     * Test creating a Layer with weak modules:
+     *
+     * Test scenario:
+     *   weak module m6 contains package q and type q.Hello
+     *   m5 requires m6
+     *   m5 contains type p.Main that invokes q.Hello
+     */
+    public void testDelegationWithWeakModules() throws Exception {
+        Configuration cf = resolveRequires("m5");
+
+        // loader(m5) == loader(m6)
+        Layer layer1 = Layer.boot().defineModulesWithOneLoader(cf, null);
+        checkLayer(layer1, "m5", "m6");
+        invoke(layer1, "m5", "p.Main");
+
+        // loader(m5) != loader(m6), loader(m5) should delegate to loader(m6)
+        Layer layer2 = Layer.boot().defineModulesWithManyLoaders(cf, null);
+        checkLayer(layer2, "m5", "m6");
+        invoke(layer2, "m5", "p.Main");
+    }
+
+
+    /**
      * Test Layer defineModulesWithXXX when the modules that override same
      * named modules in the parent layer.
      *

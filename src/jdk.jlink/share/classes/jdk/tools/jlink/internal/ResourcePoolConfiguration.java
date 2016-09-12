@@ -67,7 +67,7 @@ final class ResourcePoolConfiguration {
 
         mod.packages().stream()
            .filter(pn -> !exps.contains(pn))
-           .forEach(builder::conceals);
+           .forEach(builder::contains);
 
         md.version().ifPresent(builder::version);
         md.mainClass().ifPresent(builder::mainClass);

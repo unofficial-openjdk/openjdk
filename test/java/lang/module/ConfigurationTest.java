@@ -662,7 +662,7 @@ public class ConfigurationTest {
         ModuleDescriptor descriptor2
             = ModuleDescriptor.module("m2")
                 .requires("m1")
-                .conceals("q")
+                .contains("q")
                 .provides("p.S", "q.T")
                 .build();
 
@@ -705,14 +705,14 @@ public class ConfigurationTest {
             = ModuleDescriptor.module("m2")
                 .requires("m1")
                 .uses("p.S2")
-                .conceals("q")
+                .contains("q")
                 .provides("p.S1", "q.Service1Impl")
                 .build();
 
         ModuleDescriptor descriptor3
             = ModuleDescriptor.module("m3")
                 .requires("m1")
-                .conceals("q")
+                .contains("q")
                 .provides("p.S2", "q.Service2Impl")
                 .build();
 
@@ -769,7 +769,7 @@ public class ConfigurationTest {
         ModuleDescriptor descriptor2
             = ModuleDescriptor.module("m2")
                 .requires("m1")
-                .conceals("q")
+                .contains("q")
                 .provides("p.S", "q.T")
                 .build();
 
@@ -804,14 +804,14 @@ public class ConfigurationTest {
             = ModuleDescriptor.module("m1")
                 .exports("p")
                 .uses("p.S")
-                .conceals("p1")
+                .contains("p1")
                 .provides("p.S", "p1.ServiceImpl")
                 .build();
 
         ModuleDescriptor descriptor2
             = ModuleDescriptor.module("m2")
                 .requires("m1")
-                .conceals("p2")
+                .contains("p2")
                 .provides("p.S", "p2.ServiceImpl")
                 .build();
 
@@ -827,14 +827,14 @@ public class ConfigurationTest {
         ModuleDescriptor descriptor3
             = ModuleDescriptor.module("m3")
                 .requires("m1")
-                .conceals("p3")
+                .contains("p3")
                 .provides("p.S", "p3.ServiceImpl")
                 .build();
 
         ModuleDescriptor descriptor4
             = ModuleDescriptor.module("m4")
                 .requires("m1")
-                .conceals("p4")
+                .contains("p4")
                 .provides("p.S", "p4.ServiceImpl")
                 .build();
 
@@ -883,7 +883,7 @@ public class ConfigurationTest {
             = ModuleDescriptor.module("p")
                 .version("1.0")
                 .requires("s")
-                .conceals("q")
+                .contains("q")
                 .provides("p.S", "q.T")
                 .build();
 
@@ -910,7 +910,7 @@ public class ConfigurationTest {
             = ModuleDescriptor.module("p")
                 .version("2.0")
                 .requires("s")
-                .conceals("q")
+                .contains("q")
                 .provides("p.S", "q.T")
                 .build();
 
@@ -1001,14 +1001,14 @@ public class ConfigurationTest {
         ModuleDescriptor descriptor2_v1
             = ModuleDescriptor.module("m2")
                 .requires("m1")
-                .conceals("q")
+                .contains("q")
                 .provides("p.S", "q.T")
                 .build();
 
         ModuleDescriptor descriptor2_v2
             = ModuleDescriptor.module("m2")
                 .requires("m1")
-                .conceals("q")
+                .contains("q")
                 .provides("p.S", "q.T")
                 .build();
 
@@ -1227,7 +1227,7 @@ public class ConfigurationTest {
             = ModuleDescriptor.module("m2")
                 .requires("m1")
                 .requires("m3")
-                .conceals("q")
+                .contains("q")
                 .provides("p.S", "q.T")
                 .build();
 
@@ -1269,7 +1269,7 @@ public class ConfigurationTest {
             = ModuleDescriptor.module("m2")
                 .requires("m1")
                 .requires("m3")
-                .conceals("q")
+                .contains("q")
                 .provides("p.S", "q.T")
                 .build();
         ModuleDescriptor descriptor3
@@ -1316,7 +1316,37 @@ public class ConfigurationTest {
 
 
     /**
-     * Test the scenario where a module has a concealed package p and reads
+     * Test the scenario where a module reads two weak modules, both containing
+     * package p.
+     */
+    @Test(expectedExceptions = { ResolutionException.class })
+    public void testPackageSuppliedByTwoWeakModules() {
+        ModuleDescriptor descriptor1
+            =  ModuleDescriptor.module("m1")
+                .requires("m2")
+                .requires("m3")
+                .build();
+
+        ModuleDescriptor descriptor2
+            =  ModuleDescriptor.weakModule("m2")
+                .contains("p")
+                .build();
+
+        ModuleDescriptor descriptor3
+            =  ModuleDescriptor.weakModule("m3")
+                .contains("p")
+                .build();
+
+        ModuleFinder finder
+            = ModuleUtils.finderOf(descriptor1, descriptor2, descriptor3);
+
+        // m2 and m3 export package p to module m1
+        resolveRequires(finder, "m1");
+    }
+
+
+    /**
+     * Test the scenario where a module contains a package p and reads
      * a module that exports package p.
      */
     @Test(expectedExceptions = { ResolutionException.class })
@@ -1325,7 +1355,7 @@ public class ConfigurationTest {
         ModuleDescriptor descriptor1
             =  ModuleDescriptor.module("m1")
                 .requires("m2")
-                .conceals("p")
+                .contains("p")
                 .build();
 
         ModuleDescriptor descriptor2
@@ -1335,25 +1365,49 @@ public class ConfigurationTest {
 
         ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);
 
-        //  m1 contains package p, module m2 exports package p to m1
+        // m1 contains package p, module m2 exports package p to m1
         resolveRequires(finder, "m1");
     }
 
 
     /**
-     * Test the scenario where a module has a concealed package p and reads
-     * a module that also has a concealed package p.
+     * Test the scenario where a module containing package p reads a weak
+     * module that also contains package p
      */
-    public void testPackageConcealedBySelfAndOther() {
+    @Test(expectedExceptions = { ResolutionException.class })
+    public void testPackageSuppliedBySelfAndWeakModule() {
         ModuleDescriptor descriptor1
             =  ModuleDescriptor.module("m1")
                 .requires("m2")
-                .conceals("p")
+                .contains("p")
+                .build();
+
+        ModuleDescriptor descriptor2
+            =  ModuleDescriptor.weakModule("m2")
+                .contains("p")
+                .build();
+
+        ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);
+
+        // m1 contains package p, module m2 exports package p to m1
+        resolveRequires(finder, "m1");
+    }
+
+
+    /**
+     * Test the scenario where a module contains a package p and reads
+     * a module that also contains a package p.
+     */
+    public void testContainsPackageInSelfAndOther() {
+        ModuleDescriptor descriptor1
+            =  ModuleDescriptor.module("m1")
+                .requires("m2")
+                .contains("p")
                 .build();
 
         ModuleDescriptor descriptor2
             =  ModuleDescriptor.module("m2")
-                .conceals("p")
+                .contains("p")
                 .build();
 
         ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);
@@ -1395,12 +1449,12 @@ public class ConfigurationTest {
 
 
     /**
-     * Test "uses p.S" where p is a concealed package in the same module.
+     * Test "uses p.S" where p is contained in the same module.
      */
-    public void testConcealedService1() {
+    public void testContainsService1() {
         ModuleDescriptor descriptor1
             = ModuleDescriptor.module("m1")
-                .conceals("p")
+                .contains("p")
                 .uses("p.S")
                 .build();
 
@@ -1414,13 +1468,13 @@ public class ConfigurationTest {
 
 
     /**
-     * Test "uses p.S" where p is a concealed package in a different module.
+     * Test "uses p.S" where p is contained in a different module.
      */
     @Test(expectedExceptions = { ResolutionException.class })
-    public void testConcealedService2() {
+    public void testContainsService2() {
         ModuleDescriptor descriptor1
             = ModuleDescriptor.module("m1")
-                .conceals("p")
+                .contains("p")
                 .build();
 
         ModuleDescriptor descriptor2
@@ -1437,13 +1491,13 @@ public class ConfigurationTest {
 
 
     /**
-     * Test "provides p.S" where p is a concealed package in the same module.
+     * Test "provides p.S" where p is contained in the same module.
      */
-    public void testConcealedService3() {
+    public void testContainsService3() {
         ModuleDescriptor descriptor1
             = ModuleDescriptor.module("m1")
-                .conceals("p")
-                .conceals("q")
+                .contains("p")
+                .contains("q")
                 .provides("p.S", "q.S1")
                 .build();
 
@@ -1457,19 +1511,19 @@ public class ConfigurationTest {
 
 
     /**
-     * Test "provides p.S" where p is a concealed package in a different module.
+     * Test "provides p.S" where p is contained in a different module.
      */
     @Test(expectedExceptions = { ResolutionException.class })
-    public void testConcealedService4() {
+    public void testContainsService4() {
         ModuleDescriptor descriptor1
             = ModuleDescriptor.module("m1")
-                .conceals("p")
+                .contains("p")
                 .build();
 
         ModuleDescriptor descriptor2
             = ModuleDescriptor.module("m2")
                 .requires("m1")
-                .conceals("q")
+                .contains("q")
                 .provides("p.S", "q.S1")
                 .build();
 
@@ -1504,7 +1558,7 @@ public class ConfigurationTest {
     public void testServiceTypePackageNotExported2() {
         ModuleDescriptor descriptor1
             = ModuleDescriptor.module("m1")
-                .conceals("q")
+                .contains("q")
                 .provides("p.S", "q.T")
                 .build();
 

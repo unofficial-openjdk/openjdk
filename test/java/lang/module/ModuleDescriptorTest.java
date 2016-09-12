@@ -49,6 +49,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static java.lang.module.ModuleDescriptor.Requires.Modifier.*;
@@ -361,13 +362,13 @@ public class ModuleDescriptorTest {
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
-    public void testExportsWithConcealedPackage() {
-        ModuleDescriptor.module("foo").conceals("p").exports("p");
+    public void testExportsOnContainedPackage() {
+        ModuleDescriptor.module("foo").contains("p").exports("p");
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
-    public void testExportsToTargetWithConcealedPackage() {
-        ModuleDescriptor.module("foo").conceals("p").exports("p", Set.of("bar"));
+    public void testExportsToTargetOnContainedPackage() {
+        ModuleDescriptor.module("foo").contains("p").exports("p", Set.of("bar"));
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class )
@@ -616,41 +617,41 @@ public class ModuleDescriptorTest {
         assertNotEquals(p1, p2);
     }
 
-    // conceals
+    // contains
 
-    public void testConceals() {
-        Set<String> conceals = ModuleDescriptor.module("foo")
-                .conceals("p")
-                .conceals("q")
+    public void testContains() {
+        Set<String> packages = ModuleDescriptor.module("foo")
+                .contains("p")
+                .contains("q")
                 .build()
-                .conceals();
-        assertTrue(conceals.size() == 2);
-        assertTrue(conceals.contains("p"));
-        assertTrue(conceals.contains("q"));
+                .packages();
+        assertTrue(packages.size() == 2);
+        assertTrue(packages.contains("p"));
+        assertTrue(packages.contains("q"));
     }
 
-    public void testConcealsWithEmptySet() {
-        Set<String> conceals = ModuleDescriptor.module("foo")
-                .conceals(Collections.emptySet())
+    public void testContainsWithEmptySet() {
+        Set<String> packages = ModuleDescriptor.module("foo")
+                .contains(Collections.emptySet())
                 .build()
-                .conceals();
-        assertTrue(conceals.size() == 0);
+                .packages();
+        assertTrue(packages.size() == 0);
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
-    public void testConcealsWithDuplicate() {
-        ModuleDescriptor.module("foo").conceals("p").conceals("p");
+    public void testContainsWithDuplicate() {
+        ModuleDescriptor.module("foo").contains("p").contains("p");
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
-    public void testConcealsWithExportedPackage() {
-        ModuleDescriptor.module("foo").exports("p").conceals("p");
+    public void testContainsWithExportedPackage() {
+        ModuleDescriptor.module("foo").exports("p").contains("p");
     }
 
     @Test(dataProvider = "invalidjavaidentifiers",
           expectedExceptions = IllegalArgumentException.class )
-    public void testConcealsWithBadName(String pn, String ignore) {
-        ModuleDescriptor.module("foo").conceals(pn);
+    public void testContainsWithBadName(String pn, String ignore) {
+        ModuleDescriptor.module("foo").contains(pn);
     }
 
 
@@ -659,7 +660,7 @@ public class ModuleDescriptorTest {
     public void testPackages() {
         Set<String> packages = ModuleDescriptor.module("foo")
                 .exports("p")
-                .conceals("q")
+                .contains("q")
                 .build()
                 .packages();
         assertTrue(packages.size() == 2);
@@ -737,18 +738,12 @@ public class ModuleDescriptorTest {
     public void testWeakModules() {
         ModuleDescriptor descriptor = ModuleDescriptor.weakModule("m")
                 .requires("java.base")
-                .conceals("p")
+                .contains("p")
                 .build();
         assertTrue(descriptor.isWeak());
-        assertTrue(descriptor.conceals().isEmpty());
-
-        assertTrue(descriptor.exports().size() == 1);
-        Exports e = descriptor.exports().iterator().next();
-        assertFalse(e.isQualified());
-        assertEquals(e.source(), "p");
-        assertTrue(e.modifiers().size() == 1);
-        assertTrue(e.modifiers().contains(Exports.Modifier.PRIVATE));
-        assertTrue(e.targets().isEmpty());
+        assertTrue(descriptor.packages().size() == 1);
+        assertTrue(descriptor.packages().contains("p"));
+        assertTrue(descriptor.exports().isEmpty());
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
@@ -943,9 +938,42 @@ public class ModuleDescriptorTest {
         assertTrue(e.targets().contains("m2-"));
     }
 
-    public void testReadsWithPackageFinder() {
-        // TBD: Need way to write a module-info.class without a
-        // Packages attribute
+    /**
+     * Test ModuleDescriptor with a packager finder
+     */
+    public void testReadsWithPackageFinder() throws Exception {
+        ModuleDescriptor descriptor = ModuleDescriptor.module("foo")
+                .requires("java.base")
+                .build();
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ModuleInfoWriter.write(descriptor, baos);
+        ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
+
+        descriptor = ModuleDescriptor.read(bb, () -> Set.of("p", "q"));
+
+        assertTrue(descriptor.packages().size() == 2);
+        assertTrue(descriptor.packages().contains("p"));
+        assertTrue(descriptor.packages().contains("q"));
+    }
+
+    /**
+     * Test ModuleDescriptor with a packager finder that doesn't return the
+     * complete set of packages.
+     */
+    @Test(expectedExceptions = InvalidModuleDescriptorException.class)
+    public void testReadsWithBadPackageFinder() throws Exception {
+        ModuleDescriptor descriptor = ModuleDescriptor.module("foo")
+                .requires("java.base")
+                .exports("p")
+                .build();
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ModuleInfoWriter.write(descriptor, baos);
+        ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
+
+        // package finder returns a set that doesn't include p
+        ModuleDescriptor.read(bb, () -> Set.of("q"));
     }
 
     @Test(expectedExceptions = InvalidModuleDescriptorException.class)

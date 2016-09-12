@@ -58,7 +58,6 @@ public class SystemModulesTest {
     }
 
     private void testModuleDescriptor(ModuleDescriptor md) {
-        assertUnmodifiable(md.conceals(), "conceal");
         assertUnmodifiable(md.packages(), "package");
         assertUnmodifiable(md.requires(),
                            jlma.newRequires(Set.of(Requires.Modifier.TRANSITIVE), "require"));

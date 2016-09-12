@@ -664,7 +664,7 @@ final class Resolver {
                     // source is exported to descriptor2
                     String source = export.source();
                     ModuleDescriptor other
-                        = packageToExporter.put(source, descriptor2);
+                        = packageToExporter.putIfAbsent(source, descriptor2);
 
                     if (other != null && other != descriptor2) {
                         // package might be local to descriptor1
@@ -684,6 +684,33 @@ final class Resolver {
                                     descriptor1.name());
                         }
 
+                    }
+                }
+
+                if (descriptor2.isWeak()) {
+                    for (String source : descriptor2.packages()) {
+                        ModuleDescriptor other
+                            = packageToExporter.putIfAbsent(source, descriptor2);
+
+                        if (other != null && other != descriptor2) {
+                            // package might be local to descriptor1
+                            if (other == descriptor1) {
+                                fail("Module %s contains package %s"
+                                      + ", module %s exports package %s to %s",
+                                        descriptor1.name(),
+                                        source,
+                                        descriptor2.name(),
+                                        source,
+                                        descriptor1.name());
+                            } else {
+                                fail("Modules %s and %s export package %s to module %s",
+                                        descriptor2.name(),
+                                        other.name(),
+                                        source,
+                                        descriptor1.name());
+                            }
+
+                        }
                     }
                 }
             }

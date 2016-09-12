@@ -271,20 +271,6 @@ final class Builder {
             requires = Collections.unmodifiableSet(this.requires);
         }
 
-        /*
-         * building a weak module all packages  are transformed
-         * so that the resulting module descriptor exports
-         * all packages with the Exports.Modifier#PRIVATE modifier.
-         */
-        if (weak) {
-            assert exports.isEmpty();
-            exports = new HashSet<>();
-
-            Set<Exports.Modifier> ms = EnumSet.of(Exports.Modifier.PRIVATE);
-            packages.stream()
-                .map(pn -> jlma.newExports(ms, pn, Collections.emptySet()))
-                .forEach(exports::add);
-        }
         return jlma.newModuleDescriptor(name,
                                         weak,         // weak
                                         automatic,    // automatic

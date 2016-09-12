@@ -199,7 +199,7 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
         for (String service : md.uses()) {
             Checks.requireServiceTypeName(service);
         }
-        for (String pn : md.conceals()) {
+        for (String pn : md.packages()) {
             Checks.requirePackageName(pn);
         }
     }

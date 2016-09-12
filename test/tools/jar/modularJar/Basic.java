@@ -149,8 +149,8 @@ public class Basic {
                         provides = stringToSet(line);
                     } else if (line.startsWith("hashes:")) {
                         hashes = line.substring("hashes:".length());
-                    } else if (line.startsWith("conceals:")) {
-                        line = line.substring("conceals:".length());
+                    } else if (line.startsWith("contains:")) {
+                        line = line.substring("contains:".length());
                         conceals = stringToSet(line);
                     } else {
                         throw new AssertionError("Unknown value " + line);
@@ -482,9 +482,9 @@ public class Basic {
                            "Expecting to find \"bar, requires foo,...\"",
                            "in output, but did not: [" + r.output + "]");
                 p = Pattern.compile(
-                        "conceals\\s+jdk.test.foo\\s+conceals\\s+jdk.test.foo.internal");
+                        "contains\\s+jdk.test.foo\\s+contains\\s+jdk.test.foo.internal");
                 assertTrue(p.matcher(r.output).find(),
-                           "Expecting to find \"conceals jdk.test.foo,...\"",
+                           "Expecting to find \"contains jdk.test.foo,...\"",
                            "in output, but did not: [" + r.output + "]");
             });
     }
@@ -851,8 +851,8 @@ public class Basic {
         ClassLoader cl = ClassLoader.getSystemClassLoader();
         try (JarFile jf = new JarFile(jar.toFile())) {
             JarEntry entry = jf.getJarEntry("module-info.class");
-            try (InputStream is = jf.getInputStream(entry)) {
-                return ModuleDescriptor.read(is);
+            try (InputStream in = jf.getInputStream(entry)) {
+                return ModuleDescriptor.read(in);
             }
         } catch (IOException ioe) {
             throw new UncheckedIOException(ioe);

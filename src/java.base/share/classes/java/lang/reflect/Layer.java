@@ -298,9 +298,12 @@ public final class Layer {
      * modules in the given {@code Configuration} to the Java virtual machine.
      * Each module is mapped, by name, to its class loader by means of the
      * given function. The class loader delegation implemented by these class
-     * loaders must respect module readability. In addition, the caller needs
-     * to arrange that the class loaders are ready to load from these module
-     * before there are any attempts to load classes or resources.
+     * loaders must respect module readability. The class loaders should be
+     * {@link ClassLoader#registerAsParallelCapable parallel-capable} so as to
+     * avoid deadlocks during class loading. In addition, the entity creating
+     * a new layer with this method should arrange that the class loaders are
+     * ready to load from these module before there are any attempts to load
+     * classes or resources.
      *
      * <p> Creating a {@code Layer} can fail for the following reasons: </p>
      *

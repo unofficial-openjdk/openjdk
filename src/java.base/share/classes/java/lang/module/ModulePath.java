@@ -405,8 +405,8 @@ class ModulePath implements ModuleFinder {
      *
      * 1. The module name (and optionally the version) is derived from the file
      *    name of the JAR file
-     * 2. The packages of all .class files in the JAR file are exported
-     * 3. It has no module-private/concealed packages
+     * 2. All packages are exported-private
+     * 3. It has no non-exported packages
      * 4. The contents of any META-INF/services configuration files are mapped
      *    to "provides" declarations
      * 5. The Main-Class attribute in the main attributes of the JAR manifest

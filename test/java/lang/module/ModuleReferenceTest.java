@@ -48,7 +48,7 @@ public class ModuleReferenceTest {
             = ModuleDescriptor.module("m")
                 .exports("p")
                 .exports("q")
-                .conceals("p.internal")
+                .contains("p.internal")
                 .build();
 
         URI uri = URI.create("module:/m");

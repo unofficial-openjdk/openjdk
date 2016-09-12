@@ -67,17 +67,12 @@ public class Main {
             throw new RuntimeException("unexpected m4 packages: " + md.packages());
         }
 
-        if (md.exports().size() != 1) {
-            throw new RuntimeException("unexpected m4 export: " + md.exports());
+        if (!md.exports().isEmpty()) {
+            throw new RuntimeException("unexpected m4 exports: " + md.exports());
         }
 
-        ModuleDescriptor.Exports exp = md.exports().stream()
-            .filter(e -> e.source().equals("p4"))
-            .findAny()
-            .orElseThrow(() -> new RuntimeException("p4 is not exported by m4"));
-
-        if (exp.isQualified() || !exp.modifiers().contains(PRIVATE)) {
-            throw new RuntimeException("unexpected m4 exports: " + exp);
+        if (!Foo.class.getModule().isExportedPrivate("p4")) {
+            throw new RuntimeException("p4 is not exported-private by m4");
         }
     }
 

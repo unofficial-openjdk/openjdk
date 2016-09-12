@@ -307,8 +307,10 @@ public class JmodTask {
                         .sorted(Comparator.comparing(Exports::source))
                         .forEach(p -> sb.append("\n  exports ").append(p));
 
-                    md.conceals().stream().sorted()
-                        .forEach(p -> sb.append("\n  conceals ").append(p));
+                    Set<String> concealed = new HashSet<>(md.packages());
+                    md.exports().stream().map(Exports::source).forEach(concealed::remove);
+                    concealed.stream().sorted()
+                        .forEach(p -> sb.append("\n  contains ").append(p));
 
                     md.provides().values().stream()
                         .sorted(Comparator.comparing(Provides::service))

@@ -28,6 +28,8 @@ import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.util.Optional;
 import java.util.StringJoiner;
+import java.util.HashSet;
+import java.util.Set;
 
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.misc.JavaLangModuleAccess;
@@ -62,9 +64,11 @@ public class Bar {
             System.out.println("provides:" + sj.toString());
 
         sj = new StringJoiner(",");
-        md.conceals().forEach(sj::add);
+        Set<String> concealed = new HashSet<>(md.packages());
+        md.exports().stream().map(Exports::source).forEach(concealed::remove);
+        concealed.forEach(sj::add);
         if (!sj.toString().equals(""))
-            System.out.println("conceals:" + sj.toString());
+            System.out.println("contains:" + sj.toString());
 
         ModuleDescriptor foo = jdk.test.foo.Foo.class.getModule().getDescriptor();
         JavaLangModuleAccess jlma = SharedSecrets.getJavaLangModuleAccess();

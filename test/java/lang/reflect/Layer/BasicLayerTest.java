@@ -252,16 +252,16 @@ public class BasicLayerTest {
      * Exercise Layer defineModules with a configuration of two modules that
      * have the same module-private package.
      */
-    public void testPackageConcealedBySelfAndOther() {
+    public void testPackageContainedInSelfAndOther() {
         ModuleDescriptor descriptor1
             =  ModuleDescriptor.module("m1")
                 .requires("m2")
-                .conceals("p")
+                .contains("p")
                 .build();
 
         ModuleDescriptor descriptor2
             = ModuleDescriptor.module("m2")
-                .conceals("p")
+                .contains("p")
                 .build();
 
         ModuleFinder finder
@@ -340,20 +340,20 @@ public class BasicLayerTest {
 
 
     /**
-     * Exercise Layer defineModules with a configuration that contains a module
-     * that has a concealed package that is the same name as a non-exported
-     * package in a parent layer.
+     * Exercise Layer defineModules with a configuration with a module that
+     * contains a package that is the same name as a non-exported package in
+     * a parent layer.
      */
-    public void testConcealSamePackageAsBootLayer() {
+    public void testContainsSamePackageAsBootLayer() {
 
         // check assumption that java.base contains sun.launcher
         ModuleDescriptor base = Object.class.getModule().getDescriptor();
-        assertTrue(base.conceals().contains("sun.launcher"));
+        assertTrue(base.packages().contains("sun.launcher"));
 
         ModuleDescriptor descriptor
             = ModuleDescriptor.module("m1")
                .requires("java.base")
-               .conceals("sun.launcher")
+               .contains("sun.launcher")
                .build();
 
         ModuleFinder finder = ModuleUtils.finderOf(descriptor);
@@ -707,13 +707,13 @@ public class BasicLayerTest {
 
         ModuleDescriptor md1
             = ModuleDescriptor.module("m1")
-                .conceals("p")
+                .contains("p")
                 .requires("java.base")
                 .build();
 
         ModuleDescriptor md2
             = ModuleDescriptor.module("m2")
-                .conceals("p")
+                .contains("p")
                 .requires("java.base")
                 .build();
 
@@ -752,7 +752,7 @@ public class BasicLayerTest {
 
         ModuleDescriptor md
             = ModuleDescriptor.module("m")
-                .conceals(c.getPackageName())
+                .contains(c.getPackageName())
                 .requires("java.base")
                 .build();
 
@@ -809,7 +809,7 @@ public class BasicLayerTest {
     public void testLayerWithJavaPackage() {
         ModuleDescriptor descriptor
             = ModuleDescriptor.module("foo")
-                .conceals("java.foo")
+                .contains("java.foo")
                 .build();
 
         ModuleFinder finder = ModuleUtils.finderOf(descriptor);
