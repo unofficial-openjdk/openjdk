@@ -93,7 +93,7 @@ public class CheckRead {
                 ModuleDescriptor.module("m3")
                         .requires("java.base")
                         .requires("m2")
-                        .conceals("p3")
+                        .contains("p3")
                         .build();
 
         // Set up a ModuleFinder containing all modules for this layer.

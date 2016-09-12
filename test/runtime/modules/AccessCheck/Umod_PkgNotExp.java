@@ -79,7 +79,7 @@ public class Umod_PkgNotExp {
         ModuleDescriptor descriptor_m2 =
                 ModuleDescriptor.module("m2")
                         .requires("java.base")
-                        .conceals("p2")
+                        .contains("p2")
                         .build();
 
         // Set up a ModuleFinder containing all modules for this layer.

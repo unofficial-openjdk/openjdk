@@ -95,7 +95,7 @@ public class ModuleHelper {
         }
 
         ModuleDescriptor descriptor =
-            ModuleDescriptor.module(name).conceals(pkg_set).build();
+            ModuleDescriptor.module(name).contains(pkg_set).build();
         URI uri = URI.create("module:/" + name);
 
         return java.lang.reflect.ModuleHelper.newModule(loader, descriptor);

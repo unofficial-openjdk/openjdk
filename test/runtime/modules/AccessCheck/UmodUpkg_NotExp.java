@@ -79,7 +79,7 @@ public class UmodUpkg_NotExp {
         ModuleDescriptor descriptor_m2 =
                 ModuleDescriptor.module("m2")
                         .requires("java.base")
-                        .conceals("p6")
+                        .contains("p6")
                         .build();
 
         // Set up a ModuleFinder containing all modules for this layer.
