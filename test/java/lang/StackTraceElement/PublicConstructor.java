@@ -42,9 +42,9 @@ public class PublicConstructor {
         if (ste.isNativeMethod())
             throw new RuntimeException("2");
         StackTraceElement ste2
-            = new StackTraceElement("jdk.module",
+            = new StackTraceElement("app",
+                                    "jdk.module",
                                     "9.0",
-                                    "app",
                                     "com.acme.Widget",
                                     "frobnicate",
                                     "Widget.java",

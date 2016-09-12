@@ -26,7 +26,6 @@ package com.app;
 import java.lang.StackWalker.StackFrame;
 import java.lang.module.ModuleDescriptor;
 import java.lang.reflect.Module;
-import java.util.List;
 import java.util.Objects;
 
 public class Utils {
@@ -78,9 +77,20 @@ public class Utils {
                 return null;
             }
 
+            private String getClassLoaderName(Class<?> c) {
+                ClassLoader loader = c.getClassLoader();
+                String name = "";
+                if (loader == null) {
+                    name = "boot";
+                } else if (loader.getName() != null) {
+                    name = loader.getName();
+                }
+                return name;
+            }
+
             @Override
             public String toString() {
-                String mid = "";
+                String mid = getClassLoaderName(c);
                 Module module = c.getModule();
                 if (module.isNamed()) {
                     ModuleDescriptor md = module.getDescriptor();
@@ -97,8 +107,8 @@ public class Utils {
                 } else if (fileName != null && lineNumber >= 0) {
                     sourceinfo = fileName + ":" + lineNumber;
                 }
-                return String.format("%s.%s(%s%s)", getClassName(), getMethodName(),
-                                     mid, sourceinfo);
+                return String.format("%s/%s.%s(%s)", mid, getClassName(), getMethodName(),
+                                     sourceinfo);
 
             }
         };

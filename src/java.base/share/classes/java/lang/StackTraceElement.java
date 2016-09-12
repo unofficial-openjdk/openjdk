@@ -40,10 +40,11 @@ import java.util.Objects;
  * @author Josh Bloch
  */
 public final class StackTraceElement implements java.io.Serializable {
-    // Normally initialized by VM (public constructor added in 1.5)
+    // Normally initialized by VM
+    private transient Class<?> declaringClassObject;
+    private String classLoaderName;
     private String moduleName;
     private String moduleVersion;
-    private String classLoaderName;
     private String declaringClass;
     private String methodName;
     private String fileName;
@@ -80,15 +81,15 @@ public final class StackTraceElement implements java.io.Serializable {
      * Creates a stack trace element representing the specified execution
      * point.
      *
+     * @param classLoaderName the class loader name if the class loader of
+     *        the class containing the execution point represented by
+     *        the stack trace is named; can be {@code null}
      * @param moduleName the module name if the class containing the
      *        execution point represented by the stack trace is in a named
      *        module; can be {@code null}
      * @param moduleVersion the module version if the class containing the
      *        execution point represented by the stack trace is in a named
      *        module that has a version; can be {@code null}
-     * @param classLoaderName the class loader name if the class loader of
-     *        the class containing the execution point represented by
-     *        the stack trace is named; can be {@code null}
      * @param declaringClass the fully qualified name of the class containing
      *        the execution point represented by the stack trace element
      * @param methodName the name of the method containing the execution point
@@ -105,19 +106,18 @@ public final class StackTraceElement implements java.io.Serializable {
      *         or {@code methodName} is {@code null}
      * @since 9
      */
-    public StackTraceElement(String moduleName, String moduleVersion,
-                             String classLoaderName,
+    public StackTraceElement(String classLoaderName,
+                             String moduleName, String moduleVersion,
                              String declaringClass, String methodName,
                              String fileName, int lineNumber) {
+        this.classLoaderName = classLoaderName;
         this.moduleName      = moduleName;
         this.moduleVersion   = moduleVersion;
-        this.classLoaderName = classLoaderName;
-        this.declaringClass  = Objects.requireNonNull(declaringClass, "Declaring class is null");
+        this.declaringClass = Objects.requireNonNull(declaringClass, "Declaring class is null");
         this.methodName      = Objects.requireNonNull(methodName, "Method name is null");
         this.fileName        = fileName;
         this.lineNumber      = lineNumber;
     }
-
 
     /**
      * Creates an empty stack frame element to be filled in by Throwable.
@@ -241,44 +241,59 @@ public final class StackTraceElement implements java.io.Serializable {
      * examples may be regarded as typical:
      * <ul>
      * <li>
-     *   {@code "MyClass.mash(my.module@9.0/MyClass.java:101)"} - Here,
+     *   {@code "myloader/my.module@9.0/MyClass.mash(MyClass.java:101)"}<br>
+     *   {@code "myloader"}, {@code "my.module"}, and {@code "9.0"}
+     *   is the class loader name, module name and module version of
+     *   the class containing the execution point represented by
+     *   this stack trace element respectively.
      *   {@code "MyClass"} is the <i>fully-qualified name</i> of the class
-     *   containing the execution point represented by this stack trace element,
+     *   containing the execution point.
      *   {@code "mash"} is the name of the method containing the execution
-     *   point, {@code "my.module"} is the module name, {@code "9.0"} is the
-     *   module version, and {@code "101"} is the line number of the source
+     *   point,  and {@code "101"} is the line number of the source
      *   line containing the execution point.
+     *   If the class loader is a <a href="ClassLoader.html#builtinLoaders">
+     *   built-in class loader</a>, or it does not have a name, then
+     *   {@code "myloader/"} will be omitted.
+     *   If the execution point is not in a named module, then
+     *   {@code "my.module@9.0"} will be omitted.
+     *   If the execution point is not in a named module and defined by
+     *   a built-in class loader, then {@code "/"} preceding the class name
+     *   will be omitted and the returned string may simply be:
+     *   {@code "MyClass.mash(MyClass.java:101)"}.
      * <li>
-     *   {@code "MyClass.mash(my.module@9.0/MyClass.java)"} - As above, but the
-     *   line number is unavailable.
+     *   {@code "myloader/my.module@9.0/MyClass.mash(MyClass.java)"}<br>
+     *   As above, but the line number is unavailable.
      * <li>
-     *   {@code "MyClass.mash(my.module@9.0/Unknown Source)"} - As above, but
-     *   neither the file name nor the line  number are available.
+     *   {@code "myloader/my.module@9.0/MyClass.mash(Unknown Source)"}<br>
+     *   As above, but neither the file name nor the line  number are available.
      * <li>
-     *   {@code "MyClass.mash(my.module@9.0/Native Method)"} - As above, but
-     *   neither the file name nor the line  number are available, and the
-     *   method containing the execution point is known to be a native method.
+     *   {@code "myloader/my.module@9.0/MyClass.mash(Native Method)"}<br>
+     *   As above, but neither the file name nor the line number are available,
+     *   and the method containing the execution point is known to be a native method.
      * </ul>
-     * If the execution point is not in a named module, {@code "my.module@9.0/"}
-     * will be replaced with the class loader's name, if present; or it will be
-     * omitted from the above.
      *
      * @see    Throwable#printStackTrace()
      */
     public String toString() {
-        String mid = "";
-        if (moduleName != null) {
-            mid = moduleName;
-            if (moduleVersion != null)
-                mid += "@" + moduleVersion;
-        } else if (classLoaderName != null) {
-            mid = "[" + classLoaderName + "]";
+        String loaderModuleClassName;
+        if (declaringClassObject != null) {
+            loaderModuleClassName = declaringClassObject.toLoaderModuleClassString();
+        } else {
+            // all elements will be included
+            loaderModuleClassName = "";
+            if (classLoaderName != null && !classLoaderName.isEmpty()) {
+                loaderModuleClassName += classLoaderName + "/";
+            }
+            if (moduleName != null && !moduleName.isEmpty()) {
+                loaderModuleClassName += moduleName;
+            }
+            if (moduleVersion != null && !moduleVersion.isEmpty()) {
+                loaderModuleClassName += "@" + moduleVersion;
+            }
+            loaderModuleClassName += declaringClass;
         }
 
-        if (!mid.isEmpty())
-            mid += "/";
-
-        return getClassName() + "." + methodName + "(" + mid +
+        return loaderModuleClassName + "." + methodName + "(" +
              (isNativeMethod() ? "Native Method)" :
               (fileName != null && lineNumber >= 0 ?
                fileName + ":" + lineNumber + ")" :
@@ -291,13 +306,14 @@ public final class StackTraceElement implements java.io.Serializable {
      * point as this instance.  Two stack trace elements {@code a} and
      * {@code b} are equal if and only if:
      * <pre>{@code
-     *     equals(a.getFileName(), b.getFileName()) &&
-     *     a.getLineNumber() == b.getLineNumber()) &&
+     *     equals(a.getClassLoaderName(), b.getClassLoaderName()) &&
      *     equals(a.getModuleName(), b.getModuleName()) &&
      *     equals(a.getModuleVersion(), b.getModuleVersion()) &&
-     *     equals(a.getClassLoaderName(), b.getClassLoaderName()) &&
      *     equals(a.getClassName(), b.getClassName()) &&
      *     equals(a.getMethodName(), b.getMethodName())
+     *     equals(a.getFileName(), b.getFileName()) &&
+     *     a.getLineNumber() == b.getLineNumber())
+     *
      * }</pre>
      * where {@code equals} has the semantics of {@link
      * java.util.Objects#equals(Object, Object) Objects.equals}.
@@ -313,10 +329,10 @@ public final class StackTraceElement implements java.io.Serializable {
         if (!(obj instanceof StackTraceElement))
             return false;
         StackTraceElement e = (StackTraceElement)obj;
-        return e.declaringClass.equals(declaringClass) &&
+        return Objects.equals(classLoaderName, e.classLoaderName) &&
             Objects.equals(moduleName, e.moduleName) &&
             Objects.equals(moduleVersion, e.moduleVersion) &&
-            Objects.equals(classLoaderName, e.classLoaderName) &&
+            e.declaringClass.equals(declaringClass) &&
             e.lineNumber == lineNumber &&
             Objects.equals(methodName, e.methodName) &&
             Objects.equals(fileName, e.fileName);
@@ -327,6 +343,7 @@ public final class StackTraceElement implements java.io.Serializable {
      */
     public int hashCode() {
         int result = 31*declaringClass.hashCode() + methodName.hashCode();
+        result = 31*result + Objects.hashCode(classLoaderName);
         result = 31*result + Objects.hashCode(moduleName);
         result = 31*result + Objects.hashCode(moduleVersion);
         result = 31*result + Objects.hashCode(fileName);

@@ -21,6 +21,6 @@
  * questions.
  */
 
-module app {
+module m1 {
     exports com.app;
 }

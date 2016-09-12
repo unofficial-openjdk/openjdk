@@ -26,6 +26,7 @@
 package java.lang;
 
 import java.lang.annotation.Annotation;
+import java.lang.module.ModuleDescriptor.Version;
 import java.lang.module.ModuleReader;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Array;
@@ -53,20 +54,23 @@ import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Set;
 import java.util.Map;
-import java.util.HashMap;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.StringJoiner;
+
 import jdk.internal.HotSpotIntrinsicCandidate;
 import jdk.internal.loader.BootLoader;
 import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.loader.ResourceHelper;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.misc.VM;
+import jdk.internal.module.Modules;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.ConstantPool;
 import jdk.internal.reflect.Reflection;
@@ -167,6 +171,39 @@ public final class Class<T> implements java.io.Serializable,
     public String toString() {
         return (isInterface() ? "interface " : (isPrimitive() ? "" : "class "))
             + getName();
+    }
+
+
+    /* package-private */
+    String toLoaderModuleClassString() {
+        ClassLoader loader = getClassLoader0();
+
+        String s = "";
+        // First element is class loader name
+        // if class loader is not a built-in class loader and has a name
+        if (loader != null && !(loader instanceof BuiltinClassLoader) &&
+            loader.getName() != null) {
+            s += loader.getName() + "/";
+        }
+
+        // Second element is module name/version
+        Module m = getModule();
+        if (m != null && m.isNamed()) {
+            s += m.getName();
+            if (!Modules.isJDKModule(m)) {
+                // drop version if it's JDK module and same as runtime version
+                Optional<Version> ov = getModule().getDescriptor().version();
+                if (ov.isPresent()) {
+                    s += "@" + ov.get().toString();
+                }
+            }
+        }
+        if (!s.isEmpty()) {
+            s += "/";
+        }
+        // Third element is the fully-qualified class loader
+        s += getName();
+        return s;
     }
 
     /**

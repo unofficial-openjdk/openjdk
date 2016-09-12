@@ -26,8 +26,8 @@
  * @bug 6479237
  * @summary Basic test StackTraceElement with class loader names
  * @library lib /lib/testlibrary
- * @build app/* WithClassLoaderName
- * @run main/othervm app/com.app.Main
+ * @build m1/* WithClassLoaderName
+ * @run main/othervm m1/com.app.Main
  * @run main/othervm WithClassLoaderName
  */
 
