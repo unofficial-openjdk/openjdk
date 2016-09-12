@@ -604,6 +604,7 @@ public class JmodTask {
          * package name.
          */
         boolean isResource(String name) {
+            name = name.replace(File.separatorChar, '/');
             return name.endsWith(".class") || !ResourceHelper.isSimpleResource(name);
         }
 
