@@ -817,7 +817,6 @@ class Main {
     }
 
     private static String toPackageName(String path) {
-        assert path.endsWith(".class");
         int index = path.lastIndexOf('/');
         if (index != -1) {
             return path.substring(0, index).replace('/', '.');
