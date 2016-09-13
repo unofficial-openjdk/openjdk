@@ -309,11 +309,19 @@ public class ProvidesTest extends ModuleTestBase {
                 "package p1; public class C1 { }",
                 "package p2; class C2 extends p1.C1 { }");
 
-        new JavacTask(tb)
+        List<String> output = new JavacTask(tb)
+                .options("-XDrawDiagnostics")
                 .outdir(Files.createDirectories(base.resolve("classes")))
                 .files(findJavaFiles(src))
-                .run()
-                .writeAll();
+                .run(Task.Expect.FAIL)
+                .writeAll()
+                .getOutputLines(Task.OutputKind.DIRECT);
+
+        List<String> expected = Arrays.asList("module-info.java:1:34: compiler.err.not.def.public.cant.access: p2.C2, p2",
+                "1 error");
+        if (!output.containsAll(expected)) {
+            throw new Exception("Expected output not found");
+        }
     }
 
     @Test
@@ -347,11 +355,19 @@ public class ProvidesTest extends ModuleTestBase {
                 "package p1; public class C1 { }",
                 "package p2; public class C2 extends p1.C1 { private C2() { } }");
 
-        new JavacTask(tb)
+        List<String> output = new JavacTask(tb)
+                .options("-XDrawDiagnostics")
                 .outdir(Files.createDirectories(base.resolve("classes")))
                 .files(findJavaFiles(src))
-                .run()
-                .writeAll();
+                .run(Task.Expect.FAIL)
+                .writeAll()
+                .getOutputLines(Task.OutputKind.DIRECT);
+
+        List<String> expected = Arrays.asList(
+                "module-info.java:1:46: compiler.err.service.implementation.no.args.constructor.not.public: p2.C2");
+        if (!output.containsAll(expected)) {
+            throw new Exception("Expected output not found");
+        }
     }
 
     @Test

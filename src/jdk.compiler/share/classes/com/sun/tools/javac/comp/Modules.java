@@ -98,6 +98,7 @@ import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
 import com.sun.tools.javac.util.Options;
 
+import static com.sun.tools.javac.code.Flags.PUBLIC;
 import static com.sun.tools.javac.code.Flags.UNATTRIBUTED;
 import static com.sun.tools.javac.code.Kinds.Kind.MDL;
 import static com.sun.tools.javac.code.TypeTag.CLASS;
@@ -840,14 +841,7 @@ public class Modules extends JCTree.Visitor {
         @Override
         public void visitProvides(JCProvides tree) {
             Type st = attr.attribType(tree.serviceName, env, syms.objectType);
-            boolean prevIgnoreAccessModifiers = env.info.ignoreAccessModifiers;
-            Type it;
-            try {
-                env.info.ignoreAccessModifiers = true;
-                it = attr.attribType(tree.implName, env, syms.objectType);
-            } finally {
-                env.info.ignoreAccessModifiers = prevIgnoreAccessModifiers;
-            }
+            Type it = attr.attribType(tree.implName, env, syms.objectType);
             ClassSymbol service = (ClassSymbol) st.tsym;
             ClassSymbol impl = (ClassSymbol) it.tsym;
             if (!types.isSubtype(it, st)) {
@@ -863,6 +857,8 @@ public class Modules extends JCTree.Visitor {
                 MethodSymbol constr = noArgsConstructor(impl);
                 if (constr == null) {
                     log.error(tree.implName.pos(), Errors.ServiceImplementationDoesntHaveANoArgsConstructor(impl));
+                } else if ((constr.flags() & PUBLIC) == 0) {
+                    log.error(tree.implName.pos(), Errors.ServiceImplementationNoArgsConstructorNotPublic(impl));
                 }
             }
             if (st.hasTag(CLASS) && it.hasTag(CLASS)) {

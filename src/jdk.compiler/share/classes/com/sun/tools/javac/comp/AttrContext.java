@@ -74,11 +74,6 @@ public class AttrContext {
      */
     boolean isNewClass = false;
 
-    /**
-     *  Should access modifiers be ignored?
-     */
-    boolean ignoreAccessModifiers = false;
-
     /** Are arguments to current function applications boxed into an array for varargs?
      */
     Resolve.MethodResolutionPhase pendingResolutionPhase = null;
@@ -125,7 +120,6 @@ public class AttrContext {
         info.isSpeculative = isSpeculative;
         info.isAnonymousDiamond = isAnonymousDiamond;
         info.isNewClass = isNewClass;
-        info.ignoreAccessModifiers = ignoreAccessModifiers;
         info.preferredTreeForDiagnostics = preferredTreeForDiagnostics;
         return info;
     }
