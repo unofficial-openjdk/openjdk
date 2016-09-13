@@ -41,7 +41,6 @@ import jdk.internal.loader.ClassLoaders;
 import jdk.internal.misc.JavaLangReflectModuleAccess;
 import jdk.internal.misc.SharedSecrets;
 
-
 /**
  * A helper class to allow JDK classes create dynamic modules and to update
  * modules, exports and the readability graph. It is also invoked by the VM

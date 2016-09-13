@@ -30,6 +30,18 @@ import javax.script.ScriptEngineFactory;
 
 public class BananaScriptEngineFactory implements ScriptEngineFactory {
 
+    static final BananaScriptEngineFactory INSTANCE  = new BananaScriptEngineFactory(null);
+
+    public BananaScriptEngineFactory() {
+        throw new RuntimeException("Should not be called");
+    }
+
+    private BananaScriptEngineFactory(Void param) { }
+
+    public static BananaScriptEngineFactory provider() {
+        return INSTANCE;
+    }
+
     @Override
     public String getEngineName() {
         return "BananaScriptEngine";

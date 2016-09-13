@@ -50,7 +50,8 @@ import static org.testng.Assert.*;
 /**
  * Basic test for ServiceLoader. The test make use of two service providers:
  * 1. BananaScriptEngine - a ScriptEngineFactory deployed as a module on the
- *    module path.
+ *    module path. It implementations a singleton via the public static
+ *    provider method.
  * 2. PearScriptEngine - a ScriptEngineFactory deployed on the class path
  *    with a service configuration file.
  */
@@ -133,6 +134,26 @@ public class Basic {
                 .collect(Collectors.toSet());
         assertTrue(names.contains("BananaScriptEngine"));
         assertTrue(names.contains("PearScriptEngine"));
+    }
+
+    /**
+     * Basic test of the public static provider method. BananaScriptEngine
+     * defines a provider method that returns the same instance.
+     */
+    @Test
+    public void testSingleton() {
+        Optional<Provider<ScriptEngineFactory>> oprovider
+            = ServiceLoader.load(ScriptEngineFactory.class)
+                .stream()
+                .filter(p -> p.type().getName().equals("org.banana.BananaScriptEngineFactory"))
+                .findFirst();
+        assertTrue(oprovider.isPresent());
+        Provider<ScriptEngineFactory> provider = oprovider.get();
+
+        // invoke Provider::get twice
+        ScriptEngineFactory factory1 = provider.get();
+        ScriptEngineFactory factory2 = provider.get();
+        assertTrue(factory1 == factory2);
     }
 
     /**

@@ -32,6 +32,8 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Layer;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Module;
 import java.net.URL;
 import java.net.URLConnection;
@@ -79,11 +81,19 @@ import jdk.internal.reflect.Reflection;
  * request together with code that can create the actual provider on demand.
  * The details of provider classes tend to be highly service-specific; no
  * single class or interface could possibly unify them, so no such type is
- * defined here. A requirement enforced by this facility is that each provider
- * class must have a zero-argument constructor. When the provider class is
- * loaded from the class path (or more generally, from an unnamed module) then
- * both provider class and the zero-argument constructor must be {@code
- * "public"}.
+ * defined here.
+ *
+ * <p> A requirement enforced by this facility is that providers deployed as
+ * explicit modules on the module path must define a static factory method
+ * to obtain the provider instance or a public zero-argument constructor.
+ * Providers deployed on the class path or as {@link
+ * java.lang.module.ModuleDescriptor#isAutomatic automatic-modules} on the
+ * module path must have a public zero-argument constructor. If an
+ * explicit module defines a static factory method then the method is a
+ * public static zero-argument method named "{@code provider}" with a return
+ * type that is assignable to the service type. If an explicit module on
+ * the module path defines both a static factory method and a public zero
+ * argument constructor then the static factory method is preferred.
  *
  * <p> An application or library using this loading facility and developed
  * and deployed as a named module must have an appropriate <i>uses</i> clause
@@ -519,53 +529,157 @@ public final class ServiceLoader<S>
     }
 
     /**
-     * Returns a constructor for instantiating a provider in a named module.
-     * The provider type or constructor is not required to be accessible
-     * to code in java.base.
+     * A Provider implementation that supports invoking the provider's
+     * "{@code provider}" or no-arg constructor with restricted permissions.
      */
-    private <T> Constructor<T> getNoArgConstructorInModule(Class<T> clazz) {
-        PrivilegedExceptionAction<Constructor<T>> action
-            = new PrivilegedExceptionAction<>() {
-                @Override
-                public Constructor<T> run() throws Exception {
-                    Constructor<T> ctor = clazz.getDeclaredConstructor();
-                    ctor.setAccessible(true);
-                    return ctor;
-                }
-        };
-        try {
-            return AccessController.doPrivileged(action);
-        } catch (PrivilegedActionException pae) {
-            String cn = clazz.getName();
-            Throwable x = pae.getCause();
-            fail(service,
-                 "Unable to get no-arg Constructor for provider " + cn, x);
-            return null;
-        }
-    }
-
-    /**
-     * Base Provider implementation that ensures caches the Constructor and
-     * ensures that the provider initialization executes with restricted
-     * permissions.
-     */
-    private abstract class AbstractProvider<S> implements Provider<S> {
+    private final class ProviderImpl<S> implements Provider<S> {
         final Class<S> type;
-        Constructor<S> ctor; // cached
-        protected AbstractProvider(Class<S> type) {
+
+        Method factoryMethod; // cached
+        Constructor<S> ctor;
+
+        ProviderImpl(Class<S> type) {
+            int mods = type.getModifiers();
+            if (!Modifier.isPublic(mods)) {
+                fail(service, "Provider " + type + " is not public");
+            }
             this.type = type;
         }
-        abstract Constructor<S> getConstructor();
+
         @Override
-        public final Class<S> type() {
+        public Class<S> type() {
             return type;
         }
+
         @Override
-        public final S get() {
-            Constructor<S> ctor = this.ctor;
-            if (ctor == null)
-                this.ctor = ctor = getConstructor();
-            return newInstance(ctor);
+        public S get() {
+            if (factoryMethod == null && ctor == null) {
+                if (factoryMethod == null && isExplicitModule()) {
+                    // look for the static "provider" method when the provider
+                    // is an explicit named module
+                    factoryMethod = getFactoryMethod();
+                }
+                if (factoryMethod == null) {
+                    ctor = getConstructor();
+                }
+            }
+            if (factoryMethod != null) {
+                return invokeFactoryMethod();
+            } else {
+                return newInstance();
+            }
+        }
+
+        /**
+         * Returns {@code true} if the provider is in an explicit module
+         */
+        private boolean isExplicitModule() {
+            Module module = type.getModule();
+            return module.isNamed() && !module.getDescriptor().isAutomatic();
+        }
+
+        /**
+         * Returns the method for the provider's "{@code public S provider()}"
+         * method or {@code null} if the method does not exist.
+         *
+         * @throws ServiceConfigurationError if the provider defines the
+         *         method but it's not static or public
+         */
+        private Method getFactoryMethod() {
+            PrivilegedAction<Method> pa = new PrivilegedAction<>() {
+                @Override
+                public Method run() {
+                    try {
+                        Method m = type.getMethod("provider");
+                        m.setAccessible(true);
+                        return m;
+                    } catch (NoSuchMethodException e) {
+                        return null;
+                    }
+                }
+            };
+            Method m = AccessController.doPrivileged(pa);
+            if (m != null) {
+                int mods = m.getModifiers();
+                if (!Modifier.isStatic(mods)) {
+                    fail(service, m + " is not a static method");
+                }
+                Class<?> returnType = m.getReturnType();
+                if (!service.isAssignableFrom(returnType)) {
+                    fail(service, m + " returns " + returnType);
+                }
+            }
+            return m;
+        }
+
+        /**
+         * Returns the provider's public no-arg constructor.
+         *
+         * @throws ServiceConfigurationError if the provider does not have
+         *         public no-arg constructor
+         */
+        private Constructor<S> getConstructor() {
+            PrivilegedAction<Constructor<S>> pa = new PrivilegedAction<>() {
+                @Override
+                public Constructor<S> run() {
+                    Constructor<S> ctor = null;
+                    try {
+                        ctor = type.getConstructor();
+                    } catch (NoSuchMethodException e) { }
+                    if (ctor != null && isExplicitModule())
+                        ctor.setAccessible(true);
+                    return ctor;
+                }
+            };
+            Constructor<S> ctor = AccessController.doPrivileged(pa);
+            if (ctor == null) {
+                fail(service, "Provider " + type
+                        + " does not have a public no-arg constructor");
+            }
+            return ctor;
+        }
+
+        /**
+         * Invokes the provider's "provider" method to instantiate a provider.
+         * When running with a security manager then the method runs with
+         * permissions that are restricted by the security context of whatever
+         * created this loader.
+         */
+        @SuppressWarnings("unchecked")
+        private S invokeFactoryMethod() {
+            S p = null;
+            Throwable exc = null;
+            SecurityManager sm = System.getSecurityManager();
+            if (sm == null) {
+                try {
+                    p = (S) factoryMethod.invoke(null);
+                } catch (Throwable x) {
+                    exc = x;
+                }
+            } else {
+                PrivilegedExceptionAction<S> pa = new PrivilegedExceptionAction<>() {
+                    @Override
+                    public S run() throws Exception {
+                        return (S) factoryMethod.invoke(null);
+                    }
+                };
+                // invoke factory method with permissions restricted by acc
+                try {
+                    p = AccessController.doPrivileged(pa, acc);
+                } catch (PrivilegedActionException pae) {
+                    exc = pae.getCause();
+                }
+            }
+            if (exc != null) {
+                if (exc instanceof InvocationTargetException)
+                    exc = exc.getCause();
+                String cn = type.getName();
+                fail(service, "Provider " + cn + " could not be created", exc);
+            }
+            if (p == null) {
+                fail(service, factoryMethod + " returned null");
+            }
+            return p;
         }
 
         /**
@@ -573,7 +687,7 @@ public final class ServiceLoader<S>
          * with a security manager then the constructor runs with permissions that
          * are restricted by the security context of whatever created this loader.
          */
-        private S newInstance(Constructor<S> ctor) {
+        private S newInstance() {
             S p = null;
             Throwable exc = null;
             SecurityManager sm = System.getSecurityManager();
@@ -600,10 +714,9 @@ public final class ServiceLoader<S>
             if (exc != null) {
                 if (exc instanceof InvocationTargetException)
                     exc = exc.getCause();
-                String cn = ctor.getDeclaringClass().getName();
+                String cn = type.getName();
                 fail(service,
                      "Provider " + cn + " could not be instantiated", exc);
-                return null;
             }
             return p;
         }
@@ -672,11 +785,7 @@ public final class ServiceLoader<S>
 
             @SuppressWarnings("unchecked")
             Class<T> clazz = (Class<T>) c;
-            return new AbstractProvider<T>(clazz) {
-                Constructor<T> getConstructor() {
-                    return getNoArgConstructorInModule(clazz);
-                }
-            };
+            return new ProviderImpl<T>(clazz);
         }
     }
 
@@ -775,11 +884,7 @@ public final class ServiceLoader<S>
 
             @SuppressWarnings("unchecked")
             Class<T> clazz = (Class<T>) c;
-            return new AbstractProvider<T>(clazz) {
-                Constructor<T> getConstructor() {
-                    return getNoArgConstructorInModule(clazz);
-                }
-            };
+            return new ProviderImpl<T>(clazz);
         }
     }
 
@@ -899,18 +1004,7 @@ public final class ServiceLoader<S>
             Class<T> clazz = next;
             next = null;
 
-            return new AbstractProvider<T>(clazz) {
-                Constructor<T> getConstructor() {
-                    try {
-                        return clazz.getConstructor();
-                    } catch (NoSuchMethodException e) {
-                        fail(service,
-                             "Unable to get public no-arg Constructor for"
-                             + " provider " + clazz.getName(), e);
-                        return null;
-                    }
-                }
-            };
+            return new ProviderImpl<T>(clazz);
         }
 
         @Override
@@ -918,7 +1012,7 @@ public final class ServiceLoader<S>
             if (acc == null) {
                 return hasNextService();
             } else {
-                PrivilegedAction<Boolean> action = new PrivilegedAction<Boolean>() {
+                PrivilegedAction<Boolean> action = new PrivilegedAction<>() {
                     public Boolean run() { return hasNextService(); }
                 };
                 return AccessController.doPrivileged(action, acc);
@@ -980,11 +1074,11 @@ public final class ServiceLoader<S>
      * providers must be done by the iterator itself. Its {@link
      * java.util.Iterator#hasNext hasNext} and {@link java.util.Iterator#next
      * next} methods can therefore throw a {@link ServiceConfigurationError}
-     * if a provider class cannot be loaded, doesn't have the appropriate
-     * constructor, can't be assigned to the service type or if any other kind
-     * of exception or error is thrown as the next provider is located and
-     * instantiated. To write robust code it is only necessary to catch {@link
-     * ServiceConfigurationError} when using a service iterator.
+     * if a provider class cannot be loaded, doesn't have an appropriate static
+     * factory method or constructor, can't be assigned to the service type or
+     * if any other kind of exception or error is thrown as the next provider
+     * is located and instantiated. To write robust code it is only necessary
+     * to catch {@link ServiceConfigurationError} when using a service iterator.
      *
      * <p> If such an error is thrown then subsequent invocations of the
      * iterator will make a best effort to locate and instantiate the next
@@ -1334,9 +1428,9 @@ public final class ServiceLoader<S>
      *
      * @throws ServiceConfigurationError
      *         If a provider class cannot be loaded, doesn't have the
-     *         appropriate constructor, can't be assigned to the service type,
-     *         or if any other kind of exception or error is thrown when
-     *         locating or instantiating the provider.
+     *         appropriate static factory method or constructor, can't be
+     *         assigned to the service type, or if any other kind of exception
+     *         or error is thrown when locating or instantiating the provider.
      *
      * @since 9
      */
