@@ -502,8 +502,7 @@ public final class ServiceLoader<S>
      */
     private Class<S> loadProviderInModule(Module module, String cn) {
         Class<?> clazz = null;
-        SecurityManager sm = System.getSecurityManager();
-        if (sm == null) {
+        if (acc == null) {
             try {
                 clazz = Class.forName(module, cn);
             } catch (LinkageError e) {
@@ -529,8 +528,9 @@ public final class ServiceLoader<S>
     }
 
     /**
-     * A Provider implementation that supports invoking the provider's
-     * "{@code provider}" or no-arg constructor with restricted permissions.
+     * A Provider implementation that supports invoking, with reduced
+     * permissions, the provider's static factory method or its no-arg
+     * constructor.
      */
     private final class ProviderImpl<S> implements Provider<S> {
         final Class<S> type;
@@ -538,6 +538,10 @@ public final class ServiceLoader<S>
         Method factoryMethod; // cached
         Constructor<S> ctor;
 
+        /**
+         * @throws ServiceConfigurationError
+         *         If the provider class is not public
+         */
         ProviderImpl(Class<S> type) {
             int mods = type.getModifiers();
             if (!Modifier.isPublic(mods)) {
@@ -554,7 +558,7 @@ public final class ServiceLoader<S>
         @Override
         public S get() {
             if (factoryMethod == null && ctor == null) {
-                if (factoryMethod == null && isExplicitModule()) {
+                if (isExplicitModule()) {
                     // look for the static "provider" method when the provider
                     // is an explicit named module
                     factoryMethod = getFactoryMethod();
@@ -590,6 +594,7 @@ public final class ServiceLoader<S>
                 @Override
                 public Method run() {
                     try {
+                        // TBD: invoke getMethod0 directly to avoid exception
                         Method m = type.getMethod("provider");
                         m.setAccessible(true);
                         return m;
@@ -634,7 +639,7 @@ public final class ServiceLoader<S>
             Constructor<S> ctor = AccessController.doPrivileged(pa);
             if (ctor == null) {
                 fail(service, "Provider " + type
-                        + " does not have a public no-arg constructor");
+                     + " does not have a public no-arg constructor");
             }
             return ctor;
         }
@@ -649,8 +654,7 @@ public final class ServiceLoader<S>
         private S invokeFactoryMethod() {
             S p = null;
             Throwable exc = null;
-            SecurityManager sm = System.getSecurityManager();
-            if (sm == null) {
+            if (acc == null) {
                 try {
                     p = (S) factoryMethod.invoke(null);
                 } catch (Throwable x) {
@@ -674,7 +678,7 @@ public final class ServiceLoader<S>
                 if (exc instanceof InvocationTargetException)
                     exc = exc.getCause();
                 String cn = type.getName();
-                fail(service, "Provider " + cn + " could not be created", exc);
+                fail(service, "Provider " + cn + " could not be obtained", exc);
             }
             if (p == null) {
                 fail(service, factoryMethod + " returned null");
@@ -683,15 +687,14 @@ public final class ServiceLoader<S>
         }
 
         /**
-         * Returns Constructor::newInstance to instantiate a provider. When running
+         * Invokes Constructor::newInstance to instantiate a provider. When running
          * with a security manager then the constructor runs with permissions that
          * are restricted by the security context of whatever created this loader.
          */
         private S newInstance() {
             S p = null;
             Throwable exc = null;
-            SecurityManager sm = System.getSecurityManager();
-            if (sm == null) {
+            if (acc == null) {
                 try {
                     p = ctor.newInstance();
                 } catch (Throwable x) {
@@ -719,6 +722,20 @@ public final class ServiceLoader<S>
                      "Provider " + cn + " could not be instantiated", exc);
             }
             return p;
+        }
+
+        @Override
+        public int hashCode() {
+            return type.hashCode();
+        }
+
+        @Override
+        public boolean equals(Object ob) {
+            if (!(ob instanceof ProviderImpl))
+                return false;
+            @SuppressWarnings("unchecked")
+            ProviderImpl<?> that = (ProviderImpl<?>)ob;
+            return this.type() == that.type();
         }
     }
 
@@ -806,6 +823,10 @@ public final class ServiceLoader<S>
             this.iterator = iteratorFor(loader);
         }
 
+        /**
+         * Returns iterator to iterate over the implementations of {@code
+         * service} in the given layer.
+         */
         private Set<ServiceProvider> providers(Layer layer) {
             ServicesCatalog catalog = JLRM_ACCESS.getServicesCatalog(layer);
             return catalog.findServices(serviceName);
@@ -988,7 +1009,7 @@ public final class ServiceLoader<S>
                 }
 
                 if (!service.isAssignableFrom(clazz)) {
-                    fail(service, "Provider " + clazz.getName()  + " not a subtype");
+                    fail(service, "Provider " + cn  + " not a subtype");
                 }
 
             } while (clazz.getModule().isNamed()); // ignore if in named module
@@ -997,18 +1018,8 @@ public final class ServiceLoader<S>
             return true;
         }
 
-        private Provider<T> nextService() {
-            if (!hasNextService())
-                throw new NoSuchElementException();
-
-            Class<T> clazz = next;
-            next = null;
-
-            return new ProviderImpl<T>(clazz);
-        }
-
         @Override
-        public final boolean hasNext() {
+        public boolean hasNext() {
             if (acc == null) {
                 return hasNextService();
             } else {
@@ -1020,15 +1031,15 @@ public final class ServiceLoader<S>
         }
 
         @Override
-        public final Provider<T> next() {
-            if (acc == null) {
-                return nextService();
-            } else {
-                PrivilegedAction<Provider<T>> action = new PrivilegedAction<>() {
-                    public Provider<T> run() { return nextService(); }
-                };
-                return AccessController.doPrivileged(action, acc);
-            }
+        public Provider<T> next() {
+            if (!hasNext())
+                throw new NoSuchElementException();
+
+            Class<T> clazz = next;
+            next = null;
+
+            // Provider::get will invoke constructor will reduced permissions
+            return new ProviderImpl<T>(clazz);
         }
     }
 
@@ -1215,13 +1226,16 @@ public final class ServiceLoader<S>
         final int expectedReloadCount = ServiceLoader.this.reloadCount;
         final Iterator<Provider<T>> iterator;
         int index;
+
         ProviderSpliterator(Iterator<Provider<T>> iterator) {
             this.iterator = iterator;
         }
+
         @Override
         public Spliterator<Provider<T>> trySplit() {
             return null;
         }
+
         @Override
         @SuppressWarnings("unchecked")
         public boolean tryAdvance(Consumer<? super Provider<T>> action) {
@@ -1243,12 +1257,14 @@ public final class ServiceLoader<S>
                 return false;
             }
         }
+
         @Override
         public int characteristics() {
-            // not DISTINCT as dependent on Provider::equals
+            // need to decide on DISTINCT
             // not IMMUTABLE as structural interference possible
             return Spliterator.ORDERED + Spliterator.NONNULL;
         }
+
         @Override
         public long estimateSize() {
             return Long.MAX_VALUE;
