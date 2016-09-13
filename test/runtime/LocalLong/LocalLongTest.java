@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,28 +19,29 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
-#ifndef OS_CPU_SOLARIS_SPARC_VM_GLOBALS_SOLARIS_SPARC_HPP
-#define OS_CPU_SOLARIS_SPARC_VM_GLOBALS_SOLARIS_SPARC_HPP
 
-//
-// Sets the default values for platform dependent flags used by the runtime system.
-// (see globals.hpp)
-//
+/*
+ * @test LocalLongTest
+ * @bug 8163014
+ * @modules java.base/jdk.internal.misc
+ * @library /test/lib
+ * @compile LocalLongHelper.java
+ * @run driver LocalLongTest
+ */
 
-define_pd_global(size_t, JVMInvokeMethodSlack,   12288);
+import jdk.test.lib.Platform;
+import jdk.test.lib.process.ProcessTools;
+import jdk.test.lib.process.OutputAnalyzer;
 
-// Used on 64 bit platforms for UseCompressedOops base address
-#ifdef _LP64
-// use 6G as default base address because by default the OS maps the application
-// to 4G on Solaris-Sparc. This leaves at least 2G for the native heap.
-define_pd_global(size_t, HeapBaseMinAddress,     CONST64(6)*G);
-#else
-define_pd_global(size_t, HeapBaseMinAddress,     2*G);
-#endif
-
-
-
-#endif // OS_CPU_SOLARIS_SPARC_VM_GLOBALS_SOLARIS_SPARC_HPP
+public class LocalLongTest {
+    public static void main(String... args) throws Exception {
+        if (Platform.is64bit()) {
+            ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-Xint",
+                                                                      "LocalLongHelper");
+            OutputAnalyzer o = new OutputAnalyzer(pb.start());
+            o.shouldHaveExitValue(0);
+        }
+    };
+}
