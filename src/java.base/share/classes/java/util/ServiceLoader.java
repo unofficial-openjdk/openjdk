@@ -532,8 +532,10 @@ public final class ServiceLoader<S>
      * permissions, the provider's static factory method or its no-arg
      * constructor.
      */
-    private final class ProviderImpl<S> implements Provider<S> {
+    private final static class ProviderImpl<S> implements Provider<S> {
+        final Class<?> service;
         final Class<S> type;
+        final AccessControlContext acc;
 
         Method factoryMethod; // cached
         Constructor<S> ctor;
@@ -542,12 +544,14 @@ public final class ServiceLoader<S>
          * @throws ServiceConfigurationError
          *         If the provider class is not public
          */
-        ProviderImpl(Class<S> type) {
+        ProviderImpl(Class<?> service, Class<S> type, AccessControlContext acc) {
             int mods = type.getModifiers();
             if (!Modifier.isPublic(mods)) {
                 fail(service, "Provider " + type + " is not public");
             }
+            this.service = service;
             this.type = type;
+            this.acc = acc;
         }
 
         @Override
@@ -724,9 +728,13 @@ public final class ServiceLoader<S>
             return p;
         }
 
+        // For now, equals/hashCode uses the access control context to ensure
+        // that two Providers created with different contexts are not equal
+        // when running with a security manager.
+
         @Override
         public int hashCode() {
-            return type.hashCode();
+            return Objects.hash(type, acc);
         }
 
         @Override
@@ -735,7 +743,8 @@ public final class ServiceLoader<S>
                 return false;
             @SuppressWarnings("unchecked")
             ProviderImpl<?> that = (ProviderImpl<?>)ob;
-            return this.type() == that.type();
+            return this.type == that.type
+                    && Objects.equals(this.acc, that.acc);
         }
     }
 
@@ -802,7 +811,7 @@ public final class ServiceLoader<S>
 
             @SuppressWarnings("unchecked")
             Class<T> clazz = (Class<T>) c;
-            return new ProviderImpl<T>(clazz);
+            return new ProviderImpl<T>(service, clazz, acc);
         }
     }
 
@@ -905,7 +914,7 @@ public final class ServiceLoader<S>
 
             @SuppressWarnings("unchecked")
             Class<T> clazz = (Class<T>) c;
-            return new ProviderImpl<T>(clazz);
+            return new ProviderImpl<T>(service, clazz, acc);
         }
     }
 
@@ -1039,7 +1048,7 @@ public final class ServiceLoader<S>
             next = null;
 
             // Provider::get will invoke constructor will reduced permissions
-            return new ProviderImpl<T>(clazz);
+            return new ProviderImpl<T>(service, clazz, acc);
         }
     }
 
@@ -1073,13 +1082,13 @@ public final class ServiceLoader<S>
     }
 
     /**
-     * Lazily loads and instantiate the available providers of this loader's
+     * Lazily load and instantiate the available providers of this loader's
      * service.
      *
      * <p> The iterator returned by this method first yields all of the
-     * elements of the provider cache, in instantiation order.  It then lazily
-     * loads and instantiates any remaining providers, adding each one to the
-     * cache in turn.
+     * elements of the provider cache, in the order that they were loaded.
+     * It then lazily loads and instantiates any remaining providers,
+     * adding each one to the cache in turn.
      *
      * <p> To achieve laziness the actual work of locating and instantiating
      * providers must be done by the iterator itself. Its {@link
