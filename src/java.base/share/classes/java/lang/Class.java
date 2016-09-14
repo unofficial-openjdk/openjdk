@@ -27,27 +27,29 @@ package java.lang;
 
 import java.lang.annotation.Annotation;
 import java.lang.module.ModuleDescriptor.Version;
+import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReader;
-import java.lang.reflect.AnnotatedElement;
-import java.lang.reflect.Array;
-import java.lang.reflect.GenericArrayType;
-import java.lang.reflect.GenericDeclaration;
-import java.lang.reflect.Member;
-import java.lang.reflect.Field;
-import java.lang.reflect.Executable;
-import java.lang.reflect.Method;
-import java.lang.reflect.Module;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.AnnotatedType;
-import java.lang.reflect.Proxy;
 import java.lang.ref.SoftReference;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectStreamField;
+import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.AnnotatedType;
+import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Executable;
+import java.lang.reflect.Field;
+import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.GenericDeclaration;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Layer;
+import java.lang.reflect.Member;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Module;
+import java.lang.reflect.Proxy;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.net.URL;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -63,14 +65,16 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
 import jdk.internal.HotSpotIntrinsicCandidate;
 import jdk.internal.loader.BootLoader;
 import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.loader.ResourceHelper;
+import jdk.internal.misc.SharedSecrets;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.misc.VM;
-import jdk.internal.module.Modules;
+import jdk.internal.module.ModuleHashes;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.ConstantPool;
 import jdk.internal.reflect.Reflection;
@@ -171,39 +175,6 @@ public final class Class<T> implements java.io.Serializable,
     public String toString() {
         return (isInterface() ? "interface " : (isPrimitive() ? "" : "class "))
             + getName();
-    }
-
-
-    /* package-private */
-    String toLoaderModuleClassString() {
-        ClassLoader loader = getClassLoader0();
-
-        String s = "";
-        // First element is class loader name
-        // if class loader is not a built-in class loader and has a name
-        if (loader != null && !(loader instanceof BuiltinClassLoader) &&
-            loader.getName() != null) {
-            s += loader.getName() + "/";
-        }
-
-        // Second element is module name/version
-        Module m = getModule();
-        if (m != null && m.isNamed()) {
-            s += m.getName();
-            if (!Modules.isJDKModule(m)) {
-                // drop version if it's JDK module and same as runtime version
-                Optional<Version> ov = getModule().getDescriptor().version();
-                if (ov.isPresent()) {
-                    s += "@" + ov.get().toString();
-                }
-            }
-        }
-        if (!s.isEmpty()) {
-            s += "/";
-        }
-        // Third element is the fully-qualified class loader
-        s += getName();
-        return s;
     }
 
     /**
@@ -3932,5 +3903,83 @@ public final class Class<T> implements java.io.Serializable,
      */
     public AnnotatedType[] getAnnotatedInterfaces() {
          return TypeAnnotationParser.buildAnnotatedInterfaces(getRawTypeAnnotations(), getConstantPool(), this);
+    }
+
+    /*
+     * Finds JDK non-upgradeable modules, i.e. the modules that are
+     * included in the hashes in java.base.
+     */
+    private static class HashedModules {
+        static final Set<String> HASHED_MODULES = getHashedModuleNames();
+
+        static Set<String> getHashedModuleNames() {
+            Module javaBase = Layer.boot().findModule("java.base").get();
+            Optional<ModuleHashes> ohashes = SharedSecrets.getJavaLangModuleAccess()
+                .hashes(javaBase.getDescriptor());
+
+            if (ohashes.isPresent()) {
+                Set<String> names = new HashSet<>(ohashes.get().names());
+                names.add("java.base");
+                return names;
+            } else {
+                // exploded image
+                return ModuleFinder.ofSystem()
+                                   .findAll()
+                                   .stream()
+                                   .map(mref -> mref.descriptor().name())
+                                   .collect(Collectors.toSet());
+            }
+        }
+
+        static boolean contains(Module m) {
+            return m.getLayer() != Layer.boot() ||
+                !HASHED_MODULES.contains(m.getName());
+        }
+    }
+
+    /**
+     * Returns <loader>/<module>/<fully-qualified-classname> string
+     * representation of the given class.
+     * <p>
+     * If the module is a non-upgradeable JDK module then omit
+     * its version string.
+     * <p>
+     * If the loader has no name, or if the loader is one of the built-in
+     * loaders (`boot`, `platform`, or `app`) then drop the first element
+     * (`<loader>/`).
+     * <p>
+     * If the first element has been dropped and the module is unnamed
+     * then drop the second element (`<module>/`).
+     * <p>
+     * If the first element is not dropped and the module is unnamed
+     * then drop `<module>`.
+     */
+    String toLoaderModuleClassName() {
+        ClassLoader loader = getClassLoader0();
+        Module m = getModule();
+
+        // First element - class loader name
+        String s = "";
+        if (loader != null && !(loader instanceof BuiltinClassLoader) &&
+                loader.getName() != null) {
+            s = loader.getName() + "/";
+        }
+
+        // Second element - module name and version
+        if (m != null && m.isNamed()) {
+            s = s.isEmpty() ? m.getName() : s + m.getName();
+            // drop version if it's JDK module tied with java.base,
+            // i.e. non-upgradeable
+            if (HashedModules.contains(m)) {
+                Optional<Version> ov = m.getDescriptor().version();
+                if (ov.isPresent()) {
+                    String version = "@" + ov.get().toString();
+                    s = s.isEmpty() ? version : s + version;
+                }
+            }
+        }
+
+        // fully-qualified class name
+        return s.isEmpty() ? getName() : s + "/" + getName();
     }
 }

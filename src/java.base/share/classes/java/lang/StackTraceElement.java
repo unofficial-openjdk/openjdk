@@ -40,8 +40,14 @@ import java.util.Objects;
  * @author Josh Bloch
  */
 public final class StackTraceElement implements java.io.Serializable {
+    // This field is set to the compacted String representation used
+    // by StackTraceElement::toString and stored in serial form.
+    //
+    // This field is of Object type. VM initially sets this field to
+    // the Class object of the declaring class to build the compacted string.
+    private Object classOrLoaderModuleClassName;
+
     // Normally initialized by VM
-    private transient Class<?> declaringClassObject;
     private String classLoaderName;
     private String moduleName;
     private String moduleVersion;
@@ -275,25 +281,23 @@ public final class StackTraceElement implements java.io.Serializable {
      * @see    Throwable#printStackTrace()
      */
     public String toString() {
-        String loaderModuleClassName;
-        if (declaringClassObject != null) {
-            loaderModuleClassName = declaringClassObject.toLoaderModuleClassString();
-        } else {
+        String s = buildLoaderModuleClassName();
+        if (s == null) {
             // all elements will be included
-            loaderModuleClassName = "";
+            s = "";
             if (classLoaderName != null && !classLoaderName.isEmpty()) {
-                loaderModuleClassName += classLoaderName + "/";
+                s += classLoaderName + "/";
             }
             if (moduleName != null && !moduleName.isEmpty()) {
-                loaderModuleClassName += moduleName;
+                s += moduleName;
             }
             if (moduleVersion != null && !moduleVersion.isEmpty()) {
-                loaderModuleClassName += "@" + moduleVersion;
+                s += "@" + moduleVersion;
             }
-            loaderModuleClassName += declaringClass;
+            s += declaringClass;
         }
 
-        return loaderModuleClassName + "." + methodName + "(" +
+        return s + "." + methodName + "(" +
              (isNativeMethod() ? "Native Method)" :
               (fileName != null && lineNumber >= 0 ?
                fileName + ":" + lineNumber + ")" :
@@ -349,6 +353,22 @@ public final class StackTraceElement implements java.io.Serializable {
         result = 31*result + Objects.hashCode(fileName);
         result = 31*result + lineNumber;
         return result;
+    }
+
+
+    /**
+     * Build the compacted String representation to be returned by
+     * toString method from the declaring Class object.
+     */
+    synchronized String buildLoaderModuleClassName() {
+        if (classOrLoaderModuleClassName == null)
+            return null;
+
+        if (classOrLoaderModuleClassName instanceof Class) {
+            Class<?> cls = (Class<?>)classOrLoaderModuleClassName;
+            classOrLoaderModuleClassName = cls.toLoaderModuleClassName();
+        }
+        return (String)classOrLoaderModuleClassName;
     }
 
     private static final long serialVersionUID = 6992337162326171013L;

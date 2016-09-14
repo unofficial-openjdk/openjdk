@@ -204,35 +204,4 @@ public class Modules {
         addReads(m, BootLoader.getUnnamedModule());
         addReads(m, ClassLoaders.appClassLoader().getUnnamedModule());
     }
-
-    private static Set<String> hashedModuleNames;
-    private static synchronized Set<String> getHashedModuleNames() {
-        if (hashedModuleNames != null)
-            return hashedModuleNames;
-
-        Module javaBase = Layer.boot().findModule("java.base").get();
-        Optional<ModuleHashes> ohashes = SharedSecrets.getJavaLangModuleAccess()
-            .hashes(javaBase.getDescriptor());
-
-        if (ohashes.isPresent()) {
-            hashedModuleNames = ohashes.get().names();
-        } else {
-            // exploded image
-            hashedModuleNames = ModuleFinder.ofSystem().findAll()
-                .stream()
-                .map(mref -> mref.descriptor().name())
-                .collect(Collectors.toSet());
-        }
-        return hashedModuleNames;
-    }
-
-    /**
-     * Returns true if the given module is JDK module.
-     * All non-upgradeable JDK modules are hashed in java.base.
-     */
-    public static boolean isJDKModule(Module m) {
-        return m.getName().equals("java.base") ||
-                (m.getLayer() == Layer.boot() &&
-                    getHashedModuleNames().contains(m.getName()));
-    }
 }
