@@ -269,6 +269,15 @@ JvmtiEnv::AddModuleExports(jobject module, const char* pkg_name, jobject to_modu
   return JvmtiExport::add_module_exports(h_module, h_pkg, h_to_module, THREAD);
 } /* end AddModuleExports */
 
+// module - pre-checked for NULL
+// pkg_name - pre-checked for NULL
+// to_module - pre-checked for NULL
+jvmtiError
+JvmtiEnv::AddModuleExportsPrivate(jobject module, const char* pkg_name, jobject to_module) {
+  // not implemented yet
+  return JVMTI_ERROR_INTERNAL;
+} /* end AddModuleExportsPrivate */
+
 
 // module - pre-checked for NULL
 // service - pre-checked for NULL

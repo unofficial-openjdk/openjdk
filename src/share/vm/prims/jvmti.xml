@@ -865,10 +865,11 @@ Agent_OnUnload_L(JavaVM *vm)</example>
 
 <intro id="bcimodules" label="Bytecode Instrumentation of code in modules">
   Agents can use the functions <functionlink id="AddModuleReads"/>,
-  <functionlink id="AddModuleExports"/>, <functionlink id="AddModuleUses"/> and 
-  <functionlink id="AddModuleProvides"/> to update a module to expend the set
-  of modules that it reads, the set of packages that it exports,
-  or the set of services that it uses or provides.
+  <functionlink id="AddModuleExports"/>, <functionlink id="AddModuleExportsPrivate"/>,
+  <functionlink id="AddModuleUses"/> and <functionlink id="AddModuleProvides"/>
+  to update a module to expand the set of modules that it reads, the set of
+  packaegs that it exports (or exports-private), or the services that it uses
+  and provides.
   <p/>
   As an aid to agents that deploy supporting classes on the search path of
   the bootstrap class loader, or the search path of the class loader that
@@ -6646,7 +6647,57 @@ class C2 extends C1 implements I2 {
       </errors>
     </function>
 
-    <function id="AddModuleUses" num="96">
+    <function id="AddModuleExportsPrivate" num="96">
+      <synopsis>Add Module Exports Private</synopsis>
+      <description>
+         Update a module to export-private a package to another module.
+         This function is a no-op when <paramlink id="module"></paramlink>
+         is an unnamed module.
+         This function facilitates the instrumentation of code
+         in named modules where that instrumentation requires
+         expanding the set of packages that a module exports.
+      </description>
+      <origin>new</origin>
+      <capabilities>
+      </capabilities>
+      <parameters>
+        <param id="module">
+          <ptrtype><jobject/></ptrtype>
+          <description>
+            The module to update.
+          </description>
+        </param>
+        <param id="pkg_name">
+          <inbuf><char/></inbuf>
+          <description>
+            The exported package name.
+          </description>
+        </param>
+        <param id="to_module">
+          <ptrtype><jobject/></ptrtype>
+          <description>
+            The module the package is exported-private to.
+            If the <code>to_module</code> is not a subclass of
+            <code>java.lang.reflect.Module</code> this function returns
+            <errorlink id="JVMTI_ERROR_INVALID_MODULE"></errorlink>.
+          </description>
+        </param>
+      </parameters>
+      <errors>
+        <error id="JVMTI_ERROR_INVALID_MODULE">
+          If <paramlink id="module"></paramlink> is not a module object.
+        </error>
+        <error id="JVMTI_ERROR_INVALID_MODULE">
+          If <paramlink id="to_modules"></paramlink> is not a module object.
+        </error>
+        <error id="JVMTI_ERROR_ILLEGAL_ARGUMENT">
+          If the package <paramlink id="pkg_name"></paramlink>
+          does not belong to the module.
+        </error>
+      </errors>
+    </function>
+
+    <function id="AddModuleUses" num="97">
       <synopsis>Add Module Uses</synopsis>
       <description>
          Updates a module to add a service to the set of services that
@@ -6683,7 +6734,7 @@ class C2 extends C1 implements I2 {
       </errors>
     </function>
 
-    <function id="AddModuleProvides" num="97">
+    <function id="AddModuleProvides" num="98">
       <synopsis>Add Module Provides</synopsis>
       <description>
          Updates a module to add a service to the set of services that
