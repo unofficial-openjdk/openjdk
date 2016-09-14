@@ -119,7 +119,6 @@ public class GenModuleInfoSource {
 
     static class Exports {
         public static enum Modifier {
-            DYNAMIC,
             PRIVATE,
         }
 
