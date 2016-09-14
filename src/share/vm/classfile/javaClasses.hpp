@@ -1305,7 +1305,7 @@ class java_lang_System : AllStatic {
 class java_lang_StackTraceElement: AllStatic {
  private:
   enum {
-    hc_declaringClassObject_offset = 0,
+    hc_classOrLoaderModuleClassName_offset = 0,
     hc_classLoaderName_offset      = 1,
     hc_moduleName_offset           = 2,
     hc_moduleVersion_offset        = 3,
@@ -1315,17 +1315,16 @@ class java_lang_StackTraceElement: AllStatic {
     hc_lineNumber_offset           = 7
   };
 
-  static int declaringClassObject_offset;
+  static int classOrLoaderModuleClassName_offset;
+  static int classLoaderName_offset;
   static int moduleName_offset;
   static int moduleVersion_offset;
-  static int classLoaderName_offset;
   static int declaringClass_offset;
   static int methodName_offset;
   static int fileName_offset;
   static int lineNumber_offset;
 
   // Setters
-  static void set_declaringClassObject(oop element, oop value);
   static void set_classLoaderName(oop element, oop value);
   static void set_moduleName(oop element, oop value);
   static void set_moduleVersion(oop element, oop value);
@@ -1333,6 +1332,7 @@ class java_lang_StackTraceElement: AllStatic {
   static void set_methodName(oop element, oop value);
   static void set_fileName(oop element, oop value);
   static void set_lineNumber(oop element, int value);
+  static void set_declaringClassObject(oop element, oop value);
 
  public:
   // Create an instance of StackTraceElement
