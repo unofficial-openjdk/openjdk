@@ -23,7 +23,6 @@
 
 package jdk.test.failurehandler.jtreg;
 
-import com.sun.javatest.regtest.config.OS;
 import com.sun.javatest.regtest.TimeoutHandler;
 import jdk.test.failurehandler.*;
 

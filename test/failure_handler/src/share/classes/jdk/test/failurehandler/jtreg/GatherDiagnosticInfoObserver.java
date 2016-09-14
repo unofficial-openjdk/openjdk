@@ -26,8 +26,7 @@ package jdk.test.failurehandler.jtreg;
 import com.sun.javatest.Harness;
 import com.sun.javatest.Parameters;
 import com.sun.javatest.TestResult;
-import com.sun.javatest.regtest.config.RegressionParameters;
-import com.sun.javatest.regtest.config.OS;
+import com.sun.javatest.InterviewParameters;
 import jdk.test.failurehandler.*;
 
 import java.io.File;
@@ -119,7 +118,7 @@ public class GatherDiagnosticInfoObserver implements Harness.Observer {
     @Override
     public void startingTestRun(Parameters params) {
         // TODO find a better way to get JDKs
-        RegressionParameters rp = (RegressionParameters) params;
+        InterviewParameters rp = (InterviewParameters) params;
         Map<?,?> map = new HashMap<>();
         rp.save(map);
         compileJdk = (String) map.get("regtest.compilejdk");
