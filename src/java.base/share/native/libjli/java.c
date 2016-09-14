@@ -61,8 +61,8 @@
  * interfaces.
  */
 
-/* we always print to stderr */
-#define USE_STDERR JNI_TRUE
+#define USE_STDERR JNI_TRUE     /* we usually print to stderr */
+#define USE_STDOUT JNI_FALSE
 
 static jboolean printVersion = JNI_FALSE; /* print and exit */
 static jboolean showVersion = JNI_FALSE;  /* print but continue */
@@ -1802,7 +1802,7 @@ ListModules(JNIEnv *env, char *optString)
             "listModules", "(ZLjava/lang/String;)V"));
     NULL_CHECK(joptString = (*env)->NewStringUTF(env, optString));
     (*env)->CallStaticVoidMethod(env, cls, listModulesID,
-                                 USE_STDERR,
+                                 USE_STDOUT,
                                  joptString);
 }
 
