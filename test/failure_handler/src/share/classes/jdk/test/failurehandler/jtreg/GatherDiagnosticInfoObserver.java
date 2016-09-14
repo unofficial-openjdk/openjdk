@@ -26,8 +26,8 @@ package jdk.test.failurehandler.jtreg;
 import com.sun.javatest.Harness;
 import com.sun.javatest.Parameters;
 import com.sun.javatest.TestResult;
-import com.sun.javatest.regtest.RegressionParameters;
-import com.sun.javatest.regtest.OS;
+import com.sun.javatest.regtest.config.RegressionParameters;
+import com.sun.javatest.regtest.config.OS;
 import jdk.test.failurehandler.*;
 
 import java.io.File;
