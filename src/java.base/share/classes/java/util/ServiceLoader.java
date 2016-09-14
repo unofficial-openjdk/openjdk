@@ -155,10 +155,15 @@ import jdk.internal.reflect.Reflection;
  * {@code load} method is invoked to locate providers using any of these class
  * loaders for this layer then then it will locate all of the providers in that
  * layer, irrespective of their defining class loader.
- * In the case of unnamed modules then the service configuration files are
+ *
+ * <p> In the case of unnamed modules then the service configuration files are
  * located using the class loader's {@link ClassLoader#getResources(String)
  * ClassLoader.getResources(String)} method. Any providers listed should be
- * visible via the class loader specified to the {@code load} method.
+ * visible via the class loader specified to the {@code load} method. If a
+ * provider in a named module is listed then it is ignored - this is to avoid
+ * duplicates that would otherwise arise when a module has both a
+ * <i>provides</i> clause and a service configuration file in {@code
+ * META-INF/services} that lists the same provider.
  *
  * <h2> Ordering </h2>
  *
