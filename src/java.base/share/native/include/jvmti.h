@@ -1511,19 +1511,22 @@ typedef struct jvmtiInterface_1_ {
     const char* pkg_name,
     jobject to_module);
 
-  /*   96 : Add Module Uses */
+  /*   96 : Add Module Exports Private */
+  jvmtiError (JNICALL *AddModuleExportsPrivate) (jvmtiEnv* env,
+    jobject module,
+    const char* pkg_name,
+    jobject to_module);
+
+  /*   97 : Add Module Uses */
   jvmtiError (JNICALL *AddModuleUses) (jvmtiEnv* env,
     jobject module,
     jclass service);
 
-  /*   97 : Add Module Provides */
+  /*   98 : Add Module Provides */
   jvmtiError (JNICALL *AddModuleProvides) (jvmtiEnv* env,
     jobject module,
     jclass service,
     jclass impl_class);
-
-  /*   98 :  RESERVED */
-  void *reserved98;
 
   /*   99 :  RESERVED */
   void *reserved99;
@@ -2175,6 +2178,12 @@ struct _jvmtiEnv {
             const char* pkg_name,
             jobject to_module) {
     return functions->AddModuleExports(this, module, pkg_name, to_module);
+  }
+
+  jvmtiError AddModuleExportsPrivate(jobject module,
+            const char* pkg_name,
+            jobject to_module) {
+    return functions->AddModuleExportsPrivate(this, module, pkg_name, to_module);
   }
 
   jvmtiError AddModuleUses(jobject module,
