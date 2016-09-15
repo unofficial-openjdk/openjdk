@@ -26,7 +26,7 @@
  * @bug 8039262
  * @summary Ensure that using Types.membersClosure does not increase the number of listeners on the
  *          class's members Scope.
- * @modules jdk.compiler/com.sun.tools.javac.code
+ * @modules jdk.compiler/com.sun.tools.javac.code:private
  *          jdk.compiler/com.sun.tools.javac.file
  *          jdk.compiler/com.sun.tools.javac.util
  */

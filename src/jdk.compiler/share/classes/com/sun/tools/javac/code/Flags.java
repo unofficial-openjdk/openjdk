@@ -293,6 +293,11 @@ public class Flags {
      */
     public static final long SYSTEM_MODULE = 1L<<53;
 
+    /**
+     * Flag to indicate the given PackageSymbol contains any non-.java and non-.class resources.
+     */
+    public static final long HAS_RESOURCE = 1L<<54;
+
     /** Modifier masks.
      */
     public static final int
