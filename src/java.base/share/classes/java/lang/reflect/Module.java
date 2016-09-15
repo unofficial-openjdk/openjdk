@@ -1069,8 +1069,8 @@ public final class Module implements AnnotatedElement {
             initExports(descriptor, nameToModule, m);
         }
 
-        // For the boot layer then register the modules in the class loader
-        // services catalog
+        // For now, register the modules in the boot layer. This will be
+        // re-examined once the ServiceLoader spec is updated.
         if (isBootLayer) {
             for (ResolvedModule resolvedModule : cf.modules()) {
                 ModuleReference mref = resolvedModule.reference();
@@ -1092,7 +1092,7 @@ public final class Module implements AnnotatedElement {
             }
         }
 
-        // ClassLoader::layers support
+        // ClassLoader::layers support, TBD whether to keep this
         for (ClassLoader loader : loaders) {
             SharedSecrets.getJavaLangAccess().bindToLayer(loader, layer);
         }

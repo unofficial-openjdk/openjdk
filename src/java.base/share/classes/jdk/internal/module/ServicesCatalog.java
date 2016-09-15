@@ -39,6 +39,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * A <em>services catalog</em>. Each {@code ClassLoader} and {@code Layer} has
  * an optional {@code ServicesCatalog} for modules that provide services.
  *
+ * @apiNote This class will be replaced once the ServiceLoader spec is updated.
+ *
  * @see java.util.ServiceLoader
  */
 public final class ServicesCatalog {

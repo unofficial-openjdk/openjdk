@@ -2677,6 +2677,8 @@ public abstract class ClassLoader {
      * Returns a possible-empty stream of the layers with modules defined to
      * this class loader.
      *
+     * @apiNote TBD whether to keep this method or a variant of.
+     *
      * @return A stream of the layers with modules defined to this class loader
      * @since 9
      */
