@@ -47,6 +47,7 @@ public interface Archive {
             NATIVE_LIB,
             NATIVE_CMD,
             CONFIG,
+            OTHER_FILES,
             SERVICE;
         }
 
@@ -62,23 +63,28 @@ public interface Archive {
             this.type = Objects.requireNonNull(type);
         }
 
-        public Archive archive() {
+        public final Archive archive() {
             return archive;
         }
 
-        public String path() {
+        public final String path() {
             return path;
         }
 
-        public EntryType type() {
+        public final EntryType type() {
             return type;
         }
 
         /*
          * Returns the name of this entry.
          */
-        public String name() {
+        public final String name() {
             return name;
+        }
+
+        public final String getResourceName() {
+            assert !name.startsWith("/");
+            return "/" + archive.moduleName() + "/" + name;
         }
 
         @Override

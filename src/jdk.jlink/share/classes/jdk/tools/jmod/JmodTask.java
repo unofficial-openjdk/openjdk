@@ -60,7 +60,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.text.MessageFormat;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -83,6 +82,7 @@ import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
@@ -161,6 +161,7 @@ public class JmodTask {
         Path jmodFile;
         boolean help;
         boolean version;
+        List<Path> otherFiles;
         List<Path> classpath;
         List<Path> cmds;
         List<Path> configs;
@@ -367,6 +368,7 @@ public class JmodTask {
     }
 
     private class JmodFileWriter {
+        final List<Path> otherFiles = options.otherFiles;
         final List<Path> cmds = options.cmds;
         final List<Path> libs = options.libs;
         final List<Path> configs = options.configs;
@@ -396,6 +398,8 @@ public class JmodTask {
                 processSection(zos, Section.NATIVE_CMDS, cmds);
                 processSection(zos, Section.NATIVE_LIBS, libs);
                 processSection(zos, Section.CONFIG, configs);
+                processSection(zos, Section.OTHER_FILES, otherFiles);
+
             }
         }
 
@@ -1014,6 +1018,7 @@ public class JmodTask {
         NATIVE_CMDS("bin"),
         CLASSES("classes"),
         CONFIG("conf"),
+        OTHER_FILES("top"),
         UNKNOWN("unknown");
 
         private final String jmodDir;
@@ -1212,6 +1217,12 @@ public class JmodTask {
                         .withValuesSeparatedBy(File.pathSeparatorChar)
                         .withValuesConvertedBy(DirPathConverter.INSTANCE);
 
+        OptionSpec<Path> otherFiles
+            = parser.accepts("other-files", getMessage("main.opt.other-files"))
+                        .withRequiredArg()
+                        .withValuesSeparatedBy(File.pathSeparatorChar)
+                        .withValuesConvertedBy(DirPathConverter.INSTANCE);
+
         OptionSpec<Void> dryrun
             = parser.accepts("dry-run", getMessage("main.opt.dry-run"));
 
@@ -1300,6 +1311,8 @@ public class JmodTask {
                 options.cmds = opts.valuesOf(cmds);
             if (opts.has(config))
                 options.configs = opts.valuesOf(config);
+            if (opts.has(otherFiles))
+                options.otherFiles = opts.valuesOf(otherFiles);
             if (opts.has(dryrun))
                 options.dryrun = true;
             if (opts.has(excludes))
@@ -1358,8 +1371,30 @@ public class JmodTask {
                 throw new CommandException("err.classpath.must.be.specified").showUsage(true);
             if (options.mainClass != null && !isValidJavaIdentifier(options.mainClass))
                 throw new CommandException("err.invalid.main-class", options.mainClass);
+
+            // check other files that should not conflict with well-known paths
+            // in an image
+            checkOtherFilePaths(options.otherFiles);
         } catch (OptionException e) {
              throw new CommandException(e.getMessage());
+        }
+    }
+
+    static void checkOtherFilePaths(List<Path> paths) {
+        if (paths == null)
+            return;;
+
+        for (Path path : paths) {
+            try (Stream<Path> dirs = Files.walk(path, 1).filter(Files::isDirectory)) {
+                dirs.forEach(p -> {
+                    Path name = p.getFileName();
+                    if (name.equals("conf") || name.equals("lib") || name.equals("bin")) {
+                        throw new CommandException("Invalid path in top level section: " + p);
+                    }
+                });
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
         }
     }
 

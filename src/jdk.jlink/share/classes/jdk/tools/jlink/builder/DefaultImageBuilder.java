@@ -37,17 +37,17 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.lang.module.ModuleDescriptor;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -55,6 +55,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Collectors;
+
 import jdk.tools.jlink.internal.BasicImageWriter;
 import jdk.tools.jlink.internal.plugins.FileCopierPlugin.SymImageFile;
 import jdk.tools.jlink.internal.ExecutableImage;
@@ -170,15 +172,36 @@ public final class DefaultImageBuilder implements ImageBuilder {
             Properties release = releaseProperties(files);
             Path bin = root.resolve("bin");
 
-            files.entries().forEach(f -> {
-                if (!f.type().equals(ResourcePoolEntry.Type.CLASS_OR_RESOURCE)) {
+
+            Map<String, Set<String>> duplicates = new HashMap<>();
+            files.entries()
+                 .filter(f -> f.type() == ResourcePoolEntry.Type.OTHER_FILE)
+                 .collect(Collectors.groupingBy(ResourcePoolEntry::imagePath,
+                          Collectors.mapping(ResourcePoolEntry::moduleName, Collectors.toSet())))
+                 .entrySet()
+                 .stream()
+                 .filter(e -> e.getValue().size() > 1)
+                 .forEach(e -> duplicates.put(e.getKey(), e.getValue()));
+
+            files.entries()
+                .filter(f -> f.type() != ResourcePoolEntry.Type.CLASS_OR_RESOURCE)
+                .forEach(f -> {
                     try {
                         accept(f);
+                    } catch (FileAlreadyExistsException e) {
+                        IOException x = e;
+                        Set<String> dups = duplicates.get(f.imagePath());
+                        if (dups != null) {
+                            x = new FileAlreadyExistsException(f.imagePath() +
+                                " duplicated in " + dups);
+                            x.addSuppressed(e);
+                        }
+                        throw new UncheckedIOException(x);
                     } catch (IOException ioExp) {
                         throw new UncheckedIOException(ioExp);
                     }
-                }
-            });
+                });
+
             files.moduleView().modules().forEach(m -> {
                 // Only add modules that contain packages
                 if (!m.packages().isEmpty()) {
@@ -326,23 +349,24 @@ public final class DefaultImageBuilder implements ImageBuilder {
     private void accept(ResourcePoolEntry file) throws IOException {
         String fullPath = file.path();
         String module = "/" + file.moduleName() + "/";
-        String filename = fullPath.substring(module.length());
+        String path = fullPath.substring(module.length());
         // Remove radical native|config|...
-        filename = filename.substring(filename.indexOf('/') + 1);
+        String filename = path.substring(path.indexOf('/') + 1);
         try (InputStream in = file.content()) {
             switch (file.type()) {
                 case NATIVE_LIB:
                     writeEntry(in, destFile(nativeDir(filename), filename));
                     break;
                 case NATIVE_CMD:
-                    Path path = destFile("bin", filename);
-                    writeEntry(in, path);
-                    path.toFile().setExecutable(true);
+                    Path p = destFile("bin", filename);
+                    writeEntry(in, p);
+                    p.toFile().setExecutable(true);
                     break;
                 case CONFIG:
                     writeEntry(in, destFile("conf", filename));
                     break;
-                case TOP:
+                case OTHER_FILE:
+                    writeEntry(in, root.resolve(path));
                     break;
                 case OTHER:
                     if (file instanceof SymImageFile) {
