@@ -1265,7 +1265,7 @@ public class JSR166TestCase extends TestCase {
      * Sleeps until the given time has elapsed.
      * Throws AssertionFailedError if interrupted.
      */
-    void sleep(long millis) {
+    static void sleep(long millis) {
         try {
             delay(millis);
         } catch (InterruptedException fail) {
