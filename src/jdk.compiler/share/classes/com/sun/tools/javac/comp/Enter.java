@@ -167,6 +167,9 @@ public class Enter extends JCTree.Visitor {
      */
     ListBuffer<ClassSymbol> uncompleted;
 
+    public boolean modulesInitialized;
+    ListBuffer<JCCompilationUnit> unfinishedModules = new ListBuffer<>();
+
     /** A dummy class to serve as enclClass for toplevel environments.
      */
     private JCClassDecl predefClassDef;
@@ -509,7 +512,9 @@ public class Enter extends JCTree.Visitor {
     public void visitModuleDef(JCModuleDecl tree) {
         Env<AttrContext> moduleEnv = moduleEnv(tree, env);
         typeEnvs.put(tree.sym, moduleEnv);
-        todo.append(moduleEnv);
+        if (modules.isInModuleGraph(tree.sym)) {
+            todo.append(moduleEnv);
+        }
     }
 
     /** Default class enter visitor method: do nothing.
@@ -552,7 +557,19 @@ public class Enter extends JCTree.Visitor {
                         prevUncompleted.append(clazz);
                 }
 
-                typeEnter.ensureImportsChecked(trees);
+                if (!modulesInitialized) {
+                    for (JCCompilationUnit cut : trees) {
+                        if (cut.getModuleDecl() != null) {
+                            unfinishedModules.append(cut);
+                        } else {
+                            typeEnter.ensureImportsChecked(List.of(cut));
+                        }
+                    }
+                } else {
+                    typeEnter.ensureImportsChecked(unfinishedModules.toList());
+                    unfinishedModules.clear();
+                    typeEnter.ensureImportsChecked(trees);
+                }
             }
         } finally {
             uncompleted = prevUncompleted;
@@ -562,5 +579,6 @@ public class Enter extends JCTree.Visitor {
 
     public void newRound() {
         typeEnvs.clear();
+        modulesInitialized = false;
     }
 }

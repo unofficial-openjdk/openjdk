@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -163,6 +163,10 @@ public class ClassWriter extends BasicWriter {
         writeModifiers(flags.getClassModifiers());
 
         if (classFile.access_flags.is(AccessFlags.ACC_MODULE) && name.endsWith(".module-info")) {
+            Attribute attr = classFile.attributes.get(Attribute.Module);
+            if (attr instanceof Module_attribute && (((Module_attribute) attr).module_flags & Module_attribute.ACC_WEAK) != 0) {
+                print("weak ");
+            }
             print("module ");
             print(name.replace(".module-info", ""));
         } else {
@@ -555,15 +559,20 @@ public class ClassWriter extends BasicWriter {
         Module_attribute m = (Module_attribute) attr;
         for (Module_attribute.RequiresEntry entry: m.requires) {
             print("requires");
-            if ((entry.requires_flags & Module_attribute.ACC_PUBLIC) != 0)
-                print(" public");
+            if ((entry.requires_flags & Module_attribute.ACC_STATIC_PHASE) != 0)
+                print(" static");
+            if ((entry.requires_flags & Module_attribute.ACC_TRANSITIVE) != 0)
+                print(" transitive");
             print(" ");
             print(getUTF8Value(entry.requires_index).replace('/', '.'));
             println(";");
         }
 
         for (Module_attribute.ExportsEntry entry: m.exports) {
-            print("exports ");
+            print("exports");
+            if ((entry.exports_flags & Module_attribute.ACC_REFLECTION) != 0)
+                print(" private");
+            print(" ");
             print(getUTF8Value(entry.exports_index).replace('/', '.'));
             boolean first = true;
             for (int i: entry.exports_to_index) {

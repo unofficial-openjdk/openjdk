@@ -162,8 +162,6 @@ public class TypeEnter implements Completer {
         // if there remain any unimported toplevels (these must have
         // no classes at all), process their import statements as well.
         for (JCCompilationUnit tree : trees) {
-            if (tree.defs.nonEmpty() && tree.defs.head.hasTag(MODULEDEF))
-                continue;
             if (!tree.starImportScope.isFilled()) {
                 Env<AttrContext> topEnv = enter.topLevelEnv(tree);
                 finishImports(tree, () -> { completeClass.resolveImports(tree, topEnv); });
@@ -351,6 +349,15 @@ public class TypeEnter implements Completer {
 
                 for (JCImport imp : tree.getImports()) {
                     doImport(imp);
+                }
+
+                if (tree.getModuleDecl() != null) {
+                    JCModuleDecl decl = tree.getModuleDecl();
+
+                    //check @Deprecated:
+                    markDeprecated(decl.sym, decl.annotations, env);
+                    // process module annotations
+                    annotate.annotateLater(decl.annotations, env, env.toplevel.modle, null);
                 }
             } finally {
                 this.env = prevEnv;
@@ -746,13 +753,7 @@ public class TypeEnter implements Completer {
                 }
             }
 
-            // Annotations.
-            // In general, we cannot fully process annotations yet,  but we
-            // can attribute the annotation types and then check to see if the
-            // @Deprecated annotation is present.
-            attr.attribAnnotationTypes(tree.mods.annotations, baseEnv);
-            if (hasDeprecatedAnnotation(tree.mods.annotations))
-                sym.flags_field |= DEPRECATED;
+            markDeprecated(sym, tree.mods.annotations, baseEnv);
 
             chk.checkNonCyclicDecl(tree);
         }
@@ -764,19 +765,6 @@ public class TypeEnter implements Completer {
                 }
 
                 return superType;
-            }
-
-            /**
-             * Check if a list of annotations contains a reference to
-             * java.lang.Deprecated.
-             **/
-            private boolean hasDeprecatedAnnotation(List<JCAnnotation> annotations) {
-                for (List<JCAnnotation> al = annotations; !al.isEmpty(); al = al.tail) {
-                    JCAnnotation a = al.head;
-                    if (a.annotationType.type == syms.deprecatedType && a.args.isEmpty())
-                        return true;
-                }
-                return false;
             }
 
         @Override
@@ -1122,5 +1110,30 @@ public class TypeEnter implements Completer {
         }
         List<JCExpression> typeargs = typarams.nonEmpty() ? make.Types(typarams) : null;
         return make.Exec(make.Apply(typeargs, meth, make.Idents(params)));
+    }
+
+    /**
+     * Mark sym deprecated if annotations contain @Deprecated annotation.
+     */
+    public void markDeprecated(Symbol sym, List<JCAnnotation> annotations, Env<AttrContext> env) {
+        // In general, we cannot fully process annotations yet,  but we
+        // can attribute the annotation types and then check to see if the
+        // @Deprecated annotation is present.
+        attr.attribAnnotationTypes(annotations, env);
+        if (hasDeprecatedAnnotation(annotations))
+            sym.flags_field |= DEPRECATED;
+    }
+
+    /**
+     * Check if a list of annotations contains a reference to
+     * java.lang.Deprecated.
+     **/
+    private boolean hasDeprecatedAnnotation(List<JCAnnotation> annotations) {
+        for (List<JCAnnotation> al = annotations; !al.isEmpty(); al = al.tail) {
+            JCAnnotation a = al.head;
+            if (a.annotationType.type == syms.deprecatedType && a.args.isEmpty())
+                return true;
+        }
+        return false;
     }
 }
