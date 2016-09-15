@@ -44,6 +44,7 @@ import jdk.tools.jlink.plugin.ResourcePool;
 
 /*
  * @test
+ * @ignore
  * @summary ImageFileCreator class test
  * @author Jean-Francois Denise
  * @modules jdk.jlink/jdk.tools.jlink.internal

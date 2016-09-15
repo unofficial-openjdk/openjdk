@@ -265,22 +265,7 @@ public final class ImageFileCreator {
         for (Archive archive : archives) {
             String mn = archive.moduleName();
             for (Entry entry : entriesForModule.get(mn)) {
-                String path;
-                if (entry.type() == EntryType.CLASS_OR_RESOURCE) {
-                    // Removal of "classes/" radical.
-                    path = entry.name();
-                    if (path.endsWith("module-info.class")) {
-                        path = "/" + path;
-                    } else {
-                        path = "/" + mn + "/" + path;
-                    }
-                } else {
-                    // Entry.path() contains the kind of file native, conf, bin, ...
-                    // Keep it to avoid naming conflict (eg: native/jvm.cfg and config/jvm.cfg
-                    path = "/" + mn + "/" + entry.path();
-                }
-
-                resources.add(new ArchiveEntryResourcePoolEntry(mn, path, entry));
+                resources.add(new ArchiveEntryResourcePoolEntry(mn, entry.getResourceName(), entry));
             }
         }
         return resources;

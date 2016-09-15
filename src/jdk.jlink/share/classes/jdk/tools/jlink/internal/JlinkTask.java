@@ -335,7 +335,7 @@ public class JlinkTask {
     }
 
     /**
-     * Returns the module finder to find the observable modules specified in
+     * Returns a module finder to find the observable modules specified in
      * the --module-path and --limit-modules options
      */
     private ModuleFinder modulePathFinder() {
@@ -349,6 +349,12 @@ public class JlinkTask {
         return finder;
     }
 
+    /**
+     * Returns a module finder of the given module path that limits
+     * the observable modules to those in the transitive closure of
+     * the modules specified in {@code limitMods} plus other modules
+     * specified in the {@code roots} set.
+     */
     public static ModuleFinder newModuleFinder(List<Path> paths,
                                                Set<String> limitMods,
                                                Set<String> roots)
@@ -522,56 +528,6 @@ public class JlinkTask {
                 }
             }
             return image;
-        }
-    }
-
-    private static enum Section {
-        NATIVE_LIBS("native", nativeDir()),
-        NATIVE_CMDS("bin", "bin"),
-        CLASSES("classes", "classes"),
-        CONFIG("conf", "conf"),
-        UNKNOWN("unknown", "unknown");
-
-        private static String nativeDir() {
-            if (System.getProperty("os.name").startsWith("Windows")) {
-                return "bin";
-            } else {
-                return "lib";
-            }
-        }
-
-        private final String jmodDir;
-        private final String imageDir;
-
-        Section(String jmodDir, String imageDir) {
-            this.jmodDir = jmodDir;
-            this.imageDir = imageDir;
-        }
-
-        String imageDir() {
-            return imageDir;
-        }
-
-        String jmodDir() {
-            return jmodDir;
-        }
-
-        boolean matches(String path) {
-            return path.startsWith(jmodDir);
-        }
-
-        static Section getSectionFromName(String dir) {
-            if (Section.NATIVE_LIBS.matches(dir)) {
-                return Section.NATIVE_LIBS;
-            } else if (Section.NATIVE_CMDS.matches(dir)) {
-                return Section.NATIVE_CMDS;
-            } else if (Section.CLASSES.matches(dir)) {
-                return Section.CLASSES;
-            } else if (Section.CONFIG.matches(dir)) {
-                return Section.CONFIG;
-            } else {
-                return Section.UNKNOWN;
-            }
         }
     }
 }
