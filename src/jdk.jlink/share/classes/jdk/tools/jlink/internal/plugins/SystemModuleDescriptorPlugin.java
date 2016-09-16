@@ -852,44 +852,66 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                         index = defaultVarIndex;
                     }
 
-                    if (elements.isEmpty()) {
-                        mv.visitMethodInsn(INVOKESTATIC, "java/util/Collections",
-                                           "emptySet",
-                                           "()Ljava/util/Set;",
-                                           false);
-                        mv.visitVarInsn(ASTORE, index);
-                    } else if (elements.size() == 1) {
-                        visitElement(elements.iterator().next(), mv);
-                        mv.visitMethodInsn(INVOKESTATIC, "java/util/Collections",
-                                           "singleton",
-                                           "(Ljava/lang/Object;)Ljava/util/Set;",
-                                           false);
-                        mv.visitVarInsn(ASTORE, index);
+                    if (linked && elements.size() > 1) {
+                        generateLinkedSet(index);
                     } else {
-                        String cn = linked ? "java/util/LinkedHashSet" : "java/util/HashSet";
-                        mv.visitTypeInsn(NEW, cn);
-                        mv.visitInsn(DUP);
-                        pushInt(initialCapacity(elements.size()));
-                        mv.visitMethodInsn(INVOKESPECIAL, cn, "<init>", "(I)V", false);
-
-                        mv.visitVarInsn(ASTORE, index);
-                        for (T t : elements) {
-                            mv.visitVarInsn(ALOAD, index);
-                            visitElement(t, mv);
-                            mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Set",
-                                               "add",
-                                               "(Ljava/lang/Object;)Z", true);
-                            mv.visitInsn(POP);
-                        }
-                        mv.visitVarInsn(ALOAD, index);
-                        mv.visitMethodInsn(INVOKESTATIC, "java/util/Collections",
-                                           "unmodifiableSet",
-                                           "(Ljava/util/Set;)Ljava/util/Set;",
-                                           false);
-                        mv.visitVarInsn(ASTORE, index);
+                        generateSetOf(index);
                     }
                 }
                 return index;
+            }
+
+            private void generateSetOf(int index) {
+                if (elements.size() <= 10) {
+                    // call Set.of(e1, e2, ...)
+                    StringBuilder sb = new StringBuilder("(");
+                    for (T t : elements) {
+                        sb.append("Ljava/lang/Object;");
+                        visitElement(t, mv);
+                    }
+                    sb.append(")Ljava/util/Set;");
+                    mv.visitMethodInsn(INVOKESTATIC, "java/util/Set",
+                            "of", sb.toString(), true);
+                } else {
+                    // call Set.of(E... elements)
+                    pushInt(elements.size());
+                    mv.visitTypeInsn(ANEWARRAY, "java/lang/String");
+                    int arrayIndex = 0;
+                    for (T t : elements) {
+                        mv.visitInsn(DUP);    // arrayref
+                        pushInt(arrayIndex);
+                        visitElement(t, mv);  // value
+                        mv.visitInsn(AASTORE);
+                        arrayIndex++;
+                    }
+                    mv.visitMethodInsn(INVOKESTATIC, "java/util/Set",
+                            "of", "([Ljava/lang/Object;)Ljava/util/Set;", true);
+                }
+                mv.visitVarInsn(ASTORE, index);
+            }
+
+            private void generateLinkedSet(int index) {
+                mv.visitTypeInsn(NEW, "java/util/LinkedHashSet");
+                mv.visitInsn(DUP);
+                pushInt(initialCapacity(elements.size()));
+                mv.visitMethodInsn(INVOKESPECIAL, "java/util/LinkedHashSet",
+                        "<init>", "(I)V", false);
+
+                mv.visitVarInsn(ASTORE, index);
+                for (T t : elements) {
+                    mv.visitVarInsn(ALOAD, index);
+                    visitElement(t, mv);
+                    mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Set",
+                            "add",
+                            "(Ljava/lang/Object;)Z", true);
+                    mv.visitInsn(POP);
+                }
+                mv.visitVarInsn(ALOAD, index);
+                mv.visitMethodInsn(INVOKESTATIC, "java/util/Collections",
+                        "unmodifiableSet",
+                        "(Ljava/util/Set;)Ljava/util/Set;",
+                        false);
+                mv.visitVarInsn(ASTORE, index);
             }
         }
 
