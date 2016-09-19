@@ -111,6 +111,7 @@ Method::Method(ConstMethod* xconst, AccessFlags access_flags, int size) {
 // Release Method*.  The nmethod will be gone when we get here because
 // we've walked the code cache.
 void Method::deallocate_contents(ClassLoaderData* loader_data) {
+  clear_jmethod_id(loader_data);
   MetadataFactory::free_metadata(loader_data, constMethod());
   set_constMethod(NULL);
   MetadataFactory::free_metadata(loader_data, method_data());
@@ -1800,13 +1801,24 @@ class JNIMethodBlock : public CHeapObj<mtClass> {
 #endif // ASSERT
     *m = _free_method;
   }
+  void clear_method(Method* m) {
+    for (JNIMethodBlock* b = this; b != NULL; b = b->_next) {
+      for (int i = 0; i < number_of_methods; i++) {
+        if (b->_methods[i] == m) {
+          b->_methods[i] = NULL;
+          return;
+        }
+      }
+    }
+    // not found
+  }
 
   // During class unloading the methods are cleared, which is different
   // than freed.
   void clear_all_methods() {
     for (JNIMethodBlock* b = this; b != NULL; b = b->_next) {
       for (int i = 0; i< number_of_methods; i++) {
-        _methods[i] = NULL;
+        b->_methods[i] = NULL;
       }
     }
   }
@@ -1816,7 +1828,7 @@ class JNIMethodBlock : public CHeapObj<mtClass> {
     int count = 0;
     for (JNIMethodBlock* b = this; b != NULL; b = b->_next) {
       for (int i = 0; i< number_of_methods; i++) {
-        if (_methods[i] != _free_method) count++;
+        if (b->_methods[i] != _free_method) count++;
       }
     }
     return count;
@@ -1872,8 +1884,13 @@ void Method::change_method_associated_with_jmethod_id(jmethodID jmid, Method* ne
 
 bool Method::is_method_id(jmethodID mid) {
   Method* m = resolve_jmethod_id(mid);
-  assert(m != NULL, "should be called with non-null method");
+  if (m == NULL) {
+    return false;
+  }
   InstanceKlass* ik = m->method_holder();
+  if (ik == NULL) {
+    return false;
+  }
   ClassLoaderData* cld = ik->class_loader_data();
   if (cld->jmethod_ids() == NULL) return false;
   return (cld->jmethod_ids()->contains((Method**)mid));
@@ -1881,6 +1898,9 @@ bool Method::is_method_id(jmethodID mid) {
 
 Method* Method::checked_resolve_jmethod_id(jmethodID mid) {
   if (mid == NULL) return NULL;
+  if (!Method::is_method_id(mid)) {
+    return NULL;
+  }
   Method* o = resolve_jmethod_id(mid);
   if (o == NULL || o == JNIMethodBlock::_free_method || !((Metadata*)o)->is_method()) {
     return NULL;
@@ -1897,6 +1917,10 @@ void Method::set_on_stack(const bool value) {
   if (value && succeeded) {
     MetadataOnStackMark::record(this, Thread::current());
   }
+}
+
+void Method::clear_jmethod_id(ClassLoaderData* loader_data) {
+  loader_data->jmethod_ids()->clear_method(this);
 }
 
 // Called when the class loader is unloaded to make all methods weak.
