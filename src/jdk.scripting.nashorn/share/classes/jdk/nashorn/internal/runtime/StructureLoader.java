@@ -63,9 +63,9 @@ final class StructureLoader extends NashornLoader {
 
     private Module createModule(final String moduleName) {
         final ModuleDescriptor descriptor
-                = new ModuleDescriptor.Builder(moduleName)
+                = ModuleDescriptor.module(moduleName)
                     .requires(NASHORN_MODULE.getName())
-                    .conceals(SCRIPTS_PKG)
+                    .contains(SCRIPTS_PKG)
                     .build();
 
         final Module mod = Context.createModuleTrusted(descriptor, this);
