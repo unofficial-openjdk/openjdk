@@ -27,9 +27,7 @@ package jdk.internal.module;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleDescriptor.Version;
 import java.nio.ByteBuffer;
-import java.util.Optional;
 
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.Opcodes;
@@ -57,7 +55,15 @@ public final class ModuleInfoWriter {
         cw.visit(Opcodes.V1_9, ACC_MODULE, name, null, null, null);
 
         cw.visitAttribute(new ModuleAttribute(md));
-        cw.visitAttribute(new ConcealedPackagesAttribute(md.conceals()));
+
+        // for tests: write the Packages attribute when there are non-exported packages
+        long nExportedPackages = md.exports().stream()
+                .map(ModuleDescriptor.Exports::source)
+                .distinct()
+                .count();
+        if (md.packages().size() > nExportedPackages)
+            cw.visitAttribute(new PackagesAttribute(md.packages()));
+
         md.version().ifPresent(v -> cw.visitAttribute(new VersionAttribute(v)));
         md.mainClass().ifPresent(mc -> cw.visitAttribute(new MainClassAttribute(mc)));
 

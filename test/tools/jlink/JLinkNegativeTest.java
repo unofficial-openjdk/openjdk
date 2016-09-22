@@ -280,7 +280,7 @@ public class JLinkNegativeTest {
                 helper.getJmodSrcDir(), helper.getJmodClassesDir(), moduleName2, classNames);
 
         try (OutputStream out = Files.newOutputStream(module2.resolve("module-info.class"))) {
-            ModuleInfoWriter.write(new ModuleDescriptor.Builder(moduleName1)
+            ModuleInfoWriter.write(ModuleDescriptor.module(moduleName1)
                     .requires("java.base").build(), out);
         }
 
@@ -338,7 +338,7 @@ public class JLinkNegativeTest {
                 helper.getJarSrcDir(), helper.getJarClassesDir(), moduleName2, classNames);
 
         try (OutputStream out = Files.newOutputStream(module2.resolve("module-info.class"))) {
-            ModuleInfoWriter.write(new ModuleDescriptor.Builder(moduleName1)
+            ModuleInfoWriter.write(ModuleDescriptor.module(moduleName1)
                     .requires("java.base").build(), out);
         }
 

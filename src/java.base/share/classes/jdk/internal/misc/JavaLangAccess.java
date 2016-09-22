@@ -136,6 +136,12 @@ public interface JavaLangAccess {
     Layer getBootLayer();
 
     /**
+     * Records in the class loader that the given layer has at least one
+     * module defined to the class loader.
+     */
+    void bindToLayer(ClassLoader loader, Layer layer);
+
+    /**
      * Returns the ServicesCatalog for the given class loader.
      */
     ServicesCatalog getServicesCatalog(ClassLoader cl);

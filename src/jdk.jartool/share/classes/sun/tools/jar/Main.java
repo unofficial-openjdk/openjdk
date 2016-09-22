@@ -56,6 +56,7 @@ import java.util.jar.Pack200.*;
 import java.util.jar.Manifest;
 import java.text.MessageFormat;
 
+import jdk.internal.loader.ResourceHelper;
 import jdk.internal.misc.JavaLangModuleAccess;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.module.ModuleHashes;
@@ -803,13 +804,12 @@ class Main {
         return true;
     }
 
-    private static Set<String> findPackages(ZipFile zf) {
-        return zf.stream()
-                 .filter(e -> e.getName().endsWith(".class"))
-                 .map(e -> toPackageName(e))
-                 .filter(pkg -> pkg.length() > 0)
-                 .distinct()
-                 .collect(Collectors.toSet());
+    /**
+     * Returns true if this entry has an effective package.
+     */
+    private static boolean isNamedPackageResource(String entryName) {
+        assert !entryName.startsWith(VERSIONS_DIR);
+        return entryName.endsWith(".class") || !ResourceHelper.isSimpleResource(entryName);
     }
 
     private static String toPackageName(ZipEntry entry) {
@@ -817,7 +817,6 @@ class Main {
     }
 
     private static String toPackageName(String path) {
-        assert path.endsWith(".class");
         int index = path.lastIndexOf('/');
         if (index != -1) {
             return path.substring(0, index).replace('/', '.');
@@ -858,7 +857,7 @@ class Main {
                 } else if (!entries.containsKey(entryName)) {
                     entries.put(entryName, entry);
                     jarEntries.add(entryName);
-                    if (entry.basename.endsWith(".class") && !entryName.startsWith(VERSIONS_DIR))
+                    if (!entryName.startsWith(VERSIONS_DIR) && isNamedPackageResource(entry.basename))
                         packages.add(toPackageName(entry.basename));
                     if (isUpdate)
                         entryMap.put(entryName, entry);
@@ -1032,6 +1031,7 @@ class Main {
             } else if (moduleInfos != null && isModuleInfoEntry) {
                 moduleInfos.putIfAbsent(name, readModuleInfo(zis));
             } else {
+                boolean isDir = e.isDirectory();
                 if (!entryMap.containsKey(name)) { // copy the old stuff
                     // do our own compression
                     ZipEntry e2 = new ZipEntry(name);
@@ -1050,10 +1050,11 @@ class Main {
                     addFile(zos, ent);
                     entryMap.remove(name);
                     entries.remove(name);
+                    isDir = ent.isDir;
                 }
 
                 jarEntries.add(name);
-                if (name.endsWith(".class") && !(name.startsWith(VERSIONS_DIR)))
+                if (!isDir && !name.startsWith(VERSIONS_DIR) && isNamedPackageResource(name))
                     packages.add(toPackageName(name));
             }
         }
@@ -1896,8 +1897,10 @@ class Main {
             .sorted(Comparator.comparing(Exports::source))
             .forEach(p -> sb.append("\n  exports ").append(p));
 
-        md.conceals().stream().sorted()
-            .forEach(p -> sb.append("\n  conceals ").append(p));
+        Set<String> concealed = new HashSet<>(md.packages());
+        md.exports().stream().map(Exports::source).forEach(concealed::remove);
+        concealed.stream().sorted()
+            .forEach(p -> sb.append("\n  contains ").append(p));
 
         md.provides().values().stream()
             .sorted(Comparator.comparing(Provides::service))
@@ -1957,20 +1960,11 @@ class Main {
         ByteBuffer bb = ByteBuffer.wrap(moduleInfos.get(MODULE_INFO));
         ModuleDescriptor rd = ModuleDescriptor.read(bb);
 
-        Set<String> exports = rd.exports()
-                                .stream()
-                                .map(Exports::source)
-                                .collect(toSet());
-
-        Set<String> conceals = packages.stream()
-                                       .filter(p -> !exports.contains(p))
-                                       .collect(toSet());
-
         for (Map.Entry<String,byte[]> e: moduleInfos.entrySet()) {
             ModuleDescriptor vd = ModuleDescriptor.read(ByteBuffer.wrap(e.getValue()));
             if (!(isValidVersionedDescriptor(vd, rd)))
                 return false;
-            e.setValue(extendedInfoBytes(rd, vd, e.getValue(), conceals));
+            e.setValue(extendedInfoBytes(rd, vd, e.getValue(), packages));
         }
         return true;
     }
@@ -2003,8 +1997,8 @@ class Main {
             for (Requires r : vd.requires()) {
                 if (rootRequires.contains(r)) {
                     continue;
-                } else if (r.modifiers().contains(Requires.Modifier.PUBLIC)) {
-                    fatalError(getMsg("error.versioned.info.requires.public"));
+                } else if (r.modifiers().contains(Requires.Modifier.TRANSITIVE)) {
+                    fatalError(getMsg("error.versioned.info.requires.transitive"));
                     return false;
                 } else if (!isPlatformModule(r.name())) {
                     fatalError(getMsg("error.versioned.info.requires.added"));
@@ -2043,15 +2037,15 @@ class Main {
     private byte[] extendedInfoBytes(ModuleDescriptor rootDescriptor,
                                      ModuleDescriptor md,
                                      byte[] miBytes,
-                                     Set<String> conceals)
+                                     Set<String> packages)
         throws IOException
     {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         InputStream is = new ByteArrayInputStream(miBytes);
         ModuleInfoExtender extender = ModuleInfoExtender.newExtender(is);
 
-        // Add (or replace) the ConcealedPackages attribute
-        extender.conceals(conceals);
+        // Add (or replace) the Packages attribute
+        extender.packages(packages);
 
         // --main-class
         if (ename != null)

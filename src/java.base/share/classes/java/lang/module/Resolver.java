@@ -26,6 +26,7 @@
 package java.lang.module;
 
 import java.io.PrintStream;
+import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Requires.Modifier;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -125,6 +126,11 @@ final class Resolver {
 
             // process dependences
             for (ModuleDescriptor.Requires requires : descriptor.requires()) {
+
+                // only required at compile-time
+                if (requires.modifiers().contains(Modifier.STATIC))
+                    continue;
+
                 String dn = requires.name();
 
                 // find dependence
@@ -456,10 +462,10 @@ final class Resolver {
      * Computes the readability graph for the modules in the given Configuration.
      *
      * The readability graph is created by propagating "requires" through the
-     * "public requires" edges of the module dependence graph. So if the module
-     * dependence graph has m1 requires m2 && m2 requires public m3 then the
-     * resulting readability graph will contain m1 reads m2, m1 reads m3, and
-     * m2 reads m3.
+     * "requires transitive" edges of the module dependence graph. So if the
+     * module dependence graph has m1 requires m2 && m2 requires transitive m3
+     * then the resulting readability graph will contain m1 reads m2, m1 reads m3,
+     * and m2 reads m3.
      */
     private Map<ResolvedModule, Set<ResolvedModule>> makeGraph(Configuration cf) {
 
@@ -467,12 +473,12 @@ final class Resolver {
         // is iteratively updated to be the readability graph
         Map<ResolvedModule, Set<ResolvedModule>> g1 = new HashMap<>();
 
-        // the "requires public" graph, contains requires public edges only
+        // the "requires transitive" graph, contains requires transitive edges only
         Map<ResolvedModule, Set<ResolvedModule>> g2 = new HashMap<>();
 
 
-        // need "requires public" from the modules in parent configurations as
-        // there may be selected modules that have a dependency on modules in
+        // need "requires transitive" from the modules in parent configurations
+        // as there may be selected modules that have a dependency on modules in
         // the parent configuration.
 
         Configuration p = parent;
@@ -482,7 +488,7 @@ final class Resolver {
                 ResolvedModule m1 = p.findModule(name)
                     .orElseThrow(() -> new InternalError(name + " not found"));
                 for (ModuleDescriptor.Requires requires : descriptor.requires()) {
-                    if (requires.modifiers().contains(Modifier.PUBLIC)) {
+                    if (requires.modifiers().contains(Modifier.TRANSITIVE)) {
                         String dn = requires.name();
                         ResolvedModule m2 = p.findModule(dn)
                             .orElseThrow(() -> new InternalError(dn + " not found"));
@@ -505,7 +511,7 @@ final class Resolver {
             ResolvedModule m1 = computeIfAbsent(nameToResolved, name, cf, mref);
 
             Set<ResolvedModule> reads = new HashSet<>();
-            Set<ResolvedModule> requiresPublic = new HashSet<>();
+            Set<ResolvedModule> requiresTransitive= new HashSet<>();
 
             for (ModuleDescriptor.Requires requires : descriptor.requires()) {
                 String dn = requires.name();
@@ -519,6 +525,7 @@ final class Resolver {
                     // parent configuration
                     m2 = parent.findModule(dn).orElse(null);
                     if (m2 == null) {
+                        assert requires.modifiers().contains(Modifier.STATIC);
                         continue;
                     }
                 }
@@ -526,9 +533,9 @@ final class Resolver {
                 // m1 requires m2 => m1 reads m2
                 reads.add(m2);
 
-                // m1 requires public m2
-                if (requires.modifiers().contains(Modifier.PUBLIC)) {
-                    requiresPublic.add(m2);
+                // m1 requires transitive m2
+                if (requires.modifiers().contains(Modifier.TRANSITIVE)) {
+                    requiresTransitive.add(m2);
                 }
 
             }
@@ -538,7 +545,7 @@ final class Resolver {
             if (descriptor.isAutomatic()) {
 
                 // reads all selected modules
-                // `requires public` all selected automatic modules
+                // `requires transitive` all selected automatic modules
                 for (ModuleReference mref2 : nameToReference.values()) {
                     ModuleDescriptor descriptor2 = mref2.descriptor();
                     String name2 = descriptor2.name();
@@ -548,18 +555,19 @@ final class Resolver {
                             = computeIfAbsent(nameToResolved, name2, cf, mref2);
                         reads.add(m2);
                         if (descriptor2.isAutomatic())
-                            requiresPublic.add(m2);
+                            requiresTransitive.add(m2);
                     }
                 }
 
                 // reads all modules in parent configurations
-                // `requires public` all automatic modules in parent configurations
+                // `requires transitive` all automatic modules in parent
+                // configurations
                 p = parent;
                 while (p != null) {
                     for (ResolvedModule m : p.modules()) {
                         reads.add(m);
                         if (m.reference().descriptor().isAutomatic())
-                            requiresPublic.add(m);
+                            requiresTransitive.add(m);
                     }
                     p = p.parent().orElse(null);
                 }
@@ -567,21 +575,22 @@ final class Resolver {
             }
 
             g1.put(m1, reads);
-            g2.put(m1, requiresPublic);
+            g2.put(m1, requiresTransitive);
         }
 
-        // Iteratively update g1 until there are no more requires public to propagate
+        // Iteratively update g1 until there are no more requires transitive
+        // to propagate
         boolean changed;
         Set<ResolvedModule> toAdd = new HashSet<>();
         do {
             changed = false;
             for (Set<ResolvedModule> m1Reads : g1.values()) {
                 for (ResolvedModule m2 : m1Reads) {
-                    Set<ResolvedModule> m2RequiresPublic = g2.get(m2);
-                    if (m2RequiresPublic != null) {
-                        for (ResolvedModule m3 : m2RequiresPublic) {
+                    Set<ResolvedModule> m2RequiresTransitive = g2.get(m2);
+                    if (m2RequiresTransitive != null) {
+                        for (ResolvedModule m3 : m2RequiresTransitive) {
                             if (!m1Reads.contains(m3)) {
-                                // m1 reads m2, m2 requires public m3
+                                // m1 reads m2, m2 requires transitive m3
                                 // => need to add m1 reads m3
                                 toAdd.add(m3);
                             }
@@ -655,7 +664,7 @@ final class Resolver {
                     // source is exported to descriptor2
                     String source = export.source();
                     ModuleDescriptor other
-                        = packageToExporter.put(source, descriptor2);
+                        = packageToExporter.putIfAbsent(source, descriptor2);
 
                     if (other != null && other != descriptor2) {
                         // package might be local to descriptor1
@@ -675,6 +684,33 @@ final class Resolver {
                                     descriptor1.name());
                         }
 
+                    }
+                }
+
+                if (descriptor2.isWeak()) {
+                    for (String source : descriptor2.packages()) {
+                        ModuleDescriptor other
+                            = packageToExporter.putIfAbsent(source, descriptor2);
+
+                        if (other != null && other != descriptor2) {
+                            // package might be local to descriptor1
+                            if (other == descriptor1) {
+                                fail("Module %s contains package %s"
+                                      + ", module %s exports package %s to %s",
+                                        descriptor1.name(),
+                                        source,
+                                        descriptor2.name(),
+                                        source,
+                                        descriptor1.name());
+                            } else {
+                                fail("Modules %s and %s export package %s to module %s",
+                                        descriptor2.name(),
+                                        other.name(),
+                                        source,
+                                        descriptor1.name());
+                            }
+
+                        }
                     }
                 }
             }

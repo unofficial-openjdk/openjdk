@@ -60,7 +60,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.text.MessageFormat;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -83,6 +82,7 @@ import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
@@ -97,10 +97,9 @@ import jdk.internal.joptsimple.OptionParser;
 import jdk.internal.joptsimple.OptionSet;
 import jdk.internal.joptsimple.OptionSpec;
 import jdk.internal.joptsimple.ValueConverter;
+import jdk.internal.loader.ResourceHelper;
 import jdk.internal.misc.JavaLangModuleAccess;
 import jdk.internal.misc.SharedSecrets;
-import jdk.internal.module.ConfigurableModuleFinder;
-import jdk.internal.module.ConfigurableModuleFinder.Phase;
 import jdk.internal.module.ModuleHashes;
 import jdk.internal.module.ModuleInfoExtender;
 import jdk.tools.jlink.internal.Utils;
@@ -162,6 +161,7 @@ public class JmodTask {
         Path jmodFile;
         boolean help;
         boolean version;
+        List<Path> otherFiles;
         List<Path> classpath;
         List<Path> cmds;
         List<Path> configs;
@@ -308,8 +308,10 @@ public class JmodTask {
                         .sorted(Comparator.comparing(Exports::source))
                         .forEach(p -> sb.append("\n  exports ").append(p));
 
-                    md.conceals().stream().sorted()
-                        .forEach(p -> sb.append("\n  conceals ").append(p));
+                    Set<String> concealed = new HashSet<>(md.packages());
+                    md.exports().stream().map(Exports::source).forEach(concealed::remove);
+                    concealed.stream().sorted()
+                        .forEach(p -> sb.append("\n  contains ").append(p));
 
                     md.provides().values().stream()
                         .sorted(Comparator.comparing(Provides::service))
@@ -366,6 +368,7 @@ public class JmodTask {
     }
 
     private class JmodFileWriter {
+        final List<Path> otherFiles = options.otherFiles;
         final List<Path> cmds = options.cmds;
         final List<Path> libs = options.libs;
         final List<Path> configs = options.configs;
@@ -395,6 +398,8 @@ public class JmodTask {
                 processSection(zos, Section.NATIVE_CMDS, cmds);
                 processSection(zos, Section.NATIVE_LIBS, libs);
                 processSection(zos, Section.CONFIG, configs);
+                processSection(zos, Section.OTHER_FILES, otherFiles);
+
             }
         }
 
@@ -434,7 +439,7 @@ public class JmodTask {
         /**
          * Writes the updated module-info.class to the ZIP output stream.
          *
-         * The updated module-info.class will have a ConcealedPackages attribute
+         * The updated module-info.class will have a Packages attribute
          * with the set of module-private/non-exported packages.
          *
          * If --module-version, --main-class, or other options were provided
@@ -459,15 +464,9 @@ public class JmodTask {
             try (InputStream in = miSupplier.get()) {
                 ModuleInfoExtender extender = ModuleInfoExtender.newExtender(in);
 
-                // Add (or replace) the ConcealedPackages attribute
+                // Add (or replace) the Packages attribute
                 if (packages != null) {
-                    Set<String> exported = descriptor.exports().stream()
-                        .map(ModuleDescriptor.Exports::source)
-                        .collect(Collectors.toSet());
-                    Set<String> concealed = packages.stream()
-                        .filter(p -> !exported.contains(p))
-                        .collect(Collectors.toSet());
-                    extender.conceals(concealed);
+                    extender.packages(packages);
                 }
 
                 // --main-class
@@ -580,10 +579,11 @@ public class JmodTask {
         Set<String> findPackages(Path dir) {
             try {
                 return Files.find(dir, Integer.MAX_VALUE,
-                        ((path, attrs) -> attrs.isRegularFile() &&
-                                path.toString().endsWith(".class")))
-                        .map(path -> toPackageName(dir.relativize(path)))
-                        .filter(pkg -> pkg.length() > 0)   // module-info
+                                  ((path, attrs) -> attrs.isRegularFile()))
+                        .map(dir::relativize)
+                        .filter(path -> isResource(path.toString()))
+                        .map(path -> toPackageName(path))
+                        .filter(pkg -> pkg.length() > 0)
                         .distinct()
                         .collect(Collectors.toSet());
             } catch (IOException ioe) {
@@ -596,21 +596,30 @@ public class JmodTask {
          */
         Set<String> findPackages(JarFile jf) {
             return jf.stream()
-                     .filter(e -> e.getName().endsWith(".class"))
+                     .filter(e -> !e.isDirectory() && isResource(e.getName()))
                      .map(e -> toPackageName(e))
-                     .filter(pkg -> pkg.length() > 0)   // module-info
+                     .filter(pkg -> pkg.length() > 0)
                      .distinct()
                      .collect(Collectors.toSet());
         }
 
+        /**
+         * Returns true if it's a .class or a resource with an effective
+         * package name.
+         */
+        boolean isResource(String name) {
+            name = name.replace(File.separatorChar, '/');
+            return name.endsWith(".class") || !ResourceHelper.isSimpleResource(name);
+        }
+
+
         String toPackageName(Path path) {
             String name = path.toString();
-            assert name.endsWith(".class");
             int index = name.lastIndexOf(File.separatorChar);
             if (index != -1)
                 return name.substring(0, index).replace(File.separatorChar, '.');
 
-            if (!name.equals(MODULE_INFO)) {
+            if (name.endsWith(".class") && !name.equals(MODULE_INFO)) {
                 IOException e = new IOException(name  + " in the unnamed package");
                 throw new UncheckedIOException(e);
             }
@@ -619,12 +628,15 @@ public class JmodTask {
 
         String toPackageName(ZipEntry entry) {
             String name = entry.getName();
-            assert name.endsWith(".class");
             int index = name.lastIndexOf("/");
             if (index != -1)
                 return name.substring(0, index).replace('/', '.');
-            else
-                return "";
+
+            if (name.endsWith(".class") && !name.equals(MODULE_INFO)) {
+                IOException e = new IOException(name  + " in the unnamed package");
+                throw new UncheckedIOException(e);
+            }
+            return "";
         }
 
         void processClasses(ZipOutputStream zos, List<Path> classpaths)
@@ -1006,6 +1018,7 @@ public class JmodTask {
         NATIVE_CMDS("bin"),
         CLASSES("classes"),
         CONFIG("conf"),
+        OTHER_FILES("top"),
         UNKNOWN("unknown");
 
         private final String jmodDir;
@@ -1204,6 +1217,12 @@ public class JmodTask {
                         .withValuesSeparatedBy(File.pathSeparatorChar)
                         .withValuesConvertedBy(DirPathConverter.INSTANCE);
 
+        OptionSpec<Path> otherFiles
+            = parser.accepts("other-files", getMessage("main.opt.other-files"))
+                        .withRequiredArg()
+                        .withValuesSeparatedBy(File.pathSeparatorChar)
+                        .withValuesConvertedBy(DirPathConverter.INSTANCE);
+
         OptionSpec<Void> dryrun
             = parser.accepts("dry-run", getMessage("main.opt.dry-run"));
 
@@ -1292,6 +1311,8 @@ public class JmodTask {
                 options.cmds = opts.valuesOf(cmds);
             if (opts.has(config))
                 options.configs = opts.valuesOf(config);
+            if (opts.has(otherFiles))
+                options.otherFiles = opts.valuesOf(otherFiles);
             if (opts.has(dryrun))
                 options.dryrun = true;
             if (opts.has(excludes))
@@ -1300,9 +1321,7 @@ public class JmodTask {
                 options.libs = opts.valuesOf(libs);
             if (opts.has(modulePath)) {
                 Path[] dirs = opts.valuesOf(modulePath).toArray(new Path[0]);
-                options.moduleFinder = ModuleFinder.of(dirs);
-                if (options.moduleFinder instanceof ConfigurableModuleFinder)
-                    ((ConfigurableModuleFinder)options.moduleFinder).configurePhase(Phase.LINK_TIME);
+                options.moduleFinder = JLMA.newModulePath(Runtime.version(), true, dirs);
             }
             if (opts.has(moduleVersion))
                 options.moduleVersion = opts.valueOf(moduleVersion);
@@ -1352,8 +1371,30 @@ public class JmodTask {
                 throw new CommandException("err.classpath.must.be.specified").showUsage(true);
             if (options.mainClass != null && !isValidJavaIdentifier(options.mainClass))
                 throw new CommandException("err.invalid.main-class", options.mainClass);
+
+            // check other files that should not conflict with well-known paths
+            // in an image
+            checkOtherFilePaths(options.otherFiles);
         } catch (OptionException e) {
              throw new CommandException(e.getMessage());
+        }
+    }
+
+    static void checkOtherFilePaths(List<Path> paths) {
+        if (paths == null)
+            return;;
+
+        for (Path path : paths) {
+            try (Stream<Path> dirs = Files.walk(path, 1).filter(Files::isDirectory)) {
+                dirs.forEach(p -> {
+                    Path name = p.getFileName();
+                    if (name.equals("conf") || name.equals("lib") || name.equals("bin")) {
+                        throw new CommandException("Invalid path in top level section: " + p);
+                    }
+                });
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
         }
     }
 

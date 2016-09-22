@@ -119,11 +119,25 @@
 java/beans/Introspector/8132566/OverridePropertyInfoTest.java   8132565 generic-all
 java/beans/Introspector/8132566/OverrideUserDefPropertyInfoTest.java 8132565 generic-all
 
+java/beans/XMLEncoder/java_util_Collections_CheckedCollection.java  8165263 generic-all
+java/beans/XMLEncoder/java_util_Collections_CheckedList.java        8165263 generic-all
+java/beans/XMLEncoder/java_util_Collections_CheckedMap.java         8165263 generic-all
+java/beans/XMLEncoder/java_util_Collections_CheckedRandomAccessList.java   8165263 generic-all
+java/beans/XMLEncoder/java_util_Collections_CheckedSet.java         8165263 generic-all
+java/beans/XMLEncoder/java_util_Collections_CheckedSortedMap.java   8165263 generic-all
+java/beans/XMLEncoder/java_util_Collections_CheckedSortedSet.java   8165263 generic-all
+java/beans/XMLEncoder/java_util_EnumMap.java          8165263 generic-all
+java/beans/XMLEncoder/java_util_JumboEnumSet.java     8165263 generic-all
+java/beans/XMLEncoder/java_util_RegularEnumSet.java   8165263 generic-all
+
 ############################################################################
 
 # jdk_lang
 
 java/lang/StringCoding/CheckEncodings.sh                        7008363 generic-all
+
+# Need to re-examine test
+java/lang/Class/getDeclaredField/FieldSetAccessibleTest.java	0000000 generic-all
 
 ############################################################################
 
@@ -206,6 +220,9 @@ sun/rmi/rmic/newrmic/equivalence/run.sh                         8145980 generic-
 
 java/rmi/transport/dgcDeadLock/DGCDeadLock.java                 8029360 macosx-all
 
+# Needs investigation
+java/rmi/transport/dgcDeadLock/DGCDeadLock.java                 0000000 generic-all
+
 ############################################################################
 
 # jdk_security
@@ -219,6 +236,9 @@ sun/security/tools/jarsigner/warnings/BadKeyUsageTest.java      8026393 generic-
 sun/security/krb5/auto/HttpNegotiateServer.java                 8038079 generic-all
 
 sun/security/ssl/SSLSocketImpl/AsyncSSLSocketClose.java         8161232 macosx-all
+
+# Needs to be investigated
+sun/security/krb5/auto/ReplayCacheTestProc.java			0000000 generic-all
 
 ############################################################################
 
@@ -308,5 +328,14 @@ demo/jvmti/compiledMethodLoad/CompiledMethodLoadTest.java       8151899 generic-
 # jdk_other
 
 com/sun/jndi/ldap/DeadSSLLdapTimeoutTest.java                   8141370 linux-i586,macosx-all
+
+com/sun/corba/se/impl/io/HookPutFieldsTest.java			8164908	generic-all
+javax/rmi/PortableRemoteObject/ConcurrentHashMapTest.java	8164908 generic-all
+com/sun/corba/7130985/CorbaExceptionsCompileTest.java		8164908 generic-all
+sun/rmi/rmic/iiopCompilation/IIOPCompilation.java		8164908 generic-all
+javax/rmi/PortableRemoteObject/8146975/RmiIiopReturnValueTest.java	8164908 generic-all
+
+# Needs to be investgated
+javax/xml/ws/clientjar/TestWsImport.java			0000000 generic-all
 
 ############################################################################

@@ -24,7 +24,7 @@
 /**
  * @test
  * @library /lib/testlibrary
- * @modules java.base/jdk.internal.module
+ * @modules java.base/jdk.internal.misc
  *          jdk.jlink/jdk.tools.jmod
  *          jdk.compiler
  * @build ModuleReaderTest CompilerUtils JarUtils
@@ -49,8 +49,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Optional;
 
-import jdk.internal.module.ConfigurableModuleFinder;
-import jdk.internal.module.ConfigurableModuleFinder.Phase;
+import jdk.internal.misc.SharedSecrets;
 
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -209,11 +208,8 @@ public class ModuleReaderTest {
      */
     void test(Path mp) throws Exception {
 
-        ModuleFinder finder = ModuleFinder.of(mp);
-        if (finder instanceof ConfigurableModuleFinder) {
-            // need ModuleFinder to be in the phase to find JMOD files
-            ((ConfigurableModuleFinder)finder).configurePhase(Phase.LINK_TIME);
-        }
+        ModuleFinder finder = SharedSecrets.getJavaLangModuleAccess()
+            .newModulePath(Runtime.version(), true, mp);
 
         ModuleReference mref = finder.find(TEST_MODULE).get();
         ModuleReader reader = mref.open();

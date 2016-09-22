@@ -29,17 +29,20 @@ package sun.instrument;
 import java.lang.reflect.Method;
 import java.lang.reflect.Module;
 import java.lang.reflect.AccessibleObject;
-
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.Instrumentation;
-
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
-
-import java.util.Objects;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.jar.JarFile;
+
+import jdk.internal.module.Modules;
 
 /*
  * Copyright 2003 Wily Technology, Inc.
@@ -228,10 +231,104 @@ public class InstrumentationImpl implements Instrumentation {
     }
 
     @Override
-    public void addModuleReads(Module module, Module other) {
-        Objects.requireNonNull(module);
-        Objects.requireNonNull(other);
-        jdk.internal.module.Modules.addReads(module, other);
+    public void redefineModule(Module module,
+                               Set<Module> extraReads,
+                               Map<String, Set<Module>> extraExports,
+                               Map<String, Set<Module>> extraExportsPrivate,
+                               Set<Class<?>> extraUses,
+                               Map<Class<?>, Set<Class<?>>> extraProvides)
+    {
+        if (!module.isNamed())
+            return;
+
+        // copy and check reads
+        extraReads = new HashSet<>(extraReads);
+        if (extraReads.contains(null))
+            throw new NullPointerException("'extraReads' contains null");
+
+        // copy and check exports
+        extraExports = cloneAndCheckExports(module, extraExports);
+        extraExportsPrivate = cloneAndCheckExports(module, extraExportsPrivate);
+
+        // copy and check uses
+        extraUses = new HashSet<>(extraUses);
+        if (extraUses.contains(null))
+            throw new NullPointerException("'extraUses' contains null");
+
+        // copy and check provides
+        Map<Class<?>, Set<Class<?>>> tmpProvides = new HashMap<>();
+        for (Map.Entry<Class<?>, Set<Class<?>>> e : extraProvides.entrySet()) {
+            Class<?> service = e.getKey();
+            if (service == null)
+                throw new NullPointerException("'extraProvides' contains null");
+            Set<Class<?>> providers = new HashSet<>(e.getValue());
+            providers.forEach(p -> {
+                if (p.getModule() != module)
+                    throw new IllegalArgumentException(p + " not in " + module);
+                if (!service.isAssignableFrom(p))
+                    throw new IllegalArgumentException(p + " is not a " + service);
+            });
+            tmpProvides.put(service, providers);
+        }
+        extraProvides = tmpProvides;
+
+
+        // update reads
+        extraReads.forEach(m -> Modules.addReads(module, m));
+
+        // update exports
+        for (Map.Entry<String, Set<Module>> e : extraExports.entrySet()) {
+            String pkg = e.getKey();
+            Set<Module> targets = e.getValue();
+            if (targets.isEmpty()) {
+                Modules.addExportsToAll(module, pkg);
+            } else {
+                targets.forEach(m -> Modules.addExports(module, pkg, m));
+            }
+        }
+
+        // update exports private
+        for (Map.Entry<String, Set<Module>> e : extraExportsPrivate.entrySet()) {
+            String pkg = e.getKey();
+            Set<Module> targets = e.getValue();
+            if (targets.isEmpty()) {
+                Modules.addExportsPrivateToAll(module, pkg);
+            } else {
+                targets.forEach(m -> Modules.addExportsPrivate(module, pkg, m));
+            }
+        }
+
+        // update uses
+        extraUses.forEach(service -> Modules.addUses(module, service));
+
+        // update provides
+        for (Map.Entry<Class<?>, Set<Class<?>>> e : extraProvides.entrySet()) {
+            Class<?> service = e.getKey();
+            Set<Class<?>> providers = e.getValue();
+            providers.forEach(p -> Modules.addProvides(module, service, p));
+        }
+    }
+
+    private Map<String, Set<Module>>
+        cloneAndCheckExports(Module module, Map<String, Set<Module>>  exports)
+    {
+        if (exports.isEmpty())
+            return Collections.emptyMap();
+
+        Map<String, Set<Module>> result = new HashMap<>();
+        Set<String> packages = Set.of(module.getPackages());
+        for (Map.Entry<String, Set<Module>> e : exports.entrySet()) {
+            String pkg = e.getKey();
+            if (pkg == null)
+                throw new NullPointerException("package cannot be null");
+            if (!packages.contains(pkg))
+                throw new IllegalArgumentException(pkg + " not in module");
+            Set<Module> targets = new HashSet<>(e.getValue());
+            if (targets.contains(null))
+                throw new NullPointerException("set of targets cannot include null");
+            result.put(pkg, targets);
+        }
+        return result;
     }
 
 

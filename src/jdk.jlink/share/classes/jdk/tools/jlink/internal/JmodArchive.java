@@ -27,6 +27,8 @@ package jdk.tools.jlink.internal;
 
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.zip.ZipEntry;
+
 import jdk.tools.jlink.internal.Archive.Entry.EntryType;
 
 /**
@@ -36,11 +38,12 @@ public class JmodArchive extends JarArchive {
 
     private static final String JMOD_EXT    = ".jmod";
     private static final String MODULE_NAME = "module";
-    private static final String MODULE_INFO = "module-info.class";
     private static final String CLASSES     = "classes";
     private static final String NATIVE_LIBS = "native";
     private static final String NATIVE_CMDS = "bin";
     private static final String CONFIG      = "conf";
+    private static final String OTHER_FILES = "top";
+
 
     public JmodArchive(String mn, Path jmod) {
         super(mn, jmod);
@@ -62,11 +65,32 @@ public class JmodArchive extends JarArchive {
                 return EntryType.NATIVE_CMD;
             case CONFIG:
                 return EntryType.CONFIG;
+            case OTHER_FILES:
+                return EntryType.OTHER_FILES;
             case MODULE_NAME:
                 return EntryType.MODULE_NAME;
             default:
                 throw new InternalError("unexpected entry: " + section);
         }
+    }
+
+    @Override
+    Entry toEntry(ZipEntry ze) {
+        if (ze.isDirectory()) {
+            return null;
+        }
+
+        String path = ze.getName();
+        EntryType type = toEntryType(path);
+        String name = getFileName(path);
+        String resourceName =
+            (type == EntryType.CLASS_OR_RESOURCE || type == EntryType.OTHER_FILES)
+                ? name
+                // Entry.path() contains the kind of file native, conf, bin, ...
+                // Keep it to avoid naming conflict (eg: native/jvm.cfg and config/jvm.cfg
+                : path;
+
+        return new JarEntry(ze.getName(), resourceName, type, zipFile, ze);
     }
 
     private static String getSection(String entryName) {

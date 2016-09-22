@@ -23,7 +23,7 @@
 
 /* @test
    @summary Test SoftSynthesizer open method
-   @modules java.desktop/com.sun.media.sound
+   @modules java.desktop/com.sun.media.sound:private
 */
 
 import java.lang.reflect.Field;

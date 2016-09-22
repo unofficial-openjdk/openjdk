@@ -122,15 +122,6 @@ public class JLinkTest {
         }
 
         {
-            String moduleName = "filter";
-            Path jmod = helper.generateDefaultJModule(moduleName).assertSuccess();
-            String className = "_A.class";
-            JImageGenerator.addFiles(jmod, new InMemoryFile(className, new byte[0]));
-            Path image = helper.generateDefaultImage(moduleName).assertSuccess();
-            helper.checkImage(image, moduleName, new String[] {"/" + moduleName + "/" + className}, null);
-        }
-
-        {
             String moduleName = "m"; // 8163382
             Path jmod = helper.generateDefaultJModule(moduleName).assertSuccess();
             JImageGenerator.getJLinkTask()
@@ -160,6 +151,7 @@ public class JLinkTest {
             }
         }
 
+        /*
         {
             // License files
             String copied = "LICENSE";
@@ -169,7 +161,7 @@ public class JLinkTest {
             copyFiles[1] = copied;
             Path imageDir = helper.generateDefaultImage(copyFiles, "composite2").assertSuccess();
             helper.checkImage(imageDir, "composite2", null, null, arr);
-        }
+        }*/
 
         {
             // List plugins

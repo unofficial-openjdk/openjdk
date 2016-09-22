@@ -39,6 +39,7 @@ import java.util.Collection;
 import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -51,22 +52,35 @@ import java.util.function.Supplier;
 public interface JavaLangModuleAccess {
 
     /**
-     * Returns {@code ModuleDescriptor.Requires} of the given modifier
+     * Creates a new builder with the given module name.
+     *
+     * @param weak
+     *        Indicates whether the module is weak
+     * @param strict
+     *        Indicates whether module names are checked or not
+     */
+    ModuleDescriptor.Builder newBuilder(String mn, boolean weak, boolean strict);
+
+    /**
+     * Returns a {@code ModuleDescriptor.Requires} of the given modifiers
      * and module name.
      */
     Requires newRequires(Set<Requires.Modifier> ms, String mn);
 
     /**
      * Returns an unqualified {@code ModuleDescriptor.Exports}
-     * of the given package name.
+     * of the given modifiers and package name source.
      */
-    Exports newExports(String source);
+    Exports newExports(Set<Exports.Modifier> ms,
+                       String source);
 
     /**
      * Returns a qualified {@code ModuleDescriptor.Exports}
-     * of the given package name and targets.
+     * of the given modifiers, package name source and targets.
      */
-    Exports newExports(String source, Set<String> targets);
+    Exports newExports(Set<Exports.Modifier> ms,
+                       String source,
+                       Set<String> targets);
 
     /**
      * Returns a {@code ModuleDescriptor.Provides}
@@ -88,6 +102,7 @@ public interface JavaLangModuleAccess {
      * Returns a new {@code ModuleDescriptor} instance.
      */
     ModuleDescriptor newModuleDescriptor(String name,
+                                         boolean weak,
                                          boolean automatic,
                                          boolean synthetic,
                                          Set<Requires> requires,
@@ -101,6 +116,11 @@ public interface JavaLangModuleAccess {
                                          String osVersion,
                                          Set<String> packages,
                                          ModuleHashes hashes);
+
+    /**
+     * Returns the object with the hashes of other modules
+     */
+    Optional<ModuleHashes> hashes(ModuleDescriptor descriptor);
 
     /**
      * Resolves a collection of root modules, with service binding
@@ -120,8 +140,10 @@ public interface JavaLangModuleAccess {
                                      Supplier<ModuleReader> readerSupplier);
 
     /**
-     * Returns the object with the hashes of other modules
+     * Creates a ModuleFinder for a module path.
      */
-    Optional<ModuleHashes> hashes(ModuleDescriptor descriptor);
+    ModuleFinder newModulePath(Runtime.Version version,
+                               boolean isLinkPhase,
+                               Path... entries);
 
 }
