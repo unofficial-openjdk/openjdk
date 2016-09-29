@@ -35,8 +35,8 @@ import java.io.IOException;
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
  */
-public class ConcealedPackages_attribute extends Attribute {
-    ConcealedPackages_attribute(ClassReader cr, int name_index, int length)
+public class Packages_attribute extends Attribute {
+    Packages_attribute(ClassReader cr, int name_index, int length)
             throws IOException {
         super(name_index, length);
         packages_count = cr.readUnsignedShort();
@@ -45,15 +45,15 @@ public class ConcealedPackages_attribute extends Attribute {
             packages_index[i] = cr.readUnsignedShort();
     }
 
-    public ConcealedPackages_attribute(ConstantPool constant_pool,
-                                       int[] packages_index)
+    public Packages_attribute(ConstantPool constant_pool,
+                              int[] packages_index)
             throws ConstantPoolException {
-        this(constant_pool.getUTF8Index(Attribute.ConcealedPackages),
+        this(constant_pool.getUTF8Index(Attribute.Packages),
              packages_index);
     }
 
-    public ConcealedPackages_attribute(int name_index,
-                                       int[] packages_index) {
+    public Packages_attribute(int name_index,
+                              int[] packages_index) {
         super(name_index, 2 + packages_index.length * 2);
         this.packages_count = packages_index.length;
         this.packages_index = packages_index;
@@ -66,7 +66,7 @@ public class ConcealedPackages_attribute extends Attribute {
 
     @Override
     public <R, D> R accept(Visitor<R, D> visitor, D data) {
-        return visitor.visitConcealedPackages(this, data);
+        return visitor.visitPackages(this, data);
     }
 
     public final int packages_count;

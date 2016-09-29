@@ -1188,7 +1188,7 @@ public class ClassfileInspector {
         }
 
         @Override
-        public Void visitConcealedPackages(ConcealedPackages_attribute attr, T p) {
+        public Void visitPackages(Packages_attribute attr, T p) {
             return null;
         }
 

@@ -21,9 +21,8 @@
  * questions.
  */
 
-module m7 {
-    // only use classes that have no direct or indirect dependency
-    // to sun.misc.Unsafe
-    requires unsafe;
-    requires m6;
+// key: compiler.err.no.exports.in.weak
+
+weak module NoExportsInWeak {
+    exports p;
 }
