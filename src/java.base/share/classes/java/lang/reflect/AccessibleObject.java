@@ -188,8 +188,10 @@ public class AccessibleObject implements AnnotatedElement {
             return;
 
         // not accessible
-        String msg = "Unable to make " + this + " accessible: ";
-        msg += declaringModule + " does not \"exports ";
+        String msg = "Unable to make ";
+        if (this instanceof Field)
+            msg += "field ";
+        msg += this + " accessible: " + declaringModule + " does not \"exports ";
         if (!isClassPublic || !isMemberPublic)
             msg += "private ";
         msg += pn + "\" to " + callerModule;

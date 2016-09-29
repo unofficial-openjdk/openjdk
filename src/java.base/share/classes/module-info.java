@@ -165,6 +165,7 @@ module java.base {
         jdk.charsets,
         jdk.compiler,
         jdk.jartool,
+        jdk.jdeps,
         jdk.jlink,
         jdk.net,
         jdk.scripting.nashorn,
@@ -188,7 +189,8 @@ module java.base {
         jdk.unsupported,
         jdk.vm.ci;
     exports jdk.internal.util.jar to
-        jdk.jartool;
+        jdk.jartool,
+        jdk.jdeps;
     exports jdk.internal.vm to
         java.management,
         jdk.jvmstat;
