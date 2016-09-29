@@ -44,6 +44,8 @@ CMDS_DIR := $(firstword $(wildcard $(addsuffix /$(MODULE), \
 CONF_DIR := $(firstword $(wildcard $(addsuffix /$(MODULE), \
     $(SUPPORT_OUTPUTDIR)/modules_conf $(IMPORT_MODULES_CONF))))
 CLASSES_DIR := $(wildcard $(JDK_OUTPUTDIR)/modules/$(MODULE))
+OTHER_FILES_DIR := $(firstword $(wildcard $(addsuffix /$(MODULE), \
+    $(SUPPORT_OUTPUTDIR)/modules_other_files $(IMPORT_MODULES_OTHER_FILES))))
 
 $(eval $(call FillCacheFind, \
     $(LIBS_DIR) $(CMDS_DIR) $(CONF_DIR) $(CLASSES_DIR) \
@@ -78,7 +80,8 @@ ifeq ($(MODULE), java.base)
     EXCLUDE_PATTERN := $(strip $(subst $(SPACE),|,$(strip $(ALL_UPGRADEABLE_MODULES))))
 
     JMOD_FLAGS += --module-path $(JMODS_DIR) \
-        --hash-modules '^(?!$(EXCLUDE_PATTERN))'
+        --hash-modules '^(?!$(EXCLUDE_PATTERN))' \
+        --other-files $(OTHER_FILES_DIR)
   endif
 endif
 
