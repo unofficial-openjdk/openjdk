@@ -38,6 +38,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Layer;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Module;
 import java.net.URL;
@@ -1987,7 +1988,10 @@ public final class System {
 
     private static void setJavaLangAccess() {
         // Allow privileged classes outside of java.lang
-        SharedSecrets.setJavaLangAccess(new JavaLangAccess(){
+        SharedSecrets.setJavaLangAccess(new JavaLangAccess() {
+            public Method getMethod(Class<?> klass, String name, Class<?>... parameterTypes) {
+                return klass.getMethod0(name, parameterTypes, true);
+            }
             public jdk.internal.reflect.ConstantPool getConstantPool(Class<?> klass) {
                 return klass.getConstantPool();
             }

@@ -83,27 +83,47 @@ import jdk.internal.reflect.Reflection;
  * single class or interface could possibly unify them, so no such type is
  * defined here.
  *
- * <p> A requirement enforced by this facility is that providers deployed as
- * explicit modules on the module path must define a static factory method
- * to obtain the provider instance or a public zero-argument constructor.
- * Providers deployed on the class path or as {@link
+ * <p> Providers deployed as explicit modules on the module path are
+ * instantiated by a <em>provider factory</em> or directly via the provider's
+ * public zero-argument constructor. In the module declaration, if the class
+ * name specified in the <i>provides</i> clause is a provider factory if it
+ * public and defines a public static no-args method named "{@code provider}".
+ * The return type of the method must be assignable to the <i>service</i>
+ * type. The provider instance that the {@code provider()} returns will
+ * typically, but is not required to be, of a type that is in the same module
+ * as the provider factory. If the class is not a provider factory then it is
+ * public with a public zero-argument constructor. As an example, suppose a
+ * module declares the following:
+ *
+ * <pre>{@code
+ *     provides com.example.CodecSet with com.example.impl.StandardCodecs;
+ *     provides com.example.CodecSet with com.example.impl.ExtendedCodecsFactory;
+ * }</pre>
+ *
+ * <p> where {@code com.example.CodecSet} is the service type, {@code
+ * com.example.impl.StandardCodecs} is a provider class that is public with a
+ * public no-args constructor, {@code com.example.impl.ExtendedCodecsFactory}
+ * is a public class that defines a public static no-args method named
+ * "{@code provider}" with a return type that is {@code CodecSet} or a subtype
+ * of. For this example then {@code StandardCodecs}'s no-arg constructor will
+ * be used to instantiate {@code StandardCodecs}. {@code ExtendedCodecsFactory}
+ * will be treated as a provider factory and {@code
+ * ExtendedCodecsFactory.provider()} will be invoked to instantiate the
+ * provider.
+ *
+ * <p> Providers deployed on the class path or as {@link
  * java.lang.module.ModuleDescriptor#isAutomatic automatic-modules} on the
- * module path must have a public zero-argument constructor. If an
- * explicit module defines a static factory method then the method is a
- * public static zero-argument method named "{@code provider}" with a return
- * type that is assignable to the service type. If an explicit module on
- * the module path defines both a static factory method and a public zero
- * argument constructor then the static factory method is preferred.
+ * module path must have a public zero-argument constructor.
  *
  * <p> An application or library using this loading facility and developed
- * and deployed as a named module must have an appropriate <i>uses</i> clause
- * in its <i>module descriptor</i> to declare that the module uses
+ * and deployed as an explicit module must have an appropriate <i>uses</i>
+ * clause in its <i>module descriptor</i> to declare that the module uses
  * implementations of the service. A corresponding requirement is that a
  * provider deployed as a named module must have an appropriate
  * <i>provides</i> clause in its module descriptor to declare that the module
  * provides an implementation of the service. The <i>uses</i> and
- * <i>provides</i> allow consumers of a service to be <i>linked</i> to
- * providers of the service.
+ * <i>provides</i> allow consumers of a service to be <i>linked</i> to modules
+ * containing providers of the service.
  *
  * <p> A service provider that is packaged as a JAR file for the class path is
  * identified by placing a <i>provider-configuration file</i> in the resource
@@ -198,12 +218,13 @@ import jdk.internal.reflect.Reflection;
  * <p> Selecting a provider or filtering providers will usually involve invoking
  * a provider method. Where selection or filtering based on the provider class is
  * needed then it can be done using a {@link #stream() stream}. For example, the
- * following locates the providers that have a specific annotation:
+ * following collects the providers that have a specific annotation:
  * <pre>{@code
- *     Stream<CodecSet> providers = ServiceLoader.load(CodecSet.class)
+ *     Set<CodecSet> providers = ServiceLoader.load(CodecSet.class)
  *            .stream()
  *            .filter(p -> p.type().isAnnotationPresent(Managed.class))
- *            .map(Provider::get);
+ *            .map(Provider::get)
+ *            .collect(Collectors.toSet());
  * }</pre>
  *
  * <h2> Security </h2>
@@ -360,13 +381,15 @@ public final class ServiceLoader<S>
      */
     public static interface Provider<S> extends Supplier<S> {
         /**
-         * Returns the provider class. There is no guarantee that this type is
-         * accessible and so attempting to instantiate it, by means of its
-         * {@link Class#newInstance() newInstance()} method for example, will
-         * fail when it is not accessible. The {@link #get() get()} method
-         * should instead be used to obtain the provider.
+         * Returns the provider type. There is no guarantee that this type is
+         * accessible or that it has a public no-args constructor. The {@link
+         * #get() get()} method should be used to obtain the provider instance.
          *
-         * @return The provider class
+         * <p> When a module declares that the provider class is created by a
+         * provider factory then this method returns the return type of its
+         * public static "{@code provider()}" method.
+         *
+         * @return The provider type
          */
         Class<S> type();
 
@@ -376,8 +399,11 @@ public final class ServiceLoader<S>
          * @return An instance of the provider.
          *
          * @throws ServiceConfigurationError
-         *         If the service provider cannot be instantiated. The error
-         *         cause will carry an appropriate cause.
+         *         If the service provider cannot be instantiated, or in the
+         *         case of a provider factory, the public static
+         *         "{@code provider()}" method returns {@code null} or throws
+         *         an error or exception. The {@code ServiceConfigurationError}
+         *         will will carry an appropriate cause where possible.
          */
         @Override S get();
     }
@@ -500,12 +526,12 @@ public final class ServiceLoader<S>
     }
 
     /**
-     * Uses Class.forName to load a provider in a module.
+     * Uses Class.forName to load a provider class in a module.
      *
      * @throws ServiceConfigurationError
-     *         If the class cannot be loaded or is not a subtype of service
+     *         If the class cannot be loaded
      */
-    private Class<S> loadProviderInModule(Module module, String cn) {
+    private Class<?> loadProviderInModule(Module module, String cn) {
         Class<?> clazz = null;
         if (acc == null) {
             try {
@@ -525,38 +551,73 @@ public final class ServiceLoader<S>
         }
         if (clazz == null)
             fail(service, "Provider " + cn  + " not found");
-        if (!service.isAssignableFrom(clazz))
-            fail(service, "Provider " + cn  + " not a subtype");
-        @SuppressWarnings("unchecked")
-        Class<S> result = (Class<S>) clazz;
-        return result;
+        return clazz;
     }
 
     /**
      * A Provider implementation that supports invoking, with reduced
-     * permissions, the provider's static factory method or its no-arg
-     * constructor.
+     * permissions, the static factory to obtain the provider or the
+     * provider's no-arg constructor.
      */
     private final static class ProviderImpl<S> implements Provider<S> {
-        final Class<?> service;
-        final Class<S> type;
+        final Class<S> service;
         final AccessControlContext acc;
 
-        Method factoryMethod; // cached
-        Constructor<S> ctor;
+        final Method factoryMethod;  // factory method or null
+        final Class<S> type;
+        final Constructor<S> ctor;   // public no-args constructor or null
 
         /**
+         * Creates a Provider.
+         *
+         * @param service
+         *        The service type
+         * @param clazz
+         *        The provider (or provider factory) class
+         * @param acc
+         *        The access control context when running with security manager
+         *
          * @throws ServiceConfigurationError
-         *         If the provider class is not public
+         *         If the class is not public; If the class defines a public
+         *         static provider() method with a return type that is assignable
+         *         to the service type or the class is not a provider class with
+         *         a public no-args constructor.
          */
-        ProviderImpl(Class<?> service, Class<S> type, AccessControlContext acc) {
-            int mods = type.getModifiers();
-            if (!Modifier.isPublic(mods)) {
-                fail(service, "Provider " + type + " is not public");
-            }
-            this.service = service;
-            this.type = type;
+        @SuppressWarnings("unchecked")
+        ProviderImpl(Class<?> service, Class<?> clazz, AccessControlContext acc) {
+            this.service = (Class<S>) service;
             this.acc = acc;
+
+            int mods = clazz.getModifiers();
+            if (!Modifier.isPublic(mods)) {
+                fail(service, clazz + " is not public");
+            }
+
+            // if the class is in an explicit module then see if it is
+            // a provider factory class
+            Method factoryMethod = null;
+            if (inExplicitModule(clazz)) {
+                factoryMethod = findStaticProviderMethod(clazz);
+                if (factoryMethod != null) {
+                    Class<?> returnType = factoryMethod.getReturnType();
+                    if (!service.isAssignableFrom(returnType)) {
+                        fail(service, factoryMethod + " return type not a subtype");
+                    }
+                }
+            }
+            this.factoryMethod = factoryMethod;
+
+            if (factoryMethod == null) {
+                // no factory method so must have a public no-args constructor
+                if (!service.isAssignableFrom(clazz)) {
+                    fail(service, clazz.getName() + " not a subtype");
+                }
+                this.type = (Class<S>) clazz;
+                this.ctor = getConstructor(clazz);
+            } else {
+                this.type = (Class<S>) factoryMethod.getReturnType();
+                this.ctor = null;
+            }
         }
 
         @Override
@@ -566,16 +627,6 @@ public final class ServiceLoader<S>
 
         @Override
         public S get() {
-            if (factoryMethod == null && ctor == null) {
-                if (isExplicitModule()) {
-                    // look for the static "provider" method when the provider
-                    // is an explicit named module
-                    factoryMethod = getFactoryMethod();
-                }
-                if (factoryMethod == null) {
-                    ctor = getConstructor();
-                }
-            }
             if (factoryMethod != null) {
                 return invokeFactoryMethod();
             } else {
@@ -586,44 +637,38 @@ public final class ServiceLoader<S>
         /**
          * Returns {@code true} if the provider is in an explicit module
          */
-        private boolean isExplicitModule() {
-            Module module = type.getModule();
+        private boolean inExplicitModule(Class<?> clazz) {
+            Module module = clazz.getModule();
             return module.isNamed() && !module.getDescriptor().isAutomatic();
         }
 
         /**
-         * Returns the method for the provider's "{@code public S provider()}"
-         * method or {@code null} if the method does not exist.
+         * Returns the public static provider method if found.
          *
-         * @throws ServiceConfigurationError if the provider defines the
-         *         method but it's not static or public
+         * @throws ServiceConfigurationError if there is an error finding the
+         *         provider method
          */
-        private Method getFactoryMethod() {
-            PrivilegedAction<Method> pa = new PrivilegedAction<>() {
-                @Override
-                public Method run() {
-                    try {
-                        // TBD: invoke getMethod0 directly to avoid exception
-                        Method m = type.getMethod("provider");
+        private Method findStaticProviderMethod(Class<?> clazz) {
+            Method method = null;
+            try {
+                method = LANG_ACCESS.getMethod(clazz, "provider");
+            } catch (Throwable x) {
+                fail(service, "Unable to get public provider() method", x);
+            }
+            if (method != null) {
+                int mods = method.getModifiers();
+                if (Modifier.isStatic(mods)) {
+                    assert Modifier.isPublic(mods);
+                    Method m = method;
+                    PrivilegedAction<Void> pa = () -> {
                         m.setAccessible(true);
-                        return m;
-                    } catch (NoSuchMethodException e) {
                         return null;
-                    }
-                }
-            };
-            Method m = AccessController.doPrivileged(pa);
-            if (m != null) {
-                int mods = m.getModifiers();
-                if (!Modifier.isStatic(mods)) {
-                    fail(service, m + " is not a static method");
-                }
-                Class<?> returnType = m.getReturnType();
-                if (!service.isAssignableFrom(returnType)) {
-                    fail(service, m + " returns " + returnType);
+                    };
+                    AccessController.doPrivileged(pa);
+                    return method;
                 }
             }
-            return m;
+            return null;
         }
 
         /**
@@ -632,23 +677,27 @@ public final class ServiceLoader<S>
          * @throws ServiceConfigurationError if the provider does not have
          *         public no-arg constructor
          */
-        private Constructor<S> getConstructor() {
-            PrivilegedAction<Constructor<S>> pa = new PrivilegedAction<>() {
-                @Override
-                public Constructor<S> run() {
-                    Constructor<S> ctor = null;
-                    try {
-                        ctor = type.getConstructor();
-                    } catch (NoSuchMethodException e) { }
-                    if (ctor != null && isExplicitModule())
-                        ctor.setAccessible(true);
-                    return ctor;
-                }
-            };
-            Constructor<S> ctor = AccessController.doPrivileged(pa);
-            if (ctor == null) {
-                fail(service, "Provider " + type
-                     + " does not have a public no-arg constructor");
+        private Constructor<S> getConstructor(Class<?> clazz) {
+            PrivilegedExceptionAction<Constructor<S>> pa
+                = new PrivilegedExceptionAction<>() {
+                    @Override
+                    public Constructor<S> run() throws Exception {
+                        Constructor<?> ctor = clazz.getConstructor();
+                        if (inExplicitModule(clazz))
+                            ctor.setAccessible(true);
+                        @SuppressWarnings("unchecked")
+                        Constructor<S> result = (Constructor<S>)ctor;
+                        return result;
+                    }
+                };
+            Constructor<S> ctor = null;
+            try {
+                ctor = AccessController.doPrivileged(pa);
+            } catch (Throwable x) {
+                if (x instanceof PrivilegedActionException)
+                    x = x.getCause();
+                String cn = clazz.getName();
+                fail(service, cn + " Unable to get public no-arg constructor", x);
             }
             return ctor;
         }
@@ -659,26 +708,25 @@ public final class ServiceLoader<S>
          * permissions that are restricted by the security context of whatever
          * created this loader.
          */
-        @SuppressWarnings("unchecked")
         private S invokeFactoryMethod() {
-            S p = null;
+            Object result = null;
             Throwable exc = null;
             if (acc == null) {
                 try {
-                    p = (S) factoryMethod.invoke(null);
+                    result = factoryMethod.invoke(null);
                 } catch (Throwable x) {
                     exc = x;
                 }
             } else {
-                PrivilegedExceptionAction<S> pa = new PrivilegedExceptionAction<>() {
+                PrivilegedExceptionAction<?> pa = new PrivilegedExceptionAction<>() {
                     @Override
-                    public S run() throws Exception {
-                        return (S) factoryMethod.invoke(null);
+                    public Object run() throws Exception {
+                        return factoryMethod.invoke(null);
                     }
                 };
                 // invoke factory method with permissions restricted by acc
                 try {
-                    p = AccessController.doPrivileged(pa, acc);
+                    result = AccessController.doPrivileged(pa, acc);
                 } catch (PrivilegedActionException pae) {
                     exc = pae.getCause();
                 }
@@ -686,12 +734,13 @@ public final class ServiceLoader<S>
             if (exc != null) {
                 if (exc instanceof InvocationTargetException)
                     exc = exc.getCause();
-                String cn = type.getName();
-                fail(service, "Provider " + cn + " could not be obtained", exc);
+                fail(service, factoryMethod + " failed", exc);
             }
-            if (p == null) {
+            if (result == null) {
                 fail(service, factoryMethod + " returned null");
             }
+            @SuppressWarnings("unchecked")
+            S p = (S) result;
             return p;
         }
 
@@ -726,7 +775,7 @@ public final class ServiceLoader<S>
             if (exc != null) {
                 if (exc instanceof InvocationTargetException)
                     exc = exc.getCause();
-                String cn = type.getName();
+                String cn = ctor.getDeclaringClass().getName();
                 fail(service,
                      "Provider " + cn + " could not be instantiated", exc);
             }
@@ -762,7 +811,7 @@ public final class ServiceLoader<S>
     {
         Layer currentLayer;
         Iterator<ServiceProvider> iterator;
-        ServiceProvider nextProvider;
+        Provider<T> next;
 
         LayerLookupIterator() {
             currentLayer = layer;
@@ -780,14 +829,21 @@ public final class ServiceLoader<S>
         public boolean hasNext() {
 
             // already have the next provider cached
-            if (nextProvider != null)
+            if (next != null)
                 return true;
 
             while (true) {
 
-                // next provider
+                // next provider (or provider factory)
                 if (iterator != null && iterator.hasNext()) {
-                    nextProvider = iterator.next();
+                    ServiceProvider provider = iterator.next();
+
+                    // attempt to load it
+                    Module module = provider.module();
+                    String cn = provider.providerName();
+                    Class<?> clazz = loadProviderInModule(module, cn);
+                    next = new ProviderImpl<T>(service, clazz, acc);
+
                     return true;
                 }
 
@@ -806,17 +862,9 @@ public final class ServiceLoader<S>
             if (!hasNext())
                 throw new NoSuchElementException();
 
-            ServiceProvider provider = nextProvider;
-            nextProvider = null;
-
-            // attempt to load the provider
-            Module module = provider.module();
-            String cn = provider.providerName();
-            Class<?> c = loadProviderInModule(module, cn);
-
-            @SuppressWarnings("unchecked")
-            Class<T> clazz = (Class<T>) c;
-            return new ProviderImpl<T>(service, clazz, acc);
+            Provider<T> result = next;
+            next = null;
+            return result;
         }
     }
 
@@ -830,7 +878,7 @@ public final class ServiceLoader<S>
     {
         ClassLoader currentLoader;
         Iterator<ServiceProvider> iterator;
-        ServiceProvider nextProvider;
+        Provider<T> next;
 
         ModuleServicesLookupIterator() {
             this.currentLoader = loader;
@@ -885,12 +933,19 @@ public final class ServiceLoader<S>
         @Override
         public boolean hasNext() {
             // already have the next provider cached
-            if (nextProvider != null)
+            if (next != null)
                 return true;
 
             while (true) {
                 if (iterator.hasNext()) {
-                    nextProvider = iterator.next();
+                    ServiceProvider provider = iterator.next();
+
+                    // attempt to load the provider (or provider factory)
+                    Module module = provider.module();
+                    String cn = provider.providerName();
+                    Class<?> clazz = loadProviderInModule(module, cn);
+                    next = new ProviderImpl<T>(service, clazz, acc);
+
                     return true;
                 }
 
@@ -909,17 +964,9 @@ public final class ServiceLoader<S>
             if (!hasNext())
                 throw new NoSuchElementException();
 
-            ServiceProvider provider = nextProvider;
-            nextProvider = null;
-
-            // attempt to load the provider
-            Module module = provider.module();
-            String cn = provider.providerName();
-            Class<?> c = loadProviderInModule(module, cn);
-
-            @SuppressWarnings("unchecked")
-            Class<T> clazz = (Class<T>) c;
-            return new ProviderImpl<T>(service, clazz, acc);
+            Provider<T> result = next;
+            next = null;
+            return result;
         }
     }
 
@@ -935,7 +982,7 @@ public final class ServiceLoader<S>
 
         Enumeration<URL> configs;
         Iterator<String> pending;
-        Class<T> next;
+        Provider<T> next;
 
         /**
          * Parse a single line from the given configuration file, adding the
@@ -990,7 +1037,6 @@ public final class ServiceLoader<S>
             return names.iterator();
         }
 
-        @SuppressWarnings("unchecked")
         private boolean hasNextService() {
             if (next != null) {
                 return true;
@@ -1022,13 +1068,9 @@ public final class ServiceLoader<S>
                     fail(service, "Provider " + cn + " not found");
                 }
 
-                if (!service.isAssignableFrom(clazz)) {
-                    fail(service, "Provider " + cn  + " not a subtype");
-                }
-
             } while (clazz.getModule().isNamed()); // ignore if in named module
 
-            next = (Class<T>) clazz;
+            next = new ProviderImpl<T>(service, clazz, acc);
             return true;
         }
 
@@ -1049,11 +1091,9 @@ public final class ServiceLoader<S>
             if (!hasNext())
                 throw new NoSuchElementException();
 
-            Class<T> clazz = next;
+            Provider<T> result = next;
             next = null;
-
-            // Provider::get will invoke constructor will reduced permissions
-            return new ProviderImpl<T>(service, clazz, acc);
+            return result;
         }
     }
 
@@ -1166,7 +1206,6 @@ public final class ServiceLoader<S>
             }
 
             @Override
-            @SuppressWarnings("unchecked")
             public S next() {
                 checkReloadCount();
                 S next;
@@ -1362,7 +1401,8 @@ public final class ServiceLoader<S>
      * have different thread context class loaders. A lookup by one application
      * may locate a service provider that is only visible via its thread
      * context class loader and so is not suitable to be located by the other
-     * application. Memory leaks can also arise.
+     * application. Memory leaks can also arise. A thread local may be suited
+     * to some applications.
      *
      * @param  <S> the class of the service type
      *

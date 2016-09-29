@@ -3283,7 +3283,7 @@ public final class Class<T> implements java.io.Serializable,
         return (res == null ? res : getReflectionFactory().copyMethod(res));
     }
 
-    private Method getMethod0(String name, Class<?>[] parameterTypes, boolean includeStaticMethods) {
+    Method getMethod0(String name, Class<?>[] parameterTypes, boolean includeStaticMethods) {
         MethodArray interfaceCandidates = new MethodArray(2);
         Method res =  privateGetMethodRecursive(name, parameterTypes, includeStaticMethods, interfaceCandidates);
         if (res != null)

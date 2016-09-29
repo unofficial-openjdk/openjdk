@@ -25,7 +25,7 @@
 # @bug 4640520 6354623 7198496
 # @summary Unit test for java.util.ServiceLoader
 #
-# @build Basic Load FooService FooProvider1 FooProvider2 FooProvider3
+# @build Basic Load FooService FooProvider1 FooProvider2 FooProvider3 BarProvider
 # @run shell basic.sh
 
 # Command-line usage: sh basic.sh /path/to/build
@@ -131,7 +131,7 @@ go "${P3JAR}${SEP}$TESTD${SEP}p2.jar" "" \
 mkdir -p x.meta/META-INF/services
 
 # Simple failures
-for p in FooProvider42 'blah blah' 9234 'X!' java.lang.Object; do
+for p in FooProvider42 'blah blah' 9234 'X!' BarProvider; do
   echo $p >x.meta/META-INF/services/FooService
   go ".${SEP}x.meta" "" fail
 done

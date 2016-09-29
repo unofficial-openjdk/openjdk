@@ -456,10 +456,11 @@ public class ModuleDescriptor
         public String service() { return service; }
 
         /**
-         * Returns the set of the fully qualified class names of the providers.
+         * Returns the set of the fully qualified class names of the providers
+         * or provider factories.
          *
          * @return A non-empty and unmodifiable set of the fully qualified class
-         *         names of the providers.
+         *         names of the providers or provider factories
          */
         public Set<String> providers() { return providers; }
 
@@ -1540,7 +1541,7 @@ public class ModuleDescriptor
          * @param  service
          *         The service type
          * @param  providers
-         *         The set of provider class names
+         *         The set of provider or provide factory class names
          *
          * @return This builder
          *
@@ -1575,7 +1576,7 @@ public class ModuleDescriptor
          * @param  service
          *         The service type
          * @param  provider
-         *         The provider class name
+         *         The provider or provider factory class name
          *
          * @return This builder
          *
