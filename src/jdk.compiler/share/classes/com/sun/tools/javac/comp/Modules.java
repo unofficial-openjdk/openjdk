@@ -101,6 +101,7 @@ import com.sun.tools.javac.util.Options;
 import static com.sun.tools.javac.code.Flags.PUBLIC;
 import static com.sun.tools.javac.code.Flags.UNATTRIBUTED;
 import static com.sun.tools.javac.code.Kinds.Kind.MDL;
+import static com.sun.tools.javac.code.Kinds.Kind.MTH;
 import static com.sun.tools.javac.code.TypeTag.CLASS;
 
 import com.sun.tools.javac.tree.JCTree.JCDirective;
@@ -836,6 +837,16 @@ public class Modules extends JCTree.Visitor {
             return null;
         }
 
+        MethodSymbol factoryMethod(ClassSymbol tsym) {
+            for (Symbol sym : tsym.members().getSymbolsByName(names.provider, sym -> sym.kind == MTH)) {
+                MethodSymbol mSym = (MethodSymbol)sym;
+                if (mSym.isStatic() && (mSym.flags() & Flags.PUBLIC) != 0 && mSym.params().isEmpty()) {
+                    return mSym;
+                }
+            }
+            return null;
+        }
+
         Map<Directive.ProvidesDirective, JCProvides> directiveToTreeMap = new HashMap<>();
 
         @Override
@@ -844,21 +855,29 @@ public class Modules extends JCTree.Visitor {
             Type it = attr.attribType(tree.implName, env, syms.objectType);
             ClassSymbol service = (ClassSymbol) st.tsym;
             ClassSymbol impl = (ClassSymbol) it.tsym;
-            if (!types.isSubtype(it, st)) {
-                log.error(tree.implName.pos(), Errors.ServiceImplementationMustBeSubtypeOfServiceInterface);
-            }
-            if ((impl.flags() & ABSTRACT) != 0) {
-                log.error(tree.implName.pos(), Errors.ServiceImplementationIsAbstract(impl));
-            } else if (impl.isInner()) {
-                log.error(tree.implName.pos(), Errors.ServiceImplementationIsInner(impl));
-            } else if (service.isInner()) {
-                log.error(tree.serviceName.pos(), Errors.ServiceDefinitionIsInner(service));
+            //find provider factory:
+            MethodSymbol factory = factoryMethod(impl);
+            if (factory != null) {
+                Type returnType = factory.type.getReturnType();
+                if (!types.isSubtype(returnType, st)) {
+                    log.error(tree.implName.pos(), Errors.ServiceImplementationProviderReturnMustBeSubtypeOfServiceInterface);
+                }
             } else {
-                MethodSymbol constr = noArgsConstructor(impl);
-                if (constr == null) {
-                    log.error(tree.implName.pos(), Errors.ServiceImplementationDoesntHaveANoArgsConstructor(impl));
-                } else if ((constr.flags() & PUBLIC) == 0) {
-                    log.error(tree.implName.pos(), Errors.ServiceImplementationNoArgsConstructorNotPublic(impl));
+                if (!types.isSubtype(it, st)) {
+                    log.error(tree.implName.pos(), Errors.ServiceImplementationMustBeSubtypeOfServiceInterface);
+                } else if ((impl.flags() & ABSTRACT) != 0) {
+                    log.error(tree.implName.pos(), Errors.ServiceImplementationIsAbstract(impl));
+                } else if (impl.isInner()) {
+                    log.error(tree.implName.pos(), Errors.ServiceImplementationIsInner(impl));
+                } else if (service.isInner()) {
+                    log.error(tree.serviceName.pos(), Errors.ServiceDefinitionIsInner(service));
+                } else {
+                    MethodSymbol constr = noArgsConstructor(impl);
+                    if (constr == null) {
+                        log.error(tree.implName.pos(), Errors.ServiceImplementationDoesntHaveANoArgsConstructor(impl));
+                    } else if ((constr.flags() & PUBLIC) == 0) {
+                        log.error(tree.implName.pos(), Errors.ServiceImplementationNoArgsConstructorNotPublic(impl));
+                    }
                 }
             }
             if (st.hasTag(CLASS) && it.hasTag(CLASS)) {

@@ -103,6 +103,7 @@ public class Names {
     public final Name length;
     public final Name next;
     public final Name ordinal;
+    public final Name provider;
     public final Name serialVersionUID;
     public final Name toString;
     public final Name value;
@@ -262,6 +263,7 @@ public class Names {
         length = fromString("length");
         next = fromString("next");
         ordinal = fromString("ordinal");
+        provider = fromString("provider");
         serialVersionUID = fromString("serialVersionUID");
         toString = fromString("toString");
         value = fromString("value");
