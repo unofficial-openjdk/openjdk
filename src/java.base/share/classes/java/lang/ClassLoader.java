@@ -1408,9 +1408,6 @@ public abstract class ClassLoader {
      * can be accessed by class code in a way that is independent of the
      * location of the code.
      *
-     * Resources in a named module are private to that module. This method does
-     * not find resources in named modules.
-     *
      * <p> The name of a resource is a {@code /}-separated path name that
      * identifies the resource.
      *
@@ -1421,6 +1418,12 @@ public abstract class ClassLoader {
      * If the evaluation results in an {@code IOException} then the I/O
      * exception is wrapped in an {@link UncheckedIOException} that is then
      * thrown.
+     *
+     * <p> Resources in named modules are subject to the encapsulation rules
+     * specified by {@link Module#getResourceAsStream Module.getResourceAsStream}.
+     * Additionally, and except for the special case where the resource has a
+     * name ending with "{@code .class}", this method will only find resources in
+     * packages of named modules when the package is exported-private. </p>
      *
      * @apiNote When overriding this method it is recommended that an
      * implementation ensures that any delegation is consistent with the {@link
