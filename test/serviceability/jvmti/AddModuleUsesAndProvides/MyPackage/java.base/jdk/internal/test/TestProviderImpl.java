@@ -21,10 +21,11 @@
  * questions.
  */
 
-#include <jni.h>
+package jdk.internal.test;
 
-JNIEXPORT jobject JNICALL
-Java_GetModule_callGetModule(JNIEnv *env, jclass unused, jclass clazz) {
-    jobject res = (jobject)((*env)->GetModule(env, clazz));
-    return res;
+import java.lang.TestProvider;
+
+public class TestProviderImpl implements TestProvider {
+    public TestProviderImpl() { }
 }
+

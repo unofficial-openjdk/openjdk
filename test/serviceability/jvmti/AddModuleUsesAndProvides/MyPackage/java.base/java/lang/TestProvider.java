@@ -21,10 +21,12 @@
  * questions.
  */
 
-#include <jni.h>
+package java.lang;
 
-JNIEXPORT jobject JNICALL
-Java_GetModule_callGetModule(JNIEnv *env, jclass unused, jclass clazz) {
-    jobject res = (jobject)((*env)->GetModule(env, clazz));
-    return res;
+import java.util.ServiceLoader;
+
+public interface TestProvider {
+    public static Iterable<TestProvider> providers() {
+        return ServiceLoader.load(TestProvider.class);
+    }
 }
