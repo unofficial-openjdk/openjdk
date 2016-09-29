@@ -177,7 +177,7 @@ public class ModulePathTest extends ModuleTestBase {
                 .run()
                 .writeAll();
 
-        Path moduleJar = base.resolve("m1.jar");
+        Path moduleJar = base.resolve("a.jar");
         new JarTask(tb, moduleJar)
           .baseDir(jarClasses)
           .files("p/CC.class")
@@ -190,7 +190,7 @@ public class ModulePathTest extends ModuleTestBase {
 
         new JavacTask(tb, Task.Mode.CMDLINE)
                 .outdir(classes)
-                .options("--module-path", moduleJar.toString(), "--add-modules", "m1")
+                .options("--module-path", moduleJar.toString(), "--add-modules", "a")
                 .files(findJavaFiles(src))
                 .run()
                 .writeAll();

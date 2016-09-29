@@ -527,6 +527,16 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         @DefinedBy(Api.COMPILER_TREE)
         public Kind getKind() { return Kind.COMPILATION_UNIT; }
 
+        public JCModuleDecl getModuleDecl() {
+            for (JCTree tree : defs) {
+                if (tree.hasTag(MODULEDEF)) {
+                    return (JCModuleDecl) tree;
+                }
+            }
+
+            return null;
+        }
+
         @DefinedBy(Api.COMPILER_TREE)
         public JCPackageDecl getPackage() {
             // PackageDecl must be the first entry if it exists
@@ -2619,11 +2629,16 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     }
 
     public static class JCModuleDecl extends JCTree implements ModuleTree {
+        public List<JCAnnotation> annotations;
+        public boolean weak;
         public JCExpression qualId;
         public List<JCDirective> directives;
         public ModuleSymbol sym;
 
-        protected JCModuleDecl(JCExpression qualId, List<JCDirective> directives) {
+        protected JCModuleDecl(List<JCAnnotation> annotations, boolean weak,
+                JCExpression qualId, List<JCDirective> directives) {
+            this.annotations = annotations;
+            this.weak = weak;
             this.qualId = qualId;
             this.directives = directives;
         }
@@ -2634,6 +2649,16 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         @Override @DefinedBy(Api.COMPILER_TREE)
         public Kind getKind() {
             return Kind.MODULE;
+        }
+
+        @Override @DefinedBy(Api.COMPILER_TREE)
+        public List<? extends AnnotationTree> getAnnotations() {
+            return annotations;
+        }
+
+        @Override @DefinedBy(Api.COMPILER_TREE)
+        public boolean isWeak() {
+            return weak;
         }
 
         @Override @DefinedBy(Api.COMPILER_TREE)
@@ -2659,17 +2684,24 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
     public static class JCExports extends JCDirective
             implements ExportsTree {
-        public JCExpression qualid;
+        public JCExpression qualid; // null for default
+        public boolean isPrivate;
         public List<JCExpression> moduleNames;
         public ExportsDirective directive;
 
-        protected JCExports(JCExpression qualId, List<JCExpression> moduleNames) {
+        protected JCExports(JCExpression qualId, boolean isPrivate, List<JCExpression> moduleNames) {
             this.qualid = qualId;
+            this.isPrivate = isPrivate;
             this.moduleNames = moduleNames;
         }
 
         @Override
         public void accept(Visitor v) { v.visitExports(this); }
+
+        @Override @DefinedBy(Api.COMPILER_TREE)
+        public boolean isPrivate() {
+            return isPrivate;
+        }
 
         @Override @DefinedBy(Api.COMPILER_TREE)
         public Kind getKind() {
@@ -2738,12 +2770,14 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
     public static class JCRequires extends JCDirective
             implements RequiresTree {
-        public boolean isPublic;
+        public boolean isTransitive;
+        public boolean isStaticPhase;
         public JCExpression moduleName;
         public RequiresDirective directive;
 
-        protected JCRequires(boolean isPublic, JCExpression moduleName) {
-            this.isPublic = isPublic;
+        protected JCRequires(boolean isTransitive, boolean isStaticPhase, JCExpression moduleName) {
+            this.isTransitive = isTransitive;
+            this.isStaticPhase = isStaticPhase;
             this.moduleName = moduleName;
         }
 
@@ -2761,8 +2795,13 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         }
 
         @Override @DefinedBy(Api.COMPILER_TREE)
-        public boolean isPublic() {
-            return isPublic;
+        public boolean isTransitive() {
+            return isTransitive;
+        }
+
+        @Override @DefinedBy(Api.COMPILER_TREE)
+        public boolean isStatic() {
+            return isStaticPhase;
         }
 
         @Override @DefinedBy(Api.COMPILER_TREE)
@@ -2946,10 +2985,10 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         JCAnnotation Annotation(JCTree annotationType, List<JCExpression> args);
         JCModifiers Modifiers(long flags, List<JCAnnotation> annotations);
         JCErroneous Erroneous(List<? extends JCTree> errs);
-        JCModuleDecl ModuleDef(JCExpression qualId, List<JCDirective> directives);
-        JCExports Exports(JCExpression qualId, List<JCExpression> moduleNames);
+        JCModuleDecl ModuleDef(List<JCAnnotation> annotations, boolean weak, JCExpression qualId, List<JCDirective> directives);
+        JCExports Exports(JCExpression qualId, boolean isPrivate, List<JCExpression> moduleNames);
         JCProvides Provides(JCExpression serviceName, JCExpression implName);
-        JCRequires Requires(boolean isPublic, JCExpression qualId);
+        JCRequires Requires(boolean isTransitive, boolean isStaticPhase, JCExpression qualId);
         JCUses Uses(JCExpression qualId);
         LetExpr LetExpr(List<JCVariableDecl> defs, JCExpression expr);
     }

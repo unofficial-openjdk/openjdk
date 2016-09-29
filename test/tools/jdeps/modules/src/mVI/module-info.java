@@ -21,13 +21,13 @@
  * questions.
  */
 
-package p7;
+module mVI {
+    requires unsafe;
 
-// Only use classes in unsafe and m6 modules with no
-// direct or indirect dependency on sun.misc.Unsafe
-public class Main {
-    public static void main(String... args) {
-        p6.safe.Lib.doit();
-        org.safe.Lib.doit();
-    }
+    // no dependency on sun.misc.Unsafe directly or indirectly
+    exports p6.safe;
+
+    // direct dependency on org.unsafe
+    // hence indirect dependency on sun.misc.Unsafe
+    exports p6.indirect;
 }

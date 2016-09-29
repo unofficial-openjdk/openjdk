@@ -21,10 +21,9 @@
  * questions.
  */
 
-module m3 {
-    requires public java.sql;
-    requires public m2;
-    requires java.logging;   // TODO: --gen-module-info to do transitive reduction
-    requires public m1;
-    exports p3;
+module mVII {
+    // only use classes that have no direct or indirect dependency
+    // to sun.misc.Unsafe
+    requires unsafe;
+    requires mVI;
 }

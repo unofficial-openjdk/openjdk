@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,12 +36,16 @@ import java.io.IOException;
  *  deletion without notice.</b>
  */
 public class Module_attribute extends Attribute {
-    public static final int ACC_PUBLIC    =   0x20;
-    public static final int ACC_SYNTHETIC = 0x1000;
-    public static final int ACC_MANDATED  = 0x8000;
+    public static final int ACC_TRANSITIVE      =   0x10;
+    public static final int ACC_STATIC_PHASE    =   0x20;
+    public static final int ACC_WEAK            =   0x20;
+    public static final int ACC_REFLECTION      =   0x80;
+    public static final int ACC_SYNTHETIC       = 0x1000;
+    public static final int ACC_MANDATED        = 0x8000;
 
     Module_attribute(ClassReader cr, int name_index, int length) throws IOException {
         super(name_index, length);
+        module_flags = cr.readUnsignedShort();
         requires_count = cr.readUnsignedShort();
         requires = new RequiresEntry[requires_count];
         for (int i = 0; i < requires_count; i++)
@@ -61,11 +65,13 @@ public class Module_attribute extends Attribute {
     }
 
     public Module_attribute(int name_index,
+            int module_flags,
             RequiresEntry[] requires,
             ExportsEntry[] exports,
             int[] uses,
             ProvidesEntry[] provides) {
         super(name_index, 2);
+        this.module_flags = module_flags;
         requires_count = requires.length;
         this.requires = requires;
         exports_count = exports.length;
@@ -87,6 +93,7 @@ public class Module_attribute extends Attribute {
         return visitor.visitModule(this, data);
     }
 
+    public final int module_flags;
     public final int requires_count;
     public final RequiresEntry[] requires;
     public final int exports_count;
@@ -120,14 +127,16 @@ public class Module_attribute extends Attribute {
     public static class ExportsEntry {
         ExportsEntry(ClassReader cr) throws IOException {
             exports_index = cr.readUnsignedShort();
+            exports_flags = cr.readUnsignedShort();
             exports_to_count = cr.readUnsignedShort();
             exports_to_index = new int[exports_to_count];
             for (int i = 0; i < exports_to_count; i++)
                 exports_to_index[i] = cr.readUnsignedShort();
         }
 
-        public ExportsEntry(int index, int[] to) {
+        public ExportsEntry(int index, int flags, int[] to) {
             this.exports_index = index;
+            this.exports_flags = flags;
             this.exports_to_count = to.length;
             this.exports_to_index = to;
         }
@@ -137,6 +146,7 @@ public class Module_attribute extends Attribute {
         }
 
         public final int exports_index;
+        public final int exports_flags;
         public final int exports_to_count;
         public final int[] exports_to_index;
     }
