@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016 SAP SE. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,30 +21,27 @@
  * questions.
  */
 
+#ifndef JAVA_MD_AIX_H
+#define JAVA_MD_AIX_H
+
 /*
- * @test
- * @bug 6505888
- * @summary Tests CheckedRandomAccessList encoding
- * @author Sergey Malenkov
+ * Very limited AIX port of dladdr() for libjli.so.
+ *
+ * We try to mimick dladdr(3) on Linux (see http://linux.die.net/man/3/dladdr)
+ * dladdr(3) is not POSIX but a GNU extension, and is not available on AIX.
+ *
+ * We only support Dl_info.dli_fname here as this is the only thing that is
+ * used of it by libjli.so. A more comprehensive port of dladdr can be found
+ * in the hotspot implementation which is not available at this place, though.
  */
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+typedef struct {
+  const char *dli_fname; /* file path of loaded library */
+  void *dli_fbase;       /* unsupported */
+  const char *dli_sname; /* unsupported */
+  void *dli_saddr;       /* unsupported */
+} Dl_info;
 
-public final class java_util_Collections_CheckedRandomAccessList extends AbstractTest<List<String>> {
-    public static void main(String[] args) {
-        new java_util_Collections_CheckedRandomAccessList().test(true);
-    }
+int dladdr(void *addr, Dl_info *info);
 
-    protected List<String> getObject() {
-        List<String> list = new ArrayList<String>();
-        list.add("string");
-        return Collections.checkedList(list, String.class);
-    }
-
-    protected List<String> getAnotherObject() {
-        List<String> list = new ArrayList<String>();
-        return Collections.checkedList(list, String.class);
-    }
-}
+#endif /* JAVA_MD_AIX_H */

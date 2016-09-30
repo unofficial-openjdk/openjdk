@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,29 +21,12 @@
  * questions.
  */
 
-/*
- * @test
- * @bug 6505888
- * @summary Tests CheckedCollection encoding
- * @author Sergey Malenkov
- */
+import java.lang.instrument.Instrumentation;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+class SimpleAgent {
 
-public final class java_util_Collections_CheckedCollection extends AbstractTest<Collection<String>> {
-    public static void main(String[] args) {
-        new java_util_Collections_CheckedCollection().test(true);
+    public static void premain(String args, Instrumentation inst) {
+        System.out.println("in premain");
     }
 
-    protected Collection<String> getObject() {
-        List<String> list = Collections.singletonList("string");
-        return Collections.checkedCollection(list, String.class);
-    }
-
-    protected Collection<String> getAnotherObject() {
-        List<String> list = Collections.emptyList();
-        return Collections.checkedCollection(list, String.class);
-    }
 }

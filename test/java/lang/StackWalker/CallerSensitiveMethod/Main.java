@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,26 +23,13 @@
 
 /*
  * @test
- * @bug 6505888
- * @summary Tests CheckedSet encoding
- * @author Sergey Malenkov
+ * @bug 8157464
+ * @summary Basic test for StackWalker.getCallerClass()
+ * @library src
+ * @build java.base/java.util.CSM csm/*
+ * @run main/othervm csm/jdk.test.CallerSensitiveTest
+ * @run main/othervm csm/jdk.test.CallerSensitiveTest sm
  */
-
-import java.util.Collections;
-import java.util.Set;
-
-public final class java_util_Collections_CheckedSet extends AbstractTest<Set<String>> {
-    public static void main(String[] args) {
-        new java_util_Collections_CheckedSet().test(true);
-    }
-
-    protected Set<String> getObject() {
-        Set<String> set = Collections.singleton("string");
-        return Collections.checkedSet(set, String.class);
-    }
-
-    protected Set<String> getAnotherObject() {
-        Set<String> set = Collections.emptySet();
-        return Collections.checkedSet(set, String.class);
-    }
+public class Main {
 }
+
