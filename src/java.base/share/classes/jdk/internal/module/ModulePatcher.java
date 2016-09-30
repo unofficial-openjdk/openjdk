@@ -159,21 +159,19 @@ public final class ModulePatcher {
                     // is not supported by the boot class loader
                     try (JarFile jf = new JarFile(file.toFile())) {
                         jf.stream()
-                          .filter(e -> e.getName().endsWith(".class"))
                           .map(e -> toPackageName(file, e))
-                          .filter(pn -> pn.length() > 0)
+                          .filter(Checks::isJavaIdentifier)
                           .forEach(packages::add);
                     }
 
                 } else if (Files.isDirectory(file)) {
 
-                    // exploded directory
+                    // exploded directory without following sym links
                     Path top = file;
                     Files.find(top, Integer.MAX_VALUE,
-                            ((path, attrs) -> attrs.isRegularFile() &&
-                                    path.toString().endsWith(".class")))
+                               ((path, attrs) -> attrs.isRegularFile()))
                             .map(path -> toPackageName(top, path))
-                            .filter(pn -> pn.length() > 0)
+                            .filter(Checks::isJavaIdentifier)
                             .forEach(packages::add);
 
                 }
@@ -537,7 +535,7 @@ public final class ModulePatcher {
         Path entry = top.relativize(file);
         Path parent = entry.getParent();
         if (parent == null) {
-            return warnUnnamedPackage(top, entry.toString());
+            return warnIfModuleInfo(top, entry.toString());
         } else {
             return parent.toString().replace(File.separatorChar, '.');
         }
@@ -557,14 +555,15 @@ public final class ModulePatcher {
         String name = entry.getName();
         int index = name.lastIndexOf("/");
         if (index == -1) {
-            return warnUnnamedPackage(file, name);
+            return warnIfModuleInfo(file, name);
         } else {
             return name.substring(0, index).replace('/', '.');
         }
     }
 
-    private static String warnUnnamedPackage(Path file, String e) {
-        System.err.println("WARNING: " + e + " not allowed in patch: " + file);
+    private static String warnIfModuleInfo(Path file, String e) {
+        if (e.equals("module-info.class"))
+            System.err.println("WARNING: " + e + " ignored in patch: " + file);
         return "";
     }
 
