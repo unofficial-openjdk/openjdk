@@ -1974,6 +1974,22 @@ public final class Class<T> implements java.io.Serializable,
         return method;
     }
 
+    /**
+     * Returns a {@code Method} object that reflects the specified public
+     * member method of the class or interface represented by this
+     * {@code Class} object.
+     *
+     * @param name the name of the method
+     * @param parameterTypes the list of parameters
+     * @return the {@code Method} object that matches the specified
+     *         {@code name} and {@code parameterTypes}; {@code null}
+     *         if the method is not found or the name is
+     *         "&lt;init&gt;"or "&lt;clinit&gt;".
+     */
+    Method getMethodOrNull(String name, Class<?>... parameterTypes) {
+        return getMethod0(name, parameterTypes, true);
+    }
+
 
     /**
      * Returns a {@code Constructor} object that reflects the specified
@@ -3283,7 +3299,7 @@ public final class Class<T> implements java.io.Serializable,
         return (res == null ? res : getReflectionFactory().copyMethod(res));
     }
 
-    Method getMethod0(String name, Class<?>[] parameterTypes, boolean includeStaticMethods) {
+    private Method getMethod0(String name, Class<?>[] parameterTypes, boolean includeStaticMethods) {
         MethodArray interfaceCandidates = new MethodArray(2);
         Method res =  privateGetMethodRecursive(name, parameterTypes, includeStaticMethods, interfaceCandidates);
         if (res != null)

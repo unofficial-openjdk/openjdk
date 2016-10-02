@@ -1989,8 +1989,8 @@ public final class System {
     private static void setJavaLangAccess() {
         // Allow privileged classes outside of java.lang
         SharedSecrets.setJavaLangAccess(new JavaLangAccess() {
-            public Method getMethod(Class<?> klass, String name, Class<?>... parameterTypes) {
-                return klass.getMethod0(name, parameterTypes, true);
+            public Method getMethodOrNull(Class<?> klass, String name, Class<?>... parameterTypes) {
+                return klass.getMethodOrNull(name, parameterTypes);
             }
             public jdk.internal.reflect.ConstantPool getConstantPool(Class<?> klass) {
                 return klass.getConstantPool();

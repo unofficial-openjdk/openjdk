@@ -49,7 +49,7 @@ public interface JavaLangAccess {
      * member method of the given class. Returns {@code null} if the
      * method is not defined.
      */
-    Method getMethod(Class<?> klass, String name, Class<?>... parameterTypes);
+    Method getMethodOrNull(Class<?> klass, String name, Class<?>... parameterTypes);
 
     /** Return the constant pool for a class. */
     ConstantPool getConstantPool(Class<?> klass);

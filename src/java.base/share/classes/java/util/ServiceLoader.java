@@ -651,7 +651,7 @@ public final class ServiceLoader<S>
         private Method findStaticProviderMethod(Class<?> clazz) {
             Method method = null;
             try {
-                method = LANG_ACCESS.getMethod(clazz, "provider");
+                method = LANG_ACCESS.getMethodOrNull(clazz, "provider");
             } catch (Throwable x) {
                 fail(service, "Unable to get public provider() method", x);
             }
