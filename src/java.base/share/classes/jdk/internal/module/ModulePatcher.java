@@ -50,6 +50,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.stream.Stream;
 
 import jdk.internal.loader.Resource;
 import jdk.internal.misc.JavaLangModuleAccess;
@@ -379,6 +380,15 @@ public final class ModulePatcher {
         }
 
         @Override
+        public Stream<String> list() throws IOException {
+            Stream<String> s = delegate().list();
+            for (ResourceFinder finder : finders) {
+                s = Stream.concat(s, finder.list());
+            }
+            return s.distinct();
+        }
+
+        @Override
         public void close() throws IOException {
             closeAll(finders);
             delegate().close();
@@ -391,6 +401,7 @@ public final class ModulePatcher {
      */
     private static interface ResourceFinder extends Closeable {
         Resource find(String name) throws IOException;
+        Stream<String> list() throws IOException;
     }
 
 
@@ -450,6 +461,13 @@ public final class ModulePatcher {
                     return (size > Integer.MAX_VALUE) ? -1 : (int) size;
                 }
             };
+        }
+
+        @Override
+        public Stream<String> list() throws IOException {
+            return jf.stream()
+                    .filter(e -> !e.isDirectory())
+                    .map(JarEntry::getName);
         }
     }
 
@@ -524,6 +542,15 @@ public final class ModulePatcher {
                     return (size > Integer.MAX_VALUE) ? -1 : (int)size;
                 }
             };
+        }
+
+        @Override
+        public Stream<String> list() throws IOException {
+            return Files.find(dir, Integer.MAX_VALUE,
+                              (path, attrs) -> attrs.isRegularFile())
+                    .map(f -> dir.relativize(f)
+                                 .toString()
+                                 .replace(File.separatorChar, '/'));
         }
     }
 

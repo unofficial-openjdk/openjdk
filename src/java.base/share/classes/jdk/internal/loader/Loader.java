@@ -58,6 +58,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 
 /**
@@ -623,6 +624,10 @@ public final class Loader extends SecureClassLoader {
         @Override
         public Optional<URI> find(String name) {
             return Optional.empty();
+        }
+        @Override
+        public Stream<String> list() {
+            return Stream.empty();
         }
         @Override
         public void close() {

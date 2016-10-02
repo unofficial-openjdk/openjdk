@@ -56,12 +56,12 @@ import java.util.jar.Manifest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import jdk.internal.module.Checks;
 import jdk.internal.perf.PerfCounter;
+import jdk.internal.util.jar.VersionedStream;
 
 
 /**
@@ -452,8 +452,9 @@ class ModulePath implements ModuleFinder {
             builder.version(vs);
 
         // scan the names of the entries in the JAR file
-        Map<Boolean, Set<String>> map = jarEntryNames(jf)
-                .filter(e -> !e.endsWith("/"))
+        Map<Boolean, Set<String>> map = VersionedStream.stream(jf)
+                .filter(e -> !e.isDirectory())
+                .map(JarEntry::getName)
                 .collect(Collectors.partitioningBy(e -> e.startsWith(SERVICES_PREFIX),
                                                    Collectors.toSet()));
 
@@ -541,58 +542,10 @@ class ModulePath implements ModuleFinder {
         return mn;
     }
 
-    /**
-     * Returns a stream of the names of the entries in a JAR file. When the
-     * JAR file is a multi-release JAR then the stream includes the names of
-     * entries in the versioned section when those entries are applicable
-     * to the release version. Suppose this ModulePath was created with a
-     * a release version of 10. In that case, the stream will include the
-     * names of entries in META-INF/versions/10 and META-INF/versions/9.
-     * The return stream may contain duplicates.
-     */
-    private Stream<String> jarEntryNames(JarFile jf) {
-        if (jf.isMultiRelease()) {
-            return jf.stream()
-                    .map(JarEntry::getName)
-                    .flatMap(name -> {
-                        if (name.startsWith(VERSIONS_PREFIX))
-                            name = toExternalEntryName(name);
-                        return (name != null) ? Stream.of(name) : Stream.empty();
-                    });
-        } else {
-            return jf.stream()
-                    .map(JarEntry::getName)
-                    .filter(name -> !name.startsWith(VERSIONS_PREFIX));
-        }
-    }
-
-    /**
-     * Given the name of an entry in the versioned section of JAR file,
-     * returns the entry name, minus the META-INF/versions/N/ prefix, if
-     * the entry is applicable to the release version that this ModulePath
-     * was created with.
-     */
-    private String toExternalEntryName(String name) {
-        int prefixLen = VERSIONS_PREFIX.length();
-        if (name.length() > prefixLen) {
-            String tail = name.substring(prefixLen);
-            int index = tail.indexOf('/');
-            if (index > 0) {
-                String vs = tail.substring(0, index);
-                try {
-                    int v = Integer.parseInt(vs);
-                    if (v > 8 && v <= releaseVersion.major()) {
-                        return tail.substring(index+1);
-                    }
-                } catch (NumberFormatException ignore) { }
-            }
-        }
-        return null;
-    }
-
     private Set<String> jarPackages(JarFile jf) {
-        return jarEntryNames(jf)
-                .filter(e -> !e.endsWith("/"))
+        return VersionedStream.stream(jf)
+                .filter(e -> !e.isDirectory())
+                .map(JarEntry::getName)
                 .map(this::toPackageName)
                 .flatMap(Optional::stream)
                 .collect(Collectors.toSet());
