@@ -60,7 +60,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ResolveMethodTest {
-    private static final Unsafe UNSAFE = Utils.getUnsafe();
+    private static final Unsafe UNSAFE = Unsafe.getUnsafe();
 
     public static void main(String args[]) {
         ResolveMethodTest test = new ResolveMethodTest();

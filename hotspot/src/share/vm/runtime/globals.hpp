@@ -1596,6 +1596,10 @@ public:
   product(bool, AlwaysPreTouch, false,                                      \
           "Force all freshly committed pages to be pre-touched")            \
                                                                             \
+  product(size_t, PreTouchParallelChunkSize, 1 * G,                         \
+          "Per-thread chunk size for parallel memory pre-touch.")           \
+          range(1, SIZE_MAX / 2)                                            \
+                                                                            \
   product_pd(size_t, CMSYoungGenPerWorker,                                  \
           "The maximum size of young gen chosen by default per GC worker "  \
           "thread available")                                               \
@@ -3016,9 +3020,6 @@ public:
   product(intx, TypeProfileWidth, 2,                                        \
           "Number of receiver types to record in call/cast profile")        \
           range(0, 8)                                                       \
-                                                                            \
-  experimental(intx, MethodProfileWidth, 0,                                 \
-          "Number of methods to record in call profile")                    \
                                                                             \
   develop(intx, BciProfileWidth,      2,                                    \
           "Number of return bci's to record in ret profile")                \

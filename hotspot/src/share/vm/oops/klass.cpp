@@ -431,6 +431,12 @@ void Klass::clean_weak_klass_links(BoolObjectClosure* is_alive, bool clean_alive
     if (clean_alive_klasses && current->is_instance_klass()) {
       InstanceKlass* ik = InstanceKlass::cast(current);
       ik->clean_weak_instanceklass_links(is_alive);
+
+      // JVMTI RedefineClasses creates previous versions that are not in
+      // the class hierarchy, so process them here.
+      while ((ik = ik->previous_versions()) != NULL) {
+        ik->clean_weak_instanceklass_links(is_alive);
+      }
     }
   }
 }
@@ -524,7 +530,7 @@ void Klass::restore_unshareable_info(ClassLoaderData* loader_data, Handle protec
       InstanceKlass* ik = (InstanceKlass*) k;
       module_entry = ik->module();
     } else {
-      module_entry = ModuleEntryTable::javabase_module();
+      module_entry = ModuleEntryTable::javabase_moduleEntry();
     }
     // Obtain java.lang.reflect.Module, if available
     Handle module_handle(THREAD, ((module_entry != NULL) ? JNIHandles::resolve(module_entry->module()) : (oop)NULL));

@@ -31,13 +31,12 @@
  */
 
 import java.lang.reflect.Field;
-import jdk.test.lib.Utils;
 import jdk.internal.misc.Unsafe;
 import static jdk.test.lib.Asserts.*;
 
 public class GetPutObject {
     public static void main(String args[]) throws Exception {
-        Unsafe unsafe = Utils.getUnsafe();
+        Unsafe unsafe = Unsafe.getUnsafe();
         Test t = new Test();
         Object o = new Object();
         Field field = Test.class.getField("o");

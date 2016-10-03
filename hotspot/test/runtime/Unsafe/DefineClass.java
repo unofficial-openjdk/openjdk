@@ -34,13 +34,12 @@
 import java.security.ProtectionDomain;
 import java.io.InputStream;
 import jdk.test.lib.InMemoryJavaCompiler;
-import jdk.test.lib.Utils;
 import jdk.internal.misc.Unsafe;
 import static jdk.test.lib.Asserts.*;
 
 public class DefineClass {
     public static void main(String args[]) throws Exception {
-        Unsafe unsafe = Utils.getUnsafe();
+        Unsafe unsafe = Unsafe.getUnsafe();
         TestClassLoader classloader = new TestClassLoader();
         ProtectionDomain pd = new ProtectionDomain(null, null);
 
