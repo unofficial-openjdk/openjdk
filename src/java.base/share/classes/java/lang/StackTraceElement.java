@@ -25,7 +25,19 @@
 
 package java.lang;
 
+import jdk.internal.loader.BuiltinClassLoader;
+import jdk.internal.misc.SharedSecrets;
+import jdk.internal.module.ModuleHashes;
+
+import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleFinder;
+import java.lang.reflect.Layer;
+import java.lang.reflect.Module;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * An element in a stack trace, as returned by {@link
@@ -366,9 +378,90 @@ public final class StackTraceElement implements java.io.Serializable {
 
         if (classOrLoaderModuleClassName instanceof Class) {
             Class<?> cls = (Class<?>)classOrLoaderModuleClassName;
-            classOrLoaderModuleClassName = cls.toLoaderModuleClassName();
+            classOrLoaderModuleClassName = toLoaderModuleClassName(cls);
         }
         return (String)classOrLoaderModuleClassName;
+    }
+
+    /**
+     * Returns <loader>/<module>/<fully-qualified-classname> string
+     * representation of the given class.
+     * <p>
+     * If the module is a non-upgradeable JDK module then omit
+     * its version string.
+     * <p>
+     * If the loader has no name, or if the loader is one of the built-in
+     * loaders (`boot`, `platform`, or `app`) then drop the first element
+     * (`<loader>/`).
+     * <p>
+     * If the first element has been dropped and the module is unnamed
+     * then drop the second element (`<module>/`).
+     * <p>
+     * If the first element is not dropped and the module is unnamed
+     * then drop `<module>`.
+     */
+    private static String toLoaderModuleClassName(Class<?> cls) {
+        ClassLoader loader = cls.getClassLoader0();
+        Module m = cls.getModule();
+
+        // First element - class loader name
+        String s = "";
+        if (loader != null && !(loader instanceof BuiltinClassLoader) &&
+            loader.getName() != null) {
+            s = loader.getName() + "/";
+        }
+
+        // Second element - module name and version
+        if (m != null && m.isNamed()) {
+            s = s.isEmpty() ? m.getName() : s + m.getName();
+            // drop version if it's JDK module tied with java.base,
+            // i.e. non-upgradeable
+            if (!HashedModules.contains(m)) {
+                Optional<ModuleDescriptor.Version> ov = m.getDescriptor().version();
+                if (ov.isPresent()) {
+                    String version = "@" + ov.get().toString();
+                    s = s.isEmpty() ? version : s + version;
+                }
+            }
+        }
+
+        // fully-qualified class name
+        return s.isEmpty() ? cls.getName() : s + "/" + cls.getName();
+    }
+
+    /*
+     * Finds JDK non-upgradeable modules, i.e. the modules that are
+     * included in the hashes in java.base.
+     */
+    private static class HashedModules {
+        static final Set<String> HASHED_MODULES = getHashedModuleNames();
+
+        static Set<String> getHashedModuleNames() {
+            Module javaBase = Layer.boot().findModule("java.base").get();
+            Optional<ModuleHashes> ohashes = SharedSecrets.getJavaLangModuleAccess()
+                .hashes(javaBase.getDescriptor());
+
+            if (ohashes.isPresent()) {
+                Set<String> names = new HashSet<>(ohashes.get().names());
+                names.add("java.base");
+                return names;
+            }
+
+            return Set.of();
+        }
+
+        /**
+         * Returns true if the module is in the boot layer and
+         * is tied to java.base.
+         *
+         * This method returns false when running on the exploded image
+         * since JDK modules are not hashed. They have no Version attribute
+         * and so "@<version>" part will be omitted anyway.
+         */
+        static boolean contains(Module m) {
+            return m.getLayer() == Layer.boot() &&
+                    HASHED_MODULES.contains(m.getName());
+        }
     }
 
     private static final long serialVersionUID = 6992337162326171013L;
