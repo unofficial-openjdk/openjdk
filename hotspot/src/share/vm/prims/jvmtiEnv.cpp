@@ -269,6 +269,15 @@ JvmtiEnv::AddModuleExports(jobject module, const char* pkg_name, jobject to_modu
   return JvmtiExport::add_module_exports(h_module, h_pkg, h_to_module, THREAD);
 } /* end AddModuleExports */
 
+// module - pre-checked for NULL
+// pkg_name - pre-checked for NULL
+// to_module - pre-checked for NULL
+jvmtiError
+JvmtiEnv::AddModuleExportsPrivate(jobject module, const char* pkg_name, jobject to_module) {
+  // not implemented yet
+  return JVMTI_ERROR_INTERNAL;
+} /* end AddModuleExportsPrivate */
+
 
 // module - pre-checked for NULL
 // service - pre-checked for NULL
@@ -741,18 +750,14 @@ JvmtiEnv::GetErrorName(jvmtiError error, char** name_ptr) {
 
 jvmtiError
 JvmtiEnv::SetVerboseFlag(jvmtiVerboseFlag flag, jboolean value) {
+  LogLevelType level = value == 0 ? LogLevel::Off : LogLevel::Info;
   switch (flag) {
   case JVMTI_VERBOSE_OTHER:
     // ignore
     break;
   case JVMTI_VERBOSE_CLASS:
-    if (value == 0) {
-      LogConfiguration::parse_log_arguments("stdout", "class+unload=off", NULL, NULL, NULL);
-      LogConfiguration::parse_log_arguments("stdout", "class+load=off", NULL, NULL, NULL);
-    } else {
-      LogConfiguration::parse_log_arguments("stdout", "class+load=info", NULL, NULL, NULL);
-      LogConfiguration::parse_log_arguments("stdout", "class+unload=info", NULL, NULL, NULL);
-    }
+    LogConfiguration::configure_stdout(level, false, LOG_TAGS(class, unload));
+    LogConfiguration::configure_stdout(level, false, LOG_TAGS(class, load));
     break;
   case JVMTI_VERBOSE_GC:
     if (value == 0) {

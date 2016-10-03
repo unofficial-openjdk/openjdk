@@ -30,6 +30,6 @@ module jdk.hotspot.agent {
     requires java.scripting;
 
     // RMI needs to serialize types in this package
-    exports dynamic sun.jvm.hotspot.debugger.remote to java.rmi;
+    exports sun.jvm.hotspot.debugger.remote to java.rmi;
 
 }
