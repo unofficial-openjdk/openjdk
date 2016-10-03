@@ -30,6 +30,7 @@ import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Version;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -61,6 +62,9 @@ final class Builder {
     final Set<Requires> requires;
     final Set<Exports> exports;
     final Map<String, Provides> provides;
+    boolean weak;
+    boolean automatic;
+    boolean synthetic;
     Set<String> packages;
     Set<String> uses;
     Version version;
@@ -71,13 +75,27 @@ final class Builder {
     String algorithm;
     Map<String, String> hashes;
 
-    Builder(String name, int reqs, int exports,
-            int provides, int packages) {
+    Builder(String name, int reqs, int exports, int provides) {
         this.name = name;
         this.requires = reqs > 0 ? new HashSet<>(reqs) : Collections.emptySet();
         this.exports  = exports > 0 ? new HashSet<>(exports) : Collections.emptySet();
         this.provides = provides > 0 ? new HashMap<>(provides) : Collections.emptyMap();
         this.uses = Collections.emptySet();
+    }
+
+    Builder weak(boolean value) {
+        this.weak = value;
+        return this;
+    }
+
+    Builder automatic(boolean value) {
+        this.automatic = value;
+        return this;
+    }
+
+    Builder synthetic(boolean value) {
+        this.synthetic = value;
+        return this;
     }
 
     /**
@@ -254,8 +272,9 @@ final class Builder {
         }
 
         return jlma.newModuleDescriptor(name,
-                                        false,    // automatic
-                                        false,    // assume not synthetic for now
+                                        weak,         // weak
+                                        automatic,    // automatic
+                                        synthetic,    // synthetic
                                         requires,
                                         uses,
                                         exports,

@@ -30,6 +30,7 @@
  * @author Sergey Malenkov
  * @library ../..
  * @modules java.desktop/sun.awt
+ * @modules java.desktop/javax.swing.plaf.basic:private
  */
 
 import sun.awt.AppContext;

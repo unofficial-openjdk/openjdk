@@ -31,15 +31,12 @@ import java.io.InputStream;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.IntSupplier;
-import java.util.stream.Collectors;
 
 import jdk.internal.misc.JavaLangModuleAccess;
 import jdk.internal.misc.SharedSecrets;
@@ -51,6 +48,7 @@ import jdk.internal.org.objectweb.asm.MethodVisitor;
 import jdk.internal.org.objectweb.asm.Opcodes;
 
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
+
 import jdk.tools.jlink.plugin.PluginException;
 import jdk.tools.jlink.plugin.ResourcePool;
 import jdk.tools.jlink.plugin.Plugin;
@@ -60,7 +58,7 @@ import jdk.tools.jlink.plugin.ResourcePoolEntry;
 
 /**
  * Jlink plugin to reconstitute module descriptors for system modules.
- * It will extend module-info.class with ConcealedPackages attribute,
+ * It will extend module-info.class with Packages attribute,
  * if not present. It also determines the number of packages of
  * the boot layer at link time.
  *
@@ -115,27 +113,27 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
         // generate the byte code to create ModuleDescriptors
         // skip parsing module-info.class and skip name check
         in.moduleView().modules().forEach(module -> {
-            Optional<ResourcePoolEntry> optData = module.findEntry("module-info.class");
-            if (! optData.isPresent()) {
+
+            ResourcePoolEntry data = module.findEntry("module-info.class").orElseThrow(
                 // automatic module not supported yet
-                throw new PluginException("module-info.class not found for " +
-                                          module.name() + " module");
-            }
-            ResourcePoolEntry data = optData.get();
+                () ->  new PluginException("module-info.class not found for " +
+                    module.name() + " module")
+            );
+
             assert module.name().equals(data.moduleName());
             try {
                 ByteArrayInputStream bain = new ByteArrayInputStream(data.contentBytes());
                 ModuleDescriptor md = ModuleDescriptor.read(bain);
                 validateNames(md);
 
+                Set<String> packages = module.packages();
                 ModuleDescriptorBuilder mbuilder = generator.module(md, module.packages());
-                int packages = md.exports().size() + md.conceals().size();
-                if (md.conceals().isEmpty() &&
-                        packages != module.packages().size()) {
-                    // add ConcealedPackages attribute if not exist
+
+                // add Packages attribute if not exist
+                if (md.packages().isEmpty() && packages.size() > 0) {
                     bain.reset();
                     ModuleInfoRewriter minfoWriter =
-                        new ModuleInfoRewriter(bain, mbuilder.conceals());
+                        new ModuleInfoRewriter(bain, module.packages());
                     // replace with the overridden version
                     data = data.copyWithContent(minfoWriter.getBytes());
                 }
@@ -163,14 +161,14 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
     }
 
     /*
-     * Add ConcealedPackages attribute
+     * Add Packages attribute
      */
     class ModuleInfoRewriter extends ByteArrayOutputStream {
         final ModuleInfoExtender extender;
-        ModuleInfoRewriter(InputStream in, Set<String> conceals) throws IOException {
+        ModuleInfoRewriter(InputStream in, Set<String> packages) throws IOException {
             this.extender = ModuleInfoExtender.newExtender(in);
-            // Add ConcealedPackages attribute
-            this.extender.conceals(conceals);
+            // Add Packages attribute
+            this.extender.packages(packages);
             this.extender.write(this);
         }
 
@@ -185,9 +183,11 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
             Checks.requireModuleName(req.name());
         }
         for (Exports e : md.exports()) {
-            Checks.requirePackageName(e.source());
+            String source = e.source();
+            if (source != null)
+                Checks.requirePackageName(e.source());
             if (e.isQualified())
-               e.targets().forEach(Checks::requireModuleName);
+                e.targets().forEach(Checks::requireModuleName);
         }
         for (Map.Entry<String, Provides> e : md.provides().entrySet()) {
             String service = e.getKey();
@@ -199,7 +199,7 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
         for (String service : md.uses()) {
             Checks.requireServiceTypeName(service);
         }
-        for (String pn : md.conceals()) {
+        for (String pn : md.packages()) {
             Checks.requirePackageName(pn);
         }
     }
@@ -438,6 +438,7 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
             static final String STRING_SIG = "(Ljava/lang/String;)" + BUILDER_TYPE;
             static final String STRING_STRING_SIG =
                 "(Ljava/lang/String;Ljava/lang/String;)" + BUILDER_TYPE;
+            static final String BOOLEAN_SIG = "(Z)" + BUILDER_TYPE;
 
             final ModuleDescriptor md;
             final Set<String> packages;
@@ -447,50 +448,9 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                 this.packages = packages;
             }
 
-            void newBuilder(String name, int reqs, int exports, int provides,
-                            int packages) {
-                mv.visitTypeInsn(NEW, MODULE_DESCRIPTOR_BUILDER);
-                mv.visitInsn(DUP);
-                mv.visitLdcInsn(name);
-                pushInt(initialCapacity(reqs));
-                pushInt(initialCapacity(exports));
-                pushInt(initialCapacity(provides));
-                pushInt(initialCapacity(packages));
-                mv.visitMethodInsn(INVOKESPECIAL, MODULE_DESCRIPTOR_BUILDER,
-                                   "<init>", "(Ljava/lang/String;IIII)V", false);
-                mv.visitVarInsn(ASTORE, BUILDER_VAR);
-                mv.visitVarInsn(ALOAD, BUILDER_VAR);
-            }
-
-            /*
-             * Returns the set of concealed packages from ModuleDescriptor, if present
-             * or compute it if the module does not have ConcealedPackages attribute
-             */
-            Set<String> conceals() {
-                Set<String> conceals = md.conceals();
-                if (conceals.isEmpty() && md.exports().size() != packages.size()) {
-                    Set<String> exports = md.exports().stream()
-                                            .map(Exports::source)
-                                            .collect(Collectors.toSet());
-                    conceals = packages.stream()
-                                       .filter(pn -> !exports.contains(pn))
-                                       .collect(Collectors.toSet());
-                }
-
-                if (conceals.size() + md.exports().size() != packages.size() &&
-                    // jdk.localedata may have concealed packages that don't exist
-                    !md.name().equals("jdk.localedata")) {
-                    throw new AssertionError(md.name() + ": conceals=" + conceals.size() +
-                            ", exports=" + md.exports().size() + ", packages=" + packages.size());
-                }
-                return conceals;
-            }
-
             void build() {
-                newBuilder(md.name(), md.requires().size(),
-                           md.exports().size(),
-                           md.provides().size(),
-                           packages.size());
+                // new jdk.internal.module.Builder
+                newBuilder();
 
                 // requires
                 for (ModuleDescriptor.Requires req : md.requires()) {
@@ -526,6 +486,45 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                 });
 
                 putModuleDescriptor();
+            }
+
+            void newBuilder() {
+                mv.visitTypeInsn(NEW, MODULE_DESCRIPTOR_BUILDER);
+                mv.visitInsn(DUP);
+                mv.visitLdcInsn(md.name());
+                pushInt(initialCapacity(md.requires().size()));
+                pushInt(initialCapacity(md.exports().size()));
+                pushInt(initialCapacity(md.provides().size()));
+                mv.visitMethodInsn(INVOKESPECIAL, MODULE_DESCRIPTOR_BUILDER,
+                    "<init>", "(Ljava/lang/String;III)V", false);
+                mv.visitVarInsn(ASTORE, BUILDER_VAR);
+                mv.visitVarInsn(ALOAD, BUILDER_VAR);
+
+                if (md.isWeak()) {
+                    setModuleBit("weak", true);
+                }
+                if (md.isAutomatic()) {
+                    setModuleBit("automatic", true);
+                }
+                if (md.isSynthetic()) {
+                    setModuleBit("synthetic", true);
+                }
+            }
+
+
+            /*
+             * Invoke Builder.<methodName>(boolean value)
+             */
+            void setModuleBit(String methodName, boolean value) {
+                mv.visitVarInsn(ALOAD, BUILDER_VAR);
+                if (value) {
+                    mv.visitInsn(ICONST_1);
+                } else {
+                    mv.visitInsn(ICONST_0);
+                }
+                mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
+                                   methodName, BOOLEAN_SIG, false);
+                mv.visitInsn(POP);
             }
 
             /*
@@ -627,7 +626,7 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
             }
 
             /*
-             * Invoke Builder.conceals(String pn)
+             * Invoke Builder.packages(String pn)
              */
             void packages(Set<String> packages) {
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
@@ -853,44 +852,66 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                         index = defaultVarIndex;
                     }
 
-                    if (elements.isEmpty()) {
-                        mv.visitMethodInsn(INVOKESTATIC, "java/util/Collections",
-                                           "emptySet",
-                                           "()Ljava/util/Set;",
-                                           false);
-                        mv.visitVarInsn(ASTORE, index);
-                    } else if (elements.size() == 1) {
-                        visitElement(elements.iterator().next(), mv);
-                        mv.visitMethodInsn(INVOKESTATIC, "java/util/Collections",
-                                           "singleton",
-                                           "(Ljava/lang/Object;)Ljava/util/Set;",
-                                           false);
-                        mv.visitVarInsn(ASTORE, index);
+                    if (linked && elements.size() > 1) {
+                        generateLinkedSet(index);
                     } else {
-                        String cn = linked ? "java/util/LinkedHashSet" : "java/util/HashSet";
-                        mv.visitTypeInsn(NEW, cn);
-                        mv.visitInsn(DUP);
-                        pushInt(initialCapacity(elements.size()));
-                        mv.visitMethodInsn(INVOKESPECIAL, cn, "<init>", "(I)V", false);
-
-                        mv.visitVarInsn(ASTORE, index);
-                        for (T t : elements) {
-                            mv.visitVarInsn(ALOAD, index);
-                            visitElement(t, mv);
-                            mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Set",
-                                               "add",
-                                               "(Ljava/lang/Object;)Z", true);
-                            mv.visitInsn(POP);
-                        }
-                        mv.visitVarInsn(ALOAD, index);
-                        mv.visitMethodInsn(INVOKESTATIC, "java/util/Collections",
-                                           "unmodifiableSet",
-                                           "(Ljava/util/Set;)Ljava/util/Set;",
-                                           false);
-                        mv.visitVarInsn(ASTORE, index);
+                        generateSetOf(index);
                     }
                 }
                 return index;
+            }
+
+            private void generateSetOf(int index) {
+                if (elements.size() <= 10) {
+                    // call Set.of(e1, e2, ...)
+                    StringBuilder sb = new StringBuilder("(");
+                    for (T t : elements) {
+                        sb.append("Ljava/lang/Object;");
+                        visitElement(t, mv);
+                    }
+                    sb.append(")Ljava/util/Set;");
+                    mv.visitMethodInsn(INVOKESTATIC, "java/util/Set",
+                            "of", sb.toString(), true);
+                } else {
+                    // call Set.of(E... elements)
+                    pushInt(elements.size());
+                    mv.visitTypeInsn(ANEWARRAY, "java/lang/String");
+                    int arrayIndex = 0;
+                    for (T t : elements) {
+                        mv.visitInsn(DUP);    // arrayref
+                        pushInt(arrayIndex);
+                        visitElement(t, mv);  // value
+                        mv.visitInsn(AASTORE);
+                        arrayIndex++;
+                    }
+                    mv.visitMethodInsn(INVOKESTATIC, "java/util/Set",
+                            "of", "([Ljava/lang/Object;)Ljava/util/Set;", true);
+                }
+                mv.visitVarInsn(ASTORE, index);
+            }
+
+            private void generateLinkedSet(int index) {
+                mv.visitTypeInsn(NEW, "java/util/LinkedHashSet");
+                mv.visitInsn(DUP);
+                pushInt(initialCapacity(elements.size()));
+                mv.visitMethodInsn(INVOKESPECIAL, "java/util/LinkedHashSet",
+                        "<init>", "(I)V", false);
+
+                mv.visitVarInsn(ASTORE, index);
+                for (T t : elements) {
+                    mv.visitVarInsn(ALOAD, index);
+                    visitElement(t, mv);
+                    mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Set",
+                            "add",
+                            "(Ljava/lang/Object;)Z", true);
+                    mv.visitInsn(POP);
+                }
+                mv.visitVarInsn(ALOAD, index);
+                mv.visitMethodInsn(INVOKESTATIC, "java/util/Collections",
+                        "unmodifiableSet",
+                        "(Ljava/util/Set;)Ljava/util/Set;",
+                        false);
+                mv.visitVarInsn(ASTORE, index);
             }
         }
 

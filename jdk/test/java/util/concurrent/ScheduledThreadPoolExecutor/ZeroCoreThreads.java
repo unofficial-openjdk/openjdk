@@ -36,11 +36,11 @@
  * @bug 8022642 8065320 8129861
  * @summary Ensure relative sanity when zero core threads
  * @library /lib/testlibrary/
+ * @modules java.base/java.util.concurrent:private
  */
 
 import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.lang.reflect.Field;
 import java.util.concurrent.BlockingQueue;

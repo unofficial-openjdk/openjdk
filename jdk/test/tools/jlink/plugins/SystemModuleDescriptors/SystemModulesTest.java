@@ -58,17 +58,16 @@ public class SystemModulesTest {
     }
 
     private void testModuleDescriptor(ModuleDescriptor md) {
-        assertUnmodifiable(md.conceals(), "conceal");
         assertUnmodifiable(md.packages(), "package");
         assertUnmodifiable(md.requires(),
-                           jlma.newRequires(Set.of(Requires.Modifier.PUBLIC), "require"));
+                           jlma.newRequires(Set.of(Requires.Modifier.TRANSITIVE), "require"));
         for (Requires req : md.requires()) {
-            assertUnmodifiable(req.modifiers(), Requires.Modifier.PUBLIC);
+            assertUnmodifiable(req.modifiers(), Requires.Modifier.TRANSITIVE);
         }
 
         assertUnmodifiable(md.exports(), jlma.newExports(Set.of(), "export", Set.of()));
         for (Exports exp : md.exports()) {
-            assertUnmodifiable(exp.modifiers(), Exports.Modifier.DYNAMIC);
+            assertUnmodifiable(exp.modifiers(), Exports.Modifier.PRIVATE);
         }
 
         assertUnmodifiable(md.uses(), "use");

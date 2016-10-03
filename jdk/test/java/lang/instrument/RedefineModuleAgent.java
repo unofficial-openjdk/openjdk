@@ -41,8 +41,9 @@ public class RedefineModuleAgent {
     static void redefineModule(Module module,
                                Set<Module> extraReads,
                                Map<String, Set<Module>> extraExports,
+                               Map<String, Set<Module>> extraExportsPrivate,
                                Set<Class<?>> extraUses,
                                Map<Class<?>, Set<Class<?>>> extraProvides) {
-        inst.redefineModule(module, extraReads, extraExports, extraUses, extraProvides);
+        inst.redefineModule(module, extraReads, extraExports, extraExportsPrivate, extraUses, extraProvides);
     }
 }

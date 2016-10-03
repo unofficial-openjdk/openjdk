@@ -23,7 +23,7 @@
 /*
  * @test
  * @bug 6673164 6552334 8077102
- * @modules java.security.jgss/sun.security.krb5
+ * @modules java.security.jgss/sun.security.krb5:private
  * @run main/othervm DnsFallback
  * @summary fix dns_fallback parse error, and use dns by default
  */

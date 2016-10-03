@@ -115,15 +115,16 @@ module java.base {
     // additional qualified exports may be inserted at build time
     // see make/gensrc/GenModuleInfo.gmk
 
-    // CORBA serialization needs reflective access
-    exports dynamic sun.util.calendar to
-        java.corba;
-
     exports com.sun.security.ntlm to
         java.security.sasl;
     exports jdk.internal.jimage to
         jdk.jlink;
     exports jdk.internal.jimage.decompressor to
+        jdk.jlink;
+    exports jdk.internal.loader to
+        java.instrument,
+        java.logging,
+        jdk.jartool,
         jdk.jlink;
     exports jdk.internal.logger to
         java.logging;
@@ -143,8 +144,6 @@ module java.base {
         jdk.scripting.nashorn;
     exports jdk.internal.org.objectweb.asm.signature to
         jdk.scripting.nashorn;
-    exports jdk.internal.loader to
-        java.instrument;
     exports jdk.internal.math to
         java.desktop;
     exports jdk.internal.module to
@@ -166,6 +165,7 @@ module java.base {
         jdk.charsets,
         jdk.compiler,
         jdk.jartool,
+        jdk.jdeps,
         jdk.jlink,
         jdk.net,
         jdk.scripting.nashorn,
@@ -189,7 +189,8 @@ module java.base {
         jdk.unsupported,
         jdk.vm.ci;
     exports jdk.internal.util.jar to
-        jdk.jartool;
+        jdk.jartool,
+        jdk.jdeps;
     exports jdk.internal.vm to
         java.management,
         jdk.jvmstat;

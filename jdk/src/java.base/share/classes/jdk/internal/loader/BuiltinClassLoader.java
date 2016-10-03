@@ -29,6 +29,8 @@ import java.io.File;
 import java.io.FilePermission;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleReader;
 import java.net.MalformedURLException;
@@ -53,6 +55,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
+import java.util.stream.Stream;
 
 import jdk.internal.module.ModulePatcher.PatchedModuleReader;
 import jdk.internal.misc.VM;
@@ -116,7 +119,7 @@ public class BuiltinClassLoader
             if (mref.location().isPresent()) {
                 try {
                     url = mref.location().get().toURL();
-                } catch (MalformedURLException e) { }
+                } catch (MalformedURLException | IllegalArgumentException e) { }
             }
             this.loader = loader;
             this.mref = mref;
@@ -144,9 +147,9 @@ public class BuiltinClassLoader
     /**
      * Create a new instance.
      */
-    BuiltinClassLoader(BuiltinClassLoader parent, URLClassPath ucp) {
+    BuiltinClassLoader(BuiltinClassLoader parent, String name, URLClassPath ucp) {
         // ensure getParent() returns null when the parent is the boot loader
-        super(parent == null || parent == ClassLoaders.bootLoader() ? null : parent);
+        super(name, parent == null || parent == ClassLoaders.bootLoader() ? null : parent);
 
         this.parent = parent;
         this.ucp = ucp;
@@ -262,13 +265,19 @@ public class BuiltinClassLoader
      */
     @Override
     public URL findResource(String name) {
-
-        // for .class resources then locate in module if possible
-        URL url = findClassResourceOrNull(name);
-
-        // search all modules
-        if (url == null) {
-            url = AccessController.doPrivileged(
+        String pn = ResourceHelper.getPackageName(name);
+        LoadedModule module = packageToModule.get(pn);
+        if (module != null) {
+            if (module.loader() == this && (name.endsWith(".class")
+                    || isExportedPrivate(module.mref(), pn))) {
+                try {
+                    return findResource(module.name(), name);
+                } catch (IOException ioe) {
+                    // ignore
+                }
+            }
+        } else {
+            URL url = AccessController.doPrivileged(
                 new PrivilegedAction<URL>() {
                     @Override
                     public URL run() {
@@ -279,11 +288,11 @@ public class BuiltinClassLoader
                         return null;
                     }
                 });
-        }
 
-        if (url != null) {
-            // check access before returning
-            return checkURL(url);
+            if (url != null) {
+                // check access before returning
+                return checkURL(url);
+            }
         }
 
         // search class path
@@ -299,13 +308,17 @@ public class BuiltinClassLoader
     public Enumeration<URL> findResources(String name) throws IOException {
         List<URL> checked = new ArrayList<>();
 
-        // for .class resources then locate in module if possible
-        URL url = findClassResourceOrNull(name);
-
-        if (url != null) {
-            // check access
-            if (checkURL(url) != null) {
-                checked.add(url);
+        String pn = ResourceHelper.getPackageName(name);
+        LoadedModule module = packageToModule.get(pn);
+        if (module != null) {
+            if (module.loader() == this && (name.endsWith(".class")
+                    || isExportedPrivate(module.mref(), pn))) {
+                try {
+                    URL url = findResource(module.name(), name);
+                    if (url != null) checked.add(url);
+                } catch (IOException ioe) {
+                    // ignore
+                }
             }
         } else {
             List<URL> result = AccessController.doPrivileged(
@@ -321,19 +334,19 @@ public class BuiltinClassLoader
                     }
                 });
 
-                // check access
-                for (URL u : result) {
-                    if (checkURL(u) != null) {
-                        checked.add(u);
-                    }
+            // check access
+            for (URL u : result) {
+                if (checkURL(u) != null) {
+                    checked.add(u);
                 }
+            }
         }
 
         if (ucp != null) {
             PrivilegedAction<Enumeration<URL>> pa = () -> ucp.findResources(name, false);
             Enumeration<URL> e = AccessController.doPrivileged(pa);
             while (e.hasMoreElements()) {
-                url = checkURL(e.nextElement());
+                URL url = checkURL(e.nextElement());
                 if (url != null) {
                     checked.add(url);
                 }
@@ -352,7 +365,7 @@ public class BuiltinClassLoader
         if (u != null) {
             try {
                 return u.toURL();
-            } catch (MalformedURLException e) { }
+            } catch (MalformedURLException | IllegalArgumentException e) { }
         }
         return null;
     }
@@ -367,27 +380,6 @@ public class BuiltinClassLoader
         } catch (IOException ignore) {
             return null;
         }
-    }
-
-    /**
-     * Returns the URL to a .class file in a module. Returns {@code null} if not
-     * a .class file in a module or an I/O error occurs.
-     */
-    private URL findClassResourceOrNull(String name) {
-        int len = name.length();
-        if (len > 6 && name.endsWith(".class")) {
-            int index = len - 6;
-            String cn = name.substring(0, index).replace("/", ".");
-            LoadedModule module = findLoadedModule(cn);
-            if (module != null) {
-                try {
-                    return findResource(module.name(), name);
-                } catch (IOException ioe) {
-                    // ignore
-                }
-            }
-        }
-        return null;
     }
 
     /**
@@ -587,20 +579,20 @@ public class BuiltinClassLoader
      */
     private Class<?> findClassOnClassPathOrNull(String cn) {
         return AccessController.doPrivileged(
-                new PrivilegedAction<Class<?>>() {
-                    public Class<?> run() {
-                        String path = cn.replace('.', '/').concat(".class");
-                        Resource res = ucp.getResource(path, false);
-                        if (res != null) {
-                            try {
-                                return defineClass(cn, res);
-                            } catch (IOException ioe) {
-                                // TBD on how I/O errors should be propagated
-                            }
+            new PrivilegedAction<Class<?>>() {
+                public Class<?> run() {
+                    String path = cn.replace('.', '/').concat(".class");
+                    Resource res = ucp.getResource(path, false);
+                    if (res != null) {
+                        try {
+                            return defineClass(cn, res);
+                        } catch (IOException ioe) {
+                            // TBD on how I/O errors should be propagated
                         }
-                        return null;
                     }
-                });
+                    return null;
+                }
+            });
     }
 
     /**
@@ -791,13 +783,13 @@ public class BuiltinClassLoader
                 sealBase = url;
         }
         return definePackage(pn,
-                             specTitle,
-                             specVersion,
-                             specVendor,
-                             implTitle,
-                             implVersion,
-                             implVendor,
-                             sealBase);
+                specTitle,
+                specVersion,
+                specVendor,
+                implTitle,
+                implVersion,
+                implVendor,
+                sealBase);
     }
 
     /**
@@ -879,10 +871,36 @@ public class BuiltinClassLoader
             return Optional.empty();
         }
         @Override
+        public Stream<String> list() {
+            return Stream.empty();
+        }
+        @Override
         public void close() {
             throw new InternalError("Should not get here");
         }
     };
+
+    /**
+     * Returns true if the given module exports-private the given package
+     * unconditionally.
+     *
+     * @implNote This method currently iterates over each of the module
+     * exports. This will be replaced once the ModuleDescriptor.Exports
+     * API is updated.
+     */
+    private boolean isExportedPrivate(ModuleReference mref, String pn) {
+        ModuleDescriptor descriptor = mref.descriptor();
+        if (descriptor.isWeak())
+            return true;
+        for (ModuleDescriptor.Exports e : descriptor.exports()) {
+            String source = e.source();
+            if (!e.isQualified() && source.equals(pn)
+                    && e.modifiers().contains(Exports.Modifier.PRIVATE)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     /**
      * Checks access to the given URL. We use URLClassPath for consistent

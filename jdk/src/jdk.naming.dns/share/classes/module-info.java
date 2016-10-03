@@ -27,7 +27,7 @@ module jdk.naming.dns {
     requires java.naming;
 
     // temporary export until NamingManager.getURLContext uses services
-    exports dynamic com.sun.jndi.url.dns to java.naming;
+    exports com.sun.jndi.url.dns to java.naming;
 
     provides javax.naming.spi.InitialContextFactory
         with com.sun.jndi.dns.DnsContextFactory;

@@ -35,6 +35,7 @@ import java.lang.instrument.Instrumentation;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -233,6 +234,7 @@ public class InstrumentationImpl implements Instrumentation {
     public void redefineModule(Module module,
                                Set<Module> extraReads,
                                Map<String, Set<Module>> extraExports,
+                               Map<String, Set<Module>> extraExportsPrivate,
                                Set<Class<?>> extraUses,
                                Map<Class<?>, Set<Class<?>>> extraProvides)
     {
@@ -245,20 +247,8 @@ public class InstrumentationImpl implements Instrumentation {
             throw new NullPointerException("'extraReads' contains null");
 
         // copy and check exports
-        Set<String> packages = Set.of(module.getPackages());
-        Map<String, Set<Module>> tmpExports = new HashMap<>();
-        for (Map.Entry<String, Set<Module>> e : extraExports.entrySet()) {
-            String pkg = e.getKey();
-            if (pkg == null)
-                throw new NullPointerException("package cannot be null");
-            if (!packages.contains(pkg))
-                throw new IllegalArgumentException(pkg + " not in module");
-            Set<Module> targets = new HashSet<>(e.getValue());
-            if (targets.contains(null))
-                throw new NullPointerException("set of targets cannot include null");
-            tmpExports.put(pkg, targets);
-        }
-        extraExports = tmpExports;
+        extraExports = cloneAndCheckExports(module, extraExports);
+        extraExportsPrivate = cloneAndCheckExports(module, extraExportsPrivate);
 
         // copy and check uses
         extraUses = new HashSet<>(extraUses);
@@ -297,6 +287,17 @@ public class InstrumentationImpl implements Instrumentation {
             }
         }
 
+        // update exports private
+        for (Map.Entry<String, Set<Module>> e : extraExportsPrivate.entrySet()) {
+            String pkg = e.getKey();
+            Set<Module> targets = e.getValue();
+            if (targets.isEmpty()) {
+                Modules.addExportsPrivateToAll(module, pkg);
+            } else {
+                targets.forEach(m -> Modules.addExportsPrivate(module, pkg, m));
+            }
+        }
+
         // update uses
         extraUses.forEach(service -> Modules.addUses(module, service));
 
@@ -306,6 +307,28 @@ public class InstrumentationImpl implements Instrumentation {
             Set<Class<?>> providers = e.getValue();
             providers.forEach(p -> Modules.addProvides(module, service, p));
         }
+    }
+
+    private Map<String, Set<Module>>
+        cloneAndCheckExports(Module module, Map<String, Set<Module>>  exports)
+    {
+        if (exports.isEmpty())
+            return Collections.emptyMap();
+
+        Map<String, Set<Module>> result = new HashMap<>();
+        Set<String> packages = Set.of(module.getPackages());
+        for (Map.Entry<String, Set<Module>> e : exports.entrySet()) {
+            String pkg = e.getKey();
+            if (pkg == null)
+                throw new NullPointerException("package cannot be null");
+            if (!packages.contains(pkg))
+                throw new IllegalArgumentException(pkg + " not in module");
+            Set<Module> targets = new HashSet<>(e.getValue());
+            if (targets.contains(null))
+                throw new NullPointerException("set of targets cannot include null");
+            result.put(pkg, targets);
+        }
+        return result;
     }
 
 

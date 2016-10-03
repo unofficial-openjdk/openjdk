@@ -24,7 +24,7 @@
 /*
  * @test
  * @bug 4351212
- * @modules java.desktop/sun.font
+ * @modules java.desktop/sun.font:private
  * @summary Verify that new getLCIDFromLocale method works
  */
 

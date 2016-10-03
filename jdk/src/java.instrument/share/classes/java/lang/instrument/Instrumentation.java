@@ -680,11 +680,13 @@ public interface Instrumentation {
      * package exported to the module by another module that it reads. </p>
      *
      * <p> The {@code extraExports} parameter is the map of additional packages to
-     * export. The map key is the fully-qualified name of the package as
-     * defined in section 6.5.3 of <cite>The Java&trade; Language Specification
-     * </cite>, for example, {@code "java.lang"}. The map value is the set of
-     * modules that the package should be exported too. If the set is empty then
-     * the package is exported unconditionally. </p>
+     * export. The {@code extraExportsPrivate} parameter is the map of additional
+     * packages to export "private". In both cases, the map key is the
+     * fully-qualified name of the package as defined in section 6.5.3 of
+     * <cite>The Java&trade; Language Specification </cite>, for example, {@code
+     * "java.lang"}. The map value is the set of modules that the package should
+     * be exported too. If the set is empty then the package is exported
+     * unconditionally. </p>
      *
      * <p> The {@code extraProvides} parameter is the additional service providers
      * for the module to provide. The map key is the service type. The map value
@@ -697,14 +699,15 @@ public interface Instrumentation {
      * @param module the module to redefine
      * @param extraReads the set of additional modules to read
      * @param extraExports the additional packages to export
+     * @param extraExportsPrivate the additional packages to export "private"
      * @param extraUses the set of additional services to use
      * @param extraProvides the additional services to provide
      *
      * @throws IllegalArgumentException
-     *         If {@code extraExports} contains a key that is not a package in
-     *         the module; if a value in the {@code extraProvides} map contains
-     *         a service provider type that is not a member of the module or an
-     *         implementation of the service
+     *         If {@code extraExports} or {@code extraExportsPrivate} contains
+     *         a key that is not a package in the module; if a value in the
+     *         {@code extraProvides} map contains a service provider type that
+     *         i snot a member of the module or an implementation of the service
      * @throws NullPointerException if any of the arguments are {@code null} or
      *         any of the Sets or Maps contains a {@code null} key or value
      *
@@ -713,6 +716,7 @@ public interface Instrumentation {
     void redefineModule(Module module,
                         Set<Module> extraReads,
                         Map<String, Set<Module>> extraExports,
+                        Map<String, Set<Module>> extraExportsPrivate,
                         Set<Class<?>> extraUses,
                         Map<Class<?>, Set<Class<?>>> extraProvides);
 }

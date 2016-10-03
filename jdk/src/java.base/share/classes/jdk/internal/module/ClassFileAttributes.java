@@ -37,6 +37,8 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
+import jdk.internal.misc.JavaLangModuleAccess;
+import jdk.internal.misc.SharedSecrets;
 import jdk.internal.org.objectweb.asm.Attribute;
 import jdk.internal.org.objectweb.asm.ByteVector;
 import jdk.internal.org.objectweb.asm.ClassReader;
@@ -60,6 +62,8 @@ public final class ClassFileAttributes {
      * }
      */
     public static class ModuleAttribute extends Attribute {
+        private static final JavaLangModuleAccess JLMA
+            = SharedSecrets.getJavaLangModuleAccess();
 
         private ModuleDescriptor descriptor;
 
@@ -80,9 +84,14 @@ public final class ClassFileAttributes {
                                  int codeOff,
                                  Label[] labels)
         {
-            ModuleDescriptor.Builder builder
-                = new ModuleDescriptor.Builder("xyzzy"); // Name never used
             ModuleAttribute attr = new ModuleAttribute();
+
+            // module_flags
+            int module_flags = cr.readUnsignedShort(off);
+            boolean weak = ((module_flags & ACC_WEAK) != 0);
+            off += 2;
+
+            ModuleDescriptor.Builder builder = JLMA.newBuilder("m", weak, false);
 
             // requires_count and requires[requires_count]
             int requires_count = cr.readUnsignedShort(off);
@@ -96,7 +105,7 @@ public final class ClassFileAttributes {
                 } else {
                     mods = new HashSet<>();
                     if ((flags & ACC_TRANSITIVE) != 0)
-                        mods.add(Requires.Modifier.PUBLIC);
+                        mods.add(Requires.Modifier.TRANSITIVE);
                     if ((flags & ACC_STATIC_PHASE) != 0)
                         mods.add(Requires.Modifier.STATIC);
                     if ((flags & ACC_SYNTHETIC) != 0)
@@ -123,8 +132,8 @@ public final class ClassFileAttributes {
                         mods = Collections.emptySet();
                     } else {
                         mods = new HashSet<>();
-                        if ((flags & ACC_DYNAMIC_PHASE) != 0)
-                            mods.add(Exports.Modifier.DYNAMIC);
+                        if ((flags & ACC_REFLECTION) != 0)
+                            mods.add(Exports.Modifier.PRIVATE);
                         if ((flags & ACC_SYNTHETIC) != 0)
                             mods.add(Exports.Modifier.SYNTHETIC);
                         if ((flags & ACC_MANDATED) != 0)
@@ -187,6 +196,14 @@ public final class ClassFileAttributes {
             assert descriptor != null;
             ByteVector attr = new ByteVector();
 
+            // module_flags
+            int module_flags = 0;
+            if (descriptor.isWeak())
+                module_flags |= ACC_WEAK;
+            if (descriptor.isSynthetic())
+                module_flags |= ACC_SYNTHETIC;
+            attr.putShort(module_flags);
+
             // requires_count
             attr.putShort(descriptor.requires().size());
 
@@ -194,7 +211,7 @@ public final class ClassFileAttributes {
             for (Requires md : descriptor.requires()) {
                 String dn = md.name();
                 int flags = 0;
-                if (md.modifiers().contains(Requires.Modifier.PUBLIC))
+                if (md.modifiers().contains(Requires.Modifier.TRANSITIVE))
                     flags |= ACC_TRANSITIVE;
                 if (md.modifiers().contains(Requires.Modifier.STATIC))
                     flags |= ACC_STATIC_PHASE;
@@ -208,7 +225,7 @@ public final class ClassFileAttributes {
             }
 
             // exports_count and exports[exports_count];
-            if (descriptor.exports().isEmpty()) {
+            if (descriptor.isWeak() || descriptor.exports().isEmpty()) {
                 attr.putShort(0);
             } else {
                 attr.putShort(descriptor.exports().size());
@@ -217,8 +234,8 @@ public final class ClassFileAttributes {
                     attr.putShort(cw.newUTF8(pkg));
 
                     int flags = 0;
-                    if (e.modifiers().contains(Exports.Modifier.DYNAMIC))
-                        flags |= ACC_DYNAMIC_PHASE;
+                    if (e.modifiers().contains(Exports.Modifier.PRIVATE))
+                        flags |= ACC_REFLECTION;
                     if (e.modifiers().contains(Exports.Modifier.SYNTHETIC))
                         flags |= ACC_SYNTHETIC;
                     if (e.modifiers().contains(Exports.Modifier.MANDATED))
@@ -269,44 +286,13 @@ public final class ClassFileAttributes {
     }
 
     /**
-     * Synthetic attribute.
-     */
-    static class SyntheticAttribute extends Attribute {
-        SyntheticAttribute() {
-            super(SYNTHETIC);
-        }
-
-        @Override
-        protected Attribute read(ClassReader cr,
-                                 int off,
-                                 int len,
-                                 char[] buf,
-                                 int codeOff,
-                                 Label[] labels)
-        {
-            return new SyntheticAttribute();
-        }
-
-        @Override
-        protected ByteVector write(ClassWriter cw,
-                                   byte[] code,
-                                   int len,
-                                   int maxStack,
-                                   int maxLocals)
-        {
-            ByteVector attr = new ByteVector();
-            return attr;
-        }
-    }
-
-    /**
-     * ConcealedPackages attribute.
+     * Packages attribute.
      *
      * <pre> {@code
      *
-     * ConcealedPackages_attribute {
+     * Packages_attribute {
      *   // index to CONSTANT_utf8_info structure in constant pool representing
-     *   // the string "ConcealedPackages"
+     *   // the string "Packages"
      *   u2 attribute_name_index;
      *   u4 attribute_length;
      *
@@ -318,15 +304,15 @@ public final class ClassFileAttributes {
      *
      * }</pre>
      */
-    public static class ConcealedPackagesAttribute extends Attribute {
+    public static class PackagesAttribute extends Attribute {
         private final Set<String> packages;
 
-        public ConcealedPackagesAttribute(Set<String> packages) {
-            super(CONCEALED_PACKAGES);
+        public PackagesAttribute(Set<String> packages) {
+            super(PACKAGES);
             this.packages = packages;
         }
 
-        public ConcealedPackagesAttribute() {
+        public PackagesAttribute() {
             this(null);
         }
 
@@ -350,7 +336,7 @@ public final class ClassFileAttributes {
                 off += 2;
             }
 
-            return new ConcealedPackagesAttribute(packages);
+            return new PackagesAttribute(packages);
         }
 
         @Override

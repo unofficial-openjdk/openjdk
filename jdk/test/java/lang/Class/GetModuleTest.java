@@ -31,7 +31,6 @@
  */
 
 import java.awt.Component;
-import java.lang.reflect.Field;
 import java.lang.reflect.Module;
 
 import jdk.internal.org.objectweb.asm.ClassWriter;
@@ -44,16 +43,7 @@ import static org.testng.Assert.*;
 
 public class GetModuleTest {
 
-    static final Unsafe U;
-    static {
-        try {
-            Field theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
-            theUnsafe.setAccessible(true);
-            U = (Unsafe) theUnsafe.get(null);
-        } catch (Exception e) {
-            throw new AssertionError(e);
-        }
-    }
+    private static final Unsafe U = Unsafe.getUnsafe();
 
     private static final Module TEST_MODULE = GetModuleTest.class.getModule();
 
@@ -101,11 +91,8 @@ public class GetModuleTest {
         return new Object[][] {
 
             { GetModuleTest.class,      null },
-            { GetModuleTest[].class,    null },
             { Object.class,             null },
-            { Object[].class,           null },
             { Component.class,          null },
-            { Component[].class,        null },
 
         };
     }
@@ -117,7 +104,7 @@ public class GetModuleTest {
     public void testGetModuleOnVMAnonymousClass(Class<?> hostClass, String ignore) {
 
         // choose a class name in the same package as the host class
-        String prefix = packageName(hostClass);
+        String prefix = hostClass.getPackageName();
         if (prefix.length() > 0)
             prefix = prefix.replace('.', '/') + "/";
         String className = prefix + "Anon";
@@ -134,17 +121,6 @@ public class GetModuleTest {
             = U.defineAnonymousClass(hostClass, classBytes, new Object[cpPoolSize]);
 
         assertTrue(anonClass.getModule() == hostClass.getModule());
-    }
-
-    private static String packageName(Class<?> c) {
-        if (c.isArray()) {
-            return packageName(c.getComponentType());
-        } else {
-            String name = c.getName();
-            int dot = name.lastIndexOf('.');
-            if (dot == -1) return "";
-            return name.substring(0, dot);
-        }
     }
 
     private static int constantPoolSize(byte[] classFile) {

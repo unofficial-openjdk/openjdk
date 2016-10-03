@@ -27,7 +27,7 @@
  * @summary Check that GarbageCollection notification are thrown by every GarbageCollectorMXBean
  * @author  Frederic Parain
  * @requires vm.opt.ExplicitGCInvokesConcurrent == null | vm.opt.ExplicitGCInvokesConcurrent == false
- * @modules java.management/sun.management
+ * @modules java.management/sun.management:private
  *          jdk.management
  * @run     main/othervm GarbageCollectionNotificationTest
  */

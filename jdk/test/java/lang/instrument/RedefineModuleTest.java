@@ -55,11 +55,13 @@ public class RedefineModuleTest {
     static void redefineModule(Module module,
                                Set<Module> extraReads,
                                Map<String, Set<Module>> extraExports,
+                               Map<String, Set<Module>> extraExportsPrivate,
                                Set<Class<?>> extraUses,
                                Map<Class<?>, Set<Class<?>>> extraProvides) {
         RedefineModuleAgent.redefineModule(module,
                                            extraReads,
                                            extraExports,
+                                           extraExportsPrivate,
                                            extraUses,
                                            extraProvides);
     }
@@ -76,7 +78,8 @@ public class RedefineModuleTest {
         assertFalse(baseModule.canRead(instrumentModule));
 
         // update java.base to read java.instrument
-        redefineModule(baseModule, Set.of(instrumentModule), Map.of(), Set.of(), Map.of());
+        Set<Module> extraReads = Set.of(instrumentModule);
+        redefineModule(baseModule, extraReads, Map.of(), Map.of(), Set.of(), Map.of());
         assertTrue(baseModule.canRead(instrumentModule));
     }
 
@@ -94,15 +97,48 @@ public class RedefineModuleTest {
 
         // update java.base to export jdk.internal.misc to an unnamed module
         Map<String, Set<Module>> extraExports = Map.of(pkg, Set.of(thisModule));
-        redefineModule(baseModule, Set.of(), extraExports, Set.of(), Map.of());
+        redefineModule(baseModule, Set.of(), extraExports, Map.of(), Set.of(), Map.of());
         assertFalse(baseModule.isExported(pkg));
         assertTrue(baseModule.isExported(pkg, thisModule));
+        assertFalse(baseModule.isExportedPrivate(pkg));
+        assertFalse(baseModule.isExportedPrivate(pkg, thisModule));
 
         // update java.base to export jdk.internal.misc unconditionally
         extraExports = Map.of(pkg, Set.of());
-        redefineModule(baseModule, Set.of(), extraExports, Set.of(), Map.of());
+        redefineModule(baseModule, Set.of(), extraExports, Map.of(), Set.of(), Map.of());
         assertTrue(baseModule.isExported(pkg));
         assertTrue(baseModule.isExported(pkg, thisModule));
+        assertFalse(baseModule.isExportedPrivate(pkg));
+        assertFalse(baseModule.isExportedPrivate(pkg, thisModule));
+    }
+
+    /**
+     * Use redefineModule to update java.base to export jdk.internal.loader
+     */
+    public void testAddExportsPrivate() {
+        Module baseModule = Object.class.getModule();
+        Module thisModule = this.getClass().getClassLoader().getUnnamedModule();
+        String pkg = "jdk.internal.loader";
+
+        // pre-conditions
+        assertFalse(baseModule.isExportedPrivate(pkg));
+        assertFalse(baseModule.isExportedPrivate(pkg, thisModule));
+
+        // update java.base to export private jdk.internal.loader to an unnamed module
+        Map<String, Set<Module>> extraExports = Map.of(pkg, Set.of(thisModule));
+        redefineModule(baseModule, Set.of(), Map.of(), extraExports, Set.of(), Map.of());
+        assertFalse(baseModule.isExported(pkg));
+        assertTrue(baseModule.isExported(pkg, thisModule));
+        assertFalse(baseModule.isExportedPrivate(pkg));
+        assertTrue(baseModule.isExportedPrivate(pkg, thisModule));
+
+        // update java.base to export private jdk.internal.misc unconditionally
+        extraExports = Map.of(pkg, Set.of());
+        redefineModule(baseModule, Set.of(), Map.of(), extraExports, Set.of(), Map.of());
+        assertTrue(baseModule.isExported(pkg));
+        assertTrue(baseModule.isExported(pkg, thisModule));
+        assertTrue(baseModule.isExportedPrivate(pkg));
+        assertTrue(baseModule.isExportedPrivate(pkg, thisModule));
     }
 
     /**
@@ -119,7 +155,7 @@ public class RedefineModuleTest {
         assertTrue(collect(ServiceLoader.load(Layer.boot(), service)).isEmpty());
 
         // update java.base to use TestProvider
-        redefineModule(baseModule, Set.of(), Map.of(), Set.of(service), Map.of());
+        redefineModule(baseModule, Set.of(), Map.of(), Map.of(), Set.of(service), Map.of());
         assertTrue(baseModule.canUse(service));
         assertTrue(collect(ServiceLoader.load(service)).isEmpty());
         assertTrue(collect(ServiceLoader.load(Layer.boot(), service)).isEmpty());
@@ -127,7 +163,7 @@ public class RedefineModuleTest {
         // update java.base to provide an implementation of TestProvider
         Class<?> type1 = Class.forName("jdk.internal.test.TestProviderImpl1");
         Map<Class<?>, Set<Class<?>>> extraProvides = Map.of(service, Set.of(type1));
-        redefineModule(baseModule, Set.of(), Map.of(), Set.of(), extraProvides);
+        redefineModule(baseModule, Set.of(), Map.of(), Map.of(), Set.of(), extraProvides);
 
         // invoke ServiceLoader from java.base to find providers
         Set<TestProvider> providers = collect(TestProvider.providers());
@@ -147,7 +183,7 @@ public class RedefineModuleTest {
         // update java.base to provide a second implementation of TestProvider
         Class<?> type2 = Class.forName("jdk.internal.test.TestProviderImpl2");
         extraProvides = Map.of(service, Set.of(type2));
-        redefineModule(baseModule, Set.of(), Map.of(), Set.of(), extraProvides);
+        redefineModule(baseModule, Set.of(), Map.of(), Map.of(), Set.of(), extraProvides);
 
         // invoke ServiceLoader from java.base to find providers
         providers = collect(TestProvider.providers());
@@ -192,7 +228,7 @@ public class RedefineModuleTest {
 
         // attempt to update java.base to export jdk.doesnotexist
         Map<String, Set<Module>> extraExports = Map.of(pkg, Set.of());
-        redefineModule(baseModule, Set.of(), extraExports, Set.of(), Map.of());
+        redefineModule(baseModule, Set.of(), extraExports, Map.of(), Set.of(), Map.of());
     }
 
     /**
@@ -212,7 +248,7 @@ public class RedefineModuleTest {
         // attempt to update java.base to provide MyProvider
         Map<Class<?>, Set<Class<?>>> extraProvides
             = Map.of(URLStreamHandlerProvider.class, Set.of(MyProvider.class));
-        redefineModule(baseModule, Set.of(), Map.of(), Set.of(), extraProvides);
+        redefineModule(baseModule, Set.of(), Map.of(), Map.of(), Set.of(), extraProvides);
     }
 
     /**
@@ -228,7 +264,7 @@ public class RedefineModuleTest {
 
         // attempt to update java.base to provide an implementation of TestProvider
         Map<Class<?>, Set<Class<?>>> extraProvides = Map.of(service, Set.of(impl));
-        redefineModule(baseModule, Set.of(), Map.of(), Set.of(), extraProvides);
+        redefineModule(baseModule, Set.of(), Map.of(), Map.of(), Set.of(), extraProvides);
     }
 
     /**
@@ -238,41 +274,53 @@ public class RedefineModuleTest {
         Module baseModule = Object.class.getModule();
 
         try {
-            redefineModule(null, Set.of(), Map.of(), Set.of(), Map.of());
+            redefineModule(null, Set.of(), Map.of(), Map.of(), Set.of(), Map.of());
             assertTrue(false);
         } catch (NullPointerException e) { }
 
         try {
-            redefineModule(baseModule, null, Map.of(), Set.of(), Map.of());
+            redefineModule(baseModule, null, Map.of(), Map.of(), Set.of(), Map.of());
             assertTrue(false);
         } catch (NullPointerException e) { }
 
         try {
-            redefineModule(baseModule, Set.of(), null, Set.of(), Map.of());
+            redefineModule(baseModule, Set.of(), null, Map.of(), Set.of(), Map.of());
             assertTrue(false);
         } catch (NullPointerException e) { }
 
         try {
-            redefineModule(baseModule, Set.of(), Map.of(), null, Map.of());
+            redefineModule(baseModule, Set.of(), Map.of(), null, Set.of(), Map.of());
             assertTrue(false);
         } catch (NullPointerException e) { }
 
         try {
-            redefineModule(baseModule, Set.of(), Map.of(), Set.of(), null);
+            redefineModule(baseModule, Set.of(), Map.of(), Map.of(), null, Map.of());
+            assertTrue(false);
+        } catch (NullPointerException e) { }
+
+        try {
+            redefineModule(baseModule, Set.of(), Map.of(), Map.of(), Set.of(), null);
             assertTrue(false);
         } catch (NullPointerException e) { }
 
         try {
             Set<Module> containsNull = new HashSet<>();
             containsNull.add(null);
-            redefineModule(baseModule, containsNull, Map.of(), Set.of(), Map.of());
+            redefineModule(baseModule, containsNull, Map.of(), Map.of(), Set.of(), Map.of());
             assertTrue(false);
         } catch (NullPointerException e) { }
 
         try {
             Map<String, Set<Module>> extraExports = new HashMap<>();
             extraExports.put(null, Set.of());
-            redefineModule(baseModule, Set.of(), extraExports, Set.of(), Map.of());
+            redefineModule(baseModule, Set.of(), extraExports, Map.of(), Set.of(), Map.of());
+            assertTrue(false);
+        } catch (NullPointerException e) { }
+
+        try {
+            Map<String, Set<Module>> extraExports = new HashMap<>();
+            extraExports.put(null, Set.of());
+            redefineModule(baseModule, Set.of(), Map.of(), extraExports, Set.of(), Map.of());
             assertTrue(false);
         } catch (NullPointerException e) { }
 
@@ -280,21 +328,21 @@ public class RedefineModuleTest {
             Set<Module> containsNull = new HashSet<>();
             containsNull.add(null);
             Map<String, Set<Module>> extraExports = Map.of("java.lang", containsNull);
-            redefineModule(baseModule, Set.of(), extraExports, Set.of(), Map.of());
+            redefineModule(baseModule, Set.of(), extraExports, Map.of(), Set.of(), Map.of());
             assertTrue(false);
         } catch (NullPointerException e) { }
 
         try {
             Set<Class<?>> containsNull = new HashSet<>();
             containsNull.add(null);
-            redefineModule(baseModule, Set.of(), Map.of(), containsNull, Map.of());
+            redefineModule(baseModule, Set.of(), Map.of(), Map.of(), containsNull, Map.of());
             assertTrue(false);
         } catch (NullPointerException e) { }
 
         try {
             Map<Class<?>, Set<Class<?>>> extraProvides = new HashMap<>();
             extraProvides.put(null, Set.of());
-            redefineModule(baseModule, Set.of(), Map.of(), Set.of(), extraProvides);
+            redefineModule(baseModule, Set.of(), Map.of(), Map.of(), Set.of(), extraProvides);
             assertTrue(false);
         } catch (NullPointerException e) { }
 
@@ -302,7 +350,7 @@ public class RedefineModuleTest {
             Set<Class<?>> containsNull = new HashSet<>();
             containsNull.add(null);
             Map<Class<?>, Set<Class<?>>> extraProvides = Map.of(TestProvider.class, containsNull);
-            redefineModule(baseModule, Set.of(), Map.of(), Set.of(), extraProvides);
+            redefineModule(baseModule, Set.of(), Map.of(), Map.of(), Set.of(), extraProvides);
             assertTrue(false);
         } catch (NullPointerException e) { }
     }

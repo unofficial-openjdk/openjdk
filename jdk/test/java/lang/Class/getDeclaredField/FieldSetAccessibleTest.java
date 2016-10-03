@@ -85,10 +85,6 @@ public class FieldSetAccessibleTest {
         for (Field f : c.getDeclaredFields()) {
             fieldCount.incrementAndGet();
             boolean expect = expectException;
-            if ((c == Module.class || c == AccessibleObject.class) &&
-                !Modifier.isPublic(f.getModifiers())) {
-                expect = true;
-            }
             try {
                 f.setAccessible(false);
                 f.setAccessible(true);

@@ -178,7 +178,7 @@ public final class Layer {
      * <ul>
      *
      *     <li><p> <em>Overlapping packages</em>: Two or more modules in the
-     *     configuration have the same package (exported or concealed). </p></li>
+     *     configuration have the same package. </p></li>
      *
      *     <li><p> <em>Split delegation</em>: The resulting class loader would
      *     need to delegate to more than one class loader in order to load types
@@ -204,7 +204,8 @@ public final class Layer {
      * @throws LayerInstantiationException
      *         If all modules cannot be defined to the same class loader for any
      *         of the reasons listed above or the layer cannot be created because
-     *         the configuration contains a module named "{@code java.base}"
+     *         the configuration contains a module named "{@code java.base}" or
+     *         a module with a package name starting with "{@code java.}"
      * @throws SecurityException
      *         If {@code RuntimePermission("createClassLoader")} or
      *         {@code RuntimePermission("getClassLoader")} is denied by
@@ -267,7 +268,8 @@ public final class Layer {
      *         for this layer
      * @throws LayerInstantiationException
      *         If the layer cannot be created because the configuration contains
-     *         a module named "{@code java.base}"
+     *         a module named "{@code java.base}" or a module with a package
+     *         name starting with "{@code java.}"
      * @throws SecurityException
      *         If {@code RuntimePermission("createClassLoader")} or
      *         {@code RuntimePermission("getClassLoader")} is denied by
@@ -296,16 +298,19 @@ public final class Layer {
      * modules in the given {@code Configuration} to the Java virtual machine.
      * Each module is mapped, by name, to its class loader by means of the
      * given function. The class loader delegation implemented by these class
-     * loaders must respect module readability. In addition, the caller needs
-     * to arrange that the class loaders are ready to load from these module
-     * before there are any attempts to load classes or resources.
+     * loaders must respect module readability. The class loaders should be
+     * {@link ClassLoader#registerAsParallelCapable parallel-capable} so as to
+     * avoid deadlocks during class loading. In addition, the entity creating
+     * a new layer with this method should arrange that the class loaders are
+     * ready to load from these module before there are any attempts to load
+     * classes or resources.
      *
      * <p> Creating a {@code Layer} can fail for the following reasons: </p>
      *
      * <ul>
      *
-     *     <li><p> Two or more modules with the same package (exported or
-     *     concealed) are mapped to the same class loader. </p></li>
+     *     <li><p> Two or more modules with the same package are mapped to the
+     *     same class loader. </p></li>
      *
      *     <li><p> A module is mapped to a class loader that already has a
      *     module of the same name defined to it. </p></li>
@@ -336,8 +341,14 @@ public final class Layer {
      *         for this layer
      * @throws LayerInstantiationException
      *         If creating the {@code Layer} fails for any of the reasons
-     *         listed above or the layer cannot be created because the
-     *         configuration contains a module named "{@code java.base}"
+     *         listed above, the layer cannot be created because the
+     *         configuration contains a module named "{@code java.base}",
+     *         a module with a package name starting with "{@code java.}" is
+     *         mapped to a class loader other than the {@link
+     *         ClassLoader#getPlatformClassLoader() platform class loader},
+     *         or the function to map a module name to a class loader returns
+     *         {@code null}
+     *
      * @throws SecurityException
      *         If {@code RuntimePermission("getClassLoader")} is denied by
      *         the security manager

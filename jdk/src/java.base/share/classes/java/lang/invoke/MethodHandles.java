@@ -3943,6 +3943,33 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
         return rtype;
     }
 
+    private static Class<?> foldArgumentChecks(int foldPos, MethodType targetType, MethodType combinerType, int ... argPos) {
+        int foldArgs = combinerType.parameterCount();
+        if (argPos.length != foldArgs) {
+            throw newIllegalArgumentException("combiner and argument map must be equal size", combinerType, argPos.length);
+        }
+        Class<?> rtype = combinerType.returnType();
+        int foldVals = rtype == void.class ? 0 : 1;
+        boolean ok = true;
+        for (int i = 0; i < foldArgs; i++) {
+            int arg = argPos[i];
+            if (arg < 0 || arg > targetType.parameterCount()) {
+                throw newIllegalArgumentException("arg outside of target parameterRange", targetType, arg);
+            }
+            if (combinerType.parameterType(i) != targetType.parameterType(arg)) {
+                throw newIllegalArgumentException("target argument type at position " + arg
+                        + " must match combiner argument type at index " + i + ": " + targetType
+                        + " -> " + combinerType + ", map: " + Arrays.toString(argPos));
+            }
+        }
+        if (ok && foldVals != 0 && combinerType.returnType() != targetType.parameterType(foldPos)) {
+            ok = false;
+        }
+        if (!ok)
+            throw misMatchedTypes("target and combiner types", targetType, combinerType);
+        return rtype;
+    }
+
     /**
      * Makes a method handle which adapts a target method handle,
      * by guarding it with a test, a boolean-valued method handle.
@@ -4341,10 +4368,11 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
         }
 
         // Step 4: fill in missing parameter types.
-        List<MethodHandle> finit = fillParameterTypes(init, commonSuffix);
-        List<MethodHandle> fstep = fillParameterTypes(step, commonParameterSequence);
-        List<MethodHandle> fpred = fillParameterTypes(pred, commonParameterSequence);
-        List<MethodHandle> ffini = fillParameterTypes(fini, commonParameterSequence);
+        // Also convert all handles to fixed-arity handles.
+        List<MethodHandle> finit = fixArities(fillParameterTypes(init, commonSuffix));
+        List<MethodHandle> fstep = fixArities(fillParameterTypes(step, commonParameterSequence));
+        List<MethodHandle> fpred = fixArities(fillParameterTypes(pred, commonParameterSequence));
+        List<MethodHandle> ffini = fixArities(fillParameterTypes(fini, commonParameterSequence));
 
         assert finit.stream().map(MethodHandle::type).map(MethodType::parameterList).
                 allMatch(pl -> pl.equals(commonSuffix));
@@ -4360,6 +4388,10 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
             int tpsize = targetParams.size();
             return pc < tpsize ? dropArguments0(h, pc, targetParams.subList(pc, tpsize)) : h;
         }).collect(Collectors.toList());
+    }
+
+    private static List<MethodHandle> fixArities(List<MethodHandle> hs) {
+        return hs.stream().map(MethodHandle::asFixedArity).collect(Collectors.toList());
     }
 
     /**
@@ -4860,7 +4892,8 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
         // target parameter list.
         cleanup = dropArgumentsToMatch(cleanup, (rtype == void.class ? 1 : 2), targetParamTypes, 0);
 
-        return MethodHandleImpl.makeTryFinally(target, cleanup, rtype, targetParamTypes);
+        // Use asFixedArity() to avoid unnecessary boxing of last argument for VarargsCollector case.
+        return MethodHandleImpl.makeTryFinally(target.asFixedArity(), cleanup.asFixedArity(), rtype, targetParamTypes);
     }
 
     /**
@@ -4949,6 +4982,27 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
         return result;
     }
 
+    /**
+     * As {@see foldArguments(MethodHandle, int, MethodHandle)}, but with the
+     * added capability of selecting the arguments from the targets parameters
+     * to call the combiner with. This allows us to avoid some simple cases of
+     * permutations and padding the combiner with dropArguments to select the
+     * right argument, which may ultimately produce fewer intermediaries.
+     */
+    static MethodHandle foldArguments(MethodHandle target, int pos, MethodHandle combiner, int ... argPositions) {
+        MethodType targetType = target.type();
+        MethodType combinerType = combiner.type();
+        Class<?> rtype = foldArgumentChecks(pos, targetType, combinerType, argPositions);
+        BoundMethodHandle result = target.rebind();
+        boolean dropResult = rtype == void.class;
+        LambdaForm lform = result.editor().foldArgumentsForm(1 + pos, dropResult, combinerType.basicType(), argPositions);
+        MethodType newType = targetType;
+        if (!dropResult) {
+            newType = newType.dropParameterTypes(pos, pos + 1);
+        }
+        result = result.copyWithExtendL(newType, lform, combiner);
+        return result;
+    }
 
     private static void checkLoop0(MethodHandle[][] clauses) {
         if (clauses == null || clauses.length == 0) {

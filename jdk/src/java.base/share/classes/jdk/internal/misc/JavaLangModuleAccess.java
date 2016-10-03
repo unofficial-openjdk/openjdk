@@ -39,6 +39,7 @@ import java.util.Collection;
 import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -49,6 +50,16 @@ import java.util.function.Supplier;
  */
 
 public interface JavaLangModuleAccess {
+
+    /**
+     * Creates a new builder with the given module name.
+     *
+     * @param weak
+     *        Indicates whether the module is weak
+     * @param strict
+     *        Indicates whether module names are checked or not
+     */
+    ModuleDescriptor.Builder newBuilder(String mn, boolean weak, boolean strict);
 
     /**
      * Returns a {@code ModuleDescriptor.Requires} of the given modifiers
@@ -91,6 +102,7 @@ public interface JavaLangModuleAccess {
      * Returns a new {@code ModuleDescriptor} instance.
      */
     ModuleDescriptor newModuleDescriptor(String name,
+                                         boolean weak,
                                          boolean automatic,
                                          boolean synthetic,
                                          Set<Requires> requires,
@@ -104,6 +116,11 @@ public interface JavaLangModuleAccess {
                                          String osVersion,
                                          Set<String> packages,
                                          ModuleHashes hashes);
+
+    /**
+     * Returns the object with the hashes of other modules
+     */
+    Optional<ModuleHashes> hashes(ModuleDescriptor descriptor);
 
     /**
      * Resolves a collection of root modules, with service binding
@@ -123,8 +140,10 @@ public interface JavaLangModuleAccess {
                                      Supplier<ModuleReader> readerSupplier);
 
     /**
-     * Returns the object with the hashes of other modules
+     * Creates a ModuleFinder for a module path.
      */
-    Optional<ModuleHashes> hashes(ModuleDescriptor descriptor);
+    ModuleFinder newModulePath(Runtime.Version version,
+                               boolean isLinkPhase,
+                               Path... entries);
 
 }

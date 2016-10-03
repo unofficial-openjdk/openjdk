@@ -50,7 +50,7 @@ final class ResourcePoolConfiguration {
         ModuleDescriptor md = mod.descriptor();
 
         // drop hashes
-        ModuleDescriptor.Builder builder = new ModuleDescriptor.Builder(md.name());
+        ModuleDescriptor.Builder builder = ModuleDescriptor.module(md.name());
         md.requires().stream()
           .forEach(builder::requires);
         md.exports().stream()
@@ -67,7 +67,7 @@ final class ResourcePoolConfiguration {
 
         mod.packages().stream()
            .filter(pn -> !exps.contains(pn))
-           .forEach(builder::conceals);
+           .forEach(builder::contains);
 
         md.version().ifPresent(builder::version);
         md.mainClass().ifPresent(builder::mainClass);

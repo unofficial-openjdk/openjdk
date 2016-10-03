@@ -32,13 +32,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
+import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Requires;
+import java.net.URI;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -52,47 +56,51 @@ import java.util.jar.Manifest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import jdk.internal.module.ConfigurableModuleFinder;
+import jdk.internal.module.Checks;
 import jdk.internal.perf.PerfCounter;
+import jdk.internal.util.jar.VersionedStream;
 
 
 /**
  * A {@code ModuleFinder} that locates modules on the file system by searching
  * a sequence of directories or packaged modules.
  *
- * The {@code ModuleFinder} can be configured to work in either the run-time
+ * The {@code ModuleFinder} can be created to work in either the run-time
  * or link-time phases. In both cases it locates modular JAR and exploded
- * modules. When configured for link-time then it additionally locates
+ * modules. When created for link-time then it additionally locates
  * modules in JMOD files.
  */
 
-class ModulePath implements ConfigurableModuleFinder {
+class ModulePath implements ModuleFinder {
     private static final String MODULE_INFO = "module-info.class";
+
+    // the version to use for multi-release modular JARs
+    private final Runtime.Version releaseVersion;
+
+    // true for the link phase (supports modules packaged in JMOD format)
+    private final boolean isLinkPhase;
 
     // the entries on this module path
     private final Path[] entries;
     private int next;
 
-    // true if in the link phase
-    private boolean isLinkPhase;
-
     // map of module name to module reference map for modules already located
     private final Map<String, ModuleReference> cachedModules = new HashMap<>();
 
-    ModulePath(Path... entries) {
+    ModulePath(Runtime.Version version, boolean isLinkPhase, Path... entries) {
+        this.releaseVersion = version;
+        this.isLinkPhase = isLinkPhase;
         this.entries = entries.clone();
         for (Path entry : this.entries) {
             Objects.requireNonNull(entry);
         }
     }
 
-    @Override
-    public void configurePhase(Phase phase) {
-        isLinkPhase = (phase == Phase.LINK_TIME);
+    ModulePath(Path... entries) {
+        this(JarFile.runtimeVersion(), false, entries);
     }
 
     @Override
@@ -237,9 +245,13 @@ class ModulePath implements ConfigurableModuleFinder {
                 if (mref != null) {
                     // can have at most one version of a module in the directory
                     String name = mref.descriptor().name();
-                    if (nameToReference.put(name, mref) != null) {
+                    ModuleReference previous = nameToReference.put(name, mref);
+                    if (previous != null) {
+                        String fn1 = fileName(mref);
+                        String fn2 = fileName(previous);
                         throw new FindException("Two versions of module "
-                                                  + name + " found in " + dir);
+                                                 + name + " found in " + dir
+                                                 + " (" + fn1 + " and " + fn2 + ")");
                     }
                 }
             }
@@ -292,14 +304,34 @@ class ModulePath implements ConfigurableModuleFinder {
     }
 
 
+    /**
+     * Returns a string with the file name of the module if possible.
+     * If the module location is not a file URI then return the URI
+     * as a string.
+     */
+    private String fileName(ModuleReference mref) {
+        URI uri = mref.location().orElse(null);
+        if (uri != null) {
+            if (uri.getScheme().equalsIgnoreCase("file")) {
+                Path file = Paths.get(uri);
+                return file.getFileName().toString();
+            } else {
+                return uri.toString();
+            }
+        } else {
+            return "<unknown>";
+        }
+    }
+
     // -- jmod files --
 
     private Set<String> jmodPackages(ZipFile zf) {
         return zf.stream()
-            .filter(e -> e.getName().startsWith("classes/") &&
-                    e.getName().endsWith(".class"))
-            .map(e -> toPackageName(e.getName().substring(8)))
-            .filter(pkg -> pkg.length() > 0) // module-info
+            .map(ZipEntry::getName)
+            .filter(e -> e.startsWith("classes/") && !e.endsWith("/"))
+            .map(e -> e.substring(8))
+            .map(this::toPackageName)
+            .flatMap(Optional::stream)
             .collect(Collectors.toSet());
     }
 
@@ -328,10 +360,11 @@ class ModulePath implements ConfigurableModuleFinder {
     // -- JAR files --
 
     private static final String SERVICES_PREFIX = "META-INF/services/";
+    private static final String VERSIONS_PREFIX = "META-INF/versions/";
 
     /**
-     * Returns a container with the service type corresponding to the name of
-     * a services configuration file.
+     * Returns the service type corresponding to the name of a services
+     * configuration file if it's a valid Java identifier.
      *
      * For example, if called with "META-INF/services/p.S" then this method
      * returns a container with the value "p.S".
@@ -343,7 +376,8 @@ class ModulePath implements ConfigurableModuleFinder {
             String prefix = cf.substring(0, index);
             if (prefix.equals(SERVICES_PREFIX)) {
                 String sn = cf.substring(index);
-                return Optional.of(sn);
+                if (Checks.isJavaIdentifier(sn))
+                    return Optional.of(sn);
             }
         }
         return Optional.empty();
@@ -371,8 +405,8 @@ class ModulePath implements ConfigurableModuleFinder {
      *
      * 1. The module name (and optionally the version) is derived from the file
      *    name of the JAR file
-     * 2. The packages of all .class files in the JAR file are exported
-     * 3. It has no module-private/concealed packages
+     * 2. All packages are exported-private
+     * 3. It has no non-exported packages
      * 4. The contents of any META-INF/services configuration files are mapped
      *    to "provides" declarations
      * 5. The Main-Class attribute in the main attributes of the JAR manifest
@@ -412,34 +446,34 @@ class ModulePath implements ConfigurableModuleFinder {
 
         // Builder throws IAE if module name is empty or invalid
         ModuleDescriptor.Builder builder
-            = new ModuleDescriptor.Builder(mn)
-                .automatic()
+            = ModuleDescriptor.automaticModule(mn)
                 .requires(Set.of(Requires.Modifier.MANDATED), "java.base");
         if (vs != null)
             builder.version(vs);
 
-        // scan the entries in the JAR file to locate the .class and service
-        // configuration file
-        Map<Boolean, Set<String>> map =
-            versionedStream(jf)
-              .map(JarEntry::getName)
-              .filter(s -> (s.endsWith(".class") ^ s.startsWith(SERVICES_PREFIX)))
-              .collect(Collectors.partitioningBy(s -> s.endsWith(".class"),
-                                                 Collectors.toSet()));
-        Set<String> classFiles = map.get(Boolean.TRUE);
-        Set<String> configFiles = map.get(Boolean.FALSE);
+        // scan the names of the entries in the JAR file
+        Map<Boolean, Set<String>> map = VersionedStream.stream(jf)
+                .filter(e -> !e.isDirectory())
+                .map(JarEntry::getName)
+                .collect(Collectors.partitioningBy(e -> e.startsWith(SERVICES_PREFIX),
+                                                   Collectors.toSet()));
 
-        // all packages are exported
-        classFiles.stream()
-            .map(c -> toPackageName(c))
-            .distinct()
-            .forEach(builder::exports);
+        Set<String> resources = map.get(Boolean.FALSE);
+        Set<String> configFiles = map.get(Boolean.TRUE);
+
+        // all packages are exported-private
+        Set<Exports.Modifier> mods = EnumSet.of(Exports.Modifier.PRIVATE);
+        resources.stream()
+                .map(this::toPackageName)
+                .flatMap(Optional::stream)
+                .distinct()
+                .forEach(pn -> builder.exports(mods, pn));
 
         // map names of service configuration files to service names
         Set<String> serviceNames = configFiles.stream()
-            .map(this::toServiceName)
-            .flatMap(Optional::stream)
-            .collect(Collectors.toSet());
+                .map(this::toServiceName)
+                .flatMap(Optional::stream)
+                .collect(Collectors.toSet());
 
         // parse each service configuration file
         for (String sn : serviceNames) {
@@ -476,6 +510,7 @@ class ModulePath implements ConfigurableModuleFinder {
      */
     private static class Patterns {
         static final Pattern DASH_VERSION = Pattern.compile("-(\\d+(\\.|$))");
+        static final Pattern TRAILING_VERSION = Pattern.compile("(\\.|\\d)*$");
         static final Pattern NON_ALPHANUM = Pattern.compile("[^A-Za-z0-9]");
         static final Pattern REPEATING_DOTS = Pattern.compile("(\\.)(\\1)+");
         static final Pattern LEADING_DOTS = Pattern.compile("^\\.");
@@ -486,6 +521,9 @@ class ModulePath implements ConfigurableModuleFinder {
      * Clean up candidate module name derived from a JAR file name.
      */
     private static String cleanModuleName(String mn) {
+        // drop trailing version from name
+        mn = Patterns.TRAILING_VERSION.matcher(mn).replaceAll("");
+
         // replace non-alphanumeric
         mn = Patterns.NON_ALPHANUM.matcher(mn).replaceAll(".");
 
@@ -504,25 +542,13 @@ class ModulePath implements ConfigurableModuleFinder {
         return mn;
     }
 
-    private Stream<JarEntry> versionedStream(JarFile jf) {
-        if (jf.isMultiRelease()) {
-            // a stream of JarEntries whose names are base names and whose
-            // contents are from the corresponding versioned entries in
-            // a multi-release jar file
-            return jf.stream().map(JarEntry::getName)
-                    .filter(name -> !name.startsWith("META-INF/versions/"))
-                    .map(jf::getJarEntry);
-        } else {
-            return jf.stream();
-        }
-    }
-
     private Set<String> jarPackages(JarFile jf) {
-        return versionedStream(jf)
-            .filter(e -> e.getName().endsWith(".class"))
-            .map(e -> toPackageName(e.getName()))
-            .filter(pkg -> pkg.length() > 0)   // module-info
-            .collect(Collectors.toSet());
+        return VersionedStream.stream(jf)
+                .filter(e -> !e.isDirectory())
+                .map(JarEntry::getName)
+                .map(this::toPackageName)
+                .flatMap(Optional::stream)
+                .collect(Collectors.toSet());
     }
 
     /**
@@ -537,7 +563,7 @@ class ModulePath implements ConfigurableModuleFinder {
         try (JarFile jf = new JarFile(file.toFile(),
                                       true,               // verify
                                       ZipFile.OPEN_READ,
-                                      JarFile.runtimeVersion()))
+                                      releaseVersion))
         {
             ModuleDescriptor md;
             JarEntry entry = jf.getJarEntry(MODULE_INFO);
@@ -567,11 +593,11 @@ class ModulePath implements ConfigurableModuleFinder {
     private Set<String> explodedPackages(Path dir) {
         try {
             return Files.find(dir, Integer.MAX_VALUE,
-                              ((path, attrs) -> attrs.isRegularFile() &&
-                               path.toString().endsWith(".class")))
-                .map(path -> toPackageName(dir.relativize(path)))
-                .filter(pkg -> pkg.length() > 0)   // module-info
-                .collect(Collectors.toSet());
+                              ((path, attrs) -> attrs.isRegularFile()))
+                    .map(path -> dir.relativize(path))
+                    .map(this::toPackageName)
+                    .flatMap(Optional::stream)
+                    .collect(Collectors.toSet());
         } catch (IOException x) {
             throw new UncheckedIOException(x);
         }
@@ -597,29 +623,62 @@ class ModulePath implements ConfigurableModuleFinder {
         return ModuleReferences.newExplodedModule(md, dir);
     }
 
+    /**
+     * Maps the name of an entry in a JAR or ZIP file to a package name.
+     *
+     * @throws IllegalArgumentException if the name is a class file in
+     *         the top-level directory of the JAR/ZIP file (and it's
+     *         not module-info.class)
+     */
+    private Optional<String> toPackageName(String name) {
+        assert !name.endsWith("/");
 
-    //
+        int index = name.lastIndexOf("/");
+        if (index == -1) {
+            if (name.endsWith(".class") && !name.equals(MODULE_INFO)) {
+                throw new IllegalArgumentException(name
+                        + " found in top-level directory:"
+                        + " (unnamed package not allowed in module)");
+            }
+            return Optional.empty();
+        }
 
-    // p/q/T.class => p.q
-    private String toPackageName(String cn) {
-        assert cn.endsWith(".class");
-        int start = 0;
-        int index = cn.lastIndexOf("/");
-        if (index > start) {
-            return cn.substring(start, index).replace('/', '.');
+        String pn = name.substring(0, index).replace('/', '.');
+        if (Checks.isJavaIdentifier(pn)) {
+            return Optional.of(pn);
         } else {
-            return "";
+            // not a valid package name
+            return Optional.empty();
         }
     }
 
-    private String toPackageName(Path path) {
-        String name = path.toString();
-        assert name.endsWith(".class");
-        int index = name.lastIndexOf(File.separatorChar);
-        if (index != -1) {
-            return name.substring(0, index).replace(File.separatorChar, '.');
+    /**
+     * Maps the relative path of an entry in an exploded module to a package
+     * name.
+     *
+     * @throws IllegalArgumentException if the name is a class file in
+     *         the top-level directory (and it's not module-info.class)
+     */
+    private Optional<String> toPackageName(Path file) {
+        assert file.getRoot() == null;
+
+        Path parent = file.getParent();
+        if (parent == null) {
+            String name = file.toString();
+            if (name.endsWith(".class") && !name.equals(MODULE_INFO)) {
+                throw new IllegalArgumentException(name
+                        + " found in in top-level directory"
+                        + " (unnamed package not allowed in module)");
+            }
+            return Optional.empty();
+        }
+
+        String pn = parent.toString().replace(File.separatorChar, '.');
+        if (Checks.isJavaIdentifier(pn)) {
+            return Optional.of(pn);
         } else {
-            return "";
+            // not a valid package name
+            return Optional.empty();
         }
     }
 

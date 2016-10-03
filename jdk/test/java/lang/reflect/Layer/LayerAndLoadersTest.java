@@ -267,10 +267,10 @@ public class LayerAndLoadersTest {
     public void testOverlappingPackages() {
 
         ModuleDescriptor descriptor1
-            = new ModuleDescriptor.Builder("m1").exports("p").build();
+            = ModuleDescriptor.module("m1").exports("p").build();
 
         ModuleDescriptor descriptor2
-            = new ModuleDescriptor.Builder("m2").exports("p").build();
+            = ModuleDescriptor.module("m2").exports("p").build();
 
         ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);
 
@@ -301,10 +301,10 @@ public class LayerAndLoadersTest {
     public void testSplitDelegation() {
 
         ModuleDescriptor descriptor1
-            = new ModuleDescriptor.Builder("m1").exports("p").build();
+            = ModuleDescriptor.module("m1").exports("p").build();
 
         ModuleDescriptor descriptor2
-            = new ModuleDescriptor.Builder("m2").exports("p").build();
+            = ModuleDescriptor.module("m2").exports("p").build();
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
 
@@ -316,10 +316,10 @@ public class LayerAndLoadersTest {
         checkLayer(layer1, "m1", "m2");
 
         ModuleDescriptor descriptor3
-            = new ModuleDescriptor.Builder("m3").requires("m1").build();
+            = ModuleDescriptor.module("m3").requires("m1").build();
 
         ModuleDescriptor descriptor4
-            = new ModuleDescriptor.Builder("m4").requires("m2").build();
+            = ModuleDescriptor.module("m4").requires("m2").build();
 
         ModuleFinder finder2 = ModuleUtils.finderOf(descriptor3, descriptor4);
 
@@ -336,6 +336,29 @@ public class LayerAndLoadersTest {
         Layer layer2 = layer1.defineModulesWithManyLoaders(cf2, null);
         checkLayer(layer2, "m3", "m4");
 
+    }
+
+
+    /**
+     * Test creating a Layer with weak modules:
+     *
+     * Test scenario:
+     *   weak module m6 contains package q and type q.Hello
+     *   m5 requires m6
+     *   m5 contains type p.Main that invokes q.Hello
+     */
+    public void testDelegationWithWeakModules() throws Exception {
+        Configuration cf = resolveRequires("m5");
+
+        // loader(m5) == loader(m6)
+        Layer layer1 = Layer.boot().defineModulesWithOneLoader(cf, null);
+        checkLayer(layer1, "m5", "m6");
+        invoke(layer1, "m5", "p.Main");
+
+        // loader(m5) != loader(m6), loader(m5) should delegate to loader(m6)
+        Layer layer2 = Layer.boot().defineModulesWithManyLoaders(cf, null);
+        checkLayer(layer2, "m5", "m6");
+        invoke(layer2, "m5", "p.Main");
     }
 
 

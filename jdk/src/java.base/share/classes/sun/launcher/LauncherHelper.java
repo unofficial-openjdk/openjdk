@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -62,18 +62,19 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.Normalizer;
 import java.text.MessageFormat;
-import java.util.ResourceBundle;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Locale.Category;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.jar.Attributes;
@@ -83,6 +84,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import jdk.internal.misc.VM;
+import jdk.internal.module.Modules;
 
 
 public final class LauncherHelper {
@@ -98,6 +100,8 @@ public final class LauncherHelper {
     private static final String JAVAFX_FXHELPER_CLASS_NAME_SUFFIX =
             "sun.launcher.LauncherHelper$FXHelper";
     private static final String MAIN_CLASS = "Main-Class";
+    private static final String ADD_EXPORTS = "Add-Exports";
+    private static final String ADD_EXPORTS_PRIVATE = "Add-Exports-Private";
 
     private static StringBuilder outBuf = new StringBuilder();
 
@@ -433,9 +437,18 @@ public final class LauncherHelper {
             if (mainAttrs == null) {
                 abort(null, "java.launcher.jar.error3", jarname);
             }
+
+            // Main-Class
             mainValue = mainAttrs.getValue(MAIN_CLASS);
             if (mainValue == null) {
                 abort(null, "java.launcher.jar.error3", jarname);
+            }
+
+            // Add-Exports and Add-Exports-Private to break encapsulation
+            String exports = mainAttrs.getValue(ADD_EXPORTS);
+            String exportsPrivate = mainAttrs.getValue(ADD_EXPORTS_PRIVATE);
+            if (exports != null || exportsPrivate != null) {
+                addExports(exports, exportsPrivate);
             }
 
             /*
@@ -454,6 +467,41 @@ public final class LauncherHelper {
             abort(ioe, "java.launcher.jar.error1", jarname);
         }
         return null;
+    }
+
+    /**
+     * Add-Exports and Add-Exports-All attributes
+     */
+    static void addExports(String exports, String exportsPrivate) {
+        if (exports != null)
+            addExports(exports, false);
+        if (exportsPrivate != null)
+            addExports(exportsPrivate, true);
+    }
+
+    /**
+     * Process the Add-Exports or Add-Exports-All value. The value is
+     * {@code <module>/<package> ( <module>/<package>)*}.
+     */
+    static void addExports(String value, boolean nonPublic) {
+        for (String moduleAndPackage : value.split(" ")) {
+            String[] s = moduleAndPackage.trim().split("/");
+            if (s.length == 2) {
+                String mn = s[0];
+                String pn = s[1];
+                Layer.boot().findModule(mn).ifPresent(m -> {
+                    try {
+                        if (nonPublic) {
+                            Modules.addExportsPrivateToAllUnnamed(m, pn);
+                        } else {
+                            Modules.addExportsToAllUnnamed(m, pn);
+                        }
+                    } catch (IllegalArgumentException ignore) {
+                        // package not in module
+                    }
+                });
+            }
+        }
     }
 
     // From src/share/bin/java.c:
@@ -924,7 +972,19 @@ public final class LauncherHelper {
                 }
 
                 ModuleDescriptor md = mref.descriptor();
-                ostream.println(midAndLocation(md, mref.location()));
+                if (md.isWeak())
+                    ostream.print("weak ");
+                ostream.println("module " + midAndLocation(md, mref.location()));
+
+                // unqualified exports (sorted by package)
+                Set<Exports> exports = new TreeSet<>(Comparator.comparing(Exports::source));
+                md.exports().stream().filter(e -> !e.isQualified()).forEach(exports::add);
+                for (Exports e : exports) {
+                    String modsAndSource = Stream.concat(toStringStream(e.modifiers()),
+                            Stream.of(e.source()))
+                            .collect(Collectors.joining(" "));
+                    ostream.format("  exports %s%n", modsAndSource);
+                }
 
                 for (Requires d : md.requires()) {
                     ostream.format("  requires %s%n", d);
@@ -933,32 +993,33 @@ public final class LauncherHelper {
                     ostream.format("  uses %s%n", s);
                 }
 
-                // sorted exports
-                Set<Exports> exports = new TreeSet<>(Comparator.comparing(Exports::source));
-                exports.addAll(md.exports());
-                for (Exports e : exports) {
-                    String modsAndSource = Stream.concat(toStringStream(e.modifiers()),
-                                                         Stream.of(e.source()))
-                                                 .collect(Collectors.joining(" "));
-                    ostream.format("  exports %s", modsAndSource);
-                    if (e.isQualified()) {
-                        formatCommaList(ostream, " to", e.targets());
-                    } else {
-                        ostream.println();
-                    }
-                }
-
-                // concealed packages
-                new TreeSet<>(md.conceals())
-                    .forEach(p -> ostream.format("  conceals %s%n", p));
-
                 Map<String, Provides> provides = md.provides();
                 for (Provides ps : provides.values()) {
                     for (String impl : ps.providers())
                         ostream.format("  provides %s with %s%n", ps.service(), impl);
                 }
+
+                // qualified exports
+                for (Exports e : md.exports()) {
+                    if (e.isQualified()) {
+                        String modsAndSource = Stream.concat(toStringStream(e.modifiers()),
+                                Stream.of(e.source()))
+                                .collect(Collectors.joining(" "));
+                        ostream.format("  exports %s", modsAndSource);
+                        formatCommaList(ostream, " to", e.targets());
+                    }
+                }
+
+                // non-exported packages
+                Set<String> concealed = new TreeSet<>(md.packages());
+                md.exports().stream().map(Exports::source).forEach(concealed::remove);
+                concealed.forEach(p -> ostream.format("  contains %s%n", p));
             }
         }
+    }
+
+    static <T> String toString(Set<T> s) {
+        return toStringStream(s).collect(Collectors.joining(" "));
     }
 
     static <T> Stream<String> toStringStream(Set<T> s) {

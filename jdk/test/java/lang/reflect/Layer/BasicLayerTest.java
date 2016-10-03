@@ -32,13 +32,14 @@
 
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
-import static java.lang.module.ModuleDescriptor.Requires.Modifier;
+import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleFinder;
 import java.lang.reflect.Layer;
 import java.lang.reflect.LayerInstantiationException;
 import java.lang.reflect.Module;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -108,18 +109,18 @@ public class BasicLayerTest {
      */
     public void testLayerOnEmpty() {
         ModuleDescriptor descriptor1
-            = new ModuleDescriptor.Builder("m1")
+            = ModuleDescriptor.module("m1")
                 .requires("m2")
                 .exports("p1")
                 .build();
 
         ModuleDescriptor descriptor2
-            = new ModuleDescriptor.Builder("m2")
+            = ModuleDescriptor.module("m2")
                 .requires("m3")
                 .build();
 
         ModuleDescriptor descriptor3
-            = new ModuleDescriptor.Builder("m3")
+            = ModuleDescriptor.module("m3")
                 .build();
 
         ModuleFinder finder
@@ -189,14 +190,14 @@ public class BasicLayerTest {
      */
     public void testLayerOnBoot() {
         ModuleDescriptor descriptor1
-            = new ModuleDescriptor.Builder("m1")
+            = ModuleDescriptor.module("m1")
                 .requires("m2")
                 .requires("java.base")
                 .exports("p1")
                 .build();
 
         ModuleDescriptor descriptor2
-            = new ModuleDescriptor.Builder("m2")
+            = ModuleDescriptor.module("m2")
                 .requires("java.base")
                 .build();
 
@@ -251,16 +252,16 @@ public class BasicLayerTest {
      * Exercise Layer defineModules with a configuration of two modules that
      * have the same module-private package.
      */
-    public void testSameConcealedPackage() {
+    public void testPackageContainedInSelfAndOther() {
         ModuleDescriptor descriptor1
-            =  new ModuleDescriptor.Builder("m1")
+            =  ModuleDescriptor.module("m1")
                 .requires("m2")
-                .conceals("p")
+                .contains("p")
                 .build();
 
         ModuleDescriptor descriptor2
-            = new ModuleDescriptor.Builder("m2")
-                .conceals("p")
+            = ModuleDescriptor.module("m2")
+                .contains("p")
                 .build();
 
         ModuleFinder finder
@@ -289,22 +290,22 @@ public class BasicLayerTest {
 
         // m1 reads m2, m2 exports p to m1
         ModuleDescriptor descriptor1
-            =  new ModuleDescriptor.Builder("m1")
+            =  ModuleDescriptor.module("m1")
                 .requires("m2")
                 .build();
         ModuleDescriptor descriptor2
-            =  new ModuleDescriptor.Builder("m2")
-                .exports("p", "m1")
+            =  ModuleDescriptor.module("m2")
+                .exports("p", Set.of("m1"))
                 .build();
 
         // m3 reads m4, m4 exports p to m3
         ModuleDescriptor descriptor3
-            =  new ModuleDescriptor.Builder("m3")
+            =  ModuleDescriptor.module("m3")
                 .requires("m4")
                 .build();
         ModuleDescriptor descriptor4
-            =  new ModuleDescriptor.Builder("m4")
-                .exports("p", "m3")
+            =  ModuleDescriptor.module("m4")
+                .exports("p", Set.of("m3"))
                 .build();
 
         ModuleFinder finder
@@ -326,7 +327,7 @@ public class BasicLayerTest {
         map.put("m1", loader1);
         map.put("m2", loader1);
         map.put("m3", loader2);
-        map.put("m3", loader2);
+        map.put("m4", loader2);
         Layer.empty().defineModules(cf, map::get);
 
         // same loader
@@ -339,20 +340,20 @@ public class BasicLayerTest {
 
 
     /**
-     * Exercise Layer defineModules with a configuration that contains a module
-     * that has a concealed package that is the same name as a non-exported
-     * package in a parent layer.
+     * Exercise Layer defineModules with a configuration with a module that
+     * contains a package that is the same name as a non-exported package in
+     * a parent layer.
      */
-    public void testConcealSamePackageAsBootLayer() {
+    public void testContainsSamePackageAsBootLayer() {
 
         // check assumption that java.base contains sun.launcher
         ModuleDescriptor base = Object.class.getModule().getDescriptor();
-        assertTrue(base.conceals().contains("sun.launcher"));
+        assertTrue(base.packages().contains("sun.launcher"));
 
         ModuleDescriptor descriptor
-            = new ModuleDescriptor.Builder("m1")
+            = ModuleDescriptor.module("m1")
                .requires("java.base")
-               .conceals("sun.launcher")
+               .contains("sun.launcher")
                .build();
 
         ModuleFinder finder = ModuleUtils.finderOf(descriptor);
@@ -371,20 +372,20 @@ public class BasicLayerTest {
      * Test layers with implied readability.
      *
      * The test consists of three configurations:
-     * - Configuration/layer1: m1, m2 requires public m1
+     * - Configuration/layer1: m1, m2 requires transitive m1
      * - Configuration/layer2: m3 requires m1
      */
     public void testImpliedReadabilityWithLayers1() {
 
-        // cf1: m1 and m2, m2 requires public m1
+        // cf1: m1 and m2, m2 requires transitive m1
 
         ModuleDescriptor descriptor1
-            = new ModuleDescriptor.Builder("m1")
+            = ModuleDescriptor.module("m1")
                 .build();
 
         ModuleDescriptor descriptor2
-            = new ModuleDescriptor.Builder("m2")
-                .requires(Set.of(Modifier.PUBLIC), "m1")
+            = ModuleDescriptor.module("m2")
+                .requires(Set.of(Requires.Modifier.TRANSITIVE), "m1")
                 .build();
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
@@ -398,7 +399,7 @@ public class BasicLayerTest {
         // cf2: m3, m3 requires m2
 
         ModuleDescriptor descriptor3
-            = new ModuleDescriptor.Builder("m3")
+            = ModuleDescriptor.module("m3")
                 .requires("m2")
                 .build();
 
@@ -443,14 +444,14 @@ public class BasicLayerTest {
      *
      * The test consists of three configurations:
      * - Configuration/layer1: m1
-     * - Configuration/layer2: m2 requires public m3, m3 requires m2
+     * - Configuration/layer2: m2 requires transitive m3, m3 requires m2
      */
     public void testImpliedReadabilityWithLayers2() {
 
         // cf1: m1
 
         ModuleDescriptor descriptor1
-            = new ModuleDescriptor.Builder("m1")
+            = ModuleDescriptor.module("m1")
                 .build();
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1);
@@ -461,15 +462,15 @@ public class BasicLayerTest {
         Layer layer1 = Layer.empty().defineModules(cf1, mn -> cl1);
 
 
-        // cf2: m2, m3: m2 requires public m1, m3 requires m2
+        // cf2: m2, m3: m2 requires transitive m1, m3 requires m2
 
         ModuleDescriptor descriptor2
-            = new ModuleDescriptor.Builder("m2")
-                .requires(Set.of(Modifier.PUBLIC), "m1")
+            = ModuleDescriptor.module("m2")
+                .requires(Set.of(Requires.Modifier.TRANSITIVE), "m1")
                 .build();
 
         ModuleDescriptor descriptor3
-            = new ModuleDescriptor.Builder("m3")
+            = ModuleDescriptor.module("m3")
                 .requires("m2")
                 .build();
 
@@ -510,7 +511,7 @@ public class BasicLayerTest {
      *
      * The test consists of three configurations:
      * - Configuration/layer1: m1
-     * - Configuration/layer2: m2 requires public m1
+     * - Configuration/layer2: m2 requires transitive m1
      * - Configuration/layer3: m3 requires m1
      */
     public void testImpliedReadabilityWithLayers3() {
@@ -518,7 +519,7 @@ public class BasicLayerTest {
         // cf1: m1
 
         ModuleDescriptor descriptor1
-            = new ModuleDescriptor.Builder("m1")
+            = ModuleDescriptor.module("m1")
                 .build();
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1);
@@ -529,11 +530,11 @@ public class BasicLayerTest {
         Layer layer1 = Layer.empty().defineModules(cf1, mn -> cl1);
 
 
-        // cf2: m2 requires public m1
+        // cf2: m2 requires transitive m1
 
         ModuleDescriptor descriptor2
-            = new ModuleDescriptor.Builder("m2")
-                .requires(Set.of(Modifier.PUBLIC), "m1")
+            = ModuleDescriptor.module("m2")
+                .requires(Set.of(Requires.Modifier.TRANSITIVE), "m1")
                 .build();
 
         ModuleFinder finder2 = ModuleUtils.finderOf(descriptor2);
@@ -547,7 +548,7 @@ public class BasicLayerTest {
         // cf3: m3 requires m2
 
         ModuleDescriptor descriptor3
-            = new ModuleDescriptor.Builder("m3")
+            = ModuleDescriptor.module("m3")
                 .requires("m2")
                 .build();
 
@@ -588,20 +589,20 @@ public class BasicLayerTest {
      * Test layers with implied readability.
      *
      * The test consists of two configurations:
-     * - Configuration/layer1: m1, m2 requires public m1
-     * - Configuration/layer2: m3 requires public m2, m4 requires m3
+     * - Configuration/layer1: m1, m2 requires transitive m1
+     * - Configuration/layer2: m3 requires transitive m2, m4 requires m3
      */
     public void testImpliedReadabilityWithLayers4() {
 
-        // cf1: m1, m2 requires public m1
+        // cf1: m1, m2 requires transitive m1
 
         ModuleDescriptor descriptor1
-            = new ModuleDescriptor.Builder("m1")
+            = ModuleDescriptor.module("m1")
                 .build();
 
         ModuleDescriptor descriptor2
-            = new ModuleDescriptor.Builder("m2")
-                .requires(Set.of(Modifier.PUBLIC), "m1")
+            = ModuleDescriptor.module("m2")
+                .requires(Set.of(Requires.Modifier.TRANSITIVE), "m1")
                 .build();
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
@@ -612,15 +613,15 @@ public class BasicLayerTest {
         Layer layer1 = Layer.empty().defineModules(cf1, mn -> cl1);
 
 
-        // cf2: m3 requires public m2, m4 requires m3
+        // cf2: m3 requires transitive m2, m4 requires m3
 
         ModuleDescriptor descriptor3
-            = new ModuleDescriptor.Builder("m3")
-                .requires(Set.of(Modifier.PUBLIC), "m2")
+            = ModuleDescriptor.module("m3")
+                .requires(Set.of(Requires.Modifier.TRANSITIVE), "m2")
                 .build();
 
         ModuleDescriptor descriptor4
-            = new ModuleDescriptor.Builder("m4")
+            = ModuleDescriptor.module("m4")
                 .requires("m3")
                 .build();
 
@@ -676,7 +677,7 @@ public class BasicLayerTest {
     public void testModuleAlreadyDefinedToLoader() {
 
         ModuleDescriptor md
-            = new ModuleDescriptor.Builder("m")
+            = ModuleDescriptor.module("m")
                 .requires("java.base")
                 .build();
 
@@ -705,14 +706,14 @@ public class BasicLayerTest {
     public void testPackageAlreadyInNamedModule() {
 
         ModuleDescriptor md1
-            = new ModuleDescriptor.Builder("m1")
-                .conceals("p")
+            = ModuleDescriptor.module("m1")
+                .contains("p")
                 .requires("java.base")
                 .build();
 
         ModuleDescriptor md2
-            = new ModuleDescriptor.Builder("m2")
-                .conceals("p")
+            = ModuleDescriptor.module("m2")
+                .contains("p")
                 .requires("java.base")
                 .build();
 
@@ -750,8 +751,8 @@ public class BasicLayerTest {
         assertFalse(c.getModule().isNamed());  // in unnamed module
 
         ModuleDescriptor md
-            = new ModuleDescriptor.Builder("m")
-                .conceals(c.getPackageName())
+            = ModuleDescriptor.module("m")
+                .contains(c.getPackageName())
                 .requires("java.base")
                 .build();
 
@@ -769,7 +770,7 @@ public class BasicLayerTest {
      */
     public void testLayerWithJavaBase() {
         ModuleDescriptor descriptor
-            = new ModuleDescriptor.Builder("java.base")
+            = ModuleDescriptor.module("java.base")
                 .exports("java.lang")
                 .build();
 
@@ -783,12 +784,7 @@ public class BasicLayerTest {
         ClassLoader scl = ClassLoader.getSystemClassLoader();
 
         try {
-            Layer.boot().defineModules(cf, loader -> null );
-            assertTrue(false);
-        } catch (LayerInstantiationException e) { }
-
-        try {
-            Layer.boot().defineModules(cf, loader -> new ClassLoader() { });
+            Layer.boot().defineModules(cf, mn -> new ClassLoader() { });
             assertTrue(false);
         } catch (LayerInstantiationException e) { }
 
@@ -805,13 +801,81 @@ public class BasicLayerTest {
 
 
     /**
+     * Attempt to create a Layer with a module containing a "java." package.
+     * This should only be allowed when the module is defined to the platform
+     * class loader.
+     */
+    @Test(enabled = false)
+    public void testLayerWithJavaPackage() {
+        ModuleDescriptor descriptor
+            = ModuleDescriptor.module("foo")
+                .contains("java.foo")
+                .build();
+
+        ModuleFinder finder = ModuleUtils.finderOf(descriptor);
+
+        Configuration cf = Layer.boot()
+                .configuration()
+                .resolveRequires(finder, ModuleFinder.of(), Set.of("foo"));
+        assertTrue(cf.modules().size() == 1);
+
+        ClassLoader pcl = ClassLoader.getPlatformClassLoader();
+        ClassLoader scl = ClassLoader.getSystemClassLoader();
+
+        try {
+            Layer.boot().defineModules(cf, mn -> new ClassLoader() { });
+            assertTrue(false);
+        } catch (LayerInstantiationException e) { }
+
+        try {
+            Layer.boot().defineModulesWithOneLoader(cf, scl);
+            assertTrue(false);
+        } catch (LayerInstantiationException e) { }
+
+        try {
+            Layer.boot().defineModulesWithManyLoaders(cf, scl);
+            assertTrue(false);
+        } catch (LayerInstantiationException e) { }
+
+        // create layer with module defined to platform class loader
+        Layer layer = Layer.boot().defineModules(cf, mn -> pcl);
+        Optional<Module> om = layer.findModule("foo");
+        assertTrue(om.isPresent());
+        Module foo = om.get();
+        assertTrue(foo.getClassLoader() == pcl);
+        assertTrue(foo.getPackages().length == 1);
+        assertTrue(foo.getPackages()[0].equals("java.foo"));
+    }
+
+
+    /**
+     * Attempt to create a Layer with a module defined to the boot loader
+     */
+    @Test(expectedExceptions = { LayerInstantiationException.class })
+    public void testLayerWithBootLoader() {
+        ModuleDescriptor descriptor
+            = ModuleDescriptor.module("m1")
+                .build();
+
+        ModuleFinder finder = ModuleUtils.finderOf(descriptor);
+
+        Configuration cf = Layer.boot()
+            .configuration()
+            .resolveRequires(finder, ModuleFinder.of(), Set.of("m1"));
+        assertTrue(cf.modules().size() == 1);
+
+        Layer.boot().defineModules(cf, mn -> null );
+    }
+
+
+    /**
      * Parent of configuration != configuration of parent Layer
      */
     @Test(expectedExceptions = { IllegalArgumentException.class })
     public void testIncorrectParent1() {
 
         ModuleDescriptor descriptor1
-            = new ModuleDescriptor.Builder("m1")
+            = ModuleDescriptor.module("m1")
                 .requires("java.base")
                 .build();
 
@@ -832,7 +896,7 @@ public class BasicLayerTest {
     public void testIncorrectParent2() {
 
         ModuleDescriptor descriptor1
-            = new ModuleDescriptor.Builder("m1")
+            = ModuleDescriptor.module("m1")
                 .build();
 
         ModuleFinder finder = ModuleUtils.finderOf(descriptor1);
