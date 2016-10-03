@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1290,18 +1290,22 @@ static bool is_authorized(Handle context, instanceKlassHandle klass, TRAPS) {
 // and null permissions - which gives no permissions.
 oop create_dummy_access_control_context(TRAPS) {
   InstanceKlass* pd_klass = InstanceKlass::cast(SystemDictionary::ProtectionDomain_klass());
-  // new ProtectionDomain(null,null);
-  oop null_protection_domain = pd_klass->allocate_instance(CHECK_NULL);
-  Handle null_pd(THREAD, null_protection_domain);
+  Handle obj = pd_klass->allocate_instance_handle(CHECK_NULL);
+  // Call constructor ProtectionDomain(null, null);
+  JavaValue result(T_VOID);
+  JavaCalls::call_special(&result, obj, KlassHandle(THREAD, pd_klass),
+                          vmSymbols::object_initializer_name(),
+                          vmSymbols::codesource_permissioncollection_signature(),
+                          Handle(), Handle(), CHECK_NULL);
 
   // new ProtectionDomain[] {pd};
   objArrayOop context = oopFactory::new_objArray(pd_klass, 1, CHECK_NULL);
-  context->obj_at_put(0, null_pd());
+  context->obj_at_put(0, obj());
 
   // new AccessControlContext(new ProtectionDomain[] {pd})
   objArrayHandle h_context(THREAD, context);
-  oop result = java_security_AccessControlContext::create(h_context, false, Handle(), CHECK_NULL);
-  return result;
+  oop acc = java_security_AccessControlContext::create(h_context, false, Handle(), CHECK_NULL);
+  return acc;
 }
 
 JVM_ENTRY(jobject, JVM_DoPrivileged(JNIEnv *env, jclass cls, jobject action, jobject context, jboolean wrapException))
@@ -2626,7 +2630,6 @@ JVM_ENTRY(const char*, JVM_GetCPMethodNameUTF(JNIEnv *env, jclass cls, jint cp_i
   switch (cp->tag_at(cp_index).value()) {
     case JVM_CONSTANT_InterfaceMethodref:
     case JVM_CONSTANT_Methodref:
-    case JVM_CONSTANT_NameAndType:  // for invokedynamic
       return cp->uncached_name_ref_at(cp_index)->as_utf8();
     default:
       fatal("JVM_GetCPMethodNameUTF: illegal constant");
@@ -2644,7 +2647,6 @@ JVM_ENTRY(const char*, JVM_GetCPMethodSignatureUTF(JNIEnv *env, jclass cls, jint
   switch (cp->tag_at(cp_index).value()) {
     case JVM_CONSTANT_InterfaceMethodref:
     case JVM_CONSTANT_Methodref:
-    case JVM_CONSTANT_NameAndType:  // for invokedynamic
       return cp->uncached_signature_ref_at(cp_index)->as_utf8();
     default:
       fatal("JVM_GetCPMethodSignatureUTF: illegal constant");
@@ -2870,7 +2872,18 @@ ATTRIBUTE_PRINTF(3, 0)
 int jio_vsnprintf(char *str, size_t count, const char *fmt, va_list args) {
   // see bug 4399518, 4417214
   if ((intptr_t)count <= 0) return -1;
-  return vsnprintf(str, count, fmt, args);
+
+  int result = vsnprintf(str, count, fmt, args);
+  // Note: on truncation vsnprintf(3) on Unix returns number of
+  // characters which would have been written had the buffer been large
+  // enough; on Windows, it returns -1. We handle both cases here and
+  // always return -1, and perform null termination.
+  if ((result > 0 && (size_t)result >= count) || result == -1) {
+    str[count - 1] = '\0';
+    result = -1;
+  }
+
+  return result;
 }
 
 ATTRIBUTE_PRINTF(3, 0)
