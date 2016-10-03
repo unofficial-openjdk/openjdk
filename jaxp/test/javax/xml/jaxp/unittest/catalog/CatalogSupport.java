@@ -25,14 +25,13 @@ package catalog;
 
 import java.io.File;
 import java.io.StringReader;
-
+import javax.xml.stream.XMLResolver;
 import javax.xml.transform.Source;
 import javax.xml.transform.URIResolver;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.sax.SAXSource;
 import javax.xml.transform.stax.StAXSource;
 import javax.xml.transform.stream.StreamSource;
-
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Listeners;
@@ -42,7 +41,7 @@ import org.xml.sax.InputSource;
 
 /**
  * @test
- * @bug 8158084 8162438 8162442
+ * @bug 8158084 8162438 8162442 8166220 8166398
  * @library /javax/xml/jaxp/libs /javax/xml/jaxp/unittest
  * @run testng/othervm -DrunSecMngr=true catalog.CatalogSupport
  * @run testng/othervm catalog.CatalogSupport
@@ -51,7 +50,7 @@ import org.xml.sax.InputSource;
  * A custom resolver is used whether or not there's a Catalog;
  * A Catalog is used when there's no custom resolver, and the USE_CATALOG
  * is true (which is the case by default).
- */
+*/
 
 /**
  * Support Catalog:
@@ -114,6 +113,15 @@ public class CatalogSupport extends CatalogSupportBase {
     }
 
     /*
+       Verifies the Catalog support on XMLStreamReader.
+    */
+    @Test(dataProvider = "data_StAXA")
+    public void testStAXA(boolean setUseCatalog, boolean useCatalog, String catalog,
+            String xml, XMLResolver resolver, String expected) throws Exception {
+        testStAX(setUseCatalog, useCatalog, catalog, xml, resolver, expected);
+    }
+
+    /*
        Verifies the Catalog support on resolving DTD, xsd import and include in
     Schema files.
     */
@@ -168,13 +176,13 @@ public class CatalogSupport extends CatalogSupportBase {
      */
     @DataProvider(name = "data_SAXA")
     public Object[][] getDataSAX() {
-        String[] systemIds = {"system.xsd"};
-        InputSource[] returnValues = {new InputSource(new StringReader(dtd_systemResolved))};
-        MyEntityHandler entityHandler = new MyEntityHandler(systemIds, returnValues, elementInSystem);
+        String[] systemIds = {"system.dtd"};
         return new Object[][]{
             {false, true, xml_catalog, xml_system, new MyHandler(elementInSystem), expectedWCatalog},
-            {false, true, xml_catalog, xml_system, entityHandler, expectedWResolver},
-            {true, true, xml_catalog, xml_system, entityHandler, expectedWResolver}
+            {false, true, xml_catalog, xml_system, getMyEntityHandler(elementInSystem, systemIds,
+                    new InputSource(new StringReader(dtd_systemResolved))), expectedWResolver},
+            {true, true, xml_catalog, xml_system, getMyEntityHandler(elementInSystem, systemIds,
+                    new InputSource(new StringReader(dtd_systemResolved))), expectedWResolver}
         };
     }
 
@@ -200,7 +208,7 @@ public class CatalogSupport extends CatalogSupportBase {
      */
     @DataProvider(name = "data_DOMA")
     public Object[][] getDataDOM() {
-        String[] systemIds = {"system.xsd"};
+        String[] systemIds = {"system.dtd"};
         InputSource[] returnValues = {new InputSource(new StringReader(dtd_systemResolved))};
         MyEntityHandler entityHandler = new MyEntityHandler(systemIds, returnValues, elementInSystem);
         return new Object[][]{
@@ -209,6 +217,20 @@ public class CatalogSupport extends CatalogSupportBase {
                     new InputSource(new StringReader(dtd_systemResolved))), expectedWResolver},
             {true, true, xml_catalog, xml_system, getMyEntityHandler(elementInSystem, systemIds,
                     new InputSource(new StringReader(dtd_systemResolved))), expectedWResolver}
+        };
+    }
+
+    /*
+       DataProvider: for testing the StAX parser
+       Data: set use_catalog, use_catalog, catalog file, xml file, handler, expected result string
+     */
+    @DataProvider(name = "data_StAXA")
+    public Object[][] getDataStAX() {
+
+        return new Object[][]{
+            {false, true, xml_catalog, xml_system, null, expectedWCatalog},
+            {false, true, xml_catalog, xml_system, new MyStaxEntityResolver(), expectedWResolver},
+            {true, true, xml_catalog, xml_system, new MyStaxEntityResolver(), expectedWResolver}
         };
     }
 
@@ -262,8 +284,8 @@ public class CatalogSupport extends CatalogSupportBase {
         SAXSource ss = new SAXSource(new InputSource(xml_val_test));
         ss.setSystemId(xml_val_test_id);
 
-        StAXSource stax = getStaxSource(xml_val_test, xml_val_test_id);
-        StAXSource stax1 = getStaxSource(xml_val_test, xml_val_test_id);
+        StAXSource stax = getStaxSource(xml_val_test, xml_val_test_id, false, true, xml_catalog);
+        StAXSource stax1 = getStaxSource(xml_val_test, xml_val_test_id, false, true, xml_catalog);
 
         StreamSource source = new StreamSource(new File(xml_val_test));
 
@@ -271,8 +293,7 @@ public class CatalogSupport extends CatalogSupportBase {
         XmlInput[] returnValues = {new XmlInput(null, dtd_system, null), new XmlInput(null, xsd_val_test, null)};
         LSResourceResolver resolver = new SourceResolver(null, systemIds, returnValues);
 
-        StAXSource stax2 = getStaxSource(xml_val_test, xml_val_test_id);
-        StAXSource stax3 = getStaxSource(xml_val_test, xml_val_test_id);
+        StAXSource stax2 = getStaxSource(xml_val_test, xml_val_test_id, false, true, xml_catalog);
 
         return new Object[][]{
             // use catalog
