@@ -24,10 +24,9 @@
  */
 
 module jdk.xml.dom {
-    requires public java.xml;
+    requires transitive java.xml;
     exports org.w3c.dom.css;
     exports org.w3c.dom.html;
     exports org.w3c.dom.stylesheets;
     exports org.w3c.dom.xpath;
 }
-
