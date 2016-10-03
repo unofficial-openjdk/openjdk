@@ -45,7 +45,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
@@ -538,15 +537,14 @@ public class ScheduledExecutorTest extends JSR166TestCase {
      * isShutdown is false before shutdown, true after
      */
     public void testIsShutdown() {
-
         final ScheduledThreadPoolExecutor p = new ScheduledThreadPoolExecutor(1);
-        try {
-            assertFalse(p.isShutdown());
+        assertFalse(p.isShutdown());
+        try (PoolCleaner cleaner = cleaner(p)) {
+            try {
+                p.shutdown();
+                assertTrue(p.isShutdown());
+            } catch (SecurityException ok) {}
         }
-        finally {
-            try { p.shutdown(); } catch (SecurityException ok) { return; }
-        }
-        assertTrue(p.isShutdown());
     }
 
     /**

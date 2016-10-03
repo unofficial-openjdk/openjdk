@@ -1032,14 +1032,17 @@ public class JSR166TestCase extends TestCase {
         ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
         System.err.println("------ stacktrace dump start ------");
         for (ThreadInfo info : threadMXBean.dumpAllThreads(true, true)) {
-            String name = info.getThreadName();
+            final String name = info.getThreadName();
+            String lockName;
             if ("Signal Dispatcher".equals(name))
                 continue;
             if ("Reference Handler".equals(name)
-                && info.getLockName().startsWith("java.lang.ref.Reference$Lock"))
+                && (lockName = info.getLockName()) != null
+                && lockName.startsWith("java.lang.ref.Reference$Lock"))
                 continue;
             if ("Finalizer".equals(name)
-                && info.getLockName().startsWith("java.lang.ref.ReferenceQueue$Lock"))
+                && (lockName = info.getLockName()) != null
+                && lockName.startsWith("java.lang.ref.ReferenceQueue$Lock"))
                 continue;
             if ("checkForWedgedTest".equals(name))
                 continue;
@@ -1264,7 +1267,7 @@ public class JSR166TestCase extends TestCase {
      * Sleeps until the given time has elapsed.
      * Throws AssertionFailedError if interrupted.
      */
-    void sleep(long millis) {
+    static void sleep(long millis) {
         try {
             delay(millis);
         } catch (InterruptedException fail) {
@@ -1783,7 +1786,7 @@ public class JSR166TestCase extends TestCase {
      * A CyclicBarrier that uses timed await and fails with
      * AssertionFailedErrors instead of throwing checked exceptions.
      */
-    public class CheckedBarrier extends CyclicBarrier {
+    public static class CheckedBarrier extends CyclicBarrier {
         public CheckedBarrier(int parties) { super(parties); }
 
         public int await() {
