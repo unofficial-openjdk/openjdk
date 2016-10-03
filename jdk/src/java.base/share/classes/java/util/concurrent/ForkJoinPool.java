@@ -130,7 +130,7 @@ import java.util.concurrent.locks.LockSupport;
  * </table>
  *
  * <p>The common pool is by default constructed with default
- * parameters, but these may be controlled by setting three
+ * parameters, but these may be controlled by setting the following
  * {@linkplain System#getProperty system properties}:
  * <ul>
  * <li>{@code java.util.concurrent.ForkJoinPool.common.parallelism}
@@ -1191,7 +1191,7 @@ public class ForkJoinPool extends AbstractExecutorService {
      * Default idle timeout value (in milliseconds) for the thread
      * triggering quiescence to park waiting for new work
      */
-    private static final long DEFAULT_KEEPALIVE = 60000L;
+    private static final long DEFAULT_KEEPALIVE = 60_000L;
 
     /**
      * Undershoot tolerance for idle timeouts
@@ -2303,7 +2303,6 @@ public class ForkJoinPool extends AbstractExecutorService {
             throw new NullPointerException();
         long ms = Math.max(unit.toMillis(keepAliveTime), TIMEOUT_SLOP);
 
-        String prefix = "ForkJoinPool-" + nextPoolId() + "-worker-";
         int corep = Math.min(Math.max(corePoolSize, parallelism), MAX_CAP);
         long c = ((((long)(-corep)       << TC_SHIFT) & TC_MASK) |
                   (((long)(-parallelism) << RC_SHIFT) & RC_MASK));
@@ -2315,8 +2314,8 @@ public class ForkJoinPool extends AbstractExecutorService {
         n |= n >>> 1; n |= n >>> 2; n |= n >>> 4; n |= n >>> 8; n |= n >>> 16;
         n = (n + 1) << 1; // power of two, including space for submission queues
 
+        this.workerNamePrefix = "ForkJoinPool-" + nextPoolId() + "-worker-";
         this.workQueues = new WorkQueue[n];
-        this.workerNamePrefix = prefix;
         this.factory = factory;
         this.ueh = handler;
         this.saturate = saturate;
@@ -2327,11 +2326,19 @@ public class ForkJoinPool extends AbstractExecutorService {
         checkPermission();
     }
 
+    private Object newInstanceFromSystemProperty(String property)
+        throws ReflectiveOperationException {
+        String className = System.getProperty(property);
+        return (className == null)
+            ? null
+            : ClassLoader.getSystemClassLoader().loadClass(className)
+            .getConstructor().newInstance();
+    }
+
     /**
      * Constructor for common pool using parameters possibly
      * overridden by system properties
      */
-    @SuppressWarnings("deprecation") // Class.newInstance
     private ForkJoinPool(byte forCommonPoolOnly) {
         int parallelism = -1;
         ForkJoinWorkerThreadFactory fac = null;
@@ -2339,18 +2346,12 @@ public class ForkJoinPool extends AbstractExecutorService {
         try {  // ignore exceptions in accessing/parsing properties
             String pp = System.getProperty
                 ("java.util.concurrent.ForkJoinPool.common.parallelism");
-            String fp = System.getProperty
-                ("java.util.concurrent.ForkJoinPool.common.threadFactory");
-            String hp = System.getProperty
-                ("java.util.concurrent.ForkJoinPool.common.exceptionHandler");
             if (pp != null)
                 parallelism = Integer.parseInt(pp);
-            if (fp != null)
-                fac = ((ForkJoinWorkerThreadFactory)ClassLoader.
-                           getSystemClassLoader().loadClass(fp).newInstance());
-            if (hp != null)
-                handler = ((UncaughtExceptionHandler)ClassLoader.
-                           getSystemClassLoader().loadClass(hp).newInstance());
+            fac = (ForkJoinWorkerThreadFactory) newInstanceFromSystemProperty(
+                "java.util.concurrent.ForkJoinPool.common.threadFactory");
+            handler = (UncaughtExceptionHandler) newInstanceFromSystemProperty(
+                "java.util.concurrent.ForkJoinPool.common.exceptionHandler");
         } catch (Exception ignore) {
         }
 
@@ -2373,8 +2374,8 @@ public class ForkJoinPool extends AbstractExecutorService {
         n |= n >>> 1; n |= n >>> 2; n |= n >>> 4; n |= n >>> 8; n |= n >>> 16;
         n = (n + 1) << 1;
 
-        this.workQueues = new WorkQueue[n];
         this.workerNamePrefix = "ForkJoinPool.commonPool-worker-";
+        this.workQueues = new WorkQueue[n];
         this.factory = fac;
         this.ueh = handler;
         this.saturate = null;
@@ -3241,7 +3242,7 @@ public class ForkJoinPool extends AbstractExecutorService {
          * An ACC to restrict permissions for the factory itself.
          * The constructed workers have no permissions set.
          */
-        private static final AccessControlContext innocuousAcc;
+        private static final AccessControlContext INNOCUOUS_ACC;
         static {
             Permissions innocuousPerms = new Permissions();
             innocuousPerms.add(modifyThreadPermission);
@@ -3249,7 +3250,7 @@ public class ForkJoinPool extends AbstractExecutorService {
                                    "enableContextClassLoaderOverride"));
             innocuousPerms.add(new RuntimePermission(
                                    "modifyThreadGroup"));
-            innocuousAcc = new AccessControlContext(new ProtectionDomain[] {
+            INNOCUOUS_ACC = new AccessControlContext(new ProtectionDomain[] {
                     new ProtectionDomain(null, innocuousPerms)
                 });
         }
@@ -3260,7 +3261,7 @@ public class ForkJoinPool extends AbstractExecutorService {
                     public ForkJoinWorkerThread run() {
                         return new ForkJoinWorkerThread.
                             InnocuousForkJoinWorkerThread(pool);
-                    }}, innocuousAcc);
+                    }}, INNOCUOUS_ACC);
         }
     }
 

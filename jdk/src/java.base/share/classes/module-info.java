@@ -143,7 +143,8 @@ module java.base {
     exports jdk.internal.org.objectweb.asm.signature to
         jdk.scripting.nashorn;
     exports jdk.internal.loader to
-        java.instrument;
+        java.instrument,
+        java.logging;
     exports jdk.internal.math to
         java.desktop;
     exports jdk.internal.module to
@@ -165,6 +166,7 @@ module java.base {
         jdk.charsets,
         jdk.compiler,
         jdk.jartool,
+        jdk.jdeps,
         jdk.jlink,
         jdk.net,
         jdk.scripting.nashorn,
@@ -188,7 +190,8 @@ module java.base {
         jdk.unsupported,
         jdk.vm.ci;
     exports jdk.internal.util.jar to
-        jdk.jartool;
+        jdk.jartool,
+        jdk.jdeps;
     exports jdk.internal.vm to
         java.management,
         jdk.jvmstat;
