@@ -347,6 +347,7 @@ public class RuntimeModeler {
     }
 
     private boolean noWrapperGen() {
+        if (Runtime.version().major() >= 9) return true;
         Object o = config.properties().get(SuppressDocLitWrapperGeneration);
         return (o!= null && o instanceof Boolean) ? ((Boolean) o) : false;
     }
