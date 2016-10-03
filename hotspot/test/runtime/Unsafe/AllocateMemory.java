@@ -31,13 +31,12 @@
  * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:MallocMaxTestWords=100m AllocateMemory
  */
 
-import jdk.test.lib.Utils;
 import jdk.internal.misc.Unsafe;
 import static jdk.test.lib.Asserts.*;
 
 public class AllocateMemory {
     public static void main(String args[]) throws Exception {
-        Unsafe unsafe = Utils.getUnsafe();
+        Unsafe unsafe = Unsafe.getUnsafe();
 
         // Allocate a byte, write to the location and read back the value
         long address = unsafe.allocateMemory(1);

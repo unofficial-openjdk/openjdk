@@ -31,13 +31,12 @@
  */
 
 import jdk.test.lib.Platform;
-import jdk.test.lib.Utils;
 import jdk.internal.misc.Unsafe;
 import static jdk.test.lib.Asserts.*;
 
 public class GetPutAddress {
     public static void main(String args[]) throws Exception {
-        Unsafe unsafe = Utils.getUnsafe();
+        Unsafe unsafe = Unsafe.getUnsafe();
         int addressSize = unsafe.addressSize();
         // Ensure the size returned from Unsafe.addressSize is correct
         assertEquals(unsafe.addressSize(), Platform.is32bit() ? 4 : 8);

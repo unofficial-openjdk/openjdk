@@ -248,7 +248,7 @@ public class TestTargetSurvivorRatioFlag {
     public static class TargetSurvivorRatioVerifier {
 
         static final WhiteBox wb = WhiteBox.getWhiteBox();
-        static final Unsafe unsafe = Utils.getUnsafe();
+        static final Unsafe unsafe = Unsafe.getUnsafe();
 
         // Desired size of memory allocated at once
         public static final int CHUNK_SIZE = 1024;
