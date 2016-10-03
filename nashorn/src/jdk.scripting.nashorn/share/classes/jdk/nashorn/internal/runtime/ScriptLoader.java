@@ -69,10 +69,10 @@ final class ScriptLoader extends NashornLoader {
     private Module createModule(final String moduleName) {
         final Module structMod = context.getStructLoader().getModule();
         final ModuleDescriptor descriptor
-                = new ModuleDescriptor.Builder(moduleName)
+                = ModuleDescriptor.module(moduleName)
                     .requires(NASHORN_MODULE.getName())
                     .requires(structMod.getName())
-                    .conceals(SCRIPTS_PKG)
+                    .contains(SCRIPTS_PKG)
                     .build();
 
         final Module mod = Context.createModuleTrusted(structMod.getLayer(), descriptor, this);
