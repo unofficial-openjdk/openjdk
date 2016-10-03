@@ -63,23 +63,13 @@ public class ModuleTest extends ModuleTestBase {
     }
 
     @Test
-    public void testDynamicExports(Path base) throws Exception {
-        ModuleDescriptor moduleDescriptor = new ModuleDescriptor("m1")
-                .exports("pack", ExportFlag.DYNAMIC)
-                .write(base);
-        tb.writeJavaFiles(base, "package pack; public class C extends java.util.ArrayList{ }");
-        compile(base);
-        testModuleAttribute(base, moduleDescriptor);
-    }
-
-    @Test
     public void testSeveralExports(Path base) throws Exception {
         ModuleDescriptor moduleDescriptor = new ModuleDescriptor("m1")
                 .exports("pack")
                 .exports("pack2")
-                .exports("pack3", ExportFlag.DYNAMIC)
+                .exports("pack3")
                 .exports("pack4")
-                .exports("pack5", ExportFlag.DYNAMIC)
+                .exports("pack5")
                 .write(base);
         tb.writeJavaFiles(base,
                 "package pack; public class A { }",
@@ -104,7 +94,7 @@ public class ModuleTest extends ModuleTestBase {
     @Test
     public void testQualifiedDynamicExports(Path base) throws Exception {
         ModuleDescriptor moduleDescriptor = new ModuleDescriptor("m1")
-                .exportsTo("pack", "jdk.compiler", ExportFlag.DYNAMIC)
+                .exportsTo("pack", "jdk.compiler")
                 .write(base);
         tb.writeJavaFiles(base, "package pack; public class A { }");
         compile(base);
@@ -117,8 +107,8 @@ public class ModuleTest extends ModuleTestBase {
                 .exportsTo("pack", "jdk.compiler, jdk.jdeps")
                 .exportsTo("pack2", "jdk.jdeps")
                 .exportsTo("pack3", "jdk.compiler")
-                .exportsTo("pack4", "jdk.compiler, jdk.jdeps", ExportFlag.DYNAMIC)
-                .exportsTo("pack5", "jdk.compiler", ExportFlag.DYNAMIC)
+                .exportsTo("pack4", "jdk.compiler, jdk.jdeps")
+                .exportsTo("pack5", "jdk.compiler")
                 .write(base);
         tb.writeJavaFiles(base,
                 "package pack; public class A {}",
@@ -140,9 +130,9 @@ public class ModuleTest extends ModuleTestBase {
     }
 
     @Test
-    public void testRequiresPublic(Path base) throws Exception {
+    public void testRequiresTransitive(Path base) throws Exception {
         ModuleDescriptor moduleDescriptor = new ModuleDescriptor("m1")
-                .requires("jdk.jdeps", RequiresFlag.PUBLIC)
+                .requires("jdk.jdeps", RequiresFlag.TRANSITIVE)
                 .write(base);
         compile(base);
         testModuleAttribute(base, moduleDescriptor);
@@ -160,12 +150,12 @@ public class ModuleTest extends ModuleTestBase {
     @Test
     public void testSeveralRequires(Path base) throws Exception {
         ModuleDescriptor moduleDescriptor = new ModuleDescriptor("m1")
-                .requires("jdk.jdeps", RequiresFlag.PUBLIC)
+                .requires("jdk.jdeps", RequiresFlag.TRANSITIVE)
                 .requires("jdk.compiler")
                 .requires("m2", RequiresFlag.STATIC)
                 .requires("m3")
-                .requires("m4", RequiresFlag.PUBLIC)
-                .requires("m5", RequiresFlag.STATIC, RequiresFlag.PUBLIC)
+                .requires("m4", RequiresFlag.TRANSITIVE)
+                .requires("m5", RequiresFlag.STATIC, RequiresFlag.TRANSITIVE)
                 .write(base.resolve("m1"));
         tb.writeJavaFiles(base.resolve("m2"), "module m2 { }");
         tb.writeJavaFiles(base.resolve("m3"), "module m3 { }");
@@ -226,24 +216,24 @@ public class ModuleTest extends ModuleTestBase {
         Path m1 = base.resolve("m1");
         ModuleDescriptor moduleDescriptor = new ModuleDescriptor("m1")
                 .exports("pack1")
-                .exports("pack3", ExportFlag.DYNAMIC)
+                .exports("pack3")
                 .exportsTo("packTo1", "m2")
-                .exportsTo("packTo3", "m3", ExportFlag.DYNAMIC)
+                .exportsTo("packTo3", "m3")
                 .requires("jdk.compiler")
-                .requires("m2", RequiresFlag.PUBLIC)
+                .requires("m2", RequiresFlag.TRANSITIVE)
                 .requires("m3", RequiresFlag.STATIC)
-                .requires("m4", RequiresFlag.PUBLIC, RequiresFlag.STATIC)
+                .requires("m4", RequiresFlag.TRANSITIVE, RequiresFlag.STATIC)
                 .provides("java.util.List", "pack1.C")
                 .uses("java.util.List")
                 .uses("java.nio.file.Path")
                 .provides("java.util.List", "pack2.D")
-                .requires("jdk.jdeps", RequiresFlag.STATIC, RequiresFlag.PUBLIC)
+                .requires("jdk.jdeps", RequiresFlag.STATIC, RequiresFlag.TRANSITIVE)
                 .requires("m5", RequiresFlag.STATIC)
-                .requires("m6", RequiresFlag.PUBLIC)
+                .requires("m6", RequiresFlag.TRANSITIVE)
                 .requires("java.compiler")
-                .exportsTo("packTo4", "java.compiler", ExportFlag.DYNAMIC)
+                .exportsTo("packTo4", "java.compiler")
                 .exportsTo("packTo2", "java.compiler")
-                .exports("pack4", ExportFlag.DYNAMIC)
+                .exports("pack4")
                 .exports("pack2")
                 .write(m1);
         tb.writeJavaFiles(m1, "package pack1; public class C extends java.util.ArrayList{ }",

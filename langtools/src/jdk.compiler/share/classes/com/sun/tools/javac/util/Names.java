@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -69,7 +69,9 @@ public class Names {
     public final Name provides;
     public final Name requires;
     public final Name to;
+    public final Name transitive;
     public final Name uses;
+    public final Name weak;
     public final Name with;
 
     // field and method names
@@ -101,6 +103,7 @@ public class Names {
     public final Name length;
     public final Name next;
     public final Name ordinal;
+    public final Name provider;
     public final Name serialVersionUID;
     public final Name toString;
     public final Name value;
@@ -226,7 +229,9 @@ public class Names {
         provides = fromString("provides");
         requires = fromString("requires");
         to = fromString("to");
+        transitive = fromString("transitive");
         uses = fromString("uses");
+        weak = fromString("weak");
         with = fromString("with");
 
         // field and method names
@@ -258,6 +263,7 @@ public class Names {
         length = fromString("length");
         next = fromString("next");
         ordinal = fromString("ordinal");
+        provider = fromString("provider");
         serialVersionUID = fromString("serialVersionUID");
         toString = fromString("toString");
         value = fromString("value");

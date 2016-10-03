@@ -419,7 +419,7 @@ public class ClassWriter {
         }
 
         @Override
-        public Void visitConcealedPackages(ConcealedPackages_attribute attr, ClassOutputStream out) {
+        public Void visitPackages(Packages_attribute attr, ClassOutputStream out) {
             out.writeShort(attr.packages_count);
             for (int i: attr.packages_index)
                 out.writeShort(i);
@@ -541,6 +541,8 @@ public class ClassWriter {
 
         @Override
         public Void visitModule(Module_attribute attr, ClassOutputStream out) {
+            out.writeShort(attr.module_flags);
+
             out.writeShort(attr.requires.length);
             for (Module_attribute.RequiresEntry e: attr.requires) {
                 out.writeShort(e.requires_index);

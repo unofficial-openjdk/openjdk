@@ -134,7 +134,7 @@ public class Flags {
     /** Flag is set for nested classes that do not access instance members
      *  or `this' of an outer class and therefore don't need to be passed
      *  a this$n reference.  This value is currently set only for anonymous
-     *  classes in superclass constructor calls and only for pre 1.4 targets.
+     *  classes in superclass constructor calls.
      *  todo: use this value for optimizing away this$n parameters in
      *  other cases.
      */
@@ -292,6 +292,11 @@ public class Flags {
      * Flag to indicate the given ModuleSymbol is a system module.
      */
     public static final long SYSTEM_MODULE = 1L<<53;
+
+    /**
+     * Flag to indicate the given PackageSymbol contains any non-.java and non-.class resources.
+     */
+    public static final long HAS_RESOURCE = 1L<<54;
 
     /** Modifier masks.
      */

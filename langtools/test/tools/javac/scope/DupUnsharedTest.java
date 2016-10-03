@@ -24,7 +24,7 @@
 /*
  * @test
  * @summary WriteableScope.dupUnshared not working properly for shared Scopes.
- * @modules jdk.compiler/com.sun.tools.javac.code
+ * @modules jdk.compiler/com.sun.tools.javac.code:private
  *          jdk.compiler/com.sun.tools.javac.file
  *          jdk.compiler/com.sun.tools.javac.util
  */

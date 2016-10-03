@@ -291,6 +291,7 @@ public abstract class BaseFileManager implements JavaFileManager {
 
             case MULTIRELEASE:
                 multiReleaseValue = value;
+                locations.setMultiReleaseValue(value);
                 return true;
 
             default:

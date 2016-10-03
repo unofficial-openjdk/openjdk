@@ -76,7 +76,9 @@ public abstract class Directive implements ModuleElement.Directive {
 
     /** Flags for ExportsDirective. */
     public enum ExportsFlag {
-        DYNAMIC_PHASE(0x0040);
+        REFLECTION(0x0080),
+        SYNTHETIC(0x1000),
+        MANDATED(0x8000);
 
         // overkill? move to ClassWriter?
         public static int value(Set<ExportsFlag> s) {
@@ -98,7 +100,7 @@ public abstract class Directive implements ModuleElement.Directive {
      */
     public static class ExportsDirective extends Directive
             implements ModuleElement.ExportsDirective {
-        public final PackageSymbol packge;
+        public final PackageSymbol packge;  // null for default
         public final Set<ExportsFlag> flags;
         public final List<ModuleSymbol> modules;
 
@@ -115,6 +117,11 @@ public abstract class Directive implements ModuleElement.Directive {
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
         public ModuleElement.DirectiveKind getKind() {
             return ModuleElement.DirectiveKind.EXPORTS;
+        }
+
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
+        public boolean isPrivate() {
+            return flags.contains(ExportsFlag.REFLECTION);
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
@@ -187,7 +194,7 @@ public abstract class Directive implements ModuleElement.Directive {
     }
 
     /**
-     * 'requires' ['public'] ModuleName ';'
+     * 'requires' ('static' | 'transitive')* ModuleName ';'
      */
     public static class RequiresDirective extends Directive
             implements ModuleElement.RequiresDirective {
@@ -209,7 +216,12 @@ public abstract class Directive implements ModuleElement.Directive {
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
-        public boolean isPublic() {
+        public boolean isStatic() {
+            return flags.contains(RequiresFlag.STATIC_PHASE);
+        }
+
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
+        public boolean isTransitive() {
             return flags.contains(RequiresFlag.TRANSITIVE);
         }
 

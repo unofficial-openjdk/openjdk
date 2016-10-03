@@ -97,8 +97,8 @@ public class ModuleAnalyzer {
 
     public boolean run() throws IOException {
         try {
-            // compute "requires public" dependences
-            modules.values().forEach(ModuleDeps::computeRequiresPublic);
+            // compute "requires transitive" dependences
+            modules.values().forEach(ModuleDeps::computeRequiresTransitive);
 
             modules.values().forEach(md -> {
                 // compute "requires" dependences
@@ -114,7 +114,7 @@ public class ModuleAnalyzer {
 
     class ModuleDeps {
         final Module root;
-        Set<Module> requiresPublic;
+        Set<Module> requiresTransitive;
         Set<Module> requires;
         Map<String, Set<String>> unusedQualifiedExports;
 
@@ -123,15 +123,15 @@ public class ModuleAnalyzer {
         }
 
         /**
-         * Compute 'requires public' dependences by analyzing API dependencies
+         * Compute 'requires transitive' dependences by analyzing API dependencies
          */
-        private void computeRequiresPublic() {
-            // record requires public
-            this.requiresPublic = computeRequires(true)
+        private void computeRequiresTransitive() {
+            // record requires transitive
+            this.requiresTransitive = computeRequires(true)
                 .filter(m -> !m.name().equals(JAVA_BASE))
                 .collect(toSet());
 
-            trace("requires public: %s%n", requiresPublic);
+            trace("requires transitive: %s%n", requiresTransitive);
         }
 
         private void computeRequires() {
@@ -154,24 +154,24 @@ public class ModuleAnalyzer {
         }
 
         ModuleDescriptor descriptor() {
-            return descriptor(requiresPublic, requires);
+            return descriptor(requiresTransitive, requires);
         }
 
-        private ModuleDescriptor descriptor(Set<Module> requiresPublic,
+        private ModuleDescriptor descriptor(Set<Module> requiresTransitive,
                                             Set<Module> requires) {
 
-            ModuleDescriptor.Builder builder = new ModuleDescriptor.Builder(root.name());
+            ModuleDescriptor.Builder builder = ModuleDescriptor.module(root.name());
 
             if (!root.name().equals(JAVA_BASE))
                 builder.requires(Set.of(MANDATED), JAVA_BASE);
 
-            requiresPublic.stream()
+            requiresTransitive.stream()
                 .filter(m -> !m.name().equals(JAVA_BASE))
                 .map(Module::name)
-                .forEach(mn -> builder.requires(Set.of(PUBLIC), mn));
+                .forEach(mn -> builder.requires(Set.of(TRANSITIVE), mn));
 
             requires.stream()
-                .filter(m -> !requiresPublic.contains(m))
+                .filter(m -> !requiresTransitive.contains(m))
                 .filter(m -> !m.name().equals(JAVA_BASE))
                 .map(Module::name)
                 .forEach(mn -> builder.requires(mn));
@@ -181,13 +181,13 @@ public class ModuleAnalyzer {
 
         ModuleDescriptor reduced() {
             Graph.Builder<Module> bd = new Graph.Builder<>();
-            requiresPublic.stream()
+            requiresTransitive.stream()
                 .forEach(m -> {
                     bd.addNode(m);
                     bd.addEdge(root, m);
                 });
 
-            // requires public graph
+            // requires transitive graph
             Graph<Module> rbg = bd.build().reduce();
 
             // transitive reduction
@@ -197,7 +197,7 @@ public class ModuleAnalyzer {
                 newGraph.printGraph(log);
             }
 
-            return descriptor(requiresPublic, newGraph.adjacentNodes(root));
+            return descriptor(requiresTransitive, newGraph.adjacentNodes(root));
         }
 
 
@@ -207,14 +207,14 @@ public class ModuleAnalyzer {
          */
         private void analyzeDeps() {
             Graph.Builder<Module> builder = new Graph.Builder<>();
-            requiresPublic.stream()
+            requiresTransitive.stream()
                 .forEach(m -> {
                     builder.addNode(m);
                     builder.addEdge(root, m);
                 });
 
-            // requires public graph
-            Graph<Module> rbg = buildGraph(requiresPublic).reduce();
+            // requires transitive graph
+            Graph<Module> rbg = buildGraph(requiresTransitive).reduce();
 
             // transitive reduction
             Graph<Module> newGraph = buildGraph(requires).reduce(builder.build().reduce());
@@ -279,7 +279,7 @@ public class ModuleAnalyzer {
         /**
          * Returns a graph of modules required by the specified module.
          *
-         * Requires public edges of the dependences are added to the graph.
+         * Requires transitive edges of the dependences are added to the graph.
          */
         private Graph<Module> buildGraph(Set<Module> deps) {
             Graph.Builder<Module> builder = new Graph.Builder<>();
@@ -293,7 +293,7 @@ public class ModuleAnalyzer {
                     builder.addEdge(root, m);
                 });
 
-            // read requires public from ModuleDescription
+            // read requires transitive from ModuleDescription
             Module source;
             while ((source = deque.poll()) != null) {
                 if (visited.contains(source))
@@ -303,7 +303,7 @@ public class ModuleAnalyzer {
                 builder.addNode(source);
                 Module from = source;
                 source.descriptor().requires().stream()
-                    .filter(req -> req.modifiers().contains(PUBLIC))
+                    .filter(req -> req.modifiers().contains(TRANSITIVE))
                     .map(ModuleDescriptor.Requires::name)
                     .map(configuration::findModule)
                     .flatMap(Optional::stream)
@@ -365,16 +365,16 @@ public class ModuleAnalyzer {
     }
 
     private boolean matches(ModuleDescriptor md, ModuleDescriptor other) {
-        // build requires public from ModuleDescriptor
-        Set<ModuleDescriptor.Requires> reqPublic = md.requires().stream()
-            .filter(req -> req.modifiers().contains(PUBLIC))
+        // build requires transitive from ModuleDescriptor
+        Set<ModuleDescriptor.Requires> reqTransitive = md.requires().stream()
+            .filter(req -> req.modifiers().contains(TRANSITIVE))
             .collect(toSet());
-        Set<ModuleDescriptor.Requires> otherReqPublic = other.requires().stream()
-            .filter(req -> req.modifiers().contains(PUBLIC))
+        Set<ModuleDescriptor.Requires> otherReqTransitive = other.requires().stream()
+            .filter(req -> req.modifiers().contains(TRANSITIVE))
             .collect(toSet());
 
-        if (!reqPublic.equals(otherReqPublic)) {
-            trace("mismatch requires public: %s%n", reqPublic);
+        if (!reqTransitive.equals(otherReqTransitive)) {
+            trace("mismatch requires transitive: %s%n", reqTransitive);
             return false;
         }
 
@@ -421,12 +421,12 @@ public class ModuleAnalyzer {
                 .sorted(Comparator.comparing(ModuleDescriptor::name))
                 .forEach(md -> {
                     String mn = md.name();
-                    Set<String> requiresPublic = md.requires().stream()
-                        .filter(d -> d.modifiers().contains(PUBLIC))
+                    Set<String> requiresTransitive = md.requires().stream()
+                        .filter(d -> d.modifiers().contains(TRANSITIVE))
                         .map(d -> d.name())
                         .collect(toSet());
 
-                    DotGraph.printEdges(out, graph, mn, requiresPublic);
+                    DotGraph.printEdges(out, graph, mn, requiresTransitive);
                 });
 
             out.println("}");
@@ -436,20 +436,20 @@ public class ModuleAnalyzer {
     /**
      * Returns a Graph of the given Configuration after transitive reduction.
      *
-     * Transitive reduction of requires public edge and requires edge have
-     * to be applied separately to prevent the requires public edges
+     * Transitive reduction of requires transitive edge and requires edge have
+     * to be applied separately to prevent the requires transitive edges
      * (e.g. U -> V) from being reduced by a path (U -> X -> Y -> V)
      * in which  V would not be re-exported from U.
      */
     private Graph<String> gengraph(Set<Module> modules) {
-        // build a Graph containing only requires public edges
+        // build a Graph containing only requires transitive edges
         // with transitive reduction.
         Graph.Builder<String> rpgbuilder = new Graph.Builder<>();
         for (Module module : modules) {
             ModuleDescriptor md = module.descriptor();
             String mn = md.name();
             md.requires().stream()
-                    .filter(d -> d.modifiers().contains(PUBLIC))
+                    .filter(d -> d.modifiers().contains(TRANSITIVE))
                     .map(d -> d.name())
                     .forEach(d -> rpgbuilder.addEdge(mn, d));
         }

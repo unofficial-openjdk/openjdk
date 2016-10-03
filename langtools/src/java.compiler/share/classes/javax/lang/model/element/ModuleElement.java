@@ -96,7 +96,7 @@ public interface ModuleElement extends Element, QualifiedNameable {
      * @since 9
      */
     enum DirectiveKind {
-        /** A "requires [public] module-name" directive. */
+        /** A "requires (static|transitive)* module-name" directive. */
         REQUIRES,
         /** An "exports package-name [to module-name-list]" directive. */
         EXPORTS,
@@ -127,10 +127,16 @@ public interface ModuleElement extends Element, QualifiedNameable {
      */
     interface RequiresDirective extends Directive {
         /**
-         * Returns whether or not this is a public dependency.
-         * @return whether or not this is a public dependency
+         * Returns whether or not this is a static dependency.
+         * @return whether or not this is a static dependency
          */
-        boolean isPublic();
+        boolean isStatic();
+
+        /**
+         * Returns whether or not this is a transitive dependency.
+         * @return whether or not this is a transitive dependency
+         */
+        boolean isTransitive();
 
         /**
          * Returns the module that is required
@@ -144,8 +150,15 @@ public interface ModuleElement extends Element, QualifiedNameable {
      * @since 9
      */
     interface ExportsDirective extends Directive {
+
         /**
-         * Returns the package being exported.
+         * Returns whether or not this is a private exports.
+         * @return whether or not this is a private exports
+         */
+        boolean isPrivate();
+
+        /**
+         * Returns the package being exported, or null if this is a default exports directive.
          * @return the package being exported
          */
         PackageElement getPackage();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -538,15 +538,16 @@ public class TreeMaker implements JCTree.Factory {
     }
 
     @Override
-    public JCModuleDecl ModuleDef(List<JCAnnotation> annotations, JCExpression qualid, List<JCDirective> directives) {
-        JCModuleDecl tree = new JCModuleDecl(annotations, qualid, directives);
+    public JCModuleDecl ModuleDef(List<JCAnnotation> annotations, boolean weak,
+            JCExpression qualid, List<JCDirective> directives) {
+        JCModuleDecl tree = new JCModuleDecl(annotations, weak, qualid, directives);
         tree.pos = pos;
         return tree;
     }
 
     @Override
-    public JCExports Exports(JCExpression qualId, boolean isDynamicPhase, List<JCExpression> moduleNames) {
-        JCExports tree = new JCExports(qualId, isDynamicPhase, moduleNames);
+    public JCExports Exports(JCExpression qualId, boolean isPrivate, List<JCExpression> moduleNames) {
+        JCExports tree = new JCExports(qualId, isPrivate, moduleNames);
         tree.pos = pos;
         return tree;
     }
@@ -559,8 +560,8 @@ public class TreeMaker implements JCTree.Factory {
     }
 
     @Override
-    public JCRequires Requires(boolean isPublic, boolean isStaticPhase, JCExpression qualId) {
-        JCRequires tree = new JCRequires(isPublic, isStaticPhase, qualId);
+    public JCRequires Requires(boolean isTransitive, boolean isStaticPhase, JCExpression qualId) {
+        JCRequires tree = new JCRequires(isTransitive, isStaticPhase, qualId);
         tree.pos = pos;
         return tree;
     }

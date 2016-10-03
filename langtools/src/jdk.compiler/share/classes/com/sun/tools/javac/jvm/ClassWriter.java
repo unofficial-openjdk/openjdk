@@ -952,6 +952,8 @@ public class ClassWriter extends ClassFile {
         ModuleSymbol m = (ModuleSymbol) c.owner;
 
         int alenIdx = writeAttr(names.Module);
+        databuf.appendChar(ModuleFlags.value(m.flags)); // module_flags
+
         ListBuffer<RequiresDirective> requires = new ListBuffer<>();
         for (RequiresDirective r: m.requires) {
             if (!r.flags.contains(RequiresFlag.EXTRA))

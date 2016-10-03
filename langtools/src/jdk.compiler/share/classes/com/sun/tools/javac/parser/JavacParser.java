@@ -51,7 +51,6 @@ import static com.sun.tools.javac.parser.Tokens.TokenKind.GT;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.IMPORT;
 import static com.sun.tools.javac.parser.Tokens.TokenKind.LT;
 import static com.sun.tools.javac.tree.JCTree.Tag.*;
-import com.sun.tools.javac.util.JCDiagnostic.SimpleDiagnosticPosition;
 
 /** The parser maps a token sequence into an abstract syntax
  *  tree. It operates by recursive descent, with code derived
@@ -3150,16 +3149,25 @@ public class JavacParser implements Parser {
                 }
                 if (mods != null || token.kind != SEMI)
                     mods = modifiersOpt(mods);
-                if (token.kind == IDENTIFIER && token.name() == names.module && firstTypeDecl) {
-                    List<JCAnnotation> annotations = List.nil();
-                    if (mods != null) {
-                        checkNoMods(mods.flags);
-                        annotations = mods.annotations;
-                        mods = null;
+                if (firstTypeDecl && token.kind == IDENTIFIER) {
+                    boolean weak = false;
+                    if (token.name() == names.weak) {
+                        weak = true;
+                        nextToken();
                     }
-                    defs.append(moduleDecl(annotations, docComment));
-                    consumedToplevelDoc = true;
-                    break;
+                    if (token.kind == IDENTIFIER && token.name() == names.module) {
+                        List<JCAnnotation> annotations = List.nil();
+                        if (mods != null) {
+                            checkNoMods(mods.flags);
+                            annotations = mods.annotations;
+                            mods = null;
+                        }
+                        defs.append(moduleDecl(annotations, weak, docComment));
+                        consumedToplevelDoc = true;
+                        break;
+                    } else if (weak) {
+                        reportSyntaxError(token.pos, "expected.module");
+                    }
                 }
                 JCTree def = typeDeclaration(mods, docComment);
                 if (def instanceof JCExpressionStatement)
@@ -3185,7 +3193,7 @@ public class JavacParser implements Parser {
         return toplevel;
     }
 
-    JCModuleDecl moduleDecl(List<JCAnnotation> annotations, Comment dc) {
+    JCModuleDecl moduleDecl(List<JCAnnotation> annotations, boolean weak, Comment dc) {
         int pos = token.pos;
         if (!allowModules) {
             log.error(pos, Errors.ModulesNotSupportedInSource(source.name));
@@ -3201,7 +3209,7 @@ public class JavacParser implements Parser {
         accept(RBRACE);
         accept(EOF);
 
-        JCModuleDecl result = toP(F.at(pos).ModuleDef(annotations, name, directives));
+        JCModuleDecl result = toP(F.at(pos).ModuleDef(annotations, weak, name, directives));
         attach(result, dc);
         return result;
     }
@@ -3212,16 +3220,31 @@ public class JavacParser implements Parser {
             int pos = token.pos;
             if (token.name() == names.requires) {
                 nextToken();
+                boolean isPublic = false;
                 boolean isTransitive = false;
                 boolean isStaticPhase = false;
             loop:
                 while (true) {
                     switch (token.kind) {
-                        case PUBLIC:
-                            if (isTransitive) {
+                        case IDENTIFIER:
+                            if (token.name() == names.transitive && !isTransitive) {
+                                Token t1 = S.token(1);
+                                if (t1.kind == SEMI || t1.kind == DOT) {
+                                    break loop;
+                                }
+                                if (isPublic) { // temporary
+                                    error(token.pos, "repeated.modifier");
+                                }
+                                isTransitive = true;
+                                break;
+                            } else {
+                                break loop;
+                            }
+                        case PUBLIC: // temporary
+                            if (isPublic || isTransitive) {
                                 error(token.pos, "repeated.modifier");
                             }
-                            isTransitive = true;
+                            isPublic = isTransitive = true;
                             break;
                         case STATIC:
                             if (isStaticPhase) {
@@ -3239,19 +3262,14 @@ public class JavacParser implements Parser {
                 defs.append(toP(F.at(pos).Requires(isTransitive, isStaticPhase, moduleName)));
             } else if (token.name() == names.exports) {
                 nextToken();
-                boolean isDynamicPhase = false;
-                if (token.kind == IDENTIFIER && token.name() == names.dynamic) {
-                    // lookahead to see if dynamic is followed by a package name
-                    // (or if the token is itself the beginning of a package name)
-                    Token t1 = S.token(1);
-                    Token t2 = S.token(2);
-                    if (t1.kind == IDENTIFIER
-                            && (t2.kind == SEMI
-                                || t2.kind == DOT
-                                || t2.kind == IDENTIFIER && t2.name() == names.to)) {
-                        isDynamicPhase = true;
-                        nextToken();
+                boolean isPrivate = false;
+            loop:
+                while (token.kind == PRIVATE) {
+                    if (isPrivate) {
+                        error(token.pos, "repeated.modifier");
                     }
+                    isPrivate = true;
+                    nextToken();
                 }
                 JCExpression pkgName = qualident(false);
                 List<JCExpression> moduleNames = null;
@@ -3260,7 +3278,7 @@ public class JavacParser implements Parser {
                     moduleNames = qualidentList(false);
                 }
                 accept(SEMI);
-                defs.append(toP(F.at(pos).Exports(pkgName, isDynamicPhase, moduleNames)));
+                defs.append(toP(F.at(pos).Exports(pkgName, isPrivate, moduleNames)));
             } else if (token.name() == names.provides) {
                 nextToken();
                 JCExpression serviceName = qualident(false);

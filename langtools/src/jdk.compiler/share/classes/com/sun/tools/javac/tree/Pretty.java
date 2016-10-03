@@ -441,6 +441,10 @@ public class Pretty extends JCTree.Visitor {
     @Override
     public void visitModuleDef(JCModuleDecl tree) {
         try {
+            printAnnotations(tree.annotations);
+            if (tree.isWeak()) {
+                print("weak ");
+            }
             print("module ");
             printExpr(tree.qualId);
             if (tree.directives == null) {
@@ -458,6 +462,8 @@ public class Pretty extends JCTree.Visitor {
     public void visitExports(JCExports tree) {
         try {
             print("exports ");
+            if (tree.isPrivate)
+                print("private ");
             printExpr(tree.qualid);
             if (tree.moduleNames != null) {
                 print(" to ");
@@ -486,8 +492,10 @@ public class Pretty extends JCTree.Visitor {
     public void visitRequires(JCRequires tree) {
         try {
             print("requires ");
+            if (tree.isStaticPhase)
+                print("static ");
             if (tree.isTransitive)
-                print("public ");
+                print("transitive ");
             printExpr(tree.moduleName);
             print(";");
         } catch (IOException e) {

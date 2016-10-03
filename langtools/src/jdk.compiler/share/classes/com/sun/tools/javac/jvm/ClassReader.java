@@ -583,6 +583,17 @@ public class ClassReader {
         throw badClassFile("bad.module-info.name");
     }
 
+    /** Read module_flags.
+     */
+    Set<ModuleFlags> readModuleFlags(int flags) {
+        Set<ModuleFlags> set = EnumSet.noneOf(ModuleFlags.class);
+        for (ModuleFlags f : ModuleFlags.values()) {
+            if ((flags & f.value) != 0)
+                set.add(f);
+        }
+        return set;
+    }
+
     /** Read exports_flags.
      */
     Set<ExportsFlag> readExportsFlags(int flags) {
@@ -1239,6 +1250,8 @@ public class ClassReader {
                     if (sym.kind == TYP && sym.owner.kind == MDL) {
                         ModuleSymbol msym = (ModuleSymbol) sym.owner;
                         ListBuffer<Directive> directives = new ListBuffer<>();
+
+                        msym.flags.addAll(readModuleFlags(nextChar()));
 
                         ListBuffer<RequiresDirective> requires = new ListBuffer<>();
                         int nrequires = nextChar();
