@@ -227,6 +227,7 @@ $(MODULE_DEPS_MAKEFILE): $(MODULE_INFOS) \
 	          /requires/ { sub(/;/, ""); \
 	                       sub(/requires/, ""); \
 	                       sub(/public/, ""); \
+	                       sub(/transitive/, ""); \
 	                       sub(/\/\/.*/, ""); \
 	                       sub(/\/\*.*\*\//, ""); \
 	                       gsub(/^ +\*.*/, ""); \
