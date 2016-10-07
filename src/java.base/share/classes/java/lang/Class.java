@@ -2439,7 +2439,7 @@ public final class Class<T> implements java.io.Serializable,
                     String pn = ResourceHelper.getPackageName(name);
                     if (packages.contains(pn)
                             && !module.isExportedPrivate(pn, caller)) {
-                        // resource is in package not exported-export to caller
+                        // resource is in package not exported-private to caller
                         return null;
                     }
                 }
@@ -2533,7 +2533,7 @@ public final class Class<T> implements java.io.Serializable,
                     String pn = ResourceHelper.getPackageName(name);
                     if (packages.contains(pn)
                             && !module.isExportedPrivate(pn, caller)) {
-                        // resource is in package not exported-exported to caller
+                        // resource is in package not exported-private to caller
                         return null;
                     }
                 }
