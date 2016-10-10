@@ -469,12 +469,15 @@ final class Resolver {
      */
     private Map<ResolvedModule, Set<ResolvedModule>> makeGraph(Configuration cf) {
 
+        // initial capacity of maps to avoid resizing
+        int capacity = 1 + (4 * nameToReference.size())/ 3;
+
         // the "reads" graph starts as a module dependence graph and
         // is iteratively updated to be the readability graph
-        Map<ResolvedModule, Set<ResolvedModule>> g1 = new HashMap<>();
+        Map<ResolvedModule, Set<ResolvedModule>> g1 = new HashMap<>(capacity);
 
         // the "requires transitive" graph, contains requires transitive edges only
-        Map<ResolvedModule, Set<ResolvedModule>> g2 = new HashMap<>();
+        Map<ResolvedModule, Set<ResolvedModule>> g2 = new HashMap<>(capacity);
 
 
         // need "requires transitive" from the modules in parent configurations
@@ -502,7 +505,7 @@ final class Resolver {
 
         // populate g1 and g2 with the dependences from the selected modules
 
-        Map<String, ResolvedModule> nameToResolved = new HashMap<>();
+        Map<String, ResolvedModule> nameToResolved = new HashMap<>(capacity);
 
         for (ModuleReference mref : nameToReference.values()) {
             ModuleDescriptor descriptor = mref.descriptor();
