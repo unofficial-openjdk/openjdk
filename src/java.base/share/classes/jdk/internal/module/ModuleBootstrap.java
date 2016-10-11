@@ -429,22 +429,23 @@ public final class ModuleBootstrap {
             // the key is $MODULE
             String mn = e.getKey();
             Optional<Module> om = bootLayer.findModule(mn);
-            if (!om.isPresent())
-                fail("Unknown module: " + mn);
+            if (!om.isPresent()) {
+                warn("Unknown module: " + mn);
+                continue;
+            }
             Module m = om.get();
 
             // the value is the set of other modules (by name)
             for (String name : e.getValue()) {
-
-                Module other;
                 if (ALL_UNNAMED.equals(name)) {
                     Modules.addReadsAllUnnamed(m);
                 } else {
                     om = bootLayer.findModule(name);
-                    if (!om.isPresent())
-                        fail("Unknown module: " + name);
-                    other = om.get();
-                    Modules.addReads(m, other);
+                    if (om.isPresent()) {
+                        Modules.addReads(m, om.get());
+                    } else {
+                        warn("Unknown module: " + name);
+                    }
                 }
 
             }
@@ -492,13 +493,23 @@ public final class ModuleBootstrap {
 
             String mn = s[0];
             String pn = s[1];
+            if (mn.isEmpty() || pn.isEmpty())
+                fail("Module and package name must be specified:" + key);
 
             // The exporting module is in the boot layer
             Module m;
             Optional<Module> om = bootLayer.findModule(mn);
-            if (!om.isPresent())
-                fail("Unknown module: " + mn);
+            if (!om.isPresent()) {
+                warn("Unknown module: " + mn);
+                continue;
+            }
+
             m = om.get();
+
+            if (!m.getDescriptor().packages().contains(pn)) {
+                warn("package " + pn + " not in " + mn);
+                continue;
+            }
 
             // the value is the set of modules to export to (by name)
             for (String name : e.getValue()) {
@@ -511,10 +522,10 @@ public final class ModuleBootstrap {
                     if (om.isPresent()) {
                         other = om.get();
                     } else {
-                        fail("Unknown module: " + name);
+                        warn("Unknown module: " + name);
+                        continue;
                     }
                 }
-
                 if (allUnnamed) {
                     if (exportPrivate) {
                         Modules.addExportsPrivateToAllUnnamed(m, pn);
@@ -564,11 +575,7 @@ public final class ModuleBootstrap {
                 fail("Unable to parse: " + value);
 
             // value is <module>(,<module>)*
-            if (map.containsKey(key))
-                fail(key + " specified more than once to --add-exports[-private]");
-
-            Set<String> values = new HashSet<>();
-            map.put(key, values);
+            Set<String> values = map.computeIfAbsent(key, k -> new HashSet<>());
             for (String s : rhs.split(",")) {
                 if (s.length() > 0) values.add(s);
             }
@@ -592,6 +599,10 @@ public final class ModuleBootstrap {
      */
     static void fail(String m) {
         throw new RuntimeException(m);
+    }
+
+    static void warn(String m) {
+        System.err.println("WARNING: " + m);
     }
 
     static class PerfCounters {
