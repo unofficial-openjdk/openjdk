@@ -26,8 +26,9 @@
  * @library /lib/testlibrary
  * @modules jdk.compiler
  * @build CompilerUtils
- * @run testng/othervm FactoryTest
- * @summary Basic test of of provider factories
+ * @run testng/othervm BadProvidersTest
+ * @summary Basic test of ServiceLoader with bad provider and bad provider
+ *          factories deployed on the module path
  */
 
 import java.lang.module.Configuration;
@@ -49,11 +50,11 @@ import org.testng.annotations.DataProvider;
 import static org.testng.Assert.*;
 
 /**
- * Basic test of `provides S with PF` where PF is a provider factory that defines
- * a public static "provider" method.
+ * Basic test of `provides S with PF` and `provides S with P` where the provider
+ * factory or provider
  */
 
-public class FactoryTest {
+public class BadProvidersTest {
 
     private static final String TEST_SRC = System.getProperty("test.src");
 
@@ -61,38 +62,41 @@ public class FactoryTest {
     private static final Path SRC_DIR    = Paths.get(TEST_SRC, "modules");
 
     private static final Path BADFACTORIES_DIR = Paths.get(TEST_SRC, "badfactories");
+    private static final Path BADPROVIDERS_DIR = Paths.get(TEST_SRC, "badproviders");
 
-    private static final String TEST_MODULE = "test";
+    private static final String TEST1_MODULE = "test1";
+    private static final String TEST2_MODULE = "test2";
+
     private static final String TEST_SERVICE = "p.Service";
 
     /**
-     * Compiles module test, returning a module path with the compiled module.
+     * Compiles a module, returning a module path with the compiled module.
      */
-    private Path compileTest() throws Exception {
+    private Path compileTest(String moduleName) throws Exception {
         Path dir = Files.createTempDirectory(USER_DIR, "mods");
-        Path output = Files.createDirectory(dir.resolve(TEST_MODULE));
-        boolean compiled = CompilerUtils.compile(SRC_DIR.resolve(TEST_MODULE), output);
+        Path output = Files.createDirectory(dir.resolve(moduleName));
+        boolean compiled = CompilerUtils.compile(SRC_DIR.resolve(moduleName), output);
         assertTrue(compiled);
         return dir;
     }
 
     /**
-     * Resolves the test module and loads it into its own layer. ServiceLoader
+     * Resolves a test module and loads it into its own layer. ServiceLoader
      * is then used to load all providers.
      */
-    private List<Provider> loadProviders(Path mp) throws Exception {
+    private List<Provider> loadProviders(Path mp, String moduleName) throws Exception {
         ModuleFinder finder = ModuleFinder.of(mp);
 
         Layer bootLayer = Layer.boot();
 
         Configuration cf = bootLayer.configuration()
-                .resolveRequiresAndUses(finder, ModuleFinder.of(), Set.of(TEST_MODULE));
+                .resolveRequiresAndUses(finder, ModuleFinder.of(), Set.of(moduleName));
 
         ClassLoader scl = ClassLoader.getSystemClassLoader();
 
         Layer layer = Layer.boot().defineModulesWithOneLoader(cf, scl);
 
-        Class<?> service = layer.findLoader(TEST_MODULE).loadClass(TEST_SERVICE);
+        Class<?> service = layer.findLoader(moduleName).loadClass(TEST_SERVICE);
 
         return ServiceLoader.load(layer, service)
                 .stream()
@@ -100,9 +104,9 @@ public class FactoryTest {
     }
 
     @Test
-    public void testBasic() throws Exception {
-        Path mods = compileTest();
-        List<Provider> list = loadProviders(mods);
+    public void sanityTest1() throws Exception {
+        Path mods = compileTest(TEST1_MODULE);
+        List<Provider> list = loadProviders(mods, TEST1_MODULE);
         assertTrue(list.size() == 1);
 
         // the provider is a singleton, enforced by the provider factory
@@ -112,9 +116,18 @@ public class FactoryTest {
         assertTrue(p1 == p2);
     }
 
+    @Test
+    public void sanityTest2() throws Exception {
+        Path mods = compileTest(TEST2_MODULE);
+        List<Provider> list = loadProviders(mods, TEST2_MODULE);
+        assertTrue(list.size() == 1);
+        Object p = list.get(0).get();
+        assertTrue(p != null);
+    }
+
 
     @DataProvider(name = "badfactories")
-    public Object[][] createtestBadFactories() {
+    public Object[][] createBadFactories() {
         return new Object[][] {
                 { "classnotpublic",     null },
                 { "methodnotpublic",    null },
@@ -128,7 +141,7 @@ public class FactoryTest {
     @Test(dataProvider = "badfactories",
           expectedExceptions = ServiceConfigurationError.class)
     public void testBadFactory(String testName, String ignore) throws Exception {
-        Path mods = compileTest();
+        Path mods = compileTest(TEST1_MODULE);
 
         // compile the bad factory
         Path source = BADFACTORIES_DIR.resolve(testName);
@@ -139,11 +152,44 @@ public class FactoryTest {
         // copy the compiled class into the module
         Path classFile = Paths.get("p", "ProviderFactory.class");
         Files.copy(output.resolve(classFile),
-                   mods.resolve(TEST_MODULE).resolve(classFile),
+                   mods.resolve(TEST1_MODULE).resolve(classFile),
                    StandardCopyOption.REPLACE_EXISTING);
 
-        // load providers and instanitate each one
-        loadProviders(mods).forEach(Provider::get);
+        // load providers and instantiate each one
+        loadProviders(mods, TEST1_MODULE).forEach(Provider::get);
+    }
+
+
+    @DataProvider(name = "badproviders")
+    public Object[][] createBadProviders() {
+        return new Object[][] {
+                { "notpublic",          null },
+                { "ctornotpublic",      null },
+                { "notasubtype",        null },
+                { "throwsexception",    null }
+        };
+    }
+
+
+    @Test(dataProvider = "badproviders",
+          expectedExceptions = ServiceConfigurationError.class)
+    public void testBadProvider(String testName, String ignore) throws Exception {
+        Path mods = compileTest(TEST2_MODULE);
+
+        // compile the bad provider
+        Path source = BADPROVIDERS_DIR.resolve(testName);
+        Path output = Files.createTempDirectory(USER_DIR, "tmp");
+        boolean compiled = CompilerUtils.compile(source, output);
+        assertTrue(compiled);
+
+        // copy the compiled class into the module
+        Path classFile = Paths.get("p", "Provider.class");
+        Files.copy(output.resolve(classFile),
+                   mods.resolve(TEST2_MODULE).resolve(classFile),
+                   StandardCopyOption.REPLACE_EXISTING);
+
+        // load providers and instantiate each one
+        loadProviders(mods, TEST2_MODULE).forEach(Provider::get);
     }
 
 }

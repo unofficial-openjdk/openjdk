@@ -21,13 +21,15 @@
  * questions.
  */
 
+package p;
+
 /**
- * Test module that provides an implementation of p.Service via a
- * provider factory class.
+ * A provider class with a constructor throws an exception.
  */
 
-module test {
-    exports p;
-    provides p.Service with p.ProviderFactory;
+public class Provider {
+    public Provider() {
+        throw new RuntimeException();
+    }
 }
 
