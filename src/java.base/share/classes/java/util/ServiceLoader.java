@@ -404,7 +404,7 @@ public final class ServiceLoader<S>
          *         case of a provider factory, the public static
          *         "{@code provider()}" method returns {@code null} or throws
          *         an error or exception. The {@code ServiceConfigurationError}
-         *         will will carry an appropriate cause where possible.
+         *         will carry an appropriate cause where possible.
          */
         @Override S get();
     }
