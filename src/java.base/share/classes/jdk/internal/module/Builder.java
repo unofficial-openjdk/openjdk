@@ -30,9 +30,7 @@ import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Version;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -58,10 +56,42 @@ final class Builder {
     // most Version objects.  JDK modules have the same version.
     static Version cachedVersion;
 
+    /**
+     * Create module dependence with the given (and possibly empty) set
+     * of modifiers.
+     */
+    public static Requires newRequires(Set<Requires.Modifier> mods, String mn) {
+        return jlma.newRequires(mods, mn);
+    }
+
+    /**
+     * Create a qualified export to a set of target modules with a given set of
+     * modifiers.
+     */
+    public static Exports newExports(Set<Exports.Modifier> ms,
+                                     String pn,
+                                     Set<String> targets) {
+        return jlma.newExports(ms, pn, targets);
+    }
+
+    /**
+     * Create an unqualified export with a given set of modifiers.
+     */
+    public static Exports newExports(Set<Exports.Modifier> ms, String pn) {
+        return jlma.newExports(ms, pn);
+    }
+
+    /**
+     * Provides service {@code st} with implementations {@code pcs}.
+     */
+    public static Provides newProvides(String st, Set<String> pcs) {
+        return jlma.newProvides(st, pcs);
+    }
+
     final String name;
-    final Set<Requires> requires;
-    final Set<Exports> exports;
-    final Map<String, Provides> provides;
+    Map<String, Provides> provides;
+    Set<Requires> requires;
+    Set<Exports> exports;
     boolean weak;
     boolean automatic;
     boolean synthetic;
@@ -75,11 +105,11 @@ final class Builder {
     String algorithm;
     Map<String, String> hashes;
 
-    Builder(String name, int reqs, int exports, int provides) {
+    Builder(String name) {
         this.name = name;
-        this.requires = reqs > 0 ? new HashSet<>(reqs) : Collections.emptySet();
-        this.exports  = exports > 0 ? new HashSet<>(exports) : Collections.emptySet();
-        this.provides = provides > 0 ? new HashMap<>(provides) : Collections.emptyMap();
+        this.provides = Collections.emptyMap();
+        this.exports = Collections.emptySet();
+        this.requires = Collections.emptySet();
         this.uses = Collections.emptySet();
     }
 
@@ -99,11 +129,39 @@ final class Builder {
     }
 
     /**
-     * Adds a module dependence with the given (and possibly empty) set
-     * of modifiers.
+     * Set module exports.
      */
-    public Builder requires(Set<Requires.Modifier> mods, String mn) {
-        requires.add(jlma.newRequires(mods, mn));
+    public Builder exports(Exports[] exports) {
+        this.exports = Set.of(exports);
+        return this;
+    }
+
+    /**
+     * Set module requires.
+     */
+    public Builder requires(Requires[] requires) {
+        this.requires = Set.of(requires);
+        return this;
+    }
+
+    /**
+     * Set module provides.
+     */
+    @SuppressWarnings(value = { "unchecked", "rawtypes" })
+    public Builder provides(Provides[] provides) {
+        Map.Entry<String, Provides>[] provideEntries = new Map.Entry[provides.length];
+        for (int i = 0; i < provides.length; i++) {
+            provideEntries[i] = Map.entry(provides[i].service(), provides[i]);
+        }
+        this.provides = Map.ofEntries(provideEntries);
+        return this;
+    }
+
+    /**
+     * Adds a set of (possible empty) packages.
+     */
+    public Builder packages(Set<String> packages) {
+        this.packages = packages;
         return this;
     }
 
@@ -112,51 +170,6 @@ final class Builder {
      */
     public Builder uses(Set<String> uses) {
         this.uses = uses;
-        return this;
-    }
-
-    /**
-     * Adds a qualified export to a set of target modules with a given set of
-     * modifiers.
-     */
-    public Builder exports(Set<Exports.Modifier> ms,
-                           String pn,
-                           Set<String> targets) {
-        exports.add(jlma.newExports(ms, pn, targets));
-        return this;
-    }
-
-    /**
-     * Adds an unqualified export with a given set of modifiers.
-     */
-    public Builder exports(Set<Exports.Modifier> ms, String pn) {
-        exports.add(jlma.newExports(ms, pn));
-        return this;
-    }
-
-    /**
-     * Provides service {@code st} with implementations {@code pcs}.
-     */
-    public Builder provides(String st, Set<String> pcs) {
-        if (provides.containsKey(st))
-            throw new IllegalStateException("Providers of service "
-                    + st + " already declared");
-        provides.put(st, jlma.newProvides(st, pcs));
-        return this;
-    }
-
-    /**
-     * Provides service {@code st} with implementation {@code pc}.
-     */
-    public Builder provides(String st, String pc) {
-        return provides(st, Collections.singleton(pc));
-    }
-
-    /**
-     * Adds a set of (possible empty) packages.
-     */
-    public Builder packages(Set<String> packages) {
-        this.packages = packages;
         return this;
     }
 
@@ -256,20 +269,6 @@ final class Builder {
 
         ModuleHashes moduleHashes =
             hashes != null ? new ModuleHashes(algorithm, hashes) : null;
-
-        // Make those collections we build dynamically unmodifiable
-        Map<String, Provides> provides = this.provides;
-        if (!provides.isEmpty()) {
-            provides = Collections.unmodifiableMap(this.provides);
-        }
-        Set<Exports> exports = this.exports;
-        if (!exports.isEmpty()) {
-            exports = Collections.unmodifiableSet(this.exports);
-        }
-        Set<Requires> requires = this.requires;
-        if (!requires.isEmpty()) {
-            requires = Collections.unmodifiableSet(this.requires);
-        }
 
         return jlma.newModuleDescriptor(name,
                                         weak,         // weak

@@ -31,6 +31,7 @@ import java.io.InputStream;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.*;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -420,19 +421,24 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
 
         class ModuleDescriptorBuilder {
             static final String BUILDER_TYPE = "Ljdk/internal/module/Builder;";
+            static final String EXPORTS_TYPE =
+                "Ljava/lang/module/ModuleDescriptor$Exports;";
+            static final String PROVIDES_TYPE =
+                "Ljava/lang/module/ModuleDescriptor$Provides;";
+            static final String REQUIRES_TYPE =
+                "Ljava/lang/module/ModuleDescriptor$Requires;";
 
             static final String EXPORTS_MODIFIER_SET_STRING_SET_SIG =
                 "(Ljava/util/Set;Ljava/lang/String;Ljava/util/Set;)"
-                    + BUILDER_TYPE;
+                    + EXPORTS_TYPE;
             static final String EXPORTS_MODIFIER_SET_STRING_SIG =
-                "(Ljava/util/Set;Ljava/lang/String;)" + BUILDER_TYPE;
+                "(Ljava/util/Set;Ljava/lang/String;)" + EXPORTS_TYPE;
+            static final String PROVIDES_STRING_SET_SIG =
+                "(Ljava/lang/String;Ljava/util/Set;)" + PROVIDES_TYPE;
+            static final String REQUIRES_SET_STRING_SIG =
+                "(Ljava/util/Set;Ljava/lang/String;)" + REQUIRES_TYPE;
 
             // general type names and signatures
-            static final String STRING_SET_SIG =
-                "(Ljava/lang/String;Ljava/util/Set;)" + BUILDER_TYPE;
-            static final String SET_STRING_SIG =
-                "(Ljava/util/Set;Ljava/lang/String;)" + BUILDER_TYPE;
-
             static final String SET_SIG =
                 "(Ljava/util/Set;)" + BUILDER_TYPE;
             static final String STRING_SIG = "(Ljava/lang/String;)" + BUILDER_TYPE;
@@ -453,22 +459,16 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                 newBuilder();
 
                 // requires
-                for (ModuleDescriptor.Requires req : md.requires()) {
-                    requires(req.modifiers(), req.name());
-                }
+                requires(md.requires());
 
                 // exports
-                for (ModuleDescriptor.Exports e : md.exports()) {
-                    exports(e.modifiers(), e.source(), e.targets());
-                }
+                exports(md.exports());
 
                 // uses
                 uses(md.uses());
 
                 // provides
-                for (ModuleDescriptor.Provides p : md.provides().values()) {
-                    provides(p.service(), p.providers());
-                }
+                provides(md.provides().values());
 
                 // all packages
                 packages(packages);
@@ -492,11 +492,8 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                 mv.visitTypeInsn(NEW, MODULE_DESCRIPTOR_BUILDER);
                 mv.visitInsn(DUP);
                 mv.visitLdcInsn(md.name());
-                pushInt(initialCapacity(md.requires().size()));
-                pushInt(initialCapacity(md.exports().size()));
-                pushInt(initialCapacity(md.provides().size()));
                 mv.visitMethodInsn(INVOKESPECIAL, MODULE_DESCRIPTOR_BUILDER,
-                    "<init>", "(Ljava/lang/String;III)V", false);
+                    "<init>", "(Ljava/lang/String;)V", false);
                 mv.visitVarInsn(ASTORE, BUILDER_VAR);
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
 
@@ -510,7 +507,6 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                     setModuleBit("synthetic", true);
                 }
             }
-
 
             /*
              * Invoke Builder.<methodName>(boolean value)
@@ -540,27 +536,66 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
             }
 
             /*
-             * Invoke Builder.requires(Set<Modifier> mods, String mn)
+             * Invoke Builder.requires(Requires[])
+             *
+             * Uses newRequires to build the Requires objects.
+             */
+            void requires(Set<ModuleDescriptor.Requires> requires) {
+                mv.visitVarInsn(ALOAD, BUILDER_VAR);
+                pushInt(requires.size());
+                mv.visitTypeInsn(ANEWARRAY, "java/lang/module/ModuleDescriptor$Requires");
+                int arrayIndex = 0;
+                for (ModuleDescriptor.Requires require : requires) {
+                    mv.visitInsn(DUP);    // arrayref
+                    pushInt(arrayIndex++);
+                    newRequires(require.modifiers(), require.name());
+                    mv.visitInsn(AASTORE);
+                }
+                mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
+                        "requires", "([" + REQUIRES_TYPE + ")" + BUILDER_TYPE, false);
+            }
+
+            /*
+             * Invoke Builder.newRequires(Set<Modifier> mods, String mn)
              *
              * Set<Modifier> mods = ...
-             * Builder.requires(mods, mn);
+             * Builder.newRequires(mods, mn);
              */
-            void requires(Set<ModuleDescriptor.Requires.Modifier> mods, String name) {
+            void newRequires(Set<ModuleDescriptor.Requires.Modifier> mods, String name) {
                 int varIndex = dedupSetBuilder.indexOfRequiresModifiers(mods);
-                mv.visitVarInsn(ALOAD, BUILDER_VAR);
                 mv.visitVarInsn(ALOAD, varIndex);
                 mv.visitLdcInsn(name);
-                mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                                   "requires", SET_STRING_SIG, false);
-                mv.visitInsn(POP);
+                mv.visitMethodInsn(INVOKESTATIC, MODULE_DESCRIPTOR_BUILDER,
+                        "newRequires", REQUIRES_SET_STRING_SIG, false);
             }
 
             /*
              * Invoke
-             *     Builder.exports(Set<Exports.Modifier> ms, String pn,
+             *     Builder.exports(Exports[])
+             *
+             * Uses newExports to build the Exports objects.
+             */
+            void exports(Set<ModuleDescriptor.Exports> exports) {
+                mv.visitVarInsn(ALOAD, BUILDER_VAR);
+                pushInt(exports.size());
+                mv.visitTypeInsn(ANEWARRAY, "java/lang/module/ModuleDescriptor$Exports");
+                int arrayIndex = 0;
+                for (ModuleDescriptor.Exports export : exports) {
+                    mv.visitInsn(DUP);    // arrayref
+                    pushInt(arrayIndex++);
+                    newExports(export.modifiers(), export.source(), export.targets());
+                    mv.visitInsn(AASTORE);
+                }
+                mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
+                        "exports", "([" + EXPORTS_TYPE + ")" + BUILDER_TYPE, false);
+            }
+
+            /*
+             * Invoke
+             *     Builder.newExports(Set<Exports.Modifier> ms, String pn,
              *                                  Set<String> targets)
              * or
-             *     Builder.exports(Set<Exports.Modifier> ms, String pn)
+             *     Builder.newExports(Set<Exports.Modifier> ms, String pn)
              *
              * Set<String> targets = new HashSet<>();
              * targets.add(t);
@@ -568,30 +603,23 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
              * :
              *
              * Set<Modifier> mods = ...
-             * Builder.exports(mods, pn, targets);
+             * Builder.newExports(mods, pn, targets);
              */
-            void exports(Set<Exports.Modifier> ms,
-                         String pn,
-                         Set<String> targets) {
-                mv.visitVarInsn(ALOAD, BUILDER_VAR);
+            void newExports(Set<Exports.Modifier> ms, String pn, Set<String> targets) {
                 int modifiersSetIndex = dedupSetBuilder.indexOfExportsModifiers(ms);
-
                 if (!targets.isEmpty()) {
                     int stringSetIndex = dedupSetBuilder.indexOfStringSet(targets);
                     mv.visitVarInsn(ALOAD, modifiersSetIndex);
                     mv.visitLdcInsn(pn);
                     mv.visitVarInsn(ALOAD, stringSetIndex);
-                    mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                                       "exports",
-                                       EXPORTS_MODIFIER_SET_STRING_SET_SIG, false);
+                    mv.visitMethodInsn(INVOKESTATIC, MODULE_DESCRIPTOR_BUILDER,
+                            "newExports", EXPORTS_MODIFIER_SET_STRING_SET_SIG, false);
                 } else {
                     mv.visitVarInsn(ALOAD, modifiersSetIndex);
                     mv.visitLdcInsn(pn);
-                    mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                                       "exports",
-                                       EXPORTS_MODIFIER_SET_STRING_SIG, false);
+                    mv.visitMethodInsn(INVOKESTATIC, MODULE_DESCRIPTOR_BUILDER,
+                            "newExports", EXPORTS_MODIFIER_SET_STRING_SIG, false);
                 }
-                mv.visitInsn(POP);
             }
 
             /*
@@ -607,30 +635,48 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
             }
 
             /*
-             * Invoke Builder.provides(String service, Set<String> providers)
+             * Invoke Builder.provides(Provides[] provides)
              *
-             * Set<String> providers = new LinkedHashSet<>();
+             * Uses newProvides to build the Provides objects.
+             */
+            void provides(Collection<Provides> provides) {
+                mv.visitVarInsn(ALOAD, BUILDER_VAR);
+                pushInt(provides.size());
+                mv.visitTypeInsn(ANEWARRAY, "java/lang/module/ModuleDescriptor$Provides");
+                int arrayIndex = 0;
+                for (ModuleDescriptor.Provides provide : provides) {
+                    mv.visitInsn(DUP);    // arrayref
+                    pushInt(arrayIndex++);
+                    newProvides(provide.service(), provide.providers());
+                    mv.visitInsn(AASTORE);
+                }
+                mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
+                        "provides", "([" + PROVIDES_TYPE + ")" + BUILDER_TYPE, false);
+            }
+
+            /*
+             * Invoke Builder.newProvides(String service, Set<String> providers)
+             *
+             * Set<String> providers = new HashSet<>();
              * providers.add(impl);
              * :
              * :
-             * Builder.exports(service, providers);
+             * Builder.newProvides(service, providers);
              */
-            void provides(String service, Set<String> providers) {
+            void newProvides(String service, Set<String> providers) {
                 int varIndex = dedupSetBuilder.indexOfStringSet(providers);
-                mv.visitVarInsn(ALOAD, BUILDER_VAR);
                 mv.visitLdcInsn(service);
                 mv.visitVarInsn(ALOAD, varIndex);
-                mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                                   "provides", STRING_SET_SIG, false);
-                mv.visitInsn(POP);
+                mv.visitMethodInsn(INVOKESTATIC, MODULE_DESCRIPTOR_BUILDER,
+                                   "newProvides", PROVIDES_STRING_SET_SIG, false);
             }
 
             /*
              * Invoke Builder.packages(String pn)
              */
             void packages(Set<String> packages) {
-                mv.visitVarInsn(ALOAD, BUILDER_VAR);
                 int varIndex = dedupSetBuilder.newStringSet(packages);
+                mv.visitVarInsn(ALOAD, BUILDER_VAR);
                 mv.visitVarInsn(ALOAD, varIndex);
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
                                    "packages", SET_SIG, false);
