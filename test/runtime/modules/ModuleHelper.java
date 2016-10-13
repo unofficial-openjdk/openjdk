@@ -73,17 +73,6 @@ public class ModuleHelper {
         java.lang.reflect.ModuleHelper.addExportsNoSync((Module)m, pkg, (Module)null);
     }
 
-    public static boolean CanReadModule(Object from, Object to) throws Throwable {
-        WhiteBox wb = WhiteBox.getWhiteBox();
-        return wb.CanReadModule(from, to);
-    }
-
-    public static boolean IsExportedToModule(Object from, String pkg,
-                                             Object to) throws Throwable {
-        WhiteBox wb = WhiteBox.getWhiteBox();
-        return wb.IsExportedToModule(from, pkg, to);
-    }
-
     public static Module ModuleObject(String name, ClassLoader loader, String[] pkgs) throws Throwable {
         Set<String> pkg_set = new HashSet<>();
         if (pkgs != null) {
