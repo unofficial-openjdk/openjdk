@@ -57,16 +57,19 @@ final class Builder {
     static Version cachedVersion;
 
     /**
-     * Create module dependence with the given (and possibly empty) set
-     * of modifiers.
+     * Returns a {@link Requires} for a dependence on a module
+     * with the given (and possibly empty) set of modifiers.
      */
-    public static Requires newRequires(Set<Requires.Modifier> mods, String mn) {
+    public static Requires newRequires(Set<Requires.Modifier> mods,
+                                       String mn)
+    {
         return jlma.newRequires(mods, mn);
     }
 
     /**
-     * Create a qualified export to a set of target modules with a given set of
-     * modifiers.
+     * Returns a {@link Exports} for a qualified export, with
+     * the given (and possibly empty) set of modifiers,
+     * to a set of target modules.
      */
     public static Exports newExports(Set<Exports.Modifier> ms,
                                      String pn,
@@ -75,14 +78,16 @@ final class Builder {
     }
 
     /**
-     * Create an unqualified export with a given set of modifiers.
+     *  Returns a {@link Exports} for an unqualified export
+     *  with a given set of modifiers.
      */
     public static Exports newExports(Set<Exports.Modifier> ms, String pn) {
         return jlma.newExports(ms, pn);
     }
 
     /**
-     * Provides service {@code st} with implementations {@code pcs}.
+     * Returns a {@link Provides} for a service with a given set of
+     * implementation classes.
      */
     public static Provides newProvides(String st, Set<String> pcs) {
         return jlma.newProvides(st, pcs);
@@ -129,7 +134,7 @@ final class Builder {
     }
 
     /**
-     * Set module exports.
+     * Sets module exports.
      */
     public Builder exports(Exports[] exports) {
         this.exports = Set.of(exports);
@@ -137,23 +142,10 @@ final class Builder {
     }
 
     /**
-     * Set module requires.
+     * Sets module requires.
      */
     public Builder requires(Requires[] requires) {
         this.requires = Set.of(requires);
-        return this;
-    }
-
-    /**
-     * Set module provides.
-     */
-    @SuppressWarnings(value = { "unchecked", "rawtypes" })
-    public Builder provides(Provides[] provides) {
-        Map.Entry<String, Provides>[] provideEntries = new Map.Entry[provides.length];
-        for (int i = 0; i < provides.length; i++) {
-            provideEntries[i] = Map.entry(provides[i].service(), provides[i]);
-        }
-        this.provides = Map.ofEntries(provideEntries);
         return this;
     }
 
@@ -170,6 +162,20 @@ final class Builder {
      */
     public Builder uses(Set<String> uses) {
         this.uses = uses;
+        return this;
+    }
+
+    /**
+     * Sets module provides.
+     */
+    public Builder provides(Provides[] provides) {
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        Map.Entry<String, Provides>[] entries = new Map.Entry[provides.length];
+        for (int i = 0; i < provides.length; i++) {
+            Provides p = provides[i];
+            entries[i] = Map.entry(p.service(), p);
+        }
+        this.provides = Map.ofEntries(entries);
         return this;
     }
 
