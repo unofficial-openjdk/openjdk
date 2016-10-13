@@ -260,6 +260,7 @@ public class AddExportsTest {
             { "java.monkey/sun.monkey=ALL-UNNAMED",     null }, // unknown module/package
 
         };
+    }
 
 
     /**
