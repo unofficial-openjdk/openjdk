@@ -407,9 +407,6 @@ JVM_SetBootLoaderUnnamedModule(JNIEnv *env, jobject module);
 JNIEXPORT void JNICALL
 JVM_AddReadsModule(JNIEnv *env, jobject from_module, jobject to_module);
 
-JNIEXPORT jboolean JNICALL
-JVM_CanReadModule(JNIEnv *env, jobject asking_module, jobject source_module);
-
 JNIEXPORT void JNICALL
 JVM_AddModuleExports(JNIEnv *env, jobject from_module, jstring package, jobject to_module);
 
@@ -418,9 +415,6 @@ JVM_AddModuleExportsToAll(JNIEnv *env, jobject from_module, jstring package);
 
 JNIEXPORT void JNICALL
 JVM_AddModuleExportsToAllUnnamed(JNIEnv *env, jobject from_module, jstring package);
-
-JNIEXPORT jboolean JNICALL
-JVM_IsExportedToModule(JNIEnv *env, jobject from_module, jstring package, jobject to_module);
 
 JNIEXPORT void JNICALL
 JVM_AddModulePackage(JNIEnv* env,  jobject module, jstring package);
