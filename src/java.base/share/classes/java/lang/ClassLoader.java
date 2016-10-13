@@ -31,6 +31,7 @@ import java.io.UncheckedIOException;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Layer;
 import java.lang.reflect.Module;
 import java.net.URL;
 import java.security.AccessController;
@@ -39,21 +40,23 @@ import java.security.CodeSource;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.security.cert.Certificate;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.Stack;
-import java.util.NoSuchElementException;
 import java.util.Vector;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -222,6 +225,9 @@ public abstract class ClassLoader {
     // must be added *after* it.
     private final ClassLoader parent;
 
+    // class loader name
+    private final String name;
+
     // the unnamed module for this ClassLoader
     private final Module unnamedModule;
 
@@ -338,7 +344,8 @@ public abstract class ClassLoader {
         return null;
     }
 
-    private ClassLoader(Void unused, ClassLoader parent) {
+    private ClassLoader(Void unused, String name, ClassLoader parent) {
+        this.name = name;
         this.parent = parent;
         this.unnamedModule
             = SharedSecrets.getJavaLangReflectModuleAccess()
@@ -375,7 +382,28 @@ public abstract class ClassLoader {
      * @since  1.2
      */
     protected ClassLoader(ClassLoader parent) {
-        this(checkCreateClassLoader(), parent);
+        this(checkCreateClassLoader(), null, parent);
+    }
+
+    /**
+     * Creates a new class loader of the specified name and using the
+     * specified parent class loader for delegation.
+     *
+     * @param name
+     *        Class loader name; can be {@code null}
+     *
+     * @param parent
+     *        The parent class loader
+     *
+     * @throws  SecurityException
+     *          If a security manager exists and its
+     *          {@link SecurityManager#checkCreateClassLoader()}
+     *          method doesn't allow creation of a new class loader.
+     *
+     * @since  9
+     */
+    protected ClassLoader(String name, ClassLoader parent) {
+        this(checkCreateClassLoader(), name, parent);
     }
 
     /**
@@ -394,7 +422,20 @@ public abstract class ClassLoader {
      *          of a new class loader.
      */
     protected ClassLoader() {
-        this(checkCreateClassLoader(), getSystemClassLoader());
+        this(checkCreateClassLoader(), null, getSystemClassLoader());
+    }
+
+    /**
+     * Returns the name of this class loader or {@code null} if
+     * this class loader is not named.
+     *
+     * @return name of this class loader; or {@code null} if
+     * this class loader is not named.
+     *
+     * @since 9
+     */
+    public String getName() {
+        return name;
     }
 
     // -- Class --
@@ -523,7 +564,7 @@ public abstract class ClassLoader {
      * @return The resulting {@code Class} object in a module defined by
      *         this class loader, or {@code null} if the class could not be found.
      */
-    final Class<?> loadLocalClass(Module module, String name) {
+    final Class<?> loadClass(Module module, String name) {
         synchronized (getClassLoadingLock(name)) {
             // First, check if the class has already been loaded
             Class<?> c = findLoadedClass(name);
@@ -535,34 +576,6 @@ public abstract class ClassLoader {
             } else {
                 return null;
             }
-        }
-    }
-
-    /**
-     * Loads the class with the specified <a href="#name">binary name</a>
-     * defined by this class loader.  This method returns {@code null}
-     * if the class could not be found.
-     *
-     * @apiNote This method does not delegate to the parent class loader.
-     *
-     * @param  name
-     *         The <a href="#name">binary name</a> of the class
-     *
-     * @return The resulting {@code Class} object in a module defined by
-     *         this class loader, or {@code null} if the class could not be found.
-     */
-    final Class<?> loadLocalClass(String name) {
-        synchronized (getClassLoadingLock(name)) {
-            // First, check if the class has already been loaded
-            Class<?> c = findLoadedClass(name);
-            if (c == null) {
-                try {
-                    return findClass(name);
-                } catch (ClassNotFoundException e) {
-                    // ignore
-                }
-            }
-            return c;
         }
     }
 
@@ -666,12 +679,17 @@ public abstract class ClassLoader {
      * should override this method.
      *
      * @apiNote This method returns {@code null} rather than throwing
-     *          {@code ClassNotFoundException} if the class could not be found
+     *          {@code ClassNotFoundException} if the class could not be found.
      *
-     * @implSpec The default implementation returns {@code null}.
+     * @implSpec The default implementation attempts to find the class by
+     * invoking {@link #findClass(String)} when the {@code moduleName} is
+     * {@code null}. It otherwise returns {@code null}.
      *
      * @param  moduleName
-     *         The module name
+     *         The module name; or {@code null} to find the class in the
+     *         {@linkplain #getUnnamedModule() unnamed module} for this
+     *         class loader
+
      * @param  name
      *         The <a href="#name">binary name</a> of the class
      *
@@ -681,6 +699,11 @@ public abstract class ClassLoader {
      * @since 9
      */
     protected Class<?> findClass(String moduleName, String name) {
+        if (moduleName == null) {
+            try {
+                return findClass(name);
+            } catch (ClassNotFoundException ignore) { }
+        }
         return null;
     }
 
@@ -1228,10 +1251,20 @@ public abstract class ClassLoader {
      * Class loader implementations that support the loading from modules
      * should override this method.
      *
-     * @implSpec The default implementation returns {@code null}.
+     * @apiNote This method is the basis for the {@code Class} {@link
+     * Class#getResource getResource} and {@link Class#getResourceAsStream
+     * getResourceAsStream} methods. It is not subject to the rules for
+     * encapsulation specified by {@code Module} {@link
+     * Module#getResourceAsStream getResourceAsStream}.
+     *
+     * @implSpec The default implementation attempts to find the resource by
+     * invoking {@link #findResource(String)} when the {@code moduleName} is
+     * {@code null}. It otherwise returns {@code null}.
      *
      * @param  moduleName
-     *         The module name
+     *         The module name; or {@code null} to find a resource in the
+     *         {@linkplain #getUnnamedModule() unnamed module} for this
+     *         class loader
      * @param  name
      *         The resource name
      *
@@ -1248,16 +1281,17 @@ public abstract class ClassLoader {
      * @since 9
      */
     protected URL findResource(String moduleName, String name) throws IOException {
-        return null;
+        if (moduleName == null) {
+            return findResource(name);
+        } else {
+            return null;
+        }
     }
 
     /**
      * Finds the resource with the given name.  A resource is some data
      * (images, audio, text, etc) that can be accessed by class code in a way
      * that is independent of the location of the code.
-     *
-     * Resources in a named module are private to that module. This method does
-     * not find resource in named modules.
      *
      * <p> The name of a resource is a '<tt>/</tt>'-separated path name that
      * identifies the resource.
@@ -1267,16 +1301,28 @@ public abstract class ClassLoader {
      * built-in to the virtual machine is searched.  That failing, this method
      * will invoke {@link #findResource(String)} to find the resource.  </p>
      *
-     * @apiNote When overriding this method it is recommended that an
-     * implementation ensures that any delegation is consistent with the {@link
+     * <p> Resources in named modules are subject to the encapsulation rules
+     * specified by {@link Module#getResourceAsStream Module.getResourceAsStream}.
+     * Additionally, and except for the special case where the resource has a
+     * name ending with "{@code .class}", this method will only find resources in
+     * packages of named modules when the package is exported-private. </p>
+     *
+     * @apiNote Where several modules are defined to the same class loader,
+     * and where more than one module contains a resource with the given name,
+     * then the ordering that modules are searched is not specified and may be
+     * very unpredictable.
+     * When overriding this method it is recommended that an implementation
+     * ensures that any delegation is consistent with the {@link
      * #getResources(java.lang.String) getResources(String)} method.
      *
      * @param  name
      *         The resource name
      *
-     * @return  A <tt>URL</tt> object for reading the resource, or
-     *          <tt>null</tt> if the resource could not be found or the invoker
-     *          doesn't have adequate  privileges to get the resource.
+     * @return  {@code URL} object for reading the resource; {@code null} if
+     *          the resource could not be found, a {@code URL} could not be
+     *          constructed to locate the resource, the resource is in a package
+     *          that is not unconditionally exported-private, or access to the
+     *          resource is denied by the security manager.
      *
      * @since  1.1
      */
@@ -1298,16 +1344,22 @@ public abstract class ClassLoader {
      * (images, audio, text, etc) that can be accessed by class code in a way
      * that is independent of the location of the code.
      *
-     * Resources in a named module are private to that module. This method does
-     * not find resources in named modules.
-     *
-     * <p>The name of a resource is a <tt>/</tt>-separated path name that
+     * <p> The name of a resource is a <tt>/</tt>-separated path name that
      * identifies the resource.
      *
-     * <p> The search order is described in the documentation for {@link
-     * #getResource(String)}.  </p>
+     * <p> The delegation order for searching is described in the documentation
+     * for {@link #getResource(String)}.  </p>
      *
-     * @apiNote When overriding this method it is recommended that an
+     * <p> Resources in named modules are subject to the encapsulation rules
+     * specified by {@link Module#getResourceAsStream Module.getResourceAsStream}.
+     * Additionally, and except for the special case where the resource has a
+     * name ending with "{@code .class}", this method will only find resources in
+     * packages of named modules when the package is exported-private. </p>
+     *
+     * @apiNote Where several modules are defined to the same class loader,
+     * and where more than one module contains a resource with the given name,
+     * then the ordering is not specified and may be very unpredictable.
+     * When overriding this method it is recommended that an
      * implementation ensures that any delegation is consistent with the {@link
      * #getResource(java.lang.String) getResource(String)} method. This should
      * ensure that the first element returned by the Enumeration's
@@ -1318,9 +1370,11 @@ public abstract class ClassLoader {
      *         The resource name
      *
      * @return  An enumeration of {@link java.net.URL <tt>URL</tt>} objects for
-     *          the resource.  If no resources could  be found, the enumeration
-     *          will be empty.  Resources that the class loader doesn't have
-     *          access to will not be in the enumeration.
+     *          the resource. If no resources could  be found, the enumeration
+     *          will be empty. Resources for which a {@code URL} cannot be
+     *          constructed, are not in a package that is unconditionally
+     *          exported-private, or access to the resource is denied by the
+     *          security manager, are not returned in the enumeration.
      *
      * @throws  IOException
      *          If I/O errors occur
@@ -1348,9 +1402,6 @@ public abstract class ClassLoader {
      * can be accessed by class code in a way that is independent of the
      * location of the code.
      *
-     * Resources in a named module are private to that module. This method does
-     * not find resources in named modules.
-     *
      * <p> The name of a resource is a {@code /}-separated path name that
      * identifies the resource.
      *
@@ -1361,6 +1412,12 @@ public abstract class ClassLoader {
      * If the evaluation results in an {@code IOException} then the I/O
      * exception is wrapped in an {@link UncheckedIOException} that is then
      * thrown.
+     *
+     * <p> Resources in named modules are subject to the encapsulation rules
+     * specified by {@link Module#getResourceAsStream Module.getResourceAsStream}.
+     * Additionally, and except for the special case where the resource has a
+     * name ending with "{@code .class}", this method will only find resources in
+     * packages of named modules when the package is exported-private. </p>
      *
      * @apiNote When overriding this method it is recommended that an
      * implementation ensures that any delegation is consistent with the {@link
@@ -1397,14 +1454,20 @@ public abstract class ClassLoader {
      * Finds the resource with the given name. Class loader implementations
      * should override this method to specify where to find resources.
      *
-     * Resources in a named module are private to that module. This method does
-     * not find resources in named modules defined to this class loader.
+     * <p> For resources in named modules then the method must implement the
+     * rules for encapsulation specified in the {@code Module} {@link
+     * Module#getResourceAsStream getResourceAsStream} method. Additionally,
+     * it must not find non-"{@code .class}" resources in packages of named
+     * modules unless the package is unconditionally exported-private. </p>
      *
      * @param  name
      *         The resource name
      *
-     * @return  A <tt>URL</tt> object for reading the resource, or
-     *          <tt>null</tt> if the resource could not be found
+     * @return  {@code URL} object for reading the resource; {@code null} if
+     *          the resource could not be found, a {@code URL} could not be
+     *          constructed to locate the resource, the resource is in a package
+     *          that is not unconditionally exported-private, or access to the
+     *          resource is denied by the security manager.
      *
      * @since  1.2
      */
@@ -1418,14 +1481,21 @@ public abstract class ClassLoader {
      * implementations should override this method to specify where to load
      * resources from.
      *
-     * Resources in a named module are private to that module. This method does
-     * not find resources in named modules defined to this class loader.
+     * <p> For resources in named modules then the method must implement the
+     * rules for encapsulation specified in the {@code Module} {@link
+     * Module#getResourceAsStream getResourceAsStream} method. Additionally,
+     * it must not find non-"{@code .class}" resources in packages of named
+     * modules unless the package is unconditionally exported-private. </p>
      *
      * @param  name
      *         The resource name
      *
      * @return  An enumeration of {@link java.net.URL <tt>URL</tt>} objects for
-     *          the resources
+     *          the resource. If no resources could  be found, the enumeration
+     *          will be empty. Resources for which a {@code URL} cannot be
+     *          constructed, are not in a package that is unconditionally
+     *          exported-private, or access to the resource is denied by the
+     *          security manager, are not returned in the enumeration.
      *
      * @throws  IOException
      *          If I/O errors occur
@@ -1433,7 +1503,7 @@ public abstract class ClassLoader {
      * @since  1.2
      */
     protected Enumeration<URL> findResources(String name) throws IOException {
-        return java.util.Collections.emptyEnumeration();
+        return Collections.emptyEnumeration();
     }
 
     /**
@@ -1465,14 +1535,20 @@ public abstract class ClassLoader {
      * classes.  This method locates the resource through the system class
      * loader (see {@link #getSystemClassLoader()}).
      *
-     * Resources in a named module are private to that module. This method does
-     * not find resources in named modules.
+     * <p> Resources in named modules are subject to the encapsulation rules
+     * specified by {@link Module#getResourceAsStream Module.getResourceAsStream}.
+     * Additionally, and except for the special case where the resource has a
+     * name ending with "{@code .class}", this method will only find resources in
+     * packages of named modules when the package is exported-private. </p>
      *
      * @param  name
      *         The resource name
      *
-     * @return  A {@link java.net.URL <tt>URL</tt>} object for reading the
-     *          resource, or <tt>null</tt> if the resource could not be found
+     * @return  A {@link java.net.URL <tt>URL</tt>} to the resource; {@code
+     *          null} if the resource could not be found, a URL could not be
+     *          constructed to locate the resource, the resource is in a package
+     *          that is not unconditionally exported-private or access to the
+     *          resource is denied by the security manager.
      *
      * @since  1.1
      */
@@ -1486,17 +1562,24 @@ public abstract class ClassLoader {
      * {@link java.util.Enumeration <tt>Enumeration</tt>} of {@link
      * java.net.URL <tt>URL</tt>} objects.
      *
-     * Resources in a named module are private to that module. This method does
-     * not find resources in named modules.
-     *
      * <p> The search order is described in the documentation for {@link
      * #getSystemResource(String)}.  </p>
+     *
+     * <p> Resources in named modules are subject to the encapsulation rules
+     * specified by {@link Module#getResourceAsStream Module.getResourceAsStream}.
+     * Additionally, and except for the special case where the resource has a
+     * name ending with "{@code .class}", this method will only find resources in
+     * packages of named modules when the package is exported-private. </p>
      *
      * @param  name
      *         The resource name
      *
-     * @return  An enumeration of resource {@link java.net.URL <tt>URL</tt>}
-     *          objects
+     * @return  An enumeration of {@link java.net.URL <tt>URL</tt>} objects for
+     *          the resource. If no resources could  be found, the enumeration
+     *          will be empty. Resources for which a {@code URL} cannot be
+     *          constructed, are not in a package that is unconditionally
+     *          exported-private, or access to the resource is denied by the
+     *          security manager, are not returned in the enumeration.
      *
      * @throws  IOException
      *          If I/O errors occur
@@ -1512,17 +1595,22 @@ public abstract class ClassLoader {
     /**
      * Returns an input stream for reading the specified resource.
      *
-     * Resources in a named module are private to that module. This method does
-     * not find resources in named modules.
-     *
      * <p> The search order is described in the documentation for {@link
      * #getResource(String)}.  </p>
+     *
+     * <p> Resources in named modules are subject to the encapsulation rules
+     * specified by {@link Module#getResourceAsStream Module.getResourceAsStream}.
+     * Additionally, and except for the special case where the resource has a
+     * name ending with "{@code .class}", this method will only find resources in
+     * packages of named modules when the package is exported-private. </p>
      *
      * @param  name
      *         The resource name
      *
-     * @return  An input stream for reading the resource, or <tt>null</tt>
-     *          if the resource could not be found
+     * @return  An input stream for reading the resource; {@code null} if the
+     *          resource could not be found, the resource is in a package that
+     *          is not unconditionally exported-private, or access to the
+     *          resource is denied by the security manager.
      *
      * @since  1.1
      */
@@ -1540,14 +1628,19 @@ public abstract class ClassLoader {
      * used to load classes.  This method locates the resource through the
      * system class loader (see {@link #getSystemClassLoader()}).
      *
-     * Resources in a named module are private to that module. This method does
-     * not find resources in named modules.
+     * <p> Resources in named modules are subject to the encapsulation rules
+     * specified by {@link Module#getResourceAsStream Module.getResourceAsStream}.
+     * Additionally, and except for the special case where the resource has a
+     * name ending with "{@code .class}", this method will only find resources in
+     * packages of named modules when the package is exported-private. </p>
      *
      * @param  name
      *         The resource name
      *
-     * @return  An input stream for reading the resource, or <tt>null</tt>
-     *          if the resource could not be found
+     * @return  An input stream for reading the resource; {@code null} if the
+     *          resource could not be found, the resource is in a package that
+     *          is not unconditionally exported-private, or access to the
+     *          resource is denied by the security manager.
      *
      * @since  1.1
      */
@@ -2620,6 +2713,45 @@ public abstract class ClassLoader {
     private static native AssertionStatusDirectives retrieveDirectives();
 
 
+    // -- Layers --
+
+    /**
+     * Returns a possible-empty stream of the layers with modules defined to
+     * this class loader.
+     *
+     * @apiNote TBD whether to keep this method or a variant of.
+     *
+     * @return A stream of the layers with modules defined to this class loader
+     * @since 9
+     */
+    public Stream<Layer> layers() {
+        Collection<Layer> layers = this.layers;
+        if (layers == null) {
+            return Stream.empty();
+        } else {
+            return layers.stream();
+        }
+    }
+
+    private volatile Collection<Layer> layers; // move to CLV?
+
+    void bindToLayer(Layer layer) {
+        Collection<Layer> layers = this.layers;
+        if (layers == null) {
+            layers = new CopyOnWriteArrayList<>();
+            boolean set = trySetObjectField("layers", layers);
+            if (!set) {
+                // beaten by someone else
+                layers = this.layers;
+            }
+        }
+        layers.add(layer);
+    }
+
+
+    // -- Misc --
+
+
     /**
      * Returns the ServiceCatalog for modules defined to this class loader
      * or {@code null} if this class loader does not have a services catalog.
@@ -2646,7 +2778,7 @@ public abstract class ClassLoader {
     }
 
     // the ServiceCatalog for modules associated with this class loader.
-    private volatile ServicesCatalog servicesCatalog;
+    private volatile ServicesCatalog servicesCatalog;   // move to CLV?
 
     /**
      * Returns the ConcurrentHashMap used as a storage for ClassLoaderValue(s)

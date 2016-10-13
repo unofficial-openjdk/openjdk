@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Layer;
+import java.lang.reflect.Method;
 import java.lang.reflect.Module;
 import java.net.URL;
 import java.security.AccessControlContext;
@@ -42,6 +43,14 @@ import sun.reflect.annotation.AnnotationType;
 import sun.nio.ch.Interruptible;
 
 public interface JavaLangAccess {
+
+    /**
+     * Returns a {@code Method} object that reflects the specified public
+     * member method of the given class. Returns {@code null} if the
+     * method is not defined.
+     */
+    Method getMethodOrNull(Class<?> klass, String name, Class<?>... parameterTypes);
+
     /** Return the constant pool for a class. */
     ConstantPool getConstantPool(Class<?> klass);
 
@@ -134,6 +143,12 @@ public interface JavaLangAccess {
      * Returns the boot Layer
      */
     Layer getBootLayer();
+
+    /**
+     * Records in the class loader that the given layer has at least one
+     * module defined to the class loader.
+     */
+    void bindToLayer(ClassLoader loader, Layer layer);
 
     /**
      * Returns the ServicesCatalog for the given class loader.

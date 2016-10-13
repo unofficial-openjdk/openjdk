@@ -34,6 +34,8 @@
 /*
  * @test
  * @bug 8054446 8137184 8137185
+ * @modules java.base/java.util.concurrent:private
+ *          java.base/java.util.concurrent.locks:private
  * @summary Regression test for memory leak in remove(Object)
  */
 

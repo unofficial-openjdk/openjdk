@@ -171,7 +171,7 @@ public class Reflection {
                     gotIsSameClassPackage = true;
                 }
                 if (!isSameClassPackage) {
-                    if (!isSubclassOf(targetClass, currentClass)) {
+                    if (!isSubclassOf(currentClass, targetClass)) {
                         return false;
                     }
                 }

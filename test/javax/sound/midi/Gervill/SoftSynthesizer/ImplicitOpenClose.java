@@ -23,7 +23,7 @@
 
 /* @test
    @summary Test SoftSynthesizer implicit open/close using getReceiver.
-   @modules java.desktop/com.sun.media.sound
+   @modules java.desktop/com.sun.media.sound:private
 */
 
 import java.lang.reflect.Field;

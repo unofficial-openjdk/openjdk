@@ -39,7 +39,7 @@ import com.sun.tools.classfile.CharacterRangeTable_attribute;
 import com.sun.tools.classfile.ClassFile;
 import com.sun.tools.classfile.Code_attribute;
 import com.sun.tools.classfile.CompilationID_attribute;
-import com.sun.tools.classfile.ConcealedPackages_attribute;
+import com.sun.tools.classfile.Packages_attribute;
 import com.sun.tools.classfile.ConstantPool;
 import com.sun.tools.classfile.ConstantPool.CONSTANT_Class_info;
 import com.sun.tools.classfile.ConstantPool.CONSTANT_Double_info;
@@ -1017,7 +1017,7 @@ class AttributeVisitor implements Attribute.Visitor<Element, Element> {
     }
 
     @Override
-    public Element visitConcealedPackages(ConcealedPackages_attribute attr, Element p) {
+    public Element visitPackages(Packages_attribute attr, Element p) {
         Element e = new Element(x.getCpString(attr.attribute_name_index));
         for (int i : attr.packages_index) {
             Element ee = new Element("Package");

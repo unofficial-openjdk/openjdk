@@ -23,6 +23,9 @@
  * questions.
  */
 
+/**
+ * Defines the Java Debugger Interface.
+ */
 module jdk.jdi {
     requires jdk.attach;
     requires jdk.jdwp.agent;

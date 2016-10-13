@@ -71,6 +71,7 @@ public class JmodArchive implements Archive {
     private final String moduleName;
     private JmodFile jmodFile;
 
+
     public JmodArchive(String mn, Path jmod) {
         Objects.requireNonNull(mn);
         Objects.requireNonNull(jmod.getFileName());
@@ -134,6 +135,8 @@ public class JmodArchive implements Archive {
                 return EntryType.NATIVE_CMD;
             case CONFIG:
                 return EntryType.CONFIG;
+            case OTHER_FILES:
+                return EntryType.OTHER_FILES;
             default:
                 throw new InternalError("unexpected entry: " + section);
         }

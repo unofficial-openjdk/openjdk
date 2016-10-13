@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@ import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Version;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -40,7 +41,7 @@ import jdk.internal.misc.SharedSecrets;
 
 /**
  * This builder is optimized for reconstituting ModuleDescriptor
- * for installed modules.  The validation should be done at jlink time.
+ * for system modules.  The validation should be done at jlink time.
  *
  * 1. skip name validation
  * 2. ignores dependency hashes.
@@ -53,11 +54,6 @@ final class Builder {
     private static final JavaLangModuleAccess jlma =
         SharedSecrets.getJavaLangModuleAccess();
 
-    private static final Set<Requires.Modifier> MANDATED =
-        Collections.singleton(Requires.Modifier.MANDATED);
-    private static final Set<Requires.Modifier> PUBLIC =
-        Collections.singleton(Requires.Modifier.PUBLIC);
-
     // Static cache of the most recently seen Version to cheaply deduplicate
     // most Version objects.  JDK modules have the same version.
     static Version cachedVersion;
@@ -66,6 +62,9 @@ final class Builder {
     final Set<Requires> requires;
     final Set<Exports> exports;
     final Map<String, Provides> provides;
+    boolean weak;
+    boolean automatic;
+    boolean synthetic;
     Set<String> packages;
     Set<String> uses;
     Version version;
@@ -76,8 +75,7 @@ final class Builder {
     String algorithm;
     Map<String, String> hashes;
 
-    Builder(String name, int reqs, int exports,
-            int provides, int packages) {
+    Builder(String name, int reqs, int exports, int provides) {
         this.name = name;
         this.requires = reqs > 0 ? new HashSet<>(reqs) : Collections.emptySet();
         this.exports  = exports > 0 ? new HashSet<>(exports) : Collections.emptySet();
@@ -85,34 +83,27 @@ final class Builder {
         this.uses = Collections.emptySet();
     }
 
+    Builder weak(boolean value) {
+        this.weak = value;
+        return this;
+    }
+
+    Builder automatic(boolean value) {
+        this.automatic = value;
+        return this;
+    }
+
+    Builder synthetic(boolean value) {
+        this.synthetic = value;
+        return this;
+    }
+
     /**
      * Adds a module dependence with the given (and possibly empty) set
      * of modifiers.
      */
     public Builder requires(Set<Requires.Modifier> mods, String mn) {
-        requires.add(jlma.newRequires(Collections.unmodifiableSet(mods), mn));
-        return this;
-    }
-
-    /**
-     * Adds a module dependence with an empty set of modifiers.
-     */
-    public Builder requires(String mn) {
-        requires.add(jlma.newRequires(Collections.emptySet(), mn));
-        return this;
-    }
-
-    /**
-     * Adds a module dependence with the given modifier.
-     */
-    public Builder requires(Requires.Modifier mod, String mn) {
-        if (mod == Requires.Modifier.MANDATED) {
-            requires.add(jlma.newRequires(MANDATED, mn));
-        } else if (mod == Requires.Modifier.PUBLIC) {
-            requires.add(jlma.newRequires(PUBLIC, mn));
-        } else {
-            requires.add(jlma.newRequires(Collections.singleton(mod), mn));
-        }
+        requires.add(jlma.newRequires(mods, mn));
         return this;
     }
 
@@ -125,25 +116,21 @@ final class Builder {
     }
 
     /**
-     * Adds an export to a set of target modules.
+     * Adds a qualified export to a set of target modules with a given set of
+     * modifiers.
      */
-    public Builder exports(String pn, Set<String> targets) {
-        exports.add(jlma.newExports(pn, targets));
+    public Builder exports(Set<Exports.Modifier> ms,
+                           String pn,
+                           Set<String> targets) {
+        exports.add(jlma.newExports(ms, pn, targets));
         return this;
     }
 
     /**
-     * Adds an export to a target module.
+     * Adds an unqualified export with a given set of modifiers.
      */
-    public Builder exports(String pn, String target) {
-        return exports(pn, Collections.singleton(target));
-    }
-
-    /**
-     * Adds an export.
-     */
-    public Builder exports(String pn) {
-        exports.add(jlma.newExports(pn));
+    public Builder exports(Set<Exports.Modifier> ms, String pn) {
+        exports.add(jlma.newExports(ms, pn));
         return this;
     }
 
@@ -270,9 +257,24 @@ final class Builder {
         ModuleHashes moduleHashes =
             hashes != null ? new ModuleHashes(algorithm, hashes) : null;
 
+        // Make those collections we build dynamically unmodifiable
+        Map<String, Provides> provides = this.provides;
+        if (!provides.isEmpty()) {
+            provides = Collections.unmodifiableMap(this.provides);
+        }
+        Set<Exports> exports = this.exports;
+        if (!exports.isEmpty()) {
+            exports = Collections.unmodifiableSet(this.exports);
+        }
+        Set<Requires> requires = this.requires;
+        if (!requires.isEmpty()) {
+            requires = Collections.unmodifiableSet(this.requires);
+        }
+
         return jlma.newModuleDescriptor(name,
-                                        false,    // automatic
-                                        false,    // assume not synthetic for now
+                                        weak,         // weak
+                                        automatic,    // automatic
+                                        synthetic,    // synthetic
                                         requires,
                                         uses,
                                         exports,
