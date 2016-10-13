@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -23,17 +23,27 @@
 # questions.
 #
 
-# Default version numbers to use unless overridden by configure
+# Runs a tool on the exploded image to improve performance
 
-DEFAULT_VERSION_MAJOR=9
+default: all
 
-LAUNCHER_NAME=openjdk
-PRODUCT_NAME=OpenJDK
-PRODUCT_SUFFIX="Runtime Environment"
-JDK_RC_PLATFORM_NAME=Platform
-COMPANY_NAME=N/A
-HOTSPOT_VM_DISTRO="OpenJDK"
+include $(SPEC)
+include MakeBase.gmk
+include $(JDK_TOPDIR)/make/ModuleTools.gmk
 
-# Might need better names for these
-MACOSX_BUNDLE_NAME_BASE="OpenJDK"
-MACOSX_BUNDLE_ID_BASE="net.java.openjdk"
+################################################################################
+
+PACKAGES_ATTRIBUTE_TARGET := $(JDK_OUTPUTDIR)/_packages_attribute.done
+ALL_MODULEINFO_CLASSES := $(wildcard $(JDK_OUTPUTDIR)/modules/*/module_info.class)
+
+$(PACKAGES_ATTRIBUTE_TARGET): $(ALL_MODULEINFO_CLASSES) $(BUILD_JIGSAW_CLASSES)
+	$(call LogInfo, Optimizing the exploded image)
+	$(TOOL_ADD_PACKAGES_ATTRIBUTE) $(JDK_OUTPUTDIR)
+
+TARGETS := $(PACKAGES_ATTRIBUTE_TARGET)
+
+################################################################################
+
+all: $(TARGETS)
+
+.PHONY: all default
