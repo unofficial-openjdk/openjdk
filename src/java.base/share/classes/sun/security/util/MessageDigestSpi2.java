@@ -1,10 +1,12 @@
 /*
- * Copyright (c) 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -21,29 +23,22 @@
  * questions.
  */
 
-/*
- * @test
- * @bug 6536295
- * @summary Tests JumboEnumSet encoding
- * @author Sergey Malenkov
+package sun.security.util;
+
+import java.security.InvalidKeyException;
+import javax.crypto.SecretKey;
+
+/**
+ * Special interface for additional MessageDigestSpi method(s).
  */
+public interface MessageDigestSpi2 {
 
-import java.util.EnumSet;
-import java.util.Set;
-
-public final class java_util_JumboEnumSet extends AbstractTest<Set<EnumPrivate>> {
-    public static void main(String[] args) {
-        new java_util_JumboEnumSet().test(true);
-    }
-
-    protected Set<EnumPrivate> getObject() {
-        return EnumSet.noneOf(EnumPrivate.class);
-    }
-
-    protected Set<EnumPrivate> getAnotherObject() {
-        Set<EnumPrivate> set = EnumSet.noneOf(EnumPrivate.class);
-        set.add(EnumPrivate.A0);
-        set.add(EnumPrivate.Z9);
-        return set;
-    }
+    /**
+     * Updates the digest using the specified key.
+     * This is used for SSL 3.0 only, we may deprecate and remove the support
+     * of this in the future
+     *
+     * @param key  the key whose value is to be digested.
+     */
+    void engineUpdate(SecretKey key) throws InvalidKeyException;
 }

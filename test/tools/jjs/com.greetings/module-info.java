@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,30 +21,6 @@
  * questions.
  */
 
-/*
- * @test
- * @bug 6505888
- * @summary Tests CheckedSortedMap encoding
- * @author Sergey Malenkov
- */
-
-import java.util.Collections;
-import java.util.SortedMap;
-import java.util.TreeMap;
-
-public final class java_util_Collections_CheckedSortedMap extends AbstractTest<SortedMap<String, String>> {
-    public static void main(String[] args) {
-        new java_util_Collections_CheckedSortedMap().test(true);
-    }
-
-    protected SortedMap<String, String> getObject() {
-        SortedMap<String, String> map = new TreeMap<String, String>();
-        map.put("key", "value");
-        return Collections.checkedSortedMap(map, String.class, String.class);
-    }
-
-    protected SortedMap<String, String> getAnotherObject() {
-        SortedMap<String, String> map = new TreeMap<String, String>();
-        return Collections.checkedSortedMap(map, String.class, String.class);
-    }
+module com.greetings {
+    exports com.greetings;
 }

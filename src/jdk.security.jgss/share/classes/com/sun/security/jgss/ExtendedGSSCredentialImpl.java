@@ -1,10 +1,12 @@
 /*
- * Copyright (c) 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -21,30 +23,14 @@
  * questions.
  */
 
-/*
- * @test
- * @bug 6505888
- * @summary Tests CheckedSortedSet encoding
- * @author Sergey Malenkov
- */
+package com.sun.security.jgss;
 
-import java.util.Collections;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import sun.security.jgss.GSSCredentialImpl;
 
-public final class java_util_Collections_CheckedSortedSet extends AbstractTest<SortedSet<String>> {
-    public static void main(String[] args) {
-        new java_util_Collections_CheckedSortedSet().test(true);
-    }
+class ExtendedGSSCredentialImpl extends GSSCredentialImpl
+        implements ExtendedGSSCredential {
 
-    protected SortedSet<String> getObject() {
-        SortedSet<String> set = new TreeSet<String>();
-        set.add("string");
-        return Collections.checkedSortedSet(set, String.class);
-    }
-
-    protected SortedSet<String> getAnotherObject() {
-        SortedSet<String> set = new TreeSet<String>();
-        return Collections.checkedSortedSet(set, String.class);
+    public ExtendedGSSCredentialImpl(GSSCredentialImpl old) {
+        super(old);
     }
 }

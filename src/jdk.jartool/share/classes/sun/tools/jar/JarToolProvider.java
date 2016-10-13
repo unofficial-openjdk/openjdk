@@ -1,10 +1,12 @@
 /*
- * Copyright (c) 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -21,29 +23,18 @@
  * questions.
  */
 
-/*
- * @test
- * @bug 6505888
- * @summary Tests CheckedCollection encoding
- * @author Sergey Malenkov
- */
+package sun.tools.jar;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.io.PrintWriter;
+import java.util.spi.ToolProvider;
 
-public final class java_util_Collections_CheckedCollection extends AbstractTest<Collection<String>> {
-    public static void main(String[] args) {
-        new java_util_Collections_CheckedCollection().test(true);
+public class JarToolProvider implements ToolProvider {
+    public String name() {
+        return "jar";
     }
 
-    protected Collection<String> getObject() {
-        List<String> list = Collections.singletonList("string");
-        return Collections.checkedCollection(list, String.class);
-    }
-
-    protected Collection<String> getAnotherObject() {
-        List<String> list = Collections.emptyList();
-        return Collections.checkedCollection(list, String.class);
+    public int run(PrintWriter out, PrintWriter err, String... args) {
+        boolean ok = new Main(out, err, name()).run(args);
+        return ok ? 0 : 1;
     }
 }

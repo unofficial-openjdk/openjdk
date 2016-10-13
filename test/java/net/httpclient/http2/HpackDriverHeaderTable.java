@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,28 +23,13 @@
 
 /*
  * @test
- * @bug 6505888
- * @summary Tests CheckedRandomAccessList encoding
- * @author Sergey Malenkov
+ * @bug 8153353
+ * @modules java.httpclient/sun.net.httpclient.hpack
+ *          jdk.localedata
+ * @key randomness
+ * @compile/module=java.httpclient sun/net/httpclient/hpack/SpecHelper.java
+ * @compile/module=java.httpclient sun/net/httpclient/hpack/TestHelper.java
+ * @compile/module=java.httpclient sun/net/httpclient/hpack/BuffersTestingKit.java
+ * @run testng/othervm java.httpclient/sun.net.httpclient.hpack.HeaderTableTest
  */
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-public final class java_util_Collections_CheckedRandomAccessList extends AbstractTest<List<String>> {
-    public static void main(String[] args) {
-        new java_util_Collections_CheckedRandomAccessList().test(true);
-    }
-
-    protected List<String> getObject() {
-        List<String> list = new ArrayList<String>();
-        list.add("string");
-        return Collections.checkedList(list, String.class);
-    }
-
-    protected List<String> getAnotherObject() {
-        List<String> list = new ArrayList<String>();
-        return Collections.checkedList(list, String.class);
-    }
-}
+public class HpackDriverHeaderTable { }
