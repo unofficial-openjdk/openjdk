@@ -1035,16 +1035,6 @@ JVM_ENTRY (void, JVM_AddReadsModule(JNIEnv *env, jobject from_module, jobject so
   Modules::add_reads_module(from_module, source_module, CHECK);
 JVM_END
 
-JVM_ENTRY(jboolean, JVM_CanReadModule(JNIEnv *env, jobject asking_module, jobject source_module))
-  JVMWrapper("JVM_CanReadModule");
-  return Modules::can_read_module(asking_module, source_module, THREAD);
-JVM_END
-
-JVM_ENTRY(jboolean, JVM_IsExportedToModule(JNIEnv *env, jobject from_module, jstring package, jobject to_module))
-  JVMWrapper("JVM_IsExportedToModule");
-  return Modules::is_exported_to_module(from_module, package, to_module, THREAD);
-JVM_END
-
 JVM_ENTRY (void, JVM_AddModulePackage(JNIEnv *env, jobject module, jstring package))
   JVMWrapper("JVM_AddModulePackage");
   Modules::add_module_package(module, package, CHECK);
