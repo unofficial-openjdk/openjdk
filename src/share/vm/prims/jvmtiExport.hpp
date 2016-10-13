@@ -222,7 +222,8 @@ class JvmtiExport : public AllStatic {
   static jvmtiError add_module_reads(Handle module, Handle to_module, TRAPS);
 
   // Add an export to the module
-  static jvmtiError add_module_exports(Handle module, Handle pkg_name, Handle to_module, TRAPS);
+  static jvmtiError add_module_exports(Handle module, Handle pkg_name, Handle to_module,
+                                       jboolean is_private, TRAPS);
 
   // Add a used service to the module
   static jvmtiError add_module_uses(Handle module, Handle service, TRAPS);

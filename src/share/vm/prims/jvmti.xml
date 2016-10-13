@@ -14714,7 +14714,7 @@ typedef void (JNICALL *jvmtiEventVMInit)
   <change date="19 June 2013" version="1.2.3">
       Added support for statically linked agents.
   </change>
-  <change date="5 July 2016" version="9.0.0">
+  <change date="13 October 2016" version="9.0.0">
       Support for modules:
        - The majorversion is 9 now
        - The ClassFileLoadHook events are not sent during the primordial phase anymore.
@@ -14724,9 +14724,7 @@ typedef void (JNICALL *jvmtiEventVMInit)
           - can_generate_early_class_hook_events
        - Add new functions:
           - GetAllModules
-          - AddModuleReads, AddModuleExports, AddModuleUses, AddModuleProvides
-  </change>
-  <change date="16 August 2016" version="9.0.0">
+          - AddModuleReads, AddModuleExports, AddModuleExportsPrivate, AddModuleUses, AddModuleProvides
       Clarified can_redefine_any_classes, can_retransform_any_classes and IsModifiableClass API to
       disallow some implementation defined classes.
   </change>

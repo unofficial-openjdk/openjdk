@@ -464,7 +464,8 @@ JvmtiExport::add_module_reads(Handle module, Handle to_module, TRAPS) {
 }
 
 jvmtiError
-JvmtiExport::add_module_exports(Handle module, Handle pkg_name, Handle to_module, TRAPS) {
+JvmtiExport::add_module_exports(Handle module, Handle pkg_name, Handle to_module,
+                                jboolean is_private, TRAPS) {
   if (!Universe::is_module_initialized()) {
     return JVMTI_ERROR_NONE; // extra safety
   }
@@ -473,7 +474,8 @@ JvmtiExport::add_module_exports(Handle module, Handle pkg_name, Handle to_module
   assert(!pkg_name.is_null(), "pkg_name should always be set");
 
   JavaValue result(T_VOID);
-  Symbol* name = vmSymbols::addExports_name();
+  Symbol* name = is_private ? vmSymbols::addExportsPrivate_name()
+                            : vmSymbols::addExports_name();
   Symbol* sign = vmSymbols::addExports_signature();
 
   // Invoke the addExports method
