@@ -251,7 +251,7 @@ public class Proc {
         }
 
         Stream.of(jdk.internal.misc.VM.getRuntimeArguments())
-            .filter(arg -> arg.startsWith("--add-exports="))
+            .filter(arg -> arg.startsWith("--add-exports"))
             .forEach(cmd::add);
 
         Collections.addAll(cmd, splitProperty("test.vm.opts"));

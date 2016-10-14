@@ -223,9 +223,6 @@ sun/security/krb5/auto/HttpNegotiateServer.java                 8038079 generic-
 
 sun/security/ssl/SSLSocketImpl/AsyncSSLSocketClose.java         8161232 macosx-all
 
-# Needs to be investigated
-sun/security/krb5/auto/ReplayCacheTestProc.java			0000000 generic-all
-
 ############################################################################
 
 # jdk_sound
