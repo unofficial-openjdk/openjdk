@@ -188,6 +188,7 @@ public class JLinkTest {
             }
         }
 
+        /*
         {
             // License files
             String copied = "LICENSE";
@@ -197,7 +198,7 @@ public class JLinkTest {
             copyFiles[1] = copied;
             Path imageDir = helper.generateDefaultImage(copyFiles, "composite2").assertSuccess();
             helper.checkImage(imageDir, "composite2", null, null, arr);
-        }
+        }*/
 
         {
             // List plugins

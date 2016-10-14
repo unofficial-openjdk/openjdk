@@ -47,8 +47,6 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.Set;
 
-import jdk.internal.module.ConfigurableModuleFinder;
-import jdk.internal.module.ConfigurableModuleFinder.Phase;
 import jdk.tools.jlink.Jlink;
 import jdk.tools.jlink.Jlink.PluginsConfiguration;
 import jdk.tools.jlink.plugin.Plugin;
@@ -59,6 +57,7 @@ import jdk.tools.jlink.plugin.PluginException;
 import jdk.tools.jlink.internal.plugins.PluginsResourceBundle;
 import jdk.tools.jlink.internal.plugins.DefaultCompressPlugin;
 import jdk.tools.jlink.internal.plugins.StripDebugPlugin;
+import jdk.internal.misc.SharedSecrets;
 
 /**
  *
@@ -692,14 +691,10 @@ public final class TaskHelper {
     }
 
     static Layer createPluginsLayer(List<Path> paths) {
-        Path[] arr = new Path[paths.size()];
-        paths.toArray(arr);
-        ModuleFinder finder = ModuleFinder.of(arr);
 
-        // jmods are located at link-time
-        if (finder instanceof ConfigurableModuleFinder) {
-            ((ConfigurableModuleFinder) finder).configurePhase(Phase.LINK_TIME);
-        }
+        Path[] dirs = paths.toArray(new Path[0]);
+        ModuleFinder finder = SharedSecrets.getJavaLangModuleAccess()
+            .newModulePath(Runtime.version(), true, dirs);
 
         Configuration bootConfiguration = Layer.boot().configuration();
         try {

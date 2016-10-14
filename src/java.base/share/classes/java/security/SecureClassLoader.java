@@ -25,8 +25,6 @@
 
 package java.security;
 
-import java.net.URL;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -105,6 +103,29 @@ public class SecureClassLoader extends ClassLoader {
      */
     protected SecureClassLoader() {
         super();
+        // this is to make the stack depth consistent with 1.1
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkCreateClassLoader();
+        }
+        initialized = true;
+    }
+
+    /**
+     * Creates a new {@code SecureClassLoader} of the specified name and
+     * using the specified parent class loader for delegation.
+     *
+     * @param name class loader name; can be {@code null}.
+     * @param parent the parent class loader
+     *
+     * @throws SecurityException  if a security manager exists and its
+     *         {@link SecurityManager#checkCreateClassLoader()} method
+     *         doesn't allow creation of a class loader.
+     *
+     * @since 9
+     */
+    protected SecureClassLoader(String name, ClassLoader parent) {
+        super(name, parent);
         // this is to make the stack depth consistent with 1.1
         SecurityManager security = System.getSecurityManager();
         if (security != null) {

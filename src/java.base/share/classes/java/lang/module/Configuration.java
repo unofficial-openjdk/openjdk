@@ -46,14 +46,14 @@ import java.util.stream.Collectors;
  * dependences expressed by {@code requires} clauses.
  *
  * The <em>dependence graph</em> is augmented with edges that take account of
- * implicitly declared dependences ({@code requires public}) to create a
+ * implicitly declared dependences ({@code requires transitive}) to create a
  * <em>readability graph</em>. A {@code Configuration} encapsulates the
  * resulting graph of {@link ResolvedModule resolved modules}.
  *
  * <p> Suppose we have the following observable modules: </p>
  * <pre> {@code
  *     module m1 { requires m2; }
- *     module m2 { requires public m3; }
+ *     module m2 { requires transitive m3; }
  *     module m3 { }
  *     module m4 { }
  * } </pre>
@@ -96,9 +96,9 @@ import java.util.stream.Collectors;
  * <p> {@link ModuleDescriptor#isAutomatic() Automatic} modules receive special
  * treatment during resolution. Each automatic module is resolved so that it
  * reads all other modules in the configuration and all parent configurations.
- * Each automatic module is also resolved as if it {@code requires public} all
- * other automatic modules in the configuration (and all automatic modules in
- * parent configurations). </p>
+ * Each automatic module is also resolved as if it {@code requires transitive}
+ * all other automatic modules in the configuration (and all automatic modules
+ * in parent configurations). </p>
 
  * <h2><a name="servicebinding">Service binding</a></h2>
  *

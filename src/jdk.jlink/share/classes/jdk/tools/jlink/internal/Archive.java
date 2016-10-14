@@ -47,6 +47,7 @@ public interface Archive {
             NATIVE_LIB,
             NATIVE_CMD,
             CONFIG,
+            OTHER_FILES,
             SERVICE;
         }
 

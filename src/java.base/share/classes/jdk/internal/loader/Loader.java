@@ -30,6 +30,7 @@ import java.io.FilePermission;
 import java.io.IOException;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
 import java.lang.module.ResolvedModule;
@@ -48,11 +49,16 @@ import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.security.SecureClassLoader;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 
 /**
@@ -118,7 +124,7 @@ public final class Loader extends SecureClassLoader {
             if (mref.location().isPresent()) {
                 try {
                     url = mref.location().get().toURL();
-                } catch (MalformedURLException e) { }
+                } catch (MalformedURLException | IllegalArgumentException e) { }
             }
             this.mref = mref;
             this.url = url;
@@ -237,7 +243,7 @@ public final class Loader extends SecureClassLoader {
                     }
                     assert layer != null;
 
-                    // find the class loader for the module in the layer
+                    // find the class loader for the module
                     // For now we use the platform loader for modules defined to the
                     // boot loader
                     assert layer.findModule(mn).isPresent();
@@ -267,8 +273,19 @@ public final class Loader extends SecureClassLoader {
                             throw new IllegalArgumentException("Package "
                                 + pn + " cannot be imported from multiple loaders");
                         }
-
                     }
+                }
+
+                // weak modules export all packages to the target module
+                if (descriptor.isWeak()) {
+                    ClassLoader ldr = loader;
+                    descriptor.packages().forEach(pn -> {
+                        ClassLoader l = remotePackageToLoader.putIfAbsent(pn, ldr);
+                        if (l != null && l != ldr) {
+                            throw new IllegalArgumentException("Package "
+                                    + pn + " cannot be imported from multiple loaders");
+                        }
+                    });
                 }
             }
 
@@ -295,12 +312,14 @@ public final class Loader extends SecureClassLoader {
      */
     @Override
     protected URL findResource(String mn, String name) throws IOException {
-        ModuleReference mref = nameToModule.get(mn);
+        ModuleReference mref = (mn != null) ? nameToModule.get(mn) : null;
         if (mref == null)
             return null;   // not defined to this class loader
 
+        // locate resource
+        URL url = null;
         try {
-            return AccessController.doPrivileged(
+            url = AccessController.doPrivileged(
                 new PrivilegedExceptionAction<URL>() {
                     @Override
                     public URL run() throws IOException {
@@ -308,16 +327,89 @@ public final class Loader extends SecureClassLoader {
                         if (ouri.isPresent()) {
                             try {
                                 return ouri.get().toURL();
-                            } catch (MalformedURLException e) { }
+                            } catch (MalformedURLException |
+                                     IllegalArgumentException e) { }
                         }
                         return null;
                     }
-                }, acc);
+                });
         } catch (PrivilegedActionException pae) {
             throw (IOException) pae.getCause();
-        } catch (SecurityException se) {
-            return null;
         }
+
+        // check access with permissions restricted by ACC
+        if (url != null && System.getSecurityManager() != null) {
+            try {
+                URL urlToCheck = url;
+                url = AccessController.doPrivileged(
+                    new PrivilegedExceptionAction<URL>() {
+                        @Override
+                        public URL run() throws IOException {
+                            return URLClassPath.checkURL(urlToCheck);
+                        }
+                    }, acc);
+            } catch (PrivilegedActionException pae) {
+                url = null;
+            }
+        }
+
+        return url;
+    }
+
+    @Override
+    public URL findResource(String name) {
+        URL url = null;
+        String pn = ResourceHelper.getPackageName(name);
+        LoadedModule module = localPackageToModule.get(pn);
+        if (module != null) {
+            if (name.endsWith(".class") || isExportedPrivate(module.mref(), pn)) {
+                try {
+                    url = findResource(module.name(), name);
+                } catch (IOException ioe) {
+                    // ignore
+                }
+            }
+        } else {
+            for (ModuleReference mref : nameToModule.values()) {
+                try {
+                    url = findResource(mref.descriptor().name(), name);
+                    if (url != null)
+                        break;
+                } catch (IOException ioe) {
+                    // ignore
+                }
+            }
+        }
+        return url;
+    }
+
+    @Override
+    public Enumeration<URL> findResources(String name) throws IOException {
+        List<URL> urls = new ArrayList<>();
+        String pn = ResourceHelper.getPackageName(name);
+        LoadedModule module = localPackageToModule.get(pn);
+        if (module != null) {
+            if (name.endsWith(".class") || isExportedPrivate(module.mref(), pn)) {
+                try {
+                    URL url = findResource(module.name(), name);
+                    if (url != null)
+                        urls.add(url);
+                } catch (IOException ioe) {
+                    // ignore
+                }
+            }
+        } else {
+            for (ModuleReference mref : nameToModule.values()) {
+                try {
+                    URL url = findResource(mref.descriptor().name(), name);
+                    if (url != null)
+                        urls.add(url);
+                } catch (IOException ioe) {
+                    // ignore
+                }
+            }
+        }
+        return Collections.enumeration(urls);
     }
 
 
@@ -534,9 +626,34 @@ public final class Loader extends SecureClassLoader {
             return Optional.empty();
         }
         @Override
+        public Stream<String> list() {
+            return Stream.empty();
+        }
+        @Override
         public void close() {
             throw new InternalError("Should not get here");
         }
     }
 
+    /**
+     * Returns true if the given module exports the given package
+     * unconditionally.
+     *
+     * @implNote This method currently iterates over each of the module
+     * exports. This will be replaced once the ModuleDescriptor.Exports
+     * API is updated.
+     */
+    private boolean isExportedPrivate(ModuleReference mref, String pn) {
+        ModuleDescriptor descriptor = mref.descriptor();
+        if (descriptor.isWeak())
+            return true;
+        for (ModuleDescriptor.Exports e : descriptor.exports()) {
+            String source = e.source();
+            if (!e.isQualified() && source.equals(pn)
+                    && e.modifiers().contains(Exports.Modifier.PRIVATE)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

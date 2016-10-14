@@ -26,7 +26,8 @@
  * @bug 8080535
  * @summary Expected size of Character.UnicodeBlock.map is not optimal
  * @library /lib/testlibrary
- * @modules java.base/sun.security.ssl
+ * @modules java.base/java.util:private
+ *          java.base/sun.security.ssl:private
  * @build jdk.testlibrary.OptimalCapacity
  * @run main OptimalListSize
  */

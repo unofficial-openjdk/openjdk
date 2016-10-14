@@ -67,6 +67,15 @@ public class AutomaticModulesTest {
             // JAR file name                module-name[/version]
 
             { "foo.jar",                    "foo" },
+            { "foo4j.jar",                  "foo4j", },
+
+            { "foo1.jar",                   "foo" },
+            { "foo1.2.jar",                 "foo" },
+            { "foo1.2.3.jar",               "foo" },
+
+            { "foo10.jar",                  "foo" },
+            { "foo10.20.jar",               "foo" },
+            { "foo10.20.30.jar",            "foo" },
 
             { "foo-1.jar",                  "foo/1" },
             { "foo-1.2.jar",                "foo/1.2" },
@@ -158,39 +167,84 @@ public class AutomaticModulesTest {
      */
     public void testPackages() throws IOException {
         Path dir = Files.createTempDirectory(USER_DIR, "mods");
-        createDummyJarFile(dir.resolve("m1.jar"),
+        createDummyJarFile(dir.resolve("m.jar"),
                            "p/C1.class", "p/C2.class", "q/C1.class");
 
         ModuleFinder finder = ModuleFinder.of(dir);
+        Optional<ModuleReference> mref = finder.find("m");
+        assertTrue(mref.isPresent(), "m not found");
 
-        Configuration parent = Layer.boot().configuration();
-        Configuration cf = resolve(parent, finder, "m1");
+        ModuleDescriptor descriptor = mref.get().descriptor();
 
-        ModuleDescriptor m1 = findDescriptor(cf, "m1");
+        assertTrue(descriptor.packages().size() == 2);
+        assertTrue(descriptor.packages().contains("p"));
+        assertTrue(descriptor.packages().contains("q"));
 
-        Set<String> exports
-            = m1.exports().stream().map(Exports::source).collect(Collectors.toSet());
-
+        Set<String> exports = descriptor.exports().stream()
+                .map(Exports::source)
+                .collect(Collectors.toSet());
         assertTrue(exports.size() == 2);
         assertTrue(exports.contains("p"));
         assertTrue(exports.contains("q"));
-        assertTrue(m1.conceals().isEmpty());
     }
-
 
     /**
-     * Test class file in JAR file where the entry does not correspond to a
+     * Test class files in JAR file where the entry does not correspond to a
      * legal package name.
      */
-    @Test(expectedExceptions = FindException.class)
     public void testBadPackage() throws IOException {
         Path dir = Files.createTempDirectory(USER_DIR, "mods");
-        createDummyJarFile(dir.resolve("m1.jar"), "p-/T.class");
+        createDummyJarFile(dir.resolve("m.jar"), "p/C1.class", "p-/C2.class");
 
-        // should throw FindException
-        ModuleFinder.of(dir).findAll();
+        ModuleFinder finder = ModuleFinder.of(dir);
+        Optional<ModuleReference> mref = finder.find("m");
+        assertTrue(mref.isPresent(), "m not found");
+
+        ModuleDescriptor descriptor = mref.get().descriptor();
+
+        assertTrue(descriptor.packages().size() == 1);
+        assertTrue(descriptor.packages().contains("p"));
+
+        Set<String> exports = descriptor.exports().stream()
+                .map(Exports::source)
+                .collect(Collectors.toSet());
+        assertTrue(exports.size() == 1);
+        assertTrue(exports.contains("p"));
     }
 
+    /**
+     * Test non-class resources in a JAR file.
+     */
+    public void testNonClassResources() throws IOException {
+        Path dir = Files.createTempDirectory(USER_DIR, "mods");
+        createDummyJarFile(dir.resolve("m.jar"),
+                "LICENSE",
+                "README",
+                "WEB-INF/tags",
+                "p/Type.class",
+                "p/resources/m.properties");
+
+        ModuleFinder finder = ModuleFinder.of(dir);
+        Optional<ModuleReference> mref = finder.find("m");
+        assertTrue(mref.isPresent(), "m not found");
+
+        ModuleDescriptor descriptor = mref.get().descriptor();
+
+        assertTrue(descriptor.packages().size() == 2);
+        assertTrue(descriptor.packages().contains("p"));
+        assertTrue(descriptor.packages().contains("p.resources"));
+    }
+
+    /**
+     * Test .class file in unnamed package (top-level directory)
+     */
+    @Test(expectedExceptions = FindException.class)
+    public void testClassInUnnamedPackage() throws IOException {
+        Path dir = Files.createTempDirectory(USER_DIR, "mods");
+        createDummyJarFile(dir.resolve("m.jar"), "Mojo.class");
+        ModuleFinder finder = ModuleFinder.of(dir);
+        finder.findAll();
+    }
 
     /**
      * Test JAR file with META-INF/services configuration file
@@ -204,12 +258,12 @@ public class AutomaticModulesTest {
         Files.createDirectories(services);
         Files.write(services.resolve(service), Set.of(provider));
         Path dir = Files.createTempDirectory(USER_DIR, "mods");
-        JarUtils.createJarFile(dir.resolve("m1.jar"), tmpdir);
+        JarUtils.createJarFile(dir.resolve("m.jar"), tmpdir);
 
         ModuleFinder finder = ModuleFinder.of(dir);
 
-        Optional<ModuleReference> mref = finder.find("m1");
-        assertTrue(mref.isPresent(), "m1 not found");
+        Optional<ModuleReference> mref = finder.find("m");
+        assertTrue(mref.isPresent(), "m not found");
 
         ModuleDescriptor descriptor = mref.get().descriptor();
         assertTrue(descriptor.provides().size() == 1);
@@ -220,17 +274,12 @@ public class AutomaticModulesTest {
     }
 
 
-    // META-INF/services configuration file/entries that are not legal
-    @DataProvider(name = "badproviders")
-    public Object[][] createProviders() {
+    // META-INF/services files that don't map to legal service names
+    @DataProvider(name = "badservices")
+    public Object[][] createBadServices() {
         return new Object[][] {
 
                 // service type         provider type
-
-                { "p.S",                "-" },
-                { "p.S",                ".S1" },
-                { "p.S",                "S1." },
-
                 { "-",                  "p.S1" },
                 { ".S",                 "p.S1" },
         };
@@ -240,8 +289,8 @@ public class AutomaticModulesTest {
      * Test JAR file with META-INF/services configuration file with bad
      * values or names.
      */
-    @Test(dataProvider = "badproviders", expectedExceptions = FindException.class)
-    public void testBadServicesConfiguration(String service, String provider)
+    @Test(dataProvider = "badservices")
+    public void testBadServicesNames(String service, String provider)
         throws IOException
     {
         Path tmpdir = Files.createTempDirectory(USER_DIR, "tmp");
@@ -249,7 +298,41 @@ public class AutomaticModulesTest {
         Files.createDirectories(services);
         Files.write(services.resolve(service), Set.of(provider));
         Path dir = Files.createTempDirectory(USER_DIR, "mods");
-        JarUtils.createJarFile(dir.resolve("m1.jar"), tmpdir);
+        JarUtils.createJarFile(dir.resolve("m.jar"), tmpdir);
+
+        Optional<ModuleReference> omref = ModuleFinder.of(dir).find("m");
+        assertTrue(omref.isPresent());
+        ModuleDescriptor descriptor = omref.get().descriptor();
+        assertTrue(descriptor.provides().isEmpty());
+    }
+
+
+    // META-INF/services configuration file entries that are not legal
+    @DataProvider(name = "badproviders")
+    public Object[][] createBadProviders() {
+        return new Object[][] {
+
+                // service type         provider type
+                { "p.S",                "-" },
+                { "p.S",                ".S1" },
+                { "p.S",                "S1." },
+        };
+    }
+
+    /**
+     * Test JAR file with META-INF/services configuration file with bad
+     * values or names.
+     */
+    @Test(dataProvider = "badproviders", expectedExceptions = FindException.class)
+    public void testBadProvideNames(String service, String provider)
+        throws IOException
+    {
+        Path tmpdir = Files.createTempDirectory(USER_DIR, "tmp");
+        Path services = tmpdir.resolve("META-INF").resolve("services");
+        Files.createDirectories(services);
+        Files.write(services.resolve(service), Set.of(provider));
+        Path dir = Files.createTempDirectory(USER_DIR, "mods");
+        JarUtils.createJarFile(dir.resolve("m.jar"), tmpdir);
 
         // should throw FindException
         ModuleFinder.of(dir).findAll();
@@ -269,17 +352,17 @@ public class AutomaticModulesTest {
         attrs.put(Attributes.Name.MAIN_CLASS, mainClass);
 
         Path dir = Files.createTempDirectory(USER_DIR, "mods");
-        createDummyJarFile(dir.resolve("m1.jar"), man);
+        createDummyJarFile(dir.resolve("m.jar"), man);
 
         ModuleFinder finder = ModuleFinder.of(dir);
 
         Configuration parent = Layer.boot().configuration();
-        Configuration cf = resolve(parent, finder, "m1");
+        Configuration cf = resolve(parent, finder, "m");
 
-        ModuleDescriptor m1 = findDescriptor(cf, "m1");
+        ModuleDescriptor descriptor = findDescriptor(cf, "m");
 
-        assertTrue(m1.mainClass().isPresent());
-        assertEquals(m1.mainClass().get(), mainClass);
+        assertTrue(descriptor.mainClass().isPresent());
+        assertEquals(descriptor.mainClass().get(), mainClass);
     }
 
 
@@ -306,7 +389,7 @@ public class AutomaticModulesTest {
         attrs.put(Attributes.Name.MAIN_CLASS, mainClass);
 
         Path dir = Files.createTempDirectory(USER_DIR, "mods");
-        createDummyJarFile(dir.resolve("m1.jar"), man);
+        createDummyJarFile(dir.resolve("m.jar"), man);
 
         // should throw FindException
         ModuleFinder.of(dir).findAll();
@@ -315,213 +398,213 @@ public class AutomaticModulesTest {
 
     /**
      * Basic test of a configuration created with automatic modules.
-     *   m1 requires m2*
-     *   m1 requires m3*
-     *   m2*
-     *   m3*
+     *   a requires b*
+     *   a requires c*
+     *   b*
+     *   c*
      */
     public void testConfiguration1() throws Exception {
         ModuleDescriptor descriptor1
-            = new ModuleDescriptor.Builder("m1")
-                .requires("m2")
-                .requires("m3")
+            = ModuleDescriptor.module("a")
+                .requires("b")
+                .requires("c")
                 .requires("java.base")
                 .build();
 
-        // m2 and m3 are automatic modules
+        // b and c are automatic modules
         Path dir = Files.createTempDirectory(USER_DIR, "mods");
-        createDummyJarFile(dir.resolve("m2.jar"), "p/T.class");
-        createDummyJarFile(dir.resolve("m3.jar"), "q/T.class");
+        createDummyJarFile(dir.resolve("b.jar"), "p/T.class");
+        createDummyJarFile(dir.resolve("c.jar"), "q/T.class");
 
-        // module finder locates m1 and the modules in the directory
+        // module finder locates a and the modules in the directory
         ModuleFinder finder
             = ModuleFinder.compose(ModuleUtils.finderOf(descriptor1),
                 ModuleFinder.of(dir));
 
         Configuration parent = Layer.boot().configuration();
-        Configuration cf = resolve(parent, finder, "m1");
+        Configuration cf = resolve(parent, finder, "a");
 
         assertTrue(cf.modules().size() == 3);
-        assertTrue(cf.findModule("m1").isPresent());
-        assertTrue(cf.findModule("m2").isPresent());
-        assertTrue(cf.findModule("m3").isPresent());
+        assertTrue(cf.findModule("a").isPresent());
+        assertTrue(cf.findModule("b").isPresent());
+        assertTrue(cf.findModule("c").isPresent());
 
         ResolvedModule base = cf.findModule("java.base").get();
         assertTrue(base.configuration() == Layer.boot().configuration());
-        ResolvedModule m1 = cf.findModule("m1").get();
-        ResolvedModule m2 = cf.findModule("m2").get();
-        ResolvedModule m3 = cf.findModule("m3").get();
+        ResolvedModule a = cf.findModule("a").get();
+        ResolvedModule b = cf.findModule("b").get();
+        ResolvedModule c = cf.findModule("c").get();
 
-        // m2 && m3 only require java.base
-        assertTrue(m2.reference().descriptor().requires().size() == 1);
-        assertTrue(m3.reference().descriptor().requires().size() == 1);
+        // b && c only require java.base
+        assertTrue(b.reference().descriptor().requires().size() == 1);
+        assertTrue(c.reference().descriptor().requires().size() == 1);
 
         // readability
 
-        assertTrue(m1.reads().size() == 3);
-        assertTrue(m1.reads().contains(base));
-        assertTrue(m1.reads().contains(m2));
-        assertTrue(m1.reads().contains(m3));
+        assertTrue(a.reads().size() == 3);
+        assertTrue(a.reads().contains(base));
+        assertTrue(a.reads().contains(b));
+        assertTrue(a.reads().contains(c));
 
-        assertTrue(m2.reads().contains(m1));
-        assertTrue(m2.reads().contains(m3));
-        testReadAllBootModules(cf, "m2");  // m2 reads all modules in boot layer
+        assertTrue(b.reads().contains(a));
+        assertTrue(b.reads().contains(c));
+        testReadAllBootModules(cf, "b");  // b reads all modules in boot layer
 
-        assertTrue(m3.reads().contains(m1));
-        assertTrue(m3.reads().contains(m2));
-        testReadAllBootModules(cf, "m3");  // m3 reads all modules in boot layer
+        assertTrue(c.reads().contains(a));
+        assertTrue(c.reads().contains(b));
+        testReadAllBootModules(cf, "c");  // c reads all modules in boot layer
 
     }
 
     /**
      * Basic test of a configuration created with automatic modules
-     *   m1 requires m2
-     *   m2 requires m3*
-     *   m3*
-     *   m4*
+     *   a requires b
+     *   b requires c*
+     *   c*
+     *   d*
      */
     public void testInConfiguration2() throws IOException {
         ModuleDescriptor descriptor1
-            =  new ModuleDescriptor.Builder("m1")
-                .requires("m2")
+            = ModuleDescriptor.module("a")
+                .requires("b")
                 .requires("java.base")
                 .build();
 
         ModuleDescriptor descriptor2
-            =  new ModuleDescriptor.Builder("m2")
-                .requires("m3")
+            = ModuleDescriptor.module("b")
+                .requires("c")
                 .requires("java.base")
                 .build();
 
-        // m3 and m4 are automatic modules
+        // c and d are automatic modules
         Path dir = Files.createTempDirectory(USER_DIR, "mods");
-        createDummyJarFile(dir.resolve("m3.jar"), "p/T.class");
-        createDummyJarFile(dir.resolve("m4.jar"), "q/T.class");
+        createDummyJarFile(dir.resolve("c.jar"), "p/T.class");
+        createDummyJarFile(dir.resolve("d.jar"), "q/T.class");
 
-        // module finder locates m1 and the modules in the directory
+        // module finder locates a and the modules in the directory
         ModuleFinder finder
             = ModuleFinder.compose(ModuleUtils.finderOf(descriptor1, descriptor2),
                                    ModuleFinder.of(dir));
 
         Configuration parent = Layer.boot().configuration();
-        Configuration cf = resolve(parent, finder, "m1", "m4");
+        Configuration cf = resolve(parent, finder, "a", "d");
 
         assertTrue(cf.modules().size() == 4);
-        assertTrue(cf.findModule("m1").isPresent());
-        assertTrue(cf.findModule("m2").isPresent());
-        assertTrue(cf.findModule("m3").isPresent());
-        assertTrue(cf.findModule("m4").isPresent());
+        assertTrue(cf.findModule("a").isPresent());
+        assertTrue(cf.findModule("b").isPresent());
+        assertTrue(cf.findModule("c").isPresent());
+        assertTrue(cf.findModule("d").isPresent());
 
-        // m3 && m4 should only require java.base
-        assertTrue(findDescriptor(cf, "m3").requires().size() == 1);
-        assertTrue(findDescriptor(cf, "m4").requires().size() == 1);
+        // c && d should only require java.base
+        assertTrue(findDescriptor(cf, "c").requires().size() == 1);
+        assertTrue(findDescriptor(cf, "d").requires().size() == 1);
 
         // readability
 
         ResolvedModule base = cf.findModule("java.base").get();
         assertTrue(base.configuration() == Layer.boot().configuration());
-        ResolvedModule m1 = cf.findModule("m1").get();
-        ResolvedModule m2 = cf.findModule("m2").get();
-        ResolvedModule m3 = cf.findModule("m3").get();
-        ResolvedModule m4 = cf.findModule("m4").get();
+        ResolvedModule a = cf.findModule("a").get();
+        ResolvedModule b = cf.findModule("b").get();
+        ResolvedModule c = cf.findModule("c").get();
+        ResolvedModule d = cf.findModule("d").get();
 
-        assertTrue(m1.reads().size() == 2);
-        assertTrue(m1.reads().contains(m2));
-        assertTrue(m1.reads().contains(base));
+        assertTrue(a.reads().size() == 2);
+        assertTrue(a.reads().contains(b));
+        assertTrue(a.reads().contains(base));
 
-        assertTrue(m2.reads().size() == 3);
-        assertTrue(m2.reads().contains(m3));
-        assertTrue(m2.reads().contains(m4));
-        assertTrue(m2.reads().contains(base));
+        assertTrue(b.reads().size() == 3);
+        assertTrue(b.reads().contains(c));
+        assertTrue(b.reads().contains(d));
+        assertTrue(b.reads().contains(base));
 
-        assertTrue(m3.reads().contains(m1));
-        assertTrue(m3.reads().contains(m2));
-        assertTrue(m3.reads().contains(m4));
-        testReadAllBootModules(cf, "m3");   // m3 reads all modules in boot layer
+        assertTrue(c.reads().contains(a));
+        assertTrue(c.reads().contains(b));
+        assertTrue(c.reads().contains(d));
+        testReadAllBootModules(cf, "c");   // c reads all modules in boot layer
 
-        assertTrue(m4.reads().contains(m1));
-        assertTrue(m4.reads().contains(m2));
-        assertTrue(m4.reads().contains(m3));
-        testReadAllBootModules(cf, "m4");    // m4 reads all modules in boot layer
+        assertTrue(d.reads().contains(a));
+        assertTrue(d.reads().contains(b));
+        assertTrue(d.reads().contains(c));
+        testReadAllBootModules(cf, "d");    // d reads all modules in boot layer
     }
 
 
     /**
      * Basic test of a configuration created with automatic modules
-     *   m1 requires m2
-     *   m2 requires public m3*
-     *   m3*
-     *   m4*
+     *   a requires b
+     *   b requires transitive c*
+     *   c*
+     *   d*
      */
     public void testInConfiguration3() throws IOException {
         ModuleDescriptor descriptor1
-            =  new ModuleDescriptor.Builder("m1")
-                .requires("m2")
+            = ModuleDescriptor.module("a")
+                .requires("b")
                 .requires("java.base")
                 .build();
 
         ModuleDescriptor descriptor2
-            =  new ModuleDescriptor.Builder("m2")
-                .requires(Modifier.PUBLIC, "m3")
+            = ModuleDescriptor.module("b")
+                .requires(Set.of(Modifier.TRANSITIVE), "c")
                 .requires("java.base")
                 .build();
 
-        // m3 and m4 are automatic modules
+        // c and d are automatic modules
         Path dir = Files.createTempDirectory(USER_DIR, "mods");
-        createDummyJarFile(dir.resolve("m3.jar"), "p/T.class");
-        createDummyJarFile(dir.resolve("m4.jar"), "q/T.class");
+        createDummyJarFile(dir.resolve("c.jar"), "p/T.class");
+        createDummyJarFile(dir.resolve("d.jar"), "q/T.class");
 
-        // module finder locates m1 and the modules in the directory
+        // module finder locates a and the modules in the directory
         ModuleFinder finder
             = ModuleFinder.compose(ModuleUtils.finderOf(descriptor1, descriptor2),
                 ModuleFinder.of(dir));
 
         Configuration parent = Layer.boot().configuration();
-        Configuration cf = resolve(parent, finder, "m1", "m4");
+        Configuration cf = resolve(parent, finder, "a", "d");
 
         assertTrue(cf.modules().size() == 4);
-        assertTrue(cf.findModule("m1").isPresent());
-        assertTrue(cf.findModule("m2").isPresent());
-        assertTrue(cf.findModule("m3").isPresent());
-        assertTrue(cf.findModule("m4").isPresent());
+        assertTrue(cf.findModule("a").isPresent());
+        assertTrue(cf.findModule("b").isPresent());
+        assertTrue(cf.findModule("c").isPresent());
+        assertTrue(cf.findModule("d").isPresent());
 
         ResolvedModule base = cf.findModule("java.base").get();
         assertTrue(base.configuration() == Layer.boot().configuration());
-        ResolvedModule m1 = cf.findModule("m1").get();
-        ResolvedModule m2 = cf.findModule("m2").get();
-        ResolvedModule m3 = cf.findModule("m3").get();
-        ResolvedModule m4 = cf.findModule("m4").get();
+        ResolvedModule a = cf.findModule("a").get();
+        ResolvedModule b = cf.findModule("b").get();
+        ResolvedModule c = cf.findModule("c").get();
+        ResolvedModule d = cf.findModule("d").get();
 
-        // m3 && m4 should only require java.base
-        assertTrue(findDescriptor(cf, "m3").requires().size() == 1);
-        assertTrue(findDescriptor(cf, "m4").requires().size() == 1);
+        // c && d should only require java.base
+        assertTrue(findDescriptor(cf, "c").requires().size() == 1);
+        assertTrue(findDescriptor(cf, "d").requires().size() == 1);
 
         // readability
 
-        assertTrue(m1.reads().size() == 4);
-        assertTrue(m1.reads().contains(m2));
-        assertTrue(m1.reads().contains(m3));
-        assertTrue(m1.reads().contains(m4));
-        assertTrue(m1.reads().contains(base));
+        assertTrue(a.reads().size() == 4);
+        assertTrue(a.reads().contains(b));
+        assertTrue(a.reads().contains(c));
+        assertTrue(a.reads().contains(d));
+        assertTrue(a.reads().contains(base));
 
-        assertTrue(m2.reads().size() == 3);
-        assertTrue(m2.reads().contains(m3));
-        assertTrue(m2.reads().contains(m4));
-        assertTrue(m2.reads().contains(base));
+        assertTrue(b.reads().size() == 3);
+        assertTrue(b.reads().contains(c));
+        assertTrue(b.reads().contains(d));
+        assertTrue(b.reads().contains(base));
 
-        assertTrue(reads(cf, "m2", "m3"));
-        assertTrue(reads(cf, "m2", "m4"));
-        assertTrue(reads(cf, "m2", "java.base"));
+        assertTrue(reads(cf, "b", "c"));
+        assertTrue(reads(cf, "b", "d"));
+        assertTrue(reads(cf, "b", "java.base"));
 
-        assertTrue(m3.reads().contains(m1));
-        assertTrue(m3.reads().contains(m2));
-        assertTrue(m3.reads().contains(m4));
-        testReadAllBootModules(cf, "m3");   // m3 reads all modules in boot layer
+        assertTrue(c.reads().contains(a));
+        assertTrue(c.reads().contains(b));
+        assertTrue(c.reads().contains(d));
+        testReadAllBootModules(cf, "c");   // c reads all modules in boot layer
 
-        assertTrue(m4.reads().contains(m1));
-        assertTrue(m4.reads().contains(m2));
-        assertTrue(m4.reads().contains(m3));
-        testReadAllBootModules(cf, "m4");    // m4 reads all modules in boot layer
+        assertTrue(d.reads().contains(a));
+        assertTrue(d.reads().contains(b));
+        assertTrue(d.reads().contains(c));
+        testReadAllBootModules(cf, "d");    // d reads all modules in boot layer
     }
 
 
@@ -530,23 +613,23 @@ public class AutomaticModulesTest {
      */
     public void testInLayer() throws IOException {
         ModuleDescriptor descriptor
-            =  new ModuleDescriptor.Builder("m1")
-                .requires("m2")
-                .requires("m3")
+            = ModuleDescriptor.module("a")
+                .requires("b")
+                .requires("c")
                 .build();
 
-        // m2 and m3 are simple JAR files
+        // b and c are simple JAR files
         Path dir = Files.createTempDirectory(USER_DIR, "mods");
-        createDummyJarFile(dir.resolve("m2.jar"), "p/T.class");
-        createDummyJarFile(dir.resolve("m3.jar"), "q/T2.class");
+        createDummyJarFile(dir.resolve("b.jar"), "p/T.class");
+        createDummyJarFile(dir.resolve("c.jar"), "q/T2.class");
 
-        // module finder locates m1 and the modules in the directory
+        // module finder locates a and the modules in the directory
         ModuleFinder finder
             = ModuleFinder.compose(ModuleUtils.finderOf(descriptor),
                 ModuleFinder.of(dir));
 
         Configuration parent = Layer.boot().configuration();
-        Configuration cf = resolve(parent, finder, "m1");
+        Configuration cf = resolve(parent, finder, "a");
         assertTrue(cf.modules().size() == 3);
 
         // each module gets its own loader
@@ -555,15 +638,15 @@ public class AutomaticModulesTest {
         // an unnamed module
         Module unnamed = (new ClassLoader() { }).getUnnamedModule();
 
-        Module m2 = layer.findModule("m2").get();
-        assertTrue(m2.isNamed());
-        assertTrue(m2.canRead(unnamed));
-        testsReadsAll(m2, layer);
+        Module b = layer.findModule("b").get();
+        assertTrue(b.isNamed());
+        assertTrue(b.canRead(unnamed));
+        testsReadsAll(b, layer);
 
-        Module m3 = layer.findModule("m3").get();
-        assertTrue(m3.isNamed());
-        assertTrue(m2.canRead(unnamed));
-        testsReadsAll(m3, layer);
+        Module c = layer.findModule("c").get();
+        assertTrue(c.isNamed());
+        assertTrue(b.canRead(unnamed));
+        testsReadsAll(c, layer);
     }
 
 
@@ -572,19 +655,19 @@ public class AutomaticModulesTest {
      */
     public void testMisc() throws IOException {
         Path dir = Files.createTempDirectory(USER_DIR, "mods");
-        Path m1_jar = createDummyJarFile(dir.resolve("m1.jar"), "p/T.class");
+        Path m_jar = createDummyJarFile(dir.resolve("m.jar"), "p/T.class");
 
-        ModuleFinder finder = ModuleFinder.of(m1_jar);
+        ModuleFinder finder = ModuleFinder.of(m_jar);
 
-        assertTrue(finder.find("m1").isPresent());
-        ModuleDescriptor m1 = finder.find("m1").get().descriptor();
+        assertTrue(finder.find("m").isPresent());
+        ModuleDescriptor m = finder.find("m").get().descriptor();
 
         // test miscellaneous methods
-        assertTrue(m1.isAutomatic());
-        assertFalse(m1.isSynthetic());
-        assertFalse(m1.osName().isPresent());
-        assertFalse(m1.osArch().isPresent());
-        assertFalse(m1.osVersion().isPresent());
+        assertTrue(m.isAutomatic());
+        assertFalse(m.isSynthetic());
+        assertFalse(m.osName().isPresent());
+        assertFalse(m.osArch().isPresent());
+        assertFalse(m.osVersion().isPresent());
     }
 
 
@@ -636,7 +719,7 @@ public class AutomaticModulesTest {
                 .map(ResolvedModule::name)
                 .map(layer::findModule)
                 .map(Optional::get)
-                .forEach(m2 -> assertTrue(m.canRead(m2)));
+                .forEach(other -> assertTrue(m.canRead(other)));
 
             layer = layer.parent().get();
         }
@@ -647,11 +730,11 @@ public class AutomaticModulesTest {
      * that reads module mn2.
      */
     static boolean reads(Configuration cf, String mn1, String mn2) {
-        Optional<ResolvedModule> om1 = cf.findModule(mn1);
-        if (!om1.isPresent())
+        Optional<ResolvedModule> om = cf.findModule(mn1);
+        if (!om.isPresent())
             return false;
 
-        return om1.get().reads().stream()
+        return om.get().reads().stream()
                 .map(ResolvedModule::name)
                 .anyMatch(mn2::equals);
     }
@@ -683,7 +766,7 @@ public class AutomaticModulesTest {
      * in the resulting JAR file.
      */
     static Path createDummyJarFile(Path jarfile, String... entries)
-        throws IOException
+            throws IOException
     {
         return createDummyJarFile(jarfile, null, entries);
     }

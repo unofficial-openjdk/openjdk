@@ -24,7 +24,6 @@
  */
 
 package java.lang;
-import jdk.internal.misc.VM;
 
 import  java.io.*;
 import  java.util.*;
@@ -830,7 +829,12 @@ public class Throwable implements Serializable {
             for (int i = 0; i < depth; i++) {
                 stackTrace[i] = new StackTraceElement();
             }
+            // VM to fill in StackTraceElement
             getStackTraceElements(stackTrace);
+            // ensure the proper StackTraceElement initialization
+            for (StackTraceElement ste : stackTrace) {
+                ste.buildLoaderModuleClassName();
+            }
         } else if (stackTrace == null) {
             return UNASSIGNED_STACK;
         }

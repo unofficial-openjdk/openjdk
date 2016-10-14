@@ -26,6 +26,7 @@
 /**
  * Defines the foundational APIs of the Java SE Platform.
  */
+@SuppressWarnings("deprecation")
 module java.base {
 
     exports java.io;
@@ -115,15 +116,16 @@ module java.base {
     // additional qualified exports may be inserted at build time
     // see make/gensrc/GenModuleInfo.gmk
 
-    // CORBA serialization needs reflective access
-    exports sun.util.calendar to
-        java.corba;
-
     exports com.sun.security.ntlm to
         java.security.sasl;
     exports jdk.internal.jimage to
         jdk.jlink;
     exports jdk.internal.jimage.decompressor to
+        jdk.jlink;
+    exports jdk.internal.loader to
+        java.instrument,
+        java.logging,
+        jdk.jartool,
         jdk.jlink;
     exports jdk.internal.jmod to
         jdk.compiler,
@@ -146,9 +148,6 @@ module java.base {
         jdk.scripting.nashorn;
     exports jdk.internal.org.objectweb.asm.signature to
         jdk.scripting.nashorn;
-    exports jdk.internal.loader to
-        java.instrument,
-        java.logging;
     exports jdk.internal.math to
         java.desktop;
     exports jdk.internal.module to
