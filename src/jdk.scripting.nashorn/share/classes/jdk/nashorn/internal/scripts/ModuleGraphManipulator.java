@@ -62,7 +62,7 @@ final class ModuleGraphManipulator {
         }
 
         // From this module add a qualified export to nashorn module
-        MY_MODULE.addExports(MY_PKG_NAME, nashornModule);
+        MY_MODULE.addExportsPrivate(MY_PKG_NAME, nashornModule);
     }
 
     // The following method is reflectively invoked from Nashorn
