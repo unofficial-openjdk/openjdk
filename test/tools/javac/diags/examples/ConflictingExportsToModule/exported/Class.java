@@ -21,13 +21,7 @@
  * questions.
  */
 
-package p7;
+package exported;
 
-// Only use classes in unsafe and m6 modules with no
-// direct or indirect dependency on sun.misc.Unsafe
-public class Main {
-    public static void main(String... args) {
-        p6.safe.Lib.doit();
-        org.safe.Lib.doit();
-    }
+public class Class {
 }

@@ -61,7 +61,8 @@ public class GenModuleInfo {
 
     // the names of the modules in this test
     private static final String UNSUPPORTED = "unsupported";
-    private static String[] modules = new String[] {"m1", "m2", "m3", UNSUPPORTED};
+    private static String[] modules = new String[] {"mI", "mII", "mIII", UNSUPPORTED};
+
     /**
      * Compiles all modules used by the test
      */
@@ -74,7 +75,7 @@ public class GenModuleInfo {
 
         assertTrue(CompilerUtils.compileModule(SRC_DIR, MODS_DIR, UNSUPPORTED,
                                                "--add-exports", "java.base/jdk.internal.perf=" + UNSUPPORTED));
-        Arrays.asList("m1", "m2", "m3")
+        Arrays.asList("mI", "mII", "mIII")
               .forEach(mn -> assertTrue(CompilerUtils.compileModule(SRC_DIR, MODS_DIR, mn)));
 
         Files.createDirectory(LIBS_DIR);
@@ -93,7 +94,7 @@ public class GenModuleInfo {
     }
 
     @Test
-    public void jdeps() throws IOException {
+    public void automaticModules() throws IOException {
         Stream<String> files = Arrays.stream(modules)
                 .map(mn -> LIBS_DIR.resolve(mn + ".jar"))
                 .map(Path::toString);
@@ -111,8 +112,8 @@ public class GenModuleInfo {
 
         // check file exists
         Arrays.stream(modules)
-                .map(mn -> DEST_DIR.resolve(mn).resolve("module-info.java"))
-                .forEach(f -> assertTrue(Files.exists(f)));
+             .map(mn -> DEST_DIR.resolve(mn).resolve("module-info.java"))
+             .forEach(f -> assertTrue(Files.exists(f)));
 
         // copy classes except the original module-info.class
         try (Stream<Path> stream = Files.walk(MODS_DIR, Integer.MAX_VALUE)) {
@@ -134,7 +135,7 @@ public class GenModuleInfo {
         assertTrue(CompilerUtils.compileModule(DEST_DIR, NEW_MODS_DIR, UNSUPPORTED,
                         "-p", NEW_MODS_DIR.toString(), "-verbose",
                         "--add-exports", "java.base/jdk.internal.perf=" + UNSUPPORTED));
-        Arrays.asList("m1", "m2", "m3")
+        Arrays.asList("mI", "mII", "mIII")
               .forEach(mn -> assertTrue(CompilerUtils.compileModule(DEST_DIR, NEW_MODS_DIR,
                                         mn, "-p", NEW_MODS_DIR.toString())));
 

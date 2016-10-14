@@ -27,7 +27,9 @@ package com.sun.tools.javac.code;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Inherited;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -47,6 +49,7 @@ import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
 
 import com.sun.tools.javac.code.ClassFinder.BadEnclosingMethodAttr;
+import com.sun.tools.javac.code.Directive.RequiresFlag;
 import com.sun.tools.javac.code.Kinds.Kind;
 import com.sun.tools.javac.comp.Annotate.AnnotationTypeMetadata;
 import com.sun.tools.javac.code.Scope.WriteableScope;
@@ -910,9 +913,11 @@ public abstract class Symbol extends AnnoConstruct implements Element {
 
         public PackageSymbol unnamedPackage;
         public Map<Name, PackageSymbol> visiblePackages;
+        public Collection<ModuleSymbol> readModules;
         public List<Symbol> enclosedPackages = List.nil();
 
         public Completer usesProvidesCompleter = Completer.NULL_COMPLETER;
+        public final Set<ModuleFlags> flags = EnumSet.noneOf(ModuleFlags.class);
 
         /**
          * Create a ModuleSymbol with an associated module-info ClassSymbol.
@@ -999,6 +1004,27 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             this.uses = null;
             this.visiblePackages = null;
         }
+
+    }
+
+    public enum ModuleFlags {
+        WEAK(0x0020),
+        SYNTHETIC(0x1000),
+        MANDATED(0x8000);
+
+        // XXX: also in Directive.RequiresFlag, should unify!
+        public static int value(Set<ModuleFlags> s) {
+            int v = 0;
+            for (ModuleFlags f: s)
+                v |= f.value;
+            return v;
+        }
+
+        private ModuleFlags(int value) {
+            this.value = value;
+        }
+
+        public final int value;
 
     }
 

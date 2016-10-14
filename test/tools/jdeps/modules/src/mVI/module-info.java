@@ -21,8 +21,13 @@
  * questions.
  */
 
-module m2 {
-    requires public m1;
-    exports p2;
-    exports p2.internal to m3;
+module mVI {
+    requires unsafe;
+
+    // no dependency on sun.misc.Unsafe directly or indirectly
+    exports p6.safe;
+
+    // direct dependency on org.unsafe
+    // hence indirect dependency on sun.misc.Unsafe
+    exports p6.indirect;
 }

@@ -21,9 +21,8 @@
  * questions.
  */
 
-// key: compiler.err.duplicate.exports
+// key: compiler.err.no.exports.in.weak
 
-module DuplicateExports {
-     exports exported;
-     exports exported;
+weak module NoExportsInWeak {
+    exports p;
 }

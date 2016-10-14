@@ -583,6 +583,28 @@ public class ClassReader {
         throw badClassFile("bad.module-info.name");
     }
 
+    /** Read module_flags.
+     */
+    Set<ModuleFlags> readModuleFlags(int flags) {
+        Set<ModuleFlags> set = EnumSet.noneOf(ModuleFlags.class);
+        for (ModuleFlags f : ModuleFlags.values()) {
+            if ((flags & f.value) != 0)
+                set.add(f);
+        }
+        return set;
+    }
+
+    /** Read exports_flags.
+     */
+    Set<ExportsFlag> readExportsFlags(int flags) {
+        Set<ExportsFlag> set = EnumSet.noneOf(ExportsFlag.class);
+        for (ExportsFlag f: ExportsFlag.values()) {
+            if ((flags & f.value) != 0)
+                set.add(f);
+        }
+        return set;
+    }
+
     /** Read requires_flags.
      */
     Set<RequiresFlag> readRequiresFlags(int flags) {
@@ -995,7 +1017,9 @@ public class ClassReader {
 
             new AttributeReader(names.Deprecated, V45_3, CLASS_OR_MEMBER_ATTRIBUTE) {
                 protected void read(Symbol sym, int attrLen) {
-                    sym.flags_field |= DEPRECATED;
+                    Symbol s = sym.owner.kind == MDL ? sym.owner : sym;
+
+                    s.flags_field |= DEPRECATED;
                 }
             },
 
@@ -1227,6 +1251,8 @@ public class ClassReader {
                         ModuleSymbol msym = (ModuleSymbol) sym.owner;
                         ListBuffer<Directive> directives = new ListBuffer<>();
 
+                        msym.flags.addAll(readModuleFlags(nextChar()));
+
                         ListBuffer<RequiresDirective> requires = new ListBuffer<>();
                         int nrequires = nextChar();
                         for (int i = 0; i < nrequires; i++) {
@@ -1243,6 +1269,7 @@ public class ClassReader {
                         for (int i = 0; i < nexports; i++) {
                             Name n = readName(nextChar());
                             PackageSymbol p = syms.enterPackage(currentModule, names.fromUtf(internalize(n)));
+                            Set<ExportsFlag> flags = readExportsFlags(nextChar());
                             int nto = nextChar();
                             List<ModuleSymbol> to;
                             if (nto == 0) {
@@ -1253,7 +1280,7 @@ public class ClassReader {
                                     lb.append(syms.enterModule(readName(nextChar())));
                                 to = lb.toList();
                             }
-                            exports.add(new ExportsDirective(p, to));
+                            exports.add(new ExportsDirective(p, to, flags));
                         }
                         msym.exports = exports.toList();
                         directives.addAll(msym.exports);
@@ -1549,7 +1576,13 @@ public class ClassReader {
     }
 
     CompoundAnnotationProxy readCompoundAnnotation() {
-        Type t = readTypeOrClassSymbol(nextChar());
+        Type t;
+        if (currentModule.module_info == currentOwner) {
+            int index = poolIdx[nextChar()];
+            t = new ProxyType(Arrays.copyOfRange(buf, index + 3, index + 3 + getChar(index + 1)));
+        } else {
+            t = readTypeOrClassSymbol(nextChar());
+        }
         int numFields = nextChar();
         ListBuffer<Pair<Name,Attribute>> pairs = new ListBuffer<>();
         for (int i=0; i<numFields; i++) {
@@ -1899,14 +1932,18 @@ public class ClassReader {
         }
 
         Attribute.Compound deproxyCompound(CompoundAnnotationProxy a) {
+            Type annotationType = a.type;
+            if (annotationType instanceof ProxyType) {
+                annotationType = ((ProxyType) annotationType).resolve();
+            }
             ListBuffer<Pair<Symbol.MethodSymbol,Attribute>> buf = new ListBuffer<>();
             for (List<Pair<Name,Attribute>> l = a.values;
                  l.nonEmpty();
                  l = l.tail) {
-                MethodSymbol meth = findAccessMethod(a.type, l.head.fst);
+                MethodSymbol meth = findAccessMethod(annotationType, l.head.fst);
                 buf.append(new Pair<>(meth, deproxy(meth.type.getReturnType(), l.head.snd)));
             }
-            return new Attribute.Compound(a.type, buf.toList());
+            return new Attribute.Compound(annotationType, buf.toList());
         }
 
         MethodSymbol findAccessMethod(Type container, Name name) {
@@ -2076,7 +2113,11 @@ public class ClassReader {
         AnnotationCompleter(Symbol sym, List<CompoundAnnotationProxy> l) {
             super(currentOwner.kind == MTH
                     ? currentOwner.enclClass() : (ClassSymbol)currentOwner);
-            this.sym = sym;
+            if (sym.kind == TYP && sym.owner.kind == MDL) {
+                this.sym = sym.owner;
+            } else {
+                this.sym = sym;
+            }
             this.l = l;
             this.classFile = currentClassFile;
         }
@@ -2488,7 +2529,7 @@ public class ClassReader {
 
         minorVersion = nextChar();
         majorVersion = nextChar();
-        int maxMajor = Version.MAX().major;
+        int maxMajor = 53; // Version.MAX().major;  //******* TEMPORARY *******
         int maxMinor = Version.MAX().minor;
         if (majorVersion > maxMajor ||
             majorVersion * 1000 + minorVersion <
@@ -2530,6 +2571,8 @@ public class ClassReader {
                 List<Type> found = foundTypeVariables;
                 missingTypeVariables = List.nil();
                 foundTypeVariables = List.nil();
+                interimUses = List.nil();
+                interimProvides = List.nil();
                 filling = false;
                 ClassType ct = (ClassType)currentOwner.type;
                 ct.supertype_field =
@@ -2789,6 +2832,31 @@ public class ClassReader {
             sym.getAnnotationTypeMetadata().setTarget(theTarget);
             sym.getAnnotationTypeMetadata().setRepeatable(theRepeatable);
         }
+    }
+
+    private class ProxyType extends Type {
+
+        private final byte[] content;
+
+        public ProxyType(byte[] content) {
+            super(syms.noSymbol, TypeMetadata.EMPTY);
+            this.content = content;
+        }
+
+        @Override
+        public TypeTag getTag() {
+            return TypeTag.NONE;
+        }
+
+        @Override
+        public Type cloneWithMetadata(TypeMetadata metadata) {
+            throw new UnsupportedOperationException();
+        }
+
+        public Type resolve() {
+            return sigToType(content, 0, content.length);
+        }
+
     }
 
     private static final class InterimUsesDirective {

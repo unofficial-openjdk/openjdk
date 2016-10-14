@@ -31,6 +31,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.lang.model.element.ElementVisitor;
 
@@ -65,6 +66,7 @@ import com.sun.tools.javac.util.Options;
 
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Kinds.Kind.*;
+import com.sun.tools.javac.code.Symbol.ModuleFlags;
 import static com.sun.tools.javac.code.TypeTag.*;
 
 /** A class that defines all predefined constants and operators
@@ -463,6 +465,7 @@ public class Symtab {
             java_base = enterModule(names.java_base);
             //avoid completing java.base during the Symtab initialization
             java_base.completer = Completer.NULL_COMPLETER;
+            java_base.readModules = Collections.emptyList();
             java_base.visiblePackages = Collections.emptyMap();
         } else {
             java_base = noModule;
@@ -642,32 +645,27 @@ public class Symtab {
         if (pack != null && pack.exists())
             return pack;
 
-        boolean dependsOnUnnamed = msym.requires != null &&
-                                   msym.requires.stream()
-                                                .map(rd -> rd.module)
-                                                .anyMatch(mod -> mod == unnamedModule);
+        Collection<ModuleSymbol> unfilledModules =
+                msym.readModules.stream()
+                                .filter(mod -> mod == unnamedModule || mod.flags.contains(ModuleFlags.WEAK))
+                                .collect(Collectors.toList());
 
-        if (dependsOnUnnamed) {
-            //msyms depends on the unnamed module, for which we generally don't know
+        if (!unfilledModules.isEmpty()) {
+            //msyms depends on an "unfilled" module (unnamed or weak), for which we generally don't know
             //the list of packages it "exports" ahead of time. So try to lookup the package in the
-            //current module, and in the unnamed module and see if it exists in one of them
-            PackageSymbol unnamedPack = getPackage(unnamedModule, flatName);
-
-            if (unnamedPack != null && unnamedPack.exists()) {
-                msym.visiblePackages.put(unnamedPack.fullname, unnamedPack);
-                return unnamedPack;
-            }
-
+            //current module, and in the unfilled modules and see if it exists in any of them
             pack = enterPackage(msym, flatName);
             pack.complete();
             if (pack.exists())
                 return pack;
 
-            unnamedPack = enterPackage(unnamedModule, flatName);
-            unnamedPack.complete();
-            if (unnamedPack.exists()) {
-                msym.visiblePackages.put(unnamedPack.fullname, unnamedPack);
-                return unnamedPack;
+            for (ModuleSymbol unfilled : unfilledModules) {
+                PackageSymbol unfilledPack = enterPackage(unfilled, flatName);
+                unfilledPack.complete();
+                if (unfilledPack.exists()) {
+                    msym.visiblePackages.put(unfilledPack.fullname, unfilledPack);
+                    return unfilledPack;
+                }
             }
 
             return pack;

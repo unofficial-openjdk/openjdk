@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -63,12 +63,15 @@ public class Names {
     public final Name _default;
     public final Name _super;
     public final Name _this;
+    public final Name dynamic;
     public final Name exports;
     public final Name module;
     public final Name provides;
     public final Name requires;
     public final Name to;
+    public final Name transitive;
     public final Name uses;
+    public final Name weak;
     public final Name with;
 
     // field and method names
@@ -100,6 +103,7 @@ public class Names {
     public final Name length;
     public final Name next;
     public final Name ordinal;
+    public final Name provider;
     public final Name serialVersionUID;
     public final Name toString;
     public final Name value;
@@ -167,6 +171,7 @@ public class Names {
     public final Name FIELD;
     public final Name LOCAL_VARIABLE;
     public final Name METHOD;
+    public final Name MODULE;
     public final Name PACKAGE;
     public final Name PARAMETER;
     public final Name TYPE;
@@ -218,12 +223,15 @@ public class Names {
         _default = fromString("default");
         _super = fromString("super");
         _this = fromString("this");
+        dynamic = fromString("dynamic");
         exports = fromString("exports");
         module = fromString("module");
         provides = fromString("provides");
         requires = fromString("requires");
         to = fromString("to");
+        transitive = fromString("transitive");
         uses = fromString("uses");
+        weak = fromString("weak");
         with = fromString("with");
 
         // field and method names
@@ -255,6 +263,7 @@ public class Names {
         length = fromString("length");
         next = fromString("next");
         ordinal = fromString("ordinal");
+        provider = fromString("provider");
         serialVersionUID = fromString("serialVersionUID");
         toString = fromString("toString");
         value = fromString("value");
@@ -323,6 +332,7 @@ public class Names {
         FIELD = fromString("FIELD");
         LOCAL_VARIABLE = fromString("LOCAL_VARIABLE");
         METHOD = fromString("METHOD");
+        MODULE = fromString("MODULE");
         PACKAGE = fromString("PACKAGE");
         PARAMETER = fromString("PARAMETER");
         TYPE = fromString("TYPE");

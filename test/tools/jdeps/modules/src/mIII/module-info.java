@@ -21,7 +21,10 @@
  * questions.
  */
 
-module m1 {
-    requires unsupported;
-    exports p1;
+module mIII {
+    requires transitive java.sql;
+    requires transitive mII;
+    requires java.logging;   // TODO: --generate-module-info to do transitive reduction
+    requires transitive mI;
+    exports p3;
 }

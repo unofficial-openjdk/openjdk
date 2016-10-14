@@ -541,7 +541,7 @@ public class ClassFinder {
     // One plausible solution is to detect if the module's sourceLocation
     // is the same as the module's classLocation.
     private void scanModulePaths(PackageSymbol p, ModuleSymbol msym) throws IOException {
-        Set<JavaFileObject.Kind> kinds = getPackageFileKinds();
+        Set<JavaFileObject.Kind> kinds = EnumSet.allOf(JavaFileObject.Kind.class);//getPackageFileKinds();
 
         Set<JavaFileObject.Kind> classKinds = EnumSet.copyOf(kinds);
         classKinds.remove(JavaFileObject.Kind.SOURCE);
@@ -576,7 +576,7 @@ public class ClassFinder {
      * Scans class path and source path for files in given package.
      */
     private void scanUserPaths(PackageSymbol p, boolean includeSourcePath) throws IOException {
-        Set<JavaFileObject.Kind> kinds = getPackageFileKinds();
+        Set<JavaFileObject.Kind> kinds = EnumSet.allOf(JavaFileObject.Kind.class);//getPackageFileKinds();
 
         Set<JavaFileObject.Kind> classKinds = EnumSet.copyOf(kinds);
         classKinds.remove(JavaFileObject.Kind.SOURCE);
@@ -666,6 +666,7 @@ public class ClassFinder {
                                       allowSigFiles &&
                                       fo.getName().endsWith(".sig");
                     if (!sigFile) {
+                        p.flags_field |= Flags.HAS_RESOURCE;
                         extraFileActions(p, fo);
                         break;
                     }
@@ -681,7 +682,9 @@ public class ClassFinder {
                     break;
                 }
                 default:
+                    p.flags_field |= Flags.HAS_RESOURCE;
                     extraFileActions(p, fo);
+                    break;
                 }
             }
         }

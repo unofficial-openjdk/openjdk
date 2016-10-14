@@ -387,14 +387,14 @@ public class Modules extends ModuleTestBase {
      * Module M : test module, with variable requires
      *
      * Module N :
-     *     requires public O  --->   Module O:
-     *                                 requires J   ---->   Module J:
-     *                                 exports openO          exports openJ
+     *     requires transitive O  --->   Module O:
+     *                                   requires J   ---->   Module J:
+     *                                   exports openO          exports openJ
      *
      *
      * Module L :
-     *     requires public P  --->   Module P:
-     *                                 exports openP
+     *     requires transitive P  --->   Module P:
+     *                                   exports openP
      *
      *
      */
@@ -425,14 +425,14 @@ public class Modules extends ModuleTestBase {
     }
 
     @Test
-    public void testExpandRequiresPublic(Path base) throws Exception {
+    public void testExpandRequiresTransitive(Path base) throws Exception {
         Path src = base.resolve("src");
 
         createAuxiliaryModules(src);
 
         new ModuleBuilder(tb, "M")
                 .comment("The M module.")
-                .requiresPublic("N", src)
+                .requiresTransitive("N", src)
                 .requires("L", src)
                 .exports("p")
                 .classes("package p; public class Main { openO.O o; openN.N n; openL.L l; }")
@@ -456,7 +456,7 @@ public class Modules extends ModuleTestBase {
 
         new ModuleBuilder(tb, "M")
                 .comment("The M module.")
-                .requiresPublic("N", src)
+                .requiresTransitive("N", src)
                 .requires("L", src)
                 .requires("O", src)
                 .exports("p")
@@ -484,7 +484,7 @@ public class Modules extends ModuleTestBase {
 
         new ModuleBuilder(tb, "M")
                 .comment("The M module.")
-                .requiresPublic("N", src)
+                .requiresTransitive("N", src)
                 .requires("L", src)
                 .requires("O", src)
                 .exports("p")
@@ -506,7 +506,7 @@ public class Modules extends ModuleTestBase {
 
         new ModuleBuilder(tb, "M")
                 .comment("The M module.")
-                .requiresPublic("N", src)
+                .requiresTransitive("N", src)
                 .requires("L", src)
                 .requires("O", src)
                 .exports("p")
@@ -532,7 +532,7 @@ public class Modules extends ModuleTestBase {
         new ModuleBuilder(tb, "L")
                 .comment("The L module.")
                 .exports("openL")
-                .requiresPublic("P")
+                . requiresTransitive("P")
                 .classes("package openL; /** Class L open */ public class L { }")
                 .classes("package closedL;  /** Class L closed */ public class L { }")
                 .write(src);
@@ -540,7 +540,7 @@ public class Modules extends ModuleTestBase {
         new ModuleBuilder(tb, "N")
                 .comment("The N module.")
                 .exports("openN")
-                .requiresPublic("O")
+                .requiresTransitive("O")
                 .classes("package openN; /** Class N open */ public class N  { }")
                 .classes("package closedN; /** Class N closed */ public class N { }")
                 .write(src);
