@@ -368,7 +368,9 @@ public class ModuleDescriptor
          */
         @Override
         public int hashCode() {
-            return hash(mods, source, targets);
+            int hash = mods.hashCode();
+            hash = hash * 43 + source.hashCode();
+            return hash * 43 + targets.hashCode();
         }
 
         /**
@@ -475,7 +477,7 @@ public class ModuleDescriptor
          */
         @Override
         public int hashCode() {
-            return hash(service, providers);
+            return service.hashCode() * 43 + providers.hashCode();
         }
 
         /**
