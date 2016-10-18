@@ -58,6 +58,9 @@ BUILD_HOTSPOT_JTREG_NATIVE_SRC := \
     $(HOTSPOT_TOPDIR)/test/testlibrary/jvmti \
     $(HOTSPOT_TOPDIR)/test/compiler/jvmci/jdk.vm.ci.code.test \
     $(HOTSPOT_TOPDIR)/test/serviceability/jvmti/GetModulesInfo \
+    $(HOTSPOT_TOPDIR)/test/serviceability/jvmti/ModuleAwareAgents/ClassFileLoadHook \
+    $(HOTSPOT_TOPDIR)/test/serviceability/jvmti/ModuleAwareAgents/ClassLoadPrepare \
+    $(HOTSPOT_TOPDIR)/test/serviceability/jvmti/ModuleAwareAgents/ThreadStart \
     #
 
 # Add conditional directories here when needed.
@@ -81,6 +84,9 @@ ifeq ($(TOOLCHAIN_TYPE), solstudio)
     BUILD_HOTSPOT_JTREG_LIBRARIES_LDFLAGS_libAddModuleReadsTest := -lc
     BUILD_HOTSPOT_JTREG_LIBRARIES_LDFLAGS_libAddModuleExportsTest := -lc
     BUILD_HOTSPOT_JTREG_LIBRARIES_LDFLAGS_libAddModuleUsesAndProvidesTest := -lc
+    BUILD_HOTSPOT_JTREG_LIBRARIES_LIBS_libMAAClassFileLoadHook := -lc
+    BUILD_HOTSPOT_JTREG_LIBRARIES_LIBS_libMAAClassLoadPrepare := -lc
+    BUILD_HOTSPOT_JTREG_LIBRARIES_LIBS_libMAAThreadStart := -lc
 endif
 
 ifeq ($(OPENJDK_TARGET_OS), linux)

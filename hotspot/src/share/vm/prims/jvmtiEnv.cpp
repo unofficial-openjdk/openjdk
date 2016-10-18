@@ -266,16 +266,30 @@ JvmtiEnv::AddModuleExports(jobject module, const char* pkg_name, jobject to_modu
   if (!java_lang_reflect_Module::is_instance(h_to_module())) {
     return JVMTI_ERROR_INVALID_MODULE;
   }
-  return JvmtiExport::add_module_exports(h_module, h_pkg, h_to_module, THREAD);
+  return JvmtiExport::add_module_exports(h_module, h_pkg, h_to_module, false, THREAD);
 } /* end AddModuleExports */
+
 
 // module - pre-checked for NULL
 // pkg_name - pre-checked for NULL
 // to_module - pre-checked for NULL
 jvmtiError
 JvmtiEnv::AddModuleExportsPrivate(jobject module, const char* pkg_name, jobject to_module) {
-  // not implemented yet
-  return JVMTI_ERROR_INTERNAL;
+  JavaThread* THREAD = JavaThread::current();
+  oop str_oop = StringTable::intern((char*)pkg_name, THREAD);
+  Handle h_pkg(THREAD, str_oop);
+
+  // check module
+  Handle h_module(THREAD, JNIHandles::resolve(module));
+  if (!java_lang_reflect_Module::is_instance(h_module())) {
+    return JVMTI_ERROR_INVALID_MODULE;
+  }
+  // check to_module
+  Handle h_to_module(THREAD, JNIHandles::resolve(to_module));
+  if (!java_lang_reflect_Module::is_instance(h_to_module())) {
+    return JVMTI_ERROR_INVALID_MODULE;
+  }
+  return JvmtiExport::add_module_exports(h_module, h_pkg, h_to_module, true, THREAD);
 } /* end AddModuleExportsPrivate */
 
 

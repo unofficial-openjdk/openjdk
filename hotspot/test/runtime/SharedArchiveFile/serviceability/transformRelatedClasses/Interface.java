@@ -19,18 +19,13 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
-#include "precompiled.hpp"
-#include "classfile/symbolTable.hpp"
-#include "memory/resourceArea.hpp"
-#include "oops/instanceKlass.hpp"
-#include "unittest.hpp"
+public interface Interface {
+    public static final String stringToBeTransformed =
+        TransformUtil.ParentCheckPattern + TransformUtil.BeforePattern;
 
-// Tests InstanceKlass::package_from_name()
-TEST_VM(instanceKlass, null_symbol) {
-  ResourceMark rm;
-  TempNewSymbol package_sym = InstanceKlass::package_from_name(NULL, NULL);
-  ASSERT_TRUE(package_sym == NULL) << "Wrong package for NULL symbol";
+    default void printString() {
+        System.out.println(stringToBeTransformed);
+    }
 }
