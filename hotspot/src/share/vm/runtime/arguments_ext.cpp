@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,36 +19,12 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- */
-
-/**
- * @test
- * @bug 7041100
- * @summary The load in String.equals intrinsic executed before null check
  *
- * @run main/othervm -Xbatch compiler.c2.Test7041100 abc def
  */
 
-package compiler.c2;
+#include "precompiled.hpp"
+#include "runtime/arguments.hpp"
 
-public class Test7041100 {
-
-    static String n = null;
-    public static void main(String[] args) throws Exception {
-        for (int i = 0; i < 10000; i++) {
-            stringEQ(args[0], args[1]);
-            stringEQ(args[0], args[0]);
-            stringEQ(args[0], n);
-            stringEQ(n, args[0]);
-        }
-    }
-
-    public static boolean stringEQ(String a, String b) {
-        if (a == b)
-            return true;
-        if (a == null || b == null)
-            return false;
-        else
-            return a.equals(b);
-    }
+bool lookup_special_flag_ext(const char *flag_name, SpecialFlag& flag) {
+  return false;
 }
