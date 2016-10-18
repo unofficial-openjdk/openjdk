@@ -54,6 +54,7 @@ import java.util.stream.Stream;
 public class ModuleInfoBuilder {
     final JdepsConfiguration configuration;
     final Path outputdir;
+    final boolean weak;
 
     final DependencyFinder dependencyFinder;
     final Analyzer analyzer;
@@ -63,9 +64,11 @@ public class ModuleInfoBuilder {
     final Map<Module, Module> automaticToExplicitModule;
     public ModuleInfoBuilder(JdepsConfiguration configuration,
                              List<String> args,
-                             Path outputdir) {
+                             Path outputdir,
+                             boolean weak) {
         this.configuration = configuration;
         this.outputdir = outputdir;
+        this.weak = weak;
 
         this.dependencyFinder = new DependencyFinder(configuration, DEFAULT_FILTER);
         this.analyzer = new Analyzer(configuration, Type.CLASS, DEFAULT_FILTER);
@@ -183,40 +186,42 @@ public class ModuleInfoBuilder {
             });
     }
 
-    void writeModuleInfo(Path file, ModuleDescriptor descriptor) {
+    void writeModuleInfo(Path file, ModuleDescriptor md) {
         try {
             Files.createDirectories(file.getParent());
             try (PrintWriter pw = new PrintWriter(Files.newOutputStream(file))) {
-                printModuleInfo(pw, descriptor);
+                printModuleInfo(pw, md);
             }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
-    private void printModuleInfo(PrintWriter writer, ModuleDescriptor descriptor) {
-        writer.format("module %s {%n", descriptor.name());
+    private void printModuleInfo(PrintWriter writer, ModuleDescriptor md) {
+        writer.format("%smodule %s {%n", weak ? "weak " : "", md.name());
 
         Map<String, Module> modules = configuration.getModules();
         // first print the JDK modules
-        descriptor.requires().stream()
-                  .filter(req -> !req.name().equals("java.base"))   // implicit requires
-                  .sorted(Comparator.comparing(Requires::name))
-                  .forEach(req -> writer.format("    requires %s;%n", req));
+        md.requires().stream()
+          .filter(req -> !req.name().equals("java.base"))   // implicit requires
+          .sorted(Comparator.comparing(Requires::name))
+          .forEach(req -> writer.format("    requires %s;%n", req));
 
-        descriptor.exports().stream()
-                  .peek(exp -> {
-                      if (exp.targets().size() > 0)
-                          throw new InternalError(descriptor.name() + " qualified exports: " + exp);
-                  })
-                  .sorted(Comparator.comparing(Exports::source))
-                  .forEach(exp -> writer.format("    exports %s;%n", exp.source()));
+        if (!weak) {
+            md.exports().stream()
+              .peek(exp -> {
+                 if (exp.targets().size() > 0)
+                    throw new InternalError(md.name() + " qualified exports: " + exp);
+              })
+              .sorted(Comparator.comparing(Exports::source))
+              .forEach(exp -> writer.format("    exports %s;%n", exp.source()));
+        }
 
-        descriptor.provides().values().stream()
-                    .sorted(Comparator.comparing(Provides::service))
-                    .forEach(p -> p.providers().stream()
-                        .sorted()
-                        .forEach(impl -> writer.format("    provides %s with %s;%n", p.service(), impl)));
+        md.provides().values().stream()
+          .sorted(Comparator.comparing(Provides::service))
+          .forEach(p -> p.providers().stream()
+          .sorted()
+          .forEach(impl -> writer.format("    provides %s with %s;%n", p.service(), impl)));
 
         writer.println("}");
     }
@@ -229,7 +234,9 @@ public class ModuleInfoBuilder {
     /**
      * Compute 'requires transitive' dependences by analyzing API dependencies
      */
-    private Map<Archive, Set<Archive>> computeRequiresTransitive() throws IOException {
+    private Map<Archive, Set<Archive>> computeRequiresTransitive()
+        throws IOException
+    {
         // parse the input modules
         dependencyFinder.parseExportedAPIs(automaticModules().stream());
 
