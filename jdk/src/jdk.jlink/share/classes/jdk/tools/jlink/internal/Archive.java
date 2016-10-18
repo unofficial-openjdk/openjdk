@@ -56,6 +56,13 @@ public interface Archive {
         private final Archive archive;
         private final String path;
 
+        /**
+         * Constructs an entry of the given archive
+         * @param archive archive
+         * @param path
+         * @param name an entry name that does not contain the module name
+         * @param type
+         */
         public Entry(Archive archive, String path, String name, EntryType type) {
             this.archive = Objects.requireNonNull(archive);
             this.path = Objects.requireNonNull(path);
@@ -67,23 +74,22 @@ public interface Archive {
             return archive;
         }
 
-        public final String path() {
-            return path;
-        }
-
         public final EntryType type() {
             return type;
         }
 
-        /*
+        /**
          * Returns the name of this entry.
          */
         public final String name() {
             return name;
         }
 
-        public final String getResourceName() {
-            assert !name.startsWith("/");
+        /**
+         * Returns the name representing a ResourcePoolEntry in the form of:
+         *    /$MODULE/$ENTRY_NAME
+         */
+        public final String getResourcePoolEntryName() {
             return "/" + archive.moduleName() + "/" + name;
         }
 

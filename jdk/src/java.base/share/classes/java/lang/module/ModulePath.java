@@ -59,6 +59,8 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import jdk.internal.jmod.JmodFile;
+import jdk.internal.jmod.JmodFile.Section;
 import jdk.internal.module.Checks;
 import jdk.internal.perf.PerfCounter;
 import jdk.internal.util.jar.VersionedStream;
@@ -325,11 +327,10 @@ class ModulePath implements ModuleFinder {
 
     // -- jmod files --
 
-    private Set<String> jmodPackages(ZipFile zf) {
-        return zf.stream()
-            .map(ZipEntry::getName)
-            .filter(e -> e.startsWith("classes/") && !e.endsWith("/"))
-            .map(e -> e.substring(8))
+    private Set<String> jmodPackages(JmodFile jf) {
+        return jf.stream()
+            .filter(e -> e.section() == Section.CLASSES)
+            .map(JmodFile.Entry::name)
             .map(this::toPackageName)
             .flatMap(Optional::stream)
             .collect(Collectors.toSet());
@@ -343,14 +344,10 @@ class ModulePath implements ModuleFinder {
      * @throws InvalidModuleDescriptorException
      */
     private ModuleReference readJMod(Path file) throws IOException {
-        try (ZipFile zf = new ZipFile(file.toString())) {
-            ZipEntry ze = zf.getEntry("classes/" + MODULE_INFO);
-            if (ze == null) {
-                throw new IOException(MODULE_INFO + " is missing: " + file);
-            }
+        try (JmodFile jf = new JmodFile(file)) {
             ModuleDescriptor md;
-            try (InputStream in = zf.getInputStream(ze)) {
-                md = ModuleDescriptor.read(in, () -> jmodPackages(zf));
+            try (InputStream in = jf.getInputStream(Section.CLASSES, MODULE_INFO)) {
+                md = ModuleDescriptor.read(in, () -> jmodPackages(jf));
             }
             return ModuleReferences.newJModModule(md, file);
         }

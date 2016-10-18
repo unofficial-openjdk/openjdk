@@ -104,6 +104,18 @@ class Main {
             basename = en.baseName;
             entryname = en.entryName;
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Entry)) return false;
+            return this.file.equals(((Entry)o).file);
+        }
+
+        @Override
+        public int hashCode() {
+            return file.hashCode();
+        }
     }
 
     class EntryName {
@@ -125,10 +137,10 @@ class Main {
             if (name.startsWith("./")) {
                 name = name.substring(2);
             }
-            this.baseName = name;
-            this.entryName = (version > BASE_VERSION)
-                    ? VERSIONS_DIR + version + "/" + this.baseName
-                    : this.baseName;
+            baseName = name;
+            entryName = (version > BASE_VERSION)
+                    ? VERSIONS_DIR + version + "/" + baseName
+                    : baseName;
         }
     }
 
@@ -138,7 +150,7 @@ class Main {
     Map<String, Entry> entryMap = new HashMap<>();
 
     // All entries need to be added/updated.
-    Map<String, Entry> entries = new LinkedHashMap<>();
+    Set<Entry> entries = new LinkedHashSet<>();
 
     // All packages.
     Set<String> packages = new HashSet<>();
@@ -854,8 +866,7 @@ class Main {
                     moduleInfoPaths.put(entryName, f.toPath());
                     if (isUpdate)
                         entryMap.put(entryName, entry);
-                } else if (!entries.containsKey(entryName)) {
-                    entries.put(entryName, entry);
+                } else if (entries.add(entry)) {
                     jarEntries.add(entryName);
                     if (!entryName.startsWith(VERSIONS_DIR) && isNamedPackageResource(entry.basename))
                         packages.add(toPackageName(entry.basename));
@@ -863,8 +874,7 @@ class Main {
                         entryMap.put(entryName, entry);
                 }
             } else if (f.isDirectory()) {
-                if (!entries.containsKey(entryName)) {
-                    entries.put(entryName, entry);
+                if (entries.add(entry)) {
                     if (isUpdate) {
                         entryMap.put(entryName, entry);
                     }
@@ -922,8 +932,7 @@ class Main {
             in.transferTo(zos);
             zos.closeEntry();
         }
-        for (String entryname : entries.keySet()) {
-            Entry entry = entries.get(entryname);
+        for (Entry entry : entries) {
             addFile(zos, entry);
         }
         zos.close();
@@ -1049,7 +1058,7 @@ class Main {
                     Entry ent = entryMap.get(name);
                     addFile(zos, ent);
                     entryMap.remove(name);
-                    entries.remove(name);
+                    entries.remove(ent);
                     isDir = ent.isDir;
                 }
 
@@ -1060,8 +1069,8 @@ class Main {
         }
 
         // add the remaining new files
-        for (String entryname : entries.keySet()) {
-            addFile(zos, entries.get(entryname));
+        for (Entry entry : entries) {
+            addFile(zos, entry);
         }
         if (!foundManifest) {
             if (newManifest != null) {
@@ -1249,6 +1258,9 @@ class Main {
      * Adds a new file entry to the ZIP output stream.
      */
     void addFile(ZipOutputStream zos, Entry entry) throws IOException {
+        // skip the generation of directory entries for META-INF/versions/*/
+        if (entry.basename.isEmpty()) return;
+
         File file = entry.file;
         String name = entry.entryname;
         boolean isDir = entry.isDir;

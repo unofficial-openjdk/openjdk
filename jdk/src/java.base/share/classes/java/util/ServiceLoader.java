@@ -85,15 +85,16 @@ import jdk.internal.reflect.Reflection;
  *
  * <p> Providers deployed as explicit modules on the module path are
  * instantiated by a <em>provider factory</em> or directly via the provider's
- * public zero-argument constructor. In the module declaration, if the class
- * name specified in the <i>provides</i> clause is a provider factory if it
- * public and defines a public static no-args method named "{@code provider}".
- * The return type of the method must be assignable to the <i>service</i>
- * type. The provider instance that the {@code provider()} returns will
- * typically, but is not required to be, of a type that is in the same module
- * as the provider factory. If the class is not a provider factory then it is
- * public with a public zero-argument constructor. As an example, suppose a
- * module declares the following:
+ * constructor. In the module declaration then the class name specified in the
+ * <i>provides</i> clause is a provider factory if it public and defines a
+ * public static no-args method named "{@code provider}". The return type of
+ * the method must be assignable to the <i>service</i> type. If the class is
+ * not a provider factory then it is public with a public zero-argument
+ * constructor. The requirement that the provider factory or provider class
+ * be public helps to document the intent that the provider will be
+ * instantiated by the service-provider loading facility.
+ *
+ * <p> As an example, suppose a module declares the following:
  *
  * <pre>{@code
  *     provides com.example.CodecSet with com.example.impl.StandardCodecs;
@@ -403,7 +404,7 @@ public final class ServiceLoader<S>
          *         case of a provider factory, the public static
          *         "{@code provider()}" method returns {@code null} or throws
          *         an error or exception. The {@code ServiceConfigurationError}
-         *         will will carry an appropriate cause where possible.
+         *         will carry an appropriate cause where possible.
          */
         @Override S get();
     }
@@ -984,6 +985,8 @@ public final class ServiceLoader<S>
         Iterator<String> pending;
         Provider<T> next;
 
+        LazyClassPathLookupIterator() { }
+
         /**
          * Parse a single line from the given configuration file, adding the
          * name on the line to the names list.
@@ -1493,6 +1496,12 @@ public final class ServiceLoader<S>
      * returns the first element from the provider cache if possible, it
      * otherwise attempts to load and instantiate the first provider.
      *
+     * <p> The following example loads the first available provider. If there
+     * are no providers deployed then it uses a default implementation.
+     * <pre>{@code
+     *    CodecSet provider =
+     *        ServiceLoader.load(CodecSet.class).findFirst().orElse(DEFAULT_CODECSET);
+     * }</pre>
      * @return The first provider or empty {@code Optional} if no providers
      *         are located
      *

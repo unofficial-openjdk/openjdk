@@ -28,8 +28,8 @@ package java.lang.module;
 import java.io.PrintStream;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -190,15 +190,21 @@ public final class Configuration {
     {
         Map<ResolvedModule, Set<ResolvedModule>> g = resolver.finish(this, check);
 
-        Map<String, ResolvedModule> nameToModule = new HashMap<>();
+        @SuppressWarnings(value = {"rawtypes", "unchecked"})
+        Entry<String, ResolvedModule>[] nameEntries
+            = (Entry<String, ResolvedModule>[])new Entry[g.size()];
+        ResolvedModule[] moduleArray = new ResolvedModule[g.size()];
+        int i = 0;
         for (ResolvedModule resolvedModule : g.keySet()) {
-            nameToModule.put(resolvedModule.name(), resolvedModule);
+            moduleArray[i] = resolvedModule;
+            nameEntries[i] = Map.entry(resolvedModule.name(), resolvedModule);
+            i++;
         }
 
         this.parent = parent;
         this.graph = g;
-        this.modules = Collections.unmodifiableSet(g.keySet());
-        this.nameToModule = Collections.unmodifiableMap(nameToModule);
+        this.modules = Set.of(moduleArray);
+        this.nameToModule = Map.ofEntries(nameEntries);
     }
 
 

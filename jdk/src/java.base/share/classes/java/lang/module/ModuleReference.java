@@ -211,8 +211,11 @@ public final class ModuleReference {
     public int hashCode() {
         int hc = hash;
         if (hc == 0) {
-            hc = Objects.hash(descriptor, location, readerSupplier, hasher,
-                    Boolean.valueOf(patched));
+            hc = descriptor.hashCode();
+            hc = 43 * hc + readerSupplier.hashCode();
+            hc = 43 * hc + Objects.hashCode(location);
+            hc = 43 * hc + Objects.hashCode(hasher);
+            hc = 43 * hc + Boolean.hashCode(patched);
             if (hc == 0)
                 hc = -1;
             hash = hc;

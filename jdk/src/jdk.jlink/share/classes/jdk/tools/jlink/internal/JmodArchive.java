@@ -25,37 +25,107 @@
 
 package jdk.tools.jlink.internal;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.Objects;
-import java.util.zip.ZipEntry;
+import java.util.stream.Stream;
 
+import jdk.internal.jmod.JmodFile;
 import jdk.tools.jlink.internal.Archive.Entry.EntryType;
 
 /**
  * An Archive backed by a jmod file.
  */
-public class JmodArchive extends JarArchive {
-
+public class JmodArchive implements Archive {
     private static final String JMOD_EXT    = ".jmod";
-    private static final String MODULE_NAME = "module";
-    private static final String CLASSES     = "classes";
-    private static final String NATIVE_LIBS = "native";
-    private static final String NATIVE_CMDS = "bin";
-    private static final String CONFIG      = "conf";
-    private static final String OTHER_FILES = "top";
 
+    /**
+     * An entry located in a jmod file.
+     */
+    public class JmodEntry extends Entry {
+        private final JmodFile.Entry entry;
 
-    public JmodArchive(String mn, Path jmod) {
-        super(mn, jmod);
-        String filename = Objects.requireNonNull(jmod.getFileName()).toString();
-        if (!filename.endsWith(JMOD_EXT)) {
-            throw new UnsupportedOperationException("Unsupported format: " + filename);
+        JmodEntry(String path, String name, EntryType type,
+                  JmodFile.Entry entry) {
+            super(JmodArchive.this, path, name, type);
+            this.entry = Objects.requireNonNull(entry);
+        }
+
+        /**
+         * Returns the number of uncompressed bytes for this entry.
+         */
+        @Override
+        public long size() {
+            return entry.size();
+        }
+
+        @Override
+        public InputStream stream() throws IOException {
+            return jmodFile.getInputStream(entry.section(), entry.name());
         }
     }
 
+    private final Path file;
+    private final String moduleName;
+    private JmodFile jmodFile;
+
+
+    public JmodArchive(String mn, Path jmod) {
+        Objects.requireNonNull(mn);
+        Objects.requireNonNull(jmod.getFileName());
+        String filename = jmod.toString();
+        if (!filename.endsWith(JMOD_EXT)) {
+            throw new UnsupportedOperationException("Unsupported format: " + filename);
+        }
+        this.moduleName = mn;
+        this.file = jmod;
+    }
+
     @Override
-    EntryType toEntryType(String entryName) {
-        String section = getSection(entryName.replace('\\', '/'));
+    public String moduleName() {
+        return moduleName;
+    }
+
+    @Override
+    public Path getPath() {
+        return file;
+    }
+
+    @Override
+    public Stream<Entry> entries() {
+        ensureOpen();
+        return jmodFile.stream()
+                       .map(this::toEntry);
+    }
+
+    @Override
+    public void open() throws IOException {
+        if (jmodFile != null) {
+            jmodFile.close();
+        }
+        this.jmodFile = new JmodFile(file);
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (jmodFile != null) {
+            jmodFile.close();
+        }
+    }
+
+    private void ensureOpen() {
+        if (jmodFile == null) {
+            try {
+                open();
+            } catch(IOException ioe){
+                throw new UncheckedIOException(ioe);
+            }
+        }
+    }
+
+    private EntryType toEntryType(JmodFile.Section section) {
         switch (section) {
             case CLASSES:
                 return EntryType.CLASS_OR_RESOURCE;
@@ -67,45 +137,23 @@ public class JmodArchive extends JarArchive {
                 return EntryType.CONFIG;
             case OTHER_FILES:
                 return EntryType.OTHER_FILES;
-            case MODULE_NAME:
-                return EntryType.MODULE_NAME;
             default:
                 throw new InternalError("unexpected entry: " + section);
         }
     }
 
-    @Override
-    Entry toEntry(ZipEntry ze) {
-        if (ze.isDirectory()) {
-            return null;
+    private Entry toEntry(JmodFile.Entry entry) {
+        EntryType type = toEntryType(entry.section());
+        String name = entry.name();
+        String path = entry.section().jmodDir() + "/" + name;
+
+        // Entry.path() contains the kind of file native, conf, bin, ...
+        // Keep it to avoid naming conflict (eg: native/jvm.cfg and config/jvm.cfg
+        String resourceName = name;
+        if (type != EntryType.CLASS_OR_RESOURCE) {
+            resourceName = path;
         }
 
-        String path = ze.getName();
-        EntryType type = toEntryType(path);
-        String name = getFileName(path);
-        String resourceName =
-            (type == EntryType.CLASS_OR_RESOURCE || type == EntryType.OTHER_FILES)
-                ? name
-                // Entry.path() contains the kind of file native, conf, bin, ...
-                // Keep it to avoid naming conflict (eg: native/jvm.cfg and config/jvm.cfg
-                : path;
-
-        return new JarEntry(ze.getName(), resourceName, type, zipFile, ze);
-    }
-
-    private static String getSection(String entryName) {
-        int i = entryName.indexOf('/');
-        // Unnamed section.
-        String section = "";
-        if (i > 0) {
-            section = entryName.substring(0, entryName.indexOf('/'));
-        }
-        return section;
-    }
-
-    @Override
-    String getFileName(String entryName) {
-        entryName = entryName.replace('\\', '/');
-        return entryName.substring(entryName.indexOf('/') + 1);
+        return new JmodEntry(path, resourceName, type, entry);
     }
 }
