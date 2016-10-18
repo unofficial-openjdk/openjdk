@@ -89,8 +89,6 @@ import javax.lang.model.element.TypeElement;
  *  - multi-version jar
  */
 public class Main implements DiagnosticListener<JavaFileObject> {
-    public static Main instance;
-
     final PrintStream out;
     final PrintStream err;
     final List<File> bootClassPath = new ArrayList<>();
@@ -386,14 +384,14 @@ public class Main implements DiagnosticListener<JavaFileObject> {
                      .collect(toList()));
         } else {
             // TODO: kind of a hack...
-            // Create a throwaway compilation task with options "-release N"
+            // Create a throwaway compilation task with options "--release N"
             // which has the side effect of setting the file manager's
             // PLATFORM_CLASS_PATH to the right value.
             JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
             StandardJavaFileManager fm =
                 compiler.getStandardFileManager(this, null, StandardCharsets.UTF_8);
             JavaCompiler.CompilationTask task =
-                compiler.getTask(null, fm, this, List.of("-release", release), null, null);
+                compiler.getTask(null, fm, this, List.of("--release", release), null, null);
             List<Path> paths = new ArrayList<>();
             for (Path p : fm.getLocationAsPaths(StandardLocation.PLATFORM_CLASS_PATH)) {
                 try (Stream<Path> str = Files.walk(p)) {
@@ -412,13 +410,6 @@ public class Main implements DiagnosticListener<JavaFileObject> {
                      .map(s -> s.replace('/', '.'))
                      .collect(toList()));
         }
-    }
-
-    /**
-     * Prints a usage message to the err stream.
-     */
-    void usage() {
-
     }
 
     /**
@@ -504,7 +495,6 @@ public class Main implements DiagnosticListener<JavaFileObject> {
                     args.remove();
                     switch (a) {
                         case "--class-path":
-                        case "-cp":
                             classPath.clear();
                             Arrays.stream(args.remove().split(File.pathSeparator))
                                   .map(File::new)
@@ -699,12 +689,7 @@ public class Main implements DiagnosticListener<JavaFileObject> {
      * @return true on success, false otherwise
      */
     public static boolean call(PrintStream out, PrintStream err, String... args) {
-        try {
-            instance = new Main(out, err);
-            return instance.run(args);
-        } finally {
-            instance = null;
-        }
+        return new Main(out, err).run(args);
     }
 
     /**

@@ -157,6 +157,15 @@ ifdef TESTBOOTCLASSPATH
 	-refvmoptions:-Xbootclasspath/p:$(TESTBOOTCLASSPATH)
 endif
 
+ifeq ($(ARCH_DATA_MODEL),32)
+  # Set the GC options for test vms
+  JTREG_GC_OPTION = -vmoption:-XX:+UseSerialGC
+  JTREG_OPTIONS += $(JTREG_GC_OPTION)
+endif
+# Set the max memory for jtreg target test JVMs
+JTREG_TESTVM_MEMORY_OPTION = -vmoption:-Xmx768m
+JTREG_OPTIONS += $(JTREG_TESTVM_MEMORY_OPTION)
+
 ifdef EXTRA_JTREG_OPTIONS
   JTREG_OPTIONS += $(EXTRA_JTREG_OPTIONS)
 endif
@@ -304,8 +313,6 @@ jtreg-tests: check-jtreg FRC
 	    $(JTREG_OUTPUT_DIR)/diff.html $(JTREG_OUTPUT_DIR)/status.txt
 	@mkdir -p $(JTREG_OUTPUT_DIR)
 	JT_JAVA=$(JT_JAVA) $(JTREG) \
-	  -J-Xmx512m \
-	  -vmoption:-Xmx768m \
 	  -a -ignore:quiet $(if $(JTREG_VERBOSE),-v:$(JTREG_VERBOSE)) \
 	  -r:$(JTREG_OUTPUT_DIR)/JTreport \
 	  -w:$(JTREG_OUTPUT_DIR)/JTwork \
@@ -314,6 +321,7 @@ jtreg-tests: check-jtreg FRC
 	  $(JTREG_EXCLUSIONS) \
 	  $(JTREG_OPTIONS) \
 	  $(JTREG_TESTDIRS) \
+	    2>&1 | tee $(JTREG_OUTPUT_DIR)/output.txt \
 	|| ( $(call EXIT_IF_FATAL,$(FATAL_JTREG_EXIT)) ; \
 	    echo $$status > $(JTREG_OUTPUT_DIR)/status.txt \
 	)
