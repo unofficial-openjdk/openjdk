@@ -422,6 +422,8 @@ static SpecialFlag const special_jvm_flags[] = {
   { "UseAltSigs",                    JDK_Version::undefined(), JDK_Version::jdk(9), JDK_Version::jdk(10) },
   { "SegmentedHeapDumpThreshold",    JDK_Version::undefined(), JDK_Version::jdk(9), JDK_Version::jdk(10) },
   { "PrintOopAddress",               JDK_Version::undefined(), JDK_Version::jdk(9), JDK_Version::jdk(10) },
+  { "PermSize",                      JDK_Version::undefined(), JDK_Version::jdk(8), JDK_Version::jdk(10) },
+  { "MaxPermSize",                   JDK_Version::undefined(), JDK_Version::jdk(8), JDK_Version::jdk(10) },
 
 #ifdef TEST_VERIFY_SPECIAL_JVM_FLAGS
   { "dep > obs",                    JDK_Version::jdk(9), JDK_Version::jdk(8), JDK_Version::undefined() },
@@ -3897,10 +3899,6 @@ jint Arguments::parse_options_buffer(const char* name, char* buffer, const size_
 
 void Arguments::set_shared_spaces_flags() {
   if (DumpSharedSpaces) {
-    if (Arguments::get_patch_mod_prefix() != NULL) {
-      vm_exit_during_initialization(
-        "Cannot use the following option when dumping the shared archive: --patch-module");
-    }
 
     if (RequireSharedSpaces) {
       warning("Cannot dump shared archive while using shared archive");
