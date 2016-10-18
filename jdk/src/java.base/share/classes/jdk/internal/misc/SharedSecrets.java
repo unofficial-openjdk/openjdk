@@ -29,6 +29,7 @@ import java.lang.module.ModuleDescriptor;
 import java.util.jar.JarFile;
 import java.io.Console;
 import java.io.FileDescriptor;
+import java.io.FilePermission;
 import java.io.ObjectInputStream;
 import java.io.RandomAccessFile;
 import java.security.ProtectionDomain;
@@ -52,12 +53,13 @@ public class SharedSecrets {
     private static JavaLangInvokeAccess javaLangInvokeAccess;
     private static JavaLangRefAccess javaLangRefAccess;
     private static JavaIOAccess javaIOAccess;
-    private static JavaNetAccess javaNetAccess;
     private static JavaNetInetAddressAccess javaNetInetAddressAccess;
     private static JavaNetHttpCookieAccess javaNetHttpCookieAccess;
     private static JavaNetSocketAccess javaNetSocketAccess;
+    private static JavaNetUriAccess javaNetUriAccess;
     private static JavaNioAccess javaNioAccess;
     private static JavaIOFileDescriptorAccess javaIOFileDescriptorAccess;
+    private static JavaIOFilePermissionAccess javaIOFilePermissionAccess;
     private static JavaSecurityProtectionDomainAccess javaSecurityProtectionDomainAccess;
     private static JavaSecurityAccess javaSecurityAccess;
     private static JavaUtilZipFileAccess javaUtilZipFileAccess;
@@ -132,14 +134,14 @@ public class SharedSecrets {
         return javaLangRefAccess;
     }
 
-    public static void setJavaNetAccess(JavaNetAccess jna) {
-        javaNetAccess = jna;
+    public static void setJavaNetUriAccess(JavaNetUriAccess jnua) {
+        javaNetUriAccess = jnua;
     }
 
-    public static JavaNetAccess getJavaNetAccess() {
-        if (javaNetAccess == null)
-            unsafe.ensureClassInitialized(java.net.URLClassLoader.class);
-        return javaNetAccess;
+    public static JavaNetUriAccess getJavaNetUriAccess() {
+        if (javaNetUriAccess == null)
+            unsafe.ensureClassInitialized(java.net.URI.class);
+        return javaNetUriAccess;
     }
 
     public static void setJavaNetInetAddressAccess(JavaNetInetAddressAccess jna) {
@@ -199,6 +201,17 @@ public class SharedSecrets {
 
     public static void setJavaIOFileDescriptorAccess(JavaIOFileDescriptorAccess jiofda) {
         javaIOFileDescriptorAccess = jiofda;
+    }
+
+    public static JavaIOFilePermissionAccess getJavaIOFilePermissionAccess() {
+        if (javaIOFilePermissionAccess == null)
+            unsafe.ensureClassInitialized(FilePermission.class);
+
+        return javaIOFilePermissionAccess;
+    }
+
+    public static void setJavaIOFilePermissionAccess(JavaIOFilePermissionAccess jiofpa) {
+        javaIOFilePermissionAccess = jiofpa;
     }
 
     public static JavaIOFileDescriptorAccess getJavaIOFileDescriptorAccess() {

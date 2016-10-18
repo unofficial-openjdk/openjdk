@@ -218,7 +218,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBZIP, \
         $(call SET_SHARED_LIBRARY_ORIGIN), \
     LDFLAGS_windows := -export:ZIP_Open -export:ZIP_Close -export:ZIP_FindEntry \
         -export:ZIP_ReadEntry -export:ZIP_GetNextEntry \
-        -export:ZIP_InflateFully -export:ZIP_CRC32, \
+        -export:ZIP_InflateFully -export:ZIP_CRC32 -export:ZIP_FreeEntry, \
     LIBS_unix := -ljvm -ljava $(LIBZ), \
     LIBS_solaris := -lc, \
     LIBS_windows := jvm.lib $(WIN_JAVA_LIB), \
@@ -255,7 +255,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJIMAGE, \
     CXXFLAGS := $(CXXFLAGS_JDKLIB) $(JIMAGELIB_CPPFLAGS), \
     CFLAGS_unix := -UDEBUG, \
     MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libjimage/mapfile-vers, \
-    LDFLAGS := $(LDFLAGS_JDKLIB) \
+    LDFLAGS := $(LDFLAGS_JDKLIB) $(LDFLAGS_CXX_JDK) \
         $(call SET_SHARED_LIBRARY_ORIGIN), \
     LDFLAGS_windows := -export:JIMAGE_Open -export:JIMAGE_Close \
         -export:JIMAGE_PackageToModule \
