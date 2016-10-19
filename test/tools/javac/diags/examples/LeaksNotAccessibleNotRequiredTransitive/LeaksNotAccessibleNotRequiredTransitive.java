@@ -21,5 +21,5 @@
  * questions.
  */
 
-// key: compiler.warn.leaks.not.accessible.not.required.public
+// key: compiler.warn.leaks.not.accessible.not.required.transitive
 // options: -Xlint:exports
