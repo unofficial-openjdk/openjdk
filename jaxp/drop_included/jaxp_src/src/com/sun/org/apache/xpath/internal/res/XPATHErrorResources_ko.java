@@ -1210,7 +1210,7 @@ public static final String ER_IGNORABLE_WHITESPACE_NOT_HANDLED =
   { "help_language", "ko"},
   { "language", "ko"},
   { "BAD_CODE", "createMessage\uc5d0 \ub300\ud55c \ub9e4\uac1c\ubcc0\uc218\uac00 \ubc94\uc704\ub97c \ubc97\uc5b4\ub0a8"},
-  { "FORMAT_FAILED", "messageFormat \ud638\ucd9c \uc911 \uc608\uc678 \ubc1c\uc0dd"},
+  { "FORMAT_FAILED", "messageFormat \uD638\uCD9C \uC911 \uC608\uC678\uC0AC\uD56D\uC774 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4."},
   { "version", ">>>>>>> Xalan \ubc84\uc804 "},
   { "version2", "<<<<<<<"},
   { "yes", "\uc608"},
