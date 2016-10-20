@@ -694,7 +694,7 @@ void Matcher::Fixup_Save_On_Entry( ) {
         tail_call_rms[tail_call_edge_cnt].Insert(OptoReg::Name(i+1));
         tail_jump_rms[tail_jump_edge_cnt].Insert(OptoReg::Name(i+1));
         halt_rms     [     halt_edge_cnt].Insert(OptoReg::Name(i+1));
-        mproj = new (C, 1) MachProjNode( start, proj_cnt, ret_rms[ret_edge_cnt], Op_RegD );
+        mproj = new (C) MachProjNode( start, proj_cnt, ret_rms[ret_edge_cnt], Op_RegD );
         proj_cnt += 2;          // Skip 2 for doubles
       }
       else if( (i&1) == 1 &&    // Else check for high half of double
@@ -720,7 +720,7 @@ void Matcher::Fixup_Save_On_Entry( ) {
         tail_call_rms[tail_call_edge_cnt].Insert(OptoReg::Name(i+1));
         tail_jump_rms[tail_jump_edge_cnt].Insert(OptoReg::Name(i+1));
         halt_rms     [     halt_edge_cnt].Insert(OptoReg::Name(i+1));
-        mproj = new (C, 1) MachProjNode( start, proj_cnt, ret_rms[ret_edge_cnt], Op_RegL );
+        mproj = new (C) MachProjNode( start, proj_cnt, ret_rms[ret_edge_cnt], Op_RegL );
         proj_cnt += 2;          // Skip 2 for longs
       }
       else if( (i&1) == 1 &&    // Else check for high half of long
@@ -735,7 +735,7 @@ void Matcher::Fixup_Save_On_Entry( ) {
         mproj = C->top();
       } else {
         // Make a projection for it off the Start
-        mproj = new (C, 1) MachProjNode( start, proj_cnt++, ret_rms[ret_edge_cnt], _register_save_type[i] );
+        mproj = new (C) MachProjNode( start, proj_cnt++, ret_rms[ret_edge_cnt], _register_save_type[i] );
       }
 
       ret_edge_cnt ++;
@@ -788,13 +788,13 @@ void Matcher::init_spill_mask( Node *ret ) {
 
   // Compute generic short-offset Loads
 #ifdef _LP64
-  MachNode *spillCP = match_tree(new (C, 3) LoadNNode(NULL,mem,fp,atp,TypeInstPtr::BOTTOM));
+  MachNode *spillCP = match_tree(new (C) LoadNNode(NULL,mem,fp,atp,TypeInstPtr::BOTTOM));
 #endif
-  MachNode *spillI  = match_tree(new (C, 3) LoadINode(NULL,mem,fp,atp));
-  MachNode *spillL  = match_tree(new (C, 3) LoadLNode(NULL,mem,fp,atp));
-  MachNode *spillF  = match_tree(new (C, 3) LoadFNode(NULL,mem,fp,atp));
-  MachNode *spillD  = match_tree(new (C, 3) LoadDNode(NULL,mem,fp,atp));
-  MachNode *spillP  = match_tree(new (C, 3) LoadPNode(NULL,mem,fp,atp,TypeInstPtr::BOTTOM));
+  MachNode *spillI  = match_tree(new (C) LoadINode(NULL,mem,fp,atp));
+  MachNode *spillL  = match_tree(new (C) LoadLNode(NULL,mem,fp,atp));
+  MachNode *spillF  = match_tree(new (C) LoadFNode(NULL,mem,fp,atp));
+  MachNode *spillD  = match_tree(new (C) LoadDNode(NULL,mem,fp,atp));
+  MachNode *spillP  = match_tree(new (C) LoadPNode(NULL,mem,fp,atp,TypeInstPtr::BOTTOM));
   assert(spillI != NULL && spillL != NULL && spillF != NULL &&
          spillD != NULL && spillP != NULL, "");
 
@@ -1250,7 +1250,7 @@ MachNode *Matcher::match_sfpt( SafePointNode *sfpt ) {
     // is excluded on the max-per-method basis, debug info cannot land in
     // this killed area.
     uint r_cnt = mcall->tf()->range()->cnt();
-    MachProjNode *proj = new (C, 1) MachProjNode( mcall, r_cnt+10000, RegMask::Empty, MachProjNode::fat_proj );
+    MachProjNode *proj = new (C) MachProjNode( mcall, r_cnt+10000, RegMask::Empty, MachProjNode::fat_proj );
     if (!RegMask::can_represent(OptoReg::Name(out_arg_limit_per_call-1))) {
       C->record_method_not_compilable_all_tiers("unsupported outgoing calling sequence");
     } else {
@@ -2082,7 +2082,7 @@ void Matcher::find_shared( Node *n ) {
       case Op_CompareAndSwapN: {   // Convert trinary to binary-tree
         Node *newval = n->in(MemNode::ValueIn );
         Node *oldval  = n->in(LoadStoreNode::ExpectedIn);
-        Node *pair = new (C, 3) BinaryNode( oldval, newval );
+        Node *pair = new (C) BinaryNode( oldval, newval );
         n->set_req(MemNode::ValueIn,pair);
         n->del_req(LoadStoreNode::ExpectedIn);
         break;
@@ -2097,22 +2097,22 @@ void Matcher::find_shared( Node *n ) {
         // we could move this code up next to the graph reshaping for IfNodes
         // or vice-versa, but I do not want to debug this for Ladybird.
         // 10/2/2000 CNC.
-        Node *pair1 = new (C, 3) BinaryNode(n->in(1),n->in(1)->in(1));
+        Node *pair1 = new (C) BinaryNode(n->in(1),n->in(1)->in(1));
         n->set_req(1,pair1);
-        Node *pair2 = new (C, 3) BinaryNode(n->in(2),n->in(3));
+        Node *pair2 = new (C) BinaryNode(n->in(2),n->in(3));
         n->set_req(2,pair2);
         n->del_req(3);
         break;
       }
       case Op_LoopLimit: {
-        Node *pair1 = new (C, 3) BinaryNode(n->in(1),n->in(2));
+        Node *pair1 = new (C) BinaryNode(n->in(1),n->in(2));
         n->set_req(1,pair1);
         n->set_req(2,n->in(3));
         n->del_req(3);
         break;
       }
       case Op_StrEquals: {
-        Node *pair1 = new (C, 3) BinaryNode(n->in(2),n->in(3));
+        Node *pair1 = new (C) BinaryNode(n->in(2),n->in(3));
         n->set_req(2,pair1);
         n->set_req(3,n->in(4));
         n->del_req(4);
@@ -2120,9 +2120,9 @@ void Matcher::find_shared( Node *n ) {
       }
       case Op_StrComp:
       case Op_StrIndexOf: {
-        Node *pair1 = new (C, 3) BinaryNode(n->in(2),n->in(3));
+        Node *pair1 = new (C) BinaryNode(n->in(2),n->in(3));
         n->set_req(2,pair1);
-        Node *pair2 = new (C, 3) BinaryNode(n->in(4),n->in(5));
+        Node *pair2 = new (C) BinaryNode(n->in(4),n->in(5));
         n->set_req(3,pair2);
         n->del_req(5);
         n->del_req(4);

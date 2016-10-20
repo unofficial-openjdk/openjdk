@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -139,6 +139,7 @@ private:
   int               _constMethod_size;
   jbyte             _interpreter_kind;
   jbyte             _flags;
+  u1                _result_type;                 // BasicType of result
 
   // Size of Java bytecodes allocated immediately after methodOop.
   u2                _code_size;
@@ -280,6 +281,10 @@ public:
   // interpreter support
   static ByteSize exception_table_offset()
                { return byte_offset_of(constMethodOopDesc, _exception_table); }
+  static ByteSize result_type_offset()
+               { return byte_offset_of(constMethodOopDesc, _result_type); }
+  void set_result_type(BasicType rt) { assert(rt < 16, "result type too large");
+                                       _result_type = (u1)rt; }
 
   // Garbage collection support
   oop*  adr_method() const             { return (oop*)&_method;          }

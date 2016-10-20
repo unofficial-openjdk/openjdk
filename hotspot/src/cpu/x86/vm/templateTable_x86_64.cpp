@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -212,6 +212,7 @@ void TemplateTable::patch_bytecode(Bytecodes::Code bc, Register bc_reg,
   switch (bc) {
   case Bytecodes::_fast_aputfield:
   case Bytecodes::_fast_bputfield:
+  case Bytecodes::_fast_zputfield:
   case Bytecodes::_fast_cputfield:
   case Bytecodes::_fast_dputfield:
   case Bytecodes::_fast_fputfield:
@@ -1045,6 +1046,16 @@ void TemplateTable::bastore() {
   // ebx: index
   // rdx: array
   index_check(rdx, rbx); // prefer index in ebx
+  // Need to check whether array is boolean or byte
+  // since both types share the bastore bytecode.
+  __ load_klass(rcx, rdx);
+  __ movl(rcx, Address(rcx, Klass::layout_helper_offset()));
+  int diffbit = Klass::layout_helper_boolean_diffbit();
+  __ testl(rcx, diffbit);
+  Label L_skip;
+  __ jccb(Assembler::zero, L_skip);
+  __ andl(rax, 1);  // if it is a T_BOOLEAN array, mask the stored value to 0/1
+  __ bind(L_skip);
   __ movb(Address(rdx, rbx,
                   Address::times_1,
                   arrayOopDesc::base_offset_in_bytes(T_BYTE)),
@@ -2076,7 +2087,14 @@ void TemplateTable::_return(TosState state) {
     __ bind(skip_register_finalizer);
   }
 
+  // Narrow result if state is itos but result type is smaller.
+  // Need to narrow in the return bytecode rather than in generate_return_entry
+  // since compiled code callers expect the result to already be narrowed.
+  if (state == itos) {
+    __ narrow(rax);
+  }
   __ remove_activation(state, r13);
+
   __ jmp(r13);
 }
 
@@ -2314,7 +2332,7 @@ void TemplateTable::getfield_or_static(int byte_no, bool is_static) {
 
   const Address field(obj, off, Address::times_1);
 
-  Label Done, notByte, notInt, notShort, notChar,
+  Label Done, notByte, notBool, notInt, notShort, notChar,
               notLong, notFloat, notObj, notDouble;
 
   __ shrl(flags, ConstantPoolCacheEntry::tosBits);
@@ -2332,6 +2350,20 @@ void TemplateTable::getfield_or_static(int byte_no, bool is_static) {
   __ jmp(Done);
 
   __ bind(notByte);
+  __ cmpl(flags, ztos);
+  __ jcc(Assembler::notEqual, notBool);
+
+  // ztos (same code as btos)
+  __ load_signed_byte(rax, field);
+  __ push(ztos);
+  // Rewrite bytecode to be faster
+  if (!is_static) {
+    // use btos rewriting, no truncating to t/f bit is needed for getfield.
+    patch_bytecode(Bytecodes::_fast_bgetfield, bc, rbx);
+  }
+  __ jmp(Done);
+
+  __ bind(notBool);
   __ cmpl(flags, atos);
   __ jcc(Assembler::notEqual, notObj);
   // atos
@@ -2522,7 +2554,7 @@ void TemplateTable::putfield_or_static(int byte_no, bool is_static) {
   // field address
   const Address field(obj, off, Address::times_1);
 
-  Label notByte, notInt, notShort, notChar,
+  Label notByte, notBool, notInt, notShort, notChar,
         notLong, notFloat, notObj, notDouble;
 
   __ shrl(flags, ConstantPoolCacheEntry::tosBits);
@@ -2543,6 +2575,22 @@ void TemplateTable::putfield_or_static(int byte_no, bool is_static) {
   }
 
   __ bind(notByte);
+  __ cmpl(flags, ztos);
+  __ jcc(Assembler::notEqual, notBool);
+
+  // ztos
+  {
+    __ pop(ztos);
+    if (!is_static) pop_and_check_object(obj);
+    __ andl(rax, 0x1);
+    __ movb(field, rax);
+    if (!is_static) {
+      patch_bytecode(Bytecodes::_fast_zputfield, bc, rbx, true, byte_no);
+    }
+    __ jmp(Done);
+  }
+
+  __ bind(notBool);
   __ cmpl(flags, atos);
   __ jcc(Assembler::notEqual, notObj);
 
@@ -2685,26 +2733,24 @@ void TemplateTable::jvmti_post_fast_field_mod() {
     __ pop_ptr(rbx);                  // copy the object pointer from tos
     __ verify_oop(rbx);
     __ push_ptr(rbx);                 // put the object pointer back on tos
-    __ subptr(rsp, sizeof(jvalue));  // add space for a jvalue object
-    __ mov(c_rarg3, rsp);
-    const Address field(c_rarg3, 0);
-
+    // Save tos values before call_VM() clobbers them. Since we have
+    // to do it for every data type, we use the saved values as the
+    // jvalue object.
     switch (bytecode()) {          // load values into the jvalue object
-    case Bytecodes::_fast_aputfield: __ movq(field, rax); break;
-    case Bytecodes::_fast_lputfield: __ movq(field, rax); break;
-    case Bytecodes::_fast_iputfield: __ movl(field, rax); break;
-    case Bytecodes::_fast_bputfield: __ movb(field, rax); break;
+    case Bytecodes::_fast_aputfield: __ push_ptr(rax); break;
+    case Bytecodes::_fast_bputfield: // fall through
+    case Bytecodes::_fast_zputfield: // fall through
     case Bytecodes::_fast_sputfield: // fall through
-    case Bytecodes::_fast_cputfield: __ movw(field, rax); break;
-    case Bytecodes::_fast_fputfield: __ movflt(field, xmm0); break;
-    case Bytecodes::_fast_dputfield: __ movdbl(field, xmm0); break;
+    case Bytecodes::_fast_cputfield: // fall through
+    case Bytecodes::_fast_iputfield: __ push_i(rax); break;
+    case Bytecodes::_fast_dputfield: __ push_d(); break;
+    case Bytecodes::_fast_fputfield: __ push_f(); break;
+    case Bytecodes::_fast_lputfield: __ push_l(rax); break;
+
     default:
       ShouldNotReachHere();
     }
-
-    // Save rax because call_VM() will clobber it, then use it for
-    // JVMTI purposes
-    __ push(rax);
+    __ mov(c_rarg3, rsp);             // points to jvalue on the stack
     // access constant pool cache entry
     __ get_cache_entry_pointer_at_bcp(c_rarg2, rax, 1);
     __ verify_oop(rbx);
@@ -2715,8 +2761,18 @@ void TemplateTable::jvmti_post_fast_field_mod() {
                CAST_FROM_FN_PTR(address,
                                 InterpreterRuntime::post_field_modification),
                rbx, c_rarg2, c_rarg3);
-    __ pop(rax);     // restore lower value
-    __ addptr(rsp, sizeof(jvalue));  // release jvalue object space
+
+    switch (bytecode()) {             // restore tos values
+    case Bytecodes::_fast_aputfield: __ pop_ptr(rax); break;
+    case Bytecodes::_fast_bputfield: // fall through
+    case Bytecodes::_fast_zputfield: // fall through
+    case Bytecodes::_fast_sputfield: // fall through
+    case Bytecodes::_fast_cputfield: // fall through
+    case Bytecodes::_fast_iputfield: __ pop_i(rax); break;
+    case Bytecodes::_fast_dputfield: __ pop_d(); break;
+    case Bytecodes::_fast_fputfield: __ pop_f(); break;
+    case Bytecodes::_fast_lputfield: __ pop_l(rax); break;
+    }
     __ bind(L2);
   }
 }
@@ -2765,6 +2821,9 @@ void TemplateTable::fast_storefield(TosState state) {
   case Bytecodes::_fast_iputfield:
     __ movl(field, rax);
     break;
+  case Bytecodes::_fast_zputfield:
+    __ andl(rax, 0x1);  // boolean is true if LSB is 1
+    // fall through to bputfield
   case Bytecodes::_fast_bputfield:
     __ movb(field, rax);
     break;

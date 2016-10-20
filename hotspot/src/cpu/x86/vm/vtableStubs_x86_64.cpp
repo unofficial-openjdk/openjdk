@@ -26,7 +26,7 @@
 #include "asm/assembler.hpp"
 #include "assembler_x86.inline.hpp"
 #include "code/vtableStubs.hpp"
-#include "interp_masm_x86_64.hpp"
+#include "interp_masm_x86.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/instanceKlass.hpp"
 #include "oops/klassVtable.hpp"

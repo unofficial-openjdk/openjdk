@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -71,18 +71,19 @@
 // bit 24: m flag true if invokeinterface used for method in class Object
 // bit 23: 0 for fields, 1 for methods
 //
-// The flags 31, 30, 29, 28 together build a 4 bit number 0 to 8 with the
+// The flags 31, 30, 29, 28 together build a 4 bit number 0 to 16 with the
 // following mapping to the TosState states:
 //
 // btos: 0
-// ctos: 1
-// stos: 2
-// itos: 3
-// ltos: 4
-// ftos: 5
-// dtos: 6
-// atos: 7
-// vtos: 8
+// ztos: 1
+// ctos: 2
+// stos: 3
+// itos: 4
+// ltos: 5
+// ftos: 6
+// dtos: 7
+// atos: 8
+// vtos: 9
 //
 // Entry specific: field entries:
 // _indices = get (b1 section) and put (b2 section) bytecodes, original constant pool index
@@ -257,14 +258,8 @@ class ConstantPoolCacheEntry VALUE_OBJ_CLASS_SPEC {
   bool is_vfinal() const                         { return ((_flags & (1 << vfinalMethod)) == (1 << vfinalMethod)); }
   bool is_volatile() const                       { return ((_flags & (1 << volatileField)) == (1 << volatileField)); }
   bool is_methodInterface() const                { return ((_flags & (1 << methodInterface)) == (1 << methodInterface)); }
-  bool is_byte() const                           { return (((uintx) _flags >> tosBits) == btos); }
-  bool is_char() const                           { return (((uintx) _flags >> tosBits) == ctos); }
-  bool is_short() const                          { return (((uintx) _flags >> tosBits) == stos); }
-  bool is_int() const                            { return (((uintx) _flags >> tosBits) == itos); }
   bool is_long() const                           { return (((uintx) _flags >> tosBits) == ltos); }
-  bool is_float() const                          { return (((uintx) _flags >> tosBits) == ftos); }
   bool is_double() const                         { return (((uintx) _flags >> tosBits) == dtos); }
-  bool is_object() const                         { return (((uintx) _flags >> tosBits) == atos); }
   TosState flag_state() const                    { assert( ( (_flags >> tosBits) & 0x0F ) < number_of_states, "Invalid state in as_flags");
                                                    return (TosState)((_flags >> tosBits) & 0x0F); }
 
