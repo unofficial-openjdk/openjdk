@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1185,8 +1185,13 @@ instanceKlassHandle SystemDictionary::load_shared_class(
 
     if (ik->super() != NULL) {
       Symbol*  cn = ik->super()->klass_part()->name();
-      resolve_super_or_fail(class_name, cn,
-                            class_loader, Handle(), true, CHECK_(nh));
+      klassOop s = resolve_super_or_fail(class_name, cn,
+                                         class_loader, Handle(), true, CHECK_(nh));
+      if (s->klass_part() != ik->super()->klass_part()) {
+        // The dynamically resolved super class is not the same as the one we used during dump time,
+        // so we cannot use ik.
+        return nh;
+      }
     }
 
     objArrayHandle interfaces (THREAD, ik->local_interfaces());
@@ -1199,7 +1204,12 @@ instanceKlassHandle SystemDictionary::load_shared_class(
       // reinitialized yet (they will be once the interface classes
       // are loaded)
       Symbol*  name  = k->klass_part()->name();
-      resolve_super_or_fail(class_name, name, class_loader, Handle(), false, CHECK_(nh));
+      klassOop i = resolve_super_or_fail(class_name, name, class_loader, Handle(), false, CHECK_(nh));
+      if (k->klass_part() != i->klass_part()) {
+        // The dynamically resolved interface class is not the same as the one we used during dump time,
+        // so we cannot use i.
+        return nh;
+      }
     }
 
     // Adjust methods to recover missing data.  They need addresses for

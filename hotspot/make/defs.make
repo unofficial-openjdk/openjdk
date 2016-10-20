@@ -101,6 +101,18 @@ endif
 # hotspot version definitions
 include $(GAMMADIR)/make/hotspot_version
 
+# When config parameter JDK_UPDATE_VERSION is defined,
+# Hotspot minor version should be set to that
+ifneq ($(JDK_UPDATE_VERSION),)
+  HS_MINOR_VER=$(JDK_UPDATE_VERSION)
+endif
+
+# When config parameter JDK_BUILD_NUMBER is defined,
+# Hotspot build number should be set to that
+ifneq ($(JDK_BUILD_NUMBER),)
+  HS_BUILD_NUMBER=$(subst b,,$(JDK_BUILD_NUMBER))
+endif
+
 # Java versions needed
 ifeq ($(PREVIOUS_JDK_VERSION),)
   PREVIOUS_JDK_VERSION=$(JDK_PREVIOUS_VERSION)
