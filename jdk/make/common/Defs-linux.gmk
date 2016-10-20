@@ -36,7 +36,7 @@
 #   CFLAGS        (set $(OTHER_CFLAGS) instead)
 #   CPPFLAGS      (set $(OTHER_CPPFLAGS) instead)
 #   CXXFLAGS      (set $(OTHER_CXXFLAGS) instead)
-#   LDFLAGS       (set $(OTHER_LDFAGS) instead)
+#   LDFLAGS       (set $(OTHER_LDFLAGS) instead)
 #   LDLIBS        (set $(EXTRA_LIBS) instead)
 #   LDLIBS_COMMON (set $(EXTRA_LIBS) instead)
 
@@ -86,17 +86,21 @@ HPIS = native
 #
 # Default optimization
 #
-CC_HIGHEST_OPT = -O3
-CC_HIGHER_OPT  = -O3
-CC_LOWER_OPT   = -O2
-CC_NO_OPT      =
 
-ifeq ($(PRODUCT), java)
-    _OPT = $(CC_HIGHER_OPT)
-else
-    _OPT = $(CC_LOWER_OPT)
-    CPPFLAGS_DBG    += -DLOGGING 
+ifndef OPTIMIZATION_LEVEL
+  ifeq ($(PRODUCT), java)
+    OPTIMIZATION_LEVEL = HIGHER
+  else
+    OPTIMIZATION_LEVEL = LOWER
+  endif
 endif
+
+CC_OPT/NONE     = 
+CC_OPT/LOWER    = -O2
+CC_OPT/HIGHER   = -O3
+CC_OPT/HIGHEST  = -O3
+
+CC_OPT          = $(CC_OPT/$(OPTIMIZATION_LEVEL))
 
 # For all platforms, do not omit the frame pointer register usage. 
 #    We need this frame pointer to make it easy to walk the stacks.
@@ -121,17 +125,20 @@ else
   LDFLAGS_COMMON        += $(LDFLAGS_COMMON_$(ARCH))
 endif
 
-# Add in platform specific optimizations for all opt levels
-CC_HIGHEST_OPT += $(_OPT_$(ARCH))
-CC_HIGHER_OPT  += $(_OPT_$(ARCH))
-CC_LOWER_OPT   += $(_OPT_$(ARCH))
-
-# If NO_OPTIMIZATIONS is defined in the environment, turn all optimzations off
-ifdef NO_OPTIMIZATIONS
-  CC_HIGHEST_OPT = $(CC_NO_OPT)
-  CC_HIGHER_OPT  = $(CC_NO_OPT)
-  CC_LOWER_OPT   = $(CC_NO_OPT)
+# GCC 6 has more aggressive dead-store elimination which causes the VM to crash
+# It also optimises away null pointer checks which are still needed.
+# We turn both of these optimisations off.
+ifeq ($(shell $(EXPR) $(CC_MAJORVER) \>= 6 ),1)
+ CFLAGS_REQUIRED += -fno-delete-null-pointer-checks -fno-lifetime-dse
 endif
+
+# If this is a --hash-style=gnu system, use --hash-style=both
+#   The gnu .hash section won't work on some Linux systems like SuSE 10.
+_HAS_HASH_STYLE_GNU:=$(shell $(CC) -dumpspecs | $(GREP) -- '--hash-style=gnu')
+ifneq ($(_HAS_HASH_STYLE_GNU),)
+  LDFLAGS_HASH_STYLE = -Wl,--hash-style=both
+endif
+LDFLAGS_COMMON          += $(LDFLAGS_HASH_STYLE)
 
 #
 # Selection of warning messages
@@ -154,10 +161,9 @@ CFLAGS_COMMON  = -fno-strict-aliasing
 PIC_CODE_LARGE = -fPIC
 PIC_CODE_SMALL = -fpic
 GLOBAL_KPIC = $(PIC_CODE_LARGE)
+CFLAGS_COMMON   += $(GLOBAL_KPIC) $(GCC_WARNINGS)
 ifeq ($(ARCH), amd64)
-   CFLAGS_COMMON   += $(GLOBAL_KPIC) $(GCC_WARNINGS) -pipe
-else
-   CFLAGS_COMMON   += $(GLOBAL_KPIC) $(GCC_WARNINGS)
+ CFLAGS_COMMON += -pipe
 endif
 
 # Linux 64bit machines use Dwarf2, which can be HUGE, have fastdebug use -g1
@@ -174,19 +180,19 @@ ifeq ($(DEBUG_BINARIES), true)
   CFLAGS_REQUIRED += $(DEBUG_FLAG)
 endif
 
-CFLAGS_OPT      = $(POPT)
+CFLAGS_OPT      = $(CC_OPT)
 CFLAGS_DBG      = $(DEBUG_FLAG)
 CFLAGS_COMMON += $(CFLAGS_REQUIRED)
 
-CXXFLAGS_COMMON = $(GLOBAL_KPIC) -DCC_NOEX $(GCC_WARNINGS)
-CXXFLAGS_OPT	= $(POPT)
+CXXFLAGS_COMMON = -std=gnu++98 $(GLOBAL_KPIC) -DCC_NOEX $(GCC_WARNINGS)
+CXXFLAGS_OPT	= $(CC_OPT)
 CXXFLAGS_DBG	= $(DEBUG_FLAG)
 CXXFLAGS_COMMON += $(CFLAGS_REQUIRED)
 
 # FASTDEBUG: Optimize the code in the -g versions, gives us a faster debug java
 ifeq ($(FASTDEBUG), true)
-  CFLAGS_DBG    += $(CC_LOWER_OPT)
-  CXXFLAGS_DBG	+= $(CC_LOWER_OPT)
+  CFLAGS_DBG    += $(CC_OPT/LOWER)
+  CXXFLAGS_DBG	+= $(CC_OPT/LOWER)
 endif
 
 CPP_ARCH_FLAGS = -DARCH='"$(ARCH)"'
@@ -205,8 +211,11 @@ ifeq ($(ARCH_DATA_MODEL), 64)
 CPPFLAGS_COMMON += -D_LP64=1
 endif
 
-CPPFLAGS_OPT    = 
+CPPFLAGS_OPT    = -DNDEBUG
 CPPFLAGS_DBG    = -DDEBUG
+ifneq ($(PRODUCT), java)
+  CPPFLAGS_DBG    += -DLOGGING 
+endif
 
 ifdef LIBRARY
   # Libraries need to locate other libraries at runtime, and you can tell
@@ -241,9 +250,8 @@ LDFLAGS_COMMON += -Wl,-soname=$(LIB_PREFIX)$(LIBRARY).$(LIBRARY_SUFFIX)
 # statically link libgcc but will print a warning with the flag. We don't 
 # want the warning, so check gcc version first.
 #
-CC_VER_MAJOR := $(shell $(CC) -dumpversion | $(SED) 's/egcs-//' | $(CUT) -d'.' -f1)
-ifeq ("$(CC_VER_MAJOR)", "3")
-OTHER_LDFLAGS  += -static-libgcc
+ifeq ($(CC_MAJORVER),3)
+  OTHER_LDFLAGS  += -static-libgcc
 endif
 
 # Automatic precompiled header option to use (if COMPILE_APPROACH=batch)

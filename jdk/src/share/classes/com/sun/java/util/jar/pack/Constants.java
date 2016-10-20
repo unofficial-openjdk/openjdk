@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,13 +25,17 @@
 
 package com.sun.java.util.jar.pack;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Shared constants
  * @author John Rose
  */
-interface Constants {
+class Constants {
+
+    private Constants(){}
+
     public final static int JAVA_MAGIC = 0xCAFEBABE;
 
     /*
@@ -47,7 +51,7 @@ interface Constants {
 
     public final static short JAVA5_MAX_CLASS_MAJOR_VERSION = 49;
     public final static short JAVA5_MAX_CLASS_MINOR_VERSION = 0;
-    // NOTE: ASSUMED for now
+
     public final static short JAVA6_MAX_CLASS_MAJOR_VERSION = 50;
     public final static short JAVA6_MAX_CLASS_MINOR_VERSION = 0;
 
@@ -146,11 +150,11 @@ interface Constants {
     public static final int NO_MODTIME = 0;  // null modtime value
 
     // some comstantly empty containers
-    public final static int[]    noInts = {};
-    public final static byte[]   noBytes = {};
-    public final static Object[] noValues = {};
-    public final static String[] noStrings = {};
-    public final static List     emptyList = Arrays.asList(noValues);
+    public final static int[]        noInts = {};
+    public final static byte[]       noBytes = {};
+    public final static Object[]     noValues = {};
+    public final static String[]     noStrings = {};
+    public final static List<Object> emptyList = Arrays.asList(noValues);
 
     // meta-coding
     public final static int

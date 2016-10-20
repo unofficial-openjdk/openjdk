@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ import java.util.jar.JarFile;
 import java.io.Console;
 import java.io.File;
 import java.io.FileDescriptor;
+import java.io.ObjectInputStream;
 import java.security.ProtectionDomain;
 
 import java.security.AccessController;
@@ -55,6 +56,7 @@ public class SharedSecrets {
     private static JavaUtilZipFileAccess javaUtilZipFileAccess;
     private static JavaAWTAccess javaAWTAccess;
     private static JavaIOFileAccess javaIOFileAccess;
+    private static JavaObjectInputStreamAccess javaObjectInputStreamAccess;
 
     public static JavaUtilJarAccess javaUtilJarAccess() {
         if (javaUtilJarAccess == null) {
@@ -160,6 +162,17 @@ public class SharedSecrets {
         // this may return null in which case calling code needs to 
         // provision for.
         return javaAWTAccess;
+    }
+
+    public static JavaObjectInputStreamAccess getJavaObjectInputStreamAccess() {
+        if (javaObjectInputStreamAccess == null) {
+            unsafe.ensureClassInitialized(ObjectInputStream.class);
+        }
+        return javaObjectInputStreamAccess;
+    }
+
+    public static void setJavaObjectInputStreamAccess(JavaObjectInputStreamAccess access) {
+        javaObjectInputStreamAccess = access;
     }
     
     public static void setJavaIOFileAccess(JavaIOFileAccess access) {

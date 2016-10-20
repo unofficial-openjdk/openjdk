@@ -21,12 +21,15 @@
  * questions.
  */
 
+// This test case relies on updated static security property, no way to re-use
+// security property in samevm/agentvm mode.
+
 /**
  * @test
  *
  * @bug 6861062
  * @summary Disable MD2 support
- *
+ * @run main/othervm CPValidatorIntermediate
  * @author Xuelei Fan
  */
 
@@ -209,6 +212,10 @@ public class CPValidatorIntermediate {
     }
 
     public static void main(String args[]) throws Exception {
+        // reset the security property to make sure that the algorithms
+        // and keys used in this test are not disabled.
+        Security.setProperty("jdk.certpath.disabledAlgorithms", "MD2");
+
         try {
             validate(intermediate_SHA1withRSA_1024_1024);
             validate(intermediate_SHA1withRSA_1024_512);

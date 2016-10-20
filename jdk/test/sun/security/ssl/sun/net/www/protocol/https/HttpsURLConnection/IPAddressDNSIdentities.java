@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,9 +21,15 @@
  * questions.
  */
 
+//
+// SunJSSE does not support dynamic system properties, no way to re-use
+// system properties in samevm/agentvm mode.
+//
+
 /* @test
- * @summary X509 certificate hostname checking is broken in JDK1.6.0_10
  * @bug 6766775
+ * @summary X509 certificate hostname checking is broken in JDK1.6.0_10
+ * @run main/othervm IPAddressDNSIdentities
  * @author Xuelei Fan
  */
 
@@ -624,6 +630,11 @@ public class IPAddressDNSIdentities {
     volatile static boolean serverReady = false;
 
     /*
+     * Is the connection ready to close?
+     */
+    volatile static boolean closeReady = false;
+
+    /*
      * Turn on SSL debugging?
      */
     static boolean debug = false;
@@ -667,11 +678,14 @@ public class IPAddressDNSIdentities {
             out.print("Testing\r\n");
             out.flush();
         } finally {
-             // close the socket
-             Thread.sleep(2000);
-             System.out.println("Server closing socket");
-             sslSocket.close();
-             serverReady = false;
+            // close the socket
+            while (!closeReady) {
+                Thread.sleep(50);
+            }
+
+            System.out.println("Server closing socket");
+            sslSocket.close();
+            serverReady = false;
         }
 
     }
@@ -683,37 +697,48 @@ public class IPAddressDNSIdentities {
      * to avoid infinite hangs.
      */
     void doClientSide() throws Exception {
-        SSLContext context = getSSLContext(trusedCertStr, clientCertStr,
-            clientModulus, clientPrivateExponent, passphrase);
-
-        SSLContext.setDefault(context);
-
-        /*
-         * Wait for server to get started.
-         */
-        while (!serverReady) {
-            Thread.sleep(50);
-        }
-
-        HttpsURLConnection http = null;
-
-        /* establish http connection to server */
-        URL url = new URL("https://127.0.0.1:" + serverPort+"/");
-        System.out.println("url is "+url.toString());
-
+        SSLContext reservedSSLContext = SSLContext.getDefault();
         try {
-            http = (HttpsURLConnection)url.openConnection();
+            SSLContext context = getSSLContext(trusedCertStr, clientCertStr,
+                clientModulus, clientPrivateExponent, passphrase);
 
-            int respCode = http.getResponseCode();
-            System.out.println("respCode = "+respCode);
+            SSLContext.setDefault(context);
 
-            throw new Exception("Unexpectly found subject alternative name " +
-                                "matching IP address");
-        } catch (SSLHandshakeException sslhe) {
-            // no subject alternative names matching IP address 127.0.0.1 found
-            // that's the expected exception, ignore it.
+            /*
+             * Wait for server to get started.
+             */
+            while (!serverReady) {
+                Thread.sleep(50);
+            }
+
+            HttpsURLConnection http = null;
+
+            /* establish http connection to server */
+            URL url = new URL("https://127.0.0.1:" + serverPort+"/");
+            System.out.println("url is "+url.toString());
+
+            try {
+                http = (HttpsURLConnection)url.openConnection();
+
+                int respCode = http.getResponseCode();
+                System.out.println("respCode = " + respCode);
+
+                throw new Exception("Unexpectly found " +
+                        "subject alternative name matching IP address");
+            } catch (SSLHandshakeException sslhe) {
+                // no subject alternative names matching IP address 127.0.0.1
+                // found that's the expected exception, ignore it.
+            } catch (IOException ioe) {
+                // HttpsClient may throw IOE during checking URL spoofing,
+                // that's the expected exception, ignore it.
+            } finally {
+                if (http != null) {
+                    http.disconnect();
+                }
+                closeReady = true;
+            }
         } finally {
-            http.disconnect();
+            SSLContext.setDefault(reservedSSLContext);
         }
     }
 

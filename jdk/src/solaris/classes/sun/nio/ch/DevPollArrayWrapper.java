@@ -217,8 +217,7 @@ class DevPollArrayWrapper {
                         Updator u = null;
                         while ((u = updateList.poll()) != null) {
                             // First add pollfd struct to clear out this fd
-                            putPollFD(updatePollArray, index, u.fd,
-                                      (short)POLLREMOVE);
+                            putPollFD(updatePollArray, index, u.fd, POLLREMOVE);
                             index++;
                             // Now add pollfd to update this fd, if necessary
                             if (u.mask != POLLREMOVE) {
@@ -280,6 +279,10 @@ class DevPollArrayWrapper {
     private native int poll0(long pollAddress, int numfds, long timeout,
                              int wfd);
     private static native void interrupt(int fd);
+
+    static {
+        IOUtil.load();
+    }
     private static native int fdLimit();
 
 }

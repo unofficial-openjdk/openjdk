@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,46 +25,57 @@
 
 package com.sun.java.util.jar.pack;
 
-import java.util.*;
-import java.util.jar.*;
-import java.util.jar.Pack200;
-import java.util.zip.*;
-import java.io.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeEvent;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.jar.Pack200;
 /**
  * Control block for publishing Pack200 options to the other classes.
  */
-class PropMap extends TreeMap {
-    ArrayList _listeners = new ArrayList(1);
+
+final class PropMap implements SortedMap<String, String>  {
+    private final TreeMap<String, String> theMap = new TreeMap<String, String>();;
+    private final List<PropertyChangeListener> listenerList = new ArrayList<PropertyChangeListener>(1);
 
     void addListener(PropertyChangeListener listener) {
-        _listeners.add(listener);
+        listenerList.add(listener);
     }
 
     void removeListener(PropertyChangeListener listener) {
-        _listeners.remove(listener);
+        listenerList.remove(listener);
     }
 
-    void addListeners(ArrayList listeners) {
-        _listeners.addAll(listeners);
+    void addListeners(ArrayList<PropertyChangeListener> listeners) {
+        listenerList.addAll(listeners);
     }
 
-    void removeListeners(ArrayList listeners) {
-        _listeners.removeAll(listeners);
+    void removeListeners(ArrayList<PropertyChangeListener> listeners) {
+        listenerList.removeAll(listeners);
     }
 
     // Override:
-    public Object put(Object key, Object value) {
-        Object oldValue = super.put(key, value);
-        if (value != oldValue && _listeners.size() > 0) {
+    public String put(String key, String value) {
+        String oldValue = theMap.put(key, value);
+        if (value != oldValue && !listenerList.isEmpty()) {
             // Post the property change event.
             PropertyChangeEvent event =
-                new PropertyChangeEvent(this, (String) key,
+                new PropertyChangeEvent(this, key,
                                         oldValue, value);
-            for (Iterator i = _listeners.iterator(); i.hasNext(); ) {
-                PropertyChangeListener listener =
-                    (PropertyChangeListener) i.next();
+            for (PropertyChangeListener listener : listenerList) {
                 listener.propertyChange(event);
             }
         }
@@ -74,7 +85,7 @@ class PropMap extends TreeMap {
     // All this other stuff is private to the current package.
     // Outide clients of Pack200 do not need to use it; they can
     // get by with generic SortedMap functionality.
-    private static Map defaultProps;
+    private static Map<String, String> defaultProps;
     static {
         Properties props = new Properties();
 
@@ -111,13 +122,12 @@ class PropMap extends TreeMap {
         // Define certain attribute layouts by default.
         // Do this after the previous props are put in place,
         // to allow override if necessary.
+        InputStream propStr = null;
         try {
             String propFile = "intrinsic.properties";
-            InputStream propStr = PackerImpl.class.getResourceAsStream(propFile);
+            propStr = PackerImpl.class.getResourceAsStream(propFile);
             props.load(new BufferedInputStream(propStr));
-            propStr.close();
-            for (Iterator i = props.entrySet().iterator(); i.hasNext(); ) {
-                Map.Entry e = (Map.Entry) i.next();
+            for (Map.Entry<Object, Object> e : props.entrySet()) {
                 String key = (String) e.getKey();
                 String val = (String) e.getValue();
                 if (key.startsWith("attribute.")) {
@@ -126,19 +136,27 @@ class PropMap extends TreeMap {
             }
         } catch (IOException ee) {
             throw new RuntimeException(ee);
+        } finally {
+            try {
+                if (propStr != null) {
+                    propStr.close();
+                }
+            } catch (IOException ignore) {}
         }
 
-        defaultProps = (new HashMap(props));  // shrink to fit
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        HashMap<String, String> temp = new HashMap(props);  // shrink to fit
+        defaultProps = temp;
     }
 
     PropMap() {
-        putAll(defaultProps);
+        theMap.putAll(defaultProps);
     }
 
     // Return a view of this map which includes only properties
     // that begin with the given prefix.  This is easy because
     // the map is sorted, and has a subMap accessor.
-    SortedMap prefixMap(String prefix) {
+    SortedMap<String, String> prefixMap(String prefix) {
         int len = prefix.length();
         if (len == 0)
             return this;
@@ -149,7 +167,7 @@ class PropMap extends TreeMap {
     }
 
     String getProperty(String s) {
-        return (String) get(s);
+        return get(s);
     }
     String getProperty(String s, String defaultVal) {
         String val = getProperty(s);
@@ -158,13 +176,13 @@ class PropMap extends TreeMap {
         return val;
     }
     String setProperty(String s, String val) {
-        return (String) put(s, val);
+        return put(s, val);
     }
 
     // Get sequence of props for "prefix", and "prefix.*".
-    List getProperties(String prefix) {
-        Collection values = prefixMap(prefix).values();
-        ArrayList res = new ArrayList(values.size());
+    List<String> getProperties(String prefix) {
+        Collection<String> values = prefixMap(prefix).values();
+        List<String> res = new ArrayList<String>(values.size());
         res.addAll(values);
         while (res.remove(null));
         return res;
@@ -228,12 +246,79 @@ class PropMap extends TreeMap {
     }
     void list(PrintWriter out) {
         out.println("#"+Utils.PACK_ZIP_ARCHIVE_MARKER_COMMENT+"[");
-        Set defaults = defaultProps.entrySet();
-        for (Iterator i = entrySet().iterator(); i.hasNext(); ) {
-            Map.Entry e = (Map.Entry) i.next();
+        Set<Map.Entry<String, String>> defaults = defaultProps.entrySet();
+        for (Map.Entry<String, String> e : theMap.entrySet()) {
             if (defaults.contains(e))  continue;
             out.println("  " + e.getKey() + " = " + e.getValue());
         }
         out.println("#]");
+    }
+
+    public int size() {
+        return theMap.size();
+    }
+
+    public boolean isEmpty() {
+        return theMap.isEmpty();
+    }
+
+    public boolean containsKey(Object key) {
+        return theMap.containsKey(key);
+    }
+
+    public boolean containsValue(Object value) {
+        return theMap.containsValue(value);
+    }
+
+    public String get(Object key) {
+        return theMap.get(key);
+    }
+
+    public String remove(Object key) {
+       return theMap.remove(key);
+    }
+
+    public void putAll(Map<? extends String, ? extends String> m) {
+       theMap.putAll(m);
+    }
+
+    public void clear() {
+        theMap.clear();
+    }
+
+    public Set<String> keySet() {
+       return theMap.keySet();
+    }
+
+    public Collection<String> values() {
+       return theMap.values();
+    }
+
+    public Set<Map.Entry<String, String>> entrySet() {
+        return theMap.entrySet();
+    }
+
+    public Comparator<? super String> comparator() {
+        return theMap.comparator();
+    }
+
+    public SortedMap<String, String> subMap(String fromKey, String toKey) {
+        return theMap.subMap(fromKey, toKey);
+    }
+
+    public SortedMap<String, String> headMap(String toKey) {
+        return theMap.headMap(toKey);
+    }
+
+    public SortedMap<String, String> tailMap(String fromKey) {
+        return theMap.tailMap(fromKey);
+    }
+
+    public String firstKey() {
+        return theMap.firstKey();
+    }
+
+    public String lastKey() {
+       return theMap.lastKey();
     }
 }

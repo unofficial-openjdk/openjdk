@@ -634,18 +634,44 @@ void ReportSysErrorMessage2(char * format, char * string, jboolean always) {
     (void)LocalFree((HLOCAL)errtext);
 }
 
-void  ReportExceptionDescription(JNIEnv * env) {
+void
+JLI_ReportErrorMessage(const char* fmt, ...) {
 #ifdef JAVAW
-  /*
-   * This code should be replaced by code which opens a window with
-   * the exception detail message.
-   */
-  (*env)->ExceptionDescribe(env);
-#else
-  (*env)->ExceptionDescribe(env);
+    char *message;
+    int n;
 #endif
+    va_list vl;
+    va_start(vl,fmt);
+
+#ifdef JAVAW
+        /* get the length of the string we need */
+        n = _vscprintf(fmt, vl);
+
+        message = (char *)JLI_MemAlloc(n + 1);
+        _vsnprintf(message, n, fmt, vl);
+        message[n]='\0';
+        MessageBox(NULL, message, "Java Virtual Machine Launcher",
+            (MB_OK|MB_ICONSTOP|MB_APPLMODAL));
+        JLI_MemFree(message);
+#else
+        vfprintf(stderr, fmt, vl);
+        fprintf(stderr, "\n");
+#endif
+    va_end(vl);
 }
 
+void  JLI_ReportExceptionDescription(JNIEnv * env) {
+#ifdef JAVAW
+       /*
+        * This code should be replaced by code which opens a window with
+        * the exception detail message, for now atleast put a dialog up.
+        */
+        MessageBox(NULL, "A Java Exception has occurred.", "Java Virtual Machine Launcher",
+               (MB_OK|MB_ICONSTOP|MB_APPLMODAL));
+#else
+        (*env)->ExceptionDescribe(env);
+#endif
+}
 
 /*
  * Return JNI_TRUE for an option string that has no effect but should
@@ -1365,5 +1391,30 @@ void AWTPreloadStop() {
 
 #endif /* ENABLE_AWT_PRELOAD */
 
-/* Linux only, empty on windows. */
+/* Unix only, empty on windows. */
 void SetJavaLauncherPlatformProps() {}
+
+/*
+ * The implementation for finding classes from the bootstrap
+ * class loader, refer to java.h
+ */
+static FindClassFromBootLoader_t *findBootClass = NULL;
+
+jclass FindBootStrapClass(JNIEnv *env, const char *classname)
+{
+   HMODULE hJvm;
+
+   if (findBootClass == NULL) {
+       hJvm = GetModuleHandle(JVM_DLL);
+       if (hJvm == NULL) return NULL;
+       /* need to use the demangled entry point */
+       findBootClass = (FindClassFromBootLoader_t *)GetProcAddress(hJvm,
+            "JVM_FindClassFromBootLoader");
+       if (findBootClass == NULL) {
+          JLI_ReportErrorMessage(DLL_ERROR4, "JVM_FindClassFromBootLoader");
+          return NULL;
+       }
+   }
+   return findBootClass(env, classname);
+}
+

@@ -26,13 +26,10 @@
 package com.sun.security.auth;
 
 import java.io.*;
-import java.lang.RuntimePermission;
 import java.lang.reflect.*;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 
-import java.security.AccessController;
 import java.security.CodeSource;
 import java.security.Identity;
 import java.security.IdentityScope;
@@ -262,7 +259,7 @@ public class PolicyFile extends javax.security.auth.Policy {
     private static final String AUTH_POLICY_URL = "auth.policy.url.";
 
     private Vector<PolicyEntry> policyEntries;
-    private Hashtable aliasMapping;
+    private Hashtable<Object, Object> aliasMapping;
 
     private boolean initialized = false;
 
@@ -295,7 +292,7 @@ public class PolicyFile extends javax.security.auth.Policy {
             return;
 
         policyEntries = new Vector<PolicyEntry>();
-        aliasMapping = new Hashtable(11);
+        aliasMapping = new Hashtable<Object, Object>(11);
 
         initPolicyFile();
         initialized = true;
@@ -405,7 +402,7 @@ public class PolicyFile extends javax.security.auth.Policy {
                 }
                 try {
                     extra_policy = PropertyExpander.expand(extra_policy);
-                    URL policyURL;;
+                    URL policyURL;
                     File policyFile = new File(extra_policy);
                     if (policyFile.exists()) {
                         policyURL =
@@ -707,8 +704,8 @@ public class PolicyFile extends javax.security.auth.Policy {
                InvocationTargetException
     {
         //XXX we might want to keep a hash of created factories...
-        Class pc = Class.forName(type);
-        Constructor c = pc.getConstructor(PARAMS);
+        Class<?> pc = Class.forName(type);
+        Constructor<?> c = pc.getConstructor(PARAMS);
         return (Permission) c.newInstance(new Object[] { name, actions });
     }
 
@@ -1093,16 +1090,20 @@ public class PolicyFile extends javax.security.auth.Policy {
             // because the earlier CodeSource.implies succeeded
             SubjectCodeSource scs = (SubjectCodeSource)accCs;
 
-            Set<Principal> principalSet = null;
+            Set<? extends Principal> principalSet = null;
             try {
-                Class pClass = Class.forName(principal.principalClass, false,
-                                ClassLoader.getSystemClassLoader());
+                // principal.principalClass should extend Principal
+                // If it doesn't, we should stop here with a ClassCastException.
+                @SuppressWarnings("unchecked")
+                Class<? extends Principal> pClass = (Class<? extends Principal>)
+                        Class.forName(principal.principalClass, false,
+                                      ClassLoader.getSystemClassLoader());
                 principalSet = scs.getSubject().getPrincipals(pClass);
             } catch (Exception e) {
                 if (debug != null) {
                     debug.println("problem finding Principal Class " +
-                                "when expanding SELF permission: " +
-                                e.toString());
+                                  "when expanding SELF permission: " +
+                                  e.toString());
                 }
             }
 
@@ -1112,11 +1113,9 @@ public class PolicyFile extends javax.security.auth.Policy {
             }
 
             String[][] info = new String[principalSet.size()][2];
-            java.util.Iterator<Principal> pIterator = principalSet.iterator();
 
             int i = 0;
-            while (pIterator.hasNext()) {
-                Principal p = pIterator.next();
+            for (Principal p : principalSet) {
                 info[i][0] = p.getClass().getName();
                 info[i][1] = p.getName();
                 i++;

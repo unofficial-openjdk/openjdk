@@ -30,6 +30,7 @@ import java.util.*;
 
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertPathValidatorException;
 import java.security.cert.CertStore;
@@ -42,12 +43,22 @@ import java.security.cert.X509CertSelector;
 import javax.security.auth.x500.X500Principal;
 
 import sun.security.util.Debug;
+import sun.security.util.DerOutputStream;
 import sun.security.x509.AccessDescription;
 import sun.security.x509.AuthorityInfoAccessExtension;
 import sun.security.x509.PKIXExtensions;
 import sun.security.x509.PolicyMappingsExtension;
 import sun.security.x509.X500Name;
 import sun.security.x509.X509CertImpl;
+import sun.security.x509.X509CRLImpl;
+import sun.security.x509.AuthorityKeyIdentifierExtension;
+import sun.security.x509.KeyIdentifier;
+import sun.security.x509.SubjectKeyIdentifierExtension;
+import sun.security.x509.SerialNumber;
+import sun.security.x509.GeneralNames;
+import sun.security.x509.GeneralName;
+import sun.security.x509.GeneralNameInterface;
+import java.math.BigInteger;
 
 /**
  * This class represents a forward builder, which is able to retrieve
@@ -65,7 +76,7 @@ class ForwardBuilder extends Builder {
     private final Set<X500Principal> trustedSubjectDNs;
     private final Set<TrustAnchor> trustAnchors;
     private X509CertSelector eeSelector;
-    private X509CertSelector caSelector;
+    private AdaptableX509CertSelector caSelector;
     private X509CertSelector caTargetSelector;
     TrustAnchor trustAnchor;
     private Comparator<X509Certificate> comparator;
@@ -201,6 +212,11 @@ class ForwardBuilder extends Builder {
         X509CertSelector sel = null;
 
         if (currentState.isInitial()) {
+            if (targetCertConstraints.getBasicConstraints() == -2) {
+                // no need to continue: this means we never can match a CA cert
+                return;
+            }
+
             /* This means a CA is the target, so match on same stuff as
              * getMatchingEECerts
              */
@@ -213,9 +229,11 @@ class ForwardBuilder extends Builder {
                     targetCertConstraints.clone();
 
                 /*
-                 * Match on certificate validity date
+                 * Since we don't check the validity period of trusted
+                 * certificates, please don't set the certificate valid
+                 * criterion unless the trusted certificate matching is
+                 * completed.
                  */
-                caTargetSelector.setCertificateValid(date);
 
                 /*
                  * Policy processing optimizations
@@ -229,17 +247,19 @@ class ForwardBuilder extends Builder {
              * at least as many CA certs that have already been traversed
              */
             caTargetSelector.setBasicConstraints(currentState.traversedCACerts);
-            sel = caTargetSelector;
 
+            sel = caTargetSelector;
         } else {
 
             if (caSelector == null) {
-                caSelector = new X509CertSelector();
+                caSelector = new AdaptableX509CertSelector();
 
                 /*
-                 * Match on certificate validity date.
+                 * Since we don't check the validity period of trusted
+                 * certificates, please don't set the certificate valid
+                 * criterion unless the trusted certificate matching is
+                 * completed.
                  */
-                caSelector.setCertificateValid(date);
 
                 /*
                  * Policy processing optimizations
@@ -266,26 +286,26 @@ class ForwardBuilder extends Builder {
              * at least as many CA certs that have already been traversed
              */
             caSelector.setBasicConstraints(currentState.traversedCACerts);
+
+            /*
+             * Facilitate certification path construction with authority
+             * key identifier and subject key identifier.
+             */
+            AuthorityKeyIdentifierExtension akidext =
+                    currentState.cert.getAuthorityKeyIdentifierExtension();
+            caSelector.parseAuthorityKeyIdentifierExtension(akidext);
+
+            /*
+             * check the validity period
+             */
+            caSelector.setValidityPeriod(currentState.cert.getNotBefore(),
+                                            currentState.cert.getNotAfter());
+
             sel = caSelector;
         }
 
-        /*
-         * Check if any of the trusted certs could be a match.
-         * Since we are not validating the trusted cert, we can't
-         * re-use the selector we've built up (sel) - we need
-         * to use a new selector (trustedSel)
-         */
-        X509CertSelector trustedSel = null;
-        if (currentState.isInitial()) {
-            trustedSel = targetCertConstraints;
-        } else {
-            trustedSel = new X509CertSelector();
-            trustedSel.setSubject(currentState.issuerDN);
-        }
-
-        boolean foundMatchingCert = false;
         for (X509Certificate trustedCert : trustedCerts) {
-            if (trustedSel.match(trustedCert)) {
+            if (sel.match(trustedCert)) {
                 if (debug != null) {
                     debug.println("ForwardBuilder.getMatchingCACerts: "
                         + "found matching trust anchor");
@@ -296,6 +316,11 @@ class ForwardBuilder extends Builder {
             }
         }
 
+        /*
+         * The trusted certificate matching is completed. We need to match
+         * on certificate validity date.
+         */
+        sel.setCertificateValid(date);
 
         /*
          * If we have already traversed as many CA certs as the maxPathLength
@@ -308,8 +333,8 @@ class ForwardBuilder extends Builder {
            (buildParams.getMaxPathLength() == -1) ||
            (buildParams.getMaxPathLength() > currentState.traversedCACerts))
         {
-            if (addMatchingCerts(sel, certStores, caCerts, searchAllCertStores)
-                && !searchAllCertStores) {
+            if (addMatchingCerts(sel, certStores,
+                    caCerts, searchAllCertStores) && !searchAllCertStores) {
                 return;
             }
         }
@@ -334,6 +359,9 @@ class ForwardBuilder extends Builder {
      * Download Certificates from the given AIA and add them to the
      * specified Collection.
      */
+    // cs.getCertificates(caSelector) returns a collection of X509Certificate's
+    // because of the selector, so the cast is safe
+    @SuppressWarnings("unchecked")
     private boolean getCerts(AuthorityInfoAccessExtension aiaExt,
         Collection<X509Certificate> certs) {
         if (Builder.USE_AIA == false) {
@@ -816,13 +844,25 @@ class ForwardBuilder extends Builder {
                 } else {
                     continue;
                 }
-            }
+            } else {
+                X500Principal principal = anchor.getCA();
+                java.security.PublicKey publicKey = anchor.getCAPublicKey();
 
-            X500Principal trustedCAName = anchor.getCA();
+                if (principal != null && publicKey != null &&
+                        principal.equals(cert.getSubjectX500Principal())) {
+                    if (publicKey.equals(cert.getPublicKey())) {
+                        // the cert itself is a trust anchor
+                        this.trustAnchor = anchor;
+                        return true;
+                    }
+                    // else, it is a self-issued certificate of the anchor
+                }
 
-            /* Check subject/issuer name chaining */
-            if (!trustedCAName.equals(cert.getIssuerX500Principal())) {
-                continue;
+                // Check subject/issuer name chaining
+                if (principal == null ||
+                        !principal.equals(cert.getIssuerX500Principal())) {
+                    continue;
+                }
             }
 
             /* Check revocation if it is enabled */

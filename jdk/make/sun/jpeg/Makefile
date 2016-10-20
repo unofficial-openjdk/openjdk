@@ -27,12 +27,11 @@ BUILDDIR = ../..
 PACKAGE = sun.awt
 LIBRARY = jpeg
 PRODUCT = sun
-include $(BUILDDIR)/common/Defs.gmk
 
-#
 # Use highest optimization level
-#
-_OPT = $(CC_HIGHEST_OPT)
+OPTIMIZATION_LEVEL = HIGHEST
+
+include $(BUILDDIR)/common/Defs.gmk
 
 #
 # Files
@@ -65,6 +64,24 @@ ifeq ($(PLATFORM), solaris)
     FILES_reorder += reorder-$(ARCH)
   endif
 endif
+
+ifeq ($(PLATFORM), linux)
+
+  # Suppress gcc warnings like "variable might be clobbered by 'longjmp'
+  # or 'vfork'": this warning indicates that some variable is placed to
+  # a register by optimized compiler and it's value might be lost on longjmp().
+  # Recommended way to avoid such warning is to declare the variable as
+  # volatile to prevent the optimization. However, this approach does not
+  # work because we have to declare all variables as volatile in result.
+
+  CC_43_OR_NEWER := \
+    $(shell $(EXPR) $(CC_MAJORVER) \> 4 \| \
+        \( $(CC_MAJORVER) = 4 \& $(CC_MINORVER) \>= 3 \) )
+  ifeq ($(CC_43_OR_NEWER),1)
+    OTHER_CFLAGS += -Wno-clobbered
+  endif
+endif
+
 include $(BUILDDIR)/common/Mapfile-vers.gmk
 include $(BUILDDIR)/common/Library.gmk
 
@@ -72,11 +89,6 @@ include $(BUILDDIR)/common/Library.gmk
 # Add to ambient vpath to get files in a subdirectory
 #
 vpath %.c   $(SHARE_SRC)/native/$(PKGDIR)/image/jpeg
-
-ifeq ($(PLATFORM), windows)
-  # Files built here do not compile with warning level 3 if warnings are fatal
-  COMPILER_WARNINGS_FATAL=false
-endif # PLATFORM
 
 CLASSES.export += java.io.InputStream
 

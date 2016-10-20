@@ -208,15 +208,28 @@ public class JPEG {
 
     public static final int [] bOffsRGB = { 2, 1, 0 };
 
-    protected static final ColorSpace sRGB =
-        ColorSpace.getInstance(ColorSpace.CS_sRGB);
-    protected static ColorSpace YCC = null;  // Can't be final
+    /* These are kept in the inner class to avoid static initialization
+     * of the CMM class until someone actually needs it.
+     * (e.g. do not init CMM on the request for jpeg mime types)
+     */
+    public static class JCS {
+        public static final ColorSpace sRGB =
+            ColorSpace.getInstance(ColorSpace.CS_sRGB);
 
-    static {
-        try {
-            YCC = ColorSpace.getInstance(ColorSpace.CS_PYCC);
-        } catch (IllegalArgumentException e) {
-            // PYCC.pf may not always be installed
+        private static ColorSpace YCC = null;
+        private static boolean yccInited = false;
+
+        public static ColorSpace getYCC() {
+            if (!yccInited) {
+                try {
+                    YCC = ColorSpace.getInstance(ColorSpace.CS_PYCC);
+                } catch (IllegalArgumentException e) {
+                    // PYCC.pf may not always be installed
+                } finally {
+                    yccInited = true;
+                }
+            }
+            return YCC;
         }
     }
 

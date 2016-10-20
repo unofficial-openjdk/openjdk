@@ -34,6 +34,7 @@ import javax.security.auth.x500.X500Principal;
 
 import sun.security.action.GetBooleanAction;
 import sun.security.util.Debug;
+import sun.security.util.DerOutputStream;
 import sun.security.x509.*;
 
 /**
@@ -49,7 +50,7 @@ import sun.security.x509.*;
  * @author Sean Mullan
  * @since 1.4.2
  */
-class DistributionPointFetcher {
+public class DistributionPointFetcher {
 
     private static final Debug debug = Debug.getInstance("certpath");
 
@@ -64,21 +65,10 @@ class DistributionPointFetcher {
     private final static boolean USE_CRLDP = AccessController.doPrivileged
         (new GetBooleanAction("com.sun.security.enableCRLDP"));
 
-    // singleton instance
-    private static final DistributionPointFetcher INSTANCE =
-        new DistributionPointFetcher();
-
     /**
      * Private instantiation only.
      */
     private DistributionPointFetcher() {}
-
-    /**
-     * Return a DistributionPointFetcher instance.
-     */
-    static DistributionPointFetcher getInstance() {
-        return INSTANCE;
-    }
 
     /**
      * Return the X509CRLs matching this selector. The selector must be
@@ -87,9 +77,15 @@ class DistributionPointFetcher {
      * If CRLDP support is disabled, this method always returns an
      * empty set.
      */
-    Collection<X509CRL> getCRLs(X509CRLSelector selector, boolean signFlag,
-        PublicKey prevKey, String provider, List<CertStore> certStores,
-        boolean[] reasonsMask, TrustAnchor anchor) throws CertStoreException
+    public static Collection<X509CRL> getCRLs(X509CRLSelector selector,
+                                              boolean signFlag,
+                                              PublicKey prevKey,
+                                              String provider,
+                                              List<CertStore> certStores,
+                                              boolean[] reasonsMask,
+                                              Set<TrustAnchor> trustAnchors,
+                                              Date validity)
+        throws CertStoreException
     {
         if (USE_CRLDP == false) {
             return Collections.emptySet();
@@ -112,15 +108,15 @@ class DistributionPointFetcher {
                 }
                 return Collections.emptySet();
             }
-            List<DistributionPoint> points = (List<DistributionPoint>)ext.get(
-                                        CRLDistributionPointsExtension.POINTS);
+            List<DistributionPoint> points =
+                    ext.get(CRLDistributionPointsExtension.POINTS);
             Set<X509CRL> results = new HashSet<X509CRL>();
             for (Iterator<DistributionPoint> t = points.iterator();
                  t.hasNext() && !Arrays.equals(reasonsMask, ALL_REASONS); ) {
                 DistributionPoint point = t.next();
                 Collection<X509CRL> crls = getCRLs(selector, certImpl,
                     point, reasonsMask, signFlag, prevKey, provider,
-                    certStores, anchor);
+                    certStores, trustAnchors, validity);
                 results.addAll(crls);
             }
             if (debug != null) {
@@ -138,11 +134,12 @@ class DistributionPointFetcher {
      * Download CRLs from the given distribution point, verify and return them.
      * See the top of the class for current limitations.
      */
-    private Collection<X509CRL> getCRLs(X509CRLSelector selector,
+    private static Collection<X509CRL> getCRLs(X509CRLSelector selector,
         X509CertImpl certImpl, DistributionPoint point, boolean[] reasonsMask,
         boolean signFlag, PublicKey prevKey, String provider,
-        List<CertStore> certStores, TrustAnchor anchor)
-    {
+        List<CertStore> certStores, Set<TrustAnchor> trustAnchors,
+        Date validity) {
+
         // check for full name
         GeneralNames fullName = point.getFullName();
         if (fullName == null) {
@@ -193,8 +190,8 @@ class DistributionPointFetcher {
                 // we check the issuer in verifyCRLs method
                 selector.setIssuerNames(null);
                 if (selector.match(crl) && verifyCRL(certImpl, point, crl,
-                        reasonsMask, signFlag, prevKey, provider, anchor,
-                        certStores)) {
+                        reasonsMask, signFlag, prevKey, provider, trustAnchors,
+                        certStores, validity)) {
                     crls.add(crl);
                 }
             } catch (Exception e) {
@@ -211,7 +208,7 @@ class DistributionPointFetcher {
     /**
      * Download CRL from given URI.
      */
-    private X509CRL getCRL(URIName name) {
+    private static X509CRL getCRL(URIName name) {
         URI uri = name.getURI();
         if (debug != null) {
             debug.println("Trying to fetch CRL from DP " + uri);
@@ -237,7 +234,7 @@ class DistributionPointFetcher {
     /**
      * Fetch CRLs from certStores.
      */
-    private Collection<X509CRL> getCRLs(X500Name name,
+    private static Collection<X509CRL> getCRLs(X500Name name,
         X500Principal certIssuer, List<CertStore> certStores)
     {
         if (debug != null) {
@@ -275,12 +272,19 @@ class DistributionPointFetcher {
      * @param signFlag true if prevKey can be used to verify the CRL
      * @param prevKey the public key that verifies the certificate's signature
      * @param provider the Signature provider to use
+     * @param trustAnchors a {@code Set} of {@code TrustAnchor}s
+     * @param certStores a {@code List} of {@code CertStore}s to be used in
+     *        finding certificates and CRLs
+     * @param validity the time for which the validity of the CRL issuer's
+     *        certification path should be determined
      * @return true if ok, false if not
      */
-    boolean verifyCRL(X509CertImpl certImpl, DistributionPoint point,
+    static boolean verifyCRL(X509CertImpl certImpl, DistributionPoint point,
         X509CRL crl, boolean[] reasonsMask, boolean signFlag,
-        PublicKey prevKey, String provider, TrustAnchor anchor,
-        List<CertStore> certStores) throws CRLException, IOException {
+        PublicKey prevKey, String provider,
+        Set<TrustAnchor> trustAnchors, List<CertStore> certStores,
+        Date validity) throws CRLException, IOException {
+
         boolean indirectCRL = false;
         X509CRLImpl crlImpl = X509CRLImpl.toImpl(crl);
         IssuingDistributionPointExtension idpExt =
@@ -313,7 +317,15 @@ class DistributionPointFetcher {
             if (match == false) {
                 return false;
             }
-            indirectCRL = true;
+
+            // we accept the case that a CRL issuer provide status
+            // information for itself.
+            if (issues(certImpl, crlImpl, provider)) {
+                // reset the public key used to verify the CRL's signature
+                prevKey = certImpl.getPublicKey();
+            } else {
+                indirectCRL = true;
+            }
         } else if (crlIssuer.equals(certIssuer) == false) {
             if (debug != null) {
                 debug.println("crl issuer does not equal cert issuer");
@@ -326,8 +338,24 @@ class DistributionPointFetcher {
             byte[] crlAKID = crlImpl.getExtensionValue(
                                 PKIXExtensions.AuthorityKey_Id.toString());
 
-            if (!Arrays.equals(certAKID, crlAKID)) {
-                indirectCRL = true;
+            if (certAKID == null || crlAKID == null) {
+                // cannot recognize indirect CRL without AKID
+
+                // we accept the case that a CRL issuer provide status
+                // information for itself.
+                if (issues(certImpl, crlImpl, provider)) {
+                    // reset the public key used to verify the CRL's signature
+                    prevKey = certImpl.getPublicKey();
+                }
+            } else if (!Arrays.equals(certAKID, crlAKID)) {
+                // we accept the case that a CRL issuer provide status
+                // information for itself.
+                if (issues(certImpl, crlImpl, provider)) {
+                    // reset the public key used to verify the CRL's signature
+                    prevKey = certImpl.getPublicKey();
+                } else {
+                    indirectCRL = true;
+                }
             }
         }
 
@@ -523,15 +551,59 @@ class DistributionPointFetcher {
             certSel.setSubject(crlIssuer.asX500Principal());
             boolean[] crlSign = {false,false,false,false,false,false,true};
             certSel.setKeyUsage(crlSign);
+
+            // Currently by default, forward builder does not enable
+            // subject/authority key identifier identifying for target
+            // certificate, instead, it only compares the CRL issuer and
+            // the target certificate subject. If the certificate of the
+            // delegated CRL issuer is a self-issued certificate, the
+            // builder is unable to find the proper CRL issuer by issuer
+            // name only, there is a potential dead loop on finding the
+            // proper issuer. It is of great help to narrow the target
+            // scope down to aware of authority key identifiers in the
+            // selector, for the purposes of breaking the dead loop.
+            AuthorityKeyIdentifierExtension akidext =
+                                            crlImpl.getAuthKeyIdExtension();
+            if (akidext != null) {
+                KeyIdentifier akid = (KeyIdentifier)akidext.get(akidext.KEY_ID);
+                if (akid != null) {
+                    DerOutputStream derout = new DerOutputStream();
+                    derout.putOctetString(akid.getIdentifier());
+                    certSel.setSubjectKeyIdentifier(derout.toByteArray());
+                }
+
+                SerialNumber asn =
+                    (SerialNumber)akidext.get(akidext.SERIAL_NUMBER);
+                if (asn != null) {
+                    certSel.setSerialNumber(asn.getNumber());
+                }
+                // the subject criterion will be set by builder automatically.
+            }
+
+            // by far, we have validated the previous certificate, we can
+            // trust it during validating the CRL issuer.
+            // Except the performance improvement, another benefit is to break
+            // the dead loop while looking for the issuer back and forth
+            // between the delegated self-issued certificate and its issuer.
+            Set<TrustAnchor> newTrustAnchors = new HashSet<TrustAnchor>(trustAnchors);
+
+            if (prevKey != null) {
+                // Add the previous certificate as a trust anchor.
+                X500Principal principal = certImpl.getIssuerX500Principal();
+                TrustAnchor temporary =
+                        new TrustAnchor(principal, prevKey, null);
+                newTrustAnchors.add(temporary);
+            }
+
             PKIXBuilderParameters params = null;
             try {
-                params = new PKIXBuilderParameters
-                    (Collections.singleton(anchor), certSel);
+                params = new PKIXBuilderParameters(newTrustAnchors, certSel);
             } catch (InvalidAlgorithmParameterException iape) {
                 throw new CRLException(iape);
             }
             params.setCertStores(certStores);
             params.setSigProvider(provider);
+            params.setDate(validity);
             try {
                 CertPathBuilder builder = CertPathBuilder.getInstance("PKIX");
                 PKIXCertPathBuilderResult result =
@@ -593,7 +665,7 @@ class DistributionPointFetcher {
      * Append relative name to the issuer name and return a new
      * GeneralNames object.
      */
-    private GeneralNames getFullNames(X500Name issuer, RDN rdn)
+    private static GeneralNames getFullNames(X500Name issuer, RDN rdn)
         throws IOException {
         List<RDN> rdns = new ArrayList<RDN>(issuer.rdns());
         rdns.add(rdn);
@@ -601,5 +673,59 @@ class DistributionPointFetcher {
         GeneralNames fullNames = new GeneralNames();
         fullNames.add(new GeneralName(fullName));
         return fullNames;
+    }
+
+    /** Verifies whether a CRL is issued by a certain certificate
+     *
+     * @param cert the certificate
+     * @param crl the CRL to be verified
+     * @param provider the name of the signature provider
+     */
+    private static boolean issues(X509CertImpl cert, X509CRLImpl crl,
+            String provider) throws IOException {
+
+        boolean matched = false;
+
+        AdaptableX509CertSelector issuerSelector =
+                                    new AdaptableX509CertSelector();
+
+        // check certificate's key usage
+        boolean[] usages = cert.getKeyUsage();
+        if (usages != null) {
+            usages[6] = true;       // cRLSign
+            issuerSelector.setKeyUsage(usages);
+        }
+
+        // check certificate's subject
+        X500Principal crlIssuer = crl.getIssuerX500Principal();
+        issuerSelector.setSubject(crlIssuer);
+
+        /*
+         * Facilitate certification path construction with authority
+         * key identifier and subject key identifier.
+         *
+         * In practice, conforming CAs MUST use the key identifier method,
+         * and MUST include authority key identifier extension in all CRLs
+         * issued. [section 5.2.1, RFC 2459]
+         */
+        AuthorityKeyIdentifierExtension crlAKID = crl.getAuthKeyIdExtension();
+        if (crlAKID != null) {
+            issuerSelector.parseAuthorityKeyIdentifierExtension(crlAKID);
+        }
+
+        matched = issuerSelector.match(cert);
+
+        // if AKID is unreliable, verify the CRL signature with the cert
+        if (matched && (crlAKID == null ||
+                cert.getAuthorityKeyIdentifierExtension() == null)) {
+            try {
+                crl.verify(cert.getPublicKey(), provider);
+                matched = true;
+            } catch (Exception e) {
+                matched = false;
+            }
+        }
+
+        return matched;
     }
 }

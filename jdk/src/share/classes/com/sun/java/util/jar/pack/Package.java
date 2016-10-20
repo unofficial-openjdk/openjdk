@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,18 +25,40 @@
 
 package com.sun.java.util.jar.pack;
 
+import com.sun.java.util.jar.pack.Attribute.Layout;
+import com.sun.java.util.jar.pack.ConstantPool.ClassEntry;
+import com.sun.java.util.jar.pack.ConstantPool.DescriptorEntry;
+import com.sun.java.util.jar.pack.ConstantPool.Index;
+import com.sun.java.util.jar.pack.ConstantPool.LiteralEntry;
+import com.sun.java.util.jar.pack.ConstantPool.Utf8Entry;
+import com.sun.java.util.jar.pack.ConstantPool.Entry;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.SequenceInputStream;
 import java.lang.reflect.Modifier;
-import java.util.*;
-import java.util.zip.*;
-import java.util.jar.*;
-import java.io.*;
-import com.sun.java.util.jar.pack.ConstantPool.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.jar.JarFile;
+import static com.sun.java.util.jar.pack.Constants.*;
 
 /**
  * Define the main data structure transmitted by pack/unpack.
  * @author John Rose
  */
-class Package implements Constants {
+class Package {
     int verbose;
     {
         PropMap pmap = Utils.currentPropMap();
@@ -77,19 +99,20 @@ class Package implements Constants {
         cp = new ConstantPool.IndexGroup();
         classes.clear();
         files.clear();
+        BandStructure.nextSeqForDebug = 0;
     }
 
     int getPackageVersion() {
-        return (package_majver << 16) + (int)package_minver;
+        return (package_majver << 16) + package_minver;
     }
 
     // Special empty versions of Code and InnerClasses, used for markers.
     public static final Attribute.Layout attrCodeEmpty;
     public static final Attribute.Layout attrInnerClassesEmpty;
     public static final Attribute.Layout attrSourceFileSpecial;
-    public static final Map attrDefs;
+    public static final Map<Attribute.Layout, Attribute> attrDefs;
     static {
-        HashMap ad = new HashMap(2);
+        Map<Layout, Attribute> ad = new HashMap<Layout, Attribute>(3);
         attrCodeEmpty = Attribute.define(ad, ATTR_CONTEXT_METHOD,
                                          "Code", "").layout();
         attrInnerClassesEmpty = Attribute.define(ad, ATTR_CONTEXT_CLASS,
@@ -108,8 +131,7 @@ class Package implements Constants {
      */
     int getHighestClassVersion() {
         int res = 0;  // initial low value
-        for (Iterator i = classes.iterator(); i.hasNext(); ) {
-            Class cls = (Class) i.next();
+        for (Class cls : classes) {
             int ver = cls.getVersion();
             if (res < ver)  res = ver;
         }
@@ -122,13 +144,12 @@ class Package implements Constants {
     void choosePackageVersion() {
         assert(package_majver <= 0);  // do not call this twice
         int classver = getHighestClassVersion();
-        if (classver != 0 &&
-            (classver >>> 16) < JAVA6_MAX_CLASS_MAJOR_VERSION) {
-            // There are only old classfiles in this segment.
+        if (classver == 0 || (classver >>> 16) < JAVA6_MAX_CLASS_MAJOR_VERSION) {
+            // There are only old classfiles in this segment or resources
             package_majver = JAVA5_PACKAGE_MAJOR_VERSION;
             package_minver = JAVA5_PACKAGE_MINOR_VERSION;
         } else {
-            // Normal case.  Use the newest archive format.
+            // Normal case.  Use the newest archive format, when available
             package_majver = JAVA6_PACKAGE_MAJOR_VERSION;
             package_minver = JAVA6_PACKAGE_MINOR_VERSION;
         }
@@ -156,14 +177,14 @@ class Package implements Constants {
         }
     }
 
-    ArrayList classes = new ArrayList();
+    ArrayList<Package.Class> classes = new ArrayList<Package.Class>();
 
-    public List getClasses() {
+    public List<Package.Class> getClasses() {
         return classes;
     }
 
-    public
-    class Class extends Attribute.Holder implements Comparable {
+    public final
+    class Class extends Attribute.Holder implements Comparable<Class> {
         public Package getPackage() { return Package.this; }
 
         // Optional file characteristics and data source (a "class stub")
@@ -183,11 +204,11 @@ class Package implements Constants {
         ClassEntry[] interfaces;
 
         // Class parts
-        ArrayList fields;
-        ArrayList methods;
+        ArrayList<Field> fields;
+        ArrayList<Method> methods;
         //ArrayList attributes;  // in Attribute.Holder.this.attributes
         // Note that InnerClasses may be collected at the package level.
-        ArrayList innerClasses;
+        ArrayList<InnerClass> innerClasses;
 
         Class(int flags, ClassEntry thisClass, ClassEntry superClass, ClassEntry[] interfaces) {
             this.magic      = JAVA_MAGIC;
@@ -207,8 +228,8 @@ class Package implements Constants {
             initFile(newStub(classFile));
         }
 
-        List getFields() { return fields == null ? noFields : fields; }
-        List getMethods() { return methods == null ? noMethods : methods; }
+        List<Field> getFields() { return fields == null ? noFields : fields; }
+        List<Method> getMethods() { return methods == null ? noMethods : methods; }
 
         public String getName() {
             return thisClass.stringValue();
@@ -222,8 +243,7 @@ class Package implements Constants {
         }
 
         // Note:  equals and hashCode are identity-based.
-        public int compareTo(Object o) {
-            Class that = (Class)o;
+        public int compareTo(Class that) {
             String n0 = this.getName();
             String n1 = that.getName();
             return n0.compareTo(n1);
@@ -239,7 +259,7 @@ class Package implements Constants {
             if (olda == null)
                 return;  // no SourceFile attr.
             String obvious = getObviousSourceFile();
-            ArrayList ref = new ArrayList(1);
+            List<Entry> ref = new ArrayList<Entry>(1);
             olda.visitRefs(this, VRM_PACKAGE, ref);
             Utf8Entry sfName = (Utf8Entry) ref.get(0);
             Attribute a = olda;
@@ -267,7 +287,7 @@ class Package implements Constants {
             if (a != olda) {
                 if (verbose > 2)
                     Utils.log.fine("recoding obvious SourceFile="+obvious);
-                List newAttrs = new ArrayList(getAttributes());
+                List<Attribute> newAttrs = new ArrayList<Attribute>(getAttributes());
                 int where = newAttrs.indexOf(olda);
                 newAttrs.set(where, a);
                 setAttributes(newAttrs);
@@ -292,12 +312,12 @@ class Package implements Constants {
         boolean hasInnerClasses() {
             return innerClasses != null;
         }
-        List getInnerClasses() {
+        List<InnerClass> getInnerClasses() {
             return innerClasses;
         }
 
-        public void setInnerClasses(Collection ics) {
-            innerClasses = (ics == null) ? null : new ArrayList(ics);
+        public void setInnerClasses(Collection<InnerClass> ics) {
+            innerClasses = (ics == null) ? null : new ArrayList<InnerClass>(ics);
             // Edit the attribute list, if necessary.
             Attribute a = getAttribute(attrInnerClassesEmpty);
             if (innerClasses != null && a == null)
@@ -315,19 +335,18 @@ class Package implements Constants {
          *  The order of the resulting list is consistent
          *  with that of Package.this.allInnerClasses.
          */
-        public List computeGloballyImpliedICs() {
-            HashSet cpRefs = new HashSet();
+        public List<InnerClass> computeGloballyImpliedICs() {
+            Set<Entry> cpRefs = new HashSet<Entry>();
             {   // This block temporarily displaces this.innerClasses.
-                ArrayList innerClassesSaved = innerClasses;
+                ArrayList<InnerClass> innerClassesSaved = innerClasses;
                 innerClasses = null;  // ignore for the moment
                 visitRefs(VRM_CLASSIC, cpRefs);
                 innerClasses = innerClassesSaved;
             }
             ConstantPool.completeReferencesIn(cpRefs, true);
 
-            HashSet icRefs = new HashSet();
-            for (Iterator i = cpRefs.iterator(); i.hasNext(); ) {
-                Entry e = (Entry) i.next();
+            Set<Entry> icRefs = new HashSet<Entry>();
+            for (Entry e : cpRefs) {
                 // Restrict cpRefs to InnerClasses entries only.
                 if (!(e instanceof ClassEntry))  continue;
                 // For every IC reference, add its outers also.
@@ -342,9 +361,8 @@ class Package implements Constants {
             // This loop is structured this way so as to accumulate
             // entries into impliedICs in an order which reflects
             // the order of allInnerClasses.
-            ArrayList impliedICs = new ArrayList();
-            for (Iterator i = allInnerClasses.iterator(); i.hasNext(); ) {
-                InnerClass ic = (InnerClass) i.next();
+            ArrayList<InnerClass> impliedICs = new ArrayList<InnerClass>();
+            for (InnerClass ic : allInnerClasses) {
                 // This one is locally relevant if it describes
                 // a member of the current class, or if the current
                 // class uses it somehow.  In the particular case
@@ -363,10 +381,11 @@ class Package implements Constants {
 
         // Helper for both minimizing and expanding.
         // Computes a symmetric difference.
-        private List computeICdiff() {
-            List impliedICs = computeGloballyImpliedICs();
-            List actualICs  = getInnerClasses();
-            if (actualICs == null)  actualICs = Collections.EMPTY_LIST;
+        private List<InnerClass> computeICdiff() {
+            List<InnerClass> impliedICs = computeGloballyImpliedICs();
+            List<InnerClass> actualICs  = getInnerClasses();
+            if (actualICs == null)
+                actualICs = Collections.emptyList();
 
             // Symmetric difference is calculated from I, A like this:
             //  diff = (I+A) - (I*A)
@@ -385,8 +404,8 @@ class Package implements Constants {
                 // Diff is A since I is empty.
             }
             // (I*A) is non-trivial
-            HashSet center = new HashSet(actualICs);
-            center.retainAll(new HashSet(impliedICs));
+            Set<InnerClass> center = new HashSet<InnerClass>(actualICs);
+            center.retainAll(new HashSet<InnerClass>(impliedICs));
             impliedICs.addAll(actualICs);
             impliedICs.removeAll(center);
             // Diff is now I^A = (I+A)-(I*A).
@@ -404,9 +423,9 @@ class Package implements Constants {
          *  to use the globally implied ICs changed.
          */
         void minimizeLocalICs() {
-            List diff = computeICdiff();
-            List actualICs = innerClasses;
-            List localICs;  // will be the diff, modulo edge cases
+            List<InnerClass> diff = computeICdiff();
+            List<InnerClass> actualICs = innerClasses;
+            List<InnerClass> localICs;  // will be the diff, modulo edge cases
             if (diff.isEmpty()) {
                 // No diff, so transmit no attribute.
                 localICs = null;
@@ -419,7 +438,7 @@ class Package implements Constants {
             } else if (actualICs == null) {
                 // No local IC attribute, even though some are implied.
                 // Signal with trivial attribute.
-                localICs = Collections.EMPTY_LIST;
+                localICs = Collections.emptyList();
             } else {
                 // Transmit a non-empty diff, which will create
                 // a local ICs attribute.
@@ -436,12 +455,12 @@ class Package implements Constants {
          *  Otherwise, return positive if any IC tuples were added.
          */
         int expandLocalICs() {
-            List localICs = innerClasses;
-            List actualICs;
+            List<InnerClass> localICs = innerClasses;
+            List<InnerClass> actualICs;
             int changed;
             if (localICs == null) {
                 // Diff was empty.  (Common case.)
-                List impliedICs = computeGloballyImpliedICs();
+                List<InnerClass> impliedICs = computeGloballyImpliedICs();
                 if (impliedICs.isEmpty()) {
                     actualICs = null;
                     changed = 0;
@@ -464,7 +483,7 @@ class Package implements Constants {
         }
 
         public abstract
-        class Member extends Attribute.Holder implements Comparable {
+        class Member extends Attribute.Holder implements Comparable<Member> {
             DescriptorEntry descriptor;
 
             protected Member(int flags, DescriptorEntry descriptor) {
@@ -487,7 +506,7 @@ class Package implements Constants {
             protected Entry[] getCPMap() {
                 return cpMap;
             }
-            protected void visitRefs(int mode, Collection refs) {
+            protected void visitRefs(int mode, Collection<Entry> refs) {
                 if (verbose > 2)  Utils.log.fine("visitRefs "+this);
                 // Careful:  The descriptor is used by the package,
                 // but the classfile breaks it into component refs.
@@ -515,7 +534,7 @@ class Package implements Constants {
                 super(flags, descriptor);
                 assert(!descriptor.isMethod());
                 if (fields == null)
-                    fields = new ArrayList();
+                    fields = new ArrayList<Field>();
                 boolean added = fields.add(this);
                 assert(added);
                 order = fields.size();
@@ -525,7 +544,7 @@ class Package implements Constants {
                 return descriptor.getLiteralTag();
             }
 
-            public int compareTo(Object o) {
+            public int compareTo(Member o) {
                 Field that = (Field)o;
                 return this.order - that.order;
             }
@@ -540,7 +559,7 @@ class Package implements Constants {
                 super(flags, descriptor);
                 assert(descriptor.isMethod());
                 if (methods == null)
-                    methods = new ArrayList();
+                    methods = new ArrayList<Method>();
                 boolean added = methods.add(this);
                 assert(added);
             }
@@ -558,19 +577,19 @@ class Package implements Constants {
             }
 
             // Sort methods in a canonical order (by type, then by name).
-            public int compareTo(Object o) {
+            public int compareTo(Member o) {
                 Method that = (Method)o;
                 return this.getDescriptor().compareTo(that.getDescriptor());
             }
 
             public void strip(String attrName) {
-                if (attrName == "Code")
+                if ("Code".equals(attrName))
                     code = null;
                 if (code != null)
                     code.strip(attrName);
                 super.strip(attrName);
             }
-            protected void visitRefs(int mode, Collection refs) {
+            protected void visitRefs(int mode, Collection<Entry> refs) {
                 super.visitRefs(mode, refs);
                 if (code != null) {
                     if (mode == VRM_CLASSIC) {
@@ -584,11 +603,10 @@ class Package implements Constants {
         public void trimToSize() {
             super.trimToSize();
             for (int isM = 0; isM <= 1; isM++) {
-                ArrayList members = (isM == 0) ? fields : methods;
+                ArrayList<? extends Member> members = (isM == 0) ? fields : methods;
                 if (members == null)  continue;
                 members.trimToSize();
-                for (Iterator i = members.iterator(); i.hasNext(); ) {
-                    Member m = (Member)i.next();
+                for (Member m : members) {
                     m.trimToSize();
                 }
             }
@@ -598,31 +616,27 @@ class Package implements Constants {
         }
 
         public void strip(String attrName) {
-            if (attrName == "InnerClass")
+            if ("InnerClass".equals(attrName))
                 innerClasses = null;
             for (int isM = 0; isM <= 1; isM++) {
-                ArrayList members = (isM == 0) ? fields : methods;
+                ArrayList<? extends Member> members = (isM == 0) ? fields : methods;
                 if (members == null)  continue;
-                for (Iterator i = members.iterator(); i.hasNext(); ) {
-                    Member m = (Member)i.next();
+                for (Member m : members) {
                     m.strip(attrName);
                 }
             }
             super.strip(attrName);
         }
 
-        protected void visitRefs(int mode, Collection refs) {
+        protected void visitRefs(int mode, Collection<Entry> refs) {
             if (verbose > 2)  Utils.log.fine("visitRefs "+this);
             refs.add(thisClass);
             refs.add(superClass);
-            for (int i = 0; i < interfaces.length; i++) {
-                refs.add(interfaces[i]);
-            }
+            refs.addAll(Arrays.asList(interfaces));
             for (int isM = 0; isM <= 1; isM++) {
-                ArrayList members = (isM == 0) ? fields : methods;
+                ArrayList<? extends Member> members = (isM == 0) ? fields : methods;
                 if (members == null)  continue;
-                for (Iterator i = members.iterator(); i.hasNext(); ) {
-                    Member m = (Member)i.next();
+                for (Member m : members) {
                     boolean ok = false;
                     try {
                         m.visitRefs(mode, refs);
@@ -638,7 +652,7 @@ class Package implements Constants {
             super.visitRefs(mode, refs);
         }
 
-        protected void visitInnerClassRefs(int mode, Collection refs) {
+        protected void visitInnerClassRefs(int mode, Collection<Entry> refs) {
             Package.visitInnerClassRefs(innerClasses, mode, refs);
         }
 
@@ -710,30 +724,28 @@ class Package implements Constants {
     }
 
     // What non-class files are in this unit?
-    ArrayList files = new ArrayList();
+    ArrayList<File> files = new ArrayList<File>();
 
-    public List getFiles() {
+    public List<File> getFiles() {
         return files;
     }
 
-    public List getClassStubs() {
-        ArrayList classStubs = new ArrayList(classes.size());
-        for (Iterator i = classes.iterator(); i.hasNext(); ) {
-            Class cls = (Class) i.next();
+    public List<File> getClassStubs() {
+        List<File> classStubs = new ArrayList<File>(classes.size());
+        for (Class cls : classes) {
             assert(cls.file.isClassStub());
             classStubs.add(cls.file);
         }
         return classStubs;
     }
 
-    public
-    class File implements Comparable {
+    public final class File implements Comparable<File> {
         String nameString;  // true name of this file
         Utf8Entry name;
         int modtime = NO_MODTIME;
         int options = 0;  // random flag bits, such as deflate_hint
         Class stubClass;  // if this is a stub, here's the class
-        ArrayList prepend = new ArrayList();  // list of byte[]
+        ArrayList<byte[]> prepend = new ArrayList<byte[]>();  // list of byte[]
         java.io.ByteArrayOutputStream append = new ByteArrayOutputStream();
 
         File(Utf8Entry name) {
@@ -769,15 +781,16 @@ class Package implements Constants {
         // The nameString is the key.  Ignore other things.
         // (Note:  The name might be "", in the case of a trivial class stub.)
         public boolean equals(Object o) {
+            if (o == null || (o.getClass() != File.class))
+                return false;
             File that = (File)o;
-            return that.nameString == this.nameString;
+            return that.nameString.equals(this.nameString);
         }
         public int hashCode() {
             return nameString.hashCode();
         }
         // Simple alphabetic sort.  PackageWriter uses a better comparator.
-        public int compareTo(Object o) {
-            File that = (File)o;
+        public int compareTo(File that) {
             return this.nameString.compareTo(that.nameString);
         }
         public String toString() {
@@ -793,9 +806,9 @@ class Package implements Constants {
             return getFileName(null);
         }
         public java.io.File getFileName(java.io.File parent) {
-            String name = this.nameString;
+            String lname = this.nameString;
             //if (name.startsWith("./"))  name = name.substring(2);
-            String fname = name.replace('/', java.io.File.separatorChar);
+            String fname = lname.replace('/', java.io.File.separatorChar);
             return new java.io.File(parent, fname);
         }
 
@@ -811,18 +824,16 @@ class Package implements Constants {
         }
         public long getFileLength() {
             long len = 0;
-            if (prepend == null && append == null)  return 0;
-            for (Iterator i = prepend.iterator(); i.hasNext(); ) {
-                byte[] block = (byte[]) i.next();
+            if (prepend == null || append == null)  return 0;
+            for (byte[] block : prepend) {
                 len += block.length;
             }
             len += append.size();
             return len;
         }
         public void writeTo(OutputStream out) throws IOException {
-            if (prepend == null && append == null)  return;
-            for (Iterator i = prepend.iterator(); i.hasNext(); ) {
-                byte[] block = (byte[]) i.next();
+            if (prepend == null || append == null)  return;
+            for (byte[] block : prepend) {
                 out.write(block);
             }
             append.writeTo(out);
@@ -836,17 +847,16 @@ class Package implements Constants {
         }
         public InputStream getInputStream() {
             InputStream in = new ByteArrayInputStream(append.toByteArray());
-            if (prepend.size() == 0)  return in;
-            ArrayList isa = new ArrayList(prepend.size()+1);
-            for (Iterator i = prepend.iterator(); i.hasNext(); ) {
-                byte[] bytes = (byte[]) i.next();
+            if (prepend.isEmpty())  return in;
+            List<InputStream> isa = new ArrayList<InputStream>(prepend.size()+1);
+            for (byte[] bytes : prepend) {
                 isa.add(new ByteArrayInputStream(bytes));
             }
             isa.add(in);
             return new SequenceInputStream(Collections.enumeration(isa));
         }
 
-        protected void visitRefs(int mode, Collection refs) {
+        protected void visitRefs(int mode, Collection<Entry> refs) {
             assert(name != null);
             refs.add(name);
         }
@@ -874,24 +884,23 @@ class Package implements Constants {
     }
 
     // Is there a globally declared table of inner classes?
-    ArrayList allInnerClasses = new ArrayList();
-    HashMap   allInnerClassesByThis;
+    List<InnerClass> allInnerClasses = new ArrayList<InnerClass>();
+    Map<ClassEntry, InnerClass>   allInnerClassesByThis;
 
     public
-    List getAllInnerClasses() {
+    List<InnerClass> getAllInnerClasses() {
         return allInnerClasses;
     }
 
     public
-    void setAllInnerClasses(Collection ics) {
+    void setAllInnerClasses(Collection<InnerClass> ics) {
         assert(ics != allInnerClasses);
         allInnerClasses.clear();
         allInnerClasses.addAll(ics);
 
         // Make an index:
-        allInnerClassesByThis = new HashMap(allInnerClasses.size());
-        for (Iterator i = allInnerClasses.iterator(); i.hasNext(); ) {
-            InnerClass ic = (InnerClass) i.next();
+        allInnerClassesByThis = new HashMap<ClassEntry, InnerClass>(allInnerClasses.size());
+        for (InnerClass ic : allInnerClasses) {
             Object pic = allInnerClassesByThis.put(ic.thisClass, ic);
             assert(pic == null);  // caller must ensure key uniqueness!
         }
@@ -901,11 +910,11 @@ class Package implements Constants {
     public
     InnerClass getGlobalInnerClass(Entry thisClass) {
         assert(thisClass instanceof ClassEntry);
-        return (InnerClass) allInnerClassesByThis.get(thisClass);
+        return allInnerClassesByThis.get(thisClass);
     }
 
     static
-    class InnerClass implements Comparable {
+    class InnerClass implements Comparable<InnerClass> {
         final ClassEntry thisClass;
         final ClassEntry outerClass;
         final Utf8Entry name;
@@ -933,16 +942,17 @@ class Package implements Constants {
             if (parse == null)  return false;
             String pkgOuter = parse[0];
             //String number = parse[1];
-            String name     = parse[2];
+            String lname     = parse[2];
             String haveName  = (this.name == null)  ? null : this.name.stringValue();
             String haveOuter = (outerClass == null) ? null : outerClass.stringValue();
-            boolean predictable = (name == haveName && pkgOuter == haveOuter);
+            boolean lpredictable = (lname == haveName && pkgOuter == haveOuter);
             //System.out.println("computePredictable => "+predictable);
-            return predictable;
+            return lpredictable;
         }
 
         public boolean equals(Object o) {
-            if (o == null)  return false;
+            if (o == null || o.getClass() != InnerClass.class)
+                return false;
             InnerClass that = (InnerClass)o;
             return eq(this.thisClass, that.thisClass)
                 && eq(this.outerClass, that.outerClass)
@@ -955,12 +965,11 @@ class Package implements Constants {
         public int hashCode() {
             return thisClass.hashCode();
         }
-        public int compareTo(Object o) {
-            InnerClass that = (InnerClass)o;
+        public int compareTo(InnerClass that) {
             return this.thisClass.compareTo(that.thisClass);
         }
 
-        protected void visitRefs(int mode, Collection refs) {
+        protected void visitRefs(int mode, Collection<Entry> refs) {
             refs.add(thisClass);
             if (mode == VRM_CLASSIC || !predictable) {
                 // If the name can be demangled, the package omits
@@ -977,7 +986,7 @@ class Package implements Constants {
 
     // Helper for building InnerClasses attributes.
     static private
-    void visitInnerClassRefs(Collection innerClasses, int mode, Collection refs) {
+    void visitInnerClassRefs(Collection<InnerClass> innerClasses, int mode, Collection<Entry> refs) {
         if (innerClasses == null) {
             return;  // no attribute; nothing to do
         }
@@ -986,8 +995,7 @@ class Package implements Constants {
         }
         if (innerClasses.size() > 0) {
             // Count the entries themselves:
-            for (Iterator i = innerClasses.iterator(); i.hasNext(); ) {
-                InnerClass c = (InnerClass) i.next();
+            for (InnerClass c : innerClasses) {
                 c.visitRefs(mode, refs);
             }
         }
@@ -1087,7 +1095,7 @@ class Package implements Constants {
         return ConstantPool.getUtf8Entry(s);
     }
 
-    static LiteralEntry getRefLiteral(Comparable s) {
+    static LiteralEntry getRefLiteral(Comparable<?> s) {
         return ConstantPool.getLiteralEntry(s);
     }
 
@@ -1095,43 +1103,38 @@ class Package implements Constants {
         // what is one of { Debug, Compile, Constant, Exceptions, InnerClasses }
         if (verbose > 0)
             Utils.log.info("Stripping "+what.toLowerCase()+" data and attributes...");
-        if (what == "Debug") {
+        if ("Debug".equals(what)) {
             strip("SourceFile");
             strip("LineNumberTable");
             strip("LocalVariableTable");
             strip("LocalVariableTypeTable");
-        }
-        if (what == "Compile") {
+        } else if ("Compile".equals(what)) {
             // Keep the inner classes normally.
             // Although they have no effect on execution,
             // the Reflection API exposes them, and JCK checks them.
             // NO: // strip("InnerClasses");
             strip("Deprecated");
             strip("Synthetic");
-        }
-        if (what == "Exceptions") {
+        } else if ("Exceptions".equals(what)) {
             // Keep the exceptions normally.
             // Although they have no effect on execution,
             // the Reflection API exposes them, and JCK checks them.
             strip("Exceptions");
-        }
-        if (what == "Constant") {
+        } else if ("Constant".equals(what)) {
             stripConstantFields();
         }
     }
 
     public void trimToSize() {
         classes.trimToSize();
-        for (Iterator i = classes.iterator(); i.hasNext(); ) {
-            Class c = (Class)i.next();
+        for (Class c : classes) {
             c.trimToSize();
         }
         files.trimToSize();
     }
 
     public void strip(String attrName) {
-        for (Iterator i = classes.iterator(); i.hasNext(); ) {
-            Class c = (Class)i.next();
+        for (Class c : classes) {
             c.strip(attrName);
         }
     }
@@ -1144,10 +1147,9 @@ class Package implements Constants {
     }
 
     public void stripConstantFields() {
-        for (Iterator i = classes.iterator(); i.hasNext(); ) {
-            Class c = (Class) i.next();
-            for (Iterator j = c.fields.iterator(); j.hasNext(); ) {
-                Class.Field f = (Class.Field) j.next();
+        for (Class c : classes) {
+            for (Iterator<Class.Field> j = c.fields.iterator(); j.hasNext(); ) {
+                Class.Field f = j.next();
                 if (Modifier.isFinal(f.flags)
                     // do not strip non-static finals:
                     && Modifier.isStatic(f.flags)
@@ -1162,14 +1164,12 @@ class Package implements Constants {
         }
     }
 
-    protected void visitRefs(int mode, Collection refs) {
-        for (Iterator i = classes.iterator(); i.hasNext(); ) {
-            Class c = (Class)i.next();
+    protected void visitRefs(int mode, Collection<Entry> refs) {
+        for ( Class c : classes) {
             c.visitRefs(mode, refs);
         }
         if (mode != VRM_CLASSIC) {
-            for (Iterator i = files.iterator(); i.hasNext(); ) {
-                File f = (File)i.next();
+            for (File f : files) {
                 f.visitRefs(mode, refs);
             }
             visitInnerClassRefs(allInnerClasses, mode, refs);
@@ -1193,9 +1193,9 @@ class Package implements Constants {
         // modtimes and options are not transmitted, and the stub files
         // for class files do not need to be transmitted at all.
         // Also
-        List stubs = getClassStubs();
-        for (Iterator i = files.iterator(); i.hasNext(); ) {
-            File file = (File) i.next();
+        List<File> stubs = getClassStubs();
+        for (Iterator<File> i = files.iterator(); i.hasNext(); ) {
+            File file = i.next();
             if (file.isClassStub() ||
                 (stripDirectories && file.isDirectory())) {
                 i.remove();
@@ -1207,10 +1207,8 @@ class Package implements Constants {
         // This keeps files of similar format near each other.
         // Put class files at the end, keeping their fixed order.
         // Be sure the JAR file's required manifest stays at the front. (4893051)
-        Collections.sort(files, new Comparator() {
-                public int compare(Object o0, Object o1) {
-                    File r0 = (File) o0;
-                    File r1 = (File) o1;
+        Collections.sort(files, new Comparator<File>() {
+                public int compare(File r0, File r1) {
                     // Get the file name.
                     String f0 = r0.nameString;
                     String f1 = r1.nameString;
@@ -1238,8 +1236,8 @@ class Package implements Constants {
 
     void trimStubs() {
         // Restore enough non-trivial stubs to carry the needed class modtimes.
-        for (ListIterator i = files.listIterator(files.size()); i.hasPrevious(); ) {
-            File file = (File) i.previous();
+        for (ListIterator<File> i = files.listIterator(files.size()); i.hasPrevious(); ) {
+            File file = i.previous();
             if (!file.isTrivialClassStub()) {
                 if (verbose > 1)
                     Utils.log.fine("Keeping last non-trivial "+file);
@@ -1256,7 +1254,7 @@ class Package implements Constants {
     }
 
     // Use this before writing the package file.
-    void buildGlobalConstantPool(Set requiredEntries) {
+    void buildGlobalConstantPool(Set<Entry> requiredEntries) {
         if (verbose > 1)
             Utils.log.fine("Checking for unused CP entries");
         requiredEntries.add(getRefString(""));  // uconditionally present
@@ -1288,17 +1286,16 @@ class Package implements Constants {
 
     // Use this before writing the class files.
     void ensureAllClassFiles() {
-        HashSet fileSet = new HashSet(files);
-        for (Iterator i = classes.iterator(); i.hasNext(); ) {
-            Class cls = (Class) i.next();
+        Set<File> fileSet = new HashSet<File>(files);
+        for (Class cls : classes) {
             // Add to the end of ths list:
             if (!fileSet.contains(cls.file))
                 files.add(cls.file);
         }
     }
 
-    static final List noObjects = Arrays.asList(new Object[0]);
-    static final List noFields = Arrays.asList(new Class.Field[0]);
-    static final List noMethods = Arrays.asList(new Class.Method[0]);
-    static final List noInnerClasses = Arrays.asList(new InnerClass[0]);
+    static final List<Object> noObjects = Arrays.asList(new Object[0]);
+    static final List<Class.Field> noFields = Arrays.asList(new Class.Field[0]);
+    static final List<Class.Method> noMethods = Arrays.asList(new Class.Method[0]);
+    static final List<InnerClass> noInnerClasses = Arrays.asList(new InnerClass[0]);
 }

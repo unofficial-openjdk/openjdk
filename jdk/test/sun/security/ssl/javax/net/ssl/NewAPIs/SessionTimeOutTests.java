@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,10 +21,16 @@
  * questions.
  */
 
+//
+// SunJSSE does not support dynamic system properties, no way to re-use
+// system properties in samevm/agentvm mode.
+//
+
 /*
  * @test
  * @bug   4366807
  * @summary Need new APIs to get/set session timeout and session cache size.
+ * @run main/othervm SessionTimeOutTests
  */
 
 import java.io.*;
@@ -32,6 +38,7 @@ import java.net.*;
 import javax.net.ssl.*;
 import java.util.*;
 import java.security.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Session reuse time-out tests cover the cases below:
@@ -75,7 +82,7 @@ public class SessionTimeOutTests {
     /*
      * Is the server ready to serve?
      */
-    volatile static int serverReady = PORTS;
+    AtomicInteger serverReady = new AtomicInteger(PORTS);
 
     /*
      * Turn on SSL debugging?
@@ -94,7 +101,7 @@ public class SessionTimeOutTests {
     /*
      * Define the server side of the test.
      *
-     * If the server prematurely exits, serverReady will be set to true
+     * If the server prematurely exits, serverReady will be set to zero
      * to avoid infinite hangs.
      */
 
@@ -107,12 +114,13 @@ public class SessionTimeOutTests {
 
         SSLServerSocket sslServerSocket =
             (SSLServerSocket) sslssf.createServerSocket(serverPort);
-        serverPorts[createdPorts++] = sslServerSocket.getLocalPort();
+        int slot = createdPorts.getAndIncrement();
+        serverPorts[slot] = sslServerSocket.getLocalPort();
 
         /*
          * Signal Client, we're ready for his connect.
          */
-        serverReady--;
+        serverReady.getAndDecrement();
         int read = 0;
         int nConnections = 0;
         SSLSession sessions [] = new SSLSession [serverConns];
@@ -133,7 +141,7 @@ public class SessionTimeOutTests {
     /*
      * Define the client side of the test.
      *
-     * If the server prematurely exits, serverReady will be set to true
+     * If the server prematurely exits, serverReady will be set to zero
      * to avoid infinite hangs.
      */
     void doClientSide() throws Exception {
@@ -141,7 +149,7 @@ public class SessionTimeOutTests {
         /*
          * Wait for server to get started.
          */
-        while (serverReady > 0) {
+        while (serverReady.get() > 0) {
             Thread.sleep(50);
         }
 
@@ -207,7 +215,7 @@ public class SessionTimeOutTests {
                 timeout = sessCtx.getSessionTimeout();
                 System.out.println("timeout is changed to: " + timeout);
                 System.out.println();
-            }
+           }
         }
 
         // check the ids returned by the enumerator
@@ -259,7 +267,7 @@ public class SessionTimeOutTests {
         for (int i = 0; i < nConnections; i++) {
             sslSockets[i].close();
         }
-         System.out.println("----------------------------------------"
+        System.out.println("----------------------------------------"
                                  + "-----------------------");
         System.out.println("Session timeout test passed");
     }
@@ -283,8 +291,8 @@ public class SessionTimeOutTests {
      * The remainder is just support stuff
      */
 
-    volatile int serverPorts[] = new int[PORTS];
-    volatile int createdPorts = 0;
+    int serverPorts[] = new int[PORTS];
+    AtomicInteger createdPorts = new AtomicInteger(0);
     static SSLServerSocketFactory sslssf;
     static SSLSocketFactory sslsf;
     static SSLContext sslctx;
@@ -344,45 +352,88 @@ public class SessionTimeOutTests {
         int serverConns = MAX_ACTIVE_CONNECTIONS / (serverPorts.length);
         int remainingConns = MAX_ACTIVE_CONNECTIONS % (serverPorts.length);
 
-        if (separateServerThread) {
-            for (int i = 0; i < serverPorts.length; i++) {
-                // distribute remaining connections among the available ports
-                if (i < remainingConns)
-                    startServer(serverPorts[i], (serverConns + 1), true);
-                else
-                    startServer(serverPorts[i], serverConns, true);
+        Exception startException = null;
+        try {
+            if (separateServerThread) {
+                for (int i = 0; i < serverPorts.length; i++) {
+                    // distribute remaining connections among the
+                    // vailable ports
+                    if (i < remainingConns)
+                        startServer(serverPorts[i], (serverConns + 1), true);
+                    else
+                        startServer(serverPorts[i], serverConns, true);
+                }
+                startClient(false);
+            } else {
+                startClient(true);
+                for (int i = 0; i < serverPorts.length; i++) {
+                    if (i < remainingConns)
+                        startServer(serverPorts[i], (serverConns + 1), false);
+                    else
+                        startServer(serverPorts[i], serverConns, false);
+                }
             }
-            startClient(false);
-        } else {
-            startClient(true);
-            for (int i = 0; i < serverPorts.length; i++) {
-                if (i < remainingConns)
-                    startServer(serverPorts[i], (serverConns + 1), false);
-                else
-                    startServer(serverPorts[i], serverConns, false);
-            }
+        } catch (Exception e) {
+            startException = e;
         }
 
         /*
          * Wait for other side to close down.
          */
         if (separateServerThread) {
-            serverThread.join();
+            if (serverThread != null) {
+                serverThread.join();
+            }
         } else {
-            clientThread.join();
+            if (clientThread != null) {
+                clientThread.join();
+            }
         }
 
         /*
          * When we get here, the test is pretty much over.
-         *
-         * If the main thread excepted, that propagates back
-         * immediately.  If the other thread threw an exception, we
-         * should report back.
+         * Which side threw the error?
          */
-        if (serverException != null)
-            throw serverException;
-        if (clientException != null)
-            throw clientException;
+        Exception local;
+        Exception remote;
+
+        if (separateServerThread) {
+            remote = serverException;
+            local = clientException;
+        } else {
+            remote = clientException;
+            local = serverException;
+        }
+
+        Exception exception = null;
+
+        /*
+         * Check various exception conditions.
+         */
+        if ((local != null) && (remote != null)) {
+            // If both failed, return the curthread's exception.
+            local.initCause(remote);
+            exception = local;
+        } else if (local != null) {
+            exception = local;
+        } else if (remote != null) {
+            exception = remote;
+        } else if (startException != null) {
+            exception = startException;
+        }
+
+        /*
+         * If there was an exception *AND* a startException,
+         * output it.
+         */
+        if (exception != null) {
+            if (exception != startException && startException != null) {
+                exception.addSuppressed(startException);
+            }
+            throw exception;
+        }
+
+        // Fall-through: no exception to throw!
     }
 
     void startServer(final int port, final int nConns,
@@ -400,14 +451,20 @@ public class SessionTimeOutTests {
                          */
                         System.err.println("Server died...");
                         e.printStackTrace();
-                        serverReady = 0;
+                        serverReady.set(0);
                         serverException = e;
                     }
                 }
             };
             serverThread.start();
         } else {
-            doServerSide(port, nConns);
+            try {
+                doServerSide(port, nConns);
+            } catch (Exception e) {
+                serverException = e;
+            } finally {
+                serverReady.set(0);
+            }
         }
     }
 
@@ -429,7 +486,11 @@ public class SessionTimeOutTests {
             };
             clientThread.start();
         } else {
-            doClientSide();
+            try {
+                doClientSide();
+            } catch (Exception e) {
+                clientException = e;
+            }
         }
     }
 }

@@ -86,13 +86,13 @@ static jlong read_input_via_stdio(unpacker* u,
       readlen = (int)(maxlen - numread);
     int nr = 0;
     if (u->infileptr != null) {
-      nr = fread(bufptr, 1, readlen, u->infileptr);
+      nr = (int)fread(bufptr, 1, readlen, u->infileptr);
     } else {
 #ifndef WIN32
       // we prefer unbuffered inputs
-      nr = read(u->infileno, bufptr, readlen);
+      nr = (int)read(u->infileno, bufptr, readlen);
 #else
-      nr = fread(bufptr, 1, readlen, stdin);
+      nr = (int)fread(bufptr, 1, readlen, stdin);
 #endif
     }
     if (nr <= 0) {
@@ -135,31 +135,28 @@ static const char* nbasename(const char* progname) {
   return progname;
 }
 
-static const char* usage_lines[] = {
-  "Usage:  %s [-opt... | --option=value]... x.pack[.gz] y.jar\n",
-    "\n",
-    "Unpacking Options\n",
-    "  -H{h}, --deflate-hint={h}     override transmitted deflate hint: true, false, or keep (default)\n",
-    "  -r, --remove-pack-file        remove input file after unpacking\n",
-    "  -v, --verbose                 increase program verbosity\n",
-    "  -q, --quiet                   set verbosity to lowest level\n",
-    "  -l{F}, --log-file={F}         output to the given log file, or '-' for standard output (default)\n",
-    "  -?, -h, --help                print this message\n",
-    "  -V, --version                 print program version\n",
-    "  -J{X}                         Java VM argument (ignored)\n",
-    null
-};
+#define USAGE_HEADER "Usage:  %s [-opt... | --option=value]... x.pack[.gz] y.jar\n"
+#define USAGE_OPTIONS \
+    "\n" \
+    "Unpacking Options\n" \
+    "  -H{h}, --deflate-hint={h}     override transmitted deflate hint: true, false, or keep (default)\n" \
+    "  -r, --remove-pack-file        remove input file after unpacking\n" \
+    "  -v, --verbose                 increase program verbosity\n" \
+    "  -q, --quiet                   set verbosity to lowest level\n" \
+    "  -l{F}, --log-file={F}         output to the given log file, or '-' for standard output (default)\n" \
+    "  -?, -h, --help                print this message\n" \
+    "  -V, --version                 print program version\n" \
+    "  -J{X}                         Java VM argument (ignored)\n"
 
 static void usage(unpacker* u, const char* progname, bool full = false) {
   // WinMain does not set argv[0] to the progrname
   progname = (progname != null) ? nbasename(progname) : "unpack200";
-  for (int i = 0; usage_lines[i] != null; i++) {
-    fprintf(u->errstrm, usage_lines[i], progname);
-    if (!full) {
-      fprintf(u->errstrm,
-              "(For more information, run %s --help .)\n", progname);
-      break;
-    }
+
+  fprintf(u->errstrm, USAGE_HEADER, progname);
+  if (full) {
+    fprintf(u->errstrm, USAGE_OPTIONS);
+  } else {
+    fprintf(u->errstrm, "(For more information, run %s --help .)\n", progname);
   }
 }
 
@@ -279,7 +276,6 @@ int unpacker::run(int argc, char **argv) {
   char** argbuf = init_args(argc, argv, envargc);
   char** arg0 = argbuf+envargc;
   char** argp = argbuf;
-  int ach;
 
   int verbose = 0;
   char* logfile = null;
@@ -370,7 +366,7 @@ int unpacker::run(int argc, char **argv) {
   int magic;
 
   // check for GZIP input
-  magic = read_magic(&u, peek, sizeof(peek));
+  magic = read_magic(&u, peek, (int)sizeof(peek));
   if ((magic & GZIP_MAGIC_MASK) == GZIP_MAGIC) {
     // Oops; must slap an input filter on this data.
     setup_gzin(&u);
@@ -397,8 +393,8 @@ int unpacker::run(int argc, char **argv) {
     if (u.aborting())  break;
 
     // Peek ahead for more data.
-    magic = read_magic(&u, peek, sizeof(peek));
-    if (magic != JAVA_PACKAGE_MAGIC) {
+    magic = read_magic(&u, peek, (int)sizeof(peek));
+    if (magic != (int)JAVA_PACKAGE_MAGIC) {
       if (magic != EOF_MAGIC)
         u.abort("garbage after end of pack archive");
       break;   // all done

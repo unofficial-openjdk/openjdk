@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,12 +34,9 @@ import java.io.ByteArrayInputStream;
 import java.io.UnsupportedEncodingException;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
-import java.util.Iterator;
-import java.util.List;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.HashMap;
@@ -48,7 +45,6 @@ import java.util.Set;
 import java.security.*;
 import java.security.KeyStore.*;
 
-import java.security.cert.CertPath;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.security.cert.CertificateFactory;
@@ -60,7 +56,6 @@ import java.security.spec.*;
 import javax.crypto.SecretKey;
 import javax.crypto.interfaces.*;
 
-import javax.security.auth.Subject;
 import javax.security.auth.x500.X500Principal;
 import javax.security.auth.login.LoginException;
 import javax.security.auth.callback.Callback;
@@ -69,7 +64,6 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
 import sun.security.util.Debug;
-import sun.security.x509.SerialNumber;
 import sun.security.util.DerValue;
 
 import sun.security.ec.ECParameters;
@@ -235,7 +229,7 @@ final class P11KeyStore extends KeyStoreSpi {
 
         private PasswordCallbackHandler(char[] password) {
             if (password != null) {
-                this.password = (char[])password.clone();
+                this.password = password.clone();
             }
         }
 
@@ -771,17 +765,11 @@ final class P11KeyStore extends KeyStoreSpi {
                 dumpTokenMap();
             }
         } catch (LoginException le) {
-            IOException ioe = new IOException("load failed");
-            ioe.initCause(le);
-            throw ioe;
+            throw new IOException("load failed", le);
         } catch (KeyStoreException kse) {
-            IOException ioe = new IOException("load failed");
-            ioe.initCause(kse);
-            throw ioe;
+            throw new IOException("load failed", kse);
         } catch (PKCS11Exception pe) {
-            IOException ioe = new IOException("load failed");
-            ioe.initCause(pe);
-            throw ioe;
+            throw new IOException("load failed", pe);
         }
     }
 
@@ -1958,7 +1946,7 @@ final class P11KeyStore extends KeyStoreSpi {
                 debug.println("creating RSAPrivateKey attrs");
             }
 
-            RSAPrivateKey rsaKey = (RSAPrivateKey)key;
+            RSAPrivateKey rsaKey = key;
 
             attrs = new CK_ATTRIBUTE[] {
                 ATTR_TOKEN_TRUE,
@@ -2750,7 +2738,7 @@ final class P11KeyStore extends KeyStoreSpi {
     private void dumpTokenMap() {
         Set<String> aliases = aliasMap.keySet();
         System.out.println("Token Alias Map:");
-        if (aliases.size() == 0) {
+        if (aliases.isEmpty()) {
             System.out.println("  [empty]");
         } else {
             for (String s : aliases) {

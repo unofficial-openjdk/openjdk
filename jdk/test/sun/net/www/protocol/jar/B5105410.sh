@@ -30,12 +30,8 @@
 #
 
 OS=`uname -s`
-case "$OS" in
-  SunOS )
-    PS=":"
-    FS="/"
-    ;;
-  Linux )
+case "$OS" in 
+  SunOS | Linux | Darwin | AIX )
     PS=":"
     FS="/"
     ;;

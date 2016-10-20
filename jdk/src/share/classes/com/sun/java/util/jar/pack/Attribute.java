@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,10 +25,19 @@
 
 package com.sun.java.util.jar.pack;
 
-import java.io.*;
-import java.util.*;
-import com.sun.java.util.jar.pack.Package.Class;
-import com.sun.java.util.jar.pack.ConstantPool.*;
+import com.sun.java.util.jar.pack.ConstantPool.Entry;
+import com.sun.java.util.jar.pack.ConstantPool.Index;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import static com.sun.java.util.jar.pack.Constants.*;
 
 /**
  * Represents an attribute in a class-file.
@@ -37,7 +46,7 @@ import com.sun.java.util.jar.pack.ConstantPool.*;
  * attribute layouts.
  * @author John Rose
  */
-class Attribute implements Comparable, Constants {
+class Attribute implements Comparable<Attribute> {
     // Attribute instance fields.
 
     Layout def;     // the name and format of this attr
@@ -91,25 +100,26 @@ class Attribute implements Comparable, Constants {
         return this == def.canon;
     }
 
-    public int compareTo(Object o) {
-        Attribute that = (Attribute) o;
+    public int compareTo(Attribute that) {
         return this.def.compareTo(that.def);
     }
 
-    static private final byte[] noBytes = {};
-    static private final HashMap canonLists = new HashMap();
-    static private final HashMap attributes = new HashMap();
-    static private final HashMap standardDefs = new HashMap();
+    private static final Map<List<Attribute>, List<Attribute>> canonLists =
+        new HashMap<List<Attribute>, List<Attribute>>();
+    private static final Map<Layout, Attribute> attributes =
+        new HashMap<Layout, Attribute>();
+    private static final Map<Layout, Attribute> standardDefs =
+        new HashMap<Layout, Attribute>();
 
     // Canonicalized lists of trivial attrs (Deprecated, etc.)
     // are used by trimToSize, in order to reduce footprint
     // of some common cases.  (Note that Code attributes are
     // always zero size.)
-    public static List getCanonList(List al) {
+    public static List<Attribute> getCanonList(List<Attribute> al) {
         synchronized (canonLists) {
-            List cl = (List) canonLists.get(al);
+            List<Attribute> cl = canonLists.get(al);
             if (cl == null) {
-                cl = new ArrayList(al.size());
+                cl = new ArrayList<Attribute>(al.size());
                 cl.addAll(al);
                 cl = Collections.unmodifiableList(cl);
                 canonLists.put(al, cl);
@@ -122,7 +132,7 @@ class Attribute implements Comparable, Constants {
     public static Attribute find(int ctype, String name, String layout) {
         Layout key = Layout.makeKey(ctype, name, layout);
         synchronized (attributes) {
-            Attribute a = (Attribute) attributes.get(key);
+            Attribute a = attributes.get(key);
             if (a == null) {
                 a = new Layout(ctype, name, layout).canonicalInstance();
                 attributes.put(key, a);
@@ -131,24 +141,29 @@ class Attribute implements Comparable, Constants {
         }
     }
 
-    public static Object keyForLookup(int ctype, String name) {
+    public static Layout keyForLookup(int ctype, String name) {
         return Layout.makeKey(ctype, name);
     }
 
     // Find canonical empty attribute with given ctype and name,
     // and with the standard layout.
-    public static Attribute lookup(Map defs, int ctype, String name) {
-        if (defs == null)  defs = standardDefs;
-        return (Attribute) defs.get(Layout.makeKey(ctype, name));
+    public static Attribute lookup(Map<Layout, Attribute> defs, int ctype,
+            String name) {
+        if (defs == null) {
+            defs = standardDefs;
+        }
+        return defs.get(Layout.makeKey(ctype, name));
     }
-    public static Attribute define(Map defs, int ctype, String name, String layout) {
+
+    public static Attribute define(Map<Layout, Attribute> defs, int ctype,
+            String name, String layout) {
         Attribute a = find(ctype, name, layout);
         defs.put(Layout.makeKey(ctype, name), a);
         return a;
     }
 
     static {
-        Map sd = standardDefs;
+        Map<Layout, Attribute> sd = standardDefs;
         define(sd, ATTR_CONTEXT_CLASS, "Signature", "RSH");
         define(sd, ATTR_CONTEXT_CLASS, "Synthetic", "");
         define(sd, ATTR_CONTEXT_CLASS, "Deprecated", "");
@@ -244,7 +259,7 @@ class Attribute implements Comparable, Constants {
              +"\n    ()[] ]"
              )
         };
-        Map sd = standardDefs;
+        Map<Layout, Attribute> sd = standardDefs;
         String defaultLayout     = mdLayouts[2];
         String annotationsLayout = mdLayouts[1] + mdLayouts[2];
         String paramsLayout      = mdLayouts[0] + annotationsLayout;
@@ -275,10 +290,6 @@ class Attribute implements Comparable, Constants {
         return null;
     }
 
-    public static Map getStandardDefs() {
-        return new HashMap(standardDefs);
-    }
-
     /** Base class for any attributed object (Class, Field, Method, Code).
      *  Flags are included because they are used to help transmit the
      *  presence of attributes.  That is, flags are a mix of modifier
@@ -291,7 +302,7 @@ class Attribute implements Comparable, Constants {
         protected abstract Entry[] getCPMap();
 
         protected int flags;             // defined here for convenience
-        protected List attributes;
+        protected List<Attribute> attributes;
 
         public int attributeSize() {
             return (attributes == null) ? 0 : attributes.size();
@@ -301,16 +312,15 @@ class Attribute implements Comparable, Constants {
             if (attributes == null) {
                 return;
             }
-            if (attributes.size() == 0) {
+            if (attributes.isEmpty()) {
                 attributes = null;
                 return;
             }
             if (attributes instanceof ArrayList) {
-                ArrayList al = (ArrayList) attributes;
+                ArrayList<Attribute> al = (ArrayList<Attribute>)attributes;
                 al.trimToSize();
                 boolean allCanon = true;
-                for (Iterator i = al.iterator(); i.hasNext(); ) {
-                    Attribute a = (Attribute) i.next();
+                for (Attribute a : al) {
                     if (!a.isCanonical()) {
                         allCanon = false;
                     }
@@ -330,9 +340,9 @@ class Attribute implements Comparable, Constants {
 
         public void addAttribute(Attribute a) {
             if (attributes == null)
-                attributes = new ArrayList(3);
+                attributes = new ArrayList<Attribute>(3);
             else if (!(attributes instanceof ArrayList))
-                attributes = new ArrayList(attributes);  // unfreeze it
+                attributes = new ArrayList<Attribute>(attributes);  // unfreeze it
             attributes.add(a);
         }
 
@@ -340,32 +350,31 @@ class Attribute implements Comparable, Constants {
             if (attributes == null)       return null;
             if (!attributes.contains(a))  return null;
             if (!(attributes instanceof ArrayList))
-                attributes = new ArrayList(attributes);  // unfreeze it
+                attributes = new ArrayList<Attribute>(attributes);  // unfreeze it
             attributes.remove(a);
             return a;
         }
 
         public Attribute getAttribute(int n) {
-            return (Attribute) attributes.get(n);
+            return attributes.get(n);
         }
 
-        protected void visitRefs(int mode, Collection refs) {
+        protected void visitRefs(int mode, Collection<Entry> refs) {
             if (attributes == null)  return;
-            for (Iterator i = attributes.iterator(); i.hasNext(); ) {
-                Attribute a = (Attribute) i.next();
+            for (Attribute a : attributes) {
                 a.visitRefs(this, mode, refs);
             }
         }
 
-        static final List noAttributes = Arrays.asList(new Object[0]);
+        static final List<Attribute> noAttributes = Arrays.asList(new Attribute[0]);
 
-        public List getAttributes() {
+        public List<Attribute> getAttributes() {
             if (attributes == null)
                 return noAttributes;
             return attributes;
         }
 
-        public void setAttributes(List attrList) {
+        public void setAttributes(List<Attribute> attrList) {
             if (attrList.isEmpty())
                 attributes = null;
             else
@@ -374,8 +383,7 @@ class Attribute implements Comparable, Constants {
 
         public Attribute getAttribute(String attrName) {
             if (attributes == null)  return null;
-            for (Iterator i = attributes.iterator(); i.hasNext(); ) {
-                Attribute a = (Attribute) i.next();
+            for (Attribute a : attributes) {
                 if (a.name().equals(attrName))
                     return a;
             }
@@ -384,8 +392,7 @@ class Attribute implements Comparable, Constants {
 
         public Attribute getAttribute(Layout attrDef) {
             if (attributes == null)  return null;
-            for (Iterator i = attributes.iterator(); i.hasNext(); ) {
-                Attribute a = (Attribute) i.next();
+            for (Attribute a : attributes) {
                 if (a.layout() == attrDef)
                     return a;
             }
@@ -443,7 +450,7 @@ class Attribute implements Comparable, Constants {
      *  and format.  The formats are specified in a "little language".
      */
     public static
-    class Layout implements Comparable {
+    class Layout implements Comparable<Layout> {
         int ctype;       // attribute context type, e.g., ATTR_CONTEXT_CODE
         String name;     // name of attribute
         boolean hasRefs; // this kind of attr contains CP refs?
@@ -457,17 +464,13 @@ class Attribute implements Comparable, Constants {
         public String layout() { return layout; }
         public Attribute canonicalInstance() { return canon; }
 
-        // Cache of name reference.
-        private Entry nameRef;   // name, for use by visitRefs
         public Entry getNameRef() {
-            Entry nameRef = this.nameRef;
-            if (nameRef == null) {
-                this.nameRef = nameRef = ConstantPool.getUtf8Entry(name());
-            }
-            return nameRef;
+            return ConstantPool.getUtf8Entry(name());
         }
 
-        public boolean isEmpty() { return layout == ""; }
+        public boolean isEmpty() {
+            return layout.isEmpty();
+        }
 
         public Layout(int ctype, String name, String layout) {
             this.ctype = ctype;
@@ -481,19 +484,19 @@ class Attribute implements Comparable, Constants {
                 } else {
                     String[] bodies = splitBodies(layout);
                     // Make the callables now, so they can be linked immediately.
-                    Element[] elems = new Element[bodies.length];
-                    this.elems = elems;
-                    for (int i = 0; i < elems.length; i++) {
+                    Element[] lelems = new Element[bodies.length];
+                    this.elems = lelems;
+                    for (int i = 0; i < lelems.length; i++) {
                         Element ce = this.new Element();
                         ce.kind = EK_CBLE;
                         ce.removeBand();
                         ce.bandIndex = NO_BAND_INDEX;
                         ce.layout = bodies[i];
-                        elems[i] = ce;
+                        lelems[i] = ce;
                     }
                     // Next fill them in.
-                    for (int i = 0; i < elems.length; i++) {
-                        Element ce = elems[i];
+                    for (int i = 0; i < lelems.length; i++) {
+                        Element ce = lelems[i];
                         ce.body = tokenizeLayout(this, i, bodies[i]);
                     }
                     //System.out.println(Arrays.asList(elems));
@@ -527,11 +530,12 @@ class Attribute implements Comparable, Constants {
         }
 
         public boolean equals(Object x) {
-            return x instanceof Layout && equals((Layout)x);
+            return ( x != null) && ( x.getClass() == Layout.class ) &&
+                    equals((Layout)x);
         }
         public boolean equals(Layout that) {
-            return this.name == that.name
-                && this.layout == that.layout
+            return this.name.equals(that.name)
+                && this.layout.equals(that.layout)
                 && this.ctype == that.ctype;
         }
         public int hashCode() {
@@ -539,8 +543,7 @@ class Attribute implements Comparable, Constants {
                     * 37 + layout.hashCode())
                     * 37 + ctype);
         }
-        public int compareTo(Object o) {
-            Layout that = (Layout) o;
+        public int compareTo(Layout that) {
             int r;
             r = this.name.compareTo(that.name);
             if (r != 0)  return r;
@@ -591,14 +594,14 @@ class Attribute implements Comparable, Constants {
                 return str;
             }
             private String stringForDebug() {
-                Element[] body = this.body;
+                Element[] lbody = this.body;
                 switch (kind) {
                 case EK_CALL:
-                    body = null;
+                    lbody = null;
                     break;
                 case EK_CASE:
                     if (flagTest(EF_BACK))
-                        body = null;
+                        lbody = null;
                     break;
                 }
                 return layout
@@ -606,7 +609,7 @@ class Attribute implements Comparable, Constants {
                     + "<"+ (flags==0?"":""+flags)+kind+len
                     + (refKind==0?"":""+refKind) + ">"
                     + (value==0?"":"("+value+")")
-                    + (body==null?"": ""+Arrays.asList(body));
+                    + (lbody==null?"": ""+Arrays.asList(lbody));
             }
         }
 
@@ -615,16 +618,19 @@ class Attribute implements Comparable, Constants {
         }
         static private final Element[] noElems = {};
         public Element[] getCallables() {
-            if (hasCallables())
-                return elems;
-            else
+            if (hasCallables()) {
+                Element[] nelems = Arrays.copyOf(elems, elems.length);
+                return nelems;
+            } else
                 return noElems;  // no callables at all
         }
         public Element[] getEntryPoint() {
             if (hasCallables())
                 return elems[0].body;  // body of first callable
-            else
-                return elems;  // no callables; whole body
+            else {
+                Element[] nelems = Arrays.copyOf(elems, elems.length);
+                return nelems;  // no callables; whole body
+            }
         }
 
         /** Return a sequence of tokens from the given attribute bytes.
@@ -659,6 +665,8 @@ class Attribute implements Comparable, Constants {
 
     public static
     class FormatException extends IOException {
+        private static final long serialVersionUID = -2542243830788066513L;
+
         private int ctype;
         private String name;
         String layout;
@@ -676,7 +684,7 @@ class Attribute implements Comparable, Constants {
         }
     }
 
-    void visitRefs(Holder holder, int mode, final Collection refs) {
+    void visitRefs(Holder holder, int mode, final Collection<Entry> refs) {
         if (mode == VRM_CLASSIC) {
             refs.add(getNameRef());
         }
@@ -722,7 +730,7 @@ class Attribute implements Comparable, Constants {
      */
     static public
     String normalizeLayoutString(String layout) {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         for (int i = 0, len = layout.length(); i < len; ) {
             char ch = layout.charAt(i++);
             if (ch <= ' ') {
@@ -834,14 +842,14 @@ class Attribute implements Comparable, Constants {
     */
     static //private
     Layout.Element[] tokenizeLayout(Layout self, int curCble, String layout) {
-        ArrayList col = new ArrayList(layout.length());
+        List<Layout.Element> col = new ArrayList<Layout.Element>(layout.length());
         tokenizeLayout(self, curCble, layout, col);
         Layout.Element[] res = new Layout.Element[col.size()];
         col.toArray(res);
         return res;
     }
     static //private
-    void tokenizeLayout(Layout self, int curCble, String layout, ArrayList col) {
+    void tokenizeLayout(Layout self, int curCble, String layout, List<Layout.Element> col) {
         boolean prevBCI = false;
         for (int len = layout.length(), i = 0; i < len; ) {
             int start = i;
@@ -899,7 +907,7 @@ class Attribute implements Comparable, Constants {
             case 'T': // union: 'T' any_int union_case* '(' ')' '[' body ']'
                 kind = EK_UN;
                 i = tokenizeSInt(e, layout, i);
-                ArrayList cases = new ArrayList();
+                List<Layout.Element> cases = new ArrayList<Layout.Element>();
                 for (;;) {
                     // Keep parsing cases until we hit the default case.
                     if (layout.charAt(i++) != '(')
@@ -1053,7 +1061,7 @@ class Attribute implements Comparable, Constants {
     }
     static //private
     String[] splitBodies(String layout) {
-        ArrayList bodies = new ArrayList();
+        List<String> bodies = new ArrayList<String>();
         // Parse several independent layout bodies:  "[foo][bar]...[baz]"
         for (int i = 0; i < layout.length(); i++) {
             if (layout.charAt(i++) != '[')
@@ -1132,7 +1140,9 @@ class Attribute implements Comparable, Constants {
     int parseIntBefore(String layout, int dash) {
         int end = dash;
         int beg = end;
-        while (beg > 0 && isDigit(layout.charAt(beg-1)))  --beg;
+        while (beg > 0 && isDigit(layout.charAt(beg-1))) {
+            --beg;
+        }
         if (beg == end)  return Integer.parseInt("empty");
         // skip backward over a sign
         if (beg >= 1 && layout.charAt(beg-1) == '-')  --beg;
@@ -1145,7 +1155,9 @@ class Attribute implements Comparable, Constants {
         int end = beg;
         int limit = layout.length();
         if (end < limit && layout.charAt(end) == '-')  ++end;
-        while (end < limit && isDigit(layout.charAt(end)))  ++end;
+        while (end < limit && isDigit(layout.charAt(end))) {
+            ++end;
+        }
         if (beg == end)  return Integer.parseInt("empty");
         return Integer.parseInt(layout.substring(beg, end));
     }
@@ -1154,7 +1166,7 @@ class Attribute implements Comparable, Constants {
     String expandCaseDashNotation(String layout) {
         int dash = findCaseDash(layout, 0);
         if (dash < 0)  return layout;  // no dashes (the common case)
-        StringBuffer result = new StringBuffer(layout.length() * 3);
+        StringBuilder result = new StringBuilder(layout.length() * 3);
         int sofar = 0;  // how far have we processed the layout?
         for (;;) {
             // for each dash, collect everything up to the dash

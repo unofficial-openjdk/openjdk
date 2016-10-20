@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,14 +21,19 @@
  * questions.
  */
 
+//
+// SunJSSE does not support dynamic system properties, no way to re-use
+// system properties in samevm/agentvm mode.
+//
+
 /*
  * @test
  * @bug 6216082
  * @library ../../../httpstest/
  * @build HttpCallback HttpServer ClosedChannelList HttpTransaction TunnelProxy
- * @run main/othervm B6216082
  * @summary  Redirect problem with HttpsURLConnection using a proxy
-*/
+ * @run main/othervm B6216082
+ */
 
 import java.io.*;
 import java.net.*;
@@ -46,20 +51,27 @@ public class B6216082 {
     static InetAddress firstNonLoAddress = null;
 
     public static void main(String[] args) throws Exception {
-        // XXX workaround for CNFE
-        Class.forName("java.nio.channels.ClosedByInterruptException");
-        setupEnv();
+        HostnameVerifier reservedHV =
+            HttpsURLConnection.getDefaultHostnameVerifier();
+        try {
+            // XXX workaround for CNFE
+            Class.forName("java.nio.channels.ClosedByInterruptException");
+            setupEnv();
 
-        startHttpServer();
+            startHttpServer();
 
-        // https.proxyPort can only be set after the TunnelProxy has been
-        // created as it will use an ephemeral port.
-        System.setProperty( "https.proxyPort", (new Integer(proxy.getLocalPort())).toString() );
+            // https.proxyPort can only be set after the TunnelProxy has been
+            // created as it will use an ephemeral port.
+            System.setProperty("https.proxyPort",
+                        (new Integer(proxy.getLocalPort())).toString() );
 
-        makeHttpCall();
+            makeHttpCall();
 
-        if (httpTrans.hasBadRequest) {
-            throw new RuntimeException("Test failed : bad http request");
+            if (httpTrans.hasBadRequest) {
+                throw new RuntimeException("Test failed : bad http request");
+            }
+        } finally {
+            HttpsURLConnection.setDefaultHostnameVerifier(reservedHV);
         }
     }
 

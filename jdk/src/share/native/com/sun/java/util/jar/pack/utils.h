@@ -27,7 +27,7 @@
 
 void* must_malloc(size_t size);
 #ifndef USE_MTRACE
-#define mtrace(c, ptr, size) (0)
+#define mtrace(c, ptr, size)
 #else
 void mtrace(char c, void* ptr, size_t size);
 #endif

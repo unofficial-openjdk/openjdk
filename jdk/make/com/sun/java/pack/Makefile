@@ -32,6 +32,7 @@ PACKAGE = com.sun.java.util.jar.pack
 LIBRARY = unpack
 PRODUCT = sun
 PGRM = unpack200
+JAVAC_MAX_WARNINGS=true
 include $(BUILDDIR)/common/Defs.gmk
 
 CPLUSPLUSLIBRARY=true
@@ -97,9 +98,6 @@ ifeq ($(PLATFORM), windows)
 	/D "J2SE_FTYPE=0x1L"
 
   RES = $(OBJDIR)/$(PGRM).res
-
-  # Files built here do not compile with warning level 3 if warnings are fatal
-  COMPILER_WARNINGS_FATAL=false
 else
   LDOUTPUT = -o #Have a space 
   LDDFLAGS += -lc

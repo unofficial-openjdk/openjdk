@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,8 @@ package javax.crypto;
 import java.security.*;
 import java.net.*;
 import java.util.*;
-import java.util.jar.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * The JCE security manager.
@@ -50,8 +51,12 @@ final class JceSecurityManager extends SecurityManager {
     private static final CryptoPermissions defaultPolicy;
     private static final CryptoPermissions exemptPolicy;
     private static final CryptoAllPermission allPerm;
-    private static final Vector TrustedCallersCache = new Vector(2);
-    private static final Map exemptCache = new HashMap();
+    private static final Vector<Class<?>> TrustedCallersCache =
+            new Vector<Class<?>>(2);
+    private static final ConcurrentMap<URL,CryptoPermissions> exemptCache =
+            new ConcurrentHashMap<URL,CryptoPermissions>();
+    private static final CryptoPermissions CACHE_NULL_MARK =
+            new CryptoPermissions();
 
     // singleton instance
     static final JceSecurityManager INSTANCE;
@@ -60,12 +65,12 @@ final class JceSecurityManager extends SecurityManager {
         defaultPolicy = JceSecurity.getDefaultPolicy();
         exemptPolicy = JceSecurity.getExemptPolicy();
         allPerm = CryptoAllPermission.INSTANCE;
-        INSTANCE = (JceSecurityManager)
-              AccessController.doPrivileged(new PrivilegedAction() {
-                  public Object run() {
-                      return new JceSecurityManager();
-                  }
-              });
+        INSTANCE = AccessController.doPrivileged(
+                new PrivilegedAction<JceSecurityManager>() {
+                    public JceSecurityManager run() {
+                        return new JceSecurityManager();
+                    }
+                });
     }
 
     private JceSecurityManager() {
@@ -94,11 +99,11 @@ final class JceSecurityManager extends SecurityManager {
         // javax.crypto.* packages.
         // NOTE: javax.crypto.* package maybe subject to package
         // insertion, so need to check its classloader as well.
-        Class[] context = getClassContext();
+        Class<?>[] context = getClassContext();
         URL callerCodeBase = null;
         int i;
         for (i=0; i<context.length; i++) {
-            Class cls = context[i];
+            Class<?> cls = context[i];
             callerCodeBase = JceSecurity.getCodeBase(cls);
             if (callerCodeBase != null) {
                 break;
@@ -116,17 +121,19 @@ final class JceSecurityManager extends SecurityManager {
             return defaultPerm;
         }
 
-        CryptoPermissions appPerms;
-        synchronized (this.getClass()) {
-            if (exemptCache.containsKey(callerCodeBase)) {
-                appPerms = (CryptoPermissions)exemptCache.get(callerCodeBase);
-            } else {
-                appPerms = getAppPermissions(callerCodeBase);
-                exemptCache.put(callerCodeBase, appPerms);
+        CryptoPermissions appPerms = exemptCache.get(callerCodeBase);
+        if (appPerms == null) {
+            // no match found in cache
+            synchronized (this.getClass()) {
+                appPerms = exemptCache.get(callerCodeBase);
+                if (appPerms == null) {
+                    appPerms = getAppPermissions(callerCodeBase);
+                    exemptCache.putIfAbsent(callerCodeBase,
+                        (appPerms == null? CACHE_NULL_MARK:appPerms));
+                }
             }
         }
-
-        if (appPerms == null) {
+        if (appPerms == null || appPerms == CACHE_NULL_MARK) {
             return defaultPerm;
         }
 
@@ -143,7 +150,7 @@ final class JceSecurityManager extends SecurityManager {
         if (appPc == null) {
             return defaultPerm;
         }
-        Enumeration enum_ = appPc.elements();
+        Enumeration<Permission> enum_ = appPc.elements();
         while (enum_.hasMoreElements()) {
             CryptoPermission cp = (CryptoPermission)enum_.nextElement();
             if (cp.getExemptionMechanism() == null) {
@@ -215,7 +222,7 @@ final class JceSecurityManager extends SecurityManager {
      * Returns the default permission for the given algorithm.
      */
     private CryptoPermission getDefaultPermission(String alg) {
-        Enumeration enum_ =
+        Enumeration<Permission> enum_ =
             defaultPolicy.getPermissionCollection(alg).elements();
         return (CryptoPermission)enum_.nextElement();
     }

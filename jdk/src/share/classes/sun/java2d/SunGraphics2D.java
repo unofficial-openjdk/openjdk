@@ -3294,7 +3294,6 @@ public final class SunGraphics2D
      *
      * @see sun.java2d.DestSurfaceProvider#getDestSurface
      */
-    @Override
     public Surface getDestSurface() {
         return surfaceData;
     }

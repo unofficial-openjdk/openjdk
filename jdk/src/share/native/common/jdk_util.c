@@ -25,6 +25,8 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
+#include <assert.h>
 
 #include "jvm.h"
 #include "jdk_util.h"
@@ -45,36 +47,50 @@ JDK_GetVersionInfo0(jdk_version_info* info, size_t info_size) {
         (unsigned int) atoi(JDK_MICRO_VERSION);
 
     const char* jdk_build_string = JDK_BUILD_NUMBER;
+    char build_number[4];
     unsigned int jdk_build_number = 0;
 
     const char* jdk_update_string = JDK_UPDATE_VERSION;
     unsigned int jdk_update_version = 0;
-    char update_ver[3];
+    int len_update_ver = 0;
+    char update_ver[5];
     char jdk_special_version = '\0';
 
     /* If the JDK_BUILD_NUMBER is of format bXX and XX is an integer
      * XX is the jdk_build_number.
      */
-    if (strlen(jdk_build_string) == 3) {
-        if (jdk_build_string[0] == 'b' &&
-            jdk_build_string[1] >= '0' && jdk_build_string[1] <= '9' &&
-            jdk_build_string[2] >= '0' && jdk_build_string[2] <= '9') {
-            jdk_build_number = (unsigned int) atoi(&jdk_build_string[1]);
-        }
-    }
-    if (strlen(jdk_update_string) == 2 || strlen(jdk_update_string) == 3) {
-        if (jdk_update_string[0] >= '0' && jdk_update_string[0] <= '9' &&
-            jdk_update_string[1] >= '0' && jdk_update_string[1] <= '9') {
-            update_ver[0] = jdk_update_string[0];
-            update_ver[1] = jdk_update_string[1];
-            update_ver[2] = '\0';
-            jdk_update_version = (unsigned int) atoi(update_ver);
-            if (strlen(jdk_update_string) == 3) {
-                jdk_special_version = jdk_update_string[2];
+    int len = strlen(jdk_build_string);
+    if (jdk_build_string[0] == 'b' && len >= 2) {
+        int i = 0;
+        for (i = 1; i < len; i++) {
+            if (isdigit(jdk_build_string[i])) {
+                build_number[i-1] = jdk_build_string[i];
+            } else {
+                // invalid build number
+                i = -1;
+                break;
             }
+        }
+        if (i == len) {
+            build_number[len-1] = '\0';
+            jdk_build_number = (unsigned int) atoi(build_number) ;
         }
     }
 
+    assert(jdk_build_number >= 0 && jdk_build_number <= 255);
+
+    len_update_ver = strlen(jdk_update_string);
+    if (len_update_ver >= 2 && len_update_ver <= 4) {
+        int update_digits = len_update_ver;
+
+        if (!isdigit(jdk_update_string[len_update_ver - 1])) {
+            jdk_special_version = jdk_update_string[len_update_ver -1];
+            update_digits = len_update_ver - 1;
+        }
+        strncpy(update_ver, jdk_update_string, update_digits);
+        update_ver[update_digits] = '\0';
+        jdk_update_version = (unsigned int) atoi(update_ver);
+    }
 
     memset(info, 0, info_size);
     info->jdk_version = ((jdk_major_version & 0xFF) << 24) |

@@ -30,7 +30,6 @@ import java.math.BigInteger;
 
 import java.security.*;
 import java.security.interfaces.RSAPublicKey;
-import java.security.spec.RSAPublicKeySpec;
 import java.security.spec.*;
 
 import javax.crypto.*;
@@ -87,6 +86,8 @@ final class JsseJce {
     }
 
     private static final class SunCertificates extends Provider {
+        private static final long serialVersionUID = -3284138292032213752L;
+
         SunCertificates(final Provider p) {
             super("SunCertificates", 1.0d, "SunJSSE internal");
             AccessController.doPrivileged(new PrivilegedAction<Object>() {
@@ -343,10 +344,9 @@ final class JsseJce {
         }
         try {
             KeyFactory factory = JsseJce.getKeyFactory("RSA");
-            return (RSAPublicKeySpec)factory.getKeySpec
-                                                (key, RSAPublicKeySpec.class);
+            return factory.getKeySpec(key, RSAPublicKeySpec.class);
         } catch (Exception e) {
-            throw (RuntimeException)new RuntimeException().initCause(e);
+            throw new RuntimeException(e);
         }
     }
 

@@ -45,10 +45,7 @@ fi
 
 OS=`uname -s`
 case "$OS" in
-  SunOS )
-    PS=":"
-    ;;
-  Linux )
+  SunOS | Linux | Darwin | AIX )
     PS=":"
     ;;
   Windows* )

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,8 +39,11 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import static java.io.ObjectStreamClass.processQueue;
+import sun.misc.JavaObjectInputStreamAccess;
+import sun.misc.ObjectStreamClassValidator;
+import sun.misc.SharedSecrets;
+import sun.misc.Unsafe;
 import sun.reflect.misc.ReflectUtil;
 
 /**
@@ -213,7 +216,8 @@ public class ObjectInputStream
     private static final Object unsharedMarker = new Object();
 
     /** table mapping primitive type names to corresponding class objects */
-    private static final HashMap primClasses = new HashMap(8, 1.0F);
+    private static final HashMap<String, Class<?>> primClasses
+        = new HashMap<String, Class<?>>(8, 1.0F);
     static {
         primClasses.put("boolean", boolean.class);
         primClasses.put("byte", byte.class);
@@ -623,7 +627,7 @@ public class ObjectInputStream
         try {
             return Class.forName(name, false, latestUserDefinedLoader());
         } catch (ClassNotFoundException ex) {
-            Class cl = (Class) primClasses.get(name);
+            Class<?> cl = primClasses.get(name);
             if (cl != null) {
                 return cl;
             } else {
@@ -1257,11 +1261,11 @@ public class ObjectInputStream
      * override security-sensitive non-final methods.  Returns true if subclass
      * is "safe", false otherwise.
      */
-    private static boolean auditSubclass(final Class subcl) {
+    private static boolean auditSubclass(final Class<?> subcl) {
         Boolean result = AccessController.doPrivileged(
             new PrivilegedAction<Boolean>() {
                 public Boolean run() {
-                    for (Class cl = subcl;
+                    for (Class<?> cl = subcl;
                          cl != ObjectInputStream.class;
                          cl = cl.getSuperclass())
                     {
@@ -1502,23 +1506,28 @@ public class ObjectInputStream
         throws IOException
     {
         byte tc = bin.peekByte();
+        ObjectStreamClass descriptor;
         switch (tc) {
             case TC_NULL:
-                return (ObjectStreamClass) readNull();
-
+                descriptor = (ObjectStreamClass) readNull();
+                break;
             case TC_REFERENCE:
-                return (ObjectStreamClass) readHandle(unshared);
-
+                descriptor = (ObjectStreamClass) readHandle(unshared);
+                break;
             case TC_PROXYCLASSDESC:
-                return readProxyDesc(unshared);
-
+                descriptor = readProxyDesc(unshared);
+                break;
             case TC_CLASSDESC:
-                return readNonProxyDesc(unshared);
-
+                descriptor = readNonProxyDesc(unshared);
+                break;
             default:
                 throw new StreamCorruptedException(
                     String.format("invalid type code: %02X", tc));
         }
+        if (descriptor != null) {
+            validateDescriptor(descriptor);
+        }
+        return descriptor;
     }
 
     private boolean isCustomSubclass() {
@@ -1886,6 +1895,8 @@ public class ObjectInputStream
                 if (obj == null || handles.lookupException(passHandle) != null) {
                     defaultReadFields(null, slotDesc); // skip field values
                 } else if (slotDesc.hasReadObjectMethod()) {
+                    ThreadDeath t = null;
+                    boolean reset = false;
                     SerialCallbackContext oldContext = curContext;
                     if (oldContext != null)
                         oldContext.check();
@@ -1904,10 +1915,19 @@ public class ObjectInputStream
                          */
                         handles.markException(passHandle, ex);
                     } finally {
-                        curContext.setUsed();
-                        if (oldContext!= null)
-                            oldContext.check();
-                        curContext = oldContext;
+                        do {
+                            try {
+                                curContext.setUsed();
+                                if (oldContext!= null)
+                                    oldContext.check();
+                                curContext = oldContext;
+                                reset = true;
+                            } catch (ThreadDeath x) {
+                                t = x;  // defer until reset is true
+                            }
+                        } while (!reset);
+                        if (t != null)
+                            throw t;
                     }
 
                     /*
@@ -1918,7 +1938,7 @@ public class ObjectInputStream
                     defaultDataEnd = false;
                 } else {
                     defaultReadFields(obj, slotDesc);
-                }
+                    }
 
                 if (slotDesc.hasWriteObjectData()) {
                     skipCustomData();
@@ -1934,7 +1954,7 @@ public class ObjectInputStream
                 }
             }
         }
-    }
+            }
 
     /**
      * Skips over all block data and objects until TC_ENDBLOCKDATA is
@@ -1982,27 +2002,27 @@ public class ObjectInputStream
         if (primVals == null || primVals.length < primDataSize) {
             primVals = new byte[primDataSize];
         }
-        bin.readFully(primVals, 0, primDataSize, false);
+            bin.readFully(primVals, 0, primDataSize, false);
         if (obj != null) {
             desc.setPrimFieldValues(obj, primVals);
         }
 
-        int objHandle = passHandle;
-        ObjectStreamField[] fields = desc.getFields(false);
+            int objHandle = passHandle;
+            ObjectStreamField[] fields = desc.getFields(false);
         Object[] objVals = new Object[desc.getNumObjFields()];
-        int numPrimFields = fields.length - objVals.length;
-        for (int i = 0; i < objVals.length; i++) {
-            ObjectStreamField f = fields[numPrimFields + i];
-            objVals[i] = readObject0(f.isUnshared());
-            if (f.getField() != null) {
-                handles.markDependency(objHandle, passHandle);
+            int numPrimFields = fields.length - objVals.length;
+            for (int i = 0; i < objVals.length; i++) {
+                ObjectStreamField f = fields[numPrimFields + i];
+                objVals[i] = readObject0(f.isUnshared());
+                if (f.getField() != null) {
+                    handles.markDependency(objHandle, passHandle);
+                }
             }
-        }
         if (obj != null) {
             desc.setObjFieldValues(obj, objVals);
         }
-        passHandle = objHandle;
-    }
+            passHandle = objHandle;
+        }
 
     /**
      * Reads in and returns IOException that caused serialization to abort.
@@ -2250,9 +2270,9 @@ public class ObjectInputStream
             try {
                 while (list != null) {
                     AccessController.doPrivileged(
-                        new PrivilegedExceptionAction()
+                        new PrivilegedExceptionAction<Void>()
                     {
-                        public Object run() throws InvalidObjectException {
+                        public Void run() throws InvalidObjectException {
                             list.obj.validateObject();
                             return null;
                         }
@@ -3537,4 +3557,24 @@ public class ObjectInputStream
         }
     }
 
+    private void validateDescriptor(ObjectStreamClass descriptor) {
+        ObjectStreamClassValidator validating = validator;
+        if (validating != null) {
+            validating.validateDescriptor(descriptor);
+        }
+    }
+
+    // controlled access to ObjectStreamClassValidator
+    private volatile ObjectStreamClassValidator validator;
+
+    private static void setValidator(ObjectInputStream ois, ObjectStreamClassValidator validator) {
+        ois.validator = validator;
+    }
+    static {
+        SharedSecrets.setJavaObjectInputStreamAccess(new JavaObjectInputStreamAccess() {
+            public void setValidator(ObjectInputStream ois, ObjectStreamClassValidator validator) {
+                ObjectInputStream.setValidator(ois, validator);
+            }
+        });
+    }
 }

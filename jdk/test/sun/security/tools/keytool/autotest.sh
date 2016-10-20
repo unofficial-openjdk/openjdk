@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006, 2008, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2006, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -39,36 +39,35 @@ if [ "${TESTJAVA}" = "" ] ; then
   exit 1
 fi
 
+find_one() {
+  for TARGET_FILE in $@; do
+    if [ -e "$TARGET_FILE" ]; then
+      echo $TARGET_FILE
+      return
+    fi
+  done
+}
+
 # set platform-dependent variables
 OS=`uname -s`
 case "$OS" in
   SunOS )
     FS="/"
-    LIBNAME=libsoftokn3.so
-    ARCH=`isainfo`
-    case "$ARCH" in
-      sparc* )
-        PF="solaris-sparc"
-        ;;
-      * )
-        echo "Will not run test on: Solaris ${ARCH}"
-        exit 0;
-        ;;
-    esac
+    LIBNAME="/usr/lib/mps/libsoftokn3.so"
     ;;
   Linux )
-    LIBNAME=libsoftokn3.so
-    ARCH=`uname -m`
     FS="/"
-    case "$ARCH" in
-      i[3-6]86 )
-        PF="linux-i586"
-        ;;
-      * )
-        echo "Will not run test on: Linux ${ARCH}"
-        exit 0;
-        ;;
-    esac
+    ${TESTJAVA}${FS}bin${FS}java -XshowSettings:properties -version 2> allprop
+    cat allprop | grep os.arch | grep 64
+    if [ "$?" != "0" ]; then
+        LIBNAME=`find_one \
+            "/usr/lib/libsoftokn3.so" \
+            "/usr/lib/i386-linux-gnu/nss/libsoftokn3.so"`
+    else
+        LIBNAME=`find_one \
+            "/usr/lib64/libsoftokn3.so" \
+            "/usr/lib/x86_64-linux-gnu/nss/libsoftokn3.so"`
+    fi
     ;;
   * )
     echo "Will not run test on: ${OS}"
@@ -76,7 +75,13 @@ case "$OS" in
     ;;
 esac
 
-${TESTJAVA}${FS}bin${FS}javac -d . ${TESTSRC}${FS}KeyToolTest.java || exit 10
+if [ "$LIBNAME" = "" ]; then
+  echo "Cannot find LIBNAME"
+  exit 1
+fi
+
+${TESTJAVA}${FS}bin${FS}javac -d . -XDignore.symbol.file \
+        ${TESTSRC}${FS}KeyToolTest.java || exit 10
 
 NSS=${TESTSRC}${FS}..${FS}..${FS}..${FS}..${FS}closed${FS}sun${FS}security${FS}pkcs11${FS}nss
 
@@ -93,7 +98,7 @@ chmod u+w key3.db
 chmod u+w cert8.db
 
 echo | ${TESTJAVA}${FS}bin${FS}java -Dfile -Dnss \
-   -Dnss.lib=${NSS}${FS}lib${FS}${PF}${FS}${LIBNAME} \
+   -Dnss.lib=${LIBNAME} \
    KeyToolTest || exit 12
 
 STATUS=$?

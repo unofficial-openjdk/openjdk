@@ -308,8 +308,9 @@ class DatagramSocket {
         // DatagramSocketImpl.peekdata() is a protected method, therefore we need to use
         // getDeclaredMethod, therefore we need permission to access the member
         try {
-            AccessController.doPrivileged(new PrivilegedExceptionAction() {
-                    public Object run() throws NoSuchMethodException {
+            AccessController.doPrivileged(
+                new PrivilegedExceptionAction<Void>() {
+                    public Void run() throws NoSuchMethodException {
                         Class[] cl = new Class[1];
                         cl[0] = DatagramPacket.class;
                         impl.getClass().getDeclaredMethod("peekData", cl);

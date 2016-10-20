@@ -25,25 +25,45 @@
 
 package com.sun.java.util.jar.pack;
 
-import java.lang.Error;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.text.MessageFormat;
-import java.util.*;
-import java.util.jar.*;
-import java.util.zip.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Properties;
+import java.util.ResourceBundle;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.jar.JarFile;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Pack200;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 /** Command line interface for Pack200.
  */
 class Driver {
-        private static final ResourceBundle RESOURCE= ResourceBundle.getBundle("com.sun.java.util.jar.pack.DriverResource");
+        private static final ResourceBundle RESOURCE =
+                ResourceBundle.getBundle("com.sun.java.util.jar.pack.DriverResource");
 
     public static void main(String[] ava) throws IOException {
-        ArrayList<String> av = new ArrayList<String>(Arrays.asList(ava));
+        List<String> av = new ArrayList<String>(Arrays.asList(ava));
 
         boolean doPack   = true;
         boolean doUnpack = false;
         boolean doRepack = false;
-        boolean doForceRepack = false;
         boolean doZip = true;
         String logFile = null;
         String verboseProp = Utils.DEBUG_VERBOSE;
@@ -51,9 +71,9 @@ class Driver {
         {
             // Non-standard, undocumented "--unpack" switch enables unpack mode.
             String arg0 = av.isEmpty() ? "" : av.get(0);
-            if (arg0.equals("--pack")) {
+            if ("--pack".equals(arg0)) {
                 av.remove(0);
-            } else if (arg0.equals("--unpack")) {
+            } else if ("--unpack".equals(arg0)) {
                 av.remove(0);
                 doPack = false;
                 doUnpack = true;
@@ -61,7 +81,7 @@ class Driver {
         }
 
         // Collect engine properties here:
-        HashMap<String,String> engProps = new HashMap<String,String>();
+        Map<String,String> engProps = new HashMap<String,String>();
         engProps.put(verboseProp, System.getProperty(verboseProp));
 
         String optionMap;
@@ -75,7 +95,7 @@ class Driver {
         }
 
         // Collect argument properties here:
-        HashMap<String,String> avProps = new HashMap<String,String>();
+        Map<String,String> avProps = new HashMap<String,String>();
         try {
             for (;;) {
                 String state = parseCommandOptions(av, optionMap, avProps);
@@ -125,7 +145,7 @@ class Driver {
                 }
 
                 // See if there is any other action to take.
-                if (state == "--config-file=") {
+                if ("--config-file=".equals(state)) {
                     String propFile = av.remove(0);
                     InputStream propIn = new FileInputStream(propFile);
                     Properties fileProps = new Properties();
@@ -133,12 +153,13 @@ class Driver {
                     if (engProps.get(verboseProp) != null)
                         fileProps.list(System.out);
                     propIn.close();
-                    for (Map.Entry<Object,Object> me : fileProps.entrySet())
-                        engProps.put((String)me.getKey(), (String)me.getValue());
-                } else if (state == "--version") {
+                    for (Map.Entry<Object,Object> me : fileProps.entrySet()) {
+                        engProps.put((String) me.getKey(), (String) me.getValue());
+                    }
+                } else if ("--version".equals(state)) {
                         System.out.println(MessageFormat.format(RESOURCE.getString(DriverResource.VERSION), Driver.class.getName(), "1.32, 08/01/25"));
                     return;
-                } else if (state == "--help") {
+                } else if ("--help".equals(state)) {
                     printUsage(doPack, true, System.out);
                     System.exit(1);
                     return;
@@ -156,14 +177,16 @@ class Driver {
         // Deal with remaining non-engine properties:
         for (String opt : avProps.keySet()) {
             String val = avProps.get(opt);
-            if (opt == "--repack") {
+            if ("--repack".equals(opt)) {
                 doRepack = true;
-            } else if (opt == "--no-gzip") {
+            } else if ("--no-gzip".equals(opt)) {
                 doZip = (val == null);
-            } else if (opt == "--log-file=") {
+            } else if ("--log-file=".equals(opt)) {
                 logFile = val;
             } else {
-            throw new InternalError(MessageFormat.format(RESOURCE.getString(DriverResource.BAD_OPTION), opt, avProps.get(opt)));
+                throw new InternalError(MessageFormat.format(
+                        RESOURCE.getString(DriverResource.BAD_OPTION),
+                        opt, avProps.get(opt)));
             }
         }
 
@@ -197,7 +220,9 @@ class Driver {
             if (packfile.toLowerCase().endsWith(".pack") ||
                 packfile.toLowerCase().endsWith(".pac") ||
                 packfile.toLowerCase().endsWith(".gz")) {
-            System.err.println(MessageFormat.format(RESOURCE.getString(DriverResource.BAD_REPACK_OUTPUT),packfile));
+                System.err.println(MessageFormat.format(
+                        RESOURCE.getString(DriverResource.BAD_REPACK_OUTPUT),
+                        packfile));
                 printUsage(doPack, false, System.err);
                 System.exit(2);
             }
@@ -686,7 +711,9 @@ class Driver {
         // Report number of arguments consumed.
         args.subList(0, argp.nextIndex()).clear();
         // Report any unconsumed partial argument.
-        while (pbp.hasPrevious())  args.add(0, pbp.previous());
+        while (pbp.hasPrevious()) {
+            args.add(0, pbp.previous());
+        }
         //System.out.println(args+" // "+properties+" -> "+resultString);
         return resultString;
     }

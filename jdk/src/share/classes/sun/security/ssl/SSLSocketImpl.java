@@ -1985,8 +1985,7 @@ final public class SSLSocketImpl extends BaseSSLSocketImpl {
             readMAC = handshaker.newReadMAC();
         } catch (GeneralSecurityException e) {
             // "can't happen"
-            throw (SSLException)new SSLException
-                                ("Algorithm missing:  ").initCause(e);
+            throw new SSLException("Algorithm missing:  ", e);
         }
     }
 
@@ -2005,8 +2004,7 @@ final public class SSLSocketImpl extends BaseSSLSocketImpl {
             writeMAC = handshaker.newWriteMAC();
         } catch (GeneralSecurityException e) {
             // "can't happen"
-            throw (SSLException)new SSLException
-                                ("Algorithm missing:  ").initCause(e);
+            throw new SSLException("Algorithm missing:  ", e);
         }
 
         // reset the flag of the first application record
@@ -2208,6 +2206,7 @@ final public class SSLSocketImpl extends BaseSSLSocketImpl {
      * client or server mode.  Must be called before any SSL
      * traffic has started.
      */
+    @SuppressWarnings("fallthrough")
     synchronized public void setUseClientMode(boolean flag) {
         switch (connectionState) {
 

@@ -27,6 +27,7 @@
  * @summary Verify that all ciphersuites work (incl. ECC using NSS crypto)
  * @author Andreas Sterbenz
  * @library ..
+ * @library ../../../../java/security/testlibrary
  * @run main/othervm ClientJSSEServerJSSE
  */
 
@@ -47,15 +48,11 @@ public class ClientJSSEServerJSSE extends PKCS11Test {
     }
 
     public void main(Provider p) throws Exception {
-        // MD5 is used in this test case, don't disable MD5 algorithm.
-        Security.setProperty(
-                "jdk.certpath.disabledAlgorithms", "MD2, RSA keySize < 1024");
-
         if (p.getService("KeyFactory", "EC") == null) {
             System.out.println("Provider does not support EC, skipping");
             return;
         }
-        Security.insertProviderAt(p, 1);
+        Providers.setAt(p, 1);
         CipherTest.main(new JSSEFactory(), cmdArgs);
         Security.removeProvider(p.getName());
     }

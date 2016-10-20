@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, 2010 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2006, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,6 +51,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import sun.security.action.GetIntegerAction;
 import sun.security.x509.AccessDescription;
 import sun.security.x509.GeneralNameInterface;
 import sun.security.x509.URIName;
@@ -118,8 +119,36 @@ class URICertStore extends CertStoreSpi {
 
     // true if URI is ldap
     private boolean ldap = false;
+    private CertStoreHelper ldapHelper;
     private CertStore ldapCertStore;
     private String ldapPath;
+
+    // Default maximum connect timeout in milliseconds (15 seconds)
+    // allowed when downloading CRLs
+    private static final int DEFAULT_CRL_CONNECT_TIMEOUT = 15000;
+
+    /**
+     * Integer value indicating the connect timeout, in seconds, to be
+     * used for the CRL download. A timeout of zero is interpreted as
+     * an infinite timeout.
+     */
+    private static final int CRL_CONNECT_TIMEOUT = initializeTimeout();
+
+    /**
+     * Initialize the timeout length by getting the CRL timeout
+     * system property. If the property has not been set, or if its
+     * value is negative, set the timeout length to the default.
+     */
+    private static int initializeTimeout() {
+        Integer tmp = java.security.AccessController.doPrivileged(
+                new GetIntegerAction("com.sun.security.crl.timeout"));
+        if (tmp == null || tmp < 0) {
+            return DEFAULT_CRL_CONNECT_TIMEOUT;
+        }
+        // Convert to milliseconds, as the system property will be
+        // specified in seconds
+        return tmp * 1000;
+    }
 
     /**
      * Creates a URICertStore.
@@ -137,8 +166,8 @@ class URICertStore extends CertStoreSpi {
         // if ldap URI, use an LDAPCertStore to fetch certs and CRLs
         if (uri.getScheme().toLowerCase(Locale.ENGLISH).equals("ldap")) {
             ldap = true;
-            ldapCertStore =
-                LDAPCertStore.getInstance(LDAPCertStore.getParameters(uri));
+            ldapHelper = CertStoreHelper.getInstance("LDAP");
+            ldapCertStore = ldapHelper.getCertStore(uri);
             ldapPath = uri.getPath();
             // strip off leading '/'
             if (ldapPath.charAt(0) == '/') {
@@ -180,7 +209,8 @@ class URICertStore extends CertStoreSpi {
      * object of a certificate's Authority Information Access Extension.
      */
     static CertStore getInstance(AccessDescription ad) {
-        if (!ad.getAccessMethod().equals(AccessDescription.Ad_CAISSUERS_Id)) {
+        if (!ad.getAccessMethod().equals((Object)
+                AccessDescription.Ad_CAISSUERS_Id)) {
             return null;
         }
         GeneralNameInterface gn = ad.getAccessLocation().getName();
@@ -212,6 +242,7 @@ class URICertStore extends CertStoreSpi {
      *         match the specified selector
      * @throws CertStoreException if an exception occurs
      */
+    @SuppressWarnings("unchecked")
     public synchronized Collection<X509Certificate> engineGetCertificates
         (CertSelector selector) throws CertStoreException {
 
@@ -220,13 +251,13 @@ class URICertStore extends CertStoreSpi {
         if (ldap) {
             X509CertSelector xsel = (X509CertSelector) selector;
             try {
-                xsel = new LDAPCertStore.LDAPCertSelector
-                    (xsel, xsel.getSubject(), ldapPath);
+                xsel = ldapHelper.wrap(xsel, xsel.getSubject(), ldapPath);
             } catch (IOException ioe) {
                 throw new CertStoreException(ioe);
             }
             // Fetch the certificates via LDAP. LDAPCertStore has its own
             // caching mechanism, see the class description for more info.
+            // Safe cast since xsel is an X509 certificate selector.
             return (Collection<X509Certificate>)
                 ldapCertStore.getCertificates(xsel);
         }
@@ -272,6 +303,7 @@ class URICertStore extends CertStoreSpi {
             if (debug != null) {
                 debug.println("Downloading new certificates...");
             }
+            // Safe cast since factory is an X.509 certificate factory
             certs = (Collection<X509Certificate>)
                 factory.generateCertificates(in);
             return getMatchingCerts(certs, selector);
@@ -333,6 +365,7 @@ class URICertStore extends CertStoreSpi {
      *         match the specified selector
      * @throws CertStoreException if an exception occurs
      */
+    @SuppressWarnings("unchecked")
     public synchronized Collection<X509CRL> engineGetCRLs(CRLSelector selector)
         throws CertStoreException {
 
@@ -341,12 +374,13 @@ class URICertStore extends CertStoreSpi {
         if (ldap) {
             X509CRLSelector xsel = (X509CRLSelector) selector;
             try {
-                xsel = new LDAPCertStore.LDAPCRLSelector(xsel, null, ldapPath);
+                xsel = ldapHelper.wrap(xsel, null, ldapPath);
             } catch (IOException ioe) {
                 throw new CertStoreException(ioe);
             }
             // Fetch the CRLs via LDAP. LDAPCertStore has its own
             // caching mechanism, see the class description for more info.
+            // Safe cast since xsel is an X509 certificate selector.
             return (Collection<X509CRL>) ldapCertStore.getCRLs(xsel);
         }
 
@@ -367,6 +401,7 @@ class URICertStore extends CertStoreSpi {
             if (lastModified != 0) {
                 connection.setIfModifiedSince(lastModified);
             }
+            connection.setConnectTimeout(CRL_CONNECT_TIMEOUT);
             in = connection.getInputStream();
             long oldLastModified = lastModified;
             lastModified = connection.getLastModified();

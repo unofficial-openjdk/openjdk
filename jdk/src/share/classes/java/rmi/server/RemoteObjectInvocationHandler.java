@@ -64,7 +64,6 @@ public class RemoteObjectInvocationHandler
         final String propName = "sun.rmi.server.invocationhandler.allowFinalizeInvocation";
         String allowProp = java.security.AccessController.doPrivileged(
             new PrivilegedAction<String>() {
-                @Override
                 public String run() {
                     return System.getProperty(propName);
                 }

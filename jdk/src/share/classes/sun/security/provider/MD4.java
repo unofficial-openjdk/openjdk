@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,9 +44,9 @@ import static sun.security.provider.ByteArrayAccess.*;
 public final class MD4 extends DigestBase {
 
     // state of this object
-    private final int[] state;
+    private int[] state;
     // temporary buffer, used by implCompress()
-    private final int[] x;
+    private int[] x;
 
     // rotation constants
     private static final int S11 = 3;
@@ -65,7 +65,9 @@ public final class MD4 extends DigestBase {
     private final static Provider md4Provider;
 
     static {
-        md4Provider = new Provider("MD4Provider", 1.0d, "MD4 MessageDigest") {};
+        md4Provider = new Provider("MD4Provider", 1.0d, "MD4 MessageDigest") {
+            private static final long serialVersionUID = -8850464997518327965L;
+        };
         AccessController.doPrivileged(new PrivilegedAction<Void>() {
             public Void run() {
                 md4Provider.put("MessageDigest.MD4", "sun.security.provider.MD4");
@@ -91,16 +93,12 @@ public final class MD4 extends DigestBase {
         implReset();
     }
 
-    // Cloning constructor
-    private MD4(MD4 base) {
-        super(base);
-        this.state = base.state.clone();
-        this.x = new int[16];
-    }
-
     // clone this object
-    public Object clone() {
-        return new MD4(this);
+    public Object clone() throws CloneNotSupportedException {
+        MD4 copy = (MD4) super.clone();
+        copy.state = copy.state.clone();
+        copy.x = new int[16];
+        return copy;
     }
 
     /**

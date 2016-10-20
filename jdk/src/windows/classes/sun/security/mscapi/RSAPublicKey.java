@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,6 @@ package sun.security.mscapi;
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
 import java.security.KeyRep;
-import java.security.PublicKey;
 
 import sun.security.rsa.RSAPublicKeyImpl;
 
@@ -39,6 +38,8 @@ import sun.security.rsa.RSAPublicKeyImpl;
  */
 class RSAPublicKey extends Key implements java.security.interfaces.RSAPublicKey
 {
+    private static final long serialVersionUID = -2289561342425825391L;
+
     private byte[] publicKeyBlob = null;
     private byte[] encoding = null;
     private BigInteger modulus = null;
@@ -91,7 +92,7 @@ class RSAPublicKey extends Key implements java.security.interfaces.RSAPublicKey
         if (exponent == null) {
             publicKeyBlob = getPublicKeyBlob(hCryptKey);
 
-            exponent = new BigInteger(getExponent(publicKeyBlob));
+            exponent = new BigInteger(1, getExponent(publicKeyBlob));
         }
 
         return exponent;
@@ -104,7 +105,7 @@ class RSAPublicKey extends Key implements java.security.interfaces.RSAPublicKey
 
         if (modulus == null) {
             publicKeyBlob = getPublicKeyBlob(hCryptKey);
-            modulus = new BigInteger(getModulus(publicKeyBlob));
+            modulus = new BigInteger(1, getModulus(publicKeyBlob));
         }
 
         return modulus;

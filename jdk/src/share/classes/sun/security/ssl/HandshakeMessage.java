@@ -795,9 +795,9 @@ class DH_ServerKeyExchange extends ServerKeyExchange
 
         Signature sig;
         String algorithm = publicKey.getAlgorithm();
-        if (algorithm.equals("DSA")) {
+        if ("DSA".equals(algorithm)) {
             sig = JsseJce.getSignature(JsseJce.SIGNATURE_DSA);
-        } else if (algorithm.equals("RSA")) {
+        } else if ("RSA".equals(algorithm)) {
             sig = RSASignature.getInstance();
         } else {
             throw new SSLKeyException("neither an RSA or a DSA key");
@@ -962,9 +962,9 @@ class ECDH_ServerKeyExchange extends ServerKeyExchange
     }
 
     private static Signature getSignature(String keyAlgorithm) throws NoSuchAlgorithmException {
-        if (keyAlgorithm.equals("EC")) {
+        if ("EC".equals(keyAlgorithm)) {
             return JsseJce.getSignature(JsseJce.SIGNATURE_ECDSA);
-        } else if (keyAlgorithm.equals("RSA")) {
+        } else if ("RSA".equals(keyAlgorithm)) {
             return RSASignature.getInstance();
         } else {
             throw new NoSuchAlgorithmException("neither an RSA or a EC key");
@@ -1282,11 +1282,11 @@ static final class CertificateVerify extends HandshakeMessage {
      */
     private static Signature getSignature(ProtocolVersion protocolVersion,
             String algorithm) throws GeneralSecurityException {
-        if (algorithm.equals("RSA")) {
+        if ("RSA".equals(algorithm)) {
             return RSASignature.getInternalInstance();
-        } else if (algorithm.equals("DSA")) {
+        } else if ("DSA".equals(algorithm)) {
             return JsseJce.getSignature(JsseJce.SIGNATURE_RAWDSA);
-        } else if (algorithm.equals("EC")) {
+        } else if ("EC".equals(algorithm)) {
             return JsseJce.getSignature(JsseJce.SIGNATURE_RAWECDSA);
         } else {
             throw new SignatureException("Unrecognized algorithm: "
@@ -1356,7 +1356,7 @@ static final class CertificateVerify extends HandshakeMessage {
         md.update(temp);
     }
 
-    private final static Class delegate;
+    private final static Class<?> delegate;
     private final static Field spiField;
 
     static {
@@ -1384,8 +1384,8 @@ static final class CertificateVerify extends HandshakeMessage {
     // cache Method objects per Spi class
     // Note that this will prevent the Spi classes from being GC'd. We assume
     // that is not a problem.
-    private final static Map<Class,Object> methodCache =
-                                        new ConcurrentHashMap<Class,Object>();
+    private final static Map<Class<?>,Object> methodCache =
+                                        new ConcurrentHashMap<Class<?>,Object>();
 
     private static void digestKey(MessageDigest md, SecretKey key) {
         try {

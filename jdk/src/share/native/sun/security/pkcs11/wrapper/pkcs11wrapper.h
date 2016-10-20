@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
  */
 
 /* Copyright  (c) 2002 Graz University of Technology. All rights reserved.
@@ -96,8 +96,8 @@
 #define P11_ENABLE_C_CLOSESESSION
 #undef  P11_ENABLE_C_CLOSEALLSESSIONS
 #define P11_ENABLE_C_GETSESSIONINFO
-#undef  P11_ENABLE_C_GETOPERATIONSTATE
-#undef  P11_ENABLE_C_SETOPERATIONSTATE
+#define P11_ENABLE_C_GETOPERATIONSTATE
+#define P11_ENABLE_C_SETOPERATIONSTATE
 #define P11_ENABLE_C_LOGIN
 #define P11_ENABLE_C_LOGOUT
 #define P11_ENABLE_C_CREATEOBJECT
@@ -153,7 +153,9 @@
 #include "p11_md.h"
 
 #include "pkcs11.h"
+#include "pkcs-11v2-20a3.h"
 #include <jni.h>
+#include <jni_util.h>
 
 #define MAX_STACK_BUFFER_LEN (4 * 1024)
 #define MAX_HEAP_BUFFER_LEN (64 * 1024)
@@ -271,17 +273,20 @@
 #define CLASS_SSL3_MASTER_KEY_DERIVE_PARAMS "sun/security/pkcs11/wrapper/CK_SSL3_MASTER_KEY_DERIVE_PARAMS"
 #define CLASS_SSL3_KEY_MAT_PARAMS "sun/security/pkcs11/wrapper/CK_SSL3_KEY_MAT_PARAMS"
 #define CLASS_TLS_PRF_PARAMS "sun/security/pkcs11/wrapper/CK_TLS_PRF_PARAMS"
+#define CLASS_AES_CTR_PARAMS "sun/security/pkcs11/wrapper/CK_AES_CTR_PARAMS"
 
 /* function to convert a PKCS#11 return value other than CK_OK into a Java Exception
  * or to throw a PKCS11RuntimeException
  */
 
 jlong ckAssertReturnValueOK(JNIEnv *env, CK_RV returnValue);
-void throwPKCS11RuntimeException(JNIEnv *env, jstring jmessage);
-void throwFileNotFoundException(JNIEnv *env, jstring jmessage);
 void throwIOException(JNIEnv *env, const char *message);
-void throwIOExceptionUnicodeMessage(JNIEnv *env, const short *message);
+void throwPKCS11RuntimeException(JNIEnv *env, const char *message);
 void throwDisconnectedRuntimeException(JNIEnv *env);
+
+/* function to free CK_ATTRIBUTE array
+ */
+void freeCKAttributeArray(CK_ATTRIBUTE_PTR attrPtr, int len);
 
 /* funktions to convert Java arrays to a CK-type array and the array length */
 
@@ -438,3 +443,15 @@ extern jobject notifyListLock;
 extern jobject jInitArgsObject;
 extern CK_C_INITIALIZE_ARGS_PTR ckpGlobalInitArgs;
 #endif /* NO_CALLBACKS */
+
+#ifdef P11_MEMORYDEBUG
+#include <stdlib.h>
+
+/* Simple malloc/free dumper */
+void *p11malloc(size_t c, char *file, int line);
+void p11free(void *p, char *file, int line);
+
+#define malloc(c)       (p11malloc((c), __FILE__, __LINE__))
+#define free(c)         (p11free((c), __FILE__, __LINE__))
+
+#endif

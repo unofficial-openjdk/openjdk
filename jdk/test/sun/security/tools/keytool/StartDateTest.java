@@ -48,7 +48,7 @@ public class StartDateTest {
         new File("jks").delete();
 
         run("-keystore jks -storetype jks -storepass changeit -keypass changeit -alias me " +
-                "-genkeypair -dname CN=Haha -startdate +1y");
+                "-keyalg rsa -genkeypair -dname CN=Haha -startdate +1y");
         cal.setTime(getIssueDate());
         System.out.println(cal);
         if (cal.get(Calendar.YEAR) != year + 1) {
@@ -132,7 +132,13 @@ public class StartDateTest {
 
     static Date getIssueDate() throws Exception {
         KeyStore ks = KeyStore.getInstance("jks");
-        ks.load(new FileInputStream("jks"), "changeit".toCharArray());
+	FileInputStream fis = null;
+        try {
+	    fis = new FileInputStream("jks");
+            ks.load(fis, "changeit".toCharArray());
+        } finally {
+	    if (fis != null) { fis.close(); }
+	}
         X509Certificate cert = (X509Certificate)ks.getCertificate("me");
         return cert.getNotBefore();
     }

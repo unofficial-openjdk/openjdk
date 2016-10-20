@@ -230,7 +230,7 @@ class Net {                                             // package-private
     private static native void initIDs();
 
     static {
-        Util.load();
+        IOUtil.load();
         initIDs();
     }
 

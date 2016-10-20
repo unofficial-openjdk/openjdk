@@ -46,7 +46,6 @@ import java.security.Permissions;
 import java.security.Permission;
 import java.security.ProtectionDomain;
 import java.security.CodeSource;
-import sun.security.action.GetPropertyAction;
 import sun.security.util.SecurityConstants;
 import sun.net.www.ParseUtil;
 
@@ -57,6 +56,8 @@ Launcher */
 public class Launcher {
     private static URLStreamHandlerFactory factory = new Factory();
     private static Launcher launcher = new Launcher();
+    private static String bootClassPath =
+        System.getProperty("sun.boot.class.path");
 
     public static Launcher getLauncher() {
         return launcher;
@@ -135,9 +136,9 @@ public class Launcher {
                 // aa synthesized ACC via a call to the private method
                 // ExtClassLoader.getContext().
 
-                return (ExtClassLoader) AccessController.doPrivileged(
-                     new PrivilegedExceptionAction() {
-                        public Object run() throws IOException {
+                return AccessController.doPrivileged(
+                    new PrivilegedExceptionAction<ExtClassLoader>() {
+                        public ExtClassLoader run() throws IOException {
                             int len = dirs.length;
                             for (int i = 0; i < len; i++) {
                                 MetaIndex.registerDirectory(dirs[i]);
@@ -180,7 +181,7 @@ public class Launcher {
         }
 
         private static URL[] getExtURLs(File[] dirs) throws IOException {
-            Vector urls = new Vector();
+            Vector<URL> urls = new Vector<URL>();
             for (int i = 0; i < dirs.length; i++) {
                 String[] files = dirs[i].list();
                 if (files != null) {
@@ -208,7 +209,8 @@ public class Launcher {
             name = System.mapLibraryName(name);
             for (int i = 0; i < dirs.length; i++) {
                 // Look in architecture-specific subdirectory first
-                String arch = System.getProperty("os.arch");
+		// Read from the saved system properties to avoid deadlock
+		String arch = VM.getSavedProperty("os.arch");
                 if (arch != null) {
                     File file = new File(new File(dirs[i], arch), name);
                     if (file.exists()) {
@@ -261,9 +263,9 @@ public class Launcher {
             // when loading  classes. Specifically it prevent
             // accessClassInPackage.sun.* grants from being honored.
             //
-            return (AppClassLoader)
-                AccessController.doPrivileged(new PrivilegedAction() {
-                public Object run() {
+            return AccessController.doPrivileged(
+                new PrivilegedAction<AppClassLoader>() {
+                    public AppClassLoader run() {
                     URL[] urls =
                         (s == null) ? new URL[0] : pathToURLs(path);
                     return new AppClassLoader(urls, extcl);
@@ -342,18 +344,17 @@ public class Launcher {
         }
     }
 
-    public static URLClassPath getBootstrapClassPath() {
-        String prop = AccessController.doPrivileged(
-            new GetPropertyAction("sun.boot.class.path"));
+    private static class BootClassPathHolder {
+        static final URLClassPath bcp;
+        static {
         URL[] urls;
-        if (prop != null) {
-            final String path = prop;
-            urls = (URL[])AccessController.doPrivileged(
-                new PrivilegedAction() {
-                    public Object run() {
-                        File[] classPath = getClassPath(path);
+            if (bootClassPath != null) {
+		urls = AccessController.doPrivileged(
+                  new PrivilegedAction<URL[]>() {
+                    public URL[] run() {
+			File[] classPath = getClassPath(bootClassPath);
                         int len = classPath.length;
-                        Set seenDirs = new HashSet();
+                        Set<File> seenDirs = new HashSet<File>();
                         for (int i = 0; i < len; i++) {
                             File curEntry = classPath[i];
                             // Negative test used to properly handle
@@ -367,12 +368,16 @@ public class Launcher {
                         }
                         return pathToURLs(classPath);
                     }
-                }
-            );
-        } else {
-            urls = new URL[0];
-        }
-        return new URLClassPath(urls, factory);
+		  });
+	    } else {
+		urls = new URL[0];
+	    }
+	    bcp = new URLClassPath(urls, factory);
+	}
+    }
+    
+    public static URLClassPath getBootstrapClassPath() {
+        return BootClassPathHolder.bcp;
     }
 
     private static URL[] pathToURLs(File[] path) {
@@ -509,8 +514,8 @@ class PathPermissions extends PermissionCollection {
         perms.add(new java.util.PropertyPermission("java.*",
             SecurityConstants.PROPERTY_READ_ACTION));
 
-        AccessController.doPrivileged(new PrivilegedAction() {
-            public Object run() {
+        AccessController.doPrivileged(new PrivilegedAction<Void>() {
+            public Void run() {
                 for (int i=0; i < path.length; i++) {
                     File f = path[i];
                     String path;
@@ -553,7 +558,7 @@ class PathPermissions extends PermissionCollection {
         return perms.implies(permission);
     }
 
-    public java.util.Enumeration elements() {
+    public java.util.Enumeration<Permission> elements() {
         if (perms == null)
             init();
         synchronized (perms) {

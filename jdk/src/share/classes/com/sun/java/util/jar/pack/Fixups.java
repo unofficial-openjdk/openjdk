@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,9 +25,11 @@
 
 package com.sun.java.util.jar.pack;
 
-import java.io.*;
-import java.util.*;
-import com.sun.java.util.jar.pack.ConstantPool.*;
+import com.sun.java.util.jar.pack.ConstantPool.Entry;
+import java.util.AbstractCollection;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 
 /**
  * Collection of relocatable constant pool references.
@@ -40,7 +42,7 @@ import com.sun.java.util.jar.pack.ConstantPool.*;
  *
  * @author John Rose
  */
-class Fixups extends AbstractCollection implements Constants {
+final class Fixups extends AbstractCollection<Fixups.Fixup> {
     byte[] bytes;    // the subject of the relocations
     int head;        // desc locating first reloc
     int tail;        // desc locating last reloc
@@ -64,11 +66,11 @@ class Fixups extends AbstractCollection implements Constants {
         // If there are no bytes, all descs are kept in bigDescs.
         this((byte[])null);
     }
-    Fixups(byte[] bytes, Collection fixups) {
+    Fixups(byte[] bytes, Collection<Fixup> fixups) {
         this(bytes);
         addAll(fixups);
     }
-    Fixups(Collection fixups) {
+    Fixups(Collection<Fixup> fixups) {
         this((byte[])null);
         addAll(fixups);
     }
@@ -97,7 +99,7 @@ class Fixups extends AbstractCollection implements Constants {
         }
     }
 
-    public void visitRefs(Collection refs) {
+    public void visitRefs(Collection<Entry> refs) {
         for (int i = 0; i < size; i++) {
             refs.add(entries[i]);
         }
@@ -106,8 +108,7 @@ class Fixups extends AbstractCollection implements Constants {
     public void clear() {
         if (bytes != null) {
             // Clean the bytes:
-            for (Iterator i = iterator(); i.hasNext(); ) {
-                Fixup fx = (Fixup) i.next();
+            for (Fixup fx : this) {
                 //System.out.println("clean "+fx);
                 storeIndex(fx.location(), fx.format(), 0);
             }
@@ -124,12 +125,12 @@ class Fixups extends AbstractCollection implements Constants {
 
     public void setBytes(byte[] newBytes) {
         if (bytes == newBytes)  return;
-        ArrayList old = null;
-        assert((old = new ArrayList(this)) != null);
+        ArrayList<Fixup> old = null;
+        assert((old = new ArrayList<Fixup>(this)) != null);
         if (bytes == null || newBytes == null) {
             // One or the other representations is deficient.
             // Construct a checkpoint.
-            ArrayList save = new ArrayList(this);
+            ArrayList<Fixup> save = new ArrayList<Fixup>(this);
             clear();
             bytes = newBytes;
             addAll(save);
@@ -137,7 +138,7 @@ class Fixups extends AbstractCollection implements Constants {
             // assume newBytes is some sort of bitwise copy of the old bytes
             bytes = newBytes;
         }
-        assert(old.equals(new ArrayList(this)));
+        assert(old.equals(new ArrayList<Fixup>(this)));
     }
 
     static final int LOC_SHIFT = 1;
@@ -233,7 +234,7 @@ class Fixups extends AbstractCollection implements Constants {
 
     /** Simple and necessary tuple to present each fixup. */
     public static
-    class Fixup implements Comparable {
+    class Fixup implements Comparable<Fixup> {
         int desc;         // location and format of reloc
         Entry entry;      // which entry to plug into the bytes
         Fixup(int desc, Entry entry) {
@@ -251,9 +252,6 @@ class Fixups extends AbstractCollection implements Constants {
             // Ordering depends only on location.
             return this.location() - that.location();
         }
-        public int compareTo(Object that) {
-            return compareTo((Fixup)that);
-        }
         public boolean equals(Object x) {
             if (!(x instanceof Fixup))  return false;
             Fixup that = (Fixup) x;
@@ -265,18 +263,18 @@ class Fixups extends AbstractCollection implements Constants {
     }
 
     private
-    class Itr implements Iterator {
+    class Itr implements Iterator<Fixup> {
         int index = 0;               // index into entries
         int bigIndex = BIGSIZE+1;    // index into bigDescs
         int next = head;             // desc pointing to next fixup
         public boolean hasNext() { return index < size; }
         public void remove() { throw new UnsupportedOperationException(); }
-        public Object next() {
+        public Fixup next() {
             int thisIndex = index;
             return new Fixup(nextDesc(), entries[thisIndex]);
         }
         int nextDesc() {
-            int thisIndex = index++;
+            index++;
             int thisDesc = next;
             if (index < size) {
                 // Fetch next desc eagerly, in case this fixup gets finalized.
@@ -295,7 +293,7 @@ class Fixups extends AbstractCollection implements Constants {
         }
     }
 
-    public Iterator iterator() {
+    public Iterator<Fixup> iterator() {
         return new Itr();
     }
     public void add(int location, int format, Entry entry) {
@@ -305,10 +303,8 @@ class Fixups extends AbstractCollection implements Constants {
         addDesc(f.desc, f.entry);
         return true;
     }
-    public boolean add(Object fixup) {
-        return add((Fixup) fixup);
-    }
-    public boolean addAll(Collection c) {
+
+    public boolean addAll(Collection<? extends Fixup> c) {
         if (c instanceof Fixups) {
             // Use knowledge of Itr structure to avoid building little structs.
             Fixups that = (Fixups) c;
@@ -418,7 +414,7 @@ class Fixups extends AbstractCollection implements Constants {
 
     // Iterate over all the references in this set of fixups.
     public static
-    void visitRefs(Object fixups, Collection refs) {
+    void visitRefs(Object fixups, Collection<Entry> refs) {
         if (fixups == null) {
         } else if (!(fixups instanceof Fixups)) {
             // Special convention; see above.
@@ -449,8 +445,7 @@ class Fixups extends AbstractCollection implements Constants {
     void finishRefs(ConstantPool.Index ix) {
         if (isEmpty())
             return;
-        for (Iterator i = iterator(); i.hasNext(); ) {
-            Fixup fx = (Fixup) i.next();
+        for (Fixup fx : this) {
             int index = ix.indexOf(fx.entry);
             //System.out.println("finish "+fx+" = "+index);
             // Note that the iterator has already fetched the

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2008, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,9 +35,11 @@ struct unpacker;
 #define CODING_D(x) ((x)>>0  & 0xF)
 
 #define CODING_INIT(B, H, S, D) \
-  { CODING_SPEC(B, H, S, D) }
+  { CODING_SPEC(B, H, S, D) , 0, 0, 0, 0, 0, 0, 0, 0}
 
-#define long do_not_use_C_long_types_use_jlong_or_int
+// For debugging purposes, some compilers do not like this and will complain.
+//    #define long do_not_use_C_long_types_use_jlong_or_int
+// Use of the type "long" is problematic, do not use it.
 
 struct coding {
   int  spec;  // B,H,S,D

@@ -25,8 +25,6 @@
 
 package javax.crypto.spec;
 
-import java.io.UnsupportedEncodingException;
-import java.security.Key;
 import java.security.MessageDigest;
 import java.security.spec.KeySpec;
 import javax.crypto.SecretKey;
@@ -96,7 +94,7 @@ public class SecretKeySpec implements KeySpec, SecretKey {
         if (key.length == 0) {
             throw new IllegalArgumentException("Empty key");
         }
-        this.key = (byte[])key.clone();
+        this.key = key.clone();
         this.algorithm = algorithm;
     }
 
@@ -182,7 +180,7 @@ public class SecretKeySpec implements KeySpec, SecretKey {
      * each time this method is called.
      */
     public byte[] getEncoded() {
-        return (byte[])this.key.clone();
+        return this.key.clone();
     }
 
     /**

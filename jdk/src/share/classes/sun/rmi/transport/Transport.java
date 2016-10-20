@@ -57,7 +57,7 @@ public abstract class Transport {
     static final int logLevel = LogStream.parseLevel(getLogLevel());
 
     private static String getLogLevel() {
-        return (String) java.security.AccessController.doPrivileged(
+        return java.security.AccessController.doPrivileged(
             new sun.security.action.GetPropertyAction("sun.rmi.transport.logLevel"));
     }
 
@@ -133,7 +133,6 @@ public abstract class Transport {
      */
     private static void setContextClassLoader(final ClassLoader ccl) {
         AccessController.doPrivileged(new PrivilegedAction<Void> () {
-                @Override
                 public Void run() {
                     Thread.currentThread().setContextClassLoader(ccl);
                     return null;
@@ -196,8 +195,8 @@ public abstract class Transport {
                     currentTransport.set(this);
                     try {
                         java.security.AccessController.doPrivileged(
-                                new java.security.PrivilegedExceptionAction() {
-                            public Object run() throws IOException {
+                            new java.security.PrivilegedExceptionAction<Void>() {
+                            public Void run() throws IOException {
                                 checkAcceptPermission(acc);
                                 disp.dispatch(impl, call);
                                 return null;

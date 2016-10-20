@@ -138,7 +138,7 @@ class MessageHeader {
         return null;
     }
 
-    class HeaderIterator implements Iterator {
+    class HeaderIterator implements Iterator<String> {
         int index = 0;
         int next = -1;
         String key;
@@ -165,7 +165,7 @@ class MessageHeader {
                 return false;
             }
         }
-        public Object next() {
+        public String next() {
             synchronized (lock) {
                 if (haveNext) {
                     haveNext = false;
@@ -187,21 +187,21 @@ class MessageHeader {
      * return an Iterator that returns all values of a particular
      * key in sequence
      */
-    public Iterator multiValueIterator (String k) {
+    public Iterator<String> multiValueIterator (String k) {
         return new HeaderIterator (k, this);
     }
 
-    public synchronized Map getHeaders() {
+    public synchronized Map<String, List<String>> getHeaders() {
         return getHeaders(null);
     }
 
-    public synchronized Map getHeaders(String[] excludeList) {
+    public synchronized Map<String, List<String>> getHeaders(String[] excludeList) {
         return filterAndAddHeaders(excludeList, null);
     }
 
-    public synchronized Map filterAndAddHeaders(String[] excludeList, Map include) {
+    public synchronized Map<String, List<String>> filterAndAddHeaders(String[] excludeList, Map<String, List<String>>  include) {
         boolean skipIt = false;
-        Map m = new HashMap();
+        Map<String, List<String>> m = new HashMap<String, List<String>>();
         for (int i = nkeys; --i >= 0;) {
             if (excludeList != null) {
                 // check if the key is in the excludeList.
@@ -215,9 +215,9 @@ class MessageHeader {
                 }
             }
             if (!skipIt) {
-                List l = (List)m.get(keys[i]);
+                List<String> l = m.get(keys[i]);
                 if (l == null) {
-                    l = new ArrayList();
+                    l = new ArrayList<String>();
                     m.put(keys[i], l);
                 }
                 l.add(values[i]);
@@ -240,11 +240,8 @@ class MessageHeader {
             }
         }
 
-        Set keySet = m.keySet();
-        for (Iterator i = keySet.iterator(); i.hasNext();) {
-            Object key = i.next();
-            List l = (List)m.get(key);
-            m.put(key, Collections.unmodifiableList(l));
+        for (String key : m.keySet()) {
+            m.put(key, Collections.unmodifiableList(m.get(key)));
         }
 
         return Collections.unmodifiableMap(m);

@@ -44,7 +44,23 @@ set +e
 
 failed=0
 
-if [ $isWindows = false ]; then
+runSA=true
+
+if [ $isMacos = true -o $isAIX = true -o `uname -m` = ppc64 ]; then
+    runSA=false
+fi
+
+if [ $isLinux = true ]; then
+    # Some Linux systems disable non-child ptrace (see 7050524)
+    ptrace_scope=`/sbin/sysctl -n kernel.yama.ptrace_scope`
+    if [ $? = 0 ]; then
+        if [ $ptrace_scope = 1 ]; then
+            runSA=false
+        fi
+    fi
+fi
+
+if [ $runSA = true ]; then
     # -sysprops option
     ${JINFO} -sysprops $appJavaPid
     if [ $? != 0 ]; then failed=1; fi

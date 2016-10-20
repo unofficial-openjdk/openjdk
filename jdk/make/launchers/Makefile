@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2004, 2005, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2004, 2010, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -92,7 +92,7 @@ $(call make-launcher, orbd, com.sun.corba.se.impl.activation.ORBD, \
   -J-Dcom.sun.CORBA.activation.Port=1049 \
   -J-Dcom.sun.CORBA.POA.ORBServerId=1, )
 $(call make-launcher, pack200, com.sun.java.util.jar.pack.Driver, , --pack)
-$(call make-launcher, policytool, sun.security.tools.PolicyTool, , )
+$(call make-launcher, policytool, sun.security.tools.policytool.PolicyTool, , )
 $(call make-launcher, rmic, sun.rmi.rmic.Main, , )
 $(call make-launcher, rmid, sun.rmi.server.Activation, , )
 $(call make-launcher, rmiregistry, sun.rmi.registry.RegistryImpl, , )

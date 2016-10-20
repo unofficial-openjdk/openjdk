@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2003, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,17 +25,24 @@
 
 package com.sun.java.util.jar.pack;
 
-import java.io.*;
-import java.util.*;
+
+import com.sun.java.util.jar.pack.ConstantPool.Entry;
+import com.sun.java.util.jar.pack.ConstantPool.Index;
+import com.sun.java.util.jar.pack.ConstantPool.NumberEntry;
 import com.sun.java.util.jar.pack.Package.Class;
 import com.sun.java.util.jar.pack.Package.InnerClass;
-import com.sun.java.util.jar.pack.ConstantPool.*;
-
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.List;
+import static com.sun.java.util.jar.pack.Constants.*;
 /**
  * Writer for a class file that is incorporated into a package.
  * @author John Rose
  */
-class ClassWriter implements Constants {
+class ClassWriter {
     int verbose;
 
     Package pkg;
@@ -157,14 +164,13 @@ class ClassWriter implements Constants {
     }
 
     void writeMembers(boolean doMethods) throws IOException {
-        List mems;
+        List<? extends Class.Member> mems;
         if (!doMethods)
             mems = cls.getFields();
         else
             mems = cls.getMethods();
         writeShort(mems.size());
-        for (Iterator i = mems.iterator(); i.hasNext(); ) {
-            Class.Member m = (Class.Member) i.next();
+        for (Class.Member m : mems) {
             writeMember(m, doMethods);
         }
     }
@@ -188,8 +194,7 @@ class ClassWriter implements Constants {
             return;
         }
         writeShort(h.attributes.size());
-        for (Iterator i = h.attributes.iterator(); i.hasNext(); ) {
-            Attribute a = (Attribute) i.next();
+        for (Attribute a : h.attributes) {
             a.finishRefs(cpIndex);
             writeRef(a.getNameRef());
             if (a.layout() == Package.attrCodeEmpty ||
@@ -199,7 +204,7 @@ class ClassWriter implements Constants {
                 assert(out != bufOut);
                 buf.reset();
                 out = bufOut;
-                if (a.name() == "Code") {
+                if ("Code".equals(a.name())) {
                     Class.Method m = (Class.Method) h;
                     writeCode(m.code);
                 } else {
@@ -238,10 +243,9 @@ class ClassWriter implements Constants {
     }
 
     void writeInnerClasses(Class cls) throws IOException {
-        List ics = cls.getInnerClasses();
+        List<InnerClass> ics = cls.getInnerClasses();
         writeShort(ics.size());
-        for (Iterator i = ics.iterator(); i.hasNext(); ) {
-            InnerClass ic = (InnerClass) i.next();
+        for (InnerClass ic : ics) {
             writeRef(ic.thisClass);
             writeRef(ic.outerClass);
             writeRef(ic.name);

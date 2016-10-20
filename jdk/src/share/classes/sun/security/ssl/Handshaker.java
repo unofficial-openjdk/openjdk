@@ -152,7 +152,7 @@ abstract class Handshaker {
      * Data is protected by the SSLEngine.this lock.
      */
     private volatile boolean taskDelegated = false;
-    private volatile DelegatedTask delegatedTask = null;
+    private volatile DelegatedTask<?> delegatedTask = null;
     private volatile Exception thrown = null;
 
     // Could probably use a java.util.concurrent.atomic.AtomicReference
@@ -1204,7 +1204,7 @@ abstract class Handshaker {
         thrown = null;
     }
 
-    DelegatedTask getTask() {
+    DelegatedTask<?> getTask() {
         if (!taskDelegated) {
             taskDelegated = true;
             return delegatedTask;
@@ -1246,8 +1246,7 @@ abstract class Handshaker {
                 thrown = null;
 
                 if (e instanceof RuntimeException) {
-                    throw (RuntimeException)
-                        new RuntimeException(msg).initCause(e);
+                    throw new RuntimeException(msg, e);
                 } else if (e instanceof SSLHandshakeException) {
                     throw (SSLHandshakeException)
                         new SSLHandshakeException(msg).initCause(e);
@@ -1265,8 +1264,7 @@ abstract class Handshaker {
                      * If it's SSLException or any other Exception,
                      * we'll wrap it in an SSLException.
                      */
-                    throw (SSLException)
-                        new SSLException(msg).initCause(e);
+                    throw new SSLException(msg, e);
                 }
             }
         }

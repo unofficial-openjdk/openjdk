@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,6 @@ package sun.security.mscapi;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.Provider;
-import java.security.ProviderException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -48,8 +47,8 @@ public final class SunMSCAPI extends Provider {
     private static final String INFO = "Sun's Microsoft Crypto API provider";
 
     static {
-        AccessController.doPrivileged(new PrivilegedAction() {
-            public Object run() {
+        AccessController.doPrivileged(new PrivilegedAction<Void>() {
+            public Void run() {
                 System.loadLibrary("sunmscapi");
                 return null;
             }
@@ -62,8 +61,9 @@ public final class SunMSCAPI extends Provider {
         // if there is no security manager installed, put directly into
         // the provider. Otherwise, create a temporary map and use a
         // doPrivileged() call at the end to transfer the contents
-        final Map map = (System.getSecurityManager() == null)
-                        ? (Map)this : new HashMap();
+        final Map<Object, Object> map =
+                (System.getSecurityManager() == null)
+                ? this : new HashMap<Object, Object>();
 
         /*
          * Secure random
@@ -79,21 +79,53 @@ public final class SunMSCAPI extends Provider {
         /*
          * Signature engines
          */
+        // NONEwithRSA must be supplied with a pre-computed message digest.
+        // Only the following digest algorithms are supported: MD5, SHA-1,
+        // SHA-224, SHA-256, SHA-384, SHA-512 and a special-purpose digest
+        // algorithm which is a concatenation of SHA-1 and MD5 digests.
+        map.put("Signature.NONEwithRSA",
+            "sun.security.mscapi.RSASignature$Raw");
         map.put("Signature.SHA1withRSA",
             "sun.security.mscapi.RSASignature$SHA1");
+        map.put("Signature.SHA224withRSA",
+            "sun.security.mscapi.RSASignature$SHA224");
+        map.put("Alg.Alias.Signature.1.2.840.113549.1.1.14",     "SHA224withRSA");
+        map.put("Alg.Alias.Signature.OID.1.2.840.113549.1.1.14", "SHA224withRSA");
+        map.put("Signature.SHA256withRSA",
+            "sun.security.mscapi.RSASignature$SHA256");
+        map.put("Alg.Alias.Signature.1.2.840.113549.1.1.11",     "SHA256withRSA");
+        map.put("Alg.Alias.Signature.OID.1.2.840.113549.1.1.11", "SHA256withRSA");
+        map.put("Signature.SHA384withRSA",
+            "sun.security.mscapi.RSASignature$SHA384");
+        map.put("Alg.Alias.Signature.1.2.840.113549.1.1.12",     "SHA384withRSA");
+        map.put("Alg.Alias.Signature.OID.1.2.840.113549.1.1.12", "SHA384withRSA");
+
+        map.put("Signature.SHA512withRSA",
+            "sun.security.mscapi.RSASignature$SHA512");
+        map.put("Alg.Alias.Signature.1.2.840.113549.1.1.13",     "SHA512withRSA");
+        map.put("Alg.Alias.Signature.OID.1.2.840.113549.1.1.13", "SHA512withRSA");
+
         map.put("Signature.MD5withRSA",
             "sun.security.mscapi.RSASignature$MD5");
         map.put("Signature.MD2withRSA",
             "sun.security.mscapi.RSASignature$MD2");
 
         // supported key classes
+        map.put("Signature.NONEwithRSA SupportedKeyClasses",
+            "sun.security.mscapi.Key");
         map.put("Signature.SHA1withRSA SupportedKeyClasses",
+            "sun.security.mscapi.Key");
+        map.put("Signature.SHA224withRSA SupportedKeyClasses",
+            "sun.security.mscapi.Key");
+        map.put("Signature.SHA256withRSA SupportedKeyClasses",
+            "sun.security.mscapi.Key");
+        map.put("Signature.SHA384withRSA SupportedKeyClasses",
+            "sun.security.mscapi.Key");
+        map.put("Signature.SHA512withRSA SupportedKeyClasses",
             "sun.security.mscapi.Key");
         map.put("Signature.MD5withRSA SupportedKeyClasses",
             "sun.security.mscapi.Key");
         map.put("Signature.MD2withRSA SupportedKeyClasses",
-            "sun.security.mscapi.Key");
-        map.put("Signature.NONEwithRSA SupportedKeyClasses",
             "sun.security.mscapi.Key");
 
         /*

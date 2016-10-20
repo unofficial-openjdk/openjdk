@@ -23,12 +23,16 @@
  * questions.
  */
 
+//
+// SunJSSE does not support dynamic system properties, no way to re-use
+// system properties in samevm/agentvm mode.
+//
+
 /*
  * @test
  * @bug 4873188
  * @summary Support TLS 1.1
- * @run main/othervm -Djavax.net.debug=all ExportableStreamCipher
- *
+ * @run main/othervm ExportableStreamCipher
  * @author Xuelei Fan
  */
 

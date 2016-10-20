@@ -1580,8 +1580,8 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
         }
         GeneralNames names;
         try {
-            names = (GeneralNames) subjectAltNameExt.get
-                (SubjectAlternativeNameExtension.SUBJECT_NAME);
+            names = subjectAltNameExt.get(
+                SubjectAlternativeNameExtension.SUBJECT_NAME);
         } catch (IOException ioe) {
             // should not occur
             return Collections.<List<?>>emptySet();
@@ -1612,8 +1612,8 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
 
             GeneralNames names;
             try {
-                names = (GeneralNames) subjectAltNameExt.get
-                    (SubjectAlternativeNameExtension.SUBJECT_NAME);
+                names = subjectAltNameExt.get(
+                    SubjectAlternativeNameExtension.SUBJECT_NAME);
             }  catch (IOException ioe) {
                 // should not occur
                 return Collections.<List<?>>emptySet();
@@ -1646,8 +1646,8 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
         }
         GeneralNames names;
         try {
-            names = (GeneralNames) issuerAltNameExt.get
-                (IssuerAlternativeNameExtension.ISSUER_NAME);
+            names = issuerAltNameExt.get(
+                IssuerAlternativeNameExtension.ISSUER_NAME);
         } catch (IOException ioe) {
             // should not occur
             return Collections.<List<?>>emptySet();
@@ -1678,8 +1678,8 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
                                                     data);
             GeneralNames names;
             try {
-                names = (GeneralNames) issuerAltNameExt.get
-                    (IssuerAlternativeNameExtension.ISSUER_NAME);
+                names = issuerAltNameExt.get(
+                    IssuerAlternativeNameExtension.ISSUER_NAME);
             }  catch (IOException ioe) {
                 // should not occur
                 return Collections.<List<?>>emptySet();

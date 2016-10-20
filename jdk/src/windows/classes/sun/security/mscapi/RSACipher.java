@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@
 
 package sun.security.mscapi;
 
+import java.math.BigInteger;
 import java.security.*;
 import java.security.Key;
 import java.security.interfaces.*;
@@ -35,6 +36,8 @@ import javax.crypto.spec.*;
 
 import sun.security.internal.spec.TlsRsaPremasterSecretParameterSpec;
 import sun.security.util.KeyUtil;
+
+import sun.security.rsa.RSAKeyFactory;
 
 /**
  * RSA cipher implementation using the Microsoft Crypto API.
@@ -203,20 +206,50 @@ public final class RSACipher extends CipherSpi {
         default:
             throw new InvalidKeyException("Unknown mode: " + opmode);
         }
+
         if (!(key instanceof sun.security.mscapi.Key)) {
-            throw new InvalidKeyException("Unsupported key type: " + key);
+            if (key instanceof java.security.interfaces.RSAPublicKey) {
+                java.security.interfaces.RSAPublicKey rsaKey =
+                    (java.security.interfaces.RSAPublicKey) key;
+
+                // Convert key to MSCAPI format
+
+                BigInteger modulus = rsaKey.getModulus();
+                BigInteger exponent =  rsaKey.getPublicExponent();
+
+                // Check against the local and global values to make sure
+                // the sizes are ok.  Round up to the nearest byte.
+                RSAKeyFactory.checkKeyLengths(((modulus.bitLength() + 7) & ~7),
+                    exponent, -1, RSAKeyPairGenerator.KEY_SIZE_MAX);
+
+                byte[] modulusBytes = modulus.toByteArray();
+                byte[] exponentBytes = exponent.toByteArray();
+
+                // Adjust key length due to sign bit
+                int keyBitLength = (modulusBytes[0] == 0)
+                    ? (modulusBytes.length - 1) * 8
+                    : modulusBytes.length * 8;
+
+                byte[] keyBlob = RSASignature.generatePublicKeyBlob(
+                    keyBitLength, modulusBytes, exponentBytes);
+
+                key = RSASignature.importPublicKey(keyBlob, keyBitLength);
+
+            } else {
+                throw new InvalidKeyException("Unsupported key type: " + key);
+            }
         }
 
         if (key instanceof PublicKey) {
             mode = encrypt ? MODE_ENCRYPT : MODE_VERIFY;
             publicKey = (sun.security.mscapi.Key)key;
             privateKey = null;
-            outputSize = publicKey.bitLength() / 8;
+            outputSize = publicKey.length() / 8;
         } else if (key instanceof PrivateKey) {
             mode = encrypt ? MODE_SIGN : MODE_DECRYPT;
             privateKey = (sun.security.mscapi.Key)key;
             publicKey = null;
-            outputSize = privateKey.bitLength() / 8;
+            outputSize = privateKey.length() / 8;
         } else {
             throw new InvalidKeyException("Unknown key type: " + key);
         }
@@ -379,7 +412,11 @@ public final class RSACipher extends CipherSpi {
     protected int engineGetKeySize(Key key) throws InvalidKeyException {
 
         if (key instanceof sun.security.mscapi.Key) {
-            return ((sun.security.mscapi.Key) key).bitLength();
+            return ((sun.security.mscapi.Key) key).length();
+
+        } else if (key instanceof RSAKey) {
+            return ((RSAKey) key).getModulus().bitLength();
+
         } else {
             throw new InvalidKeyException("Unsupported key type: " + key);
         }

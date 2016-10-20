@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2004, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,7 +40,7 @@ struct jar {
 
   // Private members
   fillbytes   central_directory;
-  ushort      central_directory_count;
+  uint        central_directory_count;
   uint        output_file_offset;
   fillbytes   deflated;  // temporary buffer
 
@@ -68,12 +68,13 @@ struct jar {
   }
 
   // Private Methods
-  void write_data(void* ptr, int len);
+  void write_data(void* ptr, size_t len);
   void write_data(bytes& b) { write_data(b.ptr, b.len); }
   void add_to_jar_directory(const char* fname, bool store, int modtime,
                             int len, int clen, uLong crc);
   void write_jar_header(const char* fname, bool store, int modtime,
                         int len, int clen, unsigned int crc);
+  void write_jar_extra(int len, int clen, unsigned int crc);
   void write_central_directory();
   uLong dostime(int y, int n, int d, int h, int m, int s);
   uLong get_dostime(int modtime);

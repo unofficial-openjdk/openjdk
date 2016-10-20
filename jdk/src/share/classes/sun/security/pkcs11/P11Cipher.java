@@ -43,14 +43,12 @@ import static sun.security.pkcs11.wrapper.PKCS11Constants.*;
  * Cipher implementation class. This class currently supports
  * DES, DESede, AES, ARCFOUR, and Blowfish.
  *
- * This class is designed to support ECB and CBC with NoPadding and
- * PKCS5Padding for both. It will use its own padding impl if the
- * native mechanism does not support padding.
+ * This class is designed to support ECB, CBC, CTR with NoPadding
+ * and ECB, CBC with PKCS5Padding. It will use its own padding impl
+ * if the native mechanism does not support padding.
  *
- * Note that PKCS#11 current only supports ECB and CBC. There are no
- * provisions for other modes such as CFB, OFB, PCBC, or CTR mode.
- * However, CTR could be implemented relatively easily (and efficiently)
- * on top of ECB mode in this class, if need be.
+ * Note that PKCS#11 currently only supports ECB, CBC, and CTR.
+ * There are no provisions for other modes such as CFB, OFB, and PCBC.
  *
  * @author  Andreas Sterbenz
  * @since   1.5
@@ -61,6 +59,8 @@ final class P11Cipher extends CipherSpi {
     private final static int MODE_ECB = 3;
     // mode constant for CBC mode
     private final static int MODE_CBC = 4;
+    // mode constant for CTR mode
+    private final static int MODE_CTR = 5;
 
     // padding constant for NoPadding
     private final static int PAD_NONE = 5;
@@ -154,12 +154,16 @@ final class P11Cipher extends CipherSpi {
     private byte[] padBuffer;
     private int padBufferLen;
 
-    // original IV, if in MODE_CBC
+    // original IV, if in MODE_CBC or MODE_CTR
     private byte[] iv;
 
     // number of bytes buffered internally by the native mechanism and padBuffer
     // if we do the padding
     private int bytesBuffered;
+
+    // length of key size in bytes; currently only used by AES given its oid
+    // specification mandates a fixed size of the key
+    private int fixedKeySize = -1;
 
     P11Cipher(Token token, String algorithm, long mechanism)
             throws PKCS11Exception, NoSuchAlgorithmException {
@@ -169,19 +173,26 @@ final class P11Cipher extends CipherSpi {
         this.mechanism = mechanism;
 
         String algoParts[] = algorithm.split("/");
-        keyAlgorithm = algoParts[0];
 
-        if (keyAlgorithm.equals("AES")) {
+        if (algoParts[0].startsWith("AES")) {
             blockSize = 16;
-        } else if (keyAlgorithm.equals("RC4") ||
-                keyAlgorithm.equals("ARCFOUR")) {
-            blockSize = 0;
-        } else { // DES, DESede, Blowfish
-            blockSize = 8;
-        }
-        this.blockMode =
+            int index = algoParts[0].indexOf('_');
+            if (index != -1) {
+                // should be well-formed since we specify what we support
+                fixedKeySize = Integer.parseInt(algoParts[0].substring(index+1))/8;
+            }
+            keyAlgorithm = "AES";
+        } else {
+            keyAlgorithm = algoParts[0];
+            if (keyAlgorithm.equals("RC4") ||
+                    keyAlgorithm.equals("ARCFOUR")) {
+                blockSize = 0;
+            } else { // DES, DESede, Blowfish
+                blockSize = 8;
+            }
+            this.blockMode =
                 (algoParts.length > 1 ? parseMode(algoParts[1]) : MODE_ECB);
-
+        }
         String defPadding = (blockSize == 0 ? "NoPadding" : "PKCS5Padding");
         String paddingStr =
                 (algoParts.length > 2 ? algoParts[2] : defPadding);
@@ -210,6 +221,8 @@ final class P11Cipher extends CipherSpi {
                         ("CBC mode not supported with stream ciphers");
             }
             result = MODE_CBC;
+        } else if (mode.equals("CTR")) {
+            result = MODE_CTR;
         } else {
             throw new NoSuchAlgorithmException("Unsupported mode " + mode);
         }
@@ -225,6 +238,10 @@ final class P11Cipher extends CipherSpi {
         if (padding.equals("NOPADDING")) {
             paddingType = PAD_NONE;
         } else if (padding.equals("PKCS5PADDING")) {
+            if (this.blockMode == MODE_CTR) {
+                throw new NoSuchPaddingException
+                    ("PKCS#5 padding not supported with CTR mode");
+            }
             paddingType = PAD_PKCS5;
             if (mechanism != CKM_DES_CBC_PAD && mechanism != CKM_DES3_CBC_PAD &&
                     mechanism != CKM_AES_CBC_PAD) {
@@ -249,7 +266,7 @@ final class P11Cipher extends CipherSpi {
 
     // see JCE spec
     protected byte[] engineGetIV() {
-        return (iv == null) ? null : (byte[]) iv.clone();
+        return (iv == null) ? null : iv.clone();
     }
 
     // see JCE spec
@@ -306,7 +323,7 @@ final class P11Cipher extends CipherSpi {
         byte[] ivValue;
         if (params != null) {
             try {
-                IvParameterSpec ivSpec = (IvParameterSpec)
+                IvParameterSpec ivSpec =
                         params.getParameterSpec(IvParameterSpec.class);
                 ivValue = ivSpec.getIV();
             } catch (InvalidParameterSpecException e) {
@@ -324,6 +341,9 @@ final class P11Cipher extends CipherSpi {
             SecureRandom random)
             throws InvalidKeyException, InvalidAlgorithmParameterException {
         cancelOperation();
+        if (fixedKeySize != -1 && key.getEncoded().length != fixedKeySize) {
+            throw new InvalidKeyException("Key size is invalid");
+        }
         switch (opmode) {
             case Cipher.ENCRYPT_MODE:
                 encrypt = true;
@@ -345,11 +365,14 @@ final class P11Cipher extends CipherSpi {
                             ("IV not used in ECB mode");
                 }
             }
-        } else { // MODE_CBC
+        } else { // MODE_CBC or MODE_CTR
             if (iv == null) {
                 if (encrypt == false) {
-                    throw new InvalidAlgorithmParameterException
-                            ("IV must be specified for decryption in CBC mode");
+                    String exMsg =
+                        (blockMode == MODE_CBC ?
+                         "IV must be specified for decryption in CBC mode" :
+                         "IV must be specified for decryption in CTR mode");
+                    throw new InvalidAlgorithmParameterException(exMsg);
                 }
                 // generate random IV
                 if (random == null) {
@@ -392,6 +415,8 @@ final class P11Cipher extends CipherSpi {
             }
         } catch (PKCS11Exception e) {
             throw new ProviderException("Cancel failed", e);
+        } finally {
+            reset();
         }
     }
 
@@ -405,12 +430,20 @@ final class P11Cipher extends CipherSpi {
         if (session == null) {
             session = token.getOpSession();
         }
-        if (encrypt) {
-            token.p11.C_EncryptInit(session.id(),
-                    new CK_MECHANISM(mechanism, iv), p11Key.keyID);
-        } else {
-            token.p11.C_DecryptInit(session.id(),
-                    new CK_MECHANISM(mechanism, iv), p11Key.keyID);
+        CK_MECHANISM mechParams = (blockMode == MODE_CTR?
+            new CK_MECHANISM(mechanism, new CK_AES_CTR_PARAMS(iv)) :
+            new CK_MECHANISM(mechanism, iv));
+
+        try {
+            if (encrypt) {
+                token.p11.C_EncryptInit(session.id(), mechParams, p11Key.keyID);
+            } else {
+                token.p11.C_DecryptInit(session.id(), mechParams, p11Key.keyID);
+            }
+        } catch (PKCS11Exception ex) {
+            // release session when initialization failed
+            session = token.releaseSession(session);
+            throw ex;
         }
         bytesBuffered = 0;
         padBufferLen = 0;
@@ -443,6 +476,16 @@ final class P11Cipher extends CipherSpi {
             result += (blockSize - (result & (blockSize - 1)));
         }
         return result;
+    }
+
+    // reset the states to the pre-initialized values
+    private void reset() {
+        initialized = false;
+        bytesBuffered = 0;
+        padBufferLen = 0;
+        if (session != null) {
+            session = token.releaseSession(session);
+        }
     }
 
     // see JCE spec
@@ -563,6 +606,7 @@ final class P11Cipher extends CipherSpi {
                 throw (ShortBufferException)
                         (new ShortBufferException().initCause(e));
             }
+            reset();
             throw new ProviderException("update() failed", e);
         }
     }
@@ -680,6 +724,7 @@ final class P11Cipher extends CipherSpi {
                 throw (ShortBufferException)
                         (new ShortBufferException().initCause(e));
             }
+            reset();
             throw new ProviderException("update() failed", e);
         }
     }
@@ -726,10 +771,7 @@ final class P11Cipher extends CipherSpi {
             handleException(e);
             throw new ProviderException("doFinal() failed", e);
         } finally {
-            initialized = false;
-            bytesBuffered = 0;
-            padBufferLen = 0;
-            session = token.releaseSession(session);
+            reset();
         }
     }
 
@@ -803,9 +845,7 @@ final class P11Cipher extends CipherSpi {
             handleException(e);
             throw new ProviderException("doFinal() failed", e);
         } finally {
-            initialized = false;
-            bytesBuffered = 0;
-            session = token.releaseSession(session);
+            reset();
         }
     }
 

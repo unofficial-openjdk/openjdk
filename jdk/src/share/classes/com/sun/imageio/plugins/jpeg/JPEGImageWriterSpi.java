@@ -43,8 +43,6 @@ public class JPEGImageWriterSpi extends ImageWriterSpi {
     private static String [] readerSpiNames =
         {"com.sun.imageio.plugins.jpeg.JPEGImageReaderSpi"};
 
-    private boolean registered = false;
-
     public JPEGImageWriterSpi() {
         super(JPEG.vendor,
               JPEG.version,
@@ -67,23 +65,6 @@ public class JPEGImageWriterSpi extends ImageWriterSpi {
 
     public String getDescription(Locale locale) {
         return "Standard JPEG Image Writer";
-    }
-
-    public void onRegistration(ServiceRegistry registry,
-                               Class<?> category) {
-        if (registered) {
-            return;
-        }
-        try {
-            java.security.AccessController.doPrivileged(
-                new sun.security.action.LoadLibraryAction("jpeg"));
-        } catch (Throwable e) { // Fail on any Throwable
-            // if it can't be loaded, deregister and return
-            registry.deregisterServiceProvider(this);
-            return;
-        }
-
-        registered = true;
     }
 
     public boolean isFormatLossless() {
