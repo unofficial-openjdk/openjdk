@@ -126,4 +126,7 @@ class PollArrayWrapper extends AbstractPollArrayWrapper {
 
     private static native void interrupt(int fd);
 
+    static {
+        IOUtil.load();
+    }
 }

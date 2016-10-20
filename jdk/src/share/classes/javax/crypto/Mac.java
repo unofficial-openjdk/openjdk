@@ -100,7 +100,7 @@ public class Mac implements Cloneable {
 
     // remaining services to try in provider selection
     // null once provider is selected
-    private Iterator serviceIterator;
+    private Iterator<Service> serviceIterator;
 
     private final Object lock;
 
@@ -119,7 +119,7 @@ public class Mac implements Cloneable {
         lock = null;
     }
 
-    private Mac(Service s, Iterator t, String algorithm) {
+    private Mac(Service s, Iterator<Service> t, String algorithm) {
         firstService = s;
         serviceIterator = t;
         this.algorithm = algorithm;
@@ -168,11 +168,11 @@ public class Mac implements Cloneable {
      */
     public static final Mac getInstance(String algorithm)
             throws NoSuchAlgorithmException {
-        List services = GetInstance.getServices("Mac", algorithm);
+        List<Service> services = GetInstance.getServices("Mac", algorithm);
         // make sure there is at least one service from a signed provider
-        Iterator t = services.iterator();
+        Iterator<Service> t = services.iterator();
         while (t.hasNext()) {
-            Service s = (Service)t.next();
+            Service s = t.next();
             if (JceSecurity.canUseProvider(s.getProvider()) == false) {
                 continue;
             }
@@ -293,7 +293,7 @@ public class Mac implements Cloneable {
                     s = firstService;
                     firstService = null;
                 } else {
-                    s = (Service)serviceIterator.next();
+                    s = serviceIterator.next();
                 }
                 if (JceSecurity.canUseProvider(s.getProvider()) == false) {
                     continue;
@@ -336,7 +336,7 @@ public class Mac implements Cloneable {
                     s = firstService;
                     firstService = null;
                 } else {
-                    s = (Service)serviceIterator.next();
+                    s = serviceIterator.next();
                 }
                 // if provider says it does not support this key, ignore it
                 if (s.supportsParameter(key) == false) {

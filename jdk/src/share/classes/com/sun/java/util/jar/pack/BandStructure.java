@@ -1705,7 +1705,7 @@ class BandStructure {
         for (int i = 0; i < ATTR_CONTEXT_LIMIT; i++) {
             assert(attrIndexLimit[i] == 0);
             attrIndexLimit[i] = 32;  // just for the sake of predefs.
-            attrDefs.set(i, new ArrayList<Attribute.Layout>(Collections.nCopies(
+            attrDefs.set(i, new ArrayList<>(Collections.nCopies(
                     attrIndexLimit[i], (Attribute.Layout)null)));
 
         }
@@ -1893,7 +1893,7 @@ class BandStructure {
         return testBit(archiveOptions, mask);
     }
 
-    protected List getPredefinedAttrs(int ctype) {
+    protected List<Attribute.Layout> getPredefinedAttrs(int ctype) {
         assert(attrIndexLimit[ctype] != 0);
         List<Attribute.Layout> res = new ArrayList<>(attrIndexLimit[ctype]);
         // Remove nulls and non-predefs.
@@ -2650,7 +2650,7 @@ class BandStructure {
 
     // Utilities for reallocating:
     protected static Object[] realloc(Object[] a, int len) {
-        java.lang.Class elt = a.getClass().getComponentType();
+        java.lang.Class<?> elt = a.getClass().getComponentType();
         Object[] na = (Object[]) java.lang.reflect.Array.newInstance(elt, len);
         System.arraycopy(a, 0, na, 0, Math.min(a.length, len));
         return na;

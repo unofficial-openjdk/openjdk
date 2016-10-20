@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,7 @@
  * questions.
  */
 
-package sun.security.tools;
+package sun.security.tools.keytool;
 
 import java.io.*;
 import java.security.CodeSigner;
@@ -38,10 +38,12 @@ import java.security.Signature;
 import java.security.Timestamp;
 import java.security.UnrecoverableEntryException;
 import java.security.UnrecoverableKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.Provider;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
+import java.security.cert.CertStoreException;
 import java.security.cert.CRL;
 import java.security.cert.X509Certificate;
 import java.security.cert.CertificateException;
@@ -64,30 +66,25 @@ import java.security.cert.X509CRLSelector;
 import javax.security.auth.x500.X500Principal;
 import sun.misc.BASE64Encoder;
 import sun.security.util.ObjectIdentifier;
-import sun.security.pkcs.PKCS10;
+import sun.security.pkcs10.PKCS10;
+import sun.security.pkcs10.PKCS10Attribute;
 import sun.security.provider.X509Factory;
+import sun.security.provider.certpath.CertStoreHelper;
 import sun.security.util.Password;
-import sun.security.util.PathList;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 import sun.misc.BASE64Decoder;
-import sun.security.pkcs.PKCS10Attribute;
 import sun.security.pkcs.PKCS9Attribute;
-import sun.security.provider.certpath.ldap.LDAPCertStoreHelper;
+import sun.security.tools.KeyStoreUtil;
+import sun.security.tools.PathList;
 import sun.security.util.DerValue;
 import sun.security.x509.*;
 
 import static java.security.KeyStore.*;
 import javax.net.ssl.*;
-import static sun.security.tools.KeyTool.Command.*;
-import static sun.security.tools.KeyTool.Option.*;
+import static sun.security.tools.keytool.Main.Command.*;
+import static sun.security.tools.keytool.Main.Option.*;
 
 /**
  * This tool manages keystores.
@@ -101,7 +98,7 @@ import static sun.security.tools.KeyTool.Option.*;
  *
  * @since 1.2
  */
-public final class KeyTool {
+public final class Main {
 
     private boolean debug = false;
     private Command command = null;
@@ -311,7 +308,6 @@ public final class KeyTool {
 
     private static final Class[] PARAM_STRING = { String.class };
 
-    private static final String JKS = "jks";
     private static final String NONE = "NONE";
     private static final String P11KEYSTORE = "PKCS11";
     private static final String P12KEYSTORE = "PKCS12";
@@ -319,17 +315,18 @@ public final class KeyTool {
 
     // for i18n
     private static final java.util.ResourceBundle rb =
-        java.util.ResourceBundle.getBundle("sun.security.util.Resources");
+        java.util.ResourceBundle.getBundle(
+            "sun.security.tools.keytool.Resources");
     private static final Collator collator = Collator.getInstance();
     static {
         // this is for case insensitive string comparisons
         collator.setStrength(Collator.PRIMARY);
     };
 
-    private KeyTool() { }
+    private Main() { }
 
     public static void main(String[] args) throws Exception {
-        KeyTool kt = new KeyTool();
+        Main kt = new Main();
         kt.run(args, System.out);
     }
 
@@ -914,23 +911,18 @@ public final class KeyTool {
         }
 
         if (trustcacerts) {
-            caks = getCacertsKeyStore();
+            caks = KeyStoreUtil.getCacertsKeyStore();
         }
 
         // Perform the specified command
         if (command == CERTREQ) {
-            PrintStream ps = null;
             if (filename != null) {
-                ps = new PrintStream(new FileOutputStream
-                                                 (filename));
-                out = ps;
-            }
-            try {
-                doCertReq(alias, sigAlgName, out);
-            } finally {
-                if (ps != null) {
-                    ps.close();
+                try (PrintStream ps = new PrintStream(new FileOutputStream
+                                                      (filename))) {
+                    doCertReq(alias, sigAlgName, ps);
                 }
+            } else {
+                doCertReq(alias, sigAlgName, out);
             }
             if (verbose && filename != null) {
                 MessageFormat form = new MessageFormat(rb.getString
@@ -943,18 +935,13 @@ public final class KeyTool {
             doDeleteEntry(alias);
             kssave = true;
         } else if (command == EXPORTCERT) {
-            PrintStream ps = null;
             if (filename != null) {
-                ps = new PrintStream(new FileOutputStream
-                                                 (filename));
-                out = ps;
-            }
-            try {
-                doExportCert(alias, out);
-            } finally {
-                if (ps != null) {
-                    ps.close();
+                try (PrintStream ps = new PrintStream(new FileOutputStream
+                                                   (filename))) {
+                    doExportCert(alias, ps);
                 }
+            } else {
+                doExportCert(alias, out);
             }
             if (filename != null) {
                 MessageFormat form = new MessageFormat(rb.getString
@@ -975,16 +962,12 @@ public final class KeyTool {
             doGenSecretKey(alias, keyAlgName, keysize);
             kssave = true;
         } else if (command == IDENTITYDB) {
-            InputStream inStream = System.in;
             if (filename != null) {
-                inStream = new FileInputStream(filename);
-            }
-            try {
-                doImportIdentityDatabase(inStream);
-            } finally {
-                if (inStream != System.in) {
-                    inStream.close();
+                try (InputStream inStream = new FileInputStream(filename)) {
+                    doImportIdentityDatabase(inStream);
                 }
+            } else {
+                doImportIdentityDatabase(System.in);
             }
         } else if (command == IMPORTCERT) {
             InputStream inStream = System.in;
@@ -1103,29 +1086,21 @@ public final class KeyTool {
             if (alias == null) {
                 alias = keyAlias;
             }
-            PrintStream ps = null;
             if (filename != null) {
-                ps = new PrintStream(new FileOutputStream(filename));
-                out = ps;
-            }
-            try {
-                doGenCRL(out);
-            } finally {
-                if (ps != null) {
-                    ps.close();
+                try (PrintStream ps =
+                         new PrintStream(new FileOutputStream(filename))) {
+                    doGenCRL(ps);
                 }
+            } else {
+                doGenCRL(out);
             }
         } else if (command == PRINTCERTREQ) {
-            InputStream inStream = System.in;
             if (filename != null) {
-                inStream = new FileInputStream(filename);
-            }
-            try {
-                doPrintCertReq(inStream, out);
-            } finally {
-                if (inStream != System.in) {
-                    inStream.close();
+                try (InputStream inStream = new FileInputStream(filename)) {
+                    doPrintCertReq(inStream, out);
                 }
+            } else {
+                doPrintCertReq(System.in, out);
             }
         } else if (command == PRINTCRL) {
             doPrintCRL(filename, out);
@@ -1196,7 +1171,7 @@ public final class KeyTool {
                     new CertificateVersion(CertificateVersion.V3));
         info.set(X509CertInfo.ALGORITHM_ID,
                     new CertificateAlgorithmId(
-                        AlgorithmId.getAlgorithmId(sigAlgName)));
+                        AlgorithmId.get(sigAlgName)));
         info.set(X509CertInfo.ISSUER, new CertificateIssuerName(issuer));
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(in));
@@ -1226,7 +1201,7 @@ public final class KeyTool {
         Iterator<PKCS10Attribute> attrs = req.getAttributes().getAttributes().iterator();
         while (attrs.hasNext()) {
             PKCS10Attribute attr = attrs.next();
-            if (attr.getAttributeId().equals(PKCS9Attribute.EXTENSION_REQUEST_OID)) {
+            if (attr.getAttributeId().equals((Object)PKCS9Attribute.EXTENSION_REQUEST_OID)) {
                 reqex = (CertificateExtensions)attr.getAttributeValue();
             }
         }
@@ -1265,7 +1240,7 @@ public final class KeyTool {
 
         Date firstDate = getStartDate(startDate);
         Date lastDate = (Date) firstDate.clone();
-        lastDate.setTime(lastDate.getTime() + (long)validity*1000*24*60*60);
+        lastDate.setTime(lastDate.getTime() + validity*1000*24*60*60);
         CertificateValidity interval = new CertificateValidity(firstDate,
                                                                lastDate);
 
@@ -2076,12 +2051,13 @@ public final class KeyTool {
                 }
             }
         } else {    // must be LDAP, and uri is not null
+            // Lazily load LDAPCertStoreHelper if present
+            CertStoreHelper helper = CertStoreHelper.getInstance("LDAP");
             String path = uri.getPath();
             if (path.charAt(0) == '/') path = path.substring(1);
-            LDAPCertStoreHelper h = new LDAPCertStoreHelper();
-            CertStore s = h.getCertStore(uri);
+            CertStore s = helper.getCertStore(uri);
             X509CRLSelector sel =
-                    h.wrap(new X509CRLSelector(), null, path);
+                    helper.wrap(new X509CRLSelector(), null, path);
             return s.getCRLs(sel);
         }
     }
@@ -2096,14 +2072,15 @@ public final class KeyTool {
         CRLDistributionPointsExtension ext =
                 X509CertImpl.toImpl(cert).getCRLDistributionPointsExtension();
         if (ext == null) return crls;
-        for (DistributionPoint o: (List<DistributionPoint>)
-                ext.get(CRLDistributionPointsExtension.POINTS)) {
+        List<DistributionPoint> distPoints =
+                ext.get(CRLDistributionPointsExtension.POINTS);
+        for (DistributionPoint o: distPoints) {
             GeneralNames names = o.getFullName();
             if (names != null) {
                 for (GeneralName name: names.names()) {
                     if (name.getType() == GeneralNameInterface.NAME_URI) {
                         URIName uriName = (URIName)name.getName();
-                        for (CRL crl: KeyTool.loadCRLs(uriName.getName())) {
+                        for (CRL crl: loadCRLs(uriName.getName())) {
                             if (crl instanceof X509CRL) {
                                 crls.add((X509CRL)crl);
                             }
@@ -2202,7 +2179,7 @@ public final class KeyTool {
                 req.getSubjectName(), pkey.getFormat(), pkey.getAlgorithm());
         for (PKCS10Attribute attr: req.getAttributes().getAttributes()) {
             ObjectIdentifier oid = attr.getAttributeId();
-            if (oid.equals(PKCS9Attribute.EXTENSION_REQUEST_OID)) {
+            if (oid.equals((Object)PKCS9Attribute.EXTENSION_REQUEST_OID)) {
                 CertificateExtensions exts = (CertificateExtensions)attr.getAttributeValue();
                 if (exts != null) {
                     printExtensions(rb.getString("Extension.Request."), exts, out);
@@ -2264,17 +2241,11 @@ public final class KeyTool {
             int pos = 0;
             while (entries.hasMoreElements()) {
                 JarEntry je = entries.nextElement();
-                InputStream is = null;
-                try {
-                    is = jf.getInputStream(je);
+                try (InputStream is = jf.getInputStream(je)) {
                     while (is.read(buffer) != -1) {
                         // we just read. this will throw a SecurityException
                         // if a signature/digest check fails. This also
                         // populate the signers
-                    }
-                } finally {
-                    if (is != null) {
-                        is.close();
                     }
                 }
                 CodeSigner[] signers = je.getCodeSigners();
@@ -2317,114 +2288,56 @@ public final class KeyTool {
                 }
             }
             jf.close();
-            if (ss.size() == 0) {
+            if (ss.isEmpty()) {
                 out.println(rb.getString("Not.a.signed.jar.file"));
             }
         } else if (sslserver != null) {
-            SSLContext sc = SSLContext.getInstance("SSL");
-            final boolean[] certPrinted = new boolean[1];
-            sc.init(null, new TrustManager[] {
-                new X509ExtendedTrustManager() {
-                    @Override
-                    public X509Certificate[] getAcceptedIssuers() {
-                        return new X509Certificate[0];
-                    }
-                    @Override
-                    public void checkClientTrusted(
-                            X509Certificate[] certs, String authType) {
-                        throw new UnsupportedOperationException();
-                    }
-                    @Override
-                    public void checkClientTrusted(X509Certificate[] chain,
-                            String authType, Socket socket)
-                            throws CertificateException {
-                        throw new UnsupportedOperationException();
-                    }
-                    @Override
-                    public void checkClientTrusted(X509Certificate[] chain,
-                            String authType, SSLEngine engine) throws
-                            CertificateException {
-                        throw new UnsupportedOperationException();
-                    }
-                    @Override
-                    public void checkServerTrusted(
-                            X509Certificate[] certs, String authType) {
-                        for (int i=0; i<certs.length; i++) {
-                            X509Certificate cert = certs[i];
-                            try {
-                                if (rfc) {
-                                    dumpCert(cert, out);
-                                } else {
-                                    out.println("Certificate #" + i);
-                                    out.println("====================================");
-                                    printX509Cert(cert, out);
-                                    out.println();
-                                }
-                            } catch (Exception e) {
-                                if (debug) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        }
-
-                        // Set to true where there's something to print
-                        if (certs.length > 0) {
-                            certPrinted[0] = true;
-                        }
-                    }
-                    @Override
-                    public void checkServerTrusted(X509Certificate[] chain,
-                            String authType, Socket socket)
-                            throws CertificateException {
-                        checkServerTrusted(chain, authType);
-                    }
-                    @Override
-                    public void checkServerTrusted(X509Certificate[] chain,
-                            String authType, SSLEngine engine)
-                            throws CertificateException {
-                        checkServerTrusted(chain, authType);
-                    }
-                }
-            }, null);
-            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-            HttpsURLConnection.setDefaultHostnameVerifier(
-                    new HostnameVerifier() {
-                        public boolean verify(String hostname, SSLSession session) {
-                            return true;
-                        }
-                    });
-            // HTTPS instead of raw SSL, so that -Dhttps.proxyHost and
-            // -Dhttps.proxyPort can be used. Since we only go through
-            // the handshake process, an HTTPS server is not needed.
-            // This program should be able to deal with any SSL-based
-            // network service.
-            Exception ex = null;
+            // Lazily load SSLCertStoreHelper if present
+            CertStoreHelper helper = CertStoreHelper.getInstance("SSLServer");
+            CertStore cs = helper.getCertStore(new URI("https://" + sslserver));
+            Collection<? extends Certificate> chain;
             try {
-                new URL("https://" + sslserver).openConnection().connect();
-            } catch (Exception e) {
-                ex = e;
-            }
-            // If the certs are not printed out, we consider it an error even
-            // if the URL connection is successful.
-            if (!certPrinted[0]) {
-                Exception e = new Exception(
-                        rb.getString("No.certificate.from.the.SSL.server"));
-                if (ex != null) {
-                    e.initCause(ex);
+                chain = cs.getCertificates(null);
+                if (chain.isEmpty()) {
+                    // If the certs are not retrieved, we consider it an error
+                    // even if the URL connection is successful.
+                    throw new Exception(rb.getString(
+                                        "No.certificate.from.the.SSL.server"));
                 }
-                throw e;
+            } catch (CertStoreException cse) {
+                if (cse.getCause() instanceof IOException) {
+                    throw new Exception(rb.getString(
+                                        "No.certificate.from.the.SSL.server"),
+                                        cse.getCause());
+                } else {
+                    throw cse;
+                }
+            }
+
+            int i = 0;
+            for (Certificate cert : chain) {
+                try {
+                    if (rfc) {
+                        dumpCert(cert, out);
+                    } else {
+                        out.println("Certificate #" + i++);
+                        out.println("====================================");
+                        printX509Cert((X509Certificate)cert, out);
+                        out.println();
+                    }
+                } catch (Exception e) {
+                    if (debug) {
+                        e.printStackTrace();
+                    }
+                }
             }
         } else {
-            InputStream inStream = System.in;
             if (filename != null) {
-                inStream = new FileInputStream(filename);
-            }
-            try {
-                printCertFromStream(inStream, out);
-            } finally {
-                if (inStream != System.in) {
-                    inStream.close();
+                try (FileInputStream inStream = new FileInputStream(filename)) {
+                    printCertFromStream(inStream, out);
                 }
+            } else {
+                printCertFromStream(System.in, out);
             }
         }
     }
@@ -2620,9 +2533,7 @@ public final class KeyTool {
         X509Certificate cert = null;
         try {
             cert = (X509Certificate)cf.generateCertificate(in);
-        } catch (ClassCastException cce) {
-            throw new Exception(rb.getString("Input.not.an.X.509.certificate"));
-        } catch (CertificateException ce) {
+        } catch (ClassCastException | CertificateException ce) {
             throw new Exception(rb.getString("Input.not.an.X.509.certificate"));
         }
 
@@ -3459,33 +3370,6 @@ public final class KeyTool {
     }
 
     /**
-     * Returns the keystore with the configured CA certificates.
-     */
-    public static KeyStore getCacertsKeyStore()
-        throws Exception
-    {
-        String sep = File.separator;
-        File file = new File(System.getProperty("java.home") + sep
-                             + "lib" + sep + "security" + sep
-                             + "cacerts");
-        if (!file.exists()) {
-            return null;
-        }
-        FileInputStream fis = null;
-        KeyStore caks = null;
-        try {
-            fis = new FileInputStream(file);
-            caks = KeyStore.getInstance(JKS);
-            caks.load(fis, null);
-        } finally {
-            if (fis != null) {
-                fis.close();
-            }
-        }
-        return caks;
-    }
-
-    /**
      * Stores the (leaf) certificates of a keystore in a hashtable.
      * All certs belonging to the same CA are stored in a vector that
      * in turn is stored in the hashtable, keyed by the CA's subject DN
@@ -3773,7 +3657,7 @@ public final class KeyTool {
                             }
                             String n = reqex.getNameByOid(findOidForExtName(type));
                             if (add) {
-                                Extension e = (Extension)reqex.get(n);
+                                Extension e = reqex.get(n);
                                 if (!e.isCritical() && action == 0
                                         || e.isCritical() && action == 1) {
                                     e = Extension.newExtension(
@@ -4150,58 +4034,10 @@ public final class KeyTool {
     }
 
     private char[] getPass(String modifier, String arg) {
-        char[] output = getPassWithModifier(modifier, arg);
+        char[] output = KeyStoreUtil.getPassWithModifier(modifier, arg, rb);
         if (output != null) return output;
         tinyHelp();
         return null;    // Useless, tinyHelp() already exits.
-    }
-
-    // This method also used by JarSigner
-    public static char[] getPassWithModifier(String modifier, String arg) {
-        if (modifier == null) {
-            return arg.toCharArray();
-        } else if (collator.compare(modifier, "env") == 0) {
-            String value = System.getenv(arg);
-            if (value == null) {
-                System.err.println(rb.getString(
-                        "Cannot.find.environment.variable.") + arg);
-                return null;
-            } else {
-                return value.toCharArray();
-            }
-        } else if (collator.compare(modifier, "file") == 0) {
-            try {
-                URL url = null;
-                try {
-                    url = new URL(arg);
-                } catch (java.net.MalformedURLException mue) {
-                    File f = new File(arg);
-                    if (f.exists()) {
-                        url = f.toURI().toURL();
-                    } else {
-                        System.err.println(rb.getString(
-                                "Cannot.find.file.") + arg);
-                        return null;
-                    }
-                }
-                BufferedReader br = new BufferedReader(new InputStreamReader(
-                            url.openStream()));
-                String value = br.readLine();
-                br.close();
-                if (value == null) {
-                    return new char[0];
-                } else {
-                    return value.toCharArray();
-                }
-            } catch (IOException ioe) {
-                System.err.println(ioe);
-                return null;
-            }
-        } else {
-            System.err.println(rb.getString("Unknown.password.type.") +
-                    modifier);
-            return null;
-        }
     }
 }
 

@@ -29,8 +29,6 @@ import java.util.ArrayList;
 import java.util.List;
 import sun.security.util.Debug;
 import sun.security.util.SecurityConstants;
-import sun.misc.JavaSecurityAccess;
-import sun.misc.SharedSecrets;
 
 
 /**
@@ -418,7 +416,7 @@ public final class AccessControlContext {
                 Debug.isOn("permission=" + perm.getClass().getCanonicalName());
 
             if (dumpDebug && Debug.isOn("stack")) {
-                Thread.currentThread().dumpStack();
+                Thread.dumpStack();
             }
 
             if (dumpDebug && Debug.isOn("domain")) {
@@ -461,7 +459,7 @@ public final class AccessControlContext {
                     if (!dumpDebug) {
                         debug.println("access denied " + perm);
                     }
-                    Thread.currentThread().dumpStack();
+                    Thread.dumpStack();
                     final ProtectionDomain pd = context[i];
                     final Debug db = debug;
                     AccessController.doPrivileged (new PrivilegedAction<Void>() {
@@ -895,7 +893,7 @@ public final class AccessControlContext {
                     match = (thatContext[j] == null);
                 }
             } else {
-                Class thisPdClass = thisPd.getClass();
+                Class<?> thisPdClass = thisPd.getClass();
                 ProtectionDomain thatPd;
                 for (int j = 0; (j < thatContext.length) && !match; j++) {
                     thatPd = thatContext[j];

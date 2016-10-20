@@ -25,10 +25,8 @@
 
 package sun.security.ec;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.math.BigInteger;
-import java.util.Arrays;
 
 import java.security.*;
 import java.security.interfaces.*;
@@ -36,7 +34,6 @@ import java.security.spec.*;
 
 import sun.security.jca.JCAUtil;
 import sun.security.util.*;
-import sun.security.x509.AlgorithmId;
 
 /**
  * ECDSA signature implementation. This class currently supports the
@@ -324,6 +321,7 @@ abstract class ECDSASignature extends SignatureSpi {
 
     // set parameter, not supported. See JCA doc
     @Override
+    @Deprecated
     protected void engineSetParameter(String param, Object value)
             throws InvalidParameterException {
         throw new UnsupportedOperationException("setParameter() not supported");
@@ -331,6 +329,7 @@ abstract class ECDSASignature extends SignatureSpi {
 
     // get parameter, not supported. See JCA doc
     @Override
+    @Deprecated
     protected Object engineGetParameter(String param)
             throws InvalidParameterException {
         throw new UnsupportedOperationException("getParameter() not supported");

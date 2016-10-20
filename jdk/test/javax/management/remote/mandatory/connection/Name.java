@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 1996, 2003, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Red Hat Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,23 +21,29 @@
  * questions.
  */
 
-/**
- * Generic PKCS Encoding exception.
- *
- * @author Benjamin Renaud
- */
+public class Name implements NameMBean {
 
-package sun.security.pkcs;
+    private String firstName;
+    private String lastName;
 
-public class EncodingException extends Exception {
-
-    private static final long serialVersionUID = 4060198374240668325L;
-
-    public EncodingException() {
-        super();
+    @Override
+    public String getFirstName() {
+        return firstName;
     }
 
-    public EncodingException(String s) {
-        super(s);
+    @Override
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
     }
+
+    @Override
+    public String getLastName() {
+        return lastName;
+    }
+
+    @Override
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
 }

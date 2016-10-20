@@ -179,7 +179,7 @@ implements Serializable {
      *
      * @return an enumeration of all the Permissions.
      */
-    public Enumeration elements() {
+    public Enumeration<Permission> elements() {
         // go through each Permissions in the hash table
         // and call their elements() function.
         return new PermissionsEnumerator(perms.elements());
@@ -211,8 +211,7 @@ implements Serializable {
 
 
         PermissionCollection thatWildcard =
-            (PermissionCollection)other.perms.get(
-                                        CryptoPermission.ALG_NAME_WILDCARD);
+                other.perms.get(CryptoPermission.ALG_NAME_WILDCARD);
         int maxKeySize = 0;
         if (thatWildcard != null) {
             maxKeySize = ((CryptoPermission)
@@ -221,14 +220,12 @@ implements Serializable {
         // For each algorithm in this CryptoPermissions,
         // find out if there is anything we should add into
         // ret.
-        Enumeration thisKeys = this.perms.keys();
+        Enumeration<String> thisKeys = this.perms.keys();
         while (thisKeys.hasMoreElements()) {
-            String alg = (String)thisKeys.nextElement();
+            String alg = thisKeys.nextElement();
 
-            PermissionCollection thisPc =
-                (PermissionCollection)this.perms.get(alg);
-            PermissionCollection thatPc =
-                (PermissionCollection)other.perms.get(alg);
+            PermissionCollection thisPc = this.perms.get(alg);
+            PermissionCollection thatPc = other.perms.get(alg);
 
             CryptoPermission[] partialResult;
 
@@ -251,8 +248,7 @@ implements Serializable {
         }
 
         PermissionCollection thisWildcard =
-            (PermissionCollection)this.perms.get(
-                                      CryptoPermission.ALG_NAME_WILDCARD);
+                this.perms.get(CryptoPermission.ALG_NAME_WILDCARD);
 
         // If this CryptoPermissions doesn't
         // have a wildcard, we are done.
@@ -265,16 +261,15 @@ implements Serializable {
         maxKeySize =
             ((CryptoPermission)
                     thisWildcard.elements().nextElement()).getMaxKeySize();
-        Enumeration thatKeys = other.perms.keys();
+        Enumeration<String> thatKeys = other.perms.keys();
         while (thatKeys.hasMoreElements()) {
-            String alg = (String)thatKeys.nextElement();
+            String alg = thatKeys.nextElement();
 
             if (this.perms.containsKey(alg)) {
                 continue;
             }
 
-            PermissionCollection thatPc =
-                (PermissionCollection)other.perms.get(alg);
+            PermissionCollection thatPc = other.perms.get(alg);
 
             CryptoPermission[] partialResult;
 
@@ -299,9 +294,9 @@ implements Serializable {
      */
     private CryptoPermission[] getMinimum(PermissionCollection thisPc,
                                           PermissionCollection thatPc) {
-        Vector permVector = new Vector(2);
+        Vector<CryptoPermission> permVector = new Vector<>(2);
 
-        Enumeration thisPcPermissions = thisPc.elements();
+        Enumeration<Permission> thisPcPermissions = thisPc.elements();
 
         // For each CryptoPermission in
         // thisPc object, do the following:
@@ -320,7 +315,7 @@ implements Serializable {
             CryptoPermission thisCp =
                 (CryptoPermission)thisPcPermissions.nextElement();
 
-            Enumeration thatPcPermissions = thatPc.elements();
+            Enumeration<Permission> thatPcPermissions = thatPc.elements();
             while (thatPcPermissions.hasMoreElements()) {
                 CryptoPermission thatCp =
                     (CryptoPermission)thatPcPermissions.nextElement();
@@ -355,9 +350,9 @@ implements Serializable {
      */
     private CryptoPermission[] getMinimum(int maxKeySize,
                                           PermissionCollection pc) {
-        Vector permVector = new Vector(1);
+        Vector<CryptoPermission> permVector = new Vector<>(1);
 
-        Enumeration enum_ = pc.elements();
+        Enumeration<Permission> enum_ = pc.elements();
 
         while (enum_.hasMoreElements()) {
             CryptoPermission cp =
@@ -424,7 +419,7 @@ implements Serializable {
 
         String alg = cryptoPerm.getAlgorithm();
 
-        PermissionCollection pc = (PermissionCollection)perms.get(alg);
+        PermissionCollection pc = perms.get(alg);
 
         if (pc == null) {
             pc = cryptoPerm.newPermissionCollection();
@@ -455,14 +450,14 @@ implements Serializable {
     }
 }
 
-final class PermissionsEnumerator implements Enumeration {
+final class PermissionsEnumerator implements Enumeration<Permission> {
 
     // all the perms
-    private Enumeration perms;
+    private Enumeration<PermissionCollection> perms;
     // the current set
-    private Enumeration permset;
+    private Enumeration<Permission> permset;
 
-    PermissionsEnumerator(Enumeration e) {
+    PermissionsEnumerator(Enumeration<PermissionCollection> e) {
         perms = e;
         permset = getNextEnumWithMore();
     }
@@ -486,7 +481,7 @@ final class PermissionsEnumerator implements Enumeration {
         return (permset != null);
     }
 
-    public synchronized Object nextElement() {
+    public synchronized Permission nextElement() {
         // hasMoreElements will update permset to the next permset
         // with something in it...
 
@@ -497,11 +492,10 @@ final class PermissionsEnumerator implements Enumeration {
         }
     }
 
-    private Enumeration getNextEnumWithMore() {
+    private Enumeration<Permission> getNextEnumWithMore() {
         while (perms.hasMoreElements()) {
-            PermissionCollection pc =
-                (PermissionCollection) perms.nextElement();
-            Enumeration next = pc.elements();
+            PermissionCollection pc = perms.nextElement();
+            Enumeration<Permission> next = pc.elements();
             if (next.hasMoreElements())
                 return next;
         }

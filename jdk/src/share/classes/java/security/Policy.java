@@ -26,16 +26,7 @@
 
 package java.security;
 
-import java.io.*;
-import java.lang.RuntimePermission;
-import java.lang.reflect.*;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Enumeration;
-import java.util.Hashtable;
-import java.util.PropertyPermission;
-import java.util.StringTokenizer;
-import java.util.Vector;
 import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import sun.security.jca.GetInstance;
@@ -813,6 +804,8 @@ public abstract class Policy {
      */
     private static class UnsupportedEmptyCollection
         extends PermissionCollection {
+
+        private static final long serialVersionUID = -8492269157353014774L;
 
         private Permissions perms;
 

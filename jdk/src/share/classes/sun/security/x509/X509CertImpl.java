@@ -1616,7 +1616,7 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
         }
         GeneralNames names;
         try {
-            names = (GeneralNames) subjectAltNameExt.get(
+            names = subjectAltNameExt.get(
                     SubjectAlternativeNameExtension.SUBJECT_NAME);
         } catch (IOException ioe) {
             // should not occur
@@ -1648,7 +1648,7 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
 
             GeneralNames names;
             try {
-                names = (GeneralNames) subjectAltNameExt.get(
+                names = subjectAltNameExt.get(
                         SubjectAlternativeNameExtension.SUBJECT_NAME);
             }  catch (IOException ioe) {
                 // should not occur
@@ -1679,7 +1679,7 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
         }
         GeneralNames names;
         try {
-            names = (GeneralNames) issuerAltNameExt.get(
+            names = issuerAltNameExt.get(
                     IssuerAlternativeNameExtension.ISSUER_NAME);
         } catch (IOException ioe) {
             // should not occur
@@ -1711,7 +1711,7 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
                                                     data);
             GeneralNames names;
             try {
-                names = (GeneralNames) issuerAltNameExt.get(
+                names = issuerAltNameExt.get(
                         IssuerAlternativeNameExtension.ISSUER_NAME);
             }  catch (IOException ioe) {
                 // should not occur

@@ -134,6 +134,7 @@ final class PBKDF2KeyImpl implements javax.crypto.interfaces.PBEKey {
             byte[] ti = new byte[hlen];
             // SecretKeySpec cannot be used, since password can be empty here.
             SecretKey macKey = new SecretKey() {
+                private static final long serialVersionUID = 7874493593505141603L;
                 @Override
                 public String getAlgorithm() {
                     return prf.getAlgorithm();
@@ -195,7 +196,7 @@ final class PBKDF2KeyImpl implements javax.crypto.interfaces.PBEKey {
     }
 
     public byte[] getEncoded() {
-        return (byte[]) key.clone();
+        return key.clone();
     }
 
     public String getAlgorithm() {
@@ -207,7 +208,7 @@ final class PBKDF2KeyImpl implements javax.crypto.interfaces.PBEKey {
     }
 
     public char[] getPassword() {
-        return (char[]) passwd.clone();
+        return passwd.clone();
     }
 
     public byte[] getSalt() {
@@ -269,7 +270,7 @@ final class PBKDF2KeyImpl implements javax.crypto.interfaces.PBEKey {
     protected void finalize() throws Throwable {
         try {
             if (this.passwd != null) {
-                java.util.Arrays.fill(this.passwd, (char) '0');
+                java.util.Arrays.fill(this.passwd, '0');
                 this.passwd = null;
             }
             if (this.key != null) {

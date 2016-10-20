@@ -128,6 +128,7 @@ ifndef OPENJDK
   endif
 endif
 
+JAVAC_MAX_WARNINGS = true
 include $(BUILDDIR)/common/Defs.gmk
 
 #

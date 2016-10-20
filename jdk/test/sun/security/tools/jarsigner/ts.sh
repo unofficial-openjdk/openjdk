@@ -22,7 +22,7 @@
 #
 
 # @test
-# @bug 6543842 6543440 6939248 8024302
+# @bug 6543842 6543440 6939248 8009636 8024302
 # @summary checking response of timestamp
 #
 # @run shell/timeout=600 ts.sh
@@ -86,6 +86,6 @@ $KT -alias tsbad3 -certreq | \
         $KT -alias ca -gencert -ext eku:critical=cs | \
         $KT -alias tsbad3 -importcert
 
-$JAVAC -d . ${TESTSRC}/TimestampCheck.java
+$JAVAC -XDignore.symbol.file -d . ${TESTSRC}/TimestampCheck.java
 $JAVA TimestampCheck
 

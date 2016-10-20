@@ -27,7 +27,6 @@ package sun.security.rsa;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.math.BigInteger;
 
 import java.security.*;
 import java.security.interfaces.*;
@@ -201,8 +200,6 @@ public abstract class RSASignature extends SignatureSpi {
             // return false rather than propagating the exception for
             // compatibility/ease of use
             return false;
-        } catch (GeneralSecurityException e) {
-            throw new SignatureException("Signature verification failed", e);
         } catch (IOException e) {
             throw new SignatureException("Signature encoding error", e);
         }
@@ -234,7 +231,7 @@ public abstract class RSASignature extends SignatureSpi {
             throw new IOException("SEQUENCE length error");
         }
         AlgorithmId algId = AlgorithmId.parse(values[0]);
-        if (algId.getOID().equals(oid) == false) {
+        if (algId.getOID().equals((Object)oid) == false) {
             throw new IOException("ObjectIdentifier mismatch: "
                 + algId.getOID());
         }

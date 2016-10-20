@@ -1942,6 +1942,7 @@ assertEquals("yz", (String) d0.invokeExact(123, "x", "y", "z"));
      */
     public static
     MethodHandle dropArguments(MethodHandle target, int pos, List<Class<?>> valueTypes) {
+        valueTypes = copyTypes(valueTypes);
         MethodType oldType = target.type();  // get NPE
         int dropped = valueTypes.size();
         MethodType.checkSlotCount(dropped);
@@ -1955,6 +1956,11 @@ assertEquals("yz", (String) d0.invokeExact(123, "x", "y", "z"));
         if (ptypes.size() != inargs)  throw newIllegalArgumentException("valueTypes");
         MethodType newType = MethodType.methodType(oldType.returnType(), ptypes);
         return target.dropArguments(newType, pos, dropped);
+    }
+
+    private static List<Class<?>> copyTypes(List<Class<?>> types) {
+        Object[] a = types.toArray();
+        return Arrays.asList((Class<?>[]) Arrays.copyOf(a, a.length, Class[].class));
     }
 
     /**
@@ -2177,7 +2183,7 @@ System.out.println((int) f0.invokeExact("x", "y")); // 2
         int filterValues = filterType.parameterCount();
         if (filterValues == 0
                 ? (rtype != void.class)
-                : (rtype != filterType.parameterType(0)))
+                : (rtype != filterType.parameterType(0) || filterValues != 1))
             throw newIllegalArgumentException("target and filter types do not match", target, filter);
         // result = fold( lambda(retval, arg...) { filter(retval) },
         //                lambda(        arg...) { target(arg...) } )

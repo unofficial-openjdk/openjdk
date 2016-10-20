@@ -23,7 +23,7 @@
  * questions.
  */
 
-package sun.security.tools;
+package sun.security.tools.jarsigner;
 
 import java.io.*;
 import java.util.*;
@@ -53,6 +53,8 @@ import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.PKIXParameters;
 import java.security.cert.TrustAnchor;
 import java.util.Map.Entry;
+import sun.security.tools.KeyStoreUtil;
+import sun.security.tools.PathList;
 import sun.security.x509.*;
 import sun.security.util.*;
 import sun.misc.BASE64Encoder;
@@ -74,12 +76,12 @@ import sun.misc.BASE64Encoder;
  * @author Jan Luehe
  */
 
-public class JarSigner {
+public class Main {
 
     // for i18n
     private static final java.util.ResourceBundle rb =
         java.util.ResourceBundle.getBundle
-        ("sun.security.tools.JarSignerResources");
+        ("sun.security.tools.jarsigner.Resources");
     private static final Collator collator = Collator.getInstance();
     static {
         // this is for case insensitive string comparisions
@@ -98,7 +100,7 @@ public class JarSigner {
     // Attention:
     // This is the entry that get launched by the security tool jarsigner.
     public static void main(String args[]) throws Exception {
-        JarSigner js = new JarSigner();
+        Main js = new Main();
         js.run(args);
     }
 
@@ -136,6 +138,8 @@ public class JarSigner {
     String tsaUrl; // location of the Timestamping Authority
     String tsaAlias; // alias for the Timestamping Authority's certificate
     String altCertChain; // file to read alternative cert chain from
+    String tSAPolicyID;
+    String tSADigestAlg = "SHA-256";
     boolean verify = false; // verify the jar
     String verbose = null; // verbose output when signing/verifying
     boolean showcerts = false; // show certs when verifying
@@ -328,6 +332,12 @@ public class JarSigner {
             } else if (collator.compare(flags, "-certchain") ==0) {
                 if (++n == args.length) usageNoArg();
                 altCertChain = args[n];
+            } else if (collator.compare(flags, "-tsapolicyid") ==0) {
+                if (++n == args.length) usageNoArg();
+                tSAPolicyID = args[n];
+            } else if (collator.compare(flags, "-tsadigestalg") ==0) {
+                if (++n == args.length) usageNoArg();
+                tSADigestAlg = args[n];
             } else if (collator.compare(flags, "-debug") ==0) {
                 debug = true;
             } else if (collator.compare(flags, "-keypass") ==0) {
@@ -460,7 +470,7 @@ public class JarSigner {
     }
 
     static char[] getPass(String modifier, String arg) {
-        char[] output = KeyTool.getPassWithModifier(modifier, arg);
+        char[] output = KeyStoreUtil.getPassWithModifier(modifier, arg, rb);
         if (output != null) return output;
         usage();
         return null;    // Useless, usage() already exit
@@ -526,6 +536,12 @@ public class JarSigner {
         System.out.println();
         System.out.println(rb.getString
                 (".tsacert.alias.public.key.certificate.for.Timestamping.Authority"));
+        System.out.println();
+        System.out.println(rb.getString
+                (".tsapolicyid.tsapolicyid.for.Timestamping.Authority"));
+        System.out.println();
+        System.out.println(rb.getString
+                (".tsadigestalg.algorithm.of.digest.data.in.timestamping.request"));
         System.out.println();
         System.out.println(rb.getString
                 (".altsigner.class.class.name.of.an.alternative.signing.mechanism"));
@@ -1264,8 +1280,8 @@ public class JarSigner {
             try {
                 block =
                     sf.generateBlock(privateKey, sigalg, certChain,
-                        externalSF, tsaUrl, tsaCert, signingMechanism, args,
-                        zipFile);
+                        externalSF, tsaUrl, tsaCert, tSAPolicyID, tSADigestAlg,
+                        signingMechanism, args, zipFile);
             } catch (SocketTimeoutException e) {
                 // Provide a helpful message when TSA is beyond a firewall
                 error(rb.getString("unable.to.sign.jar.") +
@@ -1309,11 +1325,10 @@ public class JarSigner {
                     System.out.println(rb.getString("TSA.location.") + tsaUrl);
                 }
                 if (tsaCert != null) {
-                    String certUrl =
-                        TimestampedSigner.getTimestampingUrl(tsaCert);
-                    if (certUrl != null) {
+                    URI tsaURI = TimestampedSigner.getTimestampingURI(tsaCert);
+                    if (tsaURI != null) {
                         System.out.println(rb.getString("TSA.location.") +
-                            certUrl);
+                            tsaURI);
                     }
                     System.out.println(rb.getString("TSA.certificate.") +
                         printCert("", tsaCert, false, null, false));
@@ -1480,6 +1495,7 @@ public class JarSigner {
      * lines of attributes plus an empty line. The empty line is included
      * in the header.
      */
+    @SuppressWarnings("fallthrough")
     private int findHeaderEnd(byte[] bs) {
         // Initial state true to deal with empty header
         boolean newline = true;     // just met a newline
@@ -1619,7 +1635,7 @@ public class JarSigner {
             validator = CertPathValidator.getInstance("PKIX");
             Set<TrustAnchor> tas = new HashSet<>();
             try {
-                KeyStore caks = KeyTool.getCacertsKeyStore();
+                KeyStore caks = KeyStoreUtil.getCacertsKeyStore();
                 if (caks != null) {
                     Enumeration<String> aliases = caks.aliases();
                     while (aliases.hasMoreElements()) {
@@ -1795,8 +1811,7 @@ public class JarSigner {
                 NetscapeCertTypeExtension extn =
                         new NetscapeCertTypeExtension(encoded);
 
-                Boolean val = (Boolean)extn.get(
-                        NetscapeCertTypeExtension.OBJECT_SIGNING);
+                Boolean val = extn.get(NetscapeCertTypeExtension.OBJECT_SIGNING);
                 if (!val) {
                     if (bad != null) {
                         bad[2] = true;
@@ -2134,7 +2149,7 @@ public class JarSigner {
         ClassLoader appClassLoader = new URLClassLoader(urls);
 
         // attempt to find signer
-        Class signerClass = appClassLoader.loadClass(signerClassName);
+        Class<?> signerClass = appClassLoader.loadClass(signerClassName);
 
         // Check that it implements ContentSigner
         Object signer = signerClass.newInstance();
@@ -2279,13 +2294,15 @@ class SignatureFile {
                                X509Certificate[] certChain,
                                boolean externalSF, String tsaUrl,
                                X509Certificate tsaCert,
+                               String tSAPolicyID,
+                               String tSADigestAlg,
                                ContentSigner signingMechanism,
                                String[] args, ZipFile zipFile)
         throws NoSuchAlgorithmException, InvalidKeyException, IOException,
             SignatureException, CertificateException
     {
         return new Block(this, privateKey, sigalg, certChain, externalSF,
-                tsaUrl, tsaCert, signingMechanism, args, zipFile);
+                tsaUrl, tsaCert, tSAPolicyID, tSADigestAlg, signingMechanism, args, zipFile);
     }
 
 
@@ -2299,8 +2316,8 @@ class SignatureFile {
          */
         Block(SignatureFile sfg, PrivateKey privateKey, String sigalg,
             X509Certificate[] certChain, boolean externalSF, String tsaUrl,
-            X509Certificate tsaCert, ContentSigner signingMechanism,
-            String[] args, ZipFile zipFile)
+            X509Certificate tsaCert, String tSAPolicyID, String tSADigestAlg,
+            ContentSigner signingMechanism, String[] args, ZipFile zipFile)
             throws NoSuchAlgorithmException, InvalidKeyException, IOException,
             SignatureException, CertificateException {
 
@@ -2377,14 +2394,13 @@ class SignatureFile {
                     tsaUri = new URI(tsaUrl);
                 }
             } catch (URISyntaxException e) {
-                IOException ioe = new IOException();
-                ioe.initCause(e);
-                throw ioe;
+                throw new IOException(e);
             }
 
             // Assemble parameters for the signing mechanism
             ContentSignerParameters params =
-                new JarSignerParameters(args, tsaUri, tsaCert, signature,
+                new JarSignerParameters(args, tsaUri, tsaCert, tSAPolicyID,
+                        tSADigestAlg, signature,
                     signatureAlgorithm, certChain, content, zipFile);
 
             // Generate the signature block
@@ -2411,115 +2427,5 @@ class SignatureFile {
         {
             out.write(block);
         }
-    }
-}
-
-
-/*
- * This object encapsulates the parameters used to perform content signing.
- */
-class JarSignerParameters implements ContentSignerParameters {
-
-    private String[] args;
-    private URI tsa;
-    private X509Certificate tsaCertificate;
-    private byte[] signature;
-    private String signatureAlgorithm;
-    private X509Certificate[] signerCertificateChain;
-    private byte[] content;
-    private ZipFile source;
-
-    /**
-     * Create a new object.
-     */
-    JarSignerParameters(String[] args, URI tsa, X509Certificate tsaCertificate,
-        byte[] signature, String signatureAlgorithm,
-        X509Certificate[] signerCertificateChain, byte[] content,
-        ZipFile source) {
-
-        if (signature == null || signatureAlgorithm == null ||
-            signerCertificateChain == null) {
-            throw new NullPointerException();
-        }
-        this.args = args;
-        this.tsa = tsa;
-        this.tsaCertificate = tsaCertificate;
-        this.signature = signature;
-        this.signatureAlgorithm = signatureAlgorithm;
-        this.signerCertificateChain = signerCertificateChain;
-        this.content = content;
-        this.source = source;
-    }
-
-    /**
-     * Retrieves the command-line arguments.
-     *
-     * @return The command-line arguments. May be null.
-     */
-    public String[] getCommandLine() {
-        return args;
-    }
-
-    /**
-     * Retrieves the identifier for a Timestamping Authority (TSA).
-     *
-     * @return The TSA identifier. May be null.
-     */
-    public URI getTimestampingAuthority() {
-        return tsa;
-    }
-
-    /**
-     * Retrieves the certificate for a Timestamping Authority (TSA).
-     *
-     * @return The TSA certificate. May be null.
-     */
-    public X509Certificate getTimestampingAuthorityCertificate() {
-        return tsaCertificate;
-    }
-
-    /**
-     * Retrieves the signature.
-     *
-     * @return The non-null signature bytes.
-     */
-    public byte[] getSignature() {
-        return signature;
-    }
-
-    /**
-     * Retrieves the name of the signature algorithm.
-     *
-     * @return The non-null string name of the signature algorithm.
-     */
-    public String getSignatureAlgorithm() {
-        return signatureAlgorithm;
-    }
-
-    /**
-     * Retrieves the signer's X.509 certificate chain.
-     *
-     * @return The non-null array of X.509 public-key certificates.
-     */
-    public X509Certificate[] getSignerCertificateChain() {
-        return signerCertificateChain;
-    }
-
-    /**
-     * Retrieves the content that was signed.
-     *
-     * @return The content bytes. May be null.
-     */
-    public byte[] getContent() {
-        return content;
-    }
-
-    /**
-     * Retrieves the original source ZIP file before it was signed.
-     *
-     * @return The original ZIP file. May be null.
-     */
-    public ZipFile getSource() {
-        return source;
     }
 }

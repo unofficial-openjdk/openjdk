@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.math.BigInteger;
 import java.security.AccessController;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreSpi;
@@ -40,15 +39,9 @@ import java.security.SecurityPermission;
 import java.security.cert.X509Certificate;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
-import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateFactory;
 import java.security.interfaces.RSAPrivateCrtKey;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Enumeration;
-import java.util.Iterator;
-import java.util.UUID;
+import java.util.*;
 
 import sun.security.action.GetPropertyAction;
 
@@ -144,7 +137,7 @@ abstract class KeyStore extends KeyStoreSpi {
                 key.getPrimeExponentQ().toByteArray(),
                 key.getCrtCoefficient().toByteArray());
 
-            privateKey = storePrivateKey(keyBlob,
+            privateKey = storePrivateKey(Objects.requireNonNull(keyBlob),
                 "{" + UUID.randomUUID().toString() + "}", keyBitLength);
         }
 
@@ -319,7 +312,7 @@ abstract class KeyStore extends KeyStoreSpi {
             if (alias.equals(entry.getAlias()))
             {
                 X509Certificate[] certChain = entry.getCertificateChain();
-                return certChain[0];
+                return certChain.length == 0 ? null : certChain[0];
             }
         }
 
@@ -564,20 +557,20 @@ abstract class KeyStore extends KeyStoreSpi {
      *
      * @return enumeration of the alias names
      */
-    public Enumeration engineAliases() {
+    public Enumeration<String> engineAliases() {
 
-        final Iterator iter = entries.iterator();
+        final Iterator<KeyEntry> iter = entries.iterator();
 
-        return new Enumeration()
+        return new Enumeration<String>()
         {
             public boolean hasMoreElements()
             {
                 return iter.hasNext();
             }
 
-            public Object nextElement()
+            public String nextElement()
             {
-                KeyEntry entry = (KeyEntry) iter.next();
+                KeyEntry entry = iter.next();
                 return entry.getAlias();
             }
         };
@@ -591,10 +584,10 @@ abstract class KeyStore extends KeyStoreSpi {
      * @return true if the alias exists, false otherwise
      */
     public boolean engineContainsAlias(String alias) {
-        for (Enumeration enumerator = engineAliases();
+        for (Enumeration<String> enumerator = engineAliases();
             enumerator.hasMoreElements();)
         {
-            String a = (String) enumerator.nextElement();
+            String a = enumerator.nextElement();
 
             if (a.equals(alias))
                 return true;
@@ -774,7 +767,8 @@ abstract class KeyStore extends KeyStoreSpi {
      * certificates and stores the result into a key entry.
      */
     private void generateCertificateChain(String alias,
-        Collection certCollection, Collection<KeyEntry> entries)
+        Collection<? extends Certificate> certCollection,
+        Collection<KeyEntry> entries)
     {
         try
         {
@@ -782,7 +776,8 @@ abstract class KeyStore extends KeyStoreSpi {
                 new X509Certificate[certCollection.size()];
 
             int i = 0;
-            for (Iterator iter=certCollection.iterator(); iter.hasNext(); i++)
+            for (Iterator<? extends Certificate> iter =
+                    certCollection.iterator(); iter.hasNext(); i++)
             {
                 certChain[i] = (X509Certificate) iter.next();
             }
@@ -805,7 +800,8 @@ abstract class KeyStore extends KeyStoreSpi {
      */
     private void generateRSAKeyAndCertificateChain(String alias,
         long hCryptProv, long hCryptKey, int keyLength,
-        Collection certCollection, Collection<KeyEntry> entries)
+        Collection<? extends Certificate> certCollection,
+        Collection<KeyEntry> entries)
     {
         try
         {
@@ -813,7 +809,8 @@ abstract class KeyStore extends KeyStoreSpi {
                 new X509Certificate[certCollection.size()];
 
             int i = 0;
-            for (Iterator iter=certCollection.iterator(); iter.hasNext(); i++)
+            for (Iterator<? extends Certificate> iter =
+                    certCollection.iterator(); iter.hasNext(); i++)
             {
                 certChain[i] = (X509Certificate) iter.next();
             }
@@ -837,19 +834,20 @@ abstract class KeyStore extends KeyStoreSpi {
      * @param data Byte data.
      * @param certCollection Collection of certificates.
      */
-    private void generateCertificate(byte[] data, Collection certCollection)
-    {
+    private void generateCertificate(byte[] data,
+        Collection<Certificate> certCollection) {
         try
         {
             ByteArrayInputStream bis = new ByteArrayInputStream(data);
 
             // Obtain certificate factory
             if (certificateFactory == null) {
-                certificateFactory = CertificateFactory.getInstance("X.509");
+                certificateFactory = CertificateFactory.getInstance("X.509", "SUN");
             }
 
             // Generate certificate
-            Collection c = certificateFactory.generateCertificates(bis);
+            Collection<? extends Certificate> c =
+                    certificateFactory.generateCertificates(bis);
             certCollection.addAll(c);
         }
         catch (CertificateException e)

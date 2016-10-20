@@ -471,25 +471,4 @@ class Util {
         return bugLevel.equals(bl);
     }
 
-
-
-    // -- Initialization --
-
-    private static boolean loaded = false;
-
-    static void load() {
-        synchronized (Util.class) {
-            if (loaded)
-                return;
-            loaded = true;
-            java.security.AccessController
-                .doPrivileged(new sun.security.action.LoadLibraryAction("net"));
-            java.security.AccessController
-                .doPrivileged(new sun.security.action.LoadLibraryAction("nio"));
-            // IOUtil must be initialized; Its native methods are called from
-            // other places in native nio code so they must be set up.
-            IOUtil.initIDs();
-        }
-    }
-
 }

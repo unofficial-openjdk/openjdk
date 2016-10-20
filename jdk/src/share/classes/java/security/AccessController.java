@@ -668,7 +668,7 @@ public final class AccessController {
             }
 
             if (dumpDebug && Debug.isOn("stack")) {
-                Thread.currentThread().dumpStack();
+                Thread.dumpStack();
             }
 
             if (dumpDebug && Debug.isOn("domain")) {

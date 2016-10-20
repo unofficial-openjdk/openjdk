@@ -133,7 +133,7 @@ public class KeyGenerator {
 
     private final Object lock = new Object();
 
-    private Iterator serviceIterator;
+    private Iterator<Service> serviceIterator;
 
     private int initType;
     private int initKeySize;
@@ -161,7 +161,8 @@ public class KeyGenerator {
 
     private KeyGenerator(String algorithm) throws NoSuchAlgorithmException {
         this.algorithm = algorithm;
-        List list = GetInstance.getServices("KeyGenerator", algorithm);
+        List<Service> list =
+                GetInstance.getServices("KeyGenerator", algorithm);
         serviceIterator = list.iterator();
         initType = I_NONE;
         // fetch and instantiate initial spi
@@ -336,7 +337,7 @@ public class KeyGenerator {
                 return null;
             }
             while (serviceIterator.hasNext()) {
-                Service s = (Service)serviceIterator.next();
+                Service s = serviceIterator.next();
                 if (JceSecurity.canUseProvider(s.getProvider()) == false) {
                     continue;
                 }

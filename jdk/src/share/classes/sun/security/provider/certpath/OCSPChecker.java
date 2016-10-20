@@ -343,9 +343,11 @@ class OCSPChecker extends PKIXCertPathChecker {
                     List<CertStore> certStores = pkixParams.getCertStores();
                     for (CertStore certStore : certStores) {
                         try {
-                            responderCerts.addAll(
-                                (Collection<X509Certificate>)
-                                    certStore.getCertificates(filter));
+                            for (Certificate storeCert : certStore.getCertificates(filter)) {
+                                if (storeCert instanceof X509Certificate) {
+                                    responderCerts.add((X509Certificate) storeCert);
+                                }
+                            }
                         } catch (CertStoreException cse) {
                             // ignore and try next certStore
                             if (DEBUG != null) {
