@@ -50,115 +50,116 @@ public class Bug4322313 extends IntlTest {
 
         Object[][] valids = {
           /* given ID      offset                format('z'), ('Z')    index */
-            {"GMT+03:04",  new Long(-184 * mpm), "GMT+03:04", "+0304", new Integer(9)},
-            {"GMT+13:42",  new Long(-822 * mpm), "GMT+13:42", "+1342", new Integer(9)},
-            {"GMT+00:00",  new Long(0),          "GMT+00:00", "+0000", new Integer(9)},
-            {"GMT+1:11",   new Long(-71 * mpm),  "GMT+01:11", "+0111", new Integer(8)},
-            {"GMT +13:42", new Long(0),          "GMT",       "+0000", new Integer(3)},
-            {" GMT",       new Long(0),          "GMT",       "+0000", new Integer(4)},
-            {"+0304",      new Long(-184 * mpm), "GMT+03:04", "+0304", new Integer(5)},
-            {"+1342",      new Long(-822 * mpm), "GMT+13:42", "+1342", new Integer(5)},
-            {"+0000",      new Long(0),          "GMT+00:00", "+0000", new Integer(5)},
-            {" +1342",     new Long(-822 * mpm), "GMT+13:42", "+1342", new Integer(6)},
+            {"GMT+03:04",  -184L * mpm, "GMT+03:04", "+0304", 9},
+            {"GMT+13:42",  -822L * mpm, "GMT+13:42", "+1342", 9},
+            {"GMT+00:00",   0L,         "GMT+00:00", "+0000", 9},
+            {"GMT+1:11",   -71L * mpm,  "GMT+01:11", "+0111", 8},
+            {"GMT +13:42",  0L,         "GMT",       "+0000", 3},
+            {" GMT",        0L,         "GMT",       "+0000", 4},
+            {"+0304",      -184L * mpm, "GMT+03:04", "+0304", 5},
+            {"+1342",      -822L * mpm, "GMT+13:42", "+1342", 5},
+            {"+0000",       0L,         "GMT+00:00", "+0000", 5},
+            {" +1342",     -822L * mpm, "GMT+13:42", "+1342", 6},
             /* ISO-LATIN-1 digits */
-            {"GMT+\u0030\u0031:\u0032\u0033", new Long(-83 * mpm), "GMT+01:23", "+0123", new Integer(9)},
+            {"GMT+\u0030\u0031:\u0032\u0033", -83L * mpm, "GMT+01:23", "+0123", 9},
 
            /* In fact, this test case is skipped because TimeZone class can't
             * recognize TimeZone IDs like "+00234" or "-00234".
             */
-            {"+00234",     new Long(-23 * mpm), "GMT+00:23", "+0023", new Integer(5)},
+            {"+00234",     -23L * mpm, "GMT+00:23", "+0023", 5},
 
-            {"GMT-03:04",  new Long(184 * mpm), "GMT-03:04", "-0304", new Integer(9)},
-            {"GMT-13:42",  new Long(822 * mpm), "GMT-13:42", "-1342", new Integer(9)},
-            {"GMT-00:00",  new Long(0),         "GMT+00:00", "+0000", new Integer(9)},
-            {"GMT-1:11",   new Long(71 * mpm),  "GMT-01:11", "-0111", new Integer(8)},
-            {"GMT -13:42", new Long(0),         "GMT",       "+0000", new Integer(3)},
-            {"-0304",      new Long(184 * mpm), "GMT-03:04", "-0304", new Integer(5)},
-            {"-1342",      new Long(822 * mpm), "GMT-13:42", "-1342", new Integer(5)},
-            {" -1342",     new Long(822 * mpm), "GMT-13:42", "-1342", new Integer(6)},
+            {"GMT-03:04",  184L * mpm, "GMT-03:04", "-0304", 9},
+            {"GMT-13:42",  822L * mpm, "GMT-13:42", "-1342", 9},
+            {"GMT-00:00",  0L,         "GMT+00:00", "+0000", 9},
+            {"GMT-1:11",   71L * mpm,  "GMT-01:11", "-0111", 8},
+            {"GMT -13:42", 0L,         "GMT",       "+0000", 3},
+            {"-0304",      184L * mpm, "GMT-03:04", "-0304", 5},
+            {"-1342",      822L * mpm, "GMT-13:42", "-1342", 5},
+            {" -1342",     822L * mpm, "GMT-13:42", "-1342", 6},
             /* ISO-LATIN-1 digits */
-            {"GMT-\u0030\u0031:\u0032\u0033", new Long(83 * mpm), "GMT-01:23", "-0123", new Integer(9)},
+            {"GMT-\u0030\u0031:\u0032\u0033", 83L * mpm, "GMT-01:23", "-0123", 9},
            /* In fact, this test case is skipped because TimeZone class can't
             * recognize TimeZone IDs like "+00234" or "-00234".
             */
-            {"-00234",     new Long(23 * mpm),  "GMT+00:23", "-0023", new Integer(5)},
+            {"-00234",     23L * mpm,  "GMT+00:23", "-0023", 5},
         };
 
         Object[][] invalids = {
           /* given ID       error index   */
-            {"GMT+8",       new Integer(5)},
-            {"GMT+18",      new Integer(6)},
-            {"GMT+208",     new Integer(6)},
-            {"GMT+0304",    new Integer(6)},
-            {"GMT+42195",   new Integer(5)},
-            {"GMT+5:8",     new Integer(7)},
-            {"GMT+23:60",   new Integer(8)},
-            {"GMT+11:1",    new Integer(8)},
-            {"GMT+24:13",   new Integer(5)},
-            {"GMT+421:950", new Integer(5)},
-            {"GMT+0a:0A",   new Integer(5)},
-            {"GMT+ 13:42",  new Integer(4)},
-            {"GMT+13 :42",  new Integer(6)},
-            {"GMT+13: 42",  new Integer(7)},
-            {"GMT+-13:42",  new Integer(4)},
-            {"G M T",       new Integer(0)},
-            {"+8",          new Integer(2)},
-            {"+18",         new Integer(3)},
-            {"+208",        new Integer(4)},
-            {"+2360",       new Integer(4)},
-            {"+2413",       new Integer(2)},
-            {"+42195",      new Integer(2)},
-            {"+0AbC",       new Integer(2)},
-            {"+ 1342",      new Integer(1)},
-            {"+-1342",      new Integer(1)},
-            {"1342",        new Integer(0)},
+            {"GMT+8",       5},
+            {"GMT+18",      6},
+            {"GMT+208",     6},
+            {"GMT+0304",    6},
+            {"GMT+42195",   5},
+            {"GMT+5:8",     7},
+            {"GMT+23:60",   8},
+            {"GMT+11:1",    8},
+            {"GMT+24:13",   5},
+            {"GMT+421:950", 5},
+            {"GMT+0a:0A",   5},
+            {"GMT+ 13:42",  4},
+            {"GMT+13 :42",  6},
+            {"GMT+13: 42",  7},
+            {"GMT+-13:42",  4},
+            {"G M T",       0},
+            {"+8",          2},
+            {"+18",         3},
+            {"+208",        4},
+            {"+2360",       4},
+            {"+2413",       2},
+            {"+42195",      2},
+            {"+0AbC",       2},
+            {"+ 1342",      1},
+            {"+-1342",      1},
+            {"1342",        0},
           /* Arabic-Indic digits */
-            {"GMT+\u0660\u0661:\u0662\u0663", new Integer(4)},
+            {"GMT+\u0660\u0661:\u0662\u0663", 4},
           /* Extended Arabic-Indic digits */
-            {"GMT+\u06f0\u06f1:\u06f2\u06f3", new Integer(4)},
+            {"GMT+\u06f0\u06f1:\u06f2\u06f3", 4},
           /* Devanagari digits */
-            {"GMT+\u0966\u0967:\u0968\u0969", new Integer(4)},
+            {"GMT+\u0966\u0967:\u0968\u0969", 4},
           /* Fullwidth digits */
-            {"GMT+\uFF10\uFF11:\uFF12\uFF13", new Integer(4)},
+            {"GMT+\uFF10\uFF11:\uFF12\uFF13", 4},
 
-            {"GMT-8",       new Integer(5)},
-            {"GMT-18",      new Integer(6)},
-            {"GMT-208",     new Integer(6)},
-            {"GMT-0304",    new Integer(6)},
-            {"GMT-42195",   new Integer(5)},
-            {"GMT-5:8",     new Integer(7)},
-            {"GMT-23:60",   new Integer(8)},
-            {"GMT-11:1",    new Integer(8)},
-            {"GMT-24:13",   new Integer(5)},
-            {"GMT-421:950", new Integer(5)},
-            {"GMT-0a:0A",   new Integer(5)},
-            {"GMT- 13:42",  new Integer(4)},
-            {"GMT-13 :42",  new Integer(6)},
-            {"GMT-13: 42",  new Integer(7)},
-            {"GMT-+13:42",  new Integer(4)},
-            {"-8",          new Integer(2)},
-            {"-18",         new Integer(3)},
-            {"-208",        new Integer(4)},
-            {"-2360",       new Integer(4)},
-            {"-2413",       new Integer(2)},
-            {"-42195",      new Integer(2)},
-            {"-0AbC",       new Integer(2)},
-            {"- 1342",      new Integer(1)},
-            {"--1342",      new Integer(1)},
-            {"-802",        new Integer(2)},
+            {"GMT-8",       5},
+            {"GMT-18",      6},
+            {"GMT-208",     6},
+            {"GMT-0304",    6},
+            {"GMT-42195",   5},
+            {"GMT-5:8",     7},
+            {"GMT-23:60",   8},
+            {"GMT-11:1",    8},
+            {"GMT-24:13",   5},
+            {"GMT-421:950", 5},
+            {"GMT-0a:0A",   5},
+            {"GMT- 13:42",  4},
+            {"GMT-13 :42",  6},
+            {"GMT-13: 42",  7},
+            {"GMT-+13:42",  4},
+            {"-8",          2},
+            {"-18",         3},
+            {"-208",        4},
+            {"-2360",       4},
+            {"-2413",       2},
+            {"-42195",      2},
+            {"-0AbC",       2},
+            {"- 1342",      1},
+            {"--1342",      1},
+            {"-802",        2},
           /* Arabic-Indic digits */
-            {"GMT-\u0660\u0661:\u0662\u0663", new Integer(4)},
+            {"GMT-\u0660\u0661:\u0662\u0663", 4},
           /* Extended Arabic-Indic digits */
-            {"GMT-\u06f0\u06f1:\u06f2\u06f3", new Integer(4)},
+            {"GMT-\u06f0\u06f1:\u06f2\u06f3", 4},
           /* Devanagari digits */
-            {"GMT-\u0966\u0967:\u0968\u0969", new Integer(4)},
+            {"GMT-\u0966\u0967:\u0968\u0969", 4},
           /* Fullwidth digits */
-            {"GMT-\uFF10\uFF11:\uFF12\uFF13", new Integer(4)},
+            {"GMT-\uFF10\uFF11:\uFF12\uFF13", 4},
         };
 
         try {
             for (int i=0; i < locs.length; i++) {
-                Locale.setDefault(locs[i]);
+                Locale locale = locs[i];
+                Locale.setDefault(locale);
 
                 for (int j=0; j < formats.length; j++) {
                     TimeZone.setDefault(TimeZone.getTimeZone("GMT"));
@@ -174,7 +175,7 @@ public class Bug4322313 extends IntlTest {
                         catch (Exception e) {
                             err = true;
                             System.err.println("\tParse  Error [Locale=" +
-                                Locale.getDefault() + ", " + formats[j] +
+                                locale + ", " + formats[j] +
                                 "/\"" + valids[k][0] +
                                 "\"] Unexpected Exception occurred: " + e);
                             continue;
@@ -184,7 +185,7 @@ public class Bug4322313 extends IntlTest {
                         if (offset != ((Integer)valids[k][4]).intValue()) {
                             err = true;
                             System.err.println("\tParse  Error [Locale=" +
-                                Locale.getDefault() + ", " + formats[j] +
+                                locale + ", " + formats[j] +
                                 "/\"" + valids[k][0] +
                                 "\"] invalid index: expected:" + valids[k][4] +
                                 ", got:" + offset);
@@ -193,14 +194,14 @@ public class Bug4322313 extends IntlTest {
                         if (date.getTime() != ((Long)valids[k][1]).longValue()) {
                             err = true;
                             System.err.println("\tParse  Error [Locale=" +
-                                Locale.getDefault() + ", " + formats[j] +
+                                locale + ", " + formats[j] +
                                 "/\"" + valids[k][0] +
                                 "\"] expected:" + valids[k][1] +
                                 ", got:" + date.getTime() + ", " + date);
                         } else {
 /*
                             logln("\tParse  Okay  [Locale=" +
-                                Locale.getDefault() + ", " + formats[j] +
+                                locale) + ", " + formats[j] +
                                 "/\"" + valids[k][0] +
                                 "\"] expected:" + valids[k][1] +
                                 ", got:" + date.getTime() + ", " + date);
@@ -212,7 +213,7 @@ public class Bug4322313 extends IntlTest {
                             catch (Exception e) {
                                 err = true;
                                 System.err.println("\tParse  Error [Locale=" +
-                                    Locale.getDefault() + ", " + formats[j] +
+                                    locale + ", " + formats[j] +
                                     "/\"" + valids[k][0] +
                                     "\"] Unexpected Exception occurred: " + e);
                                 continue;
@@ -245,14 +246,14 @@ public class Bug4322313 extends IntlTest {
                                   expected.equals("GMT+00:00"))) {
                                 err = true;
                                 System.err.println("\tFormat Error [Locale=" +
-                                    Locale.getDefault() + ", " +
+                                    locale + ", " +
                                     formats[j] + "/\"" + valids[k][0] +
                                     "\"] expected:" + valids[k][2+j] +
                                     ", got:" + s + ", " + date);
                             } else {
 /*
                                 logln("\tFormat Okay  [Locale=" +
-                                    Locale.getDefault() + ", " +
+                                    locale + ", " +
                                     formats[j] + "/\"" + valids[k][0] +
                                     "\"] expected:" + valids[k][2+j] +
                                     ", got:" + s + ", " + date);
@@ -271,7 +272,7 @@ public class Bug4322313 extends IntlTest {
                             if (date != null) {
                                 err = true;
                                 System.err.println("\tParse  Error [Locale=" +
-                                    Locale.getDefault() + ", " + formats[j] +
+                                    locale + ", " + formats[j] +
                                     "/\"" + invalids[k][0] +
                                     "\"] expected:null , got:" + date);
                             }
@@ -279,14 +280,14 @@ public class Bug4322313 extends IntlTest {
                             if (offset != ((Integer)invalids[k][1]).intValue()) {
                                 err = true;
                                 System.err.println("\tParse  Error [Locale=" +
-                                    Locale.getDefault() + ", " + formats[j] +
+                                    locale + ", " + formats[j] +
                                     "/\"" + invalids[k][0] +
                                     "\"] incorrect offset. expected:" +
                                     invalids[k][1] + ", got: " + offset);
                             } else {
 /*
                                 logln("\tParse  Okay  [Locale=" +
-                                    Locale.getDefault() + ", " + formats[j] +
+                                    locale + ", " + formats[j] +
                                     "/\"" + invalids[k][0] +
                                     "\"] correct offset: " + offset);
 */
@@ -295,7 +296,7 @@ public class Bug4322313 extends IntlTest {
                         catch (Exception e) {
                             err = true;
                             System.err.println("\tParse  Error [Locale=" +
-                                Locale.getDefault() + ", " + formats[j] +
+                                locale + ", " + formats[j] +
                                 "/\"" + invalids[k][0] +
                                 "\"] Unexpected Exception occurred: " + e);
                         }
@@ -315,14 +316,14 @@ public class Bug4322313 extends IntlTest {
                             if (offset != ((Integer)invalids[k][1]).intValue()) {
                                 err = true;
                                 System.err.println("\tParse  Error [Locale=" +
-                                    Locale.getDefault() + ", " + formats[j] +
+                                    locale + ", " + formats[j] +
                                     "/\"" + invalids[k][0] +
                                     "\"] Expected exception occurred with an incorrect offset. expected:" +
                                     invalids[k][1] + ", got: " + offset);
                             } else {
 /*
                                 logln("\tParse  Okay  [Locale=" +
-                                    Locale.getDefault() + ", " + formats[j] +
+                                    locale + ", " + formats[j] +
                                     "/\"" + invalids[k][0] +
                                     "\"] Expected exception occurred with an correct offset: "
                                     + offset);
@@ -332,7 +333,7 @@ public class Bug4322313 extends IntlTest {
                         catch (Exception e) {
                             err = true;
                             System.err.println("\tParse  Error [Locale=" +
-                                Locale.getDefault() + ", " + formats[j] +
+                                locale + ", " + formats[j] +
                                 "/\"" + invalids[k][0] +
                                 "\"] Invalid exception occurred: " + e);
                         }
@@ -340,7 +341,7 @@ public class Bug4322313 extends IntlTest {
                             if (!correctParseException) {
                                 err = true;
                                 System.err.println("\tParse  Error: [Locale=" +
-                                    Locale.getDefault() + ", " + formats[j] +
+                                    locale + ", " + formats[j] +
                                     "/\"" + invalids[k][0] +
                                     "\"] Expected exception didn't occur.");
                             }

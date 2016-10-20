@@ -29,7 +29,8 @@
 #include "runtime/basicLock.hpp"
 #include "runtime/monitorChunk.hpp"
 #include "runtime/registerMap.hpp"
-#ifdef TARGET_ARCH_zero
+#include "utilities/macros.hpp"
+#ifdef ZERO
 # include "stack_zero.hpp"
 #endif
 
@@ -164,6 +165,8 @@ class frame VALUE_OBJ_CLASS_SPEC {
   frame sender_for_entry_frame(RegisterMap* map) const;
   frame sender_for_interpreter_frame(RegisterMap* map) const;
   frame sender_for_native_frame(RegisterMap* map) const;
+
+  bool is_entry_frame_valid(JavaThread* thread) const;
 
   // All frames:
 
@@ -415,24 +418,7 @@ class frame VALUE_OBJ_CLASS_SPEC {
 
   int pd_oop_map_offset_adjustment() const;
 
-#ifdef TARGET_ARCH_x86
-# include "frame_x86.hpp"
-#endif
-#ifdef TARGET_ARCH_sparc
-# include "frame_sparc.hpp"
-#endif
-#ifdef TARGET_ARCH_zero
-# include "frame_zero.hpp"
-#endif
-#ifdef TARGET_ARCH_arm
-# include "frame_arm.hpp"
-#endif
-#ifdef TARGET_ARCH_ppc
-# include "frame_ppc.hpp"
-#endif
-#ifdef TARGET_ARCH_aarch64
-# include "frame_aarch64.hpp"
-#endif
+#include CPU_HEADER(frame)
 
 };
 

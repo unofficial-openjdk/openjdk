@@ -539,10 +539,10 @@ class MethodType implements java.io.Serializable {
             return res;
         } else {
             // insert after (if need be), then before
-            if (pos < parameterList().size() - 1) {
-                res = res.insertParameterTypes(arrayLength, parameterList().subList(pos + 1, parameterList().size()));
+            if (pos < ptypes.length - 1) {
+                res = res.insertParameterTypes(arrayLength, Arrays.copyOfRange(ptypes, pos + 1, ptypes.length));
             }
-            return res.insertParameterTypes(0, parameterList().subList(0, pos));
+            return res.insertParameterTypes(0, Arrays.copyOf(ptypes, pos));
         }
     }
 
@@ -807,6 +807,28 @@ class MethodType implements java.io.Serializable {
             sj.add(ptypes[i].getSimpleName());
         }
         return sj.toString();
+    }
+
+    /** True if my parameter list is effectively identical to the given full list,
+     *  after skipping the given number of my own initial parameters.
+     *  In other words, after disregarding {@code skipPos} parameters,
+     *  my remaining parameter list is no longer than the {@code fullList}, and
+     *  is equal to the same-length initial sublist of {@code fullList}.
+     */
+    /*non-public*/
+    boolean effectivelyIdenticalParameters(int skipPos, List<Class<?>> fullList) {
+        int myLen = ptypes.length, fullLen = fullList.size();
+        if (skipPos > myLen || myLen - skipPos > fullLen)
+            return false;
+        List<Class<?>> myList = Arrays.asList(ptypes);
+        if (skipPos != 0) {
+            myList = myList.subList(skipPos, myLen);
+            myLen -= skipPos;
+        }
+        if (fullLen == myLen)
+            return myList.equals(fullList);
+        else
+            return myList.equals(fullList.subList(0, myLen));
     }
 
     /** True if the old return type can always be viewed (w/o casting) under new return type,

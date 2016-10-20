@@ -34,7 +34,7 @@
 #include "memory/filemap.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/oop.inline.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/mutexLocker.hpp"
 #include "utilities/hashtable.inline.hpp"
 
@@ -236,6 +236,29 @@ Symbol* SymbolTable::lookup(int index, const char* name,
     }
     return sym;
   }
+}
+
+u4 SymbolTable::encode_shared(Symbol* sym) {
+  assert(DumpSharedSpaces, "called only during dump time");
+  uintx base_address = uintx(MetaspaceShared::shared_rs()->base());
+  uintx offset = uintx(sym) - base_address;
+  assert(offset < 0x7fffffff, "sanity");
+  return u4(offset);
+}
+
+Symbol* SymbolTable::decode_shared(u4 offset) {
+  assert(!DumpSharedSpaces, "called only during runtime");
+  uintx base_address = _shared_table.base_address();
+  Symbol* sym = (Symbol*)(base_address + offset);
+
+#ifndef PRODUCT
+  const char* s = (const char*)sym->bytes();
+  int len = sym->utf8_length();
+  unsigned int hash = hash_symbol(s, len);
+  assert(sym == lookup_shared(s, len, hash), "must be shared symbol");
+#endif
+
+  return sym;
 }
 
 // Pick hashing algorithm.
@@ -687,53 +710,3 @@ int SymboltableDCmd::num_arguments() {
     return 0;
   }
 }
-
-#ifndef PRODUCT
-// Internal test of TempNewSymbol
-void Test_TempNewSymbol() {
-  // Assert messages assume these symbols are unique, and the refcounts start at
-  // one, but code does not rely on this.
-  Thread* THREAD = Thread::current();
-  Symbol* abc = SymbolTable::new_symbol("abc", CATCH);
-  int abccount = abc->refcount();
-  TempNewSymbol ss = abc;
-  assert(ss->refcount() == abccount, "only one abc");
-  assert(ss->refcount() == abc->refcount(), "should match TempNewSymbol");
-
-  Symbol* efg = SymbolTable::new_symbol("efg", CATCH);
-  Symbol* hij = SymbolTable::new_symbol("hij", CATCH);
-  int efgcount = efg->refcount();
-  int hijcount = hij->refcount();
-
-  TempNewSymbol s1 = efg;
-  TempNewSymbol s2 = hij;
-  assert(s1->refcount() == efgcount, "one efg");
-  assert(s2->refcount() == hijcount, "one hij");
-
-  // Assignment operator
-  s1 = s2;
-  assert(hij->refcount() == hijcount + 1, "should be two hij");
-  assert(efg->refcount() == efgcount - 1, "should be no efg");
-
-  s1 = ss;  // s1 is abc
-  assert(s1->refcount() == abccount + 1, "should be two abc (s1 and ss)");
-  assert(hij->refcount() == hijcount, "should only have one hij now (s2)");
-
-  s1 = s1; // self assignment
-  assert(s1->refcount() == abccount + 1, "should still be two abc (s1 and ss)");
-
-  TempNewSymbol s3;
-  Symbol* klm = SymbolTable::new_symbol("klm", CATCH);
-  int klmcount = klm->refcount();
-  s3 = klm;   // assignment
-  assert(s3->refcount() == klmcount, "only one klm now");
-
-  Symbol* xyz = SymbolTable::new_symbol("xyz", CATCH);
-  int xyzcount = xyz->refcount();
-  { // inner scope
-     TempNewSymbol s_inner = xyz;
-  }
-  assert(xyz->refcount() == (xyzcount - 1),
-         "Should have been decremented by dtor in inner scope");
-}
-#endif // PRODUCT

@@ -845,13 +845,40 @@ void TemplateInterpreterGenerator::generate_counter_overflow(Label& continue_ent
   __ b(continue_entry);
 }
 
+// See if we've got enough room on the stack for locals plus overhead below
+// JavaThread::stack_overflow_limit(). If not, throw a StackOverflowError
+// without going through the signal handler, i.e., reserved and yellow zones
+// will not be made usable. The shadow zone must suffice to handle the
+// overflow.
+//
+// Kills Rmem_frame_size, Rscratch1.
 void TemplateInterpreterGenerator::generate_stack_overflow_check(Register Rmem_frame_size, Register Rscratch1) {
+  Label done;
   assert_different_registers(Rmem_frame_size, Rscratch1);
-  __ generate_stack_overflow_check_with_compare_and_throw(Rmem_frame_size, Rscratch1);
-}
 
-void TemplateInterpreterGenerator::unlock_method(bool check_exceptions) {
-  __ unlock_object(R26_monitor, check_exceptions);
+  BLOCK_COMMENT("stack_overflow_check_with_compare {");
+  __ sub(Rmem_frame_size, R1_SP, Rmem_frame_size);
+  __ ld(Rscratch1, thread_(stack_overflow_limit));
+  __ cmpld(CCR0/*is_stack_overflow*/, Rmem_frame_size, Rscratch1);
+  __ bgt(CCR0/*is_stack_overflow*/, done);
+
+  // The stack overflows. Load target address of the runtime stub and call it.
+  assert(StubRoutines::throw_StackOverflowError_entry() != NULL, "generated in wrong order");
+  __ load_const_optimized(Rscratch1, (StubRoutines::throw_StackOverflowError_entry()), R0);
+  __ mtctr(Rscratch1);
+  // Restore caller_sp.
+#ifdef ASSERT
+  __ ld(Rscratch1, 0, R1_SP);
+  __ ld(R0, 0, R21_sender_SP);
+  __ cmpd(CCR0, R0, Rscratch1);
+  __ asm_assert_eq("backlink", 0x547);
+#endif // ASSERT
+  __ mr(R1_SP, R21_sender_SP);
+  __ bctr();
+
+  __ align(32, 12);
+  __ bind(done);
+  BLOCK_COMMENT("} stack_overflow_check_with_compare");
 }
 
 // Lock the current method, interpreter register window must be set up!
@@ -1014,10 +1041,10 @@ void TemplateInterpreterGenerator::generate_fixed_frame(bool native_call, Regist
   // Enlarge by locals-parameters (not in case of native_call), shrink by ESP-SP-ABI48.
 
   if (!native_call) {
-    // --------------------------------------------------------------------------
-    // Stack overflow check
-
-    Label cont;
+    // Stack overflow check.
+    // Native calls don't need the stack size check since they have no
+    // expression stack and the arguments are already on the stack and
+    // we only add a handful of words to the stack.
     __ add(R11_scratch1, parent_frame_resize, top_frame_size);
     generate_stack_overflow_check(R11_scratch1, R12_scratch2);
   }
@@ -1517,6 +1544,12 @@ address TemplateInterpreterGenerator::generate_native_entry(bool synchronized) {
     __ fence();
   }
 
+  if (CheckJNICalls) {
+    // clear_pending_jni_exception_check
+    __ load_const_optimized(R0, 0L);
+    __ st_ptr(R0, JavaThread::pending_jni_exception_check_fn_offset(), R16_thread);
+  }
+
   __ reset_last_Java_frame();
 
   // Jvmdi/jvmpi support. Whether we've got an exception pending or
@@ -1535,7 +1568,7 @@ address TemplateInterpreterGenerator::generate_native_entry(bool synchronized) {
   if (synchronized) {
     // Don't check for exceptions since we're still in the i2n frame. Do that
     // manually afterwards.
-    unlock_method(false);
+    __ unlock_object(R26_monitor, false); // Can also unlock methods.
   }
 
   // Reset active handles after returning from native.
@@ -1578,7 +1611,7 @@ address TemplateInterpreterGenerator::generate_native_entry(bool synchronized) {
   if (synchronized) {
     // Don't check for exceptions since we're still in the i2n frame. Do that
     // manually afterwards.
-    unlock_method(false);
+    __ unlock_object(R26_monitor, false); // Can also unlock methods.
   }
   BIND(exception_return_sync_check_already_unlocked);
 

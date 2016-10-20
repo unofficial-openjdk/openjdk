@@ -21,14 +21,15 @@
  * questions.
  */
 
-/**
+/*
  * @test
- * @bug 6316539
+ * @bug 6316539 8136355
  * @summary Known-answer-test for TlsMasterSecret generator
  * @author Andreas Sterbenz
  * @library ..
  * @modules java.base/sun.security.internal.interfaces
  *          java.base/sun.security.internal.spec
+ *          jdk.crypto.pkcs11
  * @run main/othervm TestMasterSecret
  * @run main/othervm TestMasterSecret sm TestMasterSecret.policy
  */
@@ -37,6 +38,7 @@ import java.io.BufferedReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.Provider;
+import java.security.InvalidAlgorithmParameterException;
 import java.util.Arrays;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -115,15 +117,24 @@ public class TestMasterSecret extends PKCS11Test {
                         new TlsMasterSecretParameterSpec(premasterKey,
                             protoMajor, protoMinor, clientRandom, serverRandom,
                             null, -1, -1);
-                    kg.init(spec);
-                    TlsMasterSecret key = (TlsMasterSecret)kg.generateKey();
-                    byte[] enc = key.getEncoded();
-                    if (Arrays.equals(master, enc) == false) {
-                        throw new Exception("mismatch line: " + lineNumber);
-                    }
-                    if ((preMajor != key.getMajorVersion()) ||
-                            (preMinor != key.getMinorVersion())) {
-                        throw new Exception("version mismatch line: " + lineNumber);
+
+                    try {
+                        kg.init(spec);
+                        TlsMasterSecret key = (TlsMasterSecret)kg.generateKey();
+                        byte[] enc = key.getEncoded();
+                        if (Arrays.equals(master, enc) == false) {
+                            throw new Exception("mismatch line: " + lineNumber);
+                        }
+                        if ((preMajor != key.getMajorVersion()) ||
+                                (preMinor != key.getMinorVersion())) {
+                           throw new Exception("version mismatch line: " + lineNumber);
+                        }
+                    } catch (InvalidAlgorithmParameterException iape) {
+                        // SSLv3 support is removed in S12
+                        if (preMajor == 3 && preMinor == 0) {
+                            System.out.println("Skip testing SSLv3");
+                            continue;
+                        }
                     }
                 } else {
                     throw new Exception("Unknown line: " + line);

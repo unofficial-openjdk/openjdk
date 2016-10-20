@@ -23,7 +23,7 @@
 
 /**
  * @test
- * @summary Test -addmods and -limitmods; also test the "enabled" modules.
+ * @summary Test --add-modules and --limit-modules; also test the "enabled" modules.
  * @library /tools/lib
  * @modules
  *      jdk.compiler/com.sun.tools.javac.api
@@ -103,14 +103,14 @@ public class AddLimitMods extends ModuleTestBase {
         Files.createDirectories(modulePath);
 
         new JavacTask(tb)
-                .options("-modulesourcepath", moduleSrc.toString())
+                .options("--module-source-path", moduleSrc.toString())
                 .outdir(modulePath)
                 .files(findJavaFiles(m3))
                 .run()
                 .writeAll();
 
         new JavacTask(tb)
-                .options("-modulesourcepath", moduleSrc.toString())
+                .options("--module-source-path", moduleSrc.toString())
                 .outdir(modulePath)
                 .files(findJavaFiles(m2))
                 .run()
@@ -118,57 +118,57 @@ public class AddLimitMods extends ModuleTestBase {
 
         //real test
         new JavacTask(tb)
-                .options("-modulepath", modulePath.toString(),
-                         "-XDshouldStopPolicyIfNoError=FLOW",
-                         "-limitmods", "java.base")
+                .options("--module-path", modulePath.toString(),
+                         "--should-stop:ifNoError=FLOW",
+                         "--limit-modules", "java.base")
                 .outdir(modulePath)
                 .files(findJavaFiles(m1))
                 .run(Task.Expect.FAIL)
                 .writeAll();
 
         new JavacTask(tb)
-                .options("-modulepath", modulePath.toString(),
-                         "-XDshouldStopPolicyIfNoError=FLOW",
-                         "-limitmods", "java.base",
-                         "-addmods", "m2")
+                .options("--module-path", modulePath.toString(),
+                         "--should-stop:ifNoError=FLOW",
+                         "--limit-modules", "java.base",
+                         "--add-modules", "m2")
                 .outdir(modulePath)
                 .files(findJavaFiles(m1))
                 .run(Task.Expect.FAIL)
                 .writeAll();
 
         new JavacTask(tb)
-                .options("-modulepath", modulePath.toString(),
-                         "-XDshouldStopPolicyIfNoError=FLOW",
-                         "-limitmods", "java.base",
-                         "-addmods", "m2,m3")
+                .options("--module-path", modulePath.toString(),
+                         "--should-stop:ifNoError=FLOW",
+                         "--limit-modules", "java.base",
+                         "--add-modules", "m2,m3")
                 .outdir(modulePath)
                 .files(findJavaFiles(m1))
                 .run()
                 .writeAll();
 
         new JavacTask(tb)
-                .options("-modulepath", modulePath.toString(),
-                         "-XDshouldStopPolicyIfNoError=FLOW",
-                         "-limitmods", "m2")
+                .options("--module-path", modulePath.toString(),
+                         "--should-stop:ifNoError=FLOW",
+                         "--limit-modules", "m2")
                 .outdir(modulePath)
                 .files(findJavaFiles(m1))
                 .run()
                 .writeAll();
 
         new JavacTask(tb)
-                .options("-modulepath", modulePath.toString(),
-                         "-XDshouldStopPolicyIfNoError=FLOW",
-                         "-limitmods", "m3")
+                .options("--module-path", modulePath.toString(),
+                         "--should-stop:ifNoError=FLOW",
+                         "--limit-modules", "m3")
                 .outdir(modulePath)
                 .files(findJavaFiles(m1))
                 .run(Task.Expect.FAIL)
                 .writeAll();
 
         new JavacTask(tb)
-                .options("-modulepath", modulePath.toString(),
-                         "-XDshouldStopPolicyIfNoError=FLOW",
-                         "-limitmods", "m3",
-                         "-addmods", "m2")
+                .options("--module-path", modulePath.toString(),
+                         "--should-stop:ifNoError=FLOW",
+                         "--limit-modules", "m3",
+                         "--add-modules", "m2")
                 .outdir(modulePath)
                 .files(findJavaFiles(m1))
                 .run()
@@ -219,11 +219,11 @@ public class AddLimitMods extends ModuleTestBase {
                                               "Test.java:2:18: compiler.err.doesnt.exist: javax.annotation\n"
                                             + "Test.java:5:19: compiler.err.doesnt.exist: javax.xml.bind\n"
                                             + "2 errors\n"),
-            new SimpleEntry<String[], String>(new String[] {"-addmods", "java.annotations.common,java.xml.bind"},
+            new SimpleEntry<String[], String>(new String[] {"--add-modules", "java.annotations.common,java.xml.bind"},
                                               null),
-            new SimpleEntry<String[], String>(new String[] {"-limitmods", "java.xml.ws,jdk.compiler"},
+            new SimpleEntry<String[], String>(new String[] {"--limit-modules", "java.xml.ws,jdk.compiler"},
                                               null),
-            new SimpleEntry<String[], String>(new String[] {"-addmods", "ALL-SYSTEM"},
+            new SimpleEntry<String[], String>(new String[] {"--add-modules", "ALL-SYSTEM"},
                                               null)
     );
 
@@ -244,7 +244,7 @@ public class AddLimitMods extends ModuleTestBase {
         Files.createDirectories(modulePath);
 
         new JavacTask(tb)
-                .options("-modulesourcepath", moduleSrc.toString())
+                .options("--module-source-path", moduleSrc.toString())
                 .outdir(modulePath)
                 .files(findJavaFiles(moduleSrc))
                 .run()
@@ -258,15 +258,15 @@ public class AddLimitMods extends ModuleTestBase {
         Files.createDirectories(cpOut);
 
         new JavacTask(tb)
-                .options("-modulepath", modulePath.toString())
+                .options("--module-path", modulePath.toString())
                 .outdir(cpOut)
                 .files(findJavaFiles(cpSrc))
                 .run(Task.Expect.FAIL)
                 .writeAll();
 
         new JavacTask(tb)
-                .options("-modulepath", modulePath.toString(),
-                         "-addmods", "ALL-MODULE-PATH")
+                .options("--module-path", modulePath.toString(),
+                         "--add-modules", "ALL-MODULE-PATH")
                 .outdir(cpOut)
                 .files(findJavaFiles(cpSrc))
                 .run()
@@ -278,9 +278,9 @@ public class AddLimitMods extends ModuleTestBase {
                 "1 error");
 
         actual = new JavacTask(tb)
-                   .options("-modulesourcepath", moduleSrc.toString(),
+                   .options("--module-source-path", moduleSrc.toString(),
                             "-XDrawDiagnostics",
-                            "-addmods", "ALL-MODULE-PATH")
+                            "--add-modules", "ALL-MODULE-PATH")
                    .outdir(modulePath)
                    .files(findJavaFiles(moduleSrc))
                    .run(Task.Expect.FAIL)
@@ -294,7 +294,7 @@ public class AddLimitMods extends ModuleTestBase {
         actual = new JavacTask(tb)
                    .options("-Xmodule:java.base",
                             "-XDrawDiagnostics",
-                            "-addmods", "ALL-MODULE-PATH")
+                            "--add-modules", "ALL-MODULE-PATH")
                    .outdir(cpOut)
                    .files(findJavaFiles(cpSrc))
                    .run(Task.Expect.FAIL)
@@ -308,14 +308,14 @@ public class AddLimitMods extends ModuleTestBase {
         actual = new JavacTask(tb, Task.Mode.CMDLINE)
                    .options("-source", "8", "-target", "8",
                             "-XDrawDiagnostics",
-                            "-addmods", "ALL-MODULE-PATH")
+                            "--add-modules", "ALL-MODULE-PATH")
                    .outdir(cpOut)
                    .files(findJavaFiles(cpSrc))
                    .run(Task.Expect.FAIL)
                    .writeAll()
                    .getOutputLines(Task.OutputKind.DIRECT);
 
-        if (!actual.contains("javac: option -addmods not allowed with target 1.8")) {
+        if (!actual.contains("javac: option --add-modules not allowed with target 1.8")) {
             throw new IllegalStateException("incorrect errors; actual=" + actual);
         }
 
@@ -323,7 +323,7 @@ public class AddLimitMods extends ModuleTestBase {
 
         actual = new JavacTask(tb)
                    .options("-XDrawDiagnostics",
-                            "-addmods", "ALL-MODULE-PATH")
+                            "--add-modules", "ALL-MODULE-PATH")
                    .outdir(cpOut)
                    .files(findJavaFiles(cpSrc))
                    .run(Task.Expect.FAIL)
@@ -345,6 +345,7 @@ public class AddLimitMods extends ModuleTestBase {
 
         Files.createDirectories(classpathOut);
 
+        System.err.println("Compiling classpath-src files:");
         new JavacTask(tb)
                 .outdir(classpathOut)
                 .files(findJavaFiles(classpathSrc))
@@ -360,6 +361,7 @@ public class AddLimitMods extends ModuleTestBase {
 
         Files.createDirectories(automaticOut);
 
+        System.err.println("Compiling automatic-src files:");
         new JavacTask(tb)
                 .outdir(automaticOut)
                 .files(findJavaFiles(automaticSrc))
@@ -373,6 +375,7 @@ public class AddLimitMods extends ModuleTestBase {
 
         Path automaticJar = modulePath.resolve("automatic.jar");
 
+        System.err.println("Creating automatic.jar:");
         new JarTask(tb, automaticJar)
           .baseDir(automaticOut)
           .files("automatic/Automatic.class")
@@ -385,8 +388,9 @@ public class AddLimitMods extends ModuleTestBase {
                           "module m1 { exports api; }",
                           "package api; public class Api { public void test() { } }");
 
+        System.err.println("Compiling module-src files:");
         new JavacTask(tb)
-                .options("-modulesourcepath", moduleSrc.toString())
+                .options("--module-source-path", moduleSrc.toString())
                 .outdir(modulePath)
                 .files(findJavaFiles(moduleSrc))
                 .run()
@@ -399,7 +403,7 @@ public class AddLimitMods extends ModuleTestBase {
             for (String[] options : OPTIONS_VARIANTS) {
                 index++;
 
-                System.err.println("running check: " + moduleInfo + "; " + Arrays.asList(options));
+                System.err.println("Running check: " + moduleInfo + "; " + Arrays.asList(options));
 
                 Path m2Runtime = base.resolve(index + "-runtime").resolve("m2");
                 Path out = base.resolve(index + "-runtime").resolve("out").resolve("m2");
@@ -427,8 +431,9 @@ public class AddLimitMods extends ModuleTestBase {
 
                 tb.writeJavaFiles(m2Runtime, moduleInfo, testClassNamed.toString());
 
+                System.err.println("Compiling " + m2Runtime + " files:");
                 new JavacTask(tb)
-                   .options("-modulepath", modulePath.toString())
+                   .options("--module-path", modulePath.toString())
                    .outdir(out)
                    .files(findJavaFiles(m2Runtime))
                    .run()
@@ -438,12 +443,13 @@ public class AddLimitMods extends ModuleTestBase {
                 String output;
 
                 try {
+                    System.err.println("Running m2/test.Test:");
                     output = new JavaTask(tb)
                        .vmOptions(augmentOptions(options,
                                                  Collections.emptyList(),
-                                                 "-modulepath", modulePath.toString() + File.pathSeparator + out.getParent().toString(),
-                                                 "-classpath", classpathOut.toString(),
-                                                 "-XaddReads:m2=ALL-UNNAMED,automatic",
+                                                 "--module-path", modulePath.toString() + File.pathSeparator + out.getParent().toString(),
+                                                 "--class-path", classpathOut.toString(),
+                                                 "--add-reads", "m2=ALL-UNNAMED,automatic",
                                                  "-m", "m2/test.Test"))
                        .run()
                        .writeAll()
@@ -463,17 +469,19 @@ public class AddLimitMods extends ModuleTestBase {
                                   "public class Test {}\n");
 
                 List<String> auxOptions = success ? Arrays.asList(
-                    "-processorpath", System.getProperty("test.class.path"),
+                    "--processor-path", System.getProperty("test.class.path"),
                     "-processor", CheckVisibleModule.class.getName(),
                     "-Aoutput=" + output,
                     "-XDaccessInternalAPI=true"
                 ) : Collections.emptyList();
+
+                System.err.println("Compiling/processing m2 files:");
                 new JavacTask(tb)
                    .options(augmentOptions(options,
                                            auxOptions,
-                                           "-modulepath", modulePath.toString(),
-                                           "-classpath", classpathOut.toString(),
-                                           "-XDshouldStopPolicyIfNoError=FLOW"))
+                                           "--module-path", modulePath.toString(),
+                                           "--class-path", classpathOut.toString(),
+                                           "--should-stop:ifNoError=FLOW"))
                    .outdir(modulePath)
                    .files(findJavaFiles(m2))
                    .run(success ? Task.Expect.SUCCESS : Task.Expect.FAIL)
@@ -510,8 +518,6 @@ public class AddLimitMods extends ModuleTestBase {
         MODULES_TO_CHECK_TO_SAMPLE_CLASS.put("m1", "api.Api");
         MODULES_TO_CHECK_TO_SAMPLE_CLASS.put("m2", "test.Test");
         MODULES_TO_CHECK_TO_SAMPLE_CLASS.put("java.base", "java.lang.Object");
-        MODULES_TO_CHECK_TO_SAMPLE_CLASS.put("java.compiler", "javax.tools.ToolProvider");
-        MODULES_TO_CHECK_TO_SAMPLE_CLASS.put("jdk.compiler", "com.sun.tools.javac.Main");
     };
 
     @SupportedAnnotationTypes("*")
@@ -573,19 +579,18 @@ public class AddLimitMods extends ModuleTestBase {
 
     private static final String[] MODULE_INFO_VARIANTS = {
         "module m2 { exports test; }",
-        "module m2 { requires m1; exports test; }",
-        "module m2 { requires jdk.compiler; exports test; }",
+        "module m2 { requires m1; exports test; }"
     };
 
     private static final String[][] OPTIONS_VARIANTS = {
-        {"-addmods", "automatic"},
-        {"-addmods", "m1,automatic"},
-        {"-addmods", "jdk.compiler,automatic"},
-        {"-addmods", "m1,jdk.compiler,automatic"},
-        {"-addmods", "ALL-SYSTEM,automatic"},
-        {"-limitmods", "java.base", "-addmods", "automatic"},
-        {"-limitmods", "java.base", "-addmods", "ALL-SYSTEM,automatic"},
-        {"-limitmods", "m2", "-addmods", "automatic"},
-        {"-limitmods", "jdk.compiler", "-addmods", "automatic"},
+        {"--add-modules", "automatic"},
+        {"--add-modules", "m1,automatic"},
+        {"--add-modules", "jdk.compiler,automatic"},
+        {"--add-modules", "m1,jdk.compiler,automatic"},
+        {"--add-modules", "ALL-SYSTEM,automatic"},
+        {"--limit-modules", "java.base", "--add-modules", "automatic"},
+        {"--limit-modules", "java.base", "--add-modules", "ALL-SYSTEM,automatic"},
+        {"--limit-modules", "m2", "--add-modules", "automatic"},
+        {"--limit-modules", "jdk.compiler", "--add-modules", "automatic"},
     };
 }

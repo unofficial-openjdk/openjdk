@@ -42,7 +42,6 @@ public interface Archive {
     public abstract class Entry {
 
         public static enum EntryType {
-
             MODULE_NAME,
             CLASS_OR_RESOURCE,
             NATIVE_LIB,
@@ -56,34 +55,41 @@ public interface Archive {
         private final Archive archive;
         private final String path;
 
+        /**
+         * Constructs an entry of the given archive
+         * @param archive archive
+         * @param path
+         * @param name an entry name that does not contain the module name
+         * @param type
+         */
         public Entry(Archive archive, String path, String name, EntryType type) {
-            Objects.requireNonNull(archive);
-            Objects.requireNonNull(path);
-            Objects.requireNonNull(name);
-            Objects.requireNonNull(type);
-            this.archive = archive;
-            this.path = path;
-            this.name = name;
-            this.type = type;
+            this.archive = Objects.requireNonNull(archive);
+            this.path = Objects.requireNonNull(path);
+            this.name = Objects.requireNonNull(name);
+            this.type = Objects.requireNonNull(type);
         }
 
-        public Archive archive() {
+        public final Archive archive() {
             return archive;
         }
 
-        public String path() {
-            return path;
-        }
-
-        public EntryType type() {
+        public final EntryType type() {
             return type;
         }
 
         /**
          * Returns the name of this entry.
          */
-        public String name() {
+        public final String name() {
             return name;
+        }
+
+        /**
+         * Returns the name representing a ResourcePoolEntry in the form of:
+         *    /$MODULE/$ENTRY_NAME
+         */
+        public final String getResourcePoolEntryName() {
+            return "/" + archive.moduleName() + "/" + name;
         }
 
         @Override
@@ -91,7 +97,7 @@ public interface Archive {
             return "type " + type.name() + " path " + path;
         }
 
-        /**
+        /*
          * Returns the number of uncompressed bytes for this entry.
          */
         public abstract long size();
@@ -99,17 +105,17 @@ public interface Archive {
         public abstract InputStream stream() throws IOException;
     }
 
-    /**
+    /*
      * The module name.
      */
     String moduleName();
 
-    /**
+    /*
      * Returns the path to this module's content
      */
     Path getPath();
 
-    /**
+    /*
      * Stream of Entry.
      * The stream of entries needs to be closed after use
      * since it might cover lazy I/O based resources.
@@ -117,12 +123,12 @@ public interface Archive {
      */
     Stream<Entry> entries();
 
-    /**
+    /*
      * Open the archive
      */
     void open() throws IOException;
 
-    /**
+    /*
      * Close the archive
      */
     void close() throws IOException;

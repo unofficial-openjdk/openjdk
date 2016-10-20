@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -75,11 +75,6 @@ endef
 
 # Param 1 - The file containing the MODULES list
 define create-info-file
-  $(call info-file-item, "JAVA_VERSION", "$(VERSION_NUMBER)")
-  $(call info-file-item, "JAVA_FULL_VERSION", "$(VERSION_STRING)")
-  $(call info-file-item, "OS_NAME", "$(REQUIRED_OS_NAME)")
-  $(call info-file-item, "OS_VERSION", "$(REQUIRED_OS_VERSION)")
-  $(call info-file-item, "OS_ARCH", "$(OPENJDK_TARGET_CPU_LEGACY)")
   $(if $(JDK_ARCH_ABI_PROP_NAME), \
     $(call info-file-item, "SUN_ARCH_ABI", "$(JDK_ARCH_ABI_PROP_NAME)"))
   $(call info-file-item, "SOURCE", "$(strip $(ALL_SOURCE_TIPS))")
@@ -116,8 +111,10 @@ JMODS := $(wildcard $(IMAGES_OUTPUTDIR)/jmods/*.jmod)
 JIMAGE_TARGET_FILE := bin/java$(EXE_SUFFIX)
 
 JLINK_ORDER_RESOURCES := **module-info.class
+JLINK_JLI_CLASSES :=
 ifeq ($(ENABLE_GENERATE_CLASSLIST), true)
   JLINK_ORDER_RESOURCES += @$(SUPPORT_OUTPUTDIR)/classlist/classlist
+  JLINK_JLI_CLASSES := --generate-jli-classes=@$(SUPPORT_OUTPUTDIR)/classlist/jli_trace.out
 endif
 JLINK_ORDER_RESOURCES += \
     /java.base/java/** \
@@ -127,10 +124,11 @@ JLINK_ORDER_RESOURCES += \
     /jdk.localedata/** \
     #
 
-JLINK_TOOL := $(JLINK) --modulepath $(IMAGES_OUTPUTDIR)/jmods \
+JLINK_TOOL := $(JLINK) --module-path $(IMAGES_OUTPUTDIR)/jmods \
     --endian $(OPENJDK_BUILD_CPU_ENDIAN) \
     --release-info $(BASE_RELEASE_FILE) \
     --order-resources=$(call CommaList, $(JLINK_ORDER_RESOURCES)) \
+    $(JLINK_JLI_CLASSES) \
     #
 
 ifeq ($(JLINK_KEEP_PACKAGED_MODULES), true)
@@ -142,7 +140,7 @@ $(JDK_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS) \
 	$(ECHO) Creating jdk jimage
 	$(RM) -r $(JDK_IMAGE_DIR)
 	$(JLINK_TOOL) --output $(JDK_IMAGE_DIR) \
-	    --addmods $(JDK_MODULES_LIST) $(JLINK_EXTRA_OPTS)
+	    --add-modules $(JDK_MODULES_LIST) $(JLINK_EXTRA_OPTS)
 	$(TOUCH) $@
 
 $(JRE_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS) \
@@ -150,7 +148,7 @@ $(JRE_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS) \
 	$(ECHO) Creating jre jimage
 	$(RM) -r $(JRE_IMAGE_DIR)
 	$(JLINK_TOOL) --output $(JRE_IMAGE_DIR) \
-	    --addmods $(JRE_MODULES_LIST)
+	    --add-modules $(JRE_MODULES_LIST)
 	$(TOUCH) $@
 
 JRE_COMPACT1_IMAGE_DIR := $(JRE_IMAGE_DIR)-compact1
@@ -161,7 +159,7 @@ $(JRE_COMPACT1_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS) \
     $(call DependOnVariable, JRE_COMPACT1_MODULES_LIST) $(BASE_RELEASE_FILE)
 	$(ECHO) Creating jre compact1 jimage
 	$(RM) -r $(JRE_COMPACT1_IMAGE_DIR)
-	$(JLINK_TOOL) --addmods $(JRE_COMPACT1_MODULES_LIST) \
+	$(JLINK_TOOL) --add-modules $(JRE_COMPACT1_MODULES_LIST) \
 	    --output $(JRE_COMPACT1_IMAGE_DIR)
 	$(TOUCH) $@
 
@@ -169,7 +167,7 @@ $(JRE_COMPACT2_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS) \
     $(call DependOnVariable, JRE_COMPACT2_MODULES_LIST) $(BASE_RELEASE_FILE)
 	$(ECHO) Creating jre compact2 jimage
 	$(RM) -r $(JRE_COMPACT2_IMAGE_DIR)
-	$(JLINK_TOOL) --addmods $(JRE_COMPACT2_MODULES_LIST) \
+	$(JLINK_TOOL) --add-modules $(JRE_COMPACT2_MODULES_LIST) \
 	    --output $(JRE_COMPACT2_IMAGE_DIR)
 	$(TOUCH) $@
 
@@ -177,7 +175,7 @@ $(JRE_COMPACT3_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS) \
     $(call DependOnVariable, JRE_COMPACT3_MODULES_LIST) $(BASE_RELEASE_FILE)
 	$(ECHO) Creating jre compact3 jimage
 	$(RM) -r $(JRE_COMPACT3_IMAGE_DIR)
-	$(JLINK_TOOL) --addmods $(JRE_COMPACT3_MODULES_LIST) \
+	$(JLINK_TOOL) --add-modules $(JRE_COMPACT3_MODULES_LIST) \
 	    --output $(JRE_COMPACT3_IMAGE_DIR)
 	$(TOUCH) $@
 
@@ -207,12 +205,6 @@ ifneq ($(OPENJDK_TARGET_OS), windows)
       tnameserv.1 \
       unpack200.1
 
-  ifndef OPENJDK
-    ifneq ($(OPENJDK_TARGET_OS), solaris)
-      JRE_MAN_PAGES += javaws.1
-    endif
-  endif
-
   JDK_MAN_PAGES += \
       $(JRE_MAN_PAGES) \
       appletviewer.1 \
@@ -231,7 +223,6 @@ ifneq ($(OPENJDK_TARGET_OS), windows)
       jmap.1 \
       jps.1 \
       jrunscript.1 \
-      jsadebugd.1 \
       jstack.1 \
       jstat.1 \
       jstatd.1 \
@@ -391,14 +382,28 @@ endif
 
 ################################################################################
 # /demo dir
-ifneq ($(findstring images, $(MAKECMDGOALS)), )
+# Avoid doing the expensive find unless called with "jdk" as target.
+ifneq ($(filter jdk, $(MAKECMDGOALS)), )
+
+  DEMO_FILES := \
+      $(if $(wildcard $(SUPPORT_OUTPUTDIR)/demos/image), \
+        $(call DoubleDollar, $(call DoubleDollar, \
+        $(shell $(FIND) $(SUPPORT_OUTPUTDIR)/demos/image \
+            -type f -a ! \( -name "_the*" -o -name "javac_state" \) ))) \
+      )
+
+  ifeq ($(ZIP_EXTERNAL_DEBUG_SYMBOLS), true)
+    ifeq ($(OPENJDK_TARGET_OS), macosx)
+      DEMO_FILES := $(call not-containing, .dSYM, $(DEMO_FILES))
+    else
+      DEMO_FILES := $(filter-out %.debuginfo %.pdb %.map, $(DEMO_FILES))
+    endif
+  endif
+
   $(eval $(call SetupCopyFiles, JDK_COPY_DEMOS, \
       SRC := $(SUPPORT_OUTPUTDIR)/demos/image, \
       DEST := $(JDK_IMAGE_DIR)/demo, \
-      FILES := $(if $(wildcard $(SUPPORT_OUTPUTDIR)/demos/image), \
-          $(call DoubleDollar, $(call DoubleDollar, \
-      $(shell $(FIND) $(SUPPORT_OUTPUTDIR)/demos/image \
-          -type f -a ! \( -name "_the*" -o -name "javac_state" \) )))), \
+      FILES := $(DEMO_FILES), \
   ))
 
   JDK_TARGETS += $(JDK_COPY_DEMOS)
@@ -463,21 +468,25 @@ else
   LIBS_TARGET_SUBDIR := lib
 endif
 
-DEBUGINFO_SUFFIXES := .diz .debuginfo .pdb .map
-
 # Param 1 - dir to find debuginfo files in
 FindDebuginfoFiles = \
     $(wildcard $(addprefix $1/*, $(DEBUGINFO_SUFFIXES)) \
         $(addprefix $1/*/*, $(DEBUGINFO_SUFFIXES)) \
         $(addprefix $1/*/*/*, $(DEBUGINFO_SUFFIXES)))
 
-# On Macosx, if debug symbols have not been zipped, find all files inside *.dSYM
-# dirs.
-ifeq ($(OPENJDK_TARGET_OS)-$(ZIP_EXTERNAL_DEBUG_SYMBOLS), macosx-false)
-  $(eval $(call FillCacheFind, \
-      $(SUPPORT_OUTPUTDIR)/modules_cmds $(SUPPORT_OUTPUTDIR)/modules_libs/))
-  FindDebuginfoFiles = \
-      $(if $(wildcard $1), $(call containing, .dSYM/, $(call CacheFind, $1)))
+# Pick the correct debug info files to copy, either zipped or not.
+ifeq ($(ZIP_EXTERNAL_DEBUG_SYMBOLS), true)
+  DEBUGINFO_SUFFIXES += .diz
+else
+  DEBUGINFO_SUFFIXES := .debuginfo .pdb .map
+  # On Macosx, if debug symbols have not been zipped, find all files inside *.dSYM
+  # dirs.
+  ifeq ($(OPENJDK_TARGET_OS), macosx)
+    $(eval $(call FillCacheFind, \
+        $(SUPPORT_OUTPUTDIR)/modules_cmds $(SUPPORT_OUTPUTDIR)/modules_libs))
+    FindDebuginfoFiles = \
+        $(if $(wildcard $1), $(call containing, .dSYM/, $(call CacheFind, $1)))
+  endif
 endif
 
 # Param 1 - either JDK or JRE
@@ -508,8 +517,11 @@ $(eval $(call IncludeCustomExtension, , Images-post.gmk))
 $(JRE_TARGETS): $(TOOL_JRE_TARGETS)
 $(JDK_TARGETS): $(TOOL_JDK_TARGETS)
 
-jimages: $(TOOL_JRE_TARGETS) $(TOOL_JDK_TARGETS) $(JRE_TARGETS) $(JDK_TARGETS) \
-    $(SYMBOLS_TARGETS)
+jdk: $(JDK_TARGETS)
+jre: $(JRE_TARGETS)
+symbols: $(SYMBOLS_TARGETS)
+
+all: jdk jre symbols
 
 $(JRE_COMPACT1_TARGETS): $(TOOL_JRE_COMPACT1_TARGETS)
 $(JRE_COMPACT2_TARGETS): $(TOOL_JRE_COMPACT2_TARGETS)
@@ -522,4 +534,4 @@ profiles: $(TOOL_JRE_COMPACT1_TARGETS) \
     $(JRE_COMPACT2_TARGETS) \
     $(JRE_COMPACT3_TARGETS)
 
-.PHONY: default all jimages profiles
+.PHONY: default all jdk jre symbols profiles

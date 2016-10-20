@@ -881,6 +881,9 @@ private:
   void adcq(Register dst, Address src);
   void adcq(Register dst, Register src);
 
+  void addb(Address dst, int imm8);
+  void addw(Address dst, int imm16);
+
   void addl(Address dst, int32_t imm32);
   void addl(Address dst, Register src);
   void addl(Register dst, int32_t imm32);
@@ -1816,12 +1819,15 @@ private:
 
   void xabort(int8_t imm8);
 
+  void xaddb(Address dst, Register src);
+  void xaddw(Address dst, Register src);
   void xaddl(Address dst, Register src);
-
   void xaddq(Address dst, Register src);
 
   void xbegin(Label& abort, relocInfo::relocType rtype = relocInfo::none);
 
+  void xchgb(Register reg, Address adr);
+  void xchgw(Register reg, Address adr);
   void xchgl(Register reg, Address adr);
   void xchgl(Register dst, Register src);
 
@@ -1854,6 +1860,8 @@ private:
   void vdivsd(XMMRegister dst, XMMRegister nds, XMMRegister src);
   void vdivss(XMMRegister dst, XMMRegister nds, Address src);
   void vdivss(XMMRegister dst, XMMRegister nds, XMMRegister src);
+  void vfmadd231sd(XMMRegister dst, XMMRegister nds, XMMRegister src);
+  void vfmadd231ss(XMMRegister dst, XMMRegister nds, XMMRegister src);
   void vmulsd(XMMRegister dst, XMMRegister nds, Address src);
   void vmulsd(XMMRegister dst, XMMRegister nds, XMMRegister src);
   void vmulss(XMMRegister dst, XMMRegister nds, Address src);

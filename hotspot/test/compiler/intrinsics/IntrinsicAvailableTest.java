@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,37 +20,41 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-import java.lang.reflect.Executable;
-import java.util.concurrent.Callable;
-import java.util.Objects;
 
-import jdk.test.lib.*;
-import compiler.whitebox.CompilerWhiteBoxTest;
 /*
  * @test
  * @bug 8130832
  * @modules java.base/jdk.internal.misc
- * @library /testlibrary /test/lib /compiler/whitebox /compiler/testlibrary /
- * @build IntrinsicAvailableTest
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
+ * @library /test/lib /
+ *
+ * @build sun.hotspot.WhiteBox
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:.
  *                   -XX:+UnlockDiagnosticVMOptions
  *                   -XX:+WhiteBoxAPI
  *                   -XX:+UseCRC32Intrinsics
- *                   IntrinsicAvailableTest
+ *                   compiler.intrinsics.IntrinsicAvailableTest
  * @run main/othervm -Xbootclasspath/a:.
  *                   -XX:+UnlockDiagnosticVMOptions
  *                   -XX:+WhiteBoxAPI
  *                   -XX:-UseCRC32Intrinsics
- *                   IntrinsicAvailableTest
+ *                   compiler.intrinsics.IntrinsicAvailableTest
  */
+
+
+package compiler.intrinsics;
+
+import compiler.whitebox.CompilerWhiteBoxTest;
+import jdk.test.lib.Platform;
+
+import java.lang.reflect.Executable;
+import java.util.concurrent.Callable;
+
 public class IntrinsicAvailableTest extends CompilerWhiteBoxTest {
-    protected String VMName;
 
     public IntrinsicAvailableTest(IntrinsicAvailableTestTestCase testCase) {
         super(testCase);
-        VMName = System.getProperty("java.vm.name");
     }
 
     public static class IntrinsicAvailableTestTestCase implements TestCase {
@@ -110,7 +114,7 @@ public class IntrinsicAvailableTest extends CompilerWhiteBoxTest {
 
     public void test() throws Exception {
         Executable intrinsicMethod = testCase.getExecutable();
-        if (Platform.isServer()) {
+        if (Platform.isServer() && (TIERED_STOP_AT_LEVEL == COMP_LEVEL_FULL_OPTIMIZATION)) {
             if (TIERED_COMPILATION) {
                 checkIntrinsicForCompilationLevel(intrinsicMethod, COMP_LEVEL_SIMPLE);
             }

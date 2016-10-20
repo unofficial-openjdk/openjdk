@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,8 +24,10 @@
 /*
  * @test
  * @modules java.base/jdk.internal.misc
- * @library /test/lib /testlibrary /
- * @build compiler.calls.common.InvokeInterface
+ * @summary check calls from compiled to compiled using InvokeInterface
+ * @library /test/lib /
+ *
+ * @build sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
  *    sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xbootclasspath/a:.
@@ -40,5 +42,4 @@
  * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xbootclasspath/a:.
  *    -Xbatch compiler.calls.common.InvokeInterface
  *    -compileCaller 4 -checkCallerCompileLevel 4 -compileCallee 4 -checkCalleeCompileLevel 4
- * @summary check calls from compiled to compiled using InvokeInterface
  */

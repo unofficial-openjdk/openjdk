@@ -26,8 +26,7 @@ package jdk.vm.ci.hotspot;
 import static jdk.vm.ci.common.InitTimer.timer;
 import static jdk.vm.ci.hotspot.HotSpotJVMCIRuntime.runtime;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
+import java.lang.reflect.Executable;
 
 import jdk.vm.ci.code.BytecodeFrame;
 import jdk.vm.ci.code.InstalledCode;
@@ -35,11 +34,9 @@ import jdk.vm.ci.code.InvalidInstalledCodeException;
 import jdk.vm.ci.code.TargetDescription;
 import jdk.vm.ci.common.InitTimer;
 import jdk.vm.ci.common.JVMCIError;
-import jdk.vm.ci.hotspotvmconfig.HotSpotVMField;
 import jdk.vm.ci.meta.JavaType;
 import jdk.vm.ci.meta.ResolvedJavaMethod;
 import jdk.vm.ci.meta.ResolvedJavaType;
-import jdk.internal.misc.Unsafe;
 
 /**
  * Calls from Java into HotSpot. The behavior of all the methods in this class that take a native
@@ -246,15 +243,19 @@ final class CompilerToVM {
     native void resolveInvokeDynamicInPool(HotSpotConstantPool constantPool, int cpi);
 
     /**
-     * Ensures that the type referenced by the entry for a
+     * If {@code cpi} denotes an entry representing a
      * <a href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-2.html#jvms-2.9">signature
-     * polymorphic</a> method at index {@code cpi} in {@code constantPool} is loaded and
-     * initialized.
-     *
-     * The behavior of this method is undefined if {@code cpi} does not denote an entry representing
-     * a signature polymorphic method.
+     * polymorphic</a> method, this method ensures that the type referenced by the entry is loaded
+     * and initialized. It {@code cpi} does not denote a signature polymorphic method, this method
+     * does nothing.
      */
     native void resolveInvokeHandleInPool(HotSpotConstantPool constantPool, int cpi);
+
+    /**
+     * Gets the list of type names (in the format of {@link JavaType#getName()}) denoting the
+     * classes that define signature polymorphic methods.
+     */
+    native String[] getSignaturePolymorphicHolders();
 
     /**
      * Gets the resolved type denoted by the entry at index {@code cpi} in {@code constantPool}.
@@ -267,8 +268,10 @@ final class CompilerToVM {
     native HotSpotResolvedObjectTypeImpl resolveTypeInPool(HotSpotConstantPool constantPool, int cpi) throws LinkageError;
 
     /**
-     * Looks up and attempts to resolve the {@code JVM_CONSTANT_Field} entry at index {@code cpi} in
-     * {@code constantPool}. The values returned in {@code info} are:
+     * Looks up and attempts to resolve the {@code JVM_CONSTANT_Field} entry for at index
+     * {@code cpi} in {@code constantPool}. For some opcodes, checks are performed that require the
+     * {@code method} that contains {@code opcode} to be specified. The values returned in
+     * {@code info} are:
      *
      * <pre>
      *     [(int) flags,   // only valid if field is resolved
@@ -281,7 +284,7 @@ final class CompilerToVM {
      * @param info an array in which the details of the field are returned
      * @return the type defining the field if resolution is successful, 0 otherwise
      */
-    native HotSpotResolvedObjectTypeImpl resolveFieldInPool(HotSpotConstantPool constantPool, int cpi, byte opcode, long[] info);
+    native HotSpotResolvedObjectTypeImpl resolveFieldInPool(HotSpotConstantPool constantPool, int cpi, HotSpotResolvedJavaMethodImpl method, byte opcode, long[] info);
 
     /**
      * Converts {@code cpci} from an index into the cache for {@code constantPool} to an index
@@ -338,9 +341,23 @@ final class CompilerToVM {
     native void resetCompilationStatistics();
 
     /**
-     * Initializes the fields of {@code config}.
+     * Reads the database of VM info. The return value encodes the info in a nested object array
+     * that is described by the pseudo Java object {@code info} below:
+     *
+     * <pre>
+     *     info = [
+     *         VMField[] vmFields,
+     *         [String name, Long size, ...] vmTypeSizes,
+     *         [String name, Long value, ...] vmConstants,
+     *         [String name, Long value, ...] vmAddresses,
+     *         VMFlag[] vmFlags
+     *         VMIntrinsicMethod[] vmIntrinsics
+     *     ]
+     * </pre>
+     *
+     * @return VM info as encoded above
      */
-    native long initializeConfiguration(HotSpotVMConfig config);
+    native Object[] readConfiguration();
 
     /**
      * Resolves the implementation of {@code method} for virtual dispatches on objects of dynamic
@@ -348,8 +365,8 @@ final class CompilerToVM {
      * {@code exactReceiver}.
      *
      * @param caller the caller or context type used to perform access checks
-     * @return the link-time resolved method (might be abstract) or {@code 0} if it can not be
-     *         linked
+     * @return the link-time resolved method (might be abstract) or {@code null} if it is either a
+     *         signature polymorphic method or can not be linked.
      */
     native HotSpotResolvedJavaMethodImpl resolveMethod(HotSpotResolvedObjectTypeImpl exactReceiver, HotSpotResolvedJavaMethodImpl method, HotSpotResolvedObjectTypeImpl caller);
 
@@ -367,10 +384,9 @@ final class CompilerToVM {
     native boolean hasFinalizableSubclass(HotSpotResolvedObjectTypeImpl type);
 
     /**
-     * Gets the method corresponding to {@code holder} and slot number {@code slot} (i.e.
-     * {@link Method#slot} or {@link Constructor#slot}).
+     * Gets the method corresponding to {@code executable}.
      */
-    native HotSpotResolvedJavaMethodImpl getResolvedJavaMethodAtSlot(Class<?> holder, int slot);
+    native HotSpotResolvedJavaMethodImpl asResolvedJavaMethod(Executable executable);
 
     /**
      * Gets the maximum absolute offset of a PC relative call to {@code address} from any position
@@ -428,7 +444,6 @@ final class CompilerToVM {
      * <li>{@link HotSpotVMConfig#localVariableTableElementLengthOffset}</li>
      * <li>{@link HotSpotVMConfig#localVariableTableElementNameCpIndexOffset}</li>
      * <li>{@link HotSpotVMConfig#localVariableTableElementDescriptorCpIndexOffset}</li>
-     * <li>{@link HotSpotVMConfig#localVariableTableElementSignatureCpIndexOffset}
      * <li>{@link HotSpotVMConfig#localVariableTableElementSlotOffset}
      * <li>{@link HotSpotVMConfig#localVariableTableElementStartBciOffset}
      * </ul>
@@ -545,20 +560,18 @@ final class CompilerToVM {
     native HotSpotResolvedJavaMethodImpl getResolvedJavaMethod(Object base, long displacement);
 
     /**
-     * Read a HotSpot ConstantPool* value from the memory location described by {@code base} plus
-     * {@code displacement} and return the {@link HotSpotConstantPool} wrapping it. This method does
-     * no checking that the memory location actually contains a valid pointer and may crash the VM
-     * if an invalid location is provided. If the {@code base} is null then {@code displacement} is
-     * used by itself. If {@code base} is a {@link HotSpotResolvedJavaMethodImpl},
-     * {@link HotSpotConstantPool} or {@link HotSpotResolvedObjectTypeImpl} then the metaspace
-     * pointer is fetched from that object and added to {@code displacement}. Any other non-null
-     * object type causes an {@link IllegalArgumentException} to be thrown.
+     * Gets the {@code ConstantPool*} associated with {@code object} and returns a
+     * {@link HotSpotConstantPool} wrapping it.
      *
-     * @param base an object to read from or null
-     * @param displacement
-     * @return null or the resolved method for this location
+     * @param object a {@link HotSpotResolvedJavaMethodImpl} or
+     *            {@link HotSpotResolvedObjectTypeImpl} object
+     * @return a {@link HotSpotConstantPool} wrapping the {@code ConstantPool*} associated with
+     *         {@code object}
+     * @throws NullPointerException if {@code object == null}
+     * @throws IllegalArgumentException if {@code object} is neither a
+     *             {@link HotSpotResolvedJavaMethodImpl} nor a {@link HotSpotResolvedObjectTypeImpl}
      */
-    native HotSpotConstantPool getConstantPool(Object base, long displacement);
+    native HotSpotConstantPool getConstantPool(Object object);
 
     /**
      * Read a HotSpot Klass* value from the memory location described by {@code base} plus
@@ -600,4 +613,10 @@ final class CompilerToVM {
      * @return the number of bytes required for deoptimization of this frame state
      */
     native int interpreterFrameSize(BytecodeFrame frame);
+
+    /**
+     * Invokes non-public method {@code java.lang.invoke.LambdaForm.compileToBytecode()} on
+     * {@code lambdaForm} (which must be a {@code java.lang.invoke.LambdaForm} instance).
+     */
+    native void compileToBytecode(Object lambdaForm);
 }

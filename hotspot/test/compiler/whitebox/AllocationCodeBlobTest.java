@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,32 +22,37 @@
  *
  */
 
-import java.lang.management.MemoryPoolMXBean;
-import java.util.EnumSet;
-import java.util.ArrayList;
-
-import sun.hotspot.WhiteBox;
-import sun.hotspot.code.BlobType;
-import jdk.test.lib.Asserts;
-import jdk.test.lib.InfiniteLoop;
-
 /*
  * @test AllocationCodeBlobTest
- * @bug 8059624 8064669
- * @library /testlibrary /test/lib
- * @modules java.base/jdk.internal.misc
- * @modules java.management
- * @build AllocationCodeBlobTest
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
- *                   -XX:+WhiteBoxAPI -XX:CompileCommand=compileonly,null::*
- *                   -XX:-SegmentedCodeCache AllocationCodeBlobTest
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
- *                   -XX:+WhiteBoxAPI -XX:CompileCommand=compileonly,null::*
- *                   -XX:+SegmentedCodeCache AllocationCodeBlobTest
  * @summary testing of WB::allocate/freeCodeBlob()
+ * @bug 8059624 8064669
+ * @library /test/lib /
+ * @modules java.base/jdk.internal.misc
+ *          java.management
+ * @build sun.hotspot.WhiteBox
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
+ *                   -XX:+WhiteBoxAPI -XX:CompileCommand=compileonly,null::*
+ *                   -XX:-SegmentedCodeCache
+ *                   compiler.whitebox.AllocationCodeBlobTest
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
+ *                   -XX:+WhiteBoxAPI -XX:CompileCommand=compileonly,null::*
+ *                   -XX:+SegmentedCodeCache
+ *                   compiler.whitebox.AllocationCodeBlobTest
  */
+
+package compiler.whitebox;
+
+import jdk.test.lib.Asserts;
+import jdk.test.lib.wrappers.InfiniteLoop;
+import sun.hotspot.WhiteBox;
+import sun.hotspot.code.BlobType;
+
+import java.lang.management.MemoryPoolMXBean;
+import java.util.ArrayList;
+import java.util.EnumSet;
+
 public class AllocationCodeBlobTest {
     private static final WhiteBox WHITE_BOX = WhiteBox.getWhiteBox();
     private static final long CODE_CACHE_SIZE

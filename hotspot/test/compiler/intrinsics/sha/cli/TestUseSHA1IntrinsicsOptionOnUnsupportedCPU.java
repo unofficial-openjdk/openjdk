@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,17 +24,27 @@
 /**
  * @test
  * @bug 8035968
- * @summary Verify UseSHA1Intrinsics option processing on unsupported CPU,
- * @library /testlibrary /test/lib /compiler/testlibrary testcases
+ * @summary Verify UseSHA1Intrinsics option processing on unsupported CPU.
+ * @library /test/lib testcases /
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @build TestUseSHA1IntrinsicsOptionOnUnsupportedCPU
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
+ *
+ * @build sun.hotspot.WhiteBox
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
  *                   -XX:+WhiteBoxAPI
- *                   TestUseSHA1IntrinsicsOptionOnUnsupportedCPU
+ *                   compiler.intrinsics.sha.cli.TestUseSHA1IntrinsicsOptionOnUnsupportedCPU
  */
+
+package compiler.intrinsics.sha.cli;
+
+import compiler.intrinsics.sha.cli.testcases.GenericTestCaseForOtherCPU;
+import compiler.intrinsics.sha.cli.testcases.GenericTestCaseForUnsupportedAArch64CPU;
+import compiler.intrinsics.sha.cli.testcases.GenericTestCaseForUnsupportedSparcCPU;
+import compiler.intrinsics.sha.cli.testcases.GenericTestCaseForUnsupportedX86CPU;
+import compiler.intrinsics.sha.cli.testcases.UseSHAIntrinsicsSpecificTestCaseForUnsupportedCPU;
+
 public class TestUseSHA1IntrinsicsOptionOnUnsupportedCPU {
     public static void main(String args[]) throws Throwable {
         new SHAOptionsBase(

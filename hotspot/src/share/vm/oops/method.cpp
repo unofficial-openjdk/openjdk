@@ -30,7 +30,6 @@
 #include "gc/shared/collectedHeap.inline.hpp"
 #include "gc/shared/gcLocker.hpp"
 #include "gc/shared/generation.hpp"
-#include "gc/shared/referencePendingListLocker.hpp"
 #include "interpreter/bytecodeStream.hpp"
 #include "interpreter/bytecodeTracer.hpp"
 #include "interpreter/bytecodes.hpp"
@@ -54,6 +53,7 @@
 #include "runtime/compilationPolicy.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/handles.inline.hpp"
+#include "runtime/init.hpp"
 #include "runtime/orderAccess.inline.hpp"
 #include "runtime/relocator.hpp"
 #include "runtime/sharedRuntime.hpp"
@@ -313,6 +313,33 @@ void Method::remove_unshareable_info() {
   unlink_method();
 }
 
+void Method::set_vtable_index(int index) {
+  if (is_shared() && !MetaspaceShared::remapped_readwrite()) {
+    // At runtime initialize_vtable is rerun as part of link_class_impl()
+    // for a shared class loaded by the non-boot loader to obtain the loader
+    // constraints based on the runtime classloaders' context.
+    return; // don't write into the shared class
+  } else {
+    _vtable_index = index;
+  }
+}
+
+void Method::set_itable_index(int index) {
+  if (is_shared() && !MetaspaceShared::remapped_readwrite()) {
+    // At runtime initialize_itable is rerun as part of link_class_impl()
+    // for a shared class loaded by the non-boot loader to obtain the loader
+    // constraints based on the runtime classloaders' context. The dumptime
+    // itable index should be the same as the runtime index.
+    assert(_vtable_index == itable_index_max - index,
+           "archived itable index is different from runtime index");
+    return; // don’t write into the shared class
+  } else {
+    _vtable_index = itable_index_max - index;
+  }
+  assert(valid_itable_index(), "");
+}
+
+
 
 bool Method::was_executed_more_than(int n) {
   // Invocation counter is reset when the Method* is compiled.
@@ -369,12 +396,6 @@ void Method::build_interpreter_method_data(const methodHandle& method, TRAPS) {
   // allocating profiling data. Callers clear pending exception so don't
   // add one here.
   if (ClassLoaderDataGraph::has_metaspace_oom()) {
-    return;
-  }
-
-  // Do not profile method if current thread holds the pending list lock,
-  // which avoids deadlock for acquiring the MethodData_lock.
-  if (ReferencePendingListLocker::is_locked_by_self()) {
     return;
   }
 
@@ -627,7 +648,7 @@ bool Method::is_constant_getter() const {
 }
 
 bool Method::is_initializer() const {
-  return name() == vmSymbols::object_initializer_name() || is_static_initializer();
+  return is_object_initializer() || is_static_initializer();
 }
 
 bool Method::has_valid_initializer_flags() const {
@@ -643,6 +664,9 @@ bool Method::is_static_initializer() const {
          has_valid_initializer_flags();
 }
 
+bool Method::is_object_initializer() const {
+   return name() == vmSymbols::object_initializer_name();
+}
 
 objArrayHandle Method::resolved_checked_exceptions_impl(Method* method, TRAPS) {
   int length = method->checked_exceptions_length();
@@ -985,7 +1009,14 @@ address Method::make_adapters(methodHandle mh, TRAPS) {
   // so making them eagerly shouldn't be too expensive.
   AdapterHandlerEntry* adapter = AdapterHandlerLibrary::get_adapter(mh);
   if (adapter == NULL ) {
-    THROW_MSG_NULL(vmSymbols::java_lang_VirtualMachineError(), "Out of space in CodeCache for adapters");
+    if (!is_init_completed()) {
+      // Don't throw exceptions during VM initialization because java.lang.* classes
+      // might not have been initialized, causing problems when constructing the
+      // Java exception object.
+      vm_exit_during_initialization("Out of space in CodeCache for adapters");
+    } else {
+      THROW_MSG_NULL(vmSymbols::java_lang_VirtualMachineError(), "Out of space in CodeCache for adapters");
+    }
   }
 
   if (mh->is_shared()) {

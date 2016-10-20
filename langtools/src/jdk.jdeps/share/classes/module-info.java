@@ -23,10 +23,19 @@
  * questions.
  */
 
+/** Defines tools for analysing dependencies in Java libraries and programs, including
+ *  the <em>jdeps</em> and <em>javap</em> tools.
+ */
 module jdk.jdeps {
     requires java.base;
     requires java.compiler;
     requires jdk.compiler;
     exports com.sun.tools.classfile to
         jdk.jlink;
+
+    provides java.util.spi.ToolProvider
+        with com.sun.tools.javap.Main.JavapToolProvider;
+
+    provides java.util.spi.ToolProvider
+        with com.sun.tools.jdeps.Main.JDepsToolProvider;
 }

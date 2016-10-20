@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,15 +21,17 @@
  * questions.
  */
 
-import jdk.test.lib.OutputAnalyzer;
-import jdk.test.lib.ProcessTools;
+package compiler.tiered;
+
+import compiler.whitebox.CompilerWhiteBoxTest;
+import jdk.test.lib.process.OutputAnalyzer;
+import jdk.test.lib.process.ProcessTools;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import compiler.whitebox.CompilerWhiteBoxTest;
 
 /**
  * Executes given test in a separate VM with enabled Tiered Compilation for
@@ -59,9 +61,6 @@ public class TransitionsTestExecutor {
         Collections.addAll(args, policy, testName);
 
         OutputAnalyzer out = ProcessTools.executeTestJvm(args.toArray(new String[args.size()]));
-        int exitCode = out.getExitValue();
-        if (exitCode != 0) {
-            throw new Error("Test execution failed with exit code " + exitCode);
-        }
+        out.shouldHaveExitValue(0);
     }
 }

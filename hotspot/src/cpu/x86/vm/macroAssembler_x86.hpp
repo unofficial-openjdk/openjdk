@@ -288,10 +288,10 @@ class MacroAssembler: public Assembler {
                            Register last_java_fp,
                            address last_java_pc);
 
-  void reset_last_Java_frame(Register thread, bool clear_fp, bool clear_pc);
+  void reset_last_Java_frame(Register thread, bool clear_fp);
 
   // thread in the default location (r15_thread on 64bit)
-  void reset_last_Java_frame(bool clear_fp, bool clear_pc);
+  void reset_last_Java_frame(bool clear_fp);
 
   // Stores
   void store_check(Register obj);                // store check for obj - register is destroyed afterwards
@@ -448,6 +448,10 @@ class MacroAssembler: public Assembler {
   // Floating-point remainder for Java (ST0 = ST0 fremr ST1, ST1 is empty afterwards)
   // tmp is a temporary register, if none is available use noreg
   void fremr(Register tmp);
+
+  // dst = c = a * b + c
+  void fmad(XMMRegister dst, XMMRegister a, XMMRegister b, XMMRegister c);
+  void fmaf(XMMRegister dst, XMMRegister a, XMMRegister b, XMMRegister c);
 
 
   // same as fcmp2int, but using SSE2

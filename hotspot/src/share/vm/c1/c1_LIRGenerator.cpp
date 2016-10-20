@@ -1387,7 +1387,6 @@ Instruction* LIRGenerator::instruction_for_vreg(int reg_num) {
 void LIRGenerator::set_vreg_flag(int vreg_num, VregFlag f) {
   if (_vreg_flags.size_in_bits() == 0) {
     BitMap2D temp(100, num_vreg_flags);
-    temp.clear();
     _vreg_flags = temp;
   }
   _vreg_flags.at_put_grow(vreg_num, f, true);
@@ -2411,6 +2410,15 @@ void LIRGenerator::do_UnsafeGetObject(UnsafeGetObject* x) {
 #endif // INCLUDE_ALL_GCS
 
   if (x->is_volatile() && os::is_MP()) __ membar_acquire();
+
+  /* Normalize boolean value returned by unsafe operation, i.e., value  != 0 ? value = true : value false. */
+  if (type == T_BOOLEAN) {
+    LabelObj* equalZeroLabel = new LabelObj();
+    __ cmp(lir_cond_equal, value, 0);
+    __ branch(lir_cond_equal, T_BOOLEAN, equalZeroLabel->label());
+    __ move(LIR_OprFact::intConst(1), value);
+    __ branch_destination(equalZeroLabel->label());
+  }
 }
 
 
@@ -3084,6 +3092,37 @@ void LIRGenerator::do_IfOp(IfOp* x) {
   __ cmove(lir_cond(x->cond()), t_val.result(), f_val.result(), reg, as_BasicType(x->x()->type()));
 }
 
+#ifdef TRACE_HAVE_INTRINSICS
+void LIRGenerator::do_ClassIDIntrinsic(Intrinsic* x) {
+  CodeEmitInfo* info = state_for(x);
+  CodeEmitInfo* info2 = new CodeEmitInfo(info); // Clone for the second null check
+
+  assert(info != NULL, "must have info");
+  LIRItem arg(x->argument_at(0), this);
+
+  arg.load_item();
+  LIR_Opr klass = new_register(T_METADATA);
+  __ move(new LIR_Address(arg.result(), java_lang_Class::klass_offset_in_bytes(), T_ADDRESS), klass, info);
+  LIR_Opr id = new_register(T_LONG);
+  ByteSize offset = TRACE_KLASS_TRACE_ID_OFFSET;
+  LIR_Address* trace_id_addr = new LIR_Address(klass, in_bytes(offset), T_LONG);
+
+  __ move(trace_id_addr, id);
+  __ logical_or(id, LIR_OprFact::longConst(0x01l), id);
+  __ store(id, trace_id_addr);
+
+#ifdef TRACE_ID_META_BITS
+  __ logical_and(id, LIR_OprFact::longConst(~TRACE_ID_META_BITS), id);
+#endif
+#ifdef TRACE_ID_CLASS_SHIFT
+  __ unsigned_shift_right(id, TRACE_ID_CLASS_SHIFT, id);
+#endif
+
+  __ move(id, rlock_result(x));
+}
+#endif
+
+
 void LIRGenerator::do_RuntimeCall(address routine, Intrinsic* x) {
   assert(x->number_of_arguments() == 0, "wrong type");
   // Enforce computation of _reserved_argument_area_size which is required on some platforms.
@@ -3109,6 +3148,9 @@ void LIRGenerator::do_Intrinsic(Intrinsic* x) {
   }
 
 #ifdef TRACE_HAVE_INTRINSICS
+  case vmIntrinsics::_getClassId:
+    do_ClassIDIntrinsic(x);
+    break;
   case vmIntrinsics::_counterTime:
     do_RuntimeCall(CAST_FROM_FN_PTR(address, TRACE_TIME_METHOD), x);
     break;
@@ -3138,6 +3180,9 @@ void LIRGenerator::do_Intrinsic(Intrinsic* x) {
   case vmIntrinsics::_dexp :          // fall through
   case vmIntrinsics::_dpow :          do_MathIntrinsic(x); break;
   case vmIntrinsics::_arraycopy:      do_ArrayCopy(x);     break;
+
+  case vmIntrinsics::_fmaD:           do_FmaIntrinsic(x); break;
+  case vmIntrinsics::_fmaF:           do_FmaIntrinsic(x); break;
 
   // java.nio.Buffer.checkIndex
   case vmIntrinsics::_checkIndex:     do_NIOCheckIndex(x); break;
@@ -3202,14 +3247,14 @@ void LIRGenerator::profile_arguments(ProfileCall* x) {
       Bytecodes::Code bc = x->method()->java_code_at_bci(bci);
       int start = 0;
       int stop = data->is_CallTypeData() ? ((ciCallTypeData*)data)->number_of_arguments() : ((ciVirtualCallTypeData*)data)->number_of_arguments();
-      if (x->inlined() && x->callee()->is_static() && Bytecodes::has_receiver(bc)) {
+      if (x->callee()->is_loaded() && x->callee()->is_static() && Bytecodes::has_receiver(bc)) {
         // first argument is not profiled at call (method handle invoke)
         assert(x->method()->raw_code_at_bci(bci) == Bytecodes::_invokehandle, "invokehandle expected");
         start = 1;
       }
       ciSignature* callee_signature = x->callee()->signature();
       // method handle call to virtual method
-      bool has_receiver = x->inlined() && !x->callee()->is_static() && !Bytecodes::has_receiver(bc);
+      bool has_receiver = x->callee()->is_loaded() && !x->callee()->is_static() && !Bytecodes::has_receiver(bc);
       ciSignatureStream callee_signature_stream(callee_signature, has_receiver ? x->callee()->holder() : NULL);
 
       bool ignored_will_link;
@@ -3435,7 +3480,7 @@ void LIRGenerator::increment_event_counter_impl(CodeEmitInfo* info,
   __ load(counter, result);
   __ add(result, LIR_OprFact::intConst(InvocationCounter::count_increment), result);
   __ store(result, counter);
-  if (notify) {
+  if (notify && (!backedge || UseOnStackReplacement)) {
     LIR_Opr meth = LIR_OprFact::metadataConst(method->constant_encoding());
     // The bci for info can point to cmp for if's we want the if bci
     CodeStub* overflow = new CounterOverflowStub(info, bci, meth);

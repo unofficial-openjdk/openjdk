@@ -62,9 +62,13 @@ public class Main {
      */
     String ownName;
 
+    /** The writer to use for normal output.
+     */
+    PrintWriter stdOut;
+
     /** The writer to use for diagnostic output.
      */
-    PrintWriter out;
+    PrintWriter stdErr;
 
     /** The log to use for diagnostic output.
      */
@@ -102,7 +106,7 @@ public class Main {
      * @param name the name of this tool
      */
     public Main(String name) {
-        this(name, new PrintWriter(System.err, true));
+        this.ownName = name;
     }
 
     /**
@@ -112,7 +116,19 @@ public class Main {
      */
     public Main(String name, PrintWriter out) {
         this.ownName = name;
-        this.out = out;
+        this.stdOut = this.stdErr = out;
+    }
+
+    /**
+     * Construct a compiler instance.
+     * @param name the name of this tool
+     * @param out a stream to which to write expected output
+     * @param err a stream to which to write diagnostic output
+     */
+    public Main(String name, PrintWriter out, PrintWriter err) {
+        this.ownName = name;
+        this.stdOut = out;
+        this.stdErr = err;
     }
 
     /** Report a usage error.
@@ -161,16 +177,24 @@ public class Main {
      * @return the result of the compilation
      */
     public Result compile(String[] argv, Context context) {
-        context.put(Log.outKey, out);
+        if (stdOut != null) {
+            context.put(Log.outKey, stdOut);
+        }
+
+        if (stdErr != null) {
+            context.put(Log.errKey, stdErr);
+        }
+
         log = Log.instance(context);
 
         if (argv.length == 0) {
-            Option.HELP.process(new OptionHelper.GrumpyHelper(log) {
+            OptionHelper h = new OptionHelper.GrumpyHelper(log) {
                 @Override
                 public String getOwnName() { return ownName; }
                 @Override
                 public void put(String name, String value) { }
-            }, "-help");
+            };
+            Option.HELP.process(h, "-help");
             return Result.CMDERR;
         }
 
@@ -243,7 +267,7 @@ public class Main {
             return Result.OK;
 
         // init Dependencies
-        if (options.isSet("completionDeps")) {
+        if (options.isSet("debug.completionDeps")) {
             Dependencies.GraphDependencies.preRegister(context);
         }
 
@@ -255,10 +279,10 @@ public class Main {
         }
 
         // init multi-release jar handling
-        if (fileManager.isSupportedOption(Option.MULTIRELEASE.text) == 1) {
+        if (fileManager.isSupportedOption(Option.MULTIRELEASE.primaryName) == 1) {
             Target target = Target.instance(context);
             List<String> list = List.of(target.multiReleaseValue());
-            fileManager.handleOption(Option.MULTIRELEASE.text, list.iterator());
+            fileManager.handleOption(Option.MULTIRELEASE.primaryName, list.iterator());
         }
 
         // init JavaCompiler

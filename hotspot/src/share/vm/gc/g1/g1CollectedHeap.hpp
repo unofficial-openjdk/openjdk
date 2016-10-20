@@ -118,6 +118,7 @@ class G1RegionMappingChangedListener : public G1MappingChangedListener {
 };
 
 class G1CollectedHeap : public CollectedHeap {
+  friend class G1FreeCollectionSetTask;
   friend class VM_CollectForMetadataAllocation;
   friend class VM_G1CollectForAllocation;
   friend class VM_G1CollectFull;
@@ -556,7 +557,7 @@ public:
   // Returns true if the heap was expanded by the requested amount;
   // false otherwise.
   // (Rounds up to a HeapRegion boundary.)
-  bool expand(size_t expand_bytes, double* expand_time_ms = NULL);
+  bool expand(size_t expand_bytes, WorkGang* pretouch_workers = NULL, double* expand_time_ms = NULL);
 
   // Returns the PLAB statistics for a given destination.
   inline G1EvacStats* alloc_buffer_stats(InCSetState dest);
@@ -642,13 +643,15 @@ public:
   // adding it to the free list that's passed as a parameter (this is
   // usually a local list which will be appended to the master free
   // list later). The used bytes of freed regions are accumulated in
-  // pre_used. If par is true, the region's RSet will not be freed
-  // up. The assumption is that this will be done later.
+  // pre_used. If skip_remset is true, the region's RSet will not be freed
+  // up. If skip_hot_card_cache is true, the region's hot card cache will not
+  // be freed up. The assumption is that this will be done later.
   // The locked parameter indicates if the caller has already taken
   // care of proper synchronization. This may allow some optimizations.
   void free_region(HeapRegion* hr,
                    FreeRegionList* free_list,
-                   bool par,
+                   bool skip_remset,
+                   bool skip_hot_card_cache = false,
                    bool locked = false);
 
   // It dirties the cards that cover the block so that the post
@@ -662,11 +665,11 @@ public:
   // will be added to the free list that's passed as a parameter (this
   // is usually a local list which will be appended to the master free
   // list later). The used bytes of freed regions are accumulated in
-  // pre_used. If par is true, the region's RSet will not be freed
+  // pre_used. If skip_remset is true, the region's RSet will not be freed
   // up. The assumption is that this will be done later.
   void free_humongous_region(HeapRegion* hr,
                              FreeRegionList* free_list,
-                             bool par);
+                             bool skip_remset);
 
   // Facility for allocating in 'archive' regions in high heap memory and
   // recording the allocated ranges. These should all be called from the
@@ -778,13 +781,13 @@ protected:
   // The closure used to refine a single card.
   RefineCardTableEntryClosure* _refine_cte_cl;
 
-  // After a collection pause, make the regions in the CS into free
+  // After a collection pause, convert the regions in the collection set into free
   // regions.
-  void free_collection_set(HeapRegion* cs_head, EvacuationInfo& evacuation_info, const size_t* surviving_young_words);
+  void free_collection_set(G1CollectionSet* collection_set, EvacuationInfo& evacuation_info, const size_t* surviving_young_words);
 
   // Abandon the current collection set without recording policy
   // statistics or updating free lists.
-  void abandon_collection_set(HeapRegion* cs_head);
+  void abandon_collection_set(G1CollectionSet* collection_set);
 
   // The concurrent marker (and the thread it runs in.)
   G1ConcurrentMark* _cm;
@@ -929,16 +932,6 @@ protected:
   // unnecessary additions to the discovered lists during reference
   // discovery.
   G1CMIsAliveClosure _is_alive_closure_cm;
-
-  // Cache used by G1CollectedHeap::start_cset_region_for_worker().
-  HeapRegion** _worker_cset_start_region;
-
-  // Time stamp to validate the regions recorded in the cache
-  // used by G1CollectedHeap::start_cset_region_for_worker().
-  // The heap region entry for a given worker is valid iff
-  // the associated time stamp value matches the current value
-  // of G1CollectedHeap::_gc_time_stamp.
-  uint* _worker_cset_start_region_time_stamp;
 
   volatile bool _free_regions_coming;
 
@@ -1211,19 +1204,14 @@ public:
                                HeapRegionClaimer* hrclaimer,
                                bool concurrent = false) const;
 
-  // Clear the cached cset start regions and (more importantly)
-  // the time stamps. Called when we reset the GC time stamp.
-  void clear_cset_start_regions();
-
-  // Given the id of a worker, obtain or calculate a suitable
-  // starting region for iterating over the current collection set.
-  HeapRegion* start_cset_region_for_worker(uint worker_i);
-
   // Iterate over the regions (if any) in the current collection set.
   void collection_set_iterate(HeapRegionClosure* blk);
 
-  // As above but starting from region r
-  void collection_set_iterate_from(HeapRegion* r, HeapRegionClosure *blk);
+  // Iterate over the regions (if any) in the current collection set. Starts the
+  // iteration over the entire collection set so that the start regions of a given
+  // worker id over the set active_workers are evenly spread across the set of
+  // collection set regions.
+  void collection_set_iterate_from(HeapRegionClosure *blk, uint worker_id);
 
   HeapRegion* next_compaction_region(const HeapRegion* from) const;
 
@@ -1282,12 +1270,6 @@ public:
   }
 
   virtual bool card_mark_must_follow_store() const {
-    return true;
-  }
-
-  // The reference pending list lock is acquired from from the
-  // ConcurrentMarkThread.
-  virtual bool needs_reference_pending_list_locker_thread() const {
     return true;
   }
 

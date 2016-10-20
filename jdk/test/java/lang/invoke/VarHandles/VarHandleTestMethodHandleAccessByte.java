@@ -39,11 +39,11 @@ import java.util.List;
 import static org.testng.Assert.*;
 
 public class VarHandleTestMethodHandleAccessByte extends VarHandleBaseTest {
-    static final byte static_final_v = (byte)1;
+    static final byte static_final_v = (byte)0x01;
 
     static byte static_v;
 
-    final byte final_v = (byte)1;
+    final byte final_v = (byte)0x01;
 
     byte v;
 
@@ -121,120 +121,534 @@ public class VarHandleTestMethodHandleAccessByte extends VarHandleBaseTest {
     static void testInstanceField(VarHandleTestMethodHandleAccessByte recv, Handles hs) throws Throwable {
         // Plain
         {
-            hs.get(TestAccessMode.SET).invokeExact(recv, (byte)1);
+            hs.get(TestAccessMode.SET).invokeExact(recv, (byte)0x01);
             byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(recv);
-            assertEquals(x, (byte)1, "set byte value");
+            assertEquals(x, (byte)0x01, "set byte value");
         }
 
 
         // Volatile
         {
-            hs.get(TestAccessMode.SET_VOLATILE).invokeExact(recv, (byte)2);
+            hs.get(TestAccessMode.SET_VOLATILE).invokeExact(recv, (byte)0x23);
             byte x = (byte) hs.get(TestAccessMode.GET_VOLATILE).invokeExact(recv);
-            assertEquals(x, (byte)2, "setVolatile byte value");
+            assertEquals(x, (byte)0x23, "setVolatile byte value");
         }
 
         // Lazy
         {
-            hs.get(TestAccessMode.SET_RELEASE).invokeExact(recv, (byte)1);
+            hs.get(TestAccessMode.SET_RELEASE).invokeExact(recv, (byte)0x01);
             byte x = (byte) hs.get(TestAccessMode.GET_ACQUIRE).invokeExact(recv);
-            assertEquals(x, (byte)1, "setRelease byte value");
+            assertEquals(x, (byte)0x01, "setRelease byte value");
         }
 
         // Opaque
         {
-            hs.get(TestAccessMode.SET_OPAQUE).invokeExact(recv, (byte)2);
+            hs.get(TestAccessMode.SET_OPAQUE).invokeExact(recv, (byte)0x23);
             byte x = (byte) hs.get(TestAccessMode.GET_OPAQUE).invokeExact(recv);
-            assertEquals(x, (byte)2, "setOpaque byte value");
+            assertEquals(x, (byte)0x23, "setOpaque byte value");
         }
 
+        hs.get(TestAccessMode.SET).invokeExact(recv, (byte)0x01);
 
+        // Compare
+        {
+            boolean r = (boolean) hs.get(TestAccessMode.COMPARE_AND_SET).invokeExact(recv, (byte)0x01, (byte)0x23);
+            assertEquals(r, true, "success compareAndSet byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, (byte)0x23, "success compareAndSet byte value");
+        }
+
+        {
+            boolean r = (boolean) hs.get(TestAccessMode.COMPARE_AND_SET).invokeExact(recv, (byte)0x01, (byte)0x45);
+            assertEquals(r, false, "failing compareAndSet byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, (byte)0x23, "failing compareAndSet byte value");
+        }
+
+        {
+            byte r = (byte) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE).invokeExact(recv, (byte)0x23, (byte)0x01);
+            assertEquals(r, (byte)0x23, "success compareAndExchange byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, (byte)0x01, "success compareAndExchange byte value");
+        }
+
+        {
+            byte r = (byte) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE).invokeExact(recv, (byte)0x23, (byte)0x45);
+            assertEquals(r, (byte)0x01, "failing compareAndExchange byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, (byte)0x01, "failing compareAndExchange byte value");
+        }
+
+        {
+            byte r = (byte) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE_ACQUIRE).invokeExact(recv, (byte)0x01, (byte)0x23);
+            assertEquals(r, (byte)0x01, "success compareAndExchangeAcquire byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, (byte)0x23, "success compareAndExchangeAcquire byte value");
+        }
+
+        {
+            byte r = (byte) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE_ACQUIRE).invokeExact(recv, (byte)0x01, (byte)0x45);
+            assertEquals(r, (byte)0x23, "failing compareAndExchangeAcquire byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, (byte)0x23, "failing compareAndExchangeAcquire byte value");
+        }
+
+        {
+            byte r = (byte) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE_RELEASE).invokeExact(recv, (byte)0x23, (byte)0x01);
+            assertEquals(r, (byte)0x23, "success compareAndExchangeRelease byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, (byte)0x01, "success compareAndExchangeRelease byte value");
+        }
+
+        {
+            byte r = (byte) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE_RELEASE).invokeExact(recv, (byte)0x23, (byte)0x45);
+            assertEquals(r, (byte)0x01, "failing compareAndExchangeRelease byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, (byte)0x01, "failing compareAndExchangeRelease byte value");
+        }
+
+        {
+            boolean success = false;
+            for (int c = 0; c < WEAK_ATTEMPTS && !success; c++) {
+                success = (boolean) hs.get(TestAccessMode.WEAK_COMPARE_AND_SET_PLAIN).invokeExact(recv, (byte)0x01, (byte)0x23);
+            }
+            assertEquals(success, true, "weakCompareAndSetPlain byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, (byte)0x23, "weakCompareAndSetPlain byte value");
+        }
+
+        {
+            boolean success = false;
+            for (int c = 0; c < WEAK_ATTEMPTS && !success; c++) {
+                success = (boolean) hs.get(TestAccessMode.WEAK_COMPARE_AND_SET_ACQUIRE).invokeExact(recv, (byte)0x23, (byte)0x01);
+            }
+            assertEquals(success, true, "weakCompareAndSetAcquire byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, (byte)0x01, "weakCompareAndSetAcquire byte");
+        }
+
+        {
+            boolean success = false;
+            for (int c = 0; c < WEAK_ATTEMPTS && !success; c++) {
+                success = (boolean) hs.get(TestAccessMode.WEAK_COMPARE_AND_SET_RELEASE).invokeExact(recv, (byte)0x01, (byte)0x23);
+            }
+            assertEquals(success, true, "weakCompareAndSetRelease byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, (byte)0x23, "weakCompareAndSetRelease byte");
+        }
+
+        {
+            boolean success = false;
+            for (int c = 0; c < WEAK_ATTEMPTS && !success; c++) {
+                success = (boolean) hs.get(TestAccessMode.WEAK_COMPARE_AND_SET).invokeExact(recv, (byte)0x23, (byte)0x01);
+            }
+            assertEquals(success, true, "weakCompareAndSet byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, (byte)0x01, "weakCompareAndSet byte");
+        }
+
+        // Compare set and get
+        {
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_SET).invokeExact(recv, (byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndSet byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, (byte)0x23, "getAndSet byte value");
+        }
+
+        // get and add, add and get
+        {
+            hs.get(TestAccessMode.SET).invokeExact(recv, (byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_ADD).invokeExact(recv, (byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndAdd byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, (byte)((byte)0x01 + (byte)0x23), "getAndAdd byte value");
+        }
+
+        {
+            hs.get(TestAccessMode.SET).invokeExact(recv, (byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_ADD_ACQUIRE).invokeExact(recv, (byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndAddAcquire byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, (byte)((byte)0x01 + (byte)0x23), "getAndAddAcquire byte value");
+        }
+
+        {
+            hs.get(TestAccessMode.SET).invokeExact(recv, (byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_ADD_RELEASE).invokeExact(recv, (byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndAddRelease byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, (byte)((byte)0x01 + (byte)0x23), "getAndAddRelease byte value");
+        }
+
+        // get and bitwise or
+        {
+            hs.get(TestAccessMode.SET).invokeExact(recv, (byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_BITWISE_OR).invokeExact(recv, (byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndBitwiseOr byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, (byte)((byte)0x01 | (byte)0x23), "getAndBitwiseOr byte value");
+        }
+
+        {
+            hs.get(TestAccessMode.SET).invokeExact(recv, (byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_BITWISE_OR_ACQUIRE).invokeExact(recv, (byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndBitwiseOrAcquire byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, (byte)((byte)0x01 | (byte)0x23), "getAndBitwiseOrAcquire byte value");
+        }
+
+        {
+            hs.get(TestAccessMode.SET).invokeExact(recv, (byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_BITWISE_OR_RELEASE).invokeExact(recv, (byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndBitwiseOrRelease byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, (byte)((byte)0x01 | (byte)0x23), "getAndBitwiseOrRelease byte value");
+        }
+
+        // get and bitwise and
+        {
+            hs.get(TestAccessMode.SET).invokeExact(recv, (byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_BITWISE_AND).invokeExact(recv, (byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndBitwiseAnd byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, (byte)((byte)0x01 & (byte)0x23), "getAndBitwiseAnd byte value");
+        }
+
+        {
+            hs.get(TestAccessMode.SET).invokeExact(recv, (byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_BITWISE_AND_ACQUIRE).invokeExact(recv, (byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndBitwiseAndAcquire byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, (byte)((byte)0x01 & (byte)0x23), "getAndBitwiseAndAcquire byte value");
+        }
+
+        {
+            hs.get(TestAccessMode.SET).invokeExact(recv, (byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_BITWISE_AND_RELEASE).invokeExact(recv, (byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndBitwiseAndRelease byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, (byte)((byte)0x01 & (byte)0x23), "getAndBitwiseAndRelease byte value");
+        }
+
+        // get and bitwise xor
+        {
+            hs.get(TestAccessMode.SET).invokeExact(recv, (byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_BITWISE_XOR).invokeExact(recv, (byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndBitwiseXor byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, (byte)((byte)0x01 ^ (byte)0x23), "getAndBitwiseXor byte value");
+        }
+
+        {
+            hs.get(TestAccessMode.SET).invokeExact(recv, (byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_BITWISE_XOR_ACQUIRE).invokeExact(recv, (byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndBitwiseXorAcquire byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, (byte)((byte)0x01 ^ (byte)0x23), "getAndBitwiseXorAcquire byte value");
+        }
+
+        {
+            hs.get(TestAccessMode.SET).invokeExact(recv, (byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_BITWISE_XOR_RELEASE).invokeExact(recv, (byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndBitwiseXorRelease byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, (byte)((byte)0x01 ^ (byte)0x23), "getAndBitwiseXorRelease byte value");
+        }
     }
 
     static void testInstanceFieldUnsupported(VarHandleTestMethodHandleAccessByte recv, Handles hs) throws Throwable {
-        for (TestAccessMode am : testAccessModesOfType(TestAccessType.COMPARE_AND_SET)) {
-            checkUOE(am, () -> {
-                boolean r = (boolean) hs.get(am).invokeExact(recv, (byte)1, (byte)2);
-            });
-        }
 
-        for (TestAccessMode am : testAccessModesOfType(TestAccessType.COMPARE_AND_EXCHANGE)) {
-            checkUOE(am, () -> {
-                byte r = (byte) hs.get(am).invokeExact(recv, (byte)1, (byte)2);
-            });
-        }
 
-        for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET_AND_SET)) {
-            checkUOE(am, () -> {
-                byte r = (byte) hs.get(am).invokeExact(recv, (byte)1);
-            });
-        }
-
-        for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET_AND_ADD)) {
-            checkUOE(am, () -> {
-                byte r = (byte) hs.get(am).invokeExact(recv, (byte)1);
-            });
-        }
     }
 
 
     static void testStaticField(Handles hs) throws Throwable {
         // Plain
         {
-            hs.get(TestAccessMode.SET).invokeExact((byte)1);
+            hs.get(TestAccessMode.SET).invokeExact((byte)0x01);
             byte x = (byte) hs.get(TestAccessMode.GET).invokeExact();
-            assertEquals(x, (byte)1, "set byte value");
+            assertEquals(x, (byte)0x01, "set byte value");
         }
 
 
         // Volatile
         {
-            hs.get(TestAccessMode.SET_VOLATILE).invokeExact((byte)2);
+            hs.get(TestAccessMode.SET_VOLATILE).invokeExact((byte)0x23);
             byte x = (byte) hs.get(TestAccessMode.GET_VOLATILE).invokeExact();
-            assertEquals(x, (byte)2, "setVolatile byte value");
+            assertEquals(x, (byte)0x23, "setVolatile byte value");
         }
 
         // Lazy
         {
-            hs.get(TestAccessMode.SET_RELEASE).invokeExact((byte)1);
+            hs.get(TestAccessMode.SET_RELEASE).invokeExact((byte)0x01);
             byte x = (byte) hs.get(TestAccessMode.GET_ACQUIRE).invokeExact();
-            assertEquals(x, (byte)1, "setRelease byte value");
+            assertEquals(x, (byte)0x01, "setRelease byte value");
         }
 
         // Opaque
         {
-            hs.get(TestAccessMode.SET_OPAQUE).invokeExact((byte)2);
+            hs.get(TestAccessMode.SET_OPAQUE).invokeExact((byte)0x23);
             byte x = (byte) hs.get(TestAccessMode.GET_OPAQUE).invokeExact();
-            assertEquals(x, (byte)2, "setOpaque byte value");
+            assertEquals(x, (byte)0x23, "setOpaque byte value");
         }
 
+        hs.get(TestAccessMode.SET).invokeExact((byte)0x01);
 
+        // Compare
+        {
+            boolean r = (boolean) hs.get(TestAccessMode.COMPARE_AND_SET).invokeExact((byte)0x01, (byte)0x23);
+            assertEquals(r, true, "success compareAndSet byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, (byte)0x23, "success compareAndSet byte value");
+        }
+
+        {
+            boolean r = (boolean) hs.get(TestAccessMode.COMPARE_AND_SET).invokeExact((byte)0x01, (byte)0x45);
+            assertEquals(r, false, "failing compareAndSet byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, (byte)0x23, "failing compareAndSet byte value");
+        }
+
+        {
+            byte r = (byte) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE).invokeExact((byte)0x23, (byte)0x01);
+            assertEquals(r, (byte)0x23, "success compareAndExchange byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, (byte)0x01, "success compareAndExchange byte value");
+        }
+
+        {
+            byte r = (byte) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE).invokeExact((byte)0x23, (byte)0x45);
+            assertEquals(r, (byte)0x01, "failing compareAndExchange byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, (byte)0x01, "failing compareAndExchange byte value");
+        }
+
+        {
+            byte r = (byte) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE_ACQUIRE).invokeExact((byte)0x01, (byte)0x23);
+            assertEquals(r, (byte)0x01, "success compareAndExchangeAcquire byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, (byte)0x23, "success compareAndExchangeAcquire byte value");
+        }
+
+        {
+            byte r = (byte) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE_ACQUIRE).invokeExact((byte)0x01, (byte)0x45);
+            assertEquals(r, (byte)0x23, "failing compareAndExchangeAcquire byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, (byte)0x23, "failing compareAndExchangeAcquire byte value");
+        }
+
+        {
+            byte r = (byte) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE_RELEASE).invokeExact((byte)0x23, (byte)0x01);
+            assertEquals(r, (byte)0x23, "success compareAndExchangeRelease byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, (byte)0x01, "success compareAndExchangeRelease byte value");
+        }
+
+        {
+            byte r = (byte) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE_RELEASE).invokeExact((byte)0x23, (byte)0x45);
+            assertEquals(r, (byte)0x01, "failing compareAndExchangeRelease byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, (byte)0x01, "failing compareAndExchangeRelease byte value");
+        }
+
+        {
+            boolean success = false;
+            for (int c = 0; c < WEAK_ATTEMPTS && !success; c++) {
+                success = (boolean) hs.get(TestAccessMode.WEAK_COMPARE_AND_SET_PLAIN).invokeExact((byte)0x01, (byte)0x23);
+            }
+            assertEquals(success, true, "weakCompareAndSetPlain byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, (byte)0x23, "weakCompareAndSetPlain byte value");
+        }
+
+        {
+            boolean success = false;
+            for (int c = 0; c < WEAK_ATTEMPTS && !success; c++) {
+                success = (boolean) hs.get(TestAccessMode.WEAK_COMPARE_AND_SET_ACQUIRE).invokeExact((byte)0x23, (byte)0x01);
+            }
+            assertEquals(success, true, "weakCompareAndSetAcquire byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, (byte)0x01, "weakCompareAndSetAcquire byte");
+        }
+
+        {
+            boolean success = false;
+            for (int c = 0; c < WEAK_ATTEMPTS && !success; c++) {
+                success = (boolean) hs.get(TestAccessMode.WEAK_COMPARE_AND_SET_RELEASE).invokeExact((byte)0x01, (byte)0x23);
+            }
+            assertEquals(success, true, "weakCompareAndSetRelease byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, (byte)0x23, "weakCompareAndSetRelease byte");
+        }
+
+        {
+            boolean success = false;
+            for (int c = 0; c < WEAK_ATTEMPTS && !success; c++) {
+                success = (boolean) hs.get(TestAccessMode.WEAK_COMPARE_AND_SET).invokeExact((byte)0x23, (byte)0x01);
+            }
+            assertEquals(success, true, "weakCompareAndSet byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, (byte)0x01, "weakCompareAndSet byte");
+        }
+
+        // Compare set and get
+        {
+            hs.get(TestAccessMode.SET).invokeExact((byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_SET).invokeExact((byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndSet byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, (byte)0x23, "getAndSet byte value");
+        }
+
+        // Compare set and get
+        {
+            hs.get(TestAccessMode.SET).invokeExact((byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_SET_ACQUIRE).invokeExact((byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndSetAcquire byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, (byte)0x23, "getAndSetAcquire byte value");
+        }
+
+        // Compare set and get
+        {
+            hs.get(TestAccessMode.SET).invokeExact((byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_SET_RELEASE).invokeExact((byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndSetRelease byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, (byte)0x23, "getAndSetRelease byte value");
+        }
+
+        // get and add, add and get
+        {
+            hs.get(TestAccessMode.SET).invokeExact((byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_ADD).invokeExact((byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndAdd byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, (byte)((byte)0x01 + (byte)0x23), "getAndAdd byte value");
+        }
+
+        {
+            hs.get(TestAccessMode.SET).invokeExact((byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_ADD_ACQUIRE).invokeExact((byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndAddAcquire byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, (byte)((byte)0x01 + (byte)0x23), "getAndAddAcquire byte value");
+        }
+
+        {
+            hs.get(TestAccessMode.SET).invokeExact((byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_ADD_RELEASE).invokeExact((byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndAddRelease byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, (byte)((byte)0x01 + (byte)0x23), "getAndAddRelease byte value");
+        }
+
+        // get and bitwise or
+        {
+            hs.get(TestAccessMode.SET).invokeExact((byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_BITWISE_OR).invokeExact((byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndBitwiseOr byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, (byte)((byte)0x01 | (byte)0x23), "getAndBitwiseOr byte value");
+        }
+
+        {
+            hs.get(TestAccessMode.SET).invokeExact((byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_BITWISE_OR_ACQUIRE).invokeExact((byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndBitwiseOrAcquire byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, (byte)((byte)0x01 | (byte)0x23), "getAndBitwiseOrAcquire byte value");
+        }
+
+        {
+            hs.get(TestAccessMode.SET).invokeExact((byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_BITWISE_OR_RELEASE).invokeExact((byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndBitwiseOrRelease byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, (byte)((byte)0x01 | (byte)0x23), "getAndBitwiseOrRelease byte value");
+        }
+
+        // get and bitwise and
+        {
+            hs.get(TestAccessMode.SET).invokeExact((byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_BITWISE_AND).invokeExact((byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndBitwiseAnd byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, (byte)((byte)0x01 & (byte)0x23), "getAndBitwiseAnd byte value");
+        }
+
+        {
+            hs.get(TestAccessMode.SET).invokeExact((byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_BITWISE_AND_ACQUIRE).invokeExact((byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndBitwiseAndAcquire byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, (byte)((byte)0x01 & (byte)0x23), "getAndBitwiseAndAcquire byte value");
+        }
+
+        {
+            hs.get(TestAccessMode.SET).invokeExact((byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_BITWISE_AND_RELEASE).invokeExact((byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndBitwiseAndRelease byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, (byte)((byte)0x01 & (byte)0x23), "getAndBitwiseAndRelease byte value");
+        }
+
+        // get and bitwise xor
+        {
+            hs.get(TestAccessMode.SET).invokeExact((byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_BITWISE_XOR).invokeExact((byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndBitwiseXor byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, (byte)((byte)0x01 ^ (byte)0x23), "getAndBitwiseXor byte value");
+        }
+
+        {
+            hs.get(TestAccessMode.SET).invokeExact((byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_BITWISE_XOR_ACQUIRE).invokeExact((byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndBitwiseXorAcquire byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, (byte)((byte)0x01 ^ (byte)0x23), "getAndBitwiseXorAcquire byte value");
+        }
+
+        {
+            hs.get(TestAccessMode.SET).invokeExact((byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_BITWISE_XOR_RELEASE).invokeExact((byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndBitwiseXorRelease byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, (byte)((byte)0x01 ^ (byte)0x23), "getAndBitwiseXorRelease byte value");
+        }
     }
 
     static void testStaticFieldUnsupported(Handles hs) throws Throwable {
-        for (TestAccessMode am : testAccessModesOfType(TestAccessType.COMPARE_AND_SET)) {
-            checkUOE(am, () -> {
-                boolean r = (boolean) hs.get(am).invokeExact((byte)1, (byte)2);
-            });
-        }
 
-        for (TestAccessMode am : testAccessModesOfType(TestAccessType.COMPARE_AND_EXCHANGE)) {
-            checkUOE(am, () -> {
-                byte r = (byte) hs.get(am).invokeExact((byte)1, (byte)2);
-            });
-        }
 
-        for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET_AND_SET)) {
-            checkUOE(am, () -> {
-                byte r = (byte) hs.get(am).invokeExact((byte)1);
-            });
-        }
-
-        for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET_AND_ADD)) {
-            checkUOE(am, () -> {
-                byte r = (byte) hs.get(am).invokeExact((byte)1);
-            });
-        }
     }
 
 
@@ -244,34 +658,271 @@ public class VarHandleTestMethodHandleAccessByte extends VarHandleBaseTest {
         for (int i = 0; i < array.length; i++) {
             // Plain
             {
-                hs.get(TestAccessMode.SET).invokeExact(array, i, (byte)1);
+                hs.get(TestAccessMode.SET).invokeExact(array, i, (byte)0x01);
                 byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(array, i);
-                assertEquals(x, (byte)1, "get byte value");
+                assertEquals(x, (byte)0x01, "get byte value");
             }
 
 
             // Volatile
             {
-                hs.get(TestAccessMode.SET_VOLATILE).invokeExact(array, i, (byte)2);
+                hs.get(TestAccessMode.SET_VOLATILE).invokeExact(array, i, (byte)0x23);
                 byte x = (byte) hs.get(TestAccessMode.GET_VOLATILE).invokeExact(array, i);
-                assertEquals(x, (byte)2, "setVolatile byte value");
+                assertEquals(x, (byte)0x23, "setVolatile byte value");
             }
 
             // Lazy
             {
-                hs.get(TestAccessMode.SET_RELEASE).invokeExact(array, i, (byte)1);
+                hs.get(TestAccessMode.SET_RELEASE).invokeExact(array, i, (byte)0x01);
                 byte x = (byte) hs.get(TestAccessMode.GET_ACQUIRE).invokeExact(array, i);
-                assertEquals(x, (byte)1, "setRelease byte value");
+                assertEquals(x, (byte)0x01, "setRelease byte value");
             }
 
             // Opaque
             {
-                hs.get(TestAccessMode.SET_OPAQUE).invokeExact(array, i, (byte)2);
+                hs.get(TestAccessMode.SET_OPAQUE).invokeExact(array, i, (byte)0x23);
                 byte x = (byte) hs.get(TestAccessMode.GET_OPAQUE).invokeExact(array, i);
-                assertEquals(x, (byte)2, "setOpaque byte value");
+                assertEquals(x, (byte)0x23, "setOpaque byte value");
             }
 
+            hs.get(TestAccessMode.SET).invokeExact(array, i, (byte)0x01);
 
+            // Compare
+            {
+                boolean r = (boolean) hs.get(TestAccessMode.COMPARE_AND_SET).invokeExact(array, i, (byte)0x01, (byte)0x23);
+                assertEquals(r, true, "success compareAndSet byte");
+                byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, (byte)0x23, "success compareAndSet byte value");
+            }
+
+            {
+                boolean r = (boolean) hs.get(TestAccessMode.COMPARE_AND_SET).invokeExact(array, i, (byte)0x01, (byte)0x45);
+                assertEquals(r, false, "failing compareAndSet byte");
+                byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, (byte)0x23, "failing compareAndSet byte value");
+            }
+
+            {
+                byte r = (byte) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE).invokeExact(array, i, (byte)0x23, (byte)0x01);
+                assertEquals(r, (byte)0x23, "success compareAndExchange byte");
+                byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, (byte)0x01, "success compareAndExchange byte value");
+            }
+
+            {
+                byte r = (byte) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE).invokeExact(array, i, (byte)0x23, (byte)0x45);
+                assertEquals(r, (byte)0x01, "failing compareAndExchange byte");
+                byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, (byte)0x01, "failing compareAndExchange byte value");
+            }
+
+            {
+                byte r = (byte) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE_ACQUIRE).invokeExact(array, i, (byte)0x01, (byte)0x23);
+                assertEquals(r, (byte)0x01, "success compareAndExchangeAcquire byte");
+                byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, (byte)0x23, "success compareAndExchangeAcquire byte value");
+            }
+
+            {
+                byte r = (byte) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE_ACQUIRE).invokeExact(array, i, (byte)0x01, (byte)0x45);
+                assertEquals(r, (byte)0x23, "failing compareAndExchangeAcquire byte");
+                byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, (byte)0x23, "failing compareAndExchangeAcquire byte value");
+            }
+
+            {
+                byte r = (byte) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE_RELEASE).invokeExact(array, i, (byte)0x23, (byte)0x01);
+                assertEquals(r, (byte)0x23, "success compareAndExchangeRelease byte");
+                byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, (byte)0x01, "success compareAndExchangeRelease byte value");
+            }
+
+            {
+                byte r = (byte) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE_RELEASE).invokeExact(array, i, (byte)0x23, (byte)0x45);
+                assertEquals(r, (byte)0x01, "failing compareAndExchangeRelease byte");
+                byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, (byte)0x01, "failing compareAndExchangeRelease byte value");
+            }
+
+            {
+                boolean success = false;
+                for (int c = 0; c < WEAK_ATTEMPTS && !success; c++) {
+                    success = (boolean) hs.get(TestAccessMode.WEAK_COMPARE_AND_SET_PLAIN).invokeExact(array, i, (byte)0x01, (byte)0x23);
+                }
+                assertEquals(success, true, "weakCompareAndSetPlain byte");
+                byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, (byte)0x23, "weakCompareAndSetPlain byte value");
+            }
+
+            {
+                boolean success = false;
+                for (int c = 0; c < WEAK_ATTEMPTS && !success; c++) {
+                    success = (boolean) hs.get(TestAccessMode.WEAK_COMPARE_AND_SET_ACQUIRE).invokeExact(array, i, (byte)0x23, (byte)0x01);
+                }
+                assertEquals(success, true, "weakCompareAndSetAcquire byte");
+                byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, (byte)0x01, "weakCompareAndSetAcquire byte");
+            }
+
+            {
+                boolean success = false;
+                for (int c = 0; c < WEAK_ATTEMPTS && !success; c++) {
+                    success = (boolean) hs.get(TestAccessMode.WEAK_COMPARE_AND_SET_RELEASE).invokeExact(array, i, (byte)0x01, (byte)0x23);
+                }
+                assertEquals(success, true, "weakCompareAndSetRelease byte");
+                byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, (byte)0x23, "weakCompareAndSetRelease byte");
+            }
+
+            {
+                boolean success = false;
+                for (int c = 0; c < WEAK_ATTEMPTS && !success; c++) {
+                    success = (boolean) hs.get(TestAccessMode.WEAK_COMPARE_AND_SET).invokeExact(array, i, (byte)0x23, (byte)0x01);
+                }
+                assertEquals(success, true, "weakCompareAndSet byte");
+                byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, (byte)0x01, "weakCompareAndSet byte");
+            }
+
+            // Compare set and get
+            {
+                hs.get(TestAccessMode.SET).invokeExact(array, i, (byte)0x01);
+
+                byte o = (byte) hs.get(TestAccessMode.GET_AND_SET).invokeExact(array, i, (byte)0x23);
+                assertEquals(o, (byte)0x01, "getAndSet byte");
+                byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, (byte)0x23, "getAndSet byte value");
+            }
+
+            {
+                hs.get(TestAccessMode.SET).invokeExact(array, i, (byte)0x01);
+
+                byte o = (byte) hs.get(TestAccessMode.GET_AND_SET_ACQUIRE).invokeExact(array, i, (byte)0x23);
+                assertEquals(o, (byte)0x01, "getAndSetAcquire byte");
+                byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, (byte)0x23, "getAndSetAcquire byte value");
+            }
+
+            {
+                hs.get(TestAccessMode.SET).invokeExact(array, i, (byte)0x01);
+
+                byte o = (byte) hs.get(TestAccessMode.GET_AND_SET_RELEASE).invokeExact(array, i, (byte)0x23);
+                assertEquals(o, (byte)0x01, "getAndSetRelease byte");
+                byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, (byte)0x23, "getAndSetRelease byte value");
+            }
+
+            // get and add, add and get
+            {
+                hs.get(TestAccessMode.SET).invokeExact(array, i, (byte)0x01);
+
+                byte o = (byte) hs.get(TestAccessMode.GET_AND_ADD).invokeExact(array, i, (byte)0x23);
+                assertEquals(o, (byte)0x01, "getAndAdd byte");
+                byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, (byte)((byte)0x01 + (byte)0x23), "getAndAdd byte value");
+            }
+
+            {
+                hs.get(TestAccessMode.SET).invokeExact(array, i, (byte)0x01);
+
+                byte o = (byte) hs.get(TestAccessMode.GET_AND_ADD_ACQUIRE).invokeExact(array, i, (byte)0x23);
+                assertEquals(o, (byte)0x01, "getAndAddAcquire byte");
+                byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, (byte)((byte)0x01 + (byte)0x23), "getAndAddAcquire byte value");
+            }
+
+            {
+                hs.get(TestAccessMode.SET).invokeExact(array, i, (byte)0x01);
+
+                byte o = (byte) hs.get(TestAccessMode.GET_AND_ADD_RELEASE).invokeExact(array, i, (byte)0x23);
+                assertEquals(o, (byte)0x01, "getAndAddRelease byte");
+                byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, (byte)((byte)0x01 + (byte)0x23), "getAndAddRelease byte value");
+            }
+
+        // get and bitwise or
+        {
+            hs.get(TestAccessMode.SET).invokeExact(array, i, (byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_BITWISE_OR).invokeExact(array, i, (byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndBitwiseOr byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(array, i);
+            assertEquals(x, (byte)((byte)0x01 | (byte)0x23), "getAndBitwiseOr byte value");
+        }
+
+        {
+            hs.get(TestAccessMode.SET).invokeExact(array, i, (byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_BITWISE_OR_ACQUIRE).invokeExact(array, i, (byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndBitwiseOrAcquire byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(array, i);
+            assertEquals(x, (byte)((byte)0x01 | (byte)0x23), "getAndBitwiseOrAcquire byte value");
+        }
+
+        {
+            hs.get(TestAccessMode.SET).invokeExact(array, i, (byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_BITWISE_OR_RELEASE).invokeExact(array, i, (byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndBitwiseOrRelease byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(array, i);
+            assertEquals(x, (byte)((byte)0x01 | (byte)0x23), "getAndBitwiseOrRelease byte value");
+        }
+
+        // get and bitwise and
+        {
+            hs.get(TestAccessMode.SET).invokeExact(array, i, (byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_BITWISE_AND).invokeExact(array, i, (byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndBitwiseAnd byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(array, i);
+            assertEquals(x, (byte)((byte)0x01 & (byte)0x23), "getAndBitwiseAnd byte value");
+        }
+
+        {
+            hs.get(TestAccessMode.SET).invokeExact(array, i, (byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_BITWISE_AND_ACQUIRE).invokeExact(array, i, (byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndBitwiseAndAcquire byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(array, i);
+            assertEquals(x, (byte)((byte)0x01 & (byte)0x23), "getAndBitwiseAndAcquire byte value");
+        }
+
+        {
+            hs.get(TestAccessMode.SET).invokeExact(array, i, (byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_BITWISE_AND_RELEASE).invokeExact(array, i, (byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndBitwiseAndRelease byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(array, i);
+            assertEquals(x, (byte)((byte)0x01 & (byte)0x23), "getAndBitwiseAndRelease byte value");
+        }
+
+        // get and bitwise xor
+        {
+            hs.get(TestAccessMode.SET).invokeExact(array, i, (byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_BITWISE_XOR).invokeExact(array, i, (byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndBitwiseXor byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(array, i);
+            assertEquals(x, (byte)((byte)0x01 ^ (byte)0x23), "getAndBitwiseXor byte value");
+        }
+
+        {
+            hs.get(TestAccessMode.SET).invokeExact(array, i, (byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_BITWISE_XOR_ACQUIRE).invokeExact(array, i, (byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndBitwiseXorAcquire byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(array, i);
+            assertEquals(x, (byte)((byte)0x01 ^ (byte)0x23), "getAndBitwiseXorAcquire byte value");
+        }
+
+        {
+            hs.get(TestAccessMode.SET).invokeExact(array, i, (byte)0x01);
+
+            byte o = (byte) hs.get(TestAccessMode.GET_AND_BITWISE_XOR_RELEASE).invokeExact(array, i, (byte)0x23);
+            assertEquals(o, (byte)0x01, "getAndBitwiseXorRelease byte");
+            byte x = (byte) hs.get(TestAccessMode.GET).invokeExact(array, i);
+            assertEquals(x, (byte)((byte)0x01 ^ (byte)0x23), "getAndBitwiseXorRelease byte value");
+        }
         }
     }
 
@@ -279,29 +930,8 @@ public class VarHandleTestMethodHandleAccessByte extends VarHandleBaseTest {
         byte[] array = new byte[10];
 
         final int i = 0;
-        for (TestAccessMode am : testAccessModesOfType(TestAccessType.COMPARE_AND_SET)) {
-            checkUOE(am, () -> {
-                boolean r = (boolean) hs.get(am).invokeExact(array, i, (byte)1, (byte)2);
-            });
-        }
 
-        for (TestAccessMode am : testAccessModesOfType(TestAccessType.COMPARE_AND_EXCHANGE)) {
-            checkUOE(am, () -> {
-                byte r = (byte) hs.get(am).invokeExact(array, i, (byte)1, (byte)2);
-            });
-        }
 
-        for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET_AND_SET)) {
-            checkUOE(am, () -> {
-                byte r = (byte) hs.get(am).invokeExact(array, i, (byte)1);
-            });
-        }
-
-        for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET_AND_ADD)) {
-            checkUOE(am, () -> {
-                byte o = (byte) hs.get(am).invokeExact(array, i, (byte)1);
-            });
-        }
     }
 
     static void testArrayIndexOutOfBounds(Handles hs) throws Throwable {
@@ -318,11 +948,39 @@ public class VarHandleTestMethodHandleAccessByte extends VarHandleBaseTest {
 
             for (TestAccessMode am : testAccessModesOfType(TestAccessType.SET)) {
                 checkIOOBE(am, () -> {
-                    hs.get(am).invokeExact(array, ci, (byte)1);
+                    hs.get(am).invokeExact(array, ci, (byte)0x01);
                 });
             }
 
+            for (TestAccessMode am : testAccessModesOfType(TestAccessType.COMPARE_AND_SET)) {
+                checkIOOBE(am, () -> {
+                    boolean r = (boolean) hs.get(am).invokeExact(array, ci, (byte)0x01, (byte)0x23);
+                });
+            }
 
+            for (TestAccessMode am : testAccessModesOfType(TestAccessType.COMPARE_AND_EXCHANGE)) {
+                checkIOOBE(am, () -> {
+                    byte r = (byte) hs.get(am).invokeExact(array, ci, (byte)0x23, (byte)0x01);
+                });
+            }
+
+            for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET_AND_SET)) {
+                checkIOOBE(am, () -> {
+                    byte o = (byte) hs.get(am).invokeExact(array, ci, (byte)0x01);
+                });
+            }
+
+            for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET_AND_ADD)) {
+                checkIOOBE(am, () -> {
+                    byte o = (byte) hs.get(am).invokeExact(array, ci, (byte)0x45);
+                });
+            }
+
+            for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET_AND_BITWISE)) {
+                checkIOOBE(am, () -> {
+                    byte o = (byte) hs.get(am).invokeExact(array, ci, (byte)0x45);
+                });
+            }
         }
     }
 }

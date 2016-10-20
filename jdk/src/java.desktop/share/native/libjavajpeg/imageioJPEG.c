@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -553,30 +553,43 @@ sun_jpeg_error_exit (j_common_ptr cinfo)
 METHODDEF(void)
 sun_jpeg_output_message (j_common_ptr cinfo)
 {
-  char buffer[JMSG_LENGTH_MAX];
-  jstring string;
-  imageIODataPtr data = (imageIODataPtr) cinfo->client_data;
-  JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-  jobject theObject;
+    char buffer[JMSG_LENGTH_MAX];
+    jstring string;
+    imageIODataPtr data = (imageIODataPtr) cinfo->client_data;
+    JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
+    jobject theObject;
 
-  /* Create the message */
-  (*cinfo->err->format_message) (cinfo, buffer);
+    /* Create the message */
+    (*cinfo->err->format_message) (cinfo, buffer);
 
-  // Create a new java string from the message
-  string = (*env)->NewStringUTF(env, buffer);
-  CHECK_NULL(string);
+    // Create a new java string from the message
+    string = (*env)->NewStringUTF(env, buffer);
+    CHECK_NULL(string);
 
-  theObject = data->imageIOobj;
+    theObject = data->imageIOobj;
 
-  if (cinfo->is_decompressor) {
-      (*env)->CallVoidMethod(env, theObject,
-                             JPEGImageReader_warningWithMessageID,
-                             string);
-  } else {
-      (*env)->CallVoidMethod(env, theObject,
-                             JPEGImageWriter_warningWithMessageID,
-                             string);
-  }
+    if (cinfo->is_decompressor) {
+        struct jpeg_source_mgr *src = ((j_decompress_ptr)cinfo)->src;
+        RELEASE_ARRAYS(env, data, src->next_input_byte);
+        (*env)->CallVoidMethod(env, theObject,
+            JPEGImageReader_warningWithMessageID,
+            string);
+        if ((*env)->ExceptionOccurred(env)
+            || !GET_ARRAYS(env, data, &(src->next_input_byte))) {
+            cinfo->err->error_exit(cinfo);
+        }
+    } else {
+        struct jpeg_destination_mgr *dest = ((j_compress_ptr)cinfo)->dest;
+        RELEASE_ARRAYS(env, data, (const JOCTET *)(dest->next_output_byte));
+        (*env)->CallVoidMethod(env, theObject,
+            JPEGImageWriter_warningWithMessageID,
+            string);
+        if ((*env)->ExceptionOccurred(env)
+            || !GET_ARRAYS(env, data,
+            (const JOCTET **)(&dest->next_output_byte))) {
+            cinfo->err->error_exit(cinfo);
+        }
+    }
 }
 
 /* End of verbatim copy from jpegdecoder.c */
@@ -952,7 +965,7 @@ imageio_fill_input_buffer(j_decompress_ptr cinfo)
                                 sb->hstreamBuffer, 0,
                                 sb->bufferLength);
     if ((ret > 0) && ((unsigned int)ret > sb->bufferLength)) {
-         ret = sb->bufferLength;
+         ret = (int)sb->bufferLength;
     }
     if ((*env)->ExceptionOccurred(env)
         || !GET_ARRAYS(env, data, &(src->next_input_byte))) {
@@ -1043,6 +1056,7 @@ imageio_fill_suspended_buffer(j_decompress_ptr cinfo)
         if (!GET_ARRAYS(env, data, &(src->next_input_byte))) {
             cinfo->err->error_exit((j_common_ptr) cinfo);
         }
+        RELEASE_ARRAYS(env, data, src->next_input_byte);
         return;
     }
 
@@ -1050,7 +1064,7 @@ imageio_fill_suspended_buffer(j_decompress_ptr cinfo)
                                 JPEGImageReader_readInputDataID,
                                 sb->hstreamBuffer,
                                 offset, buflen);
-    if ((ret > 0) && ((unsigned int)ret > buflen)) ret = buflen;
+    if ((ret > 0) && ((unsigned int)ret > buflen)) ret = (int)buflen;
     if ((*env)->ExceptionOccurred(env)
         || !GET_ARRAYS(env, data, &(src->next_input_byte))) {
         cinfo->err->error_exit((j_common_ptr) cinfo);
@@ -1774,8 +1788,8 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImageHeader
             v_samp1 = cinfo->comp_info[1].v_samp_factor;
             v_samp2 = cinfo->comp_info[2].v_samp_factor;
 
-            if ((h_samp1 > h_samp0) && (h_samp2 > h_samp0) ||
-                (v_samp1 > v_samp0) && (v_samp2 > v_samp0))
+            if (((h_samp1 > h_samp0) && (h_samp2 > h_samp0)) ||
+                ((v_samp1 > v_samp0) && (v_samp2 > v_samp0)))
             {
                 cinfo->jpeg_color_space = JCS_YCCK;
                 /* Leave the output space as CMYK */
@@ -1798,9 +1812,14 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImageHeader
                                cinfo->out_color_space,
                                cinfo->num_components,
                                profileData);
+        if ((*env)->ExceptionOccurred(env)
+            || !GET_ARRAYS(env, data, &(src->next_input_byte))) {
+            cinfo->err->error_exit((j_common_ptr) cinfo);
+        }
         if (reset) {
             jpeg_abort_decompress(cinfo);
         }
+        RELEASE_ARRAYS(env, data, src->next_input_byte);
     }
 
     return retval;
@@ -1866,7 +1885,6 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
     pixelBufferPtr pb;
     sun_jpeg_error_ptr jerr;
     boolean done;
-    boolean mustScale = FALSE;
     boolean progressive = FALSE;
     boolean orderedBands = TRUE;
     imageIODataPtr data = (imageIODataPtr)jlong_to_ptr(ptr);
@@ -2011,6 +2029,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
     jpeg_start_decompress(cinfo);
 
     if (numBands !=  cinfo->output_components) {
+        RELEASE_ARRAYS(env, data, src->next_input_byte);
         JNU_ThrowByName(env, "javax/imageio/IIOException",
                         "Invalid argument to native readImage");
         return data->abortFlag;
@@ -2019,6 +2038,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
     if (cinfo->output_components <= 0 ||
         cinfo->image_width > (0xffffffffu / (unsigned int)cinfo->output_components))
     {
+        RELEASE_ARRAYS(env, data, src->next_input_byte);
         JNU_ThrowByName(env, "javax/imageio/IIOException",
                         "Invalid number of output components");
         return data->abortFlag;
@@ -2042,15 +2062,24 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
             // the first interesting pass.
             jpeg_start_output(cinfo, cinfo->input_scan_number);
             if (wantUpdates) {
+                RELEASE_ARRAYS(env, data, src->next_input_byte);
                 (*env)->CallVoidMethod(env, this,
                                        JPEGImageReader_passStartedID,
                                        cinfo->input_scan_number-1);
+                if ((*env)->ExceptionOccurred(env)
+                    || !GET_ARRAYS(env, data, &(src->next_input_byte))) {
+                    cinfo->err->error_exit((j_common_ptr) cinfo);
+                }
             }
         } else if (wantUpdates) {
+            RELEASE_ARRAYS(env, data, src->next_input_byte);
             (*env)->CallVoidMethod(env, this,
                                    JPEGImageReader_passStartedID,
                                    0);
-
+            if ((*env)->ExceptionOccurred(env)
+                || !GET_ARRAYS(env, data, &(src->next_input_byte))) {
+                cinfo->err->error_exit((j_common_ptr) cinfo);
+            }
         }
 
         // Skip until the first interesting line
@@ -2138,8 +2167,13 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
             done = TRUE;
         }
         if (wantUpdates) {
+            RELEASE_ARRAYS(env, data, src->next_input_byte);
             (*env)->CallVoidMethod(env, this,
                                    JPEGImageReader_passCompleteID);
+            if ((*env)->ExceptionOccurred(env)
+                || !GET_ARRAYS(env, data, &(src->next_input_byte))) {
+                cinfo->err->error_exit((j_common_ptr) cinfo);
+            }
         }
 
     }
@@ -2160,6 +2194,25 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
     RELEASE_ARRAYS(env, data, src->next_input_byte);
 
     return data->abortFlag;
+}
+
+JNIEXPORT void JNICALL
+Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_clearNativeReadAbortFlag
+    (JNIEnv *env,
+    jobject this,
+    jlong ptr) {
+
+    imageIODataPtr data = (imageIODataPtr)jlong_to_ptr(ptr);
+
+    if (data == NULL) {
+        JNU_ThrowByName(env,
+            "java/lang/IllegalStateException",
+            "Attempting to use reader after dispose()");
+        return;
+    }
+
+    data->abortFlag = JNI_FALSE;
+
 }
 
 JNIEXPORT void JNICALL
@@ -2634,6 +2687,18 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeTables
     RELEASE_ARRAYS(env, data, NULL);
 }
 
+static void freeArray(UINT8** arr, jint size) {
+    int i;
+    if (arr != NULL) {
+        for (i = 0; i < size; i++) {
+            if (arr[i] != NULL) {
+                free(arr[i]);
+            }
+        }
+        free(arr);
+    }
+}
+
 JNIEXPORT jboolean JNICALL
 Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
     (JNIEnv *env,
@@ -2742,6 +2807,8 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
                 scale = (UINT8**) calloc(numBands, sizeof(UINT8*));
 
                 if (scale == NULL) {
+                    (*env)->ReleaseIntArrayElements(env, bandSizes,
+                                                    bandSize, JNI_ABORT);
                     JNU_ThrowByName( env, "java/lang/OutOfMemoryError",
                                      "Writing JPEG Stream");
                     return JNI_FALSE;
@@ -2758,6 +2825,8 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
                     free(scale[j]);
                 }
                 free(scale);
+                (*env)->ReleaseIntArrayElements(env, bandSizes,
+                                                bandSize, JNI_ABORT);
                 JNU_ThrowByName( env, "java/lang/OutOfMemoryError",
                                  "Writing JPEG Stream");
                 return JNI_FALSE;
@@ -2782,21 +2851,14 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
     pb = &data->pixelBuf;
 
     if (setPixelBuffer(env, pb, buffer) == NOT_OK) {
-        if (scale != NULL) {
-            for (i = 0; i < numBands; i++) {
-                if (scale[i] != NULL) {
-                    free(scale[i]);
-                }
-            }
-            free(scale);
-        }
+        freeArray(scale, numBands);
         return data->abortFlag;  // We already threw an out of memory exception
     }
 
     // Allocate a 1-scanline buffer
     scanLinePtr = (JSAMPROW)malloc(scanLineSize);
     if (scanLinePtr == NULL) {
-        RELEASE_ARRAYS(env, data, (const JOCTET *)(dest->next_output_byte));
+        freeArray(scale, numBands);
         JNU_ThrowByName( env,
                          "java/lang/OutOfMemoryError",
                          "Writing JPEG Stream");
@@ -2818,15 +2880,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
             JNU_ThrowByName(env, "javax/imageio/IIOException", buffer);
         }
 
-        if (scale != NULL) {
-            for (i = 0; i < numBands; i++) {
-                if (scale[i] != NULL) {
-                    free(scale[i]);
-                }
-            }
-            free(scale);
-        }
-
+        freeArray(scale, numBands);
         free(scanLinePtr);
         return data->abortFlag;
     }
@@ -2874,7 +2928,11 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
     if (qsels) {
         (*env)->ReleaseIntArrayElements(env, QtableSelectors, qsels, JNI_ABORT);
     }
-    if (!success) return data->abortFlag;
+    if (!success) {
+        freeArray(scale, numBands);
+        free(scanLinePtr);
+        return data->abortFlag;
+    }
 
     jpeg_suppress_tables(cinfo, TRUE);  // Disable writing any current
 
@@ -2892,6 +2950,8 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
     if (GET_ARRAYS(env, data,
                    (const JOCTET **)(&dest->next_output_byte)) == NOT_OK) {
         (*env)->ExceptionClear(env);
+        freeArray(scale, numBands);
+        free(scanLinePtr);
         JNU_ThrowByName(env,
                         "javax/imageio/IIOException",
                         "Array pin failed");
@@ -2926,7 +2986,12 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
             cinfo->scan_info = cinfo->script_space;
             scanptr = (int *) cinfo->script_space;
             scanData = (*env)->GetIntArrayElements(env, scanInfo, NULL);
-            CHECK_NULL_RETURN(scanData, data->abortFlag);
+            if (scanData == NULL) {
+                RELEASE_ARRAYS(env, data, (const JOCTET *)(dest->next_output_byte));
+                freeArray(scale, numBands);
+                free(scanLinePtr);
+                return data->abortFlag;
+            }
             // number of jints per scan is 9
             // We avoid a memcpy to handle different size ints
             for (i = 0; i < numScans*9; i++) {
@@ -3022,15 +3087,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
         jpeg_abort((j_common_ptr)cinfo);
     }
 
-    if (scale != NULL) {
-        for (i = 0; i < numBands; i++) {
-            if (scale[i] != NULL) {
-                free(scale[i]);
-            }
-        }
-        free(scale);
-    }
-
+    freeArray(scale, numBands);
     free(scanLinePtr);
     RELEASE_ARRAYS(env, data, NULL);
     return data->abortFlag;

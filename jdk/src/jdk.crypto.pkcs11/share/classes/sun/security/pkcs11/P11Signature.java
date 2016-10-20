@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -616,8 +616,11 @@ final class P11Signature extends SignatureSpi {
                     return dsaToASN1(signature);
                 }
             }
-        } catch (PKCS11Exception e) {
-            throw new ProviderException(e);
+        } catch (PKCS11Exception pe) {
+            throw new ProviderException(pe);
+        } catch (SignatureException | ProviderException e) {
+            cancelOperation();
+            throw e;
         } finally {
             initialized = false;
             session = token.releaseSession(session);
@@ -669,8 +672,8 @@ final class P11Signature extends SignatureSpi {
                 }
             }
             return true;
-        } catch (PKCS11Exception e) {
-            long errorCode = e.getErrorCode();
+        } catch (PKCS11Exception pe) {
+            long errorCode = pe.getErrorCode();
             if (errorCode == CKR_SIGNATURE_INVALID) {
                 return false;
             }
@@ -682,10 +685,11 @@ final class P11Signature extends SignatureSpi {
             if (errorCode == CKR_DATA_LEN_RANGE) {
                 return false;
             }
-            throw new ProviderException(e);
+            throw new ProviderException(pe);
+        }  catch (SignatureException | ProviderException e) {
+            cancelOperation();
+            throw e;
         } finally {
-            // XXX we should not release the session if we abort above
-            // before calling C_Verify
             initialized = false;
             session = token.releaseSession(session);
         }
@@ -742,6 +746,11 @@ final class P11Signature extends SignatureSpi {
             DerValue[] values = in.getSequence(2);
             BigInteger r = values[0].getPositiveBigInteger();
             BigInteger s = values[1].getPositiveBigInteger();
+
+            // Check for trailing signature data
+            if (in.available() != 0) {
+                throw new IOException("Incorrect signature length");
+            }
             byte[] br = toByteArray(r, 20);
             byte[] bs = toByteArray(s, 20);
             if ((br == null) || (bs == null)) {
@@ -761,6 +770,11 @@ final class P11Signature extends SignatureSpi {
             DerValue[] values = in.getSequence(2);
             BigInteger r = values[0].getPositiveBigInteger();
             BigInteger s = values[1].getPositiveBigInteger();
+
+            // Check for trailing signature data
+            if (in.available() != 0) {
+                throw new IOException("Incorrect signature length");
+            }
             // trim leading zeroes
             byte[] br = KeyUtil.trimZeroes(r.toByteArray());
             byte[] bs = KeyUtil.trimZeroes(s.toByteArray());

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,18 +26,16 @@
 package java.lang.invoke;
 
 import jdk.internal.loader.BootLoader;
-import jdk.internal.vm.annotation.Stable;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.FieldVisitor;
 import jdk.internal.org.objectweb.asm.MethodVisitor;
+import jdk.internal.vm.annotation.Stable;
 import sun.invoke.util.ValueConversions;
 import sun.invoke.util.Wrapper;
 
 import java.lang.invoke.LambdaForm.NamedFunction;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
@@ -168,12 +166,16 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
     }
 
     @Override
-    final Object internalValues() {
-        Object[] boundValues = new Object[speciesData().fieldCount()];
-        for (int i = 0; i < boundValues.length; ++i) {
-            boundValues[i] = arg(i);
+    final String internalValues() {
+        int count = speciesData().fieldCount();
+        if (count == 1) {
+            return "[" + arg(0) + "]";
         }
-        return Arrays.asList(boundValues);
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < count; ++i) {
+            sb.append("\n  ").append(i).append(": ( ").append(arg(i)).append(" )");
+        }
+        return sb.append("\n]").toString();
     }
 
     /*non-public*/ final Object arg(int i) {
@@ -305,7 +307,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
         /*non-public*/ char fieldTypeChar(int i) {
             return typeChars.charAt(i);
         }
-        Object fieldSignature() {
+        String fieldSignature() {
             return typeChars;
         }
         public Class<? extends BoundMethodHandle> fieldHolder() {
@@ -495,6 +497,10 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
                         String shortTypes = LambdaForm.shortenSignature(types);
                         String className = SPECIES_CLASS_PREFIX + shortTypes;
                         Class<?> c = BootLoader.loadClassOrNull(className);
+                        if (TRACE_RESOLVE) {
+                            System.out.println("[BMH_RESOLVE] " + shortTypes +
+                                    (c != null ? " (success)" : " (fail)") );
+                        }
                         if (c != null) {
                             return c.asSubclass(BoundMethodHandle.class);
                         } else {
@@ -584,26 +590,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
             return bmhClass;
         }
 
-        /**
-         * @implNote this method is used by GenerateBMHClassesPlugin to enable
-         * ahead-of-time generation of BMH classes at link time. It does
-         * added validation since this string may be user provided.
-         */
-        static Map.Entry<String, byte[]> generateConcreteBMHClassBytes(
-                final String types) {
-            for (char c : types.toCharArray()) {
-                if ("LIJFD".indexOf(c) < 0) {
-                    throw new IllegalArgumentException("All characters must "
-                            + "correspond to a basic field type: LIJFD");
-                }
-            }
-            String shortTypes = LambdaForm.shortenSignature(types);
-            final String className  = speciesInternalClassName(shortTypes);
-            return Map.entry(className,
-                    generateConcreteBMHClassBytes(shortTypes, types, className));
-        }
-
-        private static String speciesInternalClassName(String shortTypes) {
+        static String speciesInternalClassName(String shortTypes) {
             return SPECIES_PREFIX_PATH + shortTypes;
         }
 
@@ -862,14 +849,14 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
         }
     }
 
-    private static final Lookup LOOKUP = Lookup.IMPL_LOOKUP;
+    static final Lookup LOOKUP = Lookup.IMPL_LOOKUP;
 
     /**
      * All subclasses must provide such a value describing their type signature.
      */
     static final SpeciesData SPECIES_DATA = SpeciesData.EMPTY;
 
-    private static final SpeciesData[] SPECIES_DATA_CACHE = new SpeciesData[5];
+    private static final SpeciesData[] SPECIES_DATA_CACHE = new SpeciesData[6];
     private static SpeciesData checkCache(int size, String types) {
         int idx = size - 1;
         SpeciesData data = SPECIES_DATA_CACHE[idx];
@@ -877,9 +864,9 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
         SPECIES_DATA_CACHE[idx] = data = getSpeciesData(types);
         return data;
     }
-    static SpeciesData speciesData_L()     { return checkCache(1, "L"); }
-    static SpeciesData speciesData_LL()    { return checkCache(2, "LL"); }
-    static SpeciesData speciesData_LLL()   { return checkCache(3, "LLL"); }
-    static SpeciesData speciesData_LLLL()  { return checkCache(4, "LLLL"); }
-    static SpeciesData speciesData_LLLLL() { return checkCache(5, "LLLLL"); }
+    static SpeciesData speciesData_L()      { return checkCache(1, "L"); }
+    static SpeciesData speciesData_LL()     { return checkCache(2, "LL"); }
+    static SpeciesData speciesData_LLL()    { return checkCache(3, "LLL"); }
+    static SpeciesData speciesData_LLLL()   { return checkCache(4, "LLLL"); }
+    static SpeciesData speciesData_LLLLL()  { return checkCache(5, "LLLLL"); }
 }

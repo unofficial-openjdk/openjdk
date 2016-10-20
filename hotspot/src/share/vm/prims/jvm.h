@@ -26,21 +26,9 @@
 #define SHARE_VM_PRIMS_JVM_H
 
 #include "prims/jni.h"
-#ifdef TARGET_OS_FAMILY_linux
-# include "jvm_linux.h"
-#endif
-#ifdef TARGET_OS_FAMILY_solaris
-# include "jvm_solaris.h"
-#endif
-#ifdef TARGET_OS_FAMILY_windows
-# include "jvm_windows.h"
-#endif
-#ifdef TARGET_OS_FAMILY_aix
-# include "jvm_aix.h"
-#endif
-#ifdef TARGET_OS_FAMILY_bsd
-# include "jvm_bsd.h"
-#endif
+#include "utilities/macros.hpp"
+
+#include OS_HEADER_H(jvm)
 
 #ifndef _JAVASOFT_JVM_H_
 #define _JAVASOFT_JVM_H_
@@ -208,7 +196,8 @@ JVM_GetStackTraceElements(JNIEnv *env, jobject throwable, jobjectArray elements)
  * java.lang.StackWalker
  */
 enum {
-  JVM_STACKWALK_FILL_CLASS_REFS_ONLY       = 0x2,
+  JVM_STACKWALK_FILL_CLASS_REFS_ONLY       = 0x02,
+  JVM_STACKWALK_GET_CALLER_CLASS           = 0x04,
   JVM_STACKWALK_SHOW_HIDDEN_FRAMES         = 0x20,
   JVM_STACKWALK_FILL_LIVE_STACK_FRAMES     = 0x100
 };
@@ -307,6 +296,18 @@ JVM_GetSystemPackage(JNIEnv *env, jstring name);
 
 JNIEXPORT jobjectArray JNICALL
 JVM_GetSystemPackages(JNIEnv *env);
+
+/*
+ * java.lang.ref.Reference
+ */
+JNIEXPORT jobject JNICALL
+JVM_GetAndClearReferencePendingList(JNIEnv *env);
+
+JNIEXPORT jboolean JNICALL
+JVM_HasReferencePendingList(JNIEnv *env);
+
+JNIEXPORT void JNICALL
+JVM_WaitForReferencePendingList(JNIEnv *env);
 
 /*
  * java.io.ObjectInputStream

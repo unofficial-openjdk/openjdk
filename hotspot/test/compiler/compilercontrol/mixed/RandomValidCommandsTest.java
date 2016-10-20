@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,13 +26,12 @@
  * @bug 8137167
  * @summary Randomly generates valid commands with random types
  * @modules java.base/jdk.internal.misc
- * @library /testlibrary /test/lib /compiler/testlibrary ../share /
- * @build compiler.compilercontrol.mixed.RandomValidCommandsTest
- *        pool.sub.* pool.subpack.* sun.hotspot.WhiteBox
- *        compiler.testlibrary.CompilerUtils compiler.compilercontrol.share.actions.*
+ * @library /test/lib /
+ *
+ * @build sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm/timeout=600 compiler.compilercontrol.mixed.RandomValidCommandsTest
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
+ * @run driver/timeout=600 compiler.compilercontrol.mixed.RandomValidCommandsTest
  */
 
 package compiler.compilercontrol.mixed;

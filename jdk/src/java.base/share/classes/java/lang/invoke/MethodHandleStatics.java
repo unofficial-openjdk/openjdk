@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,9 +25,10 @@
 
 package java.lang.invoke;
 
-import java.util.Properties;
 import jdk.internal.misc.Unsafe;
 import sun.security.action.GetPropertyAction;
+
+import java.util.Properties;
 
 /**
  * This class consists exclusively of static names internal to the
@@ -45,12 +46,15 @@ import sun.security.action.GetPropertyAction;
     static final boolean DUMP_CLASS_FILES;
     static final boolean TRACE_INTERPRETER;
     static final boolean TRACE_METHOD_LINKAGE;
+    static final boolean TRACE_RESOLVE;
     static final int COMPILE_THRESHOLD;
+    static final boolean LOG_LF_COMPILATION_FAILURE;
     static final int DONT_INLINE_THRESHOLD;
     static final int PROFILE_LEVEL;
     static final boolean PROFILE_GWT;
     static final int CUSTOMIZE_THRESHOLD;
     static final boolean VAR_HANDLE_GUARDS;
+    static final int MAX_ARITY;
 
     static {
         Properties props = GetPropertyAction.privilegedGetProperties();
@@ -62,8 +66,12 @@ import sun.security.action.GetPropertyAction;
                 props.getProperty("java.lang.invoke.MethodHandle.TRACE_INTERPRETER"));
         TRACE_METHOD_LINKAGE = Boolean.parseBoolean(
                 props.getProperty("java.lang.invoke.MethodHandle.TRACE_METHOD_LINKAGE"));
+        TRACE_RESOLVE = Boolean.parseBoolean(
+                props.getProperty("java.lang.invoke.MethodHandle.TRACE_RESOLVE"));
         COMPILE_THRESHOLD = Integer.parseInt(
                 props.getProperty("java.lang.invoke.MethodHandle.COMPILE_THRESHOLD", "0"));
+        LOG_LF_COMPILATION_FAILURE = Boolean.parseBoolean(
+                props.getProperty("java.lang.invoke.MethodHandle.LOG_LF_COMPILATION_FAILURE", "false"));
         DONT_INLINE_THRESHOLD = Integer.parseInt(
                 props.getProperty("java.lang.invoke.MethodHandle.DONT_INLINE_THRESHOLD", "30"));
         PROFILE_LEVEL = Integer.parseInt(
@@ -74,6 +82,10 @@ import sun.security.action.GetPropertyAction;
                 props.getProperty("java.lang.invoke.MethodHandle.CUSTOMIZE_THRESHOLD", "127"));
         VAR_HANDLE_GUARDS = Boolean.parseBoolean(
                 props.getProperty("java.lang.invoke.VarHandle.VAR_HANDLE_GUARDS", "true"));
+
+        // Do not adjust this except for special platforms:
+        MAX_ARITY = Integer.parseInt(
+                props.getProperty("java.lang.invoke.MethodHandleImpl.MAX_ARITY", "255"));
 
         if (CUSTOMIZE_THRESHOLD < -1 || CUSTOMIZE_THRESHOLD > 127) {
             throw newInternalError("CUSTOMIZE_THRESHOLD should be in [-1...127] range");
@@ -87,7 +99,8 @@ import sun.security.action.GetPropertyAction;
         return (DEBUG_METHOD_HANDLE_NAMES |
                 DUMP_CLASS_FILES |
                 TRACE_INTERPRETER |
-                TRACE_METHOD_LINKAGE);
+                TRACE_METHOD_LINKAGE |
+                LOG_LF_COMPILATION_FAILURE);
     }
 
     // handy shared exception makers (they simplify the common case code)

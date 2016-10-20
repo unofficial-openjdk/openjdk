@@ -23,25 +23,14 @@
  */
 
 #include "precompiled.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/interfaceSupport.hpp"
 #include "runtime/mutex.hpp"
 #include "runtime/orderAccess.inline.hpp"
 #include "runtime/osThread.hpp"
 #include "runtime/thread.inline.hpp"
 #include "utilities/events.hpp"
-#ifdef TARGET_OS_FAMILY_linux
-# include "mutex_linux.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_solaris
-# include "mutex_solaris.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_windows
-# include "mutex_windows.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_bsd
-# include "mutex_bsd.inline.hpp"
-#endif
+#include "utilities/macros.hpp"
 
 // o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o
 //
@@ -1159,7 +1148,16 @@ bool Monitor::wait(bool no_safepoint_check, long timeout,
 }
 
 Monitor::~Monitor() {
-  assert((UNS(_owner)|UNS(_LockWord.FullWord)|UNS(_EntryList)|UNS(_WaitSet)|UNS(_OnDeck)) == 0, "");
+#ifdef ASSERT
+  uintptr_t owner = UNS(_owner);
+  uintptr_t lockword = UNS(_LockWord.FullWord);
+  uintptr_t entrylist = UNS(_EntryList);
+  uintptr_t waitset = UNS(_WaitSet);
+  uintptr_t ondeck = UNS(_OnDeck);
+  assert((owner|lockword|entrylist|waitset|ondeck) == 0,
+         "_owner(" INTPTR_FORMAT ")|_LockWord(" INTPTR_FORMAT ")|_EntryList(" INTPTR_FORMAT ")|_WaitSet("
+         INTPTR_FORMAT ")|_OnDeck(" INTPTR_FORMAT ") != 0", owner, lockword, entrylist, waitset, ondeck);
+#endif
 }
 
 void Monitor::ClearMonitor(Monitor * m, const char *name) {

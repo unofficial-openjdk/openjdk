@@ -25,16 +25,12 @@
  * @test TestPLABPromotion
  * @bug 8141278 8141141
  * @summary Test PLAB promotion
- * @requires vm.gc=="G1" | vm.gc=="null"
- * @requires vm.opt.FlightRecorder != true
- * @library /testlibrary /test/lib /
+ * @requires vm.gc.G1
+ * @requires !vm.flightRecorder
+ * @library /test/lib /
  * @modules java.base/jdk.internal.misc
  * @modules java.management
- * @build ClassFileInstaller
- *        sun.hotspot.WhiteBox
- *        gc.g1.plab.lib.MemoryConsumer
- *        gc.g1.plab.lib.LogParser
- *        gc.g1.plab.lib.AppPLABPromotion
+ * @build sun.hotspot.WhiteBox
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/timeout=240 gc.g1.plab.TestPLABPromotion
@@ -50,8 +46,8 @@ import gc.g1.plab.lib.LogParser;
 import gc.g1.plab.lib.PLABUtils;
 import gc.g1.plab.lib.PlabInfo;
 
-import jdk.test.lib.OutputAnalyzer;
-import jdk.test.lib.ProcessTools;
+import jdk.test.lib.process.OutputAnalyzer;
+import jdk.test.lib.process.ProcessTools;
 
 /**
  * Test checks PLAB promotion of different size objects.

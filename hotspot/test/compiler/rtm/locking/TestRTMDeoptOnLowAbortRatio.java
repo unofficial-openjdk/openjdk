@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,24 +26,33 @@
  * @test
  * @bug 8031320
  * @summary Verify that on low abort ratio method will be recompiled.
- * @library /testlibrary /test/lib /compiler/testlibrary
+ * @library /test/lib /
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @build TestRTMDeoptOnLowAbortRatio
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
+ * @build sun.hotspot.WhiteBox
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
- *                   -XX:+WhiteBoxAPI TestRTMDeoptOnLowAbortRatio
+ *                   -XX:+WhiteBoxAPI
+ *                   compiler.rtm.locking.TestRTMDeoptOnLowAbortRatio
  */
 
-import java.util.List;
-import jdk.test.lib.*;
+package compiler.rtm.locking;
+
+import compiler.testlibrary.rtm.AbortProvoker;
+import compiler.testlibrary.rtm.CompilableTest;
+import compiler.testlibrary.rtm.RTMLockingStatistics;
+import compiler.testlibrary.rtm.RTMTestBase;
+import compiler.testlibrary.rtm.predicate.SupportedCPU;
+import compiler.testlibrary.rtm.predicate.SupportedOS;
+import compiler.testlibrary.rtm.predicate.SupportedVM;
+import jdk.internal.misc.Unsafe;
+import jdk.test.lib.Asserts;
+import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.cli.CommandLineOptionTest;
 import jdk.test.lib.cli.predicate.AndPredicate;
-import rtm.*;
-import rtm.predicate.SupportedCPU;
-import rtm.predicate.SupportedVM;
-import jdk.internal.misc.Unsafe;
+
+import java.util.List;
 
 /**
  * Test verifies that low abort ratio method will be deoptimized with
@@ -58,7 +67,7 @@ public class TestRTMDeoptOnLowAbortRatio extends CommandLineOptionTest {
     private static final long ABORT_THRESHOLD = LOCKING_THRESHOLD / 2L;
 
     private TestRTMDeoptOnLowAbortRatio() {
-        super(new AndPredicate(new SupportedCPU(), new SupportedVM()));
+        super(new AndPredicate(new SupportedCPU(), new SupportedOS(), new SupportedVM()));
     }
 
     @Override
@@ -124,7 +133,7 @@ public class TestRTMDeoptOnLowAbortRatio extends CommandLineOptionTest {
     }
 
     public static class Test implements CompilableTest {
-        private static final Unsafe UNSAFE = Utils.getUnsafe();
+        private static final Unsafe UNSAFE = Unsafe.getUnsafe();
         private final Object monitor = new Object();
 
         @Override

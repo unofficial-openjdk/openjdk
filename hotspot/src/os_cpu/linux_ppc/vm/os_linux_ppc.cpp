@@ -34,7 +34,6 @@
 #include "interpreter/interpreter.hpp"
 #include "jvm_linux.h"
 #include "memory/allocation.inline.hpp"
-#include "mutex_linux.inline.hpp"
 #include "nativeInst_ppc.hpp"
 #include "os_share_linux.hpp"
 #include "prims/jniFastGetField.hpp"
@@ -206,8 +205,10 @@ frame os::current_frame() {
   intptr_t* csp = (intptr_t*) *((intptr_t*) os::current_stack_pointer());
   // hack.
   frame topframe(csp, (address)0x8);
-  // return sender of current topframe which hopefully has pc != NULL.
-  return os::get_sender_for_C_frame(&topframe);
+  // Return sender of sender of current topframe which hopefully
+  // both have pc != NULL.
+  frame tmp = os::get_sender_for_C_frame(&topframe);
+  return os::get_sender_for_C_frame(&tmp);
 }
 
 // Utility functions
@@ -235,6 +236,28 @@ JVM_handle_linux_signal(int sig,
       return true;
     } else {
       // Ignoring SIGPIPE - see bugs 4229104
+      return true;
+    }
+  }
+
+  // Make the signal handler transaction-aware by checking the existence of a
+  // second (transactional) context with MSR TS bits active. If the signal is
+  // caught during a transaction, then just return to the HTM abort handler.
+  // Please refer to Linux kernel document powerpc/transactional_memory.txt,
+  // section "Signals".
+  if (uc && uc->uc_link) {
+    ucontext_t* second_uc = uc->uc_link;
+
+    // MSR TS bits are 29 and 30 (Power ISA, v2.07B, Book III-S, pp. 857-858,
+    // 3.2.1 "Machine State Register"), however note that ISA notation for bit
+    // numbering is MSB 0, so for normal bit numbering (LSB 0) they come to be
+    // bits 33 and 34. It's not related to endianness, just a notation matter.
+    if (second_uc->uc_mcontext.regs->msr & 0x600000000) {
+      if (TraceTraps) {
+        tty->print_cr("caught signal in transaction, "
+                        "ignoring to jump to abort handler");
+      }
+      // Return control to the HTM abort handler.
       return true;
     }
   }
@@ -512,15 +535,13 @@ void os::Linux::set_fpu_control_word(int fpu_control) {
 ////////////////////////////////////////////////////////////////////////////////
 // thread stack
 
-size_t os::Linux::min_stack_allowed = 128*K;
+size_t os::Posix::_compiler_thread_min_stack_allowed = 128 * K;
+size_t os::Posix::_java_thread_min_stack_allowed = 128 * K;
+size_t os::Posix::_vm_internal_thread_min_stack_allowed = 128 * K;
 
 // return default stack size for thr_type
-size_t os::Linux::default_stack_size(os::ThreadType thr_type) {
+size_t os::Posix::default_stack_size(os::ThreadType thr_type) {
   // default stack size (compiler thread needs larger stack)
-  // Notice that the setting for compiler threads here have no impact
-  // because of the strange 'fallback logic' in os::create_thread().
-  // Better set CompilerThreadStackSize in globals_<os_cpu>.hpp if you want to
-  // specify a different stack size for compiler threads!
   size_t s = (thr_type == os::compiler_thread ? 4 * M : 1024 * K);
   return s;
 }

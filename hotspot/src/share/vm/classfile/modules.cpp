@@ -102,7 +102,8 @@ static PackageEntryTable* get_package_entry_table(Handle h_loader, TRAPS) {
 static ModuleEntry* get_module_entry(jobject module, TRAPS) {
   Handle module_h(THREAD, JNIHandles::resolve(module));
   if (!java_lang_reflect_Module::is_instance(module_h())) {
-    THROW_MSG_NULL(vmSymbols::java_lang_IllegalArgumentException(), "Bad module object");
+    THROW_MSG_NULL(vmSymbols::java_lang_IllegalArgumentException(),
+                   "module is not an instance of type java.lang.reflect.Module");
   }
   return java_lang_reflect_Module::module_entry(module_h(), CHECK_NULL);
 }
@@ -113,7 +114,7 @@ static PackageEntry* get_package_entry(ModuleEntry* module_entry, jstring packag
   const char *package_name = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(package));
   if (package_name == NULL) return NULL;
   TempNewSymbol pkg_symbol = SymbolTable::new_symbol(package_name, CHECK_NULL);
-  PackageEntryTable* package_entry_table = module_entry->loader()->packages();
+  PackageEntryTable* package_entry_table = module_entry->loader_data()->packages();
   assert(package_entry_table != NULL, "Unexpected null package entry table");
   return package_entry_table->lookup_only(pkg_symbol);
 }
@@ -131,36 +132,6 @@ static PackageEntry* get_package_entry_by_name(Symbol* package,
     }
   }
   return NULL;
-}
-
-// If using exploded build, append <java.home>/modules/module_name, if it exists,
-// to the system boot class path in order for the boot loader to locate class files.
-static void add_to_exploded_build_list(char *module_name, TRAPS) {
-  assert(!ClassLoader::has_jimage(), "Exploded build not applicable");
-  // java.base is handled by os::set_boot_path
-  assert(strcmp(module_name, "java.base") != 0, "Unexpected java.base module name");
-
-  char file_sep = os::file_separator()[0];
-  size_t module_len = strlen(module_name);
-
-  const char* home = Arguments::get_java_home();
-  size_t len = strlen(home) + module_len + 32;
-  char* path = NEW_C_HEAP_ARRAY(char, len, mtModule);
-  jio_snprintf(path, len, "%s%cmodules%c%s", home, file_sep, file_sep, module_name);
-  struct stat st;
-  // See if exploded module path exists
-  if ((os::stat(path, &st) != 0)) {
-    FREE_C_HEAP_ARRAY(char, path);
-    path = NULL;
-  }
-
-  if (path != NULL) {
-    HandleMark hm;
-    Handle loader_lock = Handle(THREAD, SystemDictionary::system_loader_lock());
-    ObjectLocker ol(loader_lock, THREAD);
-    log_info(class, load)("opened: %s", path);
-    ClassLoader::add_to_list(path);
-  }
 }
 
 bool Modules::is_package_defined(Symbol* package, Handle h_loader, TRAPS) {
@@ -235,7 +206,7 @@ static void define_javabase_module(jobject module, jstring version,
   assert(pkg_list->length() == 0 || package_table != NULL, "Bad package_table");
 
   // Ensure java.base's ModuleEntry has been created
-  assert(ModuleEntryTable::javabase_module() != NULL, "No ModuleEntry for java.base");
+  assert(ModuleEntryTable::javabase_moduleEntry() != NULL, "No ModuleEntry for java.base");
 
   bool duplicate_javabase = false;
   {
@@ -255,7 +226,7 @@ static void define_javabase_module(jobject module, jstring version,
       for (int x = 0; x < pkg_list->length(); x++) {
         // Some of java.base's packages were added early in bootstrapping, ignore duplicates.
         if (package_table->lookup_only(pkg_list->at(x)) == NULL) {
-          pkg = package_table->locked_create_entry_or_null(pkg_list->at(x), ModuleEntryTable::javabase_module());
+          pkg = package_table->locked_create_entry_or_null(pkg_list->at(x), ModuleEntryTable::javabase_moduleEntry());
           assert(pkg != NULL, "Unable to create a java.base package entry");
         }
         // Unable to have a GrowableArray of TempNewSymbol.  Must decrement the refcount of
@@ -284,9 +255,6 @@ static void define_javabase_module(jobject module, jstring version,
     log_trace(modules)("define_javabase_module(): creation of package %s for module java.base",
                        (pkg_list->at(x))->as_C_string());
   }
-
-  // Patch any previously loaded classes' module field with java.base's jlr.Module.
-  ModuleEntryTable::patch_javabase_entries(module_handle);
 }
 
 void Modules::define_module(jobject module, jstring version,
@@ -297,9 +265,9 @@ void Modules::define_module(jobject module, jstring version,
     THROW_MSG(vmSymbols::java_lang_NullPointerException(), "Null module object");
   }
   Handle module_handle(THREAD, JNIHandles::resolve(module));
-  if (!java_lang_reflect_Module::is_subclass(module_handle->klass())) {
+  if (!java_lang_reflect_Module::is_instance(module_handle())) {
     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
-              "module is not a subclass of java.lang.reflect.Module");
+              "module is not an instance of type java.lang.reflect.Module");
   }
 
   char* module_name = get_module_name(module_handle(), CHECK);
@@ -470,8 +438,8 @@ void Modules::define_module(jobject module, jstring version,
   // used, prepend <java.home>/modules/modules_name, if it exists, to the system boot class path.
   if (loader == NULL &&
       !Universe::is_module_initialized() &&
-      !ClassLoader::has_jimage()) {
-    add_to_exploded_build_list(module_name, CHECK);
+      !ClassLoader::has_jrt_entry()) {
+    ClassLoader::add_to_exploded_build_list(module_symbol, CHECK);
   }
 }
 
@@ -482,9 +450,9 @@ void Modules::set_bootloader_unnamed_module(jobject module, TRAPS) {
     THROW_MSG(vmSymbols::java_lang_NullPointerException(), "Null module object");
   }
   Handle module_handle(THREAD, JNIHandles::resolve(module));
-  if (!java_lang_reflect_Module::is_subclass(module_handle->klass())) {
+  if (!java_lang_reflect_Module::is_instance(module_handle())) {
     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
-              "module is not a subclass of java.lang.reflect.Module");
+              "module is not an instance of type java.lang.reflect.Module");
   }
 
   // Ensure that this is an unnamed module
@@ -568,8 +536,8 @@ void Modules::add_module_exports(jobject from_module, jstring package, jobject t
                       to_module_entry->is_named() ?
                         to_module_entry->name()->as_C_string() : UNNAMED_MODULE);
 
-  // Do nothing if modules are the same or if package is already exported unqualifiedly.
-  if (from_module_entry != to_module_entry && !package_entry->is_unqual_exported()) {
+  // Do nothing if modules are the same.
+  if (from_module_entry != to_module_entry) {
     package_entry->set_exported(to_module_entry);
   }
 }
@@ -758,7 +726,7 @@ jobject Modules::get_module(jclass clazz, TRAPS) {
   oop module = java_lang_Class::module(mirror);
 
   assert(module != NULL, "java.lang.Class module field not set");
-  assert(java_lang_reflect_Module::is_subclass(module->klass()), "Module is not a java.lang.reflect.Module");
+  assert(java_lang_reflect_Module::is_instance(module), "module is not an instance of type java.lang.reflect.Module");
 
   if (log_is_enabled(Debug, modules)) {
     ResourceMark rm(THREAD);
@@ -820,6 +788,28 @@ jobject Modules::get_module_by_package_name(jobject loader, jstring package, TRA
 }
 
 
+jobject Modules::get_named_module(Handle h_loader, const char* package_str, TRAPS) {
+  assert(ModuleEntryTable::javabase_defined(),
+         "Attempt to call get_named_module before java.base is defined");
+  assert(h_loader.is_null() || java_lang_ClassLoader::is_subclass(h_loader->klass()),
+         "Class loader is not a subclass of java.lang.ClassLoader");
+  assert(package_str != NULL, "the package_str should not be NULL");
+
+  if (strlen(package_str) == 0) {
+    return NULL;
+  }
+  TempNewSymbol package_sym = SymbolTable::new_symbol(package_str, CHECK_NULL);
+  const PackageEntry* const pkg_entry =
+    get_package_entry_by_name(package_sym, h_loader, THREAD);
+  const ModuleEntry* const module_entry = (pkg_entry != NULL ? pkg_entry->module() : NULL);
+
+  if (module_entry != NULL && module_entry->module() != NULL && module_entry->is_named()) {
+    return JNIHandles::make_local(THREAD, JNIHandles::resolve(module_entry->module()));
+  }
+  return NULL;
+}
+
+
 // This method is called by JFR and by the above method.
 jobject Modules::get_module(Symbol* package_name, Handle h_loader, TRAPS) {
   const PackageEntry* const pkg_entry =
@@ -868,7 +858,7 @@ void Modules::add_module_package(jobject module, jstring package, TRAPS) {
                      package_name, module_entry->name()->as_C_string());
 
   TempNewSymbol pkg_symbol = SymbolTable::new_symbol(package_name, CHECK);
-  PackageEntryTable* package_table = module_entry->loader()->packages();
+  PackageEntryTable* package_table = module_entry->loader_data()->packages();
   assert(package_table != NULL, "Missing package_table");
 
   bool pkg_exists = false;

@@ -52,21 +52,14 @@ void InternalVMTests::run() {
   run_unit_test(TestVirtualSpaceNode_test);
   run_unit_test(TestGlobalDefinitions_test);
   run_unit_test(GCTimer_test);
-  run_unit_test(arrayOopDesc_test);
   run_unit_test(CollectedHeap_test);
   run_unit_test(QuickSort_test);
   run_unit_test(GuardedMemory_test);
-  run_unit_test(AltHashing_test);
   run_unit_test(TestNewSize_test);
   run_unit_test(TestOldSize_test);
-  run_unit_test(TestKlass_test);
   run_unit_test(TestBitMap_test);
-  run_unit_test(TestAsUtf8);
   run_unit_test(TestResourcehash_test);
   run_unit_test(ObjectMonitor_test);
-  run_unit_test(Test_linked_list);
-  run_unit_test(TestChunkedList_test);
-  run_unit_test(JSON_test);
   run_unit_test(Test_log_tag_combinations_limit);
   run_unit_test(Test_logtarget);
   run_unit_test(Test_logstream);
@@ -84,21 +77,15 @@ void InternalVMTests::run() {
   run_unit_test(Test_invalid_log_file);
   run_unit_test(Test_multiline_logging);
   run_unit_test(DirectivesParser_test);
-  run_unit_test(Test_TempNewSymbol);
 #if INCLUDE_VM_STRUCTS
   run_unit_test(VMStructs_test);
 #endif
 #if INCLUDE_ALL_GCS
-  run_unit_test(TestOldFreeSpaceCalculation_test);
   run_unit_test(TestG1BiasedArray_test);
   run_unit_test(TestBufferingOopClosure_test);
-  run_unit_test(TestCodeCacheRemSet_test);
   if (UseG1GC) {
     run_unit_test(FreeRegionList_test);
-    run_unit_test(IHOP_test);
   }
-  run_unit_test(test_memset_with_concurrent_readers);
-  run_unit_test(TestPredictions_test);
   run_unit_test(WorkerDataArray_test);
   run_unit_test(ParallelCompact_test);
 #endif

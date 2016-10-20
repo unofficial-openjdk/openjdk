@@ -27,13 +27,14 @@
  * @summary Ensure the output for a minor GC with G1
  * includes the expected necessary messages.
  * @key gc
- * @library /testlibrary
+ * @requires vm.gc.G1
+ * @library /test/lib
  * @modules java.base/jdk.internal.misc
  *          java.management
  */
 
-import jdk.test.lib.ProcessTools;
-import jdk.test.lib.OutputAnalyzer;
+import jdk.test.lib.process.OutputAnalyzer;
+import jdk.test.lib.process.ProcessTools;
 
 public class TestGCLogMessages {
 
@@ -95,6 +96,8 @@ public class TestGCLogMessages {
         new LogMessageWithLevel("String Dedup Fixup", Level.INFO),
         new LogMessageWithLevel("Expand Heap After Collection", Level.INFO),
         // Free CSet
+        new LogMessageWithLevel("Free Collection Set", Level.INFO),
+        new LogMessageWithLevel("Free Collection Set Serial", Level.DEBUG),
         new LogMessageWithLevel("Young Free Collection Set", Level.DEBUG),
         new LogMessageWithLevel("Non-Young Free Collection Set", Level.DEBUG),
         // Humongous Eager Reclaim

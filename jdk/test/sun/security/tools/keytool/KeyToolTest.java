@@ -82,8 +82,9 @@ public class KeyToolTest {
 
     static final String NSS_P11_ARG =
             "-keystore NONE -storetype PKCS11 -providerName SunPKCS11-nss " +
-            "-providerClass sun.security.pkcs11.SunPKCS11 " +
+            "-addprovider SunPKCS11 " +
             "-providerArg p11-nss.txt ";
+    // Use -providerClass here, to confirm it still works for SunPKCS11.
     static final String NSS_SRC_P11_ARG =
             "-srckeystore NONE -srcstoretype PKCS11 " +
             "-srcproviderName SunPKCS11-nss " +
@@ -91,12 +92,12 @@ public class KeyToolTest {
             "-providerArg p11-nss.txt ";
     static final String NZZ_P11_ARG =
             "-keystore NONE -storetype PKCS11 -providerName SunPKCS11-nzz " +
-            "-providerClass sun.security.pkcs11.SunPKCS11 " +
+            "-addprovider SunPKCS11 " +
             "-providerArg p11-nzz.txt ";
     static final String NZZ_SRC_P11_ARG =
             "-srckeystore NONE -srcstoretype PKCS11 " +
             "-srcproviderName SunPKCS11-nzz " +
-            "-providerClass sun.security.pkcs11.SunPKCS11 " +
+            "-addprovider SunPKCS11 " +
             "-providerArg p11-nzz.txt ";
     static final String SUN_P11_ARG = "-keystore NONE -storetype PKCS11 ";
     static final String SUN_SRC_P11_ARG =
@@ -1715,9 +1716,9 @@ public class KeyToolTest {
         //  14. keytool -printcert -file cert
         testOK("", "-printcert -file cert -keystore x.jks -storetype JKS");
         remove("cert");
-        //  15. keytool -list -storepass password -provider sun.security.provider.Sun
+        //  15. keytool -list -storepass password -addprovider SUN
         testOK("", "-list -storepass password" +
-                " -provider sun.security.provider.Sun" +
+                " -addprovider SUN" +
                 " -keystore x.jks -storetype JKS");
 
         //Error tests
@@ -1760,7 +1761,7 @@ public class KeyToolTest {
         //PKCS#11 tests
 
         //   1. sccs edit cert8.db key3.db
-        //Runtime.getRuntime().exec("/usr/ccs/bin/sccs edit cert8.db key3.db");
+        //Runtime.getRuntime().exec("/usr/bin/sccs edit cert8.db key3.db");
         testOK("", p11Arg + ("-storepass test12 -genkey -alias genkey" +
                 " -dname cn=genkey -keysize 512 -keyalg rsa"));
         testOK("", p11Arg + "-storepass test12 -list");
@@ -1780,7 +1781,7 @@ public class KeyToolTest {
         testOK("", p11Arg + "-storepass test12 -list");
         assertTrue(out.indexOf("Your keystore contains 0 entries") != -1);
         //(check for empty database listing)
-        //Runtime.getRuntime().exec("/usr/ccs/bin/sccs unedit cert8.db key3.db");
+        //Runtime.getRuntime().exec("/usr/bin/sccs unedit cert8.db key3.db");
         remove("genkey.cert");
         remove("genkey.certreq");
         //  12. sccs unedit cert8.db key3.db

@@ -757,10 +757,10 @@ public:
                            Register last_java_pc,
                            Register scratch);
 
-  void reset_last_Java_frame(Register thread, bool clearfp, bool clear_pc);
+  void reset_last_Java_frame(Register thread);
 
-  // thread in the default location (r15_thread on 64bit)
-  void reset_last_Java_frame(bool clear_fp, bool clear_pc);
+  // thread in the default location (rthread)
+  void reset_last_Java_frame(bool clear_fp);
 
   // Stores
   void store_check(Register obj);                // store check for obj - register is destroyed afterwards
@@ -995,10 +995,11 @@ public:
   }
 
   // A generic CAS; success or failure is in the EQ flag.
+  // Clobbers rscratch1
   void cmpxchg(Register addr, Register expected, Register new_val,
                enum operand_size size,
-               bool acquire, bool release,
-               Register tmp = rscratch1);
+               bool acquire, bool release, bool weak,
+               Register result);
 
   // Calls
 
@@ -1198,7 +1199,8 @@ public:
 
   void string_compare(Register str1, Register str2,
                       Register cnt1, Register cnt2, Register result,
-                      Register tmp1);
+                      Register tmp1,
+                      FloatRegister vtmp, FloatRegister vtmpZ, int ae);
 
   void arrays_equals(Register a1, Register a2,
                      Register result, Register cnt1,

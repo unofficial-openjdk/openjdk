@@ -37,9 +37,9 @@ import java.util.stream.Stream;
 import jdk.tools.jlink.internal.Archive;
 import jdk.tools.jlink.internal.ImageFileCreator;
 import jdk.tools.jlink.internal.ImagePluginStack;
-import jdk.tools.jlink.plugin.ExecutableImage;
+import jdk.tools.jlink.internal.ExecutableImage;
 import jdk.tools.jlink.builder.ImageBuilder;
-import jdk.tools.jlink.plugin.ModulePool;
+import jdk.tools.jlink.plugin.ResourcePool;
 
 
 /*
@@ -215,12 +215,12 @@ public class ImageFileCreatorTest {
             }
 
             @Override
-            public void storeFiles(ModulePool content) {
+            public void storeFiles(ResourcePool content) {
             }
         };
 
         ImagePluginStack stack = new ImagePluginStack(noopBuilder, Collections.emptyList(),
-                null, Collections.emptyList());
+                null, false);
 
         ImageFileCreator.create(archives, ByteOrder.nativeOrder(), stack);
     }

@@ -1370,8 +1370,13 @@ public final class Math {
      * result is positive zero.
      * <li>If the argument is infinite, the result is positive infinity.
      * <li>If the argument is NaN, the result is NaN.</ul>
-     * In other words, the result is the same as the value of the expression:
-     * <p>{@code Float.intBitsToFloat(0x7fffffff & Float.floatToIntBits(a))}
+     *
+     * @apiNote As implied by the above, one valid implementation of
+     * this method is given by the expression below which computes a
+     * {@code float} with the same exponent and significand as the
+     * argument but with a guaranteed zero sign bit indicating a
+     * positive value:<br>
+     * {@code Float.intBitsToFloat(0x7fffffff & Float.floatToRawIntBits(a))}
      *
      * @param   a   the argument whose absolute value is to be determined
      * @return  the absolute value of the argument.
@@ -1389,8 +1394,13 @@ public final class Math {
      * is positive zero.
      * <li>If the argument is infinite, the result is positive infinity.
      * <li>If the argument is NaN, the result is NaN.</ul>
-     * In other words, the result is the same as the value of the expression:
-     * <p>{@code Double.longBitsToDouble((Double.doubleToLongBits(a)<<1)>>>1)}
+     *
+     * @apiNote As implied by the above, one valid implementation of
+     * this method is given by the expression below which computes a
+     * {@code double} with the same exponent and significand as the
+     * argument but with a guaranteed zero sign bit indicating a
+     * positive value:<br>
+     * {@code Double.longBitsToDouble((Double.doubleToRawLongBits(a)<<1)>>>1)}
      *
      * @param   a   the argument whose absolute value is to be determined
      * @return  the absolute value of the argument.
@@ -1613,8 +1623,10 @@ public final class Math {
      * @return (<i>a</i>&nbsp;&times;&nbsp;<i>b</i>&nbsp;+&nbsp;<i>c</i>)
      * computed, as if with unlimited range and precision, and rounded
      * once to the nearest {@code double} value
+     *
+     * @since 9
      */
-    // @HotSpotIntrinsicCandidate
+    @HotSpotIntrinsicCandidate
     public static double fma(double a, double b, double c) {
         /*
          * Infinity and NaN arithmetic is not quite the same with two
@@ -1728,8 +1740,10 @@ public final class Math {
      * @return (<i>a</i>&nbsp;&times;&nbsp;<i>b</i>&nbsp;+&nbsp;<i>c</i>)
      * computed, as if with unlimited range and precision, and rounded
      * once to the nearest {@code float} value
+     *
+     * @since 9
      */
-    // @HotSpotIntrinsicCandidate
+    @HotSpotIntrinsicCandidate
     public static float fma(float a, float b, float c) {
         /*
          *  Since the double format has more than twice the precision

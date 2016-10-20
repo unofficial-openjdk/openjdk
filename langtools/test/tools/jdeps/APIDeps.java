@@ -60,13 +60,13 @@ public class APIDeps {
         Path testsrc = Paths.get(System.getProperty("test.src"));
         List<String> options = new ArrayList<>();
 
-        // add -XaddExports
+        // add --add-exports
         String testModules = System.getProperty("test.modules", "");
         List<String> addExports = new ArrayList<>();
         for (String s : testModules.split("\\s+")) {
             if (s.isEmpty()) continue;
             if (s.indexOf('/') != -1)
-                addExports.add("-XaddExports:" + s.trim() + "=ALL-UNNAMED");
+                addExports.add("--add-exports=" + s.trim() + "=ALL-UNNAMED");
         }
         options.addAll(addExports);
 
@@ -135,7 +135,7 @@ public class APIDeps {
                            "java.util.Set",
                            "c.C", "d.D", "c.I", "e.E", "m.Bar"},
              new String[] {"compact1", testDirBasename, mDir.getName()},
-             new String[] {"-classpath", testDir.getPath(), "-verbose", "-P", "-apionly"});
+             new String[] {"-classpath", testDir.getPath(), "-verbose", "-P", "--api-only"});
         return errors;
     }
 

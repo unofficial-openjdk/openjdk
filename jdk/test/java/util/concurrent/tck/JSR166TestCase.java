@@ -40,6 +40,7 @@
  * @build *
  * @run junit/othervm/timeout=1000 -Djsr166.testImplementationDetails=true JSR166TestCase
  * @run junit/othervm/timeout=1000 -Djava.util.concurrent.ForkJoinPool.common.parallelism=0 -Djsr166.testImplementationDetails=true JSR166TestCase
+ * @run junit/othervm/timeout=1000 -Djava.util.concurrent.ForkJoinPool.common.parallelism=1 -Djava.util.secureRandomSeed=true JSR166TestCase
  */
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -67,6 +68,7 @@ import java.security.ProtectionDomain;
 import java.security.SecurityPermission;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -88,6 +90,7 @@ import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -548,6 +551,13 @@ public class JSR166TestCase extends TestCase {
         // Java9+ test classes
         if (atLeastJava9()) {
             String[] java9TestClassNames = {
+                "AtomicBoolean9Test",
+                "AtomicInteger9Test",
+                "AtomicIntegerArray9Test",
+                "AtomicLong9Test",
+                "AtomicLongArray9Test",
+                "AtomicReference9Test",
+                "AtomicReferenceArray9Test",
                 "ExecutorCompletionService9Test",
             };
             addNamedTestClasses(suite, java9TestClassNames);
@@ -975,7 +985,11 @@ public class JSR166TestCase extends TestCase {
         }
     }
 
-    /** Like Runnable, but with the freedom to throw anything */
+    /**
+     * Like Runnable, but with the freedom to throw anything.
+     * junit folks had the same idea:
+     * http://junit.org/junit5/docs/snapshot/api/org/junit/gen5/api/Executable.html
+     */
     interface Action { public void run() throws Throwable; }
 
     /**
@@ -1006,23 +1020,37 @@ public class JSR166TestCase extends TestCase {
      * Uninteresting threads are filtered out.
      */
     static void dumpTestThreads() {
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            try {
+                System.setSecurityManager(null);
+            } catch (SecurityException giveUp) {
+                return;
+            }
+        }
+
         ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
         System.err.println("------ stacktrace dump start ------");
         for (ThreadInfo info : threadMXBean.dumpAllThreads(true, true)) {
-            String name = info.getThreadName();
+            final String name = info.getThreadName();
+            String lockName;
             if ("Signal Dispatcher".equals(name))
                 continue;
             if ("Reference Handler".equals(name)
-                && info.getLockName().startsWith("java.lang.ref.Reference$Lock"))
+                && (lockName = info.getLockName()) != null
+                && lockName.startsWith("java.lang.ref.Reference$Lock"))
                 continue;
             if ("Finalizer".equals(name)
-                && info.getLockName().startsWith("java.lang.ref.ReferenceQueue$Lock"))
+                && (lockName = info.getLockName()) != null
+                && lockName.startsWith("java.lang.ref.ReferenceQueue$Lock"))
                 continue;
             if ("checkForWedgedTest".equals(name))
                 continue;
             System.err.print(info);
         }
         System.err.println("------ stacktrace dump end ------");
+
+        if (sm != null) System.setSecurityManager(sm);
     }
 
     /**
@@ -1239,7 +1267,7 @@ public class JSR166TestCase extends TestCase {
      * Sleeps until the given time has elapsed.
      * Throws AssertionFailedError if interrupted.
      */
-    void sleep(long millis) {
+    static void sleep(long millis) {
         try {
             delay(millis);
         } catch (InterruptedException fail) {
@@ -1255,7 +1283,7 @@ public class JSR166TestCase extends TestCase {
      * thread to enter a wait state: BLOCKED, WAITING, or TIMED_WAITING.
      */
     void waitForThreadToEnterWaitState(Thread thread, long timeoutMillis) {
-        long startTime = System.nanoTime();
+        long startTime = 0L;
         for (;;) {
             Thread.State s = thread.getState();
             if (s == Thread.State.BLOCKED ||
@@ -1264,6 +1292,8 @@ public class JSR166TestCase extends TestCase {
                 return;
             else if (s == Thread.State.TERMINATED)
                 fail("Unexpected thread termination");
+            else if (startTime == 0L)
+                startTime = System.nanoTime();
             else if (millisElapsedSince(startTime) > timeoutMillis) {
                 threadAssertTrue(thread.isAlive());
                 return;
@@ -1756,7 +1786,7 @@ public class JSR166TestCase extends TestCase {
      * A CyclicBarrier that uses timed await and fails with
      * AssertionFailedErrors instead of throwing checked exceptions.
      */
-    public class CheckedBarrier extends CyclicBarrier {
+    public static class CheckedBarrier extends CyclicBarrier {
         public CheckedBarrier(int parties) { super(parties); }
 
         public int await() {
@@ -1877,4 +1907,7 @@ public class JSR166TestCase extends TestCase {
                                1000L, MILLISECONDS,
                                new SynchronousQueue<Runnable>());
 
+    static <T> void shuffle(T[] array) {
+        Collections.shuffle(Arrays.asList(array), ThreadLocalRandom.current());
+    }
 }

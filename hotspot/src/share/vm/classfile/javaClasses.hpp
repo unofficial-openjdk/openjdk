@@ -219,6 +219,7 @@ class java_lang_Class : AllStatic {
   static void set_class_loader(oop java_class, oop class_loader);
   static void set_component_mirror(oop java_class, oop comp_mirror);
   static void initialize_mirror_fields(KlassHandle k, Handle mirror, Handle protection_domain, TRAPS);
+  static void set_mirror_module_field(KlassHandle K, Handle mirror, Handle module, TRAPS);
  public:
   static void compute_offsets();
 
@@ -274,7 +275,6 @@ class java_lang_Class : AllStatic {
   static void set_oop_size(oop java_class, int size);
   static int static_oop_field_count(oop java_class);
   static void set_static_oop_field_count(oop java_class, int size);
-
 
   static GrowableArray<Klass*>* fixup_mirror_list() {
     return _fixup_mirror_list;
@@ -413,7 +413,6 @@ class java_lang_ThreadGroup : AllStatic {
   static int _maxPriority_offset;
   static int _destroyed_offset;
   static int _daemon_offset;
-  static int _vmAllowSuspension_offset;
   static int _nthreads_offset;
   static int _ngroups_offset;
 
@@ -439,8 +438,6 @@ class java_lang_ThreadGroup : AllStatic {
   static bool is_destroyed(oop java_thread_group);
   // Daemon
   static bool is_daemon(oop java_thread_group);
-  // vmAllowSuspension
-  static bool is_vmAllowSuspension(oop java_thread_group);
   // Debugging
   friend class JavaClasses;
 };
@@ -781,9 +778,6 @@ class java_lang_reflect_Module {
     static Handle create(Handle loader, Handle module_name, TRAPS);
 
     // Testers
-    static bool is_subclass(Klass* klass) {
-      return klass->is_subclass_of(SystemDictionary::reflect_Module_klass());
-    }
     static bool is_instance(oop obj);
 
     // Accessors
@@ -893,17 +887,11 @@ class java_lang_ref_Reference: AllStatic {
    hc_next_offset       = 2,
    hc_discovered_offset = 3  // Is not last, see SoftRefs.
   };
-  enum {
-   hc_static_lock_offset    = 0,
-   hc_static_pending_offset = 1
-  };
 
   static int referent_offset;
   static int queue_offset;
   static int next_offset;
   static int discovered_offset;
-  static int static_lock_offset;
-  static int static_pending_offset;
   static int number_of_fake_oop_fields;
 
   // Accessors
@@ -919,13 +907,6 @@ class java_lang_ref_Reference: AllStatic {
   static inline void set_discovered(oop ref, oop value);
   static inline void set_discovered_raw(oop ref, oop value);
   static inline HeapWord* discovered_addr(oop ref);
-
-  // Accessors for statics
-  static oop  pending_list_lock();
-  static oop  pending_list();
-
-  static HeapWord*  pending_list_lock_addr();
-  static HeapWord*  pending_list_addr();
 };
 
 

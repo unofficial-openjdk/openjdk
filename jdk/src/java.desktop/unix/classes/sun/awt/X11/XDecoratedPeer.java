@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,9 @@ import java.awt.*;
 import java.awt.event.ComponentEvent;
 import java.awt.event.InvocationEvent;
 import java.awt.event.WindowEvent;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import sun.awt.IconInfo;
 import sun.util.logging.PlatformLogger;
@@ -52,6 +55,8 @@ abstract class XDecoratedPeer extends XWindowPeer {
     XContentWindow content;
     Insets currentInsets;
     XFocusProxyWindow focusProxy;
+    static final Map<Class<?>,Insets> lastKnownInsets =
+                                   Collections.synchronizedMap(new HashMap<>());
 
     XDecoratedPeer(Window target) {
         super(target);
@@ -74,6 +79,9 @@ abstract class XDecoratedPeer extends XWindowPeer {
         winAttr.initialFocus = true;
 
         currentInsets = new Insets(0,0,0,0);
+        if (XWM.getWMID() == XWM.UNITY_COMPIZ_WM) {
+            currentInsets = lastKnownInsets.get(getClass());
+        }
         applyGuessedInsets();
 
         Rectangle bounds = (Rectangle)params.get(BOUNDS);
@@ -258,6 +266,12 @@ abstract class XDecoratedPeer extends XWindowPeer {
         return new Insets(i.top, i.left, i.bottom, i.right);
     }
 
+    private Insets copyAndScaleDown(Insets i) {
+        return new Insets(scaleDown(i.top), scaleDown(i.left),
+                          scaleDown(i.bottom), scaleDown(i.right));
+    }
+
+
     // insets which we get from WM (e.g from _NET_FRAME_EXTENTS)
     private Insets wm_set_insets;
 
@@ -281,7 +295,7 @@ abstract class XDecoratedPeer extends XWindowPeer {
         }
 
         if (wm_set_insets != null) {
-            wm_set_insets = copy(wm_set_insets);
+            wm_set_insets = copyAndScaleDown(wm_set_insets);
         }
         return wm_set_insets;
     }
@@ -294,10 +308,61 @@ abstract class XDecoratedPeer extends XWindowPeer {
         super.handlePropertyNotify(xev);
 
         XPropertyEvent ev = xev.get_xproperty();
+        if( !insets_corrected && isReparented() &&
+                                         XWM.getWMID() == XWM.UNITY_COMPIZ_WM) {
+            int state = XWM.getWM().getState(this);
+            if ((state & Frame.MAXIMIZED_BOTH) ==  Frame.MAXIMIZED_BOTH) {
+                // Stop ignoring ConfigureNotify because no extents will be sent
+                // by WM for initially maximized decorated window.
+                // Re-request window bounds to ensure actual dimensions and
+                // notify the target with the initial size.
+                insets_corrected = true;
+                XlibWrapper.XConfigureWindow(XToolkit.getDisplay(),
+                                                             getWindow(), 0, 0);
+            }
+        }
         if (ev.get_atom() == XWM.XA_KDE_NET_WM_FRAME_STRUT.getAtom()
             || ev.get_atom() == XWM.XA_NET_FRAME_EXTENTS.getAtom())
         {
-            getWMSetInsets(XAtom.get(ev.get_atom()));
+            if (XWM.getWMID() != XWM.UNITY_COMPIZ_WM) {
+                getWMSetInsets(XAtom.get(ev.get_atom()));
+            } else {
+                if(!isReparented()) {
+                    return;
+                }
+                wm_set_insets = null;
+                Insets in = getWMSetInsets(XAtom.get(ev.get_atom()));
+                if (isNull(in)) {
+                    return;
+                }
+                if (!isEmbedded() && !isTargetUndecorated()) {
+                    lastKnownInsets.put(getClass(), in);
+                }
+                if (!in.equals(dimensions.getInsets())) {
+                    if (insets_corrected || isMaximized()) {
+                        currentInsets = in;
+                        insets_corrected = true;
+                        // insets were changed by WM. To handle this situation
+                        // re-request window bounds because the current
+                        // dimensions may be not actual as well.
+                        XlibWrapper.XConfigureWindow(XToolkit.getDisplay(),
+                                                             getWindow(), 0, 0);
+                    } else {
+                        // recalculate dimensions when window is just created
+                        // and the initially guessed insets were wrong
+                        handleCorrectInsets(in);
+                    }
+                } else if (!dimensions.isClientSizeSet()) {
+                    insets_corrected = true;
+                    // initial insets were guessed correctly. Re-request
+                    // frame bounds because they may be changed by WM if the
+                    // initial window position overlapped desktop's toolbars.
+                    // This should initiate the final ConfigureNotify upon which
+                    // the target will be notified with the final size.
+                    XlibWrapper.XConfigureWindow(XToolkit.getDisplay(),
+                                                             getWindow(), 0, 0);
+                }
+            }
         }
     }
 
@@ -342,6 +407,9 @@ abstract class XDecoratedPeer extends XWindowPeer {
             } else { /* reparented to WM frame, figure out our insets */
                 setReparented(true);
                 insets_corrected = false;
+                if (XWM.getWMID() == XWM.UNITY_COMPIZ_WM) {
+                    return;
+                }
 
                 // Check if we have insets provided by the WM
                 Insets correctWM = getWMSetInsets(null);
@@ -360,6 +428,9 @@ abstract class XDecoratedPeer extends XWindowPeer {
                     }
                 } else {
                     correctWM = XWM.getWM().getInsets(this, xe.get_window(), xe.get_parent());
+                    if (correctWM != null) {
+                        correctWM = copyAndScaleDown(correctWM);
+                    }
 
                     if (insLog.isLoggable(PlatformLogger.Level.FINER)) {
                         if (correctWM != null) {
@@ -444,6 +515,9 @@ abstract class XDecoratedPeer extends XWindowPeer {
                 Insets res = getWMSetInsets(null);
                 if (res == null) {
                     res = XWM.getWM().guessInsets(this);
+                    if (res != null) {
+                        res = copyAndScaleDown(res);
+                    }
                 }
                 return res;
             }
@@ -664,6 +738,9 @@ abstract class XDecoratedPeer extends XWindowPeer {
 
     boolean no_reparent_artifacts = false;
     public void handleConfigureNotifyEvent(XEvent xev) {
+        if (XWM.getWMID() == XWM.UNITY_COMPIZ_WM && !insets_corrected) {
+            return;
+        }
         assert (SunToolkit.isAWTLockHeldByCurrentThread());
         XConfigureEvent xe = xev.get_xconfigure();
         if (insLog.isLoggable(PlatformLogger.Level.FINE)) {
@@ -727,7 +804,7 @@ abstract class XDecoratedPeer extends XWindowPeer {
                 }
             }
             if (correctWM != null) {
-                handleCorrectInsets(correctWM);
+                handleCorrectInsets(copyAndScaleDown(correctWM));
             } else {
                 //Only one attempt to correct insets is made (to lower risk)
                 //if insets are still not available we simply set the flag
@@ -1010,7 +1087,22 @@ abstract class XDecoratedPeer extends XWindowPeer {
         if (focusLog.isLoggable(PlatformLogger.Level.FINE)) {
             focusLog.fine("WM_TAKE_FOCUS on {0}", this);
         }
-        requestWindowFocus(cl.get_data(1), true);
+
+        if (XWM.getWMID() == XWM.UNITY_COMPIZ_WM) {
+            // JDK-8159460
+            Window focusedWindow = XKeyboardFocusManagerPeer.getInstance()
+                    .getCurrentFocusedWindow();
+            Window activeWindow = XWindowPeer.getDecoratedOwner(focusedWindow);
+            if (activeWindow != target) {
+                requestWindowFocus(cl.get_data(1), true);
+            } else {
+                WindowEvent we = new WindowEvent(focusedWindow,
+                        WindowEvent.WINDOW_GAINED_FOCUS);
+                sendEvent(we);
+            }
+        } else {
+            requestWindowFocus(cl.get_data(1), true);
+        }
     }
 
     /**

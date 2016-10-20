@@ -38,6 +38,7 @@ import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.*;
 import com.sun.tools.javac.jvm.Code.*;
 import com.sun.tools.javac.jvm.Items.*;
+import com.sun.tools.javac.main.Option;
 import com.sun.tools.javac.tree.EndPosTable;
 import com.sun.tools.javac.tree.JCTree.*;
 
@@ -124,7 +125,7 @@ public class Gen extends JCTree.Visitor {
             ? options.isSet(G)
             : options.isSet(G_CUSTOM, "vars");
         genCrt = options.isSet(XJCOV);
-        debugCode = options.isSet("debugcode");
+        debugCode = options.isSet("debug.code");
         allowBetterNullChecks = target.hasObjects();
         pool = new Pool(types);
 
@@ -1231,7 +1232,7 @@ public class Gen extends JCTree.Visitor {
             Chain exit = switchEnv.info.exit;
             if  (exit != null) {
                 code.resolve(exit);
-                exit.state.defined.excludeFrom(code.nextreg);
+                exit.state.defined.excludeFrom(limit);
             }
 
             // If we have not set the default offset, we do so now.
@@ -1794,7 +1795,7 @@ public class Gen extends JCTree.Visitor {
     }
 
     public void visitAssignop(JCAssignOp tree) {
-        OperatorSymbol operator = (OperatorSymbol) tree.operator;
+        OperatorSymbol operator = tree.operator;
         Item l;
         if (operator.opcode == string_add) {
             l = concat.makeConcat(tree);
@@ -1826,7 +1827,7 @@ public class Gen extends JCTree.Visitor {
     }
 
     public void visitUnary(JCUnary tree) {
-        OperatorSymbol operator = (OperatorSymbol)tree.operator;
+        OperatorSymbol operator = tree.operator;
         if (tree.hasTag(NOT)) {
             CondItem od = genCond(tree.arg, false);
             result = od.negate();
@@ -1908,7 +1909,7 @@ public class Gen extends JCTree.Visitor {
     }
 
     public void visitBinary(JCBinary tree) {
-        OperatorSymbol operator = (OperatorSymbol)tree.operator;
+        OperatorSymbol operator = tree.operator;
         if (operator.opcode == string_add) {
             result = concat.makeConcat(tree);
         } else if (tree.hasTag(AND)) {

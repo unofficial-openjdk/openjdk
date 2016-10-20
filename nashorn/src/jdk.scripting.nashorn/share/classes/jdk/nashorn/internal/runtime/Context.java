@@ -56,6 +56,8 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.Module;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.CodeSigner;
@@ -81,6 +83,8 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.script.ScriptEngine;
 import jdk.dynalink.DynamicLinker;
 import jdk.internal.org.objectweb.asm.ClassReader;
@@ -614,18 +618,37 @@ public final class Context {
         }
         this.errors    = errors;
 
+        // if user passed --module-path, we create a module class loader with
+        // passed appLoader as the parent.
+        final String modulePath = env._module_path;
+        ClassLoader appCl = null;
+        if (!env._compile_only && modulePath != null && !modulePath.isEmpty()) {
+            // make sure that caller can create a class loader.
+            if (sm != null) {
+                sm.checkCreateClassLoader();
+            }
+            appCl = AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
+                @Override
+                public ClassLoader run() {
+                    return createModuleLoader(appLoader, modulePath, env._add_modules);
+                }
+            });
+        } else {
+            appCl = appLoader;
+        }
+
         // if user passed -classpath option, make a URLClassLoader with that and
-        // the app loader as the parent.
-        final String classPath = options.getString("classpath");
+        // the app loader or module app loader as the parent.
+        final String classPath = env._classpath;
         if (!env._compile_only && classPath != null && !classPath.isEmpty()) {
             // make sure that caller can create a class loader.
             if (sm != null) {
                 sm.checkCreateClassLoader();
             }
-            this.appLoader = NashornLoader.createClassLoader(classPath, appLoader);
-        } else {
-            this.appLoader = appLoader;
+            appCl = NashornLoader.createClassLoader(classPath, appCl);
         }
+
+        this.appLoader = appCl;
         this.dynamicLinker = Bootstrap.createDynamicLinker(this.appLoader, env._unstable_relink_threshold);
 
         final int cacheSize = env._class_cache_size;
@@ -1339,7 +1362,7 @@ public final class Context {
 
         final ModuleFinder finder = new ModuleFinder() {
             @Override
-            public Optional<ModuleReference> find(String name) {
+            public Optional<ModuleReference> find(final String name) {
                 if (name.equals(mn)) {
                     return Optional.of(mref);
                 } else {
@@ -1387,7 +1410,7 @@ public final class Context {
         ClassLoader loader = null;
         try {
             loader = clazz.getClassLoader();
-        } catch (SecurityException ignored) {
+        } catch (final SecurityException ignored) {
             // This could fail because of anonymous classes being used.
             // Accessing loader of anonymous class fails (for extension
             // loader class too?). In any case, for us fetching Context
@@ -1502,7 +1525,7 @@ public final class Context {
         final URL          url    = source.getURL();
         final CodeSource   cs     = new CodeSource(url, (CodeSigner[])null);
         final CodeInstaller installer;
-        if (!env.useAnonymousClasses(isEval) || env._persistent_cache || !env._lazy_compilation) {
+        if (!env.useAnonymousClasses(source.getLength()) || env._persistent_cache || !env._lazy_compilation) {
             // Persistent code cache and eager compilation preclude use of VM anonymous classes
             final ScriptLoader loader = env._loader_per_compile ? createNewLoader() : scriptLoader;
             installer = new NamedContextCodeInstaller(this, cs, loader);
@@ -1749,5 +1772,38 @@ public final class Context {
      */
     public SwitchPoint getBuiltinSwitchPoint(final String name) {
         return builtinSwitchPoints.get(name);
+    }
+
+    private static ClassLoader createModuleLoader(final ClassLoader cl,
+            final String modulePath, final String addModules) {
+        if (addModules == null) {
+            throw new IllegalArgumentException("--module-path specified with no --add-modules");
+        }
+
+        final Path[] paths = Stream.of(modulePath.split(File.pathSeparator)).
+            map(s -> Paths.get(s)).
+            toArray(sz -> new Path[sz]);
+        final ModuleFinder mf = ModuleFinder.of(paths);
+        final Set<ModuleReference> mrefs = mf.findAll();
+        if (mrefs.isEmpty()) {
+            throw new RuntimeException("No modules in script --module-path: " + modulePath);
+        }
+
+        final Set<String> rootMods;
+        if (addModules.equals("ALL-MODULE-PATH")) {
+            rootMods = mrefs.stream().
+                map(mr->mr.descriptor().name()).
+                collect(Collectors.toSet());
+        } else {
+            rootMods = Stream.of(addModules.split(",")).
+                map(String::trim).
+                collect(Collectors.toSet());
+        }
+
+        final Layer boot = Layer.boot();
+        final Configuration conf = boot.configuration().
+            resolveRequires(mf, ModuleFinder.of(), rootMods);
+        final String firstMod = rootMods.iterator().next();
+        return boot.defineModulesWithOneLoader(conf, cl).findLoader(firstMod);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,18 +38,20 @@ import javax.xml.catalog.CatalogException;
 import javax.xml.catalog.CatalogFeatures;
 import javax.xml.catalog.CatalogFeatures.Feature;
 import javax.xml.catalog.CatalogResolver;
-import javax.xml.catalog.CatalogUriResolver;
 
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 /*
  * @test
  * @bug 8077931
+ * @library /javax/xml/jaxp/libs
+ * @run testng/othervm -DrunSecMngr=true catalog.ResolveFeatureTest
+ * @run testng/othervm catalog.ResolveFeatureTest
  * @summary This case tests how does resolve feature affect the catalog
  *          resolution.
- * @compile ../../libs/catalog/CatalogTestUtils.java
- * @compile ../../libs/catalog/ResolutionChecker.java
  */
+@Listeners({jaxp.library.FilePolicy.class})
 public class ResolveFeatureTest {
 
     /*
@@ -90,7 +92,7 @@ public class ResolveFeatureTest {
      */
     @Test
     public void testContinueResolutionOnUriResolver() {
-        CatalogUriResolver resolver = createUriResolver(RESOLVE_CONTINUE);
+        CatalogResolver resolver = createUriResolver(RESOLVE_CONTINUE);
         resolver.resolve("http://remote/dtd/bob/docBobDummy.dtd", null);
         checkUriResolution(resolver, "http://remote/dtd/bob/docBob.dtd",
                 "http://local/base/dtd/docBobURI.dtd");
@@ -120,7 +122,7 @@ public class ResolveFeatureTest {
         return catalogResolver(createFeature(resolve), CATALOG_SYSTEM);
     }
 
-    private CatalogUriResolver createUriResolver(String resolve) {
+    private CatalogResolver createUriResolver(String resolve) {
         return catalogUriResolver(createFeature(resolve), CATALOG_URI);
     }
 

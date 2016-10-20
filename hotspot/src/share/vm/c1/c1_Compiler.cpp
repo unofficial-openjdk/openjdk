@@ -162,6 +162,8 @@ bool Compiler::is_intrinsic_supported(const methodHandle& method) {
   case vmIntrinsics::_dlog10:
   case vmIntrinsics::_dexp:
   case vmIntrinsics::_dpow:
+  case vmIntrinsics::_fmaD:
+  case vmIntrinsics::_fmaF:
   case vmIntrinsics::_getObject:
   case vmIntrinsics::_getBoolean:
   case vmIntrinsics::_getByte:
@@ -221,6 +223,9 @@ bool Compiler::is_intrinsic_supported(const methodHandle& method) {
   case vmIntrinsics::_putCharStringU:
 #ifdef TRACE_HAVE_INTRINSICS
   case vmIntrinsics::_counterTime:
+#if defined(_LP64) || !defined(TRACE_ID_CLASS_SHIFT)
+  case vmIntrinsics::_getClassId:
+#endif
 #endif
     break;
   default:

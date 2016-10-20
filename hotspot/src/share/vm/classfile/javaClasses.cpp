@@ -773,6 +773,41 @@ void java_lang_Class::initialize_mirror_fields(KlassHandle k,
   InstanceKlass::cast(k())->do_local_static_fields(&initialize_static_field, mirror, CHECK);
 }
 
+// Set the java.lang.reflect.Module module field in the java_lang_Class mirror
+void java_lang_Class::set_mirror_module_field(KlassHandle k, Handle mirror, Handle module, TRAPS) {
+  if (module.is_null()) {
+    // During startup, the module may be NULL only if java.base has not been defined yet.
+    // Put the class on the fixup_module_list to patch later when the java.lang.reflect.Module
+    // for java.base is known.
+    assert(!Universe::is_module_initialized(), "Incorrect java.lang.reflect.Module pre module system initialization");
+    MutexLocker m1(Module_lock, THREAD);
+    // Keep list of classes needing java.base module fixup
+    if (!ModuleEntryTable::javabase_defined()) {
+      if (fixup_module_field_list() == NULL) {
+        GrowableArray<Klass*>* list =
+          new (ResourceObj::C_HEAP, mtModule) GrowableArray<Klass*>(500, true);
+        set_fixup_module_field_list(list);
+      }
+      k->class_loader_data()->inc_keep_alive();
+      fixup_module_field_list()->push(k());
+    } else {
+      // java.base was defined at some point between calling create_mirror()
+      // and obtaining the Module_lock, patch this particular class with java.base.
+      ModuleEntry *javabase_entry = ModuleEntryTable::javabase_moduleEntry();
+      assert(javabase_entry != NULL && javabase_entry->module() != NULL,
+             "Setting class module field, java.base should be defined");
+      Handle javabase_handle(THREAD, JNIHandles::resolve(javabase_entry->module()));
+      set_module(mirror(), javabase_handle());
+    }
+  } else {
+    assert(Universe::is_module_initialized() ||
+           (ModuleEntryTable::javabase_defined() &&
+            (module() == JNIHandles::resolve(ModuleEntryTable::javabase_moduleEntry()->module()))),
+           "Incorrect java.lang.reflect.Module specification while creating mirror");
+    set_module(mirror(), module());
+  }
+}
+
 void java_lang_Class::create_mirror(KlassHandle k, Handle class_loader,
                                     Handle module, Handle protection_domain, TRAPS) {
   assert(k->java_mirror() == NULL, "should only assign mirror once");
@@ -835,24 +870,12 @@ void java_lang_Class::create_mirror(KlassHandle k, Handle class_loader,
     set_class_loader(mirror(), class_loader());
 
     // set the module field in the java_lang_Class instance
-    // This may be null during bootstrap but will get fixed up later on.
-    set_module(mirror(), module());
+    set_mirror_module_field(k, mirror, module, THREAD);
 
     // Setup indirection from klass->mirror last
     // after any exceptions can happen during allocations.
     if (!k.is_null()) {
       k->set_java_mirror(mirror());
-    }
-
-    // Keep list of classes needing java.base module fixup.
-    if (!ModuleEntryTable::javabase_defined()) {
-      if (fixup_module_field_list() == NULL) {
-        GrowableArray<Klass*>* list =
-          new (ResourceObj::C_HEAP, mtModule) GrowableArray<Klass*>(500, true);
-        set_fixup_module_field_list(list);
-      }
-      k->class_loader_data()->inc_keep_alive();
-      fixup_module_field_list()->push(k());
     }
   } else {
     if (fixup_mirror_list() == NULL) {
@@ -871,12 +894,17 @@ void java_lang_Class::fixup_module_field(KlassHandle k, Handle module) {
 
 int  java_lang_Class::oop_size(oop java_class) {
   assert(_oop_size_offset != 0, "must be set");
-  return java_class->int_field(_oop_size_offset);
+  int size = java_class->int_field(_oop_size_offset);
+  assert(size > 0, "Oop size must be greater than zero, not %d", size);
+  return size;
 }
+
 void java_lang_Class::set_oop_size(oop java_class, int size) {
   assert(_oop_size_offset != 0, "must be set");
+  assert(size > 0, "Oop size must be greater than zero, not %d", size);
   java_class->int_field_put(_oop_size_offset, size);
 }
+
 int  java_lang_Class::static_oop_field_count(oop java_class) {
   assert(_static_oop_field_count_offset != 0, "must be set");
   return java_class->int_field(_static_oop_field_count_offset);
@@ -1377,7 +1405,6 @@ int java_lang_ThreadGroup::_groups_offset = 0;
 int java_lang_ThreadGroup::_maxPriority_offset = 0;
 int java_lang_ThreadGroup::_destroyed_offset = 0;
 int java_lang_ThreadGroup::_daemon_offset = 0;
-int java_lang_ThreadGroup::_vmAllowSuspension_offset = 0;
 int java_lang_ThreadGroup::_nthreads_offset = 0;
 int java_lang_ThreadGroup::_ngroups_offset = 0;
 
@@ -1435,11 +1462,6 @@ bool java_lang_ThreadGroup::is_daemon(oop java_thread_group) {
   return java_thread_group->bool_field(_daemon_offset) != 0;
 }
 
-bool java_lang_ThreadGroup::is_vmAllowSuspension(oop java_thread_group) {
-  assert(java_thread_group->is_oop(), "thread group must be oop");
-  return java_thread_group->bool_field(_vmAllowSuspension_offset) != 0;
-}
-
 void java_lang_ThreadGroup::compute_offsets() {
   assert(_parent_offset == 0, "offsets should be initialized only once");
 
@@ -1452,7 +1474,6 @@ void java_lang_ThreadGroup::compute_offsets() {
   compute_offset(_maxPriority_offset, k, vmSymbols::maxPriority_name(), vmSymbols::int_signature());
   compute_offset(_destroyed_offset,   k, vmSymbols::destroyed_name(),   vmSymbols::bool_signature());
   compute_offset(_daemon_offset,      k, vmSymbols::daemon_name(),      vmSymbols::bool_signature());
-  compute_offset(_vmAllowSuspension_offset, k, vmSymbols::vmAllowSuspension_name(), vmSymbols::bool_signature());
   compute_offset(_nthreads_offset,    k, vmSymbols::nthreads_name(),    vmSymbols::int_signature());
   compute_offset(_ngroups_offset,     k, vmSymbols::ngroups_name(),     vmSymbols::int_signature());
 }
@@ -3017,41 +3038,6 @@ void java_lang_boxing_object::print(BasicType type, jvalue* value, outputStream*
   }
 }
 
-
-// Support for java_lang_ref_Reference
-HeapWord *java_lang_ref_Reference::pending_list_lock_addr() {
-  InstanceKlass* ik = SystemDictionary::Reference_klass();
-  address addr = ik->static_field_addr(static_lock_offset);
-  return (HeapWord*) addr;
-}
-
-oop java_lang_ref_Reference::pending_list_lock() {
-  InstanceKlass* ik = SystemDictionary::Reference_klass();
-  address addr = ik->static_field_addr(static_lock_offset);
-  if (UseCompressedOops) {
-    return oopDesc::load_decode_heap_oop((narrowOop *)addr);
-  } else {
-    return oopDesc::load_decode_heap_oop((oop*)addr);
-  }
-}
-
-HeapWord *java_lang_ref_Reference::pending_list_addr() {
-  InstanceKlass* ik = SystemDictionary::Reference_klass();
-  address addr = ik->static_field_addr(static_pending_offset);
-  // XXX This might not be HeapWord aligned, almost rather be char *.
-  return (HeapWord*)addr;
-}
-
-oop java_lang_ref_Reference::pending_list() {
-  char *addr = (char *)pending_list_addr();
-  if (UseCompressedOops) {
-    return oopDesc::load_decode_heap_oop((narrowOop *)addr);
-  } else {
-    return oopDesc::load_decode_heap_oop((oop*)addr);
-  }
-}
-
-
 // Support for java_lang_ref_SoftReference
 
 jlong java_lang_ref_SoftReference::timestamp(oop ref) {
@@ -3618,8 +3604,6 @@ int java_lang_ref_Reference::referent_offset;
 int java_lang_ref_Reference::queue_offset;
 int java_lang_ref_Reference::next_offset;
 int java_lang_ref_Reference::discovered_offset;
-int java_lang_ref_Reference::static_lock_offset;
-int java_lang_ref_Reference::static_pending_offset;
 int java_lang_ref_Reference::number_of_fake_oop_fields;
 int java_lang_ref_SoftReference::timestamp_offset;
 int java_lang_ref_SoftReference::static_clock_offset;
@@ -3774,8 +3758,6 @@ void JavaClasses::compute_hard_coded_offsets() {
   java_lang_ref_Reference::queue_offset = java_lang_ref_Reference::hc_queue_offset * x + header;
   java_lang_ref_Reference::next_offset  = java_lang_ref_Reference::hc_next_offset * x + header;
   java_lang_ref_Reference::discovered_offset  = java_lang_ref_Reference::hc_discovered_offset * x + header;
-  java_lang_ref_Reference::static_lock_offset = java_lang_ref_Reference::hc_static_lock_offset *  x;
-  java_lang_ref_Reference::static_pending_offset = java_lang_ref_Reference::hc_static_pending_offset * x;
   // Artificial fields for java_lang_ref_Reference
   // The first field is for the discovered field added in 1.4
   java_lang_ref_Reference::number_of_fake_oop_fields = 1;
@@ -4008,8 +3990,6 @@ void JavaClasses::check_offsets() {
   CHECK_OFFSET("java/lang/ref/Reference", java_lang_ref_Reference, next, "Ljava/lang/ref/Reference;");
   // Fake field
   //CHECK_OFFSET("java/lang/ref/Reference", java_lang_ref_Reference, discovered, "Ljava/lang/ref/Reference;");
-  CHECK_STATIC_OFFSET("java/lang/ref/Reference", java_lang_ref_Reference, lock, "Ljava/lang/ref/Reference$Lock;");
-  CHECK_STATIC_OFFSET("java/lang/ref/Reference", java_lang_ref_Reference, pending, "Ljava/lang/ref/Reference;");
 
   // java.lang.ref.SoftReference
 

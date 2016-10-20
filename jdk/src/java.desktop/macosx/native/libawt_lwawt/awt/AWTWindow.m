@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -54,6 +54,11 @@ static JNF_CLASS_CACHE(jc_CPlatformWindow, "sun/lwawt/macosx/CPlatformWindow");
 // was set. It would be nil if the new key window isn't an AWT
 // window or the app currently has no key window.
 static AWTWindow* lastKeyWindow = nil;
+
+// This variable contains coordinates of a window's top left
+// which was positioned via java.awt.Window.setLocationByPlatform.
+// It would be NSZeroPoint if 'Location by Platform' is not used.
+static NSPoint lastTopLeftPoint;
 
 // --------------------------------------------------------------
 // NSWindow/NSPanel descendants implementation
@@ -802,6 +807,18 @@ AWT_ASSERT_APPKIT_THREAD;
 
 - (void)sendEvent:(NSEvent *)event {
         if ([event type] == NSLeftMouseDown || [event type] == NSRightMouseDown || [event type] == NSOtherMouseDown) {
+            // Move parent windows to front and make sure that a child window is displayed
+            // in front of its nearest parent.
+            if (self.ownerWindow != nil) {
+                JNIEnv *env = [ThreadUtilities getJNIEnvUncached];
+                jobject platformWindow = [self.javaPlatformWindow jObjectWithEnv:env];
+                if (platformWindow != NULL) {
+                    static JNF_MEMBER_CACHE(jm_orderAboveSiblings, jc_CPlatformWindow, "orderAboveSiblings", "()V");
+                    JNFCallVoidMethod(env,platformWindow, jm_orderAboveSiblings);
+                    (*env)->DeleteLocalRef(env, platformWindow);
+                }
+            }
+            [self orderChildWindows:YES];
 
             NSPoint p = [NSEvent mouseLocation];
             NSRect frame = [self.nsWindow frame];
@@ -1084,6 +1101,31 @@ JNIEXPORT void JNICALL Java_sun_lwawt_macosx_CPlatformWindow_nativeSetNSWindowSt
 
 /*
  * Class:     sun_lwawt_macosx_CPlatformWindow
+ * Method:    nativeSetNSWindowLocationByPlatform
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL Java_sun_lwawt_macosx_CPlatformWindow_nativeSetNSWindowLocationByPlatform
+(JNIEnv *env, jclass clazz, jlong windowPtr)
+{
+    JNF_COCOA_ENTER(env);
+
+    NSWindow *nsWindow = OBJC(windowPtr);
+    [ThreadUtilities performOnMainThreadWaiting:NO block:^(){
+
+        if (NSEqualPoints(lastTopLeftPoint, NSZeroPoint)) {
+            // This is the first usage of lastTopLeftPoint. So invoke cascadeTopLeftFromPoint
+            // twice to avoid positioning the window's top left to zero-point, since it may
+            // cause negative user experience.
+            lastTopLeftPoint = [nsWindow cascadeTopLeftFromPoint:lastTopLeftPoint];
+        }
+        lastTopLeftPoint = [nsWindow cascadeTopLeftFromPoint:lastTopLeftPoint];
+    }];
+
+    JNF_COCOA_EXIT(env);
+}
+
+/*
+ * Class:     sun_lwawt_macosx_CPlatformWindow
  * Method:    nativeSetNSWindowMinMax
  * Signature: (JDDDD)V
  */
@@ -1129,6 +1171,16 @@ JNF_COCOA_ENTER(env);
     NSWindow *nsWindow = OBJC(windowPtr);
     [ThreadUtilities performOnMainThreadWaiting:NO block:^(){
         [nsWindow orderBack:nil];
+        // Order parent windows
+        AWTWindow *awtWindow = (AWTWindow*)[nsWindow delegate];
+        while (awtWindow.ownerWindow != nil) {
+            awtWindow = awtWindow.ownerWindow;
+            if ([AWTWindow isJavaPlatformWindowVisible:awtWindow.nsWindow]) {
+                [awtWindow.nsWindow orderBack:nil];
+            }
+        }
+        // Order child windows
+        [(AWTWindow*)[nsWindow delegate] orderChildWindows:NO];
     }];
 
 JNF_COCOA_EXIT(env);
@@ -1281,9 +1333,9 @@ JNICALL Java_sun_lwawt_macosx_CPlatformWindow_nativeGetTopmostPlatformWindowUnde
 /*
  * Class:     sun_lwawt_macosx_CPlatformWindow
  * Method:    nativeSynthesizeMouseEnteredExitedEvents
- * Signature: (J)V
+ * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_sun_lwawt_macosx_CPlatformWindow_nativeSynthesizeMouseEnteredExitedEvents
+JNIEXPORT void JNICALL Java_sun_lwawt_macosx_CPlatformWindow_nativeSynthesizeMouseEnteredExitedEvents__
 (JNIEnv *env, jclass clazz)
 {
     JNF_COCOA_ENTER(env);
@@ -1293,6 +1345,29 @@ JNIEXPORT void JNICALL Java_sun_lwawt_macosx_CPlatformWindow_nativeSynthesizeMou
     }];
 
     JNF_COCOA_EXIT(env);
+}
+
+/*
+ * Class:     sun_lwawt_macosx_CPlatformWindow
+ * Method:    nativeSynthesizeMouseEnteredExitedEvents
+ * Signature: (JI)V
+ */
+JNIEXPORT void JNICALL Java_sun_lwawt_macosx_CPlatformWindow_nativeSynthesizeMouseEnteredExitedEvents__JI
+(JNIEnv *env, jclass clazz, jlong windowPtr, jint eventType)
+{
+JNF_COCOA_ENTER(env);
+
+    if (eventType == NSMouseEntered || eventType == NSMouseExited) {
+        NSWindow *nsWindow = OBJC(windowPtr);
+
+        [ThreadUtilities performOnMainThreadWaiting:NO block:^(){
+            [AWTWindow synthesizeMouseEnteredExitedEvents:nsWindow withType:eventType];
+        }];
+    } else {
+        [JNFException raise:env as:kIllegalArgumentException reason:"unknown event type"];
+    }
+    
+JNF_COCOA_EXIT(env);
 }
 
 /*

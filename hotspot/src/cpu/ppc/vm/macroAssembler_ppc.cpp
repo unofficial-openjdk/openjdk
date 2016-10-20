@@ -1422,42 +1422,168 @@ void MacroAssembler::reserved_stack_check(Register return_pc) {
   bind(no_reserved_zone_enabling);
 }
 
-// CmpxchgX sets condition register to cmpX(current, compare).
-void MacroAssembler::cmpxchgw(ConditionRegister flag, Register dest_current_value,
-                              Register compare_value, Register exchange_value,
-                              Register addr_base, int semantics, bool cmpxchgx_hint,
-                              Register int_flag_success, bool contention_hint, bool weak) {
+void MacroAssembler::getandsetd(Register dest_current_value, Register exchange_value, Register addr_base,
+                                bool cmpxchgx_hint) {
   Label retry;
-  Label failed;
-  Label done;
-
-  // Save one branch if result is returned via register and
-  // result register is different from the other ones.
-  bool use_result_reg    = (int_flag_success != noreg);
-  bool preset_result_reg = (int_flag_success != dest_current_value && int_flag_success != compare_value &&
-                            int_flag_success != exchange_value && int_flag_success != addr_base);
-  assert(!weak || flag == CCR0, "weak only supported with CCR0");
-
-  if (use_result_reg && preset_result_reg) {
-    li(int_flag_success, 0); // preset (assume cas failed)
+  bind(retry);
+  ldarx(dest_current_value, addr_base, cmpxchgx_hint);
+  stdcx_(exchange_value, addr_base);
+  if (UseStaticBranchPredictionInCompareAndSwapPPC64) {
+    bne_predict_not_taken(CCR0, retry); // StXcx_ sets CCR0.
+  } else {
+    bne(                  CCR0, retry); // StXcx_ sets CCR0.
   }
+}
 
-  // Add simple guard in order to reduce risk of starving under high contention (recommended by IBM).
-  if (contention_hint) { // Don't try to reserve if cmp fails.
-    lwz(dest_current_value, 0, addr_base);
-    cmpw(flag, dest_current_value, compare_value);
-    bne(flag, failed);
+void MacroAssembler::getandaddd(Register dest_current_value, Register inc_value, Register addr_base,
+                                Register tmp, bool cmpxchgx_hint) {
+  Label retry;
+  bind(retry);
+  ldarx(dest_current_value, addr_base, cmpxchgx_hint);
+  add(tmp, dest_current_value, inc_value);
+  stdcx_(tmp, addr_base);
+  if (UseStaticBranchPredictionInCompareAndSwapPPC64) {
+    bne_predict_not_taken(CCR0, retry); // StXcx_ sets CCR0.
+  } else {
+    bne(                  CCR0, retry); // StXcx_ sets CCR0.
   }
+}
 
-  // release/fence semantics
-  if (semantics & MemBarRel) {
-    release();
+// Word/sub-word atomic helper functions
+
+// Temps and addr_base are killed if size < 4 and processor does not support respective instructions.
+// Only signed types are supported with size < 4.
+// Atomic add always kills tmp1.
+void MacroAssembler::atomic_get_and_modify_generic(Register dest_current_value, Register exchange_value,
+                                                   Register addr_base, Register tmp1, Register tmp2, Register tmp3,
+                                                   bool cmpxchgx_hint, bool is_add, int size) {
+  // Sub-word instructions are available since Power 8.
+  // For older processors, instruction_type != size holds, and we
+  // emulate the sub-word instructions by constructing a 4-byte value
+  // that leaves the other bytes unchanged.
+  const int instruction_type = VM_Version::has_lqarx() ? size : 4;
+
+  Label retry;
+  Register shift_amount = noreg,
+           val32 = dest_current_value,
+           modval = is_add ? tmp1 : exchange_value;
+
+  if (instruction_type != size) {
+    assert_different_registers(tmp1, tmp2, tmp3, dest_current_value, exchange_value, addr_base);
+    modval = tmp1;
+    shift_amount = tmp2;
+    val32 = tmp3;
+    // Need some preperation: Compute shift amount, align address. Note: shorts must be 2 byte aligned.
+#ifdef VM_LITTLE_ENDIAN
+    rldic(shift_amount, addr_base, 3, 64-5); // (dest & 3) * 8;
+    clrrdi(addr_base, addr_base, 2);
+#else
+    xori(shift_amount, addr_base, (size == 1) ? 3 : 2);
+    clrrdi(addr_base, addr_base, 2);
+    rldic(shift_amount, shift_amount, 3, 64-5); // byte: ((3-dest) & 3) * 8; short: ((1-dest/2) & 1) * 16;
+#endif
   }
 
   // atomic emulation loop
   bind(retry);
 
-  lwarx(dest_current_value, addr_base, cmpxchgx_hint);
+  switch (instruction_type) {
+    case 4: lwarx(val32, addr_base, cmpxchgx_hint); break;
+    case 2: lharx(val32, addr_base, cmpxchgx_hint); break;
+    case 1: lbarx(val32, addr_base, cmpxchgx_hint); break;
+    default: ShouldNotReachHere();
+  }
+
+  if (instruction_type != size) {
+    srw(dest_current_value, val32, shift_amount);
+  }
+
+  if (is_add) { add(modval, dest_current_value, exchange_value); }
+
+  if (instruction_type != size) {
+    // Transform exchange value such that the replacement can be done by one xor instruction.
+    xorr(modval, dest_current_value, is_add ? modval : exchange_value);
+    clrldi(modval, modval, (size == 1) ? 56 : 48);
+    slw(modval, modval, shift_amount);
+    xorr(modval, val32, modval);
+  }
+
+  switch (instruction_type) {
+    case 4: stwcx_(modval, addr_base); break;
+    case 2: sthcx_(modval, addr_base); break;
+    case 1: stbcx_(modval, addr_base); break;
+    default: ShouldNotReachHere();
+  }
+
+  if (UseStaticBranchPredictionInCompareAndSwapPPC64) {
+    bne_predict_not_taken(CCR0, retry); // StXcx_ sets CCR0.
+  } else {
+    bne(                  CCR0, retry); // StXcx_ sets CCR0.
+  }
+
+  // l?arx zero-extends, but Java wants byte/short values sign-extended.
+  if (size == 1) {
+    extsb(dest_current_value, dest_current_value);
+  } else if (size == 2) {
+    extsh(dest_current_value, dest_current_value);
+  };
+}
+
+// Temps, addr_base and exchange_value are killed if size < 4 and processor does not support respective instructions.
+// Only signed types are supported with size < 4.
+void MacroAssembler::cmpxchg_loop_body(ConditionRegister flag, Register dest_current_value,
+                                       Register compare_value, Register exchange_value,
+                                       Register addr_base, Register tmp1, Register tmp2,
+                                       Label &retry, Label &failed, bool cmpxchgx_hint, int size) {
+  // Sub-word instructions are available since Power 8.
+  // For older processors, instruction_type != size holds, and we
+  // emulate the sub-word instructions by constructing a 4-byte value
+  // that leaves the other bytes unchanged.
+  const int instruction_type = VM_Version::has_lqarx() ? size : 4;
+
+  Register shift_amount = noreg,
+           val32 = dest_current_value,
+           modval = exchange_value;
+
+  if (instruction_type != size) {
+    assert_different_registers(tmp1, tmp2, dest_current_value, compare_value, exchange_value, addr_base);
+    shift_amount = tmp1;
+    val32 = tmp2;
+    modval = tmp2;
+    // Need some preperation: Compute shift amount, align address. Note: shorts must be 2 byte aligned.
+#ifdef VM_LITTLE_ENDIAN
+    rldic(shift_amount, addr_base, 3, 64-5); // (dest & 3) * 8;
+    clrrdi(addr_base, addr_base, 2);
+#else
+    xori(shift_amount, addr_base, (size == 1) ? 3 : 2);
+    clrrdi(addr_base, addr_base, 2);
+    rldic(shift_amount, shift_amount, 3, 64-5); // byte: ((3-dest) & 3) * 8; short: ((1-dest/2) & 1) * 16;
+#endif
+    // Transform exchange value such that the replacement can be done by one xor instruction.
+    xorr(exchange_value, compare_value, exchange_value);
+    clrldi(exchange_value, exchange_value, (size == 1) ? 56 : 48);
+    slw(exchange_value, exchange_value, shift_amount);
+  }
+
+  // atomic emulation loop
+  bind(retry);
+
+  switch (instruction_type) {
+    case 4: lwarx(val32, addr_base, cmpxchgx_hint); break;
+    case 2: lharx(val32, addr_base, cmpxchgx_hint); break;
+    case 1: lbarx(val32, addr_base, cmpxchgx_hint); break;
+    default: ShouldNotReachHere();
+  }
+
+  if (instruction_type != size) {
+    srw(dest_current_value, val32, shift_amount);
+  }
+  if (size == 1) {
+    extsb(dest_current_value, dest_current_value);
+  } else if (size == 2) {
+    extsh(dest_current_value, dest_current_value);
+  };
+
   cmpw(flag, dest_current_value, compare_value);
   if (UseStaticBranchPredictionInCompareAndSwapPPC64) {
     bne_predict_not_taken(flag, failed);
@@ -1467,7 +1593,60 @@ void MacroAssembler::cmpxchgw(ConditionRegister flag, Register dest_current_valu
   // branch to done  => (flag == ne), (dest_current_value != compare_value)
   // fall through    => (flag == eq), (dest_current_value == compare_value)
 
-  stwcx_(exchange_value, addr_base);
+  if (instruction_type != size) {
+    xorr(modval, val32, exchange_value);
+  }
+
+  switch (instruction_type) {
+    case 4: stwcx_(modval, addr_base); break;
+    case 2: sthcx_(modval, addr_base); break;
+    case 1: stbcx_(modval, addr_base); break;
+    default: ShouldNotReachHere();
+  }
+}
+
+// CmpxchgX sets condition register to cmpX(current, compare).
+void MacroAssembler::cmpxchg_generic(ConditionRegister flag, Register dest_current_value,
+                                     Register compare_value, Register exchange_value,
+                                     Register addr_base, Register tmp1, Register tmp2,
+                                     int semantics, bool cmpxchgx_hint,
+                                     Register int_flag_success, bool contention_hint, bool weak, int size) {
+  Label retry;
+  Label failed;
+  Label done;
+
+  // Save one branch if result is returned via register and
+  // result register is different from the other ones.
+  bool use_result_reg    = (int_flag_success != noreg);
+  bool preset_result_reg = (int_flag_success != dest_current_value && int_flag_success != compare_value &&
+                            int_flag_success != exchange_value && int_flag_success != addr_base &&
+                            int_flag_success != tmp1 && int_flag_success != tmp2);
+  assert(!weak || flag == CCR0, "weak only supported with CCR0");
+  assert(size == 1 || size == 2 || size == 4, "unsupported");
+
+  if (use_result_reg && preset_result_reg) {
+    li(int_flag_success, 0); // preset (assume cas failed)
+  }
+
+  // Add simple guard in order to reduce risk of starving under high contention (recommended by IBM).
+  if (contention_hint) { // Don't try to reserve if cmp fails.
+    switch (size) {
+      case 1: lbz(dest_current_value, 0, addr_base); extsb(dest_current_value, dest_current_value); break;
+      case 2: lha(dest_current_value, 0, addr_base); break;
+      case 4: lwz(dest_current_value, 0, addr_base); break;
+      default: ShouldNotReachHere();
+    }
+    cmpw(flag, dest_current_value, compare_value);
+    bne(flag, failed);
+  }
+
+  // release/fence semantics
+  if (semantics & MemBarRel) {
+    release();
+  }
+
+  cmpxchg_loop_body(flag, dest_current_value, compare_value, exchange_value, addr_base, tmp1, tmp2,
+                    retry, failed, cmpxchgx_hint, size);
   if (!weak || use_result_reg) {
     if (UseStaticBranchPredictionInCompareAndSwapPPC64) {
       bne_predict_not_taken(CCR0, weak ? failed : retry); // StXcx_ sets CCR0.
@@ -3751,454 +3930,6 @@ void MacroAssembler::has_negatives(Register src, Register cnt, Register result,
   bind(Ldone);
 }
 
-
-// Intrinsics for non-CompactStrings
-
-// Search for a single jchar in an jchar[].
-//
-// Assumes that result differs from all other registers.
-//
-// 'haystack' is the addresses of a jchar-array.
-// 'needle' is either the character to search for or R0.
-// 'needleChar' is the character to search for if 'needle' == R0..
-// 'haycnt' is the length of the haystack. We assume 'haycnt' >=1.
-//
-// Preserves haystack, haycnt, needle and kills all other registers.
-//
-// If needle == R0, we search for the constant needleChar.
-void MacroAssembler::string_indexof_1(Register result, Register haystack, Register haycnt,
-                                      Register needle, jchar needleChar,
-                                      Register tmp1, Register tmp2) {
-
-  assert_different_registers(result, haystack, haycnt, needle, tmp1, tmp2);
-
-  Label L_InnerLoop, L_FinalCheck, L_Found1, L_Found2, L_Found3, L_NotFound, L_End;
-  Register addr = tmp1,
-           ch1 = tmp2,
-           ch2 = R0;
-
-//3:
-   dcbtct(haystack, 0x00);                        // Indicate R/O access to haystack.
-
-   srwi_(tmp2, haycnt, 1);   // Shift right by exact_log2(UNROLL_FACTOR).
-   mr(addr, haystack);
-   beq(CCR0, L_FinalCheck);
-   mtctr(tmp2);              // Move to count register.
-//8:
-  bind(L_InnerLoop);             // Main work horse (2x unrolled search loop).
-   lhz(ch1, 0, addr);        // Load characters from haystack.
-   lhz(ch2, 2, addr);
-   (needle != R0) ? cmpw(CCR0, ch1, needle) : cmplwi(CCR0, ch1, needleChar);
-   (needle != R0) ? cmpw(CCR1, ch2, needle) : cmplwi(CCR1, ch2, needleChar);
-   beq(CCR0, L_Found1);   // Did we find the needle?
-   beq(CCR1, L_Found2);
-   addi(addr, addr, 4);
-   bdnz(L_InnerLoop);
-//16:
-  bind(L_FinalCheck);
-   andi_(R0, haycnt, 1);
-   beq(CCR0, L_NotFound);
-   lhz(ch1, 0, addr);        // One position left at which we have to compare.
-   (needle != R0) ? cmpw(CCR1, ch1, needle) : cmplwi(CCR1, ch1, needleChar);
-   beq(CCR1, L_Found3);
-//21:
-  bind(L_NotFound);
-   li(result, -1);           // Not found.
-   b(L_End);
-
-  bind(L_Found2);
-   addi(addr, addr, 2);
-//24:
-  bind(L_Found1);
-  bind(L_Found3);                  // Return index ...
-   subf(addr, haystack, addr); // relative to haystack,
-   srdi(result, addr, 1);      // in characters.
-  bind(L_End);
-}
-
-
-// Implementation of IndexOf for jchar arrays.
-//
-// The length of haystack and needle are not constant, i.e. passed in a register.
-//
-// Preserves registers haystack, needle.
-// Kills registers haycnt, needlecnt.
-// Assumes that result differs from all other registers.
-// Haystack, needle are the addresses of jchar-arrays.
-// Haycnt, needlecnt are the lengths of them, respectively.
-//
-// Needlecntval must be zero or 15-bit unsigned immediate and > 1.
-void MacroAssembler::string_indexof(Register result, Register haystack, Register haycnt,
-                                    Register needle, ciTypeArray* needle_values, Register needlecnt, int needlecntval,
-                                    Register tmp1, Register tmp2, Register tmp3, Register tmp4) {
-
-  // Ensure 0<needlecnt<=haycnt in ideal graph as prerequisite!
-  Label L_TooShort, L_Found, L_NotFound, L_End;
-  Register last_addr = haycnt, // Kill haycnt at the beginning.
-           addr      = tmp1,
-           n_start   = tmp2,
-           ch1       = tmp3,
-           ch2       = R0;
-
-  // **************************************************************************************************
-  // Prepare for main loop: optimized for needle count >=2, bail out otherwise.
-  // **************************************************************************************************
-
-//1 (variable) or 3 (const):
-   dcbtct(needle, 0x00);    // Indicate R/O access to str1.
-   dcbtct(haystack, 0x00);  // Indicate R/O access to str2.
-
-  // Compute last haystack addr to use if no match gets found.
-  if (needlecntval == 0) { // variable needlecnt
-//3:
-   subf(ch1, needlecnt, haycnt);      // Last character index to compare is haycnt-needlecnt.
-   addi(addr, haystack, -2);          // Accesses use pre-increment.
-   cmpwi(CCR6, needlecnt, 2);
-   blt(CCR6, L_TooShort);          // Variable needlecnt: handle short needle separately.
-   slwi(ch1, ch1, 1);                 // Scale to number of bytes.
-   lwz(n_start, 0, needle);           // Load first 2 characters of needle.
-   add(last_addr, haystack, ch1);     // Point to last address to compare (haystack+2*(haycnt-needlecnt)).
-   addi(needlecnt, needlecnt, -2);    // Rest of needle.
-  } else { // constant needlecnt
-  guarantee(needlecntval != 1, "IndexOf with single-character needle must be handled separately");
-  assert((needlecntval & 0x7fff) == needlecntval, "wrong immediate");
-//5:
-   addi(ch1, haycnt, -needlecntval);  // Last character index to compare is haycnt-needlecnt.
-   lwz(n_start, 0, needle);           // Load first 2 characters of needle.
-   addi(addr, haystack, -2);          // Accesses use pre-increment.
-   slwi(ch1, ch1, 1);                 // Scale to number of bytes.
-   add(last_addr, haystack, ch1);     // Point to last address to compare (haystack+2*(haycnt-needlecnt)).
-   li(needlecnt, needlecntval-2);     // Rest of needle.
-  }
-
-  // Main Loop (now we have at least 3 characters).
-//11:
-  Label L_OuterLoop, L_InnerLoop, L_FinalCheck, L_Comp1, L_Comp2, L_Comp3;
-  bind(L_OuterLoop); // Search for 1st 2 characters.
-  Register addr_diff = tmp4;
-   subf(addr_diff, addr, last_addr); // Difference between already checked address and last address to check.
-   addi(addr, addr, 2);              // This is the new address we want to use for comparing.
-   srdi_(ch2, addr_diff, 2);
-   beq(CCR0, L_FinalCheck);       // 2 characters left?
-   mtctr(ch2);                       // addr_diff/4
-//16:
-  bind(L_InnerLoop);                // Main work horse (2x unrolled search loop)
-   lwz(ch1, 0, addr);           // Load 2 characters of haystack (ignore alignment).
-   lwz(ch2, 2, addr);
-   cmpw(CCR0, ch1, n_start); // Compare 2 characters (1 would be sufficient but try to reduce branches to CompLoop).
-   cmpw(CCR1, ch2, n_start);
-   beq(CCR0, L_Comp1);       // Did we find the needle start?
-   beq(CCR1, L_Comp2);
-   addi(addr, addr, 4);
-   bdnz(L_InnerLoop);
-//24:
-  bind(L_FinalCheck);
-   rldicl_(addr_diff, addr_diff, 64-1, 63); // Remaining characters not covered by InnerLoop: (addr_diff>>1)&1.
-   beq(CCR0, L_NotFound);
-   lwz(ch1, 0, addr);                       // One position left at which we have to compare.
-   cmpw(CCR1, ch1, n_start);
-   beq(CCR1, L_Comp3);
-//29:
-  bind(L_NotFound);
-   li(result, -1); // not found
-   b(L_End);
-
-
-   // **************************************************************************************************
-   // Special Case: unfortunately, the variable needle case can be called with needlecnt<2
-   // **************************************************************************************************
-//31:
- if ((needlecntval>>1) !=1 ) { // Const needlecnt is 2 or 3? Reduce code size.
-  int nopcnt = 5;
-  if (needlecntval !=0 ) ++nopcnt; // Balance alignment (other case: see below).
-  if (needlecntval == 0) {         // We have to handle these cases separately.
-  Label L_OneCharLoop;
-  bind(L_TooShort);
-   mtctr(haycnt);
-   lhz(n_start, 0, needle);    // First character of needle
-  bind(L_OneCharLoop);
-   lhzu(ch1, 2, addr);
-   cmpw(CCR1, ch1, n_start);
-   beq(CCR1, L_Found);      // Did we find the one character needle?
-   bdnz(L_OneCharLoop);
-   li(result, -1);             // Not found.
-   b(L_End);
-  } // 8 instructions, so no impact on alignment.
-  for (int x = 0; x < nopcnt; ++x) nop();
- }
-
-  // **************************************************************************************************
-  // Regular Case Part II: compare rest of needle (first 2 characters have been compared already)
-  // **************************************************************************************************
-
-  // Compare the rest
-//36 if needlecntval==0, else 37:
-  bind(L_Comp2);
-   addi(addr, addr, 2); // First comparison has failed, 2nd one hit.
-  bind(L_Comp1);            // Addr points to possible needle start.
-  bind(L_Comp3);            // Could have created a copy and use a different return address but saving code size here.
-  if (needlecntval != 2) {  // Const needlecnt==2?
-   if (needlecntval != 3) {
-    if (needlecntval == 0) beq(CCR6, L_Found); // Variable needlecnt==2?
-    Register ind_reg = tmp4;
-    li(ind_reg, 2*2);   // First 2 characters are already compared, use index 2.
-    mtctr(needlecnt);   // Decremented by 2, still > 0.
-//40:
-   Label L_CompLoop;
-   bind(L_CompLoop);
-    lhzx(ch2, needle, ind_reg);
-    lhzx(ch1, addr, ind_reg);
-    cmpw(CCR1, ch1, ch2);
-    bne(CCR1, L_OuterLoop);
-    addi(ind_reg, ind_reg, 2);
-    bdnz(L_CompLoop);
-   } else { // No loop required if there's only one needle character left.
-    lhz(ch2, 2*2, needle);
-    lhz(ch1, 2*2, addr);
-    cmpw(CCR1, ch1, ch2);
-    bne(CCR1, L_OuterLoop);
-   }
-  }
-  // Return index ...
-//46:
-  bind(L_Found);
-   subf(addr, haystack, addr); // relative to haystack, ...
-   srdi(result, addr, 1);      // in characters.
-//48:
-  bind(L_End);
-}
-
-// Implementation of Compare for jchar arrays.
-//
-// Kills the registers str1, str2, cnt1, cnt2.
-// Kills cr0, ctr.
-// Assumes that result differes from the input registers.
-void MacroAssembler::string_compare(Register str1_reg, Register str2_reg, Register cnt1_reg, Register cnt2_reg,
-                                    Register result_reg, Register tmp_reg) {
-   assert_different_registers(result_reg, str1_reg, str2_reg, cnt1_reg, cnt2_reg, tmp_reg);
-
-   Label Ldone, Lslow_case, Lslow_loop, Lfast_loop;
-   Register cnt_diff = R0,
-            limit_reg = cnt1_reg,
-            chr1_reg = result_reg,
-            chr2_reg = cnt2_reg,
-            addr_diff = str2_reg;
-
-   // 'cnt_reg' contains the number of characters in the string's character array for the
-   // pre-CompactStrings strings implementation and the number of bytes in the string's
-   // byte array for the CompactStrings strings implementation.
-   const int HAS_COMPACT_STRING = java_lang_String::has_coder_field() ? 1 : 0; // '1' = byte array, '0' = char array
-
-   // Offset 0 should be 32 byte aligned.
-//-6:
-    srawi(cnt1_reg, cnt1_reg, HAS_COMPACT_STRING);
-    srawi(cnt2_reg, cnt2_reg, HAS_COMPACT_STRING);
-//-4:
-    dcbtct(str1_reg, 0x00);  // Indicate R/O access to str1.
-    dcbtct(str2_reg, 0x00);  // Indicate R/O access to str2.
-//-2:
-   // Compute min(cnt1, cnt2) and check if 0 (bail out if we don't need to compare characters).
-    subf(result_reg, cnt2_reg, cnt1_reg);  // difference between cnt1/2
-    subf_(addr_diff, str1_reg, str2_reg);  // alias?
-    beq(CCR0, Ldone);                   // return cnt difference if both ones are identical
-    srawi(limit_reg, result_reg, 31);      // generate signmask (cnt1/2 must be non-negative so cnt_diff can't overflow)
-    mr(cnt_diff, result_reg);
-    andr(limit_reg, result_reg, limit_reg); // difference or zero (negative): cnt1<cnt2 ? cnt1-cnt2 : 0
-    add_(limit_reg, cnt2_reg, limit_reg);  // min(cnt1, cnt2)==0?
-    beq(CCR0, Ldone);                   // return cnt difference if one has 0 length
-
-    lhz(chr1_reg, 0, str1_reg);            // optional: early out if first characters mismatch
-    lhzx(chr2_reg, str1_reg, addr_diff);   // optional: early out if first characters mismatch
-    addi(tmp_reg, limit_reg, -1);          // min(cnt1, cnt2)-1
-    subf_(result_reg, chr2_reg, chr1_reg); // optional: early out if first characters mismatch
-    bne(CCR0, Ldone);                   // optional: early out if first characters mismatch
-
-   // Set loop counter by scaling down tmp_reg
-    srawi_(chr2_reg, tmp_reg, exact_log2(4)); // (min(cnt1, cnt2)-1)/4
-    ble(CCR0, Lslow_case);                 // need >4 characters for fast loop
-    andi(limit_reg, tmp_reg, 4-1);            // remaining characters
-
-   // Adapt str1_reg str2_reg for the first loop iteration
-    mtctr(chr2_reg);                 // (min(cnt1, cnt2)-1)/4
-    addi(limit_reg, limit_reg, 4+1); // compare last 5-8 characters in slow_case if mismatch found in fast_loop
-//16:
-   // Compare the rest of the characters
-   bind(Lfast_loop);
-    ld(chr1_reg, 0, str1_reg);
-    ldx(chr2_reg, str1_reg, addr_diff);
-    cmpd(CCR0, chr2_reg, chr1_reg);
-    bne(CCR0, Lslow_case); // return chr1_reg
-    addi(str1_reg, str1_reg, 4*2);
-    bdnz(Lfast_loop);
-    addi(limit_reg, limit_reg, -4); // no mismatch found in fast_loop, only 1-4 characters missing
-//23:
-   bind(Lslow_case);
-    mtctr(limit_reg);
-//24:
-   bind(Lslow_loop);
-    lhz(chr1_reg, 0, str1_reg);
-    lhzx(chr2_reg, str1_reg, addr_diff);
-    subf_(result_reg, chr2_reg, chr1_reg);
-    bne(CCR0, Ldone); // return chr1_reg
-    addi(str1_reg, str1_reg, 1*2);
-    bdnz(Lslow_loop);
-//30:
-   // If strings are equal up to min length, return the length difference.
-    mr(result_reg, cnt_diff);
-    nop(); // alignment
-//32:
-   // Otherwise, return the difference between the first mismatched chars.
-   bind(Ldone);
-}
-
-
-// Compare char[] arrays.
-//
-// str1_reg   USE only
-// str2_reg   USE only
-// cnt_reg    USE_DEF, due to tmp reg shortage
-// result_reg DEF only, might compromise USE only registers
-void MacroAssembler::char_arrays_equals(Register str1_reg, Register str2_reg, Register cnt_reg, Register result_reg,
-                                        Register tmp1_reg, Register tmp2_reg, Register tmp3_reg, Register tmp4_reg,
-                                        Register tmp5_reg) {
-
-  // Str1 may be the same register as str2 which can occur e.g. after scalar replacement.
-  assert_different_registers(result_reg, str1_reg, cnt_reg, tmp1_reg, tmp2_reg, tmp3_reg, tmp4_reg, tmp5_reg);
-  assert_different_registers(result_reg, str2_reg, cnt_reg, tmp1_reg, tmp2_reg, tmp3_reg, tmp4_reg, tmp5_reg);
-
-  // Offset 0 should be 32 byte aligned.
-  Label Linit_cbc, Lcbc, Lloop, Ldone_true, Ldone_false;
-  Register index_reg = tmp5_reg;
-  Register cbc_iter  = tmp4_reg;
-
-  // 'cnt_reg' contains the number of characters in the string's character array for the
-  // pre-CompactStrings strings implementation and the number of bytes in the string's
-  // byte array for the CompactStrings strings implementation.
-  const int HAS_COMPACT_STRING = java_lang_String::has_coder_field() ? 1 : 0; // '1' = byte array, '0' = char array
-
-//-1:
-  dcbtct(str1_reg, 0x00);  // Indicate R/O access to str1.
-  dcbtct(str2_reg, 0x00);  // Indicate R/O access to str2.
-//1:
-  // cbc_iter: remaining characters after the '4 java characters per iteration' loop.
-  rlwinm(cbc_iter, cnt_reg, 32 - HAS_COMPACT_STRING, 30, 31); // (cnt_reg % (HAS_COMPACT_STRING ? 8 : 4)) >> HAS_COMPACT_STRING
-  li(index_reg, 0); // init
-  li(result_reg, 0); // assume false
-  // tmp2_reg: units of 4 java characters (i.e. 8 bytes) per iteration (main loop).
-  srwi_(tmp2_reg, cnt_reg, exact_log2(4 << HAS_COMPACT_STRING)); // cnt_reg / (HAS_COMPACT_STRING ? 8 : 4)
-
-  cmpwi(CCR1, cbc_iter, 0);             // CCR1 = (cbc_iter==0)
-  beq(CCR0, Linit_cbc);                 // too short
-    mtctr(tmp2_reg);
-//8:
-    bind(Lloop);
-      ldx(tmp1_reg, str1_reg, index_reg);
-      ldx(tmp2_reg, str2_reg, index_reg);
-      cmpd(CCR0, tmp1_reg, tmp2_reg);
-      bne(CCR0, Ldone_false);  // Unequal char pair found -> done.
-      addi(index_reg, index_reg, 4*sizeof(jchar));
-      bdnz(Lloop);
-//14:
-  bind(Linit_cbc);
-  beq(CCR1, Ldone_true);
-    mtctr(cbc_iter);
-//16:
-    bind(Lcbc);
-      lhzx(tmp1_reg, str1_reg, index_reg);
-      lhzx(tmp2_reg, str2_reg, index_reg);
-      cmpw(CCR0, tmp1_reg, tmp2_reg);
-      bne(CCR0, Ldone_false);  // Unequal char pair found -> done.
-      addi(index_reg, index_reg, 1*sizeof(jchar));
-      bdnz(Lcbc);
-    nop();
-  bind(Ldone_true);
-  li(result_reg, 1);
-//24:
-  bind(Ldone_false);
-}
-
-
-void MacroAssembler::char_arrays_equalsImm(Register str1_reg, Register str2_reg, int cntval, Register result_reg,
-                                           Register tmp1_reg, Register tmp2_reg) {
-  // Str1 may be the same register as str2 which can occur e.g. after scalar replacement.
-  assert_different_registers(result_reg, str1_reg, tmp1_reg, tmp2_reg);
-  assert_different_registers(result_reg, str2_reg, tmp1_reg, tmp2_reg);
-  assert(sizeof(jchar) == 2, "must be");
-  assert(cntval >= 0 && ((cntval & 0x7fff) == cntval), "wrong immediate");
-
-  // 'cntval' contains the number of characters in the string's character array for the
-  // pre-CompactStrings strings implementation and the number of bytes in the string's
-  // byte array for the CompactStrings strings implementation.
-  cntval >>= (java_lang_String::has_coder_field() ? 1 : 0); // '1' = byte array strings, '0' = char array strings
-
-  Label Ldone_false;
-
-  if (cntval < 16) { // short case
-    if (cntval != 0) li(result_reg, 0); // assume false
-
-    const int num_bytes = cntval*sizeof(jchar);
-    int index = 0;
-    for (int next_index; (next_index = index + 8) <= num_bytes; index = next_index) {
-      ld(tmp1_reg, index, str1_reg);
-      ld(tmp2_reg, index, str2_reg);
-      cmpd(CCR0, tmp1_reg, tmp2_reg);
-      bne(CCR0, Ldone_false);
-    }
-    if (cntval & 2) {
-      lwz(tmp1_reg, index, str1_reg);
-      lwz(tmp2_reg, index, str2_reg);
-      cmpw(CCR0, tmp1_reg, tmp2_reg);
-      bne(CCR0, Ldone_false);
-      index += 4;
-    }
-    if (cntval & 1) {
-      lhz(tmp1_reg, index, str1_reg);
-      lhz(tmp2_reg, index, str2_reg);
-      cmpw(CCR0, tmp1_reg, tmp2_reg);
-      bne(CCR0, Ldone_false);
-    }
-    // fallthrough: true
-  } else {
-    Label Lloop;
-    Register index_reg = tmp1_reg;
-    const int loopcnt = cntval/4;
-    assert(loopcnt > 0, "must be");
-    // Offset 0 should be 32 byte aligned.
-    //2:
-    dcbtct(str1_reg, 0x00);  // Indicate R/O access to str1.
-    dcbtct(str2_reg, 0x00);  // Indicate R/O access to str2.
-    li(tmp2_reg, loopcnt);
-    li(index_reg, 0); // init
-    li(result_reg, 0); // assume false
-    mtctr(tmp2_reg);
-    //8:
-    bind(Lloop);
-    ldx(R0, str1_reg, index_reg);
-    ldx(tmp2_reg, str2_reg, index_reg);
-    cmpd(CCR0, R0, tmp2_reg);
-    bne(CCR0, Ldone_false);  // Unequal char pair found -> done.
-    addi(index_reg, index_reg, 4*sizeof(jchar));
-    bdnz(Lloop);
-    //14:
-    if (cntval & 2) {
-      lwzx(R0, str1_reg, index_reg);
-      lwzx(tmp2_reg, str2_reg, index_reg);
-      cmpw(CCR0, R0, tmp2_reg);
-      bne(CCR0, Ldone_false);
-      if (cntval & 1) addi(index_reg, index_reg, 2*sizeof(jchar));
-    }
-    if (cntval & 1) {
-      lhzx(R0, str1_reg, index_reg);
-      lhzx(tmp2_reg, str2_reg, index_reg);
-      cmpw(CCR0, R0, tmp2_reg);
-      bne(CCR0, Ldone_false);
-    }
-    // fallthru: true
-  }
-  li(result_reg, 1);
-  bind(Ldone_false);
-}
-
 #endif // Compiler2
 
 // Helpers for Intrinsic Emitters
@@ -4599,6 +4330,565 @@ void MacroAssembler::kernel_crc32_1byte(Register crc, Register buf, Register len
   update_byteLoop_crc32(crc, buf, len, table, data, true, true);
 
   BLOCK_COMMENT("} kernel_crc32_1byte");
+}
+
+/**
+ * @param crc             register containing existing CRC (32-bit)
+ * @param buf             register pointing to input byte buffer (byte*)
+ * @param len             register containing number of bytes
+ * @param table           register pointing to CRC table
+ * @param constants       register pointing to CRC table for 128-bit aligned memory
+ * @param barretConstants register pointing to table for barrett reduction
+ * @param t0              volatile register
+ * @param t1              volatile register
+ * @param t2              volatile register
+ * @param t3              volatile register
+ */
+void MacroAssembler::kernel_crc32_1word_vpmsumd(Register crc, Register buf, Register len, Register table,
+                        Register constants,  Register barretConstants,
+                        Register t0,  Register t1, Register t2, Register t3, Register t4) {
+  assert_different_registers(crc, buf, len, table);
+
+  Label L_alignedHead, L_tail, L_alignTail, L_start, L_end;
+
+  Register  prealign     = t0;
+  Register  postalign    = t0;
+
+  BLOCK_COMMENT("kernel_crc32_1word_vpmsumb {");
+
+  // 1. use kernel_crc32_1word for shorter than 384bit
+  clrldi(len, len, 32);
+  cmpdi(CCR0, len, 384);
+  bge(CCR0, L_start);
+
+    Register tc0 = t4;
+    Register tc1 = constants;
+    Register tc2 = barretConstants;
+    kernel_crc32_1word(crc, buf, len, table,t0, t1, t2, t3, tc0, tc1, tc2, table);
+    b(L_end);
+
+  BIND(L_start);
+
+    // 2. ~c
+    nand(crc, crc, crc);
+
+    // 3. calculate from 0 to first 128bit-aligned address
+    clrldi_(prealign, buf, 57);
+    beq(CCR0, L_alignedHead);
+
+    subfic(prealign, prealign, 128);
+
+    subf(len, prealign, len);
+    update_byteLoop_crc32(crc, buf, prealign, table, t2, false, false);
+
+    // 4. calculate from first 128bit-aligned address to last 128bit-aligned address
+    BIND(L_alignedHead);
+
+    clrldi(postalign, len, 57);
+    subf(len, postalign, len);
+
+    // len must be more than 256bit
+    kernel_crc32_1word_aligned(crc, buf, len, constants, barretConstants, t1, t2, t3);
+
+    // 5. calculate remaining
+    cmpdi(CCR0, postalign, 0);
+    beq(CCR0, L_tail);
+
+    update_byteLoop_crc32(crc, buf, postalign, table, t2, false, false);
+
+    BIND(L_tail);
+
+    // 6. ~c
+    nand(crc, crc, crc);
+
+  BIND(L_end);
+
+  BLOCK_COMMENT("} kernel_crc32_1word_vpmsumb");
+}
+
+/**
+ * @param crc             register containing existing CRC (32-bit)
+ * @param buf             register pointing to input byte buffer (byte*)
+ * @param len             register containing number of bytes
+ * @param constants       register pointing to CRC table for 128-bit aligned memory
+ * @param barretConstants register pointing to table for barrett reduction
+ * @param t0              volatile register
+ * @param t1              volatile register
+ * @param t2              volatile register
+ */
+void MacroAssembler::kernel_crc32_1word_aligned(Register crc, Register buf, Register len,
+    Register constants, Register barretConstants, Register t0, Register t1, Register t2) {
+  Label L_mainLoop, L_tail, L_alignTail, L_barrett_reduction, L_end, L_first_warm_up_done, L_first_cool_down, L_second_cool_down, L_XOR, L_test;
+  Label L_lv0, L_lv1, L_lv2, L_lv3, L_lv4, L_lv5, L_lv6, L_lv7, L_lv8, L_lv9, L_lv10, L_lv11, L_lv12, L_lv13, L_lv14, L_lv15;
+  Label L_1, L_2, L_3, L_4;
+
+  Register  rLoaded      = t0;
+  Register  rTmp1        = t1;
+  Register  rTmp2        = t2;
+  Register  off16        = R22;
+  Register  off32        = R23;
+  Register  off48        = R24;
+  Register  off64        = R25;
+  Register  off80        = R26;
+  Register  off96        = R27;
+  Register  off112       = R28;
+  Register  rIdx         = R29;
+  Register  rMax         = R30;
+  Register  constantsPos = R31;
+
+  VectorRegister mask_32bit = VR24;
+  VectorRegister mask_64bit = VR25;
+  VectorRegister zeroes     = VR26;
+  VectorRegister const1     = VR27;
+  VectorRegister const2     = VR28;
+
+  // Save non-volatile vector registers (frameless).
+  Register offset = t1;   int offsetInt = 0;
+  offsetInt -= 16; li(offset, -16);           stvx(VR20, offset, R1_SP);
+  offsetInt -= 16; addi(offset, offset, -16); stvx(VR21, offset, R1_SP);
+  offsetInt -= 16; addi(offset, offset, -16); stvx(VR22, offset, R1_SP);
+  offsetInt -= 16; addi(offset, offset, -16); stvx(VR23, offset, R1_SP);
+  offsetInt -= 16; addi(offset, offset, -16); stvx(VR24, offset, R1_SP);
+  offsetInt -= 16; addi(offset, offset, -16); stvx(VR25, offset, R1_SP);
+  offsetInt -= 16; addi(offset, offset, -16); stvx(VR26, offset, R1_SP);
+  offsetInt -= 16; addi(offset, offset, -16); stvx(VR27, offset, R1_SP);
+  offsetInt -= 16; addi(offset, offset, -16); stvx(VR28, offset, R1_SP);
+  offsetInt -= 8; std(R22, offsetInt, R1_SP);
+  offsetInt -= 8; std(R23, offsetInt, R1_SP);
+  offsetInt -= 8; std(R24, offsetInt, R1_SP);
+  offsetInt -= 8; std(R25, offsetInt, R1_SP);
+  offsetInt -= 8; std(R26, offsetInt, R1_SP);
+  offsetInt -= 8; std(R27, offsetInt, R1_SP);
+  offsetInt -= 8; std(R28, offsetInt, R1_SP);
+  offsetInt -= 8; std(R29, offsetInt, R1_SP);
+  offsetInt -= 8; std(R30, offsetInt, R1_SP);
+  offsetInt -= 8; std(R31, offsetInt, R1_SP);
+
+  // Set constants
+  li(off16, 16);
+  li(off32, 32);
+  li(off48, 48);
+  li(off64, 64);
+  li(off80, 80);
+  li(off96, 96);
+  li(off112, 112);
+
+  clrldi(crc, crc, 32);
+
+  vxor(zeroes, zeroes, zeroes);
+  vspltisw(VR0, -1);
+
+  vsldoi(mask_32bit, zeroes, VR0, 4);
+  vsldoi(mask_64bit, zeroes, VR0, -8);
+
+  // Get the initial value into v8
+  vxor(VR8, VR8, VR8);
+  mtvrd(VR8, crc);
+  vsldoi(VR8, zeroes, VR8, -8); // shift into bottom 32 bits
+
+  li (rLoaded, 0);
+
+  rldicr(rIdx, len, 0, 56);
+
+  {
+    BIND(L_1);
+    // Checksum in blocks of MAX_SIZE (32768)
+    lis(rMax, 0);
+    ori(rMax, rMax, 32768);
+    mr(rTmp2, rMax);
+    cmpd(CCR0, rIdx, rMax);
+    bgt(CCR0, L_2);
+    mr(rMax, rIdx);
+
+    BIND(L_2);
+    subf(rIdx, rMax, rIdx);
+
+    // our main loop does 128 bytes at a time
+    srdi(rMax, rMax, 7);
+
+    /*
+     * Work out the offset into the constants table to start at. Each
+     * constant is 16 bytes, and it is used against 128 bytes of input
+     * data - 128 / 16 = 8
+     */
+    sldi(rTmp1, rMax, 4);
+    srdi(rTmp2, rTmp2, 3);
+    subf(rTmp1, rTmp1, rTmp2);
+
+    // We reduce our final 128 bytes in a separate step
+    addi(rMax, rMax, -1);
+    mtctr(rMax);
+
+    // Find the start of our constants
+    add(constantsPos, constants, rTmp1);
+
+    // zero VR0-v7 which will contain our checksums
+    vxor(VR0, VR0, VR0);
+    vxor(VR1, VR1, VR1);
+    vxor(VR2, VR2, VR2);
+    vxor(VR3, VR3, VR3);
+    vxor(VR4, VR4, VR4);
+    vxor(VR5, VR5, VR5);
+    vxor(VR6, VR6, VR6);
+    vxor(VR7, VR7, VR7);
+
+    lvx(const1, constantsPos);
+
+    /*
+     * If we are looping back to consume more data we use the values
+     * already in VR16-v23.
+     */
+    cmpdi(CCR0, rLoaded, 1);
+    beq(CCR0, L_3);
+    {
+
+      // First warm up pass
+      lvx(VR16, buf);
+      lvx(VR17, off16, buf);
+      lvx(VR18, off32, buf);
+      lvx(VR19, off48, buf);
+      lvx(VR20, off64, buf);
+      lvx(VR21, off80, buf);
+      lvx(VR22, off96, buf);
+      lvx(VR23, off112, buf);
+      addi(buf, buf, 8*16);
+
+      // xor in initial value
+      vxor(VR16, VR16, VR8);
+    }
+
+    BIND(L_3);
+    bdz(L_first_warm_up_done);
+
+    addi(constantsPos, constantsPos, 16);
+    lvx(const2, constantsPos);
+
+    // Second warm up pass
+    vpmsumd(VR8, VR16, const1);
+    lvx(VR16, buf);
+
+    vpmsumd(VR9, VR17, const1);
+    lvx(VR17, off16, buf);
+
+    vpmsumd(VR10, VR18, const1);
+    lvx(VR18, off32, buf);
+
+    vpmsumd(VR11, VR19, const1);
+    lvx(VR19, off48, buf);
+
+    vpmsumd(VR12, VR20, const1);
+    lvx(VR20, off64, buf);
+
+    vpmsumd(VR13, VR21, const1);
+    lvx(VR21, off80, buf);
+
+    vpmsumd(VR14, VR22, const1);
+    lvx(VR22, off96, buf);
+
+    vpmsumd(VR15, VR23, const1);
+    lvx(VR23, off112, buf);
+
+    addi(buf, buf, 8 * 16);
+
+    bdz(L_first_cool_down);
+
+    /*
+     * main loop. We modulo schedule it such that it takes three iterations
+     * to complete - first iteration load, second iteration vpmsum, third
+     * iteration xor.
+     */
+    {
+      BIND(L_4);
+      lvx(const1, constantsPos); addi(constantsPos, constantsPos, 16);
+
+      vxor(VR0, VR0, VR8);
+      vpmsumd(VR8, VR16, const2);
+      lvx(VR16, buf);
+
+      vxor(VR1, VR1, VR9);
+      vpmsumd(VR9, VR17, const2);
+      lvx(VR17, off16, buf);
+
+      vxor(VR2, VR2, VR10);
+      vpmsumd(VR10, VR18, const2);
+      lvx(VR18, off32, buf);
+
+      vxor(VR3, VR3, VR11);
+      vpmsumd(VR11, VR19, const2);
+      lvx(VR19, off48, buf);
+      lvx(const2, constantsPos);
+
+      vxor(VR4, VR4, VR12);
+      vpmsumd(VR12, VR20, const1);
+      lvx(VR20, off64, buf);
+
+      vxor(VR5, VR5, VR13);
+      vpmsumd(VR13, VR21, const1);
+      lvx(VR21, off80, buf);
+
+      vxor(VR6, VR6, VR14);
+      vpmsumd(VR14, VR22, const1);
+      lvx(VR22, off96, buf);
+
+      vxor(VR7, VR7, VR15);
+      vpmsumd(VR15, VR23, const1);
+      lvx(VR23, off112, buf);
+
+      addi(buf, buf, 8 * 16);
+
+      bdnz(L_4);
+    }
+
+    BIND(L_first_cool_down);
+
+    // First cool down pass
+    lvx(const1, constantsPos);
+    addi(constantsPos, constantsPos, 16);
+
+    vxor(VR0, VR0, VR8);
+    vpmsumd(VR8, VR16, const1);
+
+    vxor(VR1, VR1, VR9);
+    vpmsumd(VR9, VR17, const1);
+
+    vxor(VR2, VR2, VR10);
+    vpmsumd(VR10, VR18, const1);
+
+    vxor(VR3, VR3, VR11);
+    vpmsumd(VR11, VR19, const1);
+
+    vxor(VR4, VR4, VR12);
+    vpmsumd(VR12, VR20, const1);
+
+    vxor(VR5, VR5, VR13);
+    vpmsumd(VR13, VR21, const1);
+
+    vxor(VR6, VR6, VR14);
+    vpmsumd(VR14, VR22, const1);
+
+    vxor(VR7, VR7, VR15);
+    vpmsumd(VR15, VR23, const1);
+
+    BIND(L_second_cool_down);
+    // Second cool down pass
+    vxor(VR0, VR0, VR8);
+    vxor(VR1, VR1, VR9);
+    vxor(VR2, VR2, VR10);
+    vxor(VR3, VR3, VR11);
+    vxor(VR4, VR4, VR12);
+    vxor(VR5, VR5, VR13);
+    vxor(VR6, VR6, VR14);
+    vxor(VR7, VR7, VR15);
+
+    /*
+     * vpmsumd produces a 96 bit result in the least significant bits
+     * of the register. Since we are bit reflected we have to shift it
+     * left 32 bits so it occupies the least significant bits in the
+     * bit reflected domain.
+     */
+    vsldoi(VR0, VR0, zeroes, 4);
+    vsldoi(VR1, VR1, zeroes, 4);
+    vsldoi(VR2, VR2, zeroes, 4);
+    vsldoi(VR3, VR3, zeroes, 4);
+    vsldoi(VR4, VR4, zeroes, 4);
+    vsldoi(VR5, VR5, zeroes, 4);
+    vsldoi(VR6, VR6, zeroes, 4);
+    vsldoi(VR7, VR7, zeroes, 4);
+
+    // xor with last 1024 bits
+    lvx(VR8, buf);
+    lvx(VR9, off16, buf);
+    lvx(VR10, off32, buf);
+    lvx(VR11, off48, buf);
+    lvx(VR12, off64, buf);
+    lvx(VR13, off80, buf);
+    lvx(VR14, off96, buf);
+    lvx(VR15, off112, buf);
+    addi(buf, buf, 8 * 16);
+
+    vxor(VR16, VR0, VR8);
+    vxor(VR17, VR1, VR9);
+    vxor(VR18, VR2, VR10);
+    vxor(VR19, VR3, VR11);
+    vxor(VR20, VR4, VR12);
+    vxor(VR21, VR5, VR13);
+    vxor(VR22, VR6, VR14);
+    vxor(VR23, VR7, VR15);
+
+    li(rLoaded, 1);
+    cmpdi(CCR0, rIdx, 0);
+    addi(rIdx, rIdx, 128);
+    bne(CCR0, L_1);
+  }
+
+  // Work out how many bytes we have left
+  andi_(len, len, 127);
+
+  // Calculate where in the constant table we need to start
+  subfic(rTmp1, len, 128);
+  add(constantsPos, constantsPos, rTmp1);
+
+  // How many 16 byte chunks are in the tail
+  srdi(rIdx, len, 4);
+  mtctr(rIdx);
+
+  /*
+   * Reduce the previously calculated 1024 bits to 64 bits, shifting
+   * 32 bits to include the trailing 32 bits of zeros
+   */
+  lvx(VR0, constantsPos);
+  lvx(VR1, off16, constantsPos);
+  lvx(VR2, off32, constantsPos);
+  lvx(VR3, off48, constantsPos);
+  lvx(VR4, off64, constantsPos);
+  lvx(VR5, off80, constantsPos);
+  lvx(VR6, off96, constantsPos);
+  lvx(VR7, off112, constantsPos);
+  addi(constantsPos, constantsPos, 8 * 16);
+
+  vpmsumw(VR0, VR16, VR0);
+  vpmsumw(VR1, VR17, VR1);
+  vpmsumw(VR2, VR18, VR2);
+  vpmsumw(VR3, VR19, VR3);
+  vpmsumw(VR4, VR20, VR4);
+  vpmsumw(VR5, VR21, VR5);
+  vpmsumw(VR6, VR22, VR6);
+  vpmsumw(VR7, VR23, VR7);
+
+  // Now reduce the tail (0 - 112 bytes)
+  cmpdi(CCR0, rIdx, 0);
+  beq(CCR0, L_XOR);
+
+  lvx(VR16, buf); addi(buf, buf, 16);
+  lvx(VR17, constantsPos);
+  vpmsumw(VR16, VR16, VR17);
+  vxor(VR0, VR0, VR16);
+  beq(CCR0, L_XOR);
+
+  lvx(VR16, buf); addi(buf, buf, 16);
+  lvx(VR17, off16, constantsPos);
+  vpmsumw(VR16, VR16, VR17);
+  vxor(VR0, VR0, VR16);
+  beq(CCR0, L_XOR);
+
+  lvx(VR16, buf); addi(buf, buf, 16);
+  lvx(VR17, off32, constantsPos);
+  vpmsumw(VR16, VR16, VR17);
+  vxor(VR0, VR0, VR16);
+  beq(CCR0, L_XOR);
+
+  lvx(VR16, buf); addi(buf, buf, 16);
+  lvx(VR17, off48,constantsPos);
+  vpmsumw(VR16, VR16, VR17);
+  vxor(VR0, VR0, VR16);
+  beq(CCR0, L_XOR);
+
+  lvx(VR16, buf); addi(buf, buf, 16);
+  lvx(VR17, off64, constantsPos);
+  vpmsumw(VR16, VR16, VR17);
+  vxor(VR0, VR0, VR16);
+  beq(CCR0, L_XOR);
+
+  lvx(VR16, buf); addi(buf, buf, 16);
+  lvx(VR17, off80, constantsPos);
+  vpmsumw(VR16, VR16, VR17);
+  vxor(VR0, VR0, VR16);
+  beq(CCR0, L_XOR);
+
+  lvx(VR16, buf); addi(buf, buf, 16);
+  lvx(VR17, off96, constantsPos);
+  vpmsumw(VR16, VR16, VR17);
+  vxor(VR0, VR0, VR16);
+
+  // Now xor all the parallel chunks together
+  BIND(L_XOR);
+  vxor(VR0, VR0, VR1);
+  vxor(VR2, VR2, VR3);
+  vxor(VR4, VR4, VR5);
+  vxor(VR6, VR6, VR7);
+
+  vxor(VR0, VR0, VR2);
+  vxor(VR4, VR4, VR6);
+
+  vxor(VR0, VR0, VR4);
+
+  b(L_barrett_reduction);
+
+  BIND(L_first_warm_up_done);
+  lvx(const1, constantsPos);
+  addi(constantsPos, constantsPos, 16);
+  vpmsumd(VR8,  VR16, const1);
+  vpmsumd(VR9,  VR17, const1);
+  vpmsumd(VR10, VR18, const1);
+  vpmsumd(VR11, VR19, const1);
+  vpmsumd(VR12, VR20, const1);
+  vpmsumd(VR13, VR21, const1);
+  vpmsumd(VR14, VR22, const1);
+  vpmsumd(VR15, VR23, const1);
+  b(L_second_cool_down);
+
+  BIND(L_barrett_reduction);
+
+  lvx(const1, barretConstants);
+  addi(barretConstants, barretConstants, 16);
+  lvx(const2, barretConstants);
+
+  vsldoi(VR1, VR0, VR0, -8);
+  vxor(VR0, VR0, VR1);    // xor two 64 bit results together
+
+  // shift left one bit
+  vspltisb(VR1, 1);
+  vsl(VR0, VR0, VR1);
+
+  vand(VR0, VR0, mask_64bit);
+
+  /*
+   * The reflected version of Barrett reduction. Instead of bit
+   * reflecting our data (which is expensive to do), we bit reflect our
+   * constants and our algorithm, which means the intermediate data in
+   * our vector registers goes from 0-63 instead of 63-0. We can reflect
+   * the algorithm because we don't carry in mod 2 arithmetic.
+   */
+  vand(VR1, VR0, mask_32bit);  // bottom 32 bits of a
+  vpmsumd(VR1, VR1, const1);   // ma
+  vand(VR1, VR1, mask_32bit);  // bottom 32bits of ma
+  vpmsumd(VR1, VR1, const2);   // qn */
+  vxor(VR0, VR0, VR1);         // a - qn, subtraction is xor in GF(2)
+
+  /*
+   * Since we are bit reflected, the result (ie the low 32 bits) is in
+   * the high 32 bits. We just need to shift it left 4 bytes
+   * V0 [ 0 1 X 3 ]
+   * V0 [ 0 X 2 3 ]
+   */
+  vsldoi(VR0, VR0, zeroes, 4);    // shift result into top 64 bits of
+
+  // Get it into r3
+  mfvrd(crc, VR0);
+
+  BIND(L_end);
+
+  offsetInt = 0;
+  // Restore non-volatile Vector registers (frameless).
+  offsetInt -= 16; li(offset, -16);           lvx(VR20, offset, R1_SP);
+  offsetInt -= 16; addi(offset, offset, -16); lvx(VR21, offset, R1_SP);
+  offsetInt -= 16; addi(offset, offset, -16); lvx(VR22, offset, R1_SP);
+  offsetInt -= 16; addi(offset, offset, -16); lvx(VR23, offset, R1_SP);
+  offsetInt -= 16; addi(offset, offset, -16); lvx(VR24, offset, R1_SP);
+  offsetInt -= 16; addi(offset, offset, -16); lvx(VR25, offset, R1_SP);
+  offsetInt -= 16; addi(offset, offset, -16); lvx(VR26, offset, R1_SP);
+  offsetInt -= 16; addi(offset, offset, -16); lvx(VR27, offset, R1_SP);
+  offsetInt -= 16; addi(offset, offset, -16); lvx(VR28, offset, R1_SP);
+  offsetInt -= 8;  ld(R22, offsetInt, R1_SP);
+  offsetInt -= 8;  ld(R23, offsetInt, R1_SP);
+  offsetInt -= 8;  ld(R24, offsetInt, R1_SP);
+  offsetInt -= 8;  ld(R25, offsetInt, R1_SP);
+  offsetInt -= 8;  ld(R26, offsetInt, R1_SP);
+  offsetInt -= 8;  ld(R27, offsetInt, R1_SP);
+  offsetInt -= 8;  ld(R28, offsetInt, R1_SP);
+  offsetInt -= 8;  ld(R29, offsetInt, R1_SP);
+  offsetInt -= 8;  ld(R30, offsetInt, R1_SP);
+  offsetInt -= 8;  ld(R31, offsetInt, R1_SP);
 }
 
 void MacroAssembler::kernel_crc32_singleByte(Register crc, Register buf, Register len, Register table, Register tmp) {

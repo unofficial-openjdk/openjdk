@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,7 @@
 #include "gc/shared/taskqueue.hpp"
 #include "memory/allocation.inline.hpp"
 #include "oops/oop.inline.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/orderAccess.inline.hpp"
 #include "utilities/debug.hpp"
 #include "utilities/stack.inline.hpp"
@@ -101,6 +101,11 @@ inline bool OverflowTaskQueue<E, F, N>::push(E t)
     TASKQUEUE_STATS_ONLY(stats.record_overflow(overflow_stack()->size()));
   }
   return true;
+}
+
+template <class E, MEMFLAGS F, unsigned int N>
+inline bool OverflowTaskQueue<E, F, N>::try_push_to_taskqueue(E t) {
+  return taskqueue_t::push(t);
 }
 
 // pop_local_slow() is done by the owning thread and is trying to

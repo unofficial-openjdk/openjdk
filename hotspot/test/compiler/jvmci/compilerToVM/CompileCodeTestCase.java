@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,13 +26,14 @@ package compiler.jvmci.compilerToVM;
 
 import compiler.jvmci.common.CTVMUtilities;
 import compiler.testlibrary.CompilerUtils;
+import jdk.test.lib.util.Pair;
 import jdk.test.lib.Utils;
 import jdk.vm.ci.code.InstalledCode;
 import sun.hotspot.WhiteBox;
 import sun.hotspot.code.NMethod;
 
-import java.lang.reflect.Executable;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Executable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -42,7 +43,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import jdk.test.lib.Pair;
 
 /**
  * A test case for tests which require compiled code.
@@ -107,6 +107,12 @@ public class CompileCodeTestCase {
     }
 
     public NMethod compile(int level) {
+        String directive = "[{ match: \"" + executable.getDeclaringClass().getName().replace('.', '/')
+                + "." + (executable instanceof Constructor ? "<init>" : executable.getName())
+                + "\", " + "BackgroundCompilation: false }]";
+        if (WB.addCompilerDirective(directive) != 1) {
+            throw new Error("Failed to add compiler directive: " + directive);
+        }
         boolean enqueued = WB.enqueueMethodForCompilation(executable,
                 level, bci);
         if (!enqueued) {

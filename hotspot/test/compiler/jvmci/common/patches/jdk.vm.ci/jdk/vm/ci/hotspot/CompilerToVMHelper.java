@@ -28,7 +28,7 @@ import jdk.vm.ci.code.InvalidInstalledCodeException;
 import jdk.vm.ci.code.TargetDescription;
 import jdk.vm.ci.meta.ConstantPool;
 import jdk.vm.ci.meta.ResolvedJavaMethod;
-import jdk.vm.ci.meta.SpeculationLog;
+import java.lang.reflect.Executable;
 
 /**
  * A simple "proxy" class to get test access to CompilerToVM package-private methods
@@ -124,8 +124,8 @@ public class CompilerToVMHelper {
     }
 
     public static HotSpotResolvedObjectType resolveFieldInPool(
-            ConstantPool constantPool, int cpi, byte opcode, long[] info) {
-        return CTVM.resolveFieldInPool((HotSpotConstantPool) constantPool, cpi, opcode, info);
+            ConstantPool constantPool, int cpi, ResolvedJavaMethod method, byte opcode, long[] info) {
+        return CTVM.resolveFieldInPool((HotSpotConstantPool) constantPool, cpi, (HotSpotResolvedJavaMethodImpl) method, opcode, info);
     }
 
     public static int constantPoolRemapInstructionOperandFromCache(
@@ -152,8 +152,8 @@ public class CompilerToVMHelper {
         CTVM.resetCompilationStatistics();
     }
 
-    public static long initializeConfiguration(HotSpotVMConfig config) {
-        return CTVM.initializeConfiguration(config);
+    public static Object[] readConfiguration() {
+        return CTVM.readConfiguration();
     }
 
     public static HotSpotResolvedJavaMethod resolveMethod(
@@ -172,9 +172,9 @@ public class CompilerToVMHelper {
         return CTVM.hasFinalizableSubclass((HotSpotResolvedObjectTypeImpl) type);
     }
 
-    public static HotSpotResolvedJavaMethodImpl getResolvedJavaMethodAtSlot(
-            Class<?> holder, int slot) {
-        return CTVM.getResolvedJavaMethodAtSlot(holder, slot);
+    public static HotSpotResolvedJavaMethodImpl asResolvedJavaMethod(
+            Executable executable) {
+        return CTVM.asResolvedJavaMethod(executable);
     }
 
     public static long getMaxCallTargetOffset(long address) {
@@ -274,8 +274,8 @@ public class CompilerToVMHelper {
         return CTVM.getResolvedJavaMethod(base, displacement);
     }
 
-    public static HotSpotConstantPool getConstantPool(Object base, long displacement) {
-        return CTVM.getConstantPool(base, displacement);
+    public static HotSpotConstantPool getConstantPool(Object object) {
+        return CTVM.getConstantPool(object);
     }
 
     public static HotSpotResolvedObjectType getResolvedJavaType(Object base,

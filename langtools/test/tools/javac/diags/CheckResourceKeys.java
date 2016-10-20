@@ -257,6 +257,15 @@ public class CheckResourceKeys {
                 // ignore package and class names
                 if (cs.matches("(com|java|javax|jdk|sun)\\.[A-Za-z.]+"))
                     continue;
+                // ignore debug flag names
+                if (cs.startsWith("debug."))
+                    continue;
+                // ignore should-stop flag names
+                if (cs.startsWith("should-stop."))
+                    continue;
+                // ignore diagsformat flag names
+                if (cs.startsWith("diags."))
+                    continue;
                 // explicit known exceptions
                 if (noResourceRequired.contains(cs))
                     continue;

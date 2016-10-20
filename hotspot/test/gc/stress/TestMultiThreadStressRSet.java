@@ -31,13 +31,13 @@ import sun.hotspot.WhiteBox;
 /*
  * @test TestMultiThreadStressRSet.java
  * @key stress
- * @requires vm.gc=="G1" | vm.gc=="null"
+ * @requires vm.gc.G1
  * @requires os.maxMemory > 2G
  * @requires vm.opt.MaxGCPauseMillis == "null"
  *
  * @summary Stress G1 Remembered Set using multiple threads
  * @modules java.base/jdk.internal.misc
- * @library /test/lib /testlibrary
+ * @library /test/lib
  * @build sun.hotspot.WhiteBox
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission

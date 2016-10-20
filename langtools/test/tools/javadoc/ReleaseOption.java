@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,7 +21,7 @@
  * questions.
  */
 
-import com.sun.tools.javadoc.Main;
+import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -29,10 +29,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
 
+import com.sun.tools.javadoc.Main;
+
 /**
  * @test
  * @bug 8086737
- * @summary Test -release option in javadoc
+ * @summary Test --release option in javadoc
  * @run main ReleaseOption
  */
 public class ReleaseOption {
@@ -41,10 +43,10 @@ public class ReleaseOption {
     }
 
     void run() {
-        doRunTest(0, out -> out.contains("compiler.err.doesnt.exist: java.util.stream"), "-release", "7");
-        doRunTest(0, out -> !out.contains("compiler.err.doesnt.exist: java.util.stream"), "-release", "8");
-        doRunTest(1, out -> true, "-release", "7", "-source", "7");
-        doRunTest(1, out -> true, "-release", "7", "-bootclasspath", "any");
+        doRunTest(0, out -> out.contains("compiler.err.doesnt.exist: java.util.stream"), "--release", "7");
+        doRunTest(0, out -> !out.contains("compiler.err.doesnt.exist: java.util.stream"), "--release", "8");
+        doRunTest(1, out -> true, "--release", "7", "-source", "7");
+        doRunTest(1, out -> true, "--release", "7", "-bootclasspath", "any");
     }
 
     void doRunTest(int expectedResult, Predicate<String> validate, String... args) {
@@ -52,16 +54,16 @@ public class ReleaseOption {
         List<String> options = new ArrayList<>();
         options.addAll(Arrays.asList(args));
         options.add("-XDrawDiagnostics");
-        options.add(System.getProperty("test.src", ".") + java.io.File.separatorChar + "ReleaseOptionSource.java");
+        options.add(new File(System.getProperty("test.src", "."), "ReleaseOptionSource.java").getPath());
         StringWriter out = new StringWriter();
         PrintWriter pw = new PrintWriter(out);
         int actualResult = Main.execute("javadoc", pw, pw, pw, "com.sun.tools.doclets.formats.html.HtmlDoclet", options.toArray(new String[0]));
         System.err.println("actual result=" + actualResult);
         System.err.println("actual output=" + out.toString());
         if (actualResult != expectedResult)
-            throw new Error();
+            throw new Error("Exit code not as expected");
         if (!validate.test(out.toString())) {
-            throw new Error("Not an expected error output: " + out.toString());
+            throw new Error("Output not as expected");
         }
     }
 }

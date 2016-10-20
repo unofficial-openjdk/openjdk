@@ -179,6 +179,7 @@ void FileMapInfo::FileMapHeader::populate(FileMapInfo* mapinfo, size_t alignment
   _classpath_entry_table_size = mapinfo->_classpath_entry_table_size;
   _classpath_entry_table = mapinfo->_classpath_entry_table;
   _classpath_entry_size = mapinfo->_classpath_entry_size;
+  _num_patch_mod_prefixes = ClassLoader::num_patch_mod_prefixes();
 
   // The following fields are for sanity checks for whether this archive
   // will function correctly with this JVM and the bootclasspath it's
@@ -199,11 +200,45 @@ void FileMapInfo::allocate_classpath_entry_table() {
   size_t entry_size = SharedClassUtil::shared_class_path_entry_size();
 
   for (int pass=0; pass<2; pass++) {
-    ClassPathEntry *cpe = ClassLoader::classpath_entry(0);
 
-    for (int cur_entry = 0 ; cpe != NULL; cpe = cpe->next(), cur_entry++) {
+    // Process the modular java runtime image first
+    ClassPathEntry* jrt_entry = ClassLoader::get_jrt_entry();
+    assert(jrt_entry != NULL,
+           "No modular java runtime image present when allocating the CDS classpath entry table");
+    const char *name = jrt_entry->name();
+    int name_bytes = (int)(strlen(name) + 1);
+    if (pass == 0) {
+      count++;
+      bytes += (int)entry_size;
+      bytes += name_bytes;
+      log_info(class, path)("add main shared path for modular java runtime image %s", name);
+    } else {
+      // The java runtime image is always in slot 0 on the shared class path.
+      SharedClassPathEntry* ent = shared_classpath(0);
+      struct stat st;
+      if (os::stat(name, &st) == 0) {
+        ent->_timestamp = st.st_mtime;
+        ent->_filesize = st.st_size;
+      }
+      if (ent->_filesize == 0) {
+        // unknown
+        ent->_filesize = -2;
+      }
+      ent->_name = strptr;
+      assert(strptr + name_bytes <= strptr_max, "miscalculated buffer size");
+      strncpy(strptr, name, (size_t)name_bytes); // name_bytes includes trailing 0.
+      strptr += name_bytes;
+    }
+
+    // Walk the appended entries, which includes the entries added for the classpath.
+    ClassPathEntry *cpe = ClassLoader::classpath_entry(1);
+
+    // Since the java runtime image is always in slot 0 on the shared class path, the
+    // appended entries are started at slot 1 immediately after.
+    for (int cur_entry = 1 ; cpe != NULL; cpe = cpe->next(), cur_entry++) {
       const char *name = cpe->name();
       int name_bytes = (int)(strlen(name) + 1);
+      assert(!cpe->is_jrt(), "A modular java runtime image is present on the list of appended entries");
 
       if (pass == 0) {
         count ++;
@@ -228,11 +263,7 @@ void FileMapInfo::allocate_classpath_entry_table() {
         } else {
           struct stat st;
           if (os::stat(name, &st) == 0) {
-            if (cpe->is_jrt()) {
-              // it's the "modules" jimage
-              ent->_timestamp = st.st_mtime;
-              ent->_filesize = st.st_size;
-            } else if ((st.st_mode & S_IFDIR) == S_IFDIR) {
+            if ((st.st_mode & S_IFDIR) == S_IFDIR) {
               if (!os::dir_is_empty(name)) {
                 ClassLoader::exit_with_path_failure(
                   "Cannot have non-empty directory in archived classpaths", name);
@@ -619,7 +650,7 @@ ReservedSpace FileMapInfo::reserve_shared_memory() {
 
 // Memory map a region in the address space.
 static const char* shared_region_name[] = { "ReadOnly", "ReadWrite", "MiscData", "MiscCode",
-                                            "String1", "String2" };
+                                            "String1", "String2", "OptionalData" };
 
 char* FileMapInfo::map_region(int i) {
   assert(!MetaspaceShared::is_string_region(i), "sanity");
@@ -881,8 +912,8 @@ bool FileMapInfo::FileMapHeader::validate() {
     return false;
   }
 
-  if (Arguments::get_xpatchprefix() != NULL) {
-    FileMapInfo::fail_continue("The shared archive file cannot be used with -Xpatch.");
+  if (!Arguments::has_jimage()) {
+    FileMapInfo::fail_continue("The shared archive file cannot be used with an exploded module build.");
     return false;
   }
 
@@ -915,6 +946,23 @@ bool FileMapInfo::FileMapHeader::validate() {
                   _compact_strings ? "enabled" : "disabled",
                   CompactStrings   ? "enabled" : "disabled");
     return false;
+  }
+
+  // Check if there is a mismatch in --patch-module entry counts between dump time and run time.
+  // More checks will be performed on individual --patch-module entry in the
+  // SharedPathsMiscInfo::check() function.
+  GrowableArray<ModulePatchPath*>* patch_mod_args = Arguments::get_patch_mod_prefix();
+  if (patch_mod_args != NULL) {
+    if (_num_patch_mod_prefixes == 0) {
+      FileMapInfo::fail_stop("--patch-module found in run time but none was specified in dump time");
+    }
+    if (patch_mod_args->length() != _num_patch_mod_prefixes) {
+      FileMapInfo::fail_stop("mismatched --patch-module entry counts between dump time and run time");
+    }
+  } else {
+    if (_num_patch_mod_prefixes > 0) {
+      FileMapInfo::fail_stop("--patch-module specified in dump time but none was specified in run time");
+    }
   }
 
   return true;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -338,6 +338,11 @@ public class JList<E> extends JComponent implements Scrollable, Accessible
     private transient DropLocation dropLocation;
 
     /**
+     * Flag to indicate UI update is in progress
+     */
+    private transient boolean updateInProgress;
+
+    /**
      * A subclass of <code>TransferHandler.DropLocation</code> representing
      * a drop location for a <code>JList</code>.
      *
@@ -531,11 +536,18 @@ public class JList<E> extends JComponent implements Scrollable, Accessible
      * @see SwingUtilities#updateComponentTreeUI
      */
     public void updateUI() {
-        setUI((ListUI)UIManager.getUI(this));
+        if (!updateInProgress) {
+            updateInProgress = true;
+            try {
+                setUI((ListUI)UIManager.getUI(this));
 
-        ListCellRenderer<? super E> renderer = getCellRenderer();
-        if (renderer instanceof Component) {
-            SwingUtilities.updateComponentTreeUI((Component)renderer);
+                ListCellRenderer<? super E> renderer = getCellRenderer();
+                if (renderer instanceof Component) {
+                    SwingUtilities.updateComponentTreeUI((Component)renderer);
+                }
+            } finally {
+                updateInProgress = false;
+            }
         }
     }
 
@@ -3176,9 +3188,9 @@ public class JList<E> extends JComponent implements Scrollable, Accessible
            * for list children.
            */
         protected class AccessibleJListChild extends AccessibleContext
-                implements Accessible, AccessibleComponent {
+                implements Accessible, AccessibleComponent, AccessibleAction {
             private JList<E>     parent = null;
-            private int       indexInParent;
+            int indexInParent;
             private Component component = null;
             private AccessibleContext accessibleContext = null;
             private ListModel<E> listModel;
@@ -3203,7 +3215,7 @@ public class JList<E> extends JComponent implements Scrollable, Accessible
                 return getComponentAtIndex(indexInParent);
             }
 
-            private AccessibleContext getCurrentAccessibleContext() {
+            AccessibleContext getCurrentAccessibleContext() {
                 Component c = getComponentAtIndex(indexInParent);
                 if (c instanceof Accessible) {
                     return c.getAccessibleContext();
@@ -3367,10 +3379,6 @@ public class JList<E> extends JComponent implements Scrollable, Accessible
                 if (ac != null) {
                     ac.removePropertyChangeListener(l);
                 }
-            }
-
-            public AccessibleAction getAccessibleAction() {
-                return getCurrentAccessibleContext().getAccessibleAction();
             }
 
            /**
@@ -3587,7 +3595,13 @@ public class JList<E> extends JComponent implements Scrollable, Accessible
 
             public Point getLocationOnScreen() {
                 if (parent != null) {
-                    Point listLocation = parent.getLocationOnScreen();
+                    Point listLocation;
+                    try {
+                        listLocation = parent.getLocationOnScreen();
+                    } catch (IllegalComponentStateException e) {
+                        // This can happen if the component isn't visisble
+                        return null;
+                    }
                     Point componentLocation = parent.indexToLocation(indexInParent);
                     if (componentLocation != null) {
                         componentLocation.translate(listLocation.x, listLocation.y);
@@ -3728,6 +3742,77 @@ public class JList<E> extends JComponent implements Scrollable, Accessible
                     return null;
                 }
             }
+
+            /**
+             * {@inheritDoc}
+             * @implSpec Returns the AccessibleAction for this AccessibleJListChild
+             * as follows:  First getListCellRendererComponent of the ListCellRenderer
+             * for the component at the "index in parent" of this child is called.
+             * Then its AccessibleContext is fetched and that AccessibleContext's
+             * AccessibleAction is returned.  Note that if an AccessibleAction
+             * is not found using this process then this object with its implementation
+             * of the AccessibleAction interface is returned.
+             * @since 9
+             */
+            @Override
+            public AccessibleAction getAccessibleAction() {
+                AccessibleContext ac = getCurrentAccessibleContext();
+                if (ac == null) {
+                    return null;
+                } else {
+                    AccessibleAction aa = ac.getAccessibleAction();
+                    if (aa != null) {
+                        return aa;
+                    } else {
+                        return this;
+                    }
+                }
+            }
+
+            /**
+             * {@inheritDoc}
+             * @implSpec If i == 0 selects this AccessibleJListChild by calling
+             * JList.this.setSelectedIndex(indexInParent) and then returns true;
+             * otherwise returns false.
+             * @since 9
+             */
+            @Override
+            public boolean doAccessibleAction(int i) {
+                if (i == 0) {
+                    JList.this.setSelectedIndex(indexInParent);
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+
+            /**
+             * {@inheritDoc}
+             * @implSpec If i == 0 returns the action description fetched from
+             * UIManager.getString("AbstractButton.clickText");
+             * otherwise returns null.
+             * @since 9
+             */
+            @Override
+            public String getAccessibleActionDescription(int i) {
+                if (i == 0) {
+                    return UIManager.getString("AbstractButton.clickText");
+                } else {
+                    return null;
+                }
+            }
+
+            /**
+             * {@inheritDoc}
+             * @implSpec Returns 1, i.e. there is only one action.
+             * @since 9
+             */
+            @Override
+            public int getAccessibleActionCount() {
+                return 1;
+            }
+
         } // inner class AccessibleJListChild
+
     } // inner class AccessibleJList
 }

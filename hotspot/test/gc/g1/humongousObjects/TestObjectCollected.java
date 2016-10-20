@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,14 +37,11 @@ import java.lang.ref.WeakReference;
  * @test TestObjectCollected
  * @summary checks that after different type of GCs weak/soft references to humongous object behave correspondingly to
  * actual object behavior
- * @requires vm.gc=="G1" | vm.gc=="null"
- * @library /testlibrary /test/lib /
+ * @requires vm.gc.G1
+ * @library /test/lib /
  * @modules java.base/jdk.internal.misc
  * @modules java.management
  * @build sun.hotspot.WhiteBox
- *        gc.testlibrary.Helpers
- *        gc.g1.humongousObjects.TestObjectCollected
- *
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
  *             sun.hotspot.WhiteBox$WhiteBoxPermission
  *

@@ -68,7 +68,7 @@ import java.util.function.LongBinaryOperator;
  * <p>Class {@link LongAdder} provides analogs of the functionality of
  * this class for the common special case of maintaining counts and
  * sums.  The call {@code new LongAdder()} is equivalent to {@code new
- * LongAccumulator((x, y) -> x + y, 0L}.
+ * LongAccumulator((x, y) -> x + y, 0L)}.
  *
  * <p>This class extends {@link Number}, but does <em>not</em> define
  * methods such as {@code equals}, {@code hashCode} and {@code
@@ -103,14 +103,16 @@ public class LongAccumulator extends Striped64 implements Serializable {
      */
     public void accumulate(long x) {
         Cell[] as; long b, v, r; int m; Cell a;
-        if ((as = cells) != null ||
-            (r = function.applyAsLong(b = base, x)) != b && !casBase(b, r)) {
+        if ((as = cells) != null
+            || ((r = function.applyAsLong(b = base, x)) != b
+                && !casBase(b, r))) {
             boolean uncontended = true;
-            if (as == null || (m = as.length - 1) < 0 ||
-                (a = as[getProbe() & m]) == null ||
-                !(uncontended =
-                  (r = function.applyAsLong(v = a.value, x)) == v ||
-                  a.cas(v, r)))
+            if (as == null
+                || (m = as.length - 1) < 0
+                || (a = as[getProbe() & m]) == null
+                || !(uncontended =
+                     (r = function.applyAsLong(v = a.value, x)) == v
+                     || a.cas(v, r)))
                 longAccumulate(x, function, uncontended);
         }
     }

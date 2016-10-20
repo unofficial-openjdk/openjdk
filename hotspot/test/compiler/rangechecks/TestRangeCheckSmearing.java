@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,24 +25,30 @@
  * @test
  * @bug 8066103
  * @summary C2's range check smearing allows out of bound array accesses
- * @library /testlibrary /test/lib /compiler/whitebox /
+ * @library /test/lib /
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @build TestRangeCheckSmearing
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- * @run main ClassFileInstaller jdk.test.lib.Platform
+ * @build sun.hotspot.WhiteBox
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
  * @run main/othervm -ea -Xmixed -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI
- *                   -XX:-BackgroundCompilation -XX:-UseOnStackReplacement TestRangeCheckSmearing
+ *                   -XX:-BackgroundCompilation -XX:-UseOnStackReplacement
+ *                   compiler.rangechecks.TestRangeCheckSmearing
  *
  */
 
-import java.lang.annotation.*;
-import java.lang.reflect.*;
-import java.util.*;
-import sun.hotspot.WhiteBox;
-import sun.hotspot.code.NMethod;
-import jdk.test.lib.Platform;
+package compiler.rangechecks;
+
 import compiler.whitebox.CompilerWhiteBoxTest;
+import compiler.testlibrary.CompilerUtils;
+import jdk.test.lib.Platform;
+import sun.hotspot.WhiteBox;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.Arrays;
+import java.util.HashMap;
 
 public class TestRangeCheckSmearing {
     private static final WhiteBox WHITE_BOX = WhiteBox.getWhiteBox();
@@ -395,7 +401,7 @@ public class TestRangeCheckSmearing {
             System.out.println("ArrayIndexOutOfBoundsException was not thrown in "+name);
         }
 
-        if (Platform.isServer()) {
+        if (CompilerUtils.getMaxCompilationLevel() == CompilerWhiteBoxTest.COMP_LEVEL_FULL_OPTIMIZATION) {
             if (exceptionRequired == WHITE_BOX.isMethodCompiled(m)) {
                 System.out.println((exceptionRequired?"Didn't deoptimized":"deoptimized") + " in "+name);
                 test_success = false;

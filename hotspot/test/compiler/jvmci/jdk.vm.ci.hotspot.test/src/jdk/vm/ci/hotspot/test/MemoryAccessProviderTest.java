@@ -24,8 +24,8 @@
 /*
  * @test
  * @bug 8152341
- * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9" | os.simpleArch == "aarch64")
- * @library /testlibrary /test/lib /compiler/jvmci/jdk.vm.ci.hotspot.test/src
+ * @requires (vm.simpleArch == "x64" | vm.simpleArch == "sparcv9" | vm.simpleArch == "aarch64")
+ * @library /test/lib /compiler/jvmci/jdk.vm.ci.hotspot.test/src
  * @modules jdk.vm.ci/jdk.vm.ci.meta
  *          jdk.vm.ci/jdk.vm.ci.common
  *          jdk.vm.ci/jdk.vm.ci.runtime
@@ -38,35 +38,14 @@
 package jdk.vm.ci.hotspot.test;
 
 import jdk.vm.ci.meta.Constant;
-import org.testng.annotations.Test;
-import org.testng.Assert;
-import jdk.vm.ci.meta.JavaConstant;
 import jdk.vm.ci.meta.JavaKind;
 import jdk.vm.ci.meta.MemoryAccessProvider;
 import jdk.vm.ci.runtime.JVMCI;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 public class MemoryAccessProviderTest {
     private static final MemoryAccessProvider PROVIDER = JVMCI.getRuntime().getHostJVMCIBackend().getConstantReflection().getMemoryAccessProvider();
-
-    @Test(dataProvider = "positivePrimitive", dataProviderClass = MemoryAccessProviderData.class)
-    public void testPositiveReadUnsafeConstant(JavaKind kind, JavaConstant base, Long offset, Object expected, int bitsCount) {
-        Assert.assertEquals(PROVIDER.readUnsafeConstant(kind, base, offset), expected, "Failed to read constant");
-    }
-
-    @Test(dataProvider = "positivePrimitive", dataProviderClass = MemoryAccessProviderData.class, expectedExceptions = {IllegalArgumentException.class})
-    public void testReadUnsafeConstantNullBase(JavaKind kind, JavaConstant base, Long offset, Object expected, int bitsCount) {
-        PROVIDER.readUnsafeConstant(kind, null, offset);
-    }
-
-    @Test(dataProvider = "positivePrimitive", dataProviderClass = MemoryAccessProviderData.class, expectedExceptions = {IllegalArgumentException.class})
-    public void testNegativeReadUnsafeConstantNullKind(JavaKind kind, JavaConstant base, Long offset, Object expected, int bitsCount) {
-        Assert.assertNull(PROVIDER.readUnsafeConstant(null, base, offset), "Expected null return");
-    }
-
-    @Test(dataProvider = "negative", dataProviderClass = MemoryAccessProviderData.class, expectedExceptions = {IllegalArgumentException.class})
-    public void testNegativeReadUnsafeConstant(JavaKind kind, JavaConstant base) {
-        PROVIDER.readUnsafeConstant(kind, base, 0L);
-    }
 
     @Test(dataProvider = "positivePrimitive", dataProviderClass = MemoryAccessProviderData.class)
     public void testPositiveReadPrimitiveConstant(JavaKind kind, Constant base, Long offset, Object expected, int bitsCount) {

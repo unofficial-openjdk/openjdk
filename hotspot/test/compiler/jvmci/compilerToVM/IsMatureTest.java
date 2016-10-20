@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,16 +24,16 @@
 /*
  * @test
  * @bug 8136421
- * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9" | os.simpleArch == "aarch64")
- * @library / /testlibrary /test/lib
- * @library ../common/patches
+ * @requires (vm.simpleArch == "x64" | vm.simpleArch == "sparcv9" | vm.simpleArch == "aarch64")
+ * @library / /test/lib
+ *          ../common/patches
  * @modules java.base/jdk.internal.misc
- * @modules jdk.vm.ci/jdk.vm.ci.hotspot
+ *          jdk.vm.ci/jdk.vm.ci.hotspot
+ *
  * @build jdk.vm.ci/jdk.vm.ci.hotspot.CompilerToVMHelper
- * @build compiler.jvmci.compilerToVM.IsMatureTest
- * @build sun.hotspot.WhiteBox
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
+ *        sun.hotspot.WhiteBox
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:.
  *                   -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI
  *                   -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI
@@ -44,16 +44,15 @@ package compiler.jvmci.compilerToVM;
 
 import compiler.jvmci.common.testcases.SimpleClass;
 import compiler.whitebox.CompilerWhiteBoxTest;
-import jdk.vm.ci.hotspot.CompilerToVMHelper;
 import jdk.test.lib.Asserts;
+import jdk.test.lib.Platform;
+import jdk.vm.ci.hotspot.CompilerToVMHelper;
 import sun.hotspot.WhiteBox;
 
 import java.lang.reflect.Executable;
 
 public class IsMatureTest {
     private static final WhiteBox WB = WhiteBox.getWhiteBox();
-    private static final boolean IS_XCOMP
-            = System.getProperty("java.vm.info").contains("compiled mode");
     private static final boolean TIERED
             = WB.getBooleanVMFlag("TieredCompilation");
 
@@ -74,11 +73,16 @@ public class IsMatureTest {
         }
         methodData = WB.getMethodData(method);
         isMature = CompilerToVMHelper.isMature(methodData);
-        Asserts.assertNE(methodData, 0L,
-                "Multiple times invoked method should have method data");
-        /* a method is not mature for -Xcomp and -Tiered,
-           see NonTieredCompPolicy::is_mature */
-        Asserts.assertEQ(isMature, !(IS_XCOMP && !TIERED),
-                "Unexpected isMature state for multiple times invoked method");
+        int compLevel = WB.getMethodCompilationLevel(method);
+        // methodData doesn't necessarily exist for interpreter and compilation level 1
+        if (compLevel != CompilerWhiteBoxTest.COMP_LEVEL_NONE
+                && compLevel != CompilerWhiteBoxTest.COMP_LEVEL_SIMPLE) {
+            Asserts.assertNE(methodData, 0L,
+                    "Multiple times invoked method should have method data");
+            /* a method is not mature in Xcomp mode with tiered compilation disabled,
+               see NonTieredCompPolicy::is_mature */
+            Asserts.assertEQ(isMature, !(Platform.isComp() && !TIERED),
+                    "Unexpected isMature state for multiple times invoked method");
+        }
     }
 }

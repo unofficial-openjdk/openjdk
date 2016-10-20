@@ -147,12 +147,18 @@ void SimpleThresholdPolicy::initialize() {
   // performed on 32-bit systems because it can lead to exhaustion
   // of the virtual memory address space available to the JVM.
   if (CICompilerCountPerCPU) {
-    count = MAX2(log2_intptr(os::active_processor_count()), 1) * 3 / 2;
+    count = MAX2(log2_intptr(os::active_processor_count()) * 3 / 2, 2);
+    FLAG_SET_ERGO(intx, CICompilerCount, count);
   }
 #endif
-  set_c1_count(MAX2(count / 3, 1));
-  set_c2_count(MAX2(count - c1_count(), 1));
-  FLAG_SET_ERGO(intx, CICompilerCount, c1_count() + c2_count());
+  if (TieredStopAtLevel < CompLevel_full_optimization) {
+    // No C2 compiler thread required
+    set_c1_count(count);
+  } else {
+    set_c1_count(MAX2(count / 3, 1));
+    set_c2_count(MAX2(count - c1_count(), 1));
+  }
+  assert(count == c1_count() + c2_count(), "inconsistent compiler thread count");
 }
 
 void SimpleThresholdPolicy::set_carry_if_necessary(InvocationCounter *counter) {
@@ -236,13 +242,6 @@ void SimpleThresholdPolicy::compile(const methodHandle& mh, int bci, CompLevel l
   if (level == CompLevel_none) {
     return;
   }
-
-#if INCLUDE_JVMCI
-  // We can't compile with a JVMCI compiler until the module system is initialized.
-  if (level == CompLevel_full_optimization && UseJVMCICompiler && !Universe::is_module_initialized()) {
-    return;
-  }
-#endif
 
   // Check if the method can be compiled. If it cannot be compiled with C1, continue profiling
   // in the interpreter and then compile with C2 (the transition function will request that,

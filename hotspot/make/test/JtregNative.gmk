@@ -44,14 +44,20 @@ BUILD_HOTSPOT_JTREG_NATIVE_SRC := \
     $(HOTSPOT_TOPDIR)/test/native_sanity \
     $(HOTSPOT_TOPDIR)/test/runtime/jni/8025979 \
     $(HOTSPOT_TOPDIR)/test/runtime/jni/8033445 \
+    $(HOTSPOT_TOPDIR)/test/runtime/jni/checked \
     $(HOTSPOT_TOPDIR)/test/runtime/jni/ToStringInInterfaceTest \
     $(HOTSPOT_TOPDIR)/test/runtime/modules/getModuleJNI \
     $(HOTSPOT_TOPDIR)/test/runtime/SameObject \
     $(HOTSPOT_TOPDIR)/test/runtime/BoolReturn \
     $(HOTSPOT_TOPDIR)/test/compiler/floatingpoint/ \
     $(HOTSPOT_TOPDIR)/test/compiler/calls \
-    $(HOTSPOT_TOPDIR)/test/compiler/native \
+    $(HOTSPOT_TOPDIR)/test/serviceability/jvmti/GetNamedModule \
     $(HOTSPOT_TOPDIR)/test/testlibrary/jvmti \
+    $(HOTSPOT_TOPDIR)/test/compiler/jvmci/jdk.vm.ci.code.test \
+    $(HOTSPOT_TOPDIR)/test/serviceability/jvmti/GetModulesInfo \
+    $(HOTSPOT_TOPDIR)/test/serviceability/jvmti/ModuleAwareAgents/ClassFileLoadHook \
+    $(HOTSPOT_TOPDIR)/test/serviceability/jvmti/ModuleAwareAgents/ClassLoadPrepare \
+    $(HOTSPOT_TOPDIR)/test/serviceability/jvmti/ModuleAwareAgents/ThreadStart \
     #
 
 # Add conditional directories here when needed.
@@ -61,9 +67,27 @@ BUILD_HOTSPOT_JTREG_NATIVE_SRC += \
     $(HOTSPOT_TOPDIR)/test/runtime/ThreadSignalMask
 endif
 
+ifeq ($(OPENJDK_TARGET_OS), linux)
+BUILD_HOTSPOT_JTREG_NATIVE_SRC += \
+    $(HOTSPOT_TOPDIR)/test/runtime/execstack \
+    $(HOTSPOT_TOPDIR)/test/runtime/jsig \
+    $(HOTSPOT_TOPDIR)/test/runtime/StackGuardPages
+endif
+
 ifeq ($(TOOLCHAIN_TYPE), solstudio)
-    BUILD_HOTSPOT_JTREG_LIBRARIES_LDFLAGS_liboverflow := -lc
-    BUILD_HOTSPOT_JTREG_LIBRARIES_LDFLAGS_libSimpleClassFileLoadHook := -lc
+    BUILD_HOTSPOT_JTREG_LIBRARIES_LIBS_liboverflow := -lc
+    BUILD_HOTSPOT_JTREG_LIBRARIES_LIBS_libSimpleClassFileLoadHook := -lc
+    BUILD_HOTSPOT_JTREG_LIBRARIES_LIBS_libGetNamedModuleTest := -lc
+    BUILD_HOTSPOT_JTREG_LIBRARIES_LIBS_libMAAClassFileLoadHook := -lc
+    BUILD_HOTSPOT_JTREG_LIBRARIES_LIBS_libMAAClassLoadPrepare := -lc
+    BUILD_HOTSPOT_JTREG_LIBRARIES_LIBS_libMAAThreadStart := -lc
+endif
+
+ifeq ($(OPENJDK_TARGET_OS), linux)
+    BUILD_HOTSPOT_JTREG_LIBRARIES_LDFLAGS_libtest-rw := -z noexecstack
+    BUILD_HOTSPOT_JTREG_LIBRARIES_LDFLAGS_libtest-rwx := -z execstack
+    BUILD_HOTSPOT_JTREG_EXECUTABLES_LIBS_exeinvoke := -ljvm -lpthread
+    BUILD_TEST_invoke_exeinvoke.c_OPTIMIZATION := NONE
 endif
 
 BUILD_HOTSPOT_JTREG_OUTPUT_DIR := $(BUILD_OUTPUT)/support/test/hotspot/jtreg/native

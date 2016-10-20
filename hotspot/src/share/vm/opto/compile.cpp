@@ -778,7 +778,7 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
     }
     if (failing())  return;
     if (cg == NULL) {
-      record_method_not_compilable_all_tiers("cannot parse method");
+      record_method_not_compilable("cannot parse method");
       return;
     }
     JVMState* jvms = build_start_state(start(), tf());
@@ -1708,16 +1708,21 @@ Compile::AliasType* Compile::find_alias_type(const TypePtr* adr_type, bool no_cr
   const TypePtr* flat = flatten_alias_type(adr_type);
 
 #ifdef ASSERT
-  assert(flat == flatten_alias_type(flat), "idempotent");
-  assert(flat != TypePtr::BOTTOM,     "cannot alias-analyze an untyped ptr");
-  if (flat->isa_oopptr() && !flat->isa_klassptr()) {
-    const TypeOopPtr* foop = flat->is_oopptr();
-    // Scalarizable allocations have exact klass always.
-    bool exact = !foop->klass_is_exact() || foop->is_known_instance();
-    const TypePtr* xoop = foop->cast_to_exactness(exact)->is_ptr();
-    assert(foop == flatten_alias_type(xoop), "exactness must not affect alias type");
+  {
+    ResourceMark rm;
+    assert(flat == flatten_alias_type(flat), "not idempotent: adr_type = %s; flat = %s => %s",
+           Type::str(adr_type), Type::str(flat), Type::str(flatten_alias_type(flat)));
+    assert(flat != TypePtr::BOTTOM, "cannot alias-analyze an untyped ptr: adr_type = %s",
+           Type::str(adr_type));
+    if (flat->isa_oopptr() && !flat->isa_klassptr()) {
+      const TypeOopPtr* foop = flat->is_oopptr();
+      // Scalarizable allocations have exact klass always.
+      bool exact = !foop->klass_is_exact() || foop->is_known_instance();
+      const TypePtr* xoop = foop->cast_to_exactness(exact)->is_ptr();
+      assert(foop == flatten_alias_type(xoop), "exactness must not affect alias type: foop = %s; xoop = %s",
+             Type::str(foop), Type::str(xoop));
+    }
   }
-  assert(flat == flatten_alias_type(flat), "exact bit doesn't matter");
 #endif
 
   int idx = AliasIdxTop;
@@ -2794,20 +2799,30 @@ void Compile::final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc) {
   case Op_StoreL:
   case Op_StoreIConditional:
   case Op_StoreLConditional:
+  case Op_CompareAndSwapB:
+  case Op_CompareAndSwapS:
   case Op_CompareAndSwapI:
   case Op_CompareAndSwapL:
   case Op_CompareAndSwapP:
   case Op_CompareAndSwapN:
+  case Op_WeakCompareAndSwapB:
+  case Op_WeakCompareAndSwapS:
   case Op_WeakCompareAndSwapI:
   case Op_WeakCompareAndSwapL:
   case Op_WeakCompareAndSwapP:
   case Op_WeakCompareAndSwapN:
+  case Op_CompareAndExchangeB:
+  case Op_CompareAndExchangeS:
   case Op_CompareAndExchangeI:
   case Op_CompareAndExchangeL:
   case Op_CompareAndExchangeP:
   case Op_CompareAndExchangeN:
+  case Op_GetAndAddS:
+  case Op_GetAndAddB:
   case Op_GetAndAddI:
   case Op_GetAndAddL:
+  case Op_GetAndSetS:
+  case Op_GetAndSetB:
   case Op_GetAndSetI:
   case Op_GetAndSetL:
   case Op_GetAndSetP:
@@ -3149,45 +3164,65 @@ void Compile::final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc) {
     break;
 #endif
 
-  case Op_ModI:
+  case Op_ModI: {
+    Node* di = NULL;
     if (UseDivMod) {
       // Check if a%b and a/b both exist
-      Node* d = n->find_similar(Op_DivI);
-      if (d) {
+      di = n->find_similar(Op_DivI);
+      if (di) {
         // Replace them with a fused divmod if supported
         if (Matcher::has_match_rule(Op_DivModI)) {
           DivModINode* divmod = DivModINode::make(n);
-          d->subsume_by(divmod->div_proj(), this);
+          di->subsume_by(divmod->div_proj(), this);
           n->subsume_by(divmod->mod_proj(), this);
         } else {
           // replace a%b with a-((a/b)*b)
-          Node* mult = new MulINode(d, d->in(2));
-          Node* sub  = new SubINode(d->in(1), mult);
+          Node* mult = new MulINode(di, di->in(2));
+          Node* sub  = new SubINode(di->in(1), mult);
           n->subsume_by(sub, this);
         }
       }
     }
+    if (di == NULL) {
+      // Remove useless control edge in case of not mod-zero.
+      const Type *t = n->in(2)->bottom_type();
+      const TypeInt *ti = t->is_int();
+      if (n->in(0) && (ti->_hi < 0 || ti->_lo > 0)) {
+        n->set_req(0, NULL);
+      }
+    }
     break;
+  }
 
-  case Op_ModL:
+  case Op_ModL: {
+    Node* dl = NULL;
     if (UseDivMod) {
       // Check if a%b and a/b both exist
-      Node* d = n->find_similar(Op_DivL);
-      if (d) {
+      dl = n->find_similar(Op_DivL);
+      if (dl) {
         // Replace them with a fused divmod if supported
         if (Matcher::has_match_rule(Op_DivModL)) {
           DivModLNode* divmod = DivModLNode::make(n);
-          d->subsume_by(divmod->div_proj(), this);
+          dl->subsume_by(divmod->div_proj(), this);
           n->subsume_by(divmod->mod_proj(), this);
         } else {
           // replace a%b with a-((a/b)*b)
-          Node* mult = new MulLNode(d, d->in(2));
-          Node* sub  = new SubLNode(d->in(1), mult);
+          Node* mult = new MulLNode(dl, dl->in(2));
+          Node* sub  = new SubLNode(dl->in(1), mult);
           n->subsume_by(sub, this);
         }
       }
     }
+    if (dl == NULL) {
+      // Remove useless control edge in case of not mod-zero.
+      const Type *t = n->in(2)->bottom_type();
+      const TypeLong *tl = t->is_long();
+      if (n->in(0) && (tl->_hi < 0 || tl->_lo > 0)) {
+        n->set_req(0, NULL);
+      }
+    }
     break;
+  }
 
   case Op_LoadVector:
   case Op_StoreVector:
@@ -3804,6 +3839,7 @@ bool Compile::Constant::operator==(const Constant& other) {
   if (can_be_reused() != other.can_be_reused())  return false;
   // For floating point values we compare the bit pattern.
   switch (type()) {
+  case T_INT:
   case T_FLOAT:   return (_v._value.i == other._v._value.i);
   case T_LONG:
   case T_DOUBLE:  return (_v._value.j == other._v._value.j);
@@ -3818,6 +3854,7 @@ bool Compile::Constant::operator==(const Constant& other) {
 
 static int type_to_size_in_bytes(BasicType t) {
   switch (t) {
+  case T_INT:     return sizeof(jint   );
   case T_LONG:    return sizeof(jlong  );
   case T_FLOAT:   return sizeof(jfloat );
   case T_DOUBLE:  return sizeof(jdouble);
@@ -3886,6 +3923,7 @@ void Compile::ConstantTable::emit(CodeBuffer& cb) {
     Constant con = _constants.at(i);
     address constant_addr = NULL;
     switch (con.type()) {
+    case T_INT:    constant_addr = _masm.int_constant(   con.get_jint()   ); break;
     case T_LONG:   constant_addr = _masm.long_constant(  con.get_jlong()  ); break;
     case T_FLOAT:  constant_addr = _masm.float_constant( con.get_jfloat() ); break;
     case T_DOUBLE: constant_addr = _masm.double_constant(con.get_jdouble()); break;

@@ -208,7 +208,7 @@ public abstract class Toolkit {
 
     /**
      * Returns whether dynamic layout of Containers on resize is currently
-     * enabled on the underlying operating system and/or window manager). If the
+     * enabled on the underlying operating system and/or window manager. If the
      * platform supports it, {@code setDynamicLayout(boolean)} may be used to
      * programmatically enable or disable platform dynamic layout. Regardless of
      * whether that toggling is supported, or whether {@code true} or {@code
@@ -1388,9 +1388,7 @@ public abstract class Toolkit {
         // ensure that the proper libraries are loaded
         loadLibraries();
         initAssistiveTechnologies();
-        if (!GraphicsEnvironment.isHeadless()) {
-            initIDs();
-        }
+        initIDs();
     }
 
     /**

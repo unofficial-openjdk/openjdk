@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,37 +24,39 @@
 /*
  * @test
  * @bug 8136421
- * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9" | os.simpleArch == "aarch64")
- * @library / /testlibrary
+ * @requires (vm.simpleArch == "x64" | vm.simpleArch == "sparcv9" | vm.simpleArch == "aarch64")
+ * @library / /test/lib
  * @library ../common/patches
  * @modules java.base/jdk.internal.misc
  * @modules java.base/jdk.internal.org.objectweb.asm
  *          java.base/jdk.internal.org.objectweb.asm.tree
  *          jdk.vm.ci/jdk.vm.ci.hotspot
  *          jdk.vm.ci/jdk.vm.ci.code
+ *          jdk.vm.ci/jdk.vm.ci.code.site
  *          jdk.vm.ci/jdk.vm.ci.meta
  *          jdk.vm.ci/jdk.vm.ci.runtime
- * @ignore 8144964
+ *
  * @build jdk.vm.ci/jdk.vm.ci.hotspot.CompilerToVMHelper
  * @build compiler.jvmci.common.JVMCIHelpers
+ * @run driver jdk.test.lib.FileInstaller ../common/services/ ./META-INF/services/
+ * @run driver jdk.test.lib.FileInstaller ./JvmciNotifyInstallEventTest.config
+ *     ./META-INF/services/jdk.vm.ci.hotspot.services.HotSpotVMEventListener
+ * @run driver ClassFileInstaller
+ *      compiler.jvmci.common.JVMCIHelpers$EmptyHotspotCompiler
+ *      compiler.jvmci.common.JVMCIHelpers$EmptyCompilerFactory
+ *      compiler.jvmci.common.JVMCIHelpers$EmptyCompilationRequestResult
+ *      compiler.jvmci.common.JVMCIHelpers$EmptyVMEventListener
+ * @run main/othervm -XX:+UnlockExperimentalVMOptions
+ *     -Xbootclasspath/a:. -Xmixed
+ *     -XX:+UseJVMCICompiler -XX:-BootstrapJVMCI
+ *     -Dcompiler.jvmci.events.JvmciNotifyInstallEventTest.failoninit=false
  *     compiler.jvmci.events.JvmciNotifyInstallEventTest
- * @run main jdk.test.lib.FileInstaller ../common/services/ ./META-INF/services/
- * @run main jdk.test.lib.FileInstaller ./JvmciNotifyInstallEventTest.config
- *     ./META-INF/services/jdk.vm.ci.hotspot.HotSpotVMEventListener
- * @run main ClassFileInstaller
- *     compiler.jvmci.common.JVMCIHelpers$EmptyHotspotCompiler
- *     compiler.jvmci.common.JVMCIHelpers$EmptyCompilerFactory
- *     compiler.jvmci.events.JvmciNotifyInstallEventTest
- *     compiler.jvmci.common.CTVMUtilities
- *     compiler.jvmci.common.testcases.SimpleClass
- *     jdk.test.lib.Asserts
- *     jdk.test.lib.Utils
- * @run main/othervm -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI
+ * @run main/othervm -XX:+UnlockExperimentalVMOptions
  *     -Djvmci.compiler=EmptyCompiler -Xbootclasspath/a:. -Xmixed
  *     -XX:+UseJVMCICompiler -XX:-BootstrapJVMCI
  *     -Dcompiler.jvmci.events.JvmciNotifyInstallEventTest.failoninit=false
  *     compiler.jvmci.events.JvmciNotifyInstallEventTest
- * @run main/othervm -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI
+ * @run main/othervm -XX:+UnlockExperimentalVMOptions
  *     -Djvmci.compiler=EmptyCompiler -Xbootclasspath/a:. -Xmixed
  *     -XX:+UseJVMCICompiler -XX:-BootstrapJVMCI -XX:JVMCINMethodSizeLimit=0
  *     -Dcompiler.jvmci.events.JvmciNotifyInstallEventTest.failoninit=false
@@ -70,22 +72,23 @@ package compiler.jvmci.events;
 import compiler.jvmci.common.CTVMUtilities;
 import compiler.jvmci.common.testcases.SimpleClass;
 import jdk.test.lib.Asserts;
-import java.lang.reflect.Method;
 import jdk.test.lib.Utils;
-import jdk.vm.ci.hotspot.HotSpotVMEventListener;
 import jdk.vm.ci.code.CompiledCode;
 import jdk.vm.ci.code.InstalledCode;
 import jdk.vm.ci.code.site.DataPatch;
 import jdk.vm.ci.code.site.Site;
-import jdk.vm.ci.meta.Assumptions.Assumption;
-import jdk.vm.ci.meta.ResolvedJavaMethod;
 import jdk.vm.ci.hotspot.HotSpotCodeCacheProvider;
 import jdk.vm.ci.hotspot.HotSpotCompiledCode;
 import jdk.vm.ci.hotspot.HotSpotCompiledCode.Comment;
 import jdk.vm.ci.hotspot.HotSpotJVMCIRuntime;
 import jdk.vm.ci.hotspot.HotSpotResolvedJavaMethod;
+import jdk.vm.ci.hotspot.services.HotSpotVMEventListener;
+import jdk.vm.ci.meta.Assumptions.Assumption;
+import jdk.vm.ci.meta.ResolvedJavaMethod;
 
-public class JvmciNotifyInstallEventTest implements HotSpotVMEventListener {
+import java.lang.reflect.Method;
+
+public class JvmciNotifyInstallEventTest extends HotSpotVMEventListener {
     private static final String METHOD_NAME = "testMethod";
     private static final boolean FAIL_ON_INIT = !Boolean.getBoolean(
             "compiler.jvmci.events.JvmciNotifyInstallEventTest.failoninit");

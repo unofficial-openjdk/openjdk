@@ -578,7 +578,7 @@ void VM_Version::get_processor_features() {
   }
 
   char buf[256];
-  jio_snprintf(buf, sizeof(buf), "(%u cores per cpu, %u threads per core) family %d model %d stepping %d%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
+  jio_snprintf(buf, sizeof(buf), "(%u cores per cpu, %u threads per core) family %d model %d stepping %d%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
                cores_per_cpu(), threads_per_core(),
                cpu_family(), _model, _stepping,
                (supports_cmov() ? ", cmov" : ""),
@@ -610,7 +610,8 @@ void VM_Version::get_processor_features() {
                (supports_bmi2() ? ", bmi2" : ""),
                (supports_adx() ? ", adx" : ""),
                (supports_evex() ? ", evex" : ""),
-               (supports_sha() ? ", sha" : ""));
+               (supports_sha() ? ", sha" : ""),
+               (supports_fma() ? ", fma" : ""));
   _features_string = os::strdup(buf);
 
   // UseSSE is set to the smaller of what hardware supports and what
@@ -658,7 +659,7 @@ void VM_Version::get_processor_features() {
           FLAG_SET_DEFAULT(UseAESCTRIntrinsics, false);
         }
       } else {
-        if(supports_sse4_1() && UseSSE >= 4) {
+        if(supports_sse4_1()) {
           if (FLAG_IS_DEFAULT(UseAESCTRIntrinsics)) {
             FLAG_SET_DEFAULT(UseAESCTRIntrinsics, true);
           }
@@ -732,6 +733,15 @@ void VM_Version::get_processor_features() {
     FLAG_SET_DEFAULT(UseGHASHIntrinsics, false);
   }
 
+  if (supports_fma() && UseSSE >= 2) {
+    if (FLAG_IS_DEFAULT(UseFMA)) {
+      UseFMA = true;
+    }
+  } else if (UseFMA) {
+    warning("FMA instructions are not available on this CPU");
+    FLAG_SET_DEFAULT(UseFMA, false);
+  }
+
   if (supports_sha() LP64_ONLY(|| supports_avx2() && supports_bmi2())) {
     if (FLAG_IS_DEFAULT(UseSHA)) {
       UseSHA = true;
@@ -773,7 +783,6 @@ void VM_Version::get_processor_features() {
     FLAG_SET_DEFAULT(UseAdler32Intrinsics, false);
   }
 
-  // Adjust RTM (Restricted Transactional Memory) flags
   if (!supports_rtm() && UseRTMLocking) {
     // Can't continue because UseRTMLocking affects UseBiasedLocking flag
     // setting during arguments processing. See use_biased_locking().
@@ -970,7 +979,7 @@ void VM_Version::get_processor_features() {
         UseXmmI2D = false;
       }
     }
-    if (supports_sse4_2() && UseSSE >= 4) {
+    if (supports_sse4_2()) {
       if (FLAG_IS_DEFAULT(UseSSE42Intrinsics)) {
         FLAG_SET_DEFAULT(UseSSE42Intrinsics, true);
       }
@@ -1050,7 +1059,7 @@ void VM_Version::get_processor_features() {
           UseUnalignedLoadStores = true; // use movdqu on newest Intel cpus
         }
       }
-      if (supports_sse4_2() && UseSSE >= 4) {
+      if (supports_sse4_2()) {
         if (FLAG_IS_DEFAULT(UseSSE42Intrinsics)) {
           FLAG_SET_DEFAULT(UseSSE42Intrinsics, true);
         }

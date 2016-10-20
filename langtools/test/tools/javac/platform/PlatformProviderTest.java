@@ -97,12 +97,11 @@ public class PlatformProviderTest implements PlatformProvider {
         Task.Result result =
                 new JavacTask(tb, Task.Mode.EXEC)
                   .outdir(".")
-                  .options("-J-classpath",
-                           "-J" + System.getProperty("test.classes"),
-                           "-J-XaddExports:jdk.compiler/com.sun.tools.javac.platform=ALL-UNNAMED",
-                           "-J-XaddExports:jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
+                  .options("-J--class-path=" + System.getProperty("test.classes"),
+                           "-J--add-exports=jdk.compiler/com.sun.tools.javac.platform=ALL-UNNAMED",
+                           "-J--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
                            "-XDrawDiagnostics",
-                           "-release",
+                           "--release",
                            platformSpec,
                            System.getProperty("test.src") + "/PlatformProviderTestSource.java")
                   .run();
@@ -133,11 +132,10 @@ public class PlatformProviderTest implements PlatformProvider {
         Task.Result result =
                 new JavacTask(tb, Task.Mode.EXEC)
                   .outdir(".")
-                  .options("-J-classpath",
-                           "-J" + System.getProperty("test.classes"),
-                           "-J-XaddExports:jdk.compiler/com.sun.tools.javac.platform=ALL-UNNAMED",
-                           "-J-XaddExports:jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
-                           "-release",
+                  .options("-J--class-path=" + System.getProperty("test.classes"),
+                           "-J--add-exports=jdk.compiler/com.sun.tools.javac.platform=ALL-UNNAMED",
+                           "-J--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
+                           "--release",
                            "fail",
                            System.getProperty("test.src") + "/PlatformProviderTestSource.java")
                   .run(Task.Expect.FAIL);

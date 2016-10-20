@@ -279,8 +279,16 @@ bool PhaseIdealLoop::is_counted_loop( Node *x, IdealLoopTree *loop ) {
     return false;
 
   // Allow funny placement of Safepoint
-  if (back_control->Opcode() == Op_SafePoint)
+  if (back_control->Opcode() == Op_SafePoint) {
+    if (UseCountedLoopSafepoints) {
+      // Leaving the safepoint on the backedge and creating a
+      // CountedLoop will confuse optimizations. We can't move the
+      // safepoint around because its jvm state wouldn't match a new
+      // location. Give up on that loop.
+      return false;
+    }
     back_control = back_control->in(TypeFunc::Control);
+  }
 
   // Controlling test for loop
   Node *iftrue = back_control;
@@ -2225,9 +2233,7 @@ void PhaseIdealLoop::build_and_optimize(bool do_split_ifs, bool skip_loop_opts) 
   // Some parser-inserted loop predicates could never be used by loop
   // predication or they were moved away from loop during some optimizations.
   // For example, peeling. Eliminate them before next loop optimizations.
-  if (UseLoopPredicate) {
-    eliminate_useless_predicates();
-  }
+  eliminate_useless_predicates();
 
 #ifndef PRODUCT
   C->verify_graph_edges();

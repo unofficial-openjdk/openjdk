@@ -27,7 +27,7 @@
 #include "gc/g1/g1CollectedHeap.inline.hpp"
 #include "gc/g1/heapRegionRemSet.hpp"
 #include "gc/shared/workgroup.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/mutexLocker.hpp"
 #include "runtime/safepoint.hpp"
 #include "runtime/thread.inline.hpp"
@@ -122,7 +122,7 @@ DirtyCardQueueSet::DirtyCardQueueSet(bool notify_when_complete) :
 
 // Determines how many mutator threads can process the buffers in parallel.
 uint DirtyCardQueueSet::num_par_ids() {
-  return (uint)os::processor_count();
+  return (uint)os::initial_active_processor_count();
 }
 
 void DirtyCardQueueSet::initialize(CardTableEntryClosure* cl,

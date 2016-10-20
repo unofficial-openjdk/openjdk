@@ -35,7 +35,6 @@
 #include "compiler/compileTask.hpp"
 #include "gc/shared/gcId.hpp"
 #include "gc/shared/gcLocker.inline.hpp"
-#include "gc/shared/referencePendingListLocker.hpp"
 #include "gc/shared/workgroup.hpp"
 #include "interpreter/interpreter.hpp"
 #include "interpreter/linkResolver.hpp"
@@ -57,7 +56,7 @@
 #include "prims/jvmtiThreadState.hpp"
 #include "prims/privilegedStack.hpp"
 #include "runtime/arguments.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/biasedLocking.hpp"
 #include "runtime/commandLineFlagConstraintList.hpp"
 #include "runtime/commandLineFlagWriteableList.hpp"
@@ -374,10 +373,13 @@ Thread::~Thread() {
   delete handle_area();
   delete metadata_handles();
 
+  // SR_handler uses this as a termination indicator -
+  // needs to happen before os::free_thread()
+  delete _SR_lock;
+  _SR_lock = NULL;
+
   // osthread() can be NULL, if creation of thread failed.
   if (osthread() != NULL) os::free_thread(osthread());
-
-  delete _SR_lock;
 
   // clear Thread::current if thread is deleting itself.
   // Needed to ensure JNI correctly detects non-attached threads.
@@ -2493,10 +2495,10 @@ void JavaThread::create_stack_guard_pages() {
   address low_addr = stack_end();
   size_t len = stack_guard_zone_size();
 
-  int allocate = os::allocate_stack_guard_pages();
+  int must_commit = os::must_commit_stack_guard_pages();
   // warning("Guarding at " PTR_FORMAT " for len " SIZE_FORMAT "\n", low_addr, len);
 
-  if (allocate && !os::create_stack_guard_pages((char *) low_addr, len)) {
+  if (must_commit && !os::create_stack_guard_pages((char *) low_addr, len)) {
     log_warning(os, thread)("Attempt to allocate stack guard pages failed.");
     return;
   }
@@ -2515,7 +2517,6 @@ void JavaThread::create_stack_guard_pages() {
   log_debug(os, thread)("Thread " UINTX_FORMAT " stack guard pages activated: "
     PTR_FORMAT "-" PTR_FORMAT ".",
     os::current_thread_id(), p2i(low_addr), p2i(low_addr + len));
-
 }
 
 void JavaThread::remove_stack_guard_pages() {
@@ -2524,7 +2525,7 @@ void JavaThread::remove_stack_guard_pages() {
   address low_addr = stack_end();
   size_t len = stack_guard_zone_size();
 
-  if (os::allocate_stack_guard_pages()) {
+  if (os::must_commit_stack_guard_pages()) {
     if (os::remove_stack_guard_pages((char *) low_addr, len)) {
       _stack_guard_state = stack_guard_unused;
     } else {
@@ -2546,7 +2547,6 @@ void JavaThread::remove_stack_guard_pages() {
   log_debug(os, thread)("Thread " UINTX_FORMAT " stack guard pages removed: "
     PTR_FORMAT "-" PTR_FORMAT ".",
     os::current_thread_id(), p2i(low_addr), p2i(low_addr + len));
-
 }
 
 void JavaThread::enable_stack_reserved_zone() {
@@ -3405,6 +3405,8 @@ static void call_initPhase1(TRAPS) {
 //
 //     After phase 2, The VM will begin search classes from -Xbootclasspath/a.
 static void call_initPhase2(TRAPS) {
+  TraceTime timer("Phase2 initialization", TRACETIME_LOG(Info, modules, startuptime));
+
   Klass* k = SystemDictionary::resolve_or_fail(vmSymbols::java_lang_System(), true, CHECK);
   instanceKlassHandle klass (THREAD, k);
 
@@ -3715,14 +3717,6 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   Management::record_vm_init_completed();
 #endif // INCLUDE_MANAGEMENT
 
-  // Note that we do not use CHECK_0 here since we are inside an EXCEPTION_MARK and
-  // set_init_completed has just been called, causing exceptions not to be shortcut
-  // anymore. We call vm_exit_during_initialization directly instead.
-
-  // Initialize reference pending list locker
-  bool needs_locker_thread = Universe::heap()->needs_reference_pending_list_locker_thread();
-  ReferencePendingListLocker::initialize(needs_locker_thread, CHECK_JNI_ERR);
-
   // Signal Dispatcher needs to be started before VMInit event is posted
   os::signal_init();
 
@@ -3772,6 +3766,14 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
 
   // cache the system class loader
   SystemDictionary::compute_java_system_loader(CHECK_(JNI_ERR));
+
+#if INCLUDE_JVMCI
+  if (EnableJVMCI && UseJVMCICompiler && (!UseInterpreter || !BackgroundCompilation)) {
+    // 8145270: Force initialization of JVMCI runtime otherwise requests for blocking
+    // compilations via JVMCI will not actually block until JVMCI is initialized.
+    JVMCIRuntime::force_initialization(CHECK_JNI_ERR);
+  }
+#endif
 
   // Always call even when there are not JVMTI environments yet, since environments
   // may be attached late and JVMTI must track phases of VM execution

@@ -61,7 +61,7 @@
 #include "memory/resourceArea.hpp"
 #include "oops/oop.inline.hpp"
 #include "prims/jvmtiExport.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/globals_extension.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/java.hpp"
@@ -1605,6 +1605,9 @@ void CMSCollector::do_compaction_work(bool clear_all_soft_refs) {
   _inter_sweep_timer.reset();
   _inter_sweep_timer.start();
 
+  // No longer a need to do a concurrent collection for Metaspace.
+  MetaspaceGC::set_should_concurrent_collect(false);
+
   gch->post_full_gc_dump(gc_timer);
 
   gc_timer->register_gc_end();
@@ -2885,7 +2888,10 @@ void CMSCollector::checkpointRootsInitialWork() {
 
       CMSParInitialMarkTask tsk(this, &srs, n_workers);
       initialize_sequential_subtasks_for_young_gen_rescan(n_workers);
-      if (n_workers > 1) {
+      // If the total workers is greater than 1, then multiple workers
+      // may be used at some time and the initialization has been set
+      // such that the single threaded path cannot be used.
+      if (workers->total_workers() > 1) {
         workers->run_task(&tsk);
       } else {
         tsk.work(0);
@@ -3019,14 +3025,14 @@ class CMSConcMarkingTerminatorTerminator: public TerminatorTerminator {
 
 // MT Concurrent Marking Task
 class CMSConcMarkingTask: public YieldingFlexibleGangTask {
-  CMSCollector* _collector;
-  uint          _n_workers;       // requested/desired # workers
-  bool          _result;
-  CompactibleFreeListSpace*  _cms_space;
-  char          _pad_front[64];   // padding to ...
-  HeapWord*     _global_finger;   // ... avoid sharing cache line
-  char          _pad_back[64];
-  HeapWord*     _restart_addr;
+  CMSCollector*             _collector;
+  uint                      _n_workers;      // requested/desired # workers
+  bool                      _result;
+  CompactibleFreeListSpace* _cms_space;
+  char                      _pad_front[64];   // padding to ...
+  HeapWord* volatile        _global_finger;   // ... avoid sharing cache line
+  char                      _pad_back[64];
+  HeapWord*                 _restart_addr;
 
   //  Exposed here for yielding support
   Mutex* const _bit_map_lock;
@@ -3062,7 +3068,7 @@ class CMSConcMarkingTask: public YieldingFlexibleGangTask {
 
   OopTaskQueue* work_queue(int i) { return task_queues()->queue(i); }
 
-  HeapWord** global_finger_addr() { return &_global_finger; }
+  HeapWord* volatile* global_finger_addr() { return &_global_finger; }
 
   CMSConcMarkingTerminator* terminator() { return &_term; }
 
@@ -3504,7 +3510,8 @@ bool CMSCollector::do_marking_mt() {
   uint num_workers = AdaptiveSizePolicy::calc_active_conc_workers(conc_workers()->total_workers(),
                                                                   conc_workers()->active_workers(),
                                                                   Threads::number_of_non_daemon_threads());
-  conc_workers()->set_active_workers(num_workers);
+  num_workers = conc_workers()->update_active_workers(num_workers);
+  log_info(gc,task)("Using %u workers of %u for marking", num_workers, conc_workers()->total_workers());
 
   CompactibleFreeListSpace* cms_space  = _cmsGen->cmsSpace();
 
@@ -6547,7 +6554,7 @@ void ParMarkFromRootsClosure::scan_oops_in_oop(HeapWord* ptr) {
 
   // Note: the local finger doesn't advance while we drain
   // the stack below, but the global finger sure can and will.
-  HeapWord** gfa = _task->global_finger_addr();
+  HeapWord* volatile* gfa = _task->global_finger_addr();
   ParPushOrMarkClosure pushOrMarkClosure(_collector,
                                          _span, _bit_map,
                                          _work_queue,
@@ -6714,7 +6721,7 @@ ParPushOrMarkClosure::ParPushOrMarkClosure(CMSCollector* collector,
                                            OopTaskQueue* work_queue,
                                            CMSMarkStack*  overflow_stack,
                                            HeapWord* finger,
-                                           HeapWord** global_finger_addr,
+                                           HeapWord* volatile* global_finger_addr,
                                            ParMarkFromRootsClosure* parent) :
   MetadataAwareOopClosure(collector->ref_processor()),
   _collector(collector),

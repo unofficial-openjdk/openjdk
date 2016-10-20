@@ -42,7 +42,6 @@ import jdk.javadoc.internal.doclets.toolkit.MemberSummaryWriter;
 import jdk.javadoc.internal.doclets.toolkit.WriterFactory;
 import jdk.javadoc.internal.doclets.toolkit.util.CommentHelper;
 import jdk.javadoc.internal.doclets.toolkit.util.DocFinder;
-import jdk.javadoc.internal.doclets.toolkit.util.Utils;
 import jdk.javadoc.internal.doclets.toolkit.util.VisibleMemberMap;
 import jdk.javadoc.internal.doclets.toolkit.CommentUtils;
 
@@ -107,8 +106,7 @@ public class MemberSummaryBuilder extends AbstractMemberBuilder {
      * @param context       the build context.
      */
     public static MemberSummaryBuilder getInstance(
-            ClassWriter classWriter, Context context)
-            throws Exception {
+            ClassWriter classWriter, Context context) {
         MemberSummaryBuilder builder = new MemberSummaryBuilder(context,
                 classWriter.getTypeElement());
         WriterFactory wf = context.configuration.getWriterFactory();
@@ -129,8 +127,7 @@ public class MemberSummaryBuilder extends AbstractMemberBuilder {
      * @param configuration the current configuration of the doclet.
      */
     public static MemberSummaryBuilder getInstance(
-            AnnotationTypeWriter annotationTypeWriter, Context context)
-            throws Exception {
+            AnnotationTypeWriter annotationTypeWriter, Context context) {
         MemberSummaryBuilder builder = new MemberSummaryBuilder(context,
                 annotationTypeWriter.getAnnotationTypeElement());
         WriterFactory wf = context.configuration.getWriterFactory();
@@ -389,8 +386,8 @@ public class MemberSummaryBuilder extends AbstractMemberBuilder {
         CommentUtils cmtutils = configuration.cmtUtils;
         final boolean isSetter = isSetter(member);
         final boolean isGetter = isGetter(member);
-        List<DocTree> firstSentence = new ArrayList<>();
-        List<DocTree> bodyTags = new ArrayList<>();
+
+        List<DocTree> fullBody = new ArrayList<>();
         List<DocTree> blockTags = new ArrayList<>();
         if (isGetter || isSetter) {
             //add "[GS]ets the value of the property PROPERTY_NAME."
@@ -398,21 +395,21 @@ public class MemberSummaryBuilder extends AbstractMemberBuilder {
                 String text = MessageFormat.format(
                         configuration.getText("doclet.PropertySetterWithName"),
                         utils.propertyName((ExecutableElement)member));
-                firstSentence.addAll(cmtutils.makeFirstSentenceTree(text));
+                fullBody.addAll(cmtutils.makeFirstSentenceTree(text));
             }
             if (isGetter) {
                 String text = MessageFormat.format(
                         configuration.getText("doclet.PropertyGetterWithName"),
                         utils.propertyName((ExecutableElement) member));
-                firstSentence.addAll(cmtutils.makeFirstSentenceTree(text));
+                fullBody.addAll(cmtutils.makeFirstSentenceTree(text));
             }
             List<? extends DocTree> propertyTags = utils.getBlockTags(property, "propertyDescription");
             if (propertyTags.isEmpty()) {
-                List<? extends DocTree> comment = utils.getBody(property);
+                List<? extends DocTree> comment = utils.getFullBody(property);
                 blockTags.addAll(cmtutils.makePropertyDescriptionTree(comment));
             }
         } else {
-            firstSentence.addAll(utils.getBody(property));
+            fullBody.addAll(utils.getFullBody(property));
         }
 
         // copy certain tags
@@ -455,7 +452,7 @@ public class MemberSummaryBuilder extends AbstractMemberBuilder {
                 blockTags.add(cmtutils.makeSeeTree(sb.toString(), setter));
             }
         }
-        cmtutils.setDocCommentTree(member, firstSentence, bodyTags, blockTags, utils);
+        cmtutils.setDocCommentTree(member, fullBody, blockTags, utils);
     }
 
     /**

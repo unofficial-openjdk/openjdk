@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,24 +23,35 @@
 
 /*
  * @test
- * @bug 8038436
+ * @bug 8038436 8158504
  * @summary Test for changes in 8038436
  * @modules java.base/sun.util.locale.provider
  *          java.base/sun.util.spi
+ *          jdk.localedata
  * @compile -XDignore.symbol.file Bug8038436.java
- * @run main/othervm Bug8038436 -Djava.ext.dirs=foo security
- * @run main/othervm Bug8038436 -Djava.locale.providers=JRE availlocs
+ * @run main/othervm  --limit-modules java.base      Bug8038436  security
+ * @run main/othervm  -Djava.locale.providers=COMPAT Bug8038436  availlocs
  */
 
-import java.security.*;
-import java.text.*;
-import java.util.*;
-import java.util.stream.*;
-import sun.util.locale.provider.*;
+import java.security.CodeSource;
+import java.security.Permission;
+import java.security.PermissionCollection;
+import java.security.Permissions;
+import java.security.Policy;
+import java.security.ProtectionDomain;
+import java.util.Arrays;
+import java.util.Formatter;
+import java.util.GregorianCalendar;
+import java.util.List;
+import java.util.Locale;
+import java.util.stream.Collectors;
+import sun.util.locale.provider.LocaleProviderAdapter;
 
 public class Bug8038436 {
     public static void main(String[] args) {
-        switch (args[1]) {
+
+        switch (args[0]) {
+
         case "security":
             securityTests();
             break;
@@ -50,6 +61,7 @@ public class Bug8038436 {
         default:
             throw new RuntimeException("no test was specified.");
         }
+
     }
 
     private static void securityTests() {
@@ -67,12 +79,14 @@ public class Bug8038436 {
 
         /*
          * Check only English/ROOT locales are returned if the jdk.localedata
-         * module is not installed (implied by "java.ext.dirs" set to "foo").
+         * module is not loaded (implied by "--limit-modules java.base").
          */
-        if (Arrays.asList(Locale.getAvailableLocales())
-                .stream()
-                .anyMatch(l -> l != Locale.ROOT && l.getLanguage() != "en")) {
-            throw new RuntimeException("non English locale(s) included in available locales");
+        List<Locale> nonEnglishLocales= (Arrays.stream(Locale.getAvailableLocales())
+                .filter(l -> (l != Locale.ROOT && !(l.getLanguage() == "en" && (l.getCountry() == "US" || l.getCountry() == "" ))))
+                .collect(Collectors.toList()));
+
+        if (!nonEnglishLocales.isEmpty()) {
+            throw new RuntimeException("non English locale(s)" + nonEnglishLocales + " included in available locales");
         }
     }
 

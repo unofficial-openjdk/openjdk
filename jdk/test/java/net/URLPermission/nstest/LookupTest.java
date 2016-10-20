@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,7 @@ public class LookupTest {
         String url, boolean throwsSecException, boolean throwsIOException)
     {
         try {
+            ProxySelector.setDefault(null);
             URL u = new URL(url);
             System.err.println ("Connecting to " + u);
             URLConnection urlc = u.openConnection();
@@ -71,7 +72,7 @@ public class LookupTest {
             System.out.print(port);
         } else if (cmd.equals("-runtest")) {
             port = Integer.parseInt(args[1]);
-            String hostsFileName = System.getProperty("test.src", ".") + "/LookupTestHosts";
+            String hostsFileName = System.getProperty("user.dir", ".") + "/LookupTestHosts";
             System.setProperty("jdk.net.hosts.file", hostsFileName);
             addMappingToHostsFile("allowedAndFound.com", "127.0.0.1", hostsFileName, false);
             addMappingToHostsFile("notAllowedButFound.com", "99.99.99.99", hostsFileName, true);

@@ -38,7 +38,7 @@
 # include <sys/sysinfo.h>
 
 bool VM_Version::_is_determine_features_test_running = false;
-
+uint64_t VM_Version::_dscr_val = 0;
 
 #define MSG(flag)   \
   if (flag && !FLAG_IS_DEFAULT(flag))                                  \
@@ -111,7 +111,7 @@ void VM_Version::initialize() {
   // Create and print feature-string.
   char buf[(num_features+1) * 16]; // Max 16 chars per feature.
   jio_snprintf(buf, sizeof(buf),
-               "ppc64%s%s%s%s%s%s%s%s%s%s%s%s%s",
+               "ppc64%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
                (has_fsqrt()   ? " fsqrt"   : ""),
                (has_isel()    ? " isel"    : ""),
                (has_lxarxeh() ? " lxarxeh" : ""),
@@ -125,7 +125,8 @@ void VM_Version::initialize() {
                (has_vcipher() ? " aes"     : ""),
                (has_vpmsumb() ? " vpmsumb" : ""),
                (has_tcheck()  ? " tcheck"  : ""),
-               (has_mfdscr()  ? " mfdscr"  : "")
+               (has_mfdscr()  ? " mfdscr"  : ""),
+               (has_vsx()     ? " vsx"     : "")
                // Make sure number of %s matches num_features!
               );
   _features_string = os::strdup(buf);
@@ -229,6 +230,11 @@ void VM_Version::initialize() {
     FLAG_SET_DEFAULT(UseGHASHIntrinsics, false);
   }
 
+  if (UseFMA) {
+    warning("FMA instructions are not available on this CPU");
+    FLAG_SET_DEFAULT(UseFMA, false);
+  }
+
   if (UseSHA) {
     warning("SHA instructions are not available on this CPU");
     FLAG_SET_DEFAULT(UseSHA, false);
@@ -273,11 +279,18 @@ void VM_Version::initialize() {
     }
     bool os_too_old = true;
 #ifdef AIX
-    if (os::Aix::os_version() >= 0x0701031e) { // at least AIX 7.1.3.30
+    // Actually, this is supported since AIX 7.1.. Unfortunately, this first
+    // contained bugs, so that it can only be enabled after AIX 7.1.3.30.
+    // The Java property os.version, which is used in RTM tests to decide
+    // whether the feature is available, only knows major and minor versions.
+    // We don't want to change this property, as user code might depend on it.
+    // So the tests can not check on subversion 3.30, and we only enable RTM
+    // with AIX 7.2.
+    if (os::Aix::os_version() >= 0x07020000) { // At least AIX 7.2.
       os_too_old = false;
     }
 #endif
-#ifdef linux
+#ifdef LINUX
     // At least Linux kernel 4.2, as the problematic behavior of syscalls
     // being called in the middle of a transaction has been addressed.
     // Please, refer to commit b4b56f9ecab40f3b4ef53e130c9f6663be491894
@@ -643,6 +656,7 @@ void VM_Version::determine_features() {
   a->vpmsumb(VR0, VR1, VR2);                   // code[11] -> vpmsumb
   a->tcheck(0);                                // code[12] -> tcheck
   a->mfdscr(R0);                               // code[13] -> mfdscr
+  a->lxvd2x(VSR0, 0, R3_ARG1);                 // code[14] -> vsx
   a->blr();
 
   // Emit function to set one cache line to zero. Emit function descriptor and get pointer to it.
@@ -691,6 +705,7 @@ void VM_Version::determine_features() {
   if (code[feature_cntr++]) features |= vpmsumb_m;
   if (code[feature_cntr++]) features |= tcheck_m;
   if (code[feature_cntr++]) features |= mfdscr_m;
+  if (code[feature_cntr++]) features |= vsx_m;
 
   // Print the detection code.
   if (PrintAssembly) {
@@ -733,31 +748,31 @@ void VM_Version::config_dscr() {
   }
 
   // Apply the configuration if needed.
-  uint64_t dscr_val = (*get_dscr)();
+  _dscr_val = (*get_dscr)();
   if (Verbose) {
-    tty->print_cr("dscr value was 0x%lx" , dscr_val);
+    tty->print_cr("dscr value was 0x%lx" , _dscr_val);
   }
   bool change_requested = false;
   if (DSCR_PPC64 != (uintx)-1) {
-    dscr_val = DSCR_PPC64;
+    _dscr_val = DSCR_PPC64;
     change_requested = true;
   }
   if (DSCR_DPFD_PPC64 <= 7) {
     uint64_t mask = 0x7;
-    if ((dscr_val & mask) != DSCR_DPFD_PPC64) {
-      dscr_val = (dscr_val & ~mask) | (DSCR_DPFD_PPC64);
+    if ((_dscr_val & mask) != DSCR_DPFD_PPC64) {
+      _dscr_val = (_dscr_val & ~mask) | (DSCR_DPFD_PPC64);
       change_requested = true;
     }
   }
   if (DSCR_URG_PPC64 <= 7) {
     uint64_t mask = 0x7 << 6;
-    if ((dscr_val & mask) != DSCR_DPFD_PPC64 << 6) {
-      dscr_val = (dscr_val & ~mask) | (DSCR_URG_PPC64 << 6);
+    if ((_dscr_val & mask) != DSCR_DPFD_PPC64 << 6) {
+      _dscr_val = (_dscr_val & ~mask) | (DSCR_URG_PPC64 << 6);
       change_requested = true;
     }
   }
   if (change_requested) {
-    (*set_dscr)(dscr_val);
+    (*set_dscr)(_dscr_val);
     if (Verbose) {
       tty->print_cr("dscr was set to 0x%lx" , (*get_dscr)());
     }

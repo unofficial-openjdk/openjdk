@@ -59,7 +59,11 @@ public abstract class CachedPainter {
         synchronized(CachedPainter.class) {
             ImageCache cache = cacheMap.get(key);
             if (cache == null) {
-                cache = new ImageCache(1);
+                if (key == PainterMultiResolutionCachedImage.class) {
+                    cache = new ImageCache(32);
+                } else {
+                    cache = new ImageCache(1);
+                }
                 cacheMap.put(key, cache);
             }
             return cache;
@@ -99,20 +103,23 @@ public abstract class CachedPainter {
         }
     }
 
-    private void paint0(Component c, Graphics g, int x,
-                         int y, int w, int h, Object... args) {
-        Object key = getClass();
+    private Image getImage(Object key, Component c,
+                           int baseWidth, int baseHeight,
+                           int w, int h, Object... args) {
         GraphicsConfiguration config = getGraphicsConfiguration(c);
         ImageCache cache = getCache(key);
         Image image = cache.getImage(key, config, w, h, args);
         int attempts = 0;
+        VolatileImage volatileImage = (image instanceof VolatileImage)
+                ? (VolatileImage) image
+                : null;
         do {
             boolean draw = false;
-            if (image instanceof VolatileImage) {
+            if (volatileImage != null) {
                 // See if we need to recreate the image
-                switch (((VolatileImage)image).validate(config)) {
+                switch (volatileImage.validate(config)) {
                 case VolatileImage.IMAGE_INCOMPATIBLE:
-                    ((VolatileImage)image).flush();
+                    volatileImage.flush();
                     image = null;
                     break;
                 case VolatileImage.IMAGE_RESTORED:
@@ -125,22 +132,47 @@ public abstract class CachedPainter {
                 image = createImage(c, w, h, config, args);
                 cache.setImage(key, config, w, h, args, image);
                 draw = true;
+                volatileImage = (image instanceof VolatileImage)
+                        ? (VolatileImage) image
+                        : null;
             }
             if (draw) {
                 // Render to the Image
-                Graphics g2 = image.getGraphics();
-                paintToImage(c, image, g2, w, h, args);
+                Graphics2D g2 = (Graphics2D) image.getGraphics();
+                if (volatileImage == null && (w != baseWidth || h != baseHeight)) {
+                    g2.scale((double) w / baseWidth, (double) h / baseHeight);
+                }
+                paintToImage(c, image, g2, baseWidth, baseHeight, args);
                 g2.dispose();
             }
-
-            // Render to the passed in Graphics
-            paintImage(c, g, x, y, w, h, image, args);
 
             // If we did this 3 times and the contents are still lost
             // assume we're painting to a VolatileImage that is bogus and
             // give up.  Presumably we'll be called again to paint.
-        } while ((image instanceof VolatileImage) &&
-                 ((VolatileImage)image).contentsLost() && ++attempts < 3);
+        } while ((volatileImage != null) &&
+                 volatileImage.contentsLost() && ++attempts < 3);
+
+        return image;
+    }
+
+    private void paint0(Component c, Graphics g, int x,
+                        int y, int w, int h, Object... args) {
+        Object key = getClass();
+        GraphicsConfiguration config = getGraphicsConfiguration(c);
+        ImageCache cache = getCache(key);
+        Image image = cache.getImage(key, config, w, h, args);
+
+        if (image == null) {
+            image = new PainterMultiResolutionCachedImage(w, h);
+            cache.setImage(key, config, w, h, args, image);
+        }
+
+        if (image instanceof PainterMultiResolutionCachedImage) {
+            ((PainterMultiResolutionCachedImage) image).setParams(c, args);
+        }
+
+        // Render to the passed in Graphics
+        paintImage(c, g, x, y, w, h, image, args);
     }
 
     /**
@@ -209,5 +241,51 @@ public abstract class CachedPainter {
             return null;
         }
         return c.getGraphicsConfiguration();
+    }
+
+    class PainterMultiResolutionCachedImage extends AbstractMultiResolutionImage {
+
+        private final int baseWidth;
+        private final int baseHeight;
+        private Component c;
+        private Object[] args;
+
+        public PainterMultiResolutionCachedImage(int baseWidth, int baseHeight) {
+            this.baseWidth = baseWidth;
+            this.baseHeight = baseHeight;
+        }
+
+        public void setParams(Component c, Object[] args) {
+            this.c = c;
+            this.args = args;
+        }
+
+        @Override
+        public int getWidth(ImageObserver observer) {
+            return baseWidth;
+        }
+
+        @Override
+        public int getHeight(ImageObserver observer) {
+            return baseHeight;
+        }
+
+        @Override
+        public Image getResolutionVariant(double destWidth, double destHeight) {
+            int w = (int) Math.ceil(destWidth);
+            int h = (int) Math.ceil(destHeight);
+            return getImage(PainterMultiResolutionCachedImage.class,
+                    c, baseWidth, baseHeight, w, h, args);
+        }
+
+        @Override
+        protected Image getBaseImage() {
+            return getResolutionVariant(baseWidth, baseHeight);
+        }
+
+        @Override
+        public java.util.List<Image> getResolutionVariants() {
+            return Arrays.asList(getResolutionVariant(baseWidth, baseHeight));
+        }
     }
 }

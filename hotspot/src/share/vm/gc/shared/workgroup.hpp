@@ -62,7 +62,12 @@ class AbstractGangTask VALUE_OBJ_CLASS_SPEC {
   AbstractGangTask(const char* name) :
     _name(name),
     _gc_id(GCId::current_raw())
- {}
+  {}
+
+  AbstractGangTask(const char* name, const uint gc_id) :
+    _name(name),
+    _gc_id(gc_id)
+  {}
 
   // The abstract work method.
   // The argument tells you which member of the gang you are.
@@ -156,22 +161,27 @@ class AbstractWorkGang : public CHeapObj<mtInternal> {
     return _active_workers;
   }
 
-  void set_active_workers(uint v) {
+  uint update_active_workers(uint v) {
     assert(v <= _total_workers,
            "Trying to set more workers active than there are");
     _active_workers = MIN2(v, _total_workers);
     add_workers(false /* exit_on_failure */);
     assert(v != 0, "Trying to set active workers to 0");
-    assert(UseDynamicNumberOfGCThreads || _active_workers == _total_workers,
-           "Unless dynamic should use total workers");
-    log_info(gc, task)("GC Workers: using %d out of %d", _active_workers, _total_workers);
+    log_trace(gc, task)("%s: using %d out of %d workers", name(), _active_workers, _total_workers);
+    return _active_workers;
   }
 
   // Add GC workers as needed.
   void add_workers(bool initializing);
 
+  // Add GC workers as needed to reach the specified number of workers.
+  void add_workers(uint active_workers, bool initializing);
+
   // Return the Ith worker.
   AbstractGangWorker* worker(uint i) const;
+
+  // Base name (without worker id #) of threads.
+  const char* group_name() { return name(); }
 
   void threads_do(ThreadClosure* tc) const;
 
@@ -214,7 +224,8 @@ public:
   virtual void run_task(AbstractGangTask* task);
   // Run a task with the given number of workers, returns
   // when the task is done. The number of workers must be at most the number of
-  // active workers.
+  // active workers.  Additional workers may be created if an insufficient
+  // number currently exists.
   void run_task(AbstractGangTask* task, uint num_workers);
 
 protected:
@@ -307,9 +318,9 @@ public:
 // enumeration type.
 
 class SubTasksDone: public CHeapObj<mtInternal> {
-  uint* _tasks;
+  volatile uint* _tasks;
   uint _n_tasks;
-  uint _threads_completed;
+  volatile uint _threads_completed;
 #ifdef ASSERT
   volatile uint _claimed;
 #endif
@@ -352,11 +363,11 @@ public:
 class SequentialSubTasksDone : public StackObj {
 protected:
   uint _n_tasks;     // Total number of tasks available.
-  uint _n_claimed;   // Number of tasks claimed.
+  volatile uint _n_claimed;   // Number of tasks claimed.
   // _n_threads is used to determine when a sub task is done.
   // See comments on SubTasksDone::_n_threads
   uint _n_threads;   // Total number of parallel threads.
-  uint _n_completed; // Number of completed threads.
+  volatile uint _n_completed; // Number of completed threads.
 
   void clear();
 

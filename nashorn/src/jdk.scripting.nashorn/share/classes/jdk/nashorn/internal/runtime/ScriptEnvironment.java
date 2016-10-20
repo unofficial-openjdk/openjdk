@@ -153,6 +153,12 @@ public final class ScriptEnvironment {
     /** Create a new class loaded for each compilation */
     public final boolean _loader_per_compile;
 
+    /** --module-path, if any */
+    public final String _module_path;
+
+    /** --add-modules, if any */
+    public final String _add_modules;
+
     /** Do not support Java support extensions. */
     public final boolean _no_java;
 
@@ -222,13 +228,19 @@ public final class ScriptEnvironment {
     /** Timing */
     public final Timing _timing;
 
-    /** Whether to use anonymous classes. See {@link #useAnonymousClasses(boolean)}. */
+    /** Whether to use anonymous classes. See {@link #useAnonymousClasses(int)}. */
     private final AnonymousClasses _anonymousClasses;
     private enum AnonymousClasses {
         AUTO,
         OFF,
         ON
     }
+
+    /** Size threshold up to which we use anonymous classes in {@link AnonymousClasses#AUTO} setting */
+    private final int _anonymous_classes_threshold;
+
+    /** Default value for anonymous class threshold */
+    private final static int DEFAULT_ANON_CLASS_THRESHOLD = 512;
 
     /**
      * Constructor
@@ -279,6 +291,8 @@ public final class ScriptEnvironment {
             _lazy_compilation = lazy_compilation;
         }
         _loader_per_compile   = options.getBoolean("loader.per.compile");
+        _module_path          = options.getString("module.path");
+        _add_modules          = options.getString("add.modules");
         _no_java              = options.getBoolean("no.java");
         _no_syntax_extensions = options.getBoolean("no.syntax.extensions");
         _no_typed_arrays      = options.getBoolean("no.typed.arrays");
@@ -327,6 +341,8 @@ public final class ScriptEnvironment {
             throw new RuntimeException("Unsupported value for anonymous classes: " + anonClasses);
         }
 
+        this._anonymous_classes_threshold = Options.getIntProperty(
+                "nashorn.anonymous.classes.threshold", DEFAULT_ANON_CLASS_THRESHOLD);
 
         final String language = options.getString("language");
         if (language == null || language.equals("es5")) {
@@ -462,11 +478,12 @@ public final class ScriptEnvironment {
 
     /**
      * Returns true if compilation should use anonymous classes.
-     * @param isEval true if compilation is an eval call.
+     * @param sourceLength length of source being compiled.
      * @return true if anonymous classes should be used
      */
-    public boolean useAnonymousClasses(final boolean isEval) {
-        return _anonymousClasses == AnonymousClasses.ON || (_anonymousClasses == AnonymousClasses.AUTO && isEval);
+    public boolean useAnonymousClasses(final int sourceLength) {
+        return _anonymousClasses == AnonymousClasses.ON
+                || (_anonymousClasses == AnonymousClasses.AUTO && sourceLength <= _anonymous_classes_threshold);
     }
 
 }

@@ -27,7 +27,9 @@
  * @library /tools/lib
  * @modules
  *      jdk.compiler/com.sun.tools.javac.api
+ *      jdk.compiler/com.sun.tools.javac.code
  *      jdk.compiler/com.sun.tools.javac.main
+ *      jdk.compiler/com.sun.tools.javac.processing
  * @build toolbox.ToolBox toolbox.JavacTask toolbox.ModuleBuilder ModuleTestBase
  * @run main XModuleTest
  */
@@ -35,12 +37,22 @@
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
+import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.RoundEnvironment;
+import javax.annotation.processing.SupportedAnnotationTypes;
+import javax.lang.model.SourceVersion;
+import javax.lang.model.element.ModuleElement;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.util.Elements;
+
+import com.sun.tools.javac.code.Symtab;
+import com.sun.tools.javac.processing.JavacProcessingEnvironment;
 import toolbox.JavacTask;
 import toolbox.ModuleBuilder;
 import toolbox.Task;
-import toolbox.TestRunner;
-import toolbox.ToolBox;
+import toolbox.Task.Expect;
 
 public class XModuleTest extends ModuleTestBase {
 
@@ -111,15 +123,22 @@ public class XModuleTest extends ModuleTestBase {
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
-        String log = new JavacTask(tb)
-                .options("-Xmodule:java.compiler", "-classpath", cpClasses.toString())
+        List<String> log = new JavacTask(tb)
+                .options("-Xmodule:java.compiler",
+                         "--class-path", cpClasses.toString(),
+                         "-XDrawDiagnostics")
                 .outdir(classes)
                 .files(src.resolve("javax/lang/model/element/Extra.java"))
-                .run()
+                .run(Expect.FAIL)
                 .writeAll()
-                .getOutput(Task.OutputKind.DIRECT);
+                .getOutputLines(Task.OutputKind.DIRECT);
 
-        if (!log.isEmpty())
+        List<String> expectedOut = Arrays.asList(
+                "Extra.java:1:76: compiler.err.doesnt.exist: p",
+                "1 error"
+        );
+
+        if (!expectedOut.equals(log))
             throw new Exception("expected output not found: " + log);
     }
 
@@ -197,7 +216,7 @@ public class XModuleTest extends ModuleTestBase {
         tb.createDirectories(classes);
 
         List<String> log = new JavacTask(tb)
-                .options("-XDrawDiagnostics", "-Xmodule:java.compiler", "-modulesourcepath", src.toString())
+                .options("-XDrawDiagnostics", "-Xmodule:java.compiler", "--module-source-path", src.toString())
                 .outdir(classes)
                 .files(findJavaFiles(src))
                 .run(Task.Expect.FAIL)
@@ -229,7 +248,7 @@ public class XModuleTest extends ModuleTestBase {
 
         List<String> expected = Arrays.asList("javac: option -Xmodule: can only be specified once",
                                               "Usage: javac <options> <source files>",
-                                              "use -help for a list of possible options");
+                                              "use --help for a list of possible options");
 
         if (!expected.equals(log))
             throw new Exception("expected output not found: " + log);
@@ -247,7 +266,7 @@ public class XModuleTest extends ModuleTestBase {
         tb.writeJavaFiles(src, "package p; interface A extends pkg1.E { }");
 
         new JavacTask(tb, Task.Mode.CMDLINE)
-                .options("-modulepath", modules.toString(),
+                .options("--module-path", modules.toString(),
                         "-Xmodule:m1")
                 .files(findJavaFiles(src))
                 .run()
@@ -263,7 +282,7 @@ public class XModuleTest extends ModuleTestBase {
 
         List<String> log = new JavacTask(tb, Task.Mode.CMDLINE)
                 .options("-XDrawDiagnostics",
-                        "-modulepath", modules.toString(),
+                        "--module-path", modules.toString(),
                         "-Xmodule:m1")
                 .files(findJavaFiles(src2))
                 .run(Task.Expect.FAIL)
@@ -295,11 +314,110 @@ public class XModuleTest extends ModuleTestBase {
         tb.writeJavaFiles(src, "package p; interface A extends pkg1.D { }");
 
         new JavacTask(tb, Task.Mode.CMDLINE)
-                .options("-modulepath", modules.toString(),
-                        "-upgrademodulepath", upgrade.toString(),
+                .options("--module-path", modules.toString(),
+                        "--upgrade-module-path", upgrade.toString(),
                         "-Xmodule:m1")
                 .files(findJavaFiles(src))
                 .run()
                 .writeAll();
     }
+
+    @Test
+    public void testUnnamedIsolation(Path base) throws Exception {
+        //note: avoiding use of java.base, as that gets special handling on some places:
+        Path sourcePath = base.resolve("source-path");
+        tb.writeJavaFiles(sourcePath, "package src; public class Src {}");
+
+        Path classPathSrc = base.resolve("class-path-src");
+        tb.writeJavaFiles(classPathSrc, "package cp; public class CP { }");
+        Path classPath = base.resolve("classPath");
+        tb.createDirectories(classPath);
+
+        String cpLog = new JavacTask(tb)
+                .outdir(classPath)
+                .files(findJavaFiles(classPathSrc))
+                .run()
+                .writeAll()
+                .getOutput(Task.OutputKind.DIRECT);
+
+        if (!cpLog.isEmpty())
+            throw new Exception("expected output not found: " + cpLog);
+
+        Path modulePathSrc = base.resolve("module-path-src");
+        tb.writeJavaFiles(modulePathSrc,
+                          "module m {}",
+                          "package m; public class M {}");
+        Path modulePath = base.resolve("modulePath");
+        tb.createDirectories(modulePath.resolve("m"));
+
+        String modLog = new JavacTask(tb)
+                .outdir(modulePath.resolve("m"))
+                .files(findJavaFiles(modulePathSrc))
+                .run()
+                .writeAll()
+                .getOutput(Task.OutputKind.DIRECT);
+
+        if (!modLog.isEmpty())
+            throw new Exception("expected output not found: " + modLog);
+
+        Path src = base.resolve("src");
+        tb.writeJavaFiles(src, "package m; public class Extra { }");
+        Path classes = base.resolve("classes");
+        tb.createDirectories(classes);
+
+        String log = new JavacTask(tb)
+                .options("-Xmodule:m",
+                         "--class-path", classPath.toString(),
+                         "--source-path", sourcePath.toString(),
+                         "--module-path", modulePath.toString(),
+                         "--processor-path", System.getProperty("test.classes"),
+                         "-XDaccessInternalAPI=true",
+                         "-processor", CheckModuleContentProcessing.class.getName())
+                .outdir(classes)
+                .files(findJavaFiles(sourcePath))
+                .run()
+                .writeAll()
+                .getOutput(Task.OutputKind.DIRECT);
+
+        if (!log.isEmpty())
+            throw new Exception("expected output not found: " + log);
+    }
+
+    @SupportedAnnotationTypes("*")
+    public static final class CheckModuleContentProcessing extends AbstractProcessor {
+
+        @Override
+        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+            Symtab syms = Symtab.instance(((JavacProcessingEnvironment) processingEnv).getContext());
+            Elements elements = processingEnv.getElementUtils();
+            ModuleElement unnamedModule = syms.unnamedModule;
+            ModuleElement mModule = elements.getModuleElement("m");
+
+            assertNonNull("mModule found", mModule);
+            assertNonNull("src.Src from m", elements.getTypeElement(mModule, "src.Src"));
+            assertNull("cp.CP not from m", elements.getTypeElement(mModule, "cp.CP"));
+            assertNull("src.Src not from unnamed", elements.getTypeElement(unnamedModule, "src.Src"));
+            assertNonNull("cp.CP from unnamed", elements.getTypeElement(unnamedModule, "cp.CP"));
+
+            return false;
+        }
+
+        @Override
+        public SourceVersion getSupportedSourceVersion() {
+            return SourceVersion.latest();
+        }
+
+        private static void assertNonNull(String msg, Object val) {
+            if (val == null) {
+                throw new AssertionError(msg);
+            }
+        }
+
+        private static void assertNull(String msg, Object val) {
+            if (val != null) {
+                throw new AssertionError(msg);
+            }
+        }
+    }
+
 }

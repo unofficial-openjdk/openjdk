@@ -35,7 +35,6 @@
 #include "logging/log.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/filemap.hpp"
-#include "mutex_linux.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "os_linux.inline.hpp"
 #include "os_share_linux.hpp"
@@ -43,7 +42,7 @@
 #include "prims/jvm.h"
 #include "prims/jvm_misc.hpp"
 #include "runtime/arguments.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/extendedPC.hpp"
 #include "runtime/globals.hpp"
 #include "runtime/interfaceSupport.hpp"
@@ -142,7 +141,6 @@ int (*os::Linux::_pthread_setname_np)(pthread_t, const char*) = NULL;
 Mutex* os::Linux::_createThread_lock = NULL;
 pthread_t os::Linux::_main_thread;
 int os::Linux::_page_size = -1;
-const int os::Linux::_vm_default_page_size = (8 * K);
 bool os::Linux::_supports_fast_thread_cpu_time = false;
 uint32_t os::Linux::_os_version = 0;
 const char * os::Linux::_glibc_version = NULL;
@@ -703,7 +701,7 @@ static void *thread_native_entry(Thread *thread) {
 }
 
 bool os::create_thread(Thread* thread, ThreadType thr_type,
-                       size_t stack_size) {
+                       size_t req_stack_size) {
   assert(thread->osthread() == NULL, "caller responsible");
 
   // Allocate the OSThread object
@@ -725,34 +723,8 @@ bool os::create_thread(Thread* thread, ThreadType thr_type,
   pthread_attr_init(&attr);
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
-  // stack size
   // calculate stack size if it's not specified by caller
-  if (stack_size == 0) {
-    stack_size = os::Linux::default_stack_size(thr_type);
-
-    switch (thr_type) {
-    case os::java_thread:
-      // Java threads use ThreadStackSize which default value can be
-      // changed with the flag -Xss
-      assert(JavaThread::stack_size_at_create() > 0, "this should be set");
-      stack_size = JavaThread::stack_size_at_create();
-      break;
-    case os::compiler_thread:
-      if (CompilerThreadStackSize > 0) {
-        stack_size = (size_t)(CompilerThreadStackSize * K);
-        break;
-      } // else fall through:
-        // use VMThreadStackSize if CompilerThreadStackSize is not defined
-    case os::vm_thread:
-    case os::pgc_thread:
-    case os::cgc_thread:
-    case os::watcher_thread:
-      if (VMThreadStackSize > 0) stack_size = (size_t)(VMThreadStackSize * K);
-      break;
-    }
-  }
-
-  stack_size = MAX2(stack_size, os::Linux::min_stack_allowed);
+  size_t stack_size = os::Posix::get_initial_stack_size(thr_type, req_stack_size);
   pthread_attr_setstacksize(&attr, stack_size);
 
   // glibc guard page
@@ -958,10 +930,9 @@ static bool find_vma(address addr, address* vma_low, address* vma_high) {
 // bogus value for initial thread.
 void os::Linux::capture_initial_stack(size_t max_size) {
   // stack size is the easy part, get it from RLIMIT_STACK
-  size_t stack_size;
   struct rlimit rlim;
   getrlimit(RLIMIT_STACK, &rlim);
-  stack_size = rlim.rlim_cur;
+  size_t stack_size = rlim.rlim_cur;
 
   // 6308388: a bug in ld.so will relocate its own .data section to the
   //   lower end of primordial stack; reduce ulimit -s value a little bit
@@ -1743,11 +1714,11 @@ void * os::dll_load(const char *filename, char *ebuf, int ebuflen) {
   }
 
   typedef struct {
-    Elf32_Half  code;         // Actual value as defined in elf.h
-    Elf32_Half  compat_class; // Compatibility of archs at VM's sense
-    char        elf_class;    // 32 or 64 bit
-    char        endianess;    // MSB or LSB
-    char*       name;         // String representation
+    Elf32_Half    code;         // Actual value as defined in elf.h
+    Elf32_Half    compat_class; // Compatibility of archs at VM's sense
+    unsigned char elf_class;    // 32 or 64 bit
+    unsigned char endianess;    // MSB or LSB
+    char*         name;         // String representation
   } arch_t;
 
 #ifndef EM_486
@@ -2877,7 +2848,7 @@ void os::Linux::rebuild_cpu_to_node_map() {
                               // in the library.
   const size_t BitsPerCLong = sizeof(long) * CHAR_BIT;
 
-  size_t cpu_num = os::active_processor_count();
+  size_t cpu_num = processor_count();
   size_t cpu_map_size = NCPUS / BitsPerCLong;
   size_t cpu_map_valid_size =
     MIN2((cpu_num + BitsPerCLong - 1) / BitsPerCLong, cpu_map_size);
@@ -3973,7 +3944,8 @@ void os::hint_no_preempt() {}
 //      - sets target osthread state to continue
 //      - sends signal to end the sigsuspend loop in the SR_handler
 //
-//  Note that the SR_lock plays no role in this suspend/resume protocol.
+//  Note that the SR_lock plays no role in this suspend/resume protocol,
+//  but is checked for NULL in SR_handler as a thread termination indicator.
 
 static void resume_clear_context(OSThread *osthread) {
   osthread->set_ucontext(NULL);
@@ -4006,8 +3978,20 @@ static void SR_handler(int sig, siginfo_t* siginfo, ucontext_t* context) {
 
   Thread* thread = Thread::current_or_null_safe();
   assert(thread != NULL, "Missing current thread in SR_handler");
-  OSThread* osthread = thread->osthread();
+
+  // On some systems we have seen signal delivery get "stuck" until the signal
+  // mask is changed as part of thread termination. Check that the current thread
+  // has not already terminated (via SR_lock()) - else the following assertion
+  // will fail because the thread is no longer a JavaThread as the ~JavaThread
+  // destructor has completed.
+
+  if (thread->SR_lock() == NULL) {
+    return;
+  }
+
   assert(thread->is_VM_thread() || thread->is_Java_thread(), "Must be VMThread or JavaThread");
+
+  OSThread* osthread = thread->osthread();
 
   os::SuspendResume::State current = osthread->sr.state();
   if (current == os::SuspendResume::SR_SUSPEND_REQUEST) {
@@ -4782,30 +4766,10 @@ jint os::init_2(void) {
   Linux::signal_sets_init();
   Linux::install_signal_handlers();
 
-  // Check minimum allowable stack size for thread creation and to initialize
-  // the java system classes, including StackOverflowError - depends on page
-  // size.  Add a page for compiler2 recursion in main thread.
-  // Add in 2*BytesPerWord times page size to account for VM stack during
-  // class initialization depending on 32 or 64 bit VM.
-  os::Linux::min_stack_allowed = MAX2(os::Linux::min_stack_allowed,
-                                      JavaThread::stack_guard_zone_size() +
-                                      JavaThread::stack_shadow_zone_size() +
-                                      (2*BytesPerWord COMPILER2_PRESENT(+1)) * Linux::vm_default_page_size());
-
-  size_t threadStackSizeInBytes = ThreadStackSize * K;
-  if (threadStackSizeInBytes != 0 &&
-      threadStackSizeInBytes < os::Linux::min_stack_allowed) {
-    tty->print_cr("\nThe stack size specified is too small, "
-                  "Specify at least " SIZE_FORMAT "k",
-                  os::Linux::min_stack_allowed/ K);
+  // Check and sets minimum stack sizes against command line options
+  if (Posix::set_minimum_stack_sizes() == JNI_ERR) {
     return JNI_ERR;
   }
-
-  // Make the stack size a multiple of the page size so that
-  // the yellow/red zones can be guarded.
-  JavaThread::set_stack_size_at_create(round_to(threadStackSizeInBytes,
-                                                vm_page_size()));
-
   Linux::capture_initial_stack(JavaThread::stack_size_at_create());
 
 #if defined(IA32)
@@ -5159,10 +5123,6 @@ int os::stat(const char *path, struct stat *sbuf) {
   }
   os::native_path(strcpy(pathbuf, path));
   return ::stat(pathbuf, sbuf);
-}
-
-bool os::check_heap(bool force) {
-  return true;
 }
 
 // Is a (classpath) directory empty?

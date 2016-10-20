@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,7 @@
  *
  */
 
-package rtm.predicate;
+package compiler.testlibrary.rtm.predicate;
 
 import jdk.test.lib.Platform;
 
@@ -31,6 +31,6 @@ import java.util.function.BooleanSupplier;
 public class SupportedVM implements BooleanSupplier {
     @Override
     public boolean getAsBoolean() {
-        return Platform.isServer() && !Platform.isEmbedded();
+        return Platform.isServer();
     }
 }

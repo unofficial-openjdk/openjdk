@@ -23,15 +23,12 @@
 
 package jdk.vm.ci.code.test;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.ArrayList;
-import java.util.Arrays;
-
+import jdk.vm.ci.code.CallingConvention;
 import jdk.vm.ci.code.CodeCacheProvider;
 import jdk.vm.ci.code.DebugInfo;
 import jdk.vm.ci.code.Register;
 import jdk.vm.ci.code.StackSlot;
+import jdk.vm.ci.code.ValueKindFactory;
 import jdk.vm.ci.code.site.Call;
 import jdk.vm.ci.code.site.ConstantReference;
 import jdk.vm.ci.code.site.DataPatch;
@@ -46,13 +43,19 @@ import jdk.vm.ci.hotspot.HotSpotCompiledCode.Comment;
 import jdk.vm.ci.hotspot.HotSpotCompiledNmethod;
 import jdk.vm.ci.hotspot.HotSpotConstant;
 import jdk.vm.ci.hotspot.HotSpotResolvedJavaMethod;
+import jdk.vm.ci.meta.AllocatableValue;
 import jdk.vm.ci.meta.Assumptions.Assumption;
 import jdk.vm.ci.meta.InvokeTarget;
 import jdk.vm.ci.meta.JavaKind;
 import jdk.vm.ci.meta.PlatformKind;
 import jdk.vm.ci.meta.ResolvedJavaMethod;
-import jdk.vm.ci.meta.ValueKind;
 import jdk.vm.ci.meta.VMConstant;
+import jdk.vm.ci.meta.ValueKind;
+
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Simple assembler used by the code installation tests.
@@ -145,6 +148,11 @@ public abstract class TestAssembler {
     public abstract StackSlot emitFloatToStack(Register a);
 
     /**
+     * Emit code to store a double-precision float from a register to a new stack slot.
+     */
+    public abstract StackSlot emitDoubleToStack(Register a);
+
+    /**
      * Emit code to store a wide pointer from a register to a new stack slot.
      */
     public abstract StackSlot emitPointerToStack(Register a);
@@ -165,6 +173,11 @@ public abstract class TestAssembler {
     public abstract void emitIntRet(Register a);
 
     /**
+     * Emit code to return from a function, returning a single precision float.
+     */
+    public abstract void emitFloatRet(Register a);
+
+    /**
      * Emit code to return from a function, returning a wide oop pointer.
      */
     public abstract void emitPointerRet(Register a);
@@ -182,6 +195,7 @@ public abstract class TestAssembler {
     private final ArrayList<DataPatch> dataPatches;
 
     protected final CodeCacheProvider codeCache;
+    protected final TestHotSpotVMConfig config;
 
     private final Register[] registers;
     private int nextRegister;
@@ -192,7 +206,13 @@ public abstract class TestAssembler {
 
     private StackSlot deoptRescue;
 
-    private static class TestValueKind extends ValueKind<TestValueKind> {
+    public ValueKindFactory<TestValueKind> valueKindFactory = new ValueKindFactory<TestAssembler.TestValueKind>() {
+        public TestValueKind getValueKind(JavaKind javaKind) {
+            return (TestValueKind) TestAssembler.this.getValueKind(javaKind);
+        }
+    };
+
+    static class TestValueKind extends ValueKind<TestValueKind> {
 
         TestValueKind(PlatformKind kind) {
             super(kind);
@@ -204,7 +224,7 @@ public abstract class TestAssembler {
         }
     }
 
-    protected TestAssembler(CodeCacheProvider codeCache, int initialFrameSize, int stackAlignment, PlatformKind narrowOopKind, Register... registers) {
+    protected TestAssembler(CodeCacheProvider codeCache, TestHotSpotVMConfig config, int initialFrameSize, int stackAlignment, PlatformKind narrowOopKind, Register... registers) {
         this.narrowOopKind = new TestValueKind(narrowOopKind);
 
         this.code = new Buffer();
@@ -213,6 +233,7 @@ public abstract class TestAssembler {
         this.dataPatches = new ArrayList<>();
 
         this.codeCache = codeCache;
+        this.config = config;
 
         this.registers = registers;
         this.nextRegister = 0;
@@ -231,7 +252,12 @@ public abstract class TestAssembler {
     }
 
     protected StackSlot newStackSlot(PlatformKind kind) {
-        curStackSlot += kind.getSizeInBytes();
+        growFrame(kind.getSizeInBytes());
+        return StackSlot.get(new TestValueKind(kind), -curStackSlot, true);
+    }
+
+    protected void growFrame(int sizeInBytes) {
+        curStackSlot += sizeInBytes;
         if (curStackSlot > frameSize) {
             int newFrameSize = curStackSlot;
             if (newFrameSize % stackAlignment != 0) {
@@ -240,7 +266,6 @@ public abstract class TestAssembler {
             emitGrowStack(newFrameSize - frameSize);
             frameSize = newFrameSize;
         }
-        return StackSlot.get(new TestValueKind(kind), -curStackSlot, true);
     }
 
     protected void setDeoptRescueSlot(StackSlot deoptRescue) {
@@ -334,6 +359,11 @@ public abstract class TestAssembler {
             data.putFloat(f);
         }
 
+        public void emitDouble(double f) {
+            ensureSize(data.position() + 8);
+            data.putDouble(f);
+        }
+
         public void align(int alignment) {
             int pos = data.position();
             int misaligned = pos % alignment;
@@ -347,4 +377,27 @@ public abstract class TestAssembler {
             return Arrays.copyOf(data.array(), data.position());
         }
     }
+
+    /**
+     * Loads a primitive into the Allocatable <code>av</code>. Implementors may only implement
+     * primitive types.
+     */
+    public abstract void emitLoad(AllocatableValue av, Object prim);
+
+    /**
+     * Emit a call to a fixed address <code>addr</code>
+     */
+    public abstract void emitCall(long addr);
+
+    /**
+     * Emit code which is necessary to call a method with {@link CallingConvention} <code>cc</code>
+     * and arguments <coe>prim</code>.
+     */
+    public abstract void emitCallPrologue(CallingConvention cc, Object... prim);
+
+    /**
+     * Emit code which is necessary after calling a method with CallingConvention <code>cc</code>.
+     */
+    public abstract void emitCallEpilogue(CallingConvention cc);
+
 }

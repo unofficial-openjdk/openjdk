@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,7 @@ import java.util.Set;
  * @summary Verify that for each group of mutually exclusive predicates defined
  *          in jdk.test.lib.Platform one and only one predicate
  *          evaluates to true.
- * @library /testlibrary
+ * @library /test/lib
  * @modules java.base/jdk.internal.misc
  *          java.management
  * @run main TestMutuallyExclusivePlatformPredicates
@@ -48,9 +48,11 @@ public class TestMutuallyExclusivePlatformPredicates {
         ARCH("isARM", "isPPC", "isSparc", "isX86", "isX64", "isAArch64"),
         BITNESS("is32bit", "is64bit"),
         OS("isAix", "isLinux", "isOSX", "isSolaris", "isWindows"),
-        VM_TYPE("isClient", "isServer", "isGraal", "isMinimal", "isZero"),
-        IGNORED("isEmbedded", "isDebugBuild", "shouldSAAttach",
-                "canPtraceAttachLinux", "canAttachOSX", "isTieredSupported");
+        VM_TYPE("isClient", "isServer", "isGraal", "isMinimal", "isZero", "isEmbedded"),
+        MODE("isInt", "isMixed", "isComp"),
+        IGNORED("isDebugBuild", "isFastDebugBuild", "isSlowDebugBuild",
+                "shouldSAAttach", "canPtraceAttachLinux", "canAttachOSX",
+                "isTieredSupported");
 
         public final List<String> methodNames;
 

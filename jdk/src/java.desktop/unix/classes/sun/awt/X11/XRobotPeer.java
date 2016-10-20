@@ -26,6 +26,8 @@ package sun.awt.X11;
 
 import java.awt.*;
 import java.awt.peer.*;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 
 import sun.awt.AWTAccessor;
 import sun.awt.SunToolkit;
@@ -35,8 +37,17 @@ import sun.awt.X11GraphicsEnvironment;
 
 class XRobotPeer implements RobotPeer {
 
-    private static volatile boolean isGtkSupported;
+    static final boolean tryGtk;
+    static {
+        loadNativeLibraries();
+        tryGtk = AccessController.doPrivileged((PrivilegedAction<Boolean>)()
+                -> Boolean.getBoolean("awt.robot.gtk"));
+    }
+
+    private static boolean isGtkSupported =  false;
+    private static volatile boolean useGtk;
     private X11GraphicsConfig   xgc = null;
+
     /*
      * native implementation uses some static shared data (pipes, processes)
      * so use a class lock to synchronize native method calls
@@ -49,13 +60,14 @@ class XRobotPeer implements RobotPeer {
         setup(tk.getNumberOfButtons(),
                 AWTAccessor.getInputEventAccessor().getButtonDownMasks());
 
-        Toolkit toolkit = Toolkit.getDefaultToolkit();
-        if (!isGtkSupported) {
-            if (toolkit instanceof UNIXToolkit
-                    && ((UNIXToolkit) toolkit).loadGTK()) {
+        boolean isGtkSupported = false;
+        if (tryGtk) {
+            if (tk instanceof UNIXToolkit && ((UNIXToolkit) tk).loadGTK()) {
                 isGtkSupported = true;
             }
         }
+
+        useGtk = (tryGtk && isGtkSupported);
     }
 
     @Override
@@ -104,7 +116,7 @@ class XRobotPeer implements RobotPeer {
     public int getRGBPixel(int x, int y) {
         int pixelArray[] = new int[1];
         getRGBPixelsImpl(xgc, x, y, 1, 1, xgc.getScale(), pixelArray,
-                         isGtkSupported);
+                         useGtk);
         return pixelArray[0];
     }
 
@@ -112,11 +124,12 @@ class XRobotPeer implements RobotPeer {
     public int [] getRGBPixels(Rectangle bounds) {
         int pixelArray[] = new int[bounds.width*bounds.height];
         getRGBPixelsImpl(xgc, bounds.x, bounds.y, bounds.width, bounds.height,
-                         xgc.getScale(), pixelArray, isGtkSupported);
+                         xgc.getScale(), pixelArray, useGtk);
         return pixelArray;
     }
 
     private static synchronized native void setup(int numberOfButtons, int[] buttonDownMasks);
+    private static native void loadNativeLibraries();
 
     private static synchronized native void mouseMoveImpl(X11GraphicsConfig xgc, int x, int y);
     private static synchronized native void mousePressImpl(int buttons);

@@ -51,6 +51,7 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
     private static native void nativeSetNSWindowMenuBar(long nsWindowPtr, long menuBarPtr);
     private static native Insets nativeGetNSWindowInsets(long nsWindowPtr);
     private static native void nativeSetNSWindowBounds(long nsWindowPtr, double x, double y, double w, double h);
+    private static native void nativeSetNSWindowLocationByPlatform(long nsWindowPtr);
     private static native void nativeSetNSWindowStandardFrame(long nsWindowPtr,
             double x, double y, double w, double h);
     private static native void nativeSetNSWindowMinMax(long nsWindowPtr, double minW, double minH, double maxW, double maxH);
@@ -62,6 +63,7 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
     private static native void nativeSetNSWindowRepresentedFilename(long nsWindowPtr, String representedFilename);
     private static native void nativeSetEnabled(long nsWindowPtr, boolean isEnabled);
     private static native void nativeSynthesizeMouseEnteredExitedEvents();
+    private static native void nativeSynthesizeMouseEnteredExitedEvents(long nsWindowPtr, int eventType);
     private static native void nativeDispose(long nsWindowPtr);
     private static native void nativeEnterFullScreenMode(long nsWindowPtr);
     private static native void nativeExitFullScreenMode(long nsWindowPtr);
@@ -530,6 +532,10 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
 
         boolean wasMaximized = isMaximized();
 
+        if (visible && target.isLocationByPlatform()) {
+            nativeSetNSWindowLocationByPlatform(getNSWindowPtr());
+        }
+
         // Actually show or hide the window
         LWWindowPeer blocker = (peer == null)? null : peer.getBlocker();
         if (blocker == null || !visible) {
@@ -818,6 +824,13 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
     public void setModalBlocked(boolean blocked) {
         if (target.getModalExclusionType() == Dialog.ModalExclusionType.APPLICATION_EXCLUDE) {
             return;
+        }
+
+        if (blocked) {
+            // We are going to show a modal window. Previously displayed window will be
+            // blocked/disabled. So we have to send mouse exited event to it now, since
+            // all mouse events are discarded for blocked/disabled windows.
+            nativeSynthesizeMouseEnteredExitedEvents(getNSWindowPtr(), CocoaConstants.NSMouseExited);
         }
 
         nativeSetEnabled(getNSWindowPtr(), !blocked);

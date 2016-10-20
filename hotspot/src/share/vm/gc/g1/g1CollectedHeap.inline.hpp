@@ -89,16 +89,13 @@ inline HeapRegion* G1CollectedHeap::heap_region_containing(const T addr) const {
 }
 
 inline void G1CollectedHeap::reset_gc_time_stamp() {
+  assert_at_safepoint(true);
   _gc_time_stamp = 0;
-  OrderAccess::fence();
-  // Clear the cached CSet starting regions and time stamps.
-  // Their validity is dependent on the GC timestamp.
-  clear_cset_start_regions();
 }
 
 inline void G1CollectedHeap::increment_gc_time_stamp() {
+  assert_at_safepoint(true);
   ++_gc_time_stamp;
-  OrderAccess::fence();
 }
 
 inline void G1CollectedHeap::old_set_add(HeapRegion* hr) {
@@ -109,7 +106,7 @@ inline void G1CollectedHeap::old_set_remove(HeapRegion* hr) {
   _old_set.remove(hr);
 }
 
-// It dirties the cards that cover the block so that so that the post
+// It dirties the cards that cover the block so that the post
 // write barrier never queues anything when updating objects on this
 // block. It is assumed (and in fact we assert) that the block
 // belongs to a young region.

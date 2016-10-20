@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -71,7 +71,6 @@ class Linux {
   static pthread_t _main_thread;
   static Mutex* _createThread_lock;
   static int _page_size;
-  static const int _vm_default_page_size;
 
   static julong available_memory();
   static julong physical_memory() { return _physical_memory; }
@@ -130,8 +129,6 @@ class Linux {
   static int page_size(void)                                        { return _page_size; }
   static void set_page_size(int val)                                { _page_size = val; }
 
-  static int vm_default_page_size(void)                             { return _vm_default_page_size; }
-
   static address   ucontext_get_pc(const ucontext_t* uc);
   static void ucontext_set_pc(ucontext_t* uc, address pc);
   static intptr_t* ucontext_get_sp(const ucontext_t* uc);
@@ -173,12 +170,8 @@ class Linux {
   static void libpthread_init();
   static bool libnuma_init();
   static void* libnuma_dlsym(void* handle, const char* name);
-  // Minimum stack size a thread can be created with (allowing
-  // the VM to completely create the thread and enter user code)
-  static size_t min_stack_allowed;
 
-  // Return default stack size or guard size for the specified thread type
-  static size_t default_stack_size(os::ThreadType thr_type);
+  // Return default guard size for the specified thread type
   static size_t default_guard_size(os::ThreadType thr_type);
 
   static void capture_initial_stack(size_t max_size);

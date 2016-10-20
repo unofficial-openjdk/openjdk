@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,17 +24,17 @@
  /*
  * @test
  * @bug 8136421
- * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9" | os.simpleArch == "aarch64")
- * @library / /testlibrary /test/lib
+ * @requires (vm.simpleArch == "x64" | vm.simpleArch == "sparcv9" | vm.simpleArch == "aarch64")
+ * @library / /test/lib
  * @library ../common/patches
  * @modules java.base/jdk.internal.misc
  * @modules jdk.vm.ci/jdk.vm.ci.hotspot
+ *
  * @build jdk.vm.ci/jdk.vm.ci.hotspot.CompilerToVMHelper
  *        jdk.vm.ci/jdk.vm.ci.hotspot.PublicMetaspaceWrapperObject
- * @build compiler.jvmci.compilerToVM.GetResolvedJavaMethodTest
- * @run main ClassFileInstaller
- *      sun.hotspot.WhiteBox
- *      sun.hotspot.WhiteBox$WhiteBoxPermission
+ *        sun.hotspot.WhiteBox
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:.
  *                   -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI
  *                   -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI
@@ -43,15 +43,15 @@
 
 package compiler.jvmci.compilerToVM;
 
+import jdk.internal.misc.Unsafe;
+import jdk.test.lib.Asserts;
 import jdk.vm.ci.hotspot.CompilerToVMHelper;
 import jdk.vm.ci.hotspot.HotSpotResolvedJavaMethod;
 import jdk.vm.ci.hotspot.PublicMetaspaceWrapperObject;
-import jdk.test.lib.Asserts;
-import jdk.test.lib.Utils;
 import sun.hotspot.WhiteBox;
-import jdk.internal.misc.Unsafe;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 public class GetResolvedJavaMethodTest {
     private static enum TestCase {
@@ -65,9 +65,7 @@ public class GetResolvedJavaMethodTest {
         JAVA_METHOD_BASE {
             @Override
             HotSpotResolvedJavaMethod getResolvedJavaMethod() {
-                HotSpotResolvedJavaMethod methodInstance
-                        = CompilerToVMHelper.getResolvedJavaMethodAtSlot(
-                                TEST_CLASS, 0);
+                HotSpotResolvedJavaMethod methodInstance = TEST_METHOD;
                 try {
                     METASPACE_METHOD_FIELD.set(methodInstance,
                             getPtrToMethod());
@@ -82,9 +80,7 @@ public class GetResolvedJavaMethodTest {
             @Override
             HotSpotResolvedJavaMethod getResolvedJavaMethod() {
                 long ptr = getPtrToMethod();
-                HotSpotResolvedJavaMethod methodInstance
-                        = CompilerToVMHelper.getResolvedJavaMethodAtSlot(
-                        TEST_CLASS, 0);
+                HotSpotResolvedJavaMethod methodInstance = TEST_METHOD;
                 try {
                     METASPACE_METHOD_FIELD.set(methodInstance, ptr / 2L);
                 } catch (ReflectiveOperationException e) {
@@ -98,9 +94,7 @@ public class GetResolvedJavaMethodTest {
             @Override
             HotSpotResolvedJavaMethod getResolvedJavaMethod() {
                 long ptr = getPtrToMethod();
-                HotSpotResolvedJavaMethod methodInstance
-                        = CompilerToVMHelper.getResolvedJavaMethodAtSlot(
-                        TEST_CLASS, 0);
+                HotSpotResolvedJavaMethod methodInstance = TEST_METHOD;
                 try {
                     METASPACE_METHOD_FIELD.set(methodInstance, 0L);
                 } catch (ReflectiveOperationException e) {
@@ -114,20 +108,25 @@ public class GetResolvedJavaMethodTest {
         abstract HotSpotResolvedJavaMethod getResolvedJavaMethod();
     }
 
-    private static final Unsafe UNSAFE = Utils.getUnsafe();
+    private static final Unsafe UNSAFE = Unsafe.getUnsafe();
     private static final WhiteBox WB = WhiteBox.getWhiteBox();
     private static final Field METASPACE_METHOD_FIELD;
     private static final Class<?> TEST_CLASS = GetResolvedJavaMethodTest.class;
+    private static final HotSpotResolvedJavaMethod TEST_METHOD;
     private static final long PTR;
     static  {
-        HotSpotResolvedJavaMethod method
-                = CompilerToVMHelper.getResolvedJavaMethodAtSlot(TEST_CLASS, 0);
+        try {
+            Method method = TEST_CLASS.getDeclaredMethod("test", TestCase.class);
+            TEST_METHOD = CompilerToVMHelper.asResolvedJavaMethod(method);
+        } catch (NoSuchMethodException e) {
+            throw new Error("TESTBUG : " + e, e);
+        }
         try {
             // jdk.vm.ci.hotspot.HotSpotResolvedJavaMethodImpl.metaspaceMethod
-            METASPACE_METHOD_FIELD = method.getClass()
+            METASPACE_METHOD_FIELD = TEST_METHOD.getClass()
                     .getDeclaredField("metaspaceMethod");
             METASPACE_METHOD_FIELD.setAccessible(true);
-            PTR = (long) METASPACE_METHOD_FIELD.get(method);
+            PTR = (long) METASPACE_METHOD_FIELD.get(TEST_METHOD);
         } catch (ReflectiveOperationException e) {
             throw new Error("TESTBUG : " + e, e);
         }

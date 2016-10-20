@@ -21,22 +21,28 @@
  * questions.
  */
 
-import java.security.*;
-import java.lang.instrument.*;
-import java.lang.reflect.*;
-import java.lang.management.ManagementFactory;
+package compiler.profiling.spectrapredefineclass_classloaders;
+
 import com.sun.tools.attach.VirtualMachine;
-import java.lang.reflect.*;
+import jdk.test.lib.Utils;
+
+import java.lang.instrument.ClassFileTransformer;
+import java.lang.instrument.Instrumentation;
+import java.lang.management.ManagementFactory;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.ProtectionDomain;
 
 public class Agent implements ClassFileTransformer {
+    public static final String AGENT_JAR = Paths.get(Utils.TEST_CLASSES, "agent.jar").toString();
     public static ClassLoader newClassLoader() {
         try {
             return new URLClassLoader(new URL[] {
-                    Paths.get(System.getProperty("test.classes",".")).toUri().toURL(),
+                    Paths.get(Utils.TEST_CLASSES).toUri().toURL(),
             }, null);
         } catch (MalformedURLException e){
             throw new RuntimeException("Unexpected URL conversion failure", e);
@@ -49,11 +55,12 @@ public class Agent implements ClassFileTransformer {
 
         // loader2 must be first on the list so loader 1 must be used first
         ClassLoader loader1 = newClassLoader();
-        Class dummy = loader1.loadClass("Test");
+        String packageName = Agent.class.getPackage().getName();
+        Class dummy = loader1.loadClass(packageName + ".Test");
 
         ClassLoader loader2 = newClassLoader();
 
-        Test_class = loader2.loadClass("Test");
+        Test_class = loader2.loadClass(packageName + ".Test");
         Method m3 = Test_class.getMethod("m3", ClassLoader.class);
         // Add speculative trap in m2() (loaded by loader1) that
         // references m4() (loaded by loader2).
@@ -72,7 +79,7 @@ public class Agent implements ClassFileTransformer {
         for (int i = 0; i < 2; i++) {
             try {
                 VirtualMachine vm = VirtualMachine.attach(pid);
-                vm.loadAgent(System.getProperty("test.classes",".") + "/agent.jar", "");
+                vm.loadAgent(AGENT_JAR, "");
                 vm.detach();
             } catch (Exception e) {
                 throw new RuntimeException(e);

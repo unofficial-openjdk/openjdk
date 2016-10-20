@@ -37,6 +37,7 @@ import static org.testng.Assert.*;
  * @bug 8129126 8136802 8137316 8137317 8136804 8139350
  * @library /lib/testlibrary
  * @modules jdk.compiler
+ *          java.logging
  * @build GetResourceBundleTest CompilerUtils jdk.testlibrary.ProcessTools
  * @run testng GetResourceBundleTest
  * @summary Tests Logger.getLogger + logger.getResourceBundle in an named/unnamed module,
@@ -66,10 +67,10 @@ public class GetResourceBundleTest {
         for (String mn : modules) {
             Path msrc = MOD_SRC_DIR.resolve(mn);
             assertTrue(CompilerUtils.compile(msrc, MOD_DEST_DIR,
-                    "-modulesourcepath", MOD_SRC_DIR.toString()));
+                    "--module-source-path", MOD_SRC_DIR.toString()));
         }
         assertTrue(CompilerUtils.compile(PKG_SRC_DIR, PKG_DEST_DIR,
-                "-modulepath", MOD_DEST_DIR.toString(), "-addmods", String.join(",", modules)));
+                "--module-path", MOD_DEST_DIR.toString(), "--add-modules", String.join(",", modules)));
 
         // copy resource files
         String[] files = { "m1/p1/resource/p.properties", "m2/p2/resource/p.properties" };
@@ -84,8 +85,8 @@ public class GetResourceBundleTest {
     public void runWithoutSecurityManager() throws Exception {
         int exitValue = executeTestJava(
                 "-cp", PKG_DEST_DIR.toString(),
-                "-mp", MOD_DEST_DIR.toString(),
-                "-addmods", String.join(",", modules),
+                "--module-path", MOD_DEST_DIR.toString(),
+                "--add-modules", String.join(",", modules),
                 "p3.test.ResourceBundleTest")
                 .outputTo(System.out)
                 .errorTo(System.err)
@@ -98,8 +99,8 @@ public class GetResourceBundleTest {
         int exitValue = executeTestJava(
                 "-Djava.security.manager",
                 "-cp", PKG_DEST_DIR.toString(),
-                "-mp", MOD_DEST_DIR.toString(),
-                "-addmods", String.join(",", modules),
+                "--module-path", MOD_DEST_DIR.toString(),
+                "--add-modules", String.join(",", modules),
                 "p3.test.ResourceBundleTest")
                 .outputTo(System.out)
                 .errorTo(System.err)

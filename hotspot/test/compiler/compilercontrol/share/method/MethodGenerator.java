@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,10 +25,10 @@ package compiler.compilercontrol.share.method;
 
 import compiler.compilercontrol.share.method.MethodDescriptor.PatternType;
 import compiler.compilercontrol.share.method.MethodDescriptor.Separator;
-import jdk.test.lib.Pair;
-import jdk.test.lib.Triple;
+import compiler.compilercontrol.share.pool.PoolHelper;
+import jdk.test.lib.util.Pair;
+import jdk.test.lib.util.Triple;
 import jdk.test.lib.Utils;
-import pool.PoolHelper;
 
 import java.lang.reflect.Executable;
 import java.util.ArrayList;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,12 +26,11 @@
  * @bug 8137167
  * @summary Tests directives to be able to compile only specified  methods
  * @modules java.base/jdk.internal.misc
- * @library /testlibrary /test/lib /compiler/testlibrary ../share /
- * @build compiler.compilercontrol.directives.CompileOnlyTest
- *        pool.sub.* pool.subpack.* sun.hotspot.WhiteBox
- *        compiler.testlibrary.CompilerUtils compiler.compilercontrol.share.actions.*
+ * @library /test/lib /
+ *
+ * @build sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run driver compiler.compilercontrol.directives.CompileOnlyTest
  */
 

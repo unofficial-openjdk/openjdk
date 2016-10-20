@@ -2172,10 +2172,9 @@ Node* GraphKit::record_profiled_receiver_for_speculation(Node* n) {
       java_bc() == Bytecodes::_instanceof ||
       java_bc() == Bytecodes::_aastore) {
     ciProfileData* data = method()->method_data()->bci_to_data(bci());
-    bool maybe_null = data == NULL ? true : data->as_BitData()->null_seen();
+    maybe_null = data == NULL ? true : data->as_BitData()->null_seen();
   }
   return record_profile_for_speculation(n, exact_kls, maybe_null);
-  return n;
 }
 
 /**
@@ -4306,8 +4305,15 @@ void GraphKit::g1_write_barrier_post(Node* oop_store,
       } __ end_if();
     } __ end_if();
   } else {
-    // Object.clone() instrinsic uses this path.
-    g1_mark_card(ideal, card_adr, oop_store, alias_idx, index, index_adr, buffer, tf);
+    // The Object.clone() intrinsic uses this path if !ReduceInitialCardMarks.
+    // We don't need a barrier here if the destination is a newly allocated object
+    // in Eden. Otherwise, GC verification breaks because we assume that cards in Eden
+    // are set to 'g1_young_gen' (see G1SATBCardTableModRefBS::verify_g1_young_region()).
+    assert(!use_ReduceInitialCardMarks(), "can only happen with card marking");
+    Node* card_val = __ load(__ ctrl(), card_adr, TypeInt::INT, T_BYTE, Compile::AliasIdxRaw);
+    __ if_then(card_val, BoolTest::ne, young_card); {
+      g1_mark_card(ideal, card_adr, oop_store, alias_idx, index, index_adr, buffer, tf);
+    } __ end_if();
   }
 
   // Final sync IdealKit and GraphKit.

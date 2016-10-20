@@ -251,9 +251,9 @@ public class Options {
 
         // Source roots
         args.addSourceLocations(Option.SRC, sources);
-        args.addSourceLocations(Option.SOURCEPATH, sourceSearchPaths);
-        args.addSourceLocations(Option.CLASSPATH,  classSearchPaths);
-        args.addSourceLocations(Option.MODULEPATH, moduleSearchPaths);
+        args.addSourceLocations(Option.SOURCE_PATH, sourceSearchPaths);
+        args.addSourceLocations(Option.CLASS_PATH,  classSearchPaths);
+        args.addSourceLocations(Option.MODULE_PATH, moduleSearchPaths);
 
         // Boolean options
         if (permitSourcesInDefaultPackage)
@@ -313,7 +313,7 @@ public class Options {
         }
 
         // Enable dependency generation
-        args.add("-XDcompletionDeps=source,class");
+        args.add("--debug:completionDeps=source,class");
 
         // This can't be anything but 'none'. Enforced by sjavac main method.
         args.add("-implicit:" + implicitPolicy);

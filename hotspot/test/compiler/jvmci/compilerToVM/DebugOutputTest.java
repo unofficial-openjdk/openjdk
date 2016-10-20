@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,13 +24,12 @@
 /*
  * @test
  * @bug 8136421
- * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9" | os.simpleArch == "aarch64")
- * @library / /testlibrary /test/lib
+ * @requires (vm.simpleArch == "x64" | vm.simpleArch == "sparcv9" | vm.simpleArch == "aarch64")
+ * @library / /test/lib
  * @library ../common/patches
  * @modules java.base/jdk.internal.misc
  * @modules jdk.vm.ci/jdk.vm.ci.hotspot
  * @build jdk.vm.ci/jdk.vm.ci.hotspot.CompilerToVMHelper
- * @build compiler.jvmci.compilerToVM.DebugOutputTest
  * @run main/othervm compiler.jvmci.compilerToVM.DebugOutputTest
  */
 
@@ -38,11 +37,11 @@
 
 package compiler.jvmci.compilerToVM;
 
+import jdk.test.lib.process.OutputAnalyzer;
+import jdk.test.lib.process.ProcessTools;
 import jdk.vm.ci.hotspot.CompilerToVMHelper;
-import jdk.test.lib.ProcessTools;
+
 import java.util.Arrays;
-import jdk.test.lib.OutputAnalyzer;
-import jdk.test.lib.Utils;
 
 public class DebugOutputTest {
     public static void main(String[] args) {

@@ -808,6 +808,17 @@ public class HtmlTree extends Content {
     }
 
     /**
+     * Generates a TH tag with style class, scope attribute and some content.
+     *
+     * @param styleClass style for the tag
+     * @param body content for the tag
+     * @return an HtmlTree object for the TH tag
+     */
+    public static HtmlTree TH_ROW_SCOPE(HtmlStyle styleClass, Content body) {
+        return TH(styleClass, "row", body);
+    }
+
+    /**
      * Generates a TITLE tag with some content.
      *
      * @param body content for the tag
@@ -833,13 +844,18 @@ public class HtmlTree extends Content {
      * Generates a UL tag with the style class attribute and some content.
      *
      * @param styleClass style for the tag
-     * @param body content for the tag
+     * @param first initial content to be added
+     * @param more a series of additional content nodes to be added
      * @return an HtmlTree object for the UL tag
      */
-    public static HtmlTree UL(HtmlStyle styleClass, Content body) {
-        HtmlTree htmltree = new HtmlTree(HtmlTag.UL, nullCheck(body));
-        htmltree.addStyle(nullCheck(styleClass));
-        return htmltree;
+    public static HtmlTree UL(HtmlStyle styleClass, Content first, Content... more) {
+        HtmlTree htmlTree = new HtmlTree(HtmlTag.UL);
+        htmlTree.addContent(nullCheck(first));
+        for (Content c : more) {
+            htmlTree.addContent(nullCheck(c));
+        }
+        htmlTree.addStyle(nullCheck(styleClass));
+        return htmlTree;
     }
 
     /**

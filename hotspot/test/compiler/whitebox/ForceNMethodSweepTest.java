@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,31 +22,30 @@
  *
  */
 
-import java.lang.reflect.Method;
-import java.util.EnumSet;
-
-import sun.hotspot.WhiteBox;
-import sun.hotspot.code.BlobType;
-
-import jdk.test.lib.Asserts;
-import jdk.test.lib.InfiniteLoop;
-import compiler.whitebox.CompilerWhiteBoxTest;
-
 /*
  * @test
  * @bug 8059624 8064669 8153265
- * @library /testlibrary /test/lib /
+ * @summary testing of WB::forceNMethodSweep
+ * @library /test/lib /
  * @modules java.base/jdk.internal.misc
- * @modules java.management
- * @build ForceNMethodSweepTest
+ *          java.management
+ * @build sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
  *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
  *                   -XX:-TieredCompilation -XX:+WhiteBoxAPI
  *                   -XX:CompileCommand=compileonly,compiler.whitebox.SimpleTestCaseHelper::*
- *                   -XX:-BackgroundCompilation -XX:-UseCounterDecay ForceNMethodSweepTest
- * @summary testing of WB::forceNMethodSweep
+ *                   -XX:-BackgroundCompilation -XX:-UseCounterDecay
+ *                   compiler.whitebox.ForceNMethodSweepTest
  */
+
+package compiler.whitebox;
+
+import jdk.test.lib.Asserts;
+import sun.hotspot.code.BlobType;
+
+import java.util.EnumSet;
+
 public class ForceNMethodSweepTest extends CompilerWhiteBoxTest {
     public static void main(String[] args) throws Exception {
         CompilerWhiteBoxTest.main(ForceNMethodSweepTest::new, args);

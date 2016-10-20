@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,10 @@ package jdk.vm.ci.hotspot;
 
 import static jdk.vm.ci.hotspot.CompilerToVM.compilerToVM;
 import static jdk.vm.ci.hotspot.HotSpotJVMCIRuntime.runtime;
-import static jdk.vm.ci.hotspot.HotSpotResolvedObjectTypeImpl.fromObjectClass;
+
+import java.lang.invoke.MethodHandle;
+import java.util.Objects;
+
 import jdk.vm.ci.common.JVMCIError;
 import jdk.vm.ci.meta.ConstantReflectionProvider;
 import jdk.vm.ci.meta.JavaConstant;
@@ -46,51 +49,46 @@ public class HotSpotMethodHandleAccessProvider implements MethodHandleAccessProv
      * possible after the {@link HotSpotJVMCIRuntime} is fully initialized.
      */
     static class LazyInitialization {
+        static final ResolvedJavaType lambdaFormType;
         static final ResolvedJavaField methodHandleFormField;
         static final ResolvedJavaField lambdaFormVmentryField;
-        static final ResolvedJavaMethod lambdaFormCompileToBytecodeMethod;
         static final HotSpotResolvedJavaField memberNameVmtargetField;
 
         /**
          * Search for an instance field with the given name in a class.
          *
-         * @param className name of the class to search in
+         * @param declaringType the type declaring the field
          * @param fieldName name of the field to be searched
-         * @return resolved java field
-         * @throws ClassNotFoundException
+         * @param fieldType resolved Java type of the field
+         * @return resolved Java field
+         * @throws NoSuchFieldError
          */
-        private static ResolvedJavaField findFieldInClass(String className, String fieldName) throws ClassNotFoundException {
-            Class<?> clazz = Class.forName(className);
-            ResolvedJavaType type = runtime().fromClass(clazz);
-            ResolvedJavaField[] fields = type.getInstanceFields(false);
+        private static ResolvedJavaField findFieldInClass(ResolvedJavaType declaringType, String fieldName, ResolvedJavaType fieldType) {
+            ResolvedJavaField[] fields = declaringType.getInstanceFields(false);
             for (ResolvedJavaField field : fields) {
-                if (field.getName().equals(fieldName)) {
+                if (field.getName().equals(fieldName) && field.getType().equals(fieldType)) {
                     return field;
                 }
             }
-            return null;
+            throw new NoSuchFieldError(fieldType.getName() + " " + declaringType + "." + fieldName);
         }
 
-        private static ResolvedJavaMethod findMethodInClass(String className, String methodName) throws ClassNotFoundException {
-            Class<?> clazz = Class.forName(className);
-            HotSpotResolvedObjectTypeImpl type = fromObjectClass(clazz);
-            ResolvedJavaMethod result = null;
-            for (ResolvedJavaMethod method : type.getDeclaredMethods()) {
-                if (method.getName().equals(methodName)) {
-                    assert result == null : "more than one method found: " + className + "." + methodName;
-                    result = method;
-                }
-            }
-            assert result != null : "method not found: " + className + "." + methodName;
-            return result;
+        private static ResolvedJavaType resolveType(Class<?> c) {
+            return runtime().fromClass(c);
+        }
+
+        private static ResolvedJavaType resolveType(String className) throws ClassNotFoundException {
+            return resolveType(Class.forName(className));
         }
 
         static {
             try {
-                methodHandleFormField = findFieldInClass("java.lang.invoke.MethodHandle", "form");
-                lambdaFormVmentryField = findFieldInClass("java.lang.invoke.LambdaForm", "vmentry");
-                lambdaFormCompileToBytecodeMethod = findMethodInClass("java.lang.invoke.LambdaForm", "compileToBytecode");
-                memberNameVmtargetField = (HotSpotResolvedJavaField) findFieldInClass("java.lang.invoke.MemberName", "vmtarget");
+                ResolvedJavaType methodHandleType = resolveType(MethodHandle.class);
+                ResolvedJavaType memberNameType = resolveType("java.lang.invoke.MemberName");
+                lambdaFormType = resolveType("java.lang.invoke.LambdaForm");
+                methodHandleFormField = findFieldInClass(methodHandleType, "form", lambdaFormType);
+                lambdaFormVmentryField = findFieldInClass(lambdaFormType, "vmentry", memberNameType);
+                memberNameVmtargetField = (HotSpotResolvedJavaField) findFieldInClass(memberNameType, "vmtarget", resolveType(long.class));
             } catch (Throwable ex) {
                 throw new JVMCIError(ex);
             }
@@ -134,13 +132,12 @@ public class HotSpotMethodHandleAccessProvider implements MethodHandleAccessProv
             return null;
         }
 
-        JavaConstant memberName;
-        if (forceBytecodeGeneration) {
-            /* Invoke non-public method: MemberName LambdaForm.compileToBytecode() */
-            memberName = LazyInitialization.lambdaFormCompileToBytecodeMethod.invoke(lambdaForm, new JavaConstant[0]);
-        } else {
-            /* Load non-public field: MemberName LambdaForm.vmentry */
+        JavaConstant memberName = constantReflection.readFieldValue(LazyInitialization.lambdaFormVmentryField, lambdaForm);
+        if (memberName.isNull() && forceBytecodeGeneration) {
+            Object lf = ((HotSpotObjectConstant) lambdaForm).asObject(LazyInitialization.lambdaFormType);
+            compilerToVM().compileToBytecode(Objects.requireNonNull(lf));
             memberName = constantReflection.readFieldValue(LazyInitialization.lambdaFormVmentryField, lambdaForm);
+            assert memberName.isNonNull();
         }
         return getTargetMethod(memberName);
     }

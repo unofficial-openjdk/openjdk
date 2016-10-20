@@ -66,7 +66,7 @@ typedef struct _JPLISEnvironment  JPLISEnvironment;
 #define JPLIS_INSTRUMENTIMPL_AGENTMAININVOKER_METHODSIGNATURE "(Ljava/lang/String;Ljava/lang/String;)V"
 #define JPLIS_INSTRUMENTIMPL_TRANSFORM_METHODNAME           "transform"
 #define JPLIS_INSTRUMENTIMPL_TRANSFORM_METHODSIGNATURE      \
-    "(Ljava/lang/ClassLoader;Ljava/lang/reflect/Module;Ljava/lang/String;Ljava/lang/Class;Ljava/security/ProtectionDomain;[BZ)[B"
+    "(Ljava/lang/reflect/Module;Ljava/lang/ClassLoader;Ljava/lang/String;Ljava/lang/Class;Ljava/security/ProtectionDomain;[BZ)[B"
 
 
 /*
@@ -107,6 +107,7 @@ struct _JPLISAgent {
     jboolean                mNativeMethodPrefixAdded;     /* indicates if can_set_native_method_prefix capability has been added */
     char const *            mAgentClassName;        /* agent class name */
     char const *            mOptionsString;         /* -javaagent options string */
+    const char *            mJarfile;               /* agent jar file name */
 };
 
 /*

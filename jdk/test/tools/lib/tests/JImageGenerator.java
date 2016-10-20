@@ -106,10 +106,10 @@ public class JImageGenerator {
     private static final String POST_PROCESS_OPTION = "--post-process-path";
     private static final String MAIN_CLASS_OPTION = "--main-class";
     private static final String CLASS_PATH_OPTION = "--class-path";
-    private static final String MODULE_PATH_OPTION = "--modulepath";
-    private static final String ADD_MODS_OPTION = "--addmods";
-    private static final String LIMIT_MODS_OPTION = "--limitmods";
-    private static final String PLUGINS_MODULE_PATH = "--plugin-module-path";
+    private static final String MODULE_PATH_OPTION = "--module-path";
+    private static final String ADD_MODULES_OPTION = "--add-modules";
+    private static final String LIMIT_MODULES_OPTION = "--limit-modules";
+    private static final String PLUGIN_MODULE_PATH = "--plugin-module-path";
 
     private static final String CMDS_OPTION = "--cmds";
     private static final String CONFIG_OPTION = "--config";
@@ -534,7 +534,7 @@ public class JImageGenerator {
                 options.add(dir.toString());
             }
             if (!pluginModulePath.isEmpty()) {
-                options.add(PLUGINS_MODULE_PATH);
+                options.add(PLUGIN_MODULE_PATH);
                 options.add(toPath(pluginModulePath));
             }
             options.addAll(this.options);
@@ -564,11 +564,20 @@ public class JImageGenerator {
         private final List<String> limitMods = new ArrayList<>();
         private final List<String> options = new ArrayList<>();
         private String modulePath;
+        // if you want to specifiy repeated --module-path option
+        private String repeatedModulePath;
+        // if you want to specifiy repeated --limit-modules option
+        private String repeatedLimitMods;
         private Path output;
         private Path existing;
 
         public JLinkTask modulePath(String modulePath) {
             this.modulePath = modulePath;
+            return this;
+        }
+
+        public JLinkTask repeatedModulePath(String modulePath) {
+            this.repeatedModulePath = modulePath;
             return this;
         }
 
@@ -594,6 +603,11 @@ public class JImageGenerator {
 
         public JLinkTask limitMods(String moduleName) {
             this.limitMods.add(moduleName);
+            return this;
+        }
+
+        public JLinkTask repeatedLimitMods(String modules) {
+            this.repeatedLimitMods = modules;
             return this;
         }
 
@@ -632,12 +646,16 @@ public class JImageGenerator {
                 options.add(output.toString());
             }
             if (!addMods.isEmpty()) {
-                options.add(ADD_MODS_OPTION);
+                options.add(ADD_MODULES_OPTION);
                 options.add(addMods.stream().collect(Collectors.joining(",")));
             }
             if (!limitMods.isEmpty()) {
-                options.add(LIMIT_MODS_OPTION);
+                options.add(LIMIT_MODULES_OPTION);
                 options.add(limitMods.stream().collect(Collectors.joining(",")));
+            }
+            if (repeatedLimitMods != null) {
+                options.add(LIMIT_MODULES_OPTION);
+                options.add(repeatedLimitMods);
             }
             if (!jars.isEmpty() || !jmods.isEmpty()) {
                 options.add(MODULE_PATH_OPTION);
@@ -647,8 +665,12 @@ public class JImageGenerator {
                 options.add(MODULE_PATH_OPTION);
                 options.add(modulePath);
             }
+            if (repeatedModulePath != null) {
+                options.add(MODULE_PATH_OPTION);
+                options.add(repeatedModulePath);
+            }
             if (!pluginModulePath.isEmpty()) {
-                options.add(PLUGINS_MODULE_PATH);
+                options.add(PLUGIN_MODULE_PATH);
                 options.add(toPath(pluginModulePath));
             }
             options.addAll(this.options);

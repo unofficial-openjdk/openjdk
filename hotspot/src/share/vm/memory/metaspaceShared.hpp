@@ -125,12 +125,14 @@ class MetaspaceShared : AllStatic {
   static bool _check_classes_made_progress;
   static bool _has_error_classes;
   static bool _archive_loading_failed;
+  static bool _remapped_readwrite;
   static address _cds_i2i_entry_code_buffers;
   static size_t  _cds_i2i_entry_code_buffers_size;
 
   // Used only during dumping.
   static SharedMiscRegion _md;
   static SharedMiscRegion _mc;
+  static SharedMiscRegion _od;
  public:
   enum {
     vtbl_list_size         = DEFAULT_VTBL_LIST_SIZE,
@@ -147,7 +149,10 @@ class MetaspaceShared : AllStatic {
     max_strings = 2, // max number of string regions in string space
     num_non_strings = 4, // number of non-string regions
     first_string = num_non_strings, // index of first string region
-    n_regions = max_strings + num_non_strings // total number of regions
+    // The optional data region is the last region.
+    // Currently it only contains class file data.
+    od = max_strings + num_non_strings,
+    n_regions = od + 1 // total number of regions
   };
 
   // Accessor functions to save shared space created for metadata, which has
@@ -205,6 +210,10 @@ class MetaspaceShared : AllStatic {
   // sharing is enabled. Simply returns true if sharing is not enabled
   // or if the remapping has already been done by a prior call.
   static bool remap_shared_readonly_as_readwrite() NOT_CDS_RETURN_(true);
+  static bool remapped_readwrite() {
+    CDS_ONLY(return _remapped_readwrite);
+    NOT_CDS(return false);
+  }
 
   static void print_shared_spaces();
 
@@ -217,9 +226,10 @@ class MetaspaceShared : AllStatic {
   static int count_class(const char* classlist_file);
   static void estimate_regions_size() NOT_CDS_RETURN;
 
-  // Allocate a block of memory from the "mc" or "md" regions.
+  // Allocate a block of memory from the "mc", "md", or "od" regions.
   static char* misc_code_space_alloc(size_t num_bytes) {  return _mc.alloc(num_bytes); }
   static char* misc_data_space_alloc(size_t num_bytes) {  return _md.alloc(num_bytes); }
+  static char* optional_data_space_alloc(size_t num_bytes) { return _od.alloc(num_bytes); }
 
   static address cds_i2i_entry_code_buffers(size_t total_size);
 
@@ -237,6 +247,10 @@ class MetaspaceShared : AllStatic {
   static SharedMiscRegion* misc_data_region() {
     assert(DumpSharedSpaces, "used during dumping only");
     return &_md;
+  }
+  static SharedMiscRegion* optional_data_region() {
+    assert(DumpSharedSpaces, "used during dumping only");
+    return &_od;
   }
 };
 #endif // SHARE_VM_MEMORY_METASPACESHARED_HPP

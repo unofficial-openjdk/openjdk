@@ -36,7 +36,6 @@ import jdk.javadoc.internal.doclets.toolkit.Configuration;
 import jdk.javadoc.internal.doclets.toolkit.Content;
 import jdk.javadoc.internal.doclets.toolkit.taglets.Taglet.UnsupportedTagletOperationException;
 import jdk.javadoc.internal.doclets.toolkit.util.CommentHelper;
-import jdk.javadoc.internal.doclets.toolkit.util.MessageRetriever;
 import jdk.javadoc.internal.doclets.toolkit.util.Utils;
 
 /**
@@ -105,13 +104,6 @@ public abstract class TagletWriter {
      * @return the output of the taglet.
      */
     protected abstract Content literalTagOutput(Element element, DocTree tag);
-
-    /**
-     * Returns {@link MessageRetriever} for output purposes.
-     *
-     * @return {@link MessageRetriever} for output purposes.
-     */
-    protected abstract MessageRetriever getMsgRetriever();
 
     /**
      * Return the header for the param tags.
@@ -229,7 +221,7 @@ public abstract class TagletWriter {
             List<Taglet> taglets, TagletWriter writer, Content output) {
         Utils utils = writer.configuration().utils;
         tagletManager.checkTags(utils, element, utils.getBlockTags(element), false);
-        tagletManager.checkTags(utils, element, utils.getBody(element), true);
+        tagletManager.checkTags(utils, element, utils.getFullBody(element), true);
         for (Taglet taglet : taglets) {
             if (utils.isTypeElement(element) && taglet instanceof ParamTaglet) {
                 //The type parameters are documented in a special section away

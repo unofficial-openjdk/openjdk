@@ -68,15 +68,6 @@ public interface ResolvedJavaType extends JavaType, ModifiersProvider, Annotated
      */
     boolean isPrimitive();
 
-    /**
-     * {@inheritDoc}
-     * <p>
-     * Only the flags specified in the JVM specification will be included in the returned mask. This
-     * method is identical to {@link Class#getModifiers()} in terms of the value return for this
-     * type.
-     */
-    int getModifiers();
-
     /*
      * The setting of the final bit for types is a bit confusing since arrays are marked as final.
      * This method provides a semantically equivalent test that appropriate for types.
@@ -209,8 +200,8 @@ public interface ResolvedJavaType extends JavaType, ModifiersProvider, Annotated
      *
      * @param method the method to select the implementation of
      * @param callerType the caller or context type used to perform access checks
-     * @return the method that would be selected at runtime (might be abstract) or {@code null} if
-     *         it can not be resolved
+     * @return the link-time resolved method (might be abstract) or {@code null} if it is either a
+     *         signature polymorphic method or can not be linked.
      */
     ResolvedJavaMethod resolveMethod(ResolvedJavaMethod method, ResolvedJavaType callerType);
 

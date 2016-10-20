@@ -28,6 +28,7 @@
 #include "runtime/frame.inline.hpp"
 #include "runtime/interfaceSupport.hpp"
 #include "runtime/os.hpp"
+#include "utilities/macros.hpp"
 #include "utilities/vmError.hpp"
 
 #include <signal.h>
@@ -92,10 +93,6 @@ void os::check_dump_limit(char* buffer, size_t bufferSize) {
 }
 
 int os::get_native_stack(address* stack, int frames, int toSkip) {
-#ifdef _NMT_NOINLINE_
-  toSkip++;
-#endif
-
   int frame_idx = 0;
   int num_of_frames;  // number of frames captured
   frame fr = os::current_frame();
@@ -214,7 +211,7 @@ void os::Posix::print_rlimit_info(outputStream* st) {
   else st->print("%luk", rlim.rlim_cur >> 10);
 
   // Isn't there on solaris
-#if !defined(TARGET_OS_FAMILY_solaris) && !defined(TARGET_OS_FAMILY_aix)
+#if !defined(SOLARIS) && !defined(AIX)
   st->print(", NPROC ");
   getrlimit(RLIMIT_NPROC, &rlim);
   if (rlim.rlim_cur == RLIM_INFINITY) st->print("infinity");
@@ -1062,28 +1059,28 @@ int os::Posix::unblock_thread_signal_mask(const sigset_t *set) {
 }
 
 address os::Posix::ucontext_get_pc(const ucontext_t* ctx) {
-#ifdef TARGET_OS_FAMILY_linux
-   return Linux::ucontext_get_pc(ctx);
-#elif defined(TARGET_OS_FAMILY_solaris)
-   return Solaris::ucontext_get_pc(ctx);
-#elif defined(TARGET_OS_FAMILY_aix)
+#if defined(AIX)
    return Aix::ucontext_get_pc(ctx);
-#elif defined(TARGET_OS_FAMILY_bsd)
+#elif defined(BSD)
    return Bsd::ucontext_get_pc(ctx);
+#elif defined(LINUX)
+   return Linux::ucontext_get_pc(ctx);
+#elif defined(SOLARIS)
+   return Solaris::ucontext_get_pc(ctx);
 #else
    VMError::report_and_die("unimplemented ucontext_get_pc");
 #endif
 }
 
 void os::Posix::ucontext_set_pc(ucontext_t* ctx, address pc) {
-#ifdef TARGET_OS_FAMILY_linux
-   Linux::ucontext_set_pc(ctx, pc);
-#elif defined(TARGET_OS_FAMILY_solaris)
-   Solaris::ucontext_set_pc(ctx, pc);
-#elif defined(TARGET_OS_FAMILY_aix)
+#if defined(AIX)
    Aix::ucontext_set_pc(ctx, pc);
-#elif defined(TARGET_OS_FAMILY_bsd)
+#elif defined(BSD)
    Bsd::ucontext_set_pc(ctx, pc);
+#elif defined(LINUX)
+   Linux::ucontext_set_pc(ctx, pc);
+#elif defined(SOLARIS)
+   Solaris::ucontext_set_pc(ctx, pc);
 #else
    VMError::report_and_die("unimplemented ucontext_get_pc");
 #endif
@@ -1102,6 +1099,123 @@ char* os::Posix::describe_pthread_attr(char* buf, size_t buflen, const pthread_a
   return buf;
 }
 
+// Check minimum allowable stack sizes for thread creation and to initialize
+// the java system classes, including StackOverflowError - depends on page
+// size.  Add two 4K pages for compiler2 recursion in main thread.
+// Add in 4*BytesPerWord 4K pages to account for VM stack during
+// class initialization depending on 32 or 64 bit VM.
+jint os::Posix::set_minimum_stack_sizes() {
+  _java_thread_min_stack_allowed = MAX2(_java_thread_min_stack_allowed,
+                                        JavaThread::stack_guard_zone_size() +
+                                        JavaThread::stack_shadow_zone_size() +
+                                        (4 * BytesPerWord COMPILER2_PRESENT(+ 2)) * 4 * K);
+
+  _java_thread_min_stack_allowed = align_size_up(_java_thread_min_stack_allowed, vm_page_size());
+
+  size_t stack_size_in_bytes = ThreadStackSize * K;
+  if (stack_size_in_bytes != 0 &&
+      stack_size_in_bytes < _java_thread_min_stack_allowed) {
+    // The '-Xss' and '-XX:ThreadStackSize=N' options both set
+    // ThreadStackSize so we go with "Java thread stack size" instead
+    // of "ThreadStackSize" to be more friendly.
+    tty->print_cr("\nThe Java thread stack size specified is too small. "
+                  "Specify at least " SIZE_FORMAT "k",
+                  _java_thread_min_stack_allowed / K);
+    return JNI_ERR;
+  }
+
+#ifdef SOLARIS
+  // For 64kbps there will be a 64kb page size, which makes
+  // the usable default stack size quite a bit less.  Increase the
+  // stack for 64kb (or any > than 8kb) pages, this increases
+  // virtual memory fragmentation (since we're not creating the
+  // stack on a power of 2 boundary.  The real fix for this
+  // should be to fix the guard page mechanism.
+
+  if (vm_page_size() > 8*K) {
+    stack_size_in_bytes = (stack_size_in_bytes != 0)
+       ? stack_size_in_bytes +
+         JavaThread::stack_red_zone_size() +
+         JavaThread::stack_yellow_zone_size()
+       : 0;
+    ThreadStackSize = stack_size_in_bytes/K;
+  }
+#endif // SOLARIS
+
+  // Make the stack size a multiple of the page size so that
+  // the yellow/red zones can be guarded.
+  JavaThread::set_stack_size_at_create(round_to(stack_size_in_bytes,
+                                                vm_page_size()));
+
+  _compiler_thread_min_stack_allowed = align_size_up(_compiler_thread_min_stack_allowed, vm_page_size());
+
+  stack_size_in_bytes = CompilerThreadStackSize * K;
+  if (stack_size_in_bytes != 0 &&
+      stack_size_in_bytes < _compiler_thread_min_stack_allowed) {
+    tty->print_cr("\nThe CompilerThreadStackSize specified is too small. "
+                  "Specify at least " SIZE_FORMAT "k",
+                  _compiler_thread_min_stack_allowed / K);
+    return JNI_ERR;
+  }
+
+  _vm_internal_thread_min_stack_allowed = align_size_up(_vm_internal_thread_min_stack_allowed, vm_page_size());
+
+  stack_size_in_bytes = VMThreadStackSize * K;
+  if (stack_size_in_bytes != 0 &&
+      stack_size_in_bytes < _vm_internal_thread_min_stack_allowed) {
+    tty->print_cr("\nThe VMThreadStackSize specified is too small. "
+                  "Specify at least " SIZE_FORMAT "k",
+                  _vm_internal_thread_min_stack_allowed / K);
+    return JNI_ERR;
+  }
+  return JNI_OK;
+}
+
+// Called when creating the thread.  The minimum stack sizes have already been calculated
+size_t os::Posix::get_initial_stack_size(ThreadType thr_type, size_t req_stack_size) {
+  size_t stack_size;
+  if (req_stack_size == 0) {
+    stack_size = default_stack_size(thr_type);
+  } else {
+    stack_size = req_stack_size;
+  }
+
+  switch (thr_type) {
+  case os::java_thread:
+    // Java threads use ThreadStackSize which default value can be
+    // changed with the flag -Xss
+    if (req_stack_size == 0 && JavaThread::stack_size_at_create() > 0) {
+      // no requested size and we have a more specific default value
+      stack_size = JavaThread::stack_size_at_create();
+    }
+    stack_size = MAX2(stack_size,
+                      _java_thread_min_stack_allowed);
+    break;
+  case os::compiler_thread:
+    if (req_stack_size == 0 && CompilerThreadStackSize > 0) {
+      // no requested size and we have a more specific default value
+      stack_size = (size_t)(CompilerThreadStackSize * K);
+    }
+    stack_size = MAX2(stack_size,
+                      _compiler_thread_min_stack_allowed);
+    break;
+  case os::vm_thread:
+  case os::pgc_thread:
+  case os::cgc_thread:
+  case os::watcher_thread:
+  default:  // presume the unknown thr_type is a VM internal
+    if (req_stack_size == 0 && VMThreadStackSize > 0) {
+      // no requested size and we have a more specific default value
+      stack_size = (size_t)(VMThreadStackSize * K);
+    }
+
+    stack_size = MAX2(stack_size,
+                      _vm_internal_thread_min_stack_allowed);
+    break;
+  }
+
+  return stack_size;
+}
 
 os::WatcherThreadCrashProtection::WatcherThreadCrashProtection() {
   assert(Thread::current()->is_Watcher_thread(), "Must be WatcherThread");

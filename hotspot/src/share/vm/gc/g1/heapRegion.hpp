@@ -261,12 +261,6 @@ class HeapRegion: public G1ContiguousSpace {
   // True iff an attempt to evacuate an object in the region failed.
   bool _evacuation_failed;
 
-  // A heap region may be a member one of a number of special subsets, each
-  // represented as linked lists through the field below.  Currently, there
-  // is only one set:
-  //   The collection set.
-  HeapRegion* _next_in_special_set;
-
   // Fields used by the HeapRegionSetBase class and subclasses.
   HeapRegion* _next;
   HeapRegion* _prev;
@@ -476,9 +470,6 @@ class HeapRegion: public G1ContiguousSpace {
 
   inline bool in_collection_set() const;
 
-  inline HeapRegion* next_in_collection_set() const;
-  inline void set_next_in_collection_set(HeapRegion* r);
-
   void set_allocation_context(AllocationContext_t context) {
     _allocation_context = context;
   }
@@ -521,8 +512,11 @@ class HeapRegion: public G1ContiguousSpace {
 #endif // ASSERT
 
 
-  // Reset HR stuff to default values.
-  void hr_clear(bool par, bool clear_space, bool locked = false);
+  // Reset the HeapRegion to default values.
+  // If skip_remset is true, do not clear the remembered set.
+  void hr_clear(bool skip_remset, bool clear_space, bool locked = false);
+  // Clear the parts skipped by skip_remset in hr_clear() in the HeapRegion during
+  // a concurrent phase.
   void par_clear();
 
   // Get the start of the unmarked area in this region.
@@ -659,27 +653,17 @@ class HeapRegion: public G1ContiguousSpace {
     }
   }
 
-  // Requires that "mr" be entirely within the region.
-  // Apply "cl->do_object" to all objects that intersect with "mr".
-  // If the iteration encounters an unparseable portion of the region,
-  // or if "cl->abort()" is true after a closure application,
-  // terminate the iteration and return the address of the start of the
-  // subregion that isn't done.  (The two can be distinguished by querying
-  // "cl->abort()".)  Return of "NULL" indicates that the iteration
-  // completed.
-  HeapWord*
-  object_iterate_mem_careful(MemRegion mr, ObjectClosure* cl);
-
-  // filter_young: if true and the region is a young region then we
-  // skip the iteration.
-  // card_ptr: if not NULL, and we decide that the card is not young
-  // and we iterate over it, we'll clean the card before we start the
-  // iteration.
-  HeapWord*
-  oops_on_card_seq_iterate_careful(MemRegion mr,
-                                   FilterOutOfRegionClosure* cl,
-                                   bool filter_young,
-                                   jbyte* card_ptr);
+  // Iterate over the card in the card designated by card_ptr,
+  // applying cl to all references in the region.
+  // mr: the memory region covered by the card.
+  // card_ptr: if we decide that the card is not young and we iterate
+  // over it, we'll clean the card before we start the iteration.
+  // Returns true if card was successfully processed, false if an
+  // unparsable part of the heap was encountered, which should only
+  // happen when invoked concurrently with the mutator.
+  bool oops_on_card_seq_iterate_careful(MemRegion mr,
+                                        FilterOutOfRegionClosure* cl,
+                                        jbyte* card_ptr);
 
   size_t recorded_rs_length() const        { return _recorded_rs_length; }
   double predicted_elapsed_time_ms() const { return _predicted_elapsed_time_ms; }
@@ -744,7 +728,7 @@ class HeapRegion: public G1ContiguousSpace {
 // Terminates the iteration when the "doHeapRegion" method returns "true".
 class HeapRegionClosure : public StackObj {
   friend class HeapRegionManager;
-  friend class G1CollectedHeap;
+  friend class G1CollectionSet;
 
   bool _complete;
   void incomplete() { _complete = false; }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2006, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,8 @@
 
 /*
  * @test
- * @bug 6474073
+ * @run main/othervm Zombies
+ * @bug 6474073 6180151
  * @summary Make sure zombies don't get created on Unix
  * @author Martin Buchholz
  */
@@ -42,6 +43,9 @@ public class Zombies {
             ! new File("/bin/ps").canExecute())
             return;
         System.out.println("Looks like a Unix system.");
+        long mypid = ProcessHandle.current().getPid();
+        System.out.printf("mypid: %d%n", mypid);
+
         final Runtime rt = Runtime.getRuntime();
 
         try {
@@ -59,15 +63,24 @@ public class Zombies {
             throw new Error("expected IOException not thrown");
         } catch (IOException expected) {/* OK */}
 
-        rt.exec(TrueCommand).waitFor();
+        Process p = rt.exec(TrueCommand);
+        ProcessHandle pp = p.toHandle().parent().orElse(null);
+        System.out.printf("%s pid: %d, parent: %s%n", TrueCommand, p.getPid(), pp);
+        p.waitFor();
 
         // Count all the zombies that are children of this Java process
         final String[] zombieCounter = {
             "/usr/bin/perl", "-e",
-            "exit @{[`/bin/ps -eo ppid,s` =~ /^ *@{[getppid]} +Z$/mog]}"
+                "$a=`/bin/ps -eo ppid,pid,s,command`;" +
+                        "print @b=$a=~/^ *@{[getppid]} +[0-9]+ +Z.*$/mog;" +
+                        "exit @b"
         };
 
-        int zombies = rt.exec(zombieCounter).waitFor();
-        if (zombies != 0) throw new Error(zombies + " zombies!");
+        ProcessBuilder pb = new ProcessBuilder(zombieCounter);
+        pb.inheritIO();
+        int zombies = pb.start().waitFor();
+        if (zombies != 0) {
+            throw new Error(zombies + " zombies!");
+        }
     }
 }

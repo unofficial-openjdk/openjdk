@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,35 +24,40 @@
 /*
  * @test
  * @bug 8136421
- * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9" | os.simpleArch == "aarch64")
- * @library / /testlibrary /test/lib
+ * @requires (vm.simpleArch == "x64" | vm.simpleArch == "sparcv9" | vm.simpleArch == "aarch64")
+ * @library / /test/lib
  * @library ../common/patches
  * @modules java.base/jdk.internal.misc
  * @modules java.base/jdk.internal.org.objectweb.asm
  *          java.base/jdk.internal.org.objectweb.asm.tree
  *          jdk.vm.ci/jdk.vm.ci.hotspot
  *          jdk.vm.ci/jdk.vm.ci.code
+ *          jdk.vm.ci/jdk.vm.ci.meta
+ *          jdk.vm.ci/jdk.vm.ci.runtime
  * @build jdk.vm.ci/jdk.vm.ci.hotspot.CompilerToVMHelper
- * @build compiler.jvmci.compilerToVM.FindUniqueConcreteMethodTest
  * @run main/othervm -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI
  *                   compiler.jvmci.compilerToVM.FindUniqueConcreteMethodTest
  */
 
 package compiler.jvmci.compilerToVM;
 
-import compiler.jvmci.common.testcases.MultipleImplementer1;
-import compiler.jvmci.common.testcases.SingleImplementer;
-import compiler.jvmci.common.testcases.SingleSubclass;
 import compiler.jvmci.common.CTVMUtilities;
+import compiler.jvmci.common.testcases.DuplicateSimpleSingleImplementerInterface;
+import compiler.jvmci.common.testcases.SimpleSingleImplementerInterface;
+import compiler.jvmci.common.testcases.MultipleImplementer1;
+import compiler.jvmci.common.testcases.MultipleSuperImplementers;
+import compiler.jvmci.common.testcases.SingleImplementer;
 import compiler.jvmci.common.testcases.SingleImplementerInterface;
-import java.lang.reflect.Method;
-import java.util.HashSet;
-import java.util.Set;
+import compiler.jvmci.common.testcases.SingleSubclass;
+import jdk.test.lib.Asserts;
+import jdk.test.lib.Utils;
 import jdk.vm.ci.hotspot.CompilerToVMHelper;
 import jdk.vm.ci.hotspot.HotSpotResolvedJavaMethod;
 import jdk.vm.ci.hotspot.HotSpotResolvedObjectType;
-import jdk.test.lib.Asserts;
-import jdk.test.lib.Utils;
+
+import java.lang.reflect.Method;
+import java.util.HashSet;
+import java.util.Set;
 
 public class FindUniqueConcreteMethodTest {
     public static void main(String args[]) {
@@ -69,40 +74,37 @@ public class FindUniqueConcreteMethodTest {
     private static Set<TestCase> createTestCases() {
         Set<TestCase> result = new HashSet<>();
         // a public method
-        result.add(new TestCase(true, SingleSubclass.class,
-                SingleSubclass.class, "usualMethod"));
+        result.add(new TestCase(true, SingleSubclass.class, "usualMethod"));
         // overriden method
-        result.add(new TestCase(true, SingleSubclass.class,
-                SingleSubclass.class, "overridenMethod"));
+        result.add(new TestCase(true, SingleSubclass.class, "overridenMethod"));
         // private method
-        result.add(new TestCase(true, SingleSubclass.class,
-                SingleSubclass.class, "privateMethod"));
+        result.add(new TestCase(true, SingleSubclass.class, "privateMethod"));
         // protected method
-        result.add(new TestCase(true, SingleSubclass.class,
-                SingleSubclass.class, "protectedMethod"));
+        result.add(new TestCase(true, SingleSubclass.class, "protectedMethod"));
         // default(package-private) method
-        result.add(new TestCase(true, SingleSubclass.class,
-                SingleSubclass.class, "defaultAccessMethod"));
+        result.add(new TestCase(true, SingleSubclass.class, "defaultAccessMethod"));
         // default interface method redefined in implementer
-        result.add(new TestCase(true, MultipleImplementer1.class,
-                MultipleImplementer1.class, "defaultMethod"));
+        result.add(new TestCase(true, MultipleImplementer1.class, "defaultMethod"));
         // interface method
-        result.add(new TestCase(true, MultipleImplementer1.class,
-                MultipleImplementer1.class, "testMethod"));
+        result.add(new TestCase(true, MultipleImplementer1.class, "testMethod"));
         // default interface method not redefined in implementer
-        result.add(new TestCase(true, SingleImplementer.class,
-                SingleImplementerInterface.class, "defaultMethod"));
+        // result.add(new TestCase(true, SingleImplementer.class,
+        //                         SingleImplementerInterface.class, "defaultMethod"));
         // static method
-        result.add(new TestCase(false, SingleSubclass.class,
-                SingleSubclass.class, "staticMethod"));
+        result.add(new TestCase(false, SingleSubclass.class, "staticMethod"));
+        // interface method
+        result.add(new TestCase(false, MultipleSuperImplementers.class,
+                                DuplicateSimpleSingleImplementerInterface.class, "interfaceMethod"));
+        result.add(new TestCase(false, MultipleSuperImplementers.class,
+                                SimpleSingleImplementerInterface.class, "interfaceMethod"));
         return result;
     }
 
     private void runTest(TestCase tcase) throws NoSuchMethodException {
         System.out.println(tcase);
         Method method = tcase.holder.getDeclaredMethod(tcase.methodName);
-        HotSpotResolvedJavaMethod testMethod = CTVMUtilities
-                .getResolvedMethod(tcase.receiver, method);
+        HotSpotResolvedJavaMethod testMethod = CTVMUtilities.getResolvedMethod(method);
+
         HotSpotResolvedObjectType resolvedType = CompilerToVMHelper
                 .lookupType(Utils.toJVMTypeSignature(tcase.receiver), getClass(),
                 /* resolve = */ true);
@@ -119,18 +121,21 @@ public class FindUniqueConcreteMethodTest {
         public final boolean isPositive;
 
         public TestCase(boolean isPositive, Class<?> clazz, Class<?> holder,
-                String methodName) {
+                        String methodName) {
             this.receiver = clazz;
             this.methodName = methodName;
             this.isPositive = isPositive;
             this.holder = holder;
         }
 
+        public TestCase(boolean isPositive, Class<?> clazz, String methodName) {
+            this(isPositive, clazz, clazz, methodName);
+        }
+
         @Override
         public String toString() {
-            return String.format("CASE: receiver=%s, holder=%s, method=%s,"
-                    + " isPositive=%s", receiver.getName(),
-                    holder.getName(), methodName, isPositive);
+            return String.format("CASE: receiver=%s, holder=%s, method=%s, isPositive=%s",
+                                 receiver.getName(), holder.getName(), methodName, isPositive);
         }
     }
 }

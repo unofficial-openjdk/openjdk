@@ -25,10 +25,10 @@
  * @test TestPLABOutput
  * @bug 8140585
  * @summary Check that G1 does not report empty PLAB statistics in the first evacuation.
- * @requires vm.gc=="G1" | vm.gc=="null"
+ * @requires vm.gc.G1
  * @key gc
  * @modules java.base/jdk.internal.misc
- * @library /testlibrary /test/lib
+ * @library /test/lib
  * @build sun.hotspot.WhiteBox
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  * @run driver TestPLABOutput
@@ -39,9 +39,9 @@ import sun.hotspot.WhiteBox;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import jdk.test.lib.OutputAnalyzer;
 import jdk.test.lib.Platform;
-import jdk.test.lib.ProcessTools;
+import jdk.test.lib.process.OutputAnalyzer;
+import jdk.test.lib.process.ProcessTools;
 
 import static jdk.test.lib.Asserts.*;
 

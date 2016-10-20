@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,13 +25,14 @@
  * @test
  * @bug 8026844
  * @summary Test non constant multiplyExact
- * @library /testlibrary
+ * @library /test/lib /
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @compile MulExactINonConstantTest.java Verify.java
- * @run main MulExactINonConstantTest
  *
+ * @run main compiler.intrinsics.mathexact.MulExactINonConstantTest
  */
+
+package compiler.intrinsics.mathexact;
 
 public class MulExactINonConstantTest {
     public static void main(String[] args) {

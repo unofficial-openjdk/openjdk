@@ -25,15 +25,22 @@
  * @test
  * @bug 8057967
  * @modules java.base/jdk.internal.misc
- * @modules java.base/jdk.internal.org.objectweb.asm
- * @library patches
+ *          java.base/jdk.internal.org.objectweb.asm
+ * @library patches /
+ *
  * @build java.base/java.lang.invoke.MethodHandleHelper
  * @run main/bootclasspath/othervm -Xbatch -XX:+IgnoreUnrecognizedVMOptions -Xlog:class+unload
  *                                 -XX:+PrintCompilation -XX:+TraceDependencies -XX:+TraceReferenceGC
- *                                 -verbose:gc compiler.jsr292.CallSiteDepContextTest
+ *                                 -verbose:gc
+ *                                 compiler.jsr292.CallSiteDepContextTest
  */
 
 package compiler.jsr292;
+
+import jdk.internal.misc.Unsafe;
+import jdk.internal.org.objectweb.asm.ClassWriter;
+import jdk.internal.org.objectweb.asm.Handle;
+import jdk.internal.org.objectweb.asm.MethodVisitor;
 
 import java.lang.invoke.CallSite;
 import java.lang.invoke.MethodHandle;
@@ -46,15 +53,16 @@ import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.reflect.Field;
 
-import jdk.internal.org.objectweb.asm.*;
-import jdk.internal.misc.Unsafe;
-
-import static jdk.internal.org.objectweb.asm.Opcodes.*;
+import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PUBLIC;
+import static jdk.internal.org.objectweb.asm.Opcodes.ACC_STATIC;
+import static jdk.internal.org.objectweb.asm.Opcodes.ACC_SUPER;
+import static jdk.internal.org.objectweb.asm.Opcodes.H_INVOKESTATIC;
+import static jdk.internal.org.objectweb.asm.Opcodes.IRETURN;
 
 public class CallSiteDepContextTest {
     static final Unsafe               UNSAFE = Unsafe.getUnsafe();
     static final MethodHandles.Lookup LOOKUP = MethodHandleHelper.IMPL_LOOKUP;
-    static final String           CLASS_NAME = "java/lang/invoke/Test";
+    static final String           CLASS_NAME = "compiler/jsr292/Test";
     static final String          METHOD_NAME = "m";
     static final MethodType TYPE = MethodType.methodType(int.class);
 
@@ -121,8 +129,8 @@ public class CallSiteDepContextTest {
     }
 
     public static void testSharedCallSite() throws Throwable {
-        Class<?> cls1 = UNSAFE.defineAnonymousClass(Object.class, getClassFile("CS_1"), null);
-        Class<?> cls2 = UNSAFE.defineAnonymousClass(Object.class, getClassFile("CS_2"), null);
+        Class<?> cls1 = UNSAFE.defineAnonymousClass(CallSiteDepContextTest.class, getClassFile("CS_1"), null);
+        Class<?> cls2 = UNSAFE.defineAnonymousClass(CallSiteDepContextTest.class, getClassFile("CS_2"), null);
 
         MethodHandle[] mhs = new MethodHandle[] {
                 LOOKUP.findStatic(cls1, METHOD_NAME, TYPE),
@@ -143,7 +151,7 @@ public class CallSiteDepContextTest {
         execute(1, mh);
 
         // mcs.context == cls1
-        Class<?> cls1 = UNSAFE.defineAnonymousClass(Object.class, getClassFile("NonBound_1"), null);
+        Class<?> cls1 = UNSAFE.defineAnonymousClass(CallSiteDepContextTest.class, getClassFile("NonBound_1"), null);
         MethodHandle mh1 = LOOKUP.findStatic(cls1, METHOD_NAME, TYPE);
 
         execute(1, mh1);
@@ -162,8 +170,8 @@ public class CallSiteDepContextTest {
         mcs = new MutableCallSite(LOOKUP.findStatic(T.class, "f1", TYPE));
 
         Class<?>[] cls = new Class[] {
-                UNSAFE.defineAnonymousClass(Object.class, getClassFile("GC_1" + id), null),
-                UNSAFE.defineAnonymousClass(Object.class, getClassFile("GC_2" + id), null),
+                UNSAFE.defineAnonymousClass(CallSiteDepContextTest.class, getClassFile("GC_1" + id), null),
+                UNSAFE.defineAnonymousClass(CallSiteDepContextTest.class, getClassFile("GC_2" + id), null),
         };
 
         MethodHandle[] mhs = new MethodHandle[] {
@@ -177,7 +185,7 @@ public class CallSiteDepContextTest {
         execute(1, mhs);
 
         ref = new PhantomReference<>(cls[0], rq);
-        cls[0] = UNSAFE.defineAnonymousClass(Object.class, getClassFile("GC_3" + id), null);
+        cls[0] = UNSAFE.defineAnonymousClass(CallSiteDepContextTest.class, getClassFile("GC_3" + id), null);
         mhs[0] = LOOKUP.findStatic(cls[0], METHOD_NAME, TYPE);
 
         do {

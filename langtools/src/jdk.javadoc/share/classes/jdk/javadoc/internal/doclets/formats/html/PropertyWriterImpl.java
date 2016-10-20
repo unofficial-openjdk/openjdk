@@ -25,8 +25,6 @@
 
 package jdk.javadoc.internal.doclets.formats.html;
 
-import java.io.*;
-
 import java.util.Arrays;
 import java.util.List;
 
@@ -94,7 +92,7 @@ public class PropertyWriterImpl extends AbstractMemberWriter
         propertyDetailsTree.addContent(writer.getMarkerAnchor(
                 SectionName.PROPERTY_DETAIL));
         Content heading = HtmlTree.HEADING(HtmlConstants.DETAILS_HEADING,
-                writer.propertyDetailsLabel);
+                contents.propertyDetailsLabel);
         propertyDetailsTree.addContent(heading);
         return propertyDetailsTree;
     }
@@ -149,7 +147,7 @@ public class PropertyWriterImpl extends AbstractMemberWriter
     @Override
     public void addComments(ExecutableElement property, Content propertyDocTree) {
         TypeElement holder = (TypeElement)property.getEnclosingElement();
-        if (!utils.getBody(property).isEmpty()) {
+        if (!utils.getFullBody(property).isEmpty()) {
             if (holder.equals(typeElement) ||
                     (!utils.isPublic(holder) || utils.isLinkable(holder))) {
                 writer.addInlineComment(property, propertyDocTree);
@@ -163,9 +161,9 @@ public class PropertyWriterImpl extends AbstractMemberWriter
                 Content codeLink = HtmlTree.CODE(link);
                 Content descfrmLabel = HtmlTree.SPAN(HtmlStyle.descfrmTypeLabel,
                         utils.isClass(holder)
-                                ? writer.descfrmClassLabel
-                                : writer.descfrmInterfaceLabel);
-                descfrmLabel.addContent(writer.getSpace());
+                                ? contents.descfrmClassLabel
+                                : contents.descfrmInterfaceLabel);
+                descfrmLabel.addContent(Contents.SPACE);
                 descfrmLabel.addContent(codeLink);
                 propertyDocTree.addContent(HtmlTree.DIV(HtmlStyle.block, descfrmLabel));
                 writer.addInlineComment(property, propertyDocTree);
@@ -203,20 +201,12 @@ public class PropertyWriterImpl extends AbstractMemberWriter
     }
 
     /**
-     * Close the writer.
-     */
-    @Override
-    public void close() throws IOException {
-        writer.close();
-    }
-
-    /**
      * {@inheritDoc}
      */
     @Override
     public void addSummaryLabel(Content memberTree) {
         Content label = HtmlTree.HEADING(HtmlConstants.SUMMARY_HEADING,
-                writer.getResource("doclet.Property_Summary"));
+                contents.propertySummary);
         memberTree.addContent(label);
     }
 
@@ -225,9 +215,9 @@ public class PropertyWriterImpl extends AbstractMemberWriter
      */
     @Override
     public String getTableSummary() {
-        return configuration.getText("doclet.Member_Table_Summary",
-                configuration.getText("doclet.Property_Summary"),
-                configuration.getText("doclet.properties"));
+        return resources.getText("doclet.Member_Table_Summary",
+                resources.getText("doclet.Property_Summary"),
+                resources.getText("doclet.properties"));
     }
 
     /**
@@ -235,7 +225,7 @@ public class PropertyWriterImpl extends AbstractMemberWriter
      */
     @Override
     public Content getCaption() {
-        return configuration.getResource("doclet.Properties");
+        return contents.properties;
     }
 
     /**
@@ -243,10 +233,8 @@ public class PropertyWriterImpl extends AbstractMemberWriter
      */
     @Override
     public List<String> getSummaryTableHeader(Element member) {
-        List<String> header = Arrays.asList(configuration.getText("doclet.Type"),
-                configuration.getText("doclet.0_and_1",
-                        configuration.getText("doclet.Property"),
-                        configuration.getText("doclet.Description")));
+        List<String> header = Arrays.asList(resources.getText("doclet.Type"),
+                resources.getText("doclet.Property"), resources.getText("doclet.Description"));
         return header;
     }
 
@@ -282,7 +270,7 @@ public class PropertyWriterImpl extends AbstractMemberWriter
                        : configuration.getText("doclet.Properties_Inherited_From_Interface"));
         Content labelHeading = HtmlTree.HEADING(HtmlConstants.INHERITED_SUMMARY_HEADING,
                 label);
-        labelHeading.addContent(writer.getSpace());
+        labelHeading.addContent(Contents.SPACE);
         labelHeading.addContent(classLink);
         inheritedTree.addContent(labelHeading);
     }
@@ -342,14 +330,14 @@ public class PropertyWriterImpl extends AbstractMemberWriter
             if (typeElement == null) {
                 return writer.getHyperLink(
                 SectionName.PROPERTY_SUMMARY,
-                writer.getResource("doclet.navProperty"));
+                contents.navProperty);
             } else {
                 return writer.getHyperLink(
                 SectionName.PROPERTIES_INHERITANCE,
-                configuration.getClassName(typeElement), writer.getResource("doclet.navProperty"));
+                configuration.getClassName(typeElement), contents.navProperty);
             }
         } else {
-            return writer.getResource("doclet.navProperty");
+            return contents.navProperty;
         }
     }
 
@@ -361,9 +349,9 @@ public class PropertyWriterImpl extends AbstractMemberWriter
         if (link) {
             liNav.addContent(writer.getHyperLink(
                     SectionName.PROPERTY_DETAIL,
-                    writer.getResource("doclet.navProperty")));
+                    contents.navProperty));
         } else {
-            liNav.addContent(writer.getResource("doclet.navProperty"));
+            liNav.addContent(contents.navProperty);
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,15 +24,21 @@
 /*
  * @test
  * @bug 8031321
- * @library /testlibrary /test/lib /compiler/whitebox / ..
+ * @requires vm.flavor == "server"
+ * @library /test/lib /
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @build TZcntTestI
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
+ *
+ * @build sun.hotspot.WhiteBox
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -Xbatch -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI
- *                   -XX:+IgnoreUnrecognizedVMOptions -XX:+UseCountTrailingZerosInstruction TZcntTestI
+ *      -XX:+IgnoreUnrecognizedVMOptions -XX:+UseCountTrailingZerosInstruction
+ *      compiler.intrinsics.bmi.verifycode.TZcntTestI
  */
+package compiler.intrinsics.bmi.verifycode;
+
+import compiler.intrinsics.bmi.TestTzcntI;
 
 import java.lang.reflect.Method;
 

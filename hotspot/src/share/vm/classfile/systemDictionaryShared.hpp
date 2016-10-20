@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,7 +48,7 @@ public:
   static bool is_shared_class_visible_for_classloader(
                                       instanceKlassHandle ik,
                                       Handle class_loader,
-                                      const jbyte* pkg_string,
+                                      const char* pkg_string,
                                       Symbol* pkg_name,
                                       PackageEntry* pkg_entry,
                                       ModuleEntry* mod_entry,
@@ -78,7 +78,19 @@ public:
                                            TRAPS) {
     return NULL;
   }
+
   static void serialize(SerializeClosure* soc) {}
+
+  // The (non-application) CDS implementation supports only classes in the boot
+  // class loader, which ensures that the verification constraints are the same
+  // during archive creation time and runtime. Thus we can do the constraint checks
+  // entirely during archive creation time.
+  static bool add_verification_constraint(Klass* k, Symbol* name,
+                  Symbol* from_name, bool from_field_is_protected,
+                  bool from_is_array, bool from_is_object) {return false;}
+  static void finalize_verification_constraints() {}
+  static void check_verification_constraints(instanceKlassHandle klass,
+                                              TRAPS) {}
 };
 
 #endif // SHARE_VM_CLASSFILE_SYSTEMDICTIONARYSHARED_HPP

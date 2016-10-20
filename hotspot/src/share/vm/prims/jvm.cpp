@@ -54,7 +54,7 @@
 #include "prims/privilegedStack.hpp"
 #include "prims/stackwalk.hpp"
 #include "runtime/arguments.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/init.hpp"
 #include "runtime/interfaceSupport.hpp"
@@ -83,21 +83,6 @@
 #if INCLUDE_CDS
 #include "classfile/sharedClassUtil.hpp"
 #include "classfile/systemDictionaryShared.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_linux
-# include "jvm_linux.h"
-#endif
-#ifdef TARGET_OS_FAMILY_solaris
-# include "jvm_solaris.h"
-#endif
-#ifdef TARGET_OS_FAMILY_windows
-# include "jvm_windows.h"
-#endif
-#ifdef TARGET_OS_FAMILY_aix
-# include "jvm_aix.h"
-#endif
-#ifdef TARGET_OS_FAMILY_bsd
-# include "jvm_bsd.h"
 #endif
 
 #include <errno.h>
@@ -577,8 +562,8 @@ JVM_ENTRY(jint, JVM_MoreStackWalk(JNIEnv *env, jobject stackStream, jlong mode, 
   }
 
   Handle stackStream_h(THREAD, JNIHandles::resolve_non_null(stackStream));
-  return StackWalk::moreFrames(stackStream_h, mode, anchor, frame_count,
-                               start_index, frames_array_h, THREAD);
+  return StackWalk::fetchNextBatch(stackStream_h, mode, anchor, frame_count,
+                                   start_index, frames_array_h, THREAD);
 JVM_END
 
 JVM_ENTRY(void, JVM_ToStackTraceElement(JNIEnv *env, jobject frame, jobject stack))
@@ -3364,6 +3349,35 @@ JVM_ENTRY(jobjectArray, JVM_GetSystemPackages(JNIEnv *env))
   JvmtiVMObjectAllocEventCollector oam;
   objArrayOop result = ClassLoader::get_system_packages(CHECK_NULL);
   return (jobjectArray) JNIHandles::make_local(result);
+JVM_END
+
+
+// java.lang.ref.Reference ///////////////////////////////////////////////////////////////
+
+
+JVM_ENTRY(jobject, JVM_GetAndClearReferencePendingList(JNIEnv* env))
+  JVMWrapper("JVM_GetAndClearReferencePendingList");
+
+  MonitorLockerEx ml(Heap_lock);
+  oop ref = Universe::reference_pending_list();
+  if (ref != NULL) {
+    Universe::set_reference_pending_list(NULL);
+  }
+  return JNIHandles::make_local(env, ref);
+JVM_END
+
+JVM_ENTRY(jboolean, JVM_HasReferencePendingList(JNIEnv* env))
+  JVMWrapper("JVM_HasReferencePendingList");
+  MonitorLockerEx ml(Heap_lock);
+  return Universe::has_reference_pending_list();
+JVM_END
+
+JVM_ENTRY(void, JVM_WaitForReferencePendingList(JNIEnv* env))
+  JVMWrapper("JVM_WaitForReferencePendingList");
+  MonitorLockerEx ml(Heap_lock);
+  while (!Universe::has_reference_pending_list()) {
+    ml.wait();
+  }
 JVM_END
 
 

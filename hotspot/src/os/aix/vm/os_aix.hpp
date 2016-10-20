@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2016, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2013, 2016 SAP SE. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -48,9 +48,6 @@ class Aix {
   static pthread_t _main_thread;
   static Mutex* _createThread_lock;
   static int _page_size;
-
-  // Page size of newly created pthreads.
-  static int _stack_page_size;
 
   // -1 = uninitialized, 0 = AIX, 1 = OS/400 (PASE)
   static int _on_pase;
@@ -113,15 +110,6 @@ class Aix {
     return _page_size;
   }
 
-  // Accessor methods for stack page size which may be different from usual page size.
-  static int stack_page_size(void) {
-    assert(_stack_page_size != -1, "not initialized");
-    return _stack_page_size;
-  }
-
-  // This is used to scale stack space (guard pages etc.). The name is somehow misleading.
-  static int vm_default_page_size(void ) { return 8*K; }
-
   static address   ucontext_get_pc(const ucontext_t* uc);
   static intptr_t* ucontext_get_sp(const ucontext_t* uc);
   static intptr_t* ucontext_get_fp(const ucontext_t* uc);
@@ -151,14 +139,6 @@ class Aix {
 
   // libpthread version string
   static void libpthread_init();
-
-  // Minimum stack size a thread can be created with (allowing
-  // the VM to completely create the thread and enter user code)
-  static size_t min_stack_allowed;
-
-  // Return default stack size or guard size for the specified thread type
-  static size_t default_stack_size(os::ThreadType thr_type);
-  static size_t default_guard_size(os::ThreadType thr_type);
 
   // Function returns true if we run on OS/400 (pase), false if we run
   // on AIX.

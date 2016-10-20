@@ -33,13 +33,9 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
-import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.SimpleElementVisitor9;
 
 import com.sun.source.doctree.DocTree;
-import com.sun.tools.javac.util.DefinedBy;
-import com.sun.tools.javac.util.DefinedBy.Api;
 
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlAttr;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlConstants;
@@ -48,6 +44,7 @@ import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTag;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTree;
 import jdk.javadoc.internal.doclets.formats.html.markup.StringContent;
 import jdk.javadoc.internal.doclets.toolkit.Content;
+import jdk.javadoc.internal.doclets.toolkit.Resources;
 import jdk.javadoc.internal.doclets.toolkit.taglets.DeprecatedTaglet;
 import jdk.javadoc.internal.doclets.toolkit.util.MethodTypes;
 import jdk.javadoc.internal.doclets.toolkit.util.Utils;
@@ -73,6 +70,9 @@ public abstract class AbstractMemberWriter {
     protected final ConfigurationImpl configuration;
     protected final Utils utils;
     protected final SubWriterHolderWriter writer;
+    protected final Contents contents;
+    protected final Resources resources;
+
     protected final TypeElement typeElement;
     protected Map<String, Integer> typeMap = new LinkedHashMap<>();
     protected Set<MethodTypes> methodTypes = EnumSet.noneOf(MethodTypes.class);
@@ -86,7 +86,9 @@ public abstract class AbstractMemberWriter {
         this.writer = writer;
         this.nodepr = configuration.nodeprecated;
         this.typeElement = typeElement;
-        this.utils = writer.configuration.utils;
+        this.utils = configuration.utils;
+        this.contents = configuration.contents;
+        this.resources = configuration.resources;
     }
 
     public AbstractMemberWriter(SubWriterHolderWriter writer) {
@@ -258,7 +260,7 @@ public abstract class AbstractMemberWriter {
         if (!set.isEmpty()) {
             String mods = set.stream().map(m -> m.toString()).collect(Collectors.joining(" "));
             htmltree.addContent(mods);
-            htmltree.addContent(writer.getSpace());
+            htmltree.addContent(Contents.SPACE);
         }
     }
 
@@ -286,7 +288,7 @@ public abstract class AbstractMemberWriter {
         addModifier(member, code);
         if (type == null) {
             code.addContent(utils.isClass(member) ? "class" : "interface");
-            code.addContent(writer.getSpace());
+            code.addContent(Contents.SPACE);
         } else {
             List<? extends TypeParameterElement> list = utils.isExecutableElement(member)
                     ? ((ExecutableElement)member).getTypeParameters()
@@ -299,7 +301,7 @@ public abstract class AbstractMemberWriter {
                 if (typeParameters.charCount() > 10) {
                     code.addContent(new HtmlTree(HtmlTag.BR));
                 } else {
-                    code.addContent(writer.getSpace());
+                    code.addContent(Contents.SPACE);
                 }
                 code.addContent(
                         writer.getLink(new LinkInfoImpl(configuration,
@@ -366,7 +368,7 @@ public abstract class AbstractMemberWriter {
      * @param htmltree the content tree to which the comment will be added.
      */
     protected void addComment(Element member, Content htmltree) {
-        if (!utils.getBody(member).isEmpty()) {
+        if (!utils.getFullBody(member).isEmpty()) {
             writer.addInlineComment(member, htmltree);
         }
     }
@@ -394,6 +396,7 @@ public abstract class AbstractMemberWriter {
     * @param ped The <code>ProgramElement</code> being checked.
     * return true if the <code>ProgramElement</code> is being inherited and
     * false otherwise.
+     *@return true if inherited
     */
     protected boolean isInherited(Element ped){
         return (!utils.isPrivate(ped) &&
@@ -413,7 +416,7 @@ public abstract class AbstractMemberWriter {
     protected void addDeprecatedAPI(Collection<Element> deprmembers, String headingKey,
             String tableSummary, List<String> tableHeader, Content contentTree) {
         if (deprmembers.size() > 0) {
-            Content caption = writer.getTableCaption(configuration.getResource(headingKey));
+            Content caption = writer.getTableCaption(configuration.getContent(headingKey));
             Content table = (configuration.isOutputHtml5())
                     ? HtmlTree.TABLE(HtmlStyle.deprecatedSummary, caption)
                     : HtmlTree.TABLE(HtmlStyle.deprecatedSummary, tableSummary, caption);
@@ -421,12 +424,15 @@ public abstract class AbstractMemberWriter {
             Content tbody = new HtmlTree(HtmlTag.TBODY);
             boolean altColor = true;
             for (Element member : deprmembers) {
-                HtmlTree td = HtmlTree.TD(HtmlStyle.colOne, getDeprecatedLink(member));
+                HtmlTree thRow = HtmlTree.TH_ROW_SCOPE(HtmlStyle.colFirst, getDeprecatedLink(member));
+                HtmlTree tr = HtmlTree.TR(thRow);
+                HtmlTree td = new HtmlTree(HtmlTag.TD);
+                td.addStyle(HtmlStyle.colLast);
                 List<? extends DocTree> deprTrees = utils.getBlockTags(member, DocTree.Kind.DEPRECATED);
                 if (!deprTrees.isEmpty()) {
                     writer.addInlineDeprecatedComment(member, deprTrees.get(0), td);
                 }
-                HtmlTree tr = HtmlTree.TR(td);
+                tr.addContent(td);
                 tr.addStyle(altColor ? HtmlStyle.altColor : HtmlStyle.rowColor);
                 altColor = !altColor;
                 tbody.addContent(tr);
@@ -474,8 +480,9 @@ public abstract class AbstractMemberWriter {
                 tdFirst.addStyle(HtmlStyle.colFirst);
                 writer.addSummaryType(this, element, tdFirst);
                 tr.addContent(tdFirst);
-                HtmlTree tdLast = new HtmlTree(HtmlTag.TD);
-                tdLast.addStyle(HtmlStyle.colLast);
+                HtmlTree thType = new HtmlTree(HtmlTag.TH);
+                thType.addStyle(HtmlStyle.colSecond);
+                thType.addAttr(HtmlAttr.SCOPE, "row");
                 if (te != null
                         && !utils.isConstructor(element)
                         && !utils.isClass(element)
@@ -484,14 +491,17 @@ public abstract class AbstractMemberWriter {
                     HtmlTree name = new HtmlTree(HtmlTag.SPAN);
                     name.addStyle(HtmlStyle.typeNameLabel);
                     name.addContent(name(te) + ".");
-                    tdLast.addContent(name);
+                    thType.addContent(name);
                 }
                 addSummaryLink(utils.isClass(element) || utils.isInterface(element)
                         ? LinkInfoImpl.Kind.CLASS_USE
                         : LinkInfoImpl.Kind.MEMBER,
-                    te, element, tdLast);
-                writer.addSummaryLinkComment(this, element, tdLast);
-                tr.addContent(tdLast);
+                        te, element, thType);
+                tr.addContent(thType);
+                HtmlTree tdDesc = new HtmlTree(HtmlTag.TD);
+                tdDesc.addStyle(HtmlStyle.colLast);
+                writer.addSummaryLinkComment(this, element, tdDesc);
+                tr.addContent(tdDesc);
                 tbody.addContent(tr);
             }
             table.addContent(tbody);
@@ -536,7 +546,7 @@ public abstract class AbstractMemberWriter {
 
     protected void serialWarning(Element e, String key, String a1, String a2) {
         if (configuration.serialwarn) {
-            configuration.getDocletSpecificMsg().warning(e, key, a1, a2);
+            configuration.messages.warning(e, key, a1, a2);
         }
     }
 
@@ -554,12 +564,15 @@ public abstract class AbstractMemberWriter {
         HtmlTree tdSummaryType = new HtmlTree(HtmlTag.TD);
         tdSummaryType.addStyle(HtmlStyle.colFirst);
         writer.addSummaryType(this, member, tdSummaryType);
-        HtmlTree tdSummary = new HtmlTree(HtmlTag.TD);
-        setSummaryColumnStyle(tdSummary);
-        addSummaryLink(tElement, member, tdSummary);
-        writer.addSummaryLinkComment(this, member, firstSentenceTags, tdSummary);
         HtmlTree tr = HtmlTree.TR(tdSummaryType);
-        tr.addContent(tdSummary);
+        HtmlTree thSummaryLink = new HtmlTree(HtmlTag.TH);
+        setSummaryColumnStyleAndScope(thSummaryLink);
+        addSummaryLink(tElement, member, thSummaryLink);
+        tr.addContent(thSummaryLink);
+        HtmlTree tdDesc = new HtmlTree(HtmlTag.TD);
+        tdDesc.addStyle(HtmlStyle.colLast);
+        writer.addSummaryLinkComment(this, member, firstSentenceTags, tdDesc);
+        tr.addContent(tdDesc);
         if (utils.isMethod(member) && !utils.isAnnotationType(member)) {
             int methodType = utils.isStatic(member) ? MethodTypes.STATIC.value() :
                     MethodTypes.INSTANCE.value();
@@ -609,12 +622,13 @@ public abstract class AbstractMemberWriter {
     }
 
     /**
-     * Set the style for the summary column.
+     * Set the style and scope attribute for the summary column.
      *
-     * @param tdTree the column for which the style will be set
+     * @param thTree the column for which the style and scope attribute will be set
      */
-    public void setSummaryColumnStyle(HtmlTree tdTree) {
-        tdTree.addStyle(HtmlStyle.colLast);
+    public void setSummaryColumnStyleAndScope(HtmlTree thTree) {
+        thTree.addStyle(HtmlStyle.colSecond);
+        thTree.addAttr(HtmlAttr.SCOPE, "row");
     }
 
     /**

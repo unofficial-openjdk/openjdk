@@ -50,12 +50,14 @@ class ClassFileStream;
 
 class ClassPathEntry : public CHeapObj<mtClass> {
 private:
-  ClassPathEntry* _next;
+  ClassPathEntry* volatile _next;
 public:
   // Next entry in class path
-  ClassPathEntry* next() const { return _next; }
+  ClassPathEntry* next() const {
+    return (ClassPathEntry*) OrderAccess::load_ptr_acquire(&_next);
+  }
   void set_next(ClassPathEntry* next) {
-    // may have unlocked readers, so write atomically.
+    // may have unlocked readers, so ensure visibility.
     OrderAccess::release_store_ptr(&_next, next);
   }
   virtual bool is_jrt() = 0;
@@ -67,6 +69,7 @@ public:
   // Attempt to locate file_name through this class path entry.
   // Returns a class file parsing stream if successfull.
   virtual ClassFileStream* open_stream(const char* name, TRAPS) = 0;
+  virtual bool stream_exists(const char* name) = 0;
   // Debugging
   NOT_PRODUCT(virtual void compile_the_world(Handle loader, TRAPS) = 0;)
 };
@@ -81,6 +84,7 @@ class ClassPathDirEntry: public ClassPathEntry {
   JImageFile* jimage() const { return NULL; }
   ClassPathDirEntry(const char* dir);
   ClassFileStream* open_stream(const char* name, TRAPS);
+  bool stream_exists(const char* name) { return false; }
   // Debugging
   NOT_PRODUCT(void compile_the_world(Handle loader, TRAPS);)
 };
@@ -124,6 +128,7 @@ class ClassPathZipEntry: public ClassPathEntry {
   ClassFileStream* open_stream(const char* name, TRAPS);
   void contents_do(void f(const char* name, void* context), void* context);
   bool is_multiple_versioned(TRAPS) NOT_CDS_RETURN_(false);
+  bool stream_exists(const char* name);
   // Debugging
   NOT_PRODUCT(void compile_the_world(Handle loader, TRAPS);)
 };
@@ -143,6 +148,7 @@ public:
   ClassPathImageEntry(JImageFile* jimage, const char* name);
   ~ClassPathImageEntry();
   ClassFileStream* open_stream(const char* name, TRAPS);
+  bool stream_exists(const char* name) { return false; }
 
   // Debugging
   NOT_PRODUCT(void compile_the_world(Handle loader, TRAPS);)
@@ -150,7 +156,7 @@ public:
 
 // ModuleClassPathList contains a linked list of ClassPathEntry's
 // that have been specified for a specific module.  Currently,
-// the only way to specify a module/path pair is via the -Xpatch
+// the only way to specify a module/path pair is via the --patch-module
 // command line option.
 class ModuleClassPathList : public CHeapObj<mtClass> {
 private:
@@ -213,36 +219,37 @@ class ClassLoader: AllStatic {
   static PerfCounter* _load_instance_class_failCounter;
 
   // The boot class path consists of 3 ordered pieces:
-  //  1. the module/path pairs specified to -Xpatch
-  //    -Xpatch:<module>=<file>(<pathsep><file>)*
+  //  1. the module/path pairs specified to --patch-module
+  //    --patch-module=<module>=<file>(<pathsep><file>)*
   //  2. the base piece
-  //    [exploded build | jimage]
+  //    [jimage | build with exploded modules]
   //  3. boot loader append path
   //    [-Xbootclasspath/a]; [jvmti appended entries]
   //
   // The boot loader must obey this order when attempting
   // to load a class.
 
-  // Contains the module/path pairs specified to -Xpatch
-  static GrowableArray<ModuleClassPathList*>* _xpatch_entries;
+  // 1. Contains the module/path pairs specified to --patch-module
+  static GrowableArray<ModuleClassPathList*>* _patch_mod_entries;
 
-  // Contains the ClassPathEntry instances that include
-  // both the base piece and the boot loader append path.
-  static ClassPathEntry* _first_entry;
-  // Last entry in linked list of ClassPathEntry instances
-  static ClassPathEntry* _last_entry;
-  static int _num_entries;
+  // 2. the base piece
+  //    Contains the ClassPathEntry of the modular java runtime image.
+  //    If no java runtime image is present, this indicates a
+  //    build with exploded modules is being used instead.
+  static ClassPathEntry* _jrt_entry;
+  static GrowableArray<ModuleClassPathList*>* _exploded_entries;
+  enum { EXPLODED_ENTRY_SIZE = 80 }; // Initial number of exploded modules
 
-  // Marks the start of:
-  //   - the boot loader's append path
-  //     [-Xbootclasspath/a]; [jvmti appended entries]
-  // within the linked list of ClassPathEntry instances.
+  // 3. the boot loader's append path
+  //    [-Xbootclasspath/a]; [jvmti appended entries]
+  //    Note: boot loader append path does not support named modules.
   static ClassPathEntry* _first_append_entry;
+  // Last entry in linked list of appended ClassPathEntry instances
+  static ClassPathEntry* _last_append_entry;
 
-  static const char* _shared_archive;
-
-  // True if the boot path has a "modules" jimage
-  static bool _has_jimage;
+  // Note: _num_entries includes the java runtime image and all
+  //       the entries on the _first_append_entry linked list.
+  static int _num_entries;
 
   // Array of module names associated with the boot class loader
   CDS_ONLY(static GrowableArray<char*>* _boot_modules_array;)
@@ -252,10 +259,16 @@ class ClassLoader: AllStatic {
 
   // Info used by CDS
   CDS_ONLY(static SharedPathsMiscInfo * _shared_paths_misc_info;)
+  CDS_ONLY(static int _num_patch_mod_prefixes;)
 
-  // Initialization
+  // Initialization:
+  //   - setup the boot loader's system class path
+  //   - setup the boot loader's patch mod entries, if present
+  //   - create the ModuleEntry for java.base
   static void setup_bootstrap_search_path();
   static void setup_search_path(const char *class_path, bool setting_bootstrap);
+  static void setup_patch_mod_entries();
+  static void create_javabase();
 
   static void load_zip_library();
   static void load_jimage_library();
@@ -285,8 +298,6 @@ class ClassLoader: AllStatic {
   static int crc32(int crc, const char* buf, int len);
   static bool update_class_path_entry_list(const char *path,
                                            bool check_for_duplicates,
-                                           bool mark_append_entry,
-                                           bool prepend_entry,
                                            bool is_boot_append,
                                            bool throw_exception=true);
   static void print_bootclasspath();
@@ -352,15 +363,17 @@ class ClassLoader: AllStatic {
     return _load_instance_class_failCounter;
   }
 
-  // Set up the module/path pairs as specified to -Xpatch
-  static void setup_xpatch_entries();
+  // Modular java runtime image is present vs. a build with exploded modules
+  static bool has_jrt_entry() { return (_jrt_entry != NULL); }
+  static ClassPathEntry* get_jrt_entry() { return _jrt_entry; }
 
-  // Sets _has_jimage to TRUE if "modules" jimage file exists
-  static void set_has_jimage();
-  static bool has_jimage() { return _has_jimage; }
+  // Add a module's exploded directory to the boot loader's exploded module build list
+  static void add_to_exploded_build_list(Symbol* module_name, TRAPS);
 
-  // Create the ModuleEntry for java.base
-  static void create_javabase();
+  // Attempt load of individual class from either the patched or exploded modules build lists
+  static ClassFileStream* search_module_entries(const GrowableArray<ModuleClassPathList*>* const module_list,
+                                                const char* const class_name,
+                                                const char* const file_name, TRAPS);
 
   // Load individual .class file
   static instanceKlassHandle load_class(Symbol* class_name, bool search_append_only, TRAPS);
@@ -381,17 +394,28 @@ class ClassLoader: AllStatic {
 
   // Initialization
   static void initialize();
+  static void classLoader_init2(TRAPS);
   CDS_ONLY(static void initialize_shared_path();)
 
   static int compute_Object_vtable();
 
   static ClassPathEntry* classpath_entry(int n) {
-    ClassPathEntry* e = ClassLoader::_first_entry;
-    while (--n >= 0) {
-      assert(e != NULL, "Not that many classpath entries.");
-      e = e->next();
+    if (n == 0) {
+      assert(has_jrt_entry(), "No class path entry at 0 for exploded module builds");
+      return ClassLoader::_jrt_entry;
+    } else {
+      // The java runtime image is always the first entry
+      // in the FileMapInfo::_classpath_entry_table. Even though
+      // the _jrt_entry is not included in the _first_append_entry
+      // linked list, it must be accounted for when comparing the
+      // class path vs. the shared archive class path.
+      ClassPathEntry* e = ClassLoader::_first_append_entry;
+      while (--n >= 1) {
+        assert(e != NULL, "Not that many classpath entries.");
+        e = e->next();
+      }
+      return e;
     }
-    return e;
   }
 
 #if INCLUDE_CDS
@@ -408,6 +432,9 @@ class ClassLoader: AllStatic {
   static void initialize_module_loader_map(JImageFile* jimage);
   static s2 classloader_type(Symbol* class_name, ClassPathEntry* e,
                              int classpath_index, TRAPS);
+  static bool is_in_patch_module(const char* const file_name);
+  static void setup_patch_mod_path(); // Only when -Xshare:dump
+  static int num_patch_mod_prefixes() { return _num_patch_mod_prefixes; }
 #endif
 
   static void  trace_class_path(const char* msg, const char* name = NULL);
@@ -429,22 +456,18 @@ class ClassLoader: AllStatic {
   // adds a class path list
   static void add_to_list(ClassPathEntry* new_entry);
 
-  // prepends a class path list
-  static void prepend_to_list(ClassPathEntry* new_entry);
-
   // creates a class path zip entry (returns NULL if JAR file cannot be opened)
   static ClassPathZipEntry* create_class_path_zip_entry(const char *apath, bool is_boot_append);
 
   // add a path to class path list
   static void add_to_list(const char* apath);
 
-  // prepend a path to class path list
-  static void prepend_to_list(const char* apath);
-
   static bool string_ends_with(const char* str, const char* str_to_find);
 
   // obtain package name from a fully qualified class name
-  static const char* package_from_name(const char* class_name);
+  // *bad_class_name is set to true if there's a problem with parsing class_name, to
+  // distinguish from a class_name with no package name, as both cases have a NULL return value
+  static const char* package_from_name(const char* const class_name, bool* bad_class_name = NULL);
 
   static bool is_jrt(const char* name) { return string_ends_with(name, MODULES_IMAGE_NAME); }
 

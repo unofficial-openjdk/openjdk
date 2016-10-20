@@ -24,14 +24,31 @@
 
 package compiler.jvmci.compilerToVM;
 
-import java.util.HashMap;
-import java.util.Map;
-import jdk.vm.ci.hotspot.HotSpotResolvedObjectType;
-import sun.hotspot.WhiteBox;
+import compiler.jvmci.compilerToVM.ConstantPoolTestsHelper.DummyClasses;
 import jdk.internal.reflect.ConstantPool;
 import jdk.internal.reflect.ConstantPool.Tag;
-import compiler.jvmci.compilerToVM.ConstantPoolTestsHelper.DummyClasses;
-import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.*;
+import jdk.vm.ci.hotspot.HotSpotResolvedObjectType;
+import jdk.vm.ci.meta.ResolvedJavaMethod;
+import sun.hotspot.WhiteBox;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.CONSTANT_CLASS;
+import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.CONSTANT_DOUBLE;
+import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.CONSTANT_FIELDREF;
+import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.CONSTANT_FLOAT;
+import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.CONSTANT_INTEGER;
+import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.CONSTANT_INTERFACEMETHODREF;
+import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.CONSTANT_INVALID;
+import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.CONSTANT_INVOKEDYNAMIC;
+import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.CONSTANT_LONG;
+import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.CONSTANT_METHODHANDLE;
+import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.CONSTANT_METHODREF;
+import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.CONSTANT_METHODTYPE;
+import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.CONSTANT_NAMEANDTYPE;
+import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.CONSTANT_STRING;
+import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.CONSTANT_UTF8;
 
 /**
  * Common class for jdk.vm.ci.hotspot.CompilerToVM constant pool tests
@@ -184,13 +201,24 @@ public class ConstantPoolTestCase {
         public final String klass;
         public final String name;
         public final String type;
+        public final ResolvedJavaMethod[] methods;
         public final byte[] opcodes;
         public final long accFlags;
 
         public TestedCPEntry(String klass, String name, String type, byte[] opcodes, long accFlags) {
+                this(klass, name, type, null, opcodes, accFlags);
+        }
+
+        public TestedCPEntry(String klass, String name, String type, ResolvedJavaMethod[] methods, byte[] opcodes, long accFlags) {
             this.klass = klass;
             this.name = name;
             this.type = type;
+            if (methods != null) {
+                this.methods = new ResolvedJavaMethod[methods.length];
+                System.arraycopy(methods, 0, this.methods, 0, methods.length);
+            } else {
+                this.methods = null;
+            }
             if (opcodes != null) {
                 this.opcodes = new byte[opcodes.length];
                 System.arraycopy(opcodes, 0, this.opcodes, 0, opcodes.length);

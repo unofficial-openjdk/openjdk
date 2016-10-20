@@ -256,7 +256,7 @@ AwtFont* AwtFont::Create(JNIEnv *env, jobject font, jint angle, jfloat awScale)
 
     AwtFont* awtFont = NULL;
     jobjectArray compFont = NULL;
-    int cfnum;
+    int cfnum = 0;
 
     try {
         if (env->EnsureLocalCapacity(3) < 0)
@@ -264,7 +264,9 @@ AwtFont* AwtFont::Create(JNIEnv *env, jobject font, jint angle, jfloat awScale)
 
         if (IsMultiFont(env, font)) {
             compFont = GetComponentFonts(env, font);
-            cfnum = env->GetArrayLength(compFont);
+            if (compFont != NULL) {
+                cfnum = env->GetArrayLength(compFont);
+            }
         } else {
             compFont = NULL;
             cfnum = 0;
@@ -647,7 +649,9 @@ int AwtFont::getFontDescriptorNumber(JNIEnv *env, jobject font,
 
     if (IsMultiFont(env, font)) {
         array = GetComponentFonts(env, font);
-        num = env->GetArrayLength(array);
+        if (array != NULL) {
+            num = env->GetArrayLength(array);
+        }
     } else {
         array = NULL;
         num = 0;
@@ -705,14 +709,16 @@ SIZE  AwtFont::DrawStringSize_sub(jstring str, HDC hDC,
 
     if (IsMultiFont(env, font)) {
         jobject peer = env->CallObjectMethod(font, AwtFont::peerMID);
-        array =  (jobjectArray)(env->CallObjectMethod(
-        peer, AwtFont::makeConvertedMultiFontStringMID, str));
-        DASSERT(!safe_ExceptionOccurred(env));
+        if (peer != NULL) {
+            array = (jobjectArray)(env->CallObjectMethod(
+            peer, AwtFont::makeConvertedMultiFontStringMID, str));
+            DASSERT(!safe_ExceptionOccurred(env));
 
-        if (array != NULL) {
-            arrayLength = env->GetArrayLength(array);
+            if (array != NULL) {
+                arrayLength = env->GetArrayLength(array);
+            }
+            env->DeleteLocalRef(peer);
         }
-        env->DeleteLocalRef(peer);
     } else {
         array = NULL;
         arrayLength = 0;
@@ -1679,6 +1685,8 @@ CSegTable* CSegTableManager::GetTable(LPCWSTR lpszFontName, BOOL fEUDC)
 
 CSegTableManager g_segTableManager;
 
+#define KEYLEN 16
+
 class CCombinedSegTable : public CSegTableComponent
 {
 public:
@@ -1689,7 +1697,7 @@ public:
 private:
     LPSTR GetCodePageSubkey();
     void GetEUDCFileName(LPWSTR lpszFileName, int cchFileName);
-    static char m_szCodePageSubkey[16];
+    static char m_szCodePageSubkey[KEYLEN];
     static WCHAR m_szDefaultEUDCFile[_MAX_PATH];
     static BOOL m_fEUDCSubKeyExist;
     static BOOL m_fTTEUDCFileExist;
@@ -1697,7 +1705,7 @@ private:
     CEUDCSegTable* m_pEUDCSegTable;
 };
 
-char CCombinedSegTable::m_szCodePageSubkey[16] = "";
+char CCombinedSegTable::m_szCodePageSubkey[KEYLEN] = "";
 
 WCHAR CCombinedSegTable::m_szDefaultEUDCFile[_MAX_PATH] = L"";
 
@@ -1729,8 +1737,11 @@ LPSTR CCombinedSegTable::GetCodePageSubkey()
     }
     lpszCP++; // cf lpszCP = "932"
 
-    char szSubKey[80];
+    char szSubKey[KEYLEN];
     strcpy(szSubKey, "EUDC\\");
+    if ((strlen(szSubKey) + strlen(lpszCP)) >= KEYLEN) {
+        return NULL;
+    }
     strcpy(&(szSubKey[strlen(szSubKey)]), lpszCP);
     strcpy(m_szCodePageSubkey, szSubKey);
     return m_szCodePageSubkey;

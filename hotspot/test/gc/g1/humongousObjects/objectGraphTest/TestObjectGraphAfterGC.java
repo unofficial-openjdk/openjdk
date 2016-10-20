@@ -24,7 +24,7 @@
 
 package gc.g1.humongousObjects.objectGraphTest;
 
-import jdk.test.lib.OutputAnalyzer;
+import jdk.test.lib.process.OutputAnalyzer;
 import sun.hotspot.WhiteBox;
 
 import java.io.File;
@@ -48,22 +48,21 @@ import java.util.stream.Collectors;
 /**
  * @test TestObjectGraphAfterGC
  * @summary Checks that objects' graph behave as expected after gc
- * @requires vm.gc=="G1" | vm.gc=="null"
+ * @requires vm.gc.G1
  * @requires vm.opt.ExplicitGCInvokesConcurrent != true
- * @library /testlibrary /test/lib /
+ * @library /test/lib /
  * @modules java.management java.base/jdk.internal.misc
  * @build sun.hotspot.WhiteBox
- *        gc.testlibrary.Helpers
- *        gc.g1.humongousObjects.objectGraphTest.GCTokens
- *        gc.g1.humongousObjects.objectGraphTest.ReferenceInfo
- *        gc.g1.humongousObjects.objectGraphTest.GC
- *        gc.g1.humongousObjects.objectGraphTest.ObjectGraph
- *        gc.g1.humongousObjects.objectGraphTest.TestObjectGraphAfterGC
- *
  * @ignore 8156755
  *
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
  *                                sun.hotspot.WhiteBox$WhiteBoxPermission
+ *
+ * @run main/othervm -Xms200M -XX:+UseG1GC -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xbootclasspath/a:.
+ * -XX:+UnlockExperimentalVMOptions -XX:MaxGCPauseMillis=30000 -XX:G1MixedGCLiveThresholdPercent=100 -XX:G1HeapWastePercent=0
+ * -XX:G1HeapRegionSize=1M -Xlog:gc=info:file=TestObjectGraphAfterGC_MIXED_GC.gc.log -XX:MaxTenuringThreshold=1
+ * -XX:G1MixedGCCountTarget=1  -XX:G1OldCSetRegionThresholdPercent=100 -XX:SurvivorRatio=1 -XX:InitiatingHeapOccupancyPercent=0
+ * gc.g1.humongousObjects.objectGraphTest.TestObjectGraphAfterGC MIXED_GC
  *
  * @run main/othervm -Xms200M -XX:+UseG1GC -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xbootclasspath/a:.
  * -XX:G1HeapRegionSize=1M -Xlog:gc*=debug:file=TestObjectGraphAfterGC_YOUNG_GC.gc.log
@@ -76,6 +75,14 @@ import java.util.stream.Collectors;
  * @run main/othervm -Xms200M -XX:+UseG1GC -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xbootclasspath/a:.
  * -XX:G1HeapRegionSize=1M -Xlog:gc=info:file=TestObjectGraphAfterGC_FULL_GC_MEMORY_PRESSURE.gc.log
  * gc.g1.humongousObjects.objectGraphTest.TestObjectGraphAfterGC FULL_GC_MEMORY_PRESSURE
+ *
+ * @run main/othervm -Xms200M -XX:+UseG1GC -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xbootclasspath/a:.
+ * -XX:G1HeapRegionSize=1M -Xlog:gc=info:file=TestObjectGraphAfterGC_CMC.gc.log -XX:MaxTenuringThreshold=16
+ * gc.g1.humongousObjects.objectGraphTest.TestObjectGraphAfterGC CMC
+ *
+ * @run main/othervm -Xms200M -XX:+UseG1GC -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xbootclasspath/a:.
+ * -XX:G1HeapRegionSize=1M -Xlog:gc=info:file=TestObjectGraphAfterGC_CMC_NO_SURV_ROOTS.gc.log -XX:MaxTenuringThreshold=1
+ * gc.g1.humongousObjects.objectGraphTest.TestObjectGraphAfterGC CMC_NO_SURV_ROOTS
  *
  */
 

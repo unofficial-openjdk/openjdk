@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,29 +21,38 @@
  * questions.
  */
 
+/**
+ * @test MemoryPoolsPresenceTest
+ * @summary verify that MemoryManagerMXBean exists for every code cache segment
+ * @modules java.base/jdk.internal.misc
+ *          java.management
+ * @library /test/lib
+ *
+ * @build sun.hotspot.WhiteBox
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
+ *     -XX:+WhiteBoxAPI
+ *     -XX:+SegmentedCodeCache
+ *     compiler.codecache.jmx.MemoryPoolsPresenceTest
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
+ *     -XX:+WhiteBoxAPI
+ *     -XX:-SegmentedCodeCache
+ *     compiler.codecache.jmx.MemoryPoolsPresenceTest
+ */
+
+package compiler.codecache.jmx;
+
 import jdk.test.lib.Asserts;
+import sun.hotspot.code.BlobType;
+
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryManagerMXBean;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import sun.hotspot.code.BlobType;
 
-/**
- * @test MemoryPoolsPresenceTest
- * @library /testlibrary /test/lib
- * @modules java.base/jdk.internal.misc
- * @modules java.management
- * @build MemoryPoolsPresenceTest
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *     sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
- *     -XX:+WhiteBoxAPI -XX:+SegmentedCodeCache MemoryPoolsPresenceTest
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
- *     -XX:+WhiteBoxAPI -XX:-SegmentedCodeCache MemoryPoolsPresenceTest
- * @summary verify that MemoryManagerMXBean exists for every code cache segment
- */
 public class MemoryPoolsPresenceTest {
 
     private static final String CC_MANAGER = "CodeCacheManager";

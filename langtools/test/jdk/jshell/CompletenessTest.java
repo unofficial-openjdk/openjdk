@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug 8149524 8131024
+ * @bug 8149524 8131024 8165211 8080071 8130454 8167343
  * @summary Test SourceCodeAnalysis
  * @build KullaTesting TestingInputStream
  * @run testng CompletenessTest
@@ -63,6 +63,7 @@ public class CompletenessTest extends KullaTesting {
         "foo: while (true) { printf(\"Innn\"); break foo; }",
         "class Case<E1 extends Enum<E1>, E2 extends Enum<E2>, E3 extends Enum<E3>> {}",
         ";",
+        "enum Tt { FOO, BAR, BAZ,; }"
     };
 
     static final String[] expression = new String[] {
@@ -77,6 +78,8 @@ public class CompletenessTest extends KullaTesting {
         "new int[] {1, 2,3}",
         "new Foo() {}",
         "i >= 0 && Character.isWhitespace(s.charAt(i))",
+        "int.class",
+        "String.class",
     };
 
     static final String[] complete_with_semi = new String[] {
@@ -113,6 +116,8 @@ public class CompletenessTest extends KullaTesting {
         "BufferedReader br = new BufferedReader(new FileReader(path))",
         "bar: g()",
         "baz: while (true) if (t()) printf('-'); else break baz",
+        "java.util.function.IntFunction<int[]> ggg = int[]::new",
+        "List<? extends Object> l",
     };
 
     static final String[] considered_incomplete = new String[] {
@@ -141,6 +146,8 @@ public class CompletenessTest extends KullaTesting {
         "if (match.kind == BRACES && (prevCT.kind == ARROW || prevCT.kind == NEW_MIDDLE)) {",
         "if (match.kind == BRACES && (prevCT.kind == ARROW || prevCT.kind == NEW_MIDDLE)) { new CT(UNMATCHED, current, \"Unmatched \" + unmatched);",
         "x +",
+        "x *",
+        "3 *",
         "int",
         "for (int i = 0; i < lines.length(); ++i) {",
         "new",
@@ -156,6 +163,19 @@ public class CompletenessTest extends KullaTesting {
         "enum TK { EOF(TokenKind.EOF, 0),",
         "enum TK { EOF(TokenKind.EOF, 0), NEW_MIDDLE(XEXPR1|XTERM)",
         "enum TK { EOF(TokenKind.EOF, 0), NEW_MIDDLE(XEXPR1|XTERM); ",
+        "enum Tt { FOO, BAR, BAZ,;",
+        "class C",
+        "class C extends D",
+        "class C implements D",
+        "class C implements D, E",
+        "interface I extends D",
+        "interface I extends D, E",
+        "enum E",
+        "enum E implements I1",
+        "enum E implements I1, I2",
+        "@interface Anno",
+        "void f()",
+        "void f() throws E",
     };
 
     static final String[] unknown = new String[] {

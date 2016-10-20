@@ -33,6 +33,7 @@
 #include <netdb.h>
 #include <stdlib.h>
 #include <dlfcn.h>
+#include <sys/time.h>
 
 #ifndef _ALLBSD_SOURCE
 #include <values.h>
@@ -333,8 +334,8 @@ jint  IPv6_supported()
 #ifdef AF_INET6
     int fd;
     void *ipv6_fn;
-    SOCKADDR sa;
-    socklen_t sa_len = sizeof(sa);
+    SOCKETADDRESS sa;
+    socklen_t sa_len = sizeof(SOCKETADDRESS);
 
     fd = socket(AF_INET6, SOCK_STREAM, 0) ;
     if (fd < 0) {
@@ -350,9 +351,8 @@ jint  IPv6_supported()
      * xinetd. If it's a socket then check the family - if it's an
      * IPv4 socket then we need to disable IPv6.
      */
-    if (getsockname(0, (struct sockaddr *)&sa, &sa_len) == 0) {
-        struct sockaddr *saP = (struct sockaddr *)&sa;
-        if (saP->sa_family != AF_INET6) {
+    if (getsockname(0, &sa.sa, &sa_len) == 0) {
+        if (sa.sa.sa_family != AF_INET6) {
             close(fd);
             return JNI_FALSE;
         }
@@ -487,24 +487,7 @@ void NET_ThrowUnknownHostExceptionWithGaiError(JNIEnv *env,
     }
 }
 
-void
-NET_AllocSockaddr(struct sockaddr **him, int *len) {
-#ifdef AF_INET6
-    if (ipv6_available()) {
-        struct sockaddr_in6 *him6 = (struct sockaddr_in6*)malloc(sizeof(struct sockaddr_in6));
-        *him = (struct sockaddr*)him6;
-        *len = sizeof(struct sockaddr_in6);
-    } else
-#endif /* AF_INET6 */
-        {
-            struct sockaddr_in *him4 = (struct sockaddr_in*)malloc(sizeof(struct sockaddr_in));
-            *him = (struct sockaddr*)him4;
-            *len = sizeof(struct sockaddr_in);
-        }
-}
-
 #if defined(__linux__) && defined(AF_INET6)
-
 
 /* following code creates a list of addresses from the kernel
  * routing table that are routed via the loopback address.
@@ -1668,4 +1651,19 @@ NET_Wait(JNIEnv *env, jint fd, jint flags, jint timeout)
       } /* while */
 
     return timeout;
+}
+
+long NET_GetCurrentTime() {
+    struct timeval time;
+    gettimeofday(&time, NULL);
+    return (time.tv_sec * 1000 + time.tv_usec / 1000);
+}
+
+int NET_TimeoutWithCurrentTime(int s, long timeout, long currentTime) {
+    return NET_Timeout0(s, timeout, currentTime);
+}
+
+int NET_Timeout(int s, long timeout) {
+    long currentTime = (timeout > 0) ? NET_GetCurrentTime() : 0;
+    return NET_Timeout0(s, timeout, currentTime);
 }

@@ -25,15 +25,11 @@
 
 package jdk.internal.misc;
 
-import java.lang.reflect.Field;
-import java.security.ProtectionDomain;
-
-import jdk.internal.reflect.CallerSensitive;
-import jdk.internal.reflect.Reflection;
-import jdk.internal.misc.VM;
-
 import jdk.internal.HotSpotIntrinsicCandidate;
 import jdk.internal.vm.annotation.ForceInline;
+
+import java.lang.reflect.Field;
+import java.security.ProtectionDomain;
 
 
 /**
@@ -59,7 +55,6 @@ public final class Unsafe {
     private static native void registerNatives();
     static {
         registerNatives();
-        Reflection.registerMethodsToFilter(Unsafe.class, "getUnsafe");
     }
 
     private Unsafe() {}
@@ -89,16 +84,8 @@ public final class Unsafe {
      * }}</pre>
      *
      * (It may assist compilers to make the local variable {@code final}.)
-     *
-     * @throws  SecurityException if the class loader of the caller
-     *          class is not in the system domain in which all permissions
-     *          are granted.
      */
-    @CallerSensitive
     public static Unsafe getUnsafe() {
-        Class<?> caller = Reflection.getCallerClass();
-        if (!VM.isSystemDomainLoader(caller.getClassLoader()))
-            throw new SecurityException("Unsafe");
         return theUnsafe;
     }
 
@@ -317,24 +304,6 @@ public final class Unsafe {
      * @return the value fetched from the indicated native variable
      */
     public native Object getUncompressedObject(long address);
-
-    /**
-     * Fetches the {@link java.lang.Class} Java mirror for the given native
-     * metaspace {@code Klass} pointer.
-     *
-     * @param metaspaceKlass a native metaspace {@code Klass} pointer
-     * @return the {@link java.lang.Class} Java mirror
-     */
-    public native Class<?> getJavaMirror(long metaspaceKlass);
-
-    /**
-     * Fetches a native metaspace {@code Klass} pointer for the given Java
-     * object.
-     *
-     * @param o Java heap object for which to fetch the class pointer
-     * @return a native metaspace {@code Klass} pointer
-     */
-    public native long getKlassPointer(Object o);
 
     // These work on values in the C heap.
 
@@ -1228,6 +1197,9 @@ public final class Unsafe {
         if (hostClass == null || data == null) {
             throw new NullPointerException();
         }
+        if (hostClass.isArray() || hostClass.isPrimitive()) {
+            throw new IllegalArgumentException();
+        }
 
         return defineAnonymousClass0(hostClass, data, cpPatches);
     }
@@ -1416,6 +1388,492 @@ public final class Unsafe {
                                                              int expected,
                                                              int x) {
         return compareAndSwapInt(o, offset, expected, x);
+    }
+
+    @HotSpotIntrinsicCandidate
+    public final byte compareAndExchangeByteVolatile(Object o, long offset,
+                                                     byte expected,
+                                                     byte x) {
+        long wordOffset = offset & ~3;
+        int shift = (int) (offset & 3) << 3;
+        if (BE) {
+            shift = 24 - shift;
+        }
+        int mask           = 0xFF << shift;
+        int maskedExpected = (expected & 0xFF) << shift;
+        int maskedX        = (x & 0xFF) << shift;
+        int fullWord;
+        do {
+            fullWord = getIntVolatile(o, wordOffset);
+            if ((fullWord & mask) != maskedExpected)
+                return (byte) ((fullWord & mask) >> shift);
+        } while (!weakCompareAndSwapIntVolatile(o, wordOffset,
+                                                fullWord, (fullWord & ~mask) | maskedX));
+        return expected;
+    }
+
+    @HotSpotIntrinsicCandidate
+    public final boolean compareAndSwapByte(Object o, long offset,
+                                            byte expected,
+                                            byte x) {
+        return compareAndExchangeByteVolatile(o, offset, expected, x) == expected;
+    }
+
+    @HotSpotIntrinsicCandidate
+    public final boolean weakCompareAndSwapByteVolatile(Object o, long offset,
+                                                        byte expected,
+                                                        byte x) {
+        return compareAndSwapByte(o, offset, expected, x);
+    }
+
+    @HotSpotIntrinsicCandidate
+    public final boolean weakCompareAndSwapByteAcquire(Object o, long offset,
+                                                       byte expected,
+                                                       byte x) {
+        return weakCompareAndSwapByteVolatile(o, offset, expected, x);
+    }
+
+    @HotSpotIntrinsicCandidate
+    public final boolean weakCompareAndSwapByteRelease(Object o, long offset,
+                                                       byte expected,
+                                                       byte x) {
+        return weakCompareAndSwapByteVolatile(o, offset, expected, x);
+    }
+
+    @HotSpotIntrinsicCandidate
+    public final boolean weakCompareAndSwapByte(Object o, long offset,
+                                                        byte expected,
+                                                        byte x) {
+        return weakCompareAndSwapByteVolatile(o, offset, expected, x);
+    }
+
+    @HotSpotIntrinsicCandidate
+    public final byte compareAndExchangeByteAcquire(Object o, long offset,
+                                                    byte expected,
+                                                    byte x) {
+        return compareAndExchangeByteVolatile(o, offset, expected, x);
+    }
+
+    @HotSpotIntrinsicCandidate
+    public final byte compareAndExchangeByteRelease(Object o, long offset,
+                                                    byte expected,
+                                                    byte x) {
+        return compareAndExchangeByteVolatile(o, offset, expected, x);
+    }
+
+    @HotSpotIntrinsicCandidate
+    public final short compareAndExchangeShortVolatile(Object o, long offset,
+                                             short expected,
+                                             short x) {
+        if ((offset & 3) == 3) {
+            throw new IllegalArgumentException("Update spans the word, not supported");
+        }
+        long wordOffset = offset & ~3;
+        int shift = (int) (offset & 3) << 3;
+        if (BE) {
+            shift = 16 - shift;
+        }
+        int mask           = 0xFFFF << shift;
+        int maskedExpected = (expected & 0xFFFF) << shift;
+        int maskedX        = (x & 0xFFFF) << shift;
+        int fullWord;
+        do {
+            fullWord = getIntVolatile(o, wordOffset);
+            if ((fullWord & mask) != maskedExpected) {
+                return (short) ((fullWord & mask) >> shift);
+            }
+        } while (!weakCompareAndSwapIntVolatile(o, wordOffset,
+                                                fullWord, (fullWord & ~mask) | maskedX));
+        return expected;
+    }
+
+    @HotSpotIntrinsicCandidate
+    public final boolean compareAndSwapShort(Object o, long offset,
+                                             short expected,
+                                             short x) {
+        return compareAndExchangeShortVolatile(o, offset, expected, x) == expected;
+    }
+
+    @HotSpotIntrinsicCandidate
+    public final boolean weakCompareAndSwapShortVolatile(Object o, long offset,
+                                                         short expected,
+                                                         short x) {
+        return compareAndSwapShort(o, offset, expected, x);
+    }
+
+    @HotSpotIntrinsicCandidate
+    public final boolean weakCompareAndSwapShortAcquire(Object o, long offset,
+                                                        short expected,
+                                                        short x) {
+        return weakCompareAndSwapShortVolatile(o, offset, expected, x);
+    }
+
+    @HotSpotIntrinsicCandidate
+    public final boolean weakCompareAndSwapShortRelease(Object o, long offset,
+                                                        short expected,
+                                                        short x) {
+        return weakCompareAndSwapShortVolatile(o, offset, expected, x);
+    }
+
+    @HotSpotIntrinsicCandidate
+    public final boolean weakCompareAndSwapShort(Object o, long offset,
+                                                 short expected,
+                                                 short x) {
+        return weakCompareAndSwapShortVolatile(o, offset, expected, x);
+    }
+
+
+    @HotSpotIntrinsicCandidate
+    public final short compareAndExchangeShortAcquire(Object o, long offset,
+                                                     short expected,
+                                                     short x) {
+        return compareAndExchangeShortVolatile(o, offset, expected, x);
+    }
+
+    @HotSpotIntrinsicCandidate
+    public final short compareAndExchangeShortRelease(Object o, long offset,
+                                                    short expected,
+                                                    short x) {
+        return compareAndExchangeShortVolatile(o, offset, expected, x);
+    }
+
+    @ForceInline
+    private char s2c(short s) {
+        return (char) s;
+    }
+
+    @ForceInline
+    private short c2s(char s) {
+        return (short) s;
+    }
+
+    @ForceInline
+    public final boolean compareAndSwapChar(Object o, long offset,
+                                            char expected,
+                                            char x) {
+        return compareAndSwapShort(o, offset, c2s(expected), c2s(x));
+    }
+
+    @ForceInline
+    public final char compareAndExchangeCharVolatile(Object o, long offset,
+                                            char expected,
+                                            char x) {
+        return s2c(compareAndExchangeShortVolatile(o, offset, c2s(expected), c2s(x)));
+    }
+
+    @ForceInline
+    public final char compareAndExchangeCharAcquire(Object o, long offset,
+                                            char expected,
+                                            char x) {
+        return s2c(compareAndExchangeShortAcquire(o, offset, c2s(expected), c2s(x)));
+    }
+
+    @ForceInline
+    public final char compareAndExchangeCharRelease(Object o, long offset,
+                                            char expected,
+                                            char x) {
+        return s2c(compareAndExchangeShortRelease(o, offset, c2s(expected), c2s(x)));
+    }
+
+    @ForceInline
+    public final boolean weakCompareAndSwapCharVolatile(Object o, long offset,
+                                            char expected,
+                                            char x) {
+        return weakCompareAndSwapShortVolatile(o, offset, c2s(expected), c2s(x));
+    }
+
+    @ForceInline
+    public final boolean weakCompareAndSwapCharAcquire(Object o, long offset,
+                                            char expected,
+                                            char x) {
+        return weakCompareAndSwapShortAcquire(o, offset, c2s(expected), c2s(x));
+    }
+
+    @ForceInline
+    public final boolean weakCompareAndSwapCharRelease(Object o, long offset,
+                                            char expected,
+                                            char x) {
+        return weakCompareAndSwapShortRelease(o, offset, c2s(expected), c2s(x));
+    }
+
+    @ForceInline
+    public final boolean weakCompareAndSwapChar(Object o, long offset,
+                                            char expected,
+                                            char x) {
+        return weakCompareAndSwapShort(o, offset, c2s(expected), c2s(x));
+    }
+
+    /**
+     * The JVM converts integral values to boolean values using two
+     * different conventions, byte testing against zero and truncation
+     * to least-significant bit.
+     *
+     * <p>The JNI documents specify that, at least for returning
+     * values from native methods, a Java boolean value is converted
+     * to the value-set 0..1 by first truncating to a byte (0..255 or
+     * maybe -128..127) and then testing against zero. Thus, Java
+     * booleans in non-Java data structures are by convention
+     * represented as 8-bit containers containing either zero (for
+     * false) or any non-zero value (for true).
+     *
+     * <p>Java booleans in the heap are also stored in bytes, but are
+     * strongly normalized to the value-set 0..1 (i.e., they are
+     * truncated to the least-significant bit).
+     *
+     * <p>The main reason for having different conventions for
+     * conversion is performance: Truncation to the least-significant
+     * bit can be usually implemented with fewer (machine)
+     * instructions than byte testing against zero.
+     *
+     * <p>A number of Unsafe methods load boolean values from the heap
+     * as bytes. Unsafe converts those values according to the JNI
+     * rules (i.e, using the "testing against zero" convention). The
+     * method {@code byte2bool} implements that conversion.
+     *
+     * @param b the byte to be converted to boolean
+     * @return the result of the conversion
+     */
+    @ForceInline
+    private boolean byte2bool(byte b) {
+        return b != 0;
+    }
+
+    /**
+     * Convert a boolean value to a byte. The return value is strongly
+     * normalized to the value-set 0..1 (i.e., the value is truncated
+     * to the least-significant bit). See {@link #byte2bool(byte)} for
+     * more details on conversion conventions.
+     *
+     * @param b the boolean to be converted to byte (and then normalized)
+     * @return the result of the conversion
+     */
+    @ForceInline
+    private byte bool2byte(boolean b) {
+        return b ? (byte)1 : (byte)0;
+    }
+
+    @ForceInline
+    public final boolean compareAndSwapBoolean(Object o, long offset,
+                                               boolean expected,
+                                               boolean x) {
+        return compareAndSwapByte(o, offset, bool2byte(expected), bool2byte(x));
+    }
+
+    @ForceInline
+    public final boolean compareAndExchangeBooleanVolatile(Object o, long offset,
+                                                        boolean expected,
+                                                        boolean x) {
+        return byte2bool(compareAndExchangeByteVolatile(o, offset, bool2byte(expected), bool2byte(x)));
+    }
+
+    @ForceInline
+    public final boolean compareAndExchangeBooleanAcquire(Object o, long offset,
+                                                    boolean expected,
+                                                    boolean x) {
+        return byte2bool(compareAndExchangeByteAcquire(o, offset, bool2byte(expected), bool2byte(x)));
+    }
+
+    @ForceInline
+    public final boolean compareAndExchangeBooleanRelease(Object o, long offset,
+                                                       boolean expected,
+                                                       boolean x) {
+        return byte2bool(compareAndExchangeByteRelease(o, offset, bool2byte(expected), bool2byte(x)));
+    }
+
+    @ForceInline
+    public final boolean weakCompareAndSwapBooleanVolatile(Object o, long offset,
+                                                           boolean expected,
+                                                           boolean x) {
+        return weakCompareAndSwapByteVolatile(o, offset, bool2byte(expected), bool2byte(x));
+    }
+
+    @ForceInline
+    public final boolean weakCompareAndSwapBooleanAcquire(Object o, long offset,
+                                                          boolean expected,
+                                                          boolean x) {
+        return weakCompareAndSwapByteAcquire(o, offset, bool2byte(expected), bool2byte(x));
+    }
+
+    @ForceInline
+    public final boolean weakCompareAndSwapBooleanRelease(Object o, long offset,
+                                                          boolean expected,
+                                                          boolean x) {
+        return weakCompareAndSwapByteRelease(o, offset, bool2byte(expected), bool2byte(x));
+    }
+
+    @ForceInline
+    public final boolean weakCompareAndSwapBoolean(Object o, long offset,
+                                                   boolean expected,
+                                                   boolean x) {
+        return weakCompareAndSwapByte(o, offset, bool2byte(expected), bool2byte(x));
+    }
+
+    /**
+     * Atomically updates Java variable to {@code x} if it is currently
+     * holding {@code expected}.
+     *
+     * <p>This operation has memory semantics of a {@code volatile} read
+     * and write.  Corresponds to C11 atomic_compare_exchange_strong.
+     *
+     * @return {@code true} if successful
+     */
+    @ForceInline
+    public final boolean compareAndSwapFloat(Object o, long offset,
+                                             float expected,
+                                             float x) {
+        return compareAndSwapInt(o, offset,
+                                 Float.floatToRawIntBits(expected),
+                                 Float.floatToRawIntBits(x));
+    }
+
+    @ForceInline
+    public final float compareAndExchangeFloatVolatile(Object o, long offset,
+                                                       float expected,
+                                                       float x) {
+        int w = compareAndExchangeIntVolatile(o, offset,
+                                              Float.floatToRawIntBits(expected),
+                                              Float.floatToRawIntBits(x));
+        return Float.intBitsToFloat(w);
+    }
+
+    @ForceInline
+    public final float compareAndExchangeFloatAcquire(Object o, long offset,
+                                                  float expected,
+                                                  float x) {
+        int w = compareAndExchangeIntAcquire(o, offset,
+                                             Float.floatToRawIntBits(expected),
+                                             Float.floatToRawIntBits(x));
+        return Float.intBitsToFloat(w);
+    }
+
+    @ForceInline
+    public final float compareAndExchangeFloatRelease(Object o, long offset,
+                                                  float expected,
+                                                  float x) {
+        int w = compareAndExchangeIntRelease(o, offset,
+                                             Float.floatToRawIntBits(expected),
+                                             Float.floatToRawIntBits(x));
+        return Float.intBitsToFloat(w);
+    }
+
+    @ForceInline
+    public final boolean weakCompareAndSwapFloat(Object o, long offset,
+                                               float expected,
+                                               float x) {
+        return weakCompareAndSwapInt(o, offset,
+                                     Float.floatToRawIntBits(expected),
+                                     Float.floatToRawIntBits(x));
+    }
+
+    @ForceInline
+    public final boolean weakCompareAndSwapFloatAcquire(Object o, long offset,
+                                                      float expected,
+                                                      float x) {
+        return weakCompareAndSwapIntAcquire(o, offset,
+                                            Float.floatToRawIntBits(expected),
+                                            Float.floatToRawIntBits(x));
+    }
+
+    @ForceInline
+    public final boolean weakCompareAndSwapFloatRelease(Object o, long offset,
+                                                      float expected,
+                                                      float x) {
+        return weakCompareAndSwapIntRelease(o, offset,
+                                            Float.floatToRawIntBits(expected),
+                                            Float.floatToRawIntBits(x));
+    }
+
+    @ForceInline
+    public final boolean weakCompareAndSwapFloatVolatile(Object o, long offset,
+                                                       float expected,
+                                                       float x) {
+        return weakCompareAndSwapIntVolatile(o, offset,
+                                             Float.floatToRawIntBits(expected),
+                                             Float.floatToRawIntBits(x));
+    }
+
+    /**
+     * Atomically updates Java variable to {@code x} if it is currently
+     * holding {@code expected}.
+     *
+     * <p>This operation has memory semantics of a {@code volatile} read
+     * and write.  Corresponds to C11 atomic_compare_exchange_strong.
+     *
+     * @return {@code true} if successful
+     */
+    @ForceInline
+    public final boolean compareAndSwapDouble(Object o, long offset,
+                                              double expected,
+                                              double x) {
+        return compareAndSwapLong(o, offset,
+                                  Double.doubleToRawLongBits(expected),
+                                  Double.doubleToRawLongBits(x));
+    }
+
+    @ForceInline
+    public final double compareAndExchangeDoubleVolatile(Object o, long offset,
+                                                         double expected,
+                                                         double x) {
+        long w = compareAndExchangeLongVolatile(o, offset,
+                                                Double.doubleToRawLongBits(expected),
+                                                Double.doubleToRawLongBits(x));
+        return Double.longBitsToDouble(w);
+    }
+
+    @ForceInline
+    public final double compareAndExchangeDoubleAcquire(Object o, long offset,
+                                                        double expected,
+                                                        double x) {
+        long w = compareAndExchangeLongAcquire(o, offset,
+                                               Double.doubleToRawLongBits(expected),
+                                               Double.doubleToRawLongBits(x));
+        return Double.longBitsToDouble(w);
+    }
+
+    @ForceInline
+    public final double compareAndExchangeDoubleRelease(Object o, long offset,
+                                                        double expected,
+                                                        double x) {
+        long w = compareAndExchangeLongRelease(o, offset,
+                                               Double.doubleToRawLongBits(expected),
+                                               Double.doubleToRawLongBits(x));
+        return Double.longBitsToDouble(w);
+    }
+
+    @ForceInline
+    public final boolean weakCompareAndSwapDouble(Object o, long offset,
+                                                  double expected,
+                                                  double x) {
+        return weakCompareAndSwapLong(o, offset,
+                                     Double.doubleToRawLongBits(expected),
+                                     Double.doubleToRawLongBits(x));
+    }
+
+    @ForceInline
+    public final boolean weakCompareAndSwapDoubleAcquire(Object o, long offset,
+                                                         double expected,
+                                                         double x) {
+        return weakCompareAndSwapLongAcquire(o, offset,
+                                             Double.doubleToRawLongBits(expected),
+                                             Double.doubleToRawLongBits(x));
+    }
+
+    @ForceInline
+    public final boolean weakCompareAndSwapDoubleRelease(Object o, long offset,
+                                                         double expected,
+                                                         double x) {
+        return weakCompareAndSwapLongRelease(o, offset,
+                                             Double.doubleToRawLongBits(expected),
+                                             Double.doubleToRawLongBits(x));
+    }
+
+    @ForceInline
+    public final boolean weakCompareAndSwapDoubleVolatile(Object o, long offset,
+                                                          double expected,
+                                                          double x) {
+        return weakCompareAndSwapLongVolatile(o, offset,
+                                              Double.doubleToRawLongBits(expected),
+                                              Double.doubleToRawLongBits(x));
     }
 
     /**
@@ -1858,7 +2316,25 @@ public final class Unsafe {
         int v;
         do {
             v = getIntVolatile(o, offset);
-        } while (!compareAndSwapInt(o, offset, v, v + delta));
+        } while (!weakCompareAndSwapIntVolatile(o, offset, v, v + delta));
+        return v;
+    }
+
+    @ForceInline
+    public final int getAndAddIntRelease(Object o, long offset, int delta) {
+        int v;
+        do {
+            v = getInt(o, offset);
+        } while (!weakCompareAndSwapIntRelease(o, offset, v, v + delta));
+        return v;
+    }
+
+    @ForceInline
+    public final int getAndAddIntAcquire(Object o, long offset, int delta) {
+        int v;
+        do {
+            v = getIntAcquire(o, offset);
+        } while (!weakCompareAndSwapIntAcquire(o, offset, v, v + delta));
         return v;
     }
 
@@ -1878,7 +2354,184 @@ public final class Unsafe {
         long v;
         do {
             v = getLongVolatile(o, offset);
-        } while (!compareAndSwapLong(o, offset, v, v + delta));
+        } while (!weakCompareAndSwapLongVolatile(o, offset, v, v + delta));
+        return v;
+    }
+
+    @ForceInline
+    public final long getAndAddLongRelease(Object o, long offset, long delta) {
+        long v;
+        do {
+            v = getLong(o, offset);
+        } while (!weakCompareAndSwapLongRelease(o, offset, v, v + delta));
+        return v;
+    }
+
+    @ForceInline
+    public final long getAndAddLongAcquire(Object o, long offset, long delta) {
+        long v;
+        do {
+            v = getLongAcquire(o, offset);
+        } while (!weakCompareAndSwapLongAcquire(o, offset, v, v + delta));
+        return v;
+    }
+
+    @HotSpotIntrinsicCandidate
+    public final byte getAndAddByte(Object o, long offset, byte delta) {
+        byte v;
+        do {
+            v = getByteVolatile(o, offset);
+        } while (!weakCompareAndSwapByteVolatile(o, offset, v, (byte) (v + delta)));
+        return v;
+    }
+
+    @ForceInline
+    public final byte getAndAddByteRelease(Object o, long offset, byte delta) {
+        byte v;
+        do {
+            v = getByte(o, offset);
+        } while (!weakCompareAndSwapByteRelease(o, offset, v, (byte) (v + delta)));
+        return v;
+    }
+
+    @ForceInline
+    public final byte getAndAddByteAcquire(Object o, long offset, byte delta) {
+        byte v;
+        do {
+            v = getByteAcquire(o, offset);
+        } while (!weakCompareAndSwapByteAcquire(o, offset, v, (byte) (v + delta)));
+        return v;
+    }
+
+    @HotSpotIntrinsicCandidate
+    public final short getAndAddShort(Object o, long offset, short delta) {
+        short v;
+        do {
+            v = getShortVolatile(o, offset);
+        } while (!weakCompareAndSwapShortVolatile(o, offset, v, (short) (v + delta)));
+        return v;
+    }
+
+    @ForceInline
+    public final short getAndAddShortRelease(Object o, long offset, short delta) {
+        short v;
+        do {
+            v = getShort(o, offset);
+        } while (!weakCompareAndSwapShortRelease(o, offset, v, (short) (v + delta)));
+        return v;
+    }
+
+    @ForceInline
+    public final short getAndAddShortAcquire(Object o, long offset, short delta) {
+        short v;
+        do {
+            v = getShortAcquire(o, offset);
+        } while (!weakCompareAndSwapShortAcquire(o, offset, v, (short) (v + delta)));
+        return v;
+    }
+
+    @ForceInline
+    public final char getAndAddChar(Object o, long offset, char delta) {
+        return (char) getAndAddShort(o, offset, (short) delta);
+    }
+
+    @ForceInline
+    public final char getAndAddCharRelease(Object o, long offset, char delta) {
+        return (char) getAndAddShortRelease(o, offset, (short) delta);
+    }
+
+    @ForceInline
+    public final char getAndAddCharAcquire(Object o, long offset, char delta) {
+        return (char) getAndAddShortAcquire(o, offset, (short) delta);
+    }
+
+    @ForceInline
+    public final float getAndAddFloat(Object o, long offset, float delta) {
+        int expectedBits;
+        float v;
+        do {
+            // Load and CAS with the raw bits to avoid issues with NaNs and
+            // possible bit conversion from signaling NaNs to quiet NaNs that
+            // may result in the loop not terminating.
+            expectedBits = getIntVolatile(o, offset);
+            v = Float.intBitsToFloat(expectedBits);
+        } while (!weakCompareAndSwapIntVolatile(o, offset,
+                                                expectedBits, Float.floatToRawIntBits(v + delta)));
+        return v;
+    }
+
+    @ForceInline
+    public final float getAndAddFloatRelease(Object o, long offset, float delta) {
+        int expectedBits;
+        float v;
+        do {
+            // Load and CAS with the raw bits to avoid issues with NaNs and
+            // possible bit conversion from signaling NaNs to quiet NaNs that
+            // may result in the loop not terminating.
+            expectedBits = getInt(o, offset);
+            v = Float.intBitsToFloat(expectedBits);
+        } while (!weakCompareAndSwapIntRelease(o, offset,
+                                               expectedBits, Float.floatToRawIntBits(v + delta)));
+        return v;
+    }
+
+    @ForceInline
+    public final float getAndAddFloatAcquire(Object o, long offset, float delta) {
+        int expectedBits;
+        float v;
+        do {
+            // Load and CAS with the raw bits to avoid issues with NaNs and
+            // possible bit conversion from signaling NaNs to quiet NaNs that
+            // may result in the loop not terminating.
+            expectedBits = getIntAcquire(o, offset);
+            v = Float.intBitsToFloat(expectedBits);
+        } while (!weakCompareAndSwapIntAcquire(o, offset,
+                                               expectedBits, Float.floatToRawIntBits(v + delta)));
+        return v;
+    }
+
+    @ForceInline
+    public final double getAndAddDouble(Object o, long offset, double delta) {
+        long expectedBits;
+        double v;
+        do {
+            // Load and CAS with the raw bits to avoid issues with NaNs and
+            // possible bit conversion from signaling NaNs to quiet NaNs that
+            // may result in the loop not terminating.
+            expectedBits = getLongVolatile(o, offset);
+            v = Double.longBitsToDouble(expectedBits);
+        } while (!weakCompareAndSwapLongVolatile(o, offset,
+                                                 expectedBits, Double.doubleToRawLongBits(v + delta)));
+        return v;
+    }
+
+    @ForceInline
+    public final double getAndAddDoubleRelease(Object o, long offset, double delta) {
+        long expectedBits;
+        double v;
+        do {
+            // Load and CAS with the raw bits to avoid issues with NaNs and
+            // possible bit conversion from signaling NaNs to quiet NaNs that
+            // may result in the loop not terminating.
+            expectedBits = getLong(o, offset);
+            v = Double.longBitsToDouble(expectedBits);
+        } while (!weakCompareAndSwapLongRelease(o, offset,
+                                                expectedBits, Double.doubleToRawLongBits(v + delta)));
+        return v;
+    }
+
+    @ForceInline
+    public final double getAndAddDoubleAcquire(Object o, long offset, double delta) {
+        long expectedBits;
+        double v;
+        do {
+            // Load and CAS with the raw bits to avoid issues with NaNs and
+            // possible bit conversion from signaling NaNs to quiet NaNs that
+            // may result in the loop not terminating.
+            expectedBits = getLongAcquire(o, offset);
+            v = Double.longBitsToDouble(expectedBits);
+        } while (!weakCompareAndSwapLongAcquire(o, offset,
+                                                expectedBits, Double.doubleToRawLongBits(v + delta)));
         return v;
     }
 
@@ -1898,7 +2551,25 @@ public final class Unsafe {
         int v;
         do {
             v = getIntVolatile(o, offset);
-        } while (!compareAndSwapInt(o, offset, v, newValue));
+        } while (!weakCompareAndSwapIntVolatile(o, offset, v, newValue));
+        return v;
+    }
+
+    @ForceInline
+    public final int getAndSetIntRelease(Object o, long offset, int newValue) {
+        int v;
+        do {
+            v = getInt(o, offset);
+        } while (!weakCompareAndSwapIntRelease(o, offset, v, newValue));
+        return v;
+    }
+
+    @ForceInline
+    public final int getAndSetIntAcquire(Object o, long offset, int newValue) {
+        int v;
+        do {
+            v = getIntAcquire(o, offset);
+        } while (!weakCompareAndSwapIntAcquire(o, offset, v, newValue));
         return v;
     }
 
@@ -1918,7 +2589,25 @@ public final class Unsafe {
         long v;
         do {
             v = getLongVolatile(o, offset);
-        } while (!compareAndSwapLong(o, offset, v, newValue));
+        } while (!weakCompareAndSwapLongVolatile(o, offset, v, newValue));
+        return v;
+    }
+
+    @ForceInline
+    public final long getAndSetLongRelease(Object o, long offset, long newValue) {
+        long v;
+        do {
+            v = getLong(o, offset);
+        } while (!weakCompareAndSwapLongRelease(o, offset, v, newValue));
+        return v;
+    }
+
+    @ForceInline
+    public final long getAndSetLongAcquire(Object o, long offset, long newValue) {
+        long v;
+        do {
+            v = getLongAcquire(o, offset);
+        } while (!weakCompareAndSwapLongAcquire(o, offset, v, newValue));
         return v;
     }
 
@@ -1938,9 +2627,630 @@ public final class Unsafe {
         Object v;
         do {
             v = getObjectVolatile(o, offset);
-        } while (!compareAndSwapObject(o, offset, v, newValue));
+        } while (!weakCompareAndSwapObjectVolatile(o, offset, v, newValue));
         return v;
     }
+
+    @ForceInline
+    public final Object getAndSetObjectRelease(Object o, long offset, Object newValue) {
+        Object v;
+        do {
+            v = getObject(o, offset);
+        } while (!weakCompareAndSwapObjectRelease(o, offset, v, newValue));
+        return v;
+    }
+
+    @ForceInline
+    public final Object getAndSetObjectAcquire(Object o, long offset, Object newValue) {
+        Object v;
+        do {
+            v = getObjectAcquire(o, offset);
+        } while (!weakCompareAndSwapObjectAcquire(o, offset, v, newValue));
+        return v;
+    }
+
+    @HotSpotIntrinsicCandidate
+    public final byte getAndSetByte(Object o, long offset, byte newValue) {
+        byte v;
+        do {
+            v = getByteVolatile(o, offset);
+        } while (!weakCompareAndSwapByteVolatile(o, offset, v, newValue));
+        return v;
+    }
+
+    @ForceInline
+    public final byte getAndSetByteRelease(Object o, long offset, byte newValue) {
+        byte v;
+        do {
+            v = getByte(o, offset);
+        } while (!weakCompareAndSwapByteRelease(o, offset, v, newValue));
+        return v;
+    }
+
+    @ForceInline
+    public final byte getAndSetByteAcquire(Object o, long offset, byte newValue) {
+        byte v;
+        do {
+            v = getByteAcquire(o, offset);
+        } while (!weakCompareAndSwapByteAcquire(o, offset, v, newValue));
+        return v;
+    }
+
+    @ForceInline
+    public final boolean getAndSetBoolean(Object o, long offset, boolean newValue) {
+        return byte2bool(getAndSetByte(o, offset, bool2byte(newValue)));
+    }
+
+    @ForceInline
+    public final boolean getAndSetBooleanRelease(Object o, long offset, boolean newValue) {
+        return byte2bool(getAndSetByteRelease(o, offset, bool2byte(newValue)));
+    }
+
+    @ForceInline
+    public final boolean getAndSetBooleanAcquire(Object o, long offset, boolean newValue) {
+        return byte2bool(getAndSetByteAcquire(o, offset, bool2byte(newValue)));
+    }
+
+    @HotSpotIntrinsicCandidate
+    public final short getAndSetShort(Object o, long offset, short newValue) {
+        short v;
+        do {
+            v = getShortVolatile(o, offset);
+        } while (!weakCompareAndSwapShortVolatile(o, offset, v, newValue));
+        return v;
+    }
+
+    @ForceInline
+    public final short getAndSetShortRelease(Object o, long offset, short newValue) {
+        short v;
+        do {
+            v = getShort(o, offset);
+        } while (!weakCompareAndSwapShortRelease(o, offset, v, newValue));
+        return v;
+    }
+
+    @ForceInline
+    public final short getAndSetShortAcquire(Object o, long offset, short newValue) {
+        short v;
+        do {
+            v = getShortAcquire(o, offset);
+        } while (!weakCompareAndSwapShortAcquire(o, offset, v, newValue));
+        return v;
+    }
+
+    @ForceInline
+    public final char getAndSetChar(Object o, long offset, char newValue) {
+        return s2c(getAndSetShort(o, offset, c2s(newValue)));
+    }
+
+    @ForceInline
+    public final char getAndSetCharRelease(Object o, long offset, char newValue) {
+        return s2c(getAndSetShortRelease(o, offset, c2s(newValue)));
+    }
+
+    @ForceInline
+    public final char getAndSetCharAcquire(Object o, long offset, char newValue) {
+        return s2c(getAndSetShortAcquire(o, offset, c2s(newValue)));
+    }
+
+    @ForceInline
+    public final float getAndSetFloat(Object o, long offset, float newValue) {
+        int v = getAndSetInt(o, offset, Float.floatToRawIntBits(newValue));
+        return Float.intBitsToFloat(v);
+    }
+
+    @ForceInline
+    public final float getAndSetFloatRelease(Object o, long offset, float newValue) {
+        int v = getAndSetIntRelease(o, offset, Float.floatToRawIntBits(newValue));
+        return Float.intBitsToFloat(v);
+    }
+
+    @ForceInline
+    public final float getAndSetFloatAcquire(Object o, long offset, float newValue) {
+        int v = getAndSetIntAcquire(o, offset, Float.floatToRawIntBits(newValue));
+        return Float.intBitsToFloat(v);
+    }
+
+    @ForceInline
+    public final double getAndSetDouble(Object o, long offset, double newValue) {
+        long v = getAndSetLong(o, offset, Double.doubleToRawLongBits(newValue));
+        return Double.longBitsToDouble(v);
+    }
+
+    @ForceInline
+    public final double getAndSetDoubleRelease(Object o, long offset, double newValue) {
+        long v = getAndSetLongRelease(o, offset, Double.doubleToRawLongBits(newValue));
+        return Double.longBitsToDouble(v);
+    }
+
+    @ForceInline
+    public final double getAndSetDoubleAcquire(Object o, long offset, double newValue) {
+        long v = getAndSetLongAcquire(o, offset, Double.doubleToRawLongBits(newValue));
+        return Double.longBitsToDouble(v);
+    }
+
+
+    // The following contain CAS-based Java implementations used on
+    // platforms not supporting native instructions
+
+    @ForceInline
+    public final boolean getAndBitwiseOrBoolean(Object o, long offset, boolean mask) {
+        return byte2bool(getAndBitwiseOrByte(o, offset, bool2byte(mask)));
+    }
+
+    @ForceInline
+    public final boolean getAndBitwiseOrBooleanRelease(Object o, long offset, boolean mask) {
+        return byte2bool(getAndBitwiseOrByteRelease(o, offset, bool2byte(mask)));
+    }
+
+    @ForceInline
+    public final boolean getAndBitwiseOrBooleanAcquire(Object o, long offset, boolean mask) {
+        return byte2bool(getAndBitwiseOrByteAcquire(o, offset, bool2byte(mask)));
+    }
+
+    @ForceInline
+    public final boolean getAndBitwiseAndBoolean(Object o, long offset, boolean mask) {
+        return byte2bool(getAndBitwiseAndByte(o, offset, bool2byte(mask)));
+    }
+
+    @ForceInline
+    public final boolean getAndBitwiseAndBooleanRelease(Object o, long offset, boolean mask) {
+        return byte2bool(getAndBitwiseAndByteRelease(o, offset, bool2byte(mask)));
+    }
+
+    @ForceInline
+    public final boolean getAndBitwiseAndBooleanAcquire(Object o, long offset, boolean mask) {
+        return byte2bool(getAndBitwiseAndByteAcquire(o, offset, bool2byte(mask)));
+    }
+
+    @ForceInline
+    public final boolean getAndBitwiseXorBoolean(Object o, long offset, boolean mask) {
+        return byte2bool(getAndBitwiseXorByte(o, offset, bool2byte(mask)));
+    }
+
+    @ForceInline
+    public final boolean getAndBitwiseXorBooleanRelease(Object o, long offset, boolean mask) {
+        return byte2bool(getAndBitwiseXorByteRelease(o, offset, bool2byte(mask)));
+    }
+
+    @ForceInline
+    public final boolean getAndBitwiseXorBooleanAcquire(Object o, long offset, boolean mask) {
+        return byte2bool(getAndBitwiseXorByteAcquire(o, offset, bool2byte(mask)));
+    }
+
+
+    @ForceInline
+    public final byte getAndBitwiseOrByte(Object o, long offset, byte mask) {
+        byte current;
+        do {
+            current = getByteVolatile(o, offset);
+        } while (!weakCompareAndSwapByteVolatile(o, offset,
+                                                  current, (byte) (current | mask)));
+        return current;
+    }
+
+    @ForceInline
+    public final byte getAndBitwiseOrByteRelease(Object o, long offset, byte mask) {
+        byte current;
+        do {
+            current = getByte(o, offset);
+        } while (!weakCompareAndSwapByteRelease(o, offset,
+                                                 current, (byte) (current | mask)));
+        return current;
+    }
+
+    @ForceInline
+    public final byte getAndBitwiseOrByteAcquire(Object o, long offset, byte mask) {
+        byte current;
+        do {
+            // Plain read, the value is a hint, the acquire CAS does the work
+            current = getByte(o, offset);
+        } while (!weakCompareAndSwapByteAcquire(o, offset,
+                                                 current, (byte) (current | mask)));
+        return current;
+    }
+
+    @ForceInline
+    public final byte getAndBitwiseAndByte(Object o, long offset, byte mask) {
+        byte current;
+        do {
+            current = getByteVolatile(o, offset);
+        } while (!weakCompareAndSwapByteVolatile(o, offset,
+                                                  current, (byte) (current & mask)));
+        return current;
+    }
+
+    @ForceInline
+    public final byte getAndBitwiseAndByteRelease(Object o, long offset, byte mask) {
+        byte current;
+        do {
+            current = getByte(o, offset);
+        } while (!weakCompareAndSwapByteRelease(o, offset,
+                                                 current, (byte) (current & mask)));
+        return current;
+    }
+
+    @ForceInline
+    public final byte getAndBitwiseAndByteAcquire(Object o, long offset, byte mask) {
+        byte current;
+        do {
+            // Plain read, the value is a hint, the acquire CAS does the work
+            current = getByte(o, offset);
+        } while (!weakCompareAndSwapByteAcquire(o, offset,
+                                                 current, (byte) (current & mask)));
+        return current;
+    }
+
+    @ForceInline
+    public final byte getAndBitwiseXorByte(Object o, long offset, byte mask) {
+        byte current;
+        do {
+            current = getByteVolatile(o, offset);
+        } while (!weakCompareAndSwapByteVolatile(o, offset,
+                                                  current, (byte) (current ^ mask)));
+        return current;
+    }
+
+    @ForceInline
+    public final byte getAndBitwiseXorByteRelease(Object o, long offset, byte mask) {
+        byte current;
+        do {
+            current = getByte(o, offset);
+        } while (!weakCompareAndSwapByteRelease(o, offset,
+                                                 current, (byte) (current ^ mask)));
+        return current;
+    }
+
+    @ForceInline
+    public final byte getAndBitwiseXorByteAcquire(Object o, long offset, byte mask) {
+        byte current;
+        do {
+            // Plain read, the value is a hint, the acquire CAS does the work
+            current = getByte(o, offset);
+        } while (!weakCompareAndSwapByteAcquire(o, offset,
+                                                 current, (byte) (current ^ mask)));
+        return current;
+    }
+
+
+    @ForceInline
+    public final char getAndBitwiseOrChar(Object o, long offset, char mask) {
+        return s2c(getAndBitwiseOrShort(o, offset, c2s(mask)));
+    }
+
+    @ForceInline
+    public final char getAndBitwiseOrCharRelease(Object o, long offset, char mask) {
+        return s2c(getAndBitwiseOrShortRelease(o, offset, c2s(mask)));
+    }
+
+    @ForceInline
+    public final char getAndBitwiseOrCharAcquire(Object o, long offset, char mask) {
+        return s2c(getAndBitwiseOrShortAcquire(o, offset, c2s(mask)));
+    }
+
+    @ForceInline
+    public final char getAndBitwiseAndChar(Object o, long offset, char mask) {
+        return s2c(getAndBitwiseAndShort(o, offset, c2s(mask)));
+    }
+
+    @ForceInline
+    public final char getAndBitwiseAndCharRelease(Object o, long offset, char mask) {
+        return s2c(getAndBitwiseAndShortRelease(o, offset, c2s(mask)));
+    }
+
+    @ForceInline
+    public final char getAndBitwiseAndCharAcquire(Object o, long offset, char mask) {
+        return s2c(getAndBitwiseAndShortAcquire(o, offset, c2s(mask)));
+    }
+
+    @ForceInline
+    public final char getAndBitwiseXorChar(Object o, long offset, char mask) {
+        return s2c(getAndBitwiseXorShort(o, offset, c2s(mask)));
+    }
+
+    @ForceInline
+    public final char getAndBitwiseXorCharRelease(Object o, long offset, char mask) {
+        return s2c(getAndBitwiseXorShortRelease(o, offset, c2s(mask)));
+    }
+
+    @ForceInline
+    public final char getAndBitwiseXorCharAcquire(Object o, long offset, char mask) {
+        return s2c(getAndBitwiseXorShortAcquire(o, offset, c2s(mask)));
+    }
+
+
+    @ForceInline
+    public final short getAndBitwiseOrShort(Object o, long offset, short mask) {
+        short current;
+        do {
+            current = getShortVolatile(o, offset);
+        } while (!weakCompareAndSwapShortVolatile(o, offset,
+                                                current, (short) (current | mask)));
+        return current;
+    }
+
+    @ForceInline
+    public final short getAndBitwiseOrShortRelease(Object o, long offset, short mask) {
+        short current;
+        do {
+            current = getShort(o, offset);
+        } while (!weakCompareAndSwapShortRelease(o, offset,
+                                               current, (short) (current | mask)));
+        return current;
+    }
+
+    @ForceInline
+    public final short getAndBitwiseOrShortAcquire(Object o, long offset, short mask) {
+        short current;
+        do {
+            // Plain read, the value is a hint, the acquire CAS does the work
+            current = getShort(o, offset);
+        } while (!weakCompareAndSwapShortAcquire(o, offset,
+                                               current, (short) (current | mask)));
+        return current;
+    }
+
+    @ForceInline
+    public final short getAndBitwiseAndShort(Object o, long offset, short mask) {
+        short current;
+        do {
+            current = getShortVolatile(o, offset);
+        } while (!weakCompareAndSwapShortVolatile(o, offset,
+                                                current, (short) (current & mask)));
+        return current;
+    }
+
+    @ForceInline
+    public final short getAndBitwiseAndShortRelease(Object o, long offset, short mask) {
+        short current;
+        do {
+            current = getShort(o, offset);
+        } while (!weakCompareAndSwapShortRelease(o, offset,
+                                               current, (short) (current & mask)));
+        return current;
+    }
+
+    @ForceInline
+    public final short getAndBitwiseAndShortAcquire(Object o, long offset, short mask) {
+        short current;
+        do {
+            // Plain read, the value is a hint, the acquire CAS does the work
+            current = getShort(o, offset);
+        } while (!weakCompareAndSwapShortAcquire(o, offset,
+                                               current, (short) (current & mask)));
+        return current;
+    }
+
+    @ForceInline
+    public final short getAndBitwiseXorShort(Object o, long offset, short mask) {
+        short current;
+        do {
+            current = getShortVolatile(o, offset);
+        } while (!weakCompareAndSwapShortVolatile(o, offset,
+                                                current, (short) (current ^ mask)));
+        return current;
+    }
+
+    @ForceInline
+    public final short getAndBitwiseXorShortRelease(Object o, long offset, short mask) {
+        short current;
+        do {
+            current = getShort(o, offset);
+        } while (!weakCompareAndSwapShortRelease(o, offset,
+                                               current, (short) (current ^ mask)));
+        return current;
+    }
+
+    @ForceInline
+    public final short getAndBitwiseXorShortAcquire(Object o, long offset, short mask) {
+        short current;
+        do {
+            // Plain read, the value is a hint, the acquire CAS does the work
+            current = getShort(o, offset);
+        } while (!weakCompareAndSwapShortAcquire(o, offset,
+                                               current, (short) (current ^ mask)));
+        return current;
+    }
+
+
+    @ForceInline
+    public final int getAndBitwiseOrInt(Object o, long offset, int mask) {
+        int current;
+        do {
+            current = getIntVolatile(o, offset);
+        } while (!weakCompareAndSwapIntVolatile(o, offset,
+                                                current, current | mask));
+        return current;
+    }
+
+    @ForceInline
+    public final int getAndBitwiseOrIntRelease(Object o, long offset, int mask) {
+        int current;
+        do {
+            current = getInt(o, offset);
+        } while (!weakCompareAndSwapIntRelease(o, offset,
+                                               current, current | mask));
+        return current;
+    }
+
+    @ForceInline
+    public final int getAndBitwiseOrIntAcquire(Object o, long offset, int mask) {
+        int current;
+        do {
+            // Plain read, the value is a hint, the acquire CAS does the work
+            current = getInt(o, offset);
+        } while (!weakCompareAndSwapIntAcquire(o, offset,
+                                               current, current | mask));
+        return current;
+    }
+
+    /**
+     * Atomically replaces the current value of a field or array element within
+     * the given object with the result of bitwise AND between the current value
+     * and mask.
+     *
+     * @param o object/array to update the field/element in
+     * @param offset field/element offset
+     * @param mask the mask value
+     * @return the previous value
+     * @since 1.9
+     */
+    @ForceInline
+    public final int getAndBitwiseAndInt(Object o, long offset, int mask) {
+        int current;
+        do {
+            current = getIntVolatile(o, offset);
+        } while (!weakCompareAndSwapIntVolatile(o, offset,
+                                                current, current & mask));
+        return current;
+    }
+
+    @ForceInline
+    public final int getAndBitwiseAndIntRelease(Object o, long offset, int mask) {
+        int current;
+        do {
+            current = getInt(o, offset);
+        } while (!weakCompareAndSwapIntRelease(o, offset,
+                                               current, current & mask));
+        return current;
+    }
+
+    @ForceInline
+    public final int getAndBitwiseAndIntAcquire(Object o, long offset, int mask) {
+        int current;
+        do {
+            // Plain read, the value is a hint, the acquire CAS does the work
+            current = getInt(o, offset);
+        } while (!weakCompareAndSwapIntAcquire(o, offset,
+                                               current, current & mask));
+        return current;
+    }
+
+    @ForceInline
+    public final int getAndBitwiseXorInt(Object o, long offset, int mask) {
+        int current;
+        do {
+            current = getIntVolatile(o, offset);
+        } while (!weakCompareAndSwapIntVolatile(o, offset,
+                                                current, current ^ mask));
+        return current;
+    }
+
+    @ForceInline
+    public final int getAndBitwiseXorIntRelease(Object o, long offset, int mask) {
+        int current;
+        do {
+            current = getInt(o, offset);
+        } while (!weakCompareAndSwapIntRelease(o, offset,
+                                               current, current ^ mask));
+        return current;
+    }
+
+    @ForceInline
+    public final int getAndBitwiseXorIntAcquire(Object o, long offset, int mask) {
+        int current;
+        do {
+            // Plain read, the value is a hint, the acquire CAS does the work
+            current = getInt(o, offset);
+        } while (!weakCompareAndSwapIntAcquire(o, offset,
+                                               current, current ^ mask));
+        return current;
+    }
+
+
+    @ForceInline
+    public final long getAndBitwiseOrLong(Object o, long offset, long mask) {
+        long current;
+        do {
+            current = getLongVolatile(o, offset);
+        } while (!weakCompareAndSwapLongVolatile(o, offset,
+                                                current, current | mask));
+        return current;
+    }
+
+    @ForceInline
+    public final long getAndBitwiseOrLongRelease(Object o, long offset, long mask) {
+        long current;
+        do {
+            current = getLong(o, offset);
+        } while (!weakCompareAndSwapLongRelease(o, offset,
+                                               current, current | mask));
+        return current;
+    }
+
+    @ForceInline
+    public final long getAndBitwiseOrLongAcquire(Object o, long offset, long mask) {
+        long current;
+        do {
+            // Plain read, the value is a hint, the acquire CAS does the work
+            current = getLong(o, offset);
+        } while (!weakCompareAndSwapLongAcquire(o, offset,
+                                               current, current | mask));
+        return current;
+    }
+
+    @ForceInline
+    public final long getAndBitwiseAndLong(Object o, long offset, long mask) {
+        long current;
+        do {
+            current = getLongVolatile(o, offset);
+        } while (!weakCompareAndSwapLongVolatile(o, offset,
+                                                current, current & mask));
+        return current;
+    }
+
+    @ForceInline
+    public final long getAndBitwiseAndLongRelease(Object o, long offset, long mask) {
+        long current;
+        do {
+            current = getLong(o, offset);
+        } while (!weakCompareAndSwapLongRelease(o, offset,
+                                               current, current & mask));
+        return current;
+    }
+
+    @ForceInline
+    public final long getAndBitwiseAndLongAcquire(Object o, long offset, long mask) {
+        long current;
+        do {
+            // Plain read, the value is a hint, the acquire CAS does the work
+            current = getLong(o, offset);
+        } while (!weakCompareAndSwapLongAcquire(o, offset,
+                                               current, current & mask));
+        return current;
+    }
+
+    @ForceInline
+    public final long getAndBitwiseXorLong(Object o, long offset, long mask) {
+        long current;
+        do {
+            current = getLongVolatile(o, offset);
+        } while (!weakCompareAndSwapLongVolatile(o, offset,
+                                                current, current ^ mask));
+        return current;
+    }
+
+    @ForceInline
+    public final long getAndBitwiseXorLongRelease(Object o, long offset, long mask) {
+        long current;
+        do {
+            current = getLong(o, offset);
+        } while (!weakCompareAndSwapLongRelease(o, offset,
+                                               current, current ^ mask));
+        return current;
+    }
+
+    @ForceInline
+    public final long getAndBitwiseXorLongAcquire(Object o, long offset, long mask) {
+        long current;
+        do {
+            // Plain read, the value is a hint, the acquire CAS does the work
+            current = getLong(o, offset);
+        } while (!weakCompareAndSwapLongAcquire(o, offset,
+                                               current, current ^ mask));
+        return current;
+    }
+
 
 
     /**

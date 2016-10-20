@@ -54,6 +54,7 @@ import static com.sun.tools.javac.tree.JCTree.Tag.ANNOTATION;
 import static com.sun.tools.javac.tree.JCTree.Tag.ASSIGN;
 import static com.sun.tools.javac.tree.JCTree.Tag.IDENT;
 import static com.sun.tools.javac.tree.JCTree.Tag.NEWARRAY;
+import com.sun.tools.javac.util.JCDiagnostic.DiagnosticFlag;
 
 /** Enter annotations onto symbols and types (and trees).
  *
@@ -91,6 +92,7 @@ public class Annotate {
 
     private final Attribute theUnfinishedDefaultValue;
     private final boolean allowRepeatedAnnos;
+    private final String sourceName;
 
     protected Annotate(Context context) {
         context.put(annotateKey, this);
@@ -113,6 +115,7 @@ public class Annotate {
 
         Source source = Source.instance(context);
         allowRepeatedAnnos = source.allowRepeatedAnnotations();
+        sourceName = source.name;
     }
 
     /** Semaphore to delay annotation processing */
@@ -302,7 +305,6 @@ public class Annotate {
     {
         Map<TypeSymbol, ListBuffer<T>> annotated = new LinkedHashMap<>();
         Map<T, DiagnosticPosition> pos = new HashMap<>();
-        boolean allowRepeatedAnnos = this.allowRepeatedAnnos;
 
         for (List<JCAnnotation> al = withAnnotations; !al.isEmpty(); al = al.tail) {
             JCAnnotation a = al.head;
@@ -322,8 +324,7 @@ public class Annotate {
 
             if (annotated.containsKey(a.type.tsym)) {
                 if (!allowRepeatedAnnos) {
-                    log.error(a.pos(), "repeatable.annotations.not.supported.in.source");
-                    allowRepeatedAnnos = true;
+                    log.error(DiagnosticFlag.SOURCE_LEVEL, a.pos(), "repeatable.annotations.not.supported.in.source", sourceName);
                 }
                 ListBuffer<T> l = annotated.get(a.type.tsym);
                 l = l.append(c);

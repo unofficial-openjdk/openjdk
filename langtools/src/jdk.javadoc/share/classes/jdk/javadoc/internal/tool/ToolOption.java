@@ -26,14 +26,21 @@
 package jdk.javadoc.internal.tool;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.StringTokenizer;
+
+import javax.lang.model.element.ElementKind;
 
 import com.sun.tools.javac.main.Option;
+import com.sun.tools.javac.main.Option.OptionKind;
 import com.sun.tools.javac.main.OptionHelper;
 import com.sun.tools.javac.util.Options;
+
+import static com.sun.tools.javac.main.Option.OptionKind.*;
+import static jdk.javadoc.internal.tool.Main.Result.*;
 
 /**
  * javadoc tool options.
@@ -44,211 +51,246 @@ import com.sun.tools.javac.util.Options;
  *  deletion without notice.</b>
  */
 public enum ToolOption {
+
     // ----- options for underlying compiler -----
 
-    BOOTCLASSPATH("-bootclasspath", true) {
+    BOOTCLASSPATH("-bootclasspath", STANDARD, true) {
         @Override
         public void process(Helper helper, String arg) {
-            helper.setFileManagerOpt(Option.BOOTCLASSPATH, arg);
+            helper.setFileManagerOpt(Option.BOOT_CLASS_PATH, arg);
         }
     },
 
-    CLASSPATH("-classpath", true) {
+    CLASS_PATH("--class-path -classpath -cp", STANDARD, true) {
         @Override
         public void process(Helper helper, String arg) {
-            helper.setFileManagerOpt(Option.CLASSPATH, arg);
+            helper.setFileManagerOpt(Option.CLASS_PATH, arg);
         }
     },
 
-    CP("-cp", true) {
-        @Override
-        public void process(Helper helper, String arg) {
-            helper.setFileManagerOpt(Option.CP, arg);
-        }
-    },
-
-    EXTDIRS("-extdirs", true) {
+    EXTDIRS("-extdirs", STANDARD, true) {
         @Override
         public void process(Helper helper, String arg) {
             helper.setFileManagerOpt(Option.EXTDIRS, arg);
         }
     },
 
-    SOURCEPATH("-sourcepath", true) {
+    SOURCE_PATH("--source-path -sourcepath", STANDARD, true) {
         @Override
         public void process(Helper helper, String arg) {
-            helper.setFileManagerOpt(Option.SOURCEPATH, arg);
+            helper.setFileManagerOpt(Option.SOURCE_PATH, arg);
         }
     },
 
-    SYSCLASSPATH("-sysclasspath", true) {
+    SYSCLASSPATH("-sysclasspath", HIDDEN, true) {
         @Override
         public void process(Helper helper, String arg) {
-            helper.setFileManagerOpt(Option.BOOTCLASSPATH, arg);
+            helper.setFileManagerOpt(Option.BOOT_CLASS_PATH, arg);
         }
     },
 
-    MODULESOURCEPATH("-modulesourcepath", true) {
+    MODULE_SOURCE_PATH("--module-source-path", STANDARD, true) {
         @Override
         public void process(Helper helper, String arg) {
-            helper.setFileManagerOpt(Option.MODULESOURCEPATH, arg);
+            helper.setFileManagerOpt(Option.MODULE_SOURCE_PATH, arg);
         }
     },
 
-    UPGRADEMODULEPATH("-upgrademodulepath", true) {
+    UPGRADE_MODULE_PATH("--upgrade-module-path", STANDARD, true) {
         @Override
         public void process(Helper helper, String arg) {
-            helper.setFileManagerOpt(Option.UPGRADEMODULEPATH, arg);
+            helper.setFileManagerOpt(Option.UPGRADE_MODULE_PATH, arg);
         }
     },
 
-    SYSTEM("-system", true) {
+    SYSTEM("--system", STANDARD, true) {
         @Override
         public void process(Helper helper, String arg) {
             helper.setFileManagerOpt(Option.SYSTEM, arg);
         }
     },
 
-    MODULEPATH("-modulepath", true) {
+    MODULE_PATH("--module-path -p", STANDARD, true) {
         @Override
         public void process(Helper helper, String arg) {
-            helper.setFileManagerOpt(Option.MODULEPATH, arg);
+            helper.setFileManagerOpt(Option.MODULE_PATH, arg);
         }
     },
 
-    ADDMODS("-addmods", true) {
+    ADD_MODULES("--add-modules", STANDARD, true) {
         @Override
         public void process(Helper helper, String arg) {
-            Option.ADDMODS.process(helper.getOptionHelper(), opt, arg);
+            Option.ADD_MODULES.process(helper.getOptionHelper(), primaryName, arg);
         }
     },
 
-    LIMITMODS("-limitmods", true) {
+    LIMIT_MODULES("--limit-modules", STANDARD, true) {
         @Override
         public void process(Helper helper, String arg) {
-            Option.LIMITMODS.process(helper.getOptionHelper(), opt, arg);
+            Option.LIMIT_MODULES.process(helper.getOptionHelper(), primaryName, arg);
         }
     },
 
-    ENCODING("-encoding", true) {
+    MODULE("--module", STANDARD, true) {
         @Override
         public void process(Helper helper, String arg) {
-            helper.encoding = arg;
+            helper.addToList(this, ",", arg);
+        }
+    },
+
+    ENCODING("-encoding", STANDARD, true) {
+        @Override
+        public void process(Helper helper, String arg) {
             helper.setFileManagerOpt(Option.ENCODING, arg);
         }
     },
 
-    RELEASE("-release", true) {
+    RELEASE("--release", STANDARD, true) {
         @Override
         public void process(Helper helper, String arg) {
-            Option.RELEASE.process(helper.getOptionHelper(), opt, arg);
+            Option.RELEASE.process(helper.getOptionHelper(), primaryName, arg);
         }
     },
 
-    SOURCE("-source", true) {
+    SOURCE("-source", STANDARD, true) {
         @Override
         public void process(Helper helper, String arg) {
-            Option.SOURCE.process(helper.getOptionHelper(), opt, arg);
+            Option.SOURCE.process(helper.getOptionHelper(), primaryName, arg);
         }
     },
 
-    XMAXERRS("-Xmaxerrs", true) {
+    XMAXERRS("-Xmaxerrs", EXTENDED, true) {
         @Override
         public void process(Helper helper, String arg) {
-            Option.XMAXERRS.process(helper.getOptionHelper(), opt, arg);
+            Option.XMAXERRS.process(helper.getOptionHelper(), primaryName, arg);
         }
     },
 
-    XMAXWARNS("-Xmaxwarns", true) {
+    XMAXWARNS("-Xmaxwarns", EXTENDED, true) {
         @Override
         public void process(Helper helper, String arg) {
-            Option.XMAXWARNS.process(helper.getOptionHelper(), opt, arg);
+            Option.XMAXWARNS.process(helper.getOptionHelper(), primaryName, arg);
         }
     },
 
-    XADDREADS("-XaddReads:", false) {
+    ADD_READS("--add-reads", EXTENDED, true) {
         @Override
         public void process(Helper helper, String arg) {
-            Option.XADDREADS.process(helper.getOptionHelper(), arg);
+            Option.ADD_READS.process(helper.getOptionHelper(), primaryName, arg);
         }
     },
 
-    XADDEXPORTS("-XaddExports:", false) {
+    ADD_EXPORTS("--add-exports", EXTENDED, true) {
         @Override
         public void process(Helper helper, String arg) {
-            Option.XADDEXPORTS.process(helper.getOptionHelper(), arg);
+            Option.ADD_EXPORTS.process(helper.getOptionHelper(), primaryName, arg);
         }
     },
 
-    XMODULE("-Xmodule:", false) {
+    XMODULE("-Xmodule:", EXTENDED, false) {
         @Override
         public void process(Helper helper, String arg) {
             Option.XMODULE.process(helper.getOptionHelper(), arg);
         }
     },
 
-    XPATCH("-Xpatch:", false) {
+    PATCH_MODULE("--patch-module", EXTENDED, true) {
         @Override
         public void process(Helper helper, String arg) {
-            Option.XMODULE.process(helper.getOptionHelper(), arg);
+            Option.PATCH_MODULE.process(helper.getOptionHelper(), primaryName, arg);
         }
     },
 
     // ----- doclet options -----
 
-    DOCLET("-doclet", true), // handled in setDocletInvoker
+    DOCLET("-doclet", STANDARD, true), // handled in setDocletInvoker
 
-    DOCLETPATH("-docletpath", true), // handled in setDocletInvoker
+    DOCLETPATH("-docletpath", STANDARD, true), // handled in setDocletInvoker
 
     // ----- selection options -----
 
-    SUBPACKAGES("-subpackages", true) {
+    SUBPACKAGES("-subpackages", STANDARD, true) {
         @Override
         public void process(Helper helper, String arg) {
-            helper.addToList(helper.subPackages, arg);
+            helper.addToList(this, ":", arg);
         }
     },
 
-    EXCLUDE("-exclude", true) {
+    EXCLUDE("-exclude", STANDARD, true) {
         @Override
         public void process(Helper helper, String arg) {
-            helper.addToList(helper.excludedPackages, arg);
+            helper.addToList(this, ":", arg);
         }
     },
 
     // ----- filtering options -----
 
-    PACKAGE("-package") {
+    PACKAGE("-package", STANDARD) {
         @Override
-        public void process(Helper helper) {
-            helper.setFilter("package");
+        public void process(Helper helper) throws OptionException {
+            helper.setSimpleFilter("package");
         }
     },
 
-    PRIVATE("-private") {
+    PRIVATE("-private", STANDARD) {
         @Override
-        public void process(Helper helper) {
-            helper.setFilter("private");
+        public void process(Helper helper) throws OptionException {
+            helper.setSimpleFilter("private");
         }
     },
 
-    PROTECTED("-protected") {
+    PROTECTED("-protected", STANDARD) {
         @Override
-        public void process(Helper helper) {
-            helper.setFilter("protected");
+        public void process(Helper helper) throws OptionException {
+            helper.setSimpleFilter("protected");
         }
     },
 
-    PUBLIC("-public") {
+    PUBLIC("-public", STANDARD) {
         @Override
-        public void process(Helper helper) {
-            helper.setFilter("public");
+        public void process(Helper helper) throws OptionException {
+            helper.setSimpleFilter("public");
+        }
+    },
+
+    SHOW_MEMBERS("--show-members", STANDARD, true) {
+        @Override
+        public void process(Helper helper, String arg) throws OptionException {
+            helper.setFilter(this, arg);
+        }
+    },
+
+    SHOW_TYPES("--show-types", STANDARD, true) {
+        @Override
+        public void process(Helper helper, String arg) throws OptionException {
+            helper.setFilter(this, arg);
+        }
+    },
+
+    SHOW_PACKAGES("--show-packages", STANDARD, true) {
+        @Override
+        public void process(Helper helper, String arg) throws OptionException {
+            helper.setShowPackageAccess(SHOW_PACKAGES, arg);
+        }
+    },
+
+    SHOW_MODULE_CONTENTS("--show-module-contents", STANDARD, true) {
+        @Override
+        public void process(Helper helper, String arg) throws OptionException {
+            helper.setShowModuleContents(SHOW_MODULE_CONTENTS, arg);
+        }
+    },
+
+    EXPAND_REQUIRES("--expand-requires", STANDARD, true) {
+        @Override
+        public void process(Helper helper, String arg) throws OptionException {
+            helper.setExpandRequires(EXPAND_REQUIRES, arg);
         }
     },
 
     // ----- output control options -----
 
-    PROMPT("-prompt") {
+    PROMPT("-prompt", HIDDEN) {
         @Override
         public void process(Helper helper) {
             helper.compOpts.put("-prompt", "-prompt");
@@ -256,21 +298,21 @@ public enum ToolOption {
         }
     },
 
-    QUIET("-quiet") {
+    QUIET("-quiet", STANDARD) {
         @Override
         public void process(Helper helper) {
-            helper.quiet = true;
+            helper.jdtoolOpts.put(QUIET, true);
         }
     },
 
-    VERBOSE("-verbose") {
+    VERBOSE("-verbose", STANDARD) {
         @Override
         public void process(Helper helper) {
             helper.compOpts.put("-verbose", "");
         }
     },
 
-    XWERROR("-Xwerror") {
+    XWERROR("-Xwerror", HIDDEN) {
         @Override
         public void process(Helper helper) {
             helper.rejectWarnings = true;
@@ -280,95 +322,133 @@ public enum ToolOption {
 
     // ----- other options -----
 
-    BREAKITERATOR("-breakiterator") {
+    BREAKITERATOR("-breakiterator", STANDARD) {
         @Override
         public void process(Helper helper) {
             helper.breakiterator = true;
         }
     },
 
-    LOCALE("-locale", true) {
+    LOCALE("-locale", STANDARD, true) {
         @Override
         public void process(Helper helper, String arg) {
             helper.docLocale = arg;
         }
     },
 
-    // the doclet consumes this
-    OVERVIEW("-overview", true) {
+    XCLASSES("-Xclasses", HIDDEN) {
         @Override
-        public void process(Helper helper, String arg) {
-            helper.setOverviewpath(arg);
+        public void process(Helper helper) {
+            helper.jdtoolOpts.put(XCLASSES, true);
         }
     },
 
-    XCLASSES("-Xclasses") {
+    DUMPONERROR("--dump-on-error", HIDDEN) {
         @Override
         public void process(Helper helper) {
-            helper.docClasses = true;
-
+            helper.dumpOnError = true;
         }
     },
 
     // ----- help options -----
 
-    HELP("-help") {
+    HELP("--help -help", STANDARD) {
         @Override
-        public void process(Helper helper) {
-            helper.usage();
+        public void process(Helper helper) throws OptionException {
+            throw new OptionException(OK, helper::usage);
         }
     },
 
-    X("-X") {
+    X("-X", STANDARD) {
+        @Override
+        public void process(Helper helper) throws OptionException {
+           throw new OptionException(OK, helper::Xusage);
+        }
+    },
+
+    // This option exists only for the purpose of documenting itself.
+    // It's actually implemented by the launcher.
+    J("-J", STANDARD, true) {
         @Override
         public void process(Helper helper) {
-            helper.Xusage();
+            throw new AssertionError("the -J flag should be caught by the launcher.");
+        }
+    },
+
+    // This option exists only for the purpose of documenting itself.
+    // It's actually implemented ahead of the normal option decoding loop.
+    Xold("-Xold", EXTENDED) {
+        @Override
+        public void process(Helper helper) {
+            throw new AssertionError("the -Xold flag should be handled earlier.");
         }
     };
 
-    public final String opt;
+    public final String primaryName;
+    public final List<String> names;
+    public final OptionKind kind;
     public final boolean hasArg;
     public final boolean hasSuffix; // ex: foo:bar or -foo=bar
 
-    ToolOption(String opt) {
-        this(opt, false);
+    ToolOption(String opt, OptionKind kind) {
+        this(opt, kind, false);
     }
 
-    ToolOption(String opt, boolean hasArg) {
-        this.opt = opt;
+    ToolOption(String names, OptionKind kind, boolean hasArg) {
+        this.names = Arrays.asList(names.split("\\s+"));
+        this.primaryName = this.names.get(0);
+        this.kind = kind;
         this.hasArg = hasArg;
-        char lastChar = opt.charAt(opt.length() - 1);
+        char lastChar = names.charAt(names.length() - 1);
         this.hasSuffix = lastChar == ':' || lastChar == '=';
     }
 
-    void process(Helper helper, String arg) { }
+    void process(Helper helper, String arg) throws OptionException { }
 
-    void process(Helper helper) { }
+    void process(Helper helper) throws OptionException { }
+
+    List<String> getNames() {
+        return names;
+    }
+
+    String getParameters(Messager messager) {
+        return (hasArg || primaryName.endsWith(":"))
+                ? messager.getText(getKey(primaryName, ".arg"))
+                : null;
+    }
+
+    String getDescription(Messager messager) {
+        return messager.getText(getKey(primaryName, ".desc"));
+    }
+
+    private String getKey(String optionName, String suffix) {
+        return "main.opt."
+                + optionName
+                .replaceAll("^-*", "")              // remove leading '-'
+                .replaceAll("[^A-Za-z0-9]+$", "")   // remove trailing non-alphanumeric
+                .replaceAll("[^A-Za-z0-9]", ".")    // replace internal non-alphanumeric
+                + suffix;
+    }
+
 
     static ToolOption get(String name) {
         String oname = name;
         if (name.contains(":")) {
             oname = name.substring(0, name.indexOf(':') + 1);
         } else if (name.contains("=")) {
-            oname = name.substring(0, name.indexOf('=') + 1);
+            oname = name.substring(0, name.indexOf('='));
         }
         for (ToolOption o : values()) {
-            if (oname.equals(o.opt)) {
-                return o;
+            for (String n : o.names) {
+                if (oname.equals(n)) {
+                    return o;
+                }
             }
         }
         return null;
     }
 
     static abstract class Helper {
-        /** List of decoded options. */
-        final List<List<String>> options = new ArrayList<>();
-
-        /** Selected packages, from -subpackages. */
-        final List<String> subPackages = new ArrayList<>();
-
-        /** Excluded packages, from -exclude. */
-        final List<String> excludedPackages = new ArrayList<>();
 
         // File manager options
         final Map<Option, String> fileManagerOpts = new LinkedHashMap<>();
@@ -376,17 +456,14 @@ public enum ToolOption {
         /** javac options, set by various options. */
         Options compOpts; // = Options.instance(context)
 
-        /* Encoding for javac, and files written? set by -encoding. */
-        String encoding = null;
+        /** Javadoc tool options */
+        final Map<ToolOption, Object> jdtoolOpts = new EnumMap<>(ToolOption.class);
+
+        /** dump stack traces for debugging etc.*/
+        boolean dumpOnError = false;
 
         /** Set by -breakiterator. */
         boolean breakiterator = false;
-
-        /** Set by -quiet. */
-        boolean quiet = false;
-
-        /** Set by -Xclasses. */
-        boolean docClasses = false;
 
         /** Set by -Xwerror. */
         boolean rejectWarnings = false;
@@ -397,43 +474,138 @@ public enum ToolOption {
         /** Set by -locale. */
         String docLocale = "";
 
-        /** Set by -public, private, -protected, -package. */
-        String showAccess = null;
-        String overviewpath;
+        Helper() {
+            populateDefaultAccessMap();
+        }
 
         abstract void usage();
         abstract void Xusage();
 
-        abstract void usageError(String msg, Object... args);
+        abstract String getLocalizedMessage(String msg, Object... args);
+
         abstract OptionHelper getOptionHelper();
 
-        void addToList(List<String> list, String str){
-            StringTokenizer st = new StringTokenizer(str, ":");
-            String current;
-            while(st.hasMoreTokens()){
-                current = st.nextToken();
-                list.add(current);
+        @SuppressWarnings("unchecked")
+        void addToList(ToolOption opt, String delimiter, String str) {
+            List<String> list = (List<String>) jdtoolOpts.computeIfAbsent(opt, v -> new ArrayList<>());
+            list.addAll(Arrays.asList(str.split(delimiter)));
+            jdtoolOpts.put(opt, list);
+        }
+
+        void setExpandRequires(ToolOption opt, String arg) throws OptionException {
+            switch (arg) {
+                case "public":
+                    jdtoolOpts.put(opt, AccessKind.PUBLIC);
+                    break;
+                case "all":
+                    jdtoolOpts.put(opt, AccessKind.PRIVATE);
+                    break;
+                default:
+                    String text = getLocalizedMessage("main.illegal_option_value", arg);
+                    throw new IllegalOptionValue(this::usage, text);
             }
         }
 
-        void setFilter(String showAccess) {
-            if (showAccess != null) {
-                if (!"public".equals(showAccess)
-                        && !"protected".equals(showAccess)
-                        && !"private".equals(showAccess)
-                        && !"package".equals(showAccess)) {
-                    usageError("main.incompatible.access.flags");
-                }
-                this.showAccess = showAccess;
+        void setShowModuleContents(ToolOption opt, String arg) throws OptionException {
+            switch (arg) {
+                case "api":
+                    jdtoolOpts.put(opt, AccessKind.PUBLIC);
+                    break;
+                case "all":
+                    jdtoolOpts.put(opt, AccessKind.PRIVATE);
+                    break;
+                default:
+                    String text = getLocalizedMessage("main.illegal_option_value", arg);
+                    throw new IllegalOptionValue(this::usage, text);
             }
+        }
+
+        void setShowPackageAccess(ToolOption opt, String arg) throws OptionException {
+            switch (arg) {
+                case "exported":
+                    jdtoolOpts.put(opt, AccessKind.PUBLIC);
+                    break;
+                case "all":
+                    jdtoolOpts.put(opt, AccessKind.PRIVATE);
+                    break;
+                default:
+                    String text = getLocalizedMessage("main.illegal_option_value", arg);
+                    throw new IllegalOptionValue(this::usage, text);
+            }
+        }
+
+
+        void setFilter(ToolOption opt, String arg) throws OptionException {
+            jdtoolOpts.put(opt, getAccessValue(arg));
+        }
+
+        void setSimpleFilter(String arg) throws OptionException {
+            handleSimpleOption(arg);
         }
 
         void setFileManagerOpt(Option opt, String arg) {
             fileManagerOpts.put(opt, arg);
         }
 
-        private void setOverviewpath(String arg) {
-            this.overviewpath = arg;
+        void handleSimpleOption(String arg) throws OptionException {
+            populateSimpleAccessMap(getAccessValue(arg));
+        }
+
+        /*
+         * This method handles both the simple options -package,
+         * -private, so on, in addition to the new ones such as
+         * --show-types:public and so on.
+         */
+        private AccessKind getAccessValue(String arg) throws OptionException {
+            int colon = arg.indexOf(':');
+            String value = (colon > 0)
+                    ? arg.substring(colon + 1)
+                    : arg;
+            switch (value) {
+                case "public":
+                    return AccessKind.PUBLIC;
+                case "protected":
+                    return AccessKind.PROTECTED;
+                case "package":
+                    return AccessKind.PACKAGE;
+                case "private":
+                    return AccessKind.PRIVATE;
+                default:
+                    String text = getLocalizedMessage("main.illegal_option_value", value);
+                    throw new IllegalOptionValue(this::usage, text);
+            }
+        }
+
+        /*
+         * Sets the entire kind map to PROTECTED this is the default.
+         */
+        private void populateDefaultAccessMap() {
+            populateSimpleAccessMap(AccessKind.PROTECTED);
+        }
+
+        /*
+         * This sets access to all the allowed kinds in the
+         * access map.
+         */
+        void populateSimpleAccessMap(AccessKind accessValue) {
+            for (ElementKind kind : ElementsTable.ModifierFilter.ALLOWED_KINDS) {
+                switch (kind) {
+                    case METHOD:
+                        jdtoolOpts.put(SHOW_MEMBERS, accessValue);
+                        break;
+                    case CLASS:
+                        jdtoolOpts.put(SHOW_TYPES, accessValue);
+                        break;
+                    case PACKAGE:
+                        jdtoolOpts.put(SHOW_PACKAGES, accessValue);
+                        break;
+                    case MODULE:
+                        jdtoolOpts.put(SHOW_MODULE_CONTENTS, accessValue);
+                        break;
+                    default:
+                        throw new AssertionError("unknown element kind:" + kind);
+                }
+            }
         }
     }
 }

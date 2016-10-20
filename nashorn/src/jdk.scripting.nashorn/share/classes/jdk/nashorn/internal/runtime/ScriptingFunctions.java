@@ -42,6 +42,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
 import jdk.nashorn.internal.objects.NativeArray;
 import static jdk.nashorn.internal.runtime.ECMAErrors.rangeError;
 
@@ -92,11 +94,7 @@ public final class ScriptingFunctions {
      * @throws IOException if an exception occurs
      */
     public static Object readLine(final Object self, final Object prompt) throws IOException {
-        if (prompt != UNDEFINED) {
-            System.out.print(JSType.toString(prompt));
-        }
-        final BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-        return reader.readLine();
+        return readLine(prompt);
     }
 
     /**
@@ -151,7 +149,7 @@ public final class ScriptingFunctions {
         String inputString = null;
 
         if (arg0 instanceof NativeArray) {
-            String[] array = (String[])JSType.toJavaArray(arg0, String.class);
+            final String[] array = (String[])JSType.toJavaArray(arg0, String.class);
             tokens = new ArrayList<>();
             tokens.addAll(Arrays.asList(array));
         } else {
@@ -208,7 +206,7 @@ public final class ScriptingFunctions {
 
         final String outString = executor.getOutputString();
         final String errString = executor.getErrorString();
-        int exitCode = executor.getExitCode();
+        final int exitCode = executor.getExitCode();
 
         // Set globals for secondary results.
         global.set(OUT_NAME, outString, 0);
@@ -217,6 +215,30 @@ public final class ScriptingFunctions {
 
         // Return the result from stdout.
         return outString;
+    }
+
+    // Implementation for pluggable "readLine" functionality
+    // Used by jjs interactive mode
+
+    private static Function<String, String> readLineHelper;
+
+    public static void setReadLineHelper(final Function<String, String> func) {
+        readLineHelper = Objects.requireNonNull(func);
+    }
+
+    public static Function<String, String> getReadLineHelper() {
+        return readLineHelper;
+    }
+
+    public static String readLine(final Object prompt) throws IOException {
+        final String p = (prompt != UNDEFINED)? JSType.toString(prompt) : "";
+        if (readLineHelper != null) {
+            return readLineHelper.apply(p);
+        } else {
+            System.out.print(p);
+            final BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+            return reader.readLine();
+        }
     }
 
     private static MethodHandle findOwnMH(final String name, final Class<?> rtype, final Class<?>... types) {

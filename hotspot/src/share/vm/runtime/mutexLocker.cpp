@@ -77,6 +77,8 @@ Mutex*   Shared_SATB_Q_lock           = NULL;
 Mutex*   DirtyCardQ_FL_lock           = NULL;
 Monitor* DirtyCardQ_CBL_mon           = NULL;
 Mutex*   Shared_DirtyCardQ_lock       = NULL;
+Mutex*   MarkStackFreeList_lock       = NULL;
+Mutex*   MarkStackChunkList_lock      = NULL;
 Mutex*   ParGCRareEvent_lock          = NULL;
 Mutex*   DerivedPointerTableGC_lock   = NULL;
 Mutex*   Compile_lock                 = NULL;
@@ -194,6 +196,9 @@ void mutex_init() {
 
     def(StringDedupQueue_lock      , Monitor, leaf,        true,  Monitor::_safepoint_check_never);
     def(StringDedupTable_lock      , Mutex  , leaf,        true,  Monitor::_safepoint_check_never);
+
+    def(MarkStackFreeList_lock     , Mutex , leaf      ,   true,  Monitor::_safepoint_check_never);
+    def(MarkStackChunkList_lock    , Mutex , leaf      ,   true,  Monitor::_safepoint_check_never);
   }
   def(ParGCRareEvent_lock          , Mutex  , leaf     ,   true,  Monitor::_safepoint_check_sometimes);
   def(DerivedPointerTableGC_lock   , Mutex,   leaf,        true,  Monitor::_safepoint_check_never);
@@ -274,7 +279,7 @@ void mutex_init() {
   def(JfrMsg_lock                  , Monitor, leaf,        true,  Monitor::_safepoint_check_always);
   def(JfrBuffer_lock               , Mutex,   leaf,        true,  Monitor::_safepoint_check_never);
   def(JfrThreadGroups_lock         , Mutex,   leaf,        true,  Monitor::_safepoint_check_always);
-  def(JfrStream_lock               , Mutex,   nonleaf,     true,  Monitor::_safepoint_check_never);
+  def(JfrStream_lock               , Mutex,   leaf+1,      true,  Monitor::_safepoint_check_never);      // ensure to rank lower than 'safepoint'
   def(JfrStacktrace_lock           , Mutex,   special,     true,  Monitor::_safepoint_check_sometimes);
 #endif
 

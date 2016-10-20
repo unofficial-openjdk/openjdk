@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -86,7 +86,7 @@ class LogTagSet VALUE_OBJ_CLASS_SPEC {
   }
 
   bool contains(LogTagType tag) const {
-    for (size_t i = 0; _tag[i] != LogTag::__NO_TAG; i++) {
+    for (size_t i = 0; i < LogTag::MaxTags && _tag[i] != LogTag::__NO_TAG; i++) {
       if (tag == _tag[i]) {
         return true;
       }

@@ -282,7 +282,17 @@ class GTKStyle extends SynthStyle implements GTKConstants {
         return getColorForState(context, type);
     }
 
+    Font getDefaultFont() {
+        return font;
+    }
+
     protected Font getFontForState(SynthContext context) {
+        Font propFont = UIManager
+                              .getFont(context.getRegion().getName() + ".font");
+        if (propFont != null) {
+            // if font property got a value then return it
+            return propFont;
+        }
         return font;
     }
 
@@ -854,6 +864,12 @@ class GTKStyle extends SynthStyle implements GTKConstants {
             return indicatorSpacing + focusSize + focusPad;
         } else if (GTKLookAndFeel.is3() && "ComboBox.forceOpaque".equals(key)) {
             return true;
+        } else if ("Tree.expanderSize".equals(key)) {
+            Object value = getClassSpecificValue("expander-size");
+            if (value instanceof Integer) {
+                return (Integer)value + 4;
+            }
+            return null;
         }
 
         // Is it a stock icon ?
@@ -1136,7 +1152,6 @@ class GTKStyle extends SynthStyle implements GTKConstants {
         CLASS_SPECIFIC_MAP.put("Slider.thumbWidth", "slider-length");
         CLASS_SPECIFIC_MAP.put("Slider.trackBorder", "trough-border");
         CLASS_SPECIFIC_MAP.put("SplitPane.size", "handle-size");
-        CLASS_SPECIFIC_MAP.put("Tree.expanderSize", "expander-size");
         CLASS_SPECIFIC_MAP.put("ScrollBar.thumbHeight", "slider-width");
         CLASS_SPECIFIC_MAP.put("ScrollBar.width", "slider-width");
         CLASS_SPECIFIC_MAP.put("TextArea.caretForeground", "cursor-color");

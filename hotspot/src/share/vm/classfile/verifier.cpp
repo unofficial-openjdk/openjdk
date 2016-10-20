@@ -67,12 +67,12 @@ static void* volatile _verify_byte_codes_fn = NULL;
 static volatile jint _is_new_verify_byte_codes_fn = (jint) true;
 
 static void* verify_byte_codes_fn() {
-  if (_verify_byte_codes_fn == NULL) {
+  if (OrderAccess::load_ptr_acquire(&_verify_byte_codes_fn) == NULL) {
     void *lib_handle = os::native_java_library();
     void *func = os::dll_lookup(lib_handle, "VerifyClassCodesForMajorVersion");
     OrderAccess::release_store_ptr(&_verify_byte_codes_fn, func);
     if (func == NULL) {
-      OrderAccess::release_store(&_is_new_verify_byte_codes_fn, false);
+      _is_new_verify_byte_codes_fn = false;
       func = os::dll_lookup(lib_handle, "VerifyClassCodes");
       OrderAccess::release_store_ptr(&_verify_byte_codes_fn, func);
     }
@@ -88,7 +88,7 @@ bool Verifier::should_verify_for(oop class_loader, bool should_verify_class) {
     BytecodeVerificationLocal : BytecodeVerificationRemote;
 }
 
-bool Verifier::relax_verify_for(oop loader) {
+bool Verifier::relax_access_for(oop loader) {
   bool trusted = java_lang_ClassLoader::is_trusted_loader(loader);
   bool need_verify =
     // verifyAll
@@ -2377,9 +2377,17 @@ bool ClassVerifier::ends_in_athrow(u4 start_bc_offset) {
       case Bytecodes::_ifnonnull:
         target = bcs.dest();
         if (visited_branches->contains(bci)) {
-          if (bci_stack->is_empty()) return true;
-          // Pop a bytecode starting offset and scan from there.
-          bcs.set_start(bci_stack->pop());
+          if (bci_stack->is_empty()) {
+            if (handler_stack->is_empty()) {
+              return true;
+            } else {
+              // Parse the catch handlers for try blocks containing athrow.
+              bcs.set_start(handler_stack->pop());
+            }
+          } else {
+            // Pop a bytecode starting offset and scan from there.
+            bcs.set_start(bci_stack->pop());
+          }
         } else {
           if (target > bci) { // forward branch
             if (target >= code_length) return false;
@@ -2402,9 +2410,17 @@ bool ClassVerifier::ends_in_athrow(u4 start_bc_offset) {
       case Bytecodes::_goto_w:
         target = (opcode == Bytecodes::_goto ? bcs.dest() : bcs.dest_w());
         if (visited_branches->contains(bci)) {
-          if (bci_stack->is_empty()) return true;
-          // Been here before, pop new starting offset from stack.
-          bcs.set_start(bci_stack->pop());
+          if (bci_stack->is_empty()) {
+            if (handler_stack->is_empty()) {
+              return true;
+            } else {
+              // Parse the catch handlers for try blocks containing athrow.
+              bcs.set_start(handler_stack->pop());
+            }
+          } else {
+            // Been here before, pop new starting offset from stack.
+            bcs.set_start(bci_stack->pop());
+          }
         } else {
           if (target >= code_length) return false;
           // Continue scanning from the target onward.
@@ -2770,7 +2786,7 @@ void ClassVerifier::verify_invoke_instructions(
       // direct interface relative to the host class
       have_imr_indirect = (have_imr_indirect &&
                            !is_same_or_direct_interface(
-                             InstanceKlass::cast(current_class()->host_klass()),
+                             current_class()->host_klass(),
                              host_klass_type, ref_class_type));
     }
     if (!subtype) {

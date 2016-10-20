@@ -25,7 +25,6 @@
 
 package jdk.javadoc.internal.doclets.formats.html;
 
-import java.io.*;
 import java.util.*;
 
 import javax.lang.model.element.PackageElement;
@@ -39,9 +38,9 @@ import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTree;
 import jdk.javadoc.internal.doclets.formats.html.markup.StringContent;
 import jdk.javadoc.internal.doclets.toolkit.Content;
 import jdk.javadoc.internal.doclets.toolkit.util.ClassUseMapper;
+import jdk.javadoc.internal.doclets.toolkit.util.DocFileIOException;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPath;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPaths;
-import jdk.javadoc.internal.doclets.toolkit.util.DocletAbortException;
 
 /**
  * Generate package usage information.
@@ -64,12 +63,10 @@ public class PackageUseWriter extends SubWriterHolderWriter {
      * Constructor.
      *
      * @param filename the file to be generated.
-     * @throws IOException
-     * @throws DocletAbortException
      */
     public PackageUseWriter(ConfigurationImpl configuration,
                             ClassUseMapper mapper, DocPath filename,
-                            PackageElement pkgElement) throws IOException {
+                            PackageElement pkgElement) {
         super(configuration, DocPath.forPackage(pkgElement).resolve(filename));
         this.packageElement = pkgElement;
 
@@ -100,32 +97,26 @@ public class PackageUseWriter extends SubWriterHolderWriter {
      * @param configuration the current configuration of the doclet.
      * @param mapper        the mapping of the class usage.
      * @param pkgElement    the package being documented.
+     * @throws DocFileIOException if there is a problem generating the package use page
      */
     public static void generate(ConfigurationImpl configuration,
-                                ClassUseMapper mapper, PackageElement pkgElement) {
-        PackageUseWriter pkgusegen;
+                                ClassUseMapper mapper, PackageElement pkgElement)
+            throws DocFileIOException {
         DocPath filename = DocPaths.PACKAGE_USE;
-        try {
-            pkgusegen = new PackageUseWriter(configuration, mapper, filename, pkgElement);
-            pkgusegen.generatePackageUseFile();
-            pkgusegen.close();
-        } catch (IOException exc) {
-            configuration.standardmessage.error(
-                "doclet.exception_encountered",
-                exc.toString(), filename);
-            throw new DocletAbortException(exc);
-        }
+        PackageUseWriter pkgusegen = new PackageUseWriter(configuration, mapper, filename, pkgElement);
+        pkgusegen.generatePackageUseFile();
     }
 
     /**
      * Generate the package use list.
+     * @throws DocFileIOException if there is a problem generating the package use page
      */
-    protected void generatePackageUseFile() throws IOException {
+    protected void generatePackageUseFile() throws DocFileIOException {
         HtmlTree body = getPackageUseHeader();
         HtmlTree div = new HtmlTree(HtmlTag.DIV);
         div.addStyle(HtmlStyle.contentContainer);
         if (usingPackageToUsedClasses.isEmpty()) {
-            div.addContent(getResource("doclet.ClassUse_No.usage.of.0", utils.getPackageName(packageElement)));
+            div.addContent(contents.getContent("doclet.ClassUse_No.usage.of.0", utils.getPackageName(packageElement)));
         } else {
             addPackageUse(div);
         }
@@ -151,7 +142,7 @@ public class PackageUseWriter extends SubWriterHolderWriter {
      *
      * @param contentTree the content tree to which the package use information will be added
      */
-    protected void addPackageUse(Content contentTree) throws IOException {
+    protected void addPackageUse(Content contentTree) {
         HtmlTree ul = new HtmlTree(HtmlTag.UL);
         ul.addStyle(HtmlStyle.blockList);
         if (configuration.packages.size() > 1) {
@@ -166,8 +157,8 @@ public class PackageUseWriter extends SubWriterHolderWriter {
      *
      * @param contentTree the content tree to which the package list will be added
      */
-    protected void addPackageList(Content contentTree) throws IOException {
-        Content caption = getTableCaption(configuration.getResource(
+    protected void addPackageList(Content contentTree) {
+        Content caption = getTableCaption(configuration.getContent(
                 "doclet.ClassUse_Packages.that.use.0",
                 getPackageLink(packageElement, utils.getPackageName(packageElement))));
         Content table = (configuration.isOutputHtml5())
@@ -194,11 +185,9 @@ public class PackageUseWriter extends SubWriterHolderWriter {
      *
      * @param contentTree the content tree to which the class list will be added
      */
-    protected void addClassList(Content contentTree) throws IOException {
+    protected void addClassList(Content contentTree) {
         List<String> classTableHeader = Arrays.asList(
-            configuration.getText("doclet.0_and_1",
-                    configuration.getText("doclet.Class"),
-                    configuration.getText("doclet.Description")));
+                resources.getText("doclet.Class"), resources.getText("doclet.Description"));
         for (String packageName : usingPackageToUsedClasses.keySet()) {
             PackageElement usingPackage = utils.elementUtils.getPackageElement(packageName);
             HtmlTree li = new HtmlTree(HtmlTag.LI);
@@ -208,7 +197,7 @@ public class PackageUseWriter extends SubWriterHolderWriter {
             }
             String tableSummary = configuration.getText("doclet.Use_Table_Summary",
                                                         configuration.getText("doclet.classes"));
-            Content caption = getTableCaption(configuration.getResource(
+            Content caption = getTableCaption(configuration.getContent(
                     "doclet.ClassUse_Classes.in.0.used.by.1",
                     getPackageLink(packageElement, utils.getPackageName(packageElement)),
                     getPackageLink(usingPackage, utils.getPackageName(usingPackage))));
@@ -243,10 +232,13 @@ public class PackageUseWriter extends SubWriterHolderWriter {
         DocPath dp = pathString(usedClass,
                 DocPaths.CLASS_USE.resolve(DocPath.forName(utils, usedClass)));
         StringContent stringContent = new StringContent(utils.getSimpleName(usedClass));
-        Content td = HtmlTree.TD(HtmlStyle.colOne,
+        Content thType = HtmlTree.TH_ROW_SCOPE(HtmlStyle.colFirst,
                 getHyperLink(dp.fragment(getPackageAnchorName(pkg)), stringContent));
-        addIndexComment(usedClass, td);
-        contentTree.addContent(td);
+        contentTree.addContent(thType);
+        HtmlTree tdDesc = new HtmlTree(HtmlTag.TD);
+        tdDesc.addStyle(HtmlStyle.colLast);
+        addIndexComment(usedClass, tdDesc);
+        contentTree.addContent(tdDesc);
     }
 
     /**
@@ -255,17 +247,17 @@ public class PackageUseWriter extends SubWriterHolderWriter {
      * @param pkg the package that used the given package
      * @param contentTree the content tree to which the information will be added
      */
-    protected void addPackageUse(PackageElement pkg, Content contentTree) throws IOException {
-        Content tdFirst = HtmlTree.TD(HtmlStyle.colFirst,
+    protected void addPackageUse(PackageElement pkg, Content contentTree) {
+        Content thFirst = HtmlTree.TH_ROW_SCOPE(HtmlStyle.colFirst,
                 getHyperLink(utils.getPackageName(pkg),
                 new StringContent(utils.getPackageName(pkg))));
-        contentTree.addContent(tdFirst);
+        contentTree.addContent(thFirst);
         HtmlTree tdLast = new HtmlTree(HtmlTag.TD);
         tdLast.addStyle(HtmlStyle.colLast);
         if (pkg != null && !pkg.isUnnamed()) {
             addSummaryComment(pkg, tdLast);
         } else {
-            tdLast.addContent(getSpace());
+            tdLast.addContent(Contents.SPACE);
         }
         contentTree.addContent(tdLast);
     }
@@ -289,7 +281,7 @@ public class PackageUseWriter extends SubWriterHolderWriter {
             bodyTree.addContent(htmlTree);
         }
         ContentBuilder headContent = new ContentBuilder();
-        headContent.addContent(getResource("doclet.ClassUse_Title", packageText));
+        headContent.addContent(contents.getContent("doclet.ClassUse_Title", packageText));
         headContent.addContent(new HtmlTree(HtmlTag.BR));
         headContent.addContent(name);
         Content heading = HtmlTree.HEADING(HtmlConstants.TITLE_HEADING, true,
@@ -311,7 +303,7 @@ public class PackageUseWriter extends SubWriterHolderWriter {
     @Override
     protected Content getNavLinkModule() {
         Content linkContent = getModuleLink(utils.elementUtils.getModuleOf(packageElement),
-                moduleLabel);
+                contents.moduleLabel);
         Content li = HtmlTree.LI(linkContent);
         return li;
     }
@@ -321,9 +313,10 @@ public class PackageUseWriter extends SubWriterHolderWriter {
      *
      * @return a content tree for the package link
      */
+    @Override
     protected Content getNavLinkPackage() {
         Content linkContent = getHyperLink(DocPaths.PACKAGE_SUMMARY,
-                packageLabel);
+                contents.packageLabel);
         Content li = HtmlTree.LI(linkContent);
         return li;
     }
@@ -333,8 +326,9 @@ public class PackageUseWriter extends SubWriterHolderWriter {
      *
      * @return a content tree for the use link
      */
+    @Override
     protected Content getNavLinkClassUse() {
-        Content li = HtmlTree.LI(HtmlStyle.navBarCell1Rev, useLabel);
+        Content li = HtmlTree.LI(HtmlStyle.navBarCell1Rev, contents.useLabel);
         return li;
     }
 
@@ -343,9 +337,10 @@ public class PackageUseWriter extends SubWriterHolderWriter {
      *
      * @return a content tree for the tree link
      */
+    @Override
     protected Content getNavLinkTree() {
         Content linkContent = getHyperLink(DocPaths.PACKAGE_TREE,
-                treeLabel);
+                contents.treeLabel);
         Content li = HtmlTree.LI(linkContent);
         return li;
     }

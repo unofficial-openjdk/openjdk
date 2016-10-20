@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,22 +24,20 @@
 /*
  * @test LockCompilationTest
  * @bug 8059624 8152169
- * @library /testlibrary /test/lib /
+ * @summary testing of WB::lock/unlockCompilation()
+ * @library /test/lib /
  * @modules java.base/jdk.internal.misc
- * @modules java.management
- * @build LockCompilationTest
+ *          java.management
+ * @build sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
  *                                sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -Xmixed -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:-UseCounterDecay LockCompilationTest
- * @summary testing of WB::lock/unlockCompilation()
+ * @run main/othervm -Xbootclasspath/a:. -Xmixed -XX:+UnlockDiagnosticVMOptions
+ *                   -XX:+WhiteBoxAPI -XX:-UseCounterDecay
+ *                   compiler.whitebox.LockCompilationTest
  */
 
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CyclicBarrier;
+package compiler.whitebox;
 
-import compiler.whitebox.CompilerWhiteBoxTest;
 import jdk.test.lib.Asserts;
 
 public class LockCompilationTest extends CompilerWhiteBoxTest {

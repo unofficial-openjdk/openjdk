@@ -50,6 +50,18 @@ import javax.accessibility.*;
  * href="http://docs.oracle.com/javase/tutorial/uiswing/misc/action.html">How
  * to Use Actions</a>, a section in <em>The Java Tutorial</em>.
  * <p>
+ * Some menus can have several button groups with radio button menu items. In
+ * this case it is useful that clicking on one radio button menu item does not
+ * close the menu. Such behavior can be controlled either by client
+ * {@link JComponent#putClientProperty} or the Look and Feel
+ * {@link UIManager#put} property named
+ * {@code "RadioButtonMenuItem.doNotCloseOnMouseClick"}. The default value is
+ * {@code false}. Setting the property to {@code true} prevents the menu from
+ * closing when it is clicked by the mouse. If the client property is set its
+ * value is always used; otherwise the {@literal L&F} property is queried.
+ * Note: some {@code L&F}s may ignore this property. All built-in {@code L&F}s
+ * inherit this behaviour.
+ * <p>
  * For further documentation and examples see
  * <a
  href="http://docs.oracle.com/javase/tutorial/uiswing/components/menu.html">How to Use Menus</a>,

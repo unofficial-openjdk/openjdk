@@ -224,6 +224,23 @@ var getJibProfilesCommon = function (input) {
     common.configure_args_slowdebug = ["--with-debug-level=slowdebug"],
     common.organization = "jpg.infra.builddeps"
 
+    var boot_jdk_revision = "8";
+    var boot_jdk_subdirpart = "1.8.0";
+    // JDK 8 does not work on sparc M7 cpus, need a newer update when building
+    // on such hardware.
+    if (input.build_cpu == "sparcv9") {
+       var cpu_brand = $EXEC("bash -c \"kstat -m cpu_info | grep brand | head -n1 | awk '{ print \$2 }'\"");
+       if (cpu_brand.trim() == 'SPARC-M7') {
+           boot_jdk_revision = "8u20";
+           boot_jdk_subdirpart = "1.8.0_20";
+       }
+    }
+    common.boot_jdk_revision = boot_jdk_revision;
+    common.boot_jdk_subdirpart = boot_jdk_subdirpart;
+    common.boot_jdk_home = input.get("boot_jdk", "home_path") + "/jdk"
+        + common.boot_jdk_subdirpart
+        + (input.build_os == "macosx" ? ".jdk/Contents/Home" : "");
+
     return common;
 };
 
@@ -254,7 +271,7 @@ var getJibProfilesProfiles = function (input, common) {
             build_cpu: "x64",
             dependencies: concat(common.dependencies, "devkit"),
             configure_args: concat(common.configure_args, common.configure_args_32bit,
-                "--with-jvm-variants=minimal,client,server", "--with-zlib=system"),
+                "--with-jvm-variants=minimal,server", "--with-zlib=system"),
             default_make_targets: common.default_make_targets
         },
 
@@ -295,8 +312,7 @@ var getJibProfilesProfiles = function (input, common) {
             target_cpu: "x86",
             build_cpu: "x64",
             dependencies: concat(common.dependencies, "devkit", "freetype"),
-            configure_args: concat(common.configure_args,
-                "--with-jvm-variants=client,server", common.configure_args_32bit),
+            configure_args: concat(common.configure_args, common.configure_args_32bit),
             default_make_targets: common.default_make_targets
         }
     };
@@ -334,8 +350,11 @@ var getJibProfilesProfiles = function (input, common) {
         "run-test": {
             target_os: input.build_os,
             target_cpu: input.build_cpu,
-            dependencies: [ "jtreg", "gnumake" ],
-            labels: "test"
+            dependencies: [ "jtreg", "gnumake", "boot_jdk" ],
+            labels: "test",
+            environment: {
+                "JT_JAVA": common.boot_jdk_home
+            }
         }
     };
     profiles = concatObjects(profiles, testOnlyProfiles);
@@ -375,12 +394,12 @@ var getJibProfilesDependencies = function (input, common) {
         boot_jdk: {
             server: "javare",
             module: "jdk",
-            revision: "8",
+            revision: common.boot_jdk_revision,
             checksum_file: boot_jdk_platform + "/MD5_VALUES",
-            file: boot_jdk_platform + "/jdk-8-" + boot_jdk_platform + ".tar.gz",
-            configure_args: (input.build_os == "macosx"
-                ? "--with-boot-jdk=" + input.get("boot_jdk", "install_path") + "/jdk1.8.0.jdk/Contents/Home"
-                : "--with-boot-jdk=" + input.get("boot_jdk", "install_path") + "/jdk1.8.0")
+            file: boot_jdk_platform + "/jdk-" + common.boot_jdk_revision
+                + "-" + boot_jdk_platform + ".tar.gz",
+            configure_args: "--with-boot-jdk=" + common.boot_jdk_home,
+            environment_path: common.boot_jdk_home
         },
 
         devkit: {
@@ -406,10 +425,11 @@ var getJibProfilesDependencies = function (input, common) {
         jtreg: {
             server: "javare",
             revision: "4.2",
-            build_number: "b02",
+            build_number: "b03",
             checksum_file: "MD5_VALUES",
             file: "jtreg_bin-4.2.zip",
-            environment_name: "JT_HOME"
+            environment_name: "JT_HOME",
+            environment_path: input.get("jtreg", "install_path") + "/jtreg/bin"
         },
 
         gnumake: {

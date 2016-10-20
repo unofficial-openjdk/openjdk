@@ -245,6 +245,7 @@ class LIRGenerator: public InstructionVisitor, public BlockClosure {
   void do_isPrimitive(Intrinsic* x);
   void do_getClass(Intrinsic* x);
   void do_currentThread(Intrinsic* x);
+  void do_FmaIntrinsic(Intrinsic* x);
   void do_MathIntrinsic(Intrinsic* x);
   void do_LibmIntrinsic(Intrinsic* x);
   void do_ArrayCopy(Intrinsic* x);
@@ -437,6 +438,10 @@ class LIRGenerator: public InstructionVisitor, public BlockClosure {
   SwitchRangeArray* create_lookup_ranges(TableSwitch* x);
   SwitchRangeArray* create_lookup_ranges(LookupSwitch* x);
   void do_SwitchRanges(SwitchRangeArray* x, LIR_Opr value, BlockBegin* default_sux);
+
+#ifdef TRACE_HAVE_INTRINSICS
+  void do_ClassIDIntrinsic(Intrinsic* x);
+#endif
 
   void do_RuntimeCall(address routine, Intrinsic* x);
 

@@ -27,28 +27,19 @@ package jdk.javadoc.internal.tool;
 
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.tools.JavaFileManager;
-import javax.tools.JavaFileManager.Location;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
-import javax.tools.StandardLocation;
 
 import com.sun.tools.javac.code.ClassFinder;
 import com.sun.tools.javac.code.Symbol.Completer;
 import com.sun.tools.javac.code.Symbol.CompletionFailure;
-import com.sun.tools.javac.code.Symbol.ModuleSymbol;
 import com.sun.tools.javac.comp.Enter;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.JCClassDecl;
@@ -59,6 +50,7 @@ import com.sun.tools.javac.util.ListBuffer;
 import com.sun.tools.javac.util.Position;
 import jdk.javadoc.doclet.DocletEnvironment;
 
+import static jdk.javadoc.internal.tool.Main.Result.*;
 
 /**
  *  This class could be the main entry point for Javadoc when Javadoc is used as a
@@ -74,7 +66,7 @@ import jdk.javadoc.doclet.DocletEnvironment;
  *  @author Neal Gafter
  */
 public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
-    DocEnv docenv;
+    ToolEnvironment toolEnv;
 
     final Messager messager;
     final ClassFinder javadocFinder;
@@ -129,114 +121,127 @@ public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
         }
     }
 
-    public DocletEnvironment getEnvironment(String encoding,
-                                      String showAccess,
-                                      String overviewpath,
-                                      List<String> args,
-                                      Iterable<? extends JavaFileObject> fileObjects,
-                                      List<String> subPackages,
-                                      List<String> excludedPackages,
-                                      boolean docClasses,
-                                      boolean quiet) throws IOException {
-        docenv = DocEnv.instance(context);
-        docenv.intialize(encoding, showAccess, overviewpath, args, fileObjects,
-                         subPackages, excludedPackages, docClasses, quiet);
+    public DocletEnvironment getEnvironment(Map<ToolOption,
+            Object> jdtoolOpts,
+            List<String> javaNames,
+            Iterable<? extends JavaFileObject> fileObjects) throws ToolException {
+        toolEnv = ToolEnvironment.instance(context);
+        toolEnv.initialize(jdtoolOpts);
+        ElementsTable etable = new ElementsTable(context, jdtoolOpts);
+        javadocFinder.sourceCompleter = etable.xclasses
+                ? Completer.NULL_COMPLETER
+                : sourceCompleter;
 
-        javadocFinder.sourceCompleter = docClasses ? Completer.NULL_COMPLETER : sourceCompleter;
-
-        if (docClasses) {
-            // If -Xclasses is set, the args should be a series of class names
-            for (String arg: args) {
-                if (!isValidPackageName(arg)) // checks
-                    docenv.error(null, "main.illegal_class_name", arg);
+        if (etable.xclasses) {
+            // If -Xclasses is set, the args should be a list of class names
+            for (String arg: javaNames) {
+                if (!isValidPackageName(arg)) { // checks
+                    String text = messager.getText("main.illegal_class_name", arg);
+                    throw new ToolException(CMDERR, text);
+                }
             }
-            if (messager.nerrors() != 0) {
+            if (messager.hasErrors()) {
                 return null;
             }
-            return new RootDocImpl(docenv, args);
+            etable.setClassArgList(javaNames);
+            // prepare, force the data structures to be analyzed
+            etable.analyze();
+            return new DocEnvImpl(toolEnv, etable);
         }
 
         ListBuffer<JCCompilationUnit> classTrees = new ListBuffer<>();
-        Set<String> includedPackages = new LinkedHashSet<>();
 
         try {
-
-            StandardJavaFileManager fm = docenv.fileManager instanceof StandardJavaFileManager
-                    ? (StandardJavaFileManager) docenv.fileManager : null;
+            StandardJavaFileManager fm = toolEnv.fileManager instanceof StandardJavaFileManager
+                    ? (StandardJavaFileManager) toolEnv.fileManager
+                    : null;
             Set<String> packageNames = new LinkedHashSet<>();
             // Normally, the args should be a series of package names or file names.
             // Parse the files and collect the package names.
-            for (String arg: args) {
+            for (String arg: javaNames) {
                 if (fm != null && arg.endsWith(".java") && new File(arg).exists()) {
                     if (new File(arg).getName().equals("module-info.java")) {
-                        docenv.warning("main.file_ignored", arg);
+                        messager.printWarningUsingKey("main.file_ignored", arg);
                     } else {
                         parse(fm.getJavaFileObjects(arg), classTrees, true);
                     }
                 } else if (isValidPackageName(arg)) {
                     packageNames.add(arg);
                 } else if (arg.endsWith(".java")) {
-                    if (fm == null)
-                        throw new IllegalArgumentException();
-                    else
-                        docenv.error(null, "main.file_not_found", arg);
+                    if (fm == null) {
+                        String text = messager.getText("main.assertion.error", "fm == null");
+                        throw new ToolException(ABNORMAL, text);
+                    } else {
+                        String text = messager.getText("main.file_not_found", arg);
+                        throw new ToolException(ERROR, text);
+                    }
                 } else {
-                    docenv.error(null, "main.illegal_package_name", arg);
+                    String text = messager.getText("main.illegal_package_name", arg);
+                    throw new ToolException(CMDERR, text);
                 }
             }
 
             // Parse file objects provide via the DocumentationTool API
             parse(fileObjects, classTrees, true);
-            modules.enter(classTrees.toList(), null);
 
-            syms.unnamedModule.complete(); // TEMP to force reading all named modules
+            etable.packages(packageNames)
+                    .classTrees(classTrees.toList())
+                    .scanSpecifiedItems();
 
-            // Build up the complete list of any packages to be documented
-            Location location = modules.multiModuleMode ? StandardLocation.MODULE_SOURCE_PATH
-                    : docenv.fileManager.hasLocation(StandardLocation.SOURCE_PATH) ? StandardLocation.SOURCE_PATH
-                    : StandardLocation.CLASS_PATH;
-
-            PackageTable t = new PackageTable(docenv.fileManager, location)
-                    .packages(packageNames)
-                    .subpackages(subPackages, excludedPackages);
-
-            includedPackages = t.getIncludedPackages();
-
-            // Parse the files in the packages to be documented
+            // Parse the files in the packages and subpackages to be documented
             ListBuffer<JCCompilationUnit> packageTrees = new ListBuffer<>();
-            for (String packageName: includedPackages) {
-                List<JavaFileObject> files = t.getFiles(packageName);
-                docenv.notice("main.Loading_source_files_for_package", packageName);
-                if (files.isEmpty())
-                    docenv.warning("main.no_source_files_for_package", packageName);
-                parse(files, packageTrees, false);
-            }
+            parse(etable.getFilesToParse(), packageTrees, false);
             modules.enter(packageTrees.toList(), null);
 
-            if (messager.nerrors() != 0) {
+            if (messager.hasErrors()) {
                 return null;
             }
 
             // Enter symbols for all files
-            docenv.notice("main.Building_tree");
-            javadocEnter.main(classTrees.toList().appendList(packageTrees.toList()));
+            toolEnv.notice("main.Building_tree");
+            javadocEnter.main(classTrees.toList().appendList(packageTrees));
+            etable.setClassDeclList(listClasses(classTrees.toList()));
 
             enterDone = true;
-        } catch (Abort ex) {}
+            etable.analyze();
+        } catch (CompletionFailure cf) {
+            throw new ToolException(ABNORMAL, cf.getMessage(), cf);
+        } catch (Abort abort) {
+            if (messager.hasErrors()) {
+                // presumably a message has been emitted, keep silent
+                throw new ToolException(ABNORMAL, "", abort);
+            } else {
+                String text = messager.getText("main.internal.error");
+                Throwable t = abort.getCause() == null ? abort : abort.getCause();
+                throw new ToolException(ABNORMAL, text, t);
+            }
+        }
 
-        if (messager.nerrors() != 0)
+        if (messager.hasErrors())
             return null;
-        docenv.root = new RootDocImpl(docenv, listClasses(classTrees.toList()),
-                                      new ArrayList<>(includedPackages));
-        return docenv.root;
+
+        toolEnv.docEnv = new DocEnvImpl(toolEnv, etable);
+        return toolEnv.docEnv;
     }
 
     /** Is the given string a valid package name? */
     boolean isValidPackageName(String s) {
-        int index;
-        while ((index = s.indexOf('.')) != -1) {
-            if (!isValidClassName(s.substring(0, index))) return false;
-            s = s.substring(index+1);
+        if (s.contains("/")) {
+            String[] a = s.split("/");
+            if (a.length == 2) {
+                 return isValidPackageName0(a[0]) && isValidPackageName0(a[1]);
+            }
+            return false;
+        }
+        return isValidPackageName0(s);
+    }
+
+    private boolean isValidPackageName0(String s) {
+        for (int index = s.indexOf('.') ; index != -1; index = s.indexOf('.')) {
+            if (!isValidClassName(s.substring(0, index))) {
+                return false;
+            }
+            s = s.substring(index + 1);
         }
         return isValidClassName(s);
     }
@@ -246,14 +251,13 @@ public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
         for (JavaFileObject fo: files) {
             if (uniquefiles.add(fo)) { // ignore duplicates
                 if (trace)
-                    docenv.notice("main.Loading_source_file", fo.getName());
+                    toolEnv.notice("main.Loading_source_file", fo.getName());
                 trees.append(parse(fo));
             }
         }
     }
 
-    /** Are surrogates supported?
-     */
+    /** Are surrogates supported? */
     final static boolean surrogatesSupported = surrogatesSupported();
     private static boolean surrogatesSupported() {
         try {
@@ -278,7 +282,7 @@ public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
             int cp = s.codePointAt(0);
             if (!Character.isJavaIdentifierStart(cp))
                 return false;
-            for (int j=Character.charCount(cp); j<s.length(); j+=Character.charCount(cp)) {
+            for (int j = Character.charCount(cp); j < s.length(); j += Character.charCount(cp)) {
                 cp = s.codePointAt(j);
                 if (!Character.isJavaIdentifierPart(cp))
                     return false;
@@ -286,7 +290,7 @@ public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
         } else {
             if (!Character.isJavaIdentifierStart(s.charAt(0)))
                 return false;
-            for (int j=1; j<s.length(); j++)
+            for (int j = 1; j < s.length(); j++)
                 if (!Character.isJavaIdentifierPart(s.charAt(j)))
                     return false;
         }
@@ -306,136 +310,4 @@ public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
         }
         return result;
     }
-
-    /**
-     * A table to manage included and excluded packages.
-     */
-    class PackageTable {
-        private final Map<String, Entry> entries = new LinkedHashMap<>();
-        private final Set<String> includedPackages = new LinkedHashSet<>();
-        private final JavaFileManager fm;
-        private final Location location;
-        private final Set<JavaFileObject.Kind> sourceKinds = EnumSet.of(JavaFileObject.Kind.SOURCE);
-
-        /**
-         * Creates a table to manage included and excluded packages.
-         * @param fm The file manager used to locate source files
-         * @param locn the location used to locate source files
-         */
-        PackageTable(JavaFileManager fm, Location locn) {
-            this.fm = fm;
-            this.location = locn;
-            getEntry("").excluded = false;
-        }
-
-        PackageTable packages(Collection<String> packageNames) {
-            includedPackages.addAll(packageNames);
-            return this;
-        }
-
-        PackageTable subpackages(Collection<String> packageNames, Collection<String> excludePackageNames)
-                throws IOException {
-            for (String p: excludePackageNames) {
-                getEntry(p).excluded = true;
-            }
-
-            for (String packageName: packageNames) {
-                for (JavaFileObject fo: fm.list(location, packageName, sourceKinds, true)) {
-                    String binaryName = fm.inferBinaryName(location, fo);
-                    String pn = getPackageName(binaryName);
-                    String simpleName = getSimpleName(binaryName);
-                    Entry e = getEntry(pn);
-                    if (!e.isExcluded() && isValidClassName(simpleName)) {
-                        includedPackages.add(pn);
-                        e.files = (e.files == null
-                                ? com.sun.tools.javac.util.List.of(fo)
-                                : e.files.prepend(fo));
-                    }
-                }
-            }
-            return this;
-        }
-
-        /**
-         * Returns the aggregate set of included packages.
-         * @return the aggregate set of included packages
-         */
-        Set<String> getIncludedPackages() {
-            return includedPackages;
-        }
-
-        /**
-         * Returns the set of source files for a package.
-         * @param packageName the specified package
-         * @return the set of file objects for the specified package
-         * @throws IOException if an error occurs while accessing the files
-         */
-        List<JavaFileObject> getFiles(String packageName) throws IOException {
-            Entry e = getEntry(packageName);
-            // The files may have been found as a side effect of searching for subpackages
-            if (e.files != null)
-                return e.files;
-
-            ListBuffer<JavaFileObject> lb = new ListBuffer<>();
-            Location packageLocn = getLocation(packageName);
-            if (packageLocn == null)
-                return Collections.emptyList();
-            for (JavaFileObject fo: fm.list(packageLocn, packageName, sourceKinds, false)) {
-                String binaryName = fm.inferBinaryName(packageLocn, fo);
-                String simpleName = getSimpleName(binaryName);
-                if (isValidClassName(simpleName)) {
-                    lb.append(fo);
-                }
-            }
-
-            return lb.toList();
-        }
-
-        private Location getLocation(String packageName) throws IOException {
-            if (location == StandardLocation.MODULE_SOURCE_PATH) {
-                // TODO: handle invalid results better.
-                ModuleSymbol msym = syms.inferModule(names.fromString(packageName));
-                if (msym == null) {
-                    return null;
-                }
-                return fm.getModuleLocation(location, msym.name.toString());
-            } else {
-                return location;
-            }
-        }
-
-        private Entry getEntry(String name) {
-            Entry e = entries.get(name);
-            if (e == null)
-                entries.put(name, e = new Entry(name));
-            return e;
-        }
-
-        private String getPackageName(String name) {
-            int lastDot = name.lastIndexOf(".");
-            return (lastDot == -1 ? "" : name.substring(0, lastDot));
-        }
-
-        private String getSimpleName(String name) {
-            int lastDot = name.lastIndexOf(".");
-            return (lastDot == -1 ? name : name.substring(lastDot + 1));
-        }
-
-        class Entry {
-            final String name;
-            Boolean excluded;
-            com.sun.tools.javac.util.List<JavaFileObject> files;
-
-            Entry(String name) {
-                this.name = name;
-            }
-
-            boolean isExcluded() {
-                if (excluded == null)
-                    excluded = getEntry(getPackageName(name)).isExcluded();
-                return excluded;
-            }
-        }
-    }
-
 }

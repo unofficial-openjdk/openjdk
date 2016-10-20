@@ -382,10 +382,8 @@ size_t G1RemSet::scan_rem_set(G1ParPushHeapRSClosure* oops_in_heap_closure,
                               uint worker_i) {
   double rs_time_start = os::elapsedTime();
 
-  HeapRegion *startRegion = _g1->start_cset_region_for_worker(worker_i);
-
   G1ScanRSClosure cl(_scan_state, oops_in_heap_closure, heap_region_codeblobs, worker_i);
-  _g1->collection_set_iterate_from(startRegion, &cl);
+  _g1->collection_set_iterate_from(&cl, worker_i);
 
    double scan_rs_time_sec = (os::elapsedTime() - rs_time_start) -
                               cl.strong_code_root_scan_time_sec();
@@ -670,20 +668,18 @@ bool G1RemSet::refine_card(jbyte* card_ptr,
   // fail arbitrarily). We tell the iteration code to perform this
   // filtering when it has been determined that there has been an actual
   // allocation in this region and making it safe to check the young type.
-  bool filter_young = true;
 
-  HeapWord* stop_point =
+  bool card_processed =
     r->oops_on_card_seq_iterate_careful(dirtyRegion,
                                         &filter_then_update_rs_oop_cl,
-                                        filter_young,
                                         card_ptr);
 
-  // If stop_point is non-null, then we encountered an unallocated region
-  // (perhaps the unfilled portion of a TLAB.)  For now, we'll dirty the
-  // card and re-enqueue: if we put off the card until a GC pause, then the
-  // unallocated portion will be filled in.  Alternatively, we might try
-  // the full complexity of the technique used in "regular" precleaning.
-  if (stop_point != NULL) {
+  // If unable to process the card then we encountered an unparsable
+  // part of the heap (e.g. a partially allocated object).  Redirty
+  // and re-enqueue: if we put off the card until a GC pause, then the
+  // allocation will have completed.
+  if (!card_processed) {
+    assert(!_g1->is_gc_active(), "Unparsable heap during GC");
     // The card might have gotten re-dirtied and re-enqueued while we
     // worked.  (In fact, it's pretty likely.)
     if (*card_ptr != CardTableModRefBS::dirty_card_val()) {

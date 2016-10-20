@@ -23,18 +23,6 @@
 
 package compiler.jvmci.common;
 
-import java.io.IOException;
-import java.lang.reflect.Module;
-import java.lang.reflect.Field;
-import java.lang.reflect.Executable;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Parameter;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TreeMap;
-
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassVisitor;
 import jdk.internal.org.objectweb.asm.ClassWriter;
@@ -47,6 +35,18 @@ import jdk.vm.ci.code.InstalledCode;
 import jdk.vm.ci.hotspot.CompilerToVMHelper;
 import jdk.vm.ci.hotspot.HotSpotResolvedJavaMethod;
 
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Executable;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Module;
+import java.lang.reflect.Parameter;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
+
 public class CTVMUtilities {
     /*
      * A method to return HotSpotResolvedJavaMethod object using class object
@@ -57,18 +57,7 @@ public class CTVMUtilities {
         if (!(method instanceof Method || method instanceof Constructor)) {
             throw new Error("wrong executable type " + method.getClass());
         }
-        Field slotField;
-        int slot;
-        try {
-            slotField = method.getClass().getDeclaredField("slot");
-            boolean old = slotField.isAccessible();
-            slotField.setAccessible(true);
-            slot = slotField.getInt(method);
-            slotField.setAccessible(old);
-        } catch (ReflectiveOperationException e) {
-            throw new Error("TEST BUG: Can't get slot field", e);
-        }
-        return CompilerToVMHelper.getResolvedJavaMethodAtSlot(cls, slot);
+        return CompilerToVMHelper.asResolvedJavaMethod(method);
     }
 
     public static HotSpotResolvedJavaMethod getResolvedMethod(

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,23 +26,26 @@ package catalog;
 import static catalog.CatalogTestUtils.CATALOG_URI;
 import static catalog.CatalogTestUtils.RESOLVE_CONTINUE;
 import static catalog.CatalogTestUtils.catalogUriResolver;
-import static catalog.ResolutionChecker.checkNoMatch;
+import static catalog.ResolutionChecker.checkNoUriMatch;
 import static catalog.ResolutionChecker.checkUriResolution;
 
+import javax.xml.catalog.CatalogResolver;
 import javax.xml.catalog.CatalogException;
 import javax.xml.catalog.CatalogFeatures;
-import javax.xml.catalog.CatalogUriResolver;
 
 import org.testng.annotations.DataProvider;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 /*
  * @test
  * @bug 8077931
+ * @library /javax/xml/jaxp/libs
+ * @run testng/othervm -DrunSecMngr=true catalog.UriTest
+ * @run testng/othervm catalog.UriTest
  * @summary Get matched URIs from uri entries.
- * @compile ../../libs/catalog/CatalogTestUtils.java
- * @compile ../../libs/catalog/ResolutionChecker.java
  */
+@Listeners({jaxp.library.FilePolicy.class})
 public class UriTest {
 
     @Test(dataProvider = "uri-matchedUri")
@@ -55,7 +58,7 @@ public class UriTest {
         return new Object[][] {
                 // The matched URI of the specified URI reference is defined in
                 // a uri entry. The match is an absolute path.
-                { "http://remote/dtd/alice/docAlice.dtd",
+                { "http://remote/dtd/uri/alice/docAlice.dtd",
                         "http://local/dtd/docAliceURI.dtd" },
 
                 // The matched URI of the specified URI reference is defined in
@@ -73,7 +76,7 @@ public class UriTest {
     }
 
     /*
-     * Specify base location via method CatalogUriResolver.resolve(href, base).
+     * Specify base location via method CatalogResolver.resolve(href, base).
      */
     @Test
     public void testSpecifyBaseByAPI() {
@@ -81,7 +84,7 @@ public class UriTest {
                 "http://remote/dtd/carl/docCarl.dtd",
                 "http://local/carlBase/dtd/docCarlURI.dtd");
 
-        CatalogUriResolver continueResolver = catalogUriResolver(
+        CatalogResolver continueResolver = catalogUriResolver(
                 CatalogFeatures.builder().with(CatalogFeatures.Feature.RESOLVE,
                         RESOLVE_CONTINUE).build(), CATALOG_URI);
         checkUriResolution(continueResolver, "docCarl.dtd",
@@ -94,10 +97,10 @@ public class UriTest {
      */
     @Test(expectedExceptions = CatalogException.class)
     public void testNoMatch() {
-        checkNoMatch(createResolver());
+        checkNoUriMatch(createResolver());
     }
 
-    private CatalogUriResolver createResolver() {
+    private CatalogResolver createResolver() {
         return catalogUriResolver(CATALOG_URI);
     }
 }

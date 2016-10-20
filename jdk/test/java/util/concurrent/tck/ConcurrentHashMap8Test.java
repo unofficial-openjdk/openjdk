@@ -38,7 +38,6 @@ import static java.util.Spliterator.NONNULL;
 import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -433,7 +432,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
         Integer[] elements = new Integer[size];
         for (int i = 0; i < size; i++)
             elements[i] = i;
-        Collections.shuffle(Arrays.asList(elements));
+        shuffle(elements);
         Collection<Integer> full = populatedSet(elements);
 
         Iterator it = full.iterator();
@@ -523,7 +522,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
         Integer[] elements = new Integer[size];
         for (int i = 0; i < size; i++)
             elements[i] = i;
-        Collections.shuffle(Arrays.asList(elements));
+        shuffle(elements);
         Collection<Integer> full = populatedSet(elements);
 
         assertTrue(Arrays.asList(elements).containsAll(Arrays.asList(full.toArray())));
@@ -553,7 +552,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
         Integer[] elements = new Integer[size];
         for (int i = 0; i < size; i++)
             elements[i] = i;
-        Collections.shuffle(Arrays.asList(elements));
+        shuffle(elements);
         Collection<Integer> full = populatedSet(elements);
 
         Arrays.fill(a, 42);

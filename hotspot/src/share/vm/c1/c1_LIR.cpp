@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,44 +41,6 @@ Register LIR_OprDesc::as_register_lo() const {
 Register LIR_OprDesc::as_register_hi() const {
   return FrameMap::cpu_rnr2reg(cpu_regnrHi());
 }
-
-#if defined(X86)
-
-XMMRegister LIR_OprDesc::as_xmm_float_reg() const {
-  return FrameMap::nr2xmmreg(xmm_regnr());
-}
-
-XMMRegister LIR_OprDesc::as_xmm_double_reg() const {
-  assert(xmm_regnrLo() == xmm_regnrHi(), "assumed in calculation");
-  return FrameMap::nr2xmmreg(xmm_regnrLo());
-}
-
-#endif // X86
-
-#if defined(SPARC) || defined(PPC32)
-
-FloatRegister LIR_OprDesc::as_float_reg() const {
-  return FrameMap::nr2floatreg(fpu_regnr());
-}
-
-FloatRegister LIR_OprDesc::as_double_reg() const {
-  return FrameMap::nr2floatreg(fpu_regnrHi());
-}
-
-#endif
-
-#if defined(ARM) || defined(AARCH64) || defined(PPC64)
-
-FloatRegister LIR_OprDesc::as_float_reg() const {
-  return as_FloatRegister(fpu_regnr());
-}
-
-FloatRegister LIR_OprDesc::as_double_reg() const {
-  return as_FloatRegister(fpu_regnrLo());
-}
-
-#endif
-
 
 LIR_Opr LIR_OprFact::illegalOpr = LIR_OprFact::illegal();
 
@@ -139,32 +101,6 @@ LIR_Address::Scale LIR_Address::scale(BasicType type) {
   ShouldNotReachHere();
   return LIR_Address::times_1;
 }
-
-
-#ifndef PRODUCT
-void LIR_Address::verify0() const {
-#if defined(SPARC) || defined(PPC)
-  assert(scale() == times_1, "Scaled addressing mode not available on SPARC/PPC and should not be used");
-  assert(disp() == 0 || index()->is_illegal(), "can't have both");
-#endif
-#ifdef _LP64
-  assert(base()->is_cpu_register(), "wrong base operand");
-#ifndef AARCH64
-  assert(index()->is_illegal() || index()->is_double_cpu(), "wrong index operand");
-#else
-  assert(index()->is_illegal() || index()->is_double_cpu() || index()->is_single_cpu(), "wrong index operand");
-#endif
-  assert(base()->type() == T_OBJECT || base()->type() == T_LONG || base()->type() == T_METADATA,
-         "wrong type for addresses");
-#else
-  assert(base()->is_single_cpu(), "wrong base operand");
-  assert(index()->is_illegal() || index()->is_single_cpu(), "wrong index operand");
-  assert(base()->type() == T_OBJECT || base()->type() == T_INT || base()->type() == T_METADATA,
-         "wrong type for addresses");
-#endif
-}
-#endif
-
 
 //---------------------------------------------------
 
@@ -730,7 +666,9 @@ void LIR_OpVisitState::visit(LIR_Op* op) {
 
 // LIR_Op3
     case lir_idiv:
-    case lir_irem: {
+    case lir_irem:
+    case lir_fmad:
+    case lir_fmaf: {
       assert(op->as_Op3() != NULL, "must be");
       LIR_Op3* op3= (LIR_Op3*)op;
 
@@ -1727,6 +1665,8 @@ const char * LIR_Op::name() const {
      // LIR_Op3
      case lir_idiv:                  s = "idiv";          break;
      case lir_irem:                  s = "irem";          break;
+     case lir_fmad:                  s = "fmad";          break;
+     case lir_fmaf:                  s = "fmaf";          break;
      // LIR_OpJavaCall
      case lir_static_call:           s = "static";        break;
      case lir_optvirtual_call:       s = "optvirtual";    break;

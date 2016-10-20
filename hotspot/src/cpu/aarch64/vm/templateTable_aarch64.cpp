@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2014, Red Hat Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -852,26 +852,23 @@ void TemplateTable::aload_0_internal(RewriteControl rc) {
     // get next bytecode
     __ load_unsigned_byte(r1, at_bcp(Bytecodes::length_for(Bytecodes::_aload_0)));
 
-    // do actual aload_0
-    aload(0);
-
     // if _getfield then wait with rewrite
     __ cmpw(r1, Bytecodes::Bytecodes::_getfield);
     __ br(Assembler::EQ, done);
 
-    // if _igetfield then reqrite to _fast_iaccess_0
+    // if _igetfield then rewrite to _fast_iaccess_0
     assert(Bytecodes::java_code(Bytecodes::_fast_iaccess_0) == Bytecodes::_aload_0, "fix bytecode definition");
     __ cmpw(r1, Bytecodes::_fast_igetfield);
     __ movw(bc, Bytecodes::_fast_iaccess_0);
     __ br(Assembler::EQ, rewrite);
 
-    // if _agetfield then reqrite to _fast_aaccess_0
+    // if _agetfield then rewrite to _fast_aaccess_0
     assert(Bytecodes::java_code(Bytecodes::_fast_aaccess_0) == Bytecodes::_aload_0, "fix bytecode definition");
     __ cmpw(r1, Bytecodes::_fast_agetfield);
     __ movw(bc, Bytecodes::_fast_aaccess_0);
     __ br(Assembler::EQ, rewrite);
 
-    // if _fgetfield then reqrite to _fast_faccess_0
+    // if _fgetfield then rewrite to _fast_faccess_0
     assert(Bytecodes::java_code(Bytecodes::_fast_faccess_0) == Bytecodes::_aload_0, "fix bytecode definition");
     __ cmpw(r1, Bytecodes::_fast_fgetfield);
     __ movw(bc, Bytecodes::_fast_faccess_0);
@@ -887,9 +884,10 @@ void TemplateTable::aload_0_internal(RewriteControl rc) {
     patch_bytecode(Bytecodes::_aload_0, bc, r1, false);
 
     __ bind(done);
-  } else {
-    aload(0);
   }
+
+  // Do actual aload_0 (must do this after patch_bytecode which might call VM and GC might change oop).
+  aload(0);
 }
 
 void TemplateTable::istore()
@@ -2190,9 +2188,8 @@ void TemplateTable::_return(TosState state)
     __ ldr(c_rarg1, aaddress(0));
     __ load_klass(r3, c_rarg1);
     __ ldrw(r3, Address(r3, Klass::access_flags_offset()));
-    __ tst(r3, JVM_ACC_HAS_FINALIZER);
     Label skip_register_finalizer;
-    __ br(Assembler::EQ, skip_register_finalizer);
+    __ tbz(r3, exact_log2(JVM_ACC_HAS_FINALIZER), skip_register_finalizer);
 
     __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::register_finalizer), c_rarg1);
 
@@ -2435,7 +2432,7 @@ void TemplateTable::getfield_or_static(int byte_no, bool is_static, RewriteContr
   __ ldrsb(r0, field);
   __ push(ztos);
   // Rewrite bytecode to be faster
-  if (!is_static) {
+  if (rc == may_rewrite) {
     // use btos rewriting, no truncating to t/f bit is needed for getfield.
     patch_bytecode(Bytecodes::_fast_bgetfield, bc, r1);
   }
@@ -2671,7 +2668,7 @@ void TemplateTable::putfield_or_static(int byte_no, bool is_static, RewriteContr
     if (!is_static) pop_and_check_object(obj);
     __ andw(r0, r0, 0x1);
     __ strb(r0, field);
-    if (!is_static) {
+    if (rc == may_rewrite) {
       patch_bytecode(Bytecodes::_fast_zputfield, bc, r1, true, byte_no);
     }
     __ b(Done);

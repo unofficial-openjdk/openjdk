@@ -48,7 +48,7 @@
 #include "oops/symbol.hpp"
 #include "prims/jvmtiExport.hpp"
 #include "prims/nativeLookup.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/biasedLocking.hpp"
 #include "runtime/compilationPolicy.hpp"
 #include "runtime/deoptimization.hpp"
@@ -558,6 +558,7 @@ void InterpreterRuntime::resolve_get_put(JavaThread* thread, Bytecodes::Code byt
   // resolve field
   fieldDescriptor info;
   constantPoolHandle pool(thread, method(thread)->constants());
+  methodHandle m(thread, method(thread));
   bool is_put    = (bytecode == Bytecodes::_putfield  || bytecode == Bytecodes::_nofast_putfield ||
                     bytecode == Bytecodes::_putstatic);
   bool is_static = (bytecode == Bytecodes::_getstatic || bytecode == Bytecodes::_putstatic);
@@ -565,7 +566,7 @@ void InterpreterRuntime::resolve_get_put(JavaThread* thread, Bytecodes::Code byt
   {
     JvmtiHideSingleStepping jhss(thread);
     LinkResolver::resolve_field_access(info, pool, get_index_u2_cpcache(thread, bytecode),
-                                       bytecode, CHECK);
+                                       m, bytecode, CHECK);
   } // end JvmtiHideSingleStepping
 
   // check if link resolution caused cpCache to be updated
@@ -575,25 +576,37 @@ void InterpreterRuntime::resolve_get_put(JavaThread* thread, Bytecodes::Code byt
   // compute auxiliary field attributes
   TosState state  = as_TosState(info.field_type());
 
-  // We need to delay resolving put instructions on final fields
-  // until we actually invoke one. This is required so we throw
-  // exceptions at the correct place. If we do not resolve completely
-  // in the current pass, leaving the put_code set to zero will
-  // cause the next put instruction to reresolve.
-  Bytecodes::Code put_code = (Bytecodes::Code)0;
+  // Resolution of put instructions on final fields is delayed. That is required so that
+  // exceptions are thrown at the correct place (when the instruction is actually invoked).
+  // If we do not resolve an instruction in the current pass, leaving the put_code
+  // set to zero will cause the next put instruction to the same field to reresolve.
 
-  // We also need to delay resolving getstatic instructions until the
-  // class is intitialized.  This is required so that access to the static
+  // Resolution of put instructions to final instance fields with invalid updates (i.e.,
+  // to final instance fields with updates originating from a method different than <init>)
+  // is inhibited. A putfield instruction targeting an instance final field must throw
+  // an IllegalAccessError if the instruction is not in an instance
+  // initializer method <init>. If resolution were not inhibited, a putfield
+  // in an initializer method could be resolved in the initializer. Subsequent
+  // putfield instructions to the same field would then use cached information.
+  // As a result, those instructions would not pass through the VM. That is,
+  // checks in resolve_field_access() would not be executed for those instructions
+  // and the required IllegalAccessError would not be thrown.
+  //
+  // Also, we need to delay resolving getstatic and putstatic instructions until the
+  // class is initialized.  This is required so that access to the static
   // field will call the initialization function every time until the class
   // is completely initialized ala. in 2.17.5 in JVM Specification.
   InstanceKlass* klass = InstanceKlass::cast(info.field_holder());
-  bool uninitialized_static = ((bytecode == Bytecodes::_getstatic || bytecode == Bytecodes::_putstatic) &&
-                               !klass->is_initialized());
-  Bytecodes::Code get_code = (Bytecodes::Code)0;
+  bool uninitialized_static = is_static && !klass->is_initialized();
+  bool has_initialized_final_update = info.field_holder()->major_version() >= 53 &&
+                                      info.has_initialized_final_update();
+  assert(!(has_initialized_final_update && !info.access_flags().is_final()), "Fields with initialized final updates must be final");
 
+  Bytecodes::Code get_code = (Bytecodes::Code)0;
+  Bytecodes::Code put_code = (Bytecodes::Code)0;
   if (!uninitialized_static) {
     get_code = ((is_static) ? Bytecodes::_getstatic : Bytecodes::_getfield);
-    if (is_put || !info.access_flags().is_final()) {
+    if ((is_put && !has_initialized_final_update) || !info.access_flags().is_final()) {
       put_code = ((is_static) ? Bytecodes::_putstatic : Bytecodes::_putfield);
     }
   }

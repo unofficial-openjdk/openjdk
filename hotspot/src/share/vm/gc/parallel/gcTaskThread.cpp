@@ -30,7 +30,7 @@
 #include "memory/allocation.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/resourceArea.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/handles.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/os.hpp"
@@ -45,7 +45,7 @@ GCTaskThread::GCTaskThread(GCTaskManager* manager,
   _time_stamp_index(0)
 {
   set_id(which);
-  set_name("ParGC Thread#%d", which);
+  set_name("%s#%d", manager->group_name(), which);
 }
 
 GCTaskThread::~GCTaskThread() {

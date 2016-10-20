@@ -94,7 +94,8 @@ import java.util.function.UnaryOperator;
  *
  * <ul>
  * <li>They are <em>structurally immutable</em>. Elements cannot be added, removed,
- * or replaced. Attempts to do so result in {@code UnsupportedOperationException}.
+ * or replaced. Calling any mutator method will always cause
+ * {@code UnsupportedOperationException} to be thrown.
  * However, if the contained elements are themselves mutable,
  * this may cause the List's contents to appear to change.
  * <li>They disallow {@code null} elements. Attempts to create them with
@@ -741,9 +742,22 @@ public interface List<E> extends Collection<E> {
      *
      * @implSpec
      * The default implementation creates a
-     * <em><a href="Spliterator.html#binding">late-binding</a></em> spliterator
-     * from the list's {@code Iterator}.  The spliterator inherits the
-     * <em>fail-fast</em> properties of the list's iterator.
+     * <em><a href="Spliterator.html#binding">late-binding</a></em>
+     * spliterator as follows:
+     * <ul>
+     * <li>If the list is an instance of {@link RandomAccess} then the default
+     *     implementation creates a spliterator that traverses elements by
+     *     invoking the method {@link List#get}.  If such invocation results or
+     *     would result in an {@code IndexOutOfBoundsException} then the
+     *     spliterator will <em>fail-fast</em> and throw a
+     *     {@code ConcurrentModificationException}.
+     *     If the list is also an instance of {@link AbstractList} then the
+     *     spliterator will use the list's {@link AbstractList#modCount modCount}
+     *     field to provide additional <em>fail-fast</em> behavior.
+     * <li>Otherwise, the default implementation creates a spliterator from the
+     *     list's {@code Iterator}.  The spliterator inherits the
+     *     <em>fail-fast</em> of the list's iterator.
+     * </ul>
      *
      * @implNote
      * The created {@code Spliterator} additionally reports
@@ -754,7 +768,11 @@ public interface List<E> extends Collection<E> {
      */
     @Override
     default Spliterator<E> spliterator() {
-        return Spliterators.spliterator(this, Spliterator.ORDERED);
+        if (this instanceof RandomAccess) {
+            return new AbstractList.RandomAccessSpliterator<>(this);
+        } else {
+            return Spliterators.spliterator(this, Spliterator.ORDERED);
+        }
     }
 
     /**

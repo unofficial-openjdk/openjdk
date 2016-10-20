@@ -26,7 +26,7 @@
  * @bug 8153042
  * @summary Tests JDK internal APIs that have been removed.
  * @library ../lib
- * @build CompilerUtils JdepsUtil ModuleMetaData
+ * @build CompilerUtils JdepsRunner JdepsUtil ModuleMetaData
  * @modules jdk.jdeps/com.sun.tools.jdeps
  * @run testng RemovedJDKInternals
  */
@@ -71,9 +71,9 @@ public class RemovedJDKInternals {
         assertTrue(CompilerUtils.compile(codecSrc, codecDest));
 
         // patch jdk.unsupported and set -cp to codec types
-        assertTrue(CompilerUtils.compile(Paths.get(TEST_SRC, "src"),
+        assertTrue(CompilerUtils.compile(Paths.get(TEST_SRC, "src", "p"),
                                          CLASSES_DIR,
-                                         "-Xpatch:jdk.unsupported=" + patchDir,
+                                         "--patch-module", "jdk.unsupported=" + patchDir,
                                          "-cp", codecDest.toString()));
     }
 
@@ -123,7 +123,8 @@ public class RemovedJDKInternals {
 
     @Test
     public void checkReplacement() {
-        String[] output = JdepsUtil.jdeps("-jdkinternals", CLASSES_DIR.toString());
+        JdepsRunner jdeps = JdepsRunner.run("-jdkinternals", CLASSES_DIR.toString());
+        String[] output = jdeps.output();
         int i = 0;
         while (!output[i].contains("Suggested Replacement")) {
             i++;

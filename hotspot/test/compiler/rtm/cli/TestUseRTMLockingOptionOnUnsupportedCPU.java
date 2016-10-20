@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,22 +27,27 @@
  * @bug 8031320
  * @summary Verify UseRTMLocking option processing on CPU without
  *          rtm support.
- * @library /testlibrary /test/lib /compiler/testlibrary
+ * @library /test/lib /
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @build TestUseRTMLockingOptionOnUnsupportedCPU
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
+ *
+ * @build sun.hotspot.WhiteBox
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
- *                   -XX:+WhiteBoxAPI TestUseRTMLockingOptionOnUnsupportedCPU
+ *                   -XX:+WhiteBoxAPI
+ *                   compiler.rtm.cli.TestUseRTMLockingOptionOnUnsupportedCPU
  */
 
-import jdk.test.lib.*;
-import jdk.test.lib.cli.*;
+package compiler.rtm.cli;
+
+import compiler.testlibrary.rtm.predicate.SupportedCPU;
+import compiler.testlibrary.rtm.predicate.SupportedVM;
+import jdk.test.lib.process.ExitCode;
+import jdk.test.lib.Platform;
+import jdk.test.lib.cli.CommandLineOptionTest;
 import jdk.test.lib.cli.predicate.AndPredicate;
 import jdk.test.lib.cli.predicate.NotPredicate;
-import rtm.predicate.SupportedCPU;
-import rtm.predicate.SupportedVM;
 
 public class TestUseRTMLockingOptionOnUnsupportedCPU
         extends CommandLineOptionTest {

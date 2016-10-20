@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,10 +25,11 @@
  * @test
  * @bug 8138651
  * @modules java.base/jdk.internal.misc
- * @library /testlibrary /test/lib
- * @build IntrinsicDisabledTest
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
+ * @library /test/lib
+ *
+ * @build sun.hotspot.WhiteBox
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:.
  *                   -XX:+UnlockDiagnosticVMOptions
  *                   -XX:+WhiteBoxAPI
@@ -36,15 +37,16 @@
  *                   -XX:DisableIntrinsic=_putIntVolatile
  *                   -XX:CompileCommand=option,jdk.internal.misc.Unsafe::putChar,ccstrlist,DisableIntrinsic,_getCharVolatile,_getInt
  *                   -XX:CompileCommand=option,jdk.internal.misc.Unsafe::putCharVolatile,ccstrlist,DisableIntrinsic,_getIntVolatile
- *                   IntrinsicDisabledTest
+ *                   compiler.intrinsics.IntrinsicDisabledTest
  */
+
+package compiler.intrinsics;
+
+import jdk.test.lib.Platform;
+import sun.hotspot.WhiteBox;
 
 import java.lang.reflect.Executable;
 import java.util.Objects;
-
-import sun.hotspot.WhiteBox;
-
-import jdk.test.lib.Platform;
 
 public class IntrinsicDisabledTest {
 
@@ -57,9 +59,9 @@ public class IntrinsicDisabledTest {
     private static final int COMP_LEVEL_FULL_OPTIMIZATION = 4;
 
     /* Determine if tiered compilation is enabled. */
-    private static boolean isTieredCompilationEnabled() {
-        return Boolean.valueOf(Objects.toString(wb.getVMFlag("TieredCompilation")));
-    }
+    private static final boolean TIERED_COMPILATION = wb.getBooleanVMFlag("TieredCompilation");
+
+    private static final int TIERED_STOP_AT_LEVEL = wb.getIntxVMFlag("TieredStopAtLevel").intValue();
 
     /* This test uses several methods from jdk.internal.misc.Unsafe. The method
      * getMethod() returns a different Executable for each different
@@ -200,8 +202,8 @@ public class IntrinsicDisabledTest {
     }
 
     public static void main(String args[]) {
-        if (Platform.isServer()) {
-            if (isTieredCompilationEnabled()) {
+        if (Platform.isServer() && (TIERED_STOP_AT_LEVEL == COMP_LEVEL_FULL_OPTIMIZATION)) {
+            if (TIERED_COMPILATION) {
                 test(COMP_LEVEL_SIMPLE);
             }
             test(COMP_LEVEL_FULL_OPTIMIZATION);

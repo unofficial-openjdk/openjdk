@@ -23,29 +23,38 @@
 
 package common;
 
+import static jaxp.library.JAXPTestUtilities.setSystemProperty;
+
 import java.io.StringReader;
 import java.io.StringWriter;
+
 import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
-import org.testng.annotations.Test;
+
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Listeners;
+import org.testng.annotations.Test;
 
 /*
  * @test
- * @modules javax.xml/com.sun.org.apache.xerces.internal.jaxp
  * @bug 8144593
+ * @library /javax/xml/jaxp/libs /javax/xml/jaxp/unittest
+ * @compile -XDignore.symbol.file TestSAXDriver.java
+ * @run testng/othervm -DrunSecMngr=true common.TransformationWarningsTest
+ * @run testng/othervm common.TransformationWarningsTest
  * @summary Check that warnings about unsupported properties from parsers
  * are suppressed during the transformation process.
  */
+@Listeners({jaxp.library.BasePolicy.class, jaxp.library.InternalAPIPolicy.class})
 public class TransformationWarningsTest extends WarningsTestBase {
 
     @BeforeClass
     public void setup() {
         //Set test SAX driver implementation.
-        System.setProperty("org.xml.sax.driver", "common.TestSAXDriver");
+        setSystemProperty("org.xml.sax.driver", "common.TestSAXDriver");
     }
 
     @Test
@@ -72,7 +81,12 @@ public class TransformationWarningsTest extends WarningsTestBase {
         Source xslsrc = new StreamSource(new StringReader(xsl));
 
         // Create factory and transformer
-        TransformerFactory tf = TransformerFactory.newInstance();
+        TransformerFactory tf;
+        // newTransformer() method doc states that different transformer
+        // factories can be used concurrently by different Threads.
+        synchronized (TransformerFactory.class) {
+            tf = TransformerFactory.newInstance();
+        }
         Transformer t = tf.newTransformer(xslsrc);
 
         // Set URI Resolver to return the newly constructed xml

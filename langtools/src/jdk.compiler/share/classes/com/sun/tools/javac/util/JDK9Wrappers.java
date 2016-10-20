@@ -25,6 +25,7 @@
 
 package com.sun.tools.javac.util;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
@@ -122,6 +123,85 @@ public class JDK9Wrappers {
                 try {
                     moduleFinderClass = Class.forName("java.lang.module.ModuleFinder", false, null);
                     ofMethod = moduleFinderClass.getDeclaredMethod("of", Path[].class);
+                } catch (ClassNotFoundException | NoSuchMethodException | SecurityException ex) {
+                    throw new Abort(ex);
+                }
+            }
+        }
+    }
+
+    /**
+     * Wrapper class for java.lang.reflect.Module. To materialize a handle use the static factory
+     * methods Module#getModule(Class<?>) or Module#getUnnamedModule(ClassLoader).
+     */
+    public static class Module {
+
+        private final Object theRealModule;
+
+        private Module(Object module) {
+            this.theRealModule = module;
+            init();
+        }
+
+        public static Module getModule(Class<?> clazz) {
+            try {
+                init();
+                Object result = getModuleMethod.invoke(clazz, new Object[0]);
+                return new Module(result);
+            } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException
+                    | SecurityException ex) {
+                throw new Abort(ex);
+            }
+        }
+
+        public static Module getUnnamedModule(ClassLoader classLoader) {
+            try {
+                init();
+                Object result = getUnnamedModuleMethod.invoke(classLoader, new Object[0]);
+                return new Module(result);
+            } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException
+                    | SecurityException ex) {
+                throw new Abort(ex);
+            }
+        }
+
+        public Module addExports(String pn, Module other) {
+            try {
+                addExportsMethod.invoke(theRealModule, new Object[] { pn, other.theRealModule});
+            } catch (IllegalAccessException | InvocationTargetException ex) {
+                throw new Abort(ex);
+            }
+            return this;
+        }
+
+        public Module addUses(Class<?> st) {
+            try {
+                addUsesMethod.invoke(theRealModule, new Object[] { st });
+            } catch (IllegalAccessException | InvocationTargetException ex) {
+                throw new Abort(ex);
+            }
+            return this;
+        }
+
+        // -----------------------------------------------------------------------------------------
+        // on java.lang.reflect.Module
+        private static Method addExportsMethod = null;
+        // on java.lang.reflect.Module
+        private static Method addUsesMethod = null;
+        // on java.lang.Class
+        private static Method getModuleMethod;
+        // on java.lang.ClassLoader
+        private static Method getUnnamedModuleMethod;
+
+        private static void init() {
+            if (addExportsMethod == null) {
+                try {
+                    Class<?> moduleClass = Class.forName("java.lang.reflect.Module", false, null);
+                    addUsesMethod = moduleClass.getDeclaredMethod("addUses", new Class<?>[] { Class.class });
+                    addExportsMethod = moduleClass.getDeclaredMethod("addExports",
+                                                        new Class<?>[] { String.class, moduleClass });
+                    getModuleMethod = Class.class.getDeclaredMethod("getModule", new Class<?>[0]);
+                    getUnnamedModuleMethod = ClassLoader.class.getDeclaredMethod("getUnnamedModule", new Class<?>[0]);
                 } catch (ClassNotFoundException | NoSuchMethodException | SecurityException ex) {
                     throw new Abort(ex);
                 }
@@ -246,6 +326,79 @@ public class JDK9Wrappers {
                                 Configuration.getConfigurationClass(),
                                 ClassLoader.class);
                     configurationMethod = layerClass.getDeclaredMethod("configuration");
+                } catch (ClassNotFoundException | NoSuchMethodException | SecurityException ex) {
+                    throw new Abort(ex);
+                }
+            }
+        }
+    }
+
+
+    /**
+     * Helper class for new method in jdk.internal.misc.VM.
+     */
+    public static final class VMHelper {
+        public static final String VM_CLASSNAME = "jdk.internal.misc.VM";
+
+        @SuppressWarnings("unchecked")
+        public static String[] getRuntimeArguments() {
+            try {
+                init();
+                Object result = getRuntimeArgumentsMethod.invoke(null);
+                return (String[])result;
+            } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException
+                    | SecurityException ex) {
+                throw new Abort(ex);
+            }
+        }
+
+        // -----------------------------------------------------------------------------------------
+
+        private static Class<?> vmClass = null;
+        private static Method getRuntimeArgumentsMethod = null;
+
+        private static void init() {
+            if (vmClass == null) {
+                try {
+                    vmClass = Class.forName(VM_CLASSNAME, false, null);
+                    getRuntimeArgumentsMethod = vmClass.getDeclaredMethod("getRuntimeArguments");
+                } catch (ClassNotFoundException | NoSuchMethodException | SecurityException ex) {
+                    throw new Abort(ex);
+                }
+            }
+        }
+    }
+
+    /**
+     * Helper class for new method in jdk.internal.jmod.JmodFile
+     */
+    public static final class JmodFile {
+        public static final String JMOD_FILE_CLASSNAME = "jdk.internal.jmod.JmodFile";
+
+        public static void checkMagic(Path file) throws IOException {
+            try {
+                init();
+                checkMagicMethod.invoke(null, file);
+            } catch (InvocationTargetException ex) {
+                if (ex.getCause() instanceof IOException) {
+                    throw IOException.class.cast(ex.getCause());
+                }
+                throw new Abort(ex);
+            } catch (IllegalAccessException | IllegalArgumentException | SecurityException ex) {
+                throw new Abort(ex);
+            }
+        }
+
+        // -----------------------------------------------------------------------------------------
+
+        private static Class<?> jmodFileClass = null;
+        private static Method checkMagicMethod = null;
+
+        private static void init() {
+            if (jmodFileClass == null) {
+                try {
+                    jmodFileClass = Class.forName(JMOD_FILE_CLASSNAME, false, null);
+                    checkMagicMethod = jmodFileClass.getDeclaredMethod("checkMagic", Path.class);
                 } catch (ClassNotFoundException | NoSuchMethodException | SecurityException ex) {
                     throw new Abort(ex);
                 }

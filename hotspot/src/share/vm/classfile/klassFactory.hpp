@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+* Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 *
 * This code is free software; you can redistribute it and/or modify it
@@ -72,10 +72,15 @@ class KlassFactory : AllStatic {
                                                 Symbol* name,
                                                 ClassLoaderData* loader_data,
                                                 Handle protection_domain,
-                                                const Klass* host_klass,
+                                                const InstanceKlass* host_klass,
                                                 GrowableArray<Handle>* cp_patches,
-                                                TempNewSymbol* parsed_name,
                                                 TRAPS);
+ public:
+  static instanceKlassHandle check_shared_class_file_load_hook(
+                                          instanceKlassHandle ik,
+                                          Symbol* class_name,
+                                          Handle class_loader,
+                                          Handle protection_domain, TRAPS);
 };
 
 #endif // SHARE_VM_CLASSFILE_KLASSFACTORY_HPP

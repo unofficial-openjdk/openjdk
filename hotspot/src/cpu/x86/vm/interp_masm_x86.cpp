@@ -611,7 +611,8 @@ void InterpreterMacroAssembler::pop_l(Register r) {
 
 void InterpreterMacroAssembler::push_l(Register r) {
   subptr(rsp, 2 * wordSize);
-  movq(Address(rsp, 0), r);
+  movptr(Address(rsp, Interpreter::expr_offset_in_bytes(0)), r         );
+  movptr(Address(rsp, Interpreter::expr_offset_in_bytes(1)), NULL_WORD );
 }
 
 void InterpreterMacroAssembler::pop(TosState state) {
@@ -1070,6 +1071,9 @@ void InterpreterMacroAssembler::remove_activation(
     Label no_reserved_zone_enabling;
 
     NOT_LP64(get_thread(rthread);)
+
+    cmpl(Address(rthread, JavaThread::stack_guard_state_offset()), JavaThread::stack_guard_enabled);
+    jcc(Assembler::equal, no_reserved_zone_enabling);
 
     cmpptr(rbx, Address(rthread, JavaThread::reserved_stack_activation_offset()));
     jcc(Assembler::lessEqual, no_reserved_zone_enabling);

@@ -78,7 +78,7 @@ int StubAssembler::call_RT(Register oop_result1, Register metadata_result, addre
   }
   pop(r0, sp);
 #endif
-  reset_last_Java_frame(true, true);
+  reset_last_Java_frame(true);
   maybe_isb();
 
   // check for pending exceptions
@@ -547,7 +547,7 @@ OopMapSet* Runtime1::generate_patching(StubAssembler* sasm, address target) {
     __ bind(L);
   }
 #endif
-  __ reset_last_Java_frame(true, false);
+  __ reset_last_Java_frame(true);
   __ maybe_isb();
 
   // check for pending exceptions
@@ -944,8 +944,7 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
         Register t = r5;
         __ load_klass(t, r0);
         __ ldrw(t, Address(t, Klass::access_flags_offset()));
-        __ tst(t, JVM_ACC_HAS_FINALIZER);
-        __ br(Assembler::NE, register_finalizer);
+        __ tbnz(t, exact_log2(JVM_ACC_HAS_FINALIZER), register_finalizer);
         __ ret(lr);
 
         __ bind(register_finalizer);

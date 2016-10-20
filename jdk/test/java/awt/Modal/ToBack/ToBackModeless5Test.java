@@ -25,7 +25,8 @@ import java.awt.Dialog;
 
 /*
  * @test
- * @bug 8054143
+ * @key headful
+ * @bug 8054143 8163583
  * @summary Check if toBack method works correctly for a modeless dialog
  *          having a visible Frame constructor.
  *

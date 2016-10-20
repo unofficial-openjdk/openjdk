@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+* Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
 * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 *
 * This code is free software; you can redistribute it and/or modify it
@@ -25,15 +25,16 @@
  * @test TestTargetSurvivorRatioFlag
  * @key gc
  * @summary Verify that option TargetSurvivorRatio affects survivor space occupancy after minor GC.
- * @library /testlibrary /test/lib
+ * @requires (vm.opt.ExplicitGCInvokesConcurrent == null) | (vm.opt.ExplicitGCInvokesConcurrent == false)
+ * @requires (vm.opt.UseJVMCICompiler == null) | (vm.opt.UseJVMCICompiler == false)
+ * @library /test/lib
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @build TestTargetSurvivorRatioFlag
+ * @build sun.hotspot.WhiteBox
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  * @run driver TestTargetSurvivorRatioFlag
  */
 
-import jdk.test.lib.AllocationHelper;
 import java.lang.management.GarbageCollectorMXBean;
 import java.util.Arrays;
 import java.util.Collections;
@@ -41,10 +42,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import jdk.test.lib.HeapRegionUsageTool;
 import jdk.internal.misc.Unsafe;
-import jdk.test.lib.OutputAnalyzer;
-import jdk.test.lib.ProcessTools;
+import jdk.test.lib.process.OutputAnalyzer;
+import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.Utils;
 import sun.hotspot.WhiteBox;
 
@@ -130,7 +130,7 @@ public class TestTargetSurvivorRatioFlag {
         LinkedList<String> vmOptions = new LinkedList<>(options);
         Collections.addAll(vmOptions,
                 "-Xbootclasspath/a:.",
-                "-XaddExports:java.base/jdk.internal.misc=ALL-UNNAMED",
+                "--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED",
                 "-XX:+UnlockDiagnosticVMOptions",
                 "-XX:+WhiteBoxAPI",
                 "-XX:+UseAdaptiveSizePolicy",
@@ -248,7 +248,7 @@ public class TestTargetSurvivorRatioFlag {
     public static class TargetSurvivorRatioVerifier {
 
         static final WhiteBox wb = WhiteBox.getWhiteBox();
-        static final Unsafe unsafe = Utils.getUnsafe();
+        static final Unsafe unsafe = Unsafe.getUnsafe();
 
         // Desired size of memory allocated at once
         public static final int CHUNK_SIZE = 1024;

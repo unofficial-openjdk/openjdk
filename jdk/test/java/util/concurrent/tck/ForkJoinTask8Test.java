@@ -35,7 +35,6 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
@@ -948,7 +947,7 @@ public class ForkJoinTask8Test extends JSR166TestCase {
                 AsyncFib f = new AsyncFib(8);
                 FailingAsyncFib g = new FailingAsyncFib(9);
                 ForkJoinTask[] tasks = { f, g };
-                Collections.shuffle(Arrays.asList(tasks));
+                shuffle(tasks);
                 try {
                     invokeAll(tasks[0], tasks[1]);
                     shouldThrow();
@@ -975,7 +974,7 @@ public class ForkJoinTask8Test extends JSR166TestCase {
                 FailingAsyncFib g = new FailingAsyncFib(9);
                 AsyncFib h = new AsyncFib(7);
                 ForkJoinTask[] tasks = { f, g, h };
-                Collections.shuffle(Arrays.asList(tasks));
+                shuffle(tasks);
                 try {
                     invokeAll(tasks[0], tasks[1], tasks[2]);
                     shouldThrow();
@@ -1002,7 +1001,7 @@ public class ForkJoinTask8Test extends JSR166TestCase {
                 AsyncFib g = new AsyncFib(9);
                 AsyncFib h = new AsyncFib(7);
                 ForkJoinTask[] tasks = { f, g, h };
-                Collections.shuffle(Arrays.asList(tasks));
+                shuffle(tasks);
                 try {
                     invokeAll(Arrays.asList(tasks));
                     shouldThrow();

@@ -27,6 +27,7 @@
 #include "classfile/classFileStream.hpp"
 #include "classfile/javaClasses.hpp"
 #include "classfile/systemDictionary.hpp"
+#include "classfile/systemDictionaryShared.hpp"
 #include "classfile/verifier.hpp"
 #include "classfile/vmSymbols.hpp"
 #include "code/dependencyContext.hpp"
@@ -40,6 +41,7 @@
 #include "memory/heapInspection.hpp"
 #include "memory/iterator.inline.hpp"
 #include "memory/metadataFactory.hpp"
+#include "memory/metaspaceShared.hpp"
 #include "memory/oopFactory.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/fieldStreams.hpp"
@@ -55,7 +57,7 @@
 #include "prims/jvmtiRedefineClasses.hpp"
 #include "prims/jvmtiThreadState.hpp"
 #include "prims/methodComparator.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/fieldDescriptor.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/javaCalls.hpp"
@@ -66,6 +68,7 @@
 #include "services/threadService.hpp"
 #include "utilities/dtrace.hpp"
 #include "utilities/macros.hpp"
+#include "utilities/stringUtils.hpp"
 #include "logging/log.hpp"
 #ifdef COMPILER1
 #include "c1/c1_Compiler.hpp"
@@ -514,7 +517,11 @@ bool InstanceKlass::link_class_or_fail(TRAPS) {
 
 bool InstanceKlass::link_class_impl(
     instanceKlassHandle this_k, bool throw_verifyerror, TRAPS) {
-  // check for error state
+  // check for error state.
+  // This is checking for the wrong state.  If the state is initialization_error,
+  // then this class *was* linked.  The CDS code does a try_link_class and uses
+  // initialization_error to mark classes to not include in the archive during
+  // DumpSharedSpaces.  This should be removed when the CDS bug is fixed.
   if (this_k->is_in_error_state()) {
     ResourceMark rm(THREAD);
     THROW_MSG_(vmSymbols::java_lang_NoClassDefFoundError(),
@@ -597,6 +604,8 @@ bool InstanceKlass::link_class_impl(
 
         // also sets rewritten
         this_k->rewrite_class(CHECK_false);
+      } else if (this_k->is_shared()) {
+        SystemDictionaryShared::check_verification_constraints(this_k, CHECK_false);
       }
 
       // relocate jsrs and link methods after they are all rewritten
@@ -606,7 +615,12 @@ bool InstanceKlass::link_class_impl(
       // methods have been rewritten since rewrite may
       // fabricate new Method*s.
       // also does loader constraint checking
-      if (!this_k()->is_shared()) {
+      //
+      // initialize_vtable and initialize_itable need to be rerun for
+      // a shared class if the class is not loaded by the NULL classloader.
+      ClassLoaderData * loader_data = this_k->class_loader_data();
+      if (!(this_k->is_shared() &&
+            loader_data->is_the_null_class_loader_data())) {
         ResourceMark rm(THREAD);
         this_k->vtable()->initialize_vtable(true, CHECK_false);
         this_k->itable()->initialize_itable(true, CHECK_false);
@@ -660,36 +674,21 @@ void InstanceKlass::link_methods(TRAPS) {
 
 // Eagerly initialize superinterfaces that declare default methods (concrete instance: any access)
 void InstanceKlass::initialize_super_interfaces(instanceKlassHandle this_k, TRAPS) {
-  if (this_k->has_default_methods()) {
-    for (int i = 0; i < this_k->local_interfaces()->length(); ++i) {
-      Klass* iface = this_k->local_interfaces()->at(i);
-      InstanceKlass* ik = InstanceKlass::cast(iface);
-      if (ik->should_be_initialized()) {
-        if (ik->has_default_methods()) {
-          ik->initialize_super_interfaces(ik, THREAD);
-        }
-        // Only initialize() interfaces that "declare" concrete methods.
-        // has_default_methods drives searching superinterfaces since it
-        // means has_default_methods in its superinterface hierarchy
-        if (!HAS_PENDING_EXCEPTION && ik->declares_default_methods()) {
-          ik->initialize(THREAD);
-        }
-        if (HAS_PENDING_EXCEPTION) {
-          Handle e(THREAD, PENDING_EXCEPTION);
-          CLEAR_PENDING_EXCEPTION;
-          {
-            EXCEPTION_MARK;
-            // Locks object, set state, and notify all waiting threads
-            this_k->set_initialization_state_and_notify(
-                initialization_error, THREAD);
+  assert (this_k->has_default_methods(), "caller should have checked this");
+  for (int i = 0; i < this_k->local_interfaces()->length(); ++i) {
+    Klass* iface = this_k->local_interfaces()->at(i);
+    InstanceKlass* ik = InstanceKlass::cast(iface);
 
-            // ignore any exception thrown, superclass initialization error is
-            // thrown below
-            CLEAR_PENDING_EXCEPTION;
-          }
-          THROW_OOP(e());
-        }
-      }
+    // Initialization is depth first search ie. we start with top of the inheritance tree
+    // has_default_methods drives searching superinterfaces since it
+    // means has_default_methods in its superinterface hierarchy
+    if (ik->has_default_methods()) {
+      ik->initialize_super_interfaces(ik, CHECK);
+    }
+
+    // Only initialize() interfaces that "declare" concrete methods.
+    if (ik->should_be_initialized() && ik->declares_default_methods()) {
+      ik->initialize(CHECK);
     }
   }
 }
@@ -755,32 +754,36 @@ void InstanceKlass::initialize_impl(instanceKlassHandle this_k, TRAPS) {
   }
 
   // Step 7
-  Klass* super_klass = this_k->super();
-  if (super_klass != NULL && !this_k->is_interface() && super_klass->should_be_initialized()) {
-    super_klass->initialize(THREAD);
+  // Next, if C is a class rather than an interface, initialize it's super class and super
+  // interfaces.
+  if (!this_k->is_interface()) {
+    Klass* super_klass = this_k->super();
+    if (super_klass != NULL && super_klass->should_be_initialized()) {
+      super_klass->initialize(THREAD);
+    }
+    // If C implements any interfaces that declares a non-abstract, non-static method,
+    // the initialization of C triggers initialization of its super interfaces.
+    // Only need to recurse if has_default_methods which includes declaring and
+    // inheriting default methods
+    if (!HAS_PENDING_EXCEPTION && this_k->has_default_methods()) {
+      this_k->initialize_super_interfaces(this_k, THREAD);
+    }
 
+    // If any exceptions, complete abruptly, throwing the same exception as above.
     if (HAS_PENDING_EXCEPTION) {
       Handle e(THREAD, PENDING_EXCEPTION);
       CLEAR_PENDING_EXCEPTION;
       {
         EXCEPTION_MARK;
-        this_k->set_initialization_state_and_notify(initialization_error, THREAD); // Locks object, set state, and notify all waiting threads
-        CLEAR_PENDING_EXCEPTION;   // ignore any exception thrown, superclass initialization error is thrown below
+        // Locks object, set state, and notify all waiting threads
+        this_k->set_initialization_state_and_notify(initialization_error, THREAD);
+        CLEAR_PENDING_EXCEPTION;
       }
       DTRACE_CLASSINIT_PROBE_WAIT(super__failed, this_k(), -1,wait);
       THROW_OOP(e());
     }
   }
 
-  // If C is an interface that declares a non-abstract, non-static method,
-  // the initialization of a class (not an interface) that implements C directly or
-  // indirectly.
-  // Recursively initialize any superinterfaces that declare default methods
-  // Only need to recurse if has_default_methods which includes declaring and
-  // inheriting default methods
-  if (!this_k->is_interface() && this_k->has_default_methods()) {
-    this_k->initialize_super_interfaces(this_k, CHECK);
-  }
 
   // Step 8
   {
@@ -842,10 +845,15 @@ void InstanceKlass::set_initialization_state_and_notify(ClassState state, TRAPS)
 
 void InstanceKlass::set_initialization_state_and_notify_impl(instanceKlassHandle this_k, ClassState state, TRAPS) {
   oop init_lock = this_k->init_lock();
-  ObjectLocker ol(init_lock, THREAD, init_lock != NULL);
-  this_k->set_init_state(state);
-  this_k->fence_and_clear_init_lock();
-  ol.notify_all(CHECK);
+  if (init_lock != NULL) {
+    ObjectLocker ol(init_lock, THREAD);
+    this_k->set_init_state(state);
+    this_k->fence_and_clear_init_lock();
+    ol.notify_all(CHECK);
+  } else {
+    assert(init_lock != NULL, "The initialization state should never be set twice");
+    this_k->set_init_state(state);
+  }
 }
 
 // The embedded _implementor field can only record one implementor.
@@ -1032,7 +1040,8 @@ Klass* InstanceKlass::array_klass_impl(bool or_null, int n, TRAPS) {
 }
 
 Klass* InstanceKlass::array_klass_impl(instanceKlassHandle this_k, bool or_null, int n, TRAPS) {
-  if (this_k->array_klasses() == NULL) {
+  // Need load-acquire for lock-free read
+  if (this_k->array_klasses_acquire() == NULL) {
     if (or_null) return NULL;
 
     ResourceMark rm;
@@ -1045,7 +1054,8 @@ Klass* InstanceKlass::array_klass_impl(instanceKlassHandle this_k, bool or_null,
       // Check if update has already taken place
       if (this_k->array_klasses() == NULL) {
         Klass*    k = ObjArrayKlass::allocate_objArray_klass(this_k->class_loader_data(), 1, this_k, CHECK_NULL);
-        this_k->set_array_klasses(k);
+        // use 'release' to pair with lock-free load
+        this_k->release_set_array_klasses(k);
       }
     }
   }
@@ -2054,6 +2064,7 @@ void InstanceKlass::release_C_heap_structures(InstanceKlass* ik) {
 }
 
 void InstanceKlass::release_C_heap_structures() {
+  assert(!this->is_shared(), "should not be called for a shared class");
 
   // Can't release the constant pool here because the constant pool can be
   // deallocated separately from the InstanceKlass for default methods and
@@ -2182,39 +2193,21 @@ const char* InstanceKlass::signature_name() const {
   return dest;
 }
 
-const jbyte* InstanceKlass::package_from_name(const Symbol* name, int& length) {
-  ResourceMark rm;
-  length = 0;
+// Used to obtain the package name from a fully qualified class name.
+Symbol* InstanceKlass::package_from_name(const Symbol* name, TRAPS) {
   if (name == NULL) {
     return NULL;
   } else {
-    const jbyte* base_name = name->base();
-    const jbyte* last_slash = UTF8::strrchr(base_name, name->utf8_length(), '/');
-
-    if (last_slash == NULL) {
-      // No package name
+    if (name->utf8_length() <= 0) {
       return NULL;
-    } else {
-      // Skip over '['s
-      if (*base_name == '[') {
-        do {
-          base_name++;
-        } while (*base_name == '[');
-        if (*base_name != 'L') {
-          // Fully qualified class names should not contain a 'L'.
-          // Set length to -1 to indicate that the package name
-          // could not be obtained due to an error condition.
-          // In this situtation, is_same_class_package returns false.
-          length = -1;
-          return NULL;
-        }
-      }
-
-      // Found the package name, look it up in the symbol table.
-      length = last_slash - base_name;
-      assert(length > 0, "Bad length for package name");
-      return base_name;
     }
+    ResourceMark rm;
+    const char* package_name = ClassLoader::package_from_name((const char*) name->as_C_string());
+    if (package_name == NULL) {
+      return NULL;
+    }
+    Symbol* pkg_name = SymbolTable::new_symbol(package_name, THREAD);
+    return pkg_name;
   }
 }
 
@@ -2230,11 +2223,13 @@ ModuleEntry* InstanceKlass::module() const {
 }
 
 void InstanceKlass::set_package(ClassLoaderData* loader_data, TRAPS) {
-  int length = 0;
-  const jbyte* base_name = package_from_name(name(), length);
 
-  if (base_name != NULL && loader_data != NULL) {
-    TempNewSymbol pkg_name = SymbolTable::new_symbol((const char*)base_name, length, CHECK);
+  // ensure java/ packages only loaded by boot or platform builtin loaders
+  check_prohibited_package(name(), loader_data->class_loader(), CHECK);
+
+  TempNewSymbol pkg_name = package_from_name(name(), CHECK);
+
+  if (pkg_name != NULL && loader_data != NULL) {
 
     // Find in class loader's package entry table.
     _package_entry = loader_data->packages()->lookup_only(pkg_name);
@@ -2250,8 +2245,8 @@ void InstanceKlass::set_package(ClassLoaderData* loader_data, TRAPS) {
         // the java.base module.  If a non-java.base package is erroneously placed
         // in the java.base module it will be caught later when java.base
         // is defined by ModuleEntryTable::verify_javabase_packages check.
-        assert(ModuleEntryTable::javabase_module() != NULL, "java.base module is NULL");
-        _package_entry = loader_data->packages()->lookup(pkg_name, ModuleEntryTable::javabase_module());
+        assert(ModuleEntryTable::javabase_moduleEntry() != NULL, "java.base module is NULL");
+        _package_entry = loader_data->packages()->lookup(pkg_name, ModuleEntryTable::javabase_moduleEntry());
       } else {
         assert(loader_data->modules()->unnamed_module() != NULL, "unnamed module is NULL");
         _package_entry = loader_data->packages()->lookup(pkg_name,
@@ -2331,20 +2326,18 @@ bool InstanceKlass::is_same_class_package(oop class_loader1, const Symbol* class
   if (class_loader1 != class_loader2) {
     return false;
   } else if (class_name1 == class_name2) {
-    return true;                // skip painful bytewise comparison
+    return true;
   } else {
     ResourceMark rm;
 
-    // The Symbol*'s are in UTF8 encoding. Since we only need to check explicitly
-    // for ASCII characters ('/', 'L', '['), we can keep them in UTF8 encoding.
-    // Otherwise, we just compare jbyte values between the strings.
-    int length1 = 0;
-    int length2 = 0;
-    const jbyte *name1 = package_from_name(class_name1, length1);
-    const jbyte *name2 = package_from_name(class_name2, length2);
+    bool bad_class_name = false;
+    const char* name1 = ClassLoader::package_from_name((const char*) class_name1->as_C_string(), &bad_class_name);
+    if (bad_class_name) {
+      return false;
+    }
 
-    if ((length1 < 0) || (length2 < 0)) {
-      // error occurred parsing package name.
+    const char* name2 = ClassLoader::package_from_name((const char*) class_name2->as_C_string(), &bad_class_name);
+    if (bad_class_name) {
       return false;
     }
 
@@ -2354,13 +2347,13 @@ bool InstanceKlass::is_same_class_package(oop class_loader1, const Symbol* class
       return name1 == name2;
     }
 
-    // Check that package part is identical
-    return UTF8::equal(name1, length1, name2, length2);
+    // Check that package is identical
+    return (strcmp(name1, name2) == 0);
   }
 }
 
 // Returns true iff super_method can be overridden by a method in targetclassname
-// See JSL 3rd edition 8.4.6.1
+// See JLS 3rd edition 8.4.6.1
 // Assumes name-signature match
 // "this" is InstanceKlass of super_method which must exist
 // note that the InstanceKlass of the method in the targetclassname has not always been created yet
@@ -2385,6 +2378,31 @@ Klass* InstanceKlass::compute_enclosing_class_impl(instanceKlassHandle self,
   ...
 }
 */
+
+// Only boot and platform class loaders can define classes in "java/" packages.
+void InstanceKlass::check_prohibited_package(Symbol* class_name,
+                                                Handle class_loader,
+                                                TRAPS) {
+  const char* javapkg = "java/";
+  ResourceMark rm(THREAD);
+  if (!class_loader.is_null() &&
+      !SystemDictionary::is_platform_class_loader(class_loader) &&
+      class_name != NULL &&
+      strncmp(class_name->as_C_string(), javapkg, strlen(javapkg)) == 0) {
+    TempNewSymbol pkg_name = InstanceKlass::package_from_name(class_name, CHECK);
+    assert(pkg_name != NULL, "Error in parsing package name starting with 'java/'");
+    char* name = pkg_name->as_C_string();
+    const char* class_loader_name = InstanceKlass::cast(class_loader()->klass())->name()->as_C_string();
+    StringUtils::replace_no_expand(name, "/", ".");
+    const char* msg_text1 = "Class loader (instance of): ";
+    const char* msg_text2 = " tried to load prohibited package name: ";
+    size_t len = strlen(msg_text1) + strlen(class_loader_name) + strlen(msg_text2) + strlen(name) + 1;
+    char* message = NEW_RESOURCE_ARRAY_IN_THREAD(THREAD, char, len);
+    jio_snprintf(message, len, "%s%s%s%s", msg_text1, class_loader_name, msg_text2, name);
+    THROW_MSG(vmSymbols::java_lang_SecurityException(), message);
+  }
+  return;
+}
 
 // tell if two classes have the same enclosing class (at package level)
 bool InstanceKlass::is_same_package_member_impl(const InstanceKlass* class1,
@@ -3027,7 +3045,11 @@ void InstanceKlass::print_loading_log(LogLevel::type type,
   if (cfs != NULL) {
     if (cfs->source() != NULL) {
       if (module_name != NULL) {
-        log->print(" source: jrt:/%s", module_name);
+        if (ClassLoader::is_jrt(cfs->source())) {
+          log->print(" source: jrt:/%s", module_name);
+        } else {
+          log->print(" source: %s", cfs->source());
+        }
       } else {
         log->print(" source: %s", cfs->source());
       }
@@ -3338,88 +3360,119 @@ void InstanceKlass::set_init_state(ClassState state) {
 
 #if INCLUDE_JVMTI
 
-// RedefineClasses() support for previous versions:
-int InstanceKlass::_previous_version_count = 0;
+// RedefineClasses() support for previous versions
 
-// Purge previous versions before adding new previous versions of the class.
-void InstanceKlass::purge_previous_versions(InstanceKlass* ik) {
-  if (ik->previous_versions() != NULL) {
-    // This klass has previous versions so see what we can cleanup
-    // while it is safe to do so.
+// Globally, there is at least one previous version of a class to walk
+// during class unloading, which is saved because old methods in the class
+// are still running.   Otherwise the previous version list is cleaned up.
+bool InstanceKlass::_has_previous_versions = false;
 
-    int deleted_count = 0;    // leave debugging breadcrumbs
-    int live_count = 0;
-    ClassLoaderData* loader_data = ik->class_loader_data();
-    assert(loader_data != NULL, "should never be null");
+// Returns true if there are previous versions of a class for class
+// unloading only. Also resets the flag to false. purge_previous_version
+// will set the flag to true if there are any left, i.e., if there's any
+// work to do for next time. This is to avoid the expensive code cache
+// walk in CLDG::do_unloading().
+bool InstanceKlass::has_previous_versions_and_reset() {
+  bool ret = _has_previous_versions;
+  log_trace(redefine, class, iklass, purge)("Class unloading: has_previous_versions = %s",
+     ret ? "true" : "false");
+  _has_previous_versions = false;
+  return ret;
+}
 
-    ResourceMark rm;
-    log_trace(redefine, class, iklass, purge)("%s: previous versions", ik->external_name());
+// Purge previous versions before adding new previous versions of the class and
+// during class unloading.
+void InstanceKlass::purge_previous_version_list() {
+  assert(SafepointSynchronize::is_at_safepoint(), "only called at safepoint");
+  assert(has_been_redefined(), "Should only be called for main class");
 
-    // previous versions are linked together through the InstanceKlass
-    InstanceKlass* pv_node = ik->previous_versions();
-    InstanceKlass* last = ik;
-    int version = 0;
+  // Quick exit.
+  if (previous_versions() == NULL) {
+    return;
+  }
 
-    // check the previous versions list
-    for (; pv_node != NULL; ) {
+  // This klass has previous versions so see what we can cleanup
+  // while it is safe to do so.
 
-      ConstantPool* pvcp = pv_node->constants();
-      assert(pvcp != NULL, "cp ref was unexpectedly cleared");
+  int deleted_count = 0;    // leave debugging breadcrumbs
+  int live_count = 0;
+  ClassLoaderData* loader_data = class_loader_data();
+  assert(loader_data != NULL, "should never be null");
 
-      if (!pvcp->on_stack()) {
-        // If the constant pool isn't on stack, none of the methods
-        // are executing.  Unlink this previous_version.
-        // The previous version InstanceKlass is on the ClassLoaderData deallocate list
-        // so will be deallocated during the next phase of class unloading.
-        log_trace(redefine, class, iklass, purge)("previous version " INTPTR_FORMAT " is dead", p2i(pv_node));
-        // For debugging purposes.
-        pv_node->set_is_scratch_class();
-        pv_node->class_loader_data()->add_to_deallocate_list(pv_node);
-        pv_node = pv_node->previous_versions();
-        last->link_previous_versions(pv_node);
-        deleted_count++;
-        version++;
-        continue;
-      } else {
-        log_trace(redefine, class, iklass, purge)("previous version " INTPTR_FORMAT " is alive", p2i(pv_node));
-        assert(pvcp->pool_holder() != NULL, "Constant pool with no holder");
-        guarantee (!loader_data->is_unloading(), "unloaded classes can't be on the stack");
-        live_count++;
-      }
+  ResourceMark rm;
+  log_trace(redefine, class, iklass, purge)("%s: previous versions", external_name());
 
-      // At least one method is live in this previous version.
-      // Reset dead EMCP methods not to get breakpoints.
-      // All methods are deallocated when all of the methods for this class are no
-      // longer running.
-      Array<Method*>* method_refs = pv_node->methods();
-      if (method_refs != NULL) {
-        log_trace(redefine, class, iklass, purge)("previous methods length=%d", method_refs->length());
-        for (int j = 0; j < method_refs->length(); j++) {
-          Method* method = method_refs->at(j);
+  // previous versions are linked together through the InstanceKlass
+  InstanceKlass* pv_node = previous_versions();
+  InstanceKlass* last = this;
+  int version = 0;
 
-          if (!method->on_stack()) {
-            // no breakpoints for non-running methods
-            if (method->is_running_emcp()) {
-              method->set_running_emcp(false);
-            }
-          } else {
-            assert (method->is_obsolete() || method->is_running_emcp(),
-                    "emcp method cannot run after emcp bit is cleared");
-            log_trace(redefine, class, iklass, purge)
-              ("purge: %s(%s): prev method @%d in version @%d is alive",
-               method->name()->as_C_string(), method->signature()->as_C_string(), j, version);
+  // check the previous versions list
+  for (; pv_node != NULL; ) {
+
+    ConstantPool* pvcp = pv_node->constants();
+    assert(pvcp != NULL, "cp ref was unexpectedly cleared");
+
+    if (!pvcp->on_stack()) {
+      // If the constant pool isn't on stack, none of the methods
+      // are executing.  Unlink this previous_version.
+      // The previous version InstanceKlass is on the ClassLoaderData deallocate list
+      // so will be deallocated during the next phase of class unloading.
+      log_trace(redefine, class, iklass, purge)
+        ("previous version " INTPTR_FORMAT " is dead.", p2i(pv_node));
+      // For debugging purposes.
+      pv_node->set_is_scratch_class();
+      // Unlink from previous version list.
+      assert(pv_node->class_loader_data() == loader_data, "wrong loader_data");
+      InstanceKlass* next = pv_node->previous_versions();
+      pv_node->link_previous_versions(NULL);   // point next to NULL
+      last->link_previous_versions(next);
+      // Add to the deallocate list after unlinking
+      loader_data->add_to_deallocate_list(pv_node);
+      pv_node = next;
+      deleted_count++;
+      version++;
+      continue;
+    } else {
+      log_trace(redefine, class, iklass, purge)("previous version " INTPTR_FORMAT " is alive", p2i(pv_node));
+      assert(pvcp->pool_holder() != NULL, "Constant pool with no holder");
+      guarantee (!loader_data->is_unloading(), "unloaded classes can't be on the stack");
+      live_count++;
+      // found a previous version for next time we do class unloading
+      _has_previous_versions = true;
+    }
+
+    // At least one method is live in this previous version.
+    // Reset dead EMCP methods not to get breakpoints.
+    // All methods are deallocated when all of the methods for this class are no
+    // longer running.
+    Array<Method*>* method_refs = pv_node->methods();
+    if (method_refs != NULL) {
+      log_trace(redefine, class, iklass, purge)("previous methods length=%d", method_refs->length());
+      for (int j = 0; j < method_refs->length(); j++) {
+        Method* method = method_refs->at(j);
+
+        if (!method->on_stack()) {
+          // no breakpoints for non-running methods
+          if (method->is_running_emcp()) {
+            method->set_running_emcp(false);
           }
+        } else {
+          assert (method->is_obsolete() || method->is_running_emcp(),
+                  "emcp method cannot run after emcp bit is cleared");
+          log_trace(redefine, class, iklass, purge)
+            ("purge: %s(%s): prev method @%d in version @%d is alive",
+             method->name()->as_C_string(), method->signature()->as_C_string(), j, version);
         }
       }
-      // next previous version
-      last = pv_node;
-      pv_node = pv_node->previous_versions();
-      version++;
     }
-    log_trace(redefine, class, iklass, purge)
-      ("previous version stats: live=%d, deleted=%d",
-       live_count, deleted_count);
+    // next previous version
+    last = pv_node;
+    pv_node = pv_node->previous_versions();
+    version++;
   }
+  log_trace(redefine, class, iklass, purge)
+    ("previous version stats: live=%d, deleted=%d", live_count, deleted_count);
 }
 
 void InstanceKlass::mark_newly_obsolete_methods(Array<Method*>* old_methods,
@@ -3491,8 +3544,8 @@ void InstanceKlass::add_previous_version(instanceKlassHandle scratch_class,
   log_trace(redefine, class, iklass, add)
     ("adding previous version ref for %s, EMCP_cnt=%d", scratch_class->external_name(), emcp_method_count);
 
-  // Clean out old previous versions
-  purge_previous_versions(this);
+  // Clean out old previous versions for this class
+  purge_previous_version_list();
 
   // Mark newly obsolete methods in remaining previous versions.  An EMCP method from
   // a previous redefinition may be made obsolete by this redefinition.
@@ -3509,8 +3562,6 @@ void InstanceKlass::add_previous_version(instanceKlassHandle scratch_class,
     // For debugging purposes.
     scratch_class->set_is_scratch_class();
     scratch_class->class_loader_data()->add_to_deallocate_list(scratch_class());
-    // Update count for class unloading.
-    _previous_version_count--;
     return;
   }
 
@@ -3538,12 +3589,12 @@ void InstanceKlass::add_previous_version(instanceKlassHandle scratch_class,
   }
 
   // Add previous version if any methods are still running.
-  log_trace(redefine, class, iklass, add)("scratch class added; one of its methods is on_stack");
+  // Set has_previous_version flag for processing during class unloading.
+  _has_previous_versions = true;
+  log_trace(redefine, class, iklass, add) ("scratch class added; one of its methods is on_stack.");
   assert(scratch_class->previous_versions() == NULL, "shouldn't have a previous version");
   scratch_class->link_previous_versions(previous_versions());
   link_previous_versions(scratch_class());
-  // Update count for class unloading.
-  _previous_version_count++;
 } // end add_previous_version()
 
 #endif // INCLUDE_JVMTI
@@ -3597,6 +3648,15 @@ Method* InstanceKlass::method_with_orig_idnum(int idnum, int version) {
 }
 
 #if INCLUDE_JVMTI
+JvmtiCachedClassFileData* InstanceKlass::get_cached_class_file() {
+  if (MetaspaceShared::is_in_shared_space(_cached_class_file)) {
+    // Ignore the archived class stream data
+    return NULL;
+  } else {
+    return _cached_class_file;
+  }
+}
+
 jint InstanceKlass::get_cached_class_file_len() {
   return VM_RedefineClasses::get_cached_class_file_len(_cached_class_file);
 }
@@ -3604,4 +3664,15 @@ jint InstanceKlass::get_cached_class_file_len() {
 unsigned char * InstanceKlass::get_cached_class_file_bytes() {
   return VM_RedefineClasses::get_cached_class_file_bytes(_cached_class_file);
 }
+
+#if INCLUDE_CDS
+JvmtiCachedClassFileData* InstanceKlass::get_archived_class_data() {
+  assert(this->is_shared(), "class should be shared");
+  if (MetaspaceShared::is_in_shared_space(_cached_class_file)) {
+    return _cached_class_file;
+  } else {
+    return NULL;
+  }
+}
+#endif
 #endif

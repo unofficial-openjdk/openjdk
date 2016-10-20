@@ -21,7 +21,7 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
-*/
+ */
 
 package jdk.internal.jimage;
 
@@ -79,7 +79,8 @@ public final class ImageHeader {
         Objects.requireNonNull(buffer);
 
         if (buffer.capacity() != HEADER_SLOTS) {
-            throw new InternalError("jimage header not the correct size");
+            throw new InternalError(
+                "jimage header not the correct size: " + buffer.capacity());
         }
 
         int magic = buffer.get(0);

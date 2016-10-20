@@ -26,19 +26,19 @@
  * @bug 8031686
  * @summary Regression test to ensure we can start G1 with 2gb heap.
  * Skip test on 32 bit system: it typically does not support the many and large virtual memory reservations needed.
- * @requires (vm.gc == "G1" | vm.gc == "null")
+ * @requires vm.gc.G1
  * @requires vm.bits != "32"
  * @key gc
  * @key regression
- * @library /testlibrary
+ * @library /test/lib
  * @modules java.base/jdk.internal.misc
  *          java.management
  */
 
 import java.util.ArrayList;
 
-import jdk.test.lib.OutputAnalyzer;
-import jdk.test.lib.ProcessTools;
+import jdk.test.lib.process.OutputAnalyzer;
+import jdk.test.lib.process.ProcessTools;
 
 public class Test2GbHeap {
   public static void main(String[] args) throws Exception {

@@ -25,26 +25,28 @@
 
 package java.lang.invoke;
 
-import java.lang.reflect.Array;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.function.Function;
-
+import jdk.internal.misc.JavaLangInvokeAccess;
+import jdk.internal.misc.SharedSecrets;
+import jdk.internal.org.objectweb.asm.AnnotationVisitor;
+import jdk.internal.org.objectweb.asm.ClassWriter;
+import jdk.internal.org.objectweb.asm.MethodVisitor;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
+import jdk.internal.vm.annotation.ForceInline;
 import jdk.internal.vm.annotation.Stable;
 import sun.invoke.empty.Empty;
 import sun.invoke.util.ValueConversions;
 import sun.invoke.util.VerifyType;
 import sun.invoke.util.Wrapper;
 
-import jdk.internal.org.objectweb.asm.AnnotationVisitor;
-import jdk.internal.org.objectweb.asm.ClassWriter;
-import jdk.internal.org.objectweb.asm.MethodVisitor;
+import java.lang.reflect.Array;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static java.lang.invoke.LambdaForm.*;
 import static java.lang.invoke.MethodHandleStatics.*;
@@ -56,19 +58,6 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
  * @author jrose
  */
 /*non-public*/ abstract class MethodHandleImpl {
-    // Do not adjust this except for special platforms:
-    private static final int MAX_ARITY;
-    static {
-        final Object[] values = { 255 };
-        AccessController.doPrivileged(new PrivilegedAction<>() {
-            @Override
-            public Void run() {
-                values[0] = Integer.getInteger(MethodHandleImpl.class.getName()+".MAX_ARITY", 255);
-                return null;
-            }
-        });
-        MAX_ARITY = (Integer) values[0];
-    }
 
     /// Factory methods to create method handles:
 
@@ -648,7 +637,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
         MethodType srcType = targetType                 // (a..., [b...])=>r
                 .dropParameterTypes(collectArgPos, collectArgPos+collectValCount);
         if (!retainOriginalArgs) {                      // (a..., b...)=>r
-            srcType = srcType.insertParameterTypes(collectArgPos, collectorType.parameterList());
+            srcType = srcType.insertParameterTypes(collectArgPos, collectorType.parameterArray());
         }
         // in  arglist: [0: ...keep1 | cpos: collect...  | cpos+cacount: keep2... ]
         // out arglist: [0: ...keep1 | cpos: collectVal? | cpos+cvcount: keep2... ]
@@ -1046,26 +1035,13 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
         // Box arguments and wrap them into Object[]: ValueConversions.array().
         MethodType varargsType = type.changeReturnType(Object[].class);
         MethodHandle collectArgs = varargsArray(type.parameterCount()).asType(varargsType);
-        // Result unboxing: ValueConversions.unbox() OR ValueConversions.identity() OR ValueConversions.ignore().
-        MethodHandle unboxResult;
-        Class<?> rtype = type.returnType();
-        if (rtype.isPrimitive()) {
-            if (rtype == void.class) {
-                unboxResult = ValueConversions.ignore();
-            } else {
-                Wrapper w = Wrapper.forPrimitiveType(type.returnType());
-                unboxResult = ValueConversions.unboxExact(w);
-            }
-        } else {
-            unboxResult = MethodHandles.identity(Object.class);
-        }
+        MethodHandle unboxResult = unboxResultHandle(type.returnType());
 
         BoundMethodHandle.SpeciesData data = BoundMethodHandle.speciesData_LLLLL();
         BoundMethodHandle mh;
         try {
-            mh = (BoundMethodHandle)
-                    data.constructor().invokeBasic(type, form, (Object) target, (Object) exType, (Object) catcher,
-                                                   (Object) collectArgs, (Object) unboxResult);
+            mh = (BoundMethodHandle) data.constructor().invokeBasic(type, form, (Object) target, (Object) exType,
+                    (Object) catcher, (Object) collectArgs, (Object) unboxResult);
         } catch (Throwable ex) {
             throw uncaughtException(ex);
         }
@@ -1085,16 +1061,18 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
             return target.asFixedArity().invokeWithArguments(av);
         } catch (Throwable t) {
             if (!exType.isInstance(t)) throw t;
-            return catcher.asFixedArity().invokeWithArguments(prepend(t, av));
+            return catcher.asFixedArity().invokeWithArguments(prepend(av, t));
         }
     }
 
-    /** Prepend an element {@code elem} to an {@code array}. */
+    /** Prepend elements to an array. */
     @LambdaForm.Hidden
-    private static Object[] prepend(Object elem, Object[] array) {
-        Object[] newArray = new Object[array.length+1];
-        newArray[0] = elem;
-        System.arraycopy(array, 0, newArray, 1, array.length);
+    private static Object[] prepend(Object[] array, Object... elems) {
+        int nArray = array.length;
+        int nElems = elems.length;
+        Object[] newArray = new Object[nArray + nElems];
+        System.arraycopy(elems, 0, newArray, 0, nElems);
+        System.arraycopy(array, 0, newArray, nElems, nArray);
         return newArray;
     }
 
@@ -1104,7 +1082,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
         int arity = type.parameterCount();
         if (arity > 1) {
             MethodHandle mh = throwException(type.dropParameterTypes(1, arity));
-            mh = MethodHandles.dropArguments(mh, 1, type.parameterList().subList(1, arity));
+            mh = MethodHandles.dropArguments(mh, 1, Arrays.copyOfRange(type.parameterArray(), 1, arity));
             return mh;
         }
         return makePairwiseConvert(NF_throwException.resolvedHandle(), type, false, true);
@@ -1256,6 +1234,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
         }
 
         @CallerSensitive
+        @ForceInline // to ensure Reflection.getCallerClass optimization
         private static boolean checkCallerClass(Class<?> expected) {
             // This method is called via MH_checkCallerClass and so it's correct to ask for the immediate caller here.
             Class<?> actual = Reflection.getCallerClass();
@@ -1352,6 +1331,8 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
     enum Intrinsic {
         SELECT_ALTERNATIVE,
         GUARD_WITH_CATCH,
+        TRY_FINALLY,
+        LOOP,
         NEW_ARRAY,
         ARRAY_LOAD,
         ARRAY_STORE,
@@ -1363,7 +1344,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
     /** Mark arbitrary method handle as intrinsic.
      * InvokerBytecodeGenerator uses this info to produce more efficient bytecode shape. */
-    private static final class IntrinsicMethodHandle extends DelegatingMethodHandle {
+    static final class IntrinsicMethodHandle extends DelegatingMethodHandle {
         private final MethodHandle target;
         private final Intrinsic intrinsicName;
 
@@ -1694,6 +1675,8 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
         NF_checkSpreadArgument,
         NF_guardWithCatch,
         NF_throwException,
+        NF_tryFinally,
+        NF_loop,
         NF_profileBoolean;
 
     static {
@@ -1703,6 +1686,10 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
             NF_guardWithCatch = new NamedFunction(MethodHandleImpl.class
                     .getDeclaredMethod("guardWithCatch", MethodHandle.class, Class.class,
                             MethodHandle.class, Object[].class));
+            NF_tryFinally = new NamedFunction(MethodHandleImpl.class
+                    .getDeclaredMethod("tryFinally", MethodHandle.class, MethodHandle.class, Object[].class));
+            NF_loop = new NamedFunction(MethodHandleImpl.class
+                    .getDeclaredMethod("loop", BasicType[].class, LoopClauses.class, Object[].class));
             NF_throwException = new NamedFunction(MethodHandleImpl.class
                     .getDeclaredMethod("throwException", Throwable.class));
             NF_profileBoolean = new NamedFunction(MethodHandleImpl.class
@@ -1710,16 +1697,82 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
         } catch (ReflectiveOperationException ex) {
             throw newInternalError(ex);
         }
+
+        SharedSecrets.setJavaLangInvokeAccess(new JavaLangInvokeAccess() {
+            @Override
+            public Object newMemberName() {
+                return new MemberName();
+            }
+
+            @Override
+            public String getName(Object mname) {
+                MemberName memberName = (MemberName)mname;
+                return memberName.getName();
+            }
+
+            @Override
+            public boolean isNative(Object mname) {
+                MemberName memberName = (MemberName)mname;
+                return memberName.isNative();
+            }
+
+            @Override
+            public byte[] generateDirectMethodHandleHolderClassBytes(
+                    String className, MethodType[] methodTypes, int[] types) {
+                return GenerateJLIClassesHelper
+                        .generateDirectMethodHandleHolderClassBytes(
+                                className, methodTypes, types);
+            }
+
+            @Override
+            public byte[] generateDelegatingMethodHandleHolderClassBytes(
+                    String className, MethodType[] methodTypes) {
+                return GenerateJLIClassesHelper
+                        .generateDelegatingMethodHandleHolderClassBytes(
+                                className, methodTypes);
+            }
+
+            @Override
+            public Map.Entry<String, byte[]> generateConcreteBMHClassBytes(
+                    final String types) {
+                return GenerateJLIClassesHelper
+                        .generateConcreteBMHClassBytes(types);
+            }
+
+            @Override
+            public byte[] generateBasicFormsClassBytes(final String className) {
+                return GenerateJLIClassesHelper
+                        .generateBasicFormsClassBytes(className);
+            }
+
+            @Override
+            public byte[] generateInvokersHolderClassBytes(final String className,
+                    MethodType[] methodTypes) {
+                return GenerateJLIClassesHelper
+                        .generateInvokersHolderClassBytes(className, methodTypes);
+            }
+        });
+    }
+
+    /** Result unboxing: ValueConversions.unbox() OR ValueConversions.identity() OR ValueConversions.ignore(). */
+    private static MethodHandle unboxResultHandle(Class<?> returnType) {
+        if (returnType.isPrimitive()) {
+            if (returnType == void.class) {
+                return ValueConversions.ignore();
+            } else {
+                Wrapper w = Wrapper.forPrimitiveType(returnType);
+                return ValueConversions.unboxExact(w);
+            }
+        } else {
+            return MethodHandles.identity(Object.class);
+        }
     }
 
     /**
-     * Assembles a loop method handle from the given handles and type information. This works by binding and configuring
-     * the {@linkplain #looper(MethodHandle[], MethodHandle[], MethodHandle[], MethodHandle[], int, int, Object[]) "most
-     * generic loop"}.
+     * Assembles a loop method handle from the given handles and type information.
      *
      * @param tloop the return type of the loop.
      * @param targs types of the arguments to be passed to the loop.
-     * @param tvars types of loop-local variables.
      * @param init sanitized array of initializers for loop-local variables.
      * @param step sanitited array of loop bodies.
      * @param pred sanitized array of predicates.
@@ -1727,64 +1780,166 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
      *
      * @return a handle that, when invoked, will execute the loop.
      */
-    static MethodHandle makeLoop(Class<?> tloop, List<Class<?>> targs, List<Class<?>> tvars, List<MethodHandle> init,
-                                 List<MethodHandle> step, List<MethodHandle> pred, List<MethodHandle> fini) {
-        MethodHandle[] ainit = toArrayArgs(init);
-        MethodHandle[] astep = toArrayArgs(step);
-        MethodHandle[] apred = toArrayArgs(pred);
-        MethodHandle[] afini = toArrayArgs(fini);
+    static MethodHandle makeLoop(Class<?> tloop, List<Class<?>> targs, List<MethodHandle> init, List<MethodHandle> step,
+                                 List<MethodHandle> pred, List<MethodHandle> fini) {
+        MethodType type = MethodType.methodType(tloop, targs);
+        BasicType[] initClauseTypes =
+                init.stream().map(h -> h.type().returnType()).map(BasicType::basicType).toArray(BasicType[]::new);
+        LambdaForm form = makeLoopForm(type.basicType(), initClauseTypes);
 
-        MethodHandle l = getConstantHandle(MH_looper);
+        // Prepare auxiliary method handles used during LambdaForm interpretation.
+        // Box arguments and wrap them into Object[]: ValueConversions.array().
+        MethodType varargsType = type.changeReturnType(Object[].class);
+        MethodHandle collectArgs = varargsArray(type.parameterCount()).asType(varargsType);
+        MethodHandle unboxResult = unboxResultHandle(tloop);
 
-        // Bind the statically known arguments.
-        l = MethodHandles.insertArguments(l, 0, ainit, astep, apred, afini, tvars.size(), targs.size());
+        LoopClauses clauseData =
+                new LoopClauses(new MethodHandle[][]{toArray(init), toArray(step), toArray(pred), toArray(fini)});
+        BoundMethodHandle.SpeciesData data = BoundMethodHandle.speciesData_LLL();
+        BoundMethodHandle mh;
+        try {
+            mh = (BoundMethodHandle) data.constructor().invokeBasic(type, form, (Object) clauseData,
+                    (Object) collectArgs, (Object) unboxResult);
+        } catch (Throwable ex) {
+            throw uncaughtException(ex);
+        }
+        assert(mh.type() == type);
+        return mh;
+    }
 
-        // Turn the args array into an argument list.
-        l = l.asCollector(Object[].class, targs.size());
-
-        // Finally, make loop type.
-        MethodType loopType = MethodType.methodType(tloop, targs);
-        l = l.asType(loopType);
-
-        return l;
+    private static MethodHandle[] toArray(List<MethodHandle> l) {
+        return l.toArray(new MethodHandle[0]);
     }
 
     /**
-     * Converts all handles in the {@code hs} array to handles that accept an array of arguments.
-     *
-     * @param hs method handles to be converted.
-     *
-     * @return the {@code hs} array, with all method handles therein converted.
+     * Loops introduce some complexity as they can have additional local state. Hence, LambdaForms for loops are
+     * generated from a template. The LambdaForm template shape for the loop combinator is as follows (assuming one
+     * reference parameter passed in {@code a1}, and a reference return type, with the return value represented by
+     * {@code t12}):
+     * <blockquote><pre>{@code
+     *  loop=Lambda(a0:L,a1:L)=>{
+     *    t2:L=BoundMethodHandle$Species_L3.argL0(a0:L);    // LoopClauses holding init, step, pred, fini handles
+     *    t3:L=BoundMethodHandle$Species_L3.argL1(a0:L);    // helper handle to box the arguments into an Object[]
+     *    t4:L=BoundMethodHandle$Species_L3.argL2(a0:L);    // helper handle to unbox the result
+     *    t5:L=MethodHandle.invokeBasic(t3:L,a1:L);         // box the arguments into an Object[]
+     *    t6:L=MethodHandleImpl.loop(null,t2:L,t3:L);       // call the loop executor
+     *    t7:L=MethodHandle.invokeBasic(t4:L,t6:L);t7:L}    // unbox the result; return the result
+     * }</pre></blockquote>
+     * <p>
+     * {@code argL0} is a LoopClauses instance holding, in a 2-dimensional array, the init, step, pred, and fini method
+     * handles. {@code argL1} and {@code argL2} are auxiliary method handles: {@code argL1} boxes arguments and wraps
+     * them into {@code Object[]} ({@code ValueConversions.array()}), and {@code argL2} unboxes the result if necessary
+     * ({@code ValueConversions.unbox()}).
+     * <p>
+     * Having {@code t3} and {@code t4} passed in via a BMH and not hardcoded in the lambda form allows to share lambda
+     * forms among loop combinators with the same basic type.
+     * <p>
+     * The above template is instantiated by using the {@link LambdaFormEditor} to replace the {@code null} argument to
+     * the {@code loop} invocation with the {@code BasicType} array describing the loop clause types. This argument is
+     * ignored in the loop invoker, but will be extracted and used in {@linkplain InvokerBytecodeGenerator#emitLoop(int)
+     * bytecode generation}.
      */
-    static MethodHandle[] toArrayArgs(List<MethodHandle> hs) {
-        return hs.stream().map(h -> h.asSpreader(Object[].class, h.type().parameterCount())).toArray(MethodHandle[]::new);
+    private static LambdaForm makeLoopForm(MethodType basicType, BasicType[] localVarTypes) {
+        MethodType lambdaType = basicType.invokerType();
+
+        final int THIS_MH = 0;  // the BMH_LLL
+        final int ARG_BASE = 1; // start of incoming arguments
+        final int ARG_LIMIT = ARG_BASE + basicType.parameterCount();
+
+        int nameCursor = ARG_LIMIT;
+        final int GET_CLAUSE_DATA = nameCursor++;
+        final int GET_COLLECT_ARGS = nameCursor++;
+        final int GET_UNBOX_RESULT = nameCursor++;
+        final int BOXED_ARGS = nameCursor++;
+        final int LOOP = nameCursor++;
+        final int UNBOX_RESULT = nameCursor++;
+
+        LambdaForm lform = basicType.form().cachedLambdaForm(MethodTypeForm.LF_LOOP);
+        if (lform == null) {
+            Name[] names = arguments(nameCursor - ARG_LIMIT, lambdaType);
+
+            BoundMethodHandle.SpeciesData data = BoundMethodHandle.speciesData_LLL();
+            names[THIS_MH] = names[THIS_MH].withConstraint(data);
+            names[GET_CLAUSE_DATA] = new Name(data.getterFunction(0), names[THIS_MH]);
+            names[GET_COLLECT_ARGS] = new Name(data.getterFunction(1), names[THIS_MH]);
+            names[GET_UNBOX_RESULT] = new Name(data.getterFunction(2), names[THIS_MH]);
+
+            // t_{i}:L=MethodHandle.invokeBasic(collectArgs:L,a1:L,...);
+            MethodType collectArgsType = basicType.changeReturnType(Object.class);
+            MethodHandle invokeBasic = MethodHandles.basicInvoker(collectArgsType);
+            Object[] args = new Object[invokeBasic.type().parameterCount()];
+            args[0] = names[GET_COLLECT_ARGS];
+            System.arraycopy(names, ARG_BASE, args, 1, ARG_LIMIT - ARG_BASE);
+            names[BOXED_ARGS] = new Name(makeIntrinsic(invokeBasic, Intrinsic.LOOP), args);
+
+            // t_{i+1}:L=MethodHandleImpl.loop(localTypes:L,clauses:L,t_{i}:L);
+            Object[] lArgs =
+                    new Object[]{null, // placeholder for BasicType[] localTypes - will be added by LambdaFormEditor
+                            names[GET_CLAUSE_DATA], names[BOXED_ARGS]};
+            names[LOOP] = new Name(NF_loop, lArgs);
+
+            // t_{i+2}:I=MethodHandle.invokeBasic(unbox:L,t_{i+1}:L);
+            MethodHandle invokeBasicUnbox = MethodHandles.basicInvoker(MethodType.methodType(basicType.rtype(), Object.class));
+            Object[] unboxArgs = new Object[]{names[GET_UNBOX_RESULT], names[LOOP]};
+            names[UNBOX_RESULT] = new Name(invokeBasicUnbox, unboxArgs);
+
+            lform = basicType.form().setCachedLambdaForm(MethodTypeForm.LF_LOOP,
+                    new LambdaForm("loop", lambdaType.parameterCount(), names));
+        }
+
+        // BOXED_ARGS is the index into the names array where the loop idiom starts
+        return lform.editor().noteLoopLocalTypesForm(BOXED_ARGS, localVarTypes);
+    }
+
+    static class LoopClauses {
+        @Stable final MethodHandle[][] clauses;
+        LoopClauses(MethodHandle[][] clauses) {
+            assert clauses.length == 4;
+            this.clauses = clauses;
+        }
+        @Override
+        public String toString() {
+            StringBuffer sb = new StringBuffer("LoopClauses -- ");
+            for (int i = 0; i < 4; ++i) {
+                if (i > 0) {
+                    sb.append("       ");
+                }
+                sb.append('<').append(i).append(">: ");
+                MethodHandle[] hs = clauses[i];
+                for (int j = 0; j < hs.length; ++j) {
+                    if (j > 0) {
+                        sb.append("          ");
+                    }
+                    sb.append('*').append(j).append(": ").append(hs[j]).append('\n');
+                }
+            }
+            sb.append(" --\n");
+            return sb.toString();
+        }
     }
 
     /**
-     * This method embodies the most generic loop for use by {@link MethodHandles#loop(MethodHandle[][])}. A handle on
-     * it will be transformed into a handle on a concrete loop instantiation by {@link #makeLoop}.
-     *
-     * @param init loop-local variable initializers.
-     * @param step bodies.
-     * @param pred predicates.
-     * @param fini finalizers.
-     * @param varSize number of loop-local variables.
-     * @param nArgs number of arguments passed to the loop.
-     * @param args arguments to the loop invocation.
-     *
-     * @return the result of executing the loop.
+     * Intrinsified during LambdaForm compilation
+     * (see {@link InvokerBytecodeGenerator#emitLoop(int)}).
      */
-    static Object looper(MethodHandle[] init, MethodHandle[] step, MethodHandle[] pred, MethodHandle[] fini,
-                         int varSize, int nArgs, Object[] args) throws Throwable {
+    @LambdaForm.Hidden
+    static Object loop(BasicType[] localTypes, LoopClauses clauseData, Object... av) throws Throwable {
+        final MethodHandle[] init = clauseData.clauses[0];
+        final MethodHandle[] step = clauseData.clauses[1];
+        final MethodHandle[] pred = clauseData.clauses[2];
+        final MethodHandle[] fini = clauseData.clauses[3];
+        int varSize = (int) Stream.of(init).filter(h -> h.type().returnType() != void.class).count();
+        int nArgs = init[0].type().parameterCount();
         Object[] varsAndArgs = new Object[varSize + nArgs];
         for (int i = 0, v = 0; i < init.length; ++i) {
-            if (init[i].type().returnType() == void.class) {
-                init[i].invoke(args);
+            MethodHandle ih = init[i];
+            if (ih.type().returnType() == void.class) {
+                ih.invokeWithArguments(av);
             } else {
-                varsAndArgs[v++] = init[i].invoke(args);
+                varsAndArgs[v++] = ih.invokeWithArguments(av);
             }
         }
-        System.arraycopy(args, 0, varsAndArgs, varSize, nArgs);
+        System.arraycopy(av, 0, varsAndArgs, varSize, nArgs);
         final int nSteps = step.length;
         for (; ; ) {
             for (int i = 0, v = 0; i < nSteps; ++i) {
@@ -1792,12 +1947,12 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
                 MethodHandle s = step[i];
                 MethodHandle f = fini[i];
                 if (s.type().returnType() == void.class) {
-                    s.invoke(varsAndArgs);
+                    s.invokeWithArguments(varsAndArgs);
                 } else {
-                    varsAndArgs[v++] = s.invoke(varsAndArgs);
+                    varsAndArgs[v++] = s.invokeWithArguments(varsAndArgs);
                 }
-                if (!(boolean) p.invoke(varsAndArgs)) {
-                    return f.invoke(varsAndArgs);
+                if (!(boolean) p.invokeWithArguments(varsAndArgs)) {
+                    return f.invokeWithArguments(varsAndArgs);
                 }
             }
         }
@@ -1807,37 +1962,26 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
      * This method is bound as the predicate in {@linkplain MethodHandles#countedLoop(MethodHandle, MethodHandle,
      * MethodHandle) counting loops}.
      *
-     * @param counter the counter parameter, passed in during loop execution.
      * @param limit the upper bound of the parameter, statically bound at loop creation time.
+     * @param counter the counter parameter, passed in during loop execution.
      *
      * @return whether the counter has reached the limit.
      */
-    static boolean countedLoopPredicate(int counter, int limit) {
-        return counter <= limit;
+    static boolean countedLoopPredicate(int limit, int counter) {
+        return counter < limit;
     }
 
     /**
      * This method is bound as the step function in {@linkplain MethodHandles#countedLoop(MethodHandle, MethodHandle,
      * MethodHandle) counting loops} to increment the counter.
      *
+     * @param limit the upper bound of the loop counter (ignored).
      * @param counter the loop counter.
      *
      * @return the loop counter incremented by 1.
      */
-    static int countedLoopStep(int counter, int limit) {
+    static int countedLoopStep(int limit, int counter) {
         return counter + 1;
-    }
-
-    /**
-     * This method is bound as a filter in {@linkplain MethodHandles#countedLoop(MethodHandle, MethodHandle, MethodHandle,
-     * MethodHandle) counting loops} to pass the correct counter value to the body.
-     *
-     * @param counter the loop counter.
-     *
-     * @return the loop counter decremented by 1.
-     */
-    static int decrementCounter(int counter) {
-        return counter - 1;
     }
 
     /**
@@ -1879,75 +2023,124 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
      *
      * @param target the target to execute in a {@code try-finally} block.
      * @param cleanup the cleanup to execute in the {@code finally} block.
-     * @param type the result type of the entire construct.
+     * @param rtype the result type of the entire construct.
      * @param argTypes the types of the arguments.
      *
      * @return a handle on the constructed {@code try-finally} block.
      */
-    static MethodHandle makeTryFinally(MethodHandle target, MethodHandle cleanup, Class<?> type, List<Class<?>> argTypes) {
-        MethodHandle tf = getConstantHandle(type == void.class ? MH_tryFinallyVoidExec : MH_tryFinallyExec);
+    static MethodHandle makeTryFinally(MethodHandle target, MethodHandle cleanup, Class<?> rtype, List<Class<?>> argTypes) {
+        MethodType type = MethodType.methodType(rtype, argTypes);
+        LambdaForm form = makeTryFinallyForm(type.basicType());
 
-        // Bind the statically known arguments.
-        tf = MethodHandles.insertArguments(tf, 0, target, cleanup);
+        // Prepare auxiliary method handles used during LambdaForm interpretation.
+        // Box arguments and wrap them into Object[]: ValueConversions.array().
+        MethodType varargsType = type.changeReturnType(Object[].class);
+        MethodHandle collectArgs = varargsArray(type.parameterCount()).asType(varargsType);
+        MethodHandle unboxResult = unboxResultHandle(rtype);
 
-        // Turn the args array into an argument list.
-        tf = tf.asCollector(Object[].class, argTypes.size());
-
-        // Finally, make try-finally type.
-        MethodType tfType = MethodType.methodType(type, argTypes);
-        tf = tf.asType(tfType);
-
-        return tf;
+        BoundMethodHandle.SpeciesData data = BoundMethodHandle.speciesData_LLLL();
+        BoundMethodHandle mh;
+        try {
+            mh = (BoundMethodHandle) data.constructor().invokeBasic(type, form, (Object) target, (Object) cleanup,
+                    (Object) collectArgs, (Object) unboxResult);
+        } catch (Throwable ex) {
+            throw uncaughtException(ex);
+        }
+        assert(mh.type() == type);
+        return mh;
     }
 
     /**
-     * A method that will be bound during construction of a {@code try-finally} handle with non-{@code void} return type
-     * by {@link MethodHandles#tryFinally(MethodHandle, MethodHandle)}.
-     *
-     * @param target the handle to wrap in a {@code try-finally} block. This will be bound.
-     * @param cleanup the handle to run in any case before returning. This will be bound.
-     * @param args the arguments to the call. These will remain as the argument list.
-     *
-     * @return whatever the execution of the {@code target} returned (it may have been modified by the execution of
-     *         {@code cleanup}).
-     * @throws Throwable in case anything is thrown by the execution of {@code target}, the {@link Throwable} will be
-     *         passed to the {@code cleanup} handle, which may decide to throw any exception it sees fit.
+     * The LambdaForm shape for the tryFinally combinator is as follows (assuming one reference parameter passed in
+     * {@code a1}, and a reference return type, with the return value represented by {@code t8}):
+     * <blockquote><pre>{@code
+     *  tryFinally=Lambda(a0:L,a1:L)=>{
+     *    t2:L=BoundMethodHandle$Species_LLLL.argL0(a0:L);  // target method handle
+     *    t3:L=BoundMethodHandle$Species_LLLL.argL1(a0:L);  // cleanup method handle
+     *    t4:L=BoundMethodHandle$Species_LLLL.argL2(a0:L);  // helper handle to box the arguments into an Object[]
+     *    t5:L=BoundMethodHandle$Species_LLLL.argL3(a0:L);  // helper handle to unbox the result
+     *    t6:L=MethodHandle.invokeBasic(t4:L,a1:L);         // box the arguments into an Object[]
+     *    t7:L=MethodHandleImpl.tryFinally(t2:L,t3:L,t6:L); // call the tryFinally executor
+     *    t8:L=MethodHandle.invokeBasic(t5:L,t7:L);t8:L}    // unbox the result; return the result
+     * }</pre></blockquote>
+     * <p>
+     * {@code argL0} and {@code argL1} are the target and cleanup method handles.
+     * {@code argL2} and {@code argL3} are auxiliary method handles: {@code argL2} boxes arguments and wraps them into
+     * {@code Object[]} ({@code ValueConversions.array()}), and {@code argL3} unboxes the result if necessary
+     * ({@code ValueConversions.unbox()}).
+     * <p>
+     * Having {@code t4} and {@code t5} passed in via a BMH and not hardcoded in the lambda form allows to share lambda
+     * forms among tryFinally combinators with the same basic type.
      */
-    static Object tryFinallyExecutor(MethodHandle target, MethodHandle cleanup, Object[] args) throws Throwable {
+    private static LambdaForm makeTryFinallyForm(MethodType basicType) {
+        MethodType lambdaType = basicType.invokerType();
+
+        LambdaForm lform = basicType.form().cachedLambdaForm(MethodTypeForm.LF_TF);
+        if (lform != null) {
+            return lform;
+        }
+        final int THIS_MH      = 0;  // the BMH_LLLL
+        final int ARG_BASE     = 1;  // start of incoming arguments
+        final int ARG_LIMIT    = ARG_BASE + basicType.parameterCount();
+
+        int nameCursor = ARG_LIMIT;
+        final int GET_TARGET       = nameCursor++;
+        final int GET_CLEANUP      = nameCursor++;
+        final int GET_COLLECT_ARGS = nameCursor++;
+        final int GET_UNBOX_RESULT = nameCursor++;
+        final int BOXED_ARGS       = nameCursor++;
+        final int TRY_FINALLY      = nameCursor++;
+        final int UNBOX_RESULT     = nameCursor++;
+
+        Name[] names = arguments(nameCursor - ARG_LIMIT, lambdaType);
+
+        BoundMethodHandle.SpeciesData data = BoundMethodHandle.speciesData_LLLL();
+        names[THIS_MH]          = names[THIS_MH].withConstraint(data);
+        names[GET_TARGET]       = new Name(data.getterFunction(0), names[THIS_MH]);
+        names[GET_CLEANUP]      = new Name(data.getterFunction(1), names[THIS_MH]);
+        names[GET_COLLECT_ARGS] = new Name(data.getterFunction(2), names[THIS_MH]);
+        names[GET_UNBOX_RESULT] = new Name(data.getterFunction(3), names[THIS_MH]);
+
+        // t_{i}:L=MethodHandle.invokeBasic(collectArgs:L,a1:L,...);
+        MethodType collectArgsType = basicType.changeReturnType(Object.class);
+        MethodHandle invokeBasic = MethodHandles.basicInvoker(collectArgsType);
+        Object[] args = new Object[invokeBasic.type().parameterCount()];
+        args[0] = names[GET_COLLECT_ARGS];
+        System.arraycopy(names, ARG_BASE, args, 1, ARG_LIMIT-ARG_BASE);
+        names[BOXED_ARGS] = new Name(makeIntrinsic(invokeBasic, Intrinsic.TRY_FINALLY), args);
+
+        // t_{i+1}:L=MethodHandleImpl.tryFinally(target:L,exType:L,catcher:L,t_{i}:L);
+        Object[] tfArgs = new Object[] {names[GET_TARGET], names[GET_CLEANUP], names[BOXED_ARGS]};
+        names[TRY_FINALLY] = new Name(NF_tryFinally, tfArgs);
+
+        // t_{i+2}:I=MethodHandle.invokeBasic(unbox:L,t_{i+1}:L);
+        MethodHandle invokeBasicUnbox = MethodHandles.basicInvoker(MethodType.methodType(basicType.rtype(), Object.class));
+        Object[] unboxArgs  = new Object[] {names[GET_UNBOX_RESULT], names[TRY_FINALLY]};
+        names[UNBOX_RESULT] = new Name(invokeBasicUnbox, unboxArgs);
+
+        lform = new LambdaForm("tryFinally", lambdaType.parameterCount(), names);
+
+        return basicType.form().setCachedLambdaForm(MethodTypeForm.LF_TF, lform);
+    }
+
+    /**
+     * Intrinsified during LambdaForm compilation
+     * (see {@link InvokerBytecodeGenerator#emitTryFinally emitTryFinally}).
+     */
+    @LambdaForm.Hidden
+    static Object tryFinally(MethodHandle target, MethodHandle cleanup, Object... av) throws Throwable {
         Throwable t = null;
         Object r = null;
         try {
-            r = target.invoke(args);
+            r = target.invokeWithArguments(av);
         } catch (Throwable thrown) {
             t = thrown;
             throw t;
         } finally {
-            r = cleanup.invoke(t, r, args);
+            Object[] args = target.type().returnType() == void.class ? prepend(av, t) : prepend(av, t, r);
+            r = cleanup.invokeWithArguments(args);
         }
         return r;
-    }
-
-    /**
-     * A method that will be bound during construction of a {@code try-finally} handle with {@code void} return type by
-     * {@link MethodHandles#tryFinally(MethodHandle, MethodHandle)}.
-     *
-     * @param target the handle to wrap in a {@code try-finally} block. This will be bound.
-     * @param cleanup the handle to run in any case before returning. This will be bound.
-     * @param args the arguments to the call. These will remain as the argument list.
-     *
-     * @throws Throwable in case anything is thrown by the execution of {@code target}, the {@link Throwable} will be
-     *         passed to the {@code cleanup} handle, which may decide to throw any exception it sees fit.
-     */
-    static void tryFinallyVoidExecutor(MethodHandle target, MethodHandle cleanup, Object[] args) throws Throwable {
-        Throwable t = null;
-        try {
-            target.invoke(args);
-        } catch (Throwable thrown) {
-            t = thrown;
-            throw t;
-        } finally {
-            cleanup.invoke(t, args);
-        }
     }
 
     // Indexes into constant method handles:
@@ -1958,17 +2151,13 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
             MH_fillNewTypedArray     =  3,
             MH_fillNewArray          =  4,
             MH_arrayIdentity         =  5,
-            MH_looper                =  6,
-            MH_countedLoopPred       =  7,
-            MH_countedLoopStep       =  8,
+            MH_countedLoopPred       =  6,
+            MH_countedLoopStep       =  7,
+            MH_initIterator          =  8,
             MH_iteratePred           =  9,
-            MH_initIterator          = 10,
-            MH_iterateNext           = 11,
-            MH_tryFinallyExec        = 12,
-            MH_tryFinallyVoidExec    = 13,
-            MH_decrementCounter      = 14,
-            MH_Array_newInstance     = 15,
-            MH_LIMIT                 = 16;
+            MH_iterateNext           = 10,
+            MH_Array_newInstance     = 11,
+            MH_LIMIT                 = 12;
 
     static MethodHandle getConstantHandle(int idx) {
         MethodHandle handle = HANDLES[idx];
@@ -2013,34 +2202,21 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
                     return makeIntrinsic(IMPL_LOOKUP.findStatic(MethodHandleImpl.class, "selectAlternative",
                             MethodType.methodType(MethodHandle.class, boolean.class, MethodHandle.class, MethodHandle.class)),
                         Intrinsic.SELECT_ALTERNATIVE);
-                case MH_looper:
-                    return IMPL_LOOKUP.findStatic(MethodHandleImpl.class, "looper", MethodType.methodType(Object.class,
-                            MethodHandle[].class, MethodHandle[].class, MethodHandle[].class, MethodHandle[].class,
-                            int.class, int.class, Object[].class));
                 case MH_countedLoopPred:
                     return IMPL_LOOKUP.findStatic(MethodHandleImpl.class, "countedLoopPredicate",
                             MethodType.methodType(boolean.class, int.class, int.class));
                 case MH_countedLoopStep:
                     return IMPL_LOOKUP.findStatic(MethodHandleImpl.class, "countedLoopStep",
                             MethodType.methodType(int.class, int.class, int.class));
-                case MH_iteratePred:
-                    return IMPL_LOOKUP.findStatic(MethodHandleImpl.class, "iteratePredicate",
-                            MethodType.methodType(boolean.class, Iterator.class));
                 case MH_initIterator:
                     return IMPL_LOOKUP.findStatic(MethodHandleImpl.class, "initIterator",
                             MethodType.methodType(Iterator.class, Iterable.class));
+                case MH_iteratePred:
+                    return IMPL_LOOKUP.findStatic(MethodHandleImpl.class, "iteratePredicate",
+                            MethodType.methodType(boolean.class, Iterator.class));
                 case MH_iterateNext:
                     return IMPL_LOOKUP.findStatic(MethodHandleImpl.class, "iterateNext",
                             MethodType.methodType(Object.class, Iterator.class));
-                case MH_tryFinallyExec:
-                    return IMPL_LOOKUP.findStatic(MethodHandleImpl.class, "tryFinallyExecutor",
-                            MethodType.methodType(Object.class, MethodHandle.class, MethodHandle.class, Object[].class));
-                case MH_tryFinallyVoidExec:
-                    return IMPL_LOOKUP.findStatic(MethodHandleImpl.class, "tryFinallyVoidExecutor",
-                            MethodType.methodType(void.class, MethodHandle.class, MethodHandle.class, Object[].class));
-                case MH_decrementCounter:
-                    return IMPL_LOOKUP.findStatic(MethodHandleImpl.class, "decrementCounter",
-                            MethodType.methodType(int.class, int.class));
                 case MH_Array_newInstance:
                     return IMPL_LOOKUP.findStatic(Array.class, "newInstance",
                             MethodType.methodType(Object.class, Class.class, int.class));

@@ -40,11 +40,7 @@
 //     package is exported to.
 //
 // Packages can be exported in the following 3 ways:
-//   - not exported:        the package has not been explicitly qualified to a
-//                            particular module nor has it been specified to be
-//                            unqualifiedly exported to all modules. If all states
-//                            of exportedness are false, the package is considered
-//                            not exported.
+//   - not exported:        the package does not have qualified or unqualified exports.
 //   - qualified exports:   the package has been explicitly qualified to at least
 //                            one particular module or has been qualifiedly exported
 //                            to all unnamed modules.
@@ -73,6 +69,7 @@ private:
   s2 _classpath_index;
   bool _is_exported_unqualified;
   bool _is_exported_allUnnamed;
+  bool _must_walk_exports;
   GrowableArray<ModuleEntry*>* _exported_pending_delete; // transitioned from qualified to unqualified, delete at safepoint
   GrowableArray<ModuleEntry*>* _qualified_exports;
   TRACE_DEFINE_TRACE_ID_FIELD;
@@ -86,6 +83,7 @@ public:
     _classpath_index = -1;
     _is_exported_unqualified = false;
     _is_exported_allUnnamed = false;
+    _must_walk_exports = false;
     _exported_pending_delete = NULL;
     _qualified_exports = NULL;
   }
@@ -125,6 +123,7 @@ public:
     return _is_exported_unqualified;
   }
   void set_unqual_exported() {
+    assert(Module_lock->owned_by_self(), "should have the Module_lock");
     _is_exported_unqualified = true;
     _is_exported_allUnnamed = false;
     _qualified_exports = NULL;
@@ -150,6 +149,7 @@ public:
 
   // add the module to the package's qualified exports
   void add_qexport(ModuleEntry* m);
+  void set_export_walk_required(ClassLoaderData* m_loader_data);
 
   PackageEntry* next() const {
     return (PackageEntry*)HashtableEntry<Symbol*, mtModule>::next();

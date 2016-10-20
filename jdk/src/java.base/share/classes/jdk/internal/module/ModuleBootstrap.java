@@ -56,8 +56,8 @@ import jdk.internal.perf.PerfCounter;
  * The {@link #boot() boot} method is called early in the startup to initialize
  * the module system. In summary, the boot method creates a Configuration by
  * resolving a set of module names specified via the launcher (or equivalent)
- * -m and -addmods options. The modules are located on a module path that is
- * constructed from the upgrade module path, system modules, and application
+ * -m and --add-modules options. The modules are located on a module path that
+ * is constructed from the upgrade module path, system modules, and application
  * module path. The Configuration is instantiated as the boot Layer with each
  * module in the the configuration defined to one of the built-in class loaders.
  */
@@ -127,16 +127,16 @@ public final class ModuleBootstrap {
 
         long t2 = System.nanoTime();
 
-        // -upgrademodulepath option specified to launcher
+        // --upgrade-module-path option specified to launcher
         ModuleFinder upgradeModulePath
-            = createModulePathFinder("jdk.upgrade.module.path");
+            = createModulePathFinder("jdk.module.upgrade.path");
         if (upgradeModulePath != null)
             systemModules = ModuleFinder.compose(upgradeModulePath, systemModules);
 
-        // -modulepath option specified to the launcher
+        // --module-path option specified to the launcher
         ModuleFinder appModulePath = createModulePathFinder("jdk.module.path");
 
-        // The module finder: [-upgrademodulepath] system [-modulepath]
+        // The module finder: [--upgrade-module-path] system [--module-path]
         ModuleFinder finder = systemModules;
         if (appModulePath != null)
             finder = ModuleFinder.compose(finder, appModulePath);
@@ -149,31 +149,28 @@ public final class ModuleBootstrap {
         if (mainModule != null)
             roots.add(mainModule);
 
-        // additional module(s) specified by -addmods
+        // additional module(s) specified by --add-modules
         boolean addAllDefaultModules = false;
         boolean addAllSystemModules = false;
         boolean addAllApplicationModules = false;
-        String propValue = System.getProperty("jdk.launcher.addmods");
-        if (propValue != null) {
-            for (String mod: propValue.split(",")) {
-                switch (mod) {
-                    case ALL_DEFAULT:
-                        addAllDefaultModules = true;
-                        break;
-                    case ALL_SYSTEM:
-                        addAllSystemModules = true;
-                        break;
-                    case ALL_MODULE_PATH:
-                        addAllApplicationModules = true;
-                        break;
-                    default :
-                        roots.add(mod);
-                }
+        for (String mod: getExtraAddModules()) {
+            switch (mod) {
+                case ALL_DEFAULT:
+                    addAllDefaultModules = true;
+                    break;
+                case ALL_SYSTEM:
+                    addAllSystemModules = true;
+                    break;
+                case ALL_MODULE_PATH:
+                    addAllApplicationModules = true;
+                    break;
+                default :
+                    roots.add(mod);
             }
         }
 
-        // -limitmods
-        propValue = System.getProperty("jdk.launcher.limitmods");
+        // --limit-modules
+        String propValue = getAndRemoveProperty("jdk.module.limitmods");
         if (propValue != null) {
             Set<String> mods = new HashSet<>();
             for (String mod: propValue.split(",")) {
@@ -216,7 +213,7 @@ public final class ModuleBootstrap {
             }
         }
 
-        // If `-addmods ALL-SYSTEM` is specified then all observable system
+        // If `--add-modules ALL-SYSTEM` is specified then all observable system
         // modules will be resolved.
         if (addAllSystemModules) {
             ModuleFinder f = finder;  // observable modules
@@ -228,9 +225,9 @@ public final class ModuleBootstrap {
                 .forEach(mn -> roots.add(mn));
         }
 
-        // If `-addmods ALL-MODULE-PATH` is specified then all observable
+        // If `--add-modules ALL-MODULE-PATH` is specified then all observable
         // modules on the application module path will be resolved.
-        if  (appModulePath != null && addAllApplicationModules) {
+        if (appModulePath != null && addAllApplicationModules) {
             ModuleFinder f = finder;  // observable modules
             appModulePath.findAll()
                 .stream()
@@ -250,7 +247,7 @@ public final class ModuleBootstrap {
         if (baseUri.getScheme().equals("jrt")   // toLowerCase not needed here
                 && (upgradeModulePath == null)
                 && (appModulePath == null)
-                && (System.getProperty("jdk.launcher.patch.0") == null)) {
+                && (!ModulePatcher.isBootLayerPatched())) {
             needPostResolutionChecks = false;
         }
 
@@ -317,7 +314,7 @@ public final class ModuleBootstrap {
         PerfCounters.loadModulesTime.addElapsedTimeFrom(t5);
 
 
-        // -XaddReads and -XaddExports
+        // --add-reads and --add-exports
         addExtraReads(bootLayer);
         addExtraExports(bootLayer);
 
@@ -392,37 +389,64 @@ public final class ModuleBootstrap {
         }
     }
 
+    /**
+     * Returns the set of module names specified via --add-modules options
+     * on the command line
+     */
+    private static Set<String> getExtraAddModules() {
+        String prefix = "jdk.module.addmods.";
+        int index = 0;
+
+        // the system property is removed after decoding
+        String value = getAndRemoveProperty(prefix + index);
+        if (value == null) {
+            return Collections.emptySet();
+        }
+
+        Set<String> modules = new HashSet<>();
+        while (value != null) {
+            for (String s : value.split(",")) {
+                if (s.length() > 0) modules.add(s);
+            }
+
+            index++;
+            value = getAndRemoveProperty(prefix + index);
+        }
+
+        return modules;
+    }
 
     /**
-     * Process the -XaddReads options to add any additional read edges that
+     * Process the --add-reads options to add any additional read edges that
      * are specified on the command-line.
      */
     private static void addExtraReads(Layer bootLayer) {
 
         // decode the command line options
-        Map<String, Set<String>> map = decode("jdk.launcher.addreads.");
+        Map<String, Set<String>> map = decode("jdk.module.addreads.");
 
         for (Map.Entry<String, Set<String>> e : map.entrySet()) {
 
             // the key is $MODULE
             String mn = e.getKey();
             Optional<Module> om = bootLayer.findModule(mn);
-            if (!om.isPresent())
-                fail("Unknown module: " + mn);
+            if (!om.isPresent()) {
+                warn("Unknown module: " + mn);
+                continue;
+            }
             Module m = om.get();
 
             // the value is the set of other modules (by name)
             for (String name : e.getValue()) {
-
-                Module other;
                 if (ALL_UNNAMED.equals(name)) {
                     Modules.addReadsAllUnnamed(m);
                 } else {
                     om = bootLayer.findModule(name);
-                    if (!om.isPresent())
-                        fail("Unknown module: " + name);
-                    other = om.get();
-                    Modules.addReads(m, other);
+                    if (om.isPresent()) {
+                        Modules.addReads(m, om.get());
+                    } else {
+                        warn("Unknown module: " + name);
+                    }
                 }
 
             }
@@ -431,13 +455,13 @@ public final class ModuleBootstrap {
 
 
     /**
-     * Process the -XaddExports options to add any additional read edges that
+     * Process the --add-exports options to add any additional read edges that
      * are specified on the command-line.
      */
     private static void addExtraExports(Layer bootLayer) {
 
         // decode the command line options
-        Map<String, Set<String>> map = decode("jdk.launcher.addexports.");
+        Map<String, Set<String>> map = decode("jdk.module.addexports.");
 
         for (Map.Entry<String, Set<String>> e : map.entrySet()) {
 
@@ -449,13 +473,23 @@ public final class ModuleBootstrap {
 
             String mn = s[0];
             String pn = s[1];
+            if (mn.isEmpty() || pn.isEmpty())
+                fail("Module and package name must be specified:" + key);
 
             // The exporting module is in the boot layer
             Module m;
             Optional<Module> om = bootLayer.findModule(mn);
-            if (!om.isPresent())
-                fail("Unknown module: " + mn);
+            if (!om.isPresent()) {
+                warn("Unknown module: " + mn);
+                continue;
+            }
+
             m = om.get();
+
+            if (!m.getDescriptor().packages().contains(pn)) {
+                warn("package " + pn + " not in " + mn);
+                continue;
+            }
 
             // the value is the set of modules to export to (by name)
             for (String name : e.getValue()) {
@@ -468,10 +502,10 @@ public final class ModuleBootstrap {
                     if (om.isPresent()) {
                         other = om.get();
                     } else {
-                        fail("Unknown module: " + name);
+                        warn("Unknown module: " + name);
+                        continue;
                     }
                 }
-
                 if (allUnnamed) {
                     Modules.addExportsToAllUnnamed(m, pn);
                 } else {
@@ -483,13 +517,14 @@ public final class ModuleBootstrap {
 
 
     /**
-     * Decodes the values of -XaddReads or -XaddExports options
+     * Decodes the values of --add-reads or --add-exports options
      *
      * The format of the options is: $KEY=$MODULE(,$MODULE)*
      */
     private static Map<String, Set<String>> decode(String prefix) {
         int index = 0;
-        String value = System.getProperty(prefix + index);
+        // the system property is removed after decoding
+        String value = getAndRemoveProperty(prefix + index);
         if (value == null)
             return Collections.emptyMap();
 
@@ -510,30 +545,34 @@ public final class ModuleBootstrap {
             if (rhs.isEmpty())
                 fail("Unable to parse: " + value);
 
-
-            // value is <module>(,<module>)*
-            if (map.containsKey(key))
-                fail(key + " specified more than once");
-
-            Set<String> values = new HashSet<>();
-            map.put(key, values);
+            Set<String> values = map.computeIfAbsent(key, k -> new HashSet<>());
             for (String s : rhs.split(",")) {
                 if (s.length() > 0) values.add(s);
             }
 
             index++;
-            value = System.getProperty(prefix + index);
+            value = getAndRemoveProperty(prefix + index);
         }
 
         return map;
     }
 
+    /**
+     * Gets and remove the named system property
+     */
+    private static String getAndRemoveProperty(String key) {
+        return (String)System.getProperties().remove(key);
+    }
 
     /**
      * Throws a RuntimeException with the given message
      */
     static void fail(String m) {
         throw new RuntimeException(m);
+    }
+
+    static void warn(String m) {
+        System.err.println("WARNING: " + m);
     }
 
     static class PerfCounters {

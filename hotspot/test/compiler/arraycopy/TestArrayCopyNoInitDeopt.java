@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,24 +25,25 @@
  * @test
  * @bug 8072016
  * @summary Infinite deoptimization/recompilation cycles in case of arraycopy with tightly coupled allocation
- * @library /testlibrary /test/lib /compiler/whitebox /
+ * @requires vm.flavor == "server"
+ * @library /test/lib /
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @build TestArrayCopyNoInitDeopt
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- * @run main ClassFileInstaller jdk.test.lib.Platform
+ *
+ * @build sun.hotspot.WhiteBox
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xmixed -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI
  *                   -XX:-BackgroundCompilation -XX:-UseOnStackReplacement -XX:TypeProfileLevel=020
- *                   TestArrayCopyNoInitDeopt
- *
+ *                   compiler.arraycopy.TestArrayCopyNoInitDeopt
  */
 
+package compiler.arraycopy;
 
-import sun.hotspot.WhiteBox;
-import sun.hotspot.code.NMethod;
-import jdk.test.lib.Platform;
-import java.lang.reflect.*;
 import compiler.whitebox.CompilerWhiteBoxTest;
+import jdk.test.lib.Platform;
+import sun.hotspot.WhiteBox;
+
+import java.lang.reflect.Method;
 
 public class TestArrayCopyNoInitDeopt {
 
@@ -85,9 +86,11 @@ public class TestArrayCopyNoInitDeopt {
     }
 
     static public void main(String[] args) throws Exception {
+        if (!Platform.isServer()) {
+            throw new Error("TESTBUG: Not server VM");
+        }
         // Only execute if C2 is available
-        if (Platform.isServer() &&
-            TIERED_STOP_AT_LEVEL == CompilerWhiteBoxTest.COMP_LEVEL_FULL_OPTIMIZATION) {
+        if (TIERED_STOP_AT_LEVEL == CompilerWhiteBoxTest.COMP_LEVEL_FULL_OPTIMIZATION) {
             int[] src = new int[10];
             Object src_obj = new Object();
             Method method_m1 = TestArrayCopyNoInitDeopt.class.getMethod("m1", Object.class);

@@ -49,7 +49,6 @@ import static jdk.tools.jlink.internal.TaskHelper.JLINK_BUNDLE;
 import jdk.tools.jlink.internal.TaskHelper.Option;
 import jdk.tools.jlink.internal.TaskHelper.OptionsHelper;
 import jdk.tools.jlink.internal.ImagePluginStack.ImageProvider;
-import jdk.tools.jlink.plugin.ExecutableImage;
 import jdk.tools.jlink.Jlink.JlinkConfiguration;
 import jdk.tools.jlink.Jlink.PluginsConfiguration;
 import jdk.tools.jlink.plugin.PluginException;
@@ -62,7 +61,7 @@ import jdk.tools.jlink.plugin.Plugin;
  * ## Should use jdk.joptsimple some day.
  */
 public class JlinkTask {
-    private static final boolean DEBUG = Boolean.getBoolean("jlink.debug");
+    static final boolean DEBUG = Boolean.getBoolean("jlink.debug");
 
     private static <T extends Throwable> void fail(Class<T> type,
             String format,
@@ -82,34 +81,41 @@ public class JlinkTask {
     private static final TaskHelper taskHelper
             = new TaskHelper(JLINK_BUNDLE);
 
-    static Option<?>[] recognizedOptions = {
+    private static final Option<?>[] recognizedOptions = {
         new Option<JlinkTask>(false, (task, opt, arg) -> {
             task.options.help = true;
-        }, "--help"),
+        }, "--help", "-h"),
         new Option<JlinkTask>(true, (task, opt, arg) -> {
+            // if used multiple times, the last one wins!
+            // So, clear previous values, if any.
+            task.options.modulePath.clear();
             String[] dirs = arg.split(File.pathSeparator);
+            int i = 0;
             Arrays.stream(dirs)
                   .map(Paths::get)
                   .forEach(task.options.modulePath::add);
-        }, "--modulepath", "--mp"),
+        }, "--module-path", "-p"),
         new Option<JlinkTask>(true, (task, opt, arg) -> {
+            // if used multiple times, the last one wins!
+            // So, clear previous values, if any.
+            task.options.limitMods.clear();
             for (String mn : arg.split(",")) {
                 if (mn.isEmpty()) {
                     throw taskHelper.newBadArgs("err.mods.must.be.specified",
-                            "--limitmods");
+                            "--limit-modules");
                 }
                 task.options.limitMods.add(mn);
             }
-        }, "--limitmods"),
+        }, "--limit-modules"),
         new Option<JlinkTask>(true, (task, opt, arg) -> {
             for (String mn : arg.split(",")) {
                 if (mn.isEmpty()) {
                     throw taskHelper.newBadArgs("err.mods.must.be.specified",
-                            "--addmods");
+                            "--add-modules");
                 }
                 task.options.addMods.add(mn);
             }
-        }, "--addmods"),
+        }, "--add-modules"),
         new Option<JlinkTask>(true, (task, opt, arg) -> {
             Path path = Paths.get(arg);
             task.options.output = path;
@@ -135,10 +141,10 @@ public class JlinkTask {
         }, true, "--keep-packaged-modules"),
         new Option<JlinkTask>(true, (task, opt, arg) -> {
             task.options.saveoptsfile = arg;
-        }, "--saveopts"),
+        }, "--save-opts"),
         new Option<JlinkTask>(false, (task, opt, arg) -> {
             task.options.fullVersion = true;
-        }, true, "--fullversion"),};
+        }, true, "--full-version"),};
 
     private static final String PROGNAME = "jlink";
     private final OptionsValues options = new OptionsValues();
@@ -184,8 +190,8 @@ public class JlinkTask {
                 optionsHelper.showHelp(PROGNAME);
                 return EXIT_OK;
             }
-            if (optionsHelper.listPlugins()) {
-                optionsHelper.listPlugins(true);
+            if (optionsHelper.shouldListPlugins()) {
+                optionsHelper.listPlugins();
                 return EXIT_OK;
             }
             if (options.version || options.fullVersion) {
@@ -295,7 +301,7 @@ public class JlinkTask {
         try {
             options.addMods = checkAddMods(options.addMods);
         } catch (IllegalArgumentException ex) {
-            throw taskHelper.newBadArgs("err.mods.must.be.specified", "--addmods")
+            throw taskHelper.newBadArgs("err.mods.must.be.specified", "--add-modules")
                     .showUsage(true);
         }
         // First create the image provider
@@ -325,7 +331,6 @@ public class JlinkTask {
                                                Set<String> limitMods,
                                                Set<String> addMods)
     {
-
         ModuleFinder finder = ModuleFinder.of(paths.toArray(new Path[0]));
 
         // jmods are located at link-time

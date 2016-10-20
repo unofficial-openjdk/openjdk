@@ -34,7 +34,6 @@
 #include "jvm_windows.h"
 #include "memory/allocation.inline.hpp"
 #include "memory/resourceArea.hpp"
-#include "mutex_windows.inline.hpp"
 #include "nativeInst_x86.hpp"
 #include "os_share_windows.hpp"
 #include "prims/jniFastGetField.hpp"
@@ -497,7 +496,15 @@ intptr_t* _get_previous_fp() {
   __asm {
     mov frameptr, ebp
   };
+  // ebp (frameptr) is for this frame (_get_previous_fp). We want the ebp for the
+  // caller of os::current_frame*(), so go up two frames. However, for
+  // optimized builds, _get_previous_fp() will be inlined, so only go
+  // up 1 frame in that case.
+#ifdef _NMT_NOINLINE_
+  return **(intptr_t***)frameptr;
+#else
   return *frameptr;
+#endif
 }
 #endif // !AMD64
 

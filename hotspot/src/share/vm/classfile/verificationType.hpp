@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -95,7 +95,8 @@ class VerificationType VALUE_OBJ_CLASS_SPEC {
       Category2_2nd      = (Category2_2ndFlag << 1 * BitsPerByte) | Primitive,
 
       // Primitive values (type descriminator stored in most-signifcant bytes)
-      Bogus              = (ITEM_Bogus      << 2 * BitsPerByte) | Category1,
+      // Bogus needs the " | Primitive".  Else, is_reference(Bogus) returns TRUE.
+      Bogus              = (ITEM_Bogus      << 2 * BitsPerByte) | Primitive,
       Boolean            = (ITEM_Boolean    << 2 * BitsPerByte) | Category1,
       Byte               = (ITEM_Byte       << 2 * BitsPerByte) | Category1,
       Short              = (ITEM_Short      << 2 * BitsPerByte) | Category1,
@@ -333,6 +334,12 @@ class VerificationType VALUE_OBJ_CLASS_SPEC {
   bool is_reference_assignable_from(
     const VerificationType&, ClassVerifier*, bool from_field_is_protected,
     TRAPS) const;
+
+ public:
+  static bool resolve_and_check_assignability(instanceKlassHandle klass, Symbol* name,
+                                              Symbol* from_name, bool from_field_is_protected,
+                                              bool from_is_array, bool from_is_object,
+                                              TRAPS);
 };
 
 #endif // SHARE_VM_CLASSFILE_VERIFICATIONTYPE_HPP

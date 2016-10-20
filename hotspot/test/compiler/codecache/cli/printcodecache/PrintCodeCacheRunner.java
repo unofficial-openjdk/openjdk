@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,13 +20,14 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package printcodecache;
 
-import jdk.test.lib.ExitCode;
+package compiler.codecache.cli.printcodecache;
+
+import compiler.codecache.cli.common.CodeCacheCLITestCase;
+import compiler.codecache.cli.common.CodeCacheInfoFormatter;
+import compiler.codecache.cli.common.CodeCacheOptions;
+import jdk.test.lib.process.ExitCode;
 import jdk.test.lib.cli.CommandLineOptionTest;
-import common.CodeCacheCLITestCase;
-import common.CodeCacheInfoFormatter;
-import common.CodeCacheOptions;
 import sun.hotspot.code.BlobType;
 
 import java.util.EnumSet;

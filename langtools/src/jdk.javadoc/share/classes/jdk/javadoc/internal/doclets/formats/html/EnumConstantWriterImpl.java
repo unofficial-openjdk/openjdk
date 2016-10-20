@@ -25,8 +25,7 @@
 
 package jdk.javadoc.internal.doclets.formats.html;
 
-import java.io.*;
-
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -34,6 +33,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 
+import jdk.javadoc.internal.doclets.formats.html.markup.HtmlAttr;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlConstants;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlStyle;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTag;
@@ -95,7 +95,7 @@ public class EnumConstantWriterImpl extends AbstractMemberWriter
         enumConstantsDetailsTree.addContent(writer.getMarkerAnchor(
                 SectionName.ENUM_CONSTANT_DETAIL));
         Content heading = HtmlTree.HEADING(HtmlConstants.DETAILS_HEADING,
-                writer.enumConstantsDetailsLabel);
+                contents.enumConstantDetailLabel);
         enumConstantsDetailsTree.addContent(heading);
         return enumConstantsDetailsTree;
     }
@@ -185,17 +185,9 @@ public class EnumConstantWriterImpl extends AbstractMemberWriter
      * {@inheritDoc}
      */
     @Override
-    public void close() throws IOException {
-        writer.close();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public void addSummaryLabel(Content memberTree) {
         Content label = HtmlTree.HEADING(HtmlConstants.SUMMARY_HEADING,
-                writer.getResource("doclet.Enum_Constant_Summary"));
+                contents.enumConstantSummary);
         memberTree.addContent(label);
     }
 
@@ -204,9 +196,9 @@ public class EnumConstantWriterImpl extends AbstractMemberWriter
      */
     @Override
     public String getTableSummary() {
-        return configuration.getText("doclet.Member_Table_Summary",
-                configuration.getText("doclet.Enum_Constant_Summary"),
-                configuration.getText("doclet.enum_constants"));
+        return resources.getText("doclet.Member_Table_Summary",
+                resources.getText("doclet.Enum_Constant_Summary"),
+                resources.getText("doclet.enum_constants"));
     }
 
     /**
@@ -214,7 +206,7 @@ public class EnumConstantWriterImpl extends AbstractMemberWriter
      */
     @Override
     public Content getCaption() {
-        return configuration.getResource("doclet.Enum_Constants");
+        return configuration.getContent("doclet.Enum_Constants");
     }
 
     /**
@@ -222,9 +214,8 @@ public class EnumConstantWriterImpl extends AbstractMemberWriter
      */
     @Override
     public List<String> getSummaryTableHeader(Element member) {
-        List<String> header = Arrays.asList(configuration.getText("doclet.0_and_1",
-                configuration.getText("doclet.Enum_Constant"),
-                configuration.getText("doclet.Description")));
+        List<String> header = Arrays.asList(resources.getText("doclet.Enum_Constant"),
+                resources.getText("doclet.Description"));
         return header;
     }
 
@@ -267,8 +258,9 @@ public class EnumConstantWriterImpl extends AbstractMemberWriter
      * {@inheritDoc}
      */
     @Override
-    public void setSummaryColumnStyle(HtmlTree tdTree) {
-        tdTree.addStyle(HtmlStyle.colOne);
+    public void setSummaryColumnStyleAndScope(HtmlTree thTree) {
+        thTree.addStyle(HtmlStyle.colFirst);
+        thTree.addAttr(HtmlAttr.SCOPE, "row");
     }
 
     /**
@@ -303,14 +295,14 @@ public class EnumConstantWriterImpl extends AbstractMemberWriter
         if (link) {
             if (typeElement == null) {
                 return writer.getHyperLink(SectionName.ENUM_CONSTANT_SUMMARY,
-                        writer.getResource("doclet.navEnum"));
+                        contents.navEnum);
             } else {
                 return writer.getHyperLink(
                         SectionName.ENUM_CONSTANTS_INHERITANCE,
-                        configuration.getClassName(typeElement), writer.getResource("doclet.navEnum"));
+                        configuration.getClassName(typeElement), contents.navEnum);
             }
         } else {
-            return writer.getResource("doclet.navEnum");
+            return contents.navEnum;
         }
     }
 
@@ -322,9 +314,9 @@ public class EnumConstantWriterImpl extends AbstractMemberWriter
         if (link) {
             liNav.addContent(writer.getHyperLink(
                     SectionName.ENUM_CONSTANT_DETAIL,
-                    writer.getResource("doclet.navEnum")));
+                    contents.navEnum));
         } else {
-            liNav.addContent(writer.getResource("doclet.navEnum"));
+            liNav.addContent(contents.navEnum);
         }
     }
 }

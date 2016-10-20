@@ -44,7 +44,6 @@
 #include "memory/allocation.inline.hpp"
 #include "memory/filemap.hpp"
 #include "misc_aix.hpp"
-#include "mutex_aix.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "os_aix.inline.hpp"
 #include "os_share_aix.hpp"
@@ -53,7 +52,7 @@
 #include "prims/jvm.h"
 #include "prims/jvm_misc.hpp"
 #include "runtime/arguments.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/extendedPC.hpp"
 #include "runtime/globals.hpp"
 #include "runtime/interfaceSupport.hpp"
@@ -155,8 +154,6 @@ int       os::Aix::_on_pase = -1;
 //  TT - tech level, if known, 0 otherwise
 //  SS - service pack, if known, 0 otherwise
 uint32_t  os::Aix::_os_version = 0;
-
-int       os::Aix::_stack_page_size = -1;
 
 // -1 = uninitialized, 0 - no, 1 - yes
 int       os::Aix::_xpg_sus_mode = -1;
@@ -850,7 +847,8 @@ static void *thread_native_entry(Thread *thread) {
   return 0;
 }
 
-bool os::create_thread(Thread* thread, ThreadType thr_type, size_t stack_size) {
+bool os::create_thread(Thread* thread, ThreadType thr_type,
+                       size_t req_stack_size) {
 
   assert(thread->osthread() == NULL, "caller responsible");
 
@@ -883,36 +881,11 @@ bool os::create_thread(Thread* thread, ThreadType thr_type, size_t stack_size) {
   guarantee(pthread_attr_setsuspendstate_np(&attr, PTHREAD_CREATE_SUSPENDED_NP) == 0, "???");
 
   // calculate stack size if it's not specified by caller
-  if (stack_size == 0) {
-    stack_size = os::Aix::default_stack_size(thr_type);
-
-    switch (thr_type) {
-    case os::java_thread:
-      // Java threads use ThreadStackSize whose default value can be changed with the flag -Xss.
-      assert(JavaThread::stack_size_at_create() > 0, "this should be set");
-      stack_size = JavaThread::stack_size_at_create();
-      break;
-    case os::compiler_thread:
-      if (CompilerThreadStackSize > 0) {
-        stack_size = (size_t)(CompilerThreadStackSize * K);
-        break;
-      } // else fall through:
-        // use VMThreadStackSize if CompilerThreadStackSize is not defined
-    case os::vm_thread:
-    case os::pgc_thread:
-    case os::cgc_thread:
-    case os::watcher_thread:
-      if (VMThreadStackSize > 0) stack_size = (size_t)(VMThreadStackSize * K);
-      break;
-    }
-  }
-
-  stack_size = MAX2(stack_size, os::Aix::min_stack_allowed);
+  size_t stack_size = os::Posix::get_initial_stack_size(thr_type, req_stack_size);
   pthread_attr_setstacksize(&attr, stack_size);
 
   pthread_t tid;
   int ret = pthread_create(&tid, &attr, (void* (*)(void*)) thread_native_entry, thread);
-
 
   char buf[64];
   if (ret == 0) {
@@ -1499,7 +1472,6 @@ void os::print_memory_info(outputStream* st) {
     g_multipage_support.error);
   st->cr();
   st->print_cr("  os::vm_page_size:       %s", describe_pagesize(os::vm_page_size()));
-  // not used in OpenJDK st->print_cr("  os::stack_page_size:    %s", describe_pagesize(os::stack_page_size()));
 
   // print out LDR_CNTRL because it affects the default page sizes
   const char* const ldr_cntrl = ::getenv("LDR_CNTRL");
@@ -2690,7 +2662,8 @@ void os::hint_no_preempt() {}
 //      - sets target osthread state to continue
 //      - sends signal to end the sigsuspend loop in the SR_handler
 //
-//  Note that the SR_lock plays no role in this suspend/resume protocol.
+//  Note that the SR_lock plays no role in this suspend/resume protocol,
+//  but is checked for NULL in SR_handler as a thread termination indicator.
 //
 
 static void resume_clear_context(OSThread *osthread) {
@@ -2722,9 +2695,22 @@ static void SR_handler(int sig, siginfo_t* siginfo, ucontext_t* context) {
   // after sigsuspend.
   int old_errno = errno;
 
-  Thread* thread = Thread::current();
-  OSThread* osthread = thread->osthread();
+  Thread* thread = Thread::current_or_null_safe();
+  assert(thread != NULL, "Missing current thread in SR_handler");
+
+  // On some systems we have seen signal delivery get "stuck" until the signal
+  // mask is changed as part of thread termination. Check that the current thread
+  // has not already terminated (via SR_lock()) - else the following assertion
+  // will fail because the thread is no longer a JavaThread as the ~JavaThread
+  // destructor has completed.
+
+  if (thread->SR_lock() == NULL) {
+    return;
+  }
+
   assert(thread->is_VM_thread() || thread->is_Java_thread(), "Must be VMThread or JavaThread");
+
+  OSThread* osthread = thread->osthread();
 
   os::SuspendResume::State current = osthread->sr.state();
   if (current == os::SuspendResume::SR_SUSPEND_REQUEST) {
@@ -3451,10 +3437,6 @@ void os::init(void) {
     FLAG_SET_ERGO(bool, Use64KPages, true);
   }
 
-  // Short-wire stack page size to base page size; if that works, we just remove
-  // that stack page size altogether.
-  Aix::_stack_page_size = Aix::_page_size;
-
   // For now UseLargePages is just ignored.
   FLAG_SET_ERGO(bool, UseLargePages, false);
   _page_sizes[0] = 0;
@@ -3587,31 +3569,10 @@ jint os::init_2(void) {
   Aix::signal_sets_init();
   Aix::install_signal_handlers();
 
-  // Check minimum allowable stack size for thread creation and to initialize
-  // the java system classes, including StackOverflowError - depends on page
-  // size. Add a page for compiler2 recursion in main thread.
-  // Add in 2*BytesPerWord times page size to account for VM stack during
-  // class initialization depending on 32 or 64 bit VM.
-  os::Aix::min_stack_allowed = MAX2(os::Aix::min_stack_allowed,
-                                    JavaThread::stack_guard_zone_size() +
-                                    JavaThread::stack_shadow_zone_size() +
-                                    (2*BytesPerWord COMPILER2_PRESENT(+1)) * Aix::vm_default_page_size());
-
-  os::Aix::min_stack_allowed = align_size_up(os::Aix::min_stack_allowed, os::Aix::page_size());
-
-  size_t threadStackSizeInBytes = ThreadStackSize * K;
-  if (threadStackSizeInBytes != 0 &&
-      threadStackSizeInBytes < os::Aix::min_stack_allowed) {
-    tty->print_cr("\nThe stack size specified is too small, "
-                  "Specify at least %dk",
-                  os::Aix::min_stack_allowed / K);
+  // Check and sets minimum stack sizes against command line options
+  if (Posix::set_minimum_stack_sizes() == JNI_ERR) {
     return JNI_ERR;
   }
-
-  // Make the stack size a multiple of the page size so that
-  // the yellow/red zones can be guarded.
-  // Note that this can be 0, if no default stacksize was set.
-  JavaThread::set_stack_size_at_create(round_to(threadStackSizeInBytes, vm_page_size()));
 
   if (UseNUMA) {
     UseNUMA = false;
@@ -3792,10 +3753,6 @@ int os::stat(const char *path, struct stat *sbuf) {
   }
   os::native_path(strcpy(pathbuf, path));
   return ::stat(pathbuf, sbuf);
-}
-
-bool os::check_heap(bool force) {
-  return true;
 }
 
 // Is a (classpath) directory empty?

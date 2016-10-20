@@ -22,6 +22,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 package com.sun.media.sound;
 
 /**
@@ -94,7 +95,7 @@ public final class DLSInfo {
     public String subject = null;
     /**
      * (ISRC) Name of person or orginization who supplied
-     *        orginal material for the file.
+     *        original material for the file.
      */
     public String source = null;
     /**

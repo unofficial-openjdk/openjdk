@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,22 +22,26 @@
  *
  */
 
-import jdk.test.lib.cli.predicate.NotPredicate;
-import jdk.test.lib.OutputAnalyzer;
-import jdk.test.lib.ProcessTools;
-
 /*
  * @test
- * @library /testlibrary /test/lib /compiler/whitebox
- *          /compiler/testlibrary /compiler/codegen/7184394
+ * @library /test/lib /
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @build TestAESIntrinsicsOnUnsupportedConfig TestAESMain
- * @run main ClassFileInstaller
- * sun.hotspot.WhiteBox sun.hotspot.WhiteBox$WhiteBoxPermission
+ *
+ * @build sun.hotspot.WhiteBox
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
- *       -XX:+WhiteBoxAPI -Xbatch  TestAESIntrinsicsOnUnsupportedConfig
+ *       -XX:+WhiteBoxAPI -Xbatch
+ *       compiler.cpuflags.TestAESIntrinsicsOnUnsupportedConfig
  */
+
+package compiler.cpuflags;
+
+import jdk.test.lib.process.OutputAnalyzer;
+import jdk.test.lib.process.ProcessTools;
+import jdk.test.lib.cli.predicate.NotPredicate;
+
 public class TestAESIntrinsicsOnUnsupportedConfig extends AESIntrinsicsBase {
 
     private static final String INTRINSICS_NOT_AVAILABLE_MSG = "warning: AES "

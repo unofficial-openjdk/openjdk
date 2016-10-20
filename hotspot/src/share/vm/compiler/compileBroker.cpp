@@ -32,7 +32,6 @@
 #include "compiler/compileLog.hpp"
 #include "compiler/compilerOracle.hpp"
 #include "compiler/directivesParser.hpp"
-#include "gc/shared/referencePendingListLocker.hpp"
 #include "interpreter/linkResolver.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/resourceArea.hpp"
@@ -42,7 +41,7 @@
 #include "prims/nativeLookup.hpp"
 #include "prims/whitebox.hpp"
 #include "runtime/arguments.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/compilationPolicy.hpp"
 #include "runtime/init.hpp"
 #include "runtime/interfaceSupport.hpp"
@@ -551,17 +550,6 @@ void CompileBroker::compilation_init(TRAPS) {
       } else {
         c1_count = JVMCIHostThreads;
       }
-
-      if (!UseInterpreter || !BackgroundCompilation) {
-        // Force initialization of JVMCI compiler otherwise JVMCI
-        // compilations will not block until JVMCI is initialized
-        ResourceMark rm;
-        TempNewSymbol getCompiler = SymbolTable::new_symbol("getCompiler", CHECK);
-        TempNewSymbol sig = SymbolTable::new_symbol("()Ljdk/vm/ci/runtime/JVMCICompiler;", CHECK);
-        Handle jvmciRuntime = JVMCIRuntime::get_HotSpotJVMCIRuntime(CHECK);
-        JavaValue result(T_OBJECT);
-        JavaCalls::call_virtual(&result, jvmciRuntime, HotSpotJVMCIRuntime::klass(), getCompiler, sig, CHECK);
-      }
     }
   }
 #endif // INCLUDE_JVMCI
@@ -904,15 +892,6 @@ void CompileBroker::compile_method_base(const methodHandle& method,
     return;
   }
 
-  // If the requesting thread is holding the pending list lock
-  // then we just return. We can't risk blocking while holding
-  // the pending list lock or a 3-way deadlock may occur
-  // between the reference handler thread, a GC (instigated
-  // by a compiler thread), and compiled method registration.
-  if (ReferencePendingListLocker::is_locked_by_self()) {
-    return;
-  }
-
   if (TieredCompilation) {
     // Tiered policy requires MethodCounters to exist before adding a method to
     // the queue. Create if we don't have them yet.
@@ -1078,6 +1057,12 @@ nmethod* CompileBroker::compile_method(const methodHandle& method, int osr_bci,
       compilation_is_prohibited(method, osr_bci, comp_level, directive->ExcludeOption)) {
     return NULL;
   }
+
+#if INCLUDE_JVMCI
+  if (comp->is_jvmci() && !JVMCIRuntime::can_initialize_JVMCI()) {
+    return NULL;
+  }
+#endif
 
   if (osr_bci == InvocationEntryBci) {
     // standard compilation
@@ -1760,7 +1745,7 @@ void CompileBroker::post_compile(CompilerThread* thread, CompileTask* task, Even
   assert(task->compile_id() != CICrashAt, "just as planned");
   if (event.should_commit()) {
     event.set_method(task->method());
-    event.set_compileID(task->compile_id());
+    event.set_compileId(task->compile_id());
     event.set_compileLevel(task->comp_level());
     event.set_succeded(task->is_success());
     event.set_isOsr(task->osr_bci() != CompileBroker::standard_entry_bci);
@@ -2404,4 +2389,3 @@ void CompileBroker::print_last_compile() {
     }
   }
 }
-

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * Copyright 2016 Azul Systems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -26,15 +26,16 @@
  * @test TestOnSpinWait
  * @summary (x86 only) checks that java.lang.Thread.onSpinWait is intrinsified
  * @bug 8147844
+ * @library /test/lib
  * @modules java.base/jdk.internal.misc
- * @library /testlibrary
  * @requires os.arch=="x86" | os.arch=="amd64" | os.arch=="x86_64"
- * @run main TestOnSpinWait
+ * @run driver compiler.onSpinWait.TestOnSpinWait
  */
 
-import java.lang.invoke.*;
-import jdk.test.lib.*;
-import static jdk.test.lib.Asserts.*;
+package compiler.onSpinWait;
+
+import jdk.test.lib.process.OutputAnalyzer;
+import jdk.test.lib.process.ProcessTools;
 
 public class TestOnSpinWait {
 
@@ -45,7 +46,7 @@ public class TestOnSpinWait {
           "-XX:+IgnoreUnrecognizedVMOptions", "-showversion",
           "-XX:+TieredCompilation", "-XX:TieredStopAtLevel=1", "-Xbatch",
           "-XX:+PrintCompilation", "-XX:+UnlockDiagnosticVMOptions",
-          "-XX:+PrintInlining", "TestOnSpinWait$Launcher");
+          "-XX:+PrintInlining", Launcher.class.getName());
 
         OutputAnalyzer analyzer = new OutputAnalyzer(pb.start());
 
@@ -59,7 +60,7 @@ public class TestOnSpinWait {
           "-XX:+IgnoreUnrecognizedVMOptions", "-showversion",
           "-XX:-TieredCompilation", "-Xbatch",
           "-XX:+PrintCompilation", "-XX:+UnlockDiagnosticVMOptions",
-          "-XX:+PrintInlining", "TestOnSpinWait$Launcher");
+          "-XX:+PrintInlining", Launcher.class.getName());
 
         analyzer = new OutputAnalyzer(pb.start());
 

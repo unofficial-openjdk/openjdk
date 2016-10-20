@@ -23,7 +23,7 @@
 
 /**
  * @test
- * @requires (os.simpleArch == "x64" | os.simpleArch == "sparcv9") & os.arch != "aarch64"
+ * @requires (vm.simpleArch == "x64" | vm.simpleArch == "sparcv9") & os.arch != "aarch64"
  * @library /
  * @modules jdk.vm.ci/jdk.vm.ci.hotspot
  *          jdk.vm.ci/jdk.vm.ci.meta
@@ -32,17 +32,11 @@
  *          jdk.vm.ci/jdk.vm.ci.runtime
  *          jdk.vm.ci/jdk.vm.ci.amd64
  *          jdk.vm.ci/jdk.vm.ci.sparc
- * @compile CodeInstallationTest.java DebugInfoTest.java TestAssembler.java amd64/AMD64TestAssembler.java sparc/SPARCTestAssembler.java
+ * @compile CodeInstallationTest.java DebugInfoTest.java TestAssembler.java TestHotSpotVMConfig.java amd64/AMD64TestAssembler.java sparc/SPARCTestAssembler.java
  * @run junit/othervm -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI jdk.vm.ci.code.test.VirtualObjectDebugInfoTest
  */
 
 package jdk.vm.ci.code.test;
-
-import java.util.ArrayList;
-import java.util.Objects;
-
-import org.junit.Assert;
-import org.junit.Test;
 
 import jdk.vm.ci.code.Register;
 import jdk.vm.ci.code.VirtualObject;
@@ -52,6 +46,11 @@ import jdk.vm.ci.meta.JavaKind;
 import jdk.vm.ci.meta.JavaValue;
 import jdk.vm.ci.meta.ResolvedJavaField;
 import jdk.vm.ci.meta.ResolvedJavaType;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.Objects;
 
 public class VirtualObjectDebugInfoTest extends DebugInfoTest {
 

@@ -97,7 +97,7 @@ public final class JavacTool implements JavaCompiler {
         PrintWriter pw = (charset == null)
                 ? new PrintWriter(System.err, true)
                 : new PrintWriter(new OutputStreamWriter(System.err, charset), true);
-        context.put(Log.outKey, pw);
+        context.put(Log.errKey, pw);
         CacheFSInfo.preRegister(context);
         return new JavacFileManager(context, true, charset);
     }
@@ -161,9 +161,9 @@ public final class JavacTool implements JavaCompiler {
                 context.put(DiagnosticListener.class, ccw.wrap(diagnosticListener));
 
             if (out == null)
-                context.put(Log.outKey, new PrintWriter(System.err, true));
+                context.put(Log.errKey, new PrintWriter(System.err, true));
             else
-                context.put(Log.outKey, new PrintWriter(out, true));
+                context.put(Log.errKey, new PrintWriter(out, true));
 
             if (fileManager == null) {
                 fileManager = getStandardFileManager(diagnosticListener, null, null);
@@ -179,10 +179,10 @@ public final class JavacTool implements JavaCompiler {
             args.init("javac", options, classes, compilationUnits);
 
             // init multi-release jar handling
-            if (fileManager.isSupportedOption(Option.MULTIRELEASE.text) == 1) {
+            if (fileManager.isSupportedOption(Option.MULTIRELEASE.primaryName) == 1) {
                 Target target = Target.instance(context);
                 List<String> list = List.of(target.multiReleaseValue());
-                fileManager.handleOption(Option.MULTIRELEASE.text, list.iterator());
+                fileManager.handleOption(Option.MULTIRELEASE.primaryName, list.iterator());
             }
 
             return new JavacTaskImpl(context);
@@ -212,8 +212,9 @@ public final class JavacTool implements JavaCompiler {
     public int isSupportedOption(String option) {
         Set<Option> recognizedOptions = Option.getJavacToolOptions();
         for (Option o : recognizedOptions) {
-            if (o.matches(option))
+            if (o.matches(option)) {
                 return o.hasArg() ? 1 : 0;
+            }
         }
         return -1;
     }

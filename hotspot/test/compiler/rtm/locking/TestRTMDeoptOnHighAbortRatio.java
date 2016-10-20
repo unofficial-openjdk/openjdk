@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,23 +27,32 @@
  * @bug 8031320
  * @summary Verify that on high abort ratio method will be recompiled
  *          without rtm locking.
- * @library /testlibrary /test/lib /compiler/testlibrary
+ * @library /test/lib /
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @build TestRTMDeoptOnHighAbortRatio
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
+ * @build sun.hotspot.WhiteBox
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
- *                   -XX:+WhiteBoxAPI TestRTMDeoptOnHighAbortRatio
+ *                   -XX:+WhiteBoxAPI
+ *                   compiler.rtm.locking.TestRTMDeoptOnHighAbortRatio
  */
 
-import java.util.List;
-import jdk.test.lib.*;
+package compiler.rtm.locking;
+
+import compiler.testlibrary.rtm.AbortProvoker;
+import compiler.testlibrary.rtm.AbortType;
+import compiler.testlibrary.rtm.RTMLockingStatistics;
+import compiler.testlibrary.rtm.RTMTestBase;
+import compiler.testlibrary.rtm.predicate.SupportedCPU;
+import compiler.testlibrary.rtm.predicate.SupportedOS;
+import compiler.testlibrary.rtm.predicate.SupportedVM;
+import jdk.test.lib.Asserts;
+import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.cli.CommandLineOptionTest;
 import jdk.test.lib.cli.predicate.AndPredicate;
-import rtm.*;
-import rtm.predicate.SupportedCPU;
-import rtm.predicate.SupportedVM;
+
+import java.util.List;
 
 /**
  * Test verifies that on high abort ratio method wil be deoptimized with
@@ -58,7 +67,7 @@ public class TestRTMDeoptOnHighAbortRatio extends CommandLineOptionTest {
             = AbortProvoker.DEFAULT_ITERATIONS / 2L;
 
     private TestRTMDeoptOnHighAbortRatio() {
-        super(new AndPredicate(new SupportedCPU(), new SupportedVM()));
+        super(new AndPredicate(new SupportedCPU(), new SupportedOS(), new SupportedVM()));
     }
 
     @Override

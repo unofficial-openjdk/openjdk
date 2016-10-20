@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,32 +22,38 @@
  *
  */
 
-import java.lang.management.MemoryPoolMXBean;
-import java.util.EnumSet;
-import java.util.ArrayList;
-
-import sun.hotspot.WhiteBox;
-import sun.hotspot.code.BlobType;
-import sun.hotspot.code.CodeBlob;
-import jdk.test.lib.Asserts;
-
 /*
  * @test OverflowCodeCacheTest
  * @bug 8059550
- * @library /testlibrary /test/lib
- * @modules java.base/jdk.internal.misc
- * @modules java.management
- * @build OverflowCodeCacheTest
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
- *                   -XX:+WhiteBoxAPI -XX:CompileCommand=compileonly,null::*
- *                   -XX:-SegmentedCodeCache OverflowCodeCacheTest
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
- *                   -XX:+WhiteBoxAPI -XX:CompileCommand=compileonly,null::*
- *                   -XX:+SegmentedCodeCache OverflowCodeCacheTest
  * @summary testing of code cache segments overflow
+ * @library /test/lib
+ * @modules java.base/jdk.internal.misc
+ *          java.management
+ *
+ * @build sun.hotspot.WhiteBox
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
+ *                   -XX:+WhiteBoxAPI -XX:CompileCommand=compileonly,null::*
+ *                   -XX:-SegmentedCodeCache
+ *                   compiler.codecache.OverflowCodeCacheTest
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
+ *                   -XX:+WhiteBoxAPI -XX:CompileCommand=compileonly,null::*
+ *                   -XX:+SegmentedCodeCache
+ *                   compiler.codecache.OverflowCodeCacheTest
  */
+
+package compiler.codecache;
+
+import jdk.test.lib.Asserts;
+import sun.hotspot.WhiteBox;
+import sun.hotspot.code.BlobType;
+import sun.hotspot.code.CodeBlob;
+
+import java.lang.management.MemoryPoolMXBean;
+import java.util.ArrayList;
+import java.util.EnumSet;
+
 public class OverflowCodeCacheTest {
     private static final WhiteBox WHITE_BOX = WhiteBox.getWhiteBox();
 
@@ -69,6 +75,7 @@ public class OverflowCodeCacheTest {
         System.out.printf("type %s%n", type);
         System.out.println("allocating till possible...");
         ArrayList<Long> blobs = new ArrayList<>();
+        int compilationActivityMode = -1;
         try {
             long addr;
             int size = (int) (getHeapSize() >> 7);
@@ -82,13 +89,16 @@ public class OverflowCodeCacheTest {
                             type + " doesn't allow using " + actualType + " when overflow");
                 }
             }
-            Asserts.assertNotEquals(WHITE_BOX.getCompilationActivityMode(), 1 /* run_compilation*/,
-                    "Compilation must be disabled when CodeCache(CodeHeap) overflows");
+            /* now, remember compilationActivityMode to check it later, after freeing, since we
+               possibly have no free cache for futher work */
+            compilationActivityMode = WHITE_BOX.getCompilationActivityMode();
         } finally {
             for (Long blob : blobs) {
                 WHITE_BOX.freeCodeBlob(blob);
             }
         }
+        Asserts.assertNotEquals(compilationActivityMode, 1 /* run_compilation*/,
+                "Compilation must be disabled when CodeCache(CodeHeap) overflows");
     }
 
     private long getHeapSize() {

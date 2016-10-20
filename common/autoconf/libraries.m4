@@ -42,13 +42,9 @@ AC_DEFUN_ONCE([LIB_DETERMINE_DEPENDENCIES],
     # No X11 support on windows or macosx
     NEEDS_LIB_X11=false
   else
-    if test "x$SUPPORT_HEADFUL" = xno; then
-      # No X11 support if building headless-only
-      NEEDS_LIB_X11=false
-    else
-      # All other instances need X11
-      NEEDS_LIB_X11=true
-    fi
+    # All other instances need X11, even if building headless only, libawt still
+    # needs X11 headers.
+    NEEDS_LIB_X11=true
   fi
 
   # Check if cups is needed
@@ -59,11 +55,9 @@ AC_DEFUN_ONCE([LIB_DETERMINE_DEPENDENCIES],
     NEEDS_LIB_CUPS=true
   fi
 
-  # Check if freetype is needed
-  if test "x$OPENJDK" = "xtrue"; then
+  # A custom hook may have set this already
+  if test "x$NEEDS_LIB_FREETYPE" = "x"; then
     NEEDS_LIB_FREETYPE=true
-  else
-    NEEDS_LIB_FREETYPE=false
   fi
 
   # Check if alsa is needed
@@ -197,11 +191,15 @@ AC_DEFUN_ONCE([LIB_SETUP_MISC_LIBS],
 ################################################################################
 AC_DEFUN_ONCE([LIB_SETUP_SOLARIS_STLPORT],
 [
-  if test "$OPENJDK_TARGET_OS" = "solaris"; then
+  if test "$OPENJDK_TARGET_OS" = "solaris" && test "x$BUILD_GTEST" = "xtrue"; then
     # Find the root of the Solaris Studio installation from the compiler path
     SOLARIS_STUDIO_DIR="$(dirname $CC)/.."
     STLPORT_LIB="$SOLARIS_STUDIO_DIR/lib/stlport4$OPENJDK_TARGET_CPU_ISADIR/libstlport.so.1"
     AC_MSG_CHECKING([for libstlport.so.1])
+    if ! test -f "$STLPORT_LIB" && test "x$OPENJDK_TARGET_CPU_ISADIR" = "x/sparcv9"; then
+      # SS12u3 has libstlport under 'stlport4/v9' instead of 'stlport4/sparcv9'
+      STLPORT_LIB="$SOLARIS_STUDIO_DIR/lib/stlport4/v9/libstlport.so.1"
+    fi
     if test -f "$STLPORT_LIB"; then
       AC_MSG_RESULT([yes, $STLPORT_LIB])
       BASIC_FIXUP_PATH([STLPORT_LIB])

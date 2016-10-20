@@ -263,15 +263,15 @@ public class TIFFImageWriter extends ImageWriter {
     }
 
     public void setOutput(Object output) {
-        super.setOutput(output);
-
         if (output != null) {
-            reset();
-
             if (!(output instanceof ImageOutputStream)) {
                 throw new IllegalArgumentException
                     ("output not an ImageOutputStream!");
             }
+
+            // reset() must precede setOutput() as it sets output to null
+            reset();
+
             this.stream = (ImageOutputStream)output;
 
             //
@@ -312,6 +312,8 @@ public class TIFFImageWriter extends ImageWriter {
         } else {
             this.stream = null;
         }
+
+        super.setOutput(output);
     }
 
     public IIOMetadata
@@ -1476,7 +1478,7 @@ public class TIFFImageWriter extends ImageWriter {
                 (ExifParentTIFFTagSet.TAG_EXIF_IFD_POINTER);
             if(f != null && f.hasDirectory()) {
                 // Retrieve the Exif IFD.
-                exifIFD = (TIFFIFD)f.getDirectory();
+                exifIFD = TIFFIFD.getDirectoryAsIFD(f.getDirectory());
             } else if(isPrimaryIFD) {
                 // Create the Exif IFD.
                 List<TIFFTagSet> exifTagSets = new ArrayList<TIFFTagSet>(1);
@@ -2435,6 +2437,10 @@ public class TIFFImageWriter extends ImageWriter {
 
         clearAbortRequest();
         processImageStarted(0);
+        if (abortRequested()) {
+            processWriteAborted();
+            return;
+        }
 
         // Optionally write the header.
         if (writeHeader) {
@@ -2585,9 +2591,6 @@ public class TIFFImageWriter extends ImageWriter {
                         nextSpace = pos + byteCount;
                     }
 
-                    pixelsDone += tileRect.width*tileRect.height;
-                    processImageProgress(100.0F*pixelsDone/totalPixels);
-
                     // Fill in the offset and byte count for the file
                     stream.mark();
                     stream.seek(stripOrTileOffsetsPosition);
@@ -2598,13 +2601,15 @@ public class TIFFImageWriter extends ImageWriter {
                     stream.writeInt(byteCount);
                     stripOrTileByteCountsPosition += 4;
                     stream.reset();
+
+                    pixelsDone += tileRect.width*tileRect.height;
+                    processImageProgress(100.0F*pixelsDone/totalPixels);
+                    if (abortRequested()) {
+                        processWriteAborted();
+                        return;
+                    }
                 } catch (IOException e) {
                     throw new IIOException("I/O error writing TIFF file!", e);
-                }
-
-                if (abortRequested()) {
-                    processWriteAborted();
-                    return;
                 }
             }
         }
@@ -3619,6 +3624,8 @@ public class TIFFImageWriter extends ImageWriter {
         colorConverter = null;
         streamMetadata = null;
         imageMetadata = null;
+
+        isRescaling = false;
 
         isWritingSequence = false;
         isWritingEmpty = false;

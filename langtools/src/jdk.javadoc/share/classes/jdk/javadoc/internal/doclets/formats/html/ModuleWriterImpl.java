@@ -25,23 +25,27 @@
 
 package jdk.javadoc.internal.doclets.formats.html;
 
-import java.io.*;
+import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import javax.lang.model.element.ModuleElement;
+import javax.lang.model.element.ModuleElement.DirectiveKind;
 import javax.lang.model.element.PackageElement;
+import javax.lang.model.element.TypeElement;
 
 import com.sun.source.doctree.DocTree;
-
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlConstants;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlStyle;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTag;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTree;
 import jdk.javadoc.internal.doclets.formats.html.markup.RawHtml;
+import jdk.javadoc.internal.doclets.formats.html.markup.StringContent;
 import jdk.javadoc.internal.doclets.toolkit.Content;
 import jdk.javadoc.internal.doclets.toolkit.ModuleSummaryWriter;
 import jdk.javadoc.internal.doclets.toolkit.util.CommentHelper;
+import jdk.javadoc.internal.doclets.toolkit.util.DocFileIOException;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPaths;
 
 /**
@@ -74,31 +78,41 @@ public class ModuleWriterImpl extends HtmlDocletWriter implements ModuleSummaryW
      */
     protected ModuleElement mdle;
 
+    private final Map<ModuleElement.DirectiveKind, List<ModuleElement.Directive>> directiveMap
+            = new EnumMap<>(ModuleElement.DirectiveKind.class);
+
     /**
      * The HTML tree for main tag.
      */
     protected HtmlTree mainTree = HtmlTree.MAIN();
 
     /**
+     * The HTML tree for section tag.
+     */
+    protected HtmlTree sectionTree = HtmlTree.SECTION();
+
+    /**
      * Constructor to construct ModuleWriter object and to generate
      * "moduleName-summary.html" file.
      *
      * @param configuration the configuration of the doclet.
-     * @param module        Module under consideration.
+     * @param mdle        Module under consideration.
      * @param prevModule   Previous module in the sorted array.
      * @param nextModule   Next module in the sorted array.
      */
     public ModuleWriterImpl(ConfigurationImpl configuration,
-            ModuleElement mdle, ModuleElement prevModule, ModuleElement nextModule)
-            throws IOException {
+            ModuleElement mdle, ModuleElement prevModule, ModuleElement nextModule) {
         super(configuration, DocPaths.moduleSummary(mdle));
         this.prevModule = prevModule;
         this.nextModule = nextModule;
         this.mdle = mdle;
+        generateDirectiveMap();
     }
 
     /**
-     * {@inheritDoc}
+     * Get the module header.
+     *
+     * @param heading the heading for the section
      */
     public Content getModuleHeader(String heading) {
         HtmlTree bodyTree = getBody(true, getWindowTitle(mdle.getQualifiedName().toString()));
@@ -113,8 +127,8 @@ public class ModuleWriterImpl extends HtmlDocletWriter implements ModuleSummaryW
         HtmlTree div = new HtmlTree(HtmlTag.DIV);
         div.addStyle(HtmlStyle.header);
         Content tHeading = HtmlTree.HEADING(HtmlConstants.TITLE_HEADING, true,
-                HtmlStyle.title, moduleLabel);
-        tHeading.addContent(getSpace());
+                HtmlStyle.title, contents.moduleLabel);
+        tHeading.addContent(Contents.SPACE);
         Content moduleHead = new RawHtml(heading);
         tHeading.addContent(moduleHead);
         div.addContent(tHeading);
@@ -127,7 +141,7 @@ public class ModuleWriterImpl extends HtmlDocletWriter implements ModuleSummaryW
     }
 
     /**
-     * {@inheritDoc}
+     * Get the content header.
      */
     public Content getContentHeader() {
         HtmlTree div = new HtmlTree(HtmlTag.DIV);
@@ -136,7 +150,7 @@ public class ModuleWriterImpl extends HtmlDocletWriter implements ModuleSummaryW
     }
 
     /**
-     * {@inheritDoc}
+     * Get the summary section header.
      */
     public Content getSummaryHeader() {
         HtmlTree li = new HtmlTree(HtmlTag.LI);
@@ -145,7 +159,9 @@ public class ModuleWriterImpl extends HtmlDocletWriter implements ModuleSummaryW
     }
 
     /**
-     * {@inheritDoc}
+     * Get the summary tree.
+     *
+     * @param summaryContentTree the content tree to be added to the summary tree.
      */
     public Content getSummaryTree(Content summaryContentTree) {
         HtmlTree ul = HtmlTree.UL(HtmlStyle.blockList, summaryContentTree);
@@ -153,25 +169,322 @@ public class ModuleWriterImpl extends HtmlDocletWriter implements ModuleSummaryW
     }
 
     /**
+     * Generate the directive map for the directives on the module.
+     */
+    public void generateDirectiveMap() {
+        for (ModuleElement.Directive d : mdle.getDirectives()) {
+            if (directiveMap.containsKey(d.getKind())) {
+                List<ModuleElement.Directive> dir = directiveMap.get(d.getKind());
+                dir.add(d);
+                directiveMap.put(d.getKind(), dir);
+            } else {
+                List<ModuleElement.Directive> dir = new ArrayList<>();
+                dir.add(d);
+                directiveMap.put(d.getKind(), dir);
+            }
+        }
+    }
+
+    /**
+     * Add the summary header.
+     *
+     * @param startMarker the marker comment
+     * @param markerAnchor the marker anchor for the section
+     * @param heading the heading for the section
+     * @param htmltree the content tree to which the information is added
+     */
+    public void addSummaryHeader(Content startMarker, SectionName markerAnchor, Content heading, Content htmltree) {
+        htmltree.addContent(startMarker);
+        htmltree.addContent(getMarkerAnchor(markerAnchor));
+        htmltree.addContent(HtmlTree.HEADING(HtmlTag.H3, heading));
+    }
+
+    /**
+     * Add the summary for the module.
+     *
+     * @param text the table caption
+     * @param tableSummary the summary for the table
+     * @param htmltree the content tree to which the table will be added
+     * @param tableStyle the table style
+     * @param tableHeader the table header
+     * @param dirs the list of module directives
+     */
+    public void addSummary(String text, String tableSummary, Content htmltree, HtmlStyle tableStyle,
+            List<String> tableHeader, List<ModuleElement.Directive> dirs) {
+        Content table = (configuration.isOutputHtml5())
+                ? HtmlTree.TABLE(tableStyle, getTableCaption(new RawHtml(text)))
+                : HtmlTree.TABLE(tableStyle, tableSummary, getTableCaption(new RawHtml(text)));
+        table.addContent(getSummaryTableHeader(tableHeader, "col"));
+        Content tbody = new HtmlTree(HtmlTag.TBODY);
+        addList(dirs, tbody);
+        table.addContent(tbody);
+        htmltree.addContent(table);
+    }
+
+    /**
+     * Add the list of directives for the module.
+     *
+     * @param dirs the list of module directives
+     * @params tbody the content tree to which the list is added
+     */
+    public void addList(List<ModuleElement.Directive> dirs, Content tbody) {
+        boolean altColor = true;
+        for (ModuleElement.Directive direct : dirs) {
+            DirectiveKind kind = direct.getKind();
+            switch (kind) {
+                case REQUIRES:
+                    addRequiresList((ModuleElement.RequiresDirective) direct, tbody, altColor);
+                    break;
+                case EXPORTS:
+                    addExportedPackagesList((ModuleElement.ExportsDirective) direct, tbody, altColor);
+                    break;
+                case USES:
+                    addUsesList((ModuleElement.UsesDirective) direct, tbody, altColor);
+                    break;
+                case PROVIDES:
+                    addProvidesList((ModuleElement.ProvidesDirective) direct, tbody, altColor);
+                    break;
+                default:
+                    throw new AssertionError("unknown directive kind: " + kind);
+            }
+            altColor = !altColor;
+        }
+    }
+
+    /**
      * {@inheritDoc}
      */
-    public void addPackagesSummary(Set<PackageElement> packages, String text,
-            String tableSummary, Content summaryContentTree) {
-        Content table = (configuration.isOutputHtml5())
-                ? HtmlTree.TABLE(HtmlStyle.overviewSummary, getTableCaption(new RawHtml(text)))
-                : HtmlTree.TABLE(HtmlStyle.overviewSummary, tableSummary, getTableCaption(new RawHtml(text)));
-        table.addContent(getSummaryTableHeader(packageTableHeader, "col"));
-        Content tbody = new HtmlTree(HtmlTag.TBODY);
-        addPackagesList(packages, tbody);
-        table.addContent(tbody);
-        summaryContentTree.addContent(table);
+    public void addModulesSummary(Content summaryContentTree) {
+        List<ModuleElement.Directive> dirs = directiveMap.get(DirectiveKind.REQUIRES);
+        if (dirs != null && !dirs.isEmpty()) {
+            HtmlTree li = new HtmlTree(HtmlTag.LI);
+            li.addStyle(HtmlStyle.blockList);
+            addSummaryHeader(HtmlConstants.START_OF_MODULES_SUMMARY, SectionName.MODULES,
+                    contents.navModules, li);
+            String text = configuration.getText("doclet.Requires_Summary");
+            String tableSummary = configuration.getText("doclet.Member_Table_Summary",
+                    configuration.getText("doclet.Requires_Summary"),
+                    configuration.getText("doclet.modules"));
+            addRequiresSummary(text, tableSummary, dirs, li);
+            HtmlTree ul = HtmlTree.UL(HtmlStyle.blockList, li);
+            summaryContentTree.addContent(ul);
+        }
+    }
+
+    /**
+     * Add the requires summary for the module.
+     *
+     * @param text the table caption
+     * @param tableSummary the summary for the table
+     * @param dirs the list of module directives
+     * @param htmltree the content tree to which the table will be added
+     */
+    public void addRequiresSummary(String text, String tableSummary, List<ModuleElement.Directive> dirs,
+            Content htmltree) {
+        addSummary(text, tableSummary, htmltree, HtmlStyle.requiresSummary, requiresTableHeader, dirs);
+    }
+
+    /**
+     * Add the requires directive list for the module.
+     *
+     * @param direct the requires directive
+     * @param tbody the content tree to which the directive will be added
+     * @param altColor true if altColor style should be used or false if rowColor style should be used
+     */
+    public void addRequiresList(ModuleElement.RequiresDirective direct, Content tbody, boolean altColor) {
+        ModuleElement m = direct.getDependency();
+        Content moduleLinkContent = getModuleLink(m, new StringContent(m.getQualifiedName().toString()));
+        Content thPackage = HtmlTree.TH_ROW_SCOPE(HtmlStyle.colFirst, moduleLinkContent);
+        HtmlTree tdSummary = new HtmlTree(HtmlTag.TD);
+        tdSummary.addStyle(HtmlStyle.colLast);
+        addSummaryComment(m, tdSummary);
+        HtmlTree tr = HtmlTree.TR(thPackage);
+        tr.addContent(tdSummary);
+        tr.addStyle(altColor ? HtmlStyle.altColor : HtmlStyle.rowColor);
+        tbody.addContent(tr);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void addPackagesSummary(Content summaryContentTree) {
+        List<ModuleElement.Directive> dirs = directiveMap.get(DirectiveKind.EXPORTS);
+        if (dirs != null && !dirs.isEmpty()) {
+            HtmlTree li = new HtmlTree(HtmlTag.LI);
+            li.addStyle(HtmlStyle.blockList);
+            addSummaryHeader(HtmlConstants.START_OF_PACKAGES_SUMMARY, SectionName.PACKAGES,
+                    contents.navPackages, li);
+            String text = configuration.getText("doclet.Exported_Packages_Summary");
+            String tableSummary = configuration.getText("doclet.Member_Table_Summary",
+                    configuration.getText("doclet.Exported_Packages_Summary"),
+                    configuration.getText("doclet.packages"));
+            addExportedPackagesSummary(text, tableSummary, dirs, li);
+            HtmlTree ul = HtmlTree.UL(HtmlStyle.blockList, li);
+            summaryContentTree.addContent(ul);
+        }
+    }
+
+    /**
+     * Add the exported packages summary for the module.
+     *
+     * @param text the table caption
+     * @param tableSummary the summary for the table
+     * @param dirs the list of module directives
+     * @param htmltree the content tree to which the table will be added
+     */
+    public void addExportedPackagesSummary(String text, String tableSummary, List<ModuleElement.Directive> dirs,
+            Content htmltree) {
+        addSummary(text, tableSummary, htmltree, HtmlStyle.packagesSummary, exportedPackagesTableHeader, dirs);
+    }
+
+    /**
+     * Add the exported packages list for the module.
+     *
+     * @param direct the requires directive
+     * @param tbody the content tree to which the directive will be added
+     * @param altColor true if altColor style should be used or false if rowColor style should be used
+     */
+    public void addExportedPackagesList(ModuleElement.ExportsDirective direct, Content tbody, boolean altColor) {
+        PackageElement pkg = direct.getPackage();
+        Content pkgLinkContent = getPackageLink(pkg, new StringContent(utils.getPackageName(pkg)));
+        Content tdPackage = HtmlTree.TH_ROW_SCOPE(HtmlStyle.colFirst, pkgLinkContent);
+        HtmlTree thModules = new HtmlTree(HtmlTag.TD);
+        thModules.addStyle(HtmlStyle.colSecond);
+        List<? extends ModuleElement> targetModules = direct.getTargetModules();
+        if (targetModules != null) {
+            List<? extends ModuleElement> mElements = direct.getTargetModules();
+            for (int i = 0; i < mElements.size(); i++) {
+                if (i > 0) {
+                    thModules.addContent(new HtmlTree(HtmlTag.BR));
+                }
+                ModuleElement m = mElements.get(i);
+                thModules.addContent(new StringContent(m.getQualifiedName().toString()));
+            }
+        } else {
+            thModules.addContent(configuration.getText("doclet.All_Modules"));
+        }
+        HtmlTree tdSummary = new HtmlTree(HtmlTag.TD);
+        tdSummary.addStyle(HtmlStyle.colLast);
+        addSummaryComment(pkg, tdSummary);
+        HtmlTree tr = HtmlTree.TR(tdPackage);
+        tr.addContent(thModules);
+        tr.addContent(tdSummary);
+        tr.addStyle(altColor ? HtmlStyle.altColor : HtmlStyle.rowColor);
+        tbody.addContent(tr);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void addServicesSummary(Content summaryContentTree) {
+        List<ModuleElement.Directive> usesDirs = directiveMap.get(DirectiveKind.USES);
+        List<ModuleElement.Directive> providesDirs = directiveMap.get(DirectiveKind.PROVIDES);
+        if ((usesDirs != null && !usesDirs.isEmpty()) || (providesDirs != null && !providesDirs.isEmpty())) {
+            HtmlTree li = new HtmlTree(HtmlTag.LI);
+            li.addStyle(HtmlStyle.blockList);
+            addSummaryHeader(HtmlConstants.START_OF_SERVICES_SUMMARY, SectionName.SERVICES,
+                    contents.navServices, li);
+            String text;
+            String tableSummary;
+            if (usesDirs != null && !usesDirs.isEmpty()) {
+                text = configuration.getText("doclet.Uses_Summary");
+                tableSummary = configuration.getText("doclet.Member_Table_Summary",
+                        configuration.getText("doclet.Uses_Summary"),
+                        configuration.getText("doclet.types"));
+                addUsesSummary(text, tableSummary, usesDirs, li);
+            }
+            if (providesDirs != null && !providesDirs.isEmpty()) {
+                text = configuration.getText("doclet.Provides_Summary");
+                tableSummary = configuration.getText("doclet.Member_Table_Summary",
+                        configuration.getText("doclet.Provides_Summary"),
+                        configuration.getText("doclet.types"));
+                addProvidesSummary(text, tableSummary, providesDirs, li);
+            }
+            HtmlTree ul = HtmlTree.UL(HtmlStyle.blockList, li);
+            summaryContentTree.addContent(ul);
+        }
+    }
+
+    /**
+     * Add the uses summary for the module.
+     *
+     * @param text the table caption
+     * @param tableSummary the summary for the table
+     * @param dirs the list of module directives
+     * @param htmltree the content tree to which the table will be added
+     */
+    public void addUsesSummary(String text, String tableSummary, List<ModuleElement.Directive> dirs,
+            Content htmltree) {
+        addSummary(text, tableSummary, htmltree, HtmlStyle.usesSummary, usesTableHeader, dirs);
+    }
+
+    /**
+     * Add the uses list for the module.
+     *
+     * @param direct the requires directive
+     * @param tbody the content tree to which the directive will be added
+     * @param altColor true if altColor style should be used or false if rowColor style should be used
+     */
+    public void addUsesList(ModuleElement.UsesDirective direct, Content tbody, boolean altColor) {
+        TypeElement type = direct.getService();
+        Content typeLinkContent = getLink(new LinkInfoImpl(configuration, LinkInfoImpl.Kind.PACKAGE, type));
+        Content thPackage = HtmlTree.TH_ROW_SCOPE(HtmlStyle.colFirst, typeLinkContent);
+        HtmlTree tdSummary = new HtmlTree(HtmlTag.TD);
+        tdSummary.addStyle(HtmlStyle.colLast);
+        addSummaryComment(type, tdSummary);
+        HtmlTree tr = HtmlTree.TR(thPackage);
+        tr.addContent(tdSummary);
+        tr.addStyle(altColor ? HtmlStyle.altColor : HtmlStyle.rowColor);
+        tbody.addContent(tr);
+    }
+
+    /**
+     * Add the provides summary for the module.
+     *
+     * @param text the table caption
+     * @param tableSummary the summary for the table
+     * @param dirs the list of module directives
+     * @param htmltree the content tree to which the table will be added
+     */
+    public void addProvidesSummary(String text, String tableSummary, List<ModuleElement.Directive> dirs,
+            Content htmltree) {
+        addSummary(text, tableSummary, htmltree, HtmlStyle.providesSummary, providesTableHeader, dirs);
+    }
+
+    /**
+     * Add the exported packages list for the module.
+     *
+     * @param direct the requires directive
+     * @param tbody the content tree to which the directive will be added
+     * @param altColor true if altColor style should be used or false if rowColor style should be used
+     */
+    public void addProvidesList(ModuleElement.ProvidesDirective direct, Content tbody, boolean altColor) {
+        TypeElement impl = direct.getImplementation();
+        TypeElement srv = direct.getService();
+        Content implLinkContent = getLink(new LinkInfoImpl(configuration, LinkInfoImpl.Kind.PACKAGE, impl));
+        Content srvLinkContent = getLink(new LinkInfoImpl(configuration, LinkInfoImpl.Kind.PACKAGE, srv));
+        HtmlTree thType = HtmlTree.TH_ROW_SCOPE(HtmlStyle.colFirst, srvLinkContent);
+        thType.addContent(new HtmlTree(HtmlTag.BR));
+        thType.addContent("(");
+        HtmlTree implSpan = HtmlTree.SPAN(HtmlStyle.implementationLabel, contents.implementation);
+        thType.addContent(implSpan);
+        thType.addContent(Contents.SPACE);
+        thType.addContent(implLinkContent);
+        thType.addContent(")");
+        HtmlTree tdDesc = new HtmlTree(HtmlTag.TD);
+        tdDesc.addStyle(HtmlStyle.colLast);
+        addSummaryComment(srv, tdDesc);
+        HtmlTree tr = HtmlTree.TR(thType);
+        tr.addContent(tdDesc);
+        tr.addStyle(altColor ? HtmlStyle.altColor : HtmlStyle.rowColor);
+        tbody.addContent(tr);
     }
 
     /**
      * {@inheritDoc}
      */
     public void addModuleDescription(Content moduleContentTree) {
-        if (!utils.getBody(mdle).isEmpty()) {
+        if (!utils.getFullBody(mdle).isEmpty()) {
             Content tree = configuration.allowTag(HtmlTag.SECTION) ? HtmlTree.SECTION() : moduleContentTree;
             tree.addContent(HtmlConstants.START_OF_MODULE_DESCRIPTION);
             tree.addContent(getMarkerAnchor(SectionName.MODULE_DESCRIPTION));
@@ -196,29 +509,52 @@ public class ModuleWriterImpl extends HtmlDocletWriter implements ModuleSummaryW
     }
 
     /**
-     * Adds list of packages in the package summary table. Generate link to each package.
+     * Add summary details to the navigation bar.
      *
-     * @param packages Packages to which link is to be generated
-     * @param tbody the documentation tree to which the list will be added
+     * @param subDiv the content tree to which the summary detail links will be added
      */
-    protected void addPackagesList(Set<PackageElement> packages, Content tbody) {
-        boolean altColor = true;
-        for (PackageElement pkg : packages) {
-            if (pkg != null && !pkg.isUnnamed()) {
-                if (!(configuration.nodeprecated && utils.isDeprecated(pkg))) {
-                    Content packageLinkContent = getPackageLink(pkg, getPackageName(pkg));
-                    Content tdPackage = HtmlTree.TD(HtmlStyle.colFirst, packageLinkContent);
-                    HtmlTree tdSummary = new HtmlTree(HtmlTag.TD);
-                    tdSummary.addStyle(HtmlStyle.colLast);
-                    addSummaryComment(pkg, tdSummary);
-                    HtmlTree tr = HtmlTree.TR(tdPackage);
-                    tr.addContent(tdSummary);
-                    tr.addStyle(altColor ? HtmlStyle.altColor : HtmlStyle.rowColor);
-                    tbody.addContent(tr);
-                }
-            }
-            altColor = !altColor;
-        }
+    protected void addSummaryDetailLinks(Content subDiv) {
+        Content div = HtmlTree.DIV(getNavSummaryLinks());
+        subDiv.addContent(div);
+    }
+
+    /**
+     * Get summary links for navigation bar.
+     *
+     * @return the content tree for the navigation summary links
+     */
+    protected Content getNavSummaryLinks() {
+        Content li = HtmlTree.LI(contents.moduleSubNavLabel);
+        li.addContent(Contents.SPACE);
+        Content ulNav = HtmlTree.UL(HtmlStyle.subNavList, li);
+        Content liNav = new HtmlTree(HtmlTag.LI);
+        liNav.addContent(!utils.getFullBody(mdle).isEmpty() && !configuration.nocomment
+                ? getHyperLink(SectionName.MODULE_DESCRIPTION, contents.navModuleDescription)
+                : contents.navModuleDescription);
+        addNavGap(liNav);
+        liNav.addContent(showDirectives(DirectiveKind.REQUIRES)
+                ? getHyperLink(SectionName.MODULES, contents.navModules)
+                : contents.navModules);
+        addNavGap(liNav);
+        liNav.addContent(showDirectives(DirectiveKind.EXPORTS)
+                ? getHyperLink(SectionName.PACKAGES, contents.navPackages)
+                : contents.navPackages);
+        addNavGap(liNav);
+        liNav.addContent((showDirectives(DirectiveKind.USES) || showDirectives(DirectiveKind.PROVIDES))
+                ? getHyperLink(SectionName.SERVICES, contents.navServices)
+                : contents.navServices);
+        ulNav.addContent(liNav);
+        return ulNav;
+    }
+
+    /**
+     * Return true if the directive should be displayed.
+     *
+     * @param dirKind the kind of directive for the module
+     * @return true if the directive should be displayed
+     */
+    private boolean showDirectives(DirectiveKind dirKind) {
+        return directiveMap.get(dirKind) != null && !directiveMap.get(dirKind).isEmpty();
     }
 
     /**
@@ -250,7 +586,8 @@ public class ModuleWriterImpl extends HtmlDocletWriter implements ModuleSummaryW
     /**
      * {@inheritDoc}
      */
-    public void printDocument(Content contentTree) throws IOException {
+    @Override
+    public void printDocument(Content contentTree) throws DocFileIOException {
         printHtmlDocument(configuration.metakeywords.getMetaKeywordsForModule(mdle),
                 true, contentTree);
     }
@@ -267,7 +604,7 @@ public class ModuleWriterImpl extends HtmlDocletWriter implements ModuleSummaryW
             deprs = utils.getDeprecatedTrees(pkg);
             HtmlTree deprDiv = new HtmlTree(HtmlTag.DIV);
             deprDiv.addStyle(HtmlStyle.deprecatedContent);
-            Content deprPhrase = HtmlTree.SPAN(HtmlStyle.deprecatedLabel, deprecatedPhrase);
+            Content deprPhrase = HtmlTree.SPAN(HtmlStyle.deprecatedLabel, contents.deprecatedPhrase);
             deprDiv.addContent(deprPhrase);
             if (!deprs.isEmpty()) {
                 CommentHelper ch = utils.getCommentHelper(pkg);
@@ -287,7 +624,7 @@ public class ModuleWriterImpl extends HtmlDocletWriter implements ModuleSummaryW
      */
     @Override
     protected Content getNavLinkModule() {
-        Content li = HtmlTree.LI(HtmlStyle.navBarCell1Rev, moduleLabel);
+        Content li = HtmlTree.LI(HtmlStyle.navBarCell1Rev, contents.moduleLabel);
         return li;
     }
 
@@ -299,10 +636,10 @@ public class ModuleWriterImpl extends HtmlDocletWriter implements ModuleSummaryW
     public Content getNavLinkPrevious() {
         Content li;
         if (prevModule == null) {
-            li = HtmlTree.LI(prevmoduleLabel);
+            li = HtmlTree.LI(contents.prevModuleLabel);
         } else {
             li = HtmlTree.LI(getHyperLink(pathToRoot.resolve(DocPaths.moduleSummary(
-                    prevModule)), prevmoduleLabel, "", ""));
+                    prevModule)), contents.prevModuleLabel, "", ""));
         }
         return li;
     }
@@ -315,10 +652,10 @@ public class ModuleWriterImpl extends HtmlDocletWriter implements ModuleSummaryW
     public Content getNavLinkNext() {
         Content li;
         if (nextModule == null) {
-            li = HtmlTree.LI(nextmoduleLabel);
+            li = HtmlTree.LI(contents.nextModuleLabel);
         } else {
             li = HtmlTree.LI(getHyperLink(pathToRoot.resolve(DocPaths.moduleSummary(
-                    nextModule)), nextmoduleLabel, "", ""));
+                    nextModule)), contents.nextModuleLabel, "", ""));
         }
         return li;
     }

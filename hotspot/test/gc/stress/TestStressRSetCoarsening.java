@@ -28,13 +28,13 @@ import sun.hotspot.WhiteBox;
  * @test TestStressRSetCoarsening.java
  * @key stress
  * @bug 8146984 8147087
- * @requires vm.gc=="G1" | vm.gc=="null"
+ * @requires vm.gc.G1
  * @requires os.maxMemory > 3G
  * @requires vm.opt.MaxGCPauseMillis == "null"
  *
  * @summary Stress G1 Remembered Set by creating a lot of cross region links
  * @modules java.base/jdk.internal.misc
- * @library /testlibrary /test/lib
+ * @library /test/lib
  * @build sun.hotspot.WhiteBox
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission

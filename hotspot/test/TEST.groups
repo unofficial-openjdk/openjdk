@@ -130,8 +130,8 @@ jre = \
 # Tests that require the full JRE
 #
 needs_jre = \
-  compiler/c2/6852078/Test6852078.java \
-  compiler/c2/7047069/Test7047069.java \
+  compiler/c2/Test6852078.java \
+  compiler/c2/Test7047069.java \
   runtime/6294277/SourceDebugExtension.java \
   runtime/ClassFile/JsrRewriting.java \
   runtime/ClassFile/OomWhileParsingRepeatedJsr.java \
@@ -167,8 +167,7 @@ needs_compact3 = \
   gc/survivorAlignment \
   runtime/InternalApi/ThreadCpuTimesDeadlock.java \
   runtime/NMT/JcmdSummaryDiff.java \
-  runtime/RedefineTests/RedefineAnnotations.java
-  serviceability/sa/jmap-hashcode/Test8028623.java \
+  runtime/RedefineTests/RedefineAnnotations.java \
   serviceability/threads/TestFalseDeadLock.java \
   compiler/codecache/jmx \
   compiler/jsr292/RedefineMethodUsedByMultipleMethodHandles.java \
@@ -277,16 +276,16 @@ hotspot_fast_compiler_1 = \
   compiler/arraycopy/ \
   compiler/c1/ \
   compiler/c2/ \
-  -compiler/c2/5091921/Test6850611.java \
-  -compiler/c2/5091921/Test6890943.java \
-  -compiler/c2/5091921/Test6905845.java \
-  -compiler/c2/6340864 \
-  -compiler/c2/6589834 \
-  -compiler/c2/6603011 \
-  -compiler/c2/6912517 \
-  -compiler/c2/6792161 \
-  -compiler/c2/7070134 \
-  -compiler/c2/8004867
+  -compiler/c2/Test6850611.java \
+  -compiler/c2/cr6890943/Test6890943.java \
+  -compiler/c2/Test6905845.java \
+  -compiler/c2/cr6340864 \
+  -compiler/c2/cr6589834 \
+  -compiler/c2/cr8004867 \
+  -compiler/c2/stemmer \
+  -compiler/c2/Test6792161.java \
+  -compiler/c2/Test6603011.java \
+  -compiler/c2/Test6912517.java \
 
 hotspot_fast_compiler_2 = \
   compiler/classUnloading/ \
@@ -303,7 +302,7 @@ hotspot_fast_compiler_2 = \
   compiler/integerArithmetic/ \
   compiler/interpreter/ \
   compiler/jvmci/ \
-  -compiler/codegen/7184394 \
+  -compiler/codegen/aes \
   -compiler/codecache/stress \
   -compiler/gcbarriers/PreserveFPRegistersTest.java
 
@@ -320,13 +319,13 @@ hotspot_fast_compiler_3 = \
   compiler/types/ \
   compiler/uncommontrap/ \
   compiler/unsafe/ \
-  -compiler/intrinsics/adler32 \
   -compiler/intrinsics/bmi \
   -compiler/intrinsics/mathexact \
-  -compiler/intrinsics/multiplytolen \
   -compiler/intrinsics/sha \
-  -compiler/loopopts/7052494 \
-  -compiler/runtime/6826736
+  -compiler/intrinsics/bigInteger/TestMultiplyToLen.java \
+  -compiler/intrinsics/zip/TestAdler32.java \
+  -compiler/loopopts/Test7052494.java \
+  -compiler/runtime/Test6826736.java
 
 hotspot_fast_compiler_closed = \
   sanity/ExecuteInternalVMTests.java
@@ -352,16 +351,29 @@ hotspot_fast_gc_gcold = \
 
 hotspot_fast_runtime = \
   runtime/ \
+ -runtime/6626217/Test6626217.sh \
+ -runtime/7100935 \
+ -runtime/7158988/FieldMonitor.java \
+ -runtime/CommandLine/OptionsValidation/TestOptionsWithRanges.java \
+ -runtime/CommandLine/PrintGCApplicationConcurrentTime.java \
+ -runtime/ConstantPool/IntfMethod.java \
+ -runtime/ErrorHandling/CreateCoredumpOnCrash.java \
  -runtime/ErrorHandling/ErrorHandler.java \
- -runtime/RedefineObject/TestRedefineObject.java \
- -runtime/MirrorFrame/Test8003720.java \
- -runtime/Metaspace/FragmentMetaspace.java \
- -runtime/Metaspace/FragmentMetaspaceSimple.java \
- -runtime/Thread/TestThreadDumpMonitorContention.java \
- -runtime/SharedArchiveFile/SharedBaseAddress.java \
+ -runtime/logging/MonitorMismatchTest.java \
  -runtime/memory/ReserveMemory.java \
  -runtime/memory/RunUnitTestsConcurrently.java \
- -runtime/Unsafe/RangeCheck.java \
+ -runtime/Metaspace/FragmentMetaspace.java \
+ -runtime/Metaspace/FragmentMetaspaceSimple.java \
+ -runtime/MirrorFrame/Test8003720.java \
+ -runtime/modules/LoadUnloadModuleStress.java \
+ -runtime/modules/ModuleStress/ExportModuleStressTest.java \
+ -runtime/modules/ModuleStress/ModuleStressGC.java \
+ -runtime/NMT \
+ -runtime/RedefineObject/TestRedefineObject.java \
+ -runtime/RedefineTests/RedefinePreviousVersions.java \
+ -runtime/RedefineTests/RedefineRunningMethods.java \
+ -runtime/RedefineTests/RedefineRunningMethodsWithBacktrace.java \
+ -runtime/ReservedStack \
  -runtime/SelectionResolution/AbstractMethodErrorTest.java \
  -runtime/SelectionResolution/IllegalAccessErrorTest.java \
  -runtime/SelectionResolution/InvokeInterfaceICCE.java \
@@ -373,14 +385,14 @@ hotspot_fast_runtime = \
  -runtime/SelectionResolution/InvokeVirtualSuccessTest.java \
  -runtime/SharedArchiveFile/CdsSameObjectAlignment.java \
  -runtime/SharedArchiveFile/DefaultUseWithClient.java \
+ -runtime/SharedArchiveFile/SharedBaseAddress.java \
  -runtime/Thread/CancellableThreadTest.java \
- -runtime/7158988/FieldMonitor.java \
- -runtime/CommandLine/OptionsValidation/TestOptionsWithRanges.java \
+ -runtime/Thread/TestThreadDumpMonitorContention.java \
+ -runtime/Unsafe/RangeCheck.java \
   sanity/ \
   testlibrary_tests/TestMutuallyExclusivePlatformPredicates.java
 
 hotspot_fast_serviceability = \
-  sanity/ExecuteInternalVMTests.java \
   serviceability/dcmd/compiler \
   serviceability/logging
 
@@ -395,7 +407,33 @@ hotspot_jprt = \
   :hotspot_fast_gc_gcold \
   :hotspot_fast_runtime \
   :hotspot_fast_serviceability
+  
+hotspot_runtime_tier2 = \
+  runtime/ \
+  serviceability/ \
+ -runtime/CommandLine/OptionsValidation/TestOptionsWithRanges.java \
+ -runtime/Thread/TestThreadDumpMonitorContention.java \
+ -:hotspot_fast_runtime \
+ -:hotspot_fast_serviceability \
+ -:hotspot_runtime_tier2_platform_agnostic
+ 
+hotspot_runtime_tier2_platform_agnostic = \
+  runtime/SelectionResolution \
+ -:hotspot_fast_runtime
+ 
+hotspot_runtime_tier3 = \
+  runtime/ \
+  serviceability/ \
+ -:hotspot_fast_runtime \
+ -:hotspot_fast_serviceability \
+ -:hotspot_runtime_tier2_platform_agnostic \
+ -:hotspot_runtime_tier2
 
+hotspot_runtime_minimalvm = \
+  runtime/MinimalVM \
+  runtime/ErrorHandling \
+  runtime/logging
+  
 #All tests that depends on nashorn extension.
 #
 needs_nashorn = \

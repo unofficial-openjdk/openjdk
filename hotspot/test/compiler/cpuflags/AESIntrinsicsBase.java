@@ -21,8 +21,12 @@
  * questions.
  *
  */
+
+package compiler.cpuflags;
+
+import compiler.codegen.aes.TestAESMain;
+import compiler.cpuflags.predicate.AESSupportPredicate;
 import jdk.test.lib.cli.CommandLineOptionTest;
-import predicate.AESSupportPredicate;
 
 import java.util.Arrays;
 import java.util.function.BooleanSupplier;
@@ -44,8 +48,8 @@ public abstract class AESIntrinsicsBase extends CommandLineOptionTest {
             = {"-XX:+UnlockDiagnosticVMOptions", "-XX:+PrintIntrinsics"};
     public static final String[] TEST_AES_CMD
             = {"-XX:+IgnoreUnrecognizedVMOptions", "-XX:+PrintFlagsFinal",
-            "-Xbatch", "-DcheckOutput=true", "-Dmode=CBC",
-            "TestAESMain"};
+            "-Xbatch", "-XX:CompileThresholdScaling=0.01", "-DcheckOutput=true", "-Dmode=CBC",
+            TestAESMain.class.getName(), "100", "1000"};
 
     protected AESIntrinsicsBase(BooleanSupplier predicate) {
         super(predicate);

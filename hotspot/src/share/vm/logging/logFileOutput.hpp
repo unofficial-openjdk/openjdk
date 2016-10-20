@@ -85,11 +85,13 @@ class LogFileOutput : public LogFileStreamOutput {
   virtual int write(const LogDecorations& decorations, const char* msg);
   virtual int write(LogMessageBuffer::Iterator msg_iterator);
   virtual void force_rotate();
+  virtual void describe(outputStream *out);
 
   virtual const char* name() const {
     return _name;
   }
 
+  static const char* Prefix;
   static void set_file_name_parameters(jlong start_time);
 };
 

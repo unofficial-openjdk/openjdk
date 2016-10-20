@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,23 +28,32 @@
  * @summary Verify that UseRTMLockEliding option could be applied to
  *          specified method and that such method will not be deoptimized
  *          on high abort ratio.
- * @library /testlibrary /test/lib /compiler/testlibrary
+ * @library /test/lib /
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @build TestUseRTMLockElidingOption
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
+ * @build sun.hotspot.WhiteBox
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
- *                   -XX:+WhiteBoxAPI TestUseRTMLockElidingOption
+ *                   -XX:+WhiteBoxAPI
+ *                   compiler.rtm.method_options.TestUseRTMLockElidingOption
  */
 
-import java.util.List;
-import jdk.test.lib.*;
+package compiler.rtm.method_options;
+
+import compiler.testlibrary.rtm.AbortProvoker;
+import compiler.testlibrary.rtm.AbortType;
+import compiler.testlibrary.rtm.RTMLockingStatistics;
+import compiler.testlibrary.rtm.RTMTestBase;
+import compiler.testlibrary.rtm.predicate.SupportedCPU;
+import compiler.testlibrary.rtm.predicate.SupportedOS;
+import compiler.testlibrary.rtm.predicate.SupportedVM;
+import jdk.test.lib.Asserts;
+import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.cli.CommandLineOptionTest;
 import jdk.test.lib.cli.predicate.AndPredicate;
-import rtm.*;
-import rtm.predicate.SupportedCPU;
-import rtm.predicate.SupportedVM;
+
+import java.util.List;
 
 /**
  * Test verifies that method tagged with option <i>UseRTMLockElidingOption</i>
@@ -60,7 +69,7 @@ import rtm.predicate.SupportedVM;
  */
 public class TestUseRTMLockElidingOption extends CommandLineOptionTest {
     private TestUseRTMLockElidingOption() {
-        super(new AndPredicate(new SupportedCPU(), new SupportedVM()));
+        super(new AndPredicate(new SupportedCPU(), new SupportedOS(), new SupportedVM()));
     }
 
     @Override

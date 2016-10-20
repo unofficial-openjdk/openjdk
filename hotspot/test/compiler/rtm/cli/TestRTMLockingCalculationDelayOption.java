@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,12 +26,14 @@
  * @test
  * @bug 8031320
  * @summary Verify processing of RTMLockingCalculationDelay option.
- * @library /testlibrary
+ * @library /test/lib /
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @build TestRTMLockingCalculationDelayOption
- * @run main/othervm TestRTMLockingCalculationDelayOption
+ *
+ * @run main/othervm compiler.rtm.cli.TestRTMLockingCalculationDelayOption
  */
+
+package compiler.rtm.cli;
 
 public class TestRTMLockingCalculationDelayOption
         extends RTMGenericCommandLineOptionTest {

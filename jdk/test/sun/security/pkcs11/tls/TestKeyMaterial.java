@@ -21,13 +21,14 @@
  * questions.
  */
 
-/**
+/*
  * @test
- * @bug 6316539
+ * @bug 6316539 8136355
  * @summary Known-answer-test for TlsKeyMaterial generator
  * @author Andreas Sterbenz
  * @library ..
  * @modules java.base/sun.security.internal.spec
+ *          jdk.crypto.pkcs11
  * @run main/othervm TestKeyMaterial
  * @run main/othervm TestKeyMaterial sm policy
  */
@@ -36,6 +37,7 @@ import java.io.BufferedReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.Provider;
+import java.security.InvalidAlgorithmParameterException;
 import java.util.Arrays;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -138,21 +140,28 @@ public class TestKeyMaterial extends PKCS11Test {
                         keyLength, expandedKeyLength, ivLength, macLength,
                         null, -1, -1);
 
-                    kg.init(spec);
-                    TlsKeyMaterialSpec result =
-                        (TlsKeyMaterialSpec)kg.generateKey();
-                    match(lineNumber, clientCipherBytes,
-                        result.getClientCipherKey(), cipherAlgorithm);
-                    match(lineNumber, serverCipherBytes,
-                        result.getServerCipherKey(), cipherAlgorithm);
-                    match(lineNumber, clientIv, result.getClientIv(), "");
-                    match(lineNumber, serverIv, result.getServerIv(), "");
-                    match(lineNumber, clientMacBytes, result.getClientMacKey(), "");
-                    match(lineNumber, serverMacBytes, result.getServerMacKey(), "");
-
-                } else {
+                    try {
+                        kg.init(spec);
+                        TlsKeyMaterialSpec result =
+                            (TlsKeyMaterialSpec)kg.generateKey();
+                        match(lineNumber, clientCipherBytes,
+                            result.getClientCipherKey(), cipherAlgorithm);
+                        match(lineNumber, serverCipherBytes,
+                            result.getServerCipherKey(), cipherAlgorithm);
+                        match(lineNumber, clientIv, result.getClientIv(), "");
+                        match(lineNumber, serverIv, result.getServerIv(), "");
+                        match(lineNumber, clientMacBytes, result.getClientMacKey(), "");
+                        match(lineNumber, serverMacBytes, result.getServerMacKey(), "");
+                    } catch (InvalidAlgorithmParameterException iape) {
+                        // SSLv3 support is removed in S12
+                        if (major == 3 && minor == 0) {
+                            System.out.println("Skip testing SSLv3");
+                            continue;
+                        }
+                    }
+               } else {
                     throw new Exception("Unknown line: " + line);
-                }
+               }
             }
             if (n == 0) {
                 throw new Exception("no tests");

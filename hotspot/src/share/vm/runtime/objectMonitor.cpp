@@ -27,7 +27,7 @@
 #include "memory/resourceArea.hpp"
 #include "oops/markOop.hpp"
 #include "oops/oop.inline.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/interfaceSupport.hpp"
 #include "runtime/mutexLocker.hpp"
@@ -130,8 +130,6 @@ static int Knob_FastHSSEC           = 0;
 static int Knob_MoveNotifyee        = 2;       // notify() - disposition of notifyee
 static int Knob_QMode               = 0;       // EntryList-cxq policy - queue discipline
 static volatile int InitDone        = 0;
-
-#define TrySpin TrySpin_VaryDuration
 
 // -----------------------------------------------------------------------------
 // Theory of operations -- Monitors lists, thread residency, etc:
@@ -392,7 +390,7 @@ void ObjectMonitor::enter(TRAPS) {
   }
 
   if (event.should_commit()) {
-    event.set_klass(((oop)this->object())->klass());
+    event.set_monitorClass(((oop)this->object())->klass());
     event.set_previousOwner((TYPE_THREAD)_previous_owner_tid);
     event.set_address((TYPE_ADDRESS)(uintptr_t)(this->object_addr()));
     event.commit();
@@ -1383,7 +1381,7 @@ void ObjectMonitor::post_monitor_wait_event(EventJavaMonitorWait* event,
                                             jlong timeout,
                                             bool timedout) {
   assert(event != NULL, "invariant");
-  event->set_klass(((oop)this->object())->klass());
+  event->set_monitorClass(((oop)this->object())->klass());
   event->set_timeout(timeout);
   event->set_address((TYPE_ADDRESS)this->object_addr());
   event->set_notifier(notifier_tid);
@@ -1848,13 +1846,8 @@ void ObjectMonitor::notifyAll(TRAPS) {
 // hysteresis control to damp the transition rate between spinning and
 // not spinning.
 
-intptr_t ObjectMonitor::SpinCallbackArgument = 0;
-int (*ObjectMonitor::SpinCallbackFunction)(intptr_t, int) = NULL;
-
 // Spinning: Fixed frequency (100%), vary duration
-
-
-int ObjectMonitor::TrySpin_VaryDuration(Thread * Self) {
+int ObjectMonitor::TrySpin(Thread * Self) {
   // Dumb, brutal spin.  Good for comparative measurements against adaptive spinning.
   int ctr = Knob_FixedSpin;
   if (ctr != 0) {
@@ -1948,11 +1941,6 @@ int ObjectMonitor::TrySpin_VaryDuration(Thread * Self) {
         goto Abort;           // abrupt spin egress
       }
       if (Knob_UsePause & 1) SpinPause();
-
-      int (*scb)(intptr_t,int) = SpinCallbackFunction;
-      if (hits > 50 && scb != NULL) {
-        int abend = (*scb)(SpinCallbackArgument, 0);
-      }
     }
 
     if (Knob_UsePause & 2) SpinPause();

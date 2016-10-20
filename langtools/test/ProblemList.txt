@@ -26,39 +26,17 @@
 ###########################################################################
 #
 # javadoc
-
-com/sun/javadoc/testTypeAnnotations/TestTypeAnnotations.java                    8006735    generic-all    output type annotations in javadoc
-com/sun/javadoc/typeAnnotations/smoke/TestSmoke.java                            8013406    generic-all    Test cases fail in javadoc test TestSmoke.java
-
-jdk/javadoc/tool/6176978/T6176978.java                                          8152049    generic-all    no longer applicable, should delete
-jdk/javadoc/tool/InlineTagsWithBraces.java                                      8152050    generic-all    API, re-evaluate @bold, @maybe causes doclint to throw up.
-jdk/javadoc/tool/LangVers.java                                                  8152051    generic-all    API, re-evaluate, unsure of this test.
 jdk/javadoc/tool/VerifyLocale.java                                              8149565    generic-all    -locale option issues
-jdk/javadoc/tool/enum/docComments/Main.java                                     8152054    generic-all    API modifications
-jdk/javadoc/tool/enum/enumType/Main.java                                        8152054    generic-all    API modifications
-jdk/javadoc/tool/generics/genericClass/Main.java                                8152054    generic-all    API modifications
-jdk/javadoc/tool/generics/genericInnerAndOuter/Main.java                        8152054    generic-all    API modifications
-jdk/javadoc/tool/generics/genericInterface/Main.java                            8152054    generic-all    API modifications
-jdk/javadoc/tool/generics/genericMethod/Main.java                               8152054    generic-all    API modifications
-jdk/javadoc/tool/generics/genericSuper/Main.java                                8152054    generic-all    API modifications
-jdk/javadoc/tool/generics/supertypes/Main.java                                  8152054    generic-all    API modifications
-jdk/javadoc/tool/generics/throwsGeneric/Main.java                               8152054    generic-all    API modifications
-jdk/javadoc/tool/generics/tparamCycle/Main.java                                 8152054    generic-all    API modifications
-jdk/javadoc/tool/generics/tparamTagOnMethod/Main.java                           8152054    generic-all    API modifications
-jdk/javadoc/tool/generics/tparamTagOnType/Main.java                             8152054    generic-all    API modifications
-jdk/javadoc/tool/generics/wildcards/Main.java                                   8152054    generic-all    API modifications
-jdk/javadoc/tool/imports/MissingImport.java                                     8152054    generic-all    API modifications, testing deprecated APIs.
-jdk/javadoc/tool/sourceOnly/Test.java                                           8152054    generic-all    API modifications
-jdk/javadoc/tool/sourceOption/SourceOption.java                                 8152054    generic-all    API modifications
-jdk/javadoc/tool/subpackageIgnore/SubpackageIgnore.java                         8152054    generic-all    API modifications
-jdk/javadoc/tool/varArgs/Main.java                                              8152054    generic-all    API modifications
+jdk/javadoc/tool/enum/docComments/Main.java                                     8152313    generic-all    convert to doclet test framework
+jdk/javadoc/tool/enum/enumType/Main.java                                        8152313    generic-all    convert to doclet test framework
+jdk/javadoc/tool/varArgs/Main.java                                              8152313    generic-all    convert to doclet test framework
+jdk/javadoc/doclet/testIOException/TestIOException.java                         8164597    windows-all
 
 ###########################################################################
 #
 # jshell
 
-jdk/jshell/EditorPadTest.java                                                   8139872    generic-all    test requires a non-headless environment
-jdk/jshell/ExternalEditorTest.java                                              8080843    generic-all    invalid key error occurs when external editor is used.
+jdk/jshell/EditorPadTest.java                                                   8161276    windows-all    Test set-up cannot press buttons
 jdk/jshell/ToolBasicTest.java                                                   8139873    generic-all    JShell tests failing
 
 ###########################################################################
@@ -76,6 +54,7 @@ tools/javac/annotations/typeAnnotations/newlocations/RepeatingTypeAnnotations.ja
 tools/javac/annotations/typeAnnotations/referenceinfos/Lambda.java              8057687    generic-all    emit correct byte code an attributes for type annotations
 tools/javac/annotations/typeAnnotations/referenceinfos/NestedTypes.java         8057687    generic-all    emit correct byte code an attributes for type annotations
 tools/javac/warnings/suppress/TypeAnnotations.java                              8057683    generic-all    improve ordering of errors with type annotations
+tools/javac/modules/T8159439/NPEForModuleInfoWithNonZeroSuperClassTest.java     8160396    generic-all    current version of jtreg needs a new promotion to include lastes version of ASM
 
 ###########################################################################
 #
@@ -90,7 +69,11 @@ tools/javap/output/RepeatingTypeAnnotations.java                                
 tools/sjavac/IncCompileFullyQualifiedRef.java                                   8152055    generic-all    Requires dependency code to deal with in-method dependencies.
 tools/sjavac/IncCompileWithChanges.java                                         8152055    generic-all    Requires dependency code to deal with in-method dependencies.
 
+tools/sjavac/ApiExtraction.java							8158002	   generic-all	  Requires investigation
+tools/sjavac/IgnoreSymbolFile.java						8158002	   generic-all	  Requires investigation
+tools/sjavac/ClasspathDependencies.java						8158002	   generic-all	  Requires investigation
+
+
 ###########################################################################
 #
 # jdeps 
-

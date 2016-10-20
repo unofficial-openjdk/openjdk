@@ -25,12 +25,12 @@
  * @test TestCMSHeapSizeFlags
  * @key gc
  * @bug 8006088
- * @requires vm.gc=="ConcMarkSweep" | vm.gc=="null"
+ * @requires vm.gc.ConcMarkSweep
  * @summary Tests argument processing for initial and maximum heap size for the CMS collector
- * @library /testlibrary /test/lib
+ * @library /test/lib
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @build TestCMSHeapSizeFlags TestMaxHeapSizeTools
+ * @build sun.hotspot.WhiteBox
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm TestCMSHeapSizeFlags

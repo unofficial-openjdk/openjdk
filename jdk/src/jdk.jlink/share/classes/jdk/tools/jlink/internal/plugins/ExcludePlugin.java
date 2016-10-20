@@ -24,18 +24,18 @@
  */
 package jdk.tools.jlink.internal.plugins;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.function.Predicate;
-import jdk.tools.jlink.plugin.TransformerPlugin;
-import jdk.tools.jlink.plugin.ModuleEntry;
-import jdk.tools.jlink.plugin.ModulePool;
+import jdk.tools.jlink.plugin.Plugin;
+import jdk.tools.jlink.plugin.ResourcePool;
+import jdk.tools.jlink.plugin.ResourcePoolBuilder;
+import jdk.tools.jlink.plugin.ResourcePoolEntry;
 
 /**
  *
  * Exclude resources plugin
  */
-public final class ExcludePlugin implements TransformerPlugin {
+public final class ExcludePlugin implements Plugin {
 
     public static final String NAME = "exclude-resources";
     private Predicate<String> predicate;
@@ -46,13 +46,14 @@ public final class ExcludePlugin implements TransformerPlugin {
     }
 
     @Override
-    public void visit(ModulePool in, ModulePool out) {
+    public ResourcePool transform(ResourcePool in, ResourcePoolBuilder out) {
         in.transformAndCopy((resource) -> {
-            if (resource.getType().equals(ModuleEntry.Type.CLASS_OR_RESOURCE)) {
-                resource = predicate.test(resource.getPath()) ? resource : null;
+            if (resource.type().equals(ResourcePoolEntry.Type.CLASS_OR_RESOURCE)) {
+                resource = predicate.test(resource.path()) ? resource : null;
             }
             return resource;
         }, out);
+        return out.build();
     }
 
     @Override

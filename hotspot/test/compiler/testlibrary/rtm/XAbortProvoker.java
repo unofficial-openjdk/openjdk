@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,9 +22,8 @@
  *
  */
 
-package rtm;
+package compiler.testlibrary.rtm;
 
-import jdk.test.lib.Utils;
 import jdk.internal.misc.Unsafe;
 
 /**
@@ -35,7 +34,7 @@ class XAbortProvoker extends AbortProvoker {
     // Following field have to be static in order to avoid escape analysis.
     @SuppressWarnings("UnsuedDeclaration")
     private static int field = 0;
-    private static final Unsafe UNSAFE = Utils.getUnsafe();
+    private static final Unsafe UNSAFE = Unsafe.getUnsafe();
 
     public XAbortProvoker() {
         this(new Object());

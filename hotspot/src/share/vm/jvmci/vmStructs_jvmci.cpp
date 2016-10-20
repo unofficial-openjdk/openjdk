@@ -69,7 +69,9 @@
                                                                                                                                      \
   static_field(CompilerToVM::Data,             _supports_inline_contig_alloc,          bool)                                         \
   static_field(CompilerToVM::Data,             _heap_end_addr,                         HeapWord**)                                   \
-  static_field(CompilerToVM::Data,             _heap_top_addr,                         HeapWord**)                                   \
+  static_field(CompilerToVM::Data,             _heap_top_addr,                         HeapWord* volatile*)                          \
+                                                                                                                                     \
+  static_field(CompilerToVM::Data,             _max_oop_map_stack_offset,              int)                                          \
                                                                                                                                      \
   static_field(CompilerToVM::Data,             cardtable_start_address,                jbyte*)                                       \
   static_field(CompilerToVM::Data,             cardtable_shift,                        int)                                          \
@@ -325,8 +327,11 @@
   declare_constant(JVM_ACC_FIELD_INTERNAL)                                \
   declare_constant(JVM_ACC_FIELD_STABLE)                                  \
   declare_constant(JVM_ACC_FIELD_HAS_GENERIC_SIGNATURE)                   \
+  declare_preprocessor_constant("JVM_ACC_VARARGS", JVM_ACC_VARARGS)       \
+  declare_preprocessor_constant("JVM_ACC_BRIDGE", JVM_ACC_BRIDGE)         \
+  declare_preprocessor_constant("JVM_ACC_ANNOTATION", JVM_ACC_ANNOTATION) \
+  declare_preprocessor_constant("JVM_ACC_ENUM", JVM_ACC_ENUM)             \
   declare_preprocessor_constant("JVM_ACC_SYNTHETIC", JVM_ACC_SYNTHETIC)   \
-  declare_preprocessor_constant("JVM_RECOGNIZED_FIELD_MODIFIERS", JVM_RECOGNIZED_FIELD_MODIFIERS) \
                                                                           \
   declare_constant(JVM_CONSTANT_Utf8)                                     \
   declare_constant(JVM_CONSTANT_Unicode)                                  \
@@ -491,6 +496,7 @@
   declare_constant(Method::_force_inline)                                 \
   declare_constant(Method::_dont_inline)                                  \
   declare_constant(Method::_hidden)                                       \
+  declare_constant(Method::_intrinsic_candidate)                          \
   declare_constant(Method::_reserved_stack_access)                        \
                                                                           \
   declare_constant(Method::nonvirtual_vtable_index)                       \
@@ -539,6 +545,8 @@
   declare_function(SharedRuntime::exception_handler_for_return_address)   \
   declare_function(SharedRuntime::OSR_migration_end)                      \
   declare_function(SharedRuntime::enable_stack_reserved_zone)             \
+  declare_function(SharedRuntime::frem)                                   \
+  declare_function(SharedRuntime::drem)                                   \
                                                                           \
   declare_function(os::dll_load)                                          \
   declare_function(os::dll_lookup)                                        \
@@ -546,7 +554,7 @@
   declare_function(os::javaTimeNanos)                                     \
                                                                           \
   declare_function(Deoptimization::fetch_unroll_info)                     \
-  COMPILER2_PRESENT(declare_function(Deoptimization::uncommon_trap))      \
+  declare_function(Deoptimization::uncommon_trap)                         \
   declare_function(Deoptimization::unpack_frames)                         \
                                                                           \
   declare_function(JVMCIRuntime::new_instance) \
@@ -587,31 +595,31 @@
 #endif // INCLUDE_ALL_GCS
 
 
-#ifdef TARGET_OS_FAMILY_linux
+#ifdef LINUX
 
 #define VM_ADDRESSES_OS(declare_address, declare_preprocessor_address, declare_function) \
   declare_preprocessor_address("RTLD_DEFAULT", RTLD_DEFAULT)
 
-#endif // TARGET_OS_FAMILY_linux
+#endif
 
 
-#ifdef TARGET_OS_FAMILY_bsd
+#ifdef BSD
 
 #define VM_ADDRESSES_OS(declare_address, declare_preprocessor_address, declare_function) \
   declare_preprocessor_address("RTLD_DEFAULT", RTLD_DEFAULT)
 
-#endif // TARGET_OS_FAMILY_bsd
+#endif
 
-
+// AARCH64 is defined in closed port, too. TARGET_ARCH_aarch64 is not.
 #ifdef TARGET_ARCH_aarch64
 
 #define VM_STRUCTS_CPU(nonstatic_field, static_field, unchecked_nonstatic_field, volatile_nonstatic_field, nonproduct_nonstatic_field, c2_nonstatic_field, unchecked_c1_static_field, unchecked_c2_static_field) \
   volatile_nonstatic_field(JavaFrameAnchor, _last_Java_fp, intptr_t*)
 
-#endif // TARGET_ARCH_aarch64
+#endif
 
 
-#ifdef TARGET_ARCH_x86
+#ifdef X86
 
 #define VM_STRUCTS_CPU(nonstatic_field, static_field, unchecked_nonstatic_field, volatile_nonstatic_field, nonproduct_nonstatic_field, c2_nonstatic_field, unchecked_c1_static_field, unchecked_c2_static_field) \
   volatile_nonstatic_field(JavaFrameAnchor, _last_Java_fp, intptr_t*)
@@ -655,12 +663,13 @@
 #define VM_LONG_CONSTANTS_CPU(declare_constant, declare_preprocessor_constant, declare_c1_constant, declare_c2_constant, declare_c2_preprocessor_constant) \
   declare_preprocessor_constant("VM_Version::CPU_AVX512BW", CPU_AVX512BW) \
   declare_preprocessor_constant("VM_Version::CPU_AVX512VL", CPU_AVX512VL) \
-  declare_preprocessor_constant("VM_Version::CPU_SHA", CPU_SHA)
+  declare_preprocessor_constant("VM_Version::CPU_SHA", CPU_SHA)           \
+  declare_preprocessor_constant("VM_Version::CPU_FMA", CPU_FMA)
 
-#endif // TARGET_ARCH_x86
+#endif
 
 
-#ifdef TARGET_ARCH_sparc
+#ifdef SPARC
 
 #define VM_STRUCTS_CPU(nonstatic_field, static_field, unchecked_nonstatic_field, volatile_nonstatic_field, nonproduct_nonstatic_field, c2_nonstatic_field, unchecked_c1_static_field, unchecked_c2_static_field) \
   volatile_nonstatic_field(JavaFrameAnchor, _flags, int)
@@ -690,7 +699,7 @@
   declare_constant(VM_Version::sha256_instruction_m)                      \
   declare_constant(VM_Version::sha512_instruction_m)
 
-#endif // TARGET_ARCH_sparc
+#endif
 
 
 /*
@@ -732,22 +741,6 @@
 #define VM_ADDRESSES_OS(declare_address, declare_preprocessor_address, declare_function)
 #endif
 
-
-// whole purpose of this function is to work around bug c++/27724 in gcc 4.1.1
-// with optimization turned on it doesn't affect produced code
-static inline uint64_t cast_uint64_t(size_t x)
-{
-  return x;
-}
-
-#define ASSIGN_CONST_TO_64BIT_VAR(var, expr) \
-  JNIEXPORT uint64_t var = cast_uint64_t(expr);
-
-#define ASSIGN_OFFSET_TO_64BIT_VAR(var, type, field)   \
-  ASSIGN_CONST_TO_64BIT_VAR(var, offset_of(type, field))
-
-#define ASSIGN_STRIDE_TO_64BIT_VAR(var, array) \
-  ASSIGN_CONST_TO_64BIT_VAR(var, (char*)&array[1] - (char*)&array[0])
 
 //
 // Instantiation of VMStructEntries, VMTypeEntries and VMIntConstantEntries
@@ -871,37 +864,31 @@ VMAddressEntry JVMCIVMStructs::localHotSpotVMAddresses[] = {
   GENERATE_VM_ADDRESS_LAST_ENTRY()
 };
 
+int JVMCIVMStructs::localHotSpotVMStructs_count() {
+  // Ignore sentinel entry at the end
+  return (sizeof(localHotSpotVMStructs) / sizeof(VMStructEntry)) - 1;
+}
+int JVMCIVMStructs::localHotSpotVMTypes_count() {
+  // Ignore sentinel entry at the end
+  return (sizeof(localHotSpotVMTypes) / sizeof(VMTypeEntry)) - 1;
+}
+int JVMCIVMStructs::localHotSpotVMIntConstants_count() {
+  // Ignore sentinel entry at the end
+  return (sizeof(localHotSpotVMIntConstants) / sizeof(VMIntConstantEntry)) - 1;
+}
+int JVMCIVMStructs::localHotSpotVMLongConstants_count() {
+  // Ignore sentinel entry at the end
+  return (sizeof(localHotSpotVMLongConstants) / sizeof(VMLongConstantEntry)) - 1;
+}
+int JVMCIVMStructs::localHotSpotVMAddresses_count() {
+  // Ignore sentinel entry at the end
+  return (sizeof(localHotSpotVMAddresses) / sizeof(VMAddressEntry)) - 1;
+}
+
 extern "C" {
 JNIEXPORT VMStructEntry* jvmciHotSpotVMStructs = JVMCIVMStructs::localHotSpotVMStructs;
-ASSIGN_OFFSET_TO_64BIT_VAR(jvmciHotSpotVMStructEntryTypeNameOffset,   VMStructEntry, typeName);
-ASSIGN_OFFSET_TO_64BIT_VAR(jvmciHotSpotVMStructEntryFieldNameOffset,  VMStructEntry, fieldName);
-ASSIGN_OFFSET_TO_64BIT_VAR(jvmciHotSpotVMStructEntryTypeStringOffset, VMStructEntry, typeString);
-ASSIGN_OFFSET_TO_64BIT_VAR(jvmciHotSpotVMStructEntryIsStaticOffset,   VMStructEntry, isStatic);
-ASSIGN_OFFSET_TO_64BIT_VAR(jvmciHotSpotVMStructEntryOffsetOffset,     VMStructEntry, offset);
-ASSIGN_OFFSET_TO_64BIT_VAR(jvmciHotSpotVMStructEntryAddressOffset,    VMStructEntry, address);
-ASSIGN_STRIDE_TO_64BIT_VAR(jvmciHotSpotVMStructEntryArrayStride, jvmciHotSpotVMStructs);
-
 JNIEXPORT VMTypeEntry* jvmciHotSpotVMTypes = JVMCIVMStructs::localHotSpotVMTypes;
-ASSIGN_OFFSET_TO_64BIT_VAR(jvmciHotSpotVMTypeEntryTypeNameOffset,       VMTypeEntry, typeName);
-ASSIGN_OFFSET_TO_64BIT_VAR(jvmciHotSpotVMTypeEntrySuperclassNameOffset, VMTypeEntry, superclassName);
-ASSIGN_OFFSET_TO_64BIT_VAR(jvmciHotSpotVMTypeEntryIsOopTypeOffset,      VMTypeEntry, isOopType);
-ASSIGN_OFFSET_TO_64BIT_VAR(jvmciHotSpotVMTypeEntryIsIntegerTypeOffset,  VMTypeEntry, isIntegerType);
-ASSIGN_OFFSET_TO_64BIT_VAR(jvmciHotSpotVMTypeEntryIsUnsignedOffset,     VMTypeEntry, isUnsigned);
-ASSIGN_OFFSET_TO_64BIT_VAR(jvmciHotSpotVMTypeEntrySizeOffset,           VMTypeEntry, size);
-ASSIGN_STRIDE_TO_64BIT_VAR(jvmciHotSpotVMTypeEntryArrayStride, jvmciHotSpotVMTypes);
-
 JNIEXPORT VMIntConstantEntry* jvmciHotSpotVMIntConstants = JVMCIVMStructs::localHotSpotVMIntConstants;
-ASSIGN_OFFSET_TO_64BIT_VAR(jvmciHotSpotVMIntConstantEntryNameOffset,  VMIntConstantEntry, name);
-ASSIGN_OFFSET_TO_64BIT_VAR(jvmciHotSpotVMIntConstantEntryValueOffset, VMIntConstantEntry, value);
-ASSIGN_STRIDE_TO_64BIT_VAR(jvmciHotSpotVMIntConstantEntryArrayStride, jvmciHotSpotVMIntConstants);
-
 JNIEXPORT VMLongConstantEntry* jvmciHotSpotVMLongConstants = JVMCIVMStructs::localHotSpotVMLongConstants;
-ASSIGN_OFFSET_TO_64BIT_VAR(jvmciHotSpotVMLongConstantEntryNameOffset,  VMLongConstantEntry, name);
-ASSIGN_OFFSET_TO_64BIT_VAR(jvmciHotSpotVMLongConstantEntryValueOffset, VMLongConstantEntry, value);
-ASSIGN_STRIDE_TO_64BIT_VAR(jvmciHotSpotVMLongConstantEntryArrayStride, jvmciHotSpotVMLongConstants);
-
 JNIEXPORT VMAddressEntry* jvmciHotSpotVMAddresses = JVMCIVMStructs::localHotSpotVMAddresses;
-ASSIGN_OFFSET_TO_64BIT_VAR(jvmciHotSpotVMAddressEntryNameOffset,  VMAddressEntry, name);
-ASSIGN_OFFSET_TO_64BIT_VAR(jvmciHotSpotVMAddressEntryValueOffset, VMAddressEntry, value);
-ASSIGN_STRIDE_TO_64BIT_VAR(jvmciHotSpotVMAddressEntryArrayStride, jvmciHotSpotVMAddresses);
 }

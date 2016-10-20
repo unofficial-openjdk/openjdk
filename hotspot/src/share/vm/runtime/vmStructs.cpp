@@ -54,7 +54,6 @@
 #include "gc/shared/genCollectedHeap.hpp"
 #include "gc/shared/generation.hpp"
 #include "gc/shared/generationSpec.hpp"
-#include "gc/shared/referencePendingListLocker.hpp"
 #include "gc/shared/space.hpp"
 #include "interpreter/bytecodeInterpreter.hpp"
 #include "interpreter/bytecodes.hpp"
@@ -107,77 +106,9 @@
 #include "utilities/hashtable.hpp"
 #include "utilities/macros.hpp"
 
-#ifdef TARGET_OS_FAMILY_linux
-# include "vmStructs_linux.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_solaris
-# include "vmStructs_solaris.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_windows
-# include "vmStructs_windows.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_aix
-# include "vmStructs_aix.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_bsd
-# include "vmStructs_bsd.hpp"
-#endif
-
-#ifdef TARGET_ARCH_x86
-# include "vmStructs_x86.hpp"
-#endif
-#ifdef TARGET_ARCH_sparc
-# include "vmStructs_sparc.hpp"
-#endif
-#ifdef TARGET_ARCH_zero
-# include "vmStructs_zero.hpp"
-#endif
-#ifdef TARGET_ARCH_arm
-# include "vmStructs_arm.hpp"
-#endif
-#ifdef TARGET_ARCH_ppc
-# include "vmStructs_ppc.hpp"
-#endif
-#ifdef TARGET_ARCH_aarch64
-# include "vmStructs_aarch64.hpp"
-#endif
-
-#ifdef TARGET_OS_ARCH_linux_x86
-# include "vmStructs_linux_x86.hpp"
-#endif
-#ifdef TARGET_OS_ARCH_linux_sparc
-# include "vmStructs_linux_sparc.hpp"
-#endif
-#ifdef TARGET_OS_ARCH_linux_zero
-# include "vmStructs_linux_zero.hpp"
-#endif
-#ifdef TARGET_OS_ARCH_solaris_x86
-# include "vmStructs_solaris_x86.hpp"
-#endif
-#ifdef TARGET_OS_ARCH_solaris_sparc
-# include "vmStructs_solaris_sparc.hpp"
-#endif
-#ifdef TARGET_OS_ARCH_windows_x86
-# include "vmStructs_windows_x86.hpp"
-#endif
-#ifdef TARGET_OS_ARCH_linux_arm
-# include "vmStructs_linux_arm.hpp"
-#endif
-#ifdef TARGET_OS_ARCH_linux_ppc
-# include "vmStructs_linux_ppc.hpp"
-#endif
-#ifdef TARGET_OS_ARCH_linux_aarch64
-# include "vmStructs_linux_aarch64.hpp"
-#endif
-#ifdef TARGET_OS_ARCH_aix_ppc
-# include "vmStructs_aix_ppc.hpp"
-#endif
-#ifdef TARGET_OS_ARCH_bsd_x86
-# include "vmStructs_bsd_x86.hpp"
-#endif
-#ifdef TARGET_OS_ARCH_bsd_zero
-# include "vmStructs_bsd_zero.hpp"
-#endif
+#include CPU_HEADER(vmStructs)
+#include OS_HEADER(vmStructs)
+#include OS_CPU_HEADER(vmStructs)
 
 #if INCLUDE_ALL_GCS
 #include "gc/cms/compactibleFreeListSpace.hpp"
@@ -310,7 +241,7 @@ typedef CompactHashtable<Symbol*, char>       SymbolCompactHashTable;
   nonstatic_field(ConstantPool,                _reference_map,                                Array<u2>*)                            \
   nonstatic_field(ConstantPoolCache,           _length,                                       int)                                   \
   nonstatic_field(ConstantPoolCache,           _constant_pool,                                ConstantPool*)                         \
-  nonstatic_field(InstanceKlass,               _array_klasses,                                Klass*)                                \
+  volatile_nonstatic_field(InstanceKlass,      _array_klasses,                                Klass*)                                \
   nonstatic_field(InstanceKlass,               _methods,                                      Array<Method*>*)                       \
   nonstatic_field(InstanceKlass,               _default_methods,                              Array<Method*>*)                       \
   nonstatic_field(InstanceKlass,               _local_interfaces,                             Array<Klass*>*)                        \
@@ -339,7 +270,7 @@ typedef CompactHashtable<Symbol*, char>       SymbolCompactHashTable;
   nonstatic_field(InstanceKlass,               _osr_nmethods_head,                            nmethod*)                              \
   JVMTI_ONLY(nonstatic_field(InstanceKlass,    _breakpoints,                                  BreakpointInfo*))                      \
   nonstatic_field(InstanceKlass,               _generic_signature_index,                      u2)                                    \
-  nonstatic_field(InstanceKlass,               _methods_jmethod_ids,                          jmethodID*)                            \
+  volatile_nonstatic_field(InstanceKlass,      _methods_jmethod_ids,                          jmethodID*)                            \
   volatile_nonstatic_field(InstanceKlass,      _idnum_allocated_count,                        u2)                                    \
   nonstatic_field(InstanceKlass,               _annotations,                                  Annotations*)                          \
   nonstatic_field(InstanceKlass,               _method_ordering,                              Array<int>*)                           \
@@ -1705,7 +1636,6 @@ typedef CompactHashtable<Symbol*, char>       SymbolCompactHashTable;
            declare_type(JavaThread, Thread)                               \
            declare_type(JvmtiAgentThread, JavaThread)                     \
            declare_type(ServiceThread, JavaThread)                        \
-           declare_type(ReferencePendingListLockerThread, JavaThread)     \
   declare_type(CompilerThread, JavaThread)                                \
   declare_type(CodeCacheSweeperThread, JavaThread)                        \
   declare_toplevel_type(OSThread)                                         \
@@ -2024,15 +1954,21 @@ typedef CompactHashtable<Symbol*, char>       SymbolCompactHashTable;
   declare_c2_type(StorePConditionalNode, LoadStoreNode)                   \
   declare_c2_type(StoreLConditionalNode, LoadStoreNode)                   \
   declare_c2_type(CompareAndSwapNode, LoadStoreConditionalNode)           \
+  declare_c2_type(CompareAndSwapBNode, CompareAndSwapNode)                \
+  declare_c2_type(CompareAndSwapSNode, CompareAndSwapNode)                \
   declare_c2_type(CompareAndSwapLNode, CompareAndSwapNode)                \
   declare_c2_type(CompareAndSwapINode, CompareAndSwapNode)                \
   declare_c2_type(CompareAndSwapPNode, CompareAndSwapNode)                \
   declare_c2_type(CompareAndSwapNNode, CompareAndSwapNode)                \
+  declare_c2_type(WeakCompareAndSwapBNode, CompareAndSwapNode)            \
+  declare_c2_type(WeakCompareAndSwapSNode, CompareAndSwapNode)            \
   declare_c2_type(WeakCompareAndSwapLNode, CompareAndSwapNode)            \
   declare_c2_type(WeakCompareAndSwapINode, CompareAndSwapNode)            \
   declare_c2_type(WeakCompareAndSwapPNode, CompareAndSwapNode)            \
   declare_c2_type(WeakCompareAndSwapNNode, CompareAndSwapNode)            \
   declare_c2_type(CompareAndExchangeNode, LoadStoreNode)                  \
+  declare_c2_type(CompareAndExchangeBNode, CompareAndExchangeNode)        \
+  declare_c2_type(CompareAndExchangeSNode, CompareAndExchangeNode)        \
   declare_c2_type(CompareAndExchangeLNode, CompareAndExchangeNode)        \
   declare_c2_type(CompareAndExchangeINode, CompareAndExchangeNode)        \
   declare_c2_type(CompareAndExchangePNode, CompareAndExchangeNode)        \
@@ -2167,6 +2103,8 @@ typedef CompactHashtable<Symbol*, char>       SymbolCompactHashTable;
   declare_c2_type(OverflowAddLNode, OverflowLNode)                        \
   declare_c2_type(OverflowSubLNode, OverflowLNode)                        \
   declare_c2_type(OverflowMulLNode, OverflowLNode)                        \
+  declare_c2_type(FmaDNode, Node)                                         \
+  declare_c2_type(FmaFNode, Node)                                         \
                                                                           \
   /*********************/                                                 \
   /* Adapter Blob Entries */                                              \
@@ -2690,6 +2628,11 @@ typedef CompactHashtable<Symbol*, char>       SymbolCompactHashTable;
   declare_constant(Deoptimization::Reason_rtm_state_change)               \
   declare_constant(Deoptimization::Reason_unstable_if)                    \
   declare_constant(Deoptimization::Reason_unstable_fused_if)              \
+  NOT_ZERO(JVMCI_ONLY(declare_constant(Deoptimization::Reason_aliasing)))                       \
+  NOT_ZERO(JVMCI_ONLY(declare_constant(Deoptimization::Reason_transfer_to_interpreter)))        \
+  NOT_ZERO(JVMCI_ONLY(declare_constant(Deoptimization::Reason_not_compiled_exception_handler))) \
+  NOT_ZERO(JVMCI_ONLY(declare_constant(Deoptimization::Reason_unresolved)))                     \
+  NOT_ZERO(JVMCI_ONLY(declare_constant(Deoptimization::Reason_jsr_mismatch)))                   \
   declare_constant(Deoptimization::Reason_tenured)                        \
   declare_constant(Deoptimization::Reason_LIMIT)                          \
   declare_constant(Deoptimization::Reason_RECORDED_LIMIT)                 \
@@ -2705,7 +2648,7 @@ typedef CompactHashtable<Symbol*, char>       SymbolCompactHashTable;
   /* DEFAULT_CACHE_LINE_SIZE (globalDefinitions.hpp) */                   \
   /***************************************************/                   \
                                                                           \
-  declare_constant(DEFAULT_CACHE_LINE_SIZE)                               \
+  declare_preprocessor_constant("DEFAULT_CACHE_LINE_SIZE", DEFAULT_CACHE_LINE_SIZE) \
                                                                           \
   declare_constant(Deoptimization::Unpack_deopt)                          \
   declare_constant(Deoptimization::Unpack_exception)                      \
@@ -2814,7 +2757,13 @@ typedef CompactHashtable<Symbol*, char>       SymbolCompactHashTable;
   declare_constant(ConcreteRegisterImpl::number_of_registers)             \
   declare_preprocessor_constant("REG_COUNT", REG_COUNT)                \
   declare_c2_preprocessor_constant("SAVED_ON_ENTRY_REG_COUNT", SAVED_ON_ENTRY_REG_COUNT) \
-  declare_c2_preprocessor_constant("C_SAVED_ON_ENTRY_REG_COUNT", C_SAVED_ON_ENTRY_REG_COUNT)
+  declare_c2_preprocessor_constant("C_SAVED_ON_ENTRY_REG_COUNT", C_SAVED_ON_ENTRY_REG_COUNT) \
+                                                                          \
+  /****************/                                                      \
+  /* JVMCI */                                                             \
+  /****************/                                                      \
+                                                                          \
+  declare_preprocessor_constant("INCLUDE_JVMCI", INCLUDE_JVMCI)
 
 
 //--------------------------------------------------------------------------------
@@ -3023,6 +2972,7 @@ VMStructEntry VMStructs::localHotSpotVMStructs[] = {
 
 #if INCLUDE_ALL_GCS
   VM_STRUCTS_PARALLELGC(GENERATE_NONSTATIC_VM_STRUCT_ENTRY,
+                        GENERATE_NONSTATIC_VM_STRUCT_ENTRY,
                         GENERATE_STATIC_VM_STRUCT_ENTRY)
 
   VM_STRUCTS_CMS(GENERATE_NONSTATIC_VM_STRUCT_ENTRY,
@@ -3035,7 +2985,7 @@ VMStructEntry VMStructs::localHotSpotVMStructs[] = {
 
 #if INCLUDE_TRACE
   VM_STRUCTS_TRACE(GENERATE_NONSTATIC_VM_STRUCT_ENTRY,
-                GENERATE_STATIC_VM_STRUCT_ENTRY)
+                   GENERATE_STATIC_VM_STRUCT_ENTRY)
 #endif
 
   VM_STRUCTS_EXT(GENERATE_NONSTATIC_VM_STRUCT_ENTRY,
@@ -3221,11 +3171,12 @@ VMStructs::init() {
 
 #if INCLUDE_ALL_GCS
   VM_STRUCTS_PARALLELGC(CHECK_NONSTATIC_VM_STRUCT_ENTRY,
-             CHECK_STATIC_VM_STRUCT_ENTRY);
+                        CHECK_VOLATILE_NONSTATIC_VM_STRUCT_ENTRY,
+                        CHECK_STATIC_VM_STRUCT_ENTRY);
 
   VM_STRUCTS_CMS(CHECK_NONSTATIC_VM_STRUCT_ENTRY,
-             CHECK_VOLATILE_NONSTATIC_VM_STRUCT_ENTRY,
-             CHECK_STATIC_VM_STRUCT_ENTRY);
+                 CHECK_VOLATILE_NONSTATIC_VM_STRUCT_ENTRY,
+                 CHECK_STATIC_VM_STRUCT_ENTRY);
 
   VM_STRUCTS_G1(CHECK_NONSTATIC_VM_STRUCT_ENTRY,
                 CHECK_STATIC_VM_STRUCT_ENTRY);
@@ -3234,7 +3185,7 @@ VMStructs::init() {
 
 #if INCLUDE_TRACE
   VM_STRUCTS_TRACE(CHECK_NONSTATIC_VM_STRUCT_ENTRY,
-                CHECK_STATIC_VM_STRUCT_ENTRY);
+                   CHECK_STATIC_VM_STRUCT_ENTRY);
 #endif
 
   VM_STRUCTS_EXT(CHECK_NONSTATIC_VM_STRUCT_ENTRY,
@@ -3346,6 +3297,7 @@ VMStructs::init() {
                         CHECK_NO_OP));
 #if INCLUDE_ALL_GCS
   debug_only(VM_STRUCTS_PARALLELGC(ENSURE_FIELD_TYPE_PRESENT,
+                                   ENSURE_FIELD_TYPE_PRESENT,
                                    ENSURE_FIELD_TYPE_PRESENT));
   debug_only(VM_STRUCTS_CMS(ENSURE_FIELD_TYPE_PRESENT,
                             ENSURE_FIELD_TYPE_PRESENT,

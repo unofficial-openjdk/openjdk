@@ -39,7 +39,7 @@
 #include "memory/iterator.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/oop.inline.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/orderAccess.inline.hpp"
 
 int    HeapRegion::LogOfHRGrainBytes = 0;
@@ -167,7 +167,7 @@ void HeapRegion::reset_after_compaction() {
   init_top_at_mark_start();
 }
 
-void HeapRegion::hr_clear(bool par, bool clear_space, bool locked) {
+void HeapRegion::hr_clear(bool keep_remset, bool clear_space, bool locked) {
   assert(_humongous_start_region == NULL,
          "we should have already filtered out humongous regions");
   assert(!in_collection_set(),
@@ -179,15 +179,14 @@ void HeapRegion::hr_clear(bool par, bool clear_space, bool locked) {
   set_free();
   reset_pre_dummy_top();
 
-  if (!par) {
-    // If this is parallel, this will be done later.
-    HeapRegionRemSet* hrrs = rem_set();
+  if (!keep_remset) {
     if (locked) {
-      hrrs->clear_locked();
+      rem_set()->clear_locked();
     } else {
-      hrrs->clear();
+      rem_set()->clear();
     }
   }
+
   zero_marked_bytes();
 
   init_top_at_mark_start();
@@ -284,7 +283,6 @@ HeapRegion::HeapRegion(uint hrm_index,
     _hrm_index(hrm_index),
     _allocation_context(AllocationContext::system()),
     _humongous_start_region(NULL),
-    _next_in_special_set(NULL),
     _evacuation_failed(false),
     _prev_marked_bytes(0), _next_marked_bytes(0), _gc_efficiency(0.0),
     _next(NULL), _prev(NULL),
@@ -354,48 +352,10 @@ void HeapRegion::note_self_forwarding_removal_end(bool during_initial_mark,
   _prev_marked_bytes = marked_bytes;
 }
 
-HeapWord*
-HeapRegion::object_iterate_mem_careful(MemRegion mr,
-                                                 ObjectClosure* cl) {
-  G1CollectedHeap* g1h = G1CollectedHeap::heap();
-  // We used to use "block_start_careful" here.  But we're actually happy
-  // to update the BOT while we do this...
-  HeapWord* cur = block_start(mr.start());
-  mr = mr.intersection(used_region());
-  if (mr.is_empty()) return NULL;
-  // Otherwise, find the obj that extends onto mr.start().
-
-  assert(cur <= mr.start()
-         && (oop(cur)->klass_or_null() == NULL ||
-             cur + oop(cur)->size() > mr.start()),
-         "postcondition of block_start");
-  oop obj;
-  while (cur < mr.end()) {
-    obj = oop(cur);
-    if (obj->klass_or_null() == NULL) {
-      // Ran into an unparseable point.
-      return cur;
-    } else if (!g1h->is_obj_dead(obj)) {
-      cl->do_object(obj);
-    }
-    cur += block_size(cur);
-  }
-  return NULL;
-}
-
-HeapWord*
-HeapRegion::
-oops_on_card_seq_iterate_careful(MemRegion mr,
-                                 FilterOutOfRegionClosure* cl,
-                                 bool filter_young,
-                                 jbyte* card_ptr) {
-  // Currently, we should only have to clean the card if filter_young
-  // is true and vice versa.
-  if (filter_young) {
-    assert(card_ptr != NULL, "pre-condition");
-  } else {
-    assert(card_ptr == NULL, "pre-condition");
-  }
+bool HeapRegion::oops_on_card_seq_iterate_careful(MemRegion mr,
+                                                  FilterOutOfRegionClosure* cl,
+                                                  jbyte* card_ptr) {
+  assert(card_ptr != NULL, "pre-condition");
   G1CollectedHeap* g1h = G1CollectedHeap::heap();
 
   // If we're within a stop-world GC, then we might look at a card in a
@@ -406,7 +366,9 @@ oops_on_card_seq_iterate_careful(MemRegion mr,
   } else {
     mr = mr.intersection(used_region());
   }
-  if (mr.is_empty()) return NULL;
+  if (mr.is_empty()) {
+    return true;
+  }
   // Otherwise, find the obj that extends onto mr.start().
 
   // The intersection of the incoming mr (for the card) and the
@@ -415,27 +377,21 @@ oops_on_card_seq_iterate_careful(MemRegion mr,
   // G1CollectedHeap.cpp that allocates a new region sets the
   // is_young tag on the region before allocating. Thus we
   // safely know if this region is young.
-  if (is_young() && filter_young) {
-    return NULL;
+  if (is_young()) {
+    return true;
   }
-
-  assert(!is_young(), "check value of filter_young");
 
   // We can only clean the card here, after we make the decision that
-  // the card is not young. And we only clean the card if we have been
-  // asked to (i.e., card_ptr != NULL).
-  if (card_ptr != NULL) {
-    *card_ptr = CardTableModRefBS::clean_card_val();
-    // We must complete this write before we do any of the reads below.
-    OrderAccess::storeload();
-  }
+  // the card is not young.
+  *card_ptr = CardTableModRefBS::clean_card_val();
+  // We must complete this write before we do any of the reads below.
+  OrderAccess::storeload();
 
   // Cache the boundaries of the memory region in some const locals
   HeapWord* const start = mr.start();
   HeapWord* const end = mr.end();
 
-  // We used to use "block_start_careful" here.  But we're actually happy
-  // to update the BOT while we do this...
+  // Update BOT as needed while finding start of (potential) object.
   HeapWord* cur = block_start(start);
   assert(cur <= start, "Postcondition");
 
@@ -447,7 +403,9 @@ oops_on_card_seq_iterate_careful(MemRegion mr,
     obj = oop(cur);
     if (obj->klass_or_null() == NULL) {
       // Ran into an unparseable point.
-      return cur;
+      assert(!g1h->is_gc_active(),
+             "Unparsable heap during GC at " PTR_FORMAT, p2i(cur));
+      return false;
     }
     // Otherwise...
     next = cur + block_size(cur);
@@ -464,7 +422,9 @@ oops_on_card_seq_iterate_careful(MemRegion mr,
     assert((cur + block_size(cur)) > (HeapWord*)obj, "Loop invariant");
     if (obj->klass_or_null() == NULL) {
       // Ran into an unparseable point.
-      return cur;
+      assert(!g1h->is_gc_active(),
+             "Unparsable heap during GC at " PTR_FORMAT, p2i(cur));
+      return false;
     }
 
     // Advance the current pointer. "obj" still points to the object to iterate.
@@ -483,7 +443,7 @@ oops_on_card_seq_iterate_careful(MemRegion mr,
     }
   } while (cur < end);
 
-  return NULL;
+  return true;
 }
 
 // Code roots support

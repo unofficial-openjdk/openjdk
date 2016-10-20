@@ -25,10 +25,8 @@
 
 package com.sun.tools.javac.file;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStreamWriter;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -43,7 +41,6 @@ import java.nio.charset.CodingErrorAction;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -65,7 +62,6 @@ import com.sun.tools.javac.util.Abort;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.DefinedBy;
 import com.sun.tools.javac.util.DefinedBy.Api;
-import com.sun.tools.javac.util.JCDiagnostic.SimpleDiagnosticPosition;
 import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Options;
 
@@ -236,7 +232,7 @@ public abstract class BaseFileManager implements JavaFileManager {
         OptionHelper helper = new GrumpyHelper(log) {
             @Override
             public String get(Option option) {
-                return options.get(option.getText());
+                return options.get(option);
             }
 
             @Override
@@ -255,23 +251,15 @@ public abstract class BaseFileManager implements JavaFileManager {
             }
         };
 
-        for (Option o: javacFileManagerOptions) {
-            if (o.matches(current))  {
-                if (o.hasArg()) {
-                    if (remaining.hasNext()) {
-                        if (!o.process(helper, current, remaining.next()))
-                            return true;
-                    }
-                } else {
-                    if (!o.process(helper, current))
-                        return true;
-                }
-                // operand missing, or process returned true
-                throw new IllegalArgumentException(current);
-            }
+        Option o = Option.lookup(current, javacFileManagerOptions);
+        if (o == null) {
+            return false;
         }
 
-        return false;
+        if (!o.handleOption(helper, current, remaining))
+            throw new IllegalArgumentException(current);
+
+        return true;
     }
     // where
         private static final Set<Option> javacFileManagerOptions =
@@ -279,11 +267,8 @@ public abstract class BaseFileManager implements JavaFileManager {
 
     @Override @DefinedBy(Api.COMPILER)
     public int isSupportedOption(String option) {
-        for (Option o : javacFileManagerOptions) {
-            if (o.matches(option))
-                return o.hasArg() ? 1 : 0;
-        }
-        return -1;
+        Option o = Option.lookup(option, javacFileManagerOptions);
+        return (o == null) ? -1 : o.hasArg() ? 1 : 0;
     }
 
     protected String multiReleaseValue;
@@ -302,6 +287,7 @@ public abstract class BaseFileManager implements JavaFileManager {
 
             case MULTIRELEASE:
                 multiReleaseValue = value;
+                locations.setMultiReleaseValue(value);
                 return true;
 
             default:
@@ -320,7 +306,7 @@ public abstract class BaseFileManager implements JavaFileManager {
             try {
                 ok = ok & handleOption(e.getKey(), e.getValue());
             } catch (IllegalArgumentException ex) {
-                log.error(Errors.IllegalArgumentForOption(e.getKey().getText(), ex.getMessage()));
+                log.error(Errors.IllegalArgumentForOption(e.getKey().getPrimaryName(), ex.getMessage()));
                 ok = false;
             }
         }
@@ -334,8 +320,7 @@ public abstract class BaseFileManager implements JavaFileManager {
     private String defaultEncodingName;
     private String getDefaultEncodingName() {
         if (defaultEncodingName == null) {
-            defaultEncodingName =
-                new OutputStreamWriter(new ByteArrayOutputStream()).getEncoding();
+            defaultEncodingName = Charset.defaultCharset().name();
         }
         return defaultEncodingName;
     }

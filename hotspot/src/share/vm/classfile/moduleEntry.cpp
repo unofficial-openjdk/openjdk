@@ -40,7 +40,6 @@
 
 ModuleEntry* ModuleEntryTable::_javabase_module = NULL;
 
-
 void ModuleEntry::set_location(Symbol* location) {
   if (_location != NULL) {
     // _location symbol's refcounts are managed by ModuleEntry,
@@ -93,7 +92,7 @@ bool ModuleEntry::can_read(ModuleEntry* m) const {
   // read java.base.  If either of these conditions
   // hold, readability has been established.
   if (!this->is_named() ||
-      (m == ModuleEntryTable::javabase_module())) {
+      (m == ModuleEntryTable::javabase_moduleEntry())) {
     return true;
   }
 
@@ -115,7 +114,32 @@ void ModuleEntry::add_read(ModuleEntry* m) {
       // Lazily create a module's reads list
       _reads = new (ResourceObj::C_HEAP, mtModule)GrowableArray<ModuleEntry*>(MODULE_READS_SIZE, true);
     }
+
+    // Determine, based on this newly established read edge to module m,
+    // if this module's read list should be walked at a GC safepoint.
+    set_read_walk_required(m->loader_data());
+
+    // Establish readability to module m
     _reads->append_if_missing(m);
+  }
+}
+
+// If the module's loader, that a read edge is being established to, is
+// not the same loader as this module's and is not one of the 3 builtin
+// class loaders, then this module's reads list must be walked at GC
+// safepoint. Modules have the same life cycle as their defining class
+// loaders and should be removed if dead.
+void ModuleEntry::set_read_walk_required(ClassLoaderData* m_loader_data) {
+  assert_locked_or_safepoint(Module_lock);
+  if (!_must_walk_reads &&
+      loader_data() != m_loader_data &&
+      !m_loader_data->is_builtin_class_loader_data()) {
+    _must_walk_reads = true;
+    if (log_is_enabled(Trace, modules)) {
+      ResourceMark rm;
+      log_trace(modules)("ModuleEntry::set_read_walk_required(): module %s reads list must be walked",
+                         (name() != NULL) ? name()->as_C_string() : UNNAMED_MODULE);
+    }
   }
 }
 
@@ -127,14 +151,28 @@ bool ModuleEntry::has_reads() const {
 // Purge dead module entries out of reads list.
 void ModuleEntry::purge_reads() {
   assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint");
-  if (has_reads()) {
+
+  if (_must_walk_reads && has_reads()) {
+    // This module's _must_walk_reads flag will be reset based
+    // on the remaining live modules on the reads list.
+    _must_walk_reads = false;
+
+    if (log_is_enabled(Trace, modules)) {
+      ResourceMark rm;
+      log_trace(modules)("ModuleEntry::purge_reads(): module %s reads list being walked",
+                         (name() != NULL) ? name()->as_C_string() : UNNAMED_MODULE);
+    }
+
     // Go backwards because this removes entries that are dead.
     int len = _reads->length();
     for (int idx = len - 1; idx >= 0; idx--) {
       ModuleEntry* module_idx = _reads->at(idx);
-      ClassLoaderData* cld = module_idx->loader();
-      if (cld->is_unloading()) {
+      ClassLoaderData* cld_idx = module_idx->loader_data();
+      if (cld_idx->is_unloading()) {
         _reads->delete_at(idx);
+      } else {
+        // Update the need to walk this module's reads based on live modules
+        set_read_walk_required(cld_idx);
       }
     }
   }
@@ -201,7 +239,7 @@ ModuleEntryTable::~ModuleEntryTable() {
 }
 
 void ModuleEntryTable::create_unnamed_module(ClassLoaderData* loader_data) {
-  assert_locked_or_safepoint(Module_lock);
+  assert(Module_lock->owned_by_self(), "should have the Module_lock");
 
   // Each ModuleEntryTable has exactly one unnamed module
   if (loader_data->is_the_null_class_loader_data()) {
@@ -227,7 +265,7 @@ void ModuleEntryTable::create_unnamed_module(ClassLoaderData* loader_data) {
 ModuleEntry* ModuleEntryTable::new_entry(unsigned int hash, Handle module_handle, Symbol* name,
                                          Symbol* version, Symbol* location,
                                          ClassLoaderData* loader_data) {
-  assert_locked_or_safepoint(Module_lock);
+  assert(Module_lock->owned_by_self(), "should have the Module_lock");
   ModuleEntry* entry = (ModuleEntry*) NEW_C_HEAP_ARRAY(char, entry_size(), mtModule);
 
   // Initialize everything BasicHashtable would
@@ -248,7 +286,7 @@ ModuleEntry* ModuleEntryTable::new_entry(unsigned int hash, Handle module_handle
     entry->set_module(loader_data->add_handle(module_handle));
   }
 
-  entry->set_loader(loader_data);
+  entry->set_loader_data(loader_data);
   entry->set_version(version);
   entry->set_location(location);
 
@@ -258,7 +296,7 @@ ModuleEntry* ModuleEntryTable::new_entry(unsigned int hash, Handle module_handle
 }
 
 void ModuleEntryTable::add_entry(int index, ModuleEntry* new_entry) {
-  assert_locked_or_safepoint(Module_lock);
+  assert(Module_lock->owned_by_self(), "should have the Module_lock");
   Hashtable<Symbol*, mtModule>::add_entry(index, (HashtableEntry<Symbol*, mtModule>*)new_entry);
 }
 
@@ -268,7 +306,7 @@ ModuleEntry* ModuleEntryTable::locked_create_entry_or_null(Handle module_handle,
                                                            Symbol* module_location,
                                                            ClassLoaderData* loader_data) {
   assert(module_name != NULL, "ModuleEntryTable locked_create_entry_or_null should never be called for unnamed module.");
-  assert_locked_or_safepoint(Module_lock);
+  assert(Module_lock->owned_by_self(), "should have the Module_lock");
   // Check if module already exists.
   if (lookup_only(module_name) != NULL) {
     return NULL;
@@ -309,7 +347,7 @@ void ModuleEntryTable::purge_all_module_reads() {
 }
 
 void ModuleEntryTable::finalize_javabase(Handle module_handle, Symbol* version, Symbol* location) {
-  assert_locked_or_safepoint(Module_lock);
+  assert(Module_lock->owned_by_self(), "should have the Module_lock");
   ClassLoaderData* boot_loader_data = ClassLoaderData::the_null_class_loader_data();
   ModuleEntryTable* module_table = boot_loader_data->modules();
 
@@ -320,16 +358,27 @@ void ModuleEntryTable::finalize_javabase(Handle module_handle, Symbol* version, 
   }
 
   // Set java.lang.reflect.Module, version and location for java.base
-  ModuleEntry* jb_module = javabase_module();
+  ModuleEntry* jb_module = javabase_moduleEntry();
   assert(jb_module != NULL, "java.base ModuleEntry not defined");
-  jb_module->set_module(boot_loader_data->add_handle(module_handle));
   jb_module->set_version(version);
   jb_module->set_location(location);
+  // Once java.base's ModuleEntry _module field is set with the known
+  // java.lang.reflect.Module, java.base is considered "defined" to the VM.
+  jb_module->set_module(boot_loader_data->add_handle(module_handle));
+
   // Store pointer to the ModuleEntry for java.base in the java.lang.reflect.Module object.
   java_lang_reflect_Module::set_module_entry(module_handle(), jb_module);
+
+  // Patch any previously loaded classes' module field with java.base's java.lang.reflect.Module.
+  patch_javabase_entries(module_handle);
 }
 
+// Within java.lang.Class instances there is a java.lang.reflect.Module field
+// that must be set with the defining module.  During startup, prior to java.base's
+// definition, classes needing their module field set are added to the fixup_module_list.
+// Their module field is set once java.base's java.lang.reflect.Module is known to the VM.
 void ModuleEntryTable::patch_javabase_entries(Handle module_handle) {
+  assert(Module_lock->owned_by_self(), "should have the Module_lock");
   if (module_handle.is_null()) {
     fatal("Unable to patch the module field of classes loaded prior to java.base's definition, invalid java.lang.reflect.Module");
   }
@@ -351,9 +400,7 @@ void ModuleEntryTable::patch_javabase_entries(Handle module_handle) {
   for (int i = 0; i < list_length; i++) {
     Klass* k = list->at(i);
     assert(k->is_klass(), "List should only hold classes");
-    Thread* THREAD = Thread::current();
-    KlassHandle kh(THREAD, k);
-    java_lang_Class::fixup_module_field(kh, module_handle);
+    java_lang_Class::fixup_module_field(KlassHandle(k), module_handle);
     k->class_loader_data()->dec_keep_alive();
   }
 
@@ -375,11 +422,11 @@ void ModuleEntryTable::print(outputStream* st) {
 
 void ModuleEntry::print(outputStream* st) {
   ResourceMark rm;
-  st->print_cr("entry "PTR_FORMAT" name %s module "PTR_FORMAT" loader %s version %s location %s strict %s next "PTR_FORMAT,
+  st->print_cr("entry " PTR_FORMAT " name %s module " PTR_FORMAT " loader %s version %s location %s strict %s next " PTR_FORMAT,
                p2i(this),
                name() == NULL ? UNNAMED_MODULE : name()->as_C_string(),
                p2i(module()),
-               loader()->loader_name(),
+               loader_data()->loader_name(),
                version() != NULL ? version()->as_C_string() : "NULL",
                location() != NULL ? location()->as_C_string() : "NULL",
                BOOL_TO_STR(!can_read_all_unnamed()), p2i(next()));
@@ -401,5 +448,5 @@ void ModuleEntryTable::verify() {
 }
 
 void ModuleEntry::verify() {
-  guarantee(loader() != NULL, "A module entry must be associated with a loader.");
+  guarantee(loader_data() != NULL, "A module entry must be associated with a loader.");
 }

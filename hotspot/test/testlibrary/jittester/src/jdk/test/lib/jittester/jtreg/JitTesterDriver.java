@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,8 +24,8 @@
 package jdk.test.lib.jittester.jtreg;
 
 import jdk.test.lib.Asserts;
-import jdk.test.lib.OutputAnalyzer;
-import jdk.test.lib.ProcessTools;
+import jdk.test.lib.process.OutputAnalyzer;
+import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.Utils;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -40,40 +40,36 @@ import java.util.stream.Stream;
 public class JitTesterDriver {
 
     public static void main(String[] args) {
-        if (args.length != 1) {
+        if (args.length < 1) {
             throw new IllegalArgumentException(
                     "[TESTBUG]: wrong number of argument : " + args.length
-                    + ". Expected 1 argument -- jit-tester test name.");
+                    + ". Expected at least 1 argument -- jit-tester test name.");
         }
         OutputAnalyzer oa;
         try {
-            ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(true, args[0]);
+            ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(true, args);
             oa = new OutputAnalyzer(pb.start());
         } catch (Exception e) {
             throw new Error("Unexpected exception on test jvm start :" + e, e);
         }
 
+        String name = args[args.length - 1];
         Pattern splitOut = Pattern.compile("\\n"); // tests use \n only in stdout
         Pattern splitErr = Pattern.compile("\\r?\\n"); // can handle both \r\n and \n
         Path testDir = Paths.get(Utils.TEST_SRC);
-        String goldOut = formatOutput(streamGoldFile(testDir, args[0], "out"), s -> true);
-        String anlzOut = formatOutput(Arrays.stream(splitOut.split(oa.getStdout())), s -> true);
+        String goldOut = formatOutput(streamGoldFile(testDir, name, "out"));
+        String anlzOut = formatOutput(Arrays.stream(splitOut.split(oa.getStdout())));
         Asserts.assertEQ(anlzOut, goldOut, "Actual stdout isn't equal to golden one");
-        // TODO: add a comment why we skip such lines
-        Predicate<String> notStartWhitespaces = s -> !(s.startsWith("\t") || s.startsWith(" "));
-        String goldErr = formatOutput(streamGoldFile(testDir, args[0], "err"), notStartWhitespaces);
-        String anlzErr = formatOutput(Arrays.stream(splitErr.split(oa.getStderr())),
-                                      notStartWhitespaces);
+        String goldErr = formatOutput(streamGoldFile(testDir, name, "err"));
+        String anlzErr = formatOutput(Arrays.stream(splitErr.split(oa.getStderr())));
         Asserts.assertEQ(anlzErr, goldErr, "Actual stderr isn't equal to golden one");
 
-        int exitValue = Integer.parseInt(streamGoldFile(testDir, args[0], "exit").findFirst().get());
+        int exitValue = Integer.parseInt(streamGoldFile(testDir, name, "exit").findFirst().get());
         oa.shouldHaveExitValue(exitValue);
     }
 
-    private static String formatOutput(Stream<String> stream, Predicate<String> predicate) {
-        String result = stream
-                .filter(predicate)
-                .collect(Collectors.joining(Utils.NEW_LINE));
+    private static String formatOutput(Stream<String> stream) {
+        String result = stream.collect(Collectors.joining(Utils.NEW_LINE));
         if (result.length() > 0) {
             result += Utils.NEW_LINE;
         }

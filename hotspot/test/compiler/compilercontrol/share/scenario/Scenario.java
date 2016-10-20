@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,14 +24,14 @@
 package compiler.compilercontrol.share.scenario;
 
 import compiler.compilercontrol.share.method.MethodDescriptor;
+import compiler.compilercontrol.share.pool.PoolHelper;
 import compiler.compilercontrol.share.processors.CommandProcessor;
 import compiler.compilercontrol.share.processors.LogProcessor;
 import compiler.compilercontrol.share.processors.PrintDirectivesProcessor;
 import compiler.compilercontrol.share.processors.PrintProcessor;
 import jdk.test.lib.Asserts;
-import jdk.test.lib.OutputAnalyzer;
-import jdk.test.lib.Pair;
-import pool.PoolHelper;
+import jdk.test.lib.process.OutputAnalyzer;
+import jdk.test.lib.util.Pair;
 
 import java.lang.reflect.Executable;
 import java.util.ArrayList;

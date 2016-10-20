@@ -22,8 +22,8 @@
 */
 
 import jdk.test.lib.JDKToolFinder;
-import jdk.test.lib.OutputAnalyzer;
-import jdk.test.lib.ProcessTools;
+import jdk.test.lib.process.ProcessTools;
+import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.Platform;
 
 /*
@@ -31,10 +31,9 @@ import jdk.test.lib.Platform;
  * @key gc
  * @bug 8059066
  * @summary Tests that the card table does not commit the same page twice
- * @requires vm.gc=="Parallel" | vm.gc=="null"
- * @library /testlibrary
+ * @requires vm.gc.Parallel
+ * @library /test/lib
  * @modules java.base/jdk.internal.misc
- *          java.management
  * @run driver TestCardTablePageCommits
  */
 public class TestCardTablePageCommits {

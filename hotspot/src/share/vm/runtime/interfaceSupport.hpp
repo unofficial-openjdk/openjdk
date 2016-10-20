@@ -34,6 +34,7 @@
 #include "runtime/thread.inline.hpp"
 #include "runtime/vmThread.hpp"
 #include "utilities/globalDefinitions.hpp"
+#include "utilities/macros.hpp"
 #include "utilities/preserveException.hpp"
 
 // Wrapper for all entry points to the virtual machine.
@@ -90,21 +91,8 @@ class InterfaceSupport: AllStatic {
 
  public:
   // OS dependent stuff
-#ifdef TARGET_OS_FAMILY_linux
-# include "interfaceSupport_linux.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_solaris
-# include "interfaceSupport_solaris.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_windows
-# include "interfaceSupport_windows.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_aix
-# include "interfaceSupport_aix.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_bsd
-# include "interfaceSupport_bsd.hpp"
-#endif
+
+#include OS_HEADER(interfaceSupport)
 
 };
 
@@ -231,6 +219,9 @@ class ThreadInVMfromJava : public ThreadStateTransition {
     trans_from_java(_thread_in_vm);
   }
   ~ThreadInVMfromJava()  {
+    if (_thread->stack_yellow_reserved_zone_disabled()) {
+      _thread->enable_stack_yellow_reserved_zone();
+    }
     trans(_thread_in_vm, _thread_in_Java);
     // Check for pending. async. exceptions or suspends.
     if (_thread->has_special_runtime_exit_condition()) _thread->handle_special_runtime_exit_condition();
@@ -289,6 +280,7 @@ class ThreadToNativeFromVM : public ThreadStateTransition {
 
   ~ThreadToNativeFromVM() {
     trans_from_native(_thread_in_vm);
+    assert(!_thread->is_pending_jni_exception_check(), "Pending JNI Exception Check");
     // We don't need to clear_walkable because it will happen automagically when we return to java
   }
 };
@@ -318,6 +310,9 @@ class ThreadInVMfromJavaNoAsyncException : public ThreadStateTransition {
     trans_from_java(_thread_in_vm);
   }
   ~ThreadInVMfromJavaNoAsyncException()  {
+    if (_thread->stack_yellow_reserved_zone_disabled()) {
+      _thread->enable_stack_yellow_reserved_zone();
+    }
     trans(_thread_in_vm, _thread_in_Java);
     // NOTE: We do not check for pending. async. exceptions.
     // If we did and moved the pending async exception over into the
@@ -325,6 +320,7 @@ class ThreadInVMfromJavaNoAsyncException : public ThreadStateTransition {
     // only). However, to do so would require that we transition back
     // to the _thread_in_vm state. Instead we postpone the handling of
     // the async exception.
+
 
     // Check for pending. suspends only.
     if (_thread->has_special_runtime_exit_condition())

@@ -38,7 +38,7 @@
 #include "oops/oop.inline.hpp"
 #include "prims/privilegedStack.hpp"
 #include "runtime/arguments.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/frame.hpp"
 #include "runtime/java.hpp"
 #include "runtime/os.hpp"
@@ -53,10 +53,6 @@
 #include "utilities/events.hpp"
 #include "utilities/macros.hpp"
 #include "utilities/vmError.hpp"
-
-#if INCLUDE_TRACE
-#include "trace/tracing.hpp"
-#endif
 
 #include <stdio.h>
 
@@ -286,6 +282,12 @@ void report_untested(const char* file, int line, const char* message) {
 }
 
 void report_out_of_shared_space(SharedSpaceType shared_space) {
+  if (shared_space == SharedOptional) {
+    // The estimated shared_optional_space size is large enough
+    // for all class bytes.  It should not run out of space.
+    ShouldNotReachHere();
+  }
+
   static const char* name[] = {
     "shared read only space",
     "shared read write space",
@@ -306,11 +308,6 @@ void report_out_of_shared_space(SharedSpaceType shared_space) {
    exit(2);
 }
 
-static void notify_tracing() {
-#if INCLUDE_TRACE
-  Tracing::on_vm_error(true);
-#endif
-}
 
 void report_insufficient_metaspace(size_t required_size) {
   warning("\nThe MaxMetaspaceSize of " SIZE_FORMAT " bytes is not large enough.\n"
@@ -333,8 +330,6 @@ void report_java_out_of_memory(const char* message) {
       tty->print_cr("java.lang.OutOfMemoryError: %s", message);
       HeapDumper::dump_heap_from_oome();
     }
-
-    notify_tracing();
 
     if (OnOutOfMemoryError && OnOutOfMemoryError[0]) {
       VMError::report_java_out_of_memory(message);

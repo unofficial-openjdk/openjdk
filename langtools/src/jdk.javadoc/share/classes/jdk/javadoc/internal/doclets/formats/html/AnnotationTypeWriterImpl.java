@@ -25,7 +25,6 @@
 
 package jdk.javadoc.internal.doclets.formats.html;
 
-import java.io.IOException;
 import java.util.List;
 
 import javax.lang.model.element.PackageElement;
@@ -42,9 +41,9 @@ import jdk.javadoc.internal.doclets.toolkit.AnnotationTypeWriter;
 import jdk.javadoc.internal.doclets.toolkit.Content;
 import jdk.javadoc.internal.doclets.toolkit.builders.MemberSummaryBuilder;
 import jdk.javadoc.internal.doclets.toolkit.util.CommentHelper;
+import jdk.javadoc.internal.doclets.toolkit.util.DocFileIOException;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPath;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPaths;
-import jdk.javadoc.internal.doclets.toolkit.util.DocletAbortException;
 import jdk.javadoc.internal.doclets.toolkit.util.VisibleMemberMap;
 
 /**
@@ -78,11 +77,9 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
      * @param annotationType the annotation type being documented.
      * @param prevType the previous class that was documented.
      * @param nextType the next class being documented.
-     * @throws java.lang.Exception
      */
     public AnnotationTypeWriterImpl(ConfigurationImpl configuration,
-            TypeElement annotationType, TypeMirror prevType, TypeMirror nextType)
-            throws Exception {
+            TypeElement annotationType, TypeMirror prevType, TypeMirror nextType) {
         super(configuration, DocPath.forClass(configuration.utils, annotationType));
         this.annotationType = annotationType;
         configuration.currentTypeElement = annotationType;
@@ -98,7 +95,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
     @Override
     protected Content getNavLinkModule() {
         Content linkContent = getModuleLink(utils.elementUtils.getModuleOf(annotationType),
-                moduleLabel);
+                contents.moduleLabel);
         Content li = HtmlTree.LI(linkContent);
         return li;
     }
@@ -111,7 +108,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
     @Override
     protected Content getNavLinkPackage() {
         Content linkContent = getHyperLink(DocPaths.PACKAGE_SUMMARY,
-                packageLabel);
+                contents.packageLabel);
         Content li = HtmlTree.LI(linkContent);
         return li;
     }
@@ -123,7 +120,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
      */
     @Override
     protected Content getNavLinkClass() {
-        Content li = HtmlTree.LI(HtmlStyle.navBarCell1Rev, classLabel);
+        Content li = HtmlTree.LI(HtmlStyle.navBarCell1Rev, contents.classLabel);
         return li;
     }
 
@@ -134,7 +131,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
      */
     @Override
     protected Content getNavLinkClassUse() {
-        Content linkContent = getHyperLink(DocPaths.CLASS_USE.resolve(filename), useLabel);
+        Content linkContent = getHyperLink(DocPaths.CLASS_USE.resolve(filename), contents.useLabel);
         Content li = HtmlTree.LI(linkContent);
         return li;
     }
@@ -150,11 +147,11 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
         if (prev != null) {
             Content prevLink = getLink(new LinkInfoImpl(configuration,
                     LinkInfoImpl.Kind.CLASS, utils.asTypeElement(prev))
-                    .label(prevclassLabel).strong(true));
+                    .label(contents.prevClassLabel).strong(true));
             li = HtmlTree.LI(prevLink);
         }
         else
-            li = HtmlTree.LI(prevclassLabel);
+            li = HtmlTree.LI(contents.prevClassLabel);
         return li;
     }
 
@@ -169,11 +166,11 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
         if (next != null) {
             Content nextLink = getLink(new LinkInfoImpl(configuration,
                     LinkInfoImpl.Kind.CLASS, utils.asTypeElement(next))
-                    .label(nextclassLabel).strong(true));
+                    .label(contents.nextClassLabel).strong(true));
             li = HtmlTree.LI(nextLink);
         }
         else
-            li = HtmlTree.LI(nextclassLabel);
+            li = HtmlTree.LI(contents.nextClassLabel);
         return li;
     }
 
@@ -243,7 +240,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
      * {@inheritDoc}
      */
     @Override
-    public void printDocument(Content contentTree) throws IOException {
+    public void printDocument(Content contentTree) throws DocFileIOException {
         printHtmlDocument(configuration.metakeywords.getMetaKeywords(annotationType),
                 true, contentTree);
     }
@@ -293,8 +290,8 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
      */
     @Override
     public void addAnnotationTypeDescription(Content annotationInfoTree) {
-        if(!configuration.nocomment) {
-            if (!utils.getBody(annotationType).isEmpty()) {
+        if (!configuration.nocomment) {
+            if (!utils.getFullBody(annotationType).isEmpty()) {
                 addInlineComment(annotationType, annotationInfoTree);
             }
         }
@@ -305,7 +302,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
      */
     @Override
     public void addAnnotationTypeTagInfo(Content annotationInfoTree) {
-        if(!configuration.nocomment) {
+        if (!configuration.nocomment) {
             addTagsInfo(annotationType, annotationInfoTree);
         }
     }
@@ -320,13 +317,13 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
         List<? extends DocTree> deprs = utils.getBlockTags(annotationType, DocTree.Kind.DEPRECATED);
         if (utils.isDeprecated(annotationType)) {
             CommentHelper ch = utils.getCommentHelper(annotationType);
-            Content deprLabel = HtmlTree.SPAN(HtmlStyle.deprecatedLabel, deprecatedPhrase);
+            Content deprLabel = HtmlTree.SPAN(HtmlStyle.deprecatedLabel, contents.deprecatedPhrase);
             Content div = HtmlTree.DIV(HtmlStyle.block, deprLabel);
             if (!deprs.isEmpty()) {
 
                 List<? extends DocTree> commentTags = ch.getDescription(configuration, deprs.get(0));
                 if (!commentTags.isEmpty()) {
-                    div.addContent(getSpace());
+                    div.addContent(Contents.SPACE);
                     addInlineDeprecatedComment(annotationType, deprs.get(0), div);
                 }
             }
@@ -340,7 +337,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
     @Override
     protected Content getNavLinkTree() {
         Content treeLinkContent = getHyperLink(DocPaths.PACKAGE_TREE,
-                treeLabel, "", "");
+                contents.treeLabel, "", "");
         Content li = HtmlTree.LI(treeLinkContent);
         return li;
     }
@@ -352,24 +349,19 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
      */
     @Override
     protected void addSummaryDetailLinks(Content subDiv) {
-        try {
-            Content div = HtmlTree.DIV(getNavSummaryLinks());
-            div.addContent(getNavDetailLinks());
-            subDiv.addContent(div);
-        } catch (Exception e) {
-            throw new DocletAbortException(e);
-        }
+        Content div = HtmlTree.DIV(getNavSummaryLinks());
+        div.addContent(getNavDetailLinks());
+        subDiv.addContent(div);
     }
 
     /**
      * Get summary links for navigation bar.
      *
      * @return the content tree for the navigation summary links
-     * @throws java.lang.Exception
      */
-    protected Content getNavSummaryLinks() throws Exception {
-        Content li = HtmlTree.LI(summaryLabel);
-        li.addContent(getSpace());
+    protected Content getNavSummaryLinks() {
+        Content li = HtmlTree.LI(contents.summaryLabel);
+        li.addContent(Contents.SPACE);
         Content ulNav = HtmlTree.UL(HtmlStyle.subNavList, li);
         MemberSummaryBuilder memberSummaryBuilder = (MemberSummaryBuilder)
                 configuration.getBuilderFactory().getMemberSummaryBuilder(this);
@@ -406,7 +398,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
         AbstractMemberWriter writer = ((AbstractMemberWriter) builder.
                 getMemberSummaryWriter(type));
         if (writer == null) {
-            liNav.addContent(getResource(label));
+            liNav.addContent(contents.getContent(label));
         } else {
             liNav.addContent(writer.getNavSummaryLink(null,
                     ! builder.getVisibleMemberMap(type).noVisibleMembers()));
@@ -417,11 +409,10 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
      * Get detail links for the navigation bar.
      *
      * @return the content tree for the detail links
-     * @throws java.lang.Exception
      */
-    protected Content getNavDetailLinks() throws Exception {
-        Content li = HtmlTree.LI(detailLabel);
-        li.addContent(getSpace());
+    protected Content getNavDetailLinks() {
+        Content li = HtmlTree.LI(contents.detailLabel);
+        li.addContent(Contents.SPACE);
         Content ulNav = HtmlTree.UL(HtmlStyle.subNavList, li);
         MemberSummaryBuilder memberSummaryBuilder = (MemberSummaryBuilder)
                 configuration.getBuilderFactory().getMemberSummaryBuilder(this);
@@ -438,7 +429,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
         if (writerField != null) {
             writerField.addNavDetailLink(!utils.getAnnotationFields(annotationType).isEmpty(), liNavField);
         } else {
-            liNavField.addContent(getResource("doclet.navField"));
+            liNavField.addContent(contents.navField);
         }
         addNavGap(liNavField);
         ulNav.addContent(liNavField);
@@ -451,21 +442,10 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
             writerRequired.addNavDetailLink(!annotationType.getAnnotationMirrors().isEmpty(), liNavReq);
             ulNav.addContent(liNavReq);
         } else {
-            Content liNav = HtmlTree.LI(getResource("doclet.navAnnotationTypeMember"));
+            Content liNav = HtmlTree.LI(contents.navAnnotationTypeMember);
             ulNav.addContent(liNav);
         }
         return ulNav;
-    }
-
-    /**
-     * Add gap between navigation bar elements.
-     *
-     * @param liNav the content tree to which the gap will be added
-     */
-    protected void addNavGap(Content liNav) {
-        liNav.addContent(getSpace());
-        liNav.addContent("|");
-        liNav.addContent(getSpace());
     }
 
     /**

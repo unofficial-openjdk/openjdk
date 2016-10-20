@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,27 +27,31 @@
  * @bug 8031320
  * @summary Verify PrintPreciseRTMLockingStatistics on CPUs without
  *          rtm support and/or unsupported VM.
- * @library /testlibrary /test/lib /compiler/testlibrary
+ * @library /test/lib /
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @build TestPrintPreciseRTMLockingStatisticsOptionOnUnsupportedConfig
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
+ *
+ * @build compiler.rtm.cli.TestPrintPreciseRTMLockingStatisticsOptionOnUnsupportedConfig
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
  *                   -XX:+WhiteBoxAPI
- *                 TestPrintPreciseRTMLockingStatisticsOptionOnUnsupportedConfig
+ *                   compiler.rtm.cli.TestPrintPreciseRTMLockingStatisticsOptionOnUnsupportedConfig
  */
 
+package compiler.rtm.cli;
+
+import compiler.testlibrary.rtm.predicate.SupportedCPU;
+import compiler.testlibrary.rtm.predicate.SupportedOS;
+import compiler.testlibrary.rtm.predicate.SupportedVM;
 import jdk.test.lib.cli.predicate.AndPredicate;
 import jdk.test.lib.cli.predicate.NotPredicate;
-import rtm.predicate.SupportedCPU;
-import rtm.predicate.SupportedVM;
 
 public class TestPrintPreciseRTMLockingStatisticsOptionOnUnsupportedConfig
         extends TestPrintPreciseRTMLockingStatisticsBase {
     private TestPrintPreciseRTMLockingStatisticsOptionOnUnsupportedConfig() {
-        super(new NotPredicate(new AndPredicate(new SupportedCPU(),
-                new SupportedVM())));
+        super(new NotPredicate(
+                new AndPredicate(new SupportedCPU(), new SupportedOS(), new SupportedVM())));
     }
 
     public static void main(String args[]) throws Throwable {

@@ -258,7 +258,7 @@ final class CodeGenerator extends NodeOperatorVisitor<CodeGeneratorLexicalContex
     private final int[] continuationEntryPoints;
 
     // Scope object creators needed for for-of and for-in loops
-    private Deque<FieldObjectCreator<?>> scopeObjectCreators = new ArrayDeque<>();
+    private final Deque<FieldObjectCreator<?>> scopeObjectCreators = new ArrayDeque<>();
 
     /**
      * Constructor.
@@ -2486,11 +2486,6 @@ final class CodeGenerator extends NodeOperatorVisitor<CodeGeneratorLexicalContex
                     }
 
                     @Override
-                    public boolean enterObjectNode(final ObjectNode objectNode) {
-                        return false;
-                    }
-
-                    @Override
                     public boolean enterDefault(final Node node) {
                         if (contains) {
                             return false;
@@ -2512,7 +2507,8 @@ final class CodeGenerator extends NodeOperatorVisitor<CodeGeneratorLexicalContex
         final List<PropertyNode> elements = objectNode.getElements();
 
         final List<MapTuple<Expression>> tuples = new ArrayList<>();
-        final List<PropertyNode> gettersSetters = new ArrayList<>();
+        // List below will contain getter/setter properties and properties with computed keys (ES6)
+        final List<PropertyNode> specialProperties = new ArrayList<>();
         final int ccp = getCurrentContinuationEntryPoint();
         final List<Splittable.SplitRange> ranges = objectNode.getSplitRanges();
 
@@ -2522,11 +2518,14 @@ final class CodeGenerator extends NodeOperatorVisitor<CodeGeneratorLexicalContex
         for (final PropertyNode propertyNode : elements) {
             final Expression value = propertyNode.getValue();
             final String key = propertyNode.getKeyName();
-            // Just use a pseudo-symbol. We just need something non null; use the name and zero flags.
-            final Symbol symbol = value == null ? null : new Symbol(key, 0);
+            final boolean isComputedOrAccessor = propertyNode.isComputed() || value == null;
 
-            if (value == null) {
-                gettersSetters.add(propertyNode);
+            // Just use a pseudo-symbol. We just need something non null; use the name and zero flags.
+            final Symbol symbol = isComputedOrAccessor ? null : new Symbol(key, 0);
+
+            if (isComputedOrAccessor) {
+                // Properties with computed names or getter/setters need special handling.
+                specialProperties.add(propertyNode);
             } else if (propertyNode.getKey() instanceof IdentNode &&
                        key.equals(ScriptObject.PROTO_PROPERTY_NAME)) {
                 // ES6 draft compliant __proto__ inside object literal
@@ -2542,7 +2541,7 @@ final class CodeGenerator extends NodeOperatorVisitor<CodeGeneratorLexicalContex
 
             //for literals, a value of null means object type, i.e. the value null or getter setter function
             //(I think)
-            final Class<?> valueType = (!useDualFields() || value == null || value.getType().isBoolean()) ? Object.class : value.getType().getTypeClass();
+            final Class<?> valueType = (!useDualFields() || isComputedOrAccessor || value.getType().isBoolean()) ? Object.class : value.getType().getTypeClass();
             tuples.add(new MapTuple<Expression>(key, symbol, Type.typeFor(valueType), value) {
                 @Override
                 public Class<?> getValueType() {
@@ -2558,7 +2557,8 @@ final class CodeGenerator extends NodeOperatorVisitor<CodeGeneratorLexicalContex
             oc = new FieldObjectCreator<Expression>(this, tuples) {
                 @Override
                 protected void loadValue(final Expression node, final Type type) {
-                    loadExpressionAsType(node, type);
+                    // Use generic type in order to avoid conversion between object types
+                    loadExpressionAsType(node, Type.generic(type));
                 }};
         }
 
@@ -2574,10 +2574,7 @@ final class CodeGenerator extends NodeOperatorVisitor<CodeGeneratorLexicalContex
         //handler
         if (restOfProperty) {
             final ContinuationInfo ci = getContinuationInfo();
-            // Can be set at most once for a single rest-of method
-            assert ci.getObjectLiteralMap() == null;
-            ci.setObjectLiteralMap(oc.getMap());
-            ci.setObjectLiteralStackDepth(method.getStackSize());
+            ci.setObjectLiteralMap(method.getStackSize(), oc.getMap());
         }
 
         method.dup();
@@ -2590,26 +2587,41 @@ final class CodeGenerator extends NodeOperatorVisitor<CodeGeneratorLexicalContex
             method.invoke(ScriptObject.SET_GLOBAL_OBJECT_PROTO);
         }
 
-        for (final PropertyNode propertyNode : gettersSetters) {
-            final FunctionNode getter = propertyNode.getGetter();
-            final FunctionNode setter = propertyNode.getSetter();
+        for (final PropertyNode propertyNode : specialProperties) {
 
-            assert getter != null || setter != null;
+            method.dup();
 
-            method.dup().loadKey(propertyNode.getKey());
-            if (getter == null) {
-                method.loadNull();
+            if (propertyNode.isComputed()) {
+                assert propertyNode.getKeyName() == null;
+                loadExpressionAsObject(propertyNode.getKey());
             } else {
-                getter.accept(this);
+                method.loadKey(propertyNode.getKey());
             }
 
-            if (setter == null) {
-                method.loadNull();
+            if (propertyNode.getValue() != null) {
+                loadExpressionAsObject(propertyNode.getValue());
+                method.load(0);
+                method.invoke(ScriptObject.GENERIC_SET);
             } else {
-                setter.accept(this);
-            }
+                final FunctionNode getter = propertyNode.getGetter();
+                final FunctionNode setter = propertyNode.getSetter();
 
-            method.invoke(ScriptObject.SET_USER_ACCESSORS);
+                assert getter != null || setter != null;
+
+                if (getter == null) {
+                    method.loadNull();
+                } else {
+                    getter.accept(this);
+                }
+
+                if (setter == null) {
+                    method.loadNull();
+                } else {
+                    setter.accept(this);
+                }
+
+                method.invoke(ScriptObject.SET_USER_ACCESSORS);
+            }
         }
     }
 
@@ -5290,10 +5302,8 @@ final class CodeGenerator extends NodeOperatorVisitor<CodeGeneratorLexicalContex
         private Type[] stackTypes;
         // If non-null, this node should perform the requisite type conversion
         private Type returnValueType;
-        // If we are in the middle of an object literal initialization, we need to update the map
-        private PropertyMap objectLiteralMap;
-        // Object literal stack depth for object literal - not necessarily top if property is a tree
-        private int objectLiteralStackDepth = -1;
+        // If we are in the middle of an object literal initialization, we need to update the property maps
+        private Map<Integer, PropertyMap> objectLiteralMaps;
         // The line number at the continuation point
         private int lineNumber;
         // The active catch label, in case the continuation point is in a try/catch block
@@ -5345,20 +5355,15 @@ final class CodeGenerator extends NodeOperatorVisitor<CodeGeneratorLexicalContex
             this.returnValueType = returnValueType;
         }
 
-        int getObjectLiteralStackDepth() {
-            return objectLiteralStackDepth;
+        void setObjectLiteralMap(final int objectLiteralStackDepth, final PropertyMap objectLiteralMap) {
+            if (objectLiteralMaps == null) {
+                objectLiteralMaps = new HashMap<>();
+            }
+            objectLiteralMaps.put(objectLiteralStackDepth, objectLiteralMap);
         }
 
-        void setObjectLiteralStackDepth(final int objectLiteralStackDepth) {
-            this.objectLiteralStackDepth = objectLiteralStackDepth;
-        }
-
-        PropertyMap getObjectLiteralMap() {
-            return objectLiteralMap;
-        }
-
-        void setObjectLiteralMap(final PropertyMap objectLiteralMap) {
-            this.objectLiteralMap = objectLiteralMap;
+        PropertyMap getObjectLiteralMap(final int stackDepth) {
+            return objectLiteralMaps == null ? null : objectLiteralMaps.get(stackDepth);
         }
 
         @Override
@@ -5448,10 +5453,9 @@ final class CodeGenerator extends NodeOperatorVisitor<CodeGeneratorLexicalContex
         final int[]   stackStoreSpec = ci.getStackStoreSpec();
         final Type[]  stackTypes     = ci.getStackTypes();
         final boolean isStackEmpty   = stackStoreSpec.length == 0;
-        boolean replacedObjectLiteralMap = false;
+        int replacedObjectLiteralMaps = 0;
         if(!isStackEmpty) {
             // Load arguments on the stack
-            final int objectLiteralStackDepth = ci.getObjectLiteralStackDepth();
             for(int i = 0; i < stackStoreSpec.length; ++i) {
                 final int slot = stackStoreSpec[i];
                 method.load(lvarTypes.get(slot), slot);
@@ -5459,18 +5463,18 @@ final class CodeGenerator extends NodeOperatorVisitor<CodeGeneratorLexicalContex
                 // stack: s0=object literal being initialized
                 // change map of s0 so that the property we are initializing when we failed
                 // is now ci.returnValueType
-                if (i == objectLiteralStackDepth) {
+                final PropertyMap map = ci.getObjectLiteralMap(i);
+                if (map != null) {
                     method.dup();
-                    assert ci.getObjectLiteralMap() != null;
                     assert ScriptObject.class.isAssignableFrom(method.peekType().getTypeClass()) : method.peekType().getTypeClass() + " is not a script object";
-                    loadConstant(ci.getObjectLiteralMap());
+                    loadConstant(map);
                     method.invoke(ScriptObject.SET_MAP);
-                    replacedObjectLiteralMap = true;
+                    replacedObjectLiteralMaps++;
                 }
             }
         }
-        // Must have emitted the code for replacing the map of an object literal if we have a set object literal stack depth
-        assert ci.getObjectLiteralStackDepth() == -1 || replacedObjectLiteralMap;
+        // Must have emitted the code for replacing all object literal maps
+        assert ci.objectLiteralMaps == null || ci.objectLiteralMaps.size() == replacedObjectLiteralMaps;
         // Load RewriteException back.
         method.load(rewriteExceptionType, lvarCount);
         // Get rid of the stored reference

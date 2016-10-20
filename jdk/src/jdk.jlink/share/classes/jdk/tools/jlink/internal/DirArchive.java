@@ -50,7 +50,7 @@ public class DirArchive implements Archive {
 
         FileEntry(Path path, String name) {
             super(DirArchive.this, getPathName(path), name,
-                    Archive.Entry.EntryType.CLASS_OR_RESOURCE);
+                  Archive.Entry.EntryType.CLASS_OR_RESOURCE);
             this.path = path;
             try {
                 size = Files.size(path);
@@ -112,13 +112,11 @@ public class DirArchive implements Archive {
 
     @Override
     public Stream<Entry> entries() {
-        Stream<Entry> ret = null;
         try {
-            ret = Files.walk(dirPath).map(this::toEntry).filter(n -> n != null);
+            return Files.walk(dirPath).map(this::toEntry).filter(n -> n != null);
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
-        return ret;
     }
 
     private Archive.Entry toEntry(Path p) {
@@ -126,13 +124,7 @@ public class DirArchive implements Archive {
             return null;
         }
         String name = getPathName(p).substring(chop);
-        if (name.startsWith("_")) {
-            return null;
-        }
         log.accept(moduleName + "/" + name);
-        if (name.equals(MODULE_INFO)) {
-            name = moduleName + "/" + MODULE_INFO;
-        }
         return new FileEntry(p, name);
     }
 

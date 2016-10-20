@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -55,23 +55,18 @@ BOOT_MODULES += \
     java.naming \
     java.prefs \
     java.rmi \
-    java.security.jgss \
     java.security.sasl \
     java.xml \
-    java.xml.crypto \
     jdk.httpserver \
     jdk.management \
     jdk.net \
     jdk.sctp \
-    jdk.security.auth \
-    jdk.security.jgss \
     jdk.unsupported \
     jdk.vm.ci \
     #
 
 # to be deprivileged
 BOOT_MODULES += \
-    java.smartcardio \
     jdk.naming.rmi \
     #
 
@@ -104,18 +99,23 @@ PLATFORM_MODULES += \
 PLATFORM_MODULES += \
     java.compiler \
     java.scripting \
+    java.security.jgss \
+    java.smartcardio \
     java.sql \
     java.sql.rowset \
+    java.xml.crypto \
     jdk.accessibility \
     jdk.charsets \
     jdk.crypto.ec \
     jdk.crypto.pkcs11 \
     jdk.dynalink \
     jdk.jsobject \
-    jdk.xml.dom \
     jdk.localedata \
     jdk.naming.dns \
     jdk.scripting.nashorn \
+    jdk.security.auth \
+    jdk.security.jgss \
+    jdk.xml.dom \
     jdk.zipfs \
     #
 
@@ -229,6 +229,7 @@ $(MODULE_DEPS_MAKEFILE): $(MODULE_INFOS) \
 	                       sub(/public/, ""); \
 	                       sub(/\/\/.*/, ""); \
 	                       sub(/\/\*.*\*\//, ""); \
+	                       gsub(/^ +\*.*/, ""); \
 	                       gsub(/ /, ""); \
 	                       printf(" %s", $$0) } \
 	          END        { printf("\n") }' $m \

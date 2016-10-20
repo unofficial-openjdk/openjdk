@@ -350,6 +350,11 @@ WB_ENTRY(jlong, WB_GetHeapSpaceAlignment(JNIEnv* env, jobject o))
   return (jlong)alignment;
 WB_END
 
+WB_ENTRY(jlong, WB_GetHeapAlignment(JNIEnv* env, jobject o))
+  size_t alignment = Universe::heap()->collector_policy()->heap_alignment();
+  return (jlong)alignment;
+WB_END
+
 #if INCLUDE_ALL_GCS
 WB_ENTRY(jboolean, WB_G1IsHumongous(JNIEnv* env, jobject o, jobject obj))
   G1CollectedHeap* g1 = G1CollectedHeap::heap();
@@ -401,14 +406,21 @@ WB_ENTRY(jint, WB_G1RegionSize(JNIEnv* env, jobject o))
 WB_END
 
 WB_ENTRY(jlong, WB_PSVirtualSpaceAlignment(JNIEnv* env, jobject o))
-  ParallelScavengeHeap* ps = ParallelScavengeHeap::heap();
-  size_t alignment = ps->gens()->virtual_spaces()->alignment();
-  return (jlong)alignment;
+#if INCLUDE_ALL_GCS
+  if (UseParallelGC) {
+    return ParallelScavengeHeap::heap()->gens()->virtual_spaces()->alignment();
+  }
+#endif // INCLUDE_ALL_GCS
+  THROW_MSG_0(vmSymbols::java_lang_RuntimeException(), "WB_PSVirtualSpaceAlignment: Parallel GC is not enabled");
 WB_END
 
 WB_ENTRY(jlong, WB_PSHeapGenerationAlignment(JNIEnv* env, jobject o))
-  size_t alignment = ParallelScavengeHeap::heap()->generation_alignment();
-  return (jlong)alignment;
+#if INCLUDE_ALL_GCS
+  if (UseParallelGC) {
+    return ParallelScavengeHeap::heap()->generation_alignment();
+  }
+#endif // INCLUDE_ALL_GCS
+  THROW_MSG_0(vmSymbols::java_lang_RuntimeException(), "WB_PSHeapGenerationAlignment: Parallel GC is not enabled");
 WB_END
 
 WB_ENTRY(jobject, WB_G1AuxiliaryMemoryUsage(JNIEnv* env))
@@ -667,7 +679,7 @@ WB_ENTRY(jboolean, WB_IsMethodQueuedForCompilation(JNIEnv* env, jobject o, jobje
 WB_END
 
 WB_ENTRY(jboolean, WB_IsIntrinsicAvailable(JNIEnv* env, jobject o, jobject method, jobject compilation_context, jint compLevel))
-  if (compLevel < CompLevel_none || compLevel > CompLevel_highest_tier) {
+  if (compLevel < CompLevel_none || compLevel > MIN2((CompLevel) TieredStopAtLevel, CompLevel_highest_tier)) {
     return false; // Intrinsic is not available on a non-existent compilation level.
   }
   jmethodID method_id, compilation_context_id;
@@ -677,6 +689,7 @@ WB_ENTRY(jboolean, WB_IsIntrinsicAvailable(JNIEnv* env, jobject o, jobject metho
 
   DirectiveSet* directive;
   AbstractCompiler* comp = CompileBroker::compiler((int)compLevel);
+  assert(comp != NULL, "compiler not available");
   if (compilation_context != NULL) {
     compilation_context_id = reflected_method_to_jmid(thread, env, compilation_context);
     CHECK_JNI_EXCEPTION_(env, JNI_FALSE);
@@ -686,7 +699,7 @@ WB_ENTRY(jboolean, WB_IsIntrinsicAvailable(JNIEnv* env, jobject o, jobject metho
     // Calling with NULL matches default directive
     directive = DirectivesStack::getDefaultDirective(comp);
   }
-  bool result = CompileBroker::compiler(compLevel)->is_intrinsic_available(mh, directive);
+  bool result = comp->is_intrinsic_available(mh, directive);
   DirectivesStack::release(directive);
   return result;
 WB_END
@@ -881,6 +894,7 @@ static bool GetVMFlag(JavaThread* thread, JNIEnv* env, jstring name, T* value, F
   }
   ThreadToNativeFromVM ttnfv(thread);   // can't be in VM when we call JNI
   const char* flag_name = env->GetStringUTFChars(name, NULL);
+  CHECK_JNI_EXCEPTION_(env, false);
   Flag::Error result = (*TAt)(flag_name, value, true, true);
   env->ReleaseStringUTFChars(name, flag_name);
   return (result == Flag::SUCCESS);
@@ -893,6 +907,7 @@ static bool SetVMFlag(JavaThread* thread, JNIEnv* env, jstring name, T* value, F
   }
   ThreadToNativeFromVM ttnfv(thread);   // can't be in VM when we call JNI
   const char* flag_name = env->GetStringUTFChars(name, NULL);
+  CHECK_JNI_EXCEPTION_(env, false);
   Flag::Error result = (*TAtPut)(flag_name, value, Flag::INTERNAL);
   env->ReleaseStringUTFChars(name, flag_name);
   return (result == Flag::SUCCESS);
@@ -931,6 +946,7 @@ static jobject doubleBox(JavaThread* thread, JNIEnv* env, jdouble value) {
 static Flag* getVMFlag(JavaThread* thread, JNIEnv* env, jstring name) {
   ThreadToNativeFromVM ttnfv(thread);   // can't be in VM when we call JNI
   const char* flag_name = env->GetStringUTFChars(name, NULL);
+  CHECK_JNI_EXCEPTION_(env, NULL);
   Flag* result = Flag::find_flag(flag_name, strlen(flag_name), true, true);
   env->ReleaseStringUTFChars(name, flag_name);
   return result;
@@ -1071,7 +1087,14 @@ WB_END
 
 WB_ENTRY(void, WB_SetStringVMFlag(JNIEnv* env, jobject o, jstring name, jstring value))
   ThreadToNativeFromVM ttnfv(thread);   // can't be in VM when we call JNI
-  const char* ccstrValue = (value == NULL) ? NULL : env->GetStringUTFChars(value, NULL);
+  const char* ccstrValue;
+  if (value == NULL) {
+    ccstrValue = NULL;
+  }
+  else {
+    ccstrValue = env->GetStringUTFChars(value, NULL);
+    CHECK_JNI_EXCEPTION(env);
+  }
   ccstr ccstrResult = ccstrValue;
   bool needFree;
   {
@@ -1295,6 +1318,7 @@ WB_ENTRY(jobjectArray, WB_GetCodeHeapEntries(JNIEnv* env, jobject o, jint blob_t
   jclass clazz = env->FindClass(vmSymbols::java_lang_Object()->as_C_string());
   CHECK_JNI_EXCEPTION_(env, NULL);
   result = env->NewObjectArray(blobs.length(), clazz, NULL);
+  CHECK_JNI_EXCEPTION_(env, NULL);
   if (result == NULL) {
     return result;
   }
@@ -1304,6 +1328,7 @@ WB_ENTRY(jobjectArray, WB_GetCodeHeapEntries(JNIEnv* env, jobject o, jint blob_t
     jobjectArray obj = codeBlob2objectArray(thread, env, *it);
     CHECK_JNI_EXCEPTION_(env, NULL);
     env->SetObjectArrayElement(result, i, obj);
+    CHECK_JNI_EXCEPTION_(env, NULL);
     ++i;
   }
   return result;
@@ -1433,6 +1458,10 @@ WB_ENTRY(jlong, WB_MetaspaceCapacityUntilGC(JNIEnv* env, jobject wb))
   return (jlong) MetaspaceGC::capacity_until_GC();
 WB_END
 
+WB_ENTRY(jboolean, WB_MetaspaceShouldConcurrentCollect(JNIEnv* env, jobject wb))
+  return MetaspaceGC::should_concurrent_collect();
+WB_END
+
 
 WB_ENTRY(void, WB_AssertMatchingSafepointCalls(JNIEnv* env, jobject o, jboolean mutexSafepointValue, jboolean attemptedNoSafepointValue))
   Monitor::SafepointCheckRequired sfpt_check_required = mutexSafepointValue ?
@@ -1506,6 +1535,7 @@ static bool GetMethodOption(JavaThread* thread, JNIEnv* env, jobject method, jst
   // can't be in VM when we call JNI
   ThreadToNativeFromVM ttnfv(thread);
   const char* flag_name = env->GetStringUTFChars(name, NULL);
+  CHECK_JNI_EXCEPTION_(env, false);
   bool result =  CompilerOracle::has_option_value(mh, flag_name, *value);
   env->ReleaseStringUTFChars(name, flag_name);
   return result;
@@ -1661,6 +1691,7 @@ WB_ENTRY(jint, WB_AddCompilerDirective(JNIEnv* env, jobject o, jstring compDirec
   // can't be in VM when we call JNI
   ThreadToNativeFromVM ttnfv(thread);
   const char* dir = env->GetStringUTFChars(compDirect, NULL);
+  CHECK_JNI_EXCEPTION_(env, 0);
   int ret;
   {
     ThreadInVMfromNative ttvfn(thread); // back to VM
@@ -1689,6 +1720,7 @@ static JNINativeMethod methods[] = {
   {CC"getVMAllocationGranularity",       CC"()J",                   (void*)&WB_GetVMAllocationGranularity },
   {CC"getVMLargePageSize",               CC"()J",                   (void*)&WB_GetVMLargePageSize},
   {CC"getHeapSpaceAlignment",            CC"()J",                   (void*)&WB_GetHeapSpaceAlignment},
+  {CC"getHeapAlignment",                 CC"()J",                   (void*)&WB_GetHeapAlignment},
   {CC"isClassAlive0",                    CC"(Ljava/lang/String;)Z", (void*)&WB_IsClassAlive      },
   {CC"parseCommandLine0",
       CC"(Ljava/lang/String;C[Lsun/hotspot/parser/DiagnosticCommand;)[Ljava/lang/Object;",
@@ -1813,6 +1845,7 @@ static JNINativeMethod methods[] = {
      CC"(Ljava/lang/ClassLoader;JJ)V",                (void*)&WB_FreeMetaspace },
   {CC"incMetaspaceCapacityUntilGC", CC"(J)J",         (void*)&WB_IncMetaspaceCapacityUntilGC },
   {CC"metaspaceCapacityUntilGC", CC"()J",             (void*)&WB_MetaspaceCapacityUntilGC },
+  {CC"metaspaceShouldConcurrentCollect", CC"()Z",     (void*)&WB_MetaspaceShouldConcurrentCollect },
   {CC"getCPUFeatures",     CC"()Ljava/lang/String;",  (void*)&WB_GetCPUFeatures     },
   {CC"getNMethod0",         CC"(Ljava/lang/reflect/Executable;Z)[Ljava/lang/Object;",
                                                       (void*)&WB_GetNMethod         },

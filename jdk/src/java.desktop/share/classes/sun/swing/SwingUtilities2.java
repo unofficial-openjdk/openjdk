@@ -30,6 +30,9 @@ import java.awt.*;
 import static java.awt.RenderingHints.*;
 import java.awt.event.*;
 import java.awt.font.*;
+import java.awt.geom.AffineTransform;
+import static java.awt.geom.AffineTransform.TYPE_FLIP;
+import static java.awt.geom.AffineTransform.TYPE_TRANSLATION;
 import java.awt.print.PrinterGraphics;
 import java.text.BreakIterator;
 import java.text.CharacterIterator;
@@ -1060,17 +1063,23 @@ public class SwingUtilities2 {
      */
     private static FontRenderContext getFRCProperty(JComponent c) {
         if (c != null) {
+
+            GraphicsConfiguration gc = c.getGraphicsConfiguration();
+            AffineTransform tx = (gc == null) ? null : gc.getDefaultTransform();
             Object aaHint = c.getClientProperty(KEY_TEXT_ANTIALIASING);
-            if (aaHint != null) {
-                return getFRCFromCache(aaHint);
-            }
+            return getFRCFromCache(tx, aaHint);
         }
         return null;
     }
 
     private static final Object APP_CONTEXT_FRC_CACHE_KEY = new Object();
 
-    private static FontRenderContext getFRCFromCache(Object aaHint) {
+    private static FontRenderContext getFRCFromCache(AffineTransform tx,
+                                                     Object aaHint) {
+        if (tx == null && aaHint == null) {
+            return null;
+        }
+
         @SuppressWarnings("unchecked")
         Map<Object, FontRenderContext> cache = (Map<Object, FontRenderContext>)
                 AppContext.getAppContext().get(APP_CONTEXT_FRC_CACHE_KEY);
@@ -1080,13 +1089,43 @@ public class SwingUtilities2 {
             AppContext.getAppContext().put(APP_CONTEXT_FRC_CACHE_KEY, cache);
         }
 
-        FontRenderContext frc = cache.get(aaHint);
+        Object key = (tx == null)
+                ? aaHint
+                : (aaHint == null ? tx : new KeyPair(tx, aaHint));
+
+        FontRenderContext frc = cache.get(key);
         if (frc == null) {
-            frc = new FontRenderContext(null, aaHint,
-                    VALUE_FRACTIONALMETRICS_DEFAULT);
-            cache.put(aaHint, frc);
+            aaHint = (aaHint == null) ? VALUE_TEXT_ANTIALIAS_OFF : aaHint;
+            frc = new FontRenderContext(tx, aaHint,
+                                        VALUE_FRACTIONALMETRICS_DEFAULT);
+            cache.put(key, frc);
         }
         return frc;
+    }
+
+    private static class KeyPair {
+
+        private final Object key1;
+        private final Object key2;
+
+        public KeyPair(Object key1, Object key2) {
+            this.key1 = key1;
+            this.key2 = key2;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof KeyPair)) {
+                return false;
+            }
+            KeyPair that = (KeyPair) obj;
+            return this.key1.equals(that.key1) && this.key2.equals(that.key2);
+        }
+
+        @Override
+        public int hashCode() {
+            return key1.hashCode() + 37 * key2.hashCode();
+        }
     }
 
     /*
@@ -1997,6 +2036,33 @@ public class SwingUtilities2 {
             }
         }
         return path;
+    }
+
+    public static boolean isScaledGraphics(Graphics g) {
+        if (g instanceof Graphics2D) {
+            AffineTransform tx = ((Graphics2D) g).getTransform();
+            return (tx.getType() & ~(TYPE_TRANSLATION | TYPE_FLIP)) != 0;
+        }
+        return false;
+    }
+
+    /**
+     * Returns the client property for the given key if it is set; otherwise
+     * returns the {@L&F} property.
+     *
+     * @param component the component
+     * @param key an {@code String} specifying the key for the desired boolean value
+     * @return the boolean value of the client property if it is set or the {@L&F}
+     *         property in other case.
+     */
+    public static boolean getBoolean(JComponent component, String key) {
+        Object clientProperty = component.getClientProperty(key);
+
+        if (clientProperty instanceof Boolean) {
+            return Boolean.TRUE.equals(clientProperty);
+        }
+
+        return UIManager.getBoolean(key);
     }
 
     /**

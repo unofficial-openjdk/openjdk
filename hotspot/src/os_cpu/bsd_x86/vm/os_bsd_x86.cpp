@@ -33,7 +33,6 @@
 #include "interpreter/interpreter.hpp"
 #include "jvm_bsd.h"
 #include "memory/allocation.inline.hpp"
-#include "mutex_bsd.inline.hpp"
 #include "os_share_bsd.hpp"
 #include "prims/jniFastGetField.hpp"
 #include "prims/jvm.h"
@@ -379,7 +378,9 @@ bool os::Bsd::get_frame_at_stack_banging_point(JavaThread* thread, ucontext_t* u
     // method returns the Java sender of the current frame.
     *fr = os::fetch_frame_from_ucontext(thread, uc);
     if (!fr->is_first_java_frame()) {
-      assert(fr->safe_for_sender(thread), "Safety check");
+      // get_frame_at_stack_banging_point() is only called when we
+      // have well defined stacks so java_sender() calls do not need
+      // to assert safe_for_sender() first.
       *fr = fr->java_sender();
     }
   } else {
@@ -396,7 +397,7 @@ bool os::Bsd::get_frame_at_stack_banging_point(JavaThread* thread, ucontext_t* u
       // has been pushed on the stack
       *fr = frame(fr->sp() + 1, fr->fp(), (address)*(fr->sp()));
       if (!fr->is_java_frame()) {
-        assert(fr->safe_for_sender(thread), "Safety check");
+        // See java_sender() comment above.
         *fr = fr->java_sender();
       }
     }
@@ -418,7 +419,15 @@ intptr_t* _get_previous_fp() {
 #else
   register intptr_t **ebp __asm__ (SPELL_REG_FP);
 #endif
-  return (intptr_t*) *ebp;   // we want what it points to.
+  // ebp is for this frame (_get_previous_fp). We want the ebp for the
+  // caller of os::current_frame*(), so go up two frames. However, for
+  // optimized builds, _get_previous_fp() will be inlined, so only go
+  // up 1 frame in that case.
+#ifdef _NMT_NOINLINE_
+  return **(intptr_t***)ebp;
+#else
+  return *ebp;
+#endif
 }
 
 
@@ -831,9 +840,13 @@ bool os::is_allocatable(size_t bytes) {
 // thread stack
 
 #ifdef AMD64
-size_t os::Bsd::min_stack_allowed  = 64 * K;
+size_t os::Posix::_compiler_thread_min_stack_allowed = 64 * K;
+size_t os::Posix::_java_thread_min_stack_allowed = 64 * K;
+size_t os::Posix::_vm_internal_thread_min_stack_allowed = 64 * K;
 #else
-size_t os::Bsd::min_stack_allowed  =  (48 DEBUG_ONLY(+4))*K;
+size_t os::Posix::_compiler_thread_min_stack_allowed = (48 DEBUG_ONLY(+ 4)) * K;
+size_t os::Posix::_java_thread_min_stack_allowed = (48 DEBUG_ONLY(+ 4)) * K;
+size_t os::Posix::_vm_internal_thread_min_stack_allowed = (48 DEBUG_ONLY(+ 4)) * K;
 
 #ifdef __GNUC__
 #define GET_GS() ({int gs; __asm__ volatile("movw %%gs, %w0":"=q"(gs)); gs&0xffff;})
@@ -842,7 +855,7 @@ size_t os::Bsd::min_stack_allowed  =  (48 DEBUG_ONLY(+4))*K;
 #endif // AMD64
 
 // return default stack size for thr_type
-size_t os::Bsd::default_stack_size(os::ThreadType thr_type) {
+size_t os::Posix::default_stack_size(os::ThreadType thr_type) {
   // default stack size (compiler thread needs larger stack)
 #ifdef AMD64
   size_t s = (thr_type == os::compiler_thread ? 4 * M : 1 * M);
@@ -852,11 +865,6 @@ size_t os::Bsd::default_stack_size(os::ThreadType thr_type) {
   return s;
 }
 
-size_t os::Bsd::default_guard_size(os::ThreadType thr_type) {
-  // Creating guard page is very expensive. Java thread has HotSpot
-  // guard page, only enable glibc guard page for non-Java threads.
-  return (thr_type == java_thread ? 0 : page_size());
-}
 
 // Java thread:
 //

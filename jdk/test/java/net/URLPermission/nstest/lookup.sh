@@ -27,6 +27,7 @@
 # @build jdk.testlibrary.*
 # @compile -XDignore.symbol.file=true LookupTest.java
 # @run shell/timeout=50 lookup.sh
+# @key intermittent
 #
 
 OS=`uname -s`
@@ -47,6 +48,7 @@ cat << POLICY > policy
 grant {
     permission java.net.URLPermission "http://allowedAndFound.com:${port}/-", "*:*";
     permission java.net.URLPermission "http://allowedButNotfound.com:${port}/-", "*:*";
+    permission java.net.NetPermission "setProxySelector";
     permission java.io.FilePermission "<<ALL FILES>>", "read,write,delete";
     permission java.util.PropertyPermission "java.io.tmpdir", "read";
 

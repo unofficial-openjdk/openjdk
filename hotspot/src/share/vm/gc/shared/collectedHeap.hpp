@@ -159,6 +159,8 @@ class CollectedHeap : public CHeapObj<mtInternal> {
   inline static void post_allocation_setup_array(KlassHandle klass,
                                                  HeapWord* obj, int length);
 
+  inline static void post_allocation_setup_class(KlassHandle klass, HeapWord* obj, int size);
+
   // Clears an allocated object.
   inline static void init_obj(HeapWord* obj, size_t size);
 
@@ -300,9 +302,7 @@ class CollectedHeap : public CHeapObj<mtInternal> {
   inline static oop obj_allocate(KlassHandle klass, int size, TRAPS);
   inline static oop array_allocate(KlassHandle klass, int size, int length, TRAPS);
   inline static oop array_allocate_nozero(KlassHandle klass, int size, int length, TRAPS);
-
-  inline static void post_allocation_install_obj_klass(KlassHandle klass,
-                                                       oop obj);
+  inline static oop class_allocate(KlassHandle klass, int size, TRAPS);
 
   // Raw memory allocation facilities
   // The obj and array allocate methods are covers for these methods.
@@ -350,7 +350,7 @@ class CollectedHeap : public CHeapObj<mtInternal> {
   // These functions return the addresses of the fields that define the
   // boundaries of the contiguous allocation area.  (These fields should be
   // physically near to one another.)
-  virtual HeapWord** top_addr() const {
+  virtual HeapWord* volatile* top_addr() const {
     guarantee(false, "inline contiguous allocation not supported");
     return NULL;
   }
@@ -437,12 +437,6 @@ class CollectedHeap : public CHeapObj<mtInternal> {
   // this informs it to flush such a deferred store barrier to the
   // remembered set.
   virtual void flush_deferred_store_barrier(JavaThread* thread);
-
-  // Should return true if the reference pending list lock is
-  // acquired from non-Java threads, such as a concurrent GC thread.
-  virtual bool needs_reference_pending_list_locker_thread() const {
-    return false;
-  }
 
   // Perform a collection of the heap; intended for use in implementing
   // "System.gc".  This probably implies as full a collection as the

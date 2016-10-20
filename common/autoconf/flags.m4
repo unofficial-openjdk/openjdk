@@ -88,8 +88,7 @@ AC_DEFUN([FLAGS_SETUP_SYSROOT_FLAGS],
         # inlining of system functions and intrinsics.
         $1SYSROOT_CFLAGS="-I-xbuiltin -I[$]$1SYSROOT/usr/include"
         $1SYSROOT_LDFLAGS="-L[$]$1SYSROOT/usr/lib$OPENJDK_TARGET_CPU_ISADIR \
-            -L[$]$1SYSROOT/lib$OPENJDK_TARGET_CPU_ISADIR \
-            -L[$]$1SYSROOT/usr/ccs/lib$OPENJDK_TARGET_CPU_ISADIR"
+            -L[$]$1SYSROOT/lib$OPENJDK_TARGET_CPU_ISADIR"
       fi
     elif test "x$TOOLCHAIN_TYPE" = xgcc; then
       $1SYSROOT_CFLAGS="--sysroot=[$]$1SYSROOT"
@@ -593,9 +592,9 @@ AC_DEFUN_ONCE([FLAGS_SETUP_COMPILER_FLAGS_FOR_OPTIMIZATION],
       fi
       C_O_FLAG_NONE="-O0"
     elif test "x$TOOLCHAIN_TYPE" = xxlc; then
-      C_O_FLAG_HIGHEST_JVM="-O3"
-      C_O_FLAG_HIGHEST="-O3"
-      C_O_FLAG_HI="-O3 -qstrict"
+      C_O_FLAG_HIGHEST_JVM="-O3 -qhot=level=1 -qinline -qinlglue"
+      C_O_FLAG_HIGHEST="-O3 -qhot=level=1 -qinline -qinlglue"
+      C_O_FLAG_HI="-O3 -qinline -qinlglue"
       C_O_FLAG_NORM="-O2"
       C_O_FLAG_DEBUG="-qnoopt"
       # FIXME: Value below not verified.
@@ -684,7 +683,7 @@ AC_DEFUN([FLAGS_SETUP_COMPILER_FLAGS_FOR_JDK],
   AC_SUBST(CXXFLAGS_TESTEXE)
 
   LDFLAGS_TESTLIB="$LDFLAGS_JDKLIB"
-  LDFLAGS_TESTEXE="$LDFLAGS_JDKEXE"
+  LDFLAGS_TESTEXE="$LDFLAGS_JDKEXE $JAVA_BASE_LDFLAGS"
 
   AC_SUBST(LDFLAGS_TESTLIB)
   AC_SUBST(LDFLAGS_TESTEXE)
@@ -713,20 +712,17 @@ AC_DEFUN([FLAGS_SETUP_COMPILER_FLAGS_FOR_JDK_HELPER],
     FLAGS_CXX_COMPILER_CHECK_ARGUMENTS(ARGUMENT: [[$]$2CXXSTD_CXXFLAG -Werror],
     						 IF_FALSE: [$2CXXSTD_CXXFLAG=""])
     $2CXXFLAGS_JDK="${$2CXXFLAGS_JDK} ${$2CXXSTD_CXXFLAG}"
+    $2JVM_CFLAGS="${$2JVM_CFLAGS} ${$2CXXSTD_CXXFLAG}"
     AC_SUBST([$2CXXSTD_CXXFLAG])
   fi
   if test "x$OPENJDK_TARGET_OS" = xsolaris; then
     $2CFLAGS_JDK="${$2CFLAGS_JDK} -D__solaris__"
     $2CXXFLAGS_JDK="${$2CXXFLAGS_JDK} -D__solaris__"
-    $2CFLAGS_JDKLIB_EXTRA='-xstrconst'
-    CFLAGS_JDK="${CFLAGS_JDK} -qchars=signed -qfullpath -qsaveopt"
-    CXXFLAGS_JDK="${CXXFLAGS_JDK} -qchars=signed -qfullpath -qsaveopt"
   fi
 
   if test "x$OPENJDK_TARGET_OS" = xsolaris; then
     $2CFLAGS_JDK="${$2CFLAGS_JDK} -D__solaris__"
     $2CXXFLAGS_JDK="${$2CXXFLAGS_JDK} -D__solaris__"
-    $2CFLAGS_JDKLIB_EXTRA='-xstrconst'
   fi
 
   $2CFLAGS_JDK="${$2CFLAGS_JDK} ${$2EXTRA_CFLAGS}"
@@ -768,7 +764,7 @@ AC_DEFUN([FLAGS_SETUP_COMPILER_FLAGS_FOR_JDK_HELPER],
         $2CFLAGS_JDK="${$2CFLAGS_JDK} -fno-strict-aliasing"
         ;;
     esac
-    TOOLCHAIN_CHECK_COMPILER_VERSION(VERSION: 6, PREFIX: $2, IF_AT_LEAST: FLAGS_SETUP_GCC6_COMPILER_FLAGS)
+    TOOLCHAIN_CHECK_COMPILER_VERSION(VERSION: 6, PREFIX: $2, IF_AT_LEAST: FLAGS_SETUP_GCC6_COMPILER_FLAGS($2))
   elif test "x$TOOLCHAIN_TYPE" = xclang; then
     $2JVM_CFLAGS="[$]$2JVM_CFLAGS -D_GNU_SOURCE"
 
@@ -911,8 +907,8 @@ AC_DEFUN([FLAGS_SETUP_COMPILER_FLAGS_FOR_JDK_HELPER],
   elif test "x$OPENJDK_$1_OS" = xaix; then
     $2JVM_CFLAGS="[$]$2JVM_CFLAGS -DAIX"
     # We may need '-qminimaltoc' or '-qpic=large -bbigtoc' if the TOC overflows.
-    $2JVM_CFLAGS="[$]$2JVM_CFLAGS -qtune=balanced -qhot=level=1 -qinline \
-        -qinlglue -qalias=noansi -qstrict -qtls=default -qlanglvl=c99vla \
+    $2JVM_CFLAGS="[$]$2JVM_CFLAGS -qtune=balanced \
+        -qalias=noansi -qstrict -qtls=default -qlanglvl=c99vla \
         -qlanglvl=noredefmac -qnortti -qnoeh -qignerrno"
   elif test "x$OPENJDK_$1_OS" = xbsd; then
     $2COMMON_CCXXFLAGS_JDK="[$]$2COMMON_CCXXFLAGS_JDK -D_ALLBSD_SOURCE"
@@ -1112,7 +1108,7 @@ AC_DEFUN([FLAGS_SETUP_COMPILER_FLAGS_FOR_JDK_HELPER],
     fi
   elif test "x$TOOLCHAIN_TYPE" = xsolstudio; then
     LDFLAGS_SOLSTUDIO="-Wl,-z,defs"
-    $2LDFLAGS_JDK="[$]$2LDFLAGS_JDK $LDFLAGS_SOLSTUDIO -xildoff -ztext"
+    $2LDFLAGS_JDK="[$]$2LDFLAGS_JDK $LDFLAGS_SOLSTUDIO -ztext"
     LDFLAGS_CXX_SOLSTUDIO="-norunpath"
     $2LDFLAGS_CXX_JDK="[$]$2LDFLAGS_CXX_JDK $LDFLAGS_CXX_SOLSTUDIO -xnolib"
     $2JVM_LDFLAGS="[$]$2JVM_LDFLAGS $LDFLAGS_SOLSTUDIO -library=%none -mt $LDFLAGS_CXX_SOLSTUDIO -z noversion"
@@ -1147,11 +1143,11 @@ AC_DEFUN([FLAGS_SETUP_COMPILER_FLAGS_FOR_JDK_HELPER],
 
   $2LDFLAGS_JDKLIB="${$2LDFLAGS_JDKLIB} ${SHARED_LIBRARY_FLAGS}"
   if test "x$TOOLCHAIN_TYPE" = xmicrosoft; then
-    $2LDFLAGS_JDKLIB="${$2LDFLAGS_JDKLIB} \
+    $2JAVA_BASE_LDFLAGS="${$2JAVA_BASE_LDFLAGS} \
         -libpath:${OUTPUT_ROOT}/support/modules_libs/java.base"
     $2JDKLIB_LIBS=""
   else
-    $2LDFLAGS_JDKLIB="${$2LDFLAGS_JDKLIB} \
+    $2JAVA_BASE_LDFLAGS="${$2JAVA_BASE_LDFLAGS} \
         -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_$1_CPU_LIBDIR)"
 
     if test "x$1" = "xTARGET"; then
@@ -1160,17 +1156,17 @@ AC_DEFUN([FLAGS_SETUP_COMPILER_FLAGS_FOR_JDK_HELPER],
       # Only add client/minimal dir if client/minimal is being built.
     # Default to server for other variants.
       if HOTSPOT_CHECK_JVM_VARIANT(server); then
-        $2LDFLAGS_JDKLIB="${$2LDFLAGS_JDKLIB} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_$1_CPU_LIBDIR)/server"
+        $2JAVA_BASE_LDFLAGS="${$2JAVA_BASE_LDFLAGS} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_$1_CPU_LIBDIR)/server"
       elif HOTSPOT_CHECK_JVM_VARIANT(client); then
-        $2LDFLAGS_JDKLIB="${$2LDFLAGS_JDKLIB} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_$1_CPU_LIBDIR)/client"
+        $2JAVA_BASE_LDFLAGS="${$2JAVA_BASE_LDFLAGS} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_$1_CPU_LIBDIR)/client"
       elif HOTSPOT_CHECK_JVM_VARIANT(minimal); then
-        $2LDFLAGS_JDKLIB="${$2LDFLAGS_JDKLIB} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_$1_CPU_LIBDIR)/minimal"
+        $2JAVA_BASE_LDFLAGS="${$2JAVA_BASE_LDFLAGS} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_$1_CPU_LIBDIR)/minimal"
     else
-        $2LDFLAGS_JDKLIB="${$2LDFLAGS_JDKLIB} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_$1_CPU_LIBDIR)/server"
+        $2JAVA_BASE_LDFLAGS="${$2JAVA_BASE_LDFLAGS} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_$1_CPU_LIBDIR)/server"
     fi
     elif test "x$1" = "xBUILD"; then
       # When building a buildjdk, it's always only the server variant
-      $2LDFLAGS_JDKLIB="${$2LDFLAGS_JDKLIB} \
+      $2JAVA_BASE_LDFLAGS="${$2JAVA_BASE_LDFLAGS} \
           -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_$1_CPU_LIBDIR)/server"
     fi
 
@@ -1180,6 +1176,8 @@ AC_DEFUN([FLAGS_SETUP_COMPILER_FLAGS_FOR_JDK_HELPER],
     fi
 
   fi
+
+$2LDFLAGS_JDKLIB="${$2LDFLAGS_JDKLIB} ${$2JAVA_BASE_LDFLAGS}"
 
   # Set $2JVM_LIBS (per os)
   if test "x$OPENJDK_$1_OS" = xlinux; then
@@ -1447,19 +1445,24 @@ AC_DEFUN_ONCE([FLAGS_SETUP_COMPILER_FLAGS_MISC],
   AC_SUBST(CFLAGS_WARNINGS_ARE_ERRORS)
 ])
 
-AC_DEFUN_ONCE([FLAGS_SETUP_GCC6_COMPILER_FLAGS],
+# FLAGS_SETUP_GCC6_COMPILER_FLAGS([PREFIX])
+# Arguments:
+# $1 - Optional prefix for each variable defined.
+AC_DEFUN([FLAGS_SETUP_GCC6_COMPILER_FLAGS],
 [
   # These flags are required for GCC 6 builds as undefined behaviour in OpenJDK code
   # runs afoul of the more aggressive versions of these optimisations.
   # Notably, value range propagation now assumes that the this pointer of C++
   # member functions is non-null.
-  NO_NULL_POINTER_CHECK_CFLAG="-fno-delete-null-pointer-checks"
-  FLAGS_COMPILER_CHECK_ARGUMENTS(ARGUMENT: [$NO_NULL_POINTER_CHECK_CFLAG -Werror],
-  					     IF_FALSE: [NO_NULL_POINTER_CHECK_CFLAG=""])
-  AC_SUBST([NO_NULL_POINTER_CHECK_CFLAG])
+  NO_DELETE_NULL_POINTER_CHECKS_CFLAG="-fno-delete-null-pointer-checks"
+  dnl Argument check is disabled until FLAGS_COMPILER_CHECK_ARGUMENTS handles cross-compilation
+  dnl FLAGS_COMPILER_CHECK_ARGUMENTS(ARGUMENT: [$NO_DELETE_NULL_POINTER_CHECKS_CFLAG -Werror],
+  dnl					     IF_FALSE: [NO_DELETE_NULL_POINTER_CHECKS_CFLAG=""])
   NO_LIFETIME_DSE_CFLAG="-fno-lifetime-dse"
-  FLAGS_COMPILER_CHECK_ARGUMENTS(ARGUMENT: [$NO_LIFETIME_DSE_CFLAG -Werror],
-  					     IF_FALSE: [NO_LIFETIME_DSE_CFLAG=""])
-  CFLAGS_JDK="${CFLAGS_JDK} ${NO_NULL_POINTER_CHECK_CFLAG} ${NO_LIFETIME_DSE_CFLAG}"
-  AC_SUBST([NO_LIFETIME_DSE_CFLAG])
+  dnl Argument check is disabled until FLAGS_COMPILER_CHECK_ARGUMENTS handles cross-compilation
+  dnl FLAGS_COMPILER_CHECK_ARGUMENTS(ARGUMENT: [$NO_LIFETIME_DSE_CFLAG -Werror],
+  dnl					     IF_FALSE: [NO_LIFETIME_DSE_CFLAG=""])
+  AC_MSG_NOTICE([GCC >= 6 detected; adding ${NO_DELETE_NULL_POINTER_CHECKS_CFLAG} and ${NO_LIFETIME_DSE_CFLAG}])
+  $1CFLAGS_JDK="[$]$1CFLAGS_JDK ${NO_DELETE_NULL_POINTER_CHECKS_CFLAG} ${NO_LIFETIME_DSE_CFLAG}"
+  $1JVM_CFLAGS="[$]$1JVM_CFLAGS ${NO_DELETE_NULL_POINTER_CHECKS_CFLAG} ${NO_LIFETIME_DSE_CFLAG}"
 ])

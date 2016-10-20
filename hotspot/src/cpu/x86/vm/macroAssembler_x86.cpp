@@ -752,8 +752,7 @@ void MacroAssembler::pushptr(AddressLiteral src) {
   }
 }
 
-void MacroAssembler::reset_last_Java_frame(bool clear_fp,
-                                           bool clear_pc) {
+void MacroAssembler::reset_last_Java_frame(bool clear_fp) {
   // we must set sp to zero to clear frame
   movptr(Address(r15_thread, JavaThread::last_Java_sp_offset()), NULL_WORD);
   // must clear fp, so that compiled frames are not confused; it is
@@ -762,9 +761,8 @@ void MacroAssembler::reset_last_Java_frame(bool clear_fp,
     movptr(Address(r15_thread, JavaThread::last_Java_fp_offset()), NULL_WORD);
   }
 
-  if (clear_pc) {
-    movptr(Address(r15_thread, JavaThread::last_Java_pc_offset()), NULL_WORD);
-  }
+  // Always clear the pc because it could have been set by make_walkable()
+  movptr(Address(r15_thread, JavaThread::last_Java_pc_offset()), NULL_WORD);
 }
 
 void MacroAssembler::set_last_Java_frame(Register last_java_sp,
@@ -2531,7 +2529,7 @@ void MacroAssembler::call_VM_base(Register oop_result,
   }
   // reset last Java frame
   // Only interpreter should have to clear fp
-  reset_last_Java_frame(java_thread, true, false);
+  reset_last_Java_frame(java_thread, true);
 
    // C++ interp handles this in the interpreter
   check_and_handle_popframe(java_thread);
@@ -3149,6 +3147,24 @@ void MacroAssembler::fremr(Register tmp) {
   fpop();
 }
 
+// dst = c = a * b + c
+void MacroAssembler::fmad(XMMRegister dst, XMMRegister a, XMMRegister b, XMMRegister c) {
+  Assembler::vfmadd231sd(c, a, b);
+  if (dst != c) {
+    movdbl(dst, c);
+  }
+}
+
+// dst = c = a * b + c
+void MacroAssembler::fmaf(XMMRegister dst, XMMRegister a, XMMRegister b, XMMRegister c) {
+  Assembler::vfmadd231ss(c, a, b);
+  if (dst != c) {
+    movflt(dst, c);
+  }
+}
+
+
+
 
 void MacroAssembler::incrementl(AddressLiteral dst) {
   if (reachable(dst)) {
@@ -3642,8 +3658,7 @@ void MacroAssembler::push_IU_state() {
   pusha();
 }
 
-void MacroAssembler::reset_last_Java_frame(Register java_thread, bool clear_fp, bool clear_pc) {
-  // determine java_thread register
+void MacroAssembler::reset_last_Java_frame(Register java_thread, bool clear_fp) { // determine java_thread register
   if (!java_thread->is_valid()) {
     java_thread = rdi;
     get_thread(java_thread);
@@ -3654,8 +3669,8 @@ void MacroAssembler::reset_last_Java_frame(Register java_thread, bool clear_fp, 
     movptr(Address(java_thread, JavaThread::last_Java_fp_offset()), NULL_WORD);
   }
 
-  if (clear_pc)
-    movptr(Address(java_thread, JavaThread::last_Java_pc_offset()), NULL_WORD);
+  // Always clear the pc because it could have been set by make_walkable()
+  movptr(Address(java_thread, JavaThread::last_Java_pc_offset()), NULL_WORD);
 
 }
 
@@ -7046,7 +7061,6 @@ void MacroAssembler::string_indexofC8(Register str1, Register str2,
                                       int ae) {
   ShortBranchVerifier sbv(this);
   assert(UseSSE42Intrinsics, "SSE4.2 intrinsics are required");
-  assert(UseSSE >= 4, "SSE4 must be enabled for SSE4.2 intrinsics to be available");
   assert(ae != StrIntrinsicNode::LU, "Invalid encoding");
 
   // This method uses the pcmpestri instruction with bound registers
@@ -7225,7 +7239,6 @@ void MacroAssembler::string_indexof(Register str1, Register str2,
                                     int ae) {
   ShortBranchVerifier sbv(this);
   assert(UseSSE42Intrinsics, "SSE4.2 intrinsics are required");
-  assert(UseSSE >= 4, "SSE4 must be enabled for SSE4.2 intrinsics to be available");
   assert(ae != StrIntrinsicNode::LU, "Invalid encoding");
 
   //
@@ -7543,7 +7556,6 @@ void MacroAssembler::string_indexof_char(Register str1, Register cnt1, Register 
                                          XMMRegister vec1, XMMRegister vec2, XMMRegister vec3, Register tmp) {
   ShortBranchVerifier sbv(this);
   assert(UseSSE42Intrinsics, "SSE4.2 intrinsics are required");
-  assert(UseSSE >= 4, "SSE4 must be enabled for SSE4.2 intrinsics to be available");
 
   int stride = 8;
 
@@ -7723,7 +7735,6 @@ void MacroAssembler::string_compare(Register str1, Register str2,
   }
 
   if (UseAVX >= 2 && UseSSE42Intrinsics) {
-    assert(UseSSE >= 4, "SSE4 must be enabled for SSE4.2 intrinsics to be available");
     Label COMPARE_WIDE_VECTORS, VECTOR_NOT_EQUAL, COMPARE_WIDE_TAIL, COMPARE_SMALL_STR;
     Label COMPARE_WIDE_VECTORS_LOOP, COMPARE_16_CHARS, COMPARE_INDEX_CHAR;
     Label COMPARE_WIDE_VECTORS_LOOP_AVX2;
@@ -7891,7 +7902,6 @@ void MacroAssembler::string_compare(Register str1, Register str2,
 
     bind(COMPARE_SMALL_STR);
   } else if (UseSSE42Intrinsics) {
-    assert(UseSSE >= 4, "SSE4 must be enabled for SSE4.2 intrinsics to be available");
     Label COMPARE_WIDE_VECTORS, VECTOR_NOT_EQUAL, COMPARE_TAIL;
     int pcmpmask = 0x19;
     // Setup to compare 8-char (16-byte) vectors,
@@ -8139,8 +8149,7 @@ void MacroAssembler::has_negatives(Register ary1, Register len,
     jmp(FALSE_LABEL);
 
     clear_vector_masking();   // closing of the stub context for programming mask registers
-  }
-  else {
+  } else {
     movl(result, len); // copy
 
     if (UseAVX == 2 && UseSSE >= 2) {
@@ -8177,9 +8186,7 @@ void MacroAssembler::has_negatives(Register ary1, Register len,
       bind(COMPARE_TAIL); // len is zero
       movl(len, result);
       // Fallthru to tail compare
-    }
-    else if (UseSSE42Intrinsics) {
-      assert(UseSSE >= 4, "SSE4 must be  for SSE4.2 intrinsics to be available");
+    } else if (UseSSE42Intrinsics) {
       // With SSE4.2, use double quad vector compare
       Label COMPARE_WIDE_VECTORS, COMPARE_TAIL;
 
@@ -8383,7 +8390,6 @@ void MacroAssembler::arrays_equals(bool is_array_equ, Register ary1, Register ar
     movl(limit, result);
     // Fallthru to tail compare
   } else if (UseSSE42Intrinsics) {
-    assert(UseSSE >= 4, "SSE4 must be enabled for SSE4.2 intrinsics to be available");
     // With SSE4.2, use double quad vector compare
     Label COMPARE_WIDE_VECTORS, COMPARE_TAIL;
 
@@ -8747,7 +8753,6 @@ void MacroAssembler::encode_iso_array(Register src, Register dst, Register len,
   negptr(len);
 
   if (UseSSE42Intrinsics || UseAVX >= 2) {
-    assert(UseSSE42Intrinsics ? UseSSE >= 4 : true, "SSE4 must be enabled for SSE4.2 intrinsics to be available");
     Label L_chars_8_check, L_copy_8_chars, L_copy_8_chars_exit;
     Label L_chars_16_check, L_copy_16_chars, L_copy_16_chars_exit;
 
@@ -10159,7 +10164,13 @@ void MacroAssembler::kernel_crc32(Register crc, Register buf, Register len, Regi
   movdqa(xmm1, Address(buf, 0));
   movdl(rax, xmm1);
   xorl(crc, rax);
-  pinsrd(xmm1, crc, 0);
+  if (VM_Version::supports_sse4_1()) {
+    pinsrd(xmm1, crc, 0);
+  } else {
+    pinsrw(xmm1, crc, 0);
+    shrl(crc, 16);
+    pinsrw(xmm1, crc, 1);
+  }
   addptr(buf, 16);
   subl(len, 4); // len > 0
   jcc(Assembler::less, L_fold_tail);
@@ -10753,7 +10764,10 @@ void MacroAssembler::char_array_compress(Register src, Register dst, Register le
   // save length for return
   push(len);
 
+  // 8165287: EVEX version disabled for now, needs to be refactored as
+  // it is returning incorrect results.
   if ((UseAVX > 2) && // AVX512
+    0 &&
     VM_Version::supports_avx512vlbw() &&
     VM_Version::supports_bmi2()) {
 
@@ -10881,7 +10895,6 @@ void MacroAssembler::char_array_compress(Register src, Register dst, Register le
     clear_vector_masking();   // closing of the stub context for programming mask registers
   }
   if (UseSSE42Intrinsics) {
-    assert(UseSSE >= 4, "SSE4 must be enabled for SSE4.2 intrinsics to be available");
     Label copy_32_loop, copy_16, copy_tail;
 
     bind(below_threshold);
@@ -11045,7 +11058,6 @@ void MacroAssembler::byte_array_inflate(Register src, Register dst, Register len
     clear_vector_masking();   // closing of the stub context for programming mask registers
   }
   if (UseSSE42Intrinsics) {
-    assert(UseSSE >= 4, "SSE4 must be enabled for SSE4.2 intrinsics to be available");
     Label copy_16_loop, copy_8_loop, copy_bytes, copy_new_tail, copy_tail;
 
     movl(tmp2, len);
@@ -11074,10 +11086,11 @@ void MacroAssembler::byte_array_inflate(Register src, Register dst, Register len
 
       bind(below_threshold);
       bind(copy_new_tail);
-      if (UseAVX > 2) {
+      if ((UseAVX > 2) &&
+        VM_Version::supports_avx512vlbw() &&
+        VM_Version::supports_bmi2()) {
         movl(tmp2, len);
-      }
-      else {
+      } else {
         movl(len, tmp2);
       }
       andl(tmp2, 0x00000007);

@@ -25,7 +25,6 @@
 
 package jdk.javadoc.internal.doclets.formats.html;
 
-import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -55,16 +54,14 @@ import com.sun.source.doctree.DocTree.Kind;
 import com.sun.source.doctree.EndElementTree;
 import com.sun.source.doctree.EntityTree;
 import com.sun.source.doctree.ErroneousTree;
-import com.sun.source.doctree.InheritDocTree;
 import com.sun.source.doctree.IndexTree;
+import com.sun.source.doctree.InheritDocTree;
 import com.sun.source.doctree.LinkTree;
 import com.sun.source.doctree.LiteralTree;
 import com.sun.source.doctree.SeeTree;
 import com.sun.source.doctree.StartElementTree;
 import com.sun.source.doctree.TextTree;
 import com.sun.source.util.SimpleDocTreeVisitor;
-import com.sun.tools.javac.util.DefinedBy;
-import com.sun.tools.javac.util.DefinedBy.Api;
 
 import jdk.javadoc.internal.doclets.formats.html.markup.Comment;
 import jdk.javadoc.internal.doclets.formats.html.markup.ContentBuilder;
@@ -82,17 +79,20 @@ import jdk.javadoc.internal.doclets.toolkit.AnnotationTypeWriter;
 import jdk.javadoc.internal.doclets.toolkit.ClassWriter;
 import jdk.javadoc.internal.doclets.toolkit.Configuration;
 import jdk.javadoc.internal.doclets.toolkit.Content;
+import jdk.javadoc.internal.doclets.toolkit.Messages;
 import jdk.javadoc.internal.doclets.toolkit.PackageSummaryWriter;
+import jdk.javadoc.internal.doclets.toolkit.Resources;
 import jdk.javadoc.internal.doclets.toolkit.taglets.DocRootTaglet;
 import jdk.javadoc.internal.doclets.toolkit.taglets.TagletWriter;
+import jdk.javadoc.internal.doclets.toolkit.util.CommentHelper;
 import jdk.javadoc.internal.doclets.toolkit.util.DocFile;
+import jdk.javadoc.internal.doclets.toolkit.util.DocFileIOException;
 import jdk.javadoc.internal.doclets.toolkit.util.DocLink;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPath;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPaths;
 import jdk.javadoc.internal.doclets.toolkit.util.DocletConstants;
 import jdk.javadoc.internal.doclets.toolkit.util.ImplementedMethods;
 import jdk.javadoc.internal.doclets.toolkit.util.Utils;
-import jdk.javadoc.internal.doclets.toolkit.util.CommentHelper;
 
 import static com.sun.source.doctree.AttributeTree.ValueKind.*;
 import static com.sun.source.doctree.DocTree.Kind.*;
@@ -145,6 +145,12 @@ public class HtmlDocletWriter extends HtmlDocWriter {
 
     protected final Utils utils;
 
+    protected final Contents contents;
+
+    protected final Messages messages;
+
+    protected final Resources resources;
+
     /**
      * To check whether annotation heading is printed or not.
      */
@@ -174,10 +180,12 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      *
      * @param path File to be generated.
      */
-    public HtmlDocletWriter(ConfigurationImpl configuration, DocPath path)
-            throws IOException {
+    public HtmlDocletWriter(ConfigurationImpl configuration, DocPath path) {
         super(configuration, path);
         this.configuration = configuration;
+        this.contents = configuration.contents;
+        this.messages = configuration.messages;
+        this.resources = configuration.resources;
         this.utils = configuration.utils;
         this.path = path;
         this.pathToRoot = path.parent().invert();
@@ -249,19 +257,19 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      */
     public Content getAllClassesLinkScript(String id) {
         HtmlTree script = HtmlTree.SCRIPT();
-        String scriptCode = "<!--" + DocletConstants.NL +
-                "  allClassesLink = document.getElementById(\"" + id + "\");" + DocletConstants.NL +
-                "  if(window==top) {" + DocletConstants.NL +
-                "    allClassesLink.style.display = \"block\";" + DocletConstants.NL +
-                "  }" + DocletConstants.NL +
-                "  else {" + DocletConstants.NL +
-                "    allClassesLink.style.display = \"none\";" + DocletConstants.NL +
-                "  }" + DocletConstants.NL +
-                "  //-->" + DocletConstants.NL;
-        Content scriptContent = new RawHtml(scriptCode);
+        String scriptCode = "<!--\n" +
+                "  allClassesLink = document.getElementById(\"" + id + "\");\n" +
+                "  if(window==top) {\n" +
+                "    allClassesLink.style.display = \"block\";\n" +
+                "  }\n" +
+                "  else {\n" +
+                "    allClassesLink.style.display = \"none\";\n" +
+                "  }\n" +
+                "  //-->\n";
+        Content scriptContent = new RawHtml(scriptCode.replace("\n", DocletConstants.NL));
         script.addContent(scriptContent);
         Content div = HtmlTree.DIV(script);
-        Content div_noscript = HtmlTree.DIV(getResource("doclet.No_Script_Message"));
+        Content div_noscript = HtmlTree.DIV(contents.noScriptMessage);
         Content noScript = HtmlTree.NOSCRIPT(div_noscript);
         div.addContent(noScript);
         return div;
@@ -397,14 +405,14 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                 }
                 Content classContent = getLink(new LinkInfoImpl(
                         configuration, LinkInfoImpl.Kind.PACKAGE, te));
-                Content tdClass = HtmlTree.TD(HtmlStyle.colFirst, classContent);
+                Content tdClass = HtmlTree.TH_ROW_SCOPE(HtmlStyle.colFirst, classContent);
                 HtmlTree tr = HtmlTree.TR(tdClass);
                 tr.addStyle(altColor ? HtmlStyle.altColor : HtmlStyle.rowColor);
                 altColor = !altColor;
                 HtmlTree tdClassDescription = new HtmlTree(HtmlTag.TD);
                 tdClassDescription.addStyle(HtmlStyle.colLast);
                 if (utils.isDeprecated(te)) {
-                    tdClassDescription.addContent(deprecatedLabel);
+                    tdClassDescription.addContent(contents.deprecatedLabel);
                     List<? extends DocTree> tags = utils.getDeprecatedTrees(te);
                     if (!tags.isEmpty()) {
                         addSummaryDeprecatedComment(te, tags.get(0), tdClassDescription);
@@ -429,9 +437,10 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      * @param includeScript true if printing windowtitle script
      *                      false for files that appear in the left-hand frames
      * @param body the body htmltree to be included in the document
+     * @throws DocFileIOException if there is a problem writing the file
      */
     public void printHtmlDocument(List<String> metakeywords, boolean includeScript,
-            Content body) throws IOException {
+            Content body) throws DocFileIOException {
         Content htmlDocType = configuration.isOutputHtml5()
                 ? DocType.HTML5
                 : DocType.TRANSITIONAL;
@@ -535,7 +544,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
             String allClassesId = "allclasses_";
             HtmlTree navDiv = new HtmlTree(HtmlTag.DIV);
             fixedNavDiv.addStyle(HtmlStyle.fixedNav);
-            Content skipNavLinks = configuration.getResource("doclet.Skip_navigation_links");
+            Content skipNavLinks = configuration.getContent("doclet.Skip_navigation_links");
             if (header) {
                 fixedNavDiv.addContent(HtmlConstants.START_OF_TOP_NAVBAR);
                 navDiv.addStyle(HtmlStyle.topNav);
@@ -570,10 +579,12 @@ public class HtmlDocletWriter extends HtmlDocWriter {
             if (configuration.createoverview) {
                 navList.addContent(getNavLinkContents());
             }
-            if (configuration.modules.size() == 1) {
-                navList.addContent(getNavLinkModule(configuration.modules.first()));
-            } else if (!configuration.modules.isEmpty()) {
-                navList.addContent(getNavLinkModule());
+            if (configuration.showModules) {
+                if (configuration.modules.size() == 1) {
+                    navList.addContent(getNavLinkModule(configuration.modules.first()));
+                } else if (!configuration.modules.isEmpty()) {
+                    navList.addContent(getNavLinkModule());
+                }
             }
             if (configuration.packages.size() == 1) {
                 navList.addContent(getNavLinkPackage(configuration.packages.first()));
@@ -605,20 +616,22 @@ public class HtmlDocletWriter extends HtmlDocWriter {
             } else {
                 tree.addContent(navDiv);
             }
-            Content ulNav = HtmlTree.UL(HtmlStyle.navList, getNavLinkPrevious());
-            ulNav.addContent(getNavLinkNext());
+            Content ulNav = HtmlTree.UL(HtmlStyle.navList, getNavLinkPrevious(), getNavLinkNext());
             Content subDiv = HtmlTree.DIV(HtmlStyle.subNav, ulNav);
-            Content ulFrames = HtmlTree.UL(HtmlStyle.navList, getNavShowLists());
-            ulFrames.addContent(getNavHideLists(filename));
-            subDiv.addContent(ulFrames);
+            if (configuration.frames) {
+                Content ulFrames = HtmlTree.UL(HtmlStyle.navList,
+                    getNavShowLists(), getNavHideLists(filename));
+                subDiv.addContent(ulFrames);
+            }
             HtmlTree ulAllClasses = HtmlTree.UL(HtmlStyle.navList, getNavLinkClassIndex());
             ulAllClasses.addAttr(HtmlAttr.ID, allClassesId);
             subDiv.addContent(ulAllClasses);
             if (header && configuration.createindex) {
                 HtmlTree inputText = HtmlTree.INPUT("text", "search");
                 HtmlTree inputReset = HtmlTree.INPUT("reset", "reset");
-                Content searchTxt = configuration.getResource("doclet.search");
-                searchTxt.addContent(getSpace());
+                Content searchTxt = new ContentBuilder();
+                searchTxt.addContent(configuration.getContent("doclet.search"));
+                searchTxt.addContent(Contents.SPACE);
                 HtmlTree liInput = HtmlTree.LI(HtmlTree.SPAN(searchTxt));
                 liInput.addContent(inputText);
                 liInput.addContent(inputReset);
@@ -632,7 +645,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                 fixedNavDiv.addContent(subDiv);
                 fixedNavDiv.addContent(HtmlConstants.END_OF_TOP_NAVBAR);
                 tree.addContent(fixedNavDiv);
-                HtmlTree paddingDiv = HtmlTree.DIV(HtmlStyle.navPadding, getSpace());
+                HtmlTree paddingDiv = HtmlTree.DIV(HtmlStyle.navPadding, Contents.SPACE);
                 tree.addContent(paddingDiv);
             } else {
                 subDiv.addContent(getMarkerAnchor(SectionName.SKIP_NAVBAR_BOTTOM));
@@ -677,8 +690,8 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      * @return a content tree for the link
      */
     protected Content getNavLinkContents() {
-        Content linkContent = getHyperLink(pathToRoot.resolve(DocPaths.OVERVIEW_SUMMARY),
-                overviewLabel, "", "");
+        Content linkContent = getHyperLink(pathToRoot.resolve(DocPaths.overviewSummary(configuration.frames)),
+                contents.overviewLabel, "", "");
         Content li = HtmlTree.LI(linkContent);
         return li;
     }
@@ -690,7 +703,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      * @return a content tree for the link
      */
     protected Content getNavLinkModule(ModuleElement mdle) {
-        Content linkContent = getModuleLink(mdle, moduleLabel);
+        Content linkContent = getModuleLink(mdle, contents.moduleLabel);
         Content li = HtmlTree.LI(linkContent);
         return li;
     }
@@ -701,7 +714,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      * @return a content tree for the link
      */
     protected Content getNavLinkModule() {
-        Content li = HtmlTree.LI(moduleLabel);
+        Content li = HtmlTree.LI(contents.moduleLabel);
         return li;
     }
 
@@ -712,7 +725,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      * @return a content tree for the link
      */
     protected Content getNavLinkPackage(PackageElement pkg) {
-        Content linkContent = getPackageLink(pkg, packageLabel);
+        Content linkContent = getPackageLink(pkg, contents.packageLabel);
         Content li = HtmlTree.LI(linkContent);
         return li;
     }
@@ -723,7 +736,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      * @return a content tree for the link
      */
     protected Content getNavLinkPackage() {
-        Content li = HtmlTree.LI(packageLabel);
+        Content li = HtmlTree.LI(contents.packageLabel);
         return li;
     }
 
@@ -733,7 +746,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      * @return a content tree for the link
      */
     protected Content getNavLinkClassUse() {
-        Content li = HtmlTree.LI(useLabel);
+        Content li = HtmlTree.LI(contents.useLabel);
         return li;
     }
 
@@ -746,10 +759,10 @@ public class HtmlDocletWriter extends HtmlDocWriter {
     public Content getNavLinkPrevious(DocPath prev) {
         Content li;
         if (prev != null) {
-            li = HtmlTree.LI(getHyperLink(prev, prevLabel, "", ""));
+            li = HtmlTree.LI(getHyperLink(prev, contents.prevLabel, "", ""));
         }
         else
-            li = HtmlTree.LI(prevLabel);
+            li = HtmlTree.LI(contents.prevLabel);
         return li;
     }
 
@@ -763,10 +776,10 @@ public class HtmlDocletWriter extends HtmlDocWriter {
     public Content getNavLinkNext(DocPath next) {
         Content li;
         if (next != null) {
-            li = HtmlTree.LI(getHyperLink(next, nextLabel, "", ""));
+            li = HtmlTree.LI(getHyperLink(next, contents.nextLabel, "", ""));
         }
         else
-            li = HtmlTree.LI(nextLabel);
+            li = HtmlTree.LI(contents.nextLabel);
         return li;
     }
 
@@ -778,7 +791,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      */
     protected Content getNavShowLists(DocPath link) {
         DocLink dl = new DocLink(link, path.getPath(), null);
-        Content framesContent = getHyperLink(dl, framesLabel, "", "_top");
+        Content framesContent = getHyperLink(dl, contents.framesLabel, "", "_top");
         Content li = HtmlTree.LI(framesContent);
         return li;
     }
@@ -799,7 +812,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      * @return a content tree for the link
      */
     protected Content getNavHideLists(DocPath link) {
-        Content noFramesContent = getHyperLink(link, noframesLabel, "", "_top");
+        Content noFramesContent = getHyperLink(link, contents.noFramesLabel, "", "_top");
         Content li = HtmlTree.LI(noFramesContent);
         return li;
     }
@@ -813,11 +826,11 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      * @return a content tree for the link
      */
     protected Content getNavLinkTree() {
-        List<PackageElement> packages = new ArrayList<>(utils.getSpecifiedPackages());
-        DocPath docPath = packages.size() == 1 && utils.getSpecifiedClasses().isEmpty()
+        List<PackageElement> packages = new ArrayList<>(configuration.getSpecifiedPackages());
+        DocPath docPath = packages.size() == 1 && configuration.getSpecifiedClasses().isEmpty()
                 ? pathString(packages.get(0), DocPaths.PACKAGE_TREE)
                 : pathToRoot.resolve(DocPaths.OVERVIEW_TREE);
-        return HtmlTree.LI(getHyperLink(docPath, treeLabel, "", ""));
+        return HtmlTree.LI(getHyperLink(docPath, contents.treeLabel, "", ""));
     }
 
     /**
@@ -839,7 +852,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      * @return a content tree for the link
      */
     protected Content getNavLinkClass() {
-        Content li = HtmlTree.LI(classLabel);
+        Content li = HtmlTree.LI(contents.classLabel);
         return li;
     }
 
@@ -850,7 +863,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      */
     protected Content getNavLinkDeprecated() {
         Content linkContent = getHyperLink(pathToRoot.resolve(DocPaths.DEPRECATED_LIST),
-                deprecatedLabel, "", "");
+                contents.deprecatedLabel, "", "");
         Content li = HtmlTree.LI(linkContent);
         return li;
     }
@@ -864,8 +877,8 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      */
     protected Content getNavLinkClassIndex() {
         Content allClassesContent = getHyperLink(pathToRoot.resolve(
-                DocPaths.ALLCLASSES_NOFRAME),
-                allclassesLabel, "", "");
+                DocPaths.AllClasses(configuration.frames)),
+                contents.allClassesLabel, "", "");
         Content li = HtmlTree.LI(allClassesContent);
         return li;
     }
@@ -880,7 +893,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                 (configuration.splitindex
                     ? DocPaths.INDEX_FILES.resolve(DocPaths.indexN(1))
                     : DocPaths.INDEX_ALL)),
-            indexLabel, "", "");
+            contents.indexLabel, "", "");
         Content li = HtmlTree.LI(linkContent);
         return li;
     }
@@ -902,9 +915,20 @@ public class HtmlDocletWriter extends HtmlDocWriter {
             helpfilenm = DocPath.create(file.getName());
         }
         Content linkContent = getHyperLink(pathToRoot.resolve(helpfilenm),
-                helpLabel, "", "");
+                contents.helpLabel, "", "");
         Content li = HtmlTree.LI(linkContent);
         return li;
+    }
+
+    /**
+     * Add gap between navigation bar elements.
+     *
+     * @param liNav the content tree to which the gap will be added
+     */
+    protected void addNavGap(Content liNav) {
+        liNav.addContent(Contents.SPACE);
+        liNav.addContent("|");
+        liNav.addContent(Contents.SPACE);
     }
 
     /**
@@ -918,16 +942,20 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         Content tr = new HtmlTree(HtmlTag.TR);
         final int size = header.size();
         Content tableHeader;
-        if (size == 1) {
+        if (size == 2) {
             tableHeader = new StringContent(header.get(0));
-            tr.addContent(HtmlTree.TH(HtmlStyle.colOne, scope, tableHeader));
+            tr.addContent(HtmlTree.TH(HtmlStyle.colFirst, scope, tableHeader));
+            tableHeader = new StringContent(header.get(1));
+            tr.addContent(HtmlTree.TH(HtmlStyle.colLast, scope, tableHeader));
             return tr;
         }
         for (int i = 0; i < size; i++) {
             tableHeader = new StringContent(header.get(i));
-            if(i == 0)
+            if (i == 0)
                 tr.addContent(HtmlTree.TH(HtmlStyle.colFirst, scope, tableHeader));
-            else if(i == (size - 1))
+            else if (i == 1)
+                tr.addContent(HtmlTree.TH(HtmlStyle.colSecond, scope, tableHeader));
+            else if (i == (size - 1))
                 tr.addContent(HtmlTree.TH(HtmlStyle.colLast, scope, tableHeader));
             else
                 tr.addContent(HtmlTree.TH(scope, tableHeader));
@@ -943,7 +971,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      */
     public Content getTableCaption(Content title) {
         Content captionSpan = HtmlTree.SPAN(title);
-        Content space = getSpace();
+        Content space = Contents.SPACE;
         Content tabSpan = HtmlTree.SPAN(HtmlStyle.tabEnd, space);
         Content caption = HtmlTree.CAPTION(captionSpan);
         caption.addContent(tabSpan);
@@ -1003,7 +1031,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      */
     public Content getPackageName(PackageElement packageElement) {
         return packageElement == null || packageElement.isUnnamed()
-                ? defaultPackageLabel
+                ? contents.defaultPackageLabel
                 : getPackageLabel(packageElement.getQualifiedName());
     }
 
@@ -1029,7 +1057,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
     protected void addPackageDeprecatedAPI(SortedSet<Element> deprPkgs, String headingKey,
             String tableSummary, List<String> tableHeader, Content contentTree) {
         if (deprPkgs.size() > 0) {
-            Content caption = getTableCaption(configuration.getResource(headingKey));
+            Content caption = getTableCaption(configuration.getContent(headingKey));
             Content table = (configuration.isOutputHtml5())
                     ? HtmlTree.TABLE(HtmlStyle.deprecatedSummary, caption)
                     : HtmlTree.TABLE(HtmlStyle.deprecatedSummary, tableSummary, caption);
@@ -1038,13 +1066,16 @@ public class HtmlDocletWriter extends HtmlDocWriter {
             boolean altColor = true;
             for (Element e : deprPkgs) {
                 PackageElement pkg = (PackageElement) e;
-                HtmlTree td = HtmlTree.TD(HtmlStyle.colOne,
+                HtmlTree thRow = HtmlTree.TH_ROW_SCOPE(HtmlStyle.colFirst,
                         getPackageLink(pkg, getPackageName(pkg)));
+                HtmlTree tr = HtmlTree.TR(thRow);
+                HtmlTree tdDesc = new HtmlTree(HtmlTag.TD);
+                tdDesc.addStyle(HtmlStyle.colLast);
                 List<? extends DocTree> tags = utils.getDeprecatedTrees(pkg);
                 if (!tags.isEmpty()) {
-                    addInlineDeprecatedComment(pkg, tags.get(0), td);
+                    addInlineDeprecatedComment(pkg, tags.get(0), tdDesc);
                 }
-                HtmlTree tr = HtmlTree.TR(td);
+                tr.addContent(tdDesc);
                 tr.addStyle(altColor ? HtmlStyle.altColor : HtmlStyle.rowColor);
                 altColor = !altColor;
                 tbody.addContent(tr);
@@ -1540,7 +1571,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                     return classCrossLink;
                 } else {
                     // No cross link found so print warning
-                    configuration.getDocletSpecificMsg().warning(ch.getDocTreePath(see),
+                    messages.warning(ch.getDocTreePath(see),
                             "doclet.see.class_or_package_not_found",
                             "@" + tagName,
                             seetext);
@@ -1583,11 +1614,11 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                 if (this instanceof ClassWriterImpl) {
                     containing = ((ClassWriterImpl) this).getTypeElement();
                 } else if (!utils.isPublic(containing)) {
-                    configuration.getDocletSpecificMsg().warning(
+                    messages.warning(
                         ch.getDocTreePath(see), "doclet.see.class_or_package_not_accessible",
                         tagName, utils.getFullyQualifiedName(containing));
                 } else {
-                    configuration.getDocletSpecificMsg().warning(
+                    messages.warning(
                         ch.getDocTreePath(see), "doclet.see.class_or_package_not_found",
                         tagName, seetext);
                 }
@@ -1673,7 +1704,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      * @param htmltree the documentation tree to which the inline comments will be added
      */
     public void addInlineComment(Element element, Content htmltree) {
-        addCommentTags(element, utils.getBody(element), false, false, htmltree);
+        addCommentTags(element, utils.getFullBody(element), false, false, htmltree);
     }
 
     /**
@@ -1717,7 +1748,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
             htmltree.addContent(div);
         }
         if (tags.isEmpty()) {
-            htmltree.addContent(getSpace());
+            htmltree.addContent(Contents.SPACE);
         }
     }
 
@@ -1809,7 +1840,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                     return false;
                 }
 
-                @Override @DefinedBy(Api.COMPILER_TREE)
+                @Override
                 public Boolean visitAttribute(AttributeTree node, Content c) {
                     StringBuilder sb = new StringBuilder(SPACER).append(node.getName());
                     if (node.getValueKind() == ValueKind.EMPTY) {
@@ -1858,7 +1889,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                     return false;
                 }
 
-                @Override @DefinedBy(Api.COMPILER_TREE)
+                @Override
                 public Boolean visitComment(CommentTree node, Content c) {
                     if (isFirstSentence && isFirst(node)) {
                         commentRemoved = true;
@@ -1876,7 +1907,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                     return content;
                 }
 
-                @Override @DefinedBy(Api.COMPILER_TREE)
+                @Override
                 public Boolean visitDocRoot(DocRootTree node, Content c) {
                     Content docRootContent = TagletWriter.getInlineTagOutput(element,
                             configuration.tagletManager,
@@ -1891,28 +1922,28 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                     return false;
                 }
 
-                @Override @DefinedBy(Api.COMPILER_TREE)
+                @Override
                 public Boolean visitEndElement(EndElementTree node, Content c) {
                     RawHtml rawHtml = new RawHtml("</" + node.getName() + ">");
                     result.addContent(rawHtml);
                     return false;
                 }
 
-                @Override @DefinedBy(Api.COMPILER_TREE)
+                @Override
                 public Boolean visitEntity(EntityTree node, Content c) {
                     result.addContent(new RawHtml(node.toString()));
                     return false;
                 }
 
-                @Override @DefinedBy(Api.COMPILER_TREE)
+                @Override
                 public Boolean visitErroneous(ErroneousTree node, Content c) {
-                    configuration.getDocletSpecificMsg().warning(ch.getDocTreePath(node),
+                    messages.warning(ch.getDocTreePath(node),
                             "doclet.tag.invalid_usage", node);
                     result.addContent(new RawHtml(node.toString()));
                     return false;
                 }
 
-                @Override @DefinedBy(Api.COMPILER_TREE)
+                @Override
                 public Boolean visitInheritDoc(InheritDocTree node, Content c) {
                     Content output = TagletWriter.getInlineTagOutput(element,
                             configuration.tagletManager, holderTag,
@@ -1922,7 +1953,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                     return (isFirstSentence && !output.isEmpty());
                 }
 
-                @Override @DefinedBy(Api.COMPILER_TREE)
+                @Override
                 public Boolean visitIndex(IndexTree node, Content p) {
                     Content output = TagletWriter.getInlineTagOutput(element,
                             configuration.tagletManager, holderTag, tag,
@@ -1933,14 +1964,14 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                     return false;
                 }
 
-                @Override @DefinedBy(Api.COMPILER_TREE)
+                @Override
                 public Boolean visitLink(LinkTree node, Content c) {
                     // we need to pass the DocTreeImpl here, so ignore node
                     result.addContent(seeTagToContent(element, tag));
                     return false;
                 }
 
-                @Override @DefinedBy(Api.COMPILER_TREE)
+                @Override
                 public Boolean visitLiteral(LiteralTree node, Content c) {
                     String s = node.getBody().toString();
                     Content content = new StringContent(utils.normalizeNewlines(s));
@@ -1950,14 +1981,14 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                     return false;
                 }
 
-                @Override @DefinedBy(Api.COMPILER_TREE)
+                @Override
                 public Boolean visitSee(SeeTree node, Content c) {
                     // we need to pass the DocTreeImpl here, so ignore node
                     result.addContent(seeTagToContent(element, tag));
                     return false;
                 }
 
-                @Override @DefinedBy(Api.COMPILER_TREE)
+                @Override
                 public Boolean visitStartElement(StartElementTree node, Content c) {
                     String text = "<" + node.getName();
                     RawHtml rawHtml = new RawHtml(utils.normalizeNewlines(text));
@@ -1985,7 +2016,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                     return utils.normalizeNewlines(text);
                 }
 
-                @Override @DefinedBy(Api.COMPILER_TREE)
+                @Override
                 public Boolean visitText(TextTree node, Content c) {
                     String text = node.getBody();
                     result.addContent(new RawHtml(textCleanup(text, isLast(node), commentRemoved)));
@@ -1993,7 +2024,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                     return false;
                 }
 
-                @Override @DefinedBy(Api.COMPILER_TREE)
+                @Override
                 protected Boolean defaultAction(DocTree node, Content c) {
                     Content output = TagletWriter.getInlineTagOutput(element,
                             configuration.tagletManager, holderTag, tag,
@@ -2071,27 +2102,27 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         }
 
         DocPath redirectPathFromRoot = new SimpleElementVisitor9<DocPath, Void>() {
-            @Override @DefinedBy(Api.LANGUAGE_MODEL)
+            @Override
             public DocPath visitType(TypeElement e, Void p) {
                 return DocPath.forPackage(utils.containingPackage(e));
             }
 
-            @Override @DefinedBy(Api.LANGUAGE_MODEL)
+            @Override
             public DocPath visitPackage(PackageElement e, Void p) {
                 return DocPath.forPackage(e);
             }
 
-            @Override @DefinedBy(Api.LANGUAGE_MODEL)
+            @Override
             public DocPath visitVariable(VariableElement e, Void p) {
                 return DocPath.forPackage(utils.containingPackage(e));
             }
 
-            @Override @DefinedBy(Api.LANGUAGE_MODEL)
+            @Override
             public DocPath visitExecutable(ExecutableElement e, Void p) {
                 return DocPath.forPackage(utils.containingPackage(e));
             }
 
-            @Override @DefinedBy(Api.LANGUAGE_MODEL)
+            @Override
             protected DocPath defaultAction(Element e, Void p) {
                 return null;
             }
@@ -2155,8 +2186,8 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         head.addContent(javascript);
         if (configuration.createindex) {
             if (pathToRoot != null && script != null) {
-                String path = pathToRoot.isEmpty() ? "." : pathToRoot.getPath();
-                script.addContent(new RawHtml("var pathtoroot = \"" + path + "/\";loadScripts(document, \'script\');"));
+                String ptrPath = pathToRoot.isEmpty() ? "." : pathToRoot.getPath();
+                script.addContent(new RawHtml("var pathtoroot = \"" + ptrPath + "/\";loadScripts(document, \'script\');"));
             }
             addJQueryFile(head, DocPaths.JSZIP_MIN);
             addJQueryFile(head, DocPaths.JSZIPUTILS_MIN);
@@ -2352,13 +2383,13 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                     List<AnnotationValue> annotationTypeValues = new ArrayList<>();
 
                     new SimpleAnnotationValueVisitor9<Void, List<AnnotationValue>>() {
-                        @Override @DefinedBy(Api.LANGUAGE_MODEL)
+                        @Override
                         public Void visitArray(List<? extends AnnotationValue> vals, List<AnnotationValue> p) {
                             p.addAll(vals);
                             return null;
                         }
 
-                        @Override @DefinedBy(Api.LANGUAGE_MODEL)
+                        @Override
                         protected Void defaultAction(Object o, List<AnnotationValue> p) {
                             p.add(annotationValue);
                             return null;
@@ -2380,7 +2411,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                     List<AnnotationValue> annotationTypeValues = new ArrayList<>();
                     for (AnnotationValue a :  pairs.values()) {
                         new SimpleAnnotationValueVisitor9<Void, List<AnnotationValue>>() {
-                            @Override @DefinedBy(Api.LANGUAGE_MODEL)
+                            @Override
                             public Void visitArray(List<? extends AnnotationValue> vals, List<AnnotationValue> annotationTypeValues) {
                                for (AnnotationValue av : vals) {
                                    annotationTypeValues.add(av);
@@ -2456,12 +2487,12 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                 AnnotationValue annotationValue = map.get(element);
                 List<AnnotationValue> annotationTypeValues = new ArrayList<>();
                 new SimpleAnnotationValueVisitor9<Void, AnnotationValue>() {
-                    @Override @DefinedBy(Api.LANGUAGE_MODEL)
+                    @Override
                     public Void visitArray(List<? extends AnnotationValue> vals, AnnotationValue p) {
                         annotationTypeValues.addAll(vals);
                         return null;
                     }
-                    @Override @DefinedBy(Api.LANGUAGE_MODEL)
+                    @Override
                     protected Void defaultAction(Object o, AnnotationValue p) {
                         annotationTypeValues.add(p);
                         return null;
@@ -2494,13 +2525,13 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         for (ExecutableElement ee : pairs.keySet()) {
             annotationValue = pairs.get(ee);
             boolean rvalue = new SimpleAnnotationValueVisitor9<Boolean, Void>() {
-                @Override @DefinedBy(Api.LANGUAGE_MODEL)
+                @Override
                 public Boolean visitArray(List<? extends AnnotationValue> vals, Void p) {
                     if (vals.size() > 1) {
                         if (vals.get(0) instanceof AnnotationMirror) {
                             isContainerDocumented = true;
                             return new SimpleAnnotationValueVisitor9<Boolean, Void>() {
-                                @Override @DefinedBy(Api.LANGUAGE_MODEL)
+                                @Override
                                 public Boolean visitAnnotation(AnnotationMirror a, Void p) {
                                     isContainerDocumented = true;
                                     Element asElement = a.getAnnotationType().asElement();
@@ -2509,7 +2540,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                                     }
                                     return true;
                                 }
-                                @Override @DefinedBy(Api.LANGUAGE_MODEL)
+                                @Override
                                 protected Boolean defaultAction(Object o, Void p) {
                                     return false;
                                 }
@@ -2519,7 +2550,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                     return false;
                 }
 
-                @Override @DefinedBy(Api.LANGUAGE_MODEL)
+                @Override
                 protected Boolean defaultAction(Object o, Void p) {
                     return false;
                 }
@@ -2534,10 +2565,10 @@ public class HtmlDocletWriter extends HtmlDocWriter {
     private Content annotationValueToContent(AnnotationValue annotationValue) {
         return new SimpleAnnotationValueVisitor9<Content, Void>() {
 
-            @Override @DefinedBy(Api.LANGUAGE_MODEL)
+            @Override
             public Content visitType(TypeMirror t, Void p) {
                 return new SimpleTypeVisitor9<Content, Void>() {
-                    @Override @DefinedBy(Api.LANGUAGE_MODEL)
+                    @Override
                     public Content visitDeclared(DeclaredType t, Void p) {
                         LinkInfoImpl linkInfo = new LinkInfoImpl(configuration,
                                 LinkInfoImpl.Kind.ANNOTATION, t);
@@ -2547,13 +2578,13 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                         linkInfo.label = new StringContent(name + utils.getDimension(t) + ".class");
                         return getLink(linkInfo);
                     }
-                    @Override @DefinedBy(Api.LANGUAGE_MODEL)
+                    @Override
                     protected Content defaultAction(TypeMirror e, Void p) {
                         return new StringContent(t + utils.getDimension(t) + ".class");
                     }
                 }.visit(t);
             }
-            @Override @DefinedBy(Api.LANGUAGE_MODEL)
+            @Override
             public Content visitAnnotation(AnnotationMirror a, Void p) {
                 List<Content> list = getAnnotations(0, a, false);
                 ContentBuilder buf = new ContentBuilder();
@@ -2562,12 +2593,12 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                 }
                 return buf;
             }
-            @Override @DefinedBy(Api.LANGUAGE_MODEL)
+            @Override
             public Content visitEnumConstant(VariableElement c, Void p) {
                 return getDocLink(LinkInfoImpl.Kind.ANNOTATION,
                         c, c.getSimpleName(), false);
             }
-            @Override @DefinedBy(Api.LANGUAGE_MODEL)
+            @Override
             public Content visitArray(List<? extends AnnotationValue> vals, Void p) {
                 ContentBuilder buf = new ContentBuilder();
                 String sep = "";
@@ -2578,7 +2609,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                 }
                 return buf;
             }
-            @Override @DefinedBy(Api.LANGUAGE_MODEL)
+            @Override
             protected Content defaultAction(Object o, Void p) {
                 return new StringContent(annotationValue.toString());
             }
@@ -2590,6 +2621,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      *
      * @return the configuration for this doclet.
      */
+    @Override
     public Configuration configuration() {
         return configuration;
     }

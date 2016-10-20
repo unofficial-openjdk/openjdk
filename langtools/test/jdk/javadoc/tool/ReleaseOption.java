@@ -21,18 +21,23 @@
  * questions.
  */
 
+import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
+
 import jdk.javadoc.internal.tool.Main;
+import jdk.javadoc.internal.tool.Main.Result;
+
+import static jdk.javadoc.internal.tool.Main.Result.*;
 
 /**
  * @test
  * @bug 8086737
- * @summary Test -release option in javadoc
+ * @summary Test --release option in javadoc
  * @run main ReleaseOption
  * @modules jdk.javadoc/jdk.javadoc.internal.tool
  */
@@ -42,27 +47,27 @@ public class ReleaseOption {
     }
 
     void run() {
-        doRunTest(0, out -> out.contains("compiler.err.doesnt.exist: java.util.stream"), "-release", "7");
-        doRunTest(0, out -> !out.contains("compiler.err.doesnt.exist: java.util.stream"), "-release", "8");
-        doRunTest(1, out -> true, "-release", "7", "-source", "7");
-        doRunTest(1, out -> true, "-release", "7", "-bootclasspath", "any");
+        doRunTest(OK, out -> out.contains("compiler.err.doesnt.exist: java.util.stream"), "--release", "7");
+        doRunTest(OK, out -> !out.contains("compiler.err.doesnt.exist: java.util.stream"), "--release", "8");
+        doRunTest(CMDERR, out -> true, "--release", "7", "-source", "7");
+        doRunTest(CMDERR, out -> true, "--release", "7", "-bootclasspath", "any");
     }
 
-    void doRunTest(int expectedResult, Predicate<String> validate, String... args) {
+    void doRunTest(Result expectedResult, Predicate<String> validate, String... args) {
         System.err.println("running with args: " + Arrays.asList(args));
         List<String> options = new ArrayList<>();
         options.addAll(Arrays.asList(args));
         options.add("-XDrawDiagnostics");
-        options.add(System.getProperty("test.src", ".") + java.io.File.separatorChar + "ReleaseOptionSource.java");
+        options.add(new File(System.getProperty("test.src", "."), "ReleaseOptionSource.java").getPath());
         StringWriter out = new StringWriter();
         PrintWriter pw = new PrintWriter(out);
         int actualResult = Main.execute(options.toArray(new String[0]), pw);
         System.err.println("actual result=" + actualResult);
         System.err.println("actual output=" + out.toString());
-        if (actualResult != expectedResult)
-            throw new Error();
+        if (actualResult != expectedResult.exitCode)
+            throw new Error("Exit code not as expected");
         if (!validate.test(out.toString())) {
-            throw new Error("Not an expected error output: " + out.toString());
+            throw new Error("Output not as expected");
         }
     }
 }

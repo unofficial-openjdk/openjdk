@@ -25,12 +25,15 @@
  * @test
  * @bug 8143628
  * @summary Test unsafe access for short
+ *
  * @modules jdk.unsupported/sun.misc
- * @run testng/othervm -Diters=100   -Xint                   SunMiscUnsafeAccessTestShort
- * @run testng/othervm -Diters=20000 -XX:TieredStopAtLevel=1 SunMiscUnsafeAccessTestShort
- * @run testng/othervm -Diters=20000 -XX:-TieredCompilation  SunMiscUnsafeAccessTestShort
- * @run testng/othervm -Diters=20000                         SunMiscUnsafeAccessTestShort
+ * @run testng/othervm -Diters=100   -Xint                   compiler.unsafe.SunMiscUnsafeAccessTestShort
+ * @run testng/othervm -Diters=20000 -XX:TieredStopAtLevel=1 compiler.unsafe.SunMiscUnsafeAccessTestShort
+ * @run testng/othervm -Diters=20000 -XX:-TieredCompilation  compiler.unsafe.SunMiscUnsafeAccessTestShort
+ * @run testng/othervm -Diters=20000                         compiler.unsafe.SunMiscUnsafeAccessTestShort
  */
+
+package compiler.unsafe;
 
 import org.testng.annotations.Test;
 
@@ -145,16 +148,16 @@ public class SunMiscUnsafeAccessTestShort {
     static void testAccess(Object base, long offset) {
         // Plain
         {
-            UNSAFE.putShort(base, offset, (short)1);
+            UNSAFE.putShort(base, offset, (short)0x0123);
             short x = UNSAFE.getShort(base, offset);
-            assertEquals(x, (short)1, "set short value");
+            assertEquals(x, (short)0x0123, "set short value");
         }
 
         // Volatile
         {
-            UNSAFE.putShortVolatile(base, offset, (short)2);
+            UNSAFE.putShortVolatile(base, offset, (short)0x4567);
             short x = UNSAFE.getShortVolatile(base, offset);
-            assertEquals(x, (short)2, "putVolatile short value");
+            assertEquals(x, (short)0x4567, "putVolatile short value");
         }
 
 
@@ -166,9 +169,9 @@ public class SunMiscUnsafeAccessTestShort {
     static void testAccess(long address) {
         // Plain
         {
-            UNSAFE.putShort(address, (short)1);
+            UNSAFE.putShort(address, (short)0x0123);
             short x = UNSAFE.getShort(address);
-            assertEquals(x, (short)1, "set short value");
+            assertEquals(x, (short)0x0123, "set short value");
         }
     }
 }

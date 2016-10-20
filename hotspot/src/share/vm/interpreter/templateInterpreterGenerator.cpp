@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -239,6 +239,10 @@ void TemplateInterpreterGenerator::generate_all() {
       method_entry(java_lang_math_log10)
       method_entry(java_lang_math_exp  )
       method_entry(java_lang_math_pow  )
+      if (UseFMA) {
+        method_entry(java_lang_math_fmaF)
+        method_entry(java_lang_math_fmaD)
+      }
       method_entry(java_lang_ref_reference_get)
 
       AbstractInterpreter::initialize_method_handle_entries();
@@ -445,7 +449,9 @@ address TemplateInterpreterGenerator::generate_method_entry(
   case Interpreter::java_lang_math_log10   : // fall thru
   case Interpreter::java_lang_math_sqrt    : // fall thru
   case Interpreter::java_lang_math_pow     : // fall thru
-  case Interpreter::java_lang_math_exp     : entry_point = generate_math_entry(kind);      break;
+  case Interpreter::java_lang_math_exp     : // fall thru
+  case Interpreter::java_lang_math_fmaD    : // fall thru
+  case Interpreter::java_lang_math_fmaF     : entry_point = generate_math_entry(kind);      break;
   case Interpreter::java_lang_ref_reference_get
                                            : entry_point = generate_Reference_get_entry(); break;
   case Interpreter::java_util_zip_CRC32_update
@@ -476,7 +482,7 @@ address TemplateInterpreterGenerator::generate_method_entry(
   case Interpreter::java_lang_Double_doubleToRawLongBits:
     native = true;
     break;
-#endif // defined(TARGET_ARCH_x86) && !defined(_LP64)
+#endif // !IA32
   default:
     fatal("unexpected method kind: %d", kind);
     break;

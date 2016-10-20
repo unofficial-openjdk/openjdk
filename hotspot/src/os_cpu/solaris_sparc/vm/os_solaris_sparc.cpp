@@ -34,7 +34,6 @@
 #include "interpreter/interpreter.hpp"
 #include "jvm_solaris.h"
 #include "memory/allocation.inline.hpp"
-#include "mutex_solaris.inline.hpp"
 #include "nativeInst_sparc.hpp"
 #include "os_share_solaris.hpp"
 #include "prims/jniFastGetField.hpp"
@@ -74,7 +73,6 @@
 # include <sys/systeminfo.h>
 # include <sys/socket.h>
 # include <sys/lwp.h>
-# include <pwd.h>
 # include <poll.h>
 # include <sys/lwp.h>
 
@@ -86,9 +84,13 @@
 // Minimum stack size for the VM.  It's easier to document a constant
 // but it's different for x86 and sparc because the page sizes are different.
 #ifdef _LP64
-size_t os::Solaris::min_stack_allowed = 128*K;
+size_t os::Posix::_compiler_thread_min_stack_allowed = 128 * K;
+size_t os::Posix::_java_thread_min_stack_allowed = 128 * K;
+size_t os::Posix::_vm_internal_thread_min_stack_allowed = 128 * K;
 #else
-size_t os::Solaris::min_stack_allowed = 96*K;
+size_t os::Posix::_compiler_thread_min_stack_allowed = 96 * K;
+size_t os::Posix::_java_thread_min_stack_allowed = 96 * K;
+size_t os::Posix::_vm_internal_thread_min_stack_allowed = 96 * K;
 #endif
 
 int os::Solaris::max_register_window_saves_before_flushing() {
@@ -276,8 +278,14 @@ bool os::Solaris::get_frame_at_stack_banging_point(JavaThread* thread, ucontext_
       // stack overflow handling
       return false;
     } else {
-      *fr = os::fetch_frame_from_ucontext(thread, uc);
-      *fr = frame(fr->sender_sp(), fr->sp());
+      // Returned frame will be the caller of the method that faults on the stack bang.
+      // Register window not yet rotated (happens at SAVE after stack bang), so there is no new
+      // frame to go with the faulting PC. Using caller SP that is still in SP, and caller PC
+      // that was written to O7 at call.
+      intptr_t* sp = os::Solaris::ucontext_get_sp(uc);
+      address pc = (address)uc->uc_mcontext.gregs[REG_O7];
+      *fr = frame(sp, frame::unpatchable, pc);
+
       if (!fr->is_java_frame()) {
         assert(fr->safe_for_sender(thread), "Safety check");
         *fr = fr->java_sender();
@@ -440,7 +448,7 @@ JVM_handle_solaris_signal(int sig, siginfo_t* info, void* ucVoid,
 
 
     if (thread->thread_state() == _thread_in_vm) {
-      if (sig == SIGBUS && info->si_code == BUS_OBJERR && thread->doing_unsafe_access()) {
+      if (sig == SIGBUS && thread->doing_unsafe_access()) {
         stub = SharedRuntime::handle_unsafe_access(thread, npc);
       }
     }
@@ -544,10 +552,6 @@ JVM_handle_solaris_signal(int sig, siginfo_t* info, void* ucVoid,
     // simulate a branch to the stub (a "call" in the safepoint stub case)
     // factor me: setPC
     os::Solaris::ucontext_set_pc(uc, stub);
-
-#ifndef PRODUCT
-    if (TraceJumps) thread->record_jump(stub, NULL, __FILE__, __LINE__);
-#endif /* PRODUCT */
 
     return true;
   }

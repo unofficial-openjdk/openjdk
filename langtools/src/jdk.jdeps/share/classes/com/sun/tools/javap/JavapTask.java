@@ -68,8 +68,6 @@ import javax.tools.StandardJavaFileManager;
 import javax.tools.StandardLocation;
 
 import com.sun.tools.classfile.*;
-import com.sun.tools.javac.util.DefinedBy;
-import com.sun.tools.javac.util.DefinedBy.Api;
 
 /**
  *  "Main" class for javap, normally accessed from the command line
@@ -126,24 +124,28 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask, Messages {
     static final Option[] recognizedOptions = {
 
         new Option(false, "-help", "--help", "-?") {
+            @Override
             void process(JavapTask task, String opt, String arg) {
                 task.options.help = true;
             }
         },
 
         new Option(false, "-version") {
+            @Override
             void process(JavapTask task, String opt, String arg) {
                 task.options.version = true;
             }
         },
 
         new Option(false, "-fullversion") {
+            @Override
             void process(JavapTask task, String opt, String arg) {
                 task.options.fullVersion = true;
             }
         },
 
         new Option(false, "-v", "-verbose", "-all") {
+            @Override
             void process(JavapTask task, String opt, String arg) {
                 task.options.verbose = true;
                 task.options.showDescriptors = true;
@@ -153,12 +155,14 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask, Messages {
         },
 
         new Option(false, "-l") {
+            @Override
             void process(JavapTask task, String opt, String arg) {
                 task.options.showLineAndLocalVariableTables = true;
             }
         },
 
         new Option(false, "-public") {
+            @Override
             void process(JavapTask task, String opt, String arg) {
                 task.options.accessOptions.add(opt);
                 task.options.showAccess = AccessFlags.ACC_PUBLIC;
@@ -166,6 +170,7 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask, Messages {
         },
 
         new Option(false, "-protected") {
+            @Override
             void process(JavapTask task, String opt, String arg) {
                 task.options.accessOptions.add(opt);
                 task.options.showAccess = AccessFlags.ACC_PROTECTED;
@@ -173,6 +178,7 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask, Messages {
         },
 
         new Option(false, "-package") {
+            @Override
             void process(JavapTask task, String opt, String arg) {
                 task.options.accessOptions.add(opt);
                 task.options.showAccess = 0;
@@ -180,6 +186,7 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask, Messages {
         },
 
         new Option(false, "-p", "-private") {
+            @Override
             void process(JavapTask task, String opt, String arg) {
                 if (!task.options.accessOptions.contains("-p") &&
                         !task.options.accessOptions.contains("-private")) {
@@ -190,24 +197,28 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask, Messages {
         },
 
         new Option(false, "-c") {
+            @Override
             void process(JavapTask task, String opt, String arg) {
                 task.options.showDisassembled = true;
             }
         },
 
         new Option(false, "-s") {
+            @Override
             void process(JavapTask task, String opt, String arg) {
                 task.options.showDescriptors = true;
             }
         },
 
         new Option(false, "-sysinfo") {
+            @Override
             void process(JavapTask task, String opt, String arg) {
                 task.options.sysInfo = true;
             }
         },
 
         new Option(false, "-XDdetails") {
+            @Override
             void process(JavapTask task, String opt, String arg) {
                 task.options.details = EnumSet.allOf(InstructionDetailWriter.Kind.class);
             }
@@ -221,6 +232,7 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask, Messages {
                 return sep != -1 && super.matches(opt.substring(0, sep + 1));
             }
 
+            @Override
             void process(JavapTask task, String opt, String arg) throws BadArgs {
                 int sep = opt.indexOf(":");
                 for (String v: opt.substring(sep + 1).split("[,: ]+")) {
@@ -258,12 +270,14 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask, Messages {
         },
 
         new Option(false, "-constants") {
+            @Override
             void process(JavapTask task, String opt, String arg) {
                 task.options.showConstants = true;
             }
         },
 
         new Option(false, "-XDinner") {
+            @Override
             void process(JavapTask task, String opt, String arg) {
                 task.options.showInnerClasses = true;
             }
@@ -276,6 +290,7 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask, Messages {
                 return sep != -1 && super.matches(opt.substring(0, sep + 1));
             }
 
+            @Override
             void process(JavapTask task, String opt, String arg) throws BadArgs {
                 int sep = opt.indexOf(":");
                 try {
@@ -294,6 +309,7 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask, Messages {
                 return sep != -1 && super.matches(opt.substring(0, sep + 1));
             }
 
+            @Override
             void process(JavapTask task, String opt, String arg) throws BadArgs {
                 int sep = opt.indexOf(":");
                 try {
@@ -305,7 +321,7 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask, Messages {
             }
         },
 
-        new Option(true, "-m") {
+        new Option(true, "--module", "-m") {
             @Override
             void process(JavapTask task, String opt, String arg) throws BadArgs {
                 task.options.moduleName = arg;
@@ -393,7 +409,6 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask, Messages {
     private DiagnosticListener<JavaFileObject> getDiagnosticListenerForWriter(Writer w) {
         final PrintWriter pw = getPrintWriterForWriter(w);
         return new DiagnosticListener<JavaFileObject> () {
-            @DefinedBy(Api.COMPILER)
             public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
                 switch (diagnostic.getKind()) {
                     case ERROR:
@@ -709,67 +724,54 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask, Messages {
                 final URLConnection conn = url.openConnection();
                 conn.setUseCaches(false);
                 return new JavaFileObject() {
-                    @DefinedBy(Api.COMPILER)
                     public Kind getKind() {
                         return JavaFileObject.Kind.CLASS;
                     }
 
-                    @DefinedBy(Api.COMPILER)
                     public boolean isNameCompatible(String simpleName, Kind kind) {
                         throw new UnsupportedOperationException();
                     }
 
-                    @DefinedBy(Api.COMPILER)
                     public NestingKind getNestingKind() {
                         throw new UnsupportedOperationException();
                     }
 
-                    @DefinedBy(Api.COMPILER)
                     public Modifier getAccessLevel() {
                         throw new UnsupportedOperationException();
                     }
 
-                    @DefinedBy(Api.COMPILER)
                     public URI toUri() {
                         return uri;
                     }
 
-                    @DefinedBy(Api.COMPILER)
                     public String getName() {
                         return uri.toString();
                     }
 
-                    @DefinedBy(Api.COMPILER)
                     public InputStream openInputStream() throws IOException {
                         return conn.getInputStream();
                     }
 
-                    @DefinedBy(Api.COMPILER)
                     public OutputStream openOutputStream() throws IOException {
                         throw new UnsupportedOperationException();
                     }
 
-                    @DefinedBy(Api.COMPILER)
                     public Reader openReader(boolean ignoreEncodingErrors) throws IOException {
                         throw new UnsupportedOperationException();
                     }
 
-                    @DefinedBy(Api.COMPILER)
                     public CharSequence getCharContent(boolean ignoreEncodingErrors) throws IOException {
                         throw new UnsupportedOperationException();
                     }
 
-                    @DefinedBy(Api.COMPILER)
                     public Writer openWriter() throws IOException {
                         throw new UnsupportedOperationException();
                     }
 
-                    @DefinedBy(Api.COMPILER)
                     public long getLastModified() {
                         return conn.getLastModified();
                     }
 
-                    @DefinedBy(Api.COMPILER)
                     public boolean delete() {
                         throw new UnsupportedOperationException();
                     }
@@ -929,21 +931,26 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask, Messages {
     private void showHelp() {
         printLines(getMessage("main.usage", progname));
         for (Option o: recognizedOptions) {
-            String name = o.aliases[0].substring(1); // there must always be at least one name
+            String name = o.aliases[0].replaceAll("^-+", "").replaceAll("-+", "_"); // there must always be at least one name
             if (name.startsWith("X") || name.equals("fullversion") || name.equals("h") || name.equals("verify"))
                 continue;
             printLines(getMessage("main.opt." + name));
         }
+
         String[] fmOptions = {
-            "-classpath", "-cp", "-bootclasspath",
-            "-upgrademodulepath", "-system", "-modulepath" };
+            "--module-path", "--system",
+            "--class-path", "-classpath", "-cp",
+            "-bootclasspath"
+        };
+
         for (String o: fmOptions) {
             if (fileManager.isSupportedOption(o) == -1)
                 continue;
-            String name = o.substring(1);
+            String name = o.replaceAll("^-+", "").replaceAll("-+", "_");
             printLines(getMessage("main.opt." + name));
         }
 
+        printLines(getMessage("main.usage.foot"));
     }
 
     private void showVersion(boolean full) {
@@ -992,47 +999,38 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask, Messages {
     private Diagnostic<JavaFileObject> createDiagnostic(
             final Diagnostic.Kind kind, final String key, final Object... args) {
         return new Diagnostic<JavaFileObject>() {
-            @DefinedBy(Api.COMPILER)
             public Kind getKind() {
                 return kind;
             }
 
-            @DefinedBy(Api.COMPILER)
             public JavaFileObject getSource() {
                 return null;
             }
 
-            @DefinedBy(Api.COMPILER)
             public long getPosition() {
                 return Diagnostic.NOPOS;
             }
 
-            @DefinedBy(Api.COMPILER)
             public long getStartPosition() {
                 return Diagnostic.NOPOS;
             }
 
-            @DefinedBy(Api.COMPILER)
             public long getEndPosition() {
                 return Diagnostic.NOPOS;
             }
 
-            @DefinedBy(Api.COMPILER)
             public long getLineNumber() {
                 return Diagnostic.NOPOS;
             }
 
-            @DefinedBy(Api.COMPILER)
             public long getColumnNumber() {
                 return Diagnostic.NOPOS;
             }
 
-            @DefinedBy(Api.COMPILER)
             public String getCode() {
                 return key;
             }
 
-            @DefinedBy(Api.COMPILER)
             public String getMessage(Locale locale) {
                 return JavapTask.this.getMessage(locale, key, args);
             }

@@ -27,11 +27,14 @@
   <import file="build-nasgen.xml"/>
   <import file="code_coverage.xml"/>
 
-  <target name="init-conditions">
+  <target name="load-properties">
     <!-- loading locally defined resources and properties. NB they owerwrite default ones defined later -->
     <property file="${user.home}/.nashorn.project.local.properties"/>
 
     <loadproperties srcFile="make/project.properties"/>
+  </target>
+
+  <target name="init-conditions" depends="load-properties">
     <path id="nashorn.jar.path">
          <pathelement location="${nashorn.jar}"/>
     </path>
@@ -175,7 +178,7 @@
       <compilerarg value="-Xdiags:verbose"/>
       <compilerarg value="-parameters"/>
     </javac>
-    <!-- -Xpatch does not like module-info.class files! -->
+    <!-- patch-module does not like module-info.class files! -->
     <delete>
       <fileset dir="${build.classes.dir}" includes="**/module-info.class"/>
     </delete>
@@ -192,7 +195,7 @@
       <compilerarg value="-parameters"/>
       <compilerarg line="${nashorn.override.option}"/>
     </javac>
-    <!-- -Xpatch does not like module-info.class files! -->
+    <!-- patch-module does not like module-info.class files! -->
     <delete>
       <fileset dir="${build.classes.dir}" includes="**/module-info.class"/>
     </delete>
@@ -209,7 +212,7 @@
       <compilerarg value="-parameters"/>
       <compilerarg line="${nashorn.override.option}"/>
     </javac>
-    <!-- -Xpatch does not like module-info.class files! -->
+    <!-- patch-module does not like module-info.class files! -->
     <delete>
       <fileset dir="${build.classes.dir}" includes="**/module-info.class"/>
     </delete>
@@ -263,7 +266,7 @@
     <javadoc destdir="${dist.javadoc.dir}" use="yes" overview="${nashorn.module.src.dir}/overview.html"
         windowtitle="${nashorn.product.name} ${nashorn.version}"
         additionalparam="-quiet" failonerror="true" useexternalfile="true">
-      <arg value="-modulesourcepath"/>
+      <arg value="--module-source-path"/>
       <arg value="${basedir}/src/*/share/classes"/>
       <arg value="${javadoc.option}"/>
       <classpath>
@@ -282,7 +285,7 @@
     <javadoc destdir="${dist.nashornapi.javadoc.dir}" use="yes" overview="${nashorn.module.src.dir}/overview.html"
         extdirs="${nashorn.ext.path}" windowtitle="${nashorn.product.name} ${nashorn.version}"
         additionalparam="-quiet" failonerror="true" useexternalfile="true">
-      <arg value="-modulesourcepath"/>
+      <arg value="--module-source-path"/>
       <arg value="${basedir}/src/*/share/classes"/>
       <arg value="${javadoc.option}"/>
       <classpath>
@@ -299,7 +302,7 @@
     <javadoc destdir="${dist.dynalinkapi.javadoc.dir}" use="yes"
         windowtitle="Dynalink"
         additionalparam="-quiet" failonerror="true" useexternalfile="true">
-      <arg value="-modulesourcepath"/>
+      <arg value="--module-source-path"/>
       <arg value="${basedir}/src/*/share/classes"/>
       <arg value="${javadoc.option}"/>
       <classpath>

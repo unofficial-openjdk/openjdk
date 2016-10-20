@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,26 +20,29 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package codeheapsize;
 
-import jdk.test.lib.Platform;
-import common.CodeCacheCLITestBase;
-import common.CodeCacheCLITestCase;
-import sun.hotspot.code.BlobType;
-import java.util.EnumSet;
 /**
  * @test
  * @bug 8015774
  * @summary Verify processing of options related to code heaps sizing.
- * @library /testlibrary .. /test/lib
+ * @library /test/lib /
  * @modules java.base/jdk.internal.misc
  *          java.compiler
  *          java.management
  *          jdk.jvmstat/sun.jvmstat.monitor
- * @build TestCodeHeapSizeOptions jdk.test.lib.* codeheapsize.*
- *        common.*
- * @run main/timeout=240 codeheapsize.TestCodeHeapSizeOptions
+ *
+ * @run driver/timeout=240 compiler.codecache.cli.codeheapsize.TestCodeHeapSizeOptions
  */
+
+package compiler.codecache.cli.codeheapsize;
+
+import compiler.codecache.cli.common.CodeCacheCLITestBase;
+import compiler.codecache.cli.common.CodeCacheCLITestCase;
+import jdk.test.lib.Platform;
+import sun.hotspot.code.BlobType;
+
+import java.util.EnumSet;
+
 public class TestCodeHeapSizeOptions extends CodeCacheCLITestBase {
     private static final CodeCacheCLITestCase JVM_STARTUP
             = new CodeCacheCLITestCase(new CodeCacheCLITestCase.Description(

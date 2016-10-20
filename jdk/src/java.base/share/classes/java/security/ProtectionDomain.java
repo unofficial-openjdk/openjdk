@@ -32,13 +32,14 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import jdk.internal.misc.JavaSecurityAccess;
 import jdk.internal.misc.JavaSecurityProtectionDomainAccess;
 import static jdk.internal.misc.JavaSecurityProtectionDomainAccess.ProtectionDomainCache;
 import jdk.internal.misc.SharedSecrets;
+import sun.security.provider.PolicyFile;
 import sun.security.util.Debug;
+import sun.security.util.FilePermCompat;
 import sun.security.util.SecurityConstants;
 
 /**
@@ -132,7 +133,7 @@ public class ProtectionDomain {
 
     /* the PermissionCollection is static (pre 1.4 constructor)
        or dynamic (via a policy refresh) */
-    private boolean staticPermissions;
+    private final boolean staticPermissions;
 
     /*
      * An object used as a key when the ProtectionDomain is stored in a Map.
@@ -143,8 +144,12 @@ public class ProtectionDomain {
      * Creates a new ProtectionDomain with the given CodeSource and
      * Permissions. If the permissions object is not null, then
      *  {@code setReadOnly()} will be called on the passed in
-     * Permissions object. The only permissions granted to this domain
-     * are the ones specified; the current Policy will not be consulted.
+     * Permissions object.
+     * <p>
+     * The permissions granted to this domain are static, i.e.
+     * invoking the {@link #staticPermissionsOnly()} method returns true.
+     * They contain only the ones passed to this constructor and
+     * the current Policy will not be consulted.
      *
      * @param codesource the codesource associated with this domain
      * @param permissions the permissions granted to this domain
@@ -170,9 +175,11 @@ public class ProtectionDomain {
      * Permissions, ClassLoader and array of Principals. If the
      * permissions object is not null, then {@code setReadOnly()}
      * will be called on the passed in Permissions object.
-     * The permissions granted to this domain are dynamic; they include
-     * both the static permissions passed to this constructor, and any
-     * permissions granted to this domain by the current Policy at the
+     * <p>
+     * The permissions granted to this domain are dynamic, i.e.
+     * invoking the {@link #staticPermissionsOnly()} method returns false.
+     * They include both the static permissions passed to this constructor,
+     * and any permissions granted to this domain by the current Policy at the
      * time a permission is checked.
      * <p>
      * This constructor is typically used by
@@ -256,6 +263,19 @@ public class ProtectionDomain {
     }
 
     /**
+     * Returns true if this domain contains only static permissions
+     * and does not check the current {@code Policy} at the time of
+     * permission checking.
+     *
+     * @return true if this domain contains only static permissions.
+     *
+     * @since 9
+     */
+    public final boolean staticPermissionsOnly() {
+        return this.staticPermissions;
+    }
+
+    /**
      * Check and see if this ProtectionDomain implies the permissions
      * expressed in the Permission object.
      * <p>
@@ -263,25 +283,19 @@ public class ProtectionDomain {
      * ProtectionDomain was constructed with a static set of permissions
      * or it was bound to a dynamically mapped set of permissions.
      * <p>
-     * If the ProtectionDomain was constructed to a
-     * {@link #ProtectionDomain(CodeSource, PermissionCollection)
-     * statically bound} PermissionCollection then the permission will
-     * only be checked against the PermissionCollection supplied at
-     * construction.
+     * If the {@link #staticPermissionsOnly()} method returns
+     * true, then the permission will only be checked against the
+     * PermissionCollection supplied at construction.
      * <p>
-     * However, if the ProtectionDomain was constructed with
-     * the constructor variant which supports
-     * {@link #ProtectionDomain(CodeSource, PermissionCollection,
-     * ClassLoader, java.security.Principal[]) dynamically binding}
-     * permissions, then the permission will be checked against the
-     * combination of the PermissionCollection supplied at construction and
+     * Otherwise, the permission will be checked against the combination
+     * of the PermissionCollection supplied at construction and
      * the current Policy binding.
      *
-     * @param permission the Permission object to check.
+     * @param perm the Permission object to check.
      *
-     * @return true if "permission" is implicit to this ProtectionDomain.
+     * @return true if {@code perm} is implied by this ProtectionDomain.
      */
-    public boolean implies(Permission permission) {
+    public boolean implies(Permission perm) {
 
         if (hasAllPerm) {
             // internal permission collection already has AllPermission -
@@ -290,11 +304,71 @@ public class ProtectionDomain {
         }
 
         if (!staticPermissions &&
-            Policy.getPolicyNoCheck().implies(this, permission))
+            Policy.getPolicyNoCheck().implies(this, perm)) {
             return true;
-        if (permissions != null)
-            return permissions.implies(permission);
+        }
+        if (permissions != null) {
+            return permissions.implies(perm);
+        }
 
+        return false;
+    }
+
+    /**
+     * This method has the same logic flow as {@link #implies} except that
+     * when the {@link FilePermCompat#compat} flag is on it ensures
+     * FilePermission compatibility after JDK-8164705. {@code implies()}
+     * is called when compat flag is not on or user has extended
+     * {@code ProtectionDomain}.
+     *
+     * This method is called by {@link AccessControlContext#checkPermission}
+     * and not intended to be called by an application.
+     */
+    boolean impliesWithAltFilePerm(Permission perm) {
+
+        // If this is a subclass of ProtectionDomain. Call the old method.
+        if (!FilePermCompat.compat || getClass() != ProtectionDomain.class) {
+            return implies(perm);
+        }
+
+        if (hasAllPerm) {
+            // internal permission collection already has AllPermission -
+            // no need to go to policy
+            return true;
+        }
+
+        Permission p2 = null;
+        boolean p2Calculated = false;
+
+        if (!staticPermissions) {
+            Policy policy = Policy.getPolicyNoCheck();
+            if (policy instanceof PolicyFile) {
+                // The PolicyFile implementation supports compatibility
+                // inside and it also covers the static permissions.
+                return policy.implies(this, perm);
+            } else {
+                if (policy.implies(this, perm)) {
+                    return true;
+                }
+                p2 = FilePermCompat.newPermUsingAltPath(perm);
+                p2Calculated = true;
+                if (p2 != null && policy.implies(this, p2)) {
+                    return true;
+                }
+            }
+        }
+        if (permissions != null) {
+            if (permissions.implies(perm)) {
+                return true;
+            } else {
+                if (!p2Calculated) {
+                    p2 = FilePermCompat.newPermUsingAltPath(perm);
+                }
+                if (p2 != null) {
+                    return permissions.implies(p2);
+                }
+            }
+        }
         return false;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,23 +46,28 @@ public class StandardDoclet implements Doclet {
         htmlDoclet = new HtmlDoclet();
     }
 
+    @Override
     public void init(Locale locale, Reporter reporter) {
         htmlDoclet.init(locale, reporter);
     }
 
+    @Override
     public String getName() {
         return "Standard";
     }
 
+    @Override
     public Set<Doclet.Option> getSupportedOptions() {
         return htmlDoclet.getSupportedOptions();
     }
 
+    @Override
     public SourceVersion getSupportedSourceVersion() {
-        return htmlDoclet.sourceVersion();
+        return htmlDoclet.getSupportedSourceVersion();
     }
 
-    public boolean run(DocletEnvironment root) {
-        return htmlDoclet.run(root);
+    @Override
+    public boolean run(DocletEnvironment docEnv) {
+        return htmlDoclet.run(docEnv);
     }
 }

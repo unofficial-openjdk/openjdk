@@ -23,6 +23,10 @@
  * questions.
  */
 
+/** Defines the implementation of the
+ *  {@link javax.tools.ToolProvider#getSystemJavaCompiler system Java compiler}
+ *  and its command line equivalent, <em>javac</em>, as well as <em>javah</em>.
+ */
 module jdk.compiler {
     requires public java.compiler;
 
@@ -65,6 +69,9 @@ module jdk.compiler {
     uses javax.annotation.processing.Processor;
     uses com.sun.source.util.Plugin;
     uses com.sun.tools.javac.platform.PlatformProvider;
+
+    provides java.util.spi.ToolProvider
+        with com.sun.tools.javac.main.JavacToolProvider;
 
     provides com.sun.tools.javac.platform.PlatformProvider
         with com.sun.tools.javac.platform.JDKPlatformProvider;

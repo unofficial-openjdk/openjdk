@@ -25,29 +25,23 @@
  * @test
  * @bug 8150778
  * @summary check stacktrace logging
- * @library /testlibrary
+ * @library /test/lib
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @build jdk.test.lib.OutputAnalyzer jdk.test.lib.ProcessTools
  * @compile TestThrowable.java
  * @run driver StackTraceLogging
  */
 
 import java.io.File;
 import java.util.Map;
-import jdk.test.lib.OutputAnalyzer;
-import jdk.test.lib.ProcessTools;
+import jdk.test.lib.process.OutputAnalyzer;
+import jdk.test.lib.process.ProcessTools;
 
 public class StackTraceLogging {
-    static void updateEnvironment(ProcessBuilder pb, String environmentVariable, String value) {
-        Map<String, String> env = pb.environment();
-        env.put(environmentVariable, value);
-    }
-
     static void analyzeOutputOn(ProcessBuilder pb) throws Exception {
         OutputAnalyzer output = new OutputAnalyzer(pb.start());
-        // These depths match the ones in TestThrowable.java
-        int[] depths = {10, 34, 100, 1024};
+        // These depths match the ones in TestThrowable.java, except the one greater than 1024
+        int[] depths = {10, 34, 100, 1023, 1024};
         for (int d : depths) {
             output.shouldContain("java.lang.RuntimeException, " + d);
         }

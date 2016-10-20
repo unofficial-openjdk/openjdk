@@ -26,9 +26,8 @@
  * @bug 8016740
  * @summary Tests that jvm with maximally verbose GC logging does not crash when ParOldGC has no memory
  * @key gc
- * @requires vm.gc=="Parallel" | vm.gc=="null"
+ * @requires vm.gc.Parallel
  * @modules java.base/jdk.internal.misc
- * @library /testlibrary
  * @run main/othervm -Xmx50m -XX:+UseParallelGC -Xlog:gc*=trace TestPrintGCDetailsVerbose
  */
 public class TestPrintGCDetailsVerbose {

@@ -148,29 +148,147 @@ public class VarHandleTestMethodHandleAccessFloat extends VarHandleBaseTest {
             assertEquals(x, 2.0f, "setOpaque float value");
         }
 
+        hs.get(TestAccessMode.SET).invokeExact(recv, 1.0f);
+
+        // Compare
+        {
+            boolean r = (boolean) hs.get(TestAccessMode.COMPARE_AND_SET).invokeExact(recv, 1.0f, 2.0f);
+            assertEquals(r, true, "success compareAndSet float");
+            float x = (float) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, 2.0f, "success compareAndSet float value");
+        }
+
+        {
+            boolean r = (boolean) hs.get(TestAccessMode.COMPARE_AND_SET).invokeExact(recv, 1.0f, 3.0f);
+            assertEquals(r, false, "failing compareAndSet float");
+            float x = (float) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, 2.0f, "failing compareAndSet float value");
+        }
+
+        {
+            float r = (float) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE).invokeExact(recv, 2.0f, 1.0f);
+            assertEquals(r, 2.0f, "success compareAndExchange float");
+            float x = (float) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, 1.0f, "success compareAndExchange float value");
+        }
+
+        {
+            float r = (float) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE).invokeExact(recv, 2.0f, 3.0f);
+            assertEquals(r, 1.0f, "failing compareAndExchange float");
+            float x = (float) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, 1.0f, "failing compareAndExchange float value");
+        }
+
+        {
+            float r = (float) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE_ACQUIRE).invokeExact(recv, 1.0f, 2.0f);
+            assertEquals(r, 1.0f, "success compareAndExchangeAcquire float");
+            float x = (float) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, 2.0f, "success compareAndExchangeAcquire float value");
+        }
+
+        {
+            float r = (float) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE_ACQUIRE).invokeExact(recv, 1.0f, 3.0f);
+            assertEquals(r, 2.0f, "failing compareAndExchangeAcquire float");
+            float x = (float) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, 2.0f, "failing compareAndExchangeAcquire float value");
+        }
+
+        {
+            float r = (float) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE_RELEASE).invokeExact(recv, 2.0f, 1.0f);
+            assertEquals(r, 2.0f, "success compareAndExchangeRelease float");
+            float x = (float) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, 1.0f, "success compareAndExchangeRelease float value");
+        }
+
+        {
+            float r = (float) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE_RELEASE).invokeExact(recv, 2.0f, 3.0f);
+            assertEquals(r, 1.0f, "failing compareAndExchangeRelease float");
+            float x = (float) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, 1.0f, "failing compareAndExchangeRelease float value");
+        }
+
+        {
+            boolean success = false;
+            for (int c = 0; c < WEAK_ATTEMPTS && !success; c++) {
+                success = (boolean) hs.get(TestAccessMode.WEAK_COMPARE_AND_SET_PLAIN).invokeExact(recv, 1.0f, 2.0f);
+            }
+            assertEquals(success, true, "weakCompareAndSetPlain float");
+            float x = (float) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, 2.0f, "weakCompareAndSetPlain float value");
+        }
+
+        {
+            boolean success = false;
+            for (int c = 0; c < WEAK_ATTEMPTS && !success; c++) {
+                success = (boolean) hs.get(TestAccessMode.WEAK_COMPARE_AND_SET_ACQUIRE).invokeExact(recv, 2.0f, 1.0f);
+            }
+            assertEquals(success, true, "weakCompareAndSetAcquire float");
+            float x = (float) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, 1.0f, "weakCompareAndSetAcquire float");
+        }
+
+        {
+            boolean success = false;
+            for (int c = 0; c < WEAK_ATTEMPTS && !success; c++) {
+                success = (boolean) hs.get(TestAccessMode.WEAK_COMPARE_AND_SET_RELEASE).invokeExact(recv, 1.0f, 2.0f);
+            }
+            assertEquals(success, true, "weakCompareAndSetRelease float");
+            float x = (float) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, 2.0f, "weakCompareAndSetRelease float");
+        }
+
+        {
+            boolean success = false;
+            for (int c = 0; c < WEAK_ATTEMPTS && !success; c++) {
+                success = (boolean) hs.get(TestAccessMode.WEAK_COMPARE_AND_SET).invokeExact(recv, 2.0f, 1.0f);
+            }
+            assertEquals(success, true, "weakCompareAndSet float");
+            float x = (float) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, 1.0f, "weakCompareAndSet float");
+        }
+
+        // Compare set and get
+        {
+            float o = (float) hs.get(TestAccessMode.GET_AND_SET).invokeExact(recv, 2.0f);
+            assertEquals(o, 1.0f, "getAndSet float");
+            float x = (float) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, 2.0f, "getAndSet float value");
+        }
+
+        // get and add, add and get
+        {
+            hs.get(TestAccessMode.SET).invokeExact(recv, 1.0f);
+
+            float o = (float) hs.get(TestAccessMode.GET_AND_ADD).invokeExact(recv, 2.0f);
+            assertEquals(o, 1.0f, "getAndAdd float");
+            float x = (float) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, (float)(1.0f + 2.0f), "getAndAdd float value");
+        }
+
+        {
+            hs.get(TestAccessMode.SET).invokeExact(recv, 1.0f);
+
+            float o = (float) hs.get(TestAccessMode.GET_AND_ADD_ACQUIRE).invokeExact(recv, 2.0f);
+            assertEquals(o, 1.0f, "getAndAddAcquire float");
+            float x = (float) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, (float)(1.0f + 2.0f), "getAndAddAcquire float value");
+        }
+
+        {
+            hs.get(TestAccessMode.SET).invokeExact(recv, 1.0f);
+
+            float o = (float) hs.get(TestAccessMode.GET_AND_ADD_RELEASE).invokeExact(recv, 2.0f);
+            assertEquals(o, 1.0f, "getAndAddRelease float");
+            float x = (float) hs.get(TestAccessMode.GET).invokeExact(recv);
+            assertEquals(x, (float)(1.0f + 2.0f), "getAndAddRelease float value");
+        }
 
     }
 
     static void testInstanceFieldUnsupported(VarHandleTestMethodHandleAccessFloat recv, Handles hs) throws Throwable {
-        for (TestAccessMode am : testAccessModesOfType(TestAccessType.COMPARE_AND_SET)) {
-            checkUOE(am, () -> {
-                boolean r = (boolean) hs.get(am).invokeExact(recv, 1.0f, 2.0f);
-            });
-        }
 
-        for (TestAccessMode am : testAccessModesOfType(TestAccessType.COMPARE_AND_EXCHANGE)) {
-            checkUOE(am, () -> {
-                float r = (float) hs.get(am).invokeExact(recv, 1.0f, 2.0f);
-            });
-        }
 
-        for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET_AND_SET)) {
-            checkUOE(am, () -> {
-                float r = (float) hs.get(am).invokeExact(recv, 1.0f);
-            });
-        }
-
-        for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET_AND_ADD)) {
+        for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET_AND_BITWISE)) {
             checkUOE(am, () -> {
                 float r = (float) hs.get(am).invokeExact(recv, 1.0f);
             });
@@ -208,29 +326,169 @@ public class VarHandleTestMethodHandleAccessFloat extends VarHandleBaseTest {
             assertEquals(x, 2.0f, "setOpaque float value");
         }
 
+        hs.get(TestAccessMode.SET).invokeExact(1.0f);
+
+        // Compare
+        {
+            boolean r = (boolean) hs.get(TestAccessMode.COMPARE_AND_SET).invokeExact(1.0f, 2.0f);
+            assertEquals(r, true, "success compareAndSet float");
+            float x = (float) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, 2.0f, "success compareAndSet float value");
+        }
+
+        {
+            boolean r = (boolean) hs.get(TestAccessMode.COMPARE_AND_SET).invokeExact(1.0f, 3.0f);
+            assertEquals(r, false, "failing compareAndSet float");
+            float x = (float) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, 2.0f, "failing compareAndSet float value");
+        }
+
+        {
+            float r = (float) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE).invokeExact(2.0f, 1.0f);
+            assertEquals(r, 2.0f, "success compareAndExchange float");
+            float x = (float) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, 1.0f, "success compareAndExchange float value");
+        }
+
+        {
+            float r = (float) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE).invokeExact(2.0f, 3.0f);
+            assertEquals(r, 1.0f, "failing compareAndExchange float");
+            float x = (float) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, 1.0f, "failing compareAndExchange float value");
+        }
+
+        {
+            float r = (float) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE_ACQUIRE).invokeExact(1.0f, 2.0f);
+            assertEquals(r, 1.0f, "success compareAndExchangeAcquire float");
+            float x = (float) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, 2.0f, "success compareAndExchangeAcquire float value");
+        }
+
+        {
+            float r = (float) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE_ACQUIRE).invokeExact(1.0f, 3.0f);
+            assertEquals(r, 2.0f, "failing compareAndExchangeAcquire float");
+            float x = (float) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, 2.0f, "failing compareAndExchangeAcquire float value");
+        }
+
+        {
+            float r = (float) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE_RELEASE).invokeExact(2.0f, 1.0f);
+            assertEquals(r, 2.0f, "success compareAndExchangeRelease float");
+            float x = (float) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, 1.0f, "success compareAndExchangeRelease float value");
+        }
+
+        {
+            float r = (float) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE_RELEASE).invokeExact(2.0f, 3.0f);
+            assertEquals(r, 1.0f, "failing compareAndExchangeRelease float");
+            float x = (float) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, 1.0f, "failing compareAndExchangeRelease float value");
+        }
+
+        {
+            boolean success = false;
+            for (int c = 0; c < WEAK_ATTEMPTS && !success; c++) {
+                success = (boolean) hs.get(TestAccessMode.WEAK_COMPARE_AND_SET_PLAIN).invokeExact(1.0f, 2.0f);
+            }
+            assertEquals(success, true, "weakCompareAndSetPlain float");
+            float x = (float) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, 2.0f, "weakCompareAndSetPlain float value");
+        }
+
+        {
+            boolean success = false;
+            for (int c = 0; c < WEAK_ATTEMPTS && !success; c++) {
+                success = (boolean) hs.get(TestAccessMode.WEAK_COMPARE_AND_SET_ACQUIRE).invokeExact(2.0f, 1.0f);
+            }
+            assertEquals(success, true, "weakCompareAndSetAcquire float");
+            float x = (float) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, 1.0f, "weakCompareAndSetAcquire float");
+        }
+
+        {
+            boolean success = false;
+            for (int c = 0; c < WEAK_ATTEMPTS && !success; c++) {
+                success = (boolean) hs.get(TestAccessMode.WEAK_COMPARE_AND_SET_RELEASE).invokeExact(1.0f, 2.0f);
+            }
+            assertEquals(success, true, "weakCompareAndSetRelease float");
+            float x = (float) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, 2.0f, "weakCompareAndSetRelease float");
+        }
+
+        {
+            boolean success = false;
+            for (int c = 0; c < WEAK_ATTEMPTS && !success; c++) {
+                success = (boolean) hs.get(TestAccessMode.WEAK_COMPARE_AND_SET).invokeExact(2.0f, 1.0f);
+            }
+            assertEquals(success, true, "weakCompareAndSet float");
+            float x = (float) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, 1.0f, "weakCompareAndSet float");
+        }
+
+        // Compare set and get
+        {
+            hs.get(TestAccessMode.SET).invokeExact(1.0f);
+
+            float o = (float) hs.get(TestAccessMode.GET_AND_SET).invokeExact(2.0f);
+            assertEquals(o, 1.0f, "getAndSet float");
+            float x = (float) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, 2.0f, "getAndSet float value");
+        }
+
+        // Compare set and get
+        {
+            hs.get(TestAccessMode.SET).invokeExact(1.0f);
+
+            float o = (float) hs.get(TestAccessMode.GET_AND_SET_ACQUIRE).invokeExact(2.0f);
+            assertEquals(o, 1.0f, "getAndSetAcquire float");
+            float x = (float) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, 2.0f, "getAndSetAcquire float value");
+        }
+
+        // Compare set and get
+        {
+            hs.get(TestAccessMode.SET).invokeExact(1.0f);
+
+            float o = (float) hs.get(TestAccessMode.GET_AND_SET_RELEASE).invokeExact(2.0f);
+            assertEquals(o, 1.0f, "getAndSetRelease float");
+            float x = (float) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, 2.0f, "getAndSetRelease float value");
+        }
+
+        // get and add, add and get
+        {
+            hs.get(TestAccessMode.SET).invokeExact(1.0f);
+
+            float o = (float) hs.get(TestAccessMode.GET_AND_ADD).invokeExact(2.0f);
+            assertEquals(o, 1.0f, "getAndAdd float");
+            float x = (float) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, (float)(1.0f + 2.0f), "getAndAdd float value");
+        }
+
+        {
+            hs.get(TestAccessMode.SET).invokeExact(1.0f);
+
+            float o = (float) hs.get(TestAccessMode.GET_AND_ADD_ACQUIRE).invokeExact(2.0f);
+            assertEquals(o, 1.0f, "getAndAddAcquire float");
+            float x = (float) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, (float)(1.0f + 2.0f), "getAndAddAcquire float value");
+        }
+
+        {
+            hs.get(TestAccessMode.SET).invokeExact(1.0f);
+
+            float o = (float) hs.get(TestAccessMode.GET_AND_ADD_RELEASE).invokeExact(2.0f);
+            assertEquals(o, 1.0f, "getAndAddRelease float");
+            float x = (float) hs.get(TestAccessMode.GET).invokeExact();
+            assertEquals(x, (float)(1.0f + 2.0f), "getAndAddRelease float value");
+        }
 
     }
 
     static void testStaticFieldUnsupported(Handles hs) throws Throwable {
-        for (TestAccessMode am : testAccessModesOfType(TestAccessType.COMPARE_AND_SET)) {
-            checkUOE(am, () -> {
-                boolean r = (boolean) hs.get(am).invokeExact(1.0f, 2.0f);
-            });
-        }
 
-        for (TestAccessMode am : testAccessModesOfType(TestAccessType.COMPARE_AND_EXCHANGE)) {
-            checkUOE(am, () -> {
-                float r = (float) hs.get(am).invokeExact(1.0f, 2.0f);
-            });
-        }
 
-        for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET_AND_SET)) {
-            checkUOE(am, () -> {
-                float r = (float) hs.get(am).invokeExact(1.0f);
-            });
-        }
-
-        for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET_AND_ADD)) {
+        for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET_AND_BITWISE)) {
             checkUOE(am, () -> {
                 float r = (float) hs.get(am).invokeExact(1.0f);
             });
@@ -271,6 +529,160 @@ public class VarHandleTestMethodHandleAccessFloat extends VarHandleBaseTest {
                 assertEquals(x, 2.0f, "setOpaque float value");
             }
 
+            hs.get(TestAccessMode.SET).invokeExact(array, i, 1.0f);
+
+            // Compare
+            {
+                boolean r = (boolean) hs.get(TestAccessMode.COMPARE_AND_SET).invokeExact(array, i, 1.0f, 2.0f);
+                assertEquals(r, true, "success compareAndSet float");
+                float x = (float) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, 2.0f, "success compareAndSet float value");
+            }
+
+            {
+                boolean r = (boolean) hs.get(TestAccessMode.COMPARE_AND_SET).invokeExact(array, i, 1.0f, 3.0f);
+                assertEquals(r, false, "failing compareAndSet float");
+                float x = (float) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, 2.0f, "failing compareAndSet float value");
+            }
+
+            {
+                float r = (float) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE).invokeExact(array, i, 2.0f, 1.0f);
+                assertEquals(r, 2.0f, "success compareAndExchange float");
+                float x = (float) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, 1.0f, "success compareAndExchange float value");
+            }
+
+            {
+                float r = (float) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE).invokeExact(array, i, 2.0f, 3.0f);
+                assertEquals(r, 1.0f, "failing compareAndExchange float");
+                float x = (float) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, 1.0f, "failing compareAndExchange float value");
+            }
+
+            {
+                float r = (float) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE_ACQUIRE).invokeExact(array, i, 1.0f, 2.0f);
+                assertEquals(r, 1.0f, "success compareAndExchangeAcquire float");
+                float x = (float) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, 2.0f, "success compareAndExchangeAcquire float value");
+            }
+
+            {
+                float r = (float) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE_ACQUIRE).invokeExact(array, i, 1.0f, 3.0f);
+                assertEquals(r, 2.0f, "failing compareAndExchangeAcquire float");
+                float x = (float) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, 2.0f, "failing compareAndExchangeAcquire float value");
+            }
+
+            {
+                float r = (float) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE_RELEASE).invokeExact(array, i, 2.0f, 1.0f);
+                assertEquals(r, 2.0f, "success compareAndExchangeRelease float");
+                float x = (float) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, 1.0f, "success compareAndExchangeRelease float value");
+            }
+
+            {
+                float r = (float) hs.get(TestAccessMode.COMPARE_AND_EXCHANGE_RELEASE).invokeExact(array, i, 2.0f, 3.0f);
+                assertEquals(r, 1.0f, "failing compareAndExchangeRelease float");
+                float x = (float) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, 1.0f, "failing compareAndExchangeRelease float value");
+            }
+
+            {
+                boolean success = false;
+                for (int c = 0; c < WEAK_ATTEMPTS && !success; c++) {
+                    success = (boolean) hs.get(TestAccessMode.WEAK_COMPARE_AND_SET_PLAIN).invokeExact(array, i, 1.0f, 2.0f);
+                }
+                assertEquals(success, true, "weakCompareAndSetPlain float");
+                float x = (float) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, 2.0f, "weakCompareAndSetPlain float value");
+            }
+
+            {
+                boolean success = false;
+                for (int c = 0; c < WEAK_ATTEMPTS && !success; c++) {
+                    success = (boolean) hs.get(TestAccessMode.WEAK_COMPARE_AND_SET_ACQUIRE).invokeExact(array, i, 2.0f, 1.0f);
+                }
+                assertEquals(success, true, "weakCompareAndSetAcquire float");
+                float x = (float) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, 1.0f, "weakCompareAndSetAcquire float");
+            }
+
+            {
+                boolean success = false;
+                for (int c = 0; c < WEAK_ATTEMPTS && !success; c++) {
+                    success = (boolean) hs.get(TestAccessMode.WEAK_COMPARE_AND_SET_RELEASE).invokeExact(array, i, 1.0f, 2.0f);
+                }
+                assertEquals(success, true, "weakCompareAndSetRelease float");
+                float x = (float) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, 2.0f, "weakCompareAndSetRelease float");
+            }
+
+            {
+                boolean success = false;
+                for (int c = 0; c < WEAK_ATTEMPTS && !success; c++) {
+                    success = (boolean) hs.get(TestAccessMode.WEAK_COMPARE_AND_SET).invokeExact(array, i, 2.0f, 1.0f);
+                }
+                assertEquals(success, true, "weakCompareAndSet float");
+                float x = (float) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, 1.0f, "weakCompareAndSet float");
+            }
+
+            // Compare set and get
+            {
+                hs.get(TestAccessMode.SET).invokeExact(array, i, 1.0f);
+
+                float o = (float) hs.get(TestAccessMode.GET_AND_SET).invokeExact(array, i, 2.0f);
+                assertEquals(o, 1.0f, "getAndSet float");
+                float x = (float) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, 2.0f, "getAndSet float value");
+            }
+
+            {
+                hs.get(TestAccessMode.SET).invokeExact(array, i, 1.0f);
+
+                float o = (float) hs.get(TestAccessMode.GET_AND_SET_ACQUIRE).invokeExact(array, i, 2.0f);
+                assertEquals(o, 1.0f, "getAndSetAcquire float");
+                float x = (float) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, 2.0f, "getAndSetAcquire float value");
+            }
+
+            {
+                hs.get(TestAccessMode.SET).invokeExact(array, i, 1.0f);
+
+                float o = (float) hs.get(TestAccessMode.GET_AND_SET_RELEASE).invokeExact(array, i, 2.0f);
+                assertEquals(o, 1.0f, "getAndSetRelease float");
+                float x = (float) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, 2.0f, "getAndSetRelease float value");
+            }
+
+            // get and add, add and get
+            {
+                hs.get(TestAccessMode.SET).invokeExact(array, i, 1.0f);
+
+                float o = (float) hs.get(TestAccessMode.GET_AND_ADD).invokeExact(array, i, 2.0f);
+                assertEquals(o, 1.0f, "getAndAdd float");
+                float x = (float) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, (float)(1.0f + 2.0f), "getAndAdd float value");
+            }
+
+            {
+                hs.get(TestAccessMode.SET).invokeExact(array, i, 1.0f);
+
+                float o = (float) hs.get(TestAccessMode.GET_AND_ADD_ACQUIRE).invokeExact(array, i, 2.0f);
+                assertEquals(o, 1.0f, "getAndAddAcquire float");
+                float x = (float) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, (float)(1.0f + 2.0f), "getAndAddAcquire float value");
+            }
+
+            {
+                hs.get(TestAccessMode.SET).invokeExact(array, i, 1.0f);
+
+                float o = (float) hs.get(TestAccessMode.GET_AND_ADD_RELEASE).invokeExact(array, i, 2.0f);
+                assertEquals(o, 1.0f, "getAndAddRelease float");
+                float x = (float) hs.get(TestAccessMode.GET).invokeExact(array, i);
+                assertEquals(x, (float)(1.0f + 2.0f), "getAndAddRelease float value");
+            }
 
         }
     }
@@ -279,25 +691,9 @@ public class VarHandleTestMethodHandleAccessFloat extends VarHandleBaseTest {
         float[] array = new float[10];
 
         final int i = 0;
-        for (TestAccessMode am : testAccessModesOfType(TestAccessType.COMPARE_AND_SET)) {
-            checkUOE(am, () -> {
-                boolean r = (boolean) hs.get(am).invokeExact(array, i, 1.0f, 2.0f);
-            });
-        }
 
-        for (TestAccessMode am : testAccessModesOfType(TestAccessType.COMPARE_AND_EXCHANGE)) {
-            checkUOE(am, () -> {
-                float r = (float) hs.get(am).invokeExact(array, i, 1.0f, 2.0f);
-            });
-        }
 
-        for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET_AND_SET)) {
-            checkUOE(am, () -> {
-                float r = (float) hs.get(am).invokeExact(array, i, 1.0f);
-            });
-        }
-
-        for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET_AND_ADD)) {
+        for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET_AND_BITWISE)) {
             checkUOE(am, () -> {
                 float o = (float) hs.get(am).invokeExact(array, i, 1.0f);
             });
@@ -322,6 +718,29 @@ public class VarHandleTestMethodHandleAccessFloat extends VarHandleBaseTest {
                 });
             }
 
+            for (TestAccessMode am : testAccessModesOfType(TestAccessType.COMPARE_AND_SET)) {
+                checkIOOBE(am, () -> {
+                    boolean r = (boolean) hs.get(am).invokeExact(array, ci, 1.0f, 2.0f);
+                });
+            }
+
+            for (TestAccessMode am : testAccessModesOfType(TestAccessType.COMPARE_AND_EXCHANGE)) {
+                checkIOOBE(am, () -> {
+                    float r = (float) hs.get(am).invokeExact(array, ci, 2.0f, 1.0f);
+                });
+            }
+
+            for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET_AND_SET)) {
+                checkIOOBE(am, () -> {
+                    float o = (float) hs.get(am).invokeExact(array, ci, 1.0f);
+                });
+            }
+
+            for (TestAccessMode am : testAccessModesOfType(TestAccessType.GET_AND_ADD)) {
+                checkIOOBE(am, () -> {
+                    float o = (float) hs.get(am).invokeExact(array, ci, 3.0f);
+                });
+            }
 
         }
     }

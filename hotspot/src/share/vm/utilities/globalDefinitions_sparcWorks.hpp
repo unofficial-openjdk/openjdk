@@ -33,9 +33,6 @@
 
 
 # include <ctype.h>
-#define __USE_LEGACY_PROTOTYPES__
-# include <dirent.h>
-#undef __USE_LEGACY_PROTOTYPES__
 # include <string.h>
 # include <strings.h>     // for bsd'isms
 # include <stdarg.h>
@@ -279,6 +276,6 @@ inline int wcslen(const jchar* x) { return wcslen((const wchar_t*)x); }
 
 // Inlining support
 #define NOINLINE
-#define ALWAYSINLINE __attribute__((always_inline))
+#define ALWAYSINLINE inline __attribute__((always_inline))
 
 #endif // SHARE_VM_UTILITIES_GLOBALDEFINITIONS_SPARCWORKS_HPP

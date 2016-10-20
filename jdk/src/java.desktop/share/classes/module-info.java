@@ -23,6 +23,10 @@
  * questions.
  */
 
+/**
+ * Defines the AWT and Swing user interface toolkits, plus APIs for
+ * accessibility, audio, imaging, printing, and JavaBeans.
+ */
 module java.desktop {
     requires public java.datatransfer;
     requires public java.xml;

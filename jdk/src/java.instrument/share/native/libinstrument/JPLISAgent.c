@@ -272,6 +272,7 @@ initializeJPLISAgent(   JPLISAgent *    agent,
     agent->mNativeMethodPrefixAdded                  = JNI_FALSE;
     agent->mAgentClassName                           = NULL;
     agent->mOptionsString                            = NULL;
+    agent->mJarfile                                  = NULL;
 
     /* make sure we can recover either handle in either direction.
      * the agent has a ref to the jvmti; make it mutual
@@ -771,12 +772,11 @@ addRedefineClassesCapability(JPLISAgent * agent) {
 }
 
 static jobject
-getModuleObject(JNIEnv *                jnienv,
+getModuleObject(jvmtiEnv*               jvmti,
                 jobject                 loaderObject,
                 const char*             cname) {
-    jboolean errorOutstanding = JNI_FALSE;
+    jvmtiError err = JVMTI_ERROR_NONE;
     jobject moduleObject = NULL;
-    jstring package = NULL;
 
     /* find last slash in the class name */
     char* last_slash = (cname == NULL) ? NULL : strrchr(cname, '/');
@@ -789,15 +789,11 @@ getModuleObject(JNIEnv *                jnienv,
     }
     pkg_name_buf[len] = '\0';
 
-    package = (*jnienv)->NewStringUTF(jnienv, pkg_name_buf);
-    jplis_assert_msg(package != NULL, "OOM error in NewStringUTF");
-
-    moduleObject = JVM_GetModuleByPackageName(jnienv, loaderObject, package);
-
-    errorOutstanding = checkForAndClearThrowable(jnienv);
-    jplis_assert_msg(!errorOutstanding,
-                     "error in lookup of a module of the class being instrumented");
+    err = (*jvmti)->GetNamedModule(jvmti, loaderObject, pkg_name_buf, &moduleObject);
     free((void*)pkg_name_buf);
+    check_phase_ret_blob(err, NULL);
+    jplis_assert_msg(err == JVMTI_ERROR_NONE, "error in the JVMTI GetNamedModule");
+
     return moduleObject;
 }
 
@@ -862,7 +858,7 @@ transformClassFile(             JPLISAgent *            agent,
             jobject moduleObject = NULL;
 
             if (classBeingRedefined == NULL) {
-                moduleObject = getModuleObject(jnienv, loaderObject, name);
+                moduleObject = getModuleObject(jvmti(agent), loaderObject, name);
             } else {
                 // Redefine or retransform, InstrumentationImpl.transform() will use
                 // classBeingRedefined.getModule() to get the module.
@@ -873,8 +869,8 @@ transformClassFile(             JPLISAgent *            agent,
                                                 jnienv,
                                                 agent->mInstrumentationImpl,
                                                 agent->mTransform,
-                                                loaderObject,
                                                 moduleObject,
+                                                loaderObject,
                                                 classNameStringObject,
                                                 classBeingRedefined,
                                                 protectionDomain,

@@ -24,18 +24,27 @@
 /*
  * @test SASymbolTableTest
  * @summary Walk symbol table using SA, with and without CDS.
- * @library /testlibrary
+ * Started failing on 2016.06.24 due to 8160376 on MacOS X so quarantine
+ * it on that platform:
+ * @requires os.family != "mac"
+ * @library /test/lib
  * @modules java.base/jdk.internal.misc
  *          jdk.hotspot.agent/sun.jvm.hotspot.oops
  *          jdk.hotspot.agent/sun.jvm.hotspot.memory
  *          jdk.hotspot.agent/sun.jvm.hotspot.runtime
  *          jdk.hotspot.agent/sun.jvm.hotspot.tools
  *          java.management
- * @build SASymbolTableTestAgent SASymbolTableTestAttachee jdk.test.lib.*
+ * @build SASymbolTableTestAgent
  * @run main SASymbolTableTest
  */
 
-import jdk.test.lib.*;
+import java.util.Arrays;
+import java.util.List;
+import jdk.test.lib.process.ProcessTools;
+import jdk.test.lib.process.OutputAnalyzer;
+import jdk.test.lib.JDKToolFinder;
+import jdk.test.lib.Platform;
+import jdk.test.lib.apps.LingeredApp;
 
 /*
  * The purpose of this test is to validate that we can use SA to
@@ -47,6 +56,7 @@ import jdk.test.lib.*;
  */
 public class SASymbolTableTest {
     static String jsaName = "./SASymbolTableTest.jsa";
+    private static LingeredApp theApp = null;
 
     public static void main(String[] args) throws Exception {
         if (!Platform.shouldSAAttach()) {
@@ -72,49 +82,44 @@ public class SASymbolTableTest {
     private static void run(boolean useArchive) throws Exception {
         String flag = useArchive ? "auto" : "off";
 
-        // (1) Launch the attachee process
-        ProcessBuilder attachee = ProcessTools.createJavaProcessBuilder(
-            "-XX:+UnlockDiagnosticVMOptions",
-            "-XX:SharedArchiveFile=" + jsaName,
-            "-Xshare:" + flag,
-            "-showversion",                // so we can see "sharing" in the output
-            "SASymbolTableTestAttachee");
+        try {
+            // (1) Launch the attachee process
+            System.out.println("Starting LingeredApp");
+            List<String> vmOpts = Arrays.asList(
+                    "-XX:+UnlockDiagnosticVMOptions",
+                    "-XX:SharedArchiveFile=" + jsaName,
+                    "-Xshare:" + flag,
+                    "-showversion");                // so we can see "sharing" in the output
 
-        final Process p = attachee.start();
+            theApp = LingeredApp.startApp(vmOpts);
 
-        // (2) Launch the agent process
-        long pid = p.getPid();
-        System.out.println("Attaching agent " + pid);
-        ProcessBuilder tool = ProcessTools.createJavaProcessBuilder(
-            "-XaddExports:jdk.hotspot.agent/sun.jvm.hotspot.oops=ALL-UNNAMED",
-            "-XaddExports:jdk.hotspot.agent/sun.jvm.hotspot.memory=ALL-UNNAMED",
-            "-XaddExports:jdk.hotspot.agent/sun.jvm.hotspot.runtime=ALL-UNNAMED",
-            "-XaddExports:jdk.hotspot.agent/sun.jvm.hotspot.tools=ALL-UNNAMED",
-            "SASymbolTableTestAgent",
-            Long.toString(pid));
-        OutputAnalyzer output = ProcessTools.executeProcess(tool);
-        System.out.println(output.getOutput());
-        output.shouldHaveExitValue(0);
-
-        Thread t = new Thread() {
-                public void run() {
-                    try {
-                        OutputAnalyzer output = new OutputAnalyzer(p);
-                        System.out.println("STDOUT[");
-                        System.out.print(output.getStdout());
-                        System.out.println("]");
-                        System.out.println("STDERR[");
-                        System.out.print(output.getStderr());
-                        System.out.println("]");
-                    } catch (Throwable t) {
-                        t.printStackTrace();
-                    }
-                }
-            };
-        t.start();
-
-        Thread.sleep(2 * 1000);
-        p.destroy();
-        t.join();
+            // (2) Launch the agent process
+            long pid = theApp.getPid();
+            System.out.println("Attaching agent to " + pid );
+            ProcessBuilder tool = ProcessTools.createJavaProcessBuilder(
+                    "--add-modules=jdk.hotspot.agent",
+                    "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.oops=ALL-UNNAMED",
+                    "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.memory=ALL-UNNAMED",
+                    "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.runtime=ALL-UNNAMED",
+                    "--add-exports=jdk.hotspot.agent/sun.jvm.hotspot.tools=ALL-UNNAMED",
+                    "SASymbolTableTestAgent",
+                    Long.toString(pid));
+            OutputAnalyzer output = ProcessTools.executeProcess(tool);
+            System.out.println("STDOUT[");
+            System.out.println(output.getOutput());
+            if (output.getStdout().contains("connected too early")) {
+                System.out.println("SymbolTable not created by VM - test skipped");
+                return;
+            }
+            System.out.println("]");
+            System.out.println("STDERR[");
+            System.out.print(output.getStderr());
+            System.out.println("]");
+            output.shouldHaveExitValue(0);
+        } catch (Exception ex) {
+            throw new RuntimeException("Test ERROR " + ex, ex);
+        } finally {
+            LingeredApp.stopApp(theApp);
+        }
     }
 }

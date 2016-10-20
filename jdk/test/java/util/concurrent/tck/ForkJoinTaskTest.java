@@ -35,9 +35,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
@@ -924,7 +922,7 @@ public class ForkJoinTaskTest extends JSR166TestCase {
                 AsyncFib f = new AsyncFib(8);
                 FailingAsyncFib g = new FailingAsyncFib(9);
                 ForkJoinTask[] tasks = { f, g };
-                Collections.shuffle(Arrays.asList(tasks));
+                shuffle(tasks);
                 try {
                     invokeAll(tasks);
                     shouldThrow();
@@ -962,7 +960,7 @@ public class ForkJoinTaskTest extends JSR166TestCase {
                 FailingAsyncFib g = new FailingAsyncFib(9);
                 AsyncFib h = new AsyncFib(7);
                 ForkJoinTask[] tasks = { f, g, h };
-                Collections.shuffle(Arrays.asList(tasks));
+                shuffle(tasks);
                 try {
                     invokeAll(tasks);
                     shouldThrow();
@@ -983,10 +981,9 @@ public class ForkJoinTaskTest extends JSR166TestCase {
                 AsyncFib g = new AsyncFib(9);
                 AsyncFib h = new AsyncFib(7);
                 ForkJoinTask[] tasks = { f, g, h };
-                List taskList = Arrays.asList(tasks);
-                Collections.shuffle(taskList);
+                shuffle(tasks);
                 try {
-                    invokeAll(taskList);
+                    invokeAll(Arrays.asList(tasks));
                     shouldThrow();
                 } catch (FJException success) {
                     checkCompletedAbnormally(f, success);
@@ -1594,7 +1591,7 @@ public class ForkJoinTaskTest extends JSR166TestCase {
                 AsyncFib f = new AsyncFib(8);
                 FailingAsyncFib g = new FailingAsyncFib(9);
                 ForkJoinTask[] tasks = { f, g };
-                Collections.shuffle(Arrays.asList(tasks));
+                shuffle(tasks);
                 try {
                     invokeAll(tasks);
                     shouldThrow();
@@ -1632,7 +1629,7 @@ public class ForkJoinTaskTest extends JSR166TestCase {
                 FailingAsyncFib g = new FailingAsyncFib(9);
                 AsyncFib h = new AsyncFib(7);
                 ForkJoinTask[] tasks = { f, g, h };
-                Collections.shuffle(Arrays.asList(tasks));
+                shuffle(tasks);
                 try {
                     invokeAll(tasks);
                     shouldThrow();
@@ -1653,10 +1650,9 @@ public class ForkJoinTaskTest extends JSR166TestCase {
                 AsyncFib g = new AsyncFib(9);
                 AsyncFib h = new AsyncFib(7);
                 ForkJoinTask[] tasks = { f, g, h };
-                List taskList = Arrays.asList(tasks);
-                Collections.shuffle(taskList);
+                shuffle(tasks);
                 try {
-                    invokeAll(taskList);
+                    invokeAll(Arrays.asList(tasks));
                     shouldThrow();
                 } catch (FJException success) {
                     checkCompletedAbnormally(f, success);

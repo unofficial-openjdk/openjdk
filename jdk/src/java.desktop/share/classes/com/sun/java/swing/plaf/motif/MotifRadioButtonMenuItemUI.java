@@ -33,6 +33,7 @@ import javax.swing.plaf.basic.BasicRadioButtonMenuItemUI;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.Serializable;
+import sun.swing.SwingUtilities2;
 
 
 /**
@@ -97,7 +98,10 @@ public class MotifRadioButtonMenuItemUI extends BasicRadioButtonMenuItemUI
             Point p = e.getPoint();
             if(p.x >= 0 && p.x < menuItem.getWidth() &&
                p.y >= 0 && p.y < menuItem.getHeight()) {
-                manager.clearSelectedPath();
+                String property = "RadioButtonMenuItem.doNotCloseOnMouseClick";
+                if (!SwingUtilities2.getBoolean(menuItem, property)) {
+                    manager.clearSelectedPath();
+                }
                 menuItem.doClick(0);
             } else {
                 manager.processMouseEvent(e);

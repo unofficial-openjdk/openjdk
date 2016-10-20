@@ -21,7 +21,10 @@
  * questions.
  */
 
-import intrinsics.Verifier;
+package compiler.intrinsics.sha.sanity;
+
+import compiler.intrinsics.sha.TestSHA;
+import compiler.testlibrary.intrinsics.Verifier;
 import sun.hotspot.WhiteBox;
 
 import java.io.FileOutputStream;

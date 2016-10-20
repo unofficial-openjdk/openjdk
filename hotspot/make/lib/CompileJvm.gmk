@@ -60,12 +60,15 @@ JVM_CFLAGS_INCLUDES += \
     -I$(HOTSPOT_TOPDIR)/src/share/vm/prims \
     #
 
+# INCLUDE_SUFFIX_* is only meant for including the proper
+# platform files. Don't use it to guard code. Use the value of
+# HOTSPOT_TARGET_CPU_DEFINE etc. instead.
+# Remaining TARGET_ARCH_* is needed to distinguish closed and open
+# 64-bit ARM ports (also called AARCH64).
 JVM_CFLAGS_TARGET_DEFINES += \
-    -DTARGET_OS_FAMILY_$(HOTSPOT_TARGET_OS) \
-    -DTARGET_ARCH_MODEL_$(HOTSPOT_TARGET_CPU) \
     -DTARGET_ARCH_$(HOTSPOT_TARGET_CPU_ARCH) \
-    -DTARGET_OS_ARCH_MODEL_$(HOTSPOT_TARGET_OS)_$(HOTSPOT_TARGET_CPU) \
-    -DTARGET_OS_ARCH_$(HOTSPOT_TARGET_OS)_$(HOTSPOT_TARGET_CPU_ARCH) \
+    -DINCLUDE_SUFFIX_OS=_$(HOTSPOT_TARGET_OS) \
+    -DINCLUDE_SUFFIX_CPU=_$(HOTSPOT_TARGET_CPU_ARCH) \
     -DTARGET_COMPILER_$(HOTSPOT_TOOLCHAIN_TYPE) \
     -D$(HOTSPOT_TARGET_CPU_DEFINE) \
     -DHOTSPOT_LIB_ARCH='"$(OPENJDK_TARGET_CPU_LEGACY_LIB)"' \
@@ -140,13 +143,6 @@ ifneq ($(filter $(OPENJDK_TARGET_OS), linux macosx windows), )
   JVM_PRECOMPILED_HEADER := $(HOTSPOT_TOPDIR)/src/share/vm/precompiled/precompiled.hpp
 endif
 
-ifneq ($(filter $(OPENJDK_TARGET_OS), macosx aix solaris), )
-  # On macosx, aix and solaris we have to link with the C++ compiler
-  JVM_TOOLCHAIN := TOOLCHAIN_LINK_CXX
-else
-  JVM_TOOLCHAIN := TOOLCHAIN_DEFAULT
-endif
-
 ifeq ($(OPENJDK_TARGET_CPU), x86)
   JVM_EXCLUDE_PATTERNS += x86_64
 else ifeq ($(OPENJDK_TARGET_CPU), x86_64)
@@ -178,22 +174,15 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
   JVM_RCFLAGS += -D"HS_FILEDESC=$(HOTSPOT_VM_DISTRO) $(RC_DESC)$(JVM_VARIANT) VM"
 endif
 
-ifeq ($(OPENJDK_TARGET_OS), macosx)
-  # NOTE: The old build did not strip binaries on macosx.
-  JVM_STRIP_SYMBOLS := false
-else
-  JVM_STRIP_SYMBOLS := true
-endif
-
 JVM_OPTIMIZATION ?= HIGHEST_JVM
 
 ################################################################################
 # Now set up the actual compilation of the main hotspot native library
 
 $(eval $(call SetupNativeCompilation, BUILD_LIBJVM, \
-    TOOLCHAIN := $(JVM_TOOLCHAIN), \
+    TOOLCHAIN := TOOLCHAIN_LINK_CXX, \
     LIBRARY := jvm, \
-    OUTPUT_DIR := $(JVM_OUTPUTDIR), \
+    OUTPUT_DIR := $(JVM_LIB_OUTPUTDIR), \
     SRC := $(JVM_SRC_DIRS), \
     EXCLUDES := $(JVM_EXCLUDES), \
     EXCLUDE_FILES := $(JVM_EXCLUDE_FILES), \
@@ -215,13 +204,24 @@ $(eval $(call SetupNativeCompilation, BUILD_LIBJVM, \
     OBJECT_DIR := $(JVM_OUTPUTDIR)/objs, \
     MAPFILE := $(JVM_MAPFILE), \
     USE_MAPFILE_FOR_SYMBOLS := true, \
-    STRIP_SYMBOLS := $(JVM_STRIP_SYMBOLS), \
     EMBED_MANIFEST := true, \
     RC_FLAGS := $(JVM_RCFLAGS), \
     VERSIONINFO_RESOURCE := $(HOTSPOT_TOPDIR)/src/os/windows/vm/version.rc, \
     PRECOMPILED_HEADER := $(JVM_PRECOMPILED_HEADER), \
     PRECOMPILED_HEADER_EXCLUDE := $(JVM_PRECOMPILED_HEADER_EXCLUDE), \
 ))
+
+ifeq ($(OPENJDK_TARGET_OS), windows)
+  # It doesn't matter which jvm.lib file gets exported, but we need
+  # to pick just one.
+  ifeq ($(JVM_VARIANT), $(firstword $(JVM_VARIANTS)))
+    $(eval $(call SetupCopyFiles, COPY_JVM_LIB, \
+        DEST := $(LIB_OUTPUTDIR), \
+        FILES :=$(JVM_VARIANT_OUTPUTDIR)/libjvm/objs/jvm.lib, \
+    ))
+    TARGETS += $(COPY_JVM_LIB)
+  endif
+endif
 
 # AIX warning explanation:
 # 1500-010  : (W) WARNING in ...: Infinite loop.  Program may not stop.
