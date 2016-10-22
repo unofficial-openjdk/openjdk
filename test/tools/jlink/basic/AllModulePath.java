@@ -25,8 +25,7 @@
  * @test
  * @summary jlink test of --add-module ALL-MODULE-PATH
  * @library /lib/testlibrary
- * @modules jdk.jlink/jdk.tools.jlink.internal
- *          jdk.compiler
+ * @modules jdk.compiler
  * @build jdk.testlibrary.ProcessTools
  *        jdk.testlibrary.OutputAnalyzer
  *        CompilerUtils
@@ -46,8 +45,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
+import java.util.spi.ToolProvider;
 
 import jdk.testlibrary.ProcessTools;
+
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
@@ -59,6 +60,11 @@ public class AllModulePath {
     private final Path MODS = Paths.get("mods");
 
     private final static Set<String> MODULES = Set.of("test", "m1");
+
+    static final ToolProvider JLINK_TOOL = ToolProvider.findFirst("jlink")
+        .orElseThrow(() ->
+            new RuntimeException("jlink tool not found")
+        );
 
     @BeforeClass
     public void setup() throws Throwable {
@@ -162,8 +168,9 @@ public class AllModulePath {
                                     "--output", image.toString());
         String[] args = Stream.concat(opts.stream(), Arrays.stream(options))
                               .toArray(String[]::new);
-        int rc = jdk.tools.jlink.internal.Main.run(args,
-                                                   new PrintWriter(System.out));
+
+        PrintWriter pw = new PrintWriter(System.out);
+        int rc = JLINK_TOOL.run(pw, pw, args);
         assertTrue(rc == 0);
     }
 }

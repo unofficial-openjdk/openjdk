@@ -25,7 +25,6 @@
  * @test
  * @library /lib/testlibrary
  * @modules java.base/jdk.internal.misc
- *          jdk.jlink/jdk.tools.jmod
  *          jdk.compiler
  * @build ModuleReaderTest CompilerUtils JarUtils
  * @run testng ModuleReaderTest
@@ -52,6 +51,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.spi.ToolProvider;
 
 import jdk.internal.misc.SharedSecrets;
 
@@ -200,8 +200,11 @@ public class ModuleReaderTest {
         String cp = MODS_DIR.resolve(TEST_MODULE).toString();
         String jmod = dir.resolve("m.jmod").toString();
         String[] args = { "create", "--class-path", cp, jmod };
-        jdk.tools.jmod.JmodTask task = new jdk.tools.jmod.JmodTask();
-        assertEquals(task.run(args), 0);
+        ToolProvider jmodTool = ToolProvider.findFirst("jmod")
+            .orElseThrow(() ->
+                new RuntimeException("jmod tool not found")
+            );
+        assertEquals(jmodTool.run(System.out, System.out, args), 0);
 
         test(dir);
     }
