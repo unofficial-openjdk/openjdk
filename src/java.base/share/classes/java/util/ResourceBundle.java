@@ -3246,7 +3246,8 @@ public abstract class ResourceBundle {
             // search from the boot loader and other ancestors
             url = BootLoader.findResource(null, name);
 
-            while (url == null && (ld = ancestors.pop()) != null) {
+            while (url == null && !ancestors.isEmpty()) {
+                ld = ancestors.pop();
                 url = SharedSecrets.getJavaLangAccess()
                                    .findResource(ld, null, name);
             }
