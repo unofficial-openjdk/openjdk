@@ -3879,7 +3879,7 @@ public class Check {
             }
 
             if (whatPackage.modle != inPackage.modle && whatPackage.modle != syms.java_base) {
-                //check that relativeTo.modle requires public what.modle, somehow:
+                //check that relativeTo.modle requires transitive what.modle, somehow:
                 List<ModuleSymbol> todo = List.of(inPackage.modle);
 
                 while (todo.nonEmpty()) {
@@ -3894,7 +3894,7 @@ public class Check {
                     }
                 }
 
-                log.warning(LintCategory.EXPORTS, pos, Warnings.LeaksNotAccessibleNotRequiredPublic(kindName(what), what, what.packge().modle));
+                log.warning(LintCategory.EXPORTS, pos, Warnings.LeaksNotAccessibleNotRequiredTransitive(kindName(what), what, what.packge().modle));
             }
         }
 }
