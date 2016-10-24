@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,24 +21,17 @@
  * questions.
  */
 
-// key: compiler.warn.access.to.member.from.serializable.element
-// options: -XDwarnOnAccessToMembers
+// key: compiler.note.removal.filename.additional
+// key: compiler.warn.has.been.deprecated.for.removal
+// options: -Xmaxwarns 1
 
-import java.io.Serializable;
-
-public class WarnSerializableLambda {
-    private void m1() {
-        new SerializableClass() {
-            @Override
-            public void m() {
-                packageField = "";
-            }
-        };
-    }
-
-    String packageField;
-
-    class SerializableClass implements Serializable {
-        public void m() {}
-    }
+class RemovalFilename {
+    RemovalClass d;
 }
+
+class RemovalFilenameAdditional {
+    RemovalClass d;
+}
+
+@Deprecated(forRemoval=true)
+class RemovalClass { }
