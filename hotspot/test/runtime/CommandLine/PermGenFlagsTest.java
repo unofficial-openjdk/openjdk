@@ -23,38 +23,29 @@
 
 /*
  * @test
- * @bug 8150778
- * @summary check stacktrace logging
+ * @bug 8167446
+ * @summary Commandline options PermSize and MaxPermSize should be recognized but ignored.
  * @library /test/lib
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @compile TestThrowable.java
- * @run driver StackTraceLogging
+ * @run driver PermGenFlagsTest
  */
 
-import java.io.File;
-import java.util.Map;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
-public class StackTraceLogging {
-    static void analyzeOutputOn(ProcessBuilder pb) throws Exception {
-        OutputAnalyzer output = new OutputAnalyzer(pb.start());
-        // These depths match the ones in TestThrowable.java, except the one greater than 1024
-        int[] depths = {10, 34, 100, 1023, 1024};
-        for (int d : depths) {
-            output.shouldContain("java.lang.RuntimeException, " + d);
-        }
-        output.shouldHaveExitValue(0);
-    }
-
-
+public class PermGenFlagsTest {
     public static void main(String[] args) throws Exception {
-        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-Xlog:stacktrace=info",
-                                                                  "-XX:MaxJavaStackTraceDepth=1024",
-                                                                  "--add-exports-private",
-                                                                  "java.base/java.lang=ALL-UNNAMED",
-                                                                  "TestThrowable");
-        analyzeOutputOn(pb);
+        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-XX:PermSize=22k",
+                                                                  "-version");
+        OutputAnalyzer output = new OutputAnalyzer(pb.start());
+        output.shouldContain("Ignoring option PermSize; support was removed in 8.0");
+        output.shouldHaveExitValue(0);
+
+        pb = ProcessTools.createJavaProcessBuilder("-XX:MaxPermSize=22k",
+                                                   "-version");
+        output = new OutputAnalyzer(pb.start());
+        output.shouldContain("Ignoring option MaxPermSize; support was removed in 8.0");
+        output.shouldHaveExitValue(0);
     }
 }
