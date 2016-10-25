@@ -311,6 +311,10 @@ public class Enter extends JCTree.Visitor {
         boolean isPkgInfo = tree.sourcefile.isNameCompatible("package-info",
                                                              JavaFileObject.Kind.SOURCE);
         if (TreeInfo.isModuleInfo(tree)) {
+            JCPackageDecl pd = tree.getPackage();
+            if (pd != null) {
+                log.error(pd.pos(), Errors.NoPkgInModuleInfoJava);
+            }
             tree.packge = syms.rootPackage;
             Env<AttrContext> topEnv = topLevelEnv(tree);
             classEnter(tree.defs, topEnv);
