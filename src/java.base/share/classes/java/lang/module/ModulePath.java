@@ -357,7 +357,6 @@ class ModulePath implements ModuleFinder {
     // -- JAR files --
 
     private static final String SERVICES_PREFIX = "META-INF/services/";
-    private static final String VERSIONS_PREFIX = "META-INF/versions/";
 
     /**
      * Returns the service type corresponding to the name of a services
