@@ -81,6 +81,7 @@ class Main {
     String fname, mname, ename;
     String zname = "";
     String rootjar = null;
+    Set<String> concealedPackages = new HashSet<>();
 
     private static final int BASE_VERSION = 0;
 
@@ -874,7 +875,7 @@ class Main {
                         entryMap.put(entryName, entry);
                 } else if (entries.add(entry)) {
                     jarEntries.add(entryName);
-                    if (!entryName.startsWith(VERSIONS_DIR) && isNamedPackageResource(entry.basename))
+                    if (isNamedPackageResource(entry.basename))
                         packages.add(toPackageName(entry.basename));
                     if (isUpdate)
                         entryMap.put(entryName, entry);
@@ -1069,8 +1070,18 @@ class Main {
                 }
 
                 jarEntries.add(name);
-                if (!isDir && !name.startsWith(VERSIONS_DIR) && isNamedPackageResource(name))
-                    packages.add(toPackageName(name));
+                if (!isDir) {
+                    if (name.startsWith(VERSIONS_DIR)) {
+                        int index = name.indexOf('/', VERSIONS_DIR.length());
+                        // name == -1 -> not a versioned directory, something else
+                        if (index != -1) {
+                            name = name.substring(index + 1);
+                        }
+                    }
+                    if (isNamedPackageResource(name)) {
+                        packages.add(toPackageName(name));
+                    }
+                }
             }
         }
 
@@ -1763,6 +1774,13 @@ class Main {
     }
 
     /**
+     * Print a warning message
+     */
+    void warn(String s) {
+        err.println(s);
+    }
+
+    /**
      * Main routine to start program.
      */
     public static void main(String args[]) {
@@ -1978,6 +1996,8 @@ class Main {
         ByteBuffer bb = ByteBuffer.wrap(moduleInfos.get(MODULE_INFO));
         ModuleDescriptor rd = ModuleDescriptor.read(bb);
 
+        concealedPackages = findConcealedPackages(rd);
+
         for (Map.Entry<String,byte[]> e: moduleInfos.entrySet()) {
             ModuleDescriptor vd = ModuleDescriptor.read(ByteBuffer.wrap(e.getValue()));
             if (!(isValidVersionedDescriptor(vd, rd)))
@@ -1985,6 +2005,18 @@ class Main {
             e.setValue(extendedInfoBytes(rd, vd, e.getValue(), packages));
         }
         return true;
+    }
+
+    private Set<String> findConcealedPackages(ModuleDescriptor md){
+        Objects.requireNonNull(md);
+        Set<String> exports = md.exports()
+                .stream()
+                .map(Exports::source)
+                .collect(toSet());
+
+        return packages.stream()
+                .filter(p -> !exports.contains(p))
+                .collect(toSet());
     }
 
     private static boolean isPlatformModule(String name) {
