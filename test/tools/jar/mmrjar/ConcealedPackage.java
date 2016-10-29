@@ -26,6 +26,8 @@
  * @bug 8146486
  * @summary Fail to create a MR modular JAR with a versioned entry in
  *          base-versioned empty package
+ * @modules jdk.compiler
+ *          jdk.jartool
  * @library /lib/testlibrary
  * @build jdk.testlibrary.FileUtils
  * @run testng ConcealedPackage
@@ -141,9 +143,7 @@ public class ConcealedPackage {
         Assert.assertEquals(rc, 1);
 
         s = new String(errbytes.toByteArray());
-        Assert.assertTrue(s.contains("p/internal/Bar.class, contains a new public "
-                + "class not found in base entries")
-        );
+        Assert.assertTrue(Message.NOT_FOUND_IN_BASE_ENTRY.match(s, "p/internal/Bar.class"));
     }
 
     // updates a valid multi-release jar with a module-info class and new
@@ -159,10 +159,7 @@ public class ConcealedPackage {
         Assert.assertEquals(rc, 0);
 
         String s = new String(errbytes.toByteArray());
-        Assert.assertTrue(s.contains("p/internal/Bar.class is a public class in a "
-                        + "concealed package, \nplacing this jar on the class path "
-                        + "will result in incompatible public interfaces")
-        );
+        Assert.assertTrue(Message.NEW_CONCEALED_PACKAGE_WARNING.match(s, "p/internal/Bar.class"));
 
         jar("-tf mmr.jar");
 
@@ -187,9 +184,7 @@ public class ConcealedPackage {
         Assert.assertEquals(rc, 1);
 
         String s = new String(errbytes.toByteArray());
-        Assert.assertTrue(s.contains("p/internal/Bar.class, contains a new public "
-                + "class not found in base entries")
-        );
+        Assert.assertTrue(Message.NOT_FOUND_IN_BASE_ENTRY.match(s, "p/internal/Bar.class"));
     }
 
     // jar tool succeeds building mmr.jar because of concealed package
@@ -200,10 +195,7 @@ public class ConcealedPackage {
         Assert.assertEquals(rc, 0);
 
         String s = new String(errbytes.toByteArray());
-        Assert.assertTrue(s.contains("p/internal/Bar.class is a public class in a "
-                + "concealed package, \nplacing this jar on the class path "
-                + "will result in incompatible public interfaces")
-        );
+        Assert.assertTrue(Message.NEW_CONCEALED_PACKAGE_WARNING.match(s, "p/internal/Bar.class"));
 
         jar("-tf mmr.jar");
 
@@ -321,5 +313,32 @@ public class ConcealedPackage {
                 "contains p.internal.bar"
         );
         Assert.assertEquals(actual, expected);
+    }
+
+    static enum Message {
+        NOT_FOUND_IN_BASE_ENTRY(
+          ", contains a new public class not found in base entries"
+        ),
+        NEW_CONCEALED_PACKAGE_WARNING(
+            " is a public class" +
+            " in a concealed package, placing this jar on the class path will result" +
+            " in incompatible public interfaces"
+        );
+
+        final String msg;
+        Message(String msg) {
+            this.msg = msg;
+        }
+
+        /*
+         * Test if the given output contains this message ignoring the line break.
+         */
+        boolean match(String output, String entry) {
+            System.out.println("checking " + entry + msg);
+            System.out.println(output);
+            return Arrays.stream(output.split("\\R"))
+                         .collect(Collectors.joining(" "))
+                         .contains(entry + msg);
+        }
     }
 }
