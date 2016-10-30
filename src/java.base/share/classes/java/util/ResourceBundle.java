@@ -3015,8 +3015,10 @@ public abstract class ResourceBundle {
          * indicates that this method is being called because the previously
          * loaded resource bundle has expired.
          *
-         * <p>Resource bundles in named modules are subject to the encapsulation rules
-         * specified by {@link Module#getResourceAsStream Module.getResourceAsStream}.
+         * @implSpec
+         *
+         * Resource bundles in named modules are subject to the encapsulation
+         * rules specified by {@link Module#getResourceAsStream Module.getResourceAsStream}.
          * A resource bundle in a named module visible to the given class loader
          * is accessible when the package of the resource file corresponding
          * to the resource bundle is exported-private.
@@ -3031,10 +3033,12 @@ public abstract class ResourceBundle {
          * locale)}.</li>
          *
          * <li>If <code>format</code> is <code>"java.class"</code>, the
-         * {@link Class} specified by the bundle name is loaded by calling
-         * {@link Class#forName(String, boolean, ClassLoader) Class.forName}.
-         * If the {@code Class} is exported-private then the
-         * <code>ResourceBundle</code> is instantiated.
+         * {@link Class} specified by the bundle name is loaded with the
+         * given class loader. If the {@code Class} is found and accessible
+         * then the <code>ResourceBundle</code> is instantiated.  The
+         * resource bundle is accessible if the package of the bundle class file
+         * is exported-private; otherwise, {@code IllegalAccessException}
+         * will be thrown.
          * Note that the <code>reload</code> flag is ignored for loading
          * class-based resource bundles in this default implementation.
          * </li>
@@ -3116,7 +3120,7 @@ public abstract class ResourceBundle {
             ResourceBundle bundle = null;
             if (format.equals("java.class")) {
                 try {
-                    Class<?> c = Class.forName(bundleName, false, loader);
+                    Class<?> c = loader.loadClass(bundleName);
                     // If the class isn't a ResourceBundle subclass, throw a
                     // ClassCastException.
                     if (ResourceBundle.class.isAssignableFrom(c)) {
