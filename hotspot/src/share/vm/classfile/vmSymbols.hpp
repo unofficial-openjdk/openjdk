@@ -646,7 +646,7 @@
   template(addReads_name,                              "addReads")                                                \
   template(addReads_signature,                         "(Ljava/lang/reflect/Module;Ljava/lang/reflect/Module;)V") \
   template(addExports_name,                            "addExports")                                              \
-  template(addExportsPrivate_name,                     "addExportsPrivate")                                              \
+  template(addOpens_name,                              "addOpens")                                                \
   template(addExports_signature,                       "(Ljava/lang/reflect/Module;Ljava/lang/String;Ljava/lang/reflect/Module;)V") \
   template(addUses_name,                               "addUses")                                                 \
   template(addUses_signature,                          "(Ljava/lang/reflect/Module;Ljava/lang/Class;)V")          \
