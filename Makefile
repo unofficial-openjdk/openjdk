@@ -66,6 +66,24 @@ endif
 ifneq ($(findstring :, $(MAKE)), )
   MAKE := $(patsubst $(CURDIR)%, %, $(patsubst $(CURDIR)/%, %, $(MAKE)))
 endif
+#ifneq关键字用来判断参数是否不等
+#findstring函数语法：
+#  $(findstring FIND,IN)
+#  搜索字串“IN”,查找“FIND”字串
+#  如果在“IN”之中存在“FIND”,则返回“FIND”,否则返回空
+#patsubst函数语法
+#  $(patsubst PATTERN,REPLACEMENT,TEXT)
+#  搜索“TEXT”中以空格分开的单词,将符合模式“TATTERN”的部分替换为“REPLACEMENT”。
+#  NOTE：
+#      1. 参数“PATTERN”中可以使用模式通配符“%”代表若干个字符。如果参数“REPLACEMENT”中也包含一个“%”,那么“REPLACEMENT”中的“%”将是“TATTERN”中的那个“%”所代表的字符串。
+#      2. 在“TATTERN”和“REPLACEMENT” 中,只有第一个“%”被作为模式字符来处理
+#      3. 在参数中如果需要将第一个出现的“%”作为字 符本身而不作为模式字符时,可使用反斜杠“\”进行转义处理。
+#      4. 参数“TEXT”单词之间的多个空格在处理时被合并为一个空格,并忽略前导和结尾空格
+#      5. 扩展：
+#          a. 变量替换引用$(VAR:PATTERN=REPLACEMENT) 等价于  $(patsubst PATTERN,REPLACEMENT,$(VAR)) 
+#          b. 后缀替换$(VAR:SUFFIX=REPLACEMENT) 等价于  $(patsubst %SUFFIX,%REPLACEMENT,$(VAR))
+
+
 
 # Locate this Makefile
 ifeq ($(filter /%, $(lastword $(MAKEFILE_LIST))),)
