@@ -56,7 +56,7 @@ module java.xml.ws {
     exports javax.xml.ws.spi.http;
     exports javax.xml.ws.wsaddressing;
 
-    exports private javax.xml.ws.wsaddressing to java.xml.bind;
+    opens javax.xml.ws.wsaddressing to java.xml.bind;
 
     exports com.oracle.webservices.internal.api.databinding to
         jdk.xml.ws;
@@ -105,10 +105,10 @@ module java.xml.ws {
         jdk.xml.ws;
 
     // XML document content needs to be exported
-    exports private com.sun.xml.internal.ws.runtime.config to java.xml.bind;
+    opens com.sun.xml.internal.ws.runtime.config to java.xml.bind;
 
     // com.sun.xml.internal.ws.fault.SOAPFaultBuilder uses JAXBContext.newInstance
-    exports private com.sun.xml.internal.ws.fault to java.xml.bind;
+    opens com.sun.xml.internal.ws.fault to java.xml.bind;
 
     // JAF data handlers
     exports com.sun.xml.internal.messaging.saaj.soap to
