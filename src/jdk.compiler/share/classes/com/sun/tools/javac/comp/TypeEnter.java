@@ -343,17 +343,17 @@ public class TypeEnter implements Completer {
                     throw new FatalError(diags.fragment("fatal.err.no.java.lang"));
                 importAll(make.at(tree.pos()).Import(make.QualIdent(javaLang), false), javaLang, env);
 
+                JCModuleDecl decl = tree.getModuleDecl();
+
                 // Process the package def and all import clauses.
-                if (tree.getPackage() != null)
+                if (tree.getPackage() != null && decl == null)
                     checkClassPackageClash(tree.getPackage());
 
                 for (JCImport imp : tree.getImports()) {
                     doImport(imp);
                 }
 
-                if (tree.getModuleDecl() != null) {
-                    JCModuleDecl decl = tree.getModuleDecl();
-
+                if (decl != null) {
                     //check @Deprecated:
                     markDeprecated(decl.sym, decl.annotations, env);
                     // process module annotations
