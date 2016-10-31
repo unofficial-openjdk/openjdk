@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -120,14 +121,24 @@ public class ModuleTestBase {
     }
 
     private void testProvides(ModuleDescriptor moduleDescriptor, Module_attribute module, ConstantPool constantPool) throws ConstantPoolException {
-        tr.checkEquals(module.provides_count, moduleDescriptor.provides.size(), "Wrong amount of provides.");
-        List<Pair<String, String>> actualProvides = new ArrayList<>();
+        int moduleProvidesCount = Arrays.asList(module.provides).stream()
+                .mapToInt(e -> e.with_index.length)
+                .sum();
+        int moduleDescriptorProvidesCount = moduleDescriptor.provides.values().stream()
+                .mapToInt(impls -> impls.size())
+                .sum();
+        tr.checkEquals(moduleProvidesCount, moduleDescriptorProvidesCount, "Wrong amount of provides.");
+        Map<String, List<String>> actualProvides = new HashMap<>();
         for (Module_attribute.ProvidesEntry provide : module.provides) {
             String provides = constantPool.getClassInfo(provide.provides_index).getBaseName().replace('/', '.');
-            String with = constantPool.getClassInfo(provide.with_index).getBaseName().replace('/', '.');
-            actualProvides.add(Pair.of(provides, with));
+            List<String> impls = new ArrayList<>();
+            for (int i = 0; i < provide.with_count; i++) {
+                String with = constantPool.getClassInfo(provide.with_index[i]).getBaseName().replace('/', '.');
+                impls.add(with);
+            }
+            actualProvides.put(provides, impls);
         }
-        tr.checkContains(actualProvides, moduleDescriptor.provides, "Lists of provides don't match");
+        tr.checkContains(actualProvides.entrySet(), moduleDescriptor.provides.entrySet(), "Lists of provides don't match");
     }
 
     protected void compile(Path base, String... options) throws IOException {
@@ -151,7 +162,7 @@ public class ModuleTestBase {
         int getMask();
     }
 
-    enum RequiresFlag implements Mask {
+    public enum RequiresFlag implements Mask {
         TRANSITIVE("transitive", Module_attribute.ACC_TRANSITIVE),
         STATIC("static", Module_attribute.ACC_STATIC_PHASE);
 
@@ -169,7 +180,7 @@ public class ModuleTestBase {
         }
     }
 
-    enum ExportFlag implements Mask {
+    public enum ExportFlag implements Mask {
         SYNTHETIC("", Module_attribute.ACC_SYNTHETIC);
 
         private final String token;
@@ -197,7 +208,7 @@ public class ModuleTestBase {
         }
     }
 
-    class ModuleDescriptor {
+    protected class ModuleDescriptor {
 
         private final String name;
         //pair is name of module and flag(public,mandated,synthetic)
@@ -210,7 +221,7 @@ public class ModuleTestBase {
         private final Map<String, Export> exports = new HashMap<>();
 
         //List of service and implementation
-        private final List<Pair<String, String>> provides = new ArrayList<>();
+        private final Map<String, List<String>> provides = new LinkedHashMap<>();
         private final List<String> uses = new ArrayList<>();
 
         private static final String LINE_END = ";\n";
@@ -267,9 +278,13 @@ public class ModuleTestBase {
             return this;
         }
 
-        public ModuleDescriptor provides(String provides, String with) {
-            this.provides.add(Pair.of(provides, with));
-            content.append("    provides ").append(provides).append(" with ").append(with).append(LINE_END);
+        public ModuleDescriptor provides(String provides, String... with) {
+            this.provides.put(provides, Arrays.asList(with));
+            content.append("    provides ")
+                    .append(provides)
+                    .append(" with ")
+                    .append(String.join(",", with))
+                    .append(LINE_END);
             return this;
         }
 
