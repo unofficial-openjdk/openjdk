@@ -71,10 +71,10 @@ public interface JavaLangReflectModuleAccess {
     void addExports(Module m1, String pkg, Module m2);
 
     /**
-     * Updates module m1 to export "private" a package to module m2. The export
-     * does not result in a strong reference to m2 (m2 can be GC'ed).
+     * Updates module m1 to open a package to module m2. Opening the
+     * package does not result in a strong reference to m2 (m2 can be GC'ed).
      */
-    void addExportsPrivate(Module m1, String pkg, Module m2);
+    void addOpens(Module m1, String pkg, Module m2);
 
     /**
      * Updates a module m to export a package to all modules.
@@ -82,9 +82,9 @@ public interface JavaLangReflectModuleAccess {
     void addExportsToAll(Module m, String pkg);
 
     /**
-     * Updates a module m to export "private" a package to all modules.
+     * Updates a module m to open a package to all modules.
      */
-    void addExportsPrivateToAll(Module m, String pkg);
+    void addOpensToAll(Module m, String pkg);
 
     /**
      * Updates a module m to export a package to all unnamed modules.
@@ -92,9 +92,9 @@ public interface JavaLangReflectModuleAccess {
     void addExportsToAllUnnamed(Module m, String pkg);
 
     /**
-     * Updates a module m to export "private" a package to all unnamed modules.
+     * Updates a module m to open a package to all unnamed modules.
      */
-    void addExportsPrivateToAllUnnamed(Module m, String pkg);
+    void addOpensToAllUnnamed(Module m, String pkg);
 
     /**
      * Updates a module m to use a service.

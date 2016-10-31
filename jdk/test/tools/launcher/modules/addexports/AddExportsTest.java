@@ -204,15 +204,15 @@ public class AddExportsTest {
 
 
     /**
-     * --add-exports and --add-exports-private allows duplicates
+     * --add-exports and --add-opens allows duplicates
      */
     public void testWithDuplicateOption() throws Exception {
 
         int exitValue
             =  executeTestJava("--add-exports", "java.base/jdk.internal.reflect=ALL-UNNAMED",
                                "--add-exports", "java.base/jdk.internal.reflect=ALL-UNNAMED",
-                               "--add-exports-private", "java.base/java.util=ALL-UNNAMED",
-                               "--add-exports-private", "java.base/java.util=ALL-UNNAMED",
+                               "--add-opens", "java.base/java.util=ALL-UNNAMED",
+                               "--add-opens", "java.base/java.util=ALL-UNNAMED",
                                "-version")
                 .outputTo(System.out)
                 .errorTo(System.out)
@@ -231,12 +231,12 @@ public class AddExportsTest {
     }
 
     /**
-     * Exercise --add-exports and --add-exports-private with unknown values.
+     * Exercise --add-exports and --add-opens with unknown values.
      * Warning is emitted.
      */
     @Test(dataProvider = "unknownvalues")
     public void testWithUnknownValue(String value, String ignore) {
-        Stream.of("--add-exports", "--add-exports-private")
+        Stream.of("--add-exports", "--add-opens")
             .forEach(option -> {
                 //  --add-exports $VALUE -version
                 int exitValue = execJava(option, value, "-version")
@@ -264,11 +264,11 @@ public class AddExportsTest {
 
 
     /**
-     * Exercise --add-exports and --add-exports-private with bad values
+     * Exercise --add-exports and --add-opens with bad values
      */
     @Test(dataProvider = "badvalues")
     public void testWithBadValue(String value, String ignore) {
-        Stream.of("--add-exports", "--add-exports-private")
+        Stream.of("--add-exports", "--add-opens")
             .forEach(option -> {
                 //  --add-exports $VALUE -version
                 int exitValue = execJava(option, value, "-version")

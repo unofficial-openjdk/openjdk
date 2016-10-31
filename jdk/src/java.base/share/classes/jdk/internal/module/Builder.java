@@ -26,6 +26,7 @@ package jdk.internal.module;
 
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
+import java.lang.module.ModuleDescriptor.Opens;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Version;
@@ -78,8 +79,27 @@ final class Builder {
     }
 
     /**
-     *  Returns a {@link Exports} for an unqualified export
-     *  with a given set of modifiers.
+     * Returns an {@link Opens} for an unqualified open with a given set of
+     * modifiers.
+     */
+    public static Opens newOpens(Set<Opens.Modifier> ms, String pn) {
+        return jlma.newOpens(ms, pn);
+    }
+
+    /**
+     * Returns an {@link Opens} for a qualified opens, with
+     * the given (and possibly empty) set of modifiers,
+     * to a set of target modules.
+     */
+    public static Opens newOpens(Set<Opens.Modifier> ms,
+                                 String pn,
+                                 Set<String> targets) {
+        return jlma.newOpens(ms, pn, targets);
+    }
+
+    /**
+     * Returns a {@link Exports} for an unqualified export with a given set
+     * of modifiers.
      */
     public static Exports newExports(Set<Exports.Modifier> ms, String pn) {
         return jlma.newExports(ms, pn);
@@ -94,14 +114,15 @@ final class Builder {
     }
 
     final String name;
-    Map<String, Provides> provides;
-    Set<Requires> requires;
-    Set<Exports> exports;
-    boolean weak;
+    boolean open;
     boolean automatic;
     boolean synthetic;
+    Set<Requires> requires;
+    Set<Exports> exports;
+    Set<Opens> opens;
     Set<String> packages;
     Set<String> uses;
+    Map<String, Provides> provides;
     Version version;
     String mainClass;
     String osName;
@@ -114,12 +135,13 @@ final class Builder {
         this.name = name;
         this.provides = Collections.emptyMap();
         this.exports = Collections.emptySet();
+        this.opens = Collections.emptySet();
         this.requires = Collections.emptySet();
         this.uses = Collections.emptySet();
     }
 
-    Builder weak(boolean value) {
-        this.weak = value;
+    Builder open(boolean value) {
+        this.open = value;
         return this;
     }
 
@@ -138,6 +160,14 @@ final class Builder {
      */
     public Builder exports(Exports[] exports) {
         this.exports = Set.of(exports);
+        return this;
+    }
+
+    /**
+     * Sets module opens.
+     */
+    public Builder opens(Opens[] opens) {
+        this.opens = Set.of(opens);
         return this;
     }
 
@@ -277,12 +307,13 @@ final class Builder {
             hashes != null ? new ModuleHashes(algorithm, hashes) : null;
 
         return jlma.newModuleDescriptor(name,
-                                        weak,         // weak
-                                        automatic,    // automatic
-                                        synthetic,    // synthetic
+                                        open,
+                                        automatic,
+                                        synthetic,
                                         requires,
                                         uses,
                                         exports,
+                                        opens,
                                         provides,
                                         version,
                                         mainClass,

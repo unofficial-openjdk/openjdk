@@ -32,7 +32,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
-import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.net.URI;
 import java.nio.file.DirectoryStream;
@@ -56,7 +55,6 @@ import java.util.jar.Manifest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import jdk.internal.jmod.JmodFile;
@@ -357,7 +355,6 @@ class ModulePath implements ModuleFinder {
     // -- JAR files --
 
     private static final String SERVICES_PREFIX = "META-INF/services/";
-    private static final String VERSIONS_PREFIX = "META-INF/versions/";
 
     /**
      * Returns the service type corresponding to the name of a services
@@ -402,8 +399,8 @@ class ModulePath implements ModuleFinder {
      *
      * 1. The module name (and optionally the version) is derived from the file
      *    name of the JAR file
-     * 2. All packages are exported-private
-     * 3. It has no non-exported packages
+     * 2. All packages are exported and open
+     * 3. It has no non-exported/non-open packages
      * 4. The contents of any META-INF/services configuration files are mapped
      *    to "provides" declarations
      * 5. The Main-Class attribute in the main attributes of the JAR manifest
@@ -458,13 +455,12 @@ class ModulePath implements ModuleFinder {
         Set<String> resources = map.get(Boolean.FALSE);
         Set<String> configFiles = map.get(Boolean.TRUE);
 
-        // all packages are exported-private
-        Set<Exports.Modifier> mods = EnumSet.of(Exports.Modifier.PRIVATE);
+        // all packages are exported and open
         resources.stream()
                 .map(this::toPackageName)
                 .flatMap(Optional::stream)
                 .distinct()
-                .forEach(pn -> builder.exports(mods, pn));
+                .forEach(pn -> builder.exports(pn).opens(pn));
 
         // map names of service configuration files to service names
         Set<String> serviceNames = configFiles.stream()
@@ -496,7 +492,7 @@ class ModulePath implements ModuleFinder {
             Attributes attrs = man.getMainAttributes();
             String mainClass = attrs.getValue(Attributes.Name.MAIN_CLASS);
             if (mainClass != null)
-                builder.mainClass(mainClass);
+                builder.mainClass(mainClass.replace("/", "."));
         }
 
         return builder.build();

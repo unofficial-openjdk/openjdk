@@ -21,5 +21,6 @@
  * questions.
  */
 
-weak module m4 {
+open module m4 {
+    exports p4;
 }

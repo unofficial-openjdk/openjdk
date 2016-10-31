@@ -663,14 +663,15 @@ public interface Instrumentation {
 
     /**
      * Redefine a module to expand the set of modules that it reads, the set of
-     * packages that it exports, or the services that it uses or provides. This
-     * method facilitates the instrumentation of code in named modules where
-     * that instrumentation requires changes to the set of modules that are read,
-     * the packages that are exported, or the services that are used or provided.
+     * packages that it exports or opens, or the services that it uses or
+     * provides. This method facilitates the instrumentation of code in named
+     * modules where that instrumentation requires changes to the set of modules
+     * that are read, the packages that are exported or open, or the services
+     * that are used or provided.
      *
      * <p> This method cannot reduce the set of modules that a module reads, nor
-     * reduce the set of packages that it exports, nor reduce the set of
-     * services that it uses or provides. This method is a no-op when invoked
+     * reduce the set of packages that it exports or opens, nor reduce the set
+     * of services that it uses or provides. This method is a no-op when invoked
      * to redefine an unnamed module. </p>
      *
      * <p> When expanding the services that a module uses or provides then the
@@ -679,44 +680,45 @@ public interface Instrumentation {
      * does not check if the service type is a member of the module or in a
      * package exported to the module by another module that it reads. </p>
      *
-     * <p> The {@code extraExports} parameter is the map of additional packages to
-     * export. The {@code extraExportsPrivate} parameter is the map of additional
-     * packages to export "private". In both cases, the map key is the
-     * fully-qualified name of the package as defined in section 6.5.3 of
+     * <p> The {@code extraExports} parameter is the map of additional packages
+     * to export. The {@code extraOpens} parameter is the map of additional
+     * packages to open. In both cases, the map key is the fully-qualified name
+     * of the package as defined in section 6.5.3 of
      * <cite>The Java&trade; Language Specification </cite>, for example, {@code
      * "java.lang"}. The map value is the set of modules that the package should
-     * be exported too. If the set is empty then the package is exported
-     * unconditionally. </p>
+     * be exported or opened to. If the set of modules is empty then the module
+     * is not updated to export or open the package to additional modules. </p>
      *
      * <p> The {@code extraProvides} parameter is the additional service providers
      * for the module to provide. The map key is the service type. The map value
-     * is set of implementation types, each of which is a member of the module
-     * and an implementation of the service. </p>
+     * is set of implementation types, each of which is a member of the
+     * module and an implementation of the service. If the set of implementation
+     * types is empty then the module is not updated to provide additional
+     * service providers. </p>
      *
      * <p> This method is safe for concurrent use and so allows multiple agents
      * to instrument and update the same module at around the same time. </p>
      *
      * @param module the module to redefine
-     * @param extraReads the set of additional modules to read
-     * @param extraExports the additional packages to export
-     * @param extraExportsPrivate the additional packages to export "private"
-     * @param extraUses the set of additional services to use
-     * @param extraProvides the additional services to provide
+     * @param extraReads the possibly-empty set of additional modules to read
+     * @param extraExports the possibly-empty additional packages to export
+     * @param extraOpens the possibly-empty additional packages to open
+     * @param extraUses the possibly-empty set of additional services to use
+     * @param extraProvides the possibly-empty additional services to provide
      *
      * @throws IllegalArgumentException
-     *         If {@code extraExports} or {@code extraExportsPrivate} contains
-     *         a key that is not a package in the module; if a value in the
+     *         If {@code extraExports} or {@code extraOpens} contains a key
+     *         that is not a package in the module; if a value in the
      *         {@code extraProvides} map contains a service provider type that
-     *         i snot a member of the module or an implementation of the service
+     *         is not a member of the module or an implementation of the service
      * @throws NullPointerException if any of the arguments are {@code null} or
      *         any of the Sets or Maps contains a {@code null} key or value
-     *
      * @since 9
      */
     void redefineModule(Module module,
                         Set<Module> extraReads,
                         Map<String, Set<Module>> extraExports,
-                        Map<String, Set<Module>> extraExportsPrivate,
+                        Map<String, Set<Module>> extraOpens,
                         Set<Class<?>> extraUses,
                         Map<Class<?>, Set<Class<?>>> extraProvides);
 }

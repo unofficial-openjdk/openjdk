@@ -45,7 +45,7 @@ import java.util.stream.Stream;
  * module. A module reader is also intended to be used by {@code ClassLoader}
  * implementations that load classes and resources from modules. </p>
  *
- * <p> A Resource in a module is identified by a name that is a
+ * <p> A resource in a module is identified by a name that is a
  * '{@code /}'-separated path string. For example, module {@code java.base} may
  * have a resource "{@code java/lang/Object.class}" that, by convention, is the
  * class file for {@code java.lang.Object}. </p>

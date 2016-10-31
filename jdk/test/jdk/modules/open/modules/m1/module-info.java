@@ -20,6 +20,6 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
-weak module m6 {
+open module m1 {
+    exports p;
 }

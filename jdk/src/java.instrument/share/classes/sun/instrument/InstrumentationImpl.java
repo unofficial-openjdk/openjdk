@@ -234,7 +234,7 @@ public class InstrumentationImpl implements Instrumentation {
     public void redefineModule(Module module,
                                Set<Module> extraReads,
                                Map<String, Set<Module>> extraExports,
-                               Map<String, Set<Module>> extraExportsPrivate,
+                               Map<String, Set<Module>> extraOpens,
                                Set<Class<?>> extraUses,
                                Map<Class<?>, Set<Class<?>>> extraProvides)
     {
@@ -246,9 +246,9 @@ public class InstrumentationImpl implements Instrumentation {
         if (extraReads.contains(null))
             throw new NullPointerException("'extraReads' contains null");
 
-        // copy and check exports
-        extraExports = cloneAndCheckExports(module, extraExports);
-        extraExportsPrivate = cloneAndCheckExports(module, extraExportsPrivate);
+        // copy and check exports and opens
+        extraExports = cloneAndCheckSet(module, extraExports);
+        extraOpens = cloneAndCheckSet(module, extraOpens);
 
         // copy and check uses
         extraUses = new HashSet<>(extraUses);
@@ -280,22 +280,14 @@ public class InstrumentationImpl implements Instrumentation {
         for (Map.Entry<String, Set<Module>> e : extraExports.entrySet()) {
             String pkg = e.getKey();
             Set<Module> targets = e.getValue();
-            if (targets.isEmpty()) {
-                Modules.addExportsToAll(module, pkg);
-            } else {
-                targets.forEach(m -> Modules.addExports(module, pkg, m));
-            }
+            targets.forEach(m -> Modules.addExports(module, pkg, m));
         }
 
-        // update exports private
-        for (Map.Entry<String, Set<Module>> e : extraExportsPrivate.entrySet()) {
+        // update opens
+        for (Map.Entry<String, Set<Module>> e : extraOpens.entrySet()) {
             String pkg = e.getKey();
             Set<Module> targets = e.getValue();
-            if (targets.isEmpty()) {
-                Modules.addExportsPrivateToAll(module, pkg);
-            } else {
-                targets.forEach(m -> Modules.addExportsPrivate(module, pkg, m));
-            }
+            targets.forEach(m -> Modules.addOpens(module, pkg, m));
         }
 
         // update uses
@@ -310,14 +302,14 @@ public class InstrumentationImpl implements Instrumentation {
     }
 
     private Map<String, Set<Module>>
-        cloneAndCheckExports(Module module, Map<String, Set<Module>>  exports)
+        cloneAndCheckSet(Module module, Map<String, Set<Module>> set)
     {
-        if (exports.isEmpty())
+        if (set.isEmpty())
             return Collections.emptyMap();
 
         Map<String, Set<Module>> result = new HashMap<>();
         Set<String> packages = Set.of(module.getPackages());
-        for (Map.Entry<String, Set<Module>> e : exports.entrySet()) {
+        for (Map.Entry<String, Set<Module>> e : set.entrySet()) {
             String pkg = e.getKey();
             if (pkg == null)
                 throw new NullPointerException("package cannot be null");

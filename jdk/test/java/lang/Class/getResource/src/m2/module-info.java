@@ -24,5 +24,5 @@
 module m2 {
     exports p2;
     exports p2.impl to m1;
-    exports private p2.resources to m1;
+    opens p2.resources to m1;
 }

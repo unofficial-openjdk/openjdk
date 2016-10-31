@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1511,8 +1511,8 @@ typedef struct jvmtiInterface_1_ {
     const char* pkg_name,
     jobject to_module);
 
-  /*   96 : Add Module Exports Private */
-  jvmtiError (JNICALL *AddModuleExportsPrivate) (jvmtiEnv* env,
+  /*   96 : Add Module Opens */
+  jvmtiError (JNICALL *AddModuleOpens) (jvmtiEnv* env,
     jobject module,
     const char* pkg_name,
     jobject to_module);
@@ -2180,10 +2180,10 @@ struct _jvmtiEnv {
     return functions->AddModuleExports(this, module, pkg_name, to_module);
   }
 
-  jvmtiError AddModuleExportsPrivate(jobject module,
+  jvmtiError AddModuleOpens(jobject module,
             const char* pkg_name,
             jobject to_module) {
-    return functions->AddModuleExportsPrivate(this, module, pkg_name, to_module);
+    return functions->AddModuleOpens(this, module, pkg_name, to_module);
   }
 
   jvmtiError AddModuleUses(jobject module,

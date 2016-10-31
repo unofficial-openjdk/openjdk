@@ -46,9 +46,9 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import jdk.internal.jmod.JmodFile;
 import jdk.internal.misc.JavaLangAccess;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.module.ModuleHashes;
@@ -286,30 +286,31 @@ class ModuleReferences {
      * A ModuleReader for a JMOD file.
      */
     static class JModModuleReader extends SafeCloseModuleReader {
-        private final ZipFile zf;
+        private final JmodFile jf;
         private final URI uri;
 
-        static ZipFile newZipFile(Path path) {
+        static JmodFile newJmodFile(Path path) {
             try {
-                return new ZipFile(path.toFile());
+                return new JmodFile(path);
             } catch (IOException ioe) {
                 throw new UncheckedIOException(ioe);
             }
         }
 
         JModModuleReader(Path path, URI uri) {
-            this.zf = newZipFile(path);
+            this.jf = newJmodFile(path);
             this.uri = uri;
         }
 
-        private ZipEntry getEntry(String name) {
-            return zf.getEntry("classes/" + Objects.requireNonNull(name));
+        private JmodFile.Entry getEntry(String name) {
+            Objects.requireNonNull(name);
+            return jf.getEntry(JmodFile.Section.CLASSES, name);
         }
 
         @Override
         Optional<URI> implFind(String name) {
-            ZipEntry ze = getEntry(name);
-            if (ze != null) {
+            JmodFile.Entry je = getEntry(name);
+            if (je != null) {
                 String encodedPath = ParseUtil.encodePath(name, false);
                 String uris = "jmod:" + uri + "!/" + encodedPath;
                 return Optional.of(URI.create(uris));
@@ -320,9 +321,9 @@ class ModuleReferences {
 
         @Override
         Optional<InputStream> implOpen(String name) throws IOException {
-            ZipEntry ze = getEntry(name);
-            if (ze != null) {
-                return Optional.of(zf.getInputStream(ze));
+            JmodFile.Entry je = getEntry(name);
+            if (je != null) {
+                return Optional.of(jf.getInputStream(je));
             } else {
                 return Optional.empty();
             }
@@ -331,17 +332,16 @@ class ModuleReferences {
         @Override
         Stream<String> implList() throws IOException {
             // take snapshot to avoid async close
-            List<String> names = zf.stream()
-                    .map(ZipEntry::getName)
-                    .filter(e -> e.startsWith("classes/") && !e.endsWith("/"))
-                    .map(e -> e.substring(8))
+            List<String> names = jf.stream()
+                    .filter(e -> e.section() == JmodFile.Section.CLASSES)
+                    .map(JmodFile.Entry::name)
                     .collect(Collectors.toList());
             return names.stream();
         }
 
         @Override
         void implClose() throws IOException {
-            zf.close();
+            jf.close();
         }
     }
 

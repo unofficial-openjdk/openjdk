@@ -31,13 +31,12 @@ import java.lang.reflect.Module;
 import static java.lang.module.ModuleDescriptor.Exports.Modifier.*;
 
 /**
- * Test if m4 is a weak module and p4 is private export that
- * m3 can access.
+ * Test if m4 is an open module and p4 is package that m3 can access
  */
 public class Main {
     public static void main(String... args) throws Exception {
         Module m4 = Foo.class.getModule();
-        if (!m4.isExportedPrivate("p4")) {
+        if (!m4.isOpen("p4")) {
             throw new RuntimeException("m3 can't access p4");
         }
 
@@ -51,28 +50,24 @@ public class Main {
             throw new RuntimeException("unexpected Foo::name value = " + name);
         }
 
-        checkWeakModule();
+        checkOpenModule();
     }
 
-    // check the module descriptor of the weak module m4
-    static void checkWeakModule() {
+    // check the module descriptor of the open module m4
+    static void checkOpenModule() {
         ModuleDescriptor md = Foo.class.getModule().getDescriptor();
         System.out.println(md);
 
-        if (!md.isWeak()) {
-            throw new RuntimeException("m4 is a weak module");
+        if (!md.isOpen()) {
+            throw new RuntimeException("m4 is a open module");
         }
 
         if (md.packages().size() != 1 || !md.packages().contains("p4")) {
             throw new RuntimeException("unexpected m4 packages: " + md.packages());
         }
 
-        if (!md.exports().isEmpty()) {
-            throw new RuntimeException("unexpected m4 exports: " + md.exports());
-        }
-
-        if (!Foo.class.getModule().isExportedPrivate("p4")) {
-            throw new RuntimeException("p4 is not exported-private by m4");
+        if (!md.opens().isEmpty()) {
+            throw new RuntimeException("unexpected m4 opens: " + md.opens());
         }
     }
 

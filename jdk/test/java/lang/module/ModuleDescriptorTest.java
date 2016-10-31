@@ -36,6 +36,7 @@ import java.lang.module.InvalidModuleDescriptorException;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Builder;
 import java.lang.module.ModuleDescriptor.Exports;
+import java.lang.module.ModuleDescriptor.Opens;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Requires.Modifier;
@@ -46,10 +47,8 @@ import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static java.lang.module.ModuleDescriptor.Requires.Modifier.*;
@@ -218,67 +217,30 @@ public class ModuleDescriptorTest {
 
     // exports
 
-    private Set<Exports.Modifier> asModifiers(Set<String> modifiers) {
-        Set<Exports.Modifier> ms = new HashSet<>();
-        for (String modifier : modifiers) {
-            switch (modifier) {
-                case "private" :
-                    ms.add(Exports.Modifier.PRIVATE);
-                    break;
-                default:
-                    throw new Error();
-
-            }
-        }
-        return ms;
+    private Exports exports(Set<Exports.Modifier> mods, String pn) {
+        return ModuleDescriptor.module("foo")
+            .exports(mods, pn)
+            .build()
+            .exports()
+            .iterator()
+            .next();
     }
 
     private Exports exports(String pn) {
+        return exports(Set.of(), pn);
+    }
+
+    private Exports exports(Set<Exports.Modifier> mods, String pn, String target) {
         return ModuleDescriptor.module("foo")
-            .exports(pn)
+            .exports(mods, pn, Set.of(target))
             .build()
             .exports()
             .iterator()
             .next();
-    }
-
-    private Exports exports(Set<String> mods, String pn) {
-        Set<Exports.Modifier> ms = asModifiers(mods);
-        return ModuleDescriptor.module("foo")
-                .exports(ms, pn)
-                .build()
-                .exports()
-                .iterator()
-                .next();
     }
 
     private Exports exports(String pn, String target) {
-        return ModuleDescriptor.module("foo")
-            .exports(pn, Set.of(target))
-            .build()
-            .exports()
-            .iterator()
-            .next();
-    }
-
-    private Exports exports(Set<String> mods, String pn, Set<String> targets) {
-        Set<Exports.Modifier> ms = asModifiers(mods);
-        return ModuleDescriptor.module("foo")
-                .exports(ms, pn, targets)
-                .build()
-                .exports()
-                .iterator()
-                .next();
-    }
-
-    private Exports exports(Set<String> mods, String pn, String target) {
-        Set<Exports.Modifier> ms = asModifiers(mods);
-        return ModuleDescriptor.module("foo")
-                .exports(ms, pn, Set.of(target))
-                .build()
-                .exports()
-                .iterator()
-                .next();
+        return exports(Set.of(), pn, target);
     }
 
 
@@ -329,26 +291,25 @@ public class ModuleDescriptorTest {
     }
 
     public void testExportsToAllWithModifier() {
-        Exports e = exports(Set.of("private"), "p");
+        Exports e = exports(Set.of(Exports.Modifier.SYNTHETIC), "p");
         assertEquals(e, e);
         assertTrue(e.modifiers().size() == 1);
-        assertTrue(e.modifiers().contains(Exports.Modifier.PRIVATE));
+        assertTrue(e.modifiers().contains(Exports.Modifier.SYNTHETIC));
         assertEquals(e.source(), "p");
         assertFalse(e.isQualified());
         assertTrue(e.targets().isEmpty());
     }
 
     public void testExportsToTargetWithModifier() {
-        Exports e = exports(Set.of("private"), "p", Set.of("bar"));
+        Exports e = exports(Set.of(Exports.Modifier.SYNTHETIC), "p", "bar");
         assertEquals(e, e);
         assertTrue(e.modifiers().size() == 1);
-        assertTrue(e.modifiers().contains(Exports.Modifier.PRIVATE));
+        assertTrue(e.modifiers().contains(Exports.Modifier.SYNTHETIC));
         assertEquals(e.source(), "p");
         assertTrue(e.isQualified());
         assertTrue(e.targets().size() == 1);
         assertTrue(e.targets().contains("bar"));
     }
-
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testExportsWithDuplicate1() {
@@ -400,8 +361,8 @@ public class ModuleDescriptorTest {
         assertEquals(e1, e2);
         assertTrue(e1.hashCode() == e2.hashCode());
 
-        e1 = exports(Set.of("private"), "p");
-        e2 = exports(Set.of("private"), "p");
+        e1 = exports(Set.of(Exports.Modifier.SYNTHETIC), "p");
+        e2 = exports(Set.of(Exports.Modifier.SYNTHETIC), "p");
         assertEquals(e1, e2);
         assertTrue(e1.hashCode() == e2.hashCode());
 
@@ -409,7 +370,7 @@ public class ModuleDescriptorTest {
         e2 = exports("q");
         assertNotEquals(e1, e2);
 
-        e1 = exports(Set.of("private"), "p");
+        e1 = exports(Set.of(Exports.Modifier.SYNTHETIC), "p");
         e2 = exports(Set.of(), "p");
         assertNotEquals(e1, e2);
     }
@@ -427,77 +388,180 @@ public class ModuleDescriptorTest {
     }
 
 
-    // overlapping exports
+    // opens
 
-    @DataProvider(name = "exportsAllowed")
-    public Object[][] exportsAllowed() {
-        return new Object[][]{
-
-            { exports("p"), exports(Set.of("private"), "p", "m") },
-
-            { exports("p", "m1"), exports(Set.of("private"), "p", "m2") },
-
-        };
-    }
-
-    @DataProvider(name = "exportsNotAllowed")
-    public Object[][] exportsNotAllowed() {
-        return new Object[][]{
-
-            { exports("p"), exports("p") },
-            { exports("p"), exports("p", "m") },
-
-            { exports(Set.of("private"), "p"), exports(Set.of("private"), "p") },
-            { exports(Set.of("private"), "p"), exports(Set.of("private"), "p", "m") },
-
-            { exports("p", "m"), exports("p", "m") },
-            { exports("p", "m"), exports(Set.of("private"), "p", "m")},
-
-            { exports(Set.of("private"), "p", "m"), exports(Set.of("private"), "p", "m")},
-
-            { exports("p", "m1"), exports("p", "m2") },
-
-            { exports(Set.of("private"), "p", "m1"), exports(Set.of("private"), "p", "m2")},
-
-        };
-    }
-
-    @Test(dataProvider = "exportsAllowed")
-    public void testOverlappingExports1(Exports e1, Exports e2) {
-        assertEquals(e1.source(), e2.source());
-
-        Set<Exports> exports = ModuleDescriptor.module("foo")
-                .exports(e1)
-                .exports(e2)
+    private Opens opens(Set<Opens.Modifier> mods, String pn) {
+        return ModuleDescriptor.module("foo")
+                .opens(mods, pn)
                 .build()
-                .exports();
-
-        assertTrue(exports.size() == 2);
-        Iterator<Exports> iterator = exports.iterator();
-        Exports e3 = iterator.next();
-        Exports e4 = iterator.next();
-        assertEquals(e3.source(), e1.source());
-        assertEquals(e4.source(), e1.source());
+                .opens()
+                .iterator()
+                .next();
     }
 
-    @Test(dataProvider = "exportsAllowed")
-    public void testOverlappingExports2(Exports e1, Exports e2) {
-        // reverse
-        testOverlappingExports1(e2, e1);
+    private Opens opens(String pn) {
+        return opens(Set.of(), pn);
     }
 
-    @Test(dataProvider = "exportsNotAllowed",
-          expectedExceptions = IllegalStateException.class )
-    public void testOverlappingExports3(Exports e1, Exports e2) {
-        assertEquals(e1.source(), e2.source());
-        ModuleDescriptor.module("foo").exports(e1).exports(e2);
+    private Opens opens(Set<Opens.Modifier> mods, String pn, String target) {
+        return ModuleDescriptor.module("foo")
+                .opens(mods, pn, Set.of(target))
+                .build()
+                .opens()
+                .iterator()
+                .next();
     }
 
-    @Test(dataProvider = "exportsNotAllowed",
-          expectedExceptions = IllegalStateException.class )
-    public void testOverlappingExports4(Exports e1, Exports e2) {
-        // reverse
-        testOverlappingExports3(e2, e1);
+    private Opens opens(String pn, String target) {
+        return opens(Set.of(), pn, target);
+    }
+
+    public void testOpensOpens() {
+        Opens o1 = opens("p");
+        ModuleDescriptor descriptor = ModuleDescriptor.module("m").opens(o1).build();
+        Opens o2 = descriptor.opens().iterator().next();
+        assertEquals(o1, o2);
+    }
+
+    public void testOpensToAll() {
+        Opens o = opens("p");
+        assertEquals(o, o);
+        assertTrue(o.modifiers().isEmpty());
+        assertEquals(o.source(), "p");
+        assertFalse(o.isQualified());
+        assertTrue(o.targets().isEmpty());
+    }
+
+
+    public void testOpensToTarget() {
+        Opens o = opens("p", "bar");
+        assertEquals(o, o);
+        assertTrue(o.modifiers().isEmpty());
+        assertEquals(o.source(), "p");
+        assertTrue(o.isQualified());
+        assertTrue(o.targets().size() == 1);
+        assertTrue(o.targets().contains("bar"));
+    }
+
+    public void testOpensToTargets() {
+        Set<String> targets = new HashSet<>();
+        targets.add("bar");
+        targets.add("gus");
+        Opens o = ModuleDescriptor.module("foo")
+                .opens("p", targets)
+                .build()
+                .opens()
+                .iterator()
+                .next();
+        assertEquals(o, o);
+        assertTrue(o.modifiers().isEmpty());
+        assertEquals(o.source(), "p");
+        assertTrue(o.isQualified());
+        assertTrue(o.targets().size() == 2);
+        assertTrue(o.targets().contains("bar"));
+        assertTrue(o.targets().contains("gus"));
+    }
+
+    /*
+
+    public void testOpensToAllWithModifier() {
+        Exports e = exports(Set.of(Exports.Modifier.SYNTHETIC), "p");
+        assertEquals(e, e);
+        assertTrue(e.modifiers().size() == 1);
+        assertTrue(e.modifiers().contains(Exports.Modifier.SYNTHETIC));
+        assertEquals(e.source(), "p");
+        assertFalse(e.isQualified());
+        assertTrue(e.targets().isEmpty());
+    }
+
+    public void testOpensToTargetWithModifier() {
+        Exports e = exports(Set.of(Exports.Modifier.SYNTHETIC), "p", Set.of("bar"));
+        assertEquals(e, e);
+        assertTrue(e.modifiers().size() == 1);
+        assertTrue(e.modifiers().contains(Exports.Modifier.SYNTHETIC));
+        assertEquals(e.source(), "p");
+        assertTrue(e.isQualified());
+        assertTrue(e.targets().size() == 1);
+        assertTrue(e.targets().contains("bar"));
+    }
+
+
+    */
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testOpensWithDuplicate1() {
+        Opens o = opens("p");
+        ModuleDescriptor.module("foo").opens(o).opens(o);
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testOpensWithDuplicate2() {
+        ModuleDescriptor.module("foo").opens("p").opens("p");
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testOpensOnContainedPackage() {
+        ModuleDescriptor.module("foo").contains("p").opens("p");
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testOpensToTargetOnContainedPackage() {
+        ModuleDescriptor.module("foo").contains("p").opens("p", Set.of("bar"));
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class )
+    public void testOpensWithEmptySet() {
+        ModuleDescriptor.module("foo").opens("p", Collections.emptySet());
+    }
+
+    @Test(dataProvider = "invalidjavaidentifiers",
+            expectedExceptions = IllegalArgumentException.class )
+    public void testOpensWithBadName(String pn, String ignore) {
+        ModuleDescriptor.module("foo").opens(pn);
+    }
+
+    @Test(expectedExceptions = NullPointerException.class )
+    public void testOpensWithNullExports() {
+        ModuleDescriptor.module("foo").opens((Opens) null);
+    }
+
+    @Test(expectedExceptions = NullPointerException.class )
+    public void testOpensWithNullTargets() {
+        ModuleDescriptor.module("foo").opens("p", (Set<String>) null);
+    }
+
+    public void testOpensEqualsAndHashCode() {
+        Opens o1, o2;
+
+        o1 = opens("p");
+        o2 = opens("p");
+        assertEquals(o1, o2);
+        assertTrue(o1.hashCode() == o1.hashCode());
+
+        o1 = opens(Set.of(Opens.Modifier.SYNTHETIC), "p");
+        o2 = opens(Set.of(Opens.Modifier.SYNTHETIC), "p");
+        assertEquals(o1, o2);
+        assertTrue(o1.hashCode() == o2.hashCode());
+
+        o1 = opens("p");
+        o2 = opens("q");
+        assertNotEquals(o1, o2);
+
+        o1 = opens(Set.of(Opens.Modifier.SYNTHETIC), "p");
+        o2 = opens(Set.of(), "p");
+        assertNotEquals(o1, o2);
+    }
+
+    public void testOpensToString() {
+        String s = ModuleDescriptor.module("foo")
+                .opens("p1", Set.of("bar"))
+                .build()
+                .opens()
+                .iterator()
+                .next()
+                .toString();
+        assertTrue(s.contains("p1"));
+        assertTrue(s.contains("bar"));
     }
 
 
@@ -733,39 +797,33 @@ public class ModuleDescriptorTest {
     }
 
 
-    // weak modules
+    // open modules
 
-    public void testWeakModules() {
-        ModuleDescriptor descriptor = ModuleDescriptor.weakModule("m")
+    public void testOpenModules() {
+        ModuleDescriptor descriptor = ModuleDescriptor.openModule("m")
                 .requires("java.base")
                 .contains("p")
                 .build();
-        assertTrue(descriptor.isWeak());
+        assertTrue(descriptor.isOpen());
         assertTrue(descriptor.packages().size() == 1);
         assertTrue(descriptor.packages().contains("p"));
         assertTrue(descriptor.exports().isEmpty());
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
-    public void testExportsOnWeakModule1() {
-        ModuleDescriptor.weakModule("foo").exports("p");
+    public void testOpensOnWeakModule1() {
+        ModuleDescriptor.openModule("foo").opens("p");
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
-    public void testExportsOnWeakModule2() {
-        ModuleDescriptor.weakModule("foo").exports("p", Set.of("bar"));
+    public void testOpensOnWeakModule2() {
+        ModuleDescriptor.openModule("foo").opens("p", Set.of("bar"));
     }
 
-    @Test(expectedExceptions = IllegalStateException.class)
-    public void testExportsOnWeakModule3() {
-        Exports e = exports("p");
-        ModuleDescriptor.weakModule("foo").exports(e);
-    }
-
-    public void testIsWeak() {
-        assertFalse(ModuleDescriptor.module("m").build().isWeak());
-        assertFalse(ModuleDescriptor.automaticModule("m").build().isWeak());
-        assertTrue(ModuleDescriptor.weakModule("m").build().isWeak());
+    public void testIsOpen() {
+        assertFalse(ModuleDescriptor.module("m").build().isOpen());
+        assertFalse(ModuleDescriptor.automaticModule("m").build().isOpen());
+        assertTrue(ModuleDescriptor.openModule("m").build().isOpen());
     }
 
 
@@ -775,7 +833,7 @@ public class ModuleDescriptorTest {
         ModuleDescriptor descriptor1 = ModuleDescriptor.module("foo").build();
         assertFalse(descriptor1.isAutomatic());
 
-        ModuleDescriptor descriptor2 = ModuleDescriptor.weakModule("foo").build();
+        ModuleDescriptor descriptor2 = ModuleDescriptor.openModule("foo").build();
         assertFalse(descriptor2.isAutomatic());
 
         ModuleDescriptor descriptor3 = ModuleDescriptor.automaticModule("foo").build();
@@ -789,7 +847,7 @@ public class ModuleDescriptorTest {
         ModuleDescriptor descriptor1 = ModuleDescriptor.module("foo").build();
         assertFalse(descriptor1.isSynthetic());
 
-        ModuleDescriptor descriptor2 = ModuleDescriptor.weakModule("foo").build();
+        ModuleDescriptor descriptor2 = ModuleDescriptor.openModule("foo").build();
         assertFalse(descriptor2.isSynthetic());
 
         ModuleDescriptor descriptor3 = ModuleDescriptor.automaticModule("foo").build();

@@ -112,10 +112,10 @@ public class UserModuleTest {
     }
 
     /*
-     * Test the image created when linking with a weak module
+     * Test the image created when linking with an open module
     */
     @Test
-    public void testWeakModule() throws Throwable {
+    public void testOpenModule() throws Throwable {
         if (!hasJmods()) return;
 
         Path java = IMAGE.resolve("bin").resolve("java");

@@ -55,13 +55,13 @@ public class RedefineModuleTest {
     static void redefineModule(Module module,
                                Set<Module> extraReads,
                                Map<String, Set<Module>> extraExports,
-                               Map<String, Set<Module>> extraExportsPrivate,
+                               Map<String, Set<Module>> extraOpens,
                                Set<Class<?>> extraUses,
                                Map<Class<?>, Set<Class<?>>> extraProvides) {
         RedefineModuleAgent.redefineModule(module,
                                            extraReads,
                                            extraExports,
-                                           extraExportsPrivate,
+                                           extraOpens,
                                            extraUses,
                                            extraProvides);
     }
@@ -100,45 +100,29 @@ public class RedefineModuleTest {
         redefineModule(baseModule, Set.of(), extraExports, Map.of(), Set.of(), Map.of());
         assertFalse(baseModule.isExported(pkg));
         assertTrue(baseModule.isExported(pkg, thisModule));
-        assertFalse(baseModule.isExportedPrivate(pkg));
-        assertFalse(baseModule.isExportedPrivate(pkg, thisModule));
-
-        // update java.base to export jdk.internal.misc unconditionally
-        extraExports = Map.of(pkg, Set.of());
-        redefineModule(baseModule, Set.of(), extraExports, Map.of(), Set.of(), Map.of());
-        assertTrue(baseModule.isExported(pkg));
-        assertTrue(baseModule.isExported(pkg, thisModule));
-        assertFalse(baseModule.isExportedPrivate(pkg));
-        assertFalse(baseModule.isExportedPrivate(pkg, thisModule));
+        assertFalse(baseModule.isOpen(pkg));
+        assertFalse(baseModule.isOpen(pkg, thisModule));
     }
 
     /**
-     * Use redefineModule to update java.base to export jdk.internal.loader
+     * Use redefineModule to update java.base to open jdk.internal.loader
      */
-    public void testAddExportsPrivate() {
+    public void testAddOpens() {
         Module baseModule = Object.class.getModule();
         Module thisModule = this.getClass().getClassLoader().getUnnamedModule();
         String pkg = "jdk.internal.loader";
 
         // pre-conditions
-        assertFalse(baseModule.isExportedPrivate(pkg));
-        assertFalse(baseModule.isExportedPrivate(pkg, thisModule));
+        assertFalse(baseModule.isOpen(pkg));
+        assertFalse(baseModule.isOpen(pkg, thisModule));
 
-        // update java.base to export private jdk.internal.loader to an unnamed module
+        // update java.base to open dk.internal.loader to an unnamed module
         Map<String, Set<Module>> extraExports = Map.of(pkg, Set.of(thisModule));
         redefineModule(baseModule, Set.of(), Map.of(), extraExports, Set.of(), Map.of());
         assertFalse(baseModule.isExported(pkg));
         assertTrue(baseModule.isExported(pkg, thisModule));
-        assertFalse(baseModule.isExportedPrivate(pkg));
-        assertTrue(baseModule.isExportedPrivate(pkg, thisModule));
-
-        // update java.base to export private jdk.internal.misc unconditionally
-        extraExports = Map.of(pkg, Set.of());
-        redefineModule(baseModule, Set.of(), Map.of(), extraExports, Set.of(), Map.of());
-        assertTrue(baseModule.isExported(pkg));
-        assertTrue(baseModule.isExported(pkg, thisModule));
-        assertTrue(baseModule.isExportedPrivate(pkg));
-        assertTrue(baseModule.isExportedPrivate(pkg, thisModule));
+        assertFalse(baseModule.isOpen(pkg));
+        assertTrue(baseModule.isOpen(pkg, thisModule));
     }
 
     /**

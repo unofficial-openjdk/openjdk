@@ -275,18 +275,6 @@ public final class Loader extends SecureClassLoader {
                         }
                     }
                 }
-
-                // weak modules export all packages to the target module
-                if (descriptor.isWeak()) {
-                    ClassLoader ldr = loader;
-                    descriptor.packages().forEach(pn -> {
-                        ClassLoader l = remotePackageToLoader.putIfAbsent(pn, ldr);
-                        if (l != null && l != ldr) {
-                            throw new IllegalArgumentException("Package "
-                                    + pn + " cannot be imported from multiple loaders");
-                        }
-                    });
-                }
             }
 
         }
@@ -362,7 +350,7 @@ public final class Loader extends SecureClassLoader {
         String pn = ResourceHelper.getPackageName(name);
         LoadedModule module = localPackageToModule.get(pn);
         if (module != null) {
-            if (name.endsWith(".class") || isExportedPrivate(module.mref(), pn)) {
+            if (name.endsWith(".class") || isOpen(module.mref(), pn)) {
                 try {
                     url = findResource(module.name(), name);
                 } catch (IOException ioe) {
@@ -389,7 +377,7 @@ public final class Loader extends SecureClassLoader {
         String pn = ResourceHelper.getPackageName(name);
         LoadedModule module = localPackageToModule.get(pn);
         if (module != null) {
-            if (name.endsWith(".class") || isExportedPrivate(module.mref(), pn)) {
+            if (name.endsWith(".class") || isOpen(module.mref(), pn)) {
                 try {
                     URL url = findResource(module.name(), name);
                     if (url != null)
@@ -636,21 +624,20 @@ public final class Loader extends SecureClassLoader {
     }
 
     /**
-     * Returns true if the given module exports the given package
+     * Returns true if the given module opens the given package
      * unconditionally.
      *
-     * @implNote This method currently iterates over each of the module
-     * exports. This will be replaced once the ModuleDescriptor.Exports
+     * @implNote This method currently iterates over each of the open
+     * packages. This will be replaced once the ModuleDescriptor.Opens
      * API is updated.
      */
-    private boolean isExportedPrivate(ModuleReference mref, String pn) {
+    private boolean isOpen(ModuleReference mref, String pn) {
         ModuleDescriptor descriptor = mref.descriptor();
-        if (descriptor.isWeak())
+        if (descriptor.isOpen())
             return true;
-        for (ModuleDescriptor.Exports e : descriptor.exports()) {
-            String source = e.source();
-            if (!e.isQualified() && source.equals(pn)
-                    && e.modifiers().contains(Exports.Modifier.PRIVATE)) {
+        for (ModuleDescriptor.Opens opens : descriptor.opens()) {
+            String source = opens.source();
+            if (!opens.isQualified() && source.equals(pn)) {
                 return true;
             }
         }

@@ -21,11 +21,15 @@
  * questions.
  */
 
-package q;
+package jdk.test.internal.resources;
 
-public class Hello {
-    public static void hello() {
-        System.out.println("Hello!");
+import java.util.ListResourceBundle;
+
+public class Foo extends ListResourceBundle {
+    @Override
+    public Object[][] getContents() {
+        return new Object[][] {
+            { "key", "root: message" }
+        };
     }
-
 }

@@ -186,10 +186,15 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
         }
         for (Exports e : md.exports()) {
             String source = e.source();
-            if (source != null)
-                Checks.requirePackageName(e.source());
+            Checks.requirePackageName(e.source());
             if (e.isQualified())
                 e.targets().forEach(Checks::requireModuleName);
+        }
+        for (Opens opens : md.opens()) {
+            String source = opens.source();
+            Checks.requirePackageName(opens.source());
+            if (opens.isQualified())
+                opens.targets().forEach(Checks::requireModuleName);
         }
         for (Map.Entry<String, Provides> e : md.provides().entrySet()) {
             String service = e.getKey();
@@ -235,6 +240,8 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
             "java/lang/module/ModuleDescriptor$Requires$Modifier";
         private static final String EXPORTS_MODIFIER_CLASSNAME =
             "java/lang/module/ModuleDescriptor$Exports$Modifier";
+        private static final String OPENS_MODIFIER_CLASSNAME =
+            "java/lang/module/ModuleDescriptor$Opens$Modifier";
 
         // static variables in SystemModules class
         private static final String MODULE_NAMES = "MODULE_NAMES";
@@ -356,6 +363,12 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                 dedupSetBuilder.exportsModifiers(e.modifiers());
             }
 
+            // opens
+            for (Opens opens : md.opens()) {
+                dedupSetBuilder.stringSet(opens.targets());
+                dedupSetBuilder.opensModifiers(opens.modifiers());
+            }
+
             // provides
             for (Provides p : md.provides().values()) {
                 dedupSetBuilder.stringSet(p.providers(),
@@ -425,18 +438,25 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
             static final String BUILDER_TYPE = "Ljdk/internal/module/Builder;";
             static final String EXPORTS_TYPE =
                 "Ljava/lang/module/ModuleDescriptor$Exports;";
+            static final String OPENS_TYPE =
+                "Ljava/lang/module/ModuleDescriptor$Opens;";
             static final String PROVIDES_TYPE =
                 "Ljava/lang/module/ModuleDescriptor$Provides;";
             static final String REQUIRES_TYPE =
                 "Ljava/lang/module/ModuleDescriptor$Requires;";
 
-            // method signature for static Builder::newExports,
+            // method signature for static Builder::newExports, newOpens,
             // newProvides, newRequires methods
             static final String EXPORTS_MODIFIER_SET_STRING_SET_SIG =
                 "(Ljava/util/Set;Ljava/lang/String;Ljava/util/Set;)"
                     + EXPORTS_TYPE;
             static final String EXPORTS_MODIFIER_SET_STRING_SIG =
                 "(Ljava/util/Set;Ljava/lang/String;)" + EXPORTS_TYPE;
+            static final String OPENS_MODIFIER_SET_STRING_SET_SIG =
+                "(Ljava/util/Set;Ljava/lang/String;Ljava/util/Set;)"
+                    + OPENS_TYPE;
+            static final String OPENS_MODIFIER_SET_STRING_SIG =
+                "(Ljava/util/Set;Ljava/lang/String;)" + OPENS_TYPE;
             static final String PROVIDES_STRING_SET_SIG =
                 "(Ljava/lang/String;Ljava/util/Set;)" + PROVIDES_TYPE;
             static final String REQUIRES_SET_STRING_SIG =
@@ -446,6 +466,8 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
             // return this Builder instance
             static final String EXPORTS_ARRAY_SIG =
                 "([" + EXPORTS_TYPE + ")" + BUILDER_TYPE;
+            static final String OPENS_ARRAY_SIG =
+                "([" + OPENS_TYPE + ")" + BUILDER_TYPE;
             static final String PROVIDES_ARRAY_SIG =
                 "([" + PROVIDES_TYPE + ")" + BUILDER_TYPE;
             static final String REQUIRES_ARRAY_SIG =
@@ -474,6 +496,9 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
 
                 // exports
                 exports(md.exports());
+
+                // opens
+                opens(md.opens());
 
                 // uses
                 uses(md.uses());
@@ -508,10 +533,10 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                 mv.visitVarInsn(ASTORE, BUILDER_VAR);
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
 
-                if (md.isWeak()) {
-                    setModuleBit("weak", true);
+                if (md.isOpen()) {
+                    setModuleBit("open", true);
                 }
-                if (md.isAutomatic()) {
+                if (md.isAutomatic()) {                 // check this, should have no automatic modules
                     setModuleBit("automatic", true);
                 }
                 if (md.isSynthetic()) {
@@ -632,6 +657,60 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                     mv.visitLdcInsn(pn);
                     mv.visitMethodInsn(INVOKESTATIC, MODULE_DESCRIPTOR_BUILDER,
                         "newExports", EXPORTS_MODIFIER_SET_STRING_SIG, false);
+                }
+            }
+
+
+            /**
+             * Call Builder::newOpens to create Opens instances and
+             * then pass it to the builder by calling:
+             *      Builder.opens(Opens[])
+             *
+             */
+            void opens(Set<Opens> opens) {
+                mv.visitVarInsn(ALOAD, BUILDER_VAR);
+                pushInt(opens.size());
+                mv.visitTypeInsn(ANEWARRAY, "java/lang/module/ModuleDescriptor$Opens");
+                int arrayIndex = 0;
+                for (Opens open : opens) {
+                    mv.visitInsn(DUP);    // arrayref
+                    pushInt(arrayIndex++);
+                    newOpens(open.modifiers(), open.source(), open.targets());
+                    mv.visitInsn(AASTORE);
+                }
+                mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
+                        "opens", OPENS_ARRAY_SIG, false);
+            }
+
+            /*
+             * Invoke
+             *     Builder.newOpens(Set<Opens.Modifier> ms, String pn,
+             *                        Set<String> targets)
+             * or
+             *     Builder.newOpens(Set<Opens.Modifier> ms, String pn)
+             *
+             * Set<String> targets = new HashSet<>();
+             * targets.add(t);
+             * :
+             * :
+             *
+             * Set<Modifier> mods = ...
+             * Builder.newOpens(mods, pn, targets);
+             */
+            void newOpens(Set<Opens.Modifier> ms, String pn, Set<String> targets) {
+                int modifiersSetIndex = dedupSetBuilder.indexOfOpensModifiers(ms);
+                if (!targets.isEmpty()) {
+                    int stringSetIndex = dedupSetBuilder.indexOfStringSet(targets);
+                    mv.visitVarInsn(ALOAD, modifiersSetIndex);
+                    mv.visitLdcInsn(pn);
+                    mv.visitVarInsn(ALOAD, stringSetIndex);
+                    mv.visitMethodInsn(INVOKESTATIC, MODULE_DESCRIPTOR_BUILDER,
+                            "newOpens", OPENS_MODIFIER_SET_STRING_SET_SIG, false);
+                } else {
+                    mv.visitVarInsn(ALOAD, modifiersSetIndex);
+                    mv.visitLdcInsn(pn);
+                    mv.visitMethodInsn(INVOKESTATIC, MODULE_DESCRIPTOR_BUILDER,
+                            "newOpens", OPENS_MODIFIER_SET_STRING_SIG, false);
                 }
             }
 
@@ -761,6 +840,11 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
             final Map<Set<Exports.Modifier>, EnumSetBuilder<Exports.Modifier>>
                 exportsModifiersSets = new HashMap<>();
 
+            // map Set<Opens.Modifier> to a specialized builder to allow them to be
+            // deduplicated as they are requested
+            final Map<Set<Opens.Modifier>, EnumSetBuilder<Opens.Modifier>>
+                opensModifiersSets = new HashMap<>();
+
             private final int stringSetVar;
             private final int enumSetVar;
             private final IntSupplier localVarSupplier;
@@ -795,8 +879,18 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
              */
             void exportsModifiers(Set<Exports.Modifier> mods) {
                 exportsModifiersSets.computeIfAbsent(mods, s ->
-                    new EnumSetBuilder<>(s, EXPORTS_MODIFIER_CLASSNAME,
-                                         enumSetVar, localVarSupplier)
+                                new EnumSetBuilder<>(s, EXPORTS_MODIFIER_CLASSNAME,
+                                        enumSetVar, localVarSupplier)
+                ).increment();
+            }
+
+            /*
+             * Add the given set of Opens.Modifiers
+             */
+            void opensModifiers(Set<Opens.Modifier> mods) {
+                opensModifiersSets.computeIfAbsent(mods, s ->
+                                new EnumSetBuilder<>(s, OPENS_MODIFIER_CLASSNAME,
+                                        enumSetVar, localVarSupplier)
                 ).increment();
             }
 
@@ -825,6 +919,15 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
             int indexOfExportsModifiers(Set<Exports.Modifier> mods) {
                 return exportsModifiersSets.get(mods).build();
             }
+
+            /**
+             * Retrieve the index to the given set of Opens.Modifier.
+             * Emit code to generate it when EnumSetBuilder::build is called.
+             */
+            int indexOfOpensModifiers(Set<Opens.Modifier> mods) {
+                return opensModifiersSets.get(mods).build();
+            }
+
 
             /*
              * Retrieve the index to the given set of Requires.Modifier.
