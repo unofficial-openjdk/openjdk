@@ -569,6 +569,7 @@ IsModuleOption(const char* name) {
            JLI_StrCmp(name, "--add-modules") == 0 ||
            JLI_StrCmp(name, "--limit-modules") == 0 ||
            JLI_StrCmp(name, "--add-exports") == 0 ||
+           JLI_StrCmp(name, "--add-opens") == 0 ||
            JLI_StrCmp(name, "--add-exports-private") == 0 ||
            JLI_StrCmp(name, "--add-reads") == 0 ||
            JLI_StrCmp(name, "--patch-module") == 0;
@@ -1296,6 +1297,7 @@ ParseArguments(int *pargc, char ***pargv,
             } else if (JLI_StrCmp(arg, "--add-modules") == 0 ||
                        JLI_StrCmp(arg, "--limit-modules") == 0 ||
                        JLI_StrCmp(arg, "--add-exports") == 0 ||
+                       JLI_StrCmp(arg, "--add-opens") == 0 ||
                        JLI_StrCmp(arg, "--add-exports-private") == 0 ||
                        JLI_StrCmp(arg, "--add-reads") == 0 ||
                        JLI_StrCmp(arg, "--patch-module") == 0) {

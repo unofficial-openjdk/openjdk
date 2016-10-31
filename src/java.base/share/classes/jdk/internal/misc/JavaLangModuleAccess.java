@@ -31,6 +31,7 @@ import jdk.internal.module.ModuleHashes;
 
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
+import java.lang.module.ModuleDescriptor.Opens;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Version;
@@ -52,14 +53,20 @@ import java.util.function.Supplier;
 public interface JavaLangModuleAccess {
 
     /**
-     * Creates a new builder with the given module name.
+     * Creates a builder for building a module with the given module name.
      *
-     * @param weak
-     *        Indicates whether the module is weak
      * @param strict
      *        Indicates whether module names are checked or not
      */
-    ModuleDescriptor.Builder newBuilder(String mn, boolean weak, boolean strict);
+    ModuleDescriptor.Builder newModuleBuilder(String mn, boolean strict);
+
+    /**
+     * Creates a builder for building an open module with the given module name.
+     *
+     * @param strict
+     *        Indicates whether module names are checked or not
+     */
+    ModuleDescriptor.Builder newOpenModuleBuilder(String mn, boolean strict);
 
     /**
      * Returns a {@code ModuleDescriptor.Requires} of the given modifiers
@@ -83,6 +90,18 @@ public interface JavaLangModuleAccess {
                        Set<String> targets);
 
     /**
+     * Returns an unqualified {@code ModuleDescriptor.Opens}
+     * of the given modifiers and package name source.
+     */
+    Opens newOpens(Set<Opens.Modifier> ms, String source);
+
+    /**
+     * Returns a qualified {@code ModuleDescriptor.Opens}
+     * of the given modifiers, package name source and targets.
+     */
+    Opens newOpens(Set<Opens.Modifier> ms, String source, Set<String> targets);
+
+    /**
      * Returns a {@code ModuleDescriptor.Provides}
      * of the given service name and providers.
      */
@@ -102,12 +121,13 @@ public interface JavaLangModuleAccess {
      * Returns a new {@code ModuleDescriptor} instance.
      */
     ModuleDescriptor newModuleDescriptor(String name,
-                                         boolean weak,
+                                         boolean open,
                                          boolean automatic,
                                          boolean synthetic,
                                          Set<Requires> requires,
                                          Set<String> uses,
                                          Set<Exports> exports,
+                                         Set<Opens> opens,
                                          Map<String, Provides> provides,
                                          Version version,
                                          String mainClass,

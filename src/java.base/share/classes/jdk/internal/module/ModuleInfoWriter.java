@@ -59,7 +59,6 @@ public final class ModuleInfoWriter {
         // for tests: write the Packages attribute when there are non-exported packages
         long nExportedPackages = md.exports().stream()
                 .map(ModuleDescriptor.Exports::source)
-                .distinct()
                 .count();
         if (md.packages().size() > nExportedPackages)
             cw.visitAttribute(new PackagesAttribute(md.packages()));

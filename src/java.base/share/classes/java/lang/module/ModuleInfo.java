@@ -34,10 +34,10 @@ import java.io.UncheckedIOException;
 import java.lang.module.ModuleDescriptor.Builder;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Exports;
+import java.lang.module.ModuleDescriptor.Opens;
 import java.nio.ByteBuffer;
 import java.nio.BufferUnderflowException;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -267,7 +267,7 @@ final class ModuleInfo {
             usedPackageFinder = true;
         }
         if (packages != null) {
-            for (String pn : builder.exportedPackages()) {
+            for (String pn : builder.exportedAndOpenPackages()) {
                 if (!packages.contains(pn)) {
                     String tail;
                     if (usedPackageFinder) {
@@ -275,7 +275,7 @@ final class ModuleInfo {
                     } else {
                         tail = " missing from Packages attribute";
                     }
-                    throw invalidModuleDescriptor("Exported package " + pn + tail);
+                    throw invalidModuleDescriptor("Package " + pn + tail);
                 }
                 packages.remove(pn);
             }
@@ -307,9 +307,9 @@ final class ModuleInfo {
         Builder builder = new ModuleDescriptor.Builder(mn, /*strict*/ false);
 
         int module_flags = in.readUnsignedShort();
-        boolean weak = ((module_flags & ACC_WEAK) != 0);
-        if (weak)
-            builder.weak(true);
+        boolean open = ((module_flags & ACC_OPEN) != 0);
+        if (open)
+            builder.open(true);
         if ((module_flags & ACC_SYNTHETIC) != 0)
             builder.synthetic(true);
 
@@ -349,10 +349,6 @@ final class ModuleInfo {
 
         int exports_count = in.readUnsignedShort();
         if (exports_count > 0) {
-            if (weak) {
-                throw invalidModuleDescriptor("The exports table for a weak"
-                                              + " module must be 0 length");
-            }
             for (int i=0; i<exports_count; i++) {
                 int index = in.readUnsignedShort();
                 String pkg = cpool.getUtf8(index).replace('/', '.');
@@ -363,8 +359,6 @@ final class ModuleInfo {
                     mods = Collections.emptySet();
                 } else {
                     mods = new HashSet<>();
-                    if ((flags & ACC_REFLECTION) != 0)
-                        mods.add(Exports.Modifier.PRIVATE);
                     if ((flags & ACC_SYNTHETIC) != 0)
                         mods.add(Exports.Modifier.SYNTHETIC);
                     if ((flags & ACC_MANDATED) != 0)
@@ -381,6 +375,42 @@ final class ModuleInfo {
                     builder.exports(mods, pkg, targets);
                 } else {
                     builder.exports(mods, pkg);
+                }
+            }
+        }
+
+        int opens_count = in.readUnsignedShort();
+        if (opens_count > 0) {
+            if (open) {
+                throw invalidModuleDescriptor("The opens table for an open"
+                                              + " module must be 0 length");
+            }
+            for (int i=0; i<opens_count; i++) {
+                int index = in.readUnsignedShort();
+                String pkg = cpool.getUtf8(index).replace('/', '.');
+
+                Set<Opens.Modifier> mods;
+                int flags = in.readUnsignedShort();
+                if (flags == 0) {
+                    mods = Collections.emptySet();
+                } else {
+                    mods = new HashSet<>();
+                    if ((flags & ACC_SYNTHETIC) != 0)
+                        mods.add(Opens.Modifier.SYNTHETIC);
+                    if ((flags & ACC_MANDATED) != 0)
+                        mods.add(Opens.Modifier.MANDATED);
+                }
+
+                int open_to_count = in.readUnsignedShort();
+                if (open_to_count > 0) {
+                    Set<String> targets = new HashSet<>(open_to_count);
+                    for (int j=0; j<open_to_count; j++) {
+                        int opens_to_index = in.readUnsignedShort();
+                        targets.add(cpool.getUtf8(opens_to_index));
+                    }
+                    builder.opens(mods, pkg, targets);
+                } else {
+                    builder.opens(mods, pkg);
                 }
             }
         }

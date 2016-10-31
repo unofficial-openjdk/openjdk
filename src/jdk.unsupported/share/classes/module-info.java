@@ -24,8 +24,11 @@
  */
 
 module jdk.unsupported {
-    exports private sun.misc;
-    exports private sun.reflect;
+    exports sun.misc;
+    exports sun.reflect;
     exports com.sun.nio.file;
+
+    opens sun.misc;
+    opens sun.reflect;
 }
 

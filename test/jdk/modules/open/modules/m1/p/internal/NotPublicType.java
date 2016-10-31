@@ -20,11 +20,8 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package p.internal;
 
-package p;
-
-public class Main {
-    public static void main(String[] args) {
-        q.Hello.hello();
-    }
+class NotPublicType {
+    public NotPublicType() { }
 }

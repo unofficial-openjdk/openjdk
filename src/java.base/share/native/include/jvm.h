@@ -398,8 +398,8 @@ JVM_DefineClassWithSource(JNIEnv *env, const char *name, jobject loader,
  */
 
 JNIEXPORT void JNICALL
-JVM_DefineModule(JNIEnv *env, jobject module, jstring version, jstring location,
-                 jobjectArray packages);
+JVM_DefineModule(JNIEnv *env, jobject module, jboolean is_open, jstring version,
+                 jstring location, jobjectArray packages);
 
 JNIEXPORT void JNICALL
 JVM_SetBootLoaderUnnamedModule(JNIEnv *env, jobject module);

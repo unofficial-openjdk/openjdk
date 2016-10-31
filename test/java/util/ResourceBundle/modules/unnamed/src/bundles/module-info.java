@@ -22,5 +22,5 @@
  */
 
 module bundles {
-    exports private jdk.test.resources;
+    opens jdk.test.resources;
 }

@@ -256,8 +256,8 @@ public interface ModuleFinder {
      *     replaced with dot ({@code "."}). If the resulting string is a valid
      *     Java identifier then it is assumed to be a package name. For example,
      *     if the JAR file contains an entry "{@code p/q/Foo.class}" then the
-     *     package name derived is "{@code p.q}". All packages are {@link
-     *     ModuleDescriptor#exports() exported-private}. </p></li>
+     *     package name derived is "{@code p.q}". All packages are exported
+     *     and opened unconditionally. </p></li>
      *
      *     <li><p> The contents of entries starting with {@code
      *     META-INF/services/} are assumed to be service configuration files

@@ -43,12 +43,11 @@ public class ClassFileConstants {
     public static final String TARGET_PLATFORM    = "TargetPlatform";
     public static final String HASHES             = "Hashes";
 
-    // access, requires, and exports flags
+    // access, requires, exports, and opens flags
     public static final int ACC_MODULE        = 0x8000;
-    public static final int ACC_WEAK          = 0x0020;
+    public static final int ACC_OPEN          = 0x0020;
     public static final int ACC_TRANSITIVE    = 0x0010;
     public static final int ACC_STATIC_PHASE  = 0x0020;
-    public static final int ACC_REFLECTION    = 0x0080;
     public static final int ACC_SYNTHETIC     = 0x1000;
     public static final int ACC_MANDATED      = 0x8000;
 

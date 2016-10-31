@@ -23,5 +23,5 @@
 
 module m1 {
     exports p1;
-    exports private p1.resources;
+    opens p1.resources;
 }

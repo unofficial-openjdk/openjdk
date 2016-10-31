@@ -2437,9 +2437,8 @@ public final class Class<T> implements java.io.Serializable,
                 if (caller != module) {
                     Set<String> packages = module.getDescriptor().packages();
                     String pn = ResourceHelper.getPackageName(name);
-                    if (packages.contains(pn)
-                            && !module.isExportedPrivate(pn, caller)) {
-                        // resource is in package not exported-private to caller
+                    if (packages.contains(pn) && !module.isOpen(pn, caller)) {
+                        // resource is in package not open to caller
                         return null;
                     }
                 }
@@ -2531,9 +2530,8 @@ public final class Class<T> implements java.io.Serializable,
                 if (caller != module) {
                     Set<String> packages = module.getDescriptor().packages();
                     String pn = ResourceHelper.getPackageName(name);
-                    if (packages.contains(pn)
-                            && !module.isExportedPrivate(pn, caller)) {
-                        // resource is in package not exported-private to caller
+                    if (packages.contains(pn) && !module.isOpen(pn, caller)) {
+                        // resource is in package not open to caller
                         return null;
                     }
                 }

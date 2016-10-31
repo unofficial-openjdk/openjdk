@@ -268,8 +268,8 @@ public class BuiltinClassLoader
         String pn = ResourceHelper.getPackageName(name);
         LoadedModule module = packageToModule.get(pn);
         if (module != null) {
-            if (module.loader() == this && (name.endsWith(".class")
-                    || isExportedPrivate(module.mref(), pn))) {
+            if (module.loader() == this
+                && (name.endsWith(".class") || isOpen(module.mref(), pn))) {
                 try {
                     return findResource(module.name(), name);
                 } catch (IOException ioe) {
@@ -311,8 +311,8 @@ public class BuiltinClassLoader
         String pn = ResourceHelper.getPackageName(name);
         LoadedModule module = packageToModule.get(pn);
         if (module != null) {
-            if (module.loader() == this && (name.endsWith(".class")
-                    || isExportedPrivate(module.mref(), pn))) {
+            if (module.loader() == this
+                && (name.endsWith(".class") || isOpen(module.mref(), pn))) {
                 try {
                     URL url = findResource(module.name(), name);
                     if (url != null) checked.add(url);
@@ -881,21 +881,20 @@ public class BuiltinClassLoader
     };
 
     /**
-     * Returns true if the given module exports-private the given package
+     * Returns true if the given module opens the given package
      * unconditionally.
      *
-     * @implNote This method currently iterates over each of the module
-     * exports. This will be replaced once the ModuleDescriptor.Exports
+     * @implNote This method currently iterates over each of the open
+     * packages. This will be replaced once the ModuleDescriptor.Opens
      * API is updated.
      */
-    private boolean isExportedPrivate(ModuleReference mref, String pn) {
+    private boolean isOpen(ModuleReference mref, String pn) {
         ModuleDescriptor descriptor = mref.descriptor();
-        if (descriptor.isWeak())
+        if (descriptor.isOpen())
             return true;
-        for (ModuleDescriptor.Exports e : descriptor.exports()) {
-            String source = e.source();
-            if (!e.isQualified() && source.equals(pn)
-                    && e.modifiers().contains(Exports.Modifier.PRIVATE)) {
+        for (ModuleDescriptor.Opens opens : descriptor.opens()) {
+            String source = opens.source();
+            if (!opens.isQualified() && source.equals(pn)) {
                 return true;
             }
         }

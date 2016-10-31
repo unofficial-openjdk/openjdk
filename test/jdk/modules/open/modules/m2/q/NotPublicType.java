@@ -20,6 +20,8 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package q;
 
-weak module m6 {
+class NotPublicType {
+    public NotPublicType() { }
 }

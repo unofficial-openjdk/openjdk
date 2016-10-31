@@ -83,8 +83,7 @@ public class AccessibleObject implements AnnotatedElement {
      * where the class is in a package that is not exported to the caller's
      * module. Additionally, if the member is non-public or its declaring
      * class is non-public, then this method can only be used to enable access
-     * if the package is {@link Module#isExportedPrivate exported-private} to
-     * the caller's module.
+     * if the package is {@link Module#isOpen open} to the caller's module.
      *
      * <p>If there is a security manager, its
      * {@code checkPermission} method is first called with a
@@ -130,8 +129,7 @@ public class AccessibleObject implements AnnotatedElement {
      * where the class is in a package that is not exported to the caller's
      * module. Additionally, if the member is non-public or its declaring
      * class is non-public, then this method can only be used to enable access
-     * if the package is {@link Module#isExportedPrivate exported-private} to
-     * the caller's module.
+     * if the package is {@link Module#isOpen open} to the caller's module.
      *
      * <p>If there is a security manager, its
      * {@code checkPermission} method is first called with a
@@ -169,9 +167,9 @@ public class AccessibleObject implements AnnotatedElement {
         if (callerModule == Object.class.getModule()) return;
         if (!declaringModule.isNamed()) return;
 
-        // package is exported-private to caller
+        // package is open to caller
         String pn = packageName(declaringClass);
-        if (declaringModule.isExportedPrivate(pn, callerModule))
+        if (declaringModule.isOpen(pn, callerModule))
             return;
 
         // package is exported to caller and class/member is public
@@ -191,10 +189,12 @@ public class AccessibleObject implements AnnotatedElement {
         String msg = "Unable to make ";
         if (this instanceof Field)
             msg += "field ";
-        msg += this + " accessible: " + declaringModule + " does not \"exports ";
-        if (!isClassPublic || !isMemberPublic)
-            msg += "private ";
-        msg += pn + "\" to " + callerModule;
+        msg += this + " accessible: " + declaringModule + " does not \"";
+        if (isClassPublic && isMemberPublic)
+            msg += "exports";
+        else
+            msg += "opens";
+        msg += " " + pn + "\" to " + callerModule;
         Reflection.throwInaccessibleObjectException(msg);
     }
 

@@ -314,9 +314,9 @@ public final class ModuleBootstrap {
         PerfCounters.loadModulesTime.addElapsedTimeFrom(t5);
 
 
-        // --add-reads and --add-exports/-add-exports-private
+        // --add-reads, -add-exports/-add-opens
         addExtraReads(bootLayer);
-        addExtraExports(bootLayer);
+        addExtraExportsAndOpens(bootLayer);
 
         // total time to initialize
         PerfCounters.bootstrapTime.addElapsedTimeFrom(t0);
@@ -454,34 +454,29 @@ public final class ModuleBootstrap {
 
 
     /**
-     * Process the --add-exports and --add-exports-private options to export
+     * Process the --add-exports and --add-opens options to export/open
      * additional packages specified on the command-line.
      */
-    private static void addExtraExports(Layer bootLayer) {
+    private static void addExtraExportsAndOpens(Layer bootLayer) {
 
         // --add-exports
         String prefix = "jdk.module.addexports.";
-        Map<String, Set<String>> exports = decode(prefix);
-        if (!exports.isEmpty()) {
-            addExtraExports(bootLayer, exports, false);
+        Map<String, Set<String>> extraExports = decode(prefix);
+        if (!extraExports.isEmpty()) {
+            addExtraExportsOrOpens(bootLayer, extraExports, false);
         }
 
-        // --add-exports-private
-        prefix = "jdk.module.addexports.private.";
-        Map<String, Set<String>> exportsPrivate = decode(prefix);
-        if (!exportsPrivate.isEmpty()) {
-            exportsPrivate.keySet()
-                .stream()
-                .filter(exports::containsKey)
-                .forEach(k -> fail(k + " specified more than once to"
-                                     + " --add-exports[-private]"));
-            addExtraExports(bootLayer, exportsPrivate, true);
+        // --add-opens
+        prefix = "jdk.module.addopens.";
+        Map<String, Set<String>> extraOpens = decode(prefix);
+        if (!extraOpens.isEmpty()) {
+            addExtraExportsOrOpens(bootLayer, extraOpens, true);
         }
     }
 
-    private static void addExtraExports(Layer bootLayer,
-                                        Map<String, Set<String>> map,
-                                        boolean exportPrivate)
+    private static void addExtraExportsOrOpens(Layer bootLayer,
+                                               Map<String, Set<String>> map,
+                                               boolean opens)
     {
         for (Map.Entry<String, Set<String>> e : map.entrySet()) {
 
@@ -527,14 +522,14 @@ public final class ModuleBootstrap {
                     }
                 }
                 if (allUnnamed) {
-                    if (exportPrivate) {
-                        Modules.addExportsPrivateToAllUnnamed(m, pn);
+                    if (opens) {
+                        Modules.addOpensToAllUnnamed(m, pn);
                     } else {
                         Modules.addExportsToAllUnnamed(m, pn);
                     }
                 } else {
-                    if (exportPrivate) {
-                        Modules.addExportsPrivate(m, pn, other);
+                    if (opens) {
+                        Modules.addOpens(m, pn, other);
                     } else {
                         Modules.addExports(m, pn, other);
                     }

@@ -36,7 +36,7 @@ public class Helper {
         Helper.class.getModule().addExports(pn, who);
     }
 
-    public static void addExportsPrivate(String pn, Module who) {
-        Helper.class.getModule().addExportsPrivate(pn, who);
+    public static void addOpens(String pn, Module who) {
+        Helper.class.getModule().addOpens(pn, who);
     }
 }

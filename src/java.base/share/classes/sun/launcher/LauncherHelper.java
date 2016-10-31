@@ -48,6 +48,7 @@ import java.lang.module.ModuleReference;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Exports;
+import java.lang.module.ModuleDescriptor.Opens;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.reflect.Layer;
 import java.lang.reflect.Method;
@@ -101,7 +102,7 @@ public final class LauncherHelper {
             "sun.launcher.LauncherHelper$FXHelper";
     private static final String MAIN_CLASS = "Main-Class";
     private static final String ADD_EXPORTS = "Add-Exports";
-    private static final String ADD_EXPORTS_PRIVATE = "Add-Exports-Private";
+    private static final String ADD_OPENS = "Add-Opens";
 
     private static StringBuilder outBuf = new StringBuilder();
 
@@ -444,11 +445,14 @@ public final class LauncherHelper {
                 abort(null, "java.launcher.jar.error3", jarname);
             }
 
-            // Add-Exports and Add-Exports-Private to break encapsulation
+            // Add-Exports and Add-Opens to break encapsulation
             String exports = mainAttrs.getValue(ADD_EXPORTS);
-            String exportsPrivate = mainAttrs.getValue(ADD_EXPORTS_PRIVATE);
-            if (exports != null || exportsPrivate != null) {
-                addExports(exports, exportsPrivate);
+            if (exports != null) {
+                addExportsOrOpens(exports, false);
+            }
+            String opens = mainAttrs.getValue(ADD_OPENS);
+            if (opens != null) {
+                addExportsOrOpens(opens, true);
             }
 
             /*
@@ -470,34 +474,22 @@ public final class LauncherHelper {
     }
 
     /**
-     * Add-Exports and Add-Exports-All attributes
-     */
-    static void addExports(String exports, String exportsPrivate) {
-        if (exports != null)
-            addExports(exports, false);
-        if (exportsPrivate != null)
-            addExports(exportsPrivate, true);
-    }
-
-    /**
-     * Process the Add-Exports or Add-Exports-All value. The value is
+     * Process the Add-Exports or Add-Opens value. The value is
      * {@code <module>/<package> ( <module>/<package>)*}.
      */
-    static void addExports(String value, boolean nonPublic) {
+    static void addExportsOrOpens(String value, boolean open) {
         for (String moduleAndPackage : value.split(" ")) {
             String[] s = moduleAndPackage.trim().split("/");
             if (s.length == 2) {
                 String mn = s[0];
                 String pn = s[1];
                 Layer.boot().findModule(mn).ifPresent(m -> {
-                    try {
-                        if (nonPublic) {
-                            Modules.addExportsPrivateToAllUnnamed(m, pn);
+                    if (m.getDescriptor().packages().contains(pn)) {
+                        if (open) {
+                            Modules.addOpensToAllUnnamed(m, pn);
                         } else {
                             Modules.addExportsToAllUnnamed(m, pn);
                         }
-                    } catch (IllegalArgumentException ignore) {
-                        // package not in module
                     }
                 });
             }
@@ -967,13 +959,13 @@ public final class LauncherHelper {
             for (String name: names) {
                 ModuleReference mref = finder.find(name).orElse(null);
                 if (mref == null) {
-                    // not found
+                    System.err.format("%s not observable!%n", name);
                     continue;
                 }
 
                 ModuleDescriptor md = mref.descriptor();
-                if (md.isWeak())
-                    ostream.print("weak ");
+                if (md.isOpen())
+                    ostream.print("open ");
                 ostream.println("module " + midAndLocation(md, mref.location()));
 
                 // unqualified exports (sorted by package)
@@ -1010,9 +1002,22 @@ public final class LauncherHelper {
                     }
                 }
 
-                // non-exported packages
+                // open packages
+                for (Opens obj: md.opens()) {
+                    String modsAndSource = Stream.concat(toStringStream(obj.modifiers()),
+                            Stream.of(obj.source()))
+                            .collect(Collectors.joining(" "));
+                    ostream.format("  opens %s", modsAndSource);
+                    if (obj.isQualified())
+                        formatCommaList(ostream, " to", obj.targets());
+                    else
+                        ostream.println();
+                }
+
+                // non-exported/non-open packages
                 Set<String> concealed = new TreeSet<>(md.packages());
                 md.exports().stream().map(Exports::source).forEach(concealed::remove);
+                md.opens().stream().map(Opens::source).forEach(concealed::remove);
                 concealed.forEach(p -> ostream.format("  contains %s%n", p));
             }
         }

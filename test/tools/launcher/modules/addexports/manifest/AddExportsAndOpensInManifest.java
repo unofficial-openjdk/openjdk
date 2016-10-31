@@ -25,10 +25,10 @@
  * @test
  * @library /lib/testlibrary
  * @modules jdk.compiler
- * @build AddExportsInManifest Test2 JarUtils jdk.testlibrary.*
+ * @build AddExportsAndOpensInManifest Test2 JarUtils jdk.testlibrary.*
  * @compile --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED Test1.java
- * @run testng AddExportsInManifest
- * @summary Basic test for Add-Exports and Add-Exports-Private attributes in the
+ * @run testng AddExportsAndOpensInManifest
+ * @summary Basic test for Add-Exports and Add-Opens attributes in the
  *          manifest of a main application JAR
  */
 
@@ -46,7 +46,7 @@ import static org.testng.Assert.*;
 
 
 @Test
-public class AddExportsInManifest {
+public class AddExportsAndOpensInManifest {
 
     /**
      * Package Test1 and Test2 into a JAR file with the given attributes
@@ -130,24 +130,24 @@ public class AddExportsInManifest {
     }
 
     /**
-     * Run tests with the Add-Exports-Private attribute in the main manifest.
+     * Run tests with the Add-Opens attribute in the main manifest.
      */
-    public void testWithAddExportsPrivate() throws Exception {
-        runExpectingPass("Main-Class=Test1,Add-Exports-Private=java.base/jdk.internal.misc");
-        runExpectingPass("Main-Class=Test2,Add-Exports-Private=java.base/jdk.internal.misc");
+    public void testWithAddOpens() throws Exception {
+        runExpectingPass("Main-Class=Test1,Add-Opens=java.base/jdk.internal.misc");
+        runExpectingPass("Main-Class=Test2,Add-Opens=java.base/jdk.internal.misc");
 
         // run with leading and trailing spaces
-        runExpectingPass("Main-Class=Test1,Add-Exports-Private=  java.base/jdk.internal.misc");
-        runExpectingPass("Main-Class=Test1,Add-Exports-Private=java.base/jdk.internal.misc  ");
+        runExpectingPass("Main-Class=Test1,Add-Opens=  java.base/jdk.internal.misc");
+        runExpectingPass("Main-Class=Test1,Add-Opens=java.base/jdk.internal.misc  ");
 
         // run with multiple values
-        runExpectingPass("Main-Class=Test1,Add-Exports-Private=java.base/jdk.internal.misc"
+        runExpectingPass("Main-Class=Test1,Add-Opens=java.base/jdk.internal.misc"
                 + " java.base/jdk.internal.loader");
-        runExpectingPass("Main-Class=Test1,Add-Exports-Private=java.base/jdk.internal.loader"
+        runExpectingPass("Main-Class=Test1,Add-Opens=java.base/jdk.internal.loader"
                 + " java.base/jdk.internal.misc");
 
         // run with duplicate values
-        runExpectingPass("Main-Class=Test1,Add-Exports-Private=java.base/jdk.internal.misc"
+        runExpectingPass("Main-Class=Test1,Add-Opens=java.base/jdk.internal.misc"
                 + " java.base/jdk.internal.misc");
     }
 
@@ -163,12 +163,12 @@ public class AddExportsInManifest {
         attrs = "Main-Class=Test1,Add-Exports=java.base/jdk.internal.DoesNotExit";
         runExpectingFail(attrs, "IllegalAccessError");
 
-        // Add-Exports-Private with bad module name
-        attrs = "Main-Class=Test1,Add-Exports-Private=java.DoesNotExist/jdk.internal.misc";
+        // Add-Opens with bad module name
+        attrs = "Main-Class=Test1,Add-Opens=java.DoesNotExist/jdk.internal.misc";
         runExpectingFail(attrs, "IllegalAccessError");
 
-        // Add-Exports-Private with bad package name
-        attrs = "Main-Class=Test1,Add-Exports-Private=java.base/jdk.internal.DoesNotExit";
+        // Add-Opens with bad package name
+        attrs = "Main-Class=Test1,Add-Opens=java.base/jdk.internal.DoesNotExit";
         runExpectingFail(attrs, "IllegalAccessError");
     }
 

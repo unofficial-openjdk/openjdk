@@ -3021,7 +3021,7 @@ public abstract class ResourceBundle {
          * rules specified by {@link Module#getResourceAsStream Module.getResourceAsStream}.
          * A resource bundle in a named module visible to the given class loader
          * is accessible when the package of the resource file corresponding
-         * to the resource bundle is exported-private.
+         * to the resource bundle is open unconditionally.
          *
          * <p>The default implementation instantiates a
          * <code>ResourceBundle</code> as follows.
@@ -3037,7 +3037,7 @@ public abstract class ResourceBundle {
          * given class loader. If the {@code Class} is found and accessible
          * then the <code>ResourceBundle</code> is instantiated.  The
          * resource bundle is accessible if the package of the bundle class file
-         * is exported-private; otherwise, {@code IllegalAccessException}
+         * is open unconditionally; otherwise, {@code IllegalAccessException}
          * will be thrown.
          * Note that the <code>reload</code> flag is ignored for loading
          * class-based resource bundles in this default implementation.
@@ -3130,9 +3130,9 @@ public abstract class ResourceBundle {
 
                         // To access a resource bundle in a named module,
                         // either class-based or properties-based, the resource
-                        // bundle must be exported privately unconditionally,
+                        // bundle must be opened unconditionally,
                         // same rule as accessing a resource file.
-                        if (m.isNamed() && !m.isExportedPrivate(bundleClass.getPackageName())) {
+                        if (m.isNamed() && !m.isOpen(bundleClass.getPackageName())) {
                             throw new IllegalAccessException("unnamed module can't load " +
                                     bundleClass.getName() + " in " + m.toString());
                         }

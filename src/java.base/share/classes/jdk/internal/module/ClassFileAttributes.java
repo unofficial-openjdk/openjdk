@@ -28,6 +28,7 @@ package jdk.internal.module;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Exports;
+import java.lang.module.ModuleDescriptor.Opens;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Version;
 import java.util.Collections;
@@ -88,10 +89,15 @@ public final class ClassFileAttributes {
 
             // module_flags
             int module_flags = cr.readUnsignedShort(off);
-            boolean weak = ((module_flags & ACC_WEAK) != 0);
+            boolean open = ((module_flags & ACC_OPEN) != 0);
             off += 2;
 
-            ModuleDescriptor.Builder builder = JLMA.newBuilder("m", weak, false);
+            ModuleDescriptor.Builder builder;
+            if (open) {
+                builder = JLMA.newOpenModuleBuilder("m", false);
+            } else {
+                builder = JLMA.newModuleBuilder("m", false);
+            }
 
             // requires_count and requires[requires_count]
             int requires_count = cr.readUnsignedShort(off);
@@ -132,8 +138,6 @@ public final class ClassFileAttributes {
                         mods = Collections.emptySet();
                     } else {
                         mods = new HashSet<>();
-                        if ((flags & ACC_REFLECTION) != 0)
-                            mods.add(Exports.Modifier.PRIVATE);
                         if ((flags & ACC_SYNTHETIC) != 0)
                             mods.add(Exports.Modifier.SYNTHETIC);
                         if ((flags & ACC_MANDATED) != 0)
@@ -152,6 +156,43 @@ public final class ClassFileAttributes {
                         builder.exports(mods, pkg, targets);
                     } else {
                         builder.exports(mods, pkg);
+                    }
+                }
+            }
+
+            // opens_count and opens[opens_count]
+            int open_count = cr.readUnsignedShort(off);
+            off += 2;
+            if (open_count > 0) {
+                for (int i=0; i<open_count; i++) {
+                    String pkg = cr.readUTF8(off, buf).replace('/', '.');
+                    off += 2;
+
+                    int flags = cr.readUnsignedShort(off);
+                    off += 2;
+                    Set<Opens.Modifier> mods;
+                    if (flags == 0) {
+                        mods = Collections.emptySet();
+                    } else {
+                        mods = new HashSet<>();
+                        if ((flags & ACC_SYNTHETIC) != 0)
+                            mods.add(Opens.Modifier.SYNTHETIC);
+                        if ((flags & ACC_MANDATED) != 0)
+                            mods.add(Opens.Modifier.MANDATED);
+                    }
+
+                    int opens_to_count = cr.readUnsignedShort(off);
+                    off += 2;
+                    if (opens_to_count > 0) {
+                        Set<String> targets = new HashSet<>();
+                        for (int j=0; j<opens_to_count; j++) {
+                            String t = cr.readUTF8(off, buf);
+                            off += 2;
+                            targets.add(t);
+                        }
+                        builder.opens(mods, pkg, targets);
+                    } else {
+                        builder.opens(mods, pkg);
                     }
                 }
             }
@@ -198,8 +239,8 @@ public final class ClassFileAttributes {
 
             // module_flags
             int module_flags = 0;
-            if (descriptor.isWeak())
-                module_flags |= ACC_WEAK;
+            if (descriptor.isOpen())
+                module_flags |= ACC_OPEN;
             if (descriptor.isSynthetic())
                 module_flags |= ACC_SYNTHETIC;
             attr.putShort(module_flags);
@@ -225,30 +266,47 @@ public final class ClassFileAttributes {
             }
 
             // exports_count and exports[exports_count];
-            if (descriptor.isWeak() || descriptor.exports().isEmpty()) {
-                attr.putShort(0);
-            } else {
-                attr.putShort(descriptor.exports().size());
-                for (Exports e : descriptor.exports()) {
-                    String pkg = e.source().replace('.', '/');
-                    attr.putShort(cw.newUTF8(pkg));
+            attr.putShort(descriptor.exports().size());
+            for (Exports e : descriptor.exports()) {
+                String pkg = e.source().replace('.', '/');
+                attr.putShort(cw.newUTF8(pkg));
 
-                    int flags = 0;
-                    if (e.modifiers().contains(Exports.Modifier.PRIVATE))
-                        flags |= ACC_REFLECTION;
-                    if (e.modifiers().contains(Exports.Modifier.SYNTHETIC))
-                        flags |= ACC_SYNTHETIC;
-                    if (e.modifiers().contains(Exports.Modifier.MANDATED))
-                        flags |= ACC_MANDATED;
-                    attr.putShort(flags);
+                int flags = 0;
+                if (e.modifiers().contains(Exports.Modifier.SYNTHETIC))
+                    flags |= ACC_SYNTHETIC;
+                if (e.modifiers().contains(Exports.Modifier.MANDATED))
+                    flags |= ACC_MANDATED;
+                attr.putShort(flags);
 
-                    if (e.isQualified()) {
-                        Set<String> ts = e.targets();
-                        attr.putShort(ts.size());
-                        ts.forEach(t -> attr.putShort(cw.newUTF8(t)));
-                    } else {
-                        attr.putShort(0);
-                    }
+                if (e.isQualified()) {
+                    Set<String> ts = e.targets();
+                    attr.putShort(ts.size());
+                    ts.forEach(t -> attr.putShort(cw.newUTF8(t)));
+                } else {
+                    attr.putShort(0);
+                }
+            }
+
+
+            // opens_counts and opens[opens_counts]
+            attr.putShort(descriptor.opens().size());
+            for (Opens obj : descriptor.opens()) {
+                String pkg = obj.source().replace('.', '/');
+                attr.putShort(cw.newUTF8(pkg));
+
+                int flags = 0;
+                if (obj.modifiers().contains(Opens.Modifier.SYNTHETIC))
+                    flags |= ACC_SYNTHETIC;
+                if (obj.modifiers().contains(Opens.Modifier.MANDATED))
+                    flags |= ACC_MANDATED;
+                attr.putShort(flags);
+
+                if (obj.isQualified()) {
+                    Set<String> ts = obj.targets();
+                    attr.putShort(ts.size());
+                    ts.forEach(t -> attr.putShort(cw.newUTF8(t)));
+                } else {
+                    attr.putShort(0);
                 }
             }
 

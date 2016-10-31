@@ -20,12 +20,6 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
-package q;
-
-public class Hello {
-    public static void hello() {
-        System.out.println("Hello!");
-    }
-
+open module m1 {
+    exports p;
 }

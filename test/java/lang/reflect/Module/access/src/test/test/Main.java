@@ -50,8 +50,8 @@ public class Main {
 
         assertTrue(targetModule.isExported("p1"));
         assertTrue(targetModule.isExported("p1", thisModule));
-        assertFalse(targetModule.isExportedPrivate("p1"));
-        assertFalse(targetModule.isExportedPrivate("p1", thisModule));
+        assertFalse(targetModule.isOpen("p1"));
+        assertFalse(targetModule.isOpen("p1", thisModule));
 
         Class<?> clazz = Class.forName("p1.Public");
         Constructor<?> ctor1 = clazz.getConstructor();   // public
@@ -77,7 +77,7 @@ public class Main {
         trySetAccessible(f1, true);
         trySetAccessible(f2, false);
 
-        targetAddExportsPrivate("p1", thisModule);
+        targetAddOpens("p1", thisModule);
 
         tryAccessConstructor(ctor1, true);
         tryAccessConstructor(ctor2, false);
@@ -100,8 +100,8 @@ public class Main {
 
         assertTrue(targetModule.isExported("p2"));
         assertTrue(targetModule.isExported("p2", thisModule));
-        assertFalse(targetModule.isExportedPrivate("p2"));
-        assertFalse(targetModule.isExportedPrivate("p2", thisModule));
+        assertFalse(targetModule.isOpen("p2"));
+        assertFalse(targetModule.isOpen("p2", thisModule));
 
         Class<?> clazz = Class.forName("p2.NonPublic");
         Constructor<?> ctor1 = clazz.getConstructor();
@@ -143,7 +143,7 @@ public class Main {
         trySetAccessible(f1, false);
         trySetAccessible(f2, false);
 
-        targetAddExportsPrivate("p2", thisModule);
+        targetAddOpens("p2", thisModule);
 
         tryAccessConstructor(ctor1, false);
         tryAccessConstructor(ctor2, false);
@@ -166,8 +166,8 @@ public class Main {
 
         assertFalse(targetModule.isExported("q1"));
         assertFalse(targetModule.isExported("q1", thisModule));
-        assertFalse(targetModule.isExportedPrivate("q1"));
-        assertFalse(targetModule.isExportedPrivate("q1", thisModule));
+        assertFalse(targetModule.isOpen("q1"));
+        assertFalse(targetModule.isOpen("q1", thisModule));
 
         Class<?> clazz = Class.forName("q1.Public");
         Constructor<?> ctor1 = clazz.getConstructor();  // public
@@ -209,7 +209,7 @@ public class Main {
         trySetAccessible(f1, true);
         trySetAccessible(f2, false);
 
-        targetAddExportsPrivate("q1", thisModule);
+        targetAddOpens("q1", thisModule);
 
         tryAccessConstructor(ctor1, true);
         tryAccessConstructor(ctor1, false);
@@ -232,8 +232,8 @@ public class Main {
 
         assertFalse(targetModule.isExported("q2"));
         assertFalse(targetModule.isExported("q2", thisModule));
-        assertFalse(targetModule.isExportedPrivate("q2"));
-        assertFalse(targetModule.isExportedPrivate("q2", thisModule));
+        assertFalse(targetModule.isOpen("q2"));
+        assertFalse(targetModule.isOpen("q2", thisModule));
 
         Class<?> clazz = Class.forName("q2.NonPublic");
         Constructor<?> ctor1 = clazz.getConstructor();  // public
@@ -275,7 +275,7 @@ public class Main {
         trySetAccessible(f1, false);
         trySetAccessible(f2, false);
 
-        targetAddExportsPrivate("q2", thisModule);
+        targetAddOpens("q2", thisModule);
 
         tryAccessConstructor(ctor1, false);
         tryAccessConstructor(ctor2, false);
@@ -349,11 +349,11 @@ public class Main {
     }
 
     /**
-     * Update target module to export a package to the given module.
+     * Update target module to open a package to the given module.
      */
-    static void targetAddExportsPrivate(String pn, Module who) throws Exception {
+    static void targetAddOpens(String pn, Module who) throws Exception {
         Class<?> helper = Class.forName("p1.Helper");
-        Method m = helper.getMethod("addExportsPrivate", String.class, Module.class);
+        Method m = helper.getMethod("addOpens", String.class, Module.class);
         m.invoke(null, pn, who);
     }
 

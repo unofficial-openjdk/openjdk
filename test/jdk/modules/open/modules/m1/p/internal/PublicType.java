@@ -20,8 +20,8 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package p.internal;
 
-module m5 {
-    requires m6;
-    exports p;
+public class PublicType {
+    public PublicType() { }
 }

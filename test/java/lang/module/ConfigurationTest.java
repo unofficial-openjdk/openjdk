@@ -1316,36 +1316,6 @@ public class ConfigurationTest {
 
 
     /**
-     * Test the scenario where a module reads two weak modules, both containing
-     * package p.
-     */
-    @Test(expectedExceptions = { ResolutionException.class })
-    public void testPackageSuppliedByTwoWeakModules() {
-        ModuleDescriptor descriptor1
-            =  ModuleDescriptor.module("m1")
-                .requires("m2")
-                .requires("m3")
-                .build();
-
-        ModuleDescriptor descriptor2
-            =  ModuleDescriptor.weakModule("m2")
-                .contains("p")
-                .build();
-
-        ModuleDescriptor descriptor3
-            =  ModuleDescriptor.weakModule("m3")
-                .contains("p")
-                .build();
-
-        ModuleFinder finder
-            = ModuleUtils.finderOf(descriptor1, descriptor2, descriptor3);
-
-        // m2 and m3 export package p to module m1
-        resolveRequires(finder, "m1");
-    }
-
-
-    /**
      * Test the scenario where a module contains a package p and reads
      * a module that exports package p.
      */
@@ -1361,30 +1331,6 @@ public class ConfigurationTest {
         ModuleDescriptor descriptor2
             =  ModuleDescriptor.module("m2")
                 .exports("p")
-                .build();
-
-        ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);
-
-        // m1 contains package p, module m2 exports package p to m1
-        resolveRequires(finder, "m1");
-    }
-
-
-    /**
-     * Test the scenario where a module containing package p reads a weak
-     * module that also contains package p
-     */
-    @Test(expectedExceptions = { ResolutionException.class })
-    public void testPackageSuppliedBySelfAndWeakModule() {
-        ModuleDescriptor descriptor1
-            =  ModuleDescriptor.module("m1")
-                .requires("m2")
-                .contains("p")
-                .build();
-
-        ModuleDescriptor descriptor2
-            =  ModuleDescriptor.weakModule("m2")
-                .contains("p")
                 .build();
 
         ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);
