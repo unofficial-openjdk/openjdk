@@ -429,16 +429,19 @@ final class ModuleInfo {
             Map<String, Set<String>> pm = new HashMap<>();
             for (int i=0; i<provides_count; i++) {
                 int index = in.readUnsignedShort();
-                int with_index = in.readUnsignedShort();
                 String sn = cpool.getClassName(index).replace('/', '.');
-                String cn = cpool.getClassName(with_index).replace('/', '.');
+                int with_count = in.readUnsignedShort();
                 // computeIfAbsent
                 Set<String> providers = pm.get(sn);
                 if (providers == null) {
                     providers = new LinkedHashSet<>(); // preserve order
                     pm.put(sn, providers);
                 }
-                providers.add(cn);
+                for (int j=0; j<with_count; j++) {
+                    index = in.readUnsignedShort();
+                    String pn = cpool.getClassName(index).replace('/', '.');
+                    providers.add(pn);
+                }
             }
             for (Map.Entry<String, Set<String>> e : pm.entrySet()) {
                 builder.provides(e.getKey(), e.getValue());

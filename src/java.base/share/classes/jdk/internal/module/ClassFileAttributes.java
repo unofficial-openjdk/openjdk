@@ -215,9 +215,14 @@ public final class ClassFileAttributes {
                 Map<String, Set<String>> provides = new HashMap<>();
                 for (int i=0; i<provides_count; i++) {
                     String sn = cr.readClass(off, buf).replace('/', '.');
-                    String cn = cr.readClass(off + 2, buf).replace('/', '.');
-                    provides.computeIfAbsent(sn, k -> new LinkedHashSet<>()).add(cn);
-                    off += 4;
+                    off += 2;
+                    int with_count = cr.readUnsignedShort(off);
+                    off += 2;
+                    for (int j=0; j<with_count; j++) {
+                        String cn = cr.readClass(off, buf).replace('/', '.');
+                        off += 2;
+                        provides.computeIfAbsent(sn, k -> new LinkedHashSet<>()).add(cn);
+                    }
                 }
                 provides.entrySet().forEach(e -> builder.provides(e.getKey(),
                                                                   e.getValue()));
@@ -326,14 +331,13 @@ public final class ClassFileAttributes {
             if (descriptor.provides().isEmpty()) {
                 attr.putShort(0);
             } else {
-                int count = descriptor.provides().values()
-                    .stream().mapToInt(ps -> ps.providers().size()).sum();
-                attr.putShort(count);
+                attr.putShort(descriptor.provides().size());
                 for (Provides p : descriptor.provides().values()) {
                     String service = p.service().replace('.', '/');
-                    int index = cw.newClass(service);
+                    attr.putShort(cw.newClass(service));
+                    int with_count = p.providers().size();
+                    attr.putShort(with_count);
                     for (String provider : p.providers()) {
-                        attr.putShort(index);
                         attr.putShort(cw.newClass(provider.replace('.', '/')));
                     }
                 }
