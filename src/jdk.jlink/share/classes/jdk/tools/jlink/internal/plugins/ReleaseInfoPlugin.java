@@ -129,7 +129,7 @@ public final class ReleaseInfoPlugin implements Plugin {
 
         // create a top level ResourcePoolEntry for "release" file.
         out.add(ResourcePoolEntry.create("/java.base/release",
-            ResourcePoolEntry.Type.OTHER_FILE, releaseFileContent()));
+            ResourcePoolEntry.Type.TOP, releaseFileContent()));
         return out.build();
     }
 

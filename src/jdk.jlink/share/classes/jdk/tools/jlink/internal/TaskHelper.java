@@ -47,13 +47,14 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.Set;
 
-import jdk.tools.jlink.Jlink;
-import jdk.tools.jlink.Jlink.PluginsConfiguration;
+import jdk.tools.jlink.internal.plugins.ExcludeFilesPlugin;
+import jdk.tools.jlink.internal.plugins.ExcludeJmodSectionPlugin;
 import jdk.tools.jlink.plugin.Plugin;
 import jdk.tools.jlink.plugin.Plugin.Category;
 import jdk.tools.jlink.builder.DefaultImageBuilder;
 import jdk.tools.jlink.builder.ImageBuilder;
 import jdk.tools.jlink.plugin.PluginException;
+import jdk.tools.jlink.internal.Jlink.PluginsConfiguration;
 import jdk.tools.jlink.internal.plugins.PluginsResourceBundle;
 import jdk.tools.jlink.internal.plugins.DefaultCompressPlugin;
 import jdk.tools.jlink.internal.plugins.StripDebugPlugin;
@@ -321,6 +322,20 @@ public final class TaskHelper {
                             (task, opt, arg) -> {
                                 addArgumentMap(plugin);
                             }, "-G");
+                    mainOptions.add(plugOption);
+                } else if (plugin instanceof ExcludeJmodSectionPlugin) {
+                    plugOption = new PlugOption(false, (task, opt, arg) -> {
+                            Map<String, String> m = addArgumentMap(plugin);
+                            m.put(ExcludeJmodSectionPlugin.NAME,
+                                  ExcludeJmodSectionPlugin.MAN_PAGES);
+                        }, "--no-man-pages");
+                    mainOptions.add(plugOption);
+
+                    plugOption = new PlugOption(false, (task, opt, arg) -> {
+                        Map<String, String> m = addArgumentMap(plugin);
+                        m.put(ExcludeJmodSectionPlugin.NAME,
+                              ExcludeJmodSectionPlugin.INCLUDE_HEADER_FILES);
+                    }, "--no-header-files");
                     mainOptions.add(plugOption);
                 }
             }

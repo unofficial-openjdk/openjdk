@@ -129,14 +129,16 @@ public class JmodArchive implements Archive {
         switch (section) {
             case CLASSES:
                 return EntryType.CLASS_OR_RESOURCE;
+            case CONFIG:
+                return EntryType.CONFIG;
             case NATIVE_LIBS:
                 return EntryType.NATIVE_LIB;
             case NATIVE_CMDS:
                 return EntryType.NATIVE_CMD;
-            case CONFIG:
-                return EntryType.CONFIG;
-            case OTHER_FILES:
-                return EntryType.OTHER_FILES;
+            case HEADER_FILES:
+                return EntryType.HEADER_FILE;
+            case MAN_PAGES:
+                return EntryType.MAN_PAGE;
             default:
                 throw new InternalError("unexpected entry: " + section);
         }

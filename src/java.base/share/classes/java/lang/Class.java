@@ -555,7 +555,7 @@ public final class Class<T> implements java.io.Serializable,
         Class<?> caller = Reflection.getCallerClass();
         if (newInstanceCallerCache != caller) {
             int modifiers = tmpConstructor.getModifiers();
-            Reflection.ensureMemberAccess(caller, this, null, modifiers);
+            Reflection.ensureMemberAccess(caller, this, this, modifiers);
             newInstanceCallerCache = caller;
         }
         // Run constructor

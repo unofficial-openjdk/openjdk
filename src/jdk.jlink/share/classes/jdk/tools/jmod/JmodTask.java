@@ -166,6 +166,8 @@ public class JmodTask {
         List<Path> cmds;
         List<Path> configs;
         List<Path> libs;
+        List<Path> headerFiles;
+        List<Path> manPages;
         ModuleFinder moduleFinder;
         Version moduleVersion;
         String mainClass;
@@ -350,6 +352,9 @@ public class JmodTask {
         final List<Path> libs = options.libs;
         final List<Path> configs = options.configs;
         final List<Path> classpath = options.classpath;
+        final List<Path> headerFiles = options.headerFiles;
+        final List<Path> manPages = options.manPages;
+
         final Version moduleVersion = options.moduleVersion;
         final String mainClass = options.mainClass;
         final String osName = options.osName;
@@ -373,7 +378,8 @@ public class JmodTask {
             processSection(out, Section.NATIVE_CMDS, cmds);
             processSection(out, Section.NATIVE_LIBS, libs);
             processSection(out, Section.CONFIG, configs);
-            processSection(out, Section.OTHER_FILES, otherFiles);
+            processSection(out, Section.HEADER_FILES, headerFiles);
+            processSection(out, Section.MAN_PAGES, manPages);
 
         }
 
@@ -609,7 +615,7 @@ public class JmodTask {
             return "";
         }
 
-        void processClasses(JmodOutputStream zos, List<Path> classpaths)
+        void processClasses(JmodOutputStream out, List<Path> classpaths)
             throws IOException
         {
             if (classpaths == null)
@@ -617,24 +623,24 @@ public class JmodTask {
 
             for (Path p : classpaths) {
                 if (Files.isDirectory(p)) {
-                    processSection(zos, Section.CLASSES, p);
+                    processSection(out, Section.CLASSES, p);
                 } else if (Files.isRegularFile(p) && p.toString().endsWith(".jar")) {
                     try (JarFile jf = new JarFile(p.toFile())) {
-                        JarEntryConsumer jec = new JarEntryConsumer(zos, jf);
+                        JarEntryConsumer jec = new JarEntryConsumer(out, jf);
                         jf.stream().filter(jec).forEach(jec);
                     }
                 }
             }
         }
 
-        void processSection(JmodOutputStream zos, Section section, List<Path> paths)
+        void processSection(JmodOutputStream out, Section section, List<Path> paths)
             throws IOException
         {
             if (paths == null)
                 return;
 
             for (Path p : paths)
-                processSection(zos, section, p);
+                processSection(out, section, p);
         }
 
         void processSection(JmodOutputStream out, Section section, Path top)
@@ -1214,6 +1220,12 @@ public class JmodTask {
                 = parser.acceptsAll(Set.of("h", "help"), getMessage("main.opt.help"))
                         .forHelp();
 
+        OptionSpec<Path> headerFiles
+            = parser.accepts("header-files", getMessage("main.opt.header-files"))
+                    .withRequiredArg()
+                    .withValuesSeparatedBy(File.pathSeparatorChar)
+                    .withValuesConvertedBy(DirPathConverter.INSTANCE);
+
         OptionSpec<Path> libs
                 = parser.accepts("libs", getMessage("main.opt.libs"))
                         .withRequiredArg()
@@ -1224,6 +1236,12 @@ public class JmodTask {
                 = parser.accepts("main-class", getMessage("main.opt.main-class"))
                         .withRequiredArg()
                         .describedAs(getMessage("main.opt.main-class.arg"));
+
+        OptionSpec<Path> manPages
+            = parser.accepts("man-pages", getMessage("main.opt.man-pages"))
+                        .withRequiredArg()
+                        .withValuesSeparatedBy(File.pathSeparatorChar)
+                        .withValuesConvertedBy(DirPathConverter.INSTANCE);
 
         OptionSpec<Path> modulePath
                 = parser.acceptsAll(Set.of("p", "module-path"),
@@ -1293,6 +1311,10 @@ public class JmodTask {
                 options.excludes = opts.valuesOf(excludes);
             if (opts.has(libs))
                 options.libs = opts.valuesOf(libs);
+            if (opts.has(headerFiles))
+                options.headerFiles = opts.valuesOf(headerFiles);
+            if (opts.has(manPages))
+                options.manPages = opts.valuesOf(manPages);
             if (opts.has(modulePath)) {
                 Path[] dirs = opts.valuesOf(modulePath).toArray(new Path[0]);
                 options.moduleFinder = JLMA.newModulePath(Runtime.version(), true, dirs);
