@@ -38,8 +38,7 @@ import java.io.IOException;
 public class Module_attribute extends Attribute {
     public static final int ACC_TRANSITIVE      =   0x10;
     public static final int ACC_STATIC_PHASE    =   0x20;
-    public static final int ACC_WEAK            =   0x20;
-    public static final int ACC_REFLECTION      =   0x80;
+    public static final int ACC_OPEN            =   0x20;
     public static final int ACC_SYNTHETIC       = 0x1000;
     public static final int ACC_MANDATED        = 0x8000;
 
@@ -54,6 +53,10 @@ public class Module_attribute extends Attribute {
         exports = new ExportsEntry[exports_count];
         for (int i = 0; i < exports_count; i++)
             exports[i] = new ExportsEntry(cr);
+        opens_count = cr.readUnsignedShort();
+        opens = new ExportsEntry[opens_count];
+        for (int i = 0; i < opens_count; i++)
+            opens[i] = new ExportsEntry(cr);
         uses_count = cr.readUnsignedShort();
         uses_index = new int[uses_count];
         for (int i = 0; i < uses_count; i++)
@@ -68,6 +71,7 @@ public class Module_attribute extends Attribute {
             int module_flags,
             RequiresEntry[] requires,
             ExportsEntry[] exports,
+            ExportsEntry[] opens,
             int[] uses,
             ProvidesEntry[] provides) {
         super(name_index, 2);
@@ -76,6 +80,8 @@ public class Module_attribute extends Attribute {
         this.requires = requires;
         exports_count = exports.length;
         this.exports = exports;
+        opens_count = opens.length;
+        this.opens = opens;
         uses_count = uses.length;
         this.uses_index = uses;
         provides_count = provides.length;
@@ -98,6 +104,8 @@ public class Module_attribute extends Attribute {
     public final RequiresEntry[] requires;
     public final int exports_count;
     public final ExportsEntry[] exports;
+    public final int opens_count;
+    public final ExportsEntry[] opens;
     public final int uses_count;
     public final int[] uses_index;
     public final int provides_count;

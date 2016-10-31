@@ -23,4 +23,4 @@
 
 // key: compiler.err.expected.module
 
-weak class ExpectedModule { }
+open class ExpectedModule { }

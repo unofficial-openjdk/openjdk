@@ -45,12 +45,14 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import javax.lang.model.SourceVersion;
+import javax.lang.model.element.ModuleElement.DirectiveKind;
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileManager.Location;
 import javax.tools.JavaFileObject;
 import javax.tools.JavaFileObject.Kind;
 import javax.tools.StandardLocation;
 
+import com.sun.source.tree.ModuleTree.ModuleKind;
 import com.sun.tools.javac.code.ClassFinder;
 import com.sun.tools.javac.code.Directive;
 import com.sun.tools.javac.code.Directive.ExportsDirective;
@@ -527,7 +529,8 @@ public class Modules extends JCTree.Visitor {
                 String binName = fileManager.inferBinaryName(msym.classLocation, clazz);
                 String pack = binName.lastIndexOf('.') != (-1) ? binName.substring(0, binName.lastIndexOf('.')) : ""; //unnamed package????
                 if (seenPackages.add(pack)) {
-                    ExportsDirective d = new ExportsDirective(syms.enterPackage(msym, names.fromString(pack)), null);
+                    ExportsDirective d = new ExportsDirective(DirectiveKind.EXPORTS, syms.enterPackage(msym, names.fromString(pack)), null);
+                    //TODO: opens?
                     directives.add(d);
                     exports.add(d);
                 }
@@ -605,15 +608,17 @@ public class Modules extends JCTree.Visitor {
         public void visitModuleDef(JCModuleDecl tree) {
             sym = Assert.checkNonNull(tree.sym);
 
-            if (tree.weak) {
-                sym.flags.add(ModuleFlags.WEAK);
+            if (tree.getModuleType() == ModuleKind.OPEN) {
+                sym.flags.add(ModuleFlags.OPEN);
             }
 
             sym.requires = List.nil();
             sym.exports = List.nil();
+            sym.opens = List.nil();
             tree.directives.forEach(t -> t.accept(this));
             sym.requires = sym.requires.reverse();
             sym.exports = sym.exports.reverse();
+            sym.opens = sym.opens.reverse();
             ensureJavaBase();
         }
 
@@ -645,8 +650,10 @@ public class Modules extends JCTree.Visitor {
             packge = syms.enterPackage(sym, name);
             attr.setPackageSymbols(tree.qualid, packge);
 
-            if (sym.flags.contains(ModuleFlags.WEAK)) {
-                log.error(tree.pos(), Errors.NoExportsInWeak);
+            if (tree.hasTag(Tag.OPENS)) {
+                if (sym.flags.contains(ModuleFlags.OPEN)) {
+                    log.error(tree.pos(), Errors.NoOpensUnlessStrong);
+                }
             }
             List<ExportsDirective> exportsForPackage = allExports.computeIfAbsent(packge, p -> List.nil());
             for (ExportsDirective d : exportsForPackage) {
@@ -662,7 +669,9 @@ public class Modules extends JCTree.Visitor {
                         log.error(n.pos(), Errors.ModuleNotFound(msym));
                     } else {
                         for (ExportsDirective d : exportsForPackage) {
-                            checkDuplicateExportsToModule(n, msym, d);
+                            if (!(tree.hasTag(Tag.EXPORTS) ^ d.getKind() == DirectiveKind.EXPORTS)) {
+                                checkDuplicateExportsToModule(n, msym, d);
+                            }
                         }
                         if (!to.add(msym)) {
                             reportExportConflictToModule(n, msym);
@@ -674,12 +683,15 @@ public class Modules extends JCTree.Visitor {
 
             if (toModules == null || !toModules.isEmpty()) {
                 Set<ExportsFlag> flags = EnumSet.noneOf(ExportsFlag.class);
-                if (tree.isPrivate) {
-                    flags.add(ExportsFlag.REFLECTION);
+                ExportsDirective d;
+                if (tree.hasTag(Tag.EXPORTS)) {
+                    d = new ExportsDirective(DirectiveKind.EXPORTS, packge, toModules, flags);
+                    sym.exports = sym.exports.prepend(d);
+                } else {
+                    d = new ExportsDirective(DirectiveKind.OPENS, packge, toModules, flags);
+                    sym.opens = sym.opens.prepend(d);
                 }
-                ExportsDirective d = new ExportsDirective(packge, toModules, flags);
                 tree.directive = d;
-                sym.exports = sym.exports.prepend(d);
 
                 allExports.put(packge, exportsForPackage.prepend(d));
             }
@@ -692,35 +704,13 @@ public class Modules extends JCTree.Visitor {
          * @param d the directive to compare against
          */
         private void checkDuplicateExports(JCExports tree, PackageSymbol packge, ExportsDirective d) {
-            if (tree.moduleNames == null) {
-                if (d.modules == null) {
-                    // both are unqualified: error
-                    reportExportConflict(tree, packge);
-                } else {
-                    // tree unqualified, directive qualified:
-                    // error if directive (i.e. qualified) does not add private
-                    if (tree.isPrivate || !d.isPrivate()) {
-                        reportExportConflict(tree, packge);
-                    }
-                }
-            } else {
-                if (d.modules == null) {
-                    // tree qualified, directive unqualified:
-                    // error if tree (i.e. qualified) does not add private
-                    if (d.isPrivate() || !tree.isPrivate) {
-                        reportExportConflict(tree, packge);
-                    }
-                } else {
-                    // both are qualified: error if private match
-                    if (!(tree.isPrivate ^ d.isPrivate())) {
-                        reportExportConflict(tree, packge);
-                    }
-                }
+            if (!(tree.hasTag(Tag.EXPORTS) ^ d.getKind() == DirectiveKind.EXPORTS)) {
+                reportExportConflict(tree, packge);
             }
         }
 
         private void reportExportConflict(JCExports tree, PackageSymbol packge) {
-            log.error(tree.qualid.pos(), Errors.ConflictingExports(packge));
+            log.error(tree.qualid.pos(), Errors.ConflictingExports(packge)); //XXX: different errors for exports and opens
         }
 
         private void checkDuplicateExportsToModule(JCExpression name, ModuleSymbol msym,
@@ -735,7 +725,7 @@ public class Modules extends JCTree.Visitor {
         }
 
         private void reportExportConflictToModule(JCExpression name, ModuleSymbol msym) {
-            log.error(name.pos(), Errors.ConflictingExportsToModule(msym));
+            log.error(name.pos(), Errors.ConflictingExportsToModule(msym)); //XXX: different errors for exports and opens
         }
 
         @Override
@@ -818,7 +808,7 @@ public class Modules extends JCTree.Visitor {
         @Override
         public void visitExports(JCExports tree) {
             if (tree.directive.packge.members().isEmpty() &&
-                (!tree.directive.isPrivate() || (tree.directive.packge.flags() & Flags.HAS_RESOURCE) == 0)) {
+                (tree.hasTag(Tag.EXPORTS) || (tree.directive.packge.flags() & Flags.HAS_RESOURCE) == 0)) {
                 log.error(tree.qualid.pos(), Errors.PackageEmptyOrNotFound(tree.directive.packge));
             }
             msym.directives = msym.directives.prepend(tree.directive);
@@ -1322,7 +1312,7 @@ public class Modules extends JCTree.Visitor {
             }
 
             Set<ExportsDirective> extra = addExports.computeIfAbsent(msym, _x -> new LinkedHashSet<>());
-            ExportsDirective d = new ExportsDirective(p, targetModules);
+            ExportsDirective d = new ExportsDirective(DirectiveKind.EXPORTS, p, targetModules);
             extra.add(d);
         }
     }

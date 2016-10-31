@@ -1082,6 +1082,11 @@ public class TreeInfo {
         case TYPE_ANNOTATION:
             return Tree.Kind.TYPE_ANNOTATION;
 
+        case EXPORTS:
+            return Tree.Kind.EXPORTS;
+        case OPENS:
+            return Tree.Kind.OPENS;
+
         default:
             return null;
         }

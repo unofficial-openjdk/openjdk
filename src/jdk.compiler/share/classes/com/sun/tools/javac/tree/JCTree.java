@@ -47,7 +47,9 @@ import static com.sun.tools.javac.tree.JCTree.Tag.*;
 
 import javax.tools.JavaFileManager.Location;
 
+import com.sun.source.tree.ModuleTree.ModuleKind;
 import com.sun.tools.javac.code.Directive.ExportsDirective;
+import com.sun.tools.javac.code.Type.ModuleType;
 
 /**
  * Root class for abstract syntax tree nodes. It provides definitions
@@ -352,6 +354,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
         MODULEDEF,
         EXPORTS,
+        OPENS,
         PROVIDES,
         REQUIRES,
         USES,
@@ -2630,15 +2633,16 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
     public static class JCModuleDecl extends JCTree implements ModuleTree {
         public List<JCAnnotation> annotations;
-        public boolean weak;
+        public ModuleType type;
+        private final ModuleKind kind;
         public JCExpression qualId;
         public List<JCDirective> directives;
         public ModuleSymbol sym;
 
-        protected JCModuleDecl(List<JCAnnotation> annotations, boolean weak,
+        protected JCModuleDecl(List<JCAnnotation> annotations, ModuleKind kind,
                 JCExpression qualId, List<JCDirective> directives) {
             this.annotations = annotations;
-            this.weak = weak;
+            this.kind = kind;
             this.qualId = qualId;
             this.directives = directives;
         }
@@ -2657,8 +2661,8 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         }
 
         @Override @DefinedBy(Api.COMPILER_TREE)
-        public boolean isWeak() {
-            return weak;
+        public ModuleKind getModuleType() {
+            return kind;
         }
 
         @Override @DefinedBy(Api.COMPILER_TREE)
@@ -2684,14 +2688,14 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
     public static class JCExports extends JCDirective
             implements ExportsTree {
-        public JCExpression qualid; // null for default
-        public boolean isPrivate;
+        private final Tag tag;
+        public JCExpression qualid;
         public List<JCExpression> moduleNames;
         public ExportsDirective directive;
 
-        protected JCExports(JCExpression qualId, boolean isPrivate, List<JCExpression> moduleNames) {
+        protected JCExports(Tag tag, JCExpression qualId, List<JCExpression> moduleNames) {
+            this.tag = tag;
             this.qualid = qualId;
-            this.isPrivate = isPrivate;
             this.moduleNames = moduleNames;
         }
 
@@ -2699,13 +2703,8 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         public void accept(Visitor v) { v.visitExports(this); }
 
         @Override @DefinedBy(Api.COMPILER_TREE)
-        public boolean isPrivate() {
-            return isPrivate;
-        }
-
-        @Override @DefinedBy(Api.COMPILER_TREE)
         public Kind getKind() {
-            return Kind.EXPORTS;
+            return TreeInfo.tagToKind(tag);
         }
 
         @Override @DefinedBy(Api.COMPILER_TREE)
@@ -2725,7 +2724,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
         @Override
         public Tag getTag() {
-            return EXPORTS;
+            return tag;
         }
     }
 
@@ -2985,8 +2984,9 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         JCAnnotation Annotation(JCTree annotationType, List<JCExpression> args);
         JCModifiers Modifiers(long flags, List<JCAnnotation> annotations);
         JCErroneous Erroneous(List<? extends JCTree> errs);
-        JCModuleDecl ModuleDef(List<JCAnnotation> annotations, boolean weak, JCExpression qualId, List<JCDirective> directives);
-        JCExports Exports(JCExpression qualId, boolean isPrivate, List<JCExpression> moduleNames);
+        JCModuleDecl ModuleDef(List<JCAnnotation> annotations, ModuleKind kind, JCExpression qualId, List<JCDirective> directives);
+        JCExports Exports(JCExpression qualId, List<JCExpression> moduleNames);
+        JCExports Opens(JCExpression qualId, List<JCExpression> moduleNames);
         JCProvides Provides(JCExpression serviceName, JCExpression implName);
         JCRequires Requires(boolean isTransitive, boolean isStaticPhase, JCExpression qualId);
         JCUses Uses(JCExpression qualId);

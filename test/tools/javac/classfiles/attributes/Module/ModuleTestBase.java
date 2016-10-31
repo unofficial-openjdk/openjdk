@@ -170,7 +170,7 @@ public class ModuleTestBase {
     }
 
     enum ExportFlag implements Mask {
-        PRIVATE("private", Module_attribute.ACC_REFLECTION);
+        SYNTHETIC("", Module_attribute.ACC_SYNTHETIC);
 
         private final String token;
         private final int mask;

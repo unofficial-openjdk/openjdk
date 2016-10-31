@@ -906,6 +906,7 @@ public abstract class Symbol extends AnnoConstruct implements Element {
         public List<com.sun.tools.javac.code.Directive> directives;
         public List<com.sun.tools.javac.code.Directive.RequiresDirective> requires;
         public List<com.sun.tools.javac.code.Directive.ExportsDirective> exports;
+        public List<com.sun.tools.javac.code.Directive.ExportsDirective> opens;
         public List<com.sun.tools.javac.code.Directive.ProvidesDirective> provides;
         public List<com.sun.tools.javac.code.Directive.UsesDirective> uses;
 
@@ -1009,7 +1010,7 @@ public abstract class Symbol extends AnnoConstruct implements Element {
     }
 
     public enum ModuleFlags {
-        WEAK(0x0020),
+        OPEN(0x0020),
         SYNTHETIC(0x1000),
         MANDATED(0x8000);
 

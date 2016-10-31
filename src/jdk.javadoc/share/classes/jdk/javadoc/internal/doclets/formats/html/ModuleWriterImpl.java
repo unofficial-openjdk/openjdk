@@ -238,6 +238,9 @@ public class ModuleWriterImpl extends HtmlDocletWriter implements ModuleSummaryW
                 case EXPORTS:
                     addExportedPackagesList((ModuleElement.ExportsDirective) direct, tbody, altColor);
                     break;
+                case OPENS:
+                    //XXX ignore for now
+                    break;
                 case USES:
                     addUsesList((ModuleElement.UsesDirective) direct, tbody, altColor);
                     break;

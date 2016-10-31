@@ -43,13 +43,7 @@ import java.util.List;
 public interface ExportsTree extends DirectiveTree {
 
     /**
-     * Returns true if this is a "exports private" directive.
-     * @return true if this is a "exports private" directive
-     */
-    boolean isPrivate();
-
-    /**
-     * Returns the name of the package to be exported, or null if this is a default exports directive.
+     * Returns the name of the package to be exported.
      * @return  the name of the package to be exported
      */
     ExpressionTree getExportName();

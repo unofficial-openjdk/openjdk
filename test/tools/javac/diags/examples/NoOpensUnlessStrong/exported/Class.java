@@ -21,8 +21,7 @@
  * questions.
  */
 
-// key: compiler.err.no.exports.in.weak
+package exported;
 
-weak module NoExportsInWeak {
-    exports p;
+public class Class {
 }

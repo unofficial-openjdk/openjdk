@@ -164,8 +164,8 @@ public class ClassWriter extends BasicWriter {
 
         if (classFile.access_flags.is(AccessFlags.ACC_MODULE) && name.endsWith(".module-info")) {
             Attribute attr = classFile.attributes.get(Attribute.Module);
-            if (attr instanceof Module_attribute && (((Module_attribute) attr).module_flags & Module_attribute.ACC_WEAK) != 0) {
-                print("weak ");
+            if (attr instanceof Module_attribute && (((Module_attribute) attr).module_flags & Module_attribute.ACC_OPEN) != 0) {
+                print("open ");
             }
             print("module ");
             print(name.replace(".module-info", ""));
@@ -570,8 +570,32 @@ public class ClassWriter extends BasicWriter {
 
         for (Module_attribute.ExportsEntry entry: m.exports) {
             print("exports");
-            if ((entry.exports_flags & Module_attribute.ACC_REFLECTION) != 0)
-                print(" private");
+            print(" ");
+            print(getUTF8Value(entry.exports_index).replace('/', '.'));
+            boolean first = true;
+            for (int i: entry.exports_to_index) {
+                String mname;
+                try {
+                    mname = classFile.constant_pool.getUTF8Value(i).replace('/', '.');
+                } catch (ConstantPoolException e) {
+                    mname = report(e);
+                }
+                if (first) {
+                    println(" to");
+                    indent(+1);
+                    first = false;
+                } else {
+                    println(",");
+                }
+                print(mname);
+            }
+            println(";");
+            if (!first)
+                indent(-1);
+        }
+
+        for (Module_attribute.ExportsEntry entry: m.opens) {
+            print("opens");
             print(" ");
             print(getUTF8Value(entry.exports_index).replace('/', '.'));
             boolean first = true;

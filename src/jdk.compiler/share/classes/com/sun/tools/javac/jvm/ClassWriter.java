@@ -979,6 +979,20 @@ public class ClassWriter extends ClassFile {
             }
         }
 
+        List<ExportsDirective> opens = m.opens;
+        databuf.appendChar(opens.size());
+        for (ExportsDirective e: opens) {
+            databuf.appendChar(pool.put(names.fromUtf(externalize(e.packge.flatName()))));
+            databuf.appendChar(ExportsFlag.value(e.flags));
+            if (e.modules == null) {
+                databuf.appendChar(0);
+            } else {
+                databuf.appendChar(e.modules.size());
+                for (ModuleSymbol msym: e.modules)
+                    databuf.appendChar(pool.put(msym.name));
+            }
+        }
+
         List<UsesDirective> uses = m.uses;
         databuf.appendChar(uses.size());
         for (UsesDirective s: uses) {

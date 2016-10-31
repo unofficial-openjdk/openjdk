@@ -29,6 +29,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import com.sun.source.tree.MemberReferenceTree.ReferenceMode;
+import com.sun.source.tree.ModuleTree.ModuleKind;
 
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.parser.Tokens.*;
@@ -3150,9 +3151,9 @@ public class JavacParser implements Parser {
                 if (mods != null || token.kind != SEMI)
                     mods = modifiersOpt(mods);
                 if (firstTypeDecl && token.kind == IDENTIFIER) {
-                    boolean weak = false;
-                    if (token.name() == names.weak) {
-                        weak = true;
+                    ModuleKind kind = ModuleKind.STRONG;
+                    if (token.name() == names.open) {
+                        kind = ModuleKind.OPEN;
                         nextToken();
                     }
                     if (token.kind == IDENTIFIER && token.name() == names.module) {
@@ -3162,10 +3163,10 @@ public class JavacParser implements Parser {
                             annotations = mods.annotations;
                             mods = null;
                         }
-                        defs.append(moduleDecl(annotations, weak, docComment));
+                        defs.append(moduleDecl(annotations, kind, docComment));
                         consumedToplevelDoc = true;
                         break;
-                    } else if (weak) {
+                    } else if (kind != ModuleKind.STRONG) {
                         reportSyntaxError(token.pos, "expected.module");
                     }
                 }
@@ -3193,7 +3194,7 @@ public class JavacParser implements Parser {
         return toplevel;
     }
 
-    JCModuleDecl moduleDecl(List<JCAnnotation> annotations, boolean weak, Comment dc) {
+    JCModuleDecl moduleDecl(List<JCAnnotation> annotations, ModuleKind kind, Comment dc) {
         int pos = token.pos;
         if (!allowModules) {
             log.error(pos, Errors.ModulesNotSupportedInSource(source.name));
@@ -3209,7 +3210,7 @@ public class JavacParser implements Parser {
         accept(RBRACE);
         accept(EOF);
 
-        JCModuleDecl result = toP(F.at(pos).ModuleDef(annotations, weak, name, directives));
+        JCModuleDecl result = toP(F.at(pos).ModuleDef(annotations, kind, name, directives));
         attach(result, dc);
         return result;
     }
@@ -3260,17 +3261,9 @@ public class JavacParser implements Parser {
                 JCExpression moduleName = qualident(false);
                 accept(SEMI);
                 defs.append(toP(F.at(pos).Requires(isTransitive, isStaticPhase, moduleName)));
-            } else if (token.name() == names.exports) {
+            } else if (token.name() == names.exports || token.name() == names.opens) {
+                boolean exports = token.name() == names.exports;
                 nextToken();
-                boolean isPrivate = false;
-            loop:
-                while (token.kind == PRIVATE) {
-                    if (isPrivate) {
-                        error(token.pos, "repeated.modifier");
-                    }
-                    isPrivate = true;
-                    nextToken();
-                }
                 JCExpression pkgName = qualident(false);
                 List<JCExpression> moduleNames = null;
                 if (token.kind == IDENTIFIER && token.name() == names.to) {
@@ -3278,7 +3271,13 @@ public class JavacParser implements Parser {
                     moduleNames = qualidentList(false);
                 }
                 accept(SEMI);
-                defs.append(toP(F.at(pos).Exports(pkgName, isPrivate, moduleNames)));
+                JCDirective d;
+                if (exports) {
+                    d = F.at(pos).Exports(pkgName, moduleNames);
+                } else {
+                    d = F.at(pos).Opens(pkgName, moduleNames);
+                }
+                defs.append(toP(d));
             } else if (token.name() == names.provides) {
                 nextToken();
                 JCExpression serviceName = qualident(false);

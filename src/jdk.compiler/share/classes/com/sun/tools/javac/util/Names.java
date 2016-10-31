@@ -65,13 +65,14 @@ public class Names {
     public final Name _this;
     public final Name dynamic;
     public final Name exports;
+    public final Name opens;
     public final Name module;
     public final Name provides;
     public final Name requires;
     public final Name to;
     public final Name transitive;
     public final Name uses;
-    public final Name weak;
+    public final Name open;
     public final Name with;
 
     // field and method names
@@ -225,13 +226,14 @@ public class Names {
         _this = fromString("this");
         dynamic = fromString("dynamic");
         exports = fromString("exports");
+        opens = fromString("opens");
         module = fromString("module");
         provides = fromString("provides");
         requires = fromString("requires");
         to = fromString("to");
         transitive = fromString("transitive");
         uses = fromString("uses");
-        weak = fromString("weak");
+        open = fromString("open");
         with = fromString("with");
 
         // field and method names

@@ -292,62 +292,62 @@ public class ModuleInfoTest extends ModuleTestBase {
                                           "exports p; exports p;",
                                           "module-info.java:1:32: compiler.err.conflicting.exports: p");
         verifyConflictingExports_packages(base,
-                                          "exports p; exports private p;",
-                                          "module-info.java:1:40: compiler.err.conflicting.exports: p");
+                                          "exports p; opens p;",
+                                          null);
         verifyConflictingExports_packages(base,
                                           "exports p; exports p to m2;",
                                           "module-info.java:1:32: compiler.err.conflicting.exports: p");
         verifyConflictingExports_packages(base,
-                                          "exports p; exports private p to m2;",
+                                          "exports p; opens p to m2;",
                                           null);
         verifyConflictingExports_packages(base,
-                                          "exports private p; exports p;",
-                                          "module-info.java:1:40: compiler.err.conflicting.exports: p");
+                                          "opens p; exports p;",
+                                          null);
         verifyConflictingExports_packages(base,
-                                          "exports private p; exports private p;",
-                                          "module-info.java:1:48: compiler.err.conflicting.exports: p");
+                                          "opens p; opens p;",
+                                          "module-info.java:1:28: compiler.err.conflicting.exports: p");
         verifyConflictingExports_packages(base,
-                                          "exports private p; exports p to m2;",
-                                          "module-info.java:1:40: compiler.err.conflicting.exports: p");
+                                          "opens p; exports p to m2;",
+                                          null);
         verifyConflictingExports_packages(base,
-                                          "exports private p; exports private p to m2;",
-                                          "module-info.java:1:48: compiler.err.conflicting.exports: p");
+                                          "opens p; opens p to m2;",
+                                          "module-info.java:1:28: compiler.err.conflicting.exports: p");
         verifyConflictingExports_packages(base,
                                           "exports p to m2; exports p;",
                                           "module-info.java:1:38: compiler.err.conflicting.exports: p");
         verifyConflictingExports_packages(base,
-                                          "exports p to m2; exports private p;",
-                                          "module-info.java:1:46: compiler.err.conflicting.exports: p");
+                                          "exports p to m2; opens p;",
+                                          null);
         verifyConflictingExports_packages(base,
                                           "exports p to m2; exports p to m2;",
                                           "module-info.java:1:43: compiler.err.conflicting.exports.to.module: m2");
         verifyConflictingExports_packages(base,
-                                          "exports p to m2; exports private p to m2;",
-                                          "module-info.java:1:51: compiler.err.conflicting.exports.to.module: m2");
-        verifyConflictingExports_packages(base,
-                                          "exports private p to m2; exports p;",
+                                          "exports p to m2; opens p to m2;",
                                           null);
         verifyConflictingExports_packages(base,
-                                          "exports private p to m2; exports private p;",
-                                          "module-info.java:1:54: compiler.err.conflicting.exports: p");
+                                          "opens p to m2; exports p;",
+                                          null);
         verifyConflictingExports_packages(base,
-                                          "exports private p to m2; exports p to m2;",
-                                          "module-info.java:1:51: compiler.err.conflicting.exports.to.module: m2");
+                                          "opens p to m2; opens p;",
+                                          "module-info.java:1:34: compiler.err.conflicting.exports: p");
         verifyConflictingExports_packages(base,
-                                          "exports private p to m2; exports private p to m2;",
-                                          "module-info.java:1:54: compiler.err.conflicting.exports: p");
+                                          "opens p to m2; exports p to m2;",
+                                          null);
+        verifyConflictingExports_packages(base,
+                                          "opens p to m2; opens p to m2;",
+                                          "module-info.java:1:34: compiler.err.conflicting.exports: p");
         verifyConflictingExports_packages(base,
                                           "exports p to m2; exports p to m3;",
                                           "module-info.java:1:38: compiler.err.conflicting.exports: p");
         verifyConflictingExports_packages(base,
-                                          "exports p to m2; exports private p to m3;",
+                                          "exports p to m2; opens p to m3;",
                                           null);
         verifyConflictingExports_packages(base,
-                                          "exports private p to m2; exports p to m3;",
+                                          "opens p to m2; exports p to m3;",
                                           null);
         verifyConflictingExports_packages(base,
-                                          "exports private p to m2; exports private p to m3;",
-                                          "module-info.java:1:54: compiler.err.conflicting.exports: p");
+                                          "opens p to m2; opens p to m3;",
+                                          "module-info.java:1:34: compiler.err.conflicting.exports: p");
     }
 
     private void verifyConflictingExports_packages(Path base, String code, String expected) throws Exception {

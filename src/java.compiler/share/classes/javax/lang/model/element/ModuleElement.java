@@ -100,6 +100,8 @@ public interface ModuleElement extends Element, QualifiedNameable {
         REQUIRES,
         /** An "exports package-name [to module-name-list]" directive. */
         EXPORTS,
+        /** An "opens package-name [to module-name-list]" directive. */
+        OPENS,
         /** A "uses service-name" directive. */
         USES,
         /** A "provides service-name with implementation-name" directive. */
@@ -150,12 +152,6 @@ public interface ModuleElement extends Element, QualifiedNameable {
      * @since 9
      */
     interface ExportsDirective extends Directive {
-
-        /**
-         * Returns whether or not this is a private exports.
-         * @return whether or not this is a private exports
-         */
-        boolean isPrivate();
 
         /**
          * Returns the package being exported, or null if this is a default exports directive.

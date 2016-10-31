@@ -501,7 +501,8 @@ public class AttributeWriter extends BasicWriter
         println("Module:");
         indent(+1);
         printRequiresTable(attr);
-        printExportsTable(attr);
+        printExportsTable(attr, true);
+        printExportsTable(attr, true);
         printUsesTable(attr);
         printProvidesTable(attr);
         indent(-1);
@@ -531,11 +532,11 @@ public class AttributeWriter extends BasicWriter
         indent(-1);
     }
 
-    protected void printExportsTable(Module_attribute attr) {
-        Module_attribute.ExportsEntry[] entries = attr.exports;
+    protected void printExportsTable(Module_attribute attr, boolean exports) {
+        Module_attribute.ExportsEntry[] entries = exports ? attr.exports : attr.opens;
         print(entries.length);
         tab();
-        println("// " + "exports");
+        println("// " + (exports ? "exports" : "opens"));
         indent(+1);
         for (Module_attribute.ExportsEntry e: entries) {
             print("#" + e.exports_index + "," + String.format("%x", e.exports_flags));
@@ -550,8 +551,6 @@ public class AttributeWriter extends BasicWriter
                 print(" ACC_MANDATED");
             if ((e.exports_flags & Module_attribute.ACC_SYNTHETIC) != 0)
                 print(" ACC_SYNTHETIC");
-            if ((e.exports_flags & Module_attribute.ACC_REFLECTION) != 0)
-                print(" ACC_PRIVATE_REFLECTION");
             if (e.exports_to_index.length == 0) {
                 println();
             } else {

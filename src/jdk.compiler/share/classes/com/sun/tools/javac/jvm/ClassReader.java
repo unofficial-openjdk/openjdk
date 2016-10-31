@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.ModuleElement.DirectiveKind;
 import javax.lang.model.element.NestingKind;
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
@@ -1280,10 +1281,30 @@ public class ClassReader {
                                     lb.append(syms.enterModule(readName(nextChar())));
                                 to = lb.toList();
                             }
-                            exports.add(new ExportsDirective(p, to, flags));
+                            exports.add(new ExportsDirective(DirectiveKind.EXPORTS, p, to, flags));
                         }
                         msym.exports = exports.toList();
                         directives.addAll(msym.exports);
+                        ListBuffer<ExportsDirective> opens = new ListBuffer<>();
+                        int nopens = nextChar();
+                        for (int i = 0; i < nopens; i++) {
+                            Name n = readName(nextChar());
+                            PackageSymbol p = syms.enterPackage(currentModule, names.fromUtf(internalize(n)));
+                            Set<ExportsFlag> flags = readExportsFlags(nextChar());
+                            int nto = nextChar();
+                            List<ModuleSymbol> to;
+                            if (nto == 0) {
+                                to = null;
+                            } else {
+                                ListBuffer<ModuleSymbol> lb = new ListBuffer<>();
+                                for (int t = 0; t < nto; t++)
+                                    lb.append(syms.enterModule(readName(nextChar())));
+                                to = lb.toList();
+                            }
+                            opens.add(new ExportsDirective(DirectiveKind.OPENS, p, to, flags));
+                        }
+                        msym.opens = opens.toList();
+                        directives.addAll(msym.opens);
 
                         msym.directives = directives.toList();
 
