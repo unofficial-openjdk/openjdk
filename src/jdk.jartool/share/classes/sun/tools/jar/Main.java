@@ -1076,7 +1076,9 @@ class Main {
                     if (name.startsWith(VERSIONS_DIR)) {
                         int index = name.indexOf('/', VERSIONS_DIR.length());
                         // name == -1 -> not a versioned directory, something else
-                        if (index != -1) {
+                        if (index == -1) {
+                            warn(formatMsg("warn.versioned.directory.unexpected.entry", name));
+                        } else {
                             name = name.substring(index + 1);
                         }
                     }
