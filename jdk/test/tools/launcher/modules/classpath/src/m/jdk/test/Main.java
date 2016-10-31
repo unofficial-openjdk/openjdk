@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -21,41 +21,25 @@
  * questions.
  */
 
-/*
- * @test
- * @bug 8137058
- * @summary Basic test for the unsupported newConstructorForSerialization
- * @modules jdk.unsupported
- */
+package jdk.test;
 
-import java.lang.reflect.Constructor;
-import sun.reflect.ReflectionFactory;
+import java.net.URL;
 
-public class NewConstructorForSerialization {
-
-    private static Constructor<?> getConstructor(Class<?> type)
-        throws NoSuchMethodException
-    {
-        ReflectionFactory factory = ReflectionFactory.getReflectionFactory();
-        Constructor<?> objectConstructor = type.getConstructor((Class[]) null);
-
-        @SuppressWarnings("unchecked")
-        Constructor<?> c = (Constructor<?>) factory
-                .newConstructorForSerialization(type, objectConstructor);
-        return c;
-    }
+public class Main {
+    static final String JAVA_CLASS_PATH = "java.class.path";
 
     public static void main(String[] args) throws Exception {
-        System.out.println(getConstructor(Object.class).newInstance());
-        System.out.println(getConstructor(Foo.class).newInstance());
-        System.out.println(getConstructor(Bar.class).newInstance());
-    }
+        String value = System.getProperty(JAVA_CLASS_PATH);
+        if (value == null) {
+            throw new RuntimeException(JAVA_CLASS_PATH + " is expected non-null" +
+                " for compatibility");
+        }
 
-    static class Foo {
-        public Foo() { }
-    }
-
-    static class Bar extends Foo {
-        public Bar() { }
+        boolean expected = args[0].equals("true");
+        ClassLoader loader = ClassLoader.getSystemClassLoader();
+        URL url = loader.getResource("jdk/test/res.properties");
+        if ((expected && url == null) || (!expected && url != null)) {
+            throw new RuntimeException("URL: " + url + " expected non-null: " + expected);
+        }
     }
 }
