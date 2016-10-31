@@ -229,7 +229,7 @@ public class Check {
         if (sym.isDeprecatedForRemoval()) {
             if (!lint.isSuppressed(LintCategory.REMOVAL)) {
                 if (sym.kind == MDL) {
-                    deprecationHandler.report(pos, "has.been.deprecated.for.removal.module", sym);
+                    removalHandler.report(pos, "has.been.deprecated.for.removal.module", sym);
                 } else {
                     removalHandler.report(pos, "has.been.deprecated.for.removal", sym, sym.location());
                 }
