@@ -562,8 +562,8 @@ public class TreeMaker implements JCTree.Factory {
     }
 
     @Override
-    public JCProvides Provides(JCExpression serviceName, JCExpression implName) {
-        JCProvides tree = new JCProvides(serviceName, implName);
+    public JCProvides Provides(JCExpression serviceName, List<JCExpression> implNames) {
+        JCProvides tree = new JCProvides(serviceName, implNames);
         tree.pos = pos;
         return tree;
     }

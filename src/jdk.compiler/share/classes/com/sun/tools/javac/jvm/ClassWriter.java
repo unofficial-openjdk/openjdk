@@ -71,6 +71,10 @@ public class ClassWriter extends ClassFile {
 
     private final Options options;
 
+    /** Switch: write new-style Provides table in Module attribute
+     */
+    boolean writeNewProvides;
+
     /** Switch: verbose output.
      */
     private boolean verbose;
@@ -194,6 +198,8 @@ public class ClassWriter extends ClassFile {
             dumpInnerClassModifiers = modifierFlags.indexOf('i') != -1;
             dumpMethodModifiers = modifierFlags.indexOf('m') != -1;
         }
+
+        writeNewProvides = true; // options.isSet("ClassWriterNewProvides");
     }
 
 /******************************************************************
@@ -999,11 +1005,28 @@ public class ClassWriter extends ClassFile {
             databuf.appendChar(pool.put(s.service));
         }
 
-        List<ProvidesDirective> services = m.provides;
-        databuf.appendChar(services.size());
-        for (ProvidesDirective s: services) {
-            databuf.appendChar(pool.put(s.service));
-            databuf.appendChar(pool.put(s.impl));
+        List<ProvidesDirective> provides = m.provides;
+        if (writeNewProvides) {
+            databuf.appendChar(provides.size());
+            for (ProvidesDirective p : provides) {
+                databuf.appendChar(pool.put(p.service));
+                databuf.appendChar(p.impls.size());
+                for (ClassSymbol impl: p.impls) {
+                    databuf.appendChar(pool.put(impl));
+                }
+            }
+        } else {
+            int nprovides = 0;
+            for (ProvidesDirective p : provides) {
+                nprovides += p.impls.size();
+            }
+            databuf.appendChar(nprovides);
+            for (ProvidesDirective p: provides) {
+                for (ClassSymbol impl : p.impls) {
+                    databuf.appendChar(pool.put(p.service));
+                    databuf.appendChar(pool.put(impl));
+                }
+            }
         }
 
         endAttr(alenIdx);

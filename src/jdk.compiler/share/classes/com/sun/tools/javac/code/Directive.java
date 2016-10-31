@@ -122,12 +122,12 @@ public abstract class Directive implements ModuleElement.Directive {
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
-        public PackageElement getPackage() {
+        public PackageSymbol getPackage() {
             return packge;
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
-        public java.util.List<? extends ModuleElement> getTargetModules() {
+        public java.util.List<ModuleSymbol> getTargetModules() {
             return modules == null
                     ? null
                     : Collections.unmodifiableList(modules);
@@ -149,11 +149,11 @@ public abstract class Directive implements ModuleElement.Directive {
     public static class ProvidesDirective extends Directive
             implements ModuleElement.ProvidesDirective {
         public final ClassSymbol service;
-        public final ClassSymbol impl;
+        public final List<ClassSymbol> impls;
 
-        public ProvidesDirective(ClassSymbol service, ClassSymbol impl) {
+        public ProvidesDirective(ClassSymbol service, List<ClassSymbol> impls) {
             this.service = service;
-            this.impl = impl;
+            this.impls = impls;
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
@@ -162,32 +162,34 @@ public abstract class Directive implements ModuleElement.Directive {
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
-        public TypeElement getService() {
+        public ClassSymbol getService() {
             return service;
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
-        public TypeElement getImplementation() {
-            return impl;
+        public List<ClassSymbol> getImplementations() {
+            return impls;
         }
 
         @Override
         public String toString() {
-            return "Provides[" + service + "," + impl + "]";
+            return "Provides[" + service + "," + impls + "]";
         }
 
+        // TODO: delete?
         @Override
         public boolean equals(Object obj) {
             if (!(obj instanceof ProvidesDirective)) {
                 return false;
             }
             ProvidesDirective other = (ProvidesDirective)obj;
-            return service == other.service && impl == other.impl;
+            return service == other.service && impls.equals(other.impls);
         }
 
+        // TODO: delete?
         @Override
         public int hashCode() {
-            return service.hashCode() * 31 + impl.hashCode() * 37;
+            return service.hashCode() * 31 + impls.hashCode() * 37;
         }
     }
 
@@ -224,7 +226,7 @@ public abstract class Directive implements ModuleElement.Directive {
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
-        public ModuleElement getDependency() {
+        public ModuleSymbol getDependency() {
             return module;
         }
 
@@ -251,7 +253,7 @@ public abstract class Directive implements ModuleElement.Directive {
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
-        public TypeElement getService() {
+        public ClassSymbol getService() {
             return service;
         }
 
@@ -260,6 +262,7 @@ public abstract class Directive implements ModuleElement.Directive {
             return "Uses[" + service + "]";
         }
 
+        // TODO: delete?
         @Override
         public boolean equals(Object obj) {
             if (!(obj instanceof UsesDirective)) {
@@ -269,6 +272,7 @@ public abstract class Directive implements ModuleElement.Directive {
             return service == other.service;
         }
 
+        // TODO: delete?
         @Override
         public int hashCode() {
             return service.hashCode() * 31;

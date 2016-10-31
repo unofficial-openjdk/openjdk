@@ -90,6 +90,10 @@ public class ClassReader {
 
     private final Annotate annotate;
 
+    /** Switch: read new-style Provides table in Module attribute
+     */
+    boolean readNewProvides;
+
     /** Switch: verbose output.
      */
     boolean verbose;
@@ -239,6 +243,7 @@ public class ClassReader {
 
         Options options = Options.instance(context);
         verbose         = options.isSet(Option.VERBOSE);
+        readNewProvides = true; // options.isSet("ClassReaderNewProvides");
 
         Source source = Source.instance(context);
         allowSimplifiedVarargs = source.allowSimplifiedVarargs();
@@ -1318,10 +1323,19 @@ public class ClassReader {
 
                         ListBuffer<InterimProvidesDirective> provides = new ListBuffer<>();
                         int nprovides = nextChar();
-                        for (int i = 0; i < nprovides; i++) {
+                        for (int p = 0; p < nprovides; p++) {
                             Name srvc = readClassName(nextChar());
-                            Name impl = readClassName(nextChar());
-                            provides.add(new InterimProvidesDirective(srvc, impl));
+                            if (readNewProvides) {
+                                int nimpls = nextChar();
+                                ListBuffer<Name> impls = new ListBuffer<>();
+                                for (int i = 0; i < nimpls; i++) {
+                                    impls.append(readClassName(nextChar()));
+                                provides.add(new InterimProvidesDirective(srvc, impls.toList()));
+                                }
+                            } else {
+                                Name impl = readClassName(nextChar());
+                                provides.add(new InterimProvidesDirective(srvc, List.of(impl)));
+                            }
                         }
                         interimProvides = provides.toList();
                     }
@@ -2900,11 +2914,11 @@ public class ClassReader {
 
     private static final class InterimProvidesDirective {
         public final Name service;
-        public final Name impl;
+        public final List<Name> impls;
 
-        public InterimProvidesDirective(Name service, Name impl) {
+        public InterimProvidesDirective(Name service, List<Name> impls) {
             this.service = service;
-            this.impl = impl;
+            this.impls = impls;
         }
 
     }
@@ -2933,8 +2947,12 @@ public class ClassReader {
             currentModule.uses = uses.toList();
             ListBuffer<ProvidesDirective> provides = new ListBuffer<>();
             for (InterimProvidesDirective interim : interimProvidesCopy) {
+                ListBuffer<ClassSymbol> impls = new ListBuffer<>();
+                for (Name impl : interim.impls) {
+                    impls.append(syms.enterClass(currentModule, impl));
+                }
                 ProvidesDirective d = new ProvidesDirective(syms.enterClass(currentModule, interim.service),
-                                                            syms.enterClass(currentModule, interim.impl));
+                                                            impls.toList());
                 provides.add(d);
                 directives.add(d);
             }

@@ -588,13 +588,18 @@ public class AttributeWriter extends BasicWriter
         println("// " + "provides");
         indent(+1);
         for (Module_attribute.ProvidesEntry e: entries) {
-            print("#" + e.provides_index + ",#" +
-                    e.with_index);
+            print("#" + e.provides_index);
             tab();
             print("// ");
             print(constantWriter.stringValue(e.provides_index));
-            print (" with ");
-            println(constantWriter.stringValue(e.with_index));
+            println(" with ... " + e.with_count);
+            indent(+1);
+            for (int with : e.with_index) {
+                print("#" + with);
+                tab();
+                println("// ... with " + constantWriter.stringValue(with));
+            }
+            indent(-1);
         }
         indent(-1);
     }

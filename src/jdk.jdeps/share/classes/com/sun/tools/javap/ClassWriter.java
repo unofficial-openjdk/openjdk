@@ -40,7 +40,7 @@ import com.sun.tools.classfile.ConstantPool;
 import com.sun.tools.classfile.ConstantPoolException;
 import com.sun.tools.classfile.ConstantValue_attribute;
 import com.sun.tools.classfile.Descriptor;
-import com.sun.tools.classfile.DescriptorException;
+import com.sun.tools.classfile.Descriptor.InvalidDescriptor;
 import com.sun.tools.classfile.Exceptions_attribute;
 import com.sun.tools.classfile.Field;
 import com.sun.tools.classfile.Method;
@@ -253,17 +253,20 @@ public class ClassWriter extends BasicWriter {
                 return builder.toString();
             }
 
+            @Override
             public StringBuilder visitSimpleType(SimpleType type, StringBuilder sb) {
                 sb.append(getJavaName(type.name));
                 return sb;
             }
 
+            @Override
             public StringBuilder visitArrayType(ArrayType type, StringBuilder sb) {
                 append(sb, type.elemType);
                 sb.append("[]");
                 return sb;
             }
 
+            @Override
             public StringBuilder visitMethodType(MethodType type, StringBuilder sb) {
                 appendIfNotEmpty(sb, "<", type.typeParamTypes, "> ");
                 append(sb, type.returnType);
@@ -272,6 +275,7 @@ public class ClassWriter extends BasicWriter {
                 return sb;
             }
 
+            @Override
             public StringBuilder visitClassSigType(ClassSigType type, StringBuilder sb) {
                 appendIfNotEmpty(sb, "<", type.typeParamTypes, ">");
                 if (isInterface) {
@@ -287,6 +291,7 @@ public class ClassWriter extends BasicWriter {
                 return sb;
             }
 
+            @Override
             public StringBuilder visitClassType(ClassType type, StringBuilder sb) {
                 if (type.outerType != null) {
                     append(sb, type.outerType);
@@ -297,6 +302,7 @@ public class ClassWriter extends BasicWriter {
                 return sb;
             }
 
+            @Override
             public StringBuilder visitTypeParamType(TypeParamType type, StringBuilder sb) {
                 sb.append(type.name);
                 String sep = " extends ";
@@ -316,6 +322,7 @@ public class ClassWriter extends BasicWriter {
                 return sb;
             }
 
+            @Override
             public StringBuilder visitWildcardType(WildcardType type, StringBuilder sb) {
                 switch (type.kind) {
                     case UNBOUNDED:
@@ -463,16 +470,20 @@ public class ClassWriter extends BasicWriter {
         if (methodType != null) {
             print(new JavaTypePrinter(false).printTypeArgs(methodType.typeParamTypes));
         }
-        if (getName(m).equals("<init>")) {
-            print(getJavaName(classFile));
-            print(getJavaParameterTypes(d, flags));
-        } else if (getName(m).equals("<clinit>")) {
-            print("{}");
-        } else {
-            print(getJavaReturnType(d));
-            print(" ");
-            print(getName(m));
-            print(getJavaParameterTypes(d, flags));
+        switch (getName(m)) {
+            case "<init>":
+                print(getJavaName(classFile));
+                print(getJavaParameterTypes(d, flags));
+                break;
+            case "<clinit>":
+                print("{}");
+                break;
+            default:
+                print(getJavaReturnType(d));
+                print(" ");
+                print(getName(m));
+                print(getJavaParameterTypes(d, flags));
+                break;
         }
 
         Attribute e_attr = m.attributes.get(Attribute.Exceptions);
@@ -627,13 +638,22 @@ public class ClassWriter extends BasicWriter {
         }
 
         for (Module_attribute.ProvidesEntry entry: m.provides) {
-            print("provides ");
+            print("provides  ");
             print(getClassName(entry.provides_index).replace('/', '.'));
-            println(" with");
-            indent(+1);
-            print(getClassName(entry.with_index).replace('/', '.'));
+            boolean first = true;
+            for (int i: entry.with_index) {
+                if (first) {
+                    println(" with");
+                    indent(+1);
+                    first = false;
+                } else {
+                    println(",");
+                }
+                print(getClassName(i).replace('/', '.'));
+            }
             println(";");
-            indent(-1);
+            if (!first)
+                indent(-1);
         }
     }
 
@@ -712,7 +732,7 @@ public class ClassWriter extends BasicWriter {
             return getJavaName(d.getFieldType(constant_pool));
         } catch (ConstantPoolException e) {
             return report(e);
-        } catch (DescriptorException e) {
+        } catch (InvalidDescriptor e) {
             return report(e);
         }
     }
@@ -722,7 +742,7 @@ public class ClassWriter extends BasicWriter {
             return getJavaName(d.getReturnType(constant_pool));
         } catch (ConstantPoolException e) {
             return report(e);
-        } catch (DescriptorException e) {
+        } catch (InvalidDescriptor e) {
             return report(e);
         }
     }
@@ -732,7 +752,7 @@ public class ClassWriter extends BasicWriter {
             return getJavaName(adjustVarargs(flags, d.getParameterTypes(constant_pool)));
         } catch (ConstantPoolException e) {
             return report(e);
-        } catch (DescriptorException e) {
+        } catch (InvalidDescriptor e) {
             return report(e);
         }
     }
@@ -799,12 +819,16 @@ public class ClassWriter extends BasicWriter {
                     ConstantPool.CONSTANT_Integer_info info =
                             (ConstantPool.CONSTANT_Integer_info) cpInfo;
                     String t = d.getValue(constant_pool);
-                    if (t.equals("C")) { // character
-                        return getConstantCharValue((char) info.value);
-                    } else if (t.equals("Z")) { // boolean
-                        return String.valueOf(info.value == 1);
-                    } else { // other: assume integer
-                        return String.valueOf(info.value);
+                    switch (t) {
+                        case "C":
+                            // character
+                            return getConstantCharValue((char) info.value);
+                        case "Z":
+                            // boolean
+                            return String.valueOf(info.value == 1);
+                        default:
+                            // other: assume integer
+                            return String.valueOf(info.value);
                     }
                 }
 
@@ -856,10 +880,10 @@ public class ClassWriter extends BasicWriter {
         }
     }
 
-    private Options options;
-    private AttributeWriter attrWriter;
-    private CodeWriter codeWriter;
-    private ConstantWriter constantWriter;
+    private final Options options;
+    private final AttributeWriter attrWriter;
+    private final CodeWriter codeWriter;
+    private final ConstantWriter constantWriter;
     private ClassFile classFile;
     private URI uri;
     private long lastModified;

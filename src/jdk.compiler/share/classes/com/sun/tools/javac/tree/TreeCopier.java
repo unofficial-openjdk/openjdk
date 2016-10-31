@@ -528,8 +528,8 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
     public JCProvides visitProvides(ProvidesTree node, P p) {
         JCProvides t = (JCProvides) node;
         JCExpression serviceName = copy(t.serviceName, p);
-        JCExpression implName = copy(t.implName, p);
-        return M.at(t.pos).Provides(serviceName, implName);
+        List<JCExpression> implNames = copy(t.implNames, p);
+        return M.at(t.pos).Provides(serviceName, implNames);
     }
 
     @Override @DefinedBy(Api.COMPILER_TREE)

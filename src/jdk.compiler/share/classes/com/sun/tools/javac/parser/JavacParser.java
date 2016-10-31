@@ -3283,9 +3283,9 @@ public class JavacParser implements Parser {
                 JCExpression serviceName = qualident(false);
                 if (token.kind == IDENTIFIER && token.name() == names.with) {
                     nextToken();
-                    JCExpression implName = qualident(false);
+                    List<JCExpression> implNames = qualidentList(false);
                     accept(SEMI);
-                    defs.append(toP(F.at(pos).Provides(serviceName, implName)));
+                    defs.append(toP(F.at(pos).Provides(serviceName, implNames)));
                 } else {
                     error(token.pos, "expected", "'" + names.with + "'");
                     skip(false, false, false, false);

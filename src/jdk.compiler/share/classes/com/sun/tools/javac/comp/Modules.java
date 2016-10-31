@@ -779,8 +779,8 @@ public class Modules extends JCTree.Visitor {
         private final ModuleSymbol msym;
         private final Env<AttrContext> env;
 
-        private final Set<Directive.UsesDirective> allUses = new HashSet<>();
-        private final Set<Directive.ProvidesDirective> allProvides = new HashSet<>();
+        private final Set<ClassSymbol> allUses = new HashSet<>();
+        private final Map<ClassSymbol, Set<ClassSymbol>> allProvides = new HashMap<>();
 
         public UsesProvidesVisitor(ModuleSymbol msym, Env<AttrContext> env) {
             this.msym = msym;
@@ -839,39 +839,48 @@ public class Modules extends JCTree.Visitor {
         @Override
         public void visitProvides(JCProvides tree) {
             Type st = attr.attribType(tree.serviceName, env, syms.objectType);
-            Type it = attr.attribType(tree.implName, env, syms.objectType);
             ClassSymbol service = (ClassSymbol) st.tsym;
-            ClassSymbol impl = (ClassSymbol) it.tsym;
-            //find provider factory:
-            MethodSymbol factory = factoryMethod(impl);
-            if (factory != null) {
-                Type returnType = factory.type.getReturnType();
-                if (!types.isSubtype(returnType, st)) {
-                    log.error(tree.implName.pos(), Errors.ServiceImplementationProviderReturnMustBeSubtypeOfServiceInterface);
-                }
-            } else {
-                if (!types.isSubtype(it, st)) {
-                    log.error(tree.implName.pos(), Errors.ServiceImplementationMustBeSubtypeOfServiceInterface);
-                } else if ((impl.flags() & ABSTRACT) != 0) {
-                    log.error(tree.implName.pos(), Errors.ServiceImplementationIsAbstract(impl));
-                } else if (impl.isInner()) {
-                    log.error(tree.implName.pos(), Errors.ServiceImplementationIsInner(impl));
-                } else if (service.isInner()) {
-                    log.error(tree.serviceName.pos(), Errors.ServiceDefinitionIsInner(service));
+            ListBuffer<ClassSymbol> impls = new ListBuffer<>();
+            for (JCExpression implName : tree.implNames) {
+                Type it = attr.attribType(implName, env, syms.objectType);
+                ClassSymbol impl = (ClassSymbol) it.tsym;
+                //find provider factory:
+                MethodSymbol factory = factoryMethod(impl);
+                if (factory != null) {
+                    Type returnType = factory.type.getReturnType();
+                    if (!types.isSubtype(returnType, st)) {
+                        log.error(implName.pos(), Errors.ServiceImplementationProviderReturnMustBeSubtypeOfServiceInterface);
+                    }
                 } else {
-                    MethodSymbol constr = noArgsConstructor(impl);
-                    if (constr == null) {
-                        log.error(tree.implName.pos(), Errors.ServiceImplementationDoesntHaveANoArgsConstructor(impl));
-                    } else if ((constr.flags() & PUBLIC) == 0) {
-                        log.error(tree.implName.pos(), Errors.ServiceImplementationNoArgsConstructorNotPublic(impl));
+                    if (!types.isSubtype(it, st)) {
+                        log.error(implName.pos(), Errors.ServiceImplementationMustBeSubtypeOfServiceInterface);
+                    } else if ((impl.flags() & ABSTRACT) != 0) {
+                        log.error(implName.pos(), Errors.ServiceImplementationIsAbstract(impl));
+                    } else if (impl.isInner()) {
+                        log.error(implName.pos(), Errors.ServiceImplementationIsInner(impl));
+                    } else if (service.isInner()) {
+                        log.error(tree.serviceName.pos(), Errors.ServiceDefinitionIsInner(service));
+                    } else {
+                        MethodSymbol constr = noArgsConstructor(impl);
+                        if (constr == null) {
+                            log.error(implName.pos(), Errors.ServiceImplementationDoesntHaveANoArgsConstructor(impl));
+                        } else if ((constr.flags() & PUBLIC) == 0) {
+                            log.error(implName.pos(), Errors.ServiceImplementationNoArgsConstructorNotPublic(impl));
+                        }
+                    }
+                }
+                if (it.hasTag(CLASS)) {
+                    // For now, we just check the pair (service-type, impl-type) is unique
+                    // TODO, check only one provides per service type as well
+                    if (allProvides.computeIfAbsent(service, s -> new HashSet<>()).add(impl)) {
+                        impls.append(impl);
+                    } else {
+                        log.error(implName.pos(), Errors.DuplicateProvides(service, impl));
                     }
                 }
             }
-            if (st.hasTag(CLASS) && it.hasTag(CLASS)) {
-                Directive.ProvidesDirective d = new Directive.ProvidesDirective(service, impl);
-                if (!allProvides.add(d)) {
-                    log.error(tree.pos(), Errors.DuplicateProvides(service, impl));
-                }
+            if (st.hasTag(CLASS) && !impls.isEmpty()) {
+                Directive.ProvidesDirective d = new Directive.ProvidesDirective(service, impls.toList());
                 msym.provides = msym.provides.prepend(d);
                 msym.directives = msym.directives.prepend(d);
                 directiveToTreeMap.put(d, tree);
@@ -893,53 +902,58 @@ public class Modules extends JCTree.Visitor {
                 log.error(tree.qualid.pos(), Errors.ServiceDefinitionIsEnum(st.tsym));
             } else if (st.hasTag(CLASS)) {
                 ClassSymbol service = (ClassSymbol) st.tsym;
-                Directive.UsesDirective d = new Directive.UsesDirective(service);
-                if (!allUses.add(d)) {
+                if (allUses.add(service)) {
+                    Directive.UsesDirective d = new Directive.UsesDirective(service);
+                    msym.uses = msym.uses.prepend(d);
+                    msym.directives = msym.directives.prepend(d);
+                } else {
                     log.error(tree.pos(), Errors.DuplicateUses(service));
                 }
-                msym.uses = msym.uses.prepend(d);
-                msym.directives = msym.directives.prepend(d);
             }
         }
 
         private void checkForCorrectness() {
-            for (Directive.ProvidesDirective provides : allProvides) {
+            for (Directive.ProvidesDirective provides : msym.provides) {
                 JCProvides tree = directiveToTreeMap.get(provides);
-                /* The implementation must be defined in the same module as the provides directive
-                 * (else, error)
-                 */
-                PackageSymbol implementationDefiningPackage = provides.impl.packge();
-                if (implementationDefiningPackage.modle != msym) {
-                    log.error(tree.pos(), Errors.ServiceImplementationNotInRightModule(implementationDefiningPackage.modle));
-                }
-
-                /* There is no inherent requirement that module that provides a service should actually
-                 * use it itself. However, it is a pointless declaration if the service package is not
-                 * exported and there is no uses for the service.
-                 */
-                PackageSymbol interfaceDeclaringPackage = provides.service.packge();
-                boolean isInterfaceDeclaredInCurrentModule = interfaceDeclaringPackage.modle == msym;
-                boolean isInterfaceExportedFromAReadableModule =
-                        msym.visiblePackages.get(interfaceDeclaringPackage.fullname) == interfaceDeclaringPackage;
-                if (isInterfaceDeclaredInCurrentModule && !isInterfaceExportedFromAReadableModule) {
-                    // ok the interface is declared in this module. Let's check if it's exported
-                    boolean warn = true;
-                    for (ExportsDirective export : msym.exports) {
-                        if (interfaceDeclaringPackage == export.packge) {
-                            warn = false;
-                            break;
-                        }
+                for (ClassSymbol impl : provides.impls) {
+                    /* The implementation must be defined in the same module as the provides directive
+                     * (else, error)
+                     */
+                    PackageSymbol implementationDefiningPackage = impl.packge();
+                    if (implementationDefiningPackage.modle != msym) {
+                        // TODO: should use tree for the implmentation name, not the entire provides tree
+                        // TODO: should improve error message to identify the implementation type
+                        log.error(tree.pos(), Errors.ServiceImplementationNotInRightModule(implementationDefiningPackage.modle));
                     }
-                    if (warn) {
-                        for (UsesDirective uses : msym.uses) {
-                            if (provides.service == uses.service) {
+
+                    /* There is no inherent requirement that module that provides a service should actually
+                     * use it itself. However, it is a pointless declaration if the service package is not
+                     * exported and there is no uses for the service.
+                     */
+                    PackageSymbol interfaceDeclaringPackage = provides.service.packge();
+                    boolean isInterfaceDeclaredInCurrentModule = interfaceDeclaringPackage.modle == msym;
+                    boolean isInterfaceExportedFromAReadableModule =
+                            msym.visiblePackages.get(interfaceDeclaringPackage.fullname) == interfaceDeclaringPackage;
+                    if (isInterfaceDeclaredInCurrentModule && !isInterfaceExportedFromAReadableModule) {
+                        // ok the interface is declared in this module. Let's check if it's exported
+                        boolean warn = true;
+                        for (ExportsDirective export : msym.exports) {
+                            if (interfaceDeclaringPackage == export.packge) {
                                 warn = false;
                                 break;
                             }
                         }
-                    }
-                    if (warn) {
-                        log.warning(tree.pos(), Warnings.ServiceProvidedButNotExportedOrUsed(provides.service));
+                        if (warn) {
+                            for (UsesDirective uses : msym.uses) {
+                                if (provides.service == uses.service) {
+                                    warn = false;
+                                    break;
+                                }
+                            }
+                        }
+                        if (warn) {
+                            log.warning(tree.pos(), Warnings.ServiceProvidedButNotExportedOrUsed(provides.service));
+                        }
                     }
                 }
             }

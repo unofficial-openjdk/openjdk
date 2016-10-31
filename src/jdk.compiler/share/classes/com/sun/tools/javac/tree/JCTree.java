@@ -2731,11 +2731,11 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     public static class JCProvides extends JCDirective
             implements ProvidesTree {
         public JCExpression serviceName;
-        public JCExpression implName;
+        public List<JCExpression> implNames;
 
-        protected JCProvides(JCExpression serviceName, JCExpression implName) {
+        protected JCProvides(JCExpression serviceName, List<JCExpression> implNames) {
             this.serviceName = serviceName;
-            this.implName = implName;
+            this.implNames = implNames;
         }
 
         @Override
@@ -2757,8 +2757,8 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         }
 
         @Override @DefinedBy(Api.COMPILER_TREE)
-        public JCExpression getImplementationName() {
-            return implName;
+        public List<JCExpression> getImplementationNames() {
+            return implNames;
         }
 
         @Override
@@ -2987,7 +2987,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         JCModuleDecl ModuleDef(List<JCAnnotation> annotations, ModuleKind kind, JCExpression qualId, List<JCDirective> directives);
         JCExports Exports(JCExpression qualId, List<JCExpression> moduleNames);
         JCExports Opens(JCExpression qualId, List<JCExpression> moduleNames);
-        JCProvides Provides(JCExpression serviceName, JCExpression implName);
+        JCProvides Provides(JCExpression serviceName, List<JCExpression> implNames);
         JCRequires Requires(boolean isTransitive, boolean isStaticPhase, JCExpression qualId);
         JCUses Uses(JCExpression qualId);
         LetExpr LetExpr(List<JCVariableDecl> defs, JCExpression expr);

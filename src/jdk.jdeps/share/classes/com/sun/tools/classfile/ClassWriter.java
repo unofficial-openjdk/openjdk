@@ -55,6 +55,9 @@ public class ClassWriter {
 
     /**
      * Write a ClassFile data structure to a file.
+     * @param classFile the classfile object to be written
+     * @param f the file
+     * @throws IOException if an error occurs while writing the file
      */
     public void write(ClassFile classFile, File f) throws IOException {
         try (FileOutputStream f_out = new FileOutputStream(f)) {
@@ -64,6 +67,9 @@ public class ClassWriter {
 
     /**
      * Write a ClassFile data structure to a stream.
+     * @param classFile the classfile object to be written
+     * @param s the stream
+     * @throws IOException if an error occurs while writing the file
      */
     public void write(ClassFile classFile, OutputStream s) throws IOException {
         this.classFile = classFile;
@@ -562,7 +568,10 @@ public class ClassWriter {
             out.writeShort(attr.provides.length);
             for (Module_attribute.ProvidesEntry e: attr.provides) {
                 out.writeShort(e.provides_index);
-                out.writeShort(e.with_index);
+                out.writeShort(e.with_count);
+                for (int with : e.with_index) {
+                    out.writeShort(with);
+                }
             }
             return null;
         }

@@ -162,17 +162,22 @@ public class Module_attribute extends Attribute {
     public static class ProvidesEntry {
         ProvidesEntry(ClassReader cr) throws IOException {
             provides_index = cr.readUnsignedShort();
-            with_index = cr.readUnsignedShort();
+            with_count = cr.readUnsignedShort();
+            with_index = new int[with_count];
+            for (int i = 0; i < with_count; i++)
+                with_index[i] = cr.readUnsignedShort();
         }
 
-        public ProvidesEntry(int provides, int with) {
+        public ProvidesEntry(int provides, int[] with) {
             this.provides_index = provides;
+            this.with_count = with.length;
             this.with_index = with;
         }
 
         public static final int length = 4;
 
         public final int provides_index;
-        public final int with_index;
+        public final int with_count;
+        public final int[] with_index;
     }
 }
