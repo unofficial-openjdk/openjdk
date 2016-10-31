@@ -88,7 +88,7 @@ public class Check {
     private final JavaFileManager fileManager;
     private final Source source;
     private final Profile profile;
-    private final boolean warnOnAccessToSensitiveMembers;
+    private final boolean warnOnAnyAccessToMembers;
 
     // The set of lint options currently in effect. It is initialized
     // from the context, and then is set/reset as needed by Attr as it
@@ -132,7 +132,7 @@ public class Check {
         allowStrictMethodClashCheck = source.allowStrictMethodClashCheck();
         allowPrivateSafeVarargs = source.allowPrivateSafeVarargs();
         allowDiamondWithAnonymousClassCreation = source.allowDiamondWithAnonymousClassCreation();
-        warnOnAccessToSensitiveMembers = options.isSet("warnOnAccessToSensitiveMembers");
+        warnOnAnyAccessToMembers = options.isSet("warnOnAccessToMembers");
 
         Target target = Target.instance(context);
         syntheticNameChar = target.syntheticNameChar();
@@ -140,11 +140,14 @@ public class Check {
         profile = Profile.instance(context);
 
         boolean verboseDeprecated = lint.isEnabled(LintCategory.DEPRECATION);
+        boolean verboseRemoval = lint.isEnabled(LintCategory.REMOVAL);
         boolean verboseUnchecked = lint.isEnabled(LintCategory.UNCHECKED);
         boolean enforceMandatoryWarnings = true;
 
         deprecationHandler = new MandatoryWarningHandler(log, verboseDeprecated,
                 enforceMandatoryWarnings, "deprecated", LintCategory.DEPRECATION);
+        removalHandler = new MandatoryWarningHandler(log, verboseRemoval,
+                enforceMandatoryWarnings, "removal", LintCategory.REMOVAL);
         uncheckedHandler = new MandatoryWarningHandler(log, verboseUnchecked,
                 enforceMandatoryWarnings, "unchecked", LintCategory.UNCHECKED);
         sunApiHandler = new MandatoryWarningHandler(log, false,
@@ -186,6 +189,10 @@ public class Check {
      */
     private MandatoryWarningHandler deprecationHandler;
 
+    /** A handler for messages about deprecated-for-removal usage.
+     */
+    private MandatoryWarningHandler removalHandler;
+
     /** A handler for messages about unchecked or unsafe usage.
      */
     private MandatoryWarningHandler uncheckedHandler;
@@ -219,7 +226,15 @@ public class Check {
      *  @param sym        The deprecated symbol.
      */
     void warnDeprecated(DiagnosticPosition pos, Symbol sym) {
-        if (!lint.isSuppressed(LintCategory.DEPRECATION)) {
+        if (sym.isDeprecatedForRemoval()) {
+            if (!lint.isSuppressed(LintCategory.REMOVAL)) {
+                if (sym.kind == MDL) {
+                    deprecationHandler.report(pos, "has.been.deprecated.for.removal.module", sym);
+                } else {
+                    removalHandler.report(pos, "has.been.deprecated.for.removal", sym, sym.location());
+                }
+            }
+        } else if (!lint.isSuppressed(LintCategory.DEPRECATION)) {
             if (sym.kind == MDL) {
                 deprecationHandler.report(pos, "has.been.deprecated.module", sym);
             } else {
@@ -263,6 +278,7 @@ public class Check {
      */
     public void reportDeferredDiagnostics() {
         deprecationHandler.reportDeferredDiagnostic();
+        removalHandler.reportDeferredDiagnostic();
         uncheckedHandler.reportDeferredDiagnostic();
         sunApiHandler.reportDeferredDiagnostic();
     }
@@ -2611,8 +2627,11 @@ public class Check {
         }
     }
 
-    void checkElemAccessFromSerializableLambda(final JCTree tree) {
-        if (warnOnAccessToSensitiveMembers) {
+    void checkAccessFromSerializableElement(final JCTree tree, boolean isLambda) {
+        if (warnOnAnyAccessToMembers ||
+            (lint.isEnabled(LintCategory.SERIAL) &&
+            !lint.isSuppressed(LintCategory.SERIAL) &&
+            isLambda)) {
             Symbol sym = TreeInfo.symbol(tree);
             if (!sym.kind.matches(KindSelector.VAL_MTH)) {
                 return;
@@ -2628,9 +2647,16 @@ public class Check {
             }
 
             if (!types.isSubtype(sym.owner.type, syms.serializableType) &&
-                    isEffectivelyNonPublic(sym)) {
-                log.warning(tree.pos(),
-                        "access.to.sensitive.member.from.serializable.element", sym);
+                isEffectivelyNonPublic(sym)) {
+                if (isLambda) {
+                    if (belongsToRestrictedPackage(sym)) {
+                        log.warning(LintCategory.SERIAL, tree.pos(),
+                            "access.to.member.from.serializable.lambda", sym);
+                    }
+                } else {
+                    log.warning(tree.pos(),
+                        "access.to.member.from.serializable.element", sym);
+                }
             }
         }
     }
@@ -2647,6 +2673,14 @@ public class Check {
             sym = sym.owner;
         }
         return false;
+    }
+
+    private boolean belongsToRestrictedPackage(Symbol sym) {
+        String fullName = sym.packge().fullname.toString();
+        return fullName.startsWith("java.") ||
+                fullName.startsWith("javax.") ||
+                fullName.startsWith("sun.") ||
+                fullName.contains(".internal.");
     }
 
     /** Report a conflict between a user symbol and a synthetic symbol.
@@ -3218,9 +3252,9 @@ public class Check {
     }
 
     void checkDeprecated(final DiagnosticPosition pos, final Symbol other, final Symbol s) {
-        if ((s.flags() & DEPRECATED) != 0 &&
-                (other.flags() & DEPRECATED) == 0 &&
-                (s.outermostClass() != other.outermostClass() || s.outermostClass() == null)) {
+        if ( (s.isDeprecatedForRemoval()
+                || s.isDeprecated() && !other.isDeprecated())
+                && (s.outermostClass() != other.outermostClass() || s.outermostClass() == null)) {
             deferredLintHandler.report(new DeferredLintHandler.LintLogger() {
                 @Override
                 public void report() {

@@ -91,6 +91,7 @@ public class Names {
     public final Name family;
     public final Name finalize;
     public final Name forName;
+    public final Name forRemoval;
     public final Name getClass;
     public final Name getClassLoader;
     public final Name getComponentType;
@@ -252,6 +253,7 @@ public class Names {
         family = fromString("family");
         finalize = fromString("finalize");
         forName = fromString("forName");
+        forRemoval = fromString("forRemoval");
         getClass = fromString("getClass");
         getClassLoader = fromString("getClassLoader");
         getComponentType = fromString("getComponentType");
