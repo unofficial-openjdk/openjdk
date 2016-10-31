@@ -864,7 +864,7 @@ Agent_OnUnload_L(JavaVM *vm)</example>
 
 <intro id="bcimodules" label="Bytecode Instrumentation of code in modules">
   Agents can use the functions <functionlink id="AddModuleReads"/>,
-  <functionlink id="AddModuleExports"/>, <functionlink id="AddModuleExportsPrivate"/>,
+  <functionlink id="AddModuleExports"/>, <functionlink id="AddModuleOpens"/>,
   <functionlink id="AddModuleUses"/> and <functionlink id="AddModuleProvides"/>
   to update a module to expand the set of modules that it reads, the set of
   packaegs that it exports (or exports-private), or the services that it uses
@@ -6646,15 +6646,16 @@ class C2 extends C1 implements I2 {
       </errors>
     </function>
 
-    <function id="AddModuleExportsPrivate" num="96">
-      <synopsis>Add Module Exports Private</synopsis>
+    <function id="AddModuleOpens" num="96">
+      <synopsis>Add Module Opens</synopsis>
       <description>
-         Update a module to export-private a package to another module.
+         Update a module to open a package to another module.
          This function is a no-op when <paramlink id="module"></paramlink>
-         is an unnamed module.
+         is an open module.
          This function facilitates the instrumentation of code
-         in named modules where that instrumentation requires
-         expanding the set of packages that a module exports.
+         in modules where that instrumentation requires
+         expanding the set of packages that a module opens to
+         other modules.
       </description>
       <origin>new</origin>
       <capabilities>
@@ -6669,13 +6670,13 @@ class C2 extends C1 implements I2 {
         <param id="pkg_name">
           <inbuf><char/></inbuf>
           <description>
-            The exported package name.
+            The package name of the package to open.
           </description>
         </param>
         <param id="to_module">
           <ptrtype><jobject/></ptrtype>
           <description>
-            The module the package is exported-private to.
+            The module with the package to open.
             If the <code>to_module</code> is not a subclass of
             <code>java.lang.reflect.Module</code> this function returns
             <errorlink id="JVMTI_ERROR_INVALID_MODULE"></errorlink>.
@@ -14723,7 +14724,7 @@ typedef void (JNICALL *jvmtiEventVMInit)
           - can_generate_early_class_hook_events
        - Add new functions:
           - GetAllModules
-          - AddModuleReads, AddModuleExports, AddModuleExportsPrivate, AddModuleUses, AddModuleProvides
+          - AddModuleReads, AddModuleExports, AddModuleOpens, AddModuleUses, AddModuleProvides
       Clarified can_redefine_any_classes, can_retransform_any_classes and IsModifiableClass API to
       disallow some implementation defined classes.
   </change>

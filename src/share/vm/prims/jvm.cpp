@@ -1004,8 +1004,8 @@ JVM_END
 
 // Module support //////////////////////////////////////////////////////////////////////////////
 
-JVM_ENTRY(void, JVM_DefineModule(JNIEnv *env, jobject module, jstring version, jstring location,
-                                 jobjectArray packages))
+JVM_ENTRY(void, JVM_DefineModule(JNIEnv *env, jobject module, jboolean is_open, jstring version,
+                                 jstring location, jobjectArray packages))
   JVMWrapper("JVM_DefineModule");
   Modules::define_module(module, version, location, packages, CHECK);
 JVM_END
