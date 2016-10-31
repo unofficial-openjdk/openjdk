@@ -458,4 +458,29 @@ public class EdgeCases extends ModuleTestBase {
 
         syms.java_base.getDirectives();
     }
+
+    @Test
+    public void testPackageInModuleInfo(Path base) throws Exception {
+        Path src = base.resolve("src");
+        Files.createDirectories(src);
+        tb.writeJavaFiles(src, "package p; module foo { }");
+        Path classes = base.resolve("classes");
+        tb.createDirectories(classes);
+
+        List<String> log = new JavacTask(tb)
+            .options("-XDrawDiagnostics", "-XDshould-stop.ifError=FLOW")
+            .outdir(classes)
+            .files(findJavaFiles(src))
+            .run(Expect.FAIL)
+            .writeAll()
+            .getOutputLines(OutputKind.DIRECT);
+
+        List<String> expected = Arrays.asList(
+                "module-info.java:1:1: compiler.err.no.pkg.in.module-info.java",
+                "1 error");
+
+        if (!expected.equals(log)) {
+            throw new AssertionError("Unexpected output: " + log);
+        }
+    }
 }

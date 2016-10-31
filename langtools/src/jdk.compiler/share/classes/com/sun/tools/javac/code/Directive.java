@@ -76,7 +76,6 @@ public abstract class Directive implements ModuleElement.Directive {
 
     /** Flags for ExportsDirective. */
     public enum ExportsFlag {
-        REFLECTION(0x0080),
         SYNTHETIC(0x1000),
         MANDATED(0x8000);
 
@@ -97,31 +96,29 @@ public abstract class Directive implements ModuleElement.Directive {
 
     /**
      * 'exports' Package ';'
+     * 'opens' Package ';'
      */
     public static class ExportsDirective extends Directive
             implements ModuleElement.ExportsDirective {
-        public final PackageSymbol packge;  // null for default
-        public final Set<ExportsFlag> flags;
+        private final ModuleElement.DirectiveKind kind;
+        public final PackageSymbol packge;
         public final List<ModuleSymbol> modules;
+        public final Set<ExportsFlag> flags;
 
-        public ExportsDirective(PackageSymbol packge, List<ModuleSymbol> modules) {
-            this(packge, modules, EnumSet.noneOf(ExportsFlag.class));
+        public ExportsDirective(ModuleElement.DirectiveKind kind, PackageSymbol packge, List<ModuleSymbol> modules) {
+            this(kind, packge, modules, EnumSet.noneOf(ExportsFlag.class));
         }
 
-        public ExportsDirective(PackageSymbol packge, List<ModuleSymbol> modules, Set<ExportsFlag> flags) {
+        public ExportsDirective(ModuleElement.DirectiveKind kind, PackageSymbol packge, List<ModuleSymbol> modules, Set<ExportsFlag> flags) {
+            this.kind = kind;
             this.packge = packge;
-            this.flags = flags;
             this.modules = modules;
+            this.flags = flags;
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
         public ModuleElement.DirectiveKind getKind() {
-            return ModuleElement.DirectiveKind.EXPORTS;
-        }
-
-        @Override @DefinedBy(Api.LANGUAGE_MODEL)
-        public boolean isPrivate() {
-            return flags.contains(ExportsFlag.REFLECTION);
+            return kind;
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
@@ -138,10 +135,11 @@ public abstract class Directive implements ModuleElement.Directive {
 
         @Override
         public String toString() {
+            String name = kind == ModuleElement.DirectiveKind.EXPORTS ? "Exports" : "Opens";
             if (modules == null)
-                return "Exports[" + packge + "]";
+                return name + "[" + packge + "]";
             else
-                return "Exports[" + packge + ":" + modules + "]";
+                return name + "[" + packge + ":" + modules + "]";
         }
     }
 

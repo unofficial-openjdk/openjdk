@@ -24,6 +24,7 @@
 /*
  * @test
  * @summary Tests jdeps --generate-weak-module option
+ * @ignore there are no weak modules anymore
  * @library ../lib
  * @build CompilerUtils JdepsUtil JdepsRunner
  * @modules jdk.jdeps/com.sun.tools.jdeps

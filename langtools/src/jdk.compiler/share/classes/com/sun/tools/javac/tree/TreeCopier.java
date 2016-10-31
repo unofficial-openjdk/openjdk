@@ -26,6 +26,7 @@
 package com.sun.tools.javac.tree;
 
 import com.sun.source.tree.*;
+import com.sun.source.tree.Tree.Kind;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.util.DefinedBy;
 import com.sun.tools.javac.util.DefinedBy.Api;
@@ -511,7 +512,7 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
         List<JCAnnotation> annotations = copy(t.annotations, p);
         JCExpression qualId = copy(t.qualId);
         List<JCDirective> directives = copy(t.directives);
-        return M.at(t.pos).ModuleDef(annotations, t.weak, qualId, directives);
+        return M.at(t.pos).ModuleDef(annotations, t.getModuleType(), qualId, directives);
     }
 
     @Override @DefinedBy(Api.COMPILER_TREE)
@@ -519,7 +520,8 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
         JCExports t = (JCExports) node;
         JCExpression qualId = copy(t.qualid, p);
         List<JCExpression> moduleNames = copy(t.moduleNames, p);
-        return M.at(t.pos).Exports(qualId, t.isPrivate, moduleNames);
+        return node.getKind() == Kind.EXPORTS ? M.at(t.pos).Exports(qualId, moduleNames)
+                                              : M.at(t.pos).Opens(qualId, moduleNames);
     }
 
     @Override @DefinedBy(Api.COMPILER_TREE)

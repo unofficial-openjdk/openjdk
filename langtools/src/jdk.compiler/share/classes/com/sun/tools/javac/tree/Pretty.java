@@ -28,6 +28,7 @@ package com.sun.tools.javac.tree;
 import java.io.*;
 
 import com.sun.source.tree.MemberReferenceTree.ReferenceMode;
+import com.sun.source.tree.ModuleTree.ModuleKind;
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.util.*;
@@ -442,8 +443,8 @@ public class Pretty extends JCTree.Visitor {
     public void visitModuleDef(JCModuleDecl tree) {
         try {
             printAnnotations(tree.annotations);
-            if (tree.isWeak()) {
-                print("weak ");
+            if (tree.getModuleType() == ModuleKind.OPEN) {
+                print("open ");
             }
             print("module ");
             printExpr(tree.qualId);
@@ -461,9 +462,11 @@ public class Pretty extends JCTree.Visitor {
     @Override
     public void visitExports(JCExports tree) {
         try {
-            print("exports ");
-            if (tree.isPrivate)
-                print("private ");
+            if (tree.hasTag(EXPORTS)) {
+                print("exports ");
+            } else {
+                print("opens ");
+            }
             printExpr(tree.qualid);
             if (tree.moduleNames != null) {
                 print(" to ");

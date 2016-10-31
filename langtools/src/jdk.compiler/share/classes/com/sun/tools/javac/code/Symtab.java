@@ -647,7 +647,7 @@ public class Symtab {
 
         Collection<ModuleSymbol> unfilledModules =
                 msym.readModules.stream()
-                                .filter(mod -> mod == unnamedModule || mod.flags.contains(ModuleFlags.WEAK))
+                                .filter(mod -> mod == unnamedModule)
                                 .collect(Collectors.toList());
 
         if (!unfilledModules.isEmpty()) {

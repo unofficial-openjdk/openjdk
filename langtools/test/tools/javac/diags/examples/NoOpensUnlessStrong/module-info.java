@@ -21,8 +21,8 @@
  * questions.
  */
 
-// key: compiler.err.conflicting.exports.to.module
+// key: compiler.err.no.opens.unless.strong
 
-module ConflictingExports {
-     exports exported to java.base, java.base;
+open module ConflictingExports {
+     opens exported;
 }

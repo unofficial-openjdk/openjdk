@@ -114,6 +114,11 @@ public class TreeKindTest {
                 ok = ok & verify(k, i, i == AnnotationTree.class);
                 break;
 
+            case EXPORTS:
+            case OPENS:
+                ok = ok & verify(k, i, i == ExportsTree.class);
+                break;
+
             case OTHER:
                 ok = ok & verify(k, i, i == null);
                 break;

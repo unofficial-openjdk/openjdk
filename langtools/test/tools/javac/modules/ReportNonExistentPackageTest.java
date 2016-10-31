@@ -108,7 +108,7 @@ public class ReportNonExistentPackageTest extends ModuleTestBase {
     public void testExportPrivateEmptyPackage(Path base) throws Exception {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
-                "module m { exports private p; }");
+                "module m { opens p; }");
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
 
@@ -119,7 +119,7 @@ public class ReportNonExistentPackageTest extends ModuleTestBase {
                 .run(Task.Expect.FAIL)
                 .writeAll()
                 .getOutput(Task.OutputKind.DIRECT);
-        if (!log.contains("module-info.java:1:28: compiler.err.package.empty.or.not.found: p"))
+        if (!log.contains("module-info.java:1:18: compiler.err.package.empty.or.not.found: p"))
             throw new Exception("expected output not found, actual output: " + log);
     }
 
@@ -127,7 +127,7 @@ public class ReportNonExistentPackageTest extends ModuleTestBase {
     public void testExportPrivateOnlyWithResources(Path base) throws Exception {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
-                "module m { exports private p; }");
+                "module m { opens p; }");
         Path resource = src.resolve("p").resolve("resource.properties");
         Files.createDirectories(resource.getParent());
         Files.newOutputStream(resource).close();

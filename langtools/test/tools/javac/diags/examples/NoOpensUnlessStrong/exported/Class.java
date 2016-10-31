@@ -21,8 +21,7 @@
  * questions.
  */
 
-// key: compiler.err.conflicting.exports.to.module
+package exported;
 
-module ConflictingExports {
-     exports exported to java.base, java.base;
+public class Class {
 }

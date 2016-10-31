@@ -201,19 +201,17 @@ public class GenModuleInfo {
      */
     private void verify(ModuleDescriptor md1, ModuleDescriptor md2) {
         System.out.println("verifying: " + md1.name());
-        assertTrue(!md1.isWeak());
         assertEquals(md1.name(), md2.name());
         assertEquals(md1.requires(), md2.requires());
         // all packages are exported
         assertEquals(md1.exports().stream()
                                   .map(ModuleDescriptor.Exports::source)
                                   .collect(Collectors.toSet()), md2.packages());
-        Exports exp = md1.exports().stream()
-           .filter(e -> e.modifiers().contains(Exports.Modifier.PRIVATE))
-           .findFirst()
-           .orElse(null);
-        if (exp != null) {
-            throw new RuntimeException("unexpected exports private: " + exp);
+        if (!md1.opens().isEmpty()) {
+            throw new RuntimeException("unexpected opens: " + md1.opens()
+                                                                 .stream()
+                                                                 .map(o -> o.toString())
+                                                                 .collect(Collectors.joining(",")));
         }
     }
 

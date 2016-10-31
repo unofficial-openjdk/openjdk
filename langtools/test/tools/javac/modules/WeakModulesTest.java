@@ -29,12 +29,13 @@
  *          jdk.compiler/com.sun.tools.javac.main
  *          jdk.jdeps/com.sun.tools.javap
  * @build toolbox.ToolBox toolbox.JavacTask toolbox.ModuleBuilder ModuleTestBase
- * @run main WeakModulesTest
+ * @run main OpenModulesTest
  */
 
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import toolbox.JavacTask;
 import toolbox.JavapTask;
@@ -42,19 +43,20 @@ import toolbox.Task;
 import toolbox.Task.Expect;
 import toolbox.Task.OutputKind;
 
-public class WeakModulesTest extends ModuleTestBase {
+public class OpenModulesTest extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {
-        new WeakModulesTest().runTests();
+        new OpenModulesTest().runTests();
     }
 
     @Test
-    public void testWeakModule(Path base) throws Exception {
+    public void testStrongModule(Path base) throws Exception {
         Path m1 = base.resolve("m1");
         tb.writeJavaFiles(m1,
-                          "weak module m1 { }",
+                          "module m1 { exports api1; opens api2; }",
                           "package api1; public class Api1 {}",
-                          "package api2; public class Api2 {}");
+                          "package api2; public class Api2 {}",
+                          "package impl; public class Impl {}");
         Path classes = base.resolve("classes");
         Path m1Classes = classes.resolve("m1");
         tb.createDirectories(m1Classes);
@@ -78,15 +80,17 @@ public class WeakModulesTest extends ModuleTestBase {
                 .getOutput(OutputKind.DIRECT)
                 .replace(System.getProperty("line.separator"), "\n");
 
-        String expected = "weak module m1 {\n" +
+        String expected = "module m1 {\n" +
                           "  requires java.base;\n" +
+                          "  exports api1;\n" +
+                          "  opens api2;\n" +
                           "}";
 
         if (!decompiled.contains(expected)) {
             throw new Exception("expected output not found: " + decompiled);
         }
 
-        //compiling against a weak module read from binary:
+        //compiling against a strong module read from binary:
         Path m2 = base.resolve("m2");
         tb.writeJavaFiles(m2,
                           "module m2 { requires m1; }",
@@ -94,70 +98,110 @@ public class WeakModulesTest extends ModuleTestBase {
         Path m2Classes = classes.resolve("m2");
         tb.createDirectories(m2Classes);
 
-        String log2 = new JavacTask(tb)
-                .options("--module-path", m1Classes.toString())
+        List<String> log2 = new JavacTask(tb)
+                .options("--module-path", m1Classes.toString(),
+                         "-XDrawDiagnostics")
                 .outdir(m2Classes)
                 .files(findJavaFiles(m2))
-                .run()
+                .run(Expect.FAIL)
                 .writeAll()
-                .getOutput(Task.OutputKind.DIRECT);
+                .getOutputLines(Task.OutputKind.DIRECT);
 
-        if (!log2.isEmpty())
+        List<String> expected2 = Arrays.asList("Test.java:1:53: compiler.err.doesnt.exist: api2",
+                                               "1 error");
+        if (!Objects.equals(log2, expected2))
             throw new Exception("expected output not found: " + log2);
     }
 
     @Test
-    public void testWeakModuleOnModuleSourcePath(Path base) throws Exception {
-        Path src = base.resolve("src");
-        Path m1 = src.resolve("m1");
+    public void testOpenModule(Path base) throws Exception {
+        Path m1 = base.resolve("m1");
         tb.writeJavaFiles(m1,
-                          "weak module m1 { }",
+                          "open module m1 { exports api1; }",
                           "package api1; public class Api1 {}",
-                          "package api2; public class Api2 {}");
-        Path m2 = base.resolve("m2");
-        tb.writeJavaFiles(m2,
-                          "module m2 { requires m1; }",
-                          "package test; public class Test { api1.Api1 a1; api2.Api2 a2; }");
+                          "package api2; public class Api2 {}",
+                          "package impl; public class Impl {}");
         Path classes = base.resolve("classes");
-        tb.createDirectories(classes);
+        Path m1Classes = classes.resolve("m1");
+        tb.createDirectories(m1Classes);
 
         String log = new JavacTask(tb)
-                .options("--module-source-path", src.toString())
-                .outdir(classes)
-                .files(findJavaFiles(src))
+                .outdir(m1Classes)
+                .files(findJavaFiles(m1))
                 .run()
                 .writeAll()
                 .getOutput(Task.OutputKind.DIRECT);
 
         if (!log.isEmpty())
             throw new Exception("expected output not found: " + log);
-    }
 
-    @Test
-    public void testNoExportsInWeakModules(Path base) throws Exception {
-        Path src = base.resolve("src");
-        Path m1 = src.resolve("m1");
-        tb.writeJavaFiles(m1,
-                          "weak module m1 { exports api1; }",
-                          "package api1; public class Api1 {}");
-        Path classes = base.resolve("classes");
-        tb.createDirectories(classes);
+        String decompiled = new JavapTask(tb)
+                .options("--system", "none", "-bootclasspath", "")
+                .classpath(m1Classes.toString())
+                .classes("module-info")
+                .run()
+                .writeAll()
+                .getOutput(OutputKind.DIRECT)
+                .replace(System.getProperty("line.separator"), "\n");
 
-        List<String> log = new JavacTask(tb)
-                .options("--module-source-path", src.toString(),
+        String expected = "open module m1 {\n" +
+                          "  requires java.base;\n" +
+                          "  exports api1;\n" +
+                          "}";
+
+        if (!decompiled.contains(expected)) {
+            throw new Exception("expected output not found: " + decompiled);
+        }
+
+        //compiling against a ordinary module read from binary:
+        Path m2 = base.resolve("m2");
+        tb.writeJavaFiles(m2,
+                          "module m2 { requires m1; }",
+                          "package test; public class Test { api1.Api1 a1; api2.Api2 a2; }");
+        Path m2Classes = classes.resolve("m2");
+        tb.createDirectories(m2Classes);
+
+        List<String> log2 = new JavacTask(tb)
+                .options("--module-path", m1Classes.toString(),
                          "-XDrawDiagnostics")
-                .outdir(classes)
-                .files(findJavaFiles(src))
+                .outdir(m2Classes)
+                .files(findJavaFiles(m2))
                 .run(Expect.FAIL)
                 .writeAll()
                 .getOutputLines(Task.OutputKind.DIRECT);
 
-        List<String> expected = Arrays.asList(
-                "module-info.java:1:18: compiler.err.no.exports.in.weak",
-                "1 error"
-        );
+        List<String> expected2 = Arrays.asList("Test.java:1:53: compiler.err.doesnt.exist: api2",
+                                               "1 error");
+        if (!Objects.equals(log2, expected2))
+            throw new Exception("expected output not found: " + log2);
+    }
+
+    @Test
+    public void testOpenModuleNoOpens(Path base) throws Exception {
+        Path m1 = base.resolve("m1");
+        tb.writeJavaFiles(m1,
+                          "open module m1 { exports api1; opens api2; }",
+                          "package api1; public class Api1 {}",
+                          "package api2; public class Api2 {}",
+                          "package impl; public class Impl {}");
+        Path classes = base.resolve("classes");
+        Path m1Classes = classes.resolve("m1");
+        tb.createDirectories(m1Classes);
+
+        List<String> log = new JavacTask(tb)
+                .options("-XDrawDiagnostics")
+                .outdir(m1Classes)
+                .files(findJavaFiles(m1))
+                .run(Expect.FAIL)
+                .writeAll()
+                .getOutputLines(Task.OutputKind.DIRECT);
+
+        List<String> expected = Arrays.asList("module-info.java:1:32: compiler.err.no.opens.unless.strong",
+                                              "1 error");
+
         if (!expected.equals(log))
             throw new Exception("expected output not found: " + log);
+
     }
 
 }

@@ -49,10 +49,10 @@ public interface ModuleTree extends Tree {
     List<? extends AnnotationTree> getAnnotations();
 
     /**
-     * Returns true if this is a "weak" module.
-     * @return true if this is a "weak" module
+     * Returns the type of this module.
+     * @return the type of this module
      */
-    boolean isWeak();
+    ModuleKind getModuleType();
 
     /**
      * Returns the name of the module.
@@ -65,4 +65,19 @@ public interface ModuleTree extends Tree {
      * @return the directives in the module declaration
      */
     List<? extends DirectiveTree> getDirectives();
+
+    /**
+     * The kind of the module.
+     */
+    enum ModuleKind {
+        /**
+         * Open module.
+         */
+        OPEN,
+        /**
+         * Strong module.
+         */
+        STRONG;
+    }
+
 }

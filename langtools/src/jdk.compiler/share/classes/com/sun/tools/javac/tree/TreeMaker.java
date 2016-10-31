@@ -27,6 +27,8 @@ package com.sun.tools.javac.tree;
 
 import java.util.Iterator;
 
+import com.sun.source.tree.ModuleTree.ModuleKind;
+import com.sun.source.tree.Tree.Kind;
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.*;
@@ -538,16 +540,23 @@ public class TreeMaker implements JCTree.Factory {
     }
 
     @Override
-    public JCModuleDecl ModuleDef(List<JCAnnotation> annotations, boolean weak,
+    public JCModuleDecl ModuleDef(List<JCAnnotation> annotations, ModuleKind kind,
             JCExpression qualid, List<JCDirective> directives) {
-        JCModuleDecl tree = new JCModuleDecl(annotations, weak, qualid, directives);
+        JCModuleDecl tree = new JCModuleDecl(annotations, kind, qualid, directives);
         tree.pos = pos;
         return tree;
     }
 
     @Override
-    public JCExports Exports(JCExpression qualId, boolean isPrivate, List<JCExpression> moduleNames) {
-        JCExports tree = new JCExports(qualId, isPrivate, moduleNames);
+    public JCExports Exports(JCExpression qualId, List<JCExpression> moduleNames) {
+        JCExports tree = new JCExports(Tag.EXPORTS, qualId, moduleNames);
+        tree.pos = pos;
+        return tree;
+    }
+
+    @Override
+    public JCExports Opens(JCExpression qualId, List<JCExpression> moduleNames) {
+        JCExports tree = new JCExports(Tag.OPENS, qualId, moduleNames);
         tree.pos = pos;
         return tree;
     }
