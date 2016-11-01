@@ -82,6 +82,7 @@ endif
 #      5. 扩展：
 #          a. 变量替换引用$(VAR:PATTERN=REPLACEMENT) 等价于  $(patsubst PATTERN,REPLACEMENT,$(VAR)) 
 #          b. 后缀替换$(VAR:SUFFIX=REPLACEMENT) 等价于  $(patsubst %SUFFIX,%REPLACEMENT,$(VAR))
+#内嵌变量“CURDIR”：代表 make 的工作目录。当使用“-C”选项进入一个子目录后,此变量将被重新赋值。
 
 
 
@@ -93,5 +94,14 @@ else
 endif
 topdir := $(strip $(patsubst %/, %, $(dir $(makefile_path))))
 
+#变量MAKEFILE_LIST： 
+#    make程序在读取多个makefile文件时,这些makefile文件包括由环境变量“MAKEFILES”指定、 命令行指定、当前工作下的默认，以及使用指示符“include”指定的。在对这些文件进行解析执行之前 make 读取的文件名将会被自动依次追加到变量 “MAKEFILE_LIST”的定中。
+#lastword这个函数表示提取最后一个MAKEFILE_LIST列表里的最后一个元素。元素与元素之间是以空格符分开。 
+
+##--------解析----------##
+#以上代码根据本makefile文件所在位置，取出改make工作的顶层目录，即：工程的根目录。
+#
+
+# 接下来导入真正的工程make文件。 $(topdir)/make/Init.gmk
 # ... and then we can include the real makefile
 include $(topdir)/make/Init.gmk
