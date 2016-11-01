@@ -1128,7 +1128,7 @@ class AttributeVisitor implements Attribute.Visitor<Element, Element> {
         for (ExportsEntry export : exports) {
             Element exto = new Element("exports");
             exto.setAttr("package", x.getCpString(export.exports_index));
-            for ( int idx : export.exports_to_index) {
+            for (int idx : export.exports_to_index) {
                 exto.setAttr("module", x.getCpString(idx));
             }
             ex.add(exto);
@@ -1140,7 +1140,9 @@ class AttributeVisitor implements Attribute.Visitor<Element, Element> {
         Element ex = new Element("Provides");
         for (ProvidesEntry provide : provides) {
             ex.setAttr("provides", x.getCpString(provide.provides_index));
-            ex.setAttr("with", x.getCpString(provide.with_index));
+            for (int idx : provide.with_index) {
+                ex.setAttr("with", x.getCpString(idx));
+            }
         }
         p.add(ex);
     }
