@@ -90,10 +90,6 @@ public class ClassReader {
 
     private final Annotate annotate;
 
-    /** Switch: read new-style Provides table in Module attribute
-     */
-    boolean readNewProvides;
-
     /** Switch: verbose output.
      */
     boolean verbose;
@@ -243,7 +239,6 @@ public class ClassReader {
 
         Options options = Options.instance(context);
         verbose         = options.isSet(Option.VERBOSE);
-        readNewProvides = true; // options.isSet("ClassReaderNewProvides");
 
         Source source = Source.instance(context);
         allowSimplifiedVarargs = source.allowSimplifiedVarargs();
@@ -1325,16 +1320,11 @@ public class ClassReader {
                         int nprovides = nextChar();
                         for (int p = 0; p < nprovides; p++) {
                             Name srvc = readClassName(nextChar());
-                            if (readNewProvides) {
-                                int nimpls = nextChar();
-                                ListBuffer<Name> impls = new ListBuffer<>();
-                                for (int i = 0; i < nimpls; i++) {
-                                    impls.append(readClassName(nextChar()));
-                                provides.add(new InterimProvidesDirective(srvc, impls.toList()));
-                                }
-                            } else {
-                                Name impl = readClassName(nextChar());
-                                provides.add(new InterimProvidesDirective(srvc, List.of(impl)));
+                            int nimpls = nextChar();
+                            ListBuffer<Name> impls = new ListBuffer<>();
+                            for (int i = 0; i < nimpls; i++) {
+                                impls.append(readClassName(nextChar()));
+                            provides.add(new InterimProvidesDirective(srvc, impls.toList()));
                             }
                         }
                         interimProvides = provides.toList();
