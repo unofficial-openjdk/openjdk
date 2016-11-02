@@ -30,7 +30,8 @@
  * @modules jdk.compiler/com.sun.tools.javac.api
  *          jdk.compiler/com.sun.tools.javac.main
  *          jdk.compiler/com.sun.tools.javac.platform
- *          jdk.compiler/com.sun.tools.javac.util:private
+ *          jdk.compiler/com.sun.tools.javac.util
+ *          jdk.compiler/com.sun.tools.javac.util:open
  * @build toolbox.ToolBox PlatformProviderTest
  * @run main/othervm PlatformProviderTest
  */

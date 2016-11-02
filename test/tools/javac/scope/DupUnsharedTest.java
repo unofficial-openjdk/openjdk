@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,8 @@
 /*
  * @test
  * @summary WriteableScope.dupUnshared not working properly for shared Scopes.
- * @modules jdk.compiler/com.sun.tools.javac.code:private
+ * @modules jdk.compiler/com.sun.tools.javac.code
+ *          jdk.compiler/com.sun.tools.javac.code:open
  *          jdk.compiler/com.sun.tools.javac.file
  *          jdk.compiler/com.sun.tools.javac.util
  */
