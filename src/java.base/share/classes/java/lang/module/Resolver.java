@@ -26,7 +26,6 @@
 package java.lang.module;
 
 import java.io.PrintStream;
-import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Requires.Modifier;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -48,12 +47,15 @@ import jdk.internal.module.ModuleHashes;
 /**
  * The resolver used by {@link Configuration#resolveRequires} and
  * {@link Configuration#resolveRequiresAndUses}.
+ *
+ * @implNote The resolver is used at VM startup and so deliberately avoids
+ * using lambda and stream usages in code paths used during startup.
  */
 
 final class Resolver {
 
     private final ModuleFinder beforeFinder;
-    private final Configuration parent;
+    private final List<Configuration> parents;
     private final ModuleFinder afterFinder;
     private final PrintStream traceOutput;
 
@@ -62,11 +64,11 @@ final class Resolver {
 
 
     Resolver(ModuleFinder beforeFinder,
-             Configuration parent,
+             List<Configuration> parents,
              ModuleFinder afterFinder,
              PrintStream traceOutput) {
         this.beforeFinder = beforeFinder;
-        this.parent = parent;
+        this.parents = parents;
         this.afterFinder = afterFinder;
         this.traceOutput = traceOutput;
     }
@@ -86,10 +88,12 @@ final class Resolver {
             // find root module
             ModuleReference mref = findWithBeforeFinder(root);
             if (mref == null) {
-                if (parent.findModule(root).isPresent()) {
+
+                if (findInParent(root) != null) {
                     // in parent, nothing to do
                     continue;
                 }
+
                 mref = findWithAfterFinder(root);
                 if (mref == null) {
                     fail("Module %s not found", root);
@@ -136,8 +140,11 @@ final class Resolver {
                 // find dependence
                 ModuleReference mref = findWithBeforeFinder(dn);
                 if (mref == null) {
-                    if (parent.findModule(dn).isPresent())
+
+                    if (findInParent(dn) != null) {
+                        // dependence is in parent
                         continue;
+                    }
 
                     mref = findWithAfterFinder(dn);
                     if (mref == null) {
@@ -197,19 +204,21 @@ final class Resolver {
         Deque<ModuleDescriptor> q = new ArrayDeque<>();
 
         // the initial set of modules that may use services
-        Set<ModuleDescriptor> candidateConsumers = new HashSet<>();
-        Configuration p = parent;
-        while (p != null) {
-            candidateConsumers.addAll(p.descriptors());
-            p = p.parent().orElse(null);
+        Set<ModuleDescriptor> initialConsumers = new HashSet<>();
+        for (Configuration parent : parents) {
+            if (parent != Configuration.empty()) {
+                parent.configurations()
+                        .map(Configuration::descriptors)
+                        .forEach(initialConsumers::addAll);
+            }
         }
         for (ModuleReference mref : nameToReference.values()) {
-            candidateConsumers.add(mref.descriptor());
+            initialConsumers.add(mref.descriptor());
         }
-
 
         // Where there is a consumer of a service then resolve all modules
         // that provide an implementation of that service
+        Set<ModuleDescriptor> candidateConsumers = initialConsumers;
         do {
             for (ModuleDescriptor descriptor : candidateConsumers) {
                 if (!descriptor.uses().isEmpty()) {
@@ -240,7 +249,6 @@ final class Resolver {
             }
 
             candidateConsumers = resolve(q);
-
         } while (!candidateConsumers.isEmpty());
 
         return this;
@@ -435,9 +443,13 @@ final class Resolver {
             for (String dn : hashes.names()) {
                 ModuleReference other = nameToReference.get(dn);
                 if (other == null) {
-                    other = parent.findModule(dn)
-                            .map(ResolvedModule::reference)
-                            .orElse(null);
+                    for (Configuration parent: parents) {
+                        Optional<ResolvedModule> om = parent.findModule(dn);
+                        if (om.isPresent()) {
+                            other = om.get().reference();
+                            break;
+                        }
+                    }
                 }
 
                 // skip checking the hash if the module has been patched
@@ -483,24 +495,22 @@ final class Resolver {
         // need "requires transitive" from the modules in parent configurations
         // as there may be selected modules that have a dependency on modules in
         // the parent configuration.
-
-        Configuration p = parent;
-        while (p != null) {
-            for (ModuleDescriptor descriptor : p.descriptors()) {
-                String name = descriptor.name();
-                ResolvedModule m1 = p.findModule(name)
-                    .orElseThrow(() -> new InternalError(name + " not found"));
-                for (ModuleDescriptor.Requires requires : descriptor.requires()) {
-                    if (requires.modifiers().contains(Modifier.TRANSITIVE)) {
-                        String dn = requires.name();
-                        ResolvedModule m2 = p.findModule(dn)
-                            .orElseThrow(() -> new InternalError(dn + " not found"));
-                        g2.computeIfAbsent(m1, k -> new HashSet<>()).add(m2);
-                    }
-                }
+        for (Configuration parent : parents) {
+            if (parent != Configuration.empty()) {
+                parent.configurations().forEach(c -> {
+                    c.modules().forEach(m1 -> {
+                        ModuleDescriptor descriptor = m1.descriptor();
+                        for (ModuleDescriptor.Requires requires : descriptor.requires()) {
+                            if (requires.modifiers().contains(Modifier.TRANSITIVE)) {
+                                String dn = requires.name();
+                                ResolvedModule m2 = c.findModule(dn)
+                                    .orElseThrow(() -> new InternalError(dn + " not found"));
+                                g2.computeIfAbsent(m1, k -> new HashSet<>()).add(m2);
+                            }
+                        }
+                    });
+                });
             }
-
-            p = p.parent().orElse(null);
         }
 
         // populate g1 and g2 with the dependences from the selected modules
@@ -519,14 +529,14 @@ final class Resolver {
             for (ModuleDescriptor.Requires requires : descriptor.requires()) {
                 String dn = requires.name();
 
-                ResolvedModule m2;
+                ResolvedModule m2 = null;
                 ModuleReference mref2 = nameToReference.get(dn);
                 if (mref2 != null) {
                     // same configuration
                     m2 = computeIfAbsent(nameToResolved, dn, cf, mref2);
                 } else {
                     // parent configuration
-                    m2 = parent.findModule(dn).orElse(null);
+                    m2 = findInParent(dn);
                     if (m2 == null) {
                         assert requires.modifiers().contains(Modifier.STATIC);
                         continue;
@@ -565,16 +575,16 @@ final class Resolver {
                 // reads all modules in parent configurations
                 // `requires transitive` all automatic modules in parent
                 // configurations
-                p = parent;
-                while (p != null) {
-                    for (ResolvedModule m : p.modules()) {
-                        reads.add(m);
-                        if (m.reference().descriptor().isAutomatic())
-                            requiresTransitive.add(m);
-                    }
-                    p = p.parent().orElse(null);
+                for (Configuration parent : parents) {
+                    parent.configurations()
+                            .map(Configuration::modules)
+                            .flatMap(Set::stream)
+                            .forEach(m -> {
+                                reads.add(m);
+                                if (m.reference().descriptor().isAutomatic())
+                                    requiresTransitive.add(m);
+                            });
                 }
-
             }
 
             g1.put(m1, reads);
@@ -584,7 +594,7 @@ final class Resolver {
         // Iteratively update g1 until there are no more requires transitive
         // to propagate
         boolean changed;
-        Set<ResolvedModule> toAdd = new HashSet<>();
+        List<ResolvedModule> toAdd = new ArrayList<>();
         do {
             changed = false;
             for (Set<ResolvedModule> m1Reads : g1.values()) {
@@ -729,6 +739,18 @@ final class Resolver {
 
     }
 
+    /**
+     * Find a module of the given name in the parent configurations
+     */
+    private ResolvedModule findInParent(String mn) {
+        for (Configuration parent : parents) {
+            Optional<ResolvedModule> om = parent.findModule(mn);
+            if (om.isPresent())
+                return om.get();
+        }
+        return null;
+    }
+
 
     /**
      * Invokes the beforeFinder to find method to find the given module.
@@ -767,15 +789,18 @@ final class Resolver {
             if (afterModules.isEmpty())
                 return beforeModules;
 
-            if (beforeModules.isEmpty() && parent == Configuration.empty())
+            if (beforeModules.isEmpty()
+                    && parents.size() == 1
+                    && parents.get(0) == Configuration.empty())
                 return afterModules;
 
             Set<ModuleReference> result = new HashSet<>(beforeModules);
             for (ModuleReference mref : afterModules) {
                 String name = mref.descriptor().name();
                 if (!beforeFinder.find(name).isPresent()
-                        && !parent.findModule(name).isPresent())
+                        && findInParent(name) == null) {
                     result.add(mref);
+                }
             }
 
             return result;

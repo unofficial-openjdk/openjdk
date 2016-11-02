@@ -253,30 +253,124 @@ public class Basic {
     }
 
     /**
-     * Basic test of ServiceLoader.load, using a custom Layer as the context.
+     * Basic test of ServiceLoader.load using a custom Layer as the context.
      */
     @Test
     public void testWithCustomLayer2() {
         Layer layer = createCustomLayer("bananascript");
 
-        List <ScriptEngineFactory> providers
+        List<ScriptEngineFactory> factories
             = collectAll(ServiceLoader.load(layer, ScriptEngineFactory.class));
 
         // should have at least 2 x bananascript
-        assertTrue(providers.size() >= 2);
+        assertTrue(factories.size() >= 2);
 
         // first element should be the provider in the custom layer
-        ScriptEngineFactory factory = providers.get(0);
+        ScriptEngineFactory factory = factories.get(0);
         assertTrue(factory.getClass().getModule().getLayer() == layer);
         assertTrue(factory.getEngineName().equals("BananaScriptEngine"));
 
         // remainder should be the boot layer
-        providers.remove(0);
-        Set<String> names = providers.stream()
+        factories.remove(0);
+        Set<String> names = factories.stream()
                 .map(ScriptEngineFactory::getEngineName)
                 .collect(Collectors.toSet());
         assertTrue(names.contains("BananaScriptEngine"));
         assertFalse(names.contains("PearScriptEngine"));
+    }
+
+    /**
+     * Basic test of ServiceLoader.load with a tree of layers.
+     *
+     * Test scenario:
+     * - boot layer contains "bananascript", maybe other script engines
+     * - layer1, with boot layer as parent, contains "bananascript"
+     * - layer2, with boot layer as parent, contains "bananascript"
+     * - layer3, with layer1 ad layer as parents, contains "bananascript"
+     *
+     * ServiceLoader should locate all 4 script engine factories in DFS order.
+     */
+    @Test
+    public void testWithCustomLayer3() {
+        Layer bootLayer = Layer.boot();
+        Configuration cf0 = bootLayer.configuration();
+
+        // boot layer should contain "bananascript"
+        List<ScriptEngineFactory> factories
+            = collectAll(ServiceLoader.load(bootLayer, ScriptEngineFactory.class));
+        int countInBootLayer = factories.size();
+        assertTrue(countInBootLayer >= 1);
+        assertTrue(factories.stream()
+                .map(p -> p.getEngineName())
+                .filter("BananaScriptEngine"::equals)
+                .findAny()
+                .isPresent());
+
+        ClassLoader scl = ClassLoader.getSystemClassLoader();
+        Path dir = Paths.get(System.getProperty("test.classes", "."), "modules");
+        ModuleFinder finder = ModuleFinder.of(dir);
+
+        // layer1
+        Configuration cf1 = cf0.resolveRequiresAndUses(finder, ModuleFinder.of(), Set.of());
+        Layer layer1 = bootLayer.defineModulesWithOneLoader(cf1, scl);
+        assertTrue(layer1.modules().size() == 1);
+
+        // layer2
+        Configuration cf2 = cf0.resolveRequiresAndUses(finder, ModuleFinder.of(), Set.of());
+        Layer layer2 = bootLayer.defineModulesWithOneLoader(cf2, scl);
+        assertTrue(layer2.modules().size() == 1);
+
+        // layer3 with layer1 and layer2 as parents
+        Configuration cf3 = Configuration.resolveRequiresAndUses(finder,
+                List.of(cf1, cf2),
+                ModuleFinder.of(),
+                Set.of());
+        Layer layer3 = Layer.defineModulesWithOneLoader(cf3, List.of(layer1, layer2), scl);
+        assertTrue(layer3.modules().size() == 1);
+
+
+        // class loaders
+        ClassLoader loader1 = layer1.findLoader("bananascript");
+        ClassLoader loader2 = layer2.findLoader("bananascript");
+        ClassLoader loader3 = layer3.findLoader("bananascript");
+        assertTrue(loader1 != loader2);
+        assertTrue(loader1 != loader3);
+        assertTrue(loader2 != loader3);
+
+        // load all factories with layer3 as the context
+        factories = collectAll(ServiceLoader.load(layer3, ScriptEngineFactory.class));
+        int count = factories.size();
+        assertTrue(count == countInBootLayer + 3);
+
+        // the ordering should be layer3, layer1, boot layer, layer2
+
+        ScriptEngineFactory factory = factories.get(0);
+        assertTrue(factory.getClass().getModule().getLayer() == layer3);
+        assertTrue(factory.getClass().getClassLoader() == loader3);
+        assertTrue(factory.getEngineName().equals("BananaScriptEngine"));
+
+        factory = factories.get(1);
+        assertTrue(factory.getClass().getModule().getLayer() == layer1);
+        assertTrue(factory.getClass().getClassLoader() == loader1);
+        assertTrue(factory.getEngineName().equals("BananaScriptEngine"));
+
+        // boot layer "bananascript" and maybe other factories
+        int last = count -1;
+        boolean found = false;
+        for (int i=2; i<last; i++) {
+            factory = factories.get(i);
+            assertTrue(factory.getClass().getModule().getLayer() == bootLayer);
+            if (factory.getEngineName().equals("BananaScriptEngine")) {
+                assertFalse(found);
+                found = true;
+            }
+        }
+        assertTrue(found);
+
+        factory = factories.get(last);
+        assertTrue(factory.getClass().getModule().getLayer() == layer2);
+        assertTrue(factory.getClass().getClassLoader() == loader2);
+        assertTrue(factory.getEngineName().equals("BananaScriptEngine"));
     }
 
 

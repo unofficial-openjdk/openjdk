@@ -1062,15 +1062,19 @@ public final class Module implements AnnotatedElement {
 
             // reads
             Set<Module> reads = new HashSet<>();
-            for (ResolvedModule d : resolvedModule.reads()) {
-                Module m2;
-                if (d.configuration() == cf) {
-                    String dn = d.reference().descriptor().name();
+            for (ResolvedModule other : resolvedModule.reads()) {
+                Module m2 = null;
+                if (other.configuration() == cf) {
+                    String dn = other.reference().descriptor().name();
                     m2 = nameToModule.get(dn);
-                    assert m2 != null;
                 } else {
-                    m2 = find(d, layer.parent().orElse(null));
+                    for (Layer parent: layer.parents()) {
+                        m2 = findModule(parent, other);
+                        if (m2 != null)
+                            break;
+                    }
                 }
+                assert m2 != null;
 
                 reads.add(m2);
 
@@ -1122,23 +1126,22 @@ public final class Module implements AnnotatedElement {
 
     /**
      * Find the runtime Module corresponding to the given ResolvedModule
-     * in the given parent Layer (or its parents).
+     * in the given parent layer (or its parents).
      */
-    private static Module find(ResolvedModule resolvedModule, Layer layer) {
+    private static Module findModule(Layer parent, ResolvedModule resolvedModule) {
         Configuration cf = resolvedModule.configuration();
         String dn = resolvedModule.name();
-
-        Module m = null;
-        while (layer != null) {
-            if (layer.configuration() == cf) {
-                Optional<Module> om = layer.findModule(dn);
-                m = om.get();
-                assert m.getLayer() == layer;
-                break;
-            }
-            layer = layer.parent().orElse(null);
-        }
-        return m;
+        return parent.layers()
+                .filter(l -> l.configuration() == cf)
+                .findAny()
+                .map(layer -> {
+                    Optional<Module> om = layer.findModule(dn);
+                    assert om.isPresent() : dn + " not found in layer";
+                    Module m = om.get();
+                    assert m.getLayer() == layer : m + " not in expected layer";
+                    return m;
+                })
+                .orElse(null);
     }
 
     /**
@@ -1538,6 +1541,10 @@ public final class Module implements AnnotatedElement {
                 @Override
                 public ServicesCatalog getServicesCatalog(Layer layer) {
                     return layer.getServicesCatalog();
+                }
+                @Override
+                public Stream<Layer> layers(Layer layer) {
+                    return layer.layers();
                 }
             });
     }

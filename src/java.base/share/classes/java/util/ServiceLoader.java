@@ -210,9 +210,14 @@ import jdk.internal.reflect.Reflection;
  * </ul>
  *
  * <p> Service loaders created to locate providers in a module {@link Layer}
- * will first locate providers in the layer, then its parent layer, then its
- * parent, and so on to the boot layer. The ordering of modules in a layer is
- * not defined.
+ * will first locate providers in the layer, before locating providers in
+ * parent layers. Traversal of parent layers is depth-first with each layer
+ * visited at most once. For example, suppose L0 is the boot layer, L1 and
+ * L2 are custom layers with L0 as their parent. Now suppose that L3 is
+ * created with L1 and L2 as the parents (in that order). Using a service
+ * loader to locate providers with L3 as the content will locate providers
+ * in the following order: L3, L1, L0, L2. The ordering of modules in a layer
+ * is not defined.
  *
  * <h2> Selection and filtering </h2>
  *
@@ -810,15 +815,14 @@ public final class ServiceLoader<S>
     private final class LayerLookupIterator<T>
         implements Iterator<Provider<T>>
     {
-        Layer currentLayer;
+        Deque<Layer> stack = new ArrayDeque<>();
+        Set<Layer> visited = new HashSet<>();
         Iterator<ServiceProvider> iterator;
         Provider<T> next;
 
         LayerLookupIterator() {
-            currentLayer = layer;
-
-            // need to get us started
-            iterator = providers(currentLayer);
+            visited.add(layer);
+            stack.push(layer);
         }
 
         private Iterator<ServiceProvider> providers(Layer layer) {
@@ -848,13 +852,20 @@ public final class ServiceLoader<S>
                     return true;
                 }
 
-                // next layer
-                Layer parent = currentLayer.parent().orElse(null);
-                if (parent == null)
+                // next layer (DFS order)
+                if (stack.isEmpty())
                     return false;
 
-                currentLayer = parent;
-                iterator = providers(currentLayer);
+                Layer layer = stack.pop();
+                List<Layer> parents = layer.parents();
+                for (int i = parents.size() - 1; i >= 0; i--) {
+                    Layer parent = parents.get(i);
+                    if (!visited.contains(parent)) {
+                        visited.add(parent);
+                        stack.push(parent);
+                    }
+                }
+                iterator = providers(layer);
             }
         }
 

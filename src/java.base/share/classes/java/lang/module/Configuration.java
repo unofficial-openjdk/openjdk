@@ -26,14 +26,20 @@
 package java.lang.module;
 
 import java.io.PrintStream;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * The configuration that is the result of resolution or resolution with
@@ -70,8 +76,10 @@ import java.util.stream.Collectors;
  * <p> Resolution is an additive process. When computing the transitive closure
  * then the dependence relation may include dependences on modules in parent
  * configurations. The result is a <em>relative configuration</em> that is
- * relative to a parent configuration and where the readability graph may have
- * edges from modules in the configuration to modules in a parent configuration.
+ * relative to one or more parent configurations and where the readability graph
+ * may have edges from modules in the configuration to modules in parent
+ * configurations.
+ *
  * </p>
  *
  * <p> Suppose we have the following observable modules: </p>
@@ -171,20 +179,21 @@ public final class Configuration {
     // @see Configuration#empty()
     private static final Configuration EMPTY_CONFIGURATION = new Configuration();
 
-    private final Configuration parent;
+    // parent configurations, in search order
+    private final List<Configuration> parents;
 
     private final Map<ResolvedModule, Set<ResolvedModule>> graph;
     private final Set<ResolvedModule> modules;
     private final Map<String, ResolvedModule> nameToModule;
 
     private Configuration() {
-        this.parent = null;
+        this.parents = Collections.emptyList();
         this.graph = Collections.emptyMap();
         this.modules = Collections.emptySet();
         this.nameToModule = Collections.emptyMap();
     }
 
-    private Configuration(Configuration parent,
+    private Configuration(List<Configuration> parents,
                           Resolver resolver,
                           boolean check)
     {
@@ -201,7 +210,7 @@ public final class Configuration {
             i++;
         }
 
-        this.parent = parent;
+        this.parents = Collections.unmodifiableList(parents);
         this.graph = g;
         this.modules = Set.of(moduleArray);
         this.nameToModule = Map.ofEntries(nameEntries);
@@ -210,21 +219,110 @@ public final class Configuration {
 
     /**
      * Resolves a collection of root modules, with this configuration as its
-     * parent, to create a new configuration.
+     * parent, to create a new configuration. If this configuration is {@code
+     * cf} then this method is equivalent to invoking:
+     * <pre> {@code
+     *     Configuration.resolveRequires(before, List.of(cf), after, roots);
+     * }</pre>
+     *
+     * @param  before
+     *         The <em>before</em> module finder to find modules
+     * @param  after
+     *         The <em>after</em> module finder to locate modules when not
+     *         located by the {@code before} module finder or in parent
+     *         configurations
+     * @param  roots
+     *         The possibly-empty collection of module names of the modules
+     *         to resolve
+     *
+     * @return The configuration that is the result of resolving the given
+     *         root modules
+     *
+     * @throws ResolutionException
+     *         If resolution or the post-resolution checks fail
+     * @throws SecurityException
+     *         If locating a module is denied by the security manager
+     */
+    public Configuration resolveRequires(ModuleFinder before,
+                                         ModuleFinder after,
+                                         Collection<String> roots)
+    {
+        return resolveRequires(before, List.of(this), after, roots);
+    }
+
+
+    /**
+     * Resolves a collection of root modules, with service binding, and with
+     * this configuration as its parent, to create a new configuration.
+     * If this configuration is {@code cf} then this method is equivalent
+     * to invoking:
+     * <pre> {@code
+     *     Configuration.resolveRequiresAndUses(before, List.of(cf), after, roots);
+     * }</pre>
+     *
+     *
+     * @param  before
+     *         The <em>before</em> module finder to find modules
+     * @param  after
+     *         The <em>after</em> module finder to locate modules when not
+     *         located by the {@code before} module finder or in parent
+     *         configurations
+     * @param  roots
+     *         The possibly-empty collection of module names of the modules
+     *         to resolve
+     *
+     * @return The configuration that is the result of resolving the given
+     *         root modules
+     *
+     * @throws ResolutionException
+     *         If resolution or the post-resolution checks fail
+     * @throws SecurityException
+     *         If locating a module is denied by the security manager
+     */
+    public Configuration resolveRequiresAndUses(ModuleFinder before,
+                                                ModuleFinder after,
+                                                Collection<String> roots)
+    {
+        return resolveRequiresAndUses(before, List.of(this), after, roots);
+    }
+
+
+    /**
+     * Resolves a collection of root modules, with service binding, and with
+     * the empty configuration as its parent. The post resolution checks
+     * are optionally run.
+     *
+     * This method is used to create the configuration for the boot layer.
+     */
+    static Configuration resolveRequiresAndUses(ModuleFinder finder,
+                                                Collection<String> roots,
+                                                boolean check,
+                                                PrintStream traceOutput)
+    {
+        List<Configuration> parents = List.of(empty());
+        Resolver resolver = new Resolver(finder, parents, ModuleFinder.of(), traceOutput);
+        resolver.resolveRequires(roots).resolveUses();
+
+        return new Configuration(parents, resolver, check);
+    }
+
+
+    /**
+     * Resolves a collection of root modules to create a configuration.
      *
      * <p> Each root module is located using the given {@code before} module
      * finder. If a module is not found then it is located in the parent
      * configuration as if by invoking the {@link #findModule(String)
-     * findModule} method. If not found then the module is located using the
-     * given {@code after} module finder. The same search order is used to
-     * locate transitive dependences. Root modules or dependences that are
-     * located in a parent configuration are resolved no further and are not
-     * included in the resulting configuration. </p>
+     * findModule} method on each parent in iteration order. If not found then
+     * the module is located using the given {@code after} module finder. The
+     * same search order is used to locate transitive dependences. Root modules
+     * or dependences that are located in a parent configuration are resolved
+     * no further and are not included in the resulting configuration. </p>
      *
      * <p> When all modules have been resolved then the resulting dependency
      * graph is checked to ensure that it does not contain cycles. A
-     * readability graph is constructed and then, in conjunction with the
-     * module exports and service use, checked for consistency. </p>
+     * readability graph is constructed and in conjunction with the module
+     * exports and service use, checked for consistency. </p>
      *
      * <p> Resolution and the (post-resolution) consistency checks may fail for
      * following reasons: </p>
@@ -268,6 +366,8 @@ public final class Configuration {
      *
      * @param  before
      *         The <em>before</em> module finder to find modules
+     * @param  parents
+     *         The list parent configurations in search order
      * @param  after
      *         The <em>after</em> module finder to locate modules when not
      *         located by the {@code before} module finder or in parent
@@ -280,31 +380,37 @@ public final class Configuration {
      *         root modules
      *
      * @throws ResolutionException
-     *         If resolution or the post-resolution checks fail for any of the
-     *         reasons listed
+     *         If resolution or the post-resolution checks fail
+     * @throws IllegalArgumentException
+     *         If the list of parents is empty
      * @throws SecurityException
      *         If locating a module is denied by the security manager
      */
-    public Configuration resolveRequires(ModuleFinder before,
-                                         ModuleFinder after,
-                                         Collection<String> roots)
+    public static Configuration resolveRequires(ModuleFinder before,
+                                                List<Configuration> parents,
+                                                ModuleFinder after,
+                                                Collection<String> roots)
     {
         Objects.requireNonNull(before);
         Objects.requireNonNull(after);
         Objects.requireNonNull(roots);
 
-        Resolver resolver = new Resolver(before, this, after, null);
+        List<Configuration> parentList = new ArrayList<>(parents);
+        if (parentList.isEmpty())
+            throw new IllegalArgumentException("'parents' is empty");
+
+        Resolver resolver = new Resolver(before, parentList, after, null);
         resolver.resolveRequires(roots);
 
-        return new Configuration(this, resolver, true);
+        return new Configuration(parentList, resolver, true);
     }
 
-
     /**
-     * Resolves a collection of root modules, with service binding, and with
-     * this configuration as its parent, to create a new configuration.
+     * Resolves a collection of root modules, with service binding, to create
+     * configuration.
      *
-     * <p> This method works exactly as specified by {@link #resolveRequires
+     * <p> This method works exactly as specified by {@link
+     * #resolveRequires(ModuleFinder,Collection,ModuleFinder,Collection)
      * resolveRequires} except that the graph of resolved modules is augmented
      * with modules induced by the service-use dependence relation. </p>
      *
@@ -325,6 +431,8 @@ public final class Configuration {
      *
      * @param  before
      *         The <em>before</em> module finder to find modules
+     * @param  parents
+     *         The list parent configurations in search order
      * @param  after
      *         The <em>after</em> module finder to locate modules when not
      *         located by the {@code before} module finder or in parent
@@ -337,45 +445,29 @@ public final class Configuration {
      *         root modules
      *
      * @throws ResolutionException
-     *         If resolution or the post-resolution checks fail for any of the
-     *         reasons listed
+     *         If resolution or the post-resolution checks fail
+     * @throws IllegalArgumentException
+     *         If the list of parents is empty
      * @throws SecurityException
      *         If locating a module is denied by the security manager
      */
-    public Configuration resolveRequiresAndUses(ModuleFinder before,
-                                                ModuleFinder after,
-                                                Collection<String> roots)
+    public static Configuration resolveRequiresAndUses(ModuleFinder before,
+                                                       List<Configuration> parents,
+                                                       ModuleFinder after,
+                                                       Collection<String> roots)
     {
         Objects.requireNonNull(before);
         Objects.requireNonNull(after);
         Objects.requireNonNull(roots);
 
-        Resolver resolver = new Resolver(before, this, after, null);
+        List<Configuration> parentList = new ArrayList<>(parents);
+        if (parentList.isEmpty())
+            throw new IllegalArgumentException("'parents' is empty");
+
+        Resolver resolver = new Resolver(before, parentList, after, null);
         resolver.resolveRequires(roots).resolveUses();
 
-        return new Configuration(this, resolver, true);
-    }
-
-
-    /**
-     * Resolves a collection of root modules, with service binding, and with
-     * the empty configuration as its parent. The post resolution checks
-     * are optionally run.
-     *
-     * This method is used to create the configuration for the boot layer.
-     */
-    static Configuration resolveRequiresAndUses(ModuleFinder finder,
-                                                Collection<String> roots,
-                                                boolean check,
-                                                PrintStream traceOutput)
-    {
-        Configuration parent = empty();
-
-        Resolver resolver
-            = new Resolver(finder, parent, ModuleFinder.of(), traceOutput);
-        resolver.resolveRequires(roots).resolveUses();
-
-        return new Configuration(parent, resolver, check);
+        return new Configuration(parentList, resolver, true);
     }
 
 
@@ -391,13 +483,14 @@ public final class Configuration {
 
 
     /**
-     * Returns this configuration's parent unless this is the {@linkplain #empty
-     * empty configuration}, which has no parent.
+     * Returns an unmodifiable list of this configuration's parents, in search
+     * order. If this is the {@linkplain #empty empty configuration} then an
+     * empty list is returned.
      *
-     * @return This configuration's parent
+     * @return A possibly-empty unmodifiable list of this parent configurations
      */
-    public Optional<Configuration> parent() {
-        return Optional.ofNullable(parent);
+    public List<Configuration> parents() {
+        return parents;
     }
 
 
@@ -414,23 +507,35 @@ public final class Configuration {
 
     /**
      * Finds a resolved module in this configuration, or if not in this
-     * configuration, the {@linkplain #parent parent} configurations.
+     * configuration, the {@linkplain #parents parent} configurations.
+     * Finding a module in parent configurations is equivalent to invoking
+     * {@code findModule} on each parent, in search order, until the module
+     * is found or all parents have been searched. In a <em>tree of
+     * configurations</em> then this is equivalent to a depth-first search.
      *
      * @param  name
      *         The module name of the resolved module to find
      *
      * @return The resolved module with the given name or an empty {@code
      *         Optional} if there isn't a module with this name in this
-     *         configuration or any parent configuration
+     *         configuration or any parent configurations
      */
     public Optional<ResolvedModule> findModule(String name) {
         Objects.requireNonNull(name);
-        if (parent == null)
-            return Optional.empty();
         ResolvedModule m = nameToModule.get(name);
         if (m != null)
             return Optional.of(m);
-        return parent().flatMap(x -> x.findModule(name));
+
+        if (!parents.isEmpty()) {
+            return configurations()
+                    .skip(1)  // skip this configuration
+                    .map(cf -> cf.nameToModule)
+                    .filter(map -> map.containsKey(name))
+                    .map(map -> map.get(name))
+                    .findFirst();
+        }
+
+        return Optional.empty();
     }
 
 
@@ -448,6 +553,43 @@ public final class Configuration {
     Set<ResolvedModule> reads(ResolvedModule m) {
         return Collections.unmodifiableSet(graph.get(m));
     }
+
+    /**
+     * Returns an ordered stream of configurations. The first element is this
+     * configuration, the remaining elements are the parent configurations
+     * in DFS order.
+     *
+     * @implNote For now, the assumption is that the number of elements will
+     * be very low and so this method does not use a specialized spliterator.
+     */
+    Stream<Configuration> configurations() {
+        List<Configuration> allConfigurations = this.allConfigurations;
+        if (allConfigurations == null) {
+            allConfigurations = new ArrayList<>();
+            Set<Configuration> visited = new HashSet<>();
+            Deque<Configuration> stack = new ArrayDeque<>();
+            visited.add(this);
+            stack.push(this);
+            while (!stack.isEmpty()) {
+                Configuration layer = stack.pop();
+                allConfigurations.add(layer);
+
+                // push in reverse order
+                for (int i = layer.parents.size() - 1; i >= 0; i--) {
+                    Configuration parent = layer.parents.get(i);
+                    if (!visited.contains(parent)) {
+                        visited.add(parent);
+                        stack.push(parent);
+                    }
+                }
+            }
+            this.allConfigurations = Collections.unmodifiableList(allConfigurations);
+        }
+        return allConfigurations.stream();
+    }
+
+    private volatile List<Configuration> allConfigurations;
+
 
     /**
      * Returns a string describing this configuration.

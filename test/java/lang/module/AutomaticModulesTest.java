@@ -712,17 +712,15 @@ public class AutomaticModulesTest {
      * and its parent Layers.
      */
     static void testsReadsAll(Module m, Layer layer) {
-        while (layer != Layer.empty()) {
+        // check that m reads all modules in the layer
+        layer.configuration().modules().stream()
+            .map(ResolvedModule::name)
+            .map(layer::findModule)
+            .map(Optional::get)
+            .forEach(other -> assertTrue(m.canRead(other)));
 
-            // check that m reads all module in the layer
-            layer.configuration().modules().stream()
-                .map(ResolvedModule::name)
-                .map(layer::findModule)
-                .map(Optional::get)
-                .forEach(other -> assertTrue(m.canRead(other)));
-
-            layer = layer.parent().get();
-        }
+        // also check parent layers
+        layer.parents().forEach(l -> testsReadsAll(m, l));
     }
 
     /**
