@@ -25,7 +25,8 @@
  * @test
  * @bug 8151149
  * @modules java.base/javax.crypto:private
- *          java.base/com.sun.crypto.provider:private
+ *          java.base/com.sun.crypto.provider
+ *          java.base/com.sun.crypto.provider:open
  */
 
 import java.lang.reflect.*;

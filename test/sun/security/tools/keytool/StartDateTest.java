@@ -25,8 +25,8 @@
  * @test
  * @bug 6468285
  * @summary keytool ability to backdate self-signed certificates to compensate for clock skew
- * @modules java.base/sun.security.tools.keytool:private
- * @compile -XDignore.symbol.file StartDateTest.java
+ * @modules java.base/sun.security.tools.keytool
+ *          java.base/sun.security.tools.keytool:open
  * @run main StartDateTest
  */
 

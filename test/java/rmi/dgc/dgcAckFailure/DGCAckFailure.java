@@ -30,7 +30,8 @@
  * rather than pinning it indefinitely.
  * @author Peter Jones
  *
- * @modules java.rmi/sun.rmi.transport:private
+ * @modules java.rmi/sun.rmi.transport
+ *          java.rmi/sun.rmi.transport:open
  * @build DGCAckFailure DGCAckFailure_Stub
  * @run main/othervm DGCAckFailure
  */
