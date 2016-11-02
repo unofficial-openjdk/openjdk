@@ -562,7 +562,7 @@ public enum Option {
         }
     },
 
-    ADD_OPENS("--add-opens", null, HIDDEN, BASIC),
+    ADD_OPENS("--add-opens", null, null, HIDDEN, BASIC),
 
     ADD_READS("--add-reads", "opt.arg.addReads", "opt.addReads", EXTENDED, BASIC) {
         @Override
