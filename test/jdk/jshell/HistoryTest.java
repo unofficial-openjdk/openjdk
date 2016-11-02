@@ -26,7 +26,8 @@
  * @bug 8166744
  * @summary Test Completion
  * @modules jdk.internal.le/jdk.internal.jline.extra
- *          jdk.jshell/jdk.internal.jshell.tool:private
+ *          jdk.jshell/jdk.internal.jshell.tool
+ *          jdk.jshell/jdk.internal.jshell.tool:open
  * @build HistoryTest
  * @run testng HistoryTest
  */
