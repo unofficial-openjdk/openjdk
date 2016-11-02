@@ -23,12 +23,11 @@
 
 /*
  * @test
- * @summary Tests jdeps --generate-weak-module option
- * @ignore there are no weak modules anymore
+ * @summary Tests jdeps --generate-open-module option
  * @library ../lib
  * @build CompilerUtils JdepsUtil JdepsRunner
  * @modules jdk.jdeps/com.sun.tools.jdeps
- * @run testng GenWeakModule
+ * @run testng GenOpenModule
  */
 
 import java.io.IOException;
@@ -48,7 +47,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
-public class GenWeakModule extends GenModuleInfo {
+public class GenOpenModule extends GenModuleInfo {
     private static final String MODULE_INFO = "module-info.class";
 
     private static final Path MODS_DIR = Paths.get("mods");
@@ -74,7 +73,7 @@ public class GenWeakModule extends GenModuleInfo {
                 .map(Path::toString);
 
         Stream<String> options = Stream.concat(
-            Stream.of("--generate-weak-module", DEST_DIR.toString()), files);
+            Stream.of("--generate-open-module", DEST_DIR.toString()), files);
         JdepsRunner.run(options.toArray(String[]::new));
 
         // check file exists
@@ -102,12 +101,12 @@ public class GenWeakModule extends GenModuleInfo {
     /*
      * Verify the dependences
      */
-    private void verify(ModuleDescriptor weakModule, ModuleDescriptor md) {
-        System.out.println("verifying: " + weakModule.name());
-        assertTrue(weakModule.isWeak());
-        assertTrue(!md.isWeak());
-        assertEquals(weakModule.name(), md.name());
-        assertEquals(weakModule.requires(), md.requires());
-        assertTrue(weakModule.exports().isEmpty());
+    private void verify(ModuleDescriptor openModule, ModuleDescriptor md) {
+        System.out.println("verifying: " + openModule.name());
+        assertTrue(openModule.isOpen());
+        assertTrue(!md.isOpen());
+        assertEquals(openModule.name(), md.name());
+        assertEquals(openModule.requires(), md.requires());
+        assertTrue(openModule.exports().isEmpty());
     }
 }

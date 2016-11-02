@@ -54,7 +54,7 @@ import java.util.stream.Stream;
 public class ModuleInfoBuilder {
     final JdepsConfiguration configuration;
     final Path outputdir;
-    final boolean weak;
+    final boolean open;
 
     final DependencyFinder dependencyFinder;
     final Analyzer analyzer;
@@ -65,10 +65,10 @@ public class ModuleInfoBuilder {
     public ModuleInfoBuilder(JdepsConfiguration configuration,
                              List<String> args,
                              Path outputdir,
-                             boolean weak) {
+                             boolean open) {
         this.configuration = configuration;
         this.outputdir = outputdir;
-        this.weak = weak;
+        this.open = open;
 
         this.dependencyFinder = new DependencyFinder(configuration, DEFAULT_FILTER);
         this.analyzer = new Analyzer(configuration, Type.CLASS, DEFAULT_FILTER);
@@ -198,7 +198,7 @@ public class ModuleInfoBuilder {
     }
 
     private void printModuleInfo(PrintWriter writer, ModuleDescriptor md) {
-        writer.format("%smodule %s {%n", weak ? "weak " : "", md.name());
+        writer.format("%smodule %s {%n", open ? "open " : "", md.name());
 
         Map<String, Module> modules = configuration.getModules();
         // first print the JDK modules
@@ -207,7 +207,7 @@ public class ModuleInfoBuilder {
           .sorted(Comparator.comparing(Requires::name))
           .forEach(req -> writer.format("    requires %s;%n", req));
 
-        if (!weak) {
+        if (!open) {
             md.exports().stream()
               .peek(exp -> {
                  if (exp.targets().size() > 0)
