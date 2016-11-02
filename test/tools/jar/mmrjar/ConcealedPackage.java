@@ -127,8 +127,7 @@ public class ConcealedPackage {
 
         jar("-tf mmr.jar");
 
-        String s = new String(outbytes.toByteArray());
-        Set<String> actual = Arrays.stream(s.split(linesep)).collect(Collectors.toSet());
+        Set<String> actual = lines(outbytes);
         Set<String> expected = Set.of(
                 "META-INF/",
                 "META-INF/MANIFEST.MF",
@@ -142,7 +141,7 @@ public class ConcealedPackage {
         rc = jar("-uf mmr.jar --release 9 -C mr9 p/internal/Bar.class");
         Assert.assertEquals(rc, 1);
 
-        s = new String(errbytes.toByteArray());
+        String s = new String(errbytes.toByteArray());
         Assert.assertTrue(Message.NOT_FOUND_IN_BASE_ENTRY.match(s, "p/internal/Bar.class"));
     }
 
@@ -163,8 +162,7 @@ public class ConcealedPackage {
 
         jar("-tf mmr.jar");
 
-        s = new String(outbytes.toByteArray());
-        Set<String> actual = Arrays.stream(s.split(linesep)).collect(Collectors.toSet());
+        Set<String> actual = lines(outbytes);
         Set<String> expected = Set.of(
                 "META-INF/",
                 "META-INF/MANIFEST.MF",
@@ -199,8 +197,7 @@ public class ConcealedPackage {
 
         jar("-tf mmr.jar");
 
-        s = new String(outbytes.toByteArray());
-        Set<String> actual = Arrays.stream(s.split(linesep)).collect(Collectors.toSet());
+        Set<String> actual = lines(outbytes);
         Set<String> expected = Set.of(
                 "META-INF/",
                 "META-INF/MANIFEST.MF",
@@ -244,8 +241,7 @@ public class ConcealedPackage {
 
         jar("tf mr.jar");
 
-        String s = new String(outbytes.toByteArray());
-        Set<String> actual = Arrays.stream(s.split(linesep)).collect(Collectors.toSet());
+        Set<String> actual = lines(outbytes);
         Set<String> expected = Set.of(
                 "META-INF/",
                 "META-INF/MANIFEST.MF",
@@ -261,11 +257,7 @@ public class ConcealedPackage {
 
         jar("-d --file mr.jar");
 
-        s = new String(outbytes.toByteArray());
-        actual = Arrays.stream(s.split(linesep))
-                .filter(l -> (l.length() > 0))
-                .map(l -> l.trim())
-                .collect(Collectors.toSet());
+        actual = lines(outbytes);
         expected = Set.of(
                 "hi",
                 "requires mandated java.base",
@@ -279,8 +271,7 @@ public class ConcealedPackage {
 
         jar("tf mr.jar");
 
-        s = new String(outbytes.toByteArray());
-        actual = Arrays.stream(s.split(linesep)).collect(Collectors.toSet());
+        actual = lines(outbytes);
         expected = Set.of(
                 "META-INF/",
                 "META-INF/MANIFEST.MF",
@@ -300,11 +291,7 @@ public class ConcealedPackage {
 
         jar("-d --file mr.jar");
 
-        s = new String(outbytes.toByteArray());
-        actual = Arrays.stream(s.split(linesep))
-                .filter(l -> (l.length() > 0))
-                .map(l -> l.trim())
-                .collect(Collectors.toSet());
+        actual = lines(outbytes);
         expected = Set.of(
                 "hi",
                 "requires mandated java.base",
@@ -313,6 +300,14 @@ public class ConcealedPackage {
                 "contains p.internal.bar"
         );
         Assert.assertEquals(actual, expected);
+    }
+
+    private static Set<String> lines(ByteArrayOutputStream baos) {
+        String s = new String(baos.toByteArray());
+        return Arrays.stream(s.split("\\R"))
+                     .map(l -> l.trim())
+                     .filter(l -> l.length() > 0)
+                     .collect(Collectors.toSet());
     }
 
     static enum Message {
@@ -334,8 +329,8 @@ public class ConcealedPackage {
          * Test if the given output contains this message ignoring the line break.
          */
         boolean match(String output, String entry) {
-            System.out.println("checking " + entry + msg);
-            System.out.println(output);
+            System.out.println("Expected: " + entry + msg);
+            System.out.println("Found: " + output);
             return Arrays.stream(output.split("\\R"))
                          .collect(Collectors.joining(" "))
                          .contains(entry + msg);

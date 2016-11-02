@@ -489,7 +489,9 @@ class Main {
             } else if (printModuleDescriptor) {
                 boolean found;
                 if (fname != null) {
-                    found = printModuleDescriptor(new ZipFile(fname));
+                    try (ZipFile zf = new ZipFile(fname)) {
+                        found = printModuleDescriptor(zf);
+                    }
                 } else {
                     try (FileInputStream fin = new FileInputStream(FileDescriptor.in)) {
                         found = printModuleDescriptor(fin);
