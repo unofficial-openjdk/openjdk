@@ -25,8 +25,7 @@
  * @test
  * @bug 8035105
  * @summary DNS resource record parsing
- * @modules jdk.naming.dns/com.sun.jndi.dns
- *          jdk.naming.dns/com.sun.jndi.dns:open
+ * @modules jdk.naming.dns/com.sun.jndi.dns:+open
  */
 
 import com.sun.jndi.dns.ResourceRecord;

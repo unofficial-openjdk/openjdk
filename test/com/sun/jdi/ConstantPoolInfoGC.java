@@ -28,8 +28,7 @@
  *
  *  @author Egor Ushakov
  *
- *  @modules jdk.jdi/com.sun.tools.jdi
- *           jdk.jdi/com.sun.tools.jdi:open
+ *  @modules jdk.jdi/com.sun.tools.jdi:+open
  *  @run build TestScaffold VMConnection
  *  @run compile -g ConstantPoolInfoGC.java
  *  @run main/othervm ConstantPoolInfoGC

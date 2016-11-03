@@ -71,8 +71,7 @@ import org.testng.TestNG;
  * @build jdk.test.lib.*
  * @compile  ObjectStreamTest.java  ObjectStreamTest$_Echo_Stub.java  ObjectStreamTest$_Server_Tie.java
  * @modules java.base/java.io:open
- *          java.corba/com.sun.corba.se.impl.io
- *          java.corba/com.sun.corba.se.impl.io:open
+ *          java.corba/com.sun.corba.se.impl.io:+open
  *          java.corba/com.sun.corba.se.impl.activation
  * @summary Tests of ReflectionFactory use in IIOP Serialization
  * @run testng/othervm

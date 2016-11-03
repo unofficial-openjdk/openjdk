@@ -25,8 +25,7 @@
  * @test
  * @build ModuleSetAccessibleTest
  * @modules java.base/java.lang:open
- *          java.base/jdk.internal.misc
- *          java.base/jdk.internal.misc:open
+ *          java.base/jdk.internal.misc:+open
  * @run testng ModuleSetAccessibleTest
  * @summary Test java.lang.reflect.AccessibleObject with modules
  */

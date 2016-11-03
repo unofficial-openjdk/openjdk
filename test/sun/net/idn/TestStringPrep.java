@@ -25,8 +25,7 @@
  * @test
  * @summary Unit test for sun.net.idn.Punycode
  * @bug 4737170 8060097
- * @modules java.base/sun.net.idn
- *          java.base/sun.net.idn:open
+ * @modules java.base/sun.net.idn:+open
  *          java.base/sun.text.normalizer
  * @library .
  * @compile -XDignore.symbol.file TestStringPrep.java NFS4StringPrep.java

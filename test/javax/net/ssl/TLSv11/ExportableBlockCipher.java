@@ -34,8 +34,8 @@
  * @summary Support TLS 1.1
  * @run main/othervm ExportableBlockCipher
  * @modules java.security.jgss
- *          java.security.jgss/sun.security.krb5:private
- *          java.security.jgss/sun.security.krb5.internal:private
+ *          java.security.jgss/sun.security.krb5:+open
+ *          java.security.jgss/sun.security.krb5.internal:+open
  *          java.security.jgss/sun.security.krb5.internal.ccache
  *          java.security.jgss/sun.security.krb5.internal.crypto
  *          java.security.jgss/sun.security.krb5.internal.ktab
