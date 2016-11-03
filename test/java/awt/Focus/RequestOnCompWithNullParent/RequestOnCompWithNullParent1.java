@@ -29,7 +29,7 @@
   @library ../../regtesthelpers
   @modules java.desktop/java.awt.peer
            java.desktop/sun.awt
-           java.desktop/java.awt:private
+           java.desktop/java.awt:open
   @build Util
   @run main RequestOnCompWithNullParent1
 */

@@ -28,7 +28,7 @@
  *          Quoted entries should get unquoted on Windows.
  *          Empty entries should be replaced with dot.
  * @library /lib/testlibrary
- * @modules java.base/java.lang:private
+ * @modules java.base/java.lang:open
  * @build jdk.testlibrary.Platform
  * @run main LibraryPathProperty
  */

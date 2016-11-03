@@ -27,7 +27,7 @@
  * @summary Test inheritance, order and class redefinition behaviour of RUNTIME
  *          class annotations
  * @author plevart
- * @modules java.base/java.lang:private
+ * @modules java.base/java.lang:open
  *          java.base/sun.reflect.annotation
  */
 

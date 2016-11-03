@@ -23,7 +23,7 @@
 
 /* @test
  * @bug 6628576
- * @modules java.base/java.net:private
+ * @modules java.base/java.net:open
  * @summary InterfaceAddress.equals() NPE when broadcast field == null
  */
 

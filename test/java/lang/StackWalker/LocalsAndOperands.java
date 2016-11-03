@@ -25,7 +25,7 @@
  * @test
  * @bug 8020968 8147039
  * @summary Tests for locals and operands
- * @modules java.base/java.lang:private
+ * @modules java.base/java.lang:open
  * @run testng LocalsAndOperands
  */
 

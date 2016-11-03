@@ -23,7 +23,7 @@
 
 /**
  * @test
- * @modules java.base/java.lang.module:private
+ * @modules java.base/java.lang.module:open
  *          java.base/jdk.internal.module
  * @run testng ModuleDescriptorTest
  * @summary Basic test for java.lang.module.ModuleDescriptor and its builder

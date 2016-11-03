@@ -28,7 +28,7 @@
  * @bug 6800513
  * @summary GTK-LaF renders menus incompletely
  * @author Mario Torre
- * @modules java.desktop/javax.swing:private
+ * @modules java.desktop/javax.swing:open
  * @library ../../regtesthelpers/
  * @build Util
  * @run main bug6800513

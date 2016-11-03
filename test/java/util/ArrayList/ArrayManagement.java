@@ -25,7 +25,7 @@
  * @test
  * @bug 8146568
  * @summary brittle white box test of internal array management
- * @modules java.base/java.util:private
+ * @modules java.base/java.util:open
  * @run testng ArrayManagement
  */
 

@@ -25,7 +25,7 @@
    @bug 6688203
    @summary Memory leak and performance problems in the method getFileSystemView of FileSystemView
    @author Pavel Porvatov
-   @modules java.desktop/javax.swing.filechooser:private
+   @modules java.desktop/javax.swing.filechooser:open
    @run main bug6688203
 */
 

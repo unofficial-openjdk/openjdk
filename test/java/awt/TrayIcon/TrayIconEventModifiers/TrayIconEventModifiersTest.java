@@ -34,7 +34,7 @@ import java.awt.image.BufferedImage;
  * @summary Check if MouseEvent has the proper modifiers when
  *          TrayIcon is clicked pressing the modifier keys
  * @author Dmitriy Ermashov (dmitriy.ermashov@oracle.com)
- * @modules java.desktop/java.awt:private
+ * @modules java.desktop/java.awt:open
  * @library /java/awt/patchlib
  * @library ../../../../lib/testlibrary ../
  * @build java.desktop/java.awt.Helper

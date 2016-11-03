@@ -29,7 +29,7 @@ import java.util.Hashtable;
  * @test
  * @bug 8068427
  * @summary Hashtable deserialization reconstitutes table with wrong capacity
- * @modules java.base/java.util:private
+ * @modules java.base/java.util:open
  */
 public class DeserializedLength {
 

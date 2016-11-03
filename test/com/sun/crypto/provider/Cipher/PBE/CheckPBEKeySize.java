@@ -24,7 +24,7 @@
 /**
  * @test
  * @bug 8151149
- * @modules java.base/javax.crypto:private
+ * @modules java.base/javax.crypto:open
  *          java.base/com.sun.crypto.provider
  *          java.base/com.sun.crypto.provider:open
  */
