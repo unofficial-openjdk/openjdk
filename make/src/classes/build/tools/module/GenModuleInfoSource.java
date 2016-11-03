@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,14 +30,13 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -55,10 +54,8 @@ public class GenModuleInfoSource {
     private final static String USAGE =
         "Usage: GenModuleInfoSource [option] -o <output file> <module-info-java>\n" +
         "Options are:\n" +
-        "  --exports  <package-name>\n" +
-        "  --exports  <package-name>[/<module-name>]\n" +
-        "  --exports-private  <package-name>\n" +
-        "  --exports-private  <package-name>[/<module-name>]\n" +
+        "  --exports  <package-name>[/<target-modules>]\n" +
+        "  --opens    <package-name>[/<target-modules>]\n" +
         "  --uses     <service>\n" +
         "  --provides <service>/<provider-impl-classname>\n";
 
@@ -72,23 +69,40 @@ public class GenModuleInfoSource {
             String option = args[i];
             if (option.startsWith("-")) {
                 String arg = args[++i];
-                if (option.equals("--exports") ||
-                    option.equals("--exports-private")) {
-                    Set<Exports.Modifier> modifiers = toModifiers(option);
+                if (option.equals("--exports")) {
                     int index = arg.indexOf('/');
                     if (index > 0) {
                         String pn = arg.substring(0, index);
-                        String mn = arg.substring(index + 1, arg.length());
-                        genModuleInfo.exportTo(modifiers, pn, mn);
+                        Set<String> targets =
+                            targets(arg.substring(index + 1, arg.length()));
+                        if (targets.isEmpty()) {
+                            throw new IllegalArgumentException("empty target: " +
+                                option + " " + arg);
+                        }
+                        genModuleInfo.exportsTo(pn, targets);
                     } else {
-                        genModuleInfo.export(modifiers, arg);
+                        genModuleInfo.exports(arg);
+                    }
+                } else if (option.equals("--opens")) {
+                    int index = arg.indexOf('/');
+                    if (index > 0) {
+                        String pn = arg.substring(0, index);
+                        Set<String> targets =
+                            targets(arg.substring(index + 1, arg.length()));
+                        if (targets.isEmpty()) {
+                            throw new IllegalArgumentException("empty target: " +
+                                option + " " + arg);
+                        }
+                        genModuleInfo.opensTo(pn, targets);
+                    } else {
+                        genModuleInfo.opens(arg);
                     }
                 } else if (option.equals("--uses")) {
                     genModuleInfo.use(arg);
                 } else if (option.equals("--provides")) {
                         int index = arg.indexOf('/');
                         if (index <= 0) {
-                            throw new IllegalArgumentException("invalid --provide argument: " + arg);
+                            throw new IllegalArgumentException("invalid -provide argument: " + arg);
                         }
                         String service = arg.substring(0, index);
                         String impl = arg.substring(index + 1, arg.length());
@@ -117,87 +131,39 @@ public class GenModuleInfoSource {
         genModuleInfo.generate(moduleInfoJava, outfile);
     }
 
-    static class Exports {
-        public static enum Modifier {
-            PRIVATE,
-        }
 
-        final Set<Modifier> mods;
-        final String source;
-        final Set<String> targets;  // empty if unqualified export
-
-        Exports(String source) {
-            this(Collections.emptySet(), source, Collections.emptySet());
-        }
-
-        Exports(Set<Modifier> ms, String source) {
-            this(ms, source, Collections.emptySet());
-        }
-
-        Exports(Set<Modifier> ms, String source, Set<String> targets) {
-            this.mods = ms;
-            this.source = source;
-            this.targets = targets;
-        }
-
-        String source() {
-            return source;
-        }
-
-        Set<String> targets() {
-            return targets;
-        }
-
-        boolean isQualified() {
-            return !targets.isEmpty();
-        }
+    private static Set<String> targets(String rhs) {
+        return Arrays.stream(rhs.split(","))
+                     .map(String::trim)
+                     .filter(mn -> mn.length() > 0)
+                     .collect(Collectors.toSet());
     }
 
+    private final ExportsOrOpens exports;
+    private final ExportsOrOpens opens;
 
-    static Set<Exports.Modifier> toModifiers(String option) {
-        switch (option) {
-            case "--exports":
-                return Collections.emptySet();
-            case "--exports-private":
-                return Collections.singleton(Exports.Modifier.PRIVATE);
-            default:
-                throw new IllegalArgumentException(option);
-        }
-    }
-
-    private final Map<String, Set<Exports>> exports = new HashMap<>();
-    private final Map<String, Set<Exports>> exportsTo = new HashMap<>();
     private final Set<String> uses = new HashSet<>();
     private final Map<String, Set<String>> provides = new HashMap<>();
     GenModuleInfoSource() {
+        this.exports = new ExportsOrOpens("exports");
+        this.opens = new ExportsOrOpens("opens");
+
     }
 
-    private void export(Set<Exports.Modifier> mods, String p) {
-        Objects.requireNonNull(p);
-        Set<Exports> exps = exports.computeIfAbsent(p, _k -> new HashSet<>());
-        Optional<Exports> oe = exps.stream()
-            .filter(e -> e.mods.equals(mods))
-            .findFirst();
-        if (oe.isPresent())
-            throw new IllegalArgumentException("duplicate exports " +
-                        toString(mods, p));
-         exps.add(new Exports(mods, p));
+    private void exports(String p) {
+        exports.add(p);
     }
 
-    private void exportTo(Set<Exports.Modifier> mods, String p, String mn) {
-        Objects.requireNonNull(p);
-        Objects.requireNonNull(mn);
-        Set<Exports> exps = exportsTo.computeIfAbsent(p, _k -> new HashSet<>());
-        Optional<Exports> oe = exps.stream()
-            .filter(e -> e.mods.equals(mods))
-            .findFirst();
-        if (oe.isPresent()) {
-            oe.get().targets.add(mn);
-        } else {
-            Set<String> targets = new HashSet<>();
-            targets.add(mn);
-            exps.add(new Exports(mods, p, targets));
-        }
+    private void exportsTo(String p, Set<String> targets) {
+        exports.add(p, targets);
+    }
+
+    private void opens(String p) {
+        opens.add(p);
+    }
+
+    private void opensTo(String p, Set<String> targets) {
+        opens.add(p, targets);
     }
 
     private void use(String service) {
@@ -205,8 +171,72 @@ public class GenModuleInfoSource {
     }
 
     private void provide(String s, String impl) {
-        provides.computeIfAbsent(s, _k -> new HashSet<>()).add(impl);
+        // keep the order
+        provides.computeIfAbsent(s, _k -> new LinkedHashSet<>()).add(impl);
     }
+
+    private void doAugments(PrintWriter writer) {
+        if (exports.isEmpty() && opens.isEmpty() &&
+            (uses.size() + provides.size()) == 0)
+            return;
+
+        writer.println();
+        writer.println("    // augmented from module-info.java.extra");
+
+        exports.writeTo(writer);
+        opens.writeTo(writer);
+
+        uses.stream().sorted()
+            .forEach(s -> writer.format("    uses %s;%n", s));
+
+        toStream(provides, "provides", "with")
+            .forEach(writer::println);
+    }
+
+    static class ExportsOrOpens {
+        final Set<String> unqualified = new HashSet<>();
+        final Map<String, Set<String>> qualified = new HashMap<>();
+        final String directive;
+        ExportsOrOpens(String name) {
+            this.directive = name;
+        }
+        void add(String pn) {
+            Objects.requireNonNull(pn);
+            if (unqualified.contains(pn) || qualified.containsKey(pn)) {
+                throw new RuntimeException("duplicated " +
+                    directive + ": " + pn);
+            }
+            unqualified.add(pn);
+        }
+
+        void add(String pn, Set<String> targets) {
+            Objects.requireNonNull(pn);
+            if (unqualified.contains(pn)) {
+                throw new RuntimeException("unqualified " +
+                    directive + " already exists: " + pn);
+            }
+            qualified.computeIfAbsent(pn, _k -> new HashSet<>()).addAll(targets);
+        }
+
+        Set<String> removeIfPresent(String pn) {
+            return qualified.remove(pn);
+        }
+
+        boolean isEmpty() {
+            return unqualified.size() + qualified.size() == 0;
+        }
+
+        void writeTo(PrintWriter writer) {
+            unqualified.stream()
+                .sorted()
+                .forEach(e -> writer.format("    %s %s;%n", directive, e));
+
+            // remaining injected qualified exports
+            toStream(qualified, directive, "to")
+                .forEach(writer::println);
+        }
+    }
+
 
     private void generate(Path sourcefile, Path outfile) throws IOException {
         Path parent = outfile.getParent();
@@ -217,8 +247,10 @@ public class GenModuleInfoSource {
         try (BufferedWriter bw = Files.newBufferedWriter(outfile);
              PrintWriter writer = new PrintWriter(bw)) {
             int lineNumber = 0;
-            String pn = null;
-            Set<Exports.Modifier> mods = null;
+            boolean inExportsTo = false;
+            boolean inOpensTo = false;
+            String name = null;
+            ExportsOrOpens exportsOrOpens = null;
             for (String l : lines) {
                 lineNumber++;
                 String[] s = l.trim().split("\\s+");
@@ -227,26 +259,12 @@ public class GenModuleInfoSource {
                 int n = l.length();
                 switch (keyword) {
                     case "exports":
-                        boolean inExportsTo = false;
-                        // exports <package-name> [to <target-module>]
-                        // exports private <package-name> [to <target-module>]
-
-                        String token = s[1].trim();
-                        int nextTokenPos = 2;
-                        pn = null;
-                        mods = Collections.emptySet();
-
-                        if (token.equals("private")) {
-                            mods = Collections.singleton(Exports.Modifier.valueOf(token.toUpperCase()));
-                            pn = s.length >= 3 ? s[2].trim() : null;
-                            nextTokenPos = 3;
-                        } else {
-                            pn = token;
-                        }
-
-                        if (s.length > nextTokenPos) {
-                            nextIndex = l.indexOf(pn, nextIndex) + pn.length();
-                            if (s[nextTokenPos].trim().equals("to")) {
+                        // assume package name immediately after exports
+                        name = s[1].trim();
+                        exportsOrOpens = exports;
+                        if (s.length >= 3) {
+                            nextIndex = l.indexOf(name, nextIndex) + name.length();
+                            if (s[2].trim().equals("to")) {
                                 inExportsTo = true;
                                 n = l.indexOf("to", nextIndex) + "to".length();
                             } else {
@@ -257,100 +275,125 @@ public class GenModuleInfoSource {
 
                         // inject the extra targets after "to"
                         if (inExportsTo) {
-                            writer.println(injectExportTargets(mods, pn, l, n));
+                            Set<String> extras = exports.removeIfPresent(name);
+                            writer.println(injectTargets(l, n, extras));
                         } else {
                             writer.println(l);
                         }
                         break;
+
+                    case "opens":
+                        // assume package name immediately after opens
+                        name = s[1].trim();
+                        exportsOrOpens = opens;
+                        if (s.length >= 3) {
+                            nextIndex = l.indexOf(name, nextIndex) + name.length();
+                            if (s[2].trim().equals("to")) {
+                                inOpensTo = true;
+                                n = l.indexOf("to", nextIndex) + "to".length();
+                            } else {
+                                throw new RuntimeException(sourcefile + ", line " +
+                                    lineNumber + ", is malformed: " + s[2]);
+                            }
+                        }
+
+                        // inject the extra targets after "to"
+                        if (inOpensTo) {
+                            Set<String> extras = opens.removeIfPresent(name);
+                            writer.println(injectTargets(l, n, extras));
+                        } else {
+                            writer.println(l);
+                        }
+                        break;
+
                     case "to":
-                        if (pn == null) {
+                        if (name == null) {
                             throw new RuntimeException(sourcefile + ", line " +
                                 lineNumber + ", is malformed");
                         }
                         n = l.indexOf("to", nextIndex) + "to".length();
-                        writer.println(injectExportTargets(mods, pn, l, n));
+                        writer.println(injectTargets(l, n, exportsOrOpens.removeIfPresent(name)));
                         break;
+
+                    case "provides":
+                        boolean hasWith = false;
+                        // assume service type name immediately after provides
+                        name = s[1].trim();
+                        if (s.length >= 3) {
+                            nextIndex = l.indexOf(name, nextIndex) + name.length();
+                            if (s[2].trim().equals("with")) {
+                                hasWith = true;
+                                n = l.indexOf("with", nextIndex) + "with".length();
+                            } else {
+                                throw new RuntimeException(sourcefile + ", line " +
+                                    lineNumber + ", is malformed: " + s[2]);
+                            }
+                        }
+
+                        // inject the extra provider classes after "with"
+                        if (hasWith) {
+                            Set<String> extras = provides.remove(name);
+                            writer.println(injectTargets(l, n, extras));
+                        } else {
+                            writer.println(l);
+                        }
+                        break;
+
+                    case "with":
+                        if (name == null) {
+                            throw new RuntimeException(sourcefile + ", line " +
+                                lineNumber + ", is malformed");
+                        }
+                        n = l.indexOf("with", nextIndex) + "with".length();
+                        writer.println(injectTargets(l, n, provides.remove(name)));
+                        break;
+
                     case "}":
                         doAugments(writer);
                         // fall through
                     default:
                         writer.println(l);
-                        // reset exports
-                        pn = null;
+                        // reset
+                        name = null;
+                        inExportsTo = inOpensTo = false;
+                        exportsOrOpens = null;
                 }
             }
         }
     }
 
-    private String injectExportTargets(Set<Exports.Modifier> mods, String pn,
-                                       String exports, int pos) {
-        if (exportsTo.containsKey(pn)) {
-            Optional<Exports> oe = exportsTo.get(pn).stream()
-                .filter(e -> e.mods.equals(mods))
-                .findFirst();
-            if (oe.isPresent()) {
-                Exports exp = oe.get();
-                exportsTo.get(pn).remove(exp);
-                StringBuilder sb = new StringBuilder();
-                // inject the extra targets after the given pos
-                sb.append(exports.substring(0, pos))
-                    .append("\n\t")
-                    .append(exp.targets.stream()
-                        .collect(Collectors.joining(", ", "", ",")))
-                    .append(" /* injected */");
-                if (pos < exports.length()) {
-                    // print the remaining statement followed "to"
-                    sb.append("\n\t")
-                      .append(exports.substring(pos + 1, exports.length()));
-                }
-                return sb.toString();
+
+    /*
+     * Injects the targets after the given position
+     */
+    private String injectTargets(String line, int pos, Set<String> extras) {
+        if (extras != null) {
+            StringBuilder sb = new StringBuilder();
+            // inject the extra targets after the given pos
+            sb.append(line.substring(0, pos))
+              .append("\n\t")
+              .append(extras.stream()
+                            .collect(Collectors.joining(",", "", ",")))
+              .append(" /* injected */");
+            if (pos < line.length()) {
+                // print the remaining statement followed "to"
+                sb.append("\n\t")
+                  .append(line.substring(pos+1, line.length()));
             }
+            return sb.toString();
+        } else {
+            return line;
         }
-        return exports;
     }
 
-    private void doAugments(PrintWriter writer) {
-        long exps = exports.values().stream()
-                           .flatMap(Set::stream).count() +
-                    exportsTo.values().stream()
-                           .flatMap(Set::stream).count();
-        if ((exps + uses.size() + provides.size()) == 0)
-            return;
-
-        writer.println();
-        writer.println("    // augmented from module-info.java.extra");
-        exports.values().stream()
-            .flatMap(Set::stream)
-            .sorted(Comparator.comparing(Exports::source))
-            .forEach(e -> writer.format("    exports %s;%n",
-                                        toString(e.mods, e.source)));
-        // remaining injected qualified exports
-        exportsTo.values().stream()
-            .flatMap(Set::stream)
-            .sorted(Comparator.comparing(Exports::source))
-            .map(e -> String.format("    exports %s to%n%s;",
-                                    toString(e.mods, e.source),
-                                    e.targets().stream().sorted()
-                                        .map(mn -> String.format("        %s", mn))
-                                        .collect(Collectors.joining(",\n"))))
-            .forEach(writer::println);
-        uses.stream().sorted()
-            .forEach(s -> writer.format("    uses %s;%n", s));
-        provides.entrySet().stream()
+    private static Stream<String> toStream(Map<String, Set<String>> map,
+                                           String directive, String verb) {
+        return map.entrySet().stream()
             .sorted(Map.Entry.comparingByKey())
-            .flatMap(e -> e.getValue().stream().sorted()
-                           .map(impl -> String.format("    provides %s with %s;",
-                                                      e.getKey(), impl)))
-            .forEach(writer::println);
+            .map(e -> String.format("    %s %s %s%n%s;",
+                                    directive, e.getKey(), verb,
+                                    e.getValue().stream().sorted()
+                                        .map(target -> String.format("        %s", target))
+                                        .collect(Collectors.joining(",\n"))));
     }
-
-    static <T> Stream<String> toStringStream(Set<T> s) {
-        return s.stream().map(e -> e.toString().toLowerCase());
-    }
-
-    static <M> String toString(Set<M> mods, String what) {
-        return (Stream.concat(toStringStream(mods), Stream.of(what)))
-            .collect(Collectors.joining(" "));
-    }
-
 }
