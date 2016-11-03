@@ -38,7 +38,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import java.util.Arrays;
 import java.util.stream.Stream;
 
 import org.testng.annotations.BeforeTest;
@@ -68,7 +67,7 @@ public class GenOpenModule extends GenModuleInfo {
 
     @Test
     public void test() throws IOException {
-        Stream<String> files = Arrays.stream(MODULES)
+        Stream<String> files = MODULES.stream()
                 .map(mn -> LIBS_DIR.resolve(mn + ".jar"))
                 .map(Path::toString);
 
@@ -77,7 +76,7 @@ public class GenOpenModule extends GenModuleInfo {
         JdepsRunner.run(options.toArray(String[]::new));
 
         // check file exists
-        Arrays.stream(MODULES)
+        MODULES.stream()
              .map(mn -> DEST_DIR.resolve(mn).resolve("module-info.java"))
              .forEach(f -> assertTrue(Files.exists(f)));
 
@@ -108,5 +107,6 @@ public class GenOpenModule extends GenModuleInfo {
         assertEquals(openModule.name(), md.name());
         assertEquals(openModule.requires(), md.requires());
         assertTrue(openModule.exports().isEmpty());
+        assertEquals(openModule.provides(), md.provides());
     }
 }

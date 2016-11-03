@@ -35,13 +35,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleDescriptor.Exports;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -65,9 +63,9 @@ public class GenModuleInfo {
 
     // the names of the modules in this test
     public static final String UNSUPPORTED = "unsupported";
-    public static final String[] MODULES = new String[] {
-        "mI", "mII", "mIII", UNSUPPORTED
-    };
+    public static final Set<String> MODULES = Set.of(
+        "mI", "mII", "mIII", "provider", UNSUPPORTED
+    );
 
     /**
      * Compile modules
@@ -75,8 +73,9 @@ public class GenModuleInfo {
     public static void compileModules(Path dest) {
         assertTrue(CompilerUtils.compileModule(SRC_DIR, dest, UNSUPPORTED,
             "--add-exports", "java.base/jdk.internal.perf=" + UNSUPPORTED));
-        Arrays.asList("mI", "mII", "mIII")
-            .forEach(mn -> assertTrue(CompilerUtils.compileModule(SRC_DIR, dest, mn)));
+        MODULES.stream()
+               .filter(mn -> !mn.equals(UNSUPPORTED))
+               .forEach(mn -> assertTrue(CompilerUtils.compileModule(SRC_DIR, dest, mn)));
     }
 
     /**
@@ -87,18 +86,41 @@ public class GenModuleInfo {
 
         for (String mn : MODULES) {
             Path root = mods.resolve(mn);
-            try (Stream<Path> stream = Files.walk(root, Integer.MAX_VALUE)) {
+            Path msrc = SRC_DIR.resolve(mn);
+            Path metaInf = msrc.resolve("META-INF");
+            if (Files.exists(metaInf)) {
+                try (Stream<Path> resources = Files.find(metaInf, Integer.MAX_VALUE,
+                        (p, attr) -> { return attr.isRegularFile();})) {
+                    resources.forEach(file -> {
+                        try {
+                            Path path = msrc.relativize(file);
+                            Files.createDirectories(root.resolve(path).getParent());
+                            Files.copy(file, root.resolve(path));
+                        } catch (IOException e) {
+                            throw new UncheckedIOException(e);
+                        }
+                    });
+                }
+            }
+            // copy all entries except module-info.class
+            try (Stream<Path> stream = Files.find(root, Integer.MAX_VALUE,
+                    (p, attr) -> { return attr.isRegularFile();})) {
                 Stream<Path> entries = stream.filter(f -> {
                     String fn = f.getFileName().toString();
-                    return fn.endsWith(".class") && !fn.equals("module-info.class");
+                    if (fn.endsWith(".class")) {
+                        return !fn.equals("module-info.class");
+                    } else {
+                        return true;
+                    }
                 });
+
                 JdepsUtil.createJar(libs.resolve(mn + ".jar"), root, entries);
             }
         }
 
-       return Arrays.stream(MODULES)
-            .map(mn -> LIBS_DIR.resolve(mn + ".jar"))
-            .collect(Collectors.toList());
+       return MODULES.stream()
+                .map(mn -> LIBS_DIR.resolve(mn + ".jar"))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -110,7 +132,8 @@ public class GenModuleInfo {
             "-p", dest.toString(),
             "--add-exports", "java.base/jdk.internal.perf=" + UNSUPPORTED));
 
-        Arrays.asList("mI", "mII", "mIII")
+        MODULES.stream()
+            .filter(mn -> !mn.equals(UNSUPPORTED))
             .forEach(mn -> assertTrue(
                 CompilerUtils.compileModule(source, dest,
                                             mn, "-p", dest.toString()))
@@ -135,7 +158,7 @@ public class GenModuleInfo {
 
     @Test
     public void automaticModules() throws IOException {
-        Stream<String> files = Arrays.stream(MODULES)
+        Stream<String> files = MODULES.stream()
                 .map(mn -> LIBS_DIR.resolve(mn + ".jar"))
                 .map(Path::toString);
         JdepsRunner.run(Stream.concat(Stream.of("-cp"), files).toArray(String[]::new));
@@ -145,7 +168,7 @@ public class GenModuleInfo {
     public void test() throws IOException {
         Files.createDirectory(DEST_DIR);
 
-        Stream<String> files = Arrays.stream(MODULES)
+        Stream<String> files = MODULES.stream()
                 .map(mn -> LIBS_DIR.resolve(mn + ".jar"))
                 .map(Path::toString);
 
@@ -154,7 +177,7 @@ public class GenModuleInfo {
         JdepsRunner.run(options.toArray(String[]::new));
 
         // check file exists
-        Arrays.stream(MODULES)
+        MODULES.stream()
              .map(mn -> DEST_DIR.resolve(mn).resolve("module-info.java"))
              .forEach(f -> assertTrue(Files.exists(f)));
 
@@ -208,11 +231,13 @@ public class GenModuleInfo {
                                   .map(ModuleDescriptor.Exports::source)
                                   .collect(Collectors.toSet()), md2.packages());
         if (!md1.opens().isEmpty()) {
-            throw new RuntimeException("unexpected opens: " + md1.opens()
-                                                                 .stream()
-                                                                 .map(o -> o.toString())
-                                                                 .collect(Collectors.joining(",")));
+            throw new RuntimeException("unexpected opens: " +
+                md1.opens().stream()
+                   .map(o -> o.toString())
+                   .collect(Collectors.joining(",")));
         }
+
+        assertEquals(md1.provides(), md2.provides());
     }
 
     private Set<String> packages(Path dir) {
