@@ -867,8 +867,8 @@ Agent_OnUnload_L(JavaVM *vm)</example>
   <functionlink id="AddModuleExports"/>, <functionlink id="AddModuleOpens"/>,
   <functionlink id="AddModuleUses"/> and <functionlink id="AddModuleProvides"/>
   to update a module to expand the set of modules that it reads, the set of
-  packaegs that it exports (or exports-private), or the services that it uses
-  and provides.
+  packages that it exports or opens to other modules, or the services that it
+  uses and provides.
   <p/>
   As an aid to agents that deploy supporting classes on the search path of
   the bootstrap class loader, or the search path of the class loader that
@@ -6601,7 +6601,7 @@ class C2 extends C1 implements I2 {
       <description>
          Update a module to export a package to another module.
          This function is a no-op when <paramlink id="module"></paramlink>
-         is an unnamed module.
+         is an unnamed module or an open module.
          This function facilitates the instrumentation of code
          in named modules where that instrumentation requires
          expanding the set of packages that a module exports.
@@ -6651,7 +6651,7 @@ class C2 extends C1 implements I2 {
       <description>
          Update a module to open a package to another module.
          This function is a no-op when <paramlink id="module"></paramlink>
-         is an open module.
+         is an unnamed module or an open module.
          This function facilitates the instrumentation of code
          in modules where that instrumentation requires
          expanding the set of packages that a module opens to
