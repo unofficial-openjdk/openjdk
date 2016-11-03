@@ -103,22 +103,14 @@ ifneq ($(MOD_FILES), )
   $(foreach line, $(MODIFICATIONS), \
     $(eval split_line := $(subst /,$(SPACE),$(line))) \
     $(eval command := $(word 1, $(split_line))) \
-    $(if $(filter $(command), exports), \
-      $(eval modifier := $(word 2, $(split_line))) \
+    $(if $(filter $(command), exports opens), \
       $(eval package := $(patsubst %;,%,$(word 2, $(split_line)))) \
-      $(eval to_module := $(patsubst %;,%,$(word 4, $(split_line)))) \
-      $(if $(filter $(modifier), private), \
-        $(eval package := $(patsubst %;,%,$(word 3, $(split_line)))) \
-        $(eval to_module := $(patsubst %;,%,$(word 5, $(split_line)))) \
-        $(eval cmd := $(command)-$(modifier)) \
-      , \
-        $(eval cmd := $(command)) \
-      ) \
       $(if $(call PackageExists, $(package)), \
+        $(eval to_module := $(patsubst %;,%,$(word 4, $(split_line)))) \
         $(if $(to_module), \
-          $(eval ARGS += --$(cmd) $(package)/$(to_module)) \
+          $(eval ARGS += --$(command) $(package)/$(to_module)) \
         , \
-          $(eval ARGS += --$(cmd) $(package)) \
+          $(eval ARGS += --$(command) $(package)) \
         ) \
       ) \
     , \
