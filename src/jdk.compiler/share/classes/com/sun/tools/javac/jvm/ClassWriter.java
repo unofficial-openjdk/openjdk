@@ -30,6 +30,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 
 import javax.tools.JavaFileManager;
 import javax.tools.FileObject;
@@ -999,15 +1000,19 @@ public class ClassWriter extends ClassFile {
             databuf.appendChar(pool.put(s.service));
         }
 
-        List<ProvidesDirective> provides = m.provides;
-        databuf.appendChar(provides.size());
-        for (ProvidesDirective p : provides) {
-            databuf.appendChar(pool.put(p.service));
-            databuf.appendChar(p.impls.size());
-            for (ClassSymbol impl: p.impls) {
-                databuf.appendChar(pool.put(impl));
-            }
+        // temporary fix to merge repeated provides clause for same service;
+        // eventually this should be disallowed when analyzing the module,
+        // so that each service type only appears once.
+        Map<ClassSymbol, Set<ClassSymbol>> mergedProvides = new LinkedHashMap<>();
+        for (ProvidesDirective p : m.provides) {
+            mergedProvides.computeIfAbsent(p.service, s -> new LinkedHashSet<>()).addAll(p.impls);
         }
+        databuf.appendChar(mergedProvides.size());
+        mergedProvides.forEach((srvc, impls) -> {
+            databuf.appendChar(pool.put(srvc));
+            databuf.appendChar(impls.size());
+            impls.forEach(impl -> databuf.appendChar(pool.put(impl)));
+        });
 
         endAttr(alenIdx);
         return 1;

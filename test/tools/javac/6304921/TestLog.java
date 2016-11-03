@@ -28,8 +28,7 @@
  * @modules jdk.compiler/com.sun.tools.javac.file
  *          jdk.compiler/com.sun.tools.javac.parser
  *          jdk.compiler/com.sun.tools.javac.tree
- *          jdk.compiler/com.sun.tools.javac.util
- *          jdk.compiler/com.sun.tools.javac.util:open
+ *          jdk.compiler/com.sun.tools.javac.util:+open
  */
 import java.lang.reflect.Field;
 import java.io.InputStream;
