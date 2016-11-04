@@ -419,7 +419,7 @@ public class JdepsConfiguration implements AutoCloseable {
             ModuleDescriptor.Builder builder = ModuleDescriptor.module(md.name());
             md.requires().forEach(builder::requires);
             md.exports().forEach(builder::exports);
-            md.provides().values().stream().forEach(builder::provides);
+            md.provides().stream().forEach(builder::provides);
             md.uses().stream().forEach(builder::uses);
 
             Set<String> concealed = new HashSet<>(md.packages());

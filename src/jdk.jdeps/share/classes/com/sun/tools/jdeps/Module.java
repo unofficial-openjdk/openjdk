@@ -250,7 +250,7 @@ class Module extends Archive {
             });
             m.descriptor.exports().forEach(e -> builder.exports(e));
             m.descriptor.uses().forEach(s -> builder.uses(s));
-            m.descriptor.provides().values().forEach(p -> builder.provides(p));
+            m.descriptor.provides().forEach(p -> builder.provides(p));
 
             Set<String> concealed = new HashSet<>(m.descriptor.packages());
             m.descriptor.exports().stream().map(Exports::source).forEach(concealed::remove);

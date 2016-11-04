@@ -217,7 +217,7 @@ public class ModuleInfoBuilder {
               .forEach(exp -> writer.format("    exports %s;%n", exp.source()));
         }
 
-        md.provides().values().stream()
+        md.provides().stream()
           .sorted(Comparator.comparing(Provides::service))
           .map(p -> p.providers().stream()
                      .map(impl -> "        " + impl.replace('$', '.'))
