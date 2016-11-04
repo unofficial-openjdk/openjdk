@@ -985,10 +985,9 @@ public final class LauncherHelper {
                     ostream.format("  uses %s%n", s);
                 }
 
-                Map<String, Provides> provides = md.provides();
-                for (Provides ps : provides.values()) {
-                    for (String impl : ps.providers())
-                        ostream.format("  provides %s with %s%n", ps.service(), impl);
+                for (Provides ps : md.provides()) {
+                    ostream.format("  provides %s with %s%n", ps.service(),
+                            ps.providers().stream().collect(Collectors.joining(", ")));
                 }
 
                 // qualified exports

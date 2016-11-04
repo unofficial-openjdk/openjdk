@@ -558,11 +558,10 @@ public class ModuleSummary {
                 ms.descriptor().uses().stream()
                         .sorted()
                         .forEach(s -> sb.append("uses ").append(s).append("<br>").append("\n"));
-                ms.descriptor().provides().entrySet().stream()
-                        .sorted(Map.Entry.comparingByKey())
-                        .flatMap(e -> e.getValue().providers().stream()
-                                .map(p -> String.format("provides %s<br>&nbsp;&nbsp;&nbsp;&nbsp;with %s",
-                                                        e.getKey(), p)))
+                ms.descriptor().provides().stream()
+                        .sorted(Comparator.comparing(Provides::service))
+                        .map(p -> String.format("provides %s<br>&nbsp;&nbsp;&nbsp;&nbsp;with %s",
+                                                p.service(), p.providers()))
                         .forEach(p -> sb.append(p).append("<br>").append("\n"));
                 sb.append("</td>");
                 return sb.toString();

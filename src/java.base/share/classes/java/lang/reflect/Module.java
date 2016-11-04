@@ -1098,8 +1098,7 @@ public final class Module implements AnnotatedElement {
             for (ResolvedModule resolvedModule : cf.modules()) {
                 ModuleReference mref = resolvedModule.reference();
                 ModuleDescriptor descriptor = mref.descriptor();
-                Map<String, Provides> services = descriptor.provides();
-                if (!services.isEmpty()) {
+                if (!descriptor.provides().isEmpty()) {
                     String name = descriptor.name();
                     Module m = nameToModule.get(name);
                     ClassLoader loader = moduleToLoader.get(name);

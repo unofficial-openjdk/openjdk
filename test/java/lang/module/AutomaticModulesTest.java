@@ -267,8 +267,8 @@ public class AutomaticModulesTest {
 
         ModuleDescriptor descriptor = mref.get().descriptor();
         assertTrue(descriptor.provides().size() == 1);
-        assertTrue(descriptor.provides().containsKey(service));
-        ModuleDescriptor.Provides provides = descriptor.provides().get(service);
+        ModuleDescriptor.Provides provides = descriptor.provides().iterator().next();
+        assertEquals(provides.service(), service);
         assertTrue(provides.providers().size() == 1);
         assertTrue(provides.providers().contains((provider)));
     }

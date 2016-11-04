@@ -901,7 +901,7 @@ public final class ServiceLoader<S>
          * Returns iterator to iterate over the implementations of {@code
          * service} in the given layer.
          */
-        private Set<ServiceProvider> providers(Layer layer) {
+        private List<ServiceProvider> providers(Layer layer) {
             ServicesCatalog catalog = JLRM_ACCESS.getServicesCatalog(layer);
             return catalog.findServices(serviceName);
         }
@@ -936,7 +936,7 @@ public final class ServiceLoader<S>
                 stream2 = loader.layers()
                         .filter(l -> (l != bootLayer))
                         .map(l -> providers(l))
-                        .flatMap(Set::stream);
+                        .flatMap(List::stream);
             }
 
             return Stream.concat(stream1, stream2).iterator();

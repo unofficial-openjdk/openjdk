@@ -26,6 +26,7 @@ package jdk.test.bar;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Requires;
+import java.lang.module.ModuleDescriptor.Provides;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.HashSet;
@@ -59,7 +60,7 @@ public class Bar {
             System.out.println("uses:" + sj.toString());
 
         sj = new StringJoiner(",");
-        md.provides().keySet().stream().sorted().forEach(sj::add);
+        md.provides().stream().map(Provides::service).sorted().forEach(sj::add);
         if (!sj.toString().equals(""))
             System.out.println("provides:" + sj.toString());
 

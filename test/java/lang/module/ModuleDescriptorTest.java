@@ -47,6 +47,7 @@ import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -598,7 +599,6 @@ public class ModuleDescriptorTest {
             .provides(st, pc)
             .build()
             .provides()
-            .values()
             .iterator()
             .next();
     }
@@ -608,27 +608,24 @@ public class ModuleDescriptorTest {
         ModuleDescriptor descriptor = ModuleDescriptor.module("m")
                 .provides(p1)
                 .build();
-        Provides p2 = descriptor.provides().get("p.S");
+        Provides p2 = descriptor.provides().iterator().next();
         assertEquals(p1, p2);
     }
 
-    public void testProvides() {
-        Set<String> pns = new HashSet<>();
-        pns.add("q.P1");
-        pns.add("q.P2");
 
-        Map<String, Provides> map
-            = ModuleDescriptor.module("foo")
-                .provides("p.S", pns)
+    public void testProvides() {
+        Set<Provides> set = ModuleDescriptor.module("foo")
+                .provides("p.S", List.of("q.P1", "q.P2"))
                 .build()
                 .provides();
-        assertTrue(map.size() == 1);
+        assertTrue(set.size() == 1);
 
-        Provides p = map.values().iterator().next();
+        Provides p = set.iterator().next();
         assertEquals(p, p);
+        assertEquals(p.service(), "p.S");
         assertTrue(p.providers().size() == 2);
-        assertTrue(p.providers().contains("q.P1"));
-        assertTrue(p.providers().contains("q.P2"));
+        assertEquals(p.providers().get(0), "q.P1");
+        assertEquals(p.providers().get(1), "q.P2");
     }
 
     @Test(expectedExceptions = IllegalStateException.class )
@@ -639,7 +636,7 @@ public class ModuleDescriptorTest {
 
     @Test(expectedExceptions = IllegalArgumentException.class )
     public void testProvidesWithEmptySet() {
-        ModuleDescriptor.module("foo").provides("p.Service", Collections.emptySet());
+        ModuleDescriptor.module("foo").provides("p.Service", Collections.emptyList());
     }
 
     @Test(dataProvider = "invalidjavaidentifiers",
@@ -661,7 +658,7 @@ public class ModuleDescriptorTest {
 
     @Test(expectedExceptions = NullPointerException.class )
     public void testProvidesWithNullProviders() {
-        ModuleDescriptor.module("foo").provides("p.S", (Set<String>) null);
+        ModuleDescriptor.module("foo").provides("p.S", (List<String>) null);
     }
 
     public void testProvidesEqualsAndHashCode() {

@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -196,10 +197,7 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
             if (opens.isQualified())
                 opens.targets().forEach(Checks::requireModuleName);
         }
-        for (Map.Entry<String, Provides> e : md.provides().entrySet()) {
-            String service = e.getKey();
-            Provides provides = e.getValue();
-            Checks.requireServiceTypeName(service);
+        for (Provides provides : md.provides()) {
             Checks.requireServiceTypeName(provides.service());
             provides.providers().forEach(Checks::requireServiceProviderName);
         }
@@ -370,8 +368,9 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
             }
 
             // provides
-            for (Provides p : md.provides().values()) {
-                dedupSetBuilder.stringSet(p.providers(),
+            for (Provides p : md.provides()) {
+                // FIXME: should emit a list rather than a set
+                dedupSetBuilder.stringSet(new HashSet<>(p.providers()),
                                           true /* preserve iteration order */);
             }
 
@@ -504,7 +503,7 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                 uses(md.uses());
 
                 // provides
-                provides(md.provides().values());
+                provides(md.provides());
 
                 // all packages
                 packages(packages);
@@ -740,7 +739,8 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                 for (Provides provide : provides) {
                     mv.visitInsn(DUP);    // arrayref
                     pushInt(arrayIndex++);
-                    newProvides(provide.service(), provide.providers());
+                    // FIXME: this needs to emit a List rather than a Set
+                    newProvides(provide.service(), new HashSet<>(provide.providers()));
                     mv.visitInsn(AASTORE);
                 }
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,

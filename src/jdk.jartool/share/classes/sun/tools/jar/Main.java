@@ -1864,13 +1864,13 @@ class Main {
 
     // Modular jar support
 
-    static <T> String toString(Set<T> set,
+    static <T> String toString(Collection<T> c,
                                CharSequence prefix,
                                CharSequence suffix ) {
-        if (set.isEmpty())
+        if (c.isEmpty())
             return "";
 
-        return set.stream().map(e -> e.toString())
+        return c.stream().map(e -> e.toString())
                            .collect(joining(", ", prefix, suffix));
     }
 
@@ -1904,7 +1904,7 @@ class Main {
         return false;
     }
 
-    static <T> String toString(Set<T> set) {
+    static <T> String toString(Collection<T> set) {
         if (set.isEmpty()) { return ""; }
         return set.stream().map(e -> e.toString().toLowerCase(Locale.ROOT))
                   .collect(joining(" "));
@@ -1940,7 +1940,7 @@ class Main {
         concealed.stream().sorted()
             .forEach(p -> sb.append("\n  contains ").append(p));
 
-        md.provides().values().stream()
+        md.provides().stream()
             .sorted(Comparator.comparing(Provides::service))
             .forEach(p -> sb.append("\n  provides ").append(p.service())
                             .append(" with ")
@@ -1973,10 +1973,9 @@ class Main {
     {
         ModuleDescriptor md = ModuleDescriptor.read(ByteBuffer.wrap(moduleInfoBytes));
         Set<String> missing = md.provides()
-                                .values()
                                 .stream()
                                 .map(Provides::providers)
-                                .flatMap(Set::stream)
+                                .flatMap(List::stream)
                                 .filter(p -> !jarEntries.contains(toBinaryName(p)))
                                 .collect(Collectors.toSet());
         if (missing.size() > 0) {

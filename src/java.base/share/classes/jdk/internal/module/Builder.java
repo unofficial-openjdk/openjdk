@@ -30,8 +30,10 @@ import java.lang.module.ModuleDescriptor.Opens;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Version;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -106,11 +108,20 @@ final class Builder {
     }
 
     /**
-     * Returns a {@link Provides} for a service with a given set of
+     * Returns a {@link Provides} for a service with a given list of
      * implementation classes.
      */
-    public static Provides newProvides(String st, Set<String> pcs) {
+    public static Provides newProvides(String st, List<String> pcs) {
         return jlma.newProvides(st, pcs);
+    }
+
+    /**
+     * Returns a {@link Provides} for a service with a given set of
+     * implementation classes. This method will be removed once the jlink
+     * plugin is updated to new newProvides(String,List).
+     */
+    public static Provides newProvides(String st, Set<String> pcs) {
+        return jlma.newProvides(st, new ArrayList<>(pcs));
     }
 
     final String name;
@@ -122,7 +133,7 @@ final class Builder {
     Set<Opens> opens;
     Set<String> packages;
     Set<String> uses;
-    Map<String, Provides> provides;
+    Set<Provides> provides;
     Version version;
     String mainClass;
     String osName;
@@ -133,10 +144,10 @@ final class Builder {
 
     Builder(String name) {
         this.name = name;
-        this.provides = Collections.emptyMap();
+        this.requires = Collections.emptySet();
         this.exports = Collections.emptySet();
         this.opens = Collections.emptySet();
-        this.requires = Collections.emptySet();
+        this.provides = Collections.emptySet();
         this.uses = Collections.emptySet();
     }
 
@@ -199,13 +210,7 @@ final class Builder {
      * Sets module provides.
      */
     public Builder provides(Provides[] provides) {
-        @SuppressWarnings({"unchecked", "rawtypes"})
-        Map.Entry<String, Provides>[] entries = new Map.Entry[provides.length];
-        for (int i = 0; i < provides.length; i++) {
-            Provides p = provides[i];
-            entries[i] = Map.entry(p.service(), p);
-        }
-        this.provides = Map.ofEntries(entries);
+        this.provides = Set.of(provides);
         return this;
     }
 
@@ -311,9 +316,9 @@ final class Builder {
                                         automatic,
                                         synthetic,
                                         requires,
-                                        uses,
                                         exports,
                                         opens,
+                                        uses,
                                         provides,
                                         version,
                                         mainClass,

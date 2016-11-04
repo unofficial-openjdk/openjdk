@@ -27,6 +27,7 @@ import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -71,14 +72,25 @@ public class SystemModulesTest {
         }
 
         assertUnmodifiable(md.uses(), "use");
-        assertUnmodifiable(md.provides(), "provide",
-                           jlma.newProvides("provide", Collections.singleton("provide")));
+        assertUnmodifiable(md.provides(),
+                           jlma.newProvides("provide", List.of("provide")));
 
     }
 
     private <T> void assertUnmodifiable(Set<T> set, T dummy) {
         try {
             set.add(dummy);
+            fail("Should throw UnsupportedOperationException");
+        } catch (UnsupportedOperationException e) {
+            // pass
+        } catch (Exception e) {
+            fail("Should throw UnsupportedOperationException");
+        }
+    }
+
+    private <T> void assertUnmodifiable(List<T> list, T dummy) {
+        try {
+            list.add(dummy);
             fail("Should throw UnsupportedOperationException");
         } catch (UnsupportedOperationException e) {
             // pass

@@ -37,10 +37,11 @@ import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Opens;
 import java.nio.ByteBuffer;
 import java.nio.BufferUnderflowException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -86,9 +87,8 @@ final class ModuleInfo {
     {
         try {
             return new ModuleInfo(pf).doRead(new DataInputStream(in));
-        } catch (IllegalArgumentException iae) {
-            // IllegalArgumentException means a malformed class
-            throw invalidModuleDescriptor(iae.getMessage());
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            throw invalidModuleDescriptor(e.getMessage());
         } catch (EOFException x) {
             throw truncatedModuleDescriptor();
         }
@@ -105,9 +105,8 @@ final class ModuleInfo {
     {
         try {
             return new ModuleInfo(pf).doRead(new DataInputWrapper(bb));
-        } catch (IllegalArgumentException iae) {
-            // IllegalArgumentException means a malformed class
-            throw invalidModuleDescriptor(iae.getMessage());
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            throw invalidModuleDescriptor(e.getMessage());
         } catch (EOFException x) {
             throw truncatedModuleDescriptor();
         } catch (IOException ioe) {
@@ -127,8 +126,8 @@ final class ModuleInfo {
     {
         try {
             return new ModuleInfo(pf, false).doRead(new DataInputWrapper(bb));
-        } catch (IllegalArgumentException iae) {
-            throw invalidModuleDescriptor(iae.getMessage());
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            throw invalidModuleDescriptor(e.getMessage());
         } catch (EOFException x) {
             throw truncatedModuleDescriptor();
         } catch (IOException ioe) {
@@ -426,25 +425,17 @@ final class ModuleInfo {
 
         int provides_count = in.readUnsignedShort();
         if (provides_count > 0) {
-            Map<String, Set<String>> pm = new HashMap<>();
             for (int i=0; i<provides_count; i++) {
                 int index = in.readUnsignedShort();
                 String sn = cpool.getClassName(index).replace('/', '.');
                 int with_count = in.readUnsignedShort();
-                // computeIfAbsent
-                Set<String> providers = pm.get(sn);
-                if (providers == null) {
-                    providers = new LinkedHashSet<>(); // preserve order
-                    pm.put(sn, providers);
-                }
+                List<String> providers = new ArrayList<>(with_count);
                 for (int j=0; j<with_count; j++) {
                     index = in.readUnsignedShort();
                     String pn = cpool.getClassName(index).replace('/', '.');
                     providers.add(pn);
                 }
-            }
-            for (Map.Entry<String, Set<String>> e : pm.entrySet()) {
-                builder.provides(e.getKey(), e.getValue());
+                builder.provides(sn, providers);
             }
         }
 
@@ -457,8 +448,8 @@ final class ModuleInfo {
     private Set<String> readPackagesAttribute(DataInput in, ConstantPool cpool)
         throws IOException
     {
-        Set<String> packages = new HashSet<>();
         int package_count = in.readUnsignedShort();
+        Set<String> packages = new HashSet<>(package_count);
         for (int i=0; i<package_count; i++) {
             int index = in.readUnsignedShort();
             String pn = cpool.getUtf8(index).replace('/', '.');

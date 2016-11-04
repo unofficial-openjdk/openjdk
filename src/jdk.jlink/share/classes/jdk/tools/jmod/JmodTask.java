@@ -263,9 +263,9 @@ public class JmodTask {
         }
     }
 
-    static <T> String toString(Set<T> set) {
-        if (set.isEmpty()) { return ""; }
-        return set.stream().map(e -> e.toString().toLowerCase(Locale.ROOT))
+    static <T> String toString(Collection<T> c) {
+        if (c.isEmpty()) { return ""; }
+        return c.stream().map(e -> e.toString().toLowerCase(Locale.ROOT))
                   .collect(joining(" "));
     }
 
@@ -298,7 +298,7 @@ public class JmodTask {
         concealed.stream().sorted()
                  .forEach(p -> sb.append("\n  contains ").append(p));
 
-        md.provides().values().stream()
+        md.provides().stream()
             .sorted(Comparator.comparing(Provides::service))
             .forEach(p -> sb.append("\n  provides ").append(p.service())
                             .append(" with ")

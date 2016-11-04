@@ -26,6 +26,7 @@
 package java.lang.module;
 
 import java.io.PrintStream;
+import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Requires.Modifier;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -187,7 +188,9 @@ final class Resolver {
             ModuleDescriptor descriptor = mref.descriptor();
             if (!descriptor.provides().isEmpty()) {
 
-                for (String sn : descriptor.provides().keySet()) {
+                for (Provides provides :  descriptor.provides()) {
+                    String sn = provides.service();
+
                     // computeIfAbsent
                     Set<ModuleReference> providers = availableProviders.get(sn);
                     if (providers == null) {
@@ -714,12 +717,8 @@ final class Resolver {
                 }
 
                 // provides S
-                for (Map.Entry<String, ModuleDescriptor.Provides> entry :
-                        descriptor1.provides().entrySet()) {
-                    String service = entry.getKey();
-                    ModuleDescriptor.Provides provides = entry.getValue();
-
-                    String pn = packageName(service);
+                for (ModuleDescriptor.Provides provides : descriptor1.provides()) {
+                    String pn = packageName(provides.service());
                     if (!packageToExporter.containsKey(pn)) {
                         fail("Module %s does not read a module that exports %s",
                              descriptor1.name(), pn);

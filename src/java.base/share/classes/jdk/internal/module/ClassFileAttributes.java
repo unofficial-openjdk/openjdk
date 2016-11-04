@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,10 +31,11 @@ import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Opens;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Version;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -212,20 +213,19 @@ public final class ClassFileAttributes {
             int provides_count = cr.readUnsignedShort(off);
             off += 2;
             if (provides_count > 0) {
-                Map<String, Set<String>> provides = new HashMap<>();
                 for (int i=0; i<provides_count; i++) {
-                    String sn = cr.readClass(off, buf).replace('/', '.');
+                    String service = cr.readClass(off, buf).replace('/', '.');
                     off += 2;
                     int with_count = cr.readUnsignedShort(off);
                     off += 2;
+                    List<String> providers = new ArrayList<>();
                     for (int j=0; j<with_count; j++) {
                         String cn = cr.readClass(off, buf).replace('/', '.');
                         off += 2;
-                        provides.computeIfAbsent(sn, k -> new LinkedHashSet<>()).add(cn);
+                        providers.add(cn);
                     }
+                    builder.provides(service, providers);
                 }
-                provides.entrySet().forEach(e -> builder.provides(e.getKey(),
-                                                                  e.getValue()));
             }
 
             attr.descriptor = builder.build();
@@ -332,7 +332,7 @@ public final class ClassFileAttributes {
                 attr.putShort(0);
             } else {
                 attr.putShort(descriptor.provides().size());
-                for (Provides p : descriptor.provides().values()) {
+                for (Provides p : descriptor.provides()) {
                     String service = p.service().replace('.', '/');
                     attr.putShort(cw.newClass(service));
                     int with_count = p.providers().size();
