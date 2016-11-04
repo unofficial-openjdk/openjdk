@@ -30,9 +30,9 @@ import java.io.FilePermission;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleReader;
+import java.lang.ref.SoftReference;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -49,8 +49,6 @@ import java.security.SecureClassLoader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -145,10 +143,9 @@ public class BuiltinClassLoader
     // maps a module reference to a module reader
     private final Map<ModuleReference, ModuleReader> moduleToReader;
 
-    // the lazily created cache of resource name -> list of URLs, used only
-    // for resources that are not in module packages (to avoid repeated
-    // searching of all modules defined to the class loader)
-    private volatile Map<String, List<URL>> miscResources;
+    // cache of resource name -> list of URLs.
+    // used only for resources that are not in module packages
+    private volatile SoftReference<Map<String, List<URL>>> resourceCache;
 
     /**
      * Create a new instance.
@@ -335,59 +332,53 @@ public class BuiltinClassLoader
      * defined to this loader. A miscellaneous resource is not in a module
      * package, e.g. META-INF/services/p.S.
      *
-     * The cache used by this method avoids repeated searching for all
-     * modules. This helps for cases where the resource is in at least one
-     * module and where the resource is not in any module.
+     * The cache used by this method avoids repeated searching of all modules.
      */
     private List<URL> findMiscResource(String name) throws IOException {
-        Map<String, List<URL>> miscResources = this.miscResources;
-        if (miscResources == null) {
-            try {
-                miscResources = AccessController.doPrivileged(
-                    new PrivilegedExceptionAction<>() {
-                        @Override
-                        public Map<String, List<URL>> run() throws IOException {
-                            return findAllMiscResources();
-                        }
-                    });
-            } catch (PrivilegedActionException pae) {
-                throw (IOException) pae.getCause();
-            }
-            if (VM.isModuleSystemInited()) {
-                // only cache resources after all modules have been defined
-                this.miscResources = miscResources;
-            }
+        SoftReference<Map<String, List<URL>>> ref = this.resourceCache;
+        Map<String, List<URL>> map = (ref != null) ? ref.get() : null;
+        if (map != null) {
+            List<URL> urls = map.get(name);
+            if (urls != null)
+                return urls;
         }
-        return miscResources.getOrDefault(name, Collections.emptyList());
-    }
 
-    /**
-     * Returns a map of the miscellaneous resources in modules defined to this
-     * class loader. The map key is the resource name, the map value is a
-     * list of the URLs to the resource.
-     */
-    private Map<String, List<URL>> findAllMiscResources() throws IOException {
-        Map<String, List<URL>> map = new HashMap<>();
-        for (ModuleReference mref : nameToModule.values()) {
-            // use Iterator due to checked exception handling
-            ModuleReader reader = moduleReaderFor(mref);
-            Iterator<String> itr = reader.list()
-                .filter(name -> {
-                    String pn = ResourceHelper.getPackageName(name);
-                    return packageToModule.get(pn) == null;
-                })
-                .iterator();
-            while (itr.hasNext()) {
-                String name = itr.next();
-                URI u = reader.find(name).orElse(null);
-                assert u != null;
-                try {
-                    URL url = u.toURL();
-                    map.computeIfAbsent(name, k -> new ArrayList<>()).add(url);
-                } catch (MalformedURLException | IllegalArgumentException e) { }
-            }
+        // search all modules for the resource
+        List<URL> urls;
+        try {
+            urls = AccessController.doPrivileged(
+                new PrivilegedExceptionAction<>() {
+                    @Override
+                    public List<URL> run() throws IOException {
+                        List<URL> result = new ArrayList<>();
+                        for (ModuleReference mref : nameToModule.values()) {
+                            URI u = moduleReaderFor(mref).find(name).orElse(null);
+                            if (u != null) {
+                                try {
+                                    result.add(u.toURL());
+                                } catch (MalformedURLException |
+                                         IllegalArgumentException e) {
+                                }
+                            }
+                        }
+                        return result;
+                    }
+                });
+        } catch (PrivilegedActionException pae) {
+            throw (IOException) pae.getCause();
         }
-        return map;
+
+        // only cache resources after all modules have been defined
+        if (VM.isModuleSystemInited()) {
+            if (map == null) {
+                map = new ConcurrentHashMap<>();
+                this.resourceCache = new SoftReference<>(map);
+            }
+            if (urls.isEmpty())
+                urls = Collections.emptyList();
+            map.putIfAbsent(name, urls);
+        }
+        return urls;
     }
 
     /**
