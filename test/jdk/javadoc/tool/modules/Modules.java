@@ -446,7 +446,7 @@ public class Modules extends ModuleTestBase {
 
         execTask("--module-source-path", src.toString(),
                 "--module", "M",
-                "--expand-requires", "public");
+                "--expand-requires", "transitive");
 
         checkModulesSpecified("M", "N", "O");
         checkModulesIncluded("M", "N", "O");
