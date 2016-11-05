@@ -2510,7 +2510,6 @@ public class ModuleDescriptor
                                                   Path... entries) {
                     return new ModulePath(version, isLinkPhase, entries);
                 }
-
             });
     }
 

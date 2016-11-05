@@ -38,6 +38,7 @@ import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;

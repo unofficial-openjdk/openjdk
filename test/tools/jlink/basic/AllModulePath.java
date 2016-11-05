@@ -44,6 +44,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.spi.ToolProvider;
 
@@ -113,7 +114,7 @@ public class AllModulePath {
         Path image = Paths.get("image1");
         createImage(image,
                     "--add-modules", "ALL-MODULE-PATH",
-                    "--limit-modules", "m1", "java.base");
+                    "--limit-modules", "m1");
 
         checkModules(image, Set.of("m1", "java.base"));
     }
@@ -169,6 +170,7 @@ public class AllModulePath {
         String[] args = Stream.concat(opts.stream(), Arrays.stream(options))
                               .toArray(String[]::new);
 
+        System.out.println("jlink " + Arrays.stream(args).collect(Collectors.joining(" ")));
         PrintWriter pw = new PrintWriter(System.out);
         int rc = JLINK_TOOL.run(pw, pw, args);
         assertTrue(rc == 0);

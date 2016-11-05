@@ -36,6 +36,7 @@ import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -69,6 +70,8 @@ import jdk.internal.perf.PerfCounter;
 
 class SystemModuleFinder implements ModuleFinder {
 
+    private static final JavaNetUriAccess JNUA = SharedSecrets.getJavaNetUriAccess();
+
     private static final PerfCounter initTime
         = PerfCounter.newPerfCounter("jdk.module.finder.jimage.initTime");
     private static final PerfCounter moduleCount
@@ -79,8 +82,6 @@ class SystemModuleFinder implements ModuleFinder {
         = PerfCounter.newPerfCounter("jdk.module.finder.jimage.exports");
     // ImageReader used to access all modules in the image
     private static final ImageReader imageReader;
-
-    private static final JavaNetUriAccess jnua = SharedSecrets.getJavaNetUriAccess();
 
     // the set of modules in the run-time image
     private static final Set<ModuleReference> modules;
@@ -180,8 +181,7 @@ class SystemModuleFinder implements ModuleFinder {
                                                      HashSupplier hash)
     {
         String mn = md.name();
-
-        URI uri = jnua.create("jrt", "/".concat(mn));
+        URI uri = JNUA.create("jrt", "/".concat(mn));
 
         Supplier<ModuleReader> readerSupplier = new Supplier<>() {
             @Override
@@ -359,7 +359,7 @@ class SystemModuleFinder implements ModuleFinder {
 
     /**
      * A Spliterator for traversing the resources of a module linked into the
-     * run-time image. Traversal is depth first.
+     * run-time image.
      */
     static class ModuleContentSpliterator implements Spliterator<String> {
         final String moduleRoot;

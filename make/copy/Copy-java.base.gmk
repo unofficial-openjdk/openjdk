@@ -58,7 +58,6 @@ TARGETS += \
 #
 TARGETS += \
     $(INCLUDE_DST_DIR)/jni.h \
-    $(INCLUDE_DST_DIR)/jvmti.h \
     $(INCLUDE_DST_DIR)/jvmticmlr.h \
     $(INCLUDE_DST_DIR)/classfile_constants.h \
     $(INCLUDE_DST_OS_DIR)/jni_md.h \

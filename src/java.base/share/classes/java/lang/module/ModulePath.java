@@ -359,7 +359,7 @@ class ModulePath implements ModuleFinder {
 
     /**
      * Returns the service type corresponding to the name of a services
-     * configuration file if it's a valid Java identifier.
+     * configuration file if it is a valid Java identifier.
      *
      * For example, if called with "META-INF/services/p.S" then this method
      * returns a container with the value "p.S".
@@ -455,13 +455,13 @@ class ModulePath implements ModuleFinder {
 
         Set<String> resources = map.get(Boolean.FALSE);
         Set<String> configFiles = map.get(Boolean.TRUE);
-
         // all packages are exported and open
         resources.stream()
                 .map(this::toPackageName)
                 .flatMap(Optional::stream)
                 .distinct()
                 .forEach(pn -> builder.exports(pn).opens(pn));
+
 
         // map names of service configuration files to service names
         Set<String> serviceNames = configFiles.stream()
