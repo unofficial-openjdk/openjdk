@@ -130,7 +130,7 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                 validateNames(md);
 
                 Set<String> packages = module.packages();
-                ModuleDescriptorBuilder mbuilder = generator.module(md, module.packages());
+                generator.prepareModule(md, module.packages());
 
                 // add Packages attribute if not exist
                 if (md.packages().isEmpty() && packages.size() > 0) {
@@ -351,7 +351,7 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
          * prepares mapping from various Sets to SetBuilders to emit an
          * optimized number of sets during build.
          */
-        public ModuleDescriptorBuilder module(ModuleDescriptor md, Set<String> packages) {
+        public void prepareModule(ModuleDescriptor md, Set<String> packages) {
             ModuleDescriptorBuilder builder = new ModuleDescriptorBuilder(md, packages);
             builders.add(builder);
 
@@ -367,13 +367,6 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                 dedupSetBuilder.opensModifiers(opens.modifiers());
             }
 
-            // provides
-            for (Provides p : md.provides()) {
-                // FIXME: should emit a list rather than a set
-                dedupSetBuilder.stringSet(new HashSet<>(p.providers()),
-                                          true /* preserve iteration order */);
-            }
-
             // requires
             for (Requires r : md.requires()) {
                 dedupSetBuilder.requiresModifiers(r.modifiers());
@@ -384,8 +377,6 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
 
             // hashes
             JLMA.hashes(md).ifPresent(mh -> modulesToHash.putAll(mh.hashes()));
-
-            return builder;
         }
 
         /*
@@ -456,8 +447,8 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                     + OPENS_TYPE;
             static final String OPENS_MODIFIER_SET_STRING_SIG =
                 "(Ljava/util/Set;Ljava/lang/String;)" + OPENS_TYPE;
-            static final String PROVIDES_STRING_SET_SIG =
-                "(Ljava/lang/String;Ljava/util/Set;)" + PROVIDES_TYPE;
+            static final String PROVIDES_STRING_LIST_SIG =
+                "(Ljava/lang/String;Ljava/util/List;)" + PROVIDES_TYPE;
             static final String REQUIRES_SET_STRING_SIG =
                 "(Ljava/util/Set;Ljava/lang/String;)" + REQUIRES_TYPE;
 
@@ -739,8 +730,7 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                 for (Provides provide : provides) {
                     mv.visitInsn(DUP);    // arrayref
                     pushInt(arrayIndex++);
-                    // FIXME: this needs to emit a List rather than a Set
-                    newProvides(provide.service(), new HashSet<>(provide.providers()));
+                    newProvides(provide.service(), provide.providers());
                     mv.visitInsn(AASTORE);
                 }
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
@@ -756,12 +746,21 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
              * :
              * Builder.newProvides(service, providers);
              */
-            void newProvides(String service, Set<String> providers) {
-                int varIndex = dedupSetBuilder.indexOfStringSet(providers);
+            void newProvides(String service, List<String> providers) {
                 mv.visitLdcInsn(service);
-                mv.visitVarInsn(ALOAD, varIndex);
+                pushInt(providers.size());
+                mv.visitTypeInsn(ANEWARRAY, "java/lang/String");
+                int arrayIndex = 0;
+                for (String provider : providers) {
+                    mv.visitInsn(DUP);    // arrayref
+                    pushInt(arrayIndex++);
+                    mv.visitLdcInsn(provider);
+                    mv.visitInsn(AASTORE);
+                }
+                mv.visitMethodInsn(INVOKESTATIC, "java/util/List",
+                                   "of", "([Ljava/lang/Object;)Ljava/util/List;", true);
                 mv.visitMethodInsn(INVOKESTATIC, MODULE_DESCRIPTOR_BUILDER,
-                                   "newProvides", PROVIDES_STRING_SET_SIG, false);
+                                   "newProvides", PROVIDES_STRING_LIST_SIG, false);
             }
 
             /*
@@ -856,22 +855,12 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
             }
 
             /*
-             * Add the given set of names to this builder
+             * Add the given set of strings to this builder.
              */
-            void stringSet(Set<String> names) {
-                stringSet(names, false);
-            }
-
-            /*
-             * Add the given set of names to this builder.
-             *
-             * If preserveIterationOrder is true, the builder creates a set
-             * that preserves the order, for example, LinkedHashSet.
-             */
-            void stringSet(Set<String> names, boolean preserveIterationOrder) {
-                stringSets.computeIfAbsent(names,
+            void stringSet(Set<String> strings) {
+                stringSets.computeIfAbsent(strings,
                     s -> new SetBuilder<>(s, stringSetVar, localVarSupplier)
-                ).iterationOrder(preserveIterationOrder).increment();
+                ).increment();
             }
 
             /*
@@ -958,7 +947,6 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
             private final Set<T> elements;
             private final int defaultVarIndex;
             private final IntSupplier nextLocalVar;
-            private boolean linked;
             private int refCount;
             private int localVarIndex;
 
@@ -968,15 +956,6 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                 this.elements = elements;
                 this.defaultVarIndex = defaultVarIndex;
                 this.nextLocalVar = nextLocalVar;
-            }
-
-            /*
-             * Marks that the builder should maintain the iteration order of
-             * the elements, i.e., use a LinkedHashSet.
-             */
-            final SetBuilder<T> iterationOrder(boolean preserveOrder) {
-                this.linked = preserveOrder;
-                return this;
             }
 
             /*
@@ -1015,11 +994,7 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                         index = defaultVarIndex;
                     }
 
-                    if (linked && elements.size() > 1) {
-                        generateLinkedSet(index);
-                    } else {
-                        generateSetOf(index);
-                    }
+                    generateSetOf(index);
                 }
                 return index;
             }
@@ -1050,30 +1025,6 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                     mv.visitMethodInsn(INVOKESTATIC, "java/util/Set",
                             "of", "([Ljava/lang/Object;)Ljava/util/Set;", true);
                 }
-                mv.visitVarInsn(ASTORE, index);
-            }
-
-            private void generateLinkedSet(int index) {
-                mv.visitTypeInsn(NEW, "java/util/LinkedHashSet");
-                mv.visitInsn(DUP);
-                pushInt(initialCapacity(elements.size()));
-                mv.visitMethodInsn(INVOKESPECIAL, "java/util/LinkedHashSet",
-                        "<init>", "(I)V", false);
-
-                mv.visitVarInsn(ASTORE, index);
-                for (T t : elements) {
-                    mv.visitVarInsn(ALOAD, index);
-                    visitElement(t, mv);
-                    mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Set",
-                            "add",
-                            "(Ljava/lang/Object;)Z", true);
-                    mv.visitInsn(POP);
-                }
-                mv.visitVarInsn(ALOAD, index);
-                mv.visitMethodInsn(INVOKESTATIC, "java/util/Collections",
-                        "unmodifiableSet",
-                        "(Ljava/util/Set;)Ljava/util/Set;",
-                        false);
                 mv.visitVarInsn(ASTORE, index);
             }
         }

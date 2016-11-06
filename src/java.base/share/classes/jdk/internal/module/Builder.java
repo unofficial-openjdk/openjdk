@@ -115,15 +115,6 @@ final class Builder {
         return jlma.newProvides(st, pcs);
     }
 
-    /**
-     * Returns a {@link Provides} for a service with a given set of
-     * implementation classes. This method will be removed once the jlink
-     * plugin is updated to new newProvides(String,List).
-     */
-    public static Provides newProvides(String st, Set<String> pcs) {
-        return jlma.newProvides(st, new ArrayList<>(pcs));
-    }
-
     final String name;
     boolean open;
     boolean automatic;

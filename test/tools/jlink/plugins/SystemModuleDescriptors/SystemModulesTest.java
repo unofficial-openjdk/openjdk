@@ -22,11 +22,9 @@
  */
 
 import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleDescriptor.Requires;
-import java.lang.module.ModuleDescriptor.Exports;
+import java.lang.module.ModuleDescriptor.*;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -69,11 +67,22 @@ public class SystemModulesTest {
         assertUnmodifiable(md.exports(), jlma.newExports(Set.of(), "export", Set.of()));
         for (Exports exp : md.exports()) {
             assertUnmodifiable(exp.modifiers(), Exports.Modifier.SYNTHETIC);
+            assertUnmodifiable(exp.targets(), "target");
+        }
+
+        assertUnmodifiable(md.opens(), jlma.newOpens(Set.of(), "open", Set.of()));
+        for (Opens opens : md.opens()) {
+            assertUnmodifiable(opens.modifiers(), Opens.Modifier.SYNTHETIC);
+            assertUnmodifiable(opens.targets(), "target");
         }
 
         assertUnmodifiable(md.uses(), "use");
+
         assertUnmodifiable(md.provides(),
                            jlma.newProvides("provide", List.of("provide")));
+        for (Provides provides : md.provides()) {
+            assertUnmodifiable(provides.providers(), "provide");
+        }
 
     }
 
