@@ -91,6 +91,11 @@ module java.desktop {
     exports com.sun.awt to
         jdk.desktop;
 
+    opens javax.swing.plaf.basic to
+        jdk.jconsole;
+    opens com.sun.java.swing.plaf.windows to
+        jdk.jconsole;
+
     uses java.awt.im.spi.InputMethodDescriptor;
     uses javax.accessibility.AccessibilityProvider;
     uses javax.imageio.spi.ImageInputStreamSpi;

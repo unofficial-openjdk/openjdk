@@ -28,8 +28,6 @@ include LauncherCommon.gmk
 $(eval $(call SetupBuildLauncher, jconsole, \
     MAIN_CLASS := sun.tools.jconsole.JConsole, \
     JAVA_ARGS := --add-opens java.base/java.io=jdk.jconsole \
-    		 --add-opens java.desktop/javax.swing.plaf.basic=jdk.jconsole \
-    		 --add-opens java.desktop/com.sun.java.swing.plaf.windows=jdk.jconsole \
 		 -Djconsole.showOutputViewer, \
     CFLAGS_windows := -DJAVAW, \
     LIBS_windows := user32.lib, \
