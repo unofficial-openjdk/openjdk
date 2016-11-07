@@ -45,15 +45,18 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import javax.lang.model.SourceVersion;
+import javax.lang.model.element.ModuleElement.DirectiveKind;
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileManager.Location;
 import javax.tools.JavaFileObject;
 import javax.tools.JavaFileObject.Kind;
 import javax.tools.StandardLocation;
 
+import com.sun.source.tree.ModuleTree.ModuleKind;
 import com.sun.tools.javac.code.ClassFinder;
 import com.sun.tools.javac.code.Directive;
 import com.sun.tools.javac.code.Directive.ExportsDirective;
+import com.sun.tools.javac.code.Directive.ExportsFlag;
 import com.sun.tools.javac.code.Directive.RequiresDirective;
 import com.sun.tools.javac.code.Directive.RequiresFlag;
 import com.sun.tools.javac.code.Directive.UsesDirective;
@@ -97,8 +100,10 @@ import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
 import com.sun.tools.javac.util.Options;
 
+import static com.sun.tools.javac.code.Flags.PUBLIC;
 import static com.sun.tools.javac.code.Flags.UNATTRIBUTED;
 import static com.sun.tools.javac.code.Kinds.Kind.MDL;
+import static com.sun.tools.javac.code.Kinds.Kind.MTH;
 import static com.sun.tools.javac.code.TypeTag.CLASS;
 
 import com.sun.tools.javac.tree.JCTree.JCDirective;
@@ -108,8 +113,7 @@ import com.sun.tools.javac.util.Position;
 
 import static com.sun.tools.javac.code.Flags.ABSTRACT;
 import static com.sun.tools.javac.code.Flags.ENUM;
-import static com.sun.tools.javac.code.Flags.PUBLIC;
-import static com.sun.tools.javac.tree.JCTree.Tag.MODULEDEF;
+import com.sun.tools.javac.code.Symbol.ModuleFlags;
 
 /**
  *  TODO: fill in
@@ -286,9 +290,9 @@ public class Modules extends JCTree.Visitor {
 
     private void enterModule(JCCompilationUnit toplevel, ClassSymbol c, Set<ModuleSymbol> modules) {
         boolean isModuleInfo = toplevel.sourcefile.isNameCompatible("module-info", Kind.SOURCE);
-        boolean isModuleDecl = toplevel.defs.nonEmpty() && toplevel.defs.head.hasTag(MODULEDEF);
+        boolean isModuleDecl = toplevel.getModuleDecl() != null;
         if (isModuleInfo && isModuleDecl) {
-            JCModuleDecl decl = (JCModuleDecl) toplevel.defs.head;
+            JCModuleDecl decl = toplevel.getModuleDecl();
             Name name = TreeInfo.fullName(decl.qualId);
             ModuleSymbol sym;
             if (c != null) {
@@ -346,8 +350,8 @@ public class Modules extends JCTree.Visitor {
                     if (locn != null) {
                         Name name = names.fromString(fileManager.inferModuleName(locn));
                         ModuleSymbol msym;
-                        if (tree.defs.head.hasTag(MODULEDEF)) {
-                            JCModuleDecl decl = (JCModuleDecl) tree.defs.head;
+                        JCModuleDecl decl = tree.getModuleDecl();
+                        if (decl != null) {
                             msym = decl.sym;
                             if (msym.name != name) {
                                 log.error(decl.qualId, Errors.ModuleNameMismatch(msym.name, name));
@@ -443,17 +447,14 @@ public class Modules extends JCTree.Visitor {
     }
 
     private Location getModuleLocation(JCCompilationUnit tree) throws IOException {
-        switch (tree.defs.head.getTag()) {
-            case MODULEDEF:
-                return getModuleLocation(tree.sourcefile, null);
-
-            case PACKAGEDEF:
-                JCPackageDecl pkg = (JCPackageDecl) tree.defs.head;
-                return getModuleLocation(tree.sourcefile, TreeInfo.fullName(pkg.pid));
-
-            default:
-                // code in unnamed module
-                return null;
+        if (tree.getModuleDecl() != null) {
+            return getModuleLocation(tree.sourcefile, null);
+        } else if (tree.getPackage() != null) {
+            JCPackageDecl pkg = tree.getPackage();
+            return getModuleLocation(tree.sourcefile, TreeInfo.fullName(pkg.pid));
+        } else {
+            // code in unnamed module
+            return null;
         }
     }
 
@@ -528,7 +529,8 @@ public class Modules extends JCTree.Visitor {
                 String binName = fileManager.inferBinaryName(msym.classLocation, clazz);
                 String pack = binName.lastIndexOf('.') != (-1) ? binName.substring(0, binName.lastIndexOf('.')) : ""; //unnamed package????
                 if (seenPackages.add(pack)) {
-                    ExportsDirective d = new ExportsDirective(syms.enterPackage(msym, names.fromString(pack)), null);
+                    ExportsDirective d = new ExportsDirective(DirectiveKind.EXPORTS, syms.enterPackage(msym, names.fromString(pack)), null);
+                    //TODO: opens?
                     directives.add(d);
                     exports.add(d);
                 }
@@ -556,7 +558,7 @@ public class Modules extends JCTree.Visitor {
             if (ms == syms.unnamedModule || ms == msym)
                 continue;
             Set<RequiresFlag> flags = (ms.flags_field & Flags.AUTOMATIC_MODULE) != 0 ?
-                    EnumSet.of(RequiresFlag.PUBLIC) : EnumSet.noneOf(RequiresFlag.class);
+                    EnumSet.of(RequiresFlag.TRANSITIVE) : EnumSet.noneOf(RequiresFlag.class);
             RequiresDirective d = new RequiresDirective(ms, flags);
             directives.add(d);
             requires.add(d);
@@ -579,9 +581,10 @@ public class Modules extends JCTree.Visitor {
                 ModuleVisitor v = new ModuleVisitor();
                 JavaFileObject prev = log.useSource(tree.sourcefile);
                 try {
-                    tree.defs.head.accept(v);
-                    checkCyclicDependencies((JCModuleDecl) tree.defs.head);
+                    JCModuleDecl moduleDecl = tree.getModuleDecl();
+                    moduleDecl.accept(v);
                     completeModule(msym);
+                    checkCyclicDependencies(moduleDecl);
                 } finally {
                     log.useSource(prev);
                     msym.flags_field &= ~UNATTRIBUTED;
@@ -599,17 +602,23 @@ public class Modules extends JCTree.Visitor {
     class ModuleVisitor extends JCTree.Visitor {
         private ModuleSymbol sym;
         private final Set<ModuleSymbol> allRequires = new HashSet<>();
-        private final Set<PackageSymbol> allExports = new HashSet<>();
+        private final Map<PackageSymbol,List<ExportsDirective>> allExports = new HashMap<>();
 
         @Override
         public void visitModuleDef(JCModuleDecl tree) {
             sym = Assert.checkNonNull(tree.sym);
 
+            if (tree.getModuleType() == ModuleKind.OPEN) {
+                sym.flags.add(ModuleFlags.OPEN);
+            }
+
             sym.requires = List.nil();
             sym.exports = List.nil();
+            sym.opens = List.nil();
             tree.directives.forEach(t -> t.accept(this));
             sym.requires = sym.requires.reverse();
             sym.exports = sym.exports.reverse();
+            sym.opens = sym.opens.reverse();
             ensureJavaBase();
         }
 
@@ -623,8 +632,10 @@ public class Modules extends JCTree.Visitor {
             } else {
                 allRequires.add(msym);
                 Set<RequiresFlag> flags = EnumSet.noneOf(RequiresFlag.class);
-                if (tree.isPublic)
-                    flags.add(RequiresFlag.PUBLIC);
+                if (tree.isTransitive)
+                    flags.add(RequiresFlag.TRANSITIVE);
+                if (tree.isStaticPhase)
+                    flags.add(RequiresFlag.STATIC_PHASE);
                 RequiresDirective d = new RequiresDirective(msym, flags);
                 tree.directive = d;
                 sym.requires = sym.requires.prepend(d);
@@ -633,32 +644,88 @@ public class Modules extends JCTree.Visitor {
 
         @Override
         public void visitExports(JCExports tree) {
+            PackageSymbol packge;
+
             Name name = TreeInfo.fullName(tree.qualid);
-            PackageSymbol packge = syms.enterPackage(sym, name);
+            packge = syms.enterPackage(sym, name);
             attr.setPackageSymbols(tree.qualid, packge);
-            if (!allExports.add(packge)) {
-                log.error(tree.qualid.pos(), Errors.DuplicateExports(packge));
+
+            if (tree.hasTag(Tag.OPENS)) {
+                if (sym.flags.contains(ModuleFlags.OPEN)) {
+                    log.error(tree.pos(), Errors.NoOpensUnlessStrong);
+                }
+            }
+            List<ExportsDirective> exportsForPackage = allExports.computeIfAbsent(packge, p -> List.nil());
+            for (ExportsDirective d : exportsForPackage) {
+                checkDuplicateExports(tree, packge, d);
             }
 
             List<ModuleSymbol> toModules = null;
             if (tree.moduleNames != null) {
-                Set<ModuleSymbol> to = new HashSet<>();
+                Set<ModuleSymbol> to = new LinkedHashSet<>();
                 for (JCExpression n: tree.moduleNames) {
                     ModuleSymbol msym = lookupModule(n);
                     if (msym.kind != MDL) {
                         log.error(n.pos(), Errors.ModuleNotFound(msym));
-                    } else if (!to.add(msym)) {
-                        log.error(n.pos(), Errors.DuplicateExports(msym));
+                    } else {
+                        for (ExportsDirective d : exportsForPackage) {
+                            if (!(tree.hasTag(Tag.EXPORTS) ^ d.getKind() == DirectiveKind.EXPORTS)) {
+                                checkDuplicateExportsToModule(n, msym, d);
+                            }
+                        }
+                        if (!to.add(msym)) {
+                            reportExportConflictToModule(n, msym);
+                        }
                     }
                 }
                 toModules = List.from(to);
             }
 
             if (toModules == null || !toModules.isEmpty()) {
-                ExportsDirective d = new ExportsDirective(packge, toModules);
+                Set<ExportsFlag> flags = EnumSet.noneOf(ExportsFlag.class);
+                ExportsDirective d;
+                if (tree.hasTag(Tag.EXPORTS)) {
+                    d = new ExportsDirective(DirectiveKind.EXPORTS, packge, toModules, flags);
+                    sym.exports = sym.exports.prepend(d);
+                } else {
+                    d = new ExportsDirective(DirectiveKind.OPENS, packge, toModules, flags);
+                    sym.opens = sym.opens.prepend(d);
+                }
                 tree.directive = d;
-                sym.exports = sym.exports.prepend(d);
+
+                allExports.put(packge, exportsForPackage.prepend(d));
             }
+        }
+
+        /**
+         * Check if an exports tree conflicts with an earlier exports, represented by an exports directive
+         * @param tree the tree to check
+         * @param packge the package being exported, or null for exports default
+         * @param d the directive to compare against
+         */
+        private void checkDuplicateExports(JCExports tree, PackageSymbol packge, ExportsDirective d) {
+            if (!(tree.hasTag(Tag.EXPORTS) ^ d.getKind() == DirectiveKind.EXPORTS)) {
+                reportExportConflict(tree, packge);
+            }
+        }
+
+        private void reportExportConflict(JCExports tree, PackageSymbol packge) {
+            log.error(tree.qualid.pos(), Errors.ConflictingExports(packge)); //XXX: different errors for exports and opens
+        }
+
+        private void checkDuplicateExportsToModule(JCExpression name, ModuleSymbol msym,
+                ExportsDirective d) {
+            if (d.modules != null) {
+                for (ModuleSymbol other : d.modules) {
+                    if (msym == other) {
+                        reportExportConflictToModule(name, msym);
+                    }
+                }
+            }
+        }
+
+        private void reportExportConflictToModule(JCExpression name, ModuleSymbol msym) {
+            log.error(name.pos(), Errors.ConflictingExportsToModule(msym)); //XXX: different errors for exports and opens
         }
 
         @Override
@@ -684,15 +751,10 @@ public class Modules extends JCTree.Visitor {
         }
 
         private ModuleSymbol lookupModule(JCExpression moduleName) {
-            try {
             Name name = TreeInfo.fullName(moduleName);
             ModuleSymbol msym = moduleFinder.findModule(name);
             TreeInfo.setSymbol(moduleName, msym);
             return msym;
-            } catch (Throwable t) {
-                System.err.println("Module " + sym + "; lookup export " + moduleName);
-                throw t;
-            }
         }
     }
 
@@ -706,7 +768,7 @@ public class Modules extends JCTree.Visitor {
             UsesProvidesVisitor v = new UsesProvidesVisitor(msym, env);
             JavaFileObject prev = log.useSource(env.toplevel.sourcefile);
             try {
-                env.toplevel.defs.head.accept(v);
+                env.toplevel.getModuleDecl().accept(v);
             } finally {
                 log.useSource(prev);
             }
@@ -717,8 +779,8 @@ public class Modules extends JCTree.Visitor {
         private final ModuleSymbol msym;
         private final Env<AttrContext> env;
 
-        private final Set<Directive.UsesDirective> allUses = new HashSet<>();
-        private final Set<Directive.ProvidesDirective> allProvides = new HashSet<>();
+        private final Set<ClassSymbol> allUses = new HashSet<>();
+        private final Map<ClassSymbol, Set<ClassSymbol>> allProvides = new HashMap<>();
 
         public UsesProvidesVisitor(ModuleSymbol msym, Env<AttrContext> env) {
             this.msym = msym;
@@ -745,7 +807,8 @@ public class Modules extends JCTree.Visitor {
 
         @Override
         public void visitExports(JCExports tree) {
-            if (tree.directive.packge.members().isEmpty()) {
+            if (tree.directive.packge.members().isEmpty() &&
+                (tree.hasTag(Tag.EXPORTS) || (tree.directive.packge.flags() & Flags.HAS_RESOURCE) == 0)) {
                 log.error(tree.qualid.pos(), Errors.PackageEmptyOrNotFound(tree.directive.packge));
             }
             msym.directives = msym.directives.prepend(tree.directive);
@@ -761,36 +824,63 @@ public class Modules extends JCTree.Visitor {
             return null;
         }
 
+        MethodSymbol factoryMethod(ClassSymbol tsym) {
+            for (Symbol sym : tsym.members().getSymbolsByName(names.provider, sym -> sym.kind == MTH)) {
+                MethodSymbol mSym = (MethodSymbol)sym;
+                if (mSym.isStatic() && (mSym.flags() & Flags.PUBLIC) != 0 && mSym.params().isEmpty()) {
+                    return mSym;
+                }
+            }
+            return null;
+        }
+
         Map<Directive.ProvidesDirective, JCProvides> directiveToTreeMap = new HashMap<>();
 
         @Override
         public void visitProvides(JCProvides tree) {
             Type st = attr.attribType(tree.serviceName, env, syms.objectType);
-            Type it = attr.attribType(tree.implName, env, syms.objectType);
             ClassSymbol service = (ClassSymbol) st.tsym;
-            ClassSymbol impl = (ClassSymbol) it.tsym;
-            if (!types.isSubtype(it, st)) {
-                log.error(tree.implName.pos(), Errors.ServiceImplementationMustBeSubtypeOfServiceInterface);
-            }
-            if ((impl.flags() & ABSTRACT) != 0) {
-                log.error(tree.implName.pos(), Errors.ServiceImplementationIsAbstract(impl));
-            } else if (impl.isInner()) {
-                log.error(tree.implName.pos(), Errors.ServiceImplementationIsInner(impl));
-            } else if (service.isInner()) {
-                log.error(tree.serviceName.pos(), Errors.ServiceDefinitionIsInner(service));
-            } else {
-                MethodSymbol constr = noArgsConstructor(impl);
-                if (constr == null) {
-                    log.error(tree.implName.pos(), Errors.ServiceImplementationDoesntHaveANoArgsConstructor(impl));
-                } else if ((constr.flags() & PUBLIC) == 0) {
-                    log.error(tree.implName.pos(), Errors.ServiceImplementationNoArgsConstructorNotPublic(impl));
+            ListBuffer<ClassSymbol> impls = new ListBuffer<>();
+            for (JCExpression implName : tree.implNames) {
+                Type it = attr.attribType(implName, env, syms.objectType);
+                ClassSymbol impl = (ClassSymbol) it.tsym;
+                //find provider factory:
+                MethodSymbol factory = factoryMethod(impl);
+                if (factory != null) {
+                    Type returnType = factory.type.getReturnType();
+                    if (!types.isSubtype(returnType, st)) {
+                        log.error(implName.pos(), Errors.ServiceImplementationProviderReturnMustBeSubtypeOfServiceInterface);
+                    }
+                } else {
+                    if (!types.isSubtype(it, st)) {
+                        log.error(implName.pos(), Errors.ServiceImplementationMustBeSubtypeOfServiceInterface);
+                    } else if ((impl.flags() & ABSTRACT) != 0) {
+                        log.error(implName.pos(), Errors.ServiceImplementationIsAbstract(impl));
+                    } else if (impl.isInner()) {
+                        log.error(implName.pos(), Errors.ServiceImplementationIsInner(impl));
+                    } else if (service.isInner()) {
+                        log.error(tree.serviceName.pos(), Errors.ServiceDefinitionIsInner(service));
+                    } else {
+                        MethodSymbol constr = noArgsConstructor(impl);
+                        if (constr == null) {
+                            log.error(implName.pos(), Errors.ServiceImplementationDoesntHaveANoArgsConstructor(impl));
+                        } else if ((constr.flags() & PUBLIC) == 0) {
+                            log.error(implName.pos(), Errors.ServiceImplementationNoArgsConstructorNotPublic(impl));
+                        }
+                    }
+                }
+                if (it.hasTag(CLASS)) {
+                    // For now, we just check the pair (service-type, impl-type) is unique
+                    // TODO, check only one provides per service type as well
+                    if (allProvides.computeIfAbsent(service, s -> new HashSet<>()).add(impl)) {
+                        impls.append(impl);
+                    } else {
+                        log.error(implName.pos(), Errors.DuplicateProvides(service, impl));
+                    }
                 }
             }
-            if (st.hasTag(CLASS) && it.hasTag(CLASS)) {
-                Directive.ProvidesDirective d = new Directive.ProvidesDirective(service, impl);
-                if (!allProvides.add(d)) {
-                    log.error(tree.pos(), Errors.DuplicateProvides(service, impl));
-                }
+            if (st.hasTag(CLASS) && !impls.isEmpty()) {
+                Directive.ProvidesDirective d = new Directive.ProvidesDirective(service, impls.toList());
                 msym.provides = msym.provides.prepend(d);
                 msym.directives = msym.directives.prepend(d);
                 directiveToTreeMap.put(d, tree);
@@ -812,53 +902,58 @@ public class Modules extends JCTree.Visitor {
                 log.error(tree.qualid.pos(), Errors.ServiceDefinitionIsEnum(st.tsym));
             } else if (st.hasTag(CLASS)) {
                 ClassSymbol service = (ClassSymbol) st.tsym;
-                Directive.UsesDirective d = new Directive.UsesDirective(service);
-                if (!allUses.add(d)) {
+                if (allUses.add(service)) {
+                    Directive.UsesDirective d = new Directive.UsesDirective(service);
+                    msym.uses = msym.uses.prepend(d);
+                    msym.directives = msym.directives.prepend(d);
+                } else {
                     log.error(tree.pos(), Errors.DuplicateUses(service));
                 }
-                msym.uses = msym.uses.prepend(d);
-                msym.directives = msym.directives.prepend(d);
             }
         }
 
         private void checkForCorrectness() {
-            for (Directive.ProvidesDirective provides : allProvides) {
+            for (Directive.ProvidesDirective provides : msym.provides) {
                 JCProvides tree = directiveToTreeMap.get(provides);
-                /* The implementation must be defined in the same module as the provides directive
-                 * (else, error)
-                 */
-                PackageSymbol implementationDefiningPackage = provides.impl.packge();
-                if (implementationDefiningPackage.modle != msym) {
-                    log.error(tree.pos(), Errors.ServiceImplementationNotInRightModule(implementationDefiningPackage.modle));
-                }
-
-                /* There is no inherent requirement that module that provides a service should actually
-                 * use it itself. However, it is a pointless declaration if the service package is not
-                 * exported and there is no uses for the service.
-                 */
-                PackageSymbol interfaceDeclaringPackage = provides.service.packge();
-                boolean isInterfaceDeclaredInCurrentModule = interfaceDeclaringPackage.modle == msym;
-                boolean isInterfaceExportedFromAReadableModule =
-                        msym.visiblePackages.get(interfaceDeclaringPackage.fullname) == interfaceDeclaringPackage;
-                if (isInterfaceDeclaredInCurrentModule && !isInterfaceExportedFromAReadableModule) {
-                    // ok the interface is declared in this module. Let's check if it's exported
-                    boolean warn = true;
-                    for (ExportsDirective export : msym.exports) {
-                        if (interfaceDeclaringPackage == export.packge) {
-                            warn = false;
-                            break;
-                        }
+                for (ClassSymbol impl : provides.impls) {
+                    /* The implementation must be defined in the same module as the provides directive
+                     * (else, error)
+                     */
+                    PackageSymbol implementationDefiningPackage = impl.packge();
+                    if (implementationDefiningPackage.modle != msym) {
+                        // TODO: should use tree for the implmentation name, not the entire provides tree
+                        // TODO: should improve error message to identify the implementation type
+                        log.error(tree.pos(), Errors.ServiceImplementationNotInRightModule(implementationDefiningPackage.modle));
                     }
-                    if (warn) {
-                        for (UsesDirective uses : msym.uses) {
-                            if (provides.service == uses.service) {
+
+                    /* There is no inherent requirement that module that provides a service should actually
+                     * use it itself. However, it is a pointless declaration if the service package is not
+                     * exported and there is no uses for the service.
+                     */
+                    PackageSymbol interfaceDeclaringPackage = provides.service.packge();
+                    boolean isInterfaceDeclaredInCurrentModule = interfaceDeclaringPackage.modle == msym;
+                    boolean isInterfaceExportedFromAReadableModule =
+                            msym.visiblePackages.get(interfaceDeclaringPackage.fullname) == interfaceDeclaringPackage;
+                    if (isInterfaceDeclaredInCurrentModule && !isInterfaceExportedFromAReadableModule) {
+                        // ok the interface is declared in this module. Let's check if it's exported
+                        boolean warn = true;
+                        for (ExportsDirective export : msym.exports) {
+                            if (interfaceDeclaringPackage == export.packge) {
                                 warn = false;
                                 break;
                             }
                         }
-                    }
-                    if (warn) {
-                        log.warning(tree.pos(), Warnings.ServiceProvidedButNotExportedOrUsed(provides.service));
+                        if (warn) {
+                            for (UsesDirective uses : msym.uses) {
+                                if (provides.service == uses.service) {
+                                    warn = false;
+                                    break;
+                                }
+                            }
+                        }
+                        if (warn) {
+                            log.warning(tree.pos(), Warnings.ServiceProvidedButNotExportedOrUsed(provides.service));
+                        }
                     }
                 }
             }
@@ -962,6 +1057,10 @@ public class Modules extends JCTree.Visitor {
         allModules = result;
     }
 
+    public boolean isInModuleGraph(ModuleSymbol msym) {
+        return allModules == null || allModules.contains(msym);
+    }
+
     private Set<ModuleSymbol> computeTransitiveClosure(Iterable<? extends ModuleSymbol> base, Set<ModuleSymbol> observable) {
         List<ModuleSymbol> todo = List.nil();
 
@@ -1008,7 +1107,8 @@ public class Modules extends JCTree.Visitor {
                     return ;
                 }
                 ModuleSymbol msym = (ModuleSymbol) sym;
-                Set<ModuleSymbol> allModules = allModules();
+                Set<ModuleSymbol> allModules = new HashSet<>(allModules());
+                allModules.remove(syms.unnamedModule);
                 for (ModuleSymbol m : allModules) {
                     m.complete();
                 }
@@ -1022,7 +1122,7 @@ public class Modules extends JCTree.Visitor {
         };
     }
 
-    private final Map<ModuleSymbol, Set<ModuleSymbol>> requiresPublicCache = new HashMap<>();
+    private final Map<ModuleSymbol, Set<ModuleSymbol>> requiresTransitiveCache = new HashMap<>();
 
     private void completeModule(ModuleSymbol msym) {
         if (inInitModules) {
@@ -1068,34 +1168,36 @@ public class Modules extends JCTree.Visitor {
         }
 
         Set<ModuleSymbol> readable = new LinkedHashSet<>();
-        Set<ModuleSymbol> requiresPublic = new HashSet<>();
+        Set<ModuleSymbol> requiresTransitive = new HashSet<>();
 
         for (RequiresDirective d : msym.requires) {
             d.module.complete();
             readable.add(d.module);
-            Set<ModuleSymbol> s = retrieveRequiresPublic(d.module);
+            Set<ModuleSymbol> s = retrieveRequiresTransitive(d.module);
             Assert.checkNonNull(s, () -> "no entry in cache for " + d.module);
             readable.addAll(s);
-            if (d.flags.contains(RequiresFlag.PUBLIC)) {
-                requiresPublic.add(d.module);
-                requiresPublic.addAll(s);
+            if (d.flags.contains(RequiresFlag.TRANSITIVE)) {
+                requiresTransitive.add(d.module);
+                requiresTransitive.addAll(s);
             }
         }
 
-        requiresPublicCache.put(msym, requiresPublic);
+        requiresTransitiveCache.put(msym, requiresTransitive);
         initVisiblePackages(msym, readable);
         for (ExportsDirective d: msym.exports) {
-            d.packge.modle = msym;
+            if (d.packge != null) {
+                d.packge.modle = msym;
+            }
         }
 
     }
 
-    private Set<ModuleSymbol> retrieveRequiresPublic(ModuleSymbol msym) {
-        Set<ModuleSymbol> requiresPublic = requiresPublicCache.get(msym);
+    private Set<ModuleSymbol> retrieveRequiresTransitive(ModuleSymbol msym) {
+        Set<ModuleSymbol> requiresTransitive = requiresTransitiveCache.get(msym);
 
-        if (requiresPublic == null) {
+        if (requiresTransitive == null) {
             //the module graph may contain cycles involving automatic modules or --add-reads edges
-            requiresPublic = new HashSet<>();
+            requiresTransitive = new HashSet<>();
 
             Set<ModuleSymbol> seen = new HashSet<>();
             List<ModuleSymbol> todo = List.of(msym);
@@ -1105,14 +1207,14 @@ public class Modules extends JCTree.Visitor {
                 todo = todo.tail;
                 if (!seen.add(current))
                     continue;
-                requiresPublic.add(current);
+                requiresTransitive.add(current);
                 current.complete();
                 Iterable<? extends RequiresDirective> requires;
                 if (current != syms.unnamedModule) {
                     Assert.checkNonNull(current.requires, () -> current + ".requires == null; " + msym);
                     requires = current.requires;
                     for (RequiresDirective rd : requires) {
-                        if (rd.isPublic())
+                        if (rd.isTransitive())
                             todo = todo.prepend(rd.module);
                     }
                 } else {
@@ -1122,15 +1224,16 @@ public class Modules extends JCTree.Visitor {
                 }
             }
 
-            requiresPublic.remove(msym);
+            requiresTransitive.remove(msym);
         }
 
-        return requiresPublic;
+        return requiresTransitive;
     }
 
     private void initVisiblePackages(ModuleSymbol msym, Collection<ModuleSymbol> readable) {
         initAddExports();
 
+        msym.readModules = readable;
         msym.visiblePackages = new LinkedHashMap<>();
 
         Map<Name, ModuleSymbol> seen = new HashMap<>();
@@ -1223,7 +1326,7 @@ public class Modules extends JCTree.Visitor {
             }
 
             Set<ExportsDirective> extra = addExports.computeIfAbsent(msym, _x -> new LinkedHashSet<>());
-            ExportsDirective d = new ExportsDirective(p, targetModules);
+            ExportsDirective d = new ExportsDirective(DirectiveKind.EXPORTS, p, targetModules);
             extra.add(d);
         }
     }

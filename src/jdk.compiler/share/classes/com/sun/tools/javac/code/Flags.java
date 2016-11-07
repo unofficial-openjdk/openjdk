@@ -298,6 +298,11 @@ public class Flags {
      */
     public static final long DEPRECATED_REMOVAL = 1L<<54;
 
+    /**
+     * Flag to indicate the given PackageSymbol contains any non-.java and non-.class resources.
+     */
+    public static final long HAS_RESOURCE = 1L<<55;
+
     /** Modifier masks.
      */
     public static final int

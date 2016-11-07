@@ -63,6 +63,7 @@ import static com.sun.tools.javac.code.TypeTag.*;
 import static com.sun.tools.javac.code.TypeTag.WILDCARD;
 
 import static com.sun.tools.javac.tree.JCTree.Tag.*;
+import com.sun.tools.javac.util.Log.DeferredDiagnosticHandler;
 
 /** Type checking helper class for the attribution phase.
  *
@@ -227,10 +228,18 @@ public class Check {
     void warnDeprecated(DiagnosticPosition pos, Symbol sym) {
         if (sym.isDeprecatedForRemoval()) {
             if (!lint.isSuppressed(LintCategory.REMOVAL)) {
-                removalHandler.report(pos, "has.been.deprecated.for.removal", sym, sym.location());
+                if (sym.kind == MDL) {
+                    removalHandler.report(pos, "has.been.deprecated.for.removal.module", sym);
+                } else {
+                    removalHandler.report(pos, "has.been.deprecated.for.removal", sym, sym.location());
+                }
             }
         } else if (!lint.isSuppressed(LintCategory.DEPRECATION)) {
-            deprecationHandler.report(pos, "has.been.deprecated", sym, sym.location());
+            if (sym.kind == MDL) {
+                deprecationHandler.report(pos, "has.been.deprecated.module", sym);
+            } else {
+                deprecationHandler.report(pos, "has.been.deprecated", sym, sym.location());
+            }
         }
     }
 
@@ -3245,7 +3254,7 @@ public class Check {
     void checkDeprecated(final DiagnosticPosition pos, final Symbol other, final Symbol s) {
         if ( (s.isDeprecatedForRemoval()
                 || s.isDeprecated() && !other.isDeprecated())
-              && s.outermostClass() != other.outermostClass()) {
+                && (s.outermostClass() != other.outermostClass() || s.outermostClass() == null)) {
             deferredLintHandler.report(new DeferredLintHandler.LintLogger() {
                 @Override
                 public void report() {
@@ -3609,6 +3618,59 @@ public class Check {
         }
     }
 
+    /**
+     * Check for references to deprecated modules in module directives.
+     *
+     * @param tree
+     */
+    void checkDeprecatedModules(JCModuleDecl tree) {
+        ModuleSymbol msym = tree.sym;
+
+        class CheckVisitor extends JCTree.Visitor {
+            @Override
+            public void visitRequires(JCRequires tree) {
+                if (tree.directive != null) {
+                    checkDeprecated(tree.moduleName.pos(), msym, tree.directive.module);
+                }
+            }
+            @Override
+            public void visitExports(JCExports tree) {
+            if (tree.getModuleNames() != null) {
+                List<JCExpression> names = tree.getModuleNames();
+                List<ModuleSymbol> modules = tree.directive.modules;
+                while (modules.nonEmpty()) {
+                    DeferredDiagnosticHandler diag = new DeferredDiagnosticHandler(log);
+                    try {
+                        modules.head.complete();
+                    } finally {
+                        log.popDiagnosticHandler(diag);
+                        if (!diag.getDiagnostics().isEmpty()) {
+                            modules.head.completer = sym -> {
+                                for (JCDiagnostic d : diag.getDiagnostics()) {
+                                    log.report(d);
+                                }
+                            };
+                        }
+                    }
+                    checkDeprecated(names.head.pos(), msym, modules.head);
+                    names = names.tail;
+                    modules = modules.tail;
+                }
+            }
+            }
+            @Override
+            public void visitUses(JCUses that) {
+            }
+            @Override
+            public void visitProvides(JCProvides that) {
+            }
+        }
+
+        CheckVisitor v = new CheckVisitor();
+
+        tree.directives.forEach(directive -> directive.accept(v));
+    }
+
     public void checkImportsResolvable(final JCCompilationUnit toplevel) {
         for (final JCImport imp : toplevel.getImports()) {
             if (!imp.staticImport || !imp.qualid.hasTag(SELECT))
@@ -3851,7 +3913,7 @@ public class Check {
             }
 
             if (whatPackage.modle != inPackage.modle && whatPackage.modle != syms.java_base) {
-                //check that relativeTo.modle requires public what.modle, somehow:
+                //check that relativeTo.modle requires transitive what.modle, somehow:
                 List<ModuleSymbol> todo = List.of(inPackage.modle);
 
                 while (todo.nonEmpty()) {
@@ -3860,13 +3922,13 @@ public class Check {
                     if (current == whatPackage.modle)
                         return ; //OK
                     for (RequiresDirective req : current.requires) {
-                        if (req.isPublic()) {
+                        if (req.isTransitive()) {
                             todo = todo.prepend(req.module);
                         }
                     }
                 }
 
-                log.warning(LintCategory.EXPORTS, pos, Warnings.LeaksNotAccessibleNotRequiredPublic(kindName(what), what, what.packge().modle));
+                log.warning(LintCategory.EXPORTS, pos, Warnings.LeaksNotAccessibleNotRequiredTransitive(kindName(what), what, what.packge().modle));
             }
         }
 }

@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.ModuleElement.DirectiveKind;
 import javax.lang.model.element.NestingKind;
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
@@ -583,6 +584,28 @@ public class ClassReader {
         throw badClassFile("bad.module-info.name");
     }
 
+    /** Read module_flags.
+     */
+    Set<ModuleFlags> readModuleFlags(int flags) {
+        Set<ModuleFlags> set = EnumSet.noneOf(ModuleFlags.class);
+        for (ModuleFlags f : ModuleFlags.values()) {
+            if ((flags & f.value) != 0)
+                set.add(f);
+        }
+        return set;
+    }
+
+    /** Read exports_flags.
+     */
+    Set<ExportsFlag> readExportsFlags(int flags) {
+        Set<ExportsFlag> set = EnumSet.noneOf(ExportsFlag.class);
+        for (ExportsFlag f: ExportsFlag.values()) {
+            if ((flags & f.value) != 0)
+                set.add(f);
+        }
+        return set;
+    }
+
     /** Read requires_flags.
      */
     Set<RequiresFlag> readRequiresFlags(int flags) {
@@ -995,7 +1018,9 @@ public class ClassReader {
 
             new AttributeReader(names.Deprecated, V45_3, CLASS_OR_MEMBER_ATTRIBUTE) {
                 protected void read(Symbol sym, int attrLen) {
-                    sym.flags_field |= DEPRECATED;
+                    Symbol s = sym.owner.kind == MDL ? sym.owner : sym;
+
+                    s.flags_field |= DEPRECATED;
                 }
             },
 
@@ -1227,6 +1252,8 @@ public class ClassReader {
                         ModuleSymbol msym = (ModuleSymbol) sym.owner;
                         ListBuffer<Directive> directives = new ListBuffer<>();
 
+                        msym.flags.addAll(readModuleFlags(nextChar()));
+
                         ListBuffer<RequiresDirective> requires = new ListBuffer<>();
                         int nrequires = nextChar();
                         for (int i = 0; i < nrequires; i++) {
@@ -1243,6 +1270,7 @@ public class ClassReader {
                         for (int i = 0; i < nexports; i++) {
                             Name n = readName(nextChar());
                             PackageSymbol p = syms.enterPackage(currentModule, names.fromUtf(internalize(n)));
+                            Set<ExportsFlag> flags = readExportsFlags(nextChar());
                             int nto = nextChar();
                             List<ModuleSymbol> to;
                             if (nto == 0) {
@@ -1253,10 +1281,30 @@ public class ClassReader {
                                     lb.append(syms.enterModule(readName(nextChar())));
                                 to = lb.toList();
                             }
-                            exports.add(new ExportsDirective(p, to));
+                            exports.add(new ExportsDirective(DirectiveKind.EXPORTS, p, to, flags));
                         }
                         msym.exports = exports.toList();
                         directives.addAll(msym.exports);
+                        ListBuffer<ExportsDirective> opens = new ListBuffer<>();
+                        int nopens = nextChar();
+                        for (int i = 0; i < nopens; i++) {
+                            Name n = readName(nextChar());
+                            PackageSymbol p = syms.enterPackage(currentModule, names.fromUtf(internalize(n)));
+                            Set<ExportsFlag> flags = readExportsFlags(nextChar());
+                            int nto = nextChar();
+                            List<ModuleSymbol> to;
+                            if (nto == 0) {
+                                to = null;
+                            } else {
+                                ListBuffer<ModuleSymbol> lb = new ListBuffer<>();
+                                for (int t = 0; t < nto; t++)
+                                    lb.append(syms.enterModule(readName(nextChar())));
+                                to = lb.toList();
+                            }
+                            opens.add(new ExportsDirective(DirectiveKind.OPENS, p, to, flags));
+                        }
+                        msym.opens = opens.toList();
+                        directives.addAll(msym.opens);
 
                         msym.directives = directives.toList();
 
@@ -1270,10 +1318,14 @@ public class ClassReader {
 
                         ListBuffer<InterimProvidesDirective> provides = new ListBuffer<>();
                         int nprovides = nextChar();
-                        for (int i = 0; i < nprovides; i++) {
+                        for (int p = 0; p < nprovides; p++) {
                             Name srvc = readClassName(nextChar());
-                            Name impl = readClassName(nextChar());
-                            provides.add(new InterimProvidesDirective(srvc, impl));
+                            int nimpls = nextChar();
+                            ListBuffer<Name> impls = new ListBuffer<>();
+                            for (int i = 0; i < nimpls; i++) {
+                                impls.append(readClassName(nextChar()));
+                            provides.add(new InterimProvidesDirective(srvc, impls.toList()));
+                            }
                         }
                         interimProvides = provides.toList();
                     }
@@ -1558,7 +1610,13 @@ public class ClassReader {
     }
 
     CompoundAnnotationProxy readCompoundAnnotation() {
-        Type t = readTypeOrClassSymbol(nextChar());
+        Type t;
+        if (currentModule.module_info == currentOwner) {
+            int index = poolIdx[nextChar()];
+            t = new ProxyType(Arrays.copyOfRange(buf, index + 3, index + 3 + getChar(index + 1)));
+        } else {
+            t = readTypeOrClassSymbol(nextChar());
+        }
         int numFields = nextChar();
         ListBuffer<Pair<Name,Attribute>> pairs = new ListBuffer<>();
         for (int i=0; i<numFields; i++) {
@@ -1908,14 +1966,18 @@ public class ClassReader {
         }
 
         Attribute.Compound deproxyCompound(CompoundAnnotationProxy a) {
+            Type annotationType = a.type;
+            if (annotationType instanceof ProxyType) {
+                annotationType = ((ProxyType) annotationType).resolve();
+            }
             ListBuffer<Pair<Symbol.MethodSymbol,Attribute>> buf = new ListBuffer<>();
             for (List<Pair<Name,Attribute>> l = a.values;
                  l.nonEmpty();
                  l = l.tail) {
-                MethodSymbol meth = findAccessMethod(a.type, l.head.fst);
+                MethodSymbol meth = findAccessMethod(annotationType, l.head.fst);
                 buf.append(new Pair<>(meth, deproxy(meth.type.getReturnType(), l.head.snd)));
             }
-            return new Attribute.Compound(a.type, buf.toList());
+            return new Attribute.Compound(annotationType, buf.toList());
         }
 
         MethodSymbol findAccessMethod(Type container, Name name) {
@@ -2085,7 +2147,11 @@ public class ClassReader {
         AnnotationCompleter(Symbol sym, List<CompoundAnnotationProxy> l) {
             super(currentOwner.kind == MTH
                     ? currentOwner.enclClass() : (ClassSymbol)currentOwner);
-            this.sym = sym;
+            if (sym.kind == TYP && sym.owner.kind == MDL) {
+                this.sym = sym.owner;
+            } else {
+                this.sym = sym;
+            }
             this.l = l;
             this.classFile = currentClassFile;
         }
@@ -2497,7 +2563,7 @@ public class ClassReader {
 
         minorVersion = nextChar();
         majorVersion = nextChar();
-        int maxMajor = Version.MAX().major;
+        int maxMajor = 53; // Version.MAX().major;  //******* TEMPORARY *******
         int maxMinor = Version.MAX().minor;
         if (majorVersion > maxMajor ||
             majorVersion * 1000 + minorVersion <
@@ -2539,6 +2605,8 @@ public class ClassReader {
                 List<Type> found = foundTypeVariables;
                 missingTypeVariables = List.nil();
                 foundTypeVariables = List.nil();
+                interimUses = List.nil();
+                interimProvides = List.nil();
                 filling = false;
                 ClassType ct = (ClassType)currentOwner.type;
                 ct.supertype_field =
@@ -2800,6 +2868,31 @@ public class ClassReader {
         }
     }
 
+    private class ProxyType extends Type {
+
+        private final byte[] content;
+
+        public ProxyType(byte[] content) {
+            super(syms.noSymbol, TypeMetadata.EMPTY);
+            this.content = content;
+        }
+
+        @Override
+        public TypeTag getTag() {
+            return TypeTag.NONE;
+        }
+
+        @Override
+        public Type cloneWithMetadata(TypeMetadata metadata) {
+            throw new UnsupportedOperationException();
+        }
+
+        public Type resolve() {
+            return sigToType(content, 0, content.length);
+        }
+
+    }
+
     private static final class InterimUsesDirective {
         public final Name service;
 
@@ -2811,11 +2904,11 @@ public class ClassReader {
 
     private static final class InterimProvidesDirective {
         public final Name service;
-        public final Name impl;
+        public final List<Name> impls;
 
-        public InterimProvidesDirective(Name service, Name impl) {
+        public InterimProvidesDirective(Name service, List<Name> impls) {
             this.service = service;
-            this.impl = impl;
+            this.impls = impls;
         }
 
     }
@@ -2844,8 +2937,12 @@ public class ClassReader {
             currentModule.uses = uses.toList();
             ListBuffer<ProvidesDirective> provides = new ListBuffer<>();
             for (InterimProvidesDirective interim : interimProvidesCopy) {
+                ListBuffer<ClassSymbol> impls = new ListBuffer<>();
+                for (Name impl : interim.impls) {
+                    impls.append(syms.enterClass(currentModule, impl));
+                }
                 ProvidesDirective d = new ProvidesDirective(syms.enterClass(currentModule, interim.service),
-                                                            syms.enterClass(currentModule, interim.impl));
+                                                            impls.toList());
                 provides.add(d);
                 directives.add(d);
             }

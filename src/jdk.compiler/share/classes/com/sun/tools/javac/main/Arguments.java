@@ -607,8 +607,9 @@ public class Arguments {
             log.error(Errors.ProcessorpathNoProcessormodulepath);
         }
 
-        if (obsoleteOptionFound)
+        if (obsoleteOptionFound && lintOptions) {
             log.warning(LintCategory.OPTIONS, "option.obsolete.suppression");
+        }
 
         String addExports = options.get(Option.ADD_EXPORTS);
         if (addExports != null) {
@@ -664,6 +665,9 @@ public class Arguments {
             });
         }
 
+        if (lintOptions && options.isSet(Option.ADD_OPENS)) {
+            log.warning(LintCategory.OPTIONS, Warnings.AddopensIgnored);
+        }
 
         return !errors;
     }

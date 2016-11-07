@@ -210,6 +210,17 @@ class JdepsTask {
                     throw new BadArgs("err.invalid.path", arg);
                 }
                 task.options.genModuleInfo = Paths.get(arg);
+                task.options.openModule = false;
+            }
+        },
+        new Option(true, "--generate-open-module") {
+            void process(JdepsTask task, String opt, String arg) throws BadArgs {
+                Path p = Paths.get(arg);
+                if (Files.exists(p) && (!Files.isDirectory(p) || !Files.isWritable(p))) {
+                    throw new BadArgs("err.invalid.path", arg);
+                }
+                task.options.genModuleInfo = Paths.get(arg);
+                task.options.openModule = true;
             }
         },
         new Option(false, "-jdkinternals", "--jdk-internals") {
@@ -711,8 +722,11 @@ class JdepsTask {
             }
         }
 
-        ModuleInfoBuilder builder
-            = new ModuleInfoBuilder(config, inputArgs, options.genModuleInfo);
+        ModuleInfoBuilder builder = new ModuleInfoBuilder(config,
+                                                          inputArgs,
+                                                          options.genModuleInfo,
+                                                          options.openModule);
+
         boolean ok = builder.run();
 
         if (!ok && !options.nowarning) {
@@ -883,6 +897,7 @@ class JdepsTask {
         Pattern filterRegex;
         Path dotOutputDir;
         Path genModuleInfo;
+        boolean openModule;
         String classpath;
         int depth = 1;
         Set<String> requires = new HashSet<>();

@@ -34,11 +34,14 @@ import java.util.List;
  * <pre>
  *    exports <em>package-name</em>;
  *    exports <em>package-name</em> to <em>module-name</em>;
+ *    exports dynamic <em>package-name</em> to <em>module-name</em>;
+ *    exports private <em>package-name</em> to <em>module-name</em>;
  * </pre>
  *
  * @since 9
  */
 public interface ExportsTree extends DirectiveTree {
+
     /**
      * Returns the name of the package to be exported.
      * @return  the name of the package to be exported

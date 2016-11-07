@@ -96,10 +96,12 @@ public interface ModuleElement extends Element, QualifiedNameable {
      * @since 9
      */
     enum DirectiveKind {
-        /** A "requires [public] module-name" directive. */
+        /** A "requires (static|transitive)* module-name" directive. */
         REQUIRES,
         /** An "exports package-name [to module-name-list]" directive. */
         EXPORTS,
+        /** An "opens package-name [to module-name-list]" directive. */
+        OPENS,
         /** A "uses service-name" directive. */
         USES,
         /** A "provides service-name with implementation-name" directive. */
@@ -127,10 +129,16 @@ public interface ModuleElement extends Element, QualifiedNameable {
      */
     interface RequiresDirective extends Directive {
         /**
-         * Returns whether or not this is a public dependency.
-         * @return whether or not this is a public dependency
+         * Returns whether or not this is a static dependency.
+         * @return whether or not this is a static dependency
          */
-        boolean isPublic();
+        boolean isStatic();
+
+        /**
+         * Returns whether or not this is a transitive dependency.
+         * @return whether or not this is a transitive dependency
+         */
+        boolean isTransitive();
 
         /**
          * Returns the module that is required
@@ -144,8 +152,9 @@ public interface ModuleElement extends Element, QualifiedNameable {
      * @since 9
      */
     interface ExportsDirective extends Directive {
+
         /**
-         * Returns the package being exported.
+         * Returns the package being exported, or null if this is a default exports directive.
          * @return the package being exported
          */
         PackageElement getPackage();
@@ -171,10 +180,10 @@ public interface ModuleElement extends Element, QualifiedNameable {
         TypeElement getService();
 
         /**
-         * Returns the implementation of the service being provided.
-         * @return the implementation of the service being provided
+         * Returns the implementations of the service being provided.
+         * @return the implementations of the service being provided
          */
-        TypeElement getImplementation();
+        List<? extends TypeElement> getImplementations();
     }
 
     /**
