@@ -130,7 +130,7 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                 validateNames(md);
 
                 Set<String> packages = module.packages();
-                generator.prepareModule(md, module.packages());
+                generator.addModule(md, module.packages());
 
                 // add Packages attribute if not exist
                 if (md.packages().isEmpty() && packages.size() > 0) {
@@ -351,7 +351,7 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
          * prepares mapping from various Sets to SetBuilders to emit an
          * optimized number of sets during build.
          */
-        public void prepareModule(ModuleDescriptor md, Set<String> packages) {
+        public void addModule(ModuleDescriptor md, Set<String> packages) {
             ModuleDescriptorBuilder builder = new ModuleDescriptorBuilder(md, packages);
             builders.add(builder);
 
