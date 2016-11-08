@@ -24,376 +24,476 @@
  */
 package build.tools.module;
 
+
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
  * A build tool to extend the module-info.java in the source tree for
- * platform-specific exports, uses, and provides and write to the specified
- * output file. Injecting platform-specific requires is not supported.
+ * platform-specific exports, opens, uses, and provides and write to
+ * the specified output file.
  *
- * The extra exports, uses, provides can be specified in module-info.java.extra
+ * Injecting platform-specific requires is not supported.
+ *
+ * The extra exports, opens, uses, provides can be specified in module-info.java.extra
  * files and GenModuleInfoSource will be invoked for each module that has
  * module-info.java.extra in the source directory.
  */
 public class GenModuleInfoSource {
     private final static String USAGE =
-        "Usage: GenModuleInfoSource [option] -o <output file> <module-info-java>\n" +
-        "Options are:\n" +
-        "  --exports  <package-name>[/<target-modules>]\n" +
-        "  --opens    <package-name>[/<target-modules>]\n" +
-        "  --uses     <service>\n" +
-        "  --provides <service>/<provider-impl-classname>\n";
+        "Usage: GenModuleInfoSource -o <output file> \n" +
+        "  --source-file <module-info-java>\n" +
+        "  --modules <module-name>[,<module-name>...]\n" +
+        "  <module-info.java.extra> ...\n";
 
     public static void main(String... args) throws Exception {
         Path outfile = null;
         Path moduleInfoJava = null;
-        GenModuleInfoSource genModuleInfo = new GenModuleInfoSource();
-
+        Set<String> modules = Collections.emptySet();
+        List<Path> extras = new ArrayList<>();
         // validate input arguments
         for (int i = 0; i < args.length; i++){
             String option = args[i];
-            if (option.startsWith("-")) {
-                String arg = args[++i];
-                if (option.equals("--exports")) {
-                    int index = arg.indexOf('/');
-                    if (index > 0) {
-                        String pn = arg.substring(0, index);
-                        Set<String> targets =
-                            targets(arg.substring(index + 1, arg.length()));
-                        if (targets.isEmpty()) {
-                            throw new IllegalArgumentException("empty target: " +
-                                option + " " + arg);
-                        }
-                        genModuleInfo.exportsTo(pn, targets);
-                    } else {
-                        genModuleInfo.exports(arg);
-                    }
-                } else if (option.equals("--opens")) {
-                    int index = arg.indexOf('/');
-                    if (index > 0) {
-                        String pn = arg.substring(0, index);
-                        Set<String> targets =
-                            targets(arg.substring(index + 1, arg.length()));
-                        if (targets.isEmpty()) {
-                            throw new IllegalArgumentException("empty target: " +
-                                option + " " + arg);
-                        }
-                        genModuleInfo.opensTo(pn, targets);
-                    } else {
-                        genModuleInfo.opens(arg);
-                    }
-                } else if (option.equals("--uses")) {
-                    genModuleInfo.use(arg);
-                } else if (option.equals("--provides")) {
-                        int index = arg.indexOf('/');
-                        if (index <= 0) {
-                            throw new IllegalArgumentException("invalid -provide argument: " + arg);
-                        }
-                        String service = arg.substring(0, index);
-                        String impl = arg.substring(index + 1, arg.length());
-                        genModuleInfo.provide(service, impl);
-                } else if (option.equals("-o")) {
+            String arg = i+1 < args.length ? args[i+1] : null;
+            switch (option) {
+                case "-o":
                     outfile = Paths.get(arg);
-                } else {
-                    throw new IllegalArgumentException("invalid option: " + option);
-                }
-            } else if (moduleInfoJava != null) {
-                throw new IllegalArgumentException("more than one module-info.java");
-            } else {
-                moduleInfoJava = Paths.get(option);
-                if (Files.notExists(moduleInfoJava)) {
-                    throw new IllegalArgumentException(option + " not exist");
-                }
+                    i++;
+                    break;
+                case "--source-file":
+                    moduleInfoJava = Paths.get(arg);
+                    if (Files.notExists(moduleInfoJava)) {
+                        throw new IllegalArgumentException(moduleInfoJava + " not exist");
+                    }
+                    i++;
+                    break;
+                case "--modules":
+                    modules = Arrays.stream(arg.split(","))
+                                    .collect(Collectors.toSet());
+                    i++;
+                    break;
+                default:
+                    Path file = Paths.get(option);
+                    if (Files.notExists(file)) {
+                        throw new IllegalArgumentException(file + " not exist");
+                    }
+                    extras.add(file);
             }
         }
 
-        if (moduleInfoJava == null || outfile == null) {
+        if (moduleInfoJava == null || outfile == null ||
+                modules.isEmpty() || extras.isEmpty()) {
             System.err.println(USAGE);
             System.exit(-1);
         }
 
+        GenModuleInfoSource genModuleInfo =
+            new GenModuleInfoSource(moduleInfoJava, modules);
+        for (Path extraFile : extras) {
+            genModuleInfo.addExtra(extraFile);
+        }
+
         // generate new module-info.java
-        genModuleInfo.generate(moduleInfoJava, outfile);
+        genModuleInfo.generate(outfile);
     }
 
-
-    private static Set<String> targets(String rhs) {
-        return Arrays.stream(rhs.split(","))
-                     .map(String::trim)
-                     .filter(mn -> mn.length() > 0)
-                     .collect(Collectors.toSet());
+    final Path sourceFile;
+    final ModuleInfo extraFiles;
+    final Set<String> modules;
+    final ModuleInfo moduleInfo;
+    GenModuleInfoSource(Path sourceFile, Set<String> modules)
+        throws IOException
+    {
+        this.sourceFile = sourceFile;
+        this.extraFiles = new ModuleInfo();
+        this.modules = modules;
+        this.moduleInfo = new ModuleInfo();
+        this.moduleInfo.parse(sourceFile);
     }
 
-    private final ExportsOrOpens exports;
-    private final ExportsOrOpens opens;
-
-    private final Set<String> uses = new HashSet<>();
-    private final Map<String, Set<String>> provides = new HashMap<>();
-    GenModuleInfoSource() {
-        this.exports = new ExportsOrOpens("exports");
-        this.opens = new ExportsOrOpens("opens");
-
+    void addExtra(Path extra) throws IOException {
+        extraFiles.parse(extra);
     }
 
-    private void exports(String p) {
-        exports.add(p);
-    }
+    void generate(Path output) throws IOException {
+        // merge with module-info.java.extra
+        merge();
 
-    private void exportsTo(String p, Set<String> targets) {
-        exports.add(p, targets);
-    }
-
-    private void opens(String p) {
-        opens.add(p);
-    }
-
-    private void opensTo(String p, Set<String> targets) {
-        opens.add(p, targets);
-    }
-
-    private void use(String service) {
-        uses.add(service);
-    }
-
-    private void provide(String s, String impl) {
-        // keep the order
-        provides.computeIfAbsent(s, _k -> new LinkedHashSet<>()).add(impl);
-    }
-
-    private void doAugments(PrintWriter writer) {
-        if (exports.isEmpty() && opens.isEmpty() &&
-            (uses.size() + provides.size()) == 0)
-            return;
-
-        writer.println();
-        writer.println("    // augmented from module-info.java.extra");
-
-        exports.writeTo(writer);
-        opens.writeTo(writer);
-
-        uses.stream().sorted()
-            .forEach(s -> writer.format("    uses %s;%n", s));
-
-        toStream(provides, "provides", "with")
-            .forEach(writer::println);
-    }
-
-    static class ExportsOrOpens {
-        final Set<String> unqualified = new HashSet<>();
-        final Map<String, Set<String>> qualified = new HashMap<>();
-        final String directive;
-        ExportsOrOpens(String name) {
-            this.directive = name;
-        }
-        void add(String pn) {
-            Objects.requireNonNull(pn);
-            if (unqualified.contains(pn) || qualified.containsKey(pn)) {
-                throw new RuntimeException("duplicated " +
-                    directive + ": " + pn);
-            }
-            unqualified.add(pn);
-        }
-
-        void add(String pn, Set<String> targets) {
-            Objects.requireNonNull(pn);
-            if (unqualified.contains(pn)) {
-                throw new RuntimeException("unqualified " +
-                    directive + " already exists: " + pn);
-            }
-            qualified.computeIfAbsent(pn, _k -> new HashSet<>()).addAll(targets);
-        }
-
-        Set<String> removeIfPresent(String pn) {
-            return qualified.remove(pn);
-        }
-
-        boolean isEmpty() {
-            return unqualified.size() + qualified.size() == 0;
-        }
-
-        void writeTo(PrintWriter writer) {
-            unqualified.stream()
-                .sorted()
-                .forEach(e -> writer.format("    %s %s;%n", directive, e));
-
-            // remaining injected qualified exports
-            toStream(qualified, directive, "to")
-                .forEach(writer::println);
-        }
-    }
-
-
-    private void generate(Path sourcefile, Path outfile) throws IOException {
-        Path parent = outfile.getParent();
-        if (parent != null)
-            Files.createDirectories(parent);
-
-        List<String> lines = Files.readAllLines(sourcefile);
-        try (BufferedWriter bw = Files.newBufferedWriter(outfile);
+        List<String> lines = Files.readAllLines(sourceFile);
+        try (BufferedWriter bw = Files.newBufferedWriter(output);
              PrintWriter writer = new PrintWriter(bw)) {
-            int lineNumber = 0;
-            boolean inExportsTo = false;
-            boolean inOpensTo = false;
-            String name = null;
-            ExportsOrOpens exportsOrOpens = null;
+            // write the copyright header and lines up to module declaration
             for (String l : lines) {
-                lineNumber++;
-                String[] s = l.trim().split("\\s+");
-                String keyword = s[0].trim();
-                int nextIndex = keyword.length();
-                int n = l.length();
-                switch (keyword) {
-                    case "exports":
-                        // assume package name immediately after exports
-                        name = s[1].trim();
-                        exportsOrOpens = exports;
-                        if (s.length >= 3) {
-                            nextIndex = l.indexOf(name, nextIndex) + name.length();
-                            if (s[2].trim().equals("to")) {
-                                inExportsTo = true;
-                                n = l.indexOf("to", nextIndex) + "to".length();
-                            } else {
-                                throw new RuntimeException(sourcefile + ", line " +
-                                    lineNumber + ", is malformed: " + s[2]);
-                            }
-                        }
-
-                        // inject the extra targets after "to"
-                        if (inExportsTo) {
-                            Set<String> extras = exports.removeIfPresent(name);
-                            writer.println(injectTargets(l, n, extras));
-                        } else {
-                            writer.println(l);
-                        }
-                        break;
-
-                    case "opens":
-                        // assume package name immediately after opens
-                        name = s[1].trim();
-                        exportsOrOpens = opens;
-                        if (s.length >= 3) {
-                            nextIndex = l.indexOf(name, nextIndex) + name.length();
-                            if (s[2].trim().equals("to")) {
-                                inOpensTo = true;
-                                n = l.indexOf("to", nextIndex) + "to".length();
-                            } else {
-                                throw new RuntimeException(sourcefile + ", line " +
-                                    lineNumber + ", is malformed: " + s[2]);
-                            }
-                        }
-
-                        // inject the extra targets after "to"
-                        if (inOpensTo) {
-                            Set<String> extras = opens.removeIfPresent(name);
-                            writer.println(injectTargets(l, n, extras));
-                        } else {
-                            writer.println(l);
-                        }
-                        break;
-
-                    case "to":
-                        if (name == null) {
-                            throw new RuntimeException(sourcefile + ", line " +
-                                lineNumber + ", is malformed");
-                        }
-                        n = l.indexOf("to", nextIndex) + "to".length();
-                        writer.println(injectTargets(l, n, exportsOrOpens.removeIfPresent(name)));
-                        break;
-
-                    case "provides":
-                        boolean hasWith = false;
-                        // assume service type name immediately after provides
-                        name = s[1].trim();
-                        if (s.length >= 3) {
-                            nextIndex = l.indexOf(name, nextIndex) + name.length();
-                            if (s[2].trim().equals("with")) {
-                                hasWith = true;
-                                n = l.indexOf("with", nextIndex) + "with".length();
-                            } else {
-                                throw new RuntimeException(sourcefile + ", line " +
-                                    lineNumber + ", is malformed: " + s[2]);
-                            }
-                        }
-
-                        // inject the extra provider classes after "with"
-                        if (hasWith) {
-                            Set<String> extras = provides.remove(name);
-                            writer.println(injectTargets(l, n, extras));
-                        } else {
-                            writer.println(l);
-                        }
-                        break;
-
-                    case "with":
-                        if (name == null) {
-                            throw new RuntimeException(sourcefile + ", line " +
-                                lineNumber + ", is malformed");
-                        }
-                        n = l.indexOf("with", nextIndex) + "with".length();
-                        writer.println(injectTargets(l, n, provides.remove(name)));
-                        break;
-
-                    case "}":
-                        doAugments(writer);
-                        // fall through
-                    default:
-                        writer.println(l);
-                        // reset
-                        name = null;
-                        inExportsTo = inOpensTo = false;
-                        exportsOrOpens = null;
+                writer.println(l);
+                if (l.trim().startsWith("module ")) {
+                    break;
                 }
             }
+
+            // requires
+            for (String l : lines) {
+                if (l.trim().startsWith("requires"))
+                    writer.println(l);
+            }
+
+            // write exports, opens, uses,
+            moduleInfo.print(writer);
+
+            // close
+            writer.println("}");
         }
     }
 
+    private void merge() {
+        // exports
+        extraFiles.exports.keySet()
+            .stream()
+            .filter(pn -> moduleInfo.exports.containsKey(pn))
+            .forEach(pn -> mergeExportsOrOpens(pn,  moduleInfo.exports.get(pn),
+                                               extraFiles.exports.get(pn)));
+        extraFiles.exports.keySet()
+            .stream()
+            .filter(pn -> !moduleInfo.exports.containsKey(pn))
+            .forEach(pn -> moduleInfo.exports.put(pn, extraFiles.exports.get(pn)));
 
-    /*
-     * Injects the targets after the given position
-     */
-    private String injectTargets(String line, int pos, Set<String> extras) {
-        if (extras != null) {
-            StringBuilder sb = new StringBuilder();
-            // inject the extra targets after the given pos
-            sb.append(line.substring(0, pos))
-              .append("\n\t")
-              .append(extras.stream()
-                            .collect(Collectors.joining(",", "", ",")))
-              .append(" /* injected */");
-            if (pos < line.length()) {
-                // print the remaining statement followed "to"
-                sb.append("\n\t")
-                  .append(line.substring(pos+1, line.length()));
+        // opens
+        extraFiles.opens.keySet()
+            .stream()
+            .filter(pn -> moduleInfo.opens.containsKey(pn))
+            .forEach(pn -> mergeExportsOrOpens(pn,  moduleInfo.opens.get(pn),
+                                               extraFiles.opens.get(pn)));
+        extraFiles.opens.keySet()
+            .stream()
+            .filter(pn -> !moduleInfo.opens.containsKey(pn))
+            .forEach(pn -> moduleInfo.opens.put(pn, extraFiles.exports.get(pn)));
+
+        // provides
+        extraFiles.provides.keySet()
+            .stream()
+            .filter(service -> moduleInfo.provides.containsKey(service))
+            .forEach(service -> mergeProvides(service, extraFiles.provides.get(service)));
+        extraFiles.provides.keySet()
+            .stream()
+            .filter(service -> !moduleInfo.provides.containsKey(service))
+            .forEach(service -> moduleInfo.provides.put(service, extraFiles.provides.get(service)));
+
+        // uses
+        extraFiles.uses.keySet()
+            .stream()
+            .filter(service -> !moduleInfo.uses.containsKey(service))
+            .forEach(service -> moduleInfo.uses.put(service, extraFiles.uses.get(service)));
+    }
+
+    private void mergeExportsOrOpens(String pn, Statement statement, Statement extra) {
+        if (statement.isUnqualified() && extra.isQualified()) {
+            throw new RuntimeException("can't add qualified exports to " +
+                "unqualified exports " + pn);
+        }
+
+        Set<String> mods = extra.targets.stream()
+            .filter(mn -> statement.targets.contains(mn))
+            .collect(Collectors.toSet());
+        if (mods.size() > 0) {
+            throw new RuntimeException("qualified exports " + pn + " to " +
+                mods.toString() + " already declared in " + sourceFile);
+        }
+
+        // add qualified exports or opens to known modules only
+        extra.targets.stream()
+             .filter(mn -> modules.contains(mn))
+             .forEach(mn -> statement.addTarget(mn));
+    }
+
+
+    private void mergeProvides(String service, Statement extra) {
+        Statement provides = moduleInfo.provides.get(service);
+
+        Set<String> mods = extra.targets.stream()
+            .filter(mn -> provides.targets.contains(mn))
+            .collect(Collectors.toSet());
+
+        if (mods.size() > 0) {
+            throw new RuntimeException("qualified exports " + service + " to " +
+                mods.toString() + " already declared in " + sourceFile);
+        }
+
+        extra.targets.stream()
+             .forEach(mn -> provides.addTarget(mn));
+    }
+
+
+    class ModuleInfo {
+        private final Map<String, Statement> exports = new HashMap<>();
+        private final Map<String, Statement> opens = new HashMap<>();
+        private final Map<String, Statement> uses = new HashMap<>();
+        private final Map<String, Statement> provides = new HashMap<>();
+
+        Statement getStatement(String directive, String name) {
+            switch (directive) {
+                case "exports":
+                    if (moduleInfo.exports.containsKey(name) &&
+                        moduleInfo.exports.get(name).isUnqualified()) {
+                        throw new IllegalArgumentException(sourceFile + " already has "
+                            + directive + " " + name);
+                    }
+                    return exports.computeIfAbsent(name,
+                        _n -> new Statement("exports", "to", name));
+                case "opens":
+                    if (moduleInfo.opens.containsKey(name) &&
+                        moduleInfo.opens.get(name).isUnqualified()) {
+                        throw new IllegalArgumentException(sourceFile + " already has "
+                            + directive + " " + name);
+                    }
+
+                    if (moduleInfo.opens.containsKey(name)) {
+                        throw new IllegalArgumentException(sourceFile + " already has "
+                            + directive + " " + name);
+                    }
+                    return opens.computeIfAbsent(name,
+                        _n -> new Statement("opens", "to", name));
+                case "uses":
+                    return uses.computeIfAbsent(name,
+                        _n -> new Statement("uses", "", name));
+                case "provides":
+                    return provides.computeIfAbsent(name,
+                        _n -> new Statement("provides", "with", name, true));
+                default:
+                    throw new IllegalArgumentException(directive);
+            }
+
+        }
+
+        void print(PrintWriter writer) {
+            // print unqualified exports
+            exports.entrySet().stream()
+                .filter(e -> e.getValue().targets.isEmpty())
+                .sorted(Map.Entry.comparingByKey())
+                .forEach(e -> writer.println(e.getValue()));
+
+            exports.entrySet().stream()
+                .filter(e -> !e.getValue().targets.isEmpty())
+                .sorted(Map.Entry.comparingByKey())
+                .forEach(e -> writer.println(e.getValue()));
+
+            opens.entrySet().stream()
+                .filter(e -> e.getValue().targets.isEmpty())
+                .sorted(Map.Entry.comparingByKey())
+                .forEach(e -> writer.println(e.getValue()));
+
+            opens.entrySet().stream()
+                .filter(e -> !e.getValue().targets.isEmpty())
+                .sorted(Map.Entry.comparingByKey())
+                .forEach(e -> writer.println(e.getValue()));
+
+            writer.println();
+            uses.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .forEach(e -> writer.println(e.getValue()));
+            provides.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .forEach(e -> writer.println(e.getValue()));
+        }
+
+        private void parse(Path sourcefile) throws IOException {
+            List<String> lines = Files.readAllLines(sourcefile);
+            Statement statement = null;
+            boolean hasTargets = false;
+
+            for (int lineNumber = 0; lineNumber < lines.size(); ) {
+                String l = lines.get(lineNumber).trim();
+                int index = 0;
+
+                if (l.isEmpty()) {
+                    lineNumber++;
+                    continue;
+                }
+
+                // comment block starts
+                if (l.startsWith("/*")) {
+                    while (l.indexOf("*/") == -1) { // end comment block
+                        l = lines.get(++lineNumber).trim();
+                    }
+                    index = l.indexOf("*/") + 2;
+                    if (index >= l.length()) {
+                        lineNumber++;
+                        continue;
+                    } else {
+                        // rest of the line
+                        l = l.substring(index, l.length());
+                        index = 0;
+                    }
+                }
+
+                // skip comment and annotations
+                if (l.startsWith("//") || l.startsWith("@")) {
+                    lineNumber++;
+                    continue;
+                }
+
+                while (index < l.length()) {
+                    String[] s = l.trim().split("\\s+");
+                    String keyword = s[0].trim();
+                    String name = s.length > 1 ? s[1].trim() : null;
+                    // System.out.format("%d: %s index=%d len=%d%n", lineNumber, l, index, l.length());
+                    switch (keyword) {
+                        case "module":
+                        case "requires":
+                        case "}":
+                            index = l.length();  // skip to the end
+                            continue;
+
+                        case "exports":
+                        case "opens":
+                        case "provides":
+                        case "uses":
+                            // assume name immediately after exports, opens, provides, uses
+                            statement = getStatement(keyword, name);
+                            hasTargets = false;
+
+                            int i = l.indexOf(name, index) + name.length() + 1;
+                            l = i < l.length() ? l.substring(i, l.length()).trim() : "";
+                            index = 0;
+
+                            if (s.length >= 3) {
+                                if (!s[2].trim().equals(statement.qualifier)) {
+                                    throw new RuntimeException(sourcefile + ", line " +
+                                        lineNumber + ", is malformed: " + s[2]);
+                                }
+                            }
+
+
+                            break;
+
+                        case "to":
+                        case "with":
+                            if (statement == null) {
+                                throw new RuntimeException(sourcefile + ", line " +
+                                    lineNumber + ", is malformed");
+                            }
+
+                            hasTargets = true;
+                            String qualifier = statement.qualifier;
+                            i = l.indexOf(qualifier, index) + qualifier.length() + 1;
+                            l = i < l.length() ? l.substring(i, l.length()).trim() : "";
+                            index = 0;
+                            break;
+                    }
+
+                    // comment block starts
+                    if (l.startsWith("/*")) {
+                        while (l.indexOf("*/") == -1) { // end comment block
+                            l = lines.get(++lineNumber).trim();
+                        }
+                        index = l.indexOf("*/") + 2;
+                        if (index >= l.length()) {
+                            continue;
+                        } else {
+                            // rest of the line
+                            l = l.substring(index, l.length());
+                            index = 0;
+                        }
+                    }
+
+                    if (l.startsWith("//")) {
+                        index = l.length();
+                        continue;
+                    }
+
+                    if (!hasTargets) {
+                        continue;
+                    }
+
+                    // parse the qualifiers
+                    int j = l.indexOf(';', index);
+                    Statement stmt = statement;
+                    String rhs = j != -1 ? l.substring(index, j) : l;
+                    index += rhs.length();
+                    // System.out.format("rhs: index=%d %s line: %s%n", index, rhs, l);
+                    String[] targets = rhs.split(",");
+                    for (String t : targets) {
+                        String n = t.trim();
+                        if (n.length() > 0)
+                            stmt.addTarget(n);
+                    }
+                    if (j != -1) {
+                        statement = null;
+                        hasTargets = false;
+                        index = j + 1;
+                    }
+                    l = index < l.length() ? l.substring(index, l.length()).trim() : "";
+                    index = 0;
+                }
+
+                lineNumber++;
+            }
+        }
+    }
+
+    static class Statement {
+        final String directive;
+        final String qualifier;
+        final String name;
+        final Set<String> targets = new LinkedHashSet<>();
+        final boolean ordered;
+
+        Statement(String directive, String qualifier, String name) {
+            this(directive, qualifier, name, false);
+        }
+
+        Statement(String directive, String qualifier, String name, boolean ordered) {
+            this.directive = directive;
+            this.qualifier = qualifier;
+            this.name = name;
+            this.ordered = ordered;
+        }
+
+        Statement addTarget(String mn) {
+            targets.add(mn);
+            return this;
+        }
+
+        boolean isQualified() {
+            return targets.size() > 0;
+        }
+
+        boolean isUnqualified() {
+            return targets.isEmpty();
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder("    ");
+            sb.append(directive).append(" ").append(name);
+            if (targets.size() == 1) {
+                sb.append(" ").append(qualifier)
+                    .append(orderedTargets()
+                        .collect(Collectors.joining(",", " ", ";")));
+            } else if (!targets.isEmpty()) {
+                sb.append(" ").append(qualifier)
+                    .append(orderedTargets()
+                        .map(target -> String.format("        %s", target))
+                        .collect(Collectors.joining(",\n", "\n", ";")));
             }
             return sb.toString();
-        } else {
-            return line;
         }
-    }
 
-    private static Stream<String> toStream(Map<String, Set<String>> map,
-                                           String directive, String verb) {
-        return map.entrySet().stream()
-            .sorted(Map.Entry.comparingByKey())
-            .map(e -> String.format("    %s %s %s%n%s;",
-                                    directive, e.getKey(), verb,
-                                    e.getValue().stream().sorted()
-                                        .map(target -> String.format("        %s", target))
-                                        .collect(Collectors.joining(",\n"))));
+        public Stream<String> orderedTargets() {
+            return ordered ? targets.stream()
+                : targets.stream().sorted();
+        }
     }
 }
