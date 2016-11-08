@@ -27,17 +27,16 @@ package java.lang;
 
 import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.misc.SharedSecrets;
+import jdk.internal.misc.VM;
 import jdk.internal.module.ModuleHashes;
 
-import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleDescriptor.Version;
 import java.lang.reflect.Layer;
 import java.lang.reflect.Module;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * An element in a stack trace, as returned by {@link
@@ -101,13 +100,13 @@ public final class StackTraceElement implements java.io.Serializable {
      *
      * @param classLoaderName the class loader name if the class loader of
      *        the class containing the execution point represented by
-     *        the stack trace is named; can be {@code null}
+     *        the stack trace is named; otherwise {@code null}
      * @param moduleName the module name if the class containing the
      *        execution point represented by the stack trace is in a named
-     *        module; can be {@code null}
+     *        module; otherwise {@code null}
      * @param moduleVersion the module version if the class containing the
      *        execution point represented by the stack trace is in a named
-     *        module that has a version; can be {@code null}
+     *        module that has a version; otherwise {@code null}
      * @param declaringClass the fully qualified name of the class containing
      *        the execution point represented by the stack trace element
      * @param methodName the name of the method containing the execution point
@@ -120,8 +119,10 @@ public final class StackTraceElement implements java.io.Serializable {
      *        a negative number if this information is unavailable. A value
      *        of -2 indicates that the method containing the execution point
      *        is a native method
+     *
      * @throws NullPointerException if {@code declaringClass} is {@code null}
      *         or {@code methodName} is {@code null}
+     *
      * @since 9
      */
     public StackTraceElement(String classLoaderName,
@@ -131,16 +132,17 @@ public final class StackTraceElement implements java.io.Serializable {
         this.classLoaderName = classLoaderName;
         this.moduleName      = moduleName;
         this.moduleVersion   = moduleVersion;
-        this.declaringClass = Objects.requireNonNull(declaringClass, "Declaring class is null");
+        this.declaringClass  = Objects.requireNonNull(declaringClass, "Declaring class is null");
         this.methodName      = Objects.requireNonNull(methodName, "Method name is null");
         this.fileName        = fileName;
         this.lineNumber      = lineNumber;
     }
 
-    /**
-     * Creates an empty stack frame element to be filled in by Throwable.
+    /*
+     * Private constructor for the factory methods to create StackTraceElement
+     * for Throwable and StackFrameInfo
      */
-    StackTraceElement() { }
+    private StackTraceElement() {}
 
     /**
      * Returns the name of the source file containing the execution point
@@ -207,7 +209,7 @@ public final class StackTraceElement implements java.io.Serializable {
      *
      * @return the name of the class loader of the class containing the execution
      *         point represented by this stack trace element; {@code null}
-     *         if the class loader name is not available.
+     *         if the class loader is not named.
      *
      * @since 9
      * @see java.lang.ClassLoader#getName()
@@ -259,36 +261,61 @@ public final class StackTraceElement implements java.io.Serializable {
      * examples may be regarded as typical:
      * <ul>
      * <li>
-     *   {@code "myloader/my.module@9.0/MyClass.mash(MyClass.java:101)"}<br>
-     *   {@code "myloader"}, {@code "my.module"}, and {@code "9.0"}
-     *   is the class loader name, module name and module version of
-     *   the class containing the execution point represented by
-     *   this stack trace element respectively.
-     *   {@code "MyClass"} is the <i>fully-qualified name</i> of the class
-     *   containing the execution point.
-     *   {@code "mash"} is the name of the method containing the execution
-     *   point,  and {@code "101"} is the line number of the source
-     *   line containing the execution point.
-     *   If the class loader is a <a href="ClassLoader.html#builtinLoaders">
-     *   built-in class loader</a>, or it does not have a name, then
-     *   {@code "myloader/"} will be omitted.
-     *   If the execution point is not in a named module, then
-     *   {@code "my.module@9.0"} will be omitted.
-     *   If the execution point is not in a named module and defined by
-     *   a built-in class loader, then {@code "/"} preceding the class name
-     *   will be omitted and the returned string may simply be:
-     *   {@code "MyClass.mash(MyClass.java:101)"}.
+     *     "{@code com.foo.loader/foo@9.0/com.foo.Main.run(Main.java:101)}"
+     * - See the description below.
+     * </li>
      * <li>
-     *   {@code "myloader/my.module@9.0/MyClass.mash(MyClass.java)"}<br>
-     *   As above, but the line number is unavailable.
+     *     "{@code com.foo.loader/foo@9.0/com.foo.Main.run(Main.java)}"
+     * - The line number is unavailable.
+     * </li>
      * <li>
-     *   {@code "myloader/my.module@9.0/MyClass.mash(Unknown Source)"}<br>
-     *   As above, but neither the file name nor the line  number are available.
+     *     "{@code com.foo.loader/foo@9.0/com.foo.Main.run(Unknown Source)}"
+     * - Neither the file name nor the line number is available.
+     * </li>
      * <li>
-     *   {@code "myloader/my.module@9.0/MyClass.mash(Native Method)"}<br>
-     *   As above, but neither the file name nor the line number are available,
-     *   and the method containing the execution point is known to be a native method.
+     *     "{@code com.foo.loader/foo@9.0/com.foo.Main.run(Native Method)}"
+     * - The method containing the execution point is a native method.
+     * </li>
+     * <li>
+     *     "{@code com.foo.loader//com.foo.bar.App.run(App.java:12)}"
+     * - The class of the execution point is defined in the unnamed module of
+     * the class loader named {@code com.foo.loader}.
+     * </li>
+     * <li>
+     *     "{@code acme@2.1/org.acme.Lib.test(Lib.java:80)}"
+     * - The class of the execution point is defined in {@code acme} module
+     * loaded by by a built-in class loader such as the application class loader.
+     * </li>
+     * <li>
+     *     "{@code MyClass.mash(MyClass.java:9)}"
+     * - {@code MyClass} class is on the application class path.
+     * </li>
      * </ul>
+     *
+     * <p> The first example shows a stack trace element consisting of
+     * three elements, each separated by {@code "/"} followed with
+     * the source file name and the line number of the source line
+     * containing the execution point.
+     *
+     * The first element "{@code com.foo.loader}" is
+     * the name of the class loader.  The second element "{@code foo@9.0}"
+     * is the module name and version.  The third element is the method
+     * containing the execution point; "{@code com.foo.Main"}" is the
+     * fully-qualified class name and "{@code run}" is the name of the method.
+     * "{@code Main.java}" is the source file name and "{@code 101}" is
+     * the line number.
+     *
+     * <p> If a class is defined in an <em>unnamed module</em>
+     * then the second element is omitted as shown in
+     * "{@code com.foo.loader//com.foo.bar.App.run(App.java:12)}".
+     *
+     * If the class loader is a <a href="ClassLoader.html#builtinLoaders">
+     * built-in class loader</a> or is not named then the first element
+     * and its following {@code "/"} are omitted as shown in
+     * "{@code acme@2.1/org.acme.Lib.test(Lib.java:80)}".
+     * If the first element is omitted and the module is an unnamed module,
+     * the second element and its following {@code "/"} are also omitted
+     * as shown in "{@code MyClass.mash(MyClass.java:9)}".
      *
      * @see    Throwable#printStackTrace()
      */
@@ -302,11 +329,12 @@ public final class StackTraceElement implements java.io.Serializable {
             }
             if (moduleName != null && !moduleName.isEmpty()) {
                 s += moduleName;
+
+                if (moduleVersion != null && !moduleVersion.isEmpty()) {
+                    s += "@" + moduleVersion;
+                }
             }
-            if (moduleVersion != null && !moduleVersion.isEmpty()) {
-                s += "@" + moduleVersion;
-            }
-            s += declaringClass;
+            s = s.isEmpty() ? declaringClass : s + "/" + declaringClass;
         }
 
         return s + "." + methodName + "(" +
@@ -328,7 +356,7 @@ public final class StackTraceElement implements java.io.Serializable {
      *     equals(a.getClassName(), b.getClassName()) &&
      *     equals(a.getMethodName(), b.getMethodName())
      *     equals(a.getFileName(), b.getFileName()) &&
-     *     a.getLineNumber() == b.getLineNumber())
+     *     a.getLineNumber() == b.getLineNumber()
      *
      * }</pre>
      * where {@code equals} has the semantics of {@link
@@ -405,22 +433,25 @@ public final class StackTraceElement implements java.io.Serializable {
         Module m = cls.getModule();
 
         // First element - class loader name
+        // Call package-private ClassLoader::name method
         String s = "";
-        if (loader != null && !(loader instanceof BuiltinClassLoader) &&
-            loader.getName() != null) {
-            s = loader.getName() + "/";
+        if (loader != null && loader.name() != null &&
+                !(loader instanceof BuiltinClassLoader)) {
+            s = loader.name() + "/";
         }
 
         // Second element - module name and version
         if (m != null && m.isNamed()) {
-            s = s.isEmpty() ? m.getName() : s + m.getName();
-            // drop version if it's JDK module tied with java.base,
-            // i.e. non-upgradeable
-            if (!HashedModules.contains(m)) {
-                Optional<ModuleDescriptor.Version> ov = m.getDescriptor().version();
+            s += m.getName();
+            // Include version if it is a user module or upgradeable module
+            //
+            // If it is JDK non-upgradeable module which is recorded
+            // in the hashes in java.base, omit the version.
+            if (!isHashedInJavaBase(m)) {
+                Optional<Version> ov = m.getDescriptor().version();
                 if (ov.isPresent()) {
                     String version = "@" + ov.get().toString();
-                    s = s.isEmpty() ? version : s + version;
+                    s += version;
                 }
             }
         }
@@ -429,17 +460,34 @@ public final class StackTraceElement implements java.io.Serializable {
         return s.isEmpty() ? cls.getName() : s + "/" + cls.getName();
     }
 
+    /**
+     * Returns true if the module is hashed with java.base.
+     * <p>
+     * This method returns false when running on the exploded image
+     * since JDK modules are not hashed. They have no Version attribute
+     * and so "@<version>" part will be omitted anyway.
+     */
+    private static boolean isHashedInJavaBase(Module m) {
+        // return true if module system is not initialized as the code
+        // must be in java.base
+        if (!VM.isModuleSystemInited())
+            return true;
+
+        return Layer.boot() == m.getLayer() && HashedModules.contains(m);
+    }
+
     /*
      * Finds JDK non-upgradeable modules, i.e. the modules that are
      * included in the hashes in java.base.
      */
     private static class HashedModules {
-        static final Set<String> HASHED_MODULES = getHashedModuleNames();
+        static Set<String> HASHED_MODULES = hashedModules();
 
-        static Set<String> getHashedModuleNames() {
+        static Set<String> hashedModules() {
             Module javaBase = Layer.boot().findModule("java.base").get();
-            Optional<ModuleHashes> ohashes = SharedSecrets.getJavaLangModuleAccess()
-                .hashes(javaBase.getDescriptor());
+            Optional<ModuleHashes> ohashes =
+                SharedSecrets.getJavaLangModuleAccess()
+                             .hashes(javaBase.getDescriptor());
 
             if (ohashes.isPresent()) {
                 Set<String> names = new HashSet<>(ohashes.get().names());
@@ -450,19 +498,54 @@ public final class StackTraceElement implements java.io.Serializable {
             return Set.of();
         }
 
-        /**
-         * Returns true if the module is in the boot layer and
-         * is tied to java.base.
-         *
-         * This method returns false when running on the exploded image
-         * since JDK modules are not hashed. They have no Version attribute
-         * and so "@<version>" part will be omitted anyway.
-         */
         static boolean contains(Module m) {
-            return m.getLayer() == Layer.boot() &&
-                    HASHED_MODULES.contains(m.getName());
+            return HASHED_MODULES.contains(m.getName());
         }
     }
+
+
+    /*
+     * Returns an array of StackTraceElements of the given depth
+     * filled from the backtrace of a given Throwable.
+     */
+    static StackTraceElement[] of(Throwable x, int depth) {
+        StackTraceElement[] stackTrace = new StackTraceElement[depth];
+        for (int i = 0; i < depth; i++) {
+            stackTrace[i] = new StackTraceElement();
+        }
+
+        // VM to fill in StackTraceElement
+        initStackTraceElements(stackTrace, x);
+
+        // ensure the proper StackTraceElement initialization
+        for (StackTraceElement ste : stackTrace) {
+            ste.buildLoaderModuleClassName();
+        }
+        return stackTrace;
+    }
+
+    /*
+     * Returns a StackTraceElement from a given StackFrameInfo.
+     */
+    static StackTraceElement of(StackFrameInfo sfi) {
+        StackTraceElement ste = new StackTraceElement();
+        initStackTraceElement(ste, sfi);
+
+        ste.buildLoaderModuleClassName();
+        return ste;
+    }
+
+    /*
+     * Sets the given stack trace elements with the backtrace
+     * of the given Throwable.
+     */
+    private static native void initStackTraceElements(StackTraceElement[] elements,
+                                                      Throwable x);
+    /*
+     * Sets the given stack trace element with the given StackFrameInfo
+     */
+    private static native void initStackTraceElement(StackTraceElement element,
+                                                     StackFrameInfo sfi);
 
     private static final long serialVersionUID = 6992337162326171013L;
 }

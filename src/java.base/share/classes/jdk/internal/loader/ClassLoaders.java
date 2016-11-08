@@ -138,7 +138,7 @@ public class ClassLoaders {
         }
 
         PlatformClassLoader(BootClassLoader parent) {
-            super(parent, "platform", null);
+            super("platform", parent, null);
         }
 
         /**
@@ -165,7 +165,7 @@ public class ClassLoaders {
         final URLClassPath ucp;
 
         AppClassLoader(PlatformClassLoader parent, URLClassPath ucp) {
-            super(parent, "app", ucp);
+            super("app", parent, ucp);
             this.ucp = ucp;
         }
 

@@ -23,6 +23,7 @@
 
 /*
  * @test
+ * @bug 6479237
  * @summary Test the format of StackTraceElement::toString and its serial form
  * @modules java.logging
  *          java.xml.bind
@@ -39,6 +40,7 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -82,15 +84,21 @@ public class SerialTest {
         }
 
         // test stack trace with class loader name from other class loader
-        Path path = Paths.get(System.getProperty("test.classes"));
-        URL[] urls = new URL[] {
-            path.toUri().toURL()
-        };
-        URLClassLoader loader = new URLClassLoader("myloader", urls, null);
+        Loader loader = new Loader("myloader");
         Class<?> cls = Class.forName("SerialTest", true, loader);
         Method method = cls.getMethod("throwException");
         StackTraceElement ste = (StackTraceElement)method.invoke(null);
         test(ste, loader);
+
+        // verify the class loader name and in the stack trace
+        if (!cls.getClassLoader().getName().equals("myloader.hacked")) {
+            throw new RuntimeException("Unexpected loader name: " +
+                cls.getClassLoader().getName());
+        }
+        if (!ste.getClassLoaderName().equals("myloader")) {
+            throw new RuntimeException("Unexpected loader name: " +
+                ste.getClassLoaderName());
+        }
     }
 
     private static void test(StackTraceElement ste) {
@@ -102,6 +110,7 @@ public class SerialTest {
             SerialTest serialTest = new SerialTest(ste);
             StackTraceElement ste2 = serialTest.serialize().deserialize();
             System.out.println(ste2);
+            // verify StackTraceElement::toString returns the same string
             if (!ste.equals(ste2) || !ste.toString().equals(ste2.toString())) {
                 throw new RuntimeException(ste + " != " + ste2);
             }
@@ -141,7 +150,7 @@ public class SerialTest {
             if (i <= 0) {
                 throw new RuntimeException("loader name missing: " + s);
             }
-            if (!loader.getName().equals(s.substring(0, i))) {
+            if (!getLoaderName(loader).equals(s.substring(0, i))) {
                 throw new RuntimeException("unexpected loader name: " + s);
             }
             int j = s.substring(i+1).indexOf('/');
@@ -151,10 +160,24 @@ public class SerialTest {
         }
     }
 
+    /*
+     * Loader::getName is overridden to return some other name
+     */
+    private static String getLoaderName(ClassLoader loader) {
+        if (loader == null)
+            return "";
+
+        if (loader instanceof Loader) {
+            return ((Loader) loader).name;
+        } else {
+            return loader.getName();
+        }
+    }
+
     private static void checkNamedModule(StackTraceElement ste,
                                          ClassLoader loader,
                                          boolean showVersion) {
-        String loaderName = loader != null ? loader.getName() : "";
+        String loaderName = getLoaderName(loader);
         String mn = ste.getModuleName();
         String s = ste.toString();
         int i = s.indexOf('/');
@@ -220,5 +243,22 @@ public class SerialTest {
                 .findFirst().get();
         }
         return null;
+    }
+
+    public static class Loader extends URLClassLoader {
+        final String name;
+        Loader(String name) throws MalformedURLException {
+            super(name, new URL[] { testClassesURL() } , null);
+            this.name = name;
+        }
+
+        private static URL testClassesURL() throws MalformedURLException {
+            Path path = Paths.get(System.getProperty("test.classes"));
+            return path.toUri().toURL();
+        }
+
+        public String getName() {
+            return name + ".hacked";
+        }
     }
 }

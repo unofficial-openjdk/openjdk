@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,25 +23,21 @@
  * questions.
  */
 
-/*
- *      Implementation of class StackFrameInfo
- */
-
 #include <stdio.h>
 #include <signal.h>
 
 #include "jni.h"
 #include "jvm.h"
 
-#include "java_lang_StackFrameInfo.h"
+#include "java_lang_StackTraceElement.h"
 
+JNIEXPORT void JNICALL Java_java_lang_StackTraceElement_initStackTraceElement
+  (JNIEnv *env, jobject dummy, jobject element, jobject stackframeinfo) {
+     JVM_InitStackTraceElement(env, element, stackframeinfo);
+}
 
-/*
- * Class:     java_lang_StackFrameInfo
- * Method:    toStackTraceElement0
- * Signature: (Ljava/lang/StackTraceElement;)V
- */
-JNIEXPORT void JNICALL Java_java_lang_StackFrameInfo_toStackTraceElement0
-  (JNIEnv *env, jobject stackframeinfo, jobject stacktraceinfo) {
-     JVM_ToStackTraceElement(env, stackframeinfo, stacktraceinfo);
+JNIEXPORT void JNICALL Java_java_lang_StackTraceElement_initStackTraceElements
+  (JNIEnv *env, jobject dummy, jobjectArray elements, jobject throwable)
+{
+    JVM_InitStackTraceElementArray(env, elements, throwable);
 }

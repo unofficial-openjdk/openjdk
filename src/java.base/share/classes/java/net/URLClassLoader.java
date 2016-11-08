@@ -211,13 +211,16 @@ public class URLClassLoader extends SecureClassLoader implements Closeable {
      * Otherwise, the URL is assumed to refer to a JAR file which will be
      * downloaded and opened as needed.
      *
-     * @param name class loader name; can be {@code null}
-     * @param urls the URLs from which to load classes and resources
-     * @param parent the parent class loader for delegation
-     * @throws SecurityException  if a security manager exists and its
+     * @param  name class loader name; or {@code null} if not named
+     * @param  urls the URLs from which to load classes and resources
+     * @param  parent the parent class loader for delegation
+     *
+     * @throws IllegalArgumentException if the given name is empty.
+     * @throws NullPointerException if {@code urls} is {@code null}.
+     *
+     * @throws SecurityException if a security manager exists and its
      *         {@link SecurityManager#checkCreateClassLoader()} method doesn't
      *         allow creation of a class loader.
-     * @throws NullPointerException if {@code urls} is {@code null}.
      *
      * @since 9
      */
@@ -241,15 +244,18 @@ public class URLClassLoader extends SecureClassLoader implements Closeable {
      * The factory argument will be used as the stream handler factory to
      * obtain protocol handlers when creating new jar URLs.
      *
-     * @param name class loader name; can be {@code null}
-     * @param urls the URLs from which to load classes and resources
-     * @param parent the parent class loader for delegation
-     * @param factory the URLStreamHandlerFactory to use when creating URLs
+     * @param  name class loader name; or {@code null} if not named
+     * @param  urls the URLs from which to load classes and resources
+     * @param  parent the parent class loader for delegation
+     * @param  factory the URLStreamHandlerFactory to use when creating URLs
      *
-     * @throws  SecurityException  if a security manager exists and its
-     *          {@code checkCreateClassLoader} method doesn't allow
-     *          creation of a class loader.
-     * @throws  NullPointerException if {@code urls} is {@code null}.
+     * @throws IllegalArgumentException if the given name is empty.
+     * @throws NullPointerException if {@code urls} is {@code null}.
+     *
+     * @throws SecurityException if a security manager exists and its
+     *         {@code checkCreateClassLoader} method doesn't allow
+     *         creation of a class loader.
+     *
      * @since 9
      */
     public URLClassLoader(String name, URL[] urls, ClassLoader parent,

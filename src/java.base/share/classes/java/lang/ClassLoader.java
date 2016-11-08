@@ -337,6 +337,14 @@ public abstract class ClassLoader {
     }
 
     private static Void checkCreateClassLoader() {
+        return checkCreateClassLoader(null);
+    }
+
+    private static Void checkCreateClassLoader(String name) {
+        if (name != null && name.isEmpty()) {
+            throw new IllegalArgumentException("name must be non-empty or null");
+        }
+
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkCreateClassLoader();
@@ -389,21 +397,20 @@ public abstract class ClassLoader {
      * Creates a new class loader of the specified name and using the
      * specified parent class loader for delegation.
      *
-     * @param name
-     *        Class loader name; can be {@code null}
+     * @param  name   class loader name; or {@code null} if not named
+     * @param  parent the parent class loader
      *
-     * @param parent
-     *        The parent class loader
+     * @throws IllegalArgumentException if the given name is empty.
      *
-     * @throws  SecurityException
-     *          If a security manager exists and its
-     *          {@link SecurityManager#checkCreateClassLoader()}
-     *          method doesn't allow creation of a new class loader.
+     * @throws SecurityException
+     *         If a security manager exists and its
+     *         {@link SecurityManager#checkCreateClassLoader()}
+     *         method doesn't allow creation of a new class loader.
      *
      * @since  9
      */
     protected ClassLoader(String name, ClassLoader parent) {
-        this(checkCreateClassLoader(), name, parent);
+        this(checkCreateClassLoader(name), name, parent);
     }
 
     /**
@@ -429,12 +436,22 @@ public abstract class ClassLoader {
      * Returns the name of this class loader or {@code null} if
      * this class loader is not named.
      *
+     * @apiNote This method is non-final for compatibility.  If this
+     * method is overridden, this method must return the same name
+     * as specified when this class loader was instantiated.
+     *
      * @return name of this class loader; or {@code null} if
      * this class loader is not named.
      *
      * @since 9
      */
     public String getName() {
+        return name;
+    }
+
+    // package-private used by StackTraceElement to avoid
+    // calling the overrideable getName method
+    final String name() {
         return name;
     }
 
@@ -1721,6 +1738,9 @@ public abstract class ClassLoader {
      * <a href="#builtinLoaders">platform classes</a> are visible to
      * the platform class loader.
      *
+     * @implNote The name of the builtin platform class loader is
+     * {@code "platform"}.
+     *
      * @return  The platform {@code ClassLoader}.
      *
      * @throws  SecurityException
@@ -1774,7 +1794,8 @@ public abstract class ClassLoader {
      * this method during startup should take care not to cache the return
      * value until the system is fully initialized.
      *
-     * <p> The class path used by the built-in system class loader is determined
+     * <p> The name of the built-in system class loader is {@code "app"}.
+     * The class path used by the built-in system class loader is determined
      * by the system property "{@code java.class.path}" during early
      * initialization of the VM. If the system property is not defined,
      * or its value is an empty string, then there is no class path
