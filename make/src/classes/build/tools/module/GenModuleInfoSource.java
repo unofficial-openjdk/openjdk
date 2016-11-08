@@ -24,7 +24,6 @@
  */
 package build.tools.module;
 
-
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -39,19 +38,20 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import static java.util.stream.Collectors.*;
 
 /**
  * A build tool to extend the module-info.java in the source tree for
  * platform-specific exports, opens, uses, and provides and write to
  * the specified output file.
  *
- * Injecting platform-specific requires is not supported.
- *
- * The extra exports, opens, uses, provides can be specified in module-info.java.extra
- * files and GenModuleInfoSource will be invoked for each module that has
+ * GenModuleInfoSource will be invoked for each module that has
  * module-info.java.extra in the source directory.
+ *
+ * The extra exports, opens, uses, provides can be specified
+ * in module-info.java.extra.
+ * Injecting platform-specific requires is not supported.
  */
 public class GenModuleInfoSource {
     private final static String USAGE =
@@ -83,7 +83,7 @@ public class GenModuleInfoSource {
                     break;
                 case "--modules":
                     modules = Arrays.stream(arg.split(","))
-                                    .collect(Collectors.toSet());
+                                    .collect(toSet());
                     i++;
                     break;
                 default:
@@ -102,37 +102,37 @@ public class GenModuleInfoSource {
         }
 
         GenModuleInfoSource genModuleInfo =
-            new GenModuleInfoSource(moduleInfoJava, modules);
-        for (Path extraFile : extras) {
-            genModuleInfo.addExtra(extraFile);
-        }
+            new GenModuleInfoSource(moduleInfoJava, extras, modules);
 
         // generate new module-info.java
         genModuleInfo.generate(outfile);
     }
 
     final Path sourceFile;
-    final ModuleInfo extraFiles;
+    final List<Path> extraFiles;
+    final ModuleInfo extras;
     final Set<String> modules;
     final ModuleInfo moduleInfo;
-    GenModuleInfoSource(Path sourceFile, Set<String> modules)
+    GenModuleInfoSource(Path sourceFile, List<Path> extraFiles, Set<String> modules)
         throws IOException
     {
         this.sourceFile = sourceFile;
-        this.extraFiles = new ModuleInfo();
+        this.extraFiles = extraFiles;
         this.modules = modules;
         this.moduleInfo = new ModuleInfo();
         this.moduleInfo.parse(sourceFile);
-    }
 
-    void addExtra(Path extra) throws IOException {
-        extraFiles.parse(extra);
+        // parse module-info.java.extra
+        this.extras = new ModuleInfo();
+        for (Path file : extraFiles) {
+            extras.parse(file);
+        }
+
+        // merge with module-info.java.extra
+        moduleInfo.augmentModuleInfo(extras, modules);
     }
 
     void generate(Path output) throws IOException {
-        // merge with module-info.java.extra
-        merge();
-
         List<String> lines = Files.readAllLines(sourceFile);
         try (BufferedWriter bw = Files.newBufferedWriter(output);
              PrintWriter writer = new PrintWriter(bw)) {
@@ -140,6 +140,10 @@ public class GenModuleInfoSource {
             for (String l : lines) {
                 writer.println(l);
                 if (l.trim().startsWith("module ")) {
+                    writer.format("    // source file: %s%n", sourceFile);
+                    for (Path file: extraFiles) {
+                        writer.format("    //              %s%n", file);
+                    }
                     break;
                 }
             }
@@ -150,89 +154,12 @@ public class GenModuleInfoSource {
                     writer.println(l);
             }
 
-            // write exports, opens, uses,
+            // write exports, opens, uses, and provides
             moduleInfo.print(writer);
 
             // close
             writer.println("}");
         }
-    }
-
-    private void merge() {
-        // exports
-        extraFiles.exports.keySet()
-            .stream()
-            .filter(pn -> moduleInfo.exports.containsKey(pn))
-            .forEach(pn -> mergeExportsOrOpens(pn,  moduleInfo.exports.get(pn),
-                                               extraFiles.exports.get(pn)));
-        extraFiles.exports.keySet()
-            .stream()
-            .filter(pn -> !moduleInfo.exports.containsKey(pn))
-            .forEach(pn -> moduleInfo.exports.put(pn, extraFiles.exports.get(pn)));
-
-        // opens
-        extraFiles.opens.keySet()
-            .stream()
-            .filter(pn -> moduleInfo.opens.containsKey(pn))
-            .forEach(pn -> mergeExportsOrOpens(pn,  moduleInfo.opens.get(pn),
-                                               extraFiles.opens.get(pn)));
-        extraFiles.opens.keySet()
-            .stream()
-            .filter(pn -> !moduleInfo.opens.containsKey(pn))
-            .forEach(pn -> moduleInfo.opens.put(pn, extraFiles.exports.get(pn)));
-
-        // provides
-        extraFiles.provides.keySet()
-            .stream()
-            .filter(service -> moduleInfo.provides.containsKey(service))
-            .forEach(service -> mergeProvides(service, extraFiles.provides.get(service)));
-        extraFiles.provides.keySet()
-            .stream()
-            .filter(service -> !moduleInfo.provides.containsKey(service))
-            .forEach(service -> moduleInfo.provides.put(service, extraFiles.provides.get(service)));
-
-        // uses
-        extraFiles.uses.keySet()
-            .stream()
-            .filter(service -> !moduleInfo.uses.containsKey(service))
-            .forEach(service -> moduleInfo.uses.put(service, extraFiles.uses.get(service)));
-    }
-
-    private void mergeExportsOrOpens(String pn, Statement statement, Statement extra) {
-        if (statement.isUnqualified() && extra.isQualified()) {
-            throw new RuntimeException("can't add qualified exports to " +
-                "unqualified exports " + pn);
-        }
-
-        Set<String> mods = extra.targets.stream()
-            .filter(mn -> statement.targets.contains(mn))
-            .collect(Collectors.toSet());
-        if (mods.size() > 0) {
-            throw new RuntimeException("qualified exports " + pn + " to " +
-                mods.toString() + " already declared in " + sourceFile);
-        }
-
-        // add qualified exports or opens to known modules only
-        extra.targets.stream()
-             .filter(mn -> modules.contains(mn))
-             .forEach(mn -> statement.addTarget(mn));
-    }
-
-
-    private void mergeProvides(String service, Statement extra) {
-        Statement provides = moduleInfo.provides.get(service);
-
-        Set<String> mods = extra.targets.stream()
-            .filter(mn -> provides.targets.contains(mn))
-            .collect(Collectors.toSet());
-
-        if (mods.size() > 0) {
-            throw new RuntimeException("qualified exports " + service + " to " +
-                mods.toString() + " already declared in " + sourceFile);
-        }
-
-        extra.targets.stream()
-             .forEach(mn -> provides.addTarget(mn));
     }
 
 
@@ -241,41 +168,155 @@ public class GenModuleInfoSource {
         private final Map<String, Statement> opens = new HashMap<>();
         private final Map<String, Statement> uses = new HashMap<>();
         private final Map<String, Statement> provides = new HashMap<>();
+        ModuleInfo() {
+        }
 
         Statement getStatement(String directive, String name) {
             switch (directive) {
                 case "exports":
                     if (moduleInfo.exports.containsKey(name) &&
                         moduleInfo.exports.get(name).isUnqualified()) {
-                        throw new IllegalArgumentException(sourceFile + " already has "
-                            + directive + " " + name);
+                        throw new IllegalArgumentException(sourceFile +
+                            " already has " + directive + " " + name);
                     }
                     return exports.computeIfAbsent(name,
                         _n -> new Statement("exports", "to", name));
+
                 case "opens":
                     if (moduleInfo.opens.containsKey(name) &&
                         moduleInfo.opens.get(name).isUnqualified()) {
-                        throw new IllegalArgumentException(sourceFile + " already has "
-                            + directive + " " + name);
+                        throw new IllegalArgumentException(sourceFile +
+                            " already has " + directive + " " + name);
                     }
 
                     if (moduleInfo.opens.containsKey(name)) {
-                        throw new IllegalArgumentException(sourceFile + " already has "
-                            + directive + " " + name);
+                        throw new IllegalArgumentException(sourceFile +
+                            " already has " + directive + " " + name);
                     }
                     return opens.computeIfAbsent(name,
                         _n -> new Statement("opens", "to", name));
+
                 case "uses":
                     return uses.computeIfAbsent(name,
                         _n -> new Statement("uses", "", name));
+
                 case "provides":
                     return provides.computeIfAbsent(name,
                         _n -> new Statement("provides", "with", name, true));
+
                 default:
                     throw new IllegalArgumentException(directive);
             }
 
         }
+
+        /*
+         * Augment this ModuleInfo with module-info.java.extra
+         */
+        void augmentModuleInfo(ModuleInfo extraFiles, Set<String> modules) {
+            // API package exported in the original module-info.java
+            extraFiles.exports.entrySet()
+                .stream()
+                .filter(e -> exports.containsKey(e.getKey()) &&
+                                e.getValue().filter(modules))
+                .forEach(e -> mergeExportsOrOpens(exports.get(e.getKey()),
+                                                  e.getValue(),
+                                                  modules));
+
+            // add exports that are not defined in the original module-info.java
+            extraFiles.exports.entrySet()
+                .stream()
+                .filter(e -> !exports.containsKey(e.getKey()) &&
+                                e.getValue().filter(modules))
+                .forEach(e -> addTargets(getStatement("exports", e.getKey()),
+                                         e.getValue(),
+                                         modules));
+
+            // API package opened in the original module-info.java
+            extraFiles.opens.entrySet()
+                .stream()
+                .filter(e -> opens.containsKey(e.getKey()) &&
+                                e.getValue().filter(modules))
+                .forEach(e -> mergeExportsOrOpens(opens.get(e.getKey()),
+                                                  e.getValue(),
+                                                  modules));
+
+            // add opens that are not defined in the original module-info.java
+            extraFiles.opens.entrySet()
+                .stream()
+                .filter(e -> !opens.containsKey(e.getKey()) &&
+                                e.getValue().filter(modules))
+                .forEach(e -> addTargets(getStatement("opens", e.getKey()),
+                                         e.getValue(),
+                                         modules));
+
+            // provides
+            extraFiles.provides.keySet()
+                .stream()
+                .filter(service -> provides.containsKey(service))
+                .forEach(service -> mergeProvides(service,
+                                                  extraFiles.provides.get(service)));
+            extraFiles.provides.keySet()
+                .stream()
+                .filter(service -> !provides.containsKey(service))
+                .forEach(service -> provides.put(service,
+                                                 extraFiles.provides.get(service)));
+
+            // uses
+            extraFiles.uses.keySet()
+                .stream()
+                .filter(service -> !uses.containsKey(service))
+                .forEach(service -> uses.put(service, extraFiles.uses.get(service)));
+        }
+
+        // add qualified exports or opens to known modules only
+        private void addTargets(Statement statement,
+                                Statement extra,
+                                Set<String> modules)
+        {
+            extra.targets.stream()
+                 .filter(mn -> modules.contains(mn))
+                 .forEach(mn -> statement.addTarget(mn));
+        }
+
+        private void mergeExportsOrOpens(Statement statement,
+                                         Statement extra,
+                                         Set<String> modules)
+        {
+            String pn = statement.name;
+            if (statement.isUnqualified() && extra.isQualified()) {
+                throw new RuntimeException("can't add qualified exports to " +
+                    "unqualified exports " + pn);
+            }
+
+            Set<String> mods = extra.targets.stream()
+                .filter(mn -> statement.targets.contains(mn))
+                .collect(toSet());
+            if (mods.size() > 0) {
+                throw new RuntimeException("qualified exports " + pn + " to " +
+                    mods.toString() + " already declared in " + sourceFile);
+            }
+
+            // add qualified exports or opens to known modules only
+            addTargets(statement, extra, modules);
+        }
+
+        private void mergeProvides(String service, Statement extra) {
+            Statement statement = provides.get(service);
+
+            Set<String> mods = extra.targets.stream()
+                .filter(mn -> statement.targets.contains(mn))
+                .collect(toSet());
+
+            if (mods.size() > 0) {
+                throw new RuntimeException("qualified exports " + service + " to " +
+                    mods.toString() + " already declared in " + sourceFile);
+            }
+
+            extra.targets.stream()
+                 .forEach(mn -> statement.addTarget(mn));
+        }
+
 
         void print(PrintWriter writer) {
             // print unqualified exports
@@ -284,21 +325,25 @@ public class GenModuleInfoSource {
                 .sorted(Map.Entry.comparingByKey())
                 .forEach(e -> writer.println(e.getValue()));
 
+            // print qualified exports
             exports.entrySet().stream()
                 .filter(e -> !e.getValue().targets.isEmpty())
                 .sorted(Map.Entry.comparingByKey())
                 .forEach(e -> writer.println(e.getValue()));
 
+            // print unqualified opens
             opens.entrySet().stream()
                 .filter(e -> e.getValue().targets.isEmpty())
                 .sorted(Map.Entry.comparingByKey())
                 .forEach(e -> writer.println(e.getValue()));
 
+            // print qualified opens
             opens.entrySet().stream()
                 .filter(e -> !e.getValue().targets.isEmpty())
                 .sorted(Map.Entry.comparingByKey())
                 .forEach(e -> writer.println(e.getValue()));
 
+            // uses and provides
             writer.println();
             uses.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
@@ -345,8 +390,12 @@ public class GenModuleInfoSource {
                 }
 
                 while (index < l.length()) {
-                    String[] s = l.trim().split("\\s+");
+                    int end = l.indexOf(';');
+                    if (end == -1)
+                        end = l.length();
+                    String[] s = l.substring(0, end).trim().split("\\s+");
                     String keyword = s[0].trim();
+
                     String name = s.length > 1 ? s[1].trim() : null;
                     // System.out.format("%d: %s index=%d len=%d%n", lineNumber, l, index, l.length());
                     switch (keyword) {
@@ -462,6 +511,8 @@ public class GenModuleInfoSource {
         }
 
         Statement addTarget(String mn) {
+            if (mn.isEmpty())
+                throw new IllegalArgumentException("empty module name");
             targets.add(mn);
             return this;
         }
@@ -474,26 +525,41 @@ public class GenModuleInfoSource {
             return targets.isEmpty();
         }
 
+        /**
+         * Returns true if this statement is unqualified or it has
+         * at least one target in the given names.
+         */
+        boolean filter(Set<String> names) {
+            if (isUnqualified()) {
+                return true;
+            } else {
+                return targets.stream()
+                    .filter(mn -> names.contains(mn))
+                    .findAny().isPresent();
+            }
+        }
+
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder("    ");
             sb.append(directive).append(" ").append(name);
-            if (targets.size() == 1) {
+            if (targets.isEmpty()) {
+                sb.append(";");
+            } else if (targets.size() == 1) {
                 sb.append(" ").append(qualifier)
-                    .append(orderedTargets()
-                        .collect(Collectors.joining(",", " ", ";")));
-            } else if (!targets.isEmpty()) {
+                  .append(orderedTargets().collect(joining(",", " ", ";")));
+            } else {
                 sb.append(" ").append(qualifier)
-                    .append(orderedTargets()
-                        .map(target -> String.format("        %s", target))
-                        .collect(Collectors.joining(",\n", "\n", ";")));
+                  .append(orderedTargets()
+                      .map(target -> String.format("        %s", target))
+                      .collect(joining(",\n", "\n", ";")));
             }
             return sb.toString();
         }
 
         public Stream<String> orderedTargets() {
             return ordered ? targets.stream()
-                : targets.stream().sorted();
+                           : targets.stream().sorted();
         }
     }
 }
