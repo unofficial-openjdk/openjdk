@@ -27,7 +27,6 @@ package com.sun.tools.javac.code;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Inherited;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map;
@@ -918,7 +917,6 @@ public abstract class Symbol extends AnnoConstruct implements Element {
 
         public PackageSymbol unnamedPackage;
         public Map<Name, PackageSymbol> visiblePackages;
-        public Collection<ModuleSymbol> readModules;
         public List<Symbol> enclosedPackages = List.nil();
 
         public Completer usesProvidesCompleter = Completer.NULL_COMPLETER;
@@ -1018,7 +1016,6 @@ public abstract class Symbol extends AnnoConstruct implements Element {
         SYNTHETIC(0x1000),
         MANDATED(0x8000);
 
-        // XXX: also in Directive.RequiresFlag, should unify!
         public static int value(Set<ModuleFlags> s) {
             int v = 0;
             for (ModuleFlags f: s)

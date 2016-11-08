@@ -274,6 +274,10 @@ public class Modules extends JCTree.Visitor {
         return defaultModule;
     }
 
+    public boolean modulesInitialized() {
+        return allModules != null;
+    }
+
     private Set<ModuleSymbol> enterModules(List<JCCompilationUnit> trees, ClassSymbol c) {
         Set<ModuleSymbol> modules = new LinkedHashSet<>();
         for (JCCompilationUnit tree : trees) {
@@ -644,16 +648,12 @@ public class Modules extends JCTree.Visitor {
 
         @Override
         public void visitExports(JCExports tree) {
-            PackageSymbol packge;
-
             Name name = TreeInfo.fullName(tree.qualid);
-            packge = syms.enterPackage(sym, name);
+            PackageSymbol packge = syms.enterPackage(sym, name);
             attr.setPackageSymbols(tree.qualid, packge);
 
-            if (tree.hasTag(Tag.OPENS)) {
-                if (sym.flags.contains(ModuleFlags.OPEN)) {
-                    log.error(tree.pos(), Errors.NoOpensUnlessStrong);
-                }
+            if (tree.hasTag(Tag.OPENS) && sym.flags.contains(ModuleFlags.OPEN)) {
+                log.error(tree.pos(), Errors.NoOpensUnlessStrong);
             }
             List<ExportsDirective> exportsForPackage = allExports.computeIfAbsent(packge, p -> List.nil());
             for (ExportsDirective d : exportsForPackage) {
@@ -921,7 +921,7 @@ public class Modules extends JCTree.Visitor {
                      */
                     PackageSymbol implementationDefiningPackage = impl.packge();
                     if (implementationDefiningPackage.modle != msym) {
-                        // TODO: should use tree for the implmentation name, not the entire provides tree
+                        // TODO: should use tree for the implentation name, not the entire provides tree
                         // TODO: should improve error message to identify the implementation type
                         log.error(tree.pos(), Errors.ServiceImplementationNotInRightModule(implementationDefiningPackage.modle));
                     }
@@ -1233,7 +1233,6 @@ public class Modules extends JCTree.Visitor {
     private void initVisiblePackages(ModuleSymbol msym, Collection<ModuleSymbol> readable) {
         initAddExports();
 
-        msym.readModules = readable;
         msym.visiblePackages = new LinkedHashMap<>();
 
         Map<Name, ModuleSymbol> seen = new HashMap<>();

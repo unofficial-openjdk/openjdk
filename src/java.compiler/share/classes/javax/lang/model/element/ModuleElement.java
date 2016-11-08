@@ -154,7 +154,7 @@ public interface ModuleElement extends Element, QualifiedNameable {
     interface ExportsDirective extends Directive {
 
         /**
-         * Returns the package being exported, or null if this is a default exports directive.
+         * Returns the package being exported.
          * @return the package being exported
          */
         PackageElement getPackage();

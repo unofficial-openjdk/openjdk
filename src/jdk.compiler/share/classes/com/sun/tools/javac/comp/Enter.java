@@ -167,7 +167,7 @@ public class Enter extends JCTree.Visitor {
      */
     ListBuffer<ClassSymbol> uncompleted;
 
-    public boolean modulesInitialized;
+    /** The queue of modules whose imports still need to be checked. */
     ListBuffer<JCCompilationUnit> unfinishedModules = new ListBuffer<>();
 
     /** A dummy class to serve as enclClass for toplevel environments.
@@ -561,7 +561,7 @@ public class Enter extends JCTree.Visitor {
                         prevUncompleted.append(clazz);
                 }
 
-                if (!modulesInitialized) {
+                if (!modules.modulesInitialized()) {
                     for (JCCompilationUnit cut : trees) {
                         if (cut.getModuleDecl() != null) {
                             unfinishedModules.append(cut);
@@ -583,6 +583,5 @@ public class Enter extends JCTree.Visitor {
 
     public void newRound() {
         typeEnvs.clear();
-        modulesInitialized = false;
     }
 }

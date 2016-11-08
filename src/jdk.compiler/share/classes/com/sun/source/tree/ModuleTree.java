@@ -34,7 +34,7 @@ import java.util.List;
  * For example:
  * <pre>
  *    <em>annotations</em>
- *    [weak] module <em>module-name</em> {
+ *    [open] module <em>module-name</em> {
  *        <em>directives</em>
  *    }
  * </pre>
