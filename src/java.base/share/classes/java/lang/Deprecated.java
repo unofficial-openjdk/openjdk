@@ -41,9 +41,9 @@ import static java.lang.annotation.ElementType.*;
  * or a package declaration has no effect on the warnings issued by a compiler.
  *
  * <p>When a module is deprecated, the use of that module in {@code
- * requires} or {@code exports} clauses causes a warning to be
- * issued. A module being deprecated does <em>not</em> cause warnings
- * to be issued for uses of types within the module.
+ * requires}, but not in {@code exports} or {@code opens} clauses causes
+ * a warning to be issued. A module being deprecated does <em>not</em> cause
+ * warnings to be issued for uses of types within the module.
  *
  * <p>This annotation type has a string-valued element {@code since}. The value
  * of this element indicates the version in which the annotated program element

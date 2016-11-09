@@ -26,7 +26,6 @@
 /**
  * Defines the foundational APIs of the Java SE Platform.
  */
-@SuppressWarnings("deprecation")
 module java.base {
 
     exports java.io;
