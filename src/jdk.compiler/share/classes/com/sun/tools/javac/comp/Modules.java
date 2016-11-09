@@ -54,6 +54,7 @@ import javax.tools.StandardLocation;
 
 import com.sun.source.tree.ModuleTree.ModuleKind;
 import com.sun.tools.javac.code.ClassFinder;
+import com.sun.tools.javac.code.DeferredLintHandler;
 import com.sun.tools.javac.code.Directive;
 import com.sun.tools.javac.code.Directive.ExportsDirective;
 import com.sun.tools.javac.code.Directive.ExportsFlag;
@@ -131,6 +132,8 @@ public class Modules extends JCTree.Visitor {
     private final Names names;
     private final Symtab syms;
     private final Attr attr;
+    private final Check chk;
+    private final DeferredLintHandler deferredLintHandler;
     private final TypeEnvs typeEnvs;
     private final Types types;
     private final JavaFileManager fileManager;
@@ -170,6 +173,8 @@ public class Modules extends JCTree.Visitor {
         names = Names.instance(context);
         syms = Symtab.instance(context);
         attr = Attr.instance(context);
+        chk = Check.instance(context);
+        deferredLintHandler = DeferredLintHandler.instance(context);
         typeEnvs = TypeEnvs.instance(context);
         moduleFinder = ModuleFinder.instance(context);
         types = Types.instance(context);
@@ -767,10 +772,14 @@ public class Modules extends JCTree.Visitor {
             Env<AttrContext> env = typeEnvs.get(msym);
             UsesProvidesVisitor v = new UsesProvidesVisitor(msym, env);
             JavaFileObject prev = log.useSource(env.toplevel.sourcefile);
+            JCModuleDecl decl = env.toplevel.getModuleDecl();
+            DiagnosticPosition prevLintPos = deferredLintHandler.setPos(decl.pos());
+
             try {
-                env.toplevel.getModuleDecl().accept(v);
+                decl.accept(v);
             } finally {
                 log.useSource(prev);
+                deferredLintHandler.setPos(prevLintPos);
             }
         };
     }
@@ -890,6 +899,7 @@ public class Modules extends JCTree.Visitor {
         @Override
         public void visitRequires(JCRequires tree) {
             if (tree.directive != null) {
+                chk.checkDeprecated(tree.moduleName.pos(), msym, tree.directive.module);
                 msym.directives = msym.directives.prepend(tree.directive);
             }
         }

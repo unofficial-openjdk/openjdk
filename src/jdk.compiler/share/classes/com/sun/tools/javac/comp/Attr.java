@@ -4437,7 +4437,7 @@ public class Attr extends JCTree.Visitor {
         Lint prevLint = chk.setLint(lint);
 
         try {
-            chk.checkDeprecatedModules(tree);
+            deferredLintHandler.flush(tree.pos());
         } finally {
             chk.setLint(prevLint);
         }

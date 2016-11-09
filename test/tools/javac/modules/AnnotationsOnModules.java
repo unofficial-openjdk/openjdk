@@ -254,9 +254,7 @@ public class AnnotationsOnModules extends ModuleTestBase {
             if (suppress.isEmpty()) {
                 expected = Arrays.asList(
                         "module-info.java:2:14: compiler.warn.has.been.deprecated.module: m1",
-                        "module-info.java:3:20: compiler.warn.has.been.deprecated.module: m1",
-                        "module-info.java:3:24: compiler.warn.has.been.deprecated.module: m2",
-                        "3 warnings");
+                        "1 warning");
             } else {
                 expected = Arrays.asList("");
             }
