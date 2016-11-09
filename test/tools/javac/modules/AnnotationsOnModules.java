@@ -38,11 +38,14 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
+import javax.annotation.processing.SupportedOptions;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ModuleElement;
 import javax.lang.model.element.TypeElement;
@@ -278,6 +281,122 @@ public class AnnotationsOnModules extends ModuleTestBase {
                 throw new AssertionError("Unexpected output: " + actual + "; suppress: " + suppress);
             }
         }
+    }
+
+    @Test
+    public void testAttributeValues(Path base) throws Exception {
+        class TestCase {
+            public final String auxDecl;
+            public final String decl;
+            public final String use;
+            public final String expectedAnnotations;
+
+            public TestCase(String auxDecl, String decl, String use, String expectedAnnotations) {
+                this.auxDecl = auxDecl;
+                this.decl = decl;
+                this.use = use;
+                this.expectedAnnotations = expectedAnnotations;
+            }
+        }
+
+        TestCase[] testCases = new TestCase[] {
+            new TestCase("package test; public enum E {A, B;}",
+                         "public E value();",
+                         "test.E.A",
+                         "@test.A(test.E.A)"),
+            new TestCase("package test; public enum E {A, B;}",
+                         "public E[] value();",
+                         "{test.E.A, test.E.B}",
+                         "@test.A({test.E.A, test.E.B})"),
+            new TestCase("package test; public class Aux {}",
+                         "public Class value();",
+                         "test.Aux.class",
+                         "@test.A(test.Aux.class)"),
+            new TestCase("package test; public class Aux {}",
+                         "public Class[] value();",
+                         "{test.Aux.class, String.class}",
+                         "@test.A({test.Aux.class, java.lang.String.class})"),
+            new TestCase("package test; public @interface Aux { public Class value(); }",
+                         "public test.Aux value();",
+                         "@test.Aux(String.class)",
+                         "@test.A(@test.Aux(java.lang.String.class))"),
+            new TestCase("package test; public @interface Aux { public Class value(); }",
+                         "public test.Aux[] value();",
+                         "{@test.Aux(String.class), @test.Aux(Integer.class)}",
+                         "@test.A({@test.Aux(java.lang.String.class), @test.Aux(java.lang.Integer.class)})"),
+            new TestCase("package test; public class Any { }",
+                         "public int value();",
+                         "1",
+                         "@test.A(1)"),
+            new TestCase("package test; public class Any { }",
+                         "public int[] value();",
+                         "{1, 2}",
+                         "@test.A({1, 2})"),
+        };
+
+        Path auxSrc = base.resolve("aux-src");
+        tb.writeJavaFiles(auxSrc,
+                          "class Any {}");
+
+        int count = 0;
+
+        for (TestCase tc : testCases) {
+            Path testBase = base.resolve(String.valueOf(count));
+            Path moduleSrc = testBase.resolve("module-src");
+            Path m = moduleSrc.resolve("m");
+
+            tb.writeJavaFiles(m,
+                              "@test.A(" + tc.use + ") module m { }",
+                              "package test; @java.lang.annotation.Target(java.lang.annotation.ElementType.MODULE) public @interface A { " + tc.decl + "}",
+                              tc.auxDecl);
+
+            Path modulePath = testBase.resolve("module-path");
+
+            Files.createDirectories(modulePath);
+
+            new JavacTask(tb)
+                .options("--module-source-path", moduleSrc.toString())
+                .outdir(modulePath)
+                .files(findJavaFiles(moduleSrc))
+                .run()
+                .writeAll();
+
+            Path classes = testBase.resolve("classes");
+
+            Files.createDirectories(classes);
+
+            new JavacTask(tb)
+                .options("--module-path", modulePath.toString(),
+                         "--add-modules", "m",
+                         "-processorpath", System.getProperty("test.classes"),
+                         "-processor", ProxyTypeValidator.class.getName(),
+                         "-A" + OPT_EXPECTED_ANNOTATIONS + "=" + tc.expectedAnnotations)
+                .outdir(classes)
+                .files(findJavaFiles(auxSrc))
+                .run()
+                .writeAll();
+        }
+    }
+
+    private static final String OPT_EXPECTED_ANNOTATIONS = "expectedAnnotations";
+
+    @SupportedAnnotationTypes("*")
+    @SupportedOptions(OPT_EXPECTED_ANNOTATIONS)
+    public static final class ProxyTypeValidator extends AbstractProcessor {
+
+        @Override
+        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+            ModuleElement m = processingEnv.getElementUtils().getModuleElement("m");
+            String actualTypes = m.getAnnotationMirrors()
+                                  .stream()
+                                  .map(am -> am.toString())
+                                  .collect(Collectors.joining(", "));
+            if (!Objects.equals(actualTypes, processingEnv.getOptions().get(OPT_EXPECTED_ANNOTATIONS))) {
+                throw new IllegalStateException("Expected annotations not found, actual: " + actualTypes);
+            }
+            return false;
+        }
+
     }
 
 }

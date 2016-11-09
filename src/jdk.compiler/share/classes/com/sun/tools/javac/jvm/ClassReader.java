@@ -1598,7 +1598,7 @@ public class ClassReader {
         // support preliminary jsr175-format class files
         if (buf[poolIdx[i]] == CONSTANT_Class)
             return readClassSymbol(i).type;
-        return readType(i);
+        return readTypeToProxy(i);
     }
     Type readEnumType(int i) {
         // support preliminary jsr175-format class files
@@ -1606,7 +1606,15 @@ public class ClassReader {
         int length = getChar(index + 1);
         if (buf[index + length + 2] != ';')
             return enterClass(readName(i)).type;
-        return readType(i);
+        return readTypeToProxy(i);
+    }
+    Type readTypeToProxy(int i) {
+        if (currentModule.module_info == currentOwner) {
+            int index = poolIdx[i];
+            return new ProxyType(Arrays.copyOfRange(buf, index + 3, index + 3 + getChar(index + 1)));
+        } else {
+            return readType(i);
+        }
     }
 
     CompoundAnnotationProxy readCompoundAnnotation() {
@@ -1857,7 +1865,7 @@ public class ClassReader {
         case 'e':
             return new EnumAttributeProxy(readEnumType(nextChar()), readName(nextChar()));
         case 'c':
-            return new Attribute.Class(types, readTypeOrClassSymbol(nextChar()));
+            return new ClassAttributeProxy(readTypeOrClassSymbol(nextChar()));
         case '[': {
             int n = nextChar();
             ListBuffer<Attribute> l = new ListBuffer<>();
@@ -1874,6 +1882,7 @@ public class ClassReader {
 
     interface ProxyVisitor extends Attribute.Visitor {
         void visitEnumAttributeProxy(EnumAttributeProxy proxy);
+        void visitClassAttributeProxy(ClassAttributeProxy proxy);
         void visitArrayAttributeProxy(ArrayAttributeProxy proxy);
         void visitCompoundAnnotationProxy(CompoundAnnotationProxy proxy);
     }
@@ -1890,6 +1899,19 @@ public class ClassReader {
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
         public String toString() {
             return "/*proxy enum*/" + enumType + "." + enumerator;
+        }
+    }
+
+    static class ClassAttributeProxy extends Attribute {
+        Type classType;
+        public ClassAttributeProxy(Type classType) {
+            super(null);
+            this.classType = classType;
+        }
+        public void accept(Visitor v) { ((ProxyVisitor)v).visitClassAttributeProxy(this); }
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
+        public String toString() {
+            return "/*proxy class*/" + classType + ".class";
         }
     }
 
@@ -1966,10 +1988,7 @@ public class ClassReader {
         }
 
         Attribute.Compound deproxyCompound(CompoundAnnotationProxy a) {
-            Type annotationType = a.type;
-            if (annotationType instanceof ProxyType) {
-                annotationType = ((ProxyType) annotationType).resolve();
-            }
+            Type annotationType = resolvePossibleProxyType(a.type);
             ListBuffer<Pair<Symbol.MethodSymbol,Attribute>> buf = new ListBuffer<>();
             for (List<Pair<Name,Attribute>> l = a.values;
                  l.nonEmpty();
@@ -2061,7 +2080,8 @@ public class ClassReader {
 
         public void visitEnumAttributeProxy(EnumAttributeProxy proxy) {
             // type.tsym.flatName() should == proxy.enumFlatName
-            TypeSymbol enumTypeSym = proxy.enumType.tsym;
+            Type enumType = resolvePossibleProxyType(proxy.enumType);
+            TypeSymbol enumTypeSym = enumType.tsym;
             VarSymbol enumerator = null;
             CompletionFailure failure = null;
             try {
@@ -2091,6 +2111,12 @@ public class ClassReader {
             }
         }
 
+        @Override
+        public void visitClassAttributeProxy(ClassAttributeProxy proxy) {
+            Type classType = resolvePossibleProxyType(proxy.classType);
+            result = new Attribute.Class(types, classType);
+        }
+
         public void visitArrayAttributeProxy(ArrayAttributeProxy proxy) {
             int length = proxy.values.length();
             Attribute[] ats = new Attribute[length];
@@ -2104,6 +2130,21 @@ public class ClassReader {
 
         public void visitCompoundAnnotationProxy(CompoundAnnotationProxy proxy) {
             result = deproxyCompound(proxy);
+        }
+
+        Type resolvePossibleProxyType(Type t) {
+            if (t instanceof ProxyType) {
+                Assert.check(requestingOwner.owner.kind == MDL);
+                ModuleSymbol prevCurrentModule = currentModule;
+                currentModule = (ModuleSymbol) requestingOwner.owner;
+                try {
+                    return ((ProxyType) t).resolve();
+                } finally {
+                    currentModule = prevCurrentModule;
+                }
+            } else {
+                return t;
+            }
         }
     }
 
@@ -2889,6 +2930,11 @@ public class ClassReader {
 
         public Type resolve() {
             return sigToType(content, 0, content.length);
+        }
+
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
+        public String toString() {
+            return "<ProxyType>";
         }
 
     }
