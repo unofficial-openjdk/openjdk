@@ -39,6 +39,7 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
@@ -60,6 +61,10 @@ public class DisabledAlgorithmConstraints extends AbstractAlgorithmConstraints {
     public static final String PROPERTY_TLS_DISABLED_ALGS =
             "jdk.tls.disabledAlgorithms";
 
+    // the known security property, jdk.jar.disabledAlgorithms
+    public static final String PROPERTY_JAR_DISABLED_ALGS =
+            "jdk.jar.disabledAlgorithms";
+
     private final String[] disabledAlgorithms;
     private final Constraints algorithmConstraints;
 
@@ -73,6 +78,14 @@ public class DisabledAlgorithmConstraints extends AbstractAlgorithmConstraints {
         this(propertyName, new AlgorithmDecomposer());
     }
 
+    /**
+     * Initialize algorithm constraints with the specified security property
+     * for a specific usage type.
+     *
+     * @param propertyName the security property name that define the disabled
+     *        algorithm constraints
+     * @param decomposer an alternate AlgorithmDecomposer.
+     */
     public DisabledAlgorithmConstraints(String propertyName,
             AlgorithmDecomposer decomposer) {
         super(decomposer);
@@ -228,10 +241,11 @@ public class DisabledAlgorithmConstraints extends AbstractAlgorithmConstraints {
 
     private static class Constraints {
         private Map<String, Set<Constraint>> constraintsMap = new HashMap<>();
-        private static final Pattern keySizePattern = Pattern.compile(
-                "keySize\\s*(<=|<|==|!=|>|>=)\\s*(\\d+)");
-        private static final Pattern denyAfterPattern = Pattern.compile(
-                "denyAfter\\s+(\\d{4})-(\\d{2})-(\\d{2})");
+
+        private static class Holder {
+            private static final Pattern DENY_AFTER_PATTERN = Pattern.compile(
+                    "denyAfter\\s+(\\d{4})-(\\d{2})-(\\d{2})");
+        }
 
         public Constraints(String[] constraintArray) {
             for (String constraintEntry : constraintArray) {
@@ -255,9 +269,11 @@ public class DisabledAlgorithmConstraints extends AbstractAlgorithmConstraints {
                                     toUpperCase(Locale.ENGLISH));
                     policy = constraintEntry.substring(space + 1);
                 } else {
-                    constraintsMap.computeIfAbsent(
-                            constraintEntry.toUpperCase(Locale.ENGLISH),
-                            k -> new HashSet<>());
+                    algorithm = constraintEntry.toUpperCase(Locale.ENGLISH);
+                    if (!constraintsMap.containsKey(algorithm)) {
+                        constraintsMap.putIfAbsent(algorithm,
+                                new HashSet<>());
+                    }
                     continue;
                 }
 
@@ -271,15 +287,21 @@ public class DisabledAlgorithmConstraints extends AbstractAlgorithmConstraints {
                 for (String entry : policy.split("&")) {
                     entry = entry.trim();
 
-                    Matcher matcher = keySizePattern.matcher(entry);
-                    if (matcher.matches()) {
+                    Matcher matcher;
+                    if (entry.startsWith("keySize")) {
                         if (debug != null) {
                             debug.println("Constraints set to keySize: " +
                                     entry);
                         }
+                        StringTokenizer tokens = new StringTokenizer(entry);
+                        if (!"keySize".equals(tokens.nextToken())) {
+                            throw new IllegalArgumentException("Error in " +
+                                    "security property. Constraint unknown: " +
+                                    entry);
+                        }
                         c = new KeySizeConstraint(algorithm,
-                                KeySizeConstraint.Operator.of(matcher.group(1)),
-                                Integer.parseInt(matcher.group(2)));
+                                KeySizeConstraint.Operator.of(tokens.nextToken()),
+                                Integer.parseInt(tokens.nextToken()));
 
                     } else if (entry.equalsIgnoreCase("jdkCA")) {
                         if (debug != null) {
@@ -293,7 +315,9 @@ public class DisabledAlgorithmConstraints extends AbstractAlgorithmConstraints {
                         c = new jdkCAConstraint(algorithm);
                         jdkCALimit = true;
 
-                    } else if(matcher.usePattern(denyAfterPattern).matches()) {
+                    } else if(entry.startsWith("denyAfter") &&
+                            (matcher = Holder.DENY_AFTER_PATTERN.matcher(entry))
+                                    .matches()) {
                         if (debug != null) {
                             debug.println("Constraints set to denyAfter");
                         }
@@ -530,7 +554,8 @@ public class DisabledAlgorithmConstraints extends AbstractAlgorithmConstraints {
                 }
                 throw new CertPathValidatorException(
                         "Algorithm constraints check failed on certificate " +
-                                "anchor limits",
+                                "anchor limits. " + algorithm + " used with " +
+                                cp.getCertificate().getSubjectX500Principal(),
                         null, null, -1, BasicReason.ALGORITHM_CONSTRAINED);
             }
         }
@@ -611,8 +636,8 @@ public class DisabledAlgorithmConstraints extends AbstractAlgorithmConstraints {
                      return;
                  }
                  throw new CertPathValidatorException(
-                         "denyAfter constraint check failed.  " +
-                                 "Constraint date: " +
+                         "denyAfter constraint check failed: " + algorithm +
+                                 " used with Constraint date: " +
                                  dateFormat.format(denyAfterDate) + "; "
                                  + errmsg + dateFormat.format(currentDate),
                          null, null, -1, BasicReason.ALGORITHM_CONSTRAINED);
@@ -644,6 +669,7 @@ public class DisabledAlgorithmConstraints extends AbstractAlgorithmConstraints {
         private int minSize;            // the minimal available key size
         private int maxSize;            // the maximal available key size
         private int prohibitedSize = -1;    // unavailable key sizes
+        private int size;
 
         public KeySizeConstraint(String algo, Operator operator, int length) {
             algorithm = algo;
@@ -695,7 +721,9 @@ public class DisabledAlgorithmConstraints extends AbstractAlgorithmConstraints {
                     return;
                 }
                 throw new CertPathValidatorException(
-                        "Algorithm constraints check failed on keysize limits",
+                        "Algorithm constraints check failed on keysize limits. "
+                                + algorithm + " " + size + "bit key used with "
+                                + cp.getCertificate().getSubjectX500Principal(),
                         null, null, -1, BasicReason.ALGORITHM_CONSTRAINED);
             }
         }
@@ -722,7 +750,7 @@ public class DisabledAlgorithmConstraints extends AbstractAlgorithmConstraints {
                 return true;
             }
 
-            int size = KeyUtil.getKeySize(key);
+            size = KeyUtil.getKeySize(key);
             if (size == 0) {
                 return false;    // we don't allow any key of size 0.
             } else if (size > 0) {
