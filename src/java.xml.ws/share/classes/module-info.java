@@ -110,6 +110,9 @@ module java.xml.ws {
     // com.sun.xml.internal.ws.fault.SOAPFaultBuilder uses JAXBContext.newInstance
     opens com.sun.xml.internal.ws.fault to java.xml.bind;
 
+    // classes passed to JAXBContext.newInstance for deep reflection
+    opens com.sun.xml.internal.ws.addressing to java.xml.bind;
+
     // JAF data handlers
     exports com.sun.xml.internal.messaging.saaj.soap to
         java.activation;
