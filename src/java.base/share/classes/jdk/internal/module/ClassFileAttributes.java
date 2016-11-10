@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,17 +27,20 @@ package jdk.internal.module;
 
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Requires;
-import java.lang.module.ModuleDescriptor.Requires.Modifier;
 import java.lang.module.ModuleDescriptor.Exports;
+import java.lang.module.ModuleDescriptor.Opens;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Version;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import jdk.internal.misc.JavaLangModuleAccess;
+import jdk.internal.misc.SharedSecrets;
 import jdk.internal.org.objectweb.asm.Attribute;
 import jdk.internal.org.objectweb.asm.ByteVector;
 import jdk.internal.org.objectweb.asm.ClassReader;
@@ -51,7 +54,7 @@ import static jdk.internal.module.ClassFileConstants.*;
  * class file attributes in a module-info class file.
  */
 
-class ClassFileAttributes {
+public final class ClassFileAttributes {
 
     private ClassFileAttributes() { }
 
@@ -60,16 +63,18 @@ class ClassFileAttributes {
      *   // See lang-vm.html for details.
      * }
      */
-    static class ModuleAttribute extends Attribute {
+    public static class ModuleAttribute extends Attribute {
+        private static final JavaLangModuleAccess JLMA
+            = SharedSecrets.getJavaLangModuleAccess();
 
         private ModuleDescriptor descriptor;
 
-        ModuleAttribute(ModuleDescriptor descriptor) {
+        public ModuleAttribute(ModuleDescriptor descriptor) {
             super(MODULE);
             this.descriptor = descriptor;
         }
 
-        ModuleAttribute() {
+        public ModuleAttribute() {
             super(MODULE);
         }
 
@@ -81,9 +86,19 @@ class ClassFileAttributes {
                                  int codeOff,
                                  Label[] labels)
         {
-            ModuleDescriptor.Builder builder
-                = new ModuleDescriptor.Builder("xyzzy"); // Name never used
             ModuleAttribute attr = new ModuleAttribute();
+
+            // module_flags
+            int module_flags = cr.readUnsignedShort(off);
+            boolean open = ((module_flags & ACC_OPEN) != 0);
+            off += 2;
+
+            ModuleDescriptor.Builder builder;
+            if (open) {
+                builder = JLMA.newOpenModuleBuilder("m", false);
+            } else {
+                builder = JLMA.newModuleBuilder("m", false);
+            }
 
             // requires_count and requires[requires_count]
             int requires_count = cr.readUnsignedShort(off);
@@ -91,17 +106,19 @@ class ClassFileAttributes {
             for (int i=0; i<requires_count; i++) {
                 String dn = cr.readUTF8(off, buf);
                 int flags = cr.readUnsignedShort(off + 2);
-                Set<Modifier> mods;
+                Set<Requires.Modifier> mods;
                 if (flags == 0) {
                     mods = Collections.emptySet();
                 } else {
                     mods = new HashSet<>();
-                    if ((flags & ACC_PUBLIC) != 0)
-                        mods.add(Modifier.PUBLIC);
+                    if ((flags & ACC_TRANSITIVE) != 0)
+                        mods.add(Requires.Modifier.TRANSITIVE);
+                    if ((flags & ACC_STATIC_PHASE) != 0)
+                        mods.add(Requires.Modifier.STATIC);
                     if ((flags & ACC_SYNTHETIC) != 0)
-                        mods.add(Modifier.SYNTHETIC);
+                        mods.add(Requires.Modifier.SYNTHETIC);
                     if ((flags & ACC_MANDATED) != 0)
-                        mods.add(Modifier.MANDATED);
+                        mods.add(Requires.Modifier.MANDATED);
                 }
                 builder.requires(mods, dn);
                 off += 4;
@@ -113,8 +130,23 @@ class ClassFileAttributes {
             if (exports_count > 0) {
                 for (int i=0; i<exports_count; i++) {
                     String pkg = cr.readUTF8(off, buf).replace('/', '.');
-                    int exports_to_count = cr.readUnsignedShort(off+2);
-                    off += 4;
+                    off += 2;
+
+                    int flags = cr.readUnsignedShort(off);
+                    off += 2;
+                    Set<Exports.Modifier> mods;
+                    if (flags == 0) {
+                        mods = Collections.emptySet();
+                    } else {
+                        mods = new HashSet<>();
+                        if ((flags & ACC_SYNTHETIC) != 0)
+                            mods.add(Exports.Modifier.SYNTHETIC);
+                        if ((flags & ACC_MANDATED) != 0)
+                            mods.add(Exports.Modifier.MANDATED);
+                    }
+
+                    int exports_to_count = cr.readUnsignedShort(off);
+                    off += 2;
                     if (exports_to_count > 0) {
                         Set<String> targets = new HashSet<>();
                         for (int j=0; j<exports_to_count; j++) {
@@ -122,9 +154,46 @@ class ClassFileAttributes {
                             off += 2;
                             targets.add(t);
                         }
-                        builder.exports(pkg, targets);
+                        builder.exports(mods, pkg, targets);
                     } else {
-                        builder.exports(pkg);
+                        builder.exports(mods, pkg);
+                    }
+                }
+            }
+
+            // opens_count and opens[opens_count]
+            int open_count = cr.readUnsignedShort(off);
+            off += 2;
+            if (open_count > 0) {
+                for (int i=0; i<open_count; i++) {
+                    String pkg = cr.readUTF8(off, buf).replace('/', '.');
+                    off += 2;
+
+                    int flags = cr.readUnsignedShort(off);
+                    off += 2;
+                    Set<Opens.Modifier> mods;
+                    if (flags == 0) {
+                        mods = Collections.emptySet();
+                    } else {
+                        mods = new HashSet<>();
+                        if ((flags & ACC_SYNTHETIC) != 0)
+                            mods.add(Opens.Modifier.SYNTHETIC);
+                        if ((flags & ACC_MANDATED) != 0)
+                            mods.add(Opens.Modifier.MANDATED);
+                    }
+
+                    int opens_to_count = cr.readUnsignedShort(off);
+                    off += 2;
+                    if (opens_to_count > 0) {
+                        Set<String> targets = new HashSet<>();
+                        for (int j=0; j<opens_to_count; j++) {
+                            String t = cr.readUTF8(off, buf);
+                            off += 2;
+                            targets.add(t);
+                        }
+                        builder.opens(mods, pkg, targets);
+                    } else {
+                        builder.opens(mods, pkg);
                     }
                 }
             }
@@ -144,15 +213,19 @@ class ClassFileAttributes {
             int provides_count = cr.readUnsignedShort(off);
             off += 2;
             if (provides_count > 0) {
-                Map<String, Set<String>> provides = new HashMap<>();
                 for (int i=0; i<provides_count; i++) {
-                    String sn = cr.readClass(off, buf).replace('/', '.');
-                    String cn = cr.readClass(off + 2, buf).replace('/', '.');
-                    provides.computeIfAbsent(sn, k -> new LinkedHashSet<>()).add(cn);
-                    off += 4;
+                    String service = cr.readClass(off, buf).replace('/', '.');
+                    off += 2;
+                    int with_count = cr.readUnsignedShort(off);
+                    off += 2;
+                    List<String> providers = new ArrayList<>();
+                    for (int j=0; j<with_count; j++) {
+                        String cn = cr.readClass(off, buf).replace('/', '.');
+                        off += 2;
+                        providers.add(cn);
+                    }
+                    builder.provides(service, providers);
                 }
-                provides.entrySet().forEach(e -> builder.provides(e.getKey(),
-                                                                  e.getValue()));
             }
 
             attr.descriptor = builder.build();
@@ -169,6 +242,14 @@ class ClassFileAttributes {
             assert descriptor != null;
             ByteVector attr = new ByteVector();
 
+            // module_flags
+            int module_flags = 0;
+            if (descriptor.isOpen())
+                module_flags |= ACC_OPEN;
+            if (descriptor.isSynthetic())
+                module_flags |= ACC_SYNTHETIC;
+            attr.putShort(module_flags);
+
             // requires_count
             attr.putShort(descriptor.requires().size());
 
@@ -176,11 +257,13 @@ class ClassFileAttributes {
             for (Requires md : descriptor.requires()) {
                 String dn = md.name();
                 int flags = 0;
-                if (md.modifiers().contains(Modifier.PUBLIC))
-                    flags |= ACC_PUBLIC;
-                if (md.modifiers().contains(Modifier.SYNTHETIC))
+                if (md.modifiers().contains(Requires.Modifier.TRANSITIVE))
+                    flags |= ACC_TRANSITIVE;
+                if (md.modifiers().contains(Requires.Modifier.STATIC))
+                    flags |= ACC_STATIC_PHASE;
+                if (md.modifiers().contains(Requires.Modifier.SYNTHETIC))
                     flags |= ACC_SYNTHETIC;
-                if (md.modifiers().contains(Modifier.MANDATED))
+                if (md.modifiers().contains(Requires.Modifier.MANDATED))
                     flags |= ACC_MANDATED;
                 int index = cw.newUTF8(dn);
                 attr.putShort(index);
@@ -188,20 +271,47 @@ class ClassFileAttributes {
             }
 
             // exports_count and exports[exports_count];
-            if (descriptor.exports().isEmpty()) {
-                attr.putShort(0);
-            } else {
-                attr.putShort(descriptor.exports().size());
-                for (Exports e : descriptor.exports()) {
-                    String pkg = e.source().replace('.', '/');
-                    attr.putShort(cw.newUTF8(pkg));
-                    if (e.isQualified()) {
-                        Set<String> ts = e.targets();
-                        attr.putShort(ts.size());
-                        ts.forEach(t -> attr.putShort(cw.newUTF8(t)));
-                    } else {
-                        attr.putShort(0);
-                    }
+            attr.putShort(descriptor.exports().size());
+            for (Exports e : descriptor.exports()) {
+                String pkg = e.source().replace('.', '/');
+                attr.putShort(cw.newUTF8(pkg));
+
+                int flags = 0;
+                if (e.modifiers().contains(Exports.Modifier.SYNTHETIC))
+                    flags |= ACC_SYNTHETIC;
+                if (e.modifiers().contains(Exports.Modifier.MANDATED))
+                    flags |= ACC_MANDATED;
+                attr.putShort(flags);
+
+                if (e.isQualified()) {
+                    Set<String> ts = e.targets();
+                    attr.putShort(ts.size());
+                    ts.forEach(t -> attr.putShort(cw.newUTF8(t)));
+                } else {
+                    attr.putShort(0);
+                }
+            }
+
+
+            // opens_counts and opens[opens_counts]
+            attr.putShort(descriptor.opens().size());
+            for (Opens obj : descriptor.opens()) {
+                String pkg = obj.source().replace('.', '/');
+                attr.putShort(cw.newUTF8(pkg));
+
+                int flags = 0;
+                if (obj.modifiers().contains(Opens.Modifier.SYNTHETIC))
+                    flags |= ACC_SYNTHETIC;
+                if (obj.modifiers().contains(Opens.Modifier.MANDATED))
+                    flags |= ACC_MANDATED;
+                attr.putShort(flags);
+
+                if (obj.isQualified()) {
+                    Set<String> ts = obj.targets();
+                    attr.putShort(ts.size());
+                    ts.forEach(t -> attr.putShort(cw.newUTF8(t)));
+                } else {
+                    attr.putShort(0);
                 }
             }
 
@@ -221,14 +331,13 @@ class ClassFileAttributes {
             if (descriptor.provides().isEmpty()) {
                 attr.putShort(0);
             } else {
-                int count = descriptor.provides().values()
-                    .stream().mapToInt(ps -> ps.providers().size()).sum();
-                attr.putShort(count);
-                for (Provides p : descriptor.provides().values()) {
+                attr.putShort(descriptor.provides().size());
+                for (Provides p : descriptor.provides()) {
                     String service = p.service().replace('.', '/');
-                    int index = cw.newClass(service);
+                    attr.putShort(cw.newClass(service));
+                    int with_count = p.providers().size();
+                    attr.putShort(with_count);
                     for (String provider : p.providers()) {
-                        attr.putShort(index);
                         attr.putShort(cw.newClass(provider.replace('.', '/')));
                     }
                 }
@@ -239,44 +348,13 @@ class ClassFileAttributes {
     }
 
     /**
-     * Synthetic attribute.
-     */
-    static class SyntheticAttribute extends Attribute {
-        SyntheticAttribute() {
-            super(SYNTHETIC);
-        }
-
-        @Override
-        protected Attribute read(ClassReader cr,
-                                 int off,
-                                 int len,
-                                 char[] buf,
-                                 int codeOff,
-                                 Label[] labels)
-        {
-            return new SyntheticAttribute();
-        }
-
-        @Override
-        protected ByteVector write(ClassWriter cw,
-                                   byte[] code,
-                                   int len,
-                                   int maxStack,
-                                   int maxLocals)
-        {
-            ByteVector attr = new ByteVector();
-            return attr;
-        }
-    }
-
-    /**
-     * ConcealedPackages attribute.
+     * Packages attribute.
      *
      * <pre> {@code
      *
-     * ConcealedPackages_attribute {
+     * Packages_attribute {
      *   // index to CONSTANT_utf8_info structure in constant pool representing
-     *   // the string "ConcealedPackages"
+     *   // the string "Packages"
      *   u2 attribute_name_index;
      *   u4 attribute_length;
      *
@@ -288,15 +366,15 @@ class ClassFileAttributes {
      *
      * }</pre>
      */
-    static class ConcealedPackagesAttribute extends Attribute {
+    public static class PackagesAttribute extends Attribute {
         private final Set<String> packages;
 
-        ConcealedPackagesAttribute(Set<String> packages) {
-            super(CONCEALED_PACKAGES);
+        public PackagesAttribute(Set<String> packages) {
+            super(PACKAGES);
             this.packages = packages;
         }
 
-        ConcealedPackagesAttribute() {
+        public PackagesAttribute() {
             this(null);
         }
 
@@ -320,7 +398,7 @@ class ClassFileAttributes {
                 off += 2;
             }
 
-            return new ConcealedPackagesAttribute(packages);
+            return new PackagesAttribute(packages);
         }
 
         @Override
@@ -364,15 +442,15 @@ class ClassFileAttributes {
      *
      * } </pre>
      */
-    static class VersionAttribute extends Attribute {
+    public static class VersionAttribute extends Attribute {
         private final Version version;
 
-        VersionAttribute(Version version) {
+        public VersionAttribute(Version version) {
             super(VERSION);
             this.version = version;
         }
 
-        VersionAttribute() {
+        public VersionAttribute() {
             this(null);
         }
 
@@ -419,15 +497,15 @@ class ClassFileAttributes {
      *
      * } </pre>
      */
-    static class MainClassAttribute extends Attribute {
+    public static class MainClassAttribute extends Attribute {
         private final String mainClass;
 
-        MainClassAttribute(String mainClass) {
+        public MainClassAttribute(String mainClass) {
             super(MAIN_CLASS);
             this.mainClass = mainClass;
         }
 
-        MainClassAttribute() {
+        public MainClassAttribute() {
             this(null);
         }
 
@@ -478,19 +556,19 @@ class ClassFileAttributes {
      *
      * } </pre>
      */
-    static class TargetPlatformAttribute extends Attribute {
+    public static class TargetPlatformAttribute extends Attribute {
         private final String osName;
         private final String osArch;
         private final String osVersion;
 
-        TargetPlatformAttribute(String osName, String osArch, String osVersion) {
+        public TargetPlatformAttribute(String osName, String osArch, String osVersion) {
             super(TARGET_PLATFORM);
             this.osName = osName;
             this.osArch = osArch;
             this.osVersion = osVersion;
         }
 
-        TargetPlatformAttribute() {
+        public TargetPlatformAttribute() {
             this(null, null, null);
         }
 
