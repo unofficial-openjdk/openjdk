@@ -21,26 +21,12 @@
  * questions.
  */
 
-/*
- * @test
- * @bug 8164518
- * @summary Tests for standard JDI connector (without failover) -- launching
- * @modules jdk.jshell/jdk.jshell.execution
- * @build KullaTesting ExecutionControlTestBase
- * @run testng JDILaunchingExecutionControlTest
- */
+// key: compiler.warn.module.for.option.not.found
+// key: compiler.err.doesnt.exist
 
+// options: --add-exports undefModule/undefPackage=ALL-UNNAMED
 
-import org.testng.annotations.Test;
-import org.testng.annotations.BeforeMethod;
-import jdk.jshell.execution.JDIDefaultExecutionControl;
+import undefPackage.Any;
 
-@Test
-public class JDILaunchingExecutionControlTest extends ExecutionControlTestBase {
+class Test {}
 
-    @BeforeMethod
-    @Override
-    public void setUp() {
-        setUp(builder -> builder.executionEngine(JDIDefaultExecutionControl.launch()));
-    }
-}

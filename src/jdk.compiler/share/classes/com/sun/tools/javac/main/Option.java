@@ -35,6 +35,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -43,6 +44,8 @@ import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -199,31 +202,37 @@ public enum Option {
         // The standard file manager code knows to split apart the NULL-separated components.
         @Override
         public boolean process(OptionHelper helper, String option, String arg) {
-            if (!arg.contains("=")) { // could be more strict regeex, e.g. "(?i)[a-z0-9_.]+=.*"
-                helper.error(Errors.LocnInvalidArgForXpatch(arg));
+            if (arg.isEmpty()) {
+                helper.error("err.no.value.for.option", option);
+                return true;
+            } else if (getPattern().matcher(arg).matches()) {
+                String prev = helper.get(PATCH_MODULE);
+                if (prev == null) {
+                    super.process(helper, option, arg);
+                    return false;
+                } else {
+                    String argModulePackage = arg.substring(0, arg.indexOf('='));
+                    boolean isRepeated = Arrays.stream(prev.split("\0"))
+                            .map(s -> s.substring(0, s.indexOf('=')))
+                            .collect(Collectors.toSet())
+                            .contains(argModulePackage);
+                    if (isRepeated) {
+                        helper.error("err.repeated.value.for.patch.module", argModulePackage);
+                        return true;
+                    } else {
+                        super.process(helper, option, prev + '\0' + arg);
+                        return false;
+                    }
+                }
+            } else {
+                helper.error("err.bad.value.for.option", option, arg);
+                return true;
             }
+        }
 
-            String previous = helper.get(this);
-            if (previous == null) {
-                return super.process(helper, option, arg);
-            }
-
-            Map<String,String> map = new LinkedHashMap<>();
-            for (String s : previous.split("\0")) {
-                int sep = s.indexOf('=');
-                map.put(s.substring(0, sep), s.substring(sep + 1));
-            }
-
-            int sep = arg.indexOf('=');
-            map.put(arg.substring(0, sep), arg.substring(sep + 1));
-
-            StringBuilder sb = new StringBuilder();
-            map.forEach((m, p) -> {
-                if (sb.length() > 0)
-                    sb.append('\0');
-                sb.append(m).append('=').append(p);
-            });
-            return super.process(helper, option, sb.toString());
+        @Override
+        public Pattern getPattern() {
+            return Pattern.compile("([^/]+)=(,*[^,].*)");
         }
     },
 
@@ -556,9 +565,22 @@ public enum Option {
     ADD_EXPORTS("--add-exports", "opt.arg.addExports", "opt.addExports", EXTENDED, BASIC) {
         @Override
         public boolean process(OptionHelper helper, String option, String arg) {
-            String prev = helper.get(ADD_EXPORTS);
-            helper.put(ADD_EXPORTS.primaryName, (prev == null) ? arg : prev + '\0' + arg);
-            return false;
+            if (arg.isEmpty()) {
+                helper.error("err.no.value.for.option", option);
+                return true;
+            } else if (getPattern().matcher(arg).matches()) {
+                String prev = helper.get(ADD_EXPORTS);
+                helper.put(ADD_EXPORTS.primaryName, (prev == null) ? arg : prev + '\0' + arg);
+                return false;
+            } else {
+                helper.error("err.bad.value.for.option", option, arg);
+                return true;
+            }
+        }
+
+        @Override
+        public Pattern getPattern() {
+            return Pattern.compile("([^/]+)/([^=]+)=(,*[^,].*)");
         }
     },
 
@@ -567,9 +589,22 @@ public enum Option {
     ADD_READS("--add-reads", "opt.arg.addReads", "opt.addReads", EXTENDED, BASIC) {
         @Override
         public boolean process(OptionHelper helper, String option, String arg) {
-            String prev = helper.get(ADD_READS);
-            helper.put(ADD_READS.primaryName, (prev == null) ? arg : prev + '\0' + arg);
-            return false;
+            if (arg.isEmpty()) {
+                helper.error("err.no.value.for.option", option);
+                return true;
+            } else if (getPattern().matcher(arg).matches()) {
+                String prev = helper.get(ADD_READS);
+                helper.put(ADD_READS.primaryName, (prev == null) ? arg : prev + '\0' + arg);
+                return false;
+            } else {
+                helper.error("err.bad.value.for.option", option, arg);
+                return true;
+            }
+        }
+
+        @Override
+        public Pattern getPattern() {
+            return Pattern.compile("([^=]+)=(,*[^,].*)");
         }
     },
 
@@ -579,6 +614,7 @@ public enum Option {
             String prev = helper.get(XMODULE);
             if (prev != null) {
                 helper.error("err.option.too.many", XMODULE.primaryName);
+                return true;
             }
             helper.put(XMODULE.primaryName, arg);
             return false;
@@ -587,9 +623,50 @@ public enum Option {
 
     MODULE("--module -m", "opt.arg.m", "opt.m", STANDARD, BASIC),
 
-    ADD_MODULES("--add-modules", "opt.arg.addmods", "opt.addmods", STANDARD, BASIC),
+    ADD_MODULES("--add-modules", "opt.arg.addmods", "opt.addmods", STANDARD, BASIC) {
+        @Override
+        public boolean process(OptionHelper helper, String option, String arg) {
+            if (arg.isEmpty()) {
+                helper.error("err.no.value.for.option", option);
+                return true;
+            } else if (getPattern().matcher(arg).matches()) {
+                String prev = helper.get(ADD_MODULES);
+                // since the individual values are simple names, we can simply join the
+                // values of multiple --add-modules options with ','
+                helper.put(ADD_MODULES.primaryName, (prev == null) ? arg : prev + ',' + arg);
+                return false;
+            } else {
+                helper.error("err.bad.value.for.option", option, arg);
+                return true;
+            }
+        }
 
-    LIMIT_MODULES("--limit-modules", "opt.arg.limitmods", "opt.limitmods", STANDARD, BASIC),
+        @Override
+        public Pattern getPattern() {
+            return Pattern.compile(",*[^,].*");
+        }
+    },
+
+    LIMIT_MODULES("--limit-modules", "opt.arg.limitmods", "opt.limitmods", STANDARD, BASIC) {
+        @Override
+        public boolean process(OptionHelper helper, String option, String arg) {
+            if (arg.isEmpty()) {
+                helper.error("err.no.value.for.option", option);
+                return true;
+            } else if (getPattern().matcher(arg).matches()) {
+                helper.put(LIMIT_MODULES.primaryName, arg); // last one wins
+                return false;
+            } else {
+                helper.error("err.bad.value.for.option", option, arg);
+                return true;
+            }
+        }
+
+        @Override
+        public Pattern getPattern() {
+            return Pattern.compile(",*[^,].*");
+        }
+    },
 
     // This option exists only for the purpose of documenting itself.
     // It's actually implemented by the CommandLine class.
@@ -965,20 +1042,24 @@ public enum Option {
      */
     public boolean handleOption(OptionHelper helper, String arg, Iterator<String> rest) {
         if (hasArg()) {
+            String option;
             String operand;
             int sep = findSeparator(arg);
             if (getArgKind() == Option.ArgKind.ADJACENT) {
+                option = primaryName; // aliases not supported
                 operand = arg.substring(primaryName.length());
             } else if (sep > 0) {
+                option = arg.substring(0, sep);
                 operand = arg.substring(sep + 1);
             } else {
                 if (!rest.hasNext()) {
                     helper.error("err.req.arg", arg);
                     return false;
                 }
+                option = arg;
                 operand = rest.next();
             }
-            return !process(helper, arg, operand);
+            return !process(helper, option, operand);
         } else {
             return !process(helper, arg);
         }
@@ -1032,6 +1113,15 @@ public enum Option {
         if (group == OptionGroup.FILEMANAGER)
             helper.handleFileManagerOption(this, arg);
         return false;
+    }
+
+    /**
+     * Returns a pattern to analyze the value for an option.
+     * @return the pattern
+     * @throws UnsupportedOperationException if an option does not provide a pattern.
+     */
+    public Pattern getPattern() {
+        throw new UnsupportedOperationException();
     }
 
     /**

@@ -21,8 +21,23 @@
  * questions.
  */
 
-// key: compiler.err.xaddexports.too.many
-// options: --add-exports jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED  --add-exports jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED
-
-public class XaddexportsTooMany {
+/**The jcod files are generated from this file, compiled by JDK 8 javac.
+ */
+public class LocalTest {
+    static {
+        class Local { }
+    }
+    {
+        class Local { }
+    }
+    static void test1() {
+        class Local { }
+    }
+    void test2() {
+        class Local { }
+    }
+    LocalTest() {
+        class Local { }
+    }
 }
+

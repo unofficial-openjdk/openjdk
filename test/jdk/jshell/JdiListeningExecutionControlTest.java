@@ -21,8 +21,26 @@
  * questions.
  */
 
-// key: compiler.err.xaddexports.malformed.entry
-// options: --add-exports jdk.compiler/com.sun.tools.javac.util
+/*
+ * @test
+ * @bug 8131029 8159935 8160127 8164518
+ * @summary Tests for alternate JDI connector -- listening
+ * @modules jdk.jshell/jdk.jshell.execution
+ * @build KullaTesting ExecutionControlTestBase
+ * @run testng JdiListeningExecutionControlTest
+ */
 
-public class XaddexportsMalformedEntry {
+
+import org.testng.annotations.Test;
+import org.testng.annotations.BeforeMethod;
+import jdk.jshell.execution.JdiDefaultExecutionControl;
+
+@Test
+public class JdiListeningExecutionControlTest extends ExecutionControlTestBase {
+
+    @BeforeMethod
+    @Override
+    public void setUp() {
+        setUp(builder -> builder.executionEngine(JdiDefaultExecutionControl.listen(null)));
+    }
 }
