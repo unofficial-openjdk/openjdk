@@ -28,8 +28,8 @@
  * accessibility, audio, imaging, printing, and JavaBeans.
  */
 module java.desktop {
-    requires public java.datatransfer;
-    requires public java.xml;
+    requires transitive java.datatransfer;
+    requires transitive java.xml;
     requires java.prefs;
 
     exports java.applet;
@@ -90,6 +90,11 @@ module java.desktop {
 
     exports com.sun.awt to
         jdk.desktop;
+
+    opens javax.swing.plaf.basic to
+        jdk.jconsole;
+    opens com.sun.java.swing.plaf.windows to
+        jdk.jconsole;
 
     uses java.awt.im.spi.InputMethodDescriptor;
     uses javax.accessibility.AccessibilityProvider;

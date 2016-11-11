@@ -39,6 +39,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -64,7 +65,7 @@ import jdk.internal.perf.PerfCounter;
  * run-time image.
  *
  * The modules linked into the run-time image are assumed to have the
- * ConcealedPackages attribute.
+ * Packages attribute.
  */
 
 class SystemModuleFinder implements ModuleFinder {
@@ -102,8 +103,11 @@ class SystemModuleFinder implements ModuleFinder {
         int n = names.length;
         moduleCount.add(n);
 
-        Set<ModuleReference> mods = new HashSet<>(n);
-        Map<String, ModuleReference> map = new HashMap<>(n);
+        ModuleReference[] mods = new ModuleReference[n];
+
+        @SuppressWarnings(value = {"rawtypes", "unchecked"})
+        Entry<String, ModuleReference>[] map
+            = (Entry<String, ModuleReference>[])new Entry[n];
 
         for (int i = 0; i < n; i++) {
             ModuleDescriptor md = descriptors[i];
@@ -111,16 +115,16 @@ class SystemModuleFinder implements ModuleFinder {
             // create the ModuleReference
             ModuleReference mref = toModuleReference(md, hashSupplier(i, names[i]));
 
-            mods.add(mref);
-            map.put(names[i], mref);
+            mods[i] = mref;
+            map[i] = Map.entry(names[i], mref);
 
             // counters
             packageCount.add(md.packages().size());
             exportsCount.add(md.exports().size());
         }
 
-        modules = Collections.unmodifiableSet(mods);
-        nameToModule = map;
+        modules = Set.of(mods);
+        nameToModule = Map.ofEntries(map);
 
         initTime.addElapsedTimeFrom(t0);
     }

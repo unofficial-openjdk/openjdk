@@ -314,9 +314,9 @@ public final class ModuleBootstrap {
         PerfCounters.loadModulesTime.addElapsedTimeFrom(t5);
 
 
-        // --add-reads and --add-exports
+        // --add-reads, -add-exports/-add-opens
         addExtraReads(bootLayer);
-        addExtraExports(bootLayer);
+        addExtraExportsAndOpens(bootLayer);
 
         // total time to initialize
         PerfCounters.bootstrapTime.addElapsedTimeFrom(t0);
@@ -408,7 +408,6 @@ public final class ModuleBootstrap {
             for (String s : value.split(",")) {
                 if (s.length() > 0) modules.add(s);
             }
-
             index++;
             value = getAndRemoveProperty(prefix + index);
         }
@@ -455,14 +454,30 @@ public final class ModuleBootstrap {
 
 
     /**
-     * Process the --add-exports options to add any additional read edges that
-     * are specified on the command-line.
+     * Process the --add-exports and --add-opens options to export/open
+     * additional packages specified on the command-line.
      */
-    private static void addExtraExports(Layer bootLayer) {
+    private static void addExtraExportsAndOpens(Layer bootLayer) {
 
-        // decode the command line options
-        Map<String, Set<String>> map = decode("jdk.module.addexports.");
+        // --add-exports
+        String prefix = "jdk.module.addexports.";
+        Map<String, Set<String>> extraExports = decode(prefix);
+        if (!extraExports.isEmpty()) {
+            addExtraExportsOrOpens(bootLayer, extraExports, false);
+        }
 
+        // --add-opens
+        prefix = "jdk.module.addopens.";
+        Map<String, Set<String>> extraOpens = decode(prefix);
+        if (!extraOpens.isEmpty()) {
+            addExtraExportsOrOpens(bootLayer, extraOpens, true);
+        }
+    }
+
+    private static void addExtraExportsOrOpens(Layer bootLayer,
+                                               Map<String, Set<String>> map,
+                                               boolean opens)
+    {
         for (Map.Entry<String, Set<String>> e : map.entrySet()) {
 
             // the key is $MODULE/$PACKAGE
@@ -507,10 +522,19 @@ public final class ModuleBootstrap {
                     }
                 }
                 if (allUnnamed) {
-                    Modules.addExportsToAllUnnamed(m, pn);
+                    if (opens) {
+                        Modules.addOpensToAllUnnamed(m, pn);
+                    } else {
+                        Modules.addExportsToAllUnnamed(m, pn);
+                    }
                 } else {
-                    Modules.addExports(m, pn, other);
+                    if (opens) {
+                        Modules.addOpens(m, pn, other);
+                    } else {
+                        Modules.addExports(m, pn, other);
+                    }
                 }
+
             }
         }
     }
@@ -545,6 +569,7 @@ public final class ModuleBootstrap {
             if (rhs.isEmpty())
                 fail("Unable to parse: " + value);
 
+            // value is <module>(,<module>)*
             Set<String> values = map.computeIfAbsent(key, k -> new HashSet<>());
             for (String s : rhs.split(",")) {
                 if (s.length() > 0) values.add(s);
