@@ -606,7 +606,10 @@ void LIRGenerator::arithmetic_op_fpu(Bytecodes::Code code, LIR_Opr result, LIR_O
 
 
 void LIRGenerator::shift_op(Bytecodes::Code code, LIR_Opr result_op, LIR_Opr value, LIR_Opr count, LIR_Opr tmp) {
-  if (TwoOperandLIRForm && value != result_op) {
+
+  if (TwoOperandLIRForm && value != result_op
+      // Only 32bit right shifts require two operand form on S390.
+      S390_ONLY(&& (code == Bytecodes::_ishr || code == Bytecodes::_iushr))) {
     assert(count != result_op, "malformed");
     __ move(value, result_op);
     value = result_op;
@@ -2973,7 +2976,6 @@ void LIRGenerator::do_Invoke(Invoke* x) {
   }
 
   // emit invoke code
-  bool optimized = x->target_is_loaded() && x->target_is_final();
   assert(receiver->is_illegal() || receiver->is_equal(LIR_Assembler::receiverOpr()), "must match");
 
   // JSR 292
@@ -2998,9 +3000,9 @@ void LIRGenerator::do_Invoke(Invoke* x) {
     case Bytecodes::_invokespecial:
     case Bytecodes::_invokevirtual:
     case Bytecodes::_invokeinterface:
-      // for final target we still produce an inline cache, in order
-      // to be able to call mixed mode
-      if (x->code() == Bytecodes::_invokespecial || optimized) {
+      // for loaded and final (method or class) target we still produce an inline cache,
+      // in order to be able to call mixed mode
+      if (x->code() == Bytecodes::_invokespecial || x->target_is_final()) {
         __ call_opt_virtual(target, receiver, result_register,
                             SharedRuntime::get_resolve_opt_virtual_call_stub(),
                             arg_list, info);
@@ -3120,6 +3122,22 @@ void LIRGenerator::do_ClassIDIntrinsic(Intrinsic* x) {
 
   __ move(id, rlock_result(x));
 }
+
+void LIRGenerator::do_getBufferWriter(Intrinsic* x) {
+  LabelObj* L_end = new LabelObj();
+
+  LIR_Address* jobj_addr = new LIR_Address(getThreadPointer(),
+                                           in_bytes(TRACE_THREAD_DATA_WRITER_OFFSET),
+                                           T_OBJECT);
+  LIR_Opr result = rlock_result(x);
+  __ move_wide(jobj_addr, result);
+  __ cmp(lir_cond_equal, result, LIR_OprFact::oopConst(NULL));
+  __ branch(lir_cond_equal, T_OBJECT, L_end->label());
+  __ move_wide(new LIR_Address(result, T_OBJECT), result);
+
+  __ branch_destination(L_end->label());
+}
+
 #endif
 
 
@@ -3150,6 +3168,9 @@ void LIRGenerator::do_Intrinsic(Intrinsic* x) {
 #ifdef TRACE_HAVE_INTRINSICS
   case vmIntrinsics::_getClassId:
     do_ClassIDIntrinsic(x);
+    break;
+  case vmIntrinsics::_getBufferWriter:
+    do_getBufferWriter(x);
     break;
   case vmIntrinsics::_counterTime:
     do_RuntimeCall(CAST_FROM_FN_PTR(address, TRACE_TIME_METHOD), x);

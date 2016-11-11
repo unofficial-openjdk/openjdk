@@ -2249,6 +2249,25 @@ void LIR_Assembler::emit_arraycopy(LIR_OpArrayCopy* op) {
     __ cbz(dst, *stub->entry());
   }
 
+  // If the compiler was not able to prove that exact type of the source or the destination
+  // of the arraycopy is an array type, check at runtime if the source or the destination is
+  // an instance type.
+  if (flags & LIR_OpArrayCopy::type_check) {
+    if (!(flags & LIR_OpArrayCopy::LIR_OpArrayCopy::dst_objarray)) {
+      __ load_klass(tmp, dst);
+      __ ldrw(rscratch1, Address(tmp, in_bytes(Klass::layout_helper_offset())));
+      __ cmpw(rscratch1, Klass::_lh_neutral_value);
+      __ br(Assembler::GE, *stub->entry());
+    }
+
+    if (!(flags & LIR_OpArrayCopy::LIR_OpArrayCopy::src_objarray)) {
+      __ load_klass(tmp, src);
+      __ ldrw(rscratch1, Address(tmp, in_bytes(Klass::layout_helper_offset())));
+      __ cmpw(rscratch1, Klass::_lh_neutral_value);
+      __ br(Assembler::GE, *stub->entry());
+    }
+  }
+
   // check if negative
   if (flags & LIR_OpArrayCopy::src_pos_positive_check) {
     __ cmpw(src_pos, 0);
@@ -2276,14 +2295,6 @@ void LIR_Assembler::emit_arraycopy(LIR_OpArrayCopy* op) {
     __ cmpw(tmp, rscratch1);
     __ br(Assembler::HI, *stub->entry());
   }
-
-  // FIXME: The logic in LIRGenerator::arraycopy_helper clears
-  // length_positive_check if the source of our length operand is an
-  // arraylength.  However, that arraylength might be zero, and the
-  // stub that we're about to call contains an assertion that count !=
-  // 0 .  So we make this check purely in order not to trigger an
-  // assertion failure.
-  __ cbzw(length, *stub->continuation());
 
   if (flags & LIR_OpArrayCopy::type_check) {
     // We don't know the array types are compatible
