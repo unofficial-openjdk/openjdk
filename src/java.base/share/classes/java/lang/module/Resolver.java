@@ -502,15 +502,17 @@ final class Resolver {
             if (parent != Configuration.empty()) {
                 parent.configurations().forEach(c -> {
                     c.modules().forEach(m1 -> {
-                        ModuleDescriptor descriptor = m1.descriptor();
-                        for (ModuleDescriptor.Requires requires : descriptor.requires()) {
-                            if (requires.modifiers().contains(Modifier.TRANSITIVE)) {
-                                String dn = requires.name();
-                                ResolvedModule m2 = c.findModule(dn)
-                                    .orElseThrow(() -> new InternalError(dn + " not found"));
-                                g2.computeIfAbsent(m1, k -> new HashSet<>()).add(m2);
-                            }
-                        }
+                        m1.descriptor().requires().stream()
+                            .filter(r -> r.modifiers().contains(Modifier.TRANSITIVE))
+                            .forEach(r -> {
+                                String dn = r.name();
+                                assert c.findModule(dn).isPresent() ||
+                                        r.modifiers().contains(Modifier.STATIC);
+                                c.findModule(dn).ifPresent(m2 -> {
+                                    g2.computeIfAbsent(m1, k -> new HashSet<>()).add(m2);
+                                });
+                            });
+
                     });
                 });
             }

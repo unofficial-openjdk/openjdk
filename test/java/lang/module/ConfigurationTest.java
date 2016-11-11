@@ -727,6 +727,83 @@ public class ConfigurationTest {
 
 
     /**
+     * Basic test of "requires static":
+     *     (m1 not observable)
+     *     m2 requires transitive static m1
+     *     m3 requires m2
+     */
+    public void testRequiresStatic7() {
+        ModuleDescriptor descriptor1 = null;  // not observable
+
+        ModuleDescriptor descriptor2
+            = ModuleDescriptor.module("m2")
+                .requires(Set.of(Requires.Modifier.TRANSITIVE,
+                                Requires.Modifier.STATIC),
+                         "m1")
+                .build();
+
+        ModuleDescriptor descriptor3
+                = ModuleDescriptor.module("m3")
+                .requires("m2")
+                .build();
+
+        ModuleFinder finder = ModuleUtils.finderOf(descriptor2, descriptor3);
+
+        Configuration cf = resolveRequires(finder, "m3");
+
+        assertTrue(cf.modules().size() == 2);
+        assertTrue(cf.findModule("m2").isPresent());
+        assertTrue(cf.findModule("m3").isPresent());
+        ResolvedModule m2 = cf.findModule("m2").get();
+        ResolvedModule m3 = cf.findModule("m3").get();
+        assertTrue(m2.reads().isEmpty());
+        assertTrue(m3.reads().size() == 1);
+        assertTrue(m3.reads().contains(m2));
+    }
+
+
+    /**
+     * Basic test of "requires static":
+     * - Configuration cf1: m2 requires transitive static m1
+     * - Configuration cf2: m3 requires m2
+     */
+    public void testRequiresStatic8() {
+        ModuleDescriptor descriptor1 = null;  // not observable
+
+        ModuleDescriptor descriptor2
+            = ModuleDescriptor.module("m2")
+                .requires(Set.of(Requires.Modifier.TRANSITIVE,
+                                Requires.Modifier.STATIC),
+                        "m1")
+                .build();
+
+        ModuleFinder finder1 = ModuleUtils.finderOf(descriptor2);
+
+        Configuration cf1 = resolveRequires(finder1, "m2");
+
+        assertTrue(cf1.modules().size() == 1);
+        assertTrue(cf1.findModule("m2").isPresent());
+        ResolvedModule m2 = cf1.findModule("m2").get();
+        assertTrue(m2.reads().isEmpty());
+
+        ModuleDescriptor descriptor3
+            = ModuleDescriptor.module("m3")
+                .requires("m2")
+                .build();
+
+        ModuleFinder finder2 = ModuleUtils.finderOf(descriptor3);
+
+        Configuration cf2 = resolveRequires(cf1, finder2, "m3");
+
+        assertTrue(cf2.modules().size() == 1);
+        assertTrue(cf2.findModule("m3").isPresent());
+        ResolvedModule m3 = cf2.findModule("m3").get();
+        assertTrue(m3.reads().size() == 1);
+        assertTrue(m3.reads().contains(m2));
+    }
+
+
+    /**
      * Basic test of binding services
      *     m1 uses p.S
      *     m2 provides p.S
