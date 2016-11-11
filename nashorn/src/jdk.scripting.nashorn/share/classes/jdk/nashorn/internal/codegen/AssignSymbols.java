@@ -343,7 +343,7 @@ final class AssignSymbols extends SimpleNodeVisitor implements Loggable {
                     symbol = null;
                 } else if (symbol.isParam()) {
                     // Duplicate parameter. Null return will force an error.
-                    throw new AssertionError("duplicate parameter");
+                    throwParserException(ECMAErrors.getMessage("syntax.error.duplicate.parameter", name), origin);
                 }
             } else if (isVar) {
                 if (isBlockScope) {
@@ -462,7 +462,7 @@ final class AssignSymbols extends SimpleNodeVisitor implements Loggable {
 
     @Override
     public boolean enterCatchNode(final CatchNode catchNode) {
-        final IdentNode exception = catchNode.getException();
+        final IdentNode exception = catchNode.getExceptionIdentifier();
         final Block     block     = lc.getCurrentBlock();
 
         start(catchNode);

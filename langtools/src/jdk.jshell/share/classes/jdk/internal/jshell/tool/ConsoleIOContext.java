@@ -25,30 +25,32 @@
 
 package jdk.internal.jshell.tool;
 
+import jdk.jshell.SourceCodeAnalysis.Documentation;
 import jdk.jshell.SourceCodeAnalysis.QualifiedNames;
 import jdk.jshell.SourceCodeAnalysis.Suggestion;
 
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.PrintStream;
 import java.io.UncheckedIOException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Supplier;
+import java.util.function.Function;
 import java.util.prefs.BackingStoreException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import jdk.internal.shellsupport.doc.JavadocFormatter;
 import jdk.internal.jline.NoInterruptUnixTerminal;
 import jdk.internal.jline.Terminal;
 import jdk.internal.jline.TerminalFactory;
@@ -167,10 +169,10 @@ class ConsoleIOContext extends IOContext {
                 return anchor[0];
             }
         });
-        bind(DOCUMENTATION_SHORTCUT, (ActionListener) evt -> documentation(repl));
+        bind(DOCUMENTATION_SHORTCUT, (Runnable) () -> documentation(repl));
         for (FixComputer computer : FIX_COMPUTERS) {
             for (String shortcuts : SHORTCUT_FIXES) {
-                bind(shortcuts + computer.shortcut, (ActionListener) evt -> fixes(computer));
+                bind(shortcuts + computer.shortcut, (Runnable) () -> fixes(computer));
             }
         }
         try {
@@ -259,22 +261,118 @@ class ConsoleIOContext extends IOContext {
         "\u001BO3P" //Alt-F1 (Linux)
     };
 
+    private String lastDocumentationBuffer;
+    private int lastDocumentationCursor = (-1);
+
     private void documentation(JShellTool repl) {
         String buffer = in.getCursorBuffer().buffer.toString();
         int cursor = in.getCursorBuffer().cursor;
-        String doc;
+        boolean firstInvocation = !buffer.equals(lastDocumentationBuffer) || cursor != lastDocumentationCursor;
+        lastDocumentationBuffer = buffer;
+        lastDocumentationCursor = cursor;
+        List<String> doc;
+        String seeMore;
+        Terminal term = in.getTerminal();
         if (prefix.isEmpty() && buffer.trim().startsWith("/")) {
-            doc = repl.commandDocumentation(buffer, cursor);
+            doc = Arrays.asList(repl.commandDocumentation(buffer, cursor, firstInvocation));
+            seeMore = "jshell.console.see.help";
         } else {
-            doc = repl.analysis.documentation(prefix + buffer, cursor + prefix.length());
+            JavadocFormatter formatter = new JavadocFormatter(term.getWidth(),
+                                                              term.isAnsiSupported());
+            Function<Documentation, String> convertor;
+            if (firstInvocation) {
+                convertor = d -> d.signature();
+            } else {
+                convertor = d -> formatter.formatJavadoc(d.signature(),
+                                                         d.javadoc() != null ? d.javadoc()
+                                                                             : repl.messageFormat("jshell.console.no.javadoc"));
+            }
+            doc = repl.analysis.documentation(prefix + buffer, cursor + prefix.length(), !firstInvocation)
+                               .stream()
+                               .map(convertor)
+                               .collect(Collectors.toList());
+            seeMore = "jshell.console.see.javadoc";
         }
 
         try {
-            if (doc != null) {
-                in.println();
-                in.println(doc);
-                in.redrawLine();
-                in.flush();
+            if (doc != null && !doc.isEmpty()) {
+                if (firstInvocation) {
+                    in.println();
+                    in.println(doc.stream().collect(Collectors.joining("\n")));
+                    in.println(repl.messageFormat(seeMore));
+                    in.redrawLine();
+                    in.flush();
+                } else {
+                    in.println();
+
+                    int height = term.getHeight();
+                    String lastNote = "";
+
+                    PRINT_DOC: for (Iterator<String> docIt = doc.iterator(); docIt.hasNext(); ) {
+                        String currentDoc = docIt.next();
+                        String[] lines = currentDoc.split("\n");
+                        int firstLine = 0;
+
+                        PRINT_PAGE: while (true) {
+                            int toPrint = height - 1;
+
+                            while (toPrint > 0 && firstLine < lines.length) {
+                                in.println(lines[firstLine++]);
+                                toPrint--;
+                            }
+
+                            if (firstLine >= lines.length) {
+                                break;
+                            }
+
+                            lastNote = repl.getResourceString("jshell.console.see.next.page");
+                            in.print(lastNote + ConsoleReader.RESET_LINE);
+                            in.flush();
+
+                            while (true) {
+                                int r = in.readCharacter();
+
+                                switch (r) {
+                                    case ' ': continue PRINT_PAGE;
+                                    case 'q':
+                                    case 3:
+                                        break PRINT_DOC;
+                                    default:
+                                        in.beep();
+                                        break;
+                                }
+                            }
+                        }
+
+                        if (docIt.hasNext()) {
+                            lastNote = repl.getResourceString("jshell.console.see.next.javadoc");
+                            in.print(lastNote + ConsoleReader.RESET_LINE);
+                            in.flush();
+
+                            while (true) {
+                                int r = in.readCharacter();
+
+                                switch (r) {
+                                    case ' ': continue PRINT_DOC;
+                                    case 'q':
+                                    case 3:
+                                        break PRINT_DOC;
+                                    default:
+                                        in.beep();
+                                        break;
+                                }
+                            }
+                        }
+                    }
+                    //clear the "press space" line:
+                    in.getCursorBuffer().buffer.replace(0, buffer.length(), lastNote);
+                    in.getCursorBuffer().cursor = 0;
+                    in.killLine();
+                    in.getCursorBuffer().buffer.append(buffer);
+                    in.getCursorBuffer().cursor = cursor;
+                    in.redrawLine();
+                    in.flush();
+                }
             } else {
                 in.beep();
             }
@@ -482,26 +580,55 @@ class ConsoleIOContext extends IOContext {
 
     private static final FixComputer[] FIX_COMPUTERS = new FixComputer[] {
         new FixComputer('v', false) { //compute "Introduce variable" Fix:
+            private void performToVar(ConsoleReader in, String type) throws IOException {
+                in.redrawLine();
+                in.setCursorPosition(0);
+                in.putString(type + "  = ");
+                in.setCursorPosition(in.getCursorBuffer().cursor - 3);
+                in.flush();
+            }
+
             @Override
             public FixResult compute(JShellTool repl, String code, int cursor) {
                 String type = repl.analysis.analyzeType(code, cursor);
                 if (type == null) {
                     return new FixResult(Collections.emptyList(), null);
                 }
-                return new FixResult(Collections.singletonList(new Fix() {
+                List<Fix> fixes = new ArrayList<>();
+                fixes.add(new Fix() {
                     @Override
                     public String displayName() {
                         return repl.messageFormat("jshell.console.create.variable");
                     }
+
                     @Override
                     public void perform(ConsoleReader in) throws IOException {
-                        in.redrawLine();
-                        in.setCursorPosition(0);
-                        in.putString(type + "  = ");
-                        in.setCursorPosition(in.getCursorBuffer().cursor - 3);
-                        in.flush();
+                        performToVar(in, type);
                     }
-                }), null);
+                });
+                int idx = type.lastIndexOf(".");
+                if (idx > 0) {
+                    String stype = type.substring(idx + 1);
+                    QualifiedNames res = repl.analysis.listQualifiedNames(stype, stype.length());
+                    if (res.isUpToDate() && res.getNames().contains(type)
+                            && !res.isResolvable()) {
+                        fixes.add(new Fix() {
+                            @Override
+                            public String displayName() {
+                                return "import: " + type + ". " +
+                                        repl.messageFormat("jshell.console.create.variable");
+                            }
+
+                            @Override
+                            public void perform(ConsoleReader in) throws IOException {
+                                repl.state.eval("import " + type + ";");
+                                in.println("Imported: " + type);
+                                performToVar(in, stype);
+                            }
+                        });
+                    }
+                }
+                return new FixResult(fixes, null);
             }
         },
         new FixComputer('i', true) { //compute "Add import" Fixes:
@@ -515,6 +642,7 @@ class ConsoleIOContext extends IOContext {
                         public String displayName() {
                             return "import: " + fqn;
                         }
+
                         @Override
                         public void perform(ConsoleReader in) throws IOException {
                             repl.state.eval("import " + fqn + ";");
