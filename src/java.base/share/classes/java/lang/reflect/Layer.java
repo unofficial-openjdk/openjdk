@@ -162,8 +162,12 @@ public final class Layer {
      * modules in the given {@code Configuration} to the Java virtual machine.
      * This method creates one class loader and defines all modules to that
      * class loader. The {@link ClassLoader#getParent() parent} of each class
-     * loader is the given parent class loader. If this layer is
-     * {@code thisLayer} then this method is equivalent to invoking:
+     * loader is the given parent class loader. This method works exactly as
+     * specified by the static {@link
+     * #defineModulesWithOneLoader(Configuration,List,ClassLoader)
+     * defineModulesWithOneLoader} method when invoked with this layer as the
+     * parent. In other words, if this layer is {@code thisLayer} then this
+     * method is equivalent to invoking:
      * <pre> {@code
      *     Layer.defineModulesWithOneLoader(cf, List.of(thisLayer), parentLoader);
      * }</pre>
@@ -202,8 +206,12 @@ public final class Layer {
      * modules in the given {@code Configuration} to the Java virtual machine.
      * Each module is defined to its own {@link ClassLoader} created by this
      * method. The {@link ClassLoader#getParent() parent} of each class loader
-     * is the given parent class loader. If this layer is {@code thisLayer}
-     * then this method is equivalent to invoking:
+     * is the given parent class loader. This method works exactly as specified
+     * by the static {@link
+     * #defineModulesWithManyLoaders(Configuration,List,ClassLoader)
+     * defineModulesWithManyLoaders} method when invoked with this layer as the
+     * parent. In other words, if this layer is {@code thisLayer} then this
+     * method is equivalent to invoking:
      * <pre> {@code
      *     Layer.defineModulesWithManyLoaders(cf, List.of(thisLayer), parentLoader);
      * }</pre>
@@ -240,8 +248,11 @@ public final class Layer {
      * Creates a new layer, with this layer as its parent, by defining the
      * modules in the given {@code Configuration} to the Java virtual machine.
      * Each module is mapped, by name, to its class loader by means of the
-     * given function. If this layer is {@code thisLayer} then this method is
-     * equivalent to invoking:
+     * given function. This method works exactly as specified by the static
+     * {@link #defineModules(Configuration,List,Function) defineModules}
+     * method when invoked with this layer as the parent. In other words, if
+     * this layer is {@code thisLayer} then this method is equivalent to
+     * invoking:
      * <pre> {@code
      *     Layer.defineModules(cf, List.of(thisLayer), clf);
      * }</pre>

@@ -219,8 +219,12 @@ public final class Configuration {
 
     /**
      * Resolves a collection of root modules, with this configuration as its
-     * parent, to create a new configuration. If this configuration is {@code
-     * cf} then this method is equivalent to invoking:
+     * parent, to create a new configuration. This method works exactly as
+     * specified by the static {@link
+     * #resolveRequires(ModuleFinder,List,ModuleFinder,Collection) resolveRequires}
+     * method when invoked with this configuration as the parent. In other words,
+     * if this configuration is {@code cf} then this method is equivalent to
+     * invoking:
      * <pre> {@code
      *     Configuration.resolveRequires(before, List.of(cf), after, roots);
      * }</pre>
@@ -228,9 +232,9 @@ public final class Configuration {
      * @param  before
      *         The <em>before</em> module finder to find modules
      * @param  after
-     *         The <em>after</em> module finder to locate modules when not
-     *         located by the {@code before} module finder or in parent
-     *         configurations
+     *         The <em>after</em> module finder to locate modules when a
+     *         module cannot be located by the {@code before} module finder
+     *         and the module is not in this configuration
      * @param  roots
      *         The possibly-empty collection of module names of the modules
      *         to resolve
@@ -254,8 +258,11 @@ public final class Configuration {
     /**
      * Resolves a collection of root modules, with service binding, and with
      * this configuration as its parent, to create a new configuration.
-     * If this configuration is {@code cf} then this method is equivalent
-     * to invoking:
+     * This method works exactly as specified by the static {@link
+     * #resolveRequiresAndUses(ModuleFinder,List,ModuleFinder,Collection)
+     * resolveRequiresAndUses} method when invoked with this configuration
+     * as the parent. In other words, if this configuration is {@code cf} then
+     * this method is equivalent to invoking:
      * <pre> {@code
      *     Configuration.resolveRequiresAndUses(before, List.of(cf), after, roots);
      * }</pre>
@@ -265,8 +272,8 @@ public final class Configuration {
      *         The <em>before</em> module finder to find modules
      * @param  after
      *         The <em>after</em> module finder to locate modules when not
-     *         located by the {@code before} module finder or in parent
-     *         configurations
+     *         located by the {@code before} module finder and this
+     *         configuration
      * @param  roots
      *         The possibly-empty collection of module names of the modules
      *         to resolve
@@ -410,7 +417,7 @@ public final class Configuration {
      * configuration.
      *
      * <p> This method works exactly as specified by {@link
-     * #resolveRequires(ModuleFinder,Collection,ModuleFinder,Collection)
+     * #resolveRequires(ModuleFinder,List,ModuleFinder,Collection)
      * resolveRequires} except that the graph of resolved modules is augmented
      * with modules induced by the service-use dependence relation. </p>
      *

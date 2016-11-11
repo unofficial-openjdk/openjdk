@@ -33,7 +33,6 @@ import java.lang.module.ModuleReference;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Opens;
-import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Version;
 import java.lang.module.ResolvedModule;
 import java.net.URI;
@@ -321,9 +320,13 @@ public final class Module implements AnnotatedElement {
      * If the caller's module is this module then update this module to read
      * the given module.
      *
-     * This method is a no-op if {@code other} is this module (all modules can
-     * read themselves) or this module is an unnamed module (as unnamed modules
-     * read all modules).
+     * This method is a no-op if {@code other} is this module (all modules read
+     * themselves), this module is an unnamed module (as unnamed modules read
+     * all modules), or this module already reads {@code other}.
+     *
+     * @implNote <em>Read edges</em> added by this method are <em>weak</em> and
+     * do not prevent {@code other} from being GC'ed when this module is
+     * strongly reachable.
      *
      * @param  other
      *         The other module
