@@ -42,7 +42,6 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -461,7 +460,6 @@ class ModulePath implements ModuleFinder {
                 .flatMap(Optional::stream)
                 .distinct()
                 .forEach(pn -> builder.exports(pn).opens(pn));
-
 
         // map names of service configuration files to service names
         Set<String> serviceNames = configFiles.stream()

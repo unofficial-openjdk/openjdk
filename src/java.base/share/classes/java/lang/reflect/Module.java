@@ -423,8 +423,9 @@ public final class Module implements AnnotatedElement {
      *
      * <p> A package is considered exported to a module at run-time when the
      * package is {@link #isOpen open} to the module. This method always returns
-     * {@code true} when invoked on an {@link ModuleDescriptor#isOpen open}
-     * module. </p>
+     * {@code true} when invoked on an unnamed module. Additionally, it always
+     * returns {@code true} when invoked on an {@link ModuleDescriptor#isOpen
+     * open} module with a package in the module. </p>
      *
      * <p> This method does not check if the given module reads this module. </p>
      *
@@ -436,6 +437,7 @@ public final class Module implements AnnotatedElement {
      * @return {@code true} if this module exports the package to at least the
      *         given module
      *
+     * @see ModuleDescriptor#exports()
      * @see #addExports(String,Module)
      */
     public boolean isExported(String pn, Module other) {
@@ -448,8 +450,10 @@ public final class Module implements AnnotatedElement {
      * Returns {@code true} if this module has <em>opened</em> a package to at
      * least the given module.
      *
-     * <p> This method always returns {@code true} when invoked on an
-     * {@link ModuleDescriptor#isOpen open} module. </p>
+     * <p> This method always returns {@code true} when invoked on an unnamed
+     * module. Additionally, it always returns {@code true} when invoked on an
+     * {@link ModuleDescriptor#isOpen open} module with a package in the
+     * module. </p>
      *
      * <p> This method does not check if the given module reads this module. </p>
      *
@@ -461,6 +465,7 @@ public final class Module implements AnnotatedElement {
      * @return {@code true} if this module has <em>opened</em> the package
      *         to at least the given module
      *
+     * @see ModuleDescriptor#opens()
      * @see #addOpens(String,Module)
      * @see AccessibleObject#setAccessible(boolean)
      */
@@ -476,8 +481,9 @@ public final class Module implements AnnotatedElement {
      *
      * <p> A package is considered exported unconditionally at run-time when
      * the package is {@link #isOpen open} unconditionally. This method always
-     * returns {@code true} when invoked on an {@link ModuleDescriptor#isOpen
-     * open} module. </p>
+     * returns {@code true} when invoked on an unnamed module. Additionally,
+     * it always returns {@code true} when invoked on an {@link
+     * ModuleDescriptor#isOpen open} module with a package in the module. </p>
      *
      * <p> This method does not check if the given module reads this module. </p>
      *
@@ -485,6 +491,8 @@ public final class Module implements AnnotatedElement {
      *         The package name
      *
      * @return {@code true} if this module exports the package unconditionally
+     *
+     * @see ModuleDescriptor#exports()
      */
     public boolean isExported(String pn) {
         Objects.requireNonNull(pn);
@@ -495,8 +503,10 @@ public final class Module implements AnnotatedElement {
      * Returns {@code true} if this module has <em>opened</em> a package
      * unconditionally.
      *
-     * <p> This method always returns {@code true} when invoked on an
-     * {@link ModuleDescriptor#isOpen open} module. </p>
+     * <p> This method always returns {@code true} when invoked on an unnamed
+     * module. Additionally, it always returns {@code true} when invoked on an
+     * {@link ModuleDescriptor#isOpen open} module with a package in the
+     * module. </p>
      *
      * <p> This method does not check if the given module reads this module. </p>
      *
@@ -505,6 +515,8 @@ public final class Module implements AnnotatedElement {
      *
      * @return {@code true} if this module has <em>opened</em> the package
      *         unconditionally
+     *
+     * @see ModuleDescriptor#opens()
      */
     public boolean isOpen(String pn) {
         Objects.requireNonNull(pn);
@@ -518,9 +530,15 @@ public final class Module implements AnnotatedElement {
      * this method tests if the package is exported or opened unconditionally.
      */
     private boolean implIsExportedOrOpen(String pn, Module other, boolean open) {
-        // all packages in unnamed modules and open modules are open
-        if (!isNamed() || descriptor.isOpen())
+        // all packages in unnamed modules are open
+        if (!isNamed())
             return true;
+
+        // all packages in open modules are open
+        if (descriptor.isOpen()) {
+            assert extraPackages == null;
+            return descriptor.packages().contains(pn);
+        }
 
         // exported/opened via module declaration/descriptor
         if (isStaticallyExportedOrOpen(pn, other, open))
@@ -965,8 +983,12 @@ public final class Module implements AnnotatedElement {
      * If {@code syncVM} is {@code true} then the VM is notified.
      */
     private void implAddPackage(String pn, boolean syncVM) {
-        if (pn.length() == 0)
-            throw new IllegalArgumentException("<unnamed> package not allowed");
+        if (!isNamed())
+            throw new InternalError("adding package to unnamed module?");
+        if (descriptor.isOpen())
+            throw new InternalError("adding package to open module?");
+        if (pn.isEmpty())
+            throw new InternalError("adding <unnamed> package to module?");
 
         if (descriptor.packages().contains(pn)) {
             // already in module
