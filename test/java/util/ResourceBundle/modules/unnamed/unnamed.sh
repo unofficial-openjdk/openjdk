@@ -68,7 +68,7 @@ $JAVA -cp classes --module-path mods --add-modules bundles \
 
 # --add-exports can't open resources 
 $JAVA -cp classes --module-path mods --add-modules bundles \
-      --add-exports-private bundles/jdk.test.internal.resources=ALL-UNNAMED \
+      --add-opens bundles/jdk.test.internal.resources=ALL-UNNAMED \
       Main de fr ja zh-tw en de
 
 exit $?
