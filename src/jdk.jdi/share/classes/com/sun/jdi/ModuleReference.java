@@ -67,12 +67,4 @@ public interface ModuleReference extends ObjectReference {
      * @return the {@link ClassLoaderReference} object for this module.
      */
     ClassLoaderReference classLoader();
-
-    /**
-     * Indicates if this module reads another module.
-     *
-     * @return {@code true} if this module reads {@code other},
-     *         {@code false} otherwise
-     */
-    boolean canRead(ModuleReference other);
 }
