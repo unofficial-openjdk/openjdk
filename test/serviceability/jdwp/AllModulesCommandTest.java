@@ -89,8 +89,7 @@ public class AllModulesCommandTest implements DebuggeeLauncher.Listener {
                 long modId = reply.getModuleId(i);
                 // For each module reported by JDWP get its name using the JDWP  NAME command
                 getModuleName(modId);
-                // Assert the JDWP CANREAD and CLASSLOADER commands
-                assertCanRead(modId);
+                // Assert the JDWP CLASSLOADER command
                 assertClassLoader(modId);
             }
 
@@ -129,13 +128,6 @@ public class AllModulesCommandTest implements DebuggeeLauncher.Listener {
         if (reply.getErrorCode() != 0) {
             throw new RuntimeException("Unexpected reply error code " + reply.getErrorCode() + " for reply " + reply);
         }
-    }
-
-    private void assertCanRead(long modId) throws IOException {
-        // Simple assert for the CANREAD command
-        JdwpCanReadReply reply = new JdwpCanReadCmd(modId, modId).send(channel);
-        assertReply(reply);
-        assertTrue(reply.canRead(), "canRead() reports false for reading from the same module");
     }
 
     private void assertClassLoader(long modId) throws IOException {
