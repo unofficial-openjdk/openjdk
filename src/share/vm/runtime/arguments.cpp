@@ -2813,7 +2813,8 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* patch_m
       if (!create_numbered_property("jdk.module.addexports", tail, addexports_count++)) {
         return JNI_ENOMEM;
       }
-    } else if (match_option(option, "--add-opens=", &tail)) {
+    } else if (match_option(option, "--add-opens=", &tail) ||
+               match_option(option, "--add-exports-private=", &tail)) {
       if (!create_numbered_property("jdk.module.addopens", tail, addopens_count++)) {
         return JNI_ENOMEM;
       }
