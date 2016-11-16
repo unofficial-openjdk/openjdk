@@ -408,7 +408,8 @@ public final class ModuleBootstrap {
      */
     private static ModulePatcher initModulePatcher() {
         Map<String, List<String>> map = decode("jdk.module.patch.",
-                                               File.pathSeparator);
+                                               File.pathSeparator,
+                                               false);
         return new ModulePatcher(map);
     }
 
@@ -570,7 +571,8 @@ public final class ModuleBootstrap {
      * @praam regex the regex for splitting the RHS of the option value
      */
     private static Map<String, List<String>> decode(String prefix,
-                                                    String regex) {
+                                                    String regex,
+                                                    boolean allowDuplicates) {
         int index = 0;
         // the system property is removed after decoding
         String value = getAndRemoveProperty(prefix + index);
@@ -595,6 +597,8 @@ public final class ModuleBootstrap {
                 fail("Unable to parse: " + value);
 
             // value is <module>(,<module>)* or <file>(<pathsep><file>)*
+            if (!allowDuplicates && map.containsKey(key))
+                fail(key + " specified more than once");
             List<String> values = map.computeIfAbsent(key, k -> new ArrayList<>());
             for (String s : rhs.split(regex)) {
                 if (s.length() > 0) values.add(s);
@@ -612,7 +616,7 @@ public final class ModuleBootstrap {
      * which use the "," to separate the RHS of the option value.
      */
     private static Map<String, List<String>> decode(String prefix) {
-        return decode(prefix, ",");
+        return decode(prefix, ",", true);
     }
 
     /**
