@@ -25,8 +25,8 @@
  * @test
  * @bug 8033735
  * @summary check backtrace field introspection
- * @modules java.base/jdk.internal.misc:private
- * @modules java.base/java.lang:private
+ * @modules java.base/jdk.internal.misc:open
+ * @modules java.base/java.lang:open
  * @run main ThrowableIntrospectionSegfault
  */
 

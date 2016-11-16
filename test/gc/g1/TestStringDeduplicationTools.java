@@ -190,7 +190,7 @@ class TestStringDeduplicationTools {
             "-Xmx" + Xmx + "m",
             "-XX:+UseG1GC",
             "-XX:+UnlockDiagnosticVMOptions",
-            "--add-exports-private=java.base/java.lang=ALL-UNNAMED",
+            "--add-opens=java.base/java.lang=ALL-UNNAMED",
             "-XX:+VerifyAfterGC" // Always verify after GC
         };
 
