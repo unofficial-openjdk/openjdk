@@ -54,6 +54,7 @@ import jdk.internal.jimage.ImageReader;
 import jdk.internal.jimage.ImageReaderFactory;
 import jdk.internal.misc.JavaNetUriAccess;
 import jdk.internal.misc.SharedSecrets;
+import jdk.internal.module.ModuleBootstrap;
 import jdk.internal.module.ModuleHashes;
 import jdk.internal.module.ModuleHashes.HashSupplier;
 import jdk.internal.module.SystemModules;
@@ -194,7 +195,7 @@ class SystemModuleFinder implements ModuleFinder {
             new ModuleReference(md, uri, readerSupplier, hash);
 
         // may need a reference to a patched module if --patch-module specified
-        mref = ModulePatcher.interposeIfNeeded(mref);
+        mref = ModuleBootstrap.patcher().patchIfNeeded(mref);
 
         return mref;
     }

@@ -32,9 +32,7 @@ import java.lang.reflect.Module;
 import java.net.URI;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import jdk.internal.loader.BootLoader;
 import jdk.internal.loader.ClassLoaders;

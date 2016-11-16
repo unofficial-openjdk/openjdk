@@ -37,9 +37,11 @@ import java.lang.reflect.Module;
 import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -81,8 +83,18 @@ public final class ModuleBootstrap {
     // the token for "all modules on the module path"
     private static final String ALL_MODULE_PATH = "ALL-MODULE-PATH";
 
+    // The ModulePatcher for the initial configuration
+    private static final ModulePatcher patcher = initModulePatcher();
+
     // ModuleFinder for the initial configuration
     private static ModuleFinder initialFinder;
+
+    /**
+     * Returns the ModulePatcher for the initial configuration.
+     */
+    public static ModulePatcher patcher() {
+        return patcher;
+    }
 
     /**
      * Returns the ModuleFinder for the initial configuration
@@ -101,7 +113,7 @@ public final class ModuleBootstrap {
 
         long t0 = System.nanoTime();
 
-        // system modules
+        // system modules (may be patched)
         ModuleFinder systemModules = ModuleFinder.ofSystem();
 
         PerfCounters.systemModulesTime.addElapsedTimeFrom(t0);
@@ -247,7 +259,7 @@ public final class ModuleBootstrap {
         if (baseUri.getScheme().equals("jrt")   // toLowerCase not needed here
                 && (upgradeModulePath == null)
                 && (appModulePath == null)
-                && (!ModulePatcher.isBootLayerPatched())) {
+                && (patcher.isEmpty())) {
             needPostResolutionChecks = false;
         }
 
@@ -389,6 +401,17 @@ public final class ModuleBootstrap {
         }
     }
 
+
+    /**
+     * Initialize the module patcher for the initial configuration passed on the
+     * value of the --patch-module options.
+     */
+    private static ModulePatcher initModulePatcher() {
+        Map<String, List<String>> map = decode("jdk.module.patch.",
+                                               File.pathSeparator);
+        return new ModulePatcher(map);
+    }
+
     /**
      * Returns the set of module names specified via --add-modules options
      * on the command line
@@ -422,9 +445,11 @@ public final class ModuleBootstrap {
     private static void addExtraReads(Layer bootLayer) {
 
         // decode the command line options
-        Map<String, Set<String>> map = decode("jdk.module.addreads.");
+        Map<String, List<String>> map = decode("jdk.module.addreads.");
+        if (map.isEmpty())
+            return;
 
-        for (Map.Entry<String, Set<String>> e : map.entrySet()) {
+        for (Map.Entry<String, List<String>> e : map.entrySet()) {
 
             // the key is $MODULE
             String mn = e.getKey();
@@ -447,11 +472,9 @@ public final class ModuleBootstrap {
                         warn("Unknown module: " + name);
                     }
                 }
-
             }
         }
     }
-
 
     /**
      * Process the --add-exports and --add-opens options to export/open
@@ -461,24 +484,24 @@ public final class ModuleBootstrap {
 
         // --add-exports
         String prefix = "jdk.module.addexports.";
-        Map<String, Set<String>> extraExports = decode(prefix);
+        Map<String, List<String>> extraExports = decode(prefix);
         if (!extraExports.isEmpty()) {
             addExtraExportsOrOpens(bootLayer, extraExports, false);
         }
 
         // --add-opens
         prefix = "jdk.module.addopens.";
-        Map<String, Set<String>> extraOpens = decode(prefix);
+        Map<String, List<String>> extraOpens = decode(prefix);
         if (!extraOpens.isEmpty()) {
             addExtraExportsOrOpens(bootLayer, extraOpens, true);
         }
     }
 
     private static void addExtraExportsOrOpens(Layer bootLayer,
-                                               Map<String, Set<String>> map,
+                                               Map<String, List<String>> map,
                                                boolean opens)
     {
-        for (Map.Entry<String, Set<String>> e : map.entrySet()) {
+        for (Map.Entry<String, List<String>> e : map.entrySet()) {
 
             // the key is $MODULE/$PACKAGE
             String key = e.getKey();
@@ -539,20 +562,22 @@ public final class ModuleBootstrap {
         }
     }
 
-
     /**
-     * Decodes the values of --add-reads or --add-exports options
+     * Decodes the values of --add-reads, -add-exports, --add-opens or
+     * --patch-modules options that are encoded in system properties.
      *
-     * The format of the options is: $KEY=$MODULE(,$MODULE)*
+     * @param prefix the system property prefix
+     * @praam regex the regex for splitting the RHS of the option value
      */
-    private static Map<String, Set<String>> decode(String prefix) {
+    private static Map<String, List<String>> decode(String prefix,
+                                                    String regex) {
         int index = 0;
         // the system property is removed after decoding
         String value = getAndRemoveProperty(prefix + index);
         if (value == null)
             return Collections.emptyMap();
 
-        Map<String, Set<String>> map = new HashMap<>();
+        Map<String, List<String>> map = new HashMap<>();
 
         while (value != null) {
 
@@ -569,9 +594,9 @@ public final class ModuleBootstrap {
             if (rhs.isEmpty())
                 fail("Unable to parse: " + value);
 
-            // value is <module>(,<module>)*
-            Set<String> values = map.computeIfAbsent(key, k -> new HashSet<>());
-            for (String s : rhs.split(",")) {
+            // value is <module>(,<module>)* or <file>(<pathsep><file>)*
+            List<String> values = map.computeIfAbsent(key, k -> new ArrayList<>());
+            for (String s : rhs.split(regex)) {
                 if (s.length() > 0) values.add(s);
             }
 
@@ -580,6 +605,14 @@ public final class ModuleBootstrap {
         }
 
         return map;
+    }
+
+    /**
+     * Decodes the values of --add-reads, -add-exports or --add-opens
+     * which use the "," to separate the RHS of the option value.
+     */
+    private static Map<String, List<String>> decode(String prefix) {
+        return decode(prefix, ",");
     }
 
     /**
