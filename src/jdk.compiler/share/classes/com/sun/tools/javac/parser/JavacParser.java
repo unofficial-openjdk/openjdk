@@ -3159,7 +3159,7 @@ public class JavacParser implements Parser {
                     if (token.kind == IDENTIFIER && token.name() == names.module) {
                         List<JCAnnotation> annotations = List.nil();
                         if (mods != null) {
-                            checkNoMods(mods.flags);
+                            checkNoMods(mods.flags & ~Flags.DEPRECATED);
                             annotations = mods.annotations;
                             mods = null;
                         }
