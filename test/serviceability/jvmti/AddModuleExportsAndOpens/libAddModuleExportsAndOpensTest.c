@@ -270,10 +270,10 @@ jint check_add_module_exports(JNIEnv *env,
 }
 
 JNIEXPORT jint JNICALL
-Java_MyPackage_AddModuleExportsTest_check(JNIEnv *env,
-                                          jclass cls,
-                                          jobject baseModule,
-                                          jobject thisModule) {
+Java_MyPackage_AddModuleExportsAndOpensTest_check(JNIEnv *env,
+                                                  jclass cls,
+                                                  jobject baseModule,
+                                                  jobject thisModule) {
     if (jvmti == NULL) {
         throw_exc(env, "JVMTI client was not properly loaded!\n");
         return FAILED;

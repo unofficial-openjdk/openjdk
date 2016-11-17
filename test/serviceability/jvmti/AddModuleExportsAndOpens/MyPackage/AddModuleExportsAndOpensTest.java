@@ -25,21 +25,21 @@ package MyPackage;
 
 /**
  * @test
- * @summary Verifies the JVMTI AddModuleExports API
- * @compile AddModuleExportsTest.java
- * @run main/othervm/native -agentlib:AddModuleExportsTest MyPackage.AddModuleExportsTest
+ * @summary Verifies the JVMTI AddModuleExports and AddModuleOpens API
+ * @compile AddModuleExportsAndOpensTest.java
+ * @run main/othervm/native -agentlib:AddModuleExportsAndOpensTest MyPackage.AddModuleExportsAndOpensTest
  */
 
 import java.io.PrintStream;
 import java.lang.reflect.Module;
 
-public class AddModuleExportsTest {
+public class AddModuleExportsAndOpensTest {
 
     static {
         try {
-            System.loadLibrary("AddModuleExportsTest");
+            System.loadLibrary("AddModuleExportsAndOpensTest");
         } catch (UnsatisfiedLinkError ule) {
-            System.err.println("Could not load AddModuleExportsTest library");
+            System.err.println("Could not load AddModuleExportsAndOpensTest library");
             System.err.println("java.library.path: "
                 + System.getProperty("java.library.path"));
             throw ule;
@@ -50,7 +50,7 @@ public class AddModuleExportsTest {
 
     public static void main(String args[]) {
         Module baseModule = Object.class.getModule();
-        Module thisModule = AddModuleExportsTest.class.getClassLoader().getUnnamedModule();
+        Module thisModule = AddModuleExportsAndOpensTest.class.getClassLoader().getUnnamedModule();
         int status = check(baseModule, thisModule);
         if (status != 0) {
             throw new RuntimeException("Non-zero status returned from the agent: " + status);

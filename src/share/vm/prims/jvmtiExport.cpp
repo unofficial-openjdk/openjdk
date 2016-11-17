@@ -464,8 +464,7 @@ JvmtiExport::add_module_reads(Handle module, Handle to_module, TRAPS) {
 }
 
 jvmtiError
-JvmtiExport::add_module_exports_or_opens(Handle module, Handle pkg_name, Handle to_module,
-                                         jboolean opens, TRAPS) {
+JvmtiExport::add_module_exports(Handle module, Handle pkg_name, Handle to_module, TRAPS) {
   if (!Universe::is_module_initialized()) {
     return JVMTI_ERROR_NONE; // extra safety
   }
@@ -473,15 +472,51 @@ JvmtiExport::add_module_exports_or_opens(Handle module, Handle pkg_name, Handle 
   assert(!to_module.is_null(), "to_module should always be set");
   assert(!pkg_name.is_null(), "pkg_name should always be set");
 
+  // Invoke the addExports method
   JavaValue result(T_VOID);
-  Symbol* name = opens ? vmSymbols::addOpens_name()
-                       : vmSymbols::addExports_name();
-  Symbol* sign = vmSymbols::addExports_signature();
-
-  // Invoke the addExports or addOpens method
   JavaCalls::call_static(&result,
                          SystemDictionary::module_Modules_klass(),
-                         name, sign, module, pkg_name, to_module, THREAD);
+                         vmSymbols::addExports_name(),
+                         vmSymbols::addExports_signature(),
+                         module,
+                         pkg_name,
+                         to_module,
+                         THREAD);
+
+  if (HAS_PENDING_EXCEPTION) {
+    Symbol* ex_name = PENDING_EXCEPTION->klass()->name();
+    LogTarget(Trace, jvmti) log;
+    LogStreamCHeap log_stream(log);
+    java_lang_Throwable::print(PENDING_EXCEPTION, &log_stream);
+    log_stream.cr();
+    CLEAR_PENDING_EXCEPTION;
+    if (ex_name == vmSymbols::java_lang_IllegalArgumentException()) {
+      return JVMTI_ERROR_ILLEGAL_ARGUMENT;
+    }
+    return JVMTI_ERROR_INTERNAL;
+  }
+  return JVMTI_ERROR_NONE;
+}
+
+jvmtiError
+JvmtiExport::add_module_opens(Handle module, Handle pkg_name, Handle to_module, TRAPS) {
+  if (!Universe::is_module_initialized()) {
+    return JVMTI_ERROR_NONE; // extra safety
+  }
+  assert(!module.is_null(), "module should always be set");
+  assert(!to_module.is_null(), "to_module should always be set");
+  assert(!pkg_name.is_null(), "pkg_name should always be set");
+
+  // Invoke the addOpens method
+  JavaValue result(T_VOID);
+  JavaCalls::call_static(&result,
+                         SystemDictionary::module_Modules_klass(),
+                         vmSymbols::addOpens_name(),
+                         vmSymbols::addExports_signature(),
+                         module,
+                         pkg_name,
+                         to_module,
+                         THREAD);
 
   if (HAS_PENDING_EXCEPTION) {
     Symbol* ex_name = PENDING_EXCEPTION->klass()->name();

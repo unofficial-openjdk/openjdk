@@ -266,7 +266,7 @@ JvmtiEnv::AddModuleExports(jobject module, const char* pkg_name, jobject to_modu
   if (!java_lang_reflect_Module::is_instance(h_to_module())) {
     return JVMTI_ERROR_INVALID_MODULE;
   }
-  return JvmtiExport::add_module_exports_or_opens(h_module, h_pkg, h_to_module, false, THREAD);
+  return JvmtiExport::add_module_exports(h_module, h_pkg, h_to_module, THREAD);
 } /* end AddModuleExports */
 
 
@@ -289,7 +289,7 @@ JvmtiEnv::AddModuleOpens(jobject module, const char* pkg_name, jobject to_module
   if (!java_lang_reflect_Module::is_instance(h_to_module())) {
     return JVMTI_ERROR_INVALID_MODULE;
   }
-  return JvmtiExport::add_module_exports_or_opens(h_module, h_pkg, h_to_module, true, THREAD);
+  return JvmtiExport::add_module_opens(h_module, h_pkg, h_to_module, THREAD);
 } /* end AddModuleOpens */
 
 
