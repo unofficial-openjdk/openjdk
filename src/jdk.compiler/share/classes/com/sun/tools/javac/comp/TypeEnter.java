@@ -354,9 +354,9 @@ public class TypeEnter implements Completer {
 
                 if (decl != null) {
                     //check @Deprecated:
-                    markDeprecated(decl.sym, decl.annotations, env);
+                    markDeprecated(decl.sym, decl.mods.annotations, env);
                     // process module annotations
-                    annotate.annotateLater(decl.annotations, env, env.toplevel.modle, null);
+                    annotate.annotateLater(decl.mods.annotations, env, env.toplevel.modle, null);
                 }
             } finally {
                 this.env = prevEnv;
@@ -1132,7 +1132,7 @@ public class TypeEnter implements Completer {
         for (List<JCAnnotation> al = annotations; !al.isEmpty(); al = al.tail) {
             JCAnnotation a = al.head;
             if (a.annotationType.type == syms.deprecatedType) {
-                sym.flags_field |= Flags.DEPRECATED;
+                sym.flags_field |= (Flags.DEPRECATED | Flags.DEPRECATED_ANNOTATION);
                 a.args.stream()
                         .filter(e -> e.hasTag(ASSIGN))
                         .map(e -> (JCAssign) e)

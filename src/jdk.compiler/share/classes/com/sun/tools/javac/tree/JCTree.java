@@ -2632,16 +2632,16 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     }
 
     public static class JCModuleDecl extends JCTree implements ModuleTree {
-        public List<JCAnnotation> annotations;
+        public JCModifiers mods;
         public ModuleType type;
         private final ModuleKind kind;
         public JCExpression qualId;
         public List<JCDirective> directives;
         public ModuleSymbol sym;
 
-        protected JCModuleDecl(List<JCAnnotation> annotations, ModuleKind kind,
+        protected JCModuleDecl(JCModifiers mods, ModuleKind kind,
                 JCExpression qualId, List<JCDirective> directives) {
-            this.annotations = annotations;
+            this.mods = mods;
             this.kind = kind;
             this.qualId = qualId;
             this.directives = directives;
@@ -2657,7 +2657,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
         @Override @DefinedBy(Api.COMPILER_TREE)
         public List<? extends AnnotationTree> getAnnotations() {
-            return annotations;
+            return mods.annotations;
         }
 
         @Override @DefinedBy(Api.COMPILER_TREE)
@@ -2984,7 +2984,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         JCAnnotation Annotation(JCTree annotationType, List<JCExpression> args);
         JCModifiers Modifiers(long flags, List<JCAnnotation> annotations);
         JCErroneous Erroneous(List<? extends JCTree> errs);
-        JCModuleDecl ModuleDef(List<JCAnnotation> annotations, ModuleKind kind, JCExpression qualId, List<JCDirective> directives);
+        JCModuleDecl ModuleDef(JCModifiers mods, ModuleKind kind, JCExpression qualId, List<JCDirective> directives);
         JCExports Exports(JCExpression qualId, List<JCExpression> moduleNames);
         JCExports Opens(JCExpression qualId, List<JCExpression> moduleNames);
         JCProvides Provides(JCExpression serviceName, List<JCExpression> implNames);

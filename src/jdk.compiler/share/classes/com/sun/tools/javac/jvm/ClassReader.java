@@ -1532,7 +1532,7 @@ public class ClassReader {
                     } else if (proxy.type.tsym == syms.repeatableType.tsym) {
                         repeatable = proxy;
                     } else if (proxy.type.tsym == syms.deprecatedType.tsym) {
-                        sym.flags_field |= DEPRECATED;
+                        sym.flags_field |= (DEPRECATED | DEPRECATED_ANNOTATION);
                         for (Pair<Name, Attribute> v : proxy.values) {
                             if (v.fst == names.forRemoval && v.snd instanceof Attribute.Constant) {
                                 Attribute.Constant c = (Attribute.Constant) v.snd;
@@ -2204,6 +2204,18 @@ public class ClassReader {
             try {
                 currentClassFile = classFile;
                 List<Attribute.Compound> newList = deproxyCompoundList(l);
+                for (Attribute.Compound attr : newList) {
+                    if (attr.type.tsym == syms.deprecatedType.tsym) {
+                        sym.flags_field |= (DEPRECATED | DEPRECATED_ANNOTATION);
+                        Attribute forRemoval = attr.member(names.forRemoval);
+                        if (forRemoval instanceof Attribute.Constant) {
+                            Attribute.Constant c = (Attribute.Constant) forRemoval;
+                            if (c.type == syms.booleanType && ((Integer) c.value) != 0) {
+                                sym.flags_field |= DEPRECATED_REMOVAL;
+                            }
+                        }
+                    }
+                }
                 if (sym.annotationsPendingCompletion()) {
                     sym.setDeclarationAttributes(newList);
                 } else {

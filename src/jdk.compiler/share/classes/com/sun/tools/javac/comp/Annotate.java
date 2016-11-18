@@ -340,7 +340,7 @@ public class Annotate {
             if (!c.type.isErroneous()
                     && (toAnnotate.kind == MDL || toAnnotate.owner.kind != MTH)
                     && types.isSameType(c.type, syms.deprecatedType)) {
-                toAnnotate.flags_field |= Flags.DEPRECATED;
+                toAnnotate.flags_field |= (Flags.DEPRECATED | Flags.DEPRECATED_ANNOTATION);
                 Attribute fr = c.member(names.forRemoval);
                 if (fr instanceof Attribute.Constant) {
                     Attribute.Constant v = (Attribute.Constant) fr;
