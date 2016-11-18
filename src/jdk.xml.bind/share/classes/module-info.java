@@ -56,7 +56,7 @@ module jdk.xml.bind {
         jdk.xml.ws;
 
     // XML document content needs to be exported
-    exports com.sun.tools.internal.xjc.reader.xmlschema.bindinfo to
+    opens com.sun.tools.internal.xjc.reader.xmlschema.bindinfo to
         java.xml.bind;
 
     // com.sun.tools.internal.xjc.reader.xmlschema.bindinfo.BindInfo uses JAXBContext
