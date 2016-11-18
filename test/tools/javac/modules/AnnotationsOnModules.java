@@ -223,6 +223,7 @@ public class AnnotationsOnModules extends ModuleTestBase {
                               "    exports api to m1, m2;\n" +
                               "}",
                               "package api; public class Api { }");
+            System.err.println("compile m3");
             actual = new JavacTask(tb)
                     .options("--module-source-path", moduleSrc.toString(),
                              "-XDrawDiagnostics")
@@ -244,6 +245,7 @@ public class AnnotationsOnModules extends ModuleTestBase {
                 throw new AssertionError("Unexpected output: " + actual + "; suppress: " + suppress);
             }
 
+            System.err.println("compile m3 with -Xlint:-deprecation");
             actual = new JavacTask(tb)
                     .options("--module-source-path", moduleSrc.toString(),
                              "-XDrawDiagnostics",
@@ -267,6 +269,7 @@ public class AnnotationsOnModules extends ModuleTestBase {
             }
 
             //load the deprecated module-infos from classfile:
+            System.err.println("compile m3 with -Xlint:-deprecation, loading deprecated modules from classes");
             actual = new JavacTask(tb)
                     .options("--module-path", modulePath.toString(),
                              "-XDrawDiagnostics",

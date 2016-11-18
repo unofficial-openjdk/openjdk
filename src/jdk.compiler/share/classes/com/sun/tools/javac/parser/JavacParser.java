@@ -3157,13 +3157,10 @@ public class JavacParser implements Parser {
                         nextToken();
                     }
                     if (token.kind == IDENTIFIER && token.name() == names.module) {
-                        List<JCAnnotation> annotations = List.nil();
                         if (mods != null) {
                             checkNoMods(mods.flags & ~Flags.DEPRECATED);
-                            annotations = mods.annotations;
-                            mods = null;
                         }
-                        defs.append(moduleDecl(annotations, kind, docComment));
+                        defs.append(moduleDecl(mods, kind, docComment));
                         consumedToplevelDoc = true;
                         break;
                     } else if (kind != ModuleKind.STRONG) {
@@ -3194,7 +3191,7 @@ public class JavacParser implements Parser {
         return toplevel;
     }
 
-    JCModuleDecl moduleDecl(List<JCAnnotation> annotations, ModuleKind kind, Comment dc) {
+    JCModuleDecl moduleDecl(JCModifiers mods, ModuleKind kind, Comment dc) {
         int pos = token.pos;
         if (!allowModules) {
             log.error(pos, Errors.ModulesNotSupportedInSource(source.name));
@@ -3210,7 +3207,7 @@ public class JavacParser implements Parser {
         accept(RBRACE);
         accept(EOF);
 
-        JCModuleDecl result = toP(F.at(pos).ModuleDef(annotations, kind, name, directives));
+        JCModuleDecl result = toP(F.at(pos).ModuleDef(mods, kind, name, directives));
         attach(result, dc);
         return result;
     }

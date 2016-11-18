@@ -626,6 +626,7 @@ public class Modules extends JCTree.Visitor {
             if (tree.getModuleType() == ModuleKind.OPEN) {
                 sym.flags.add(ModuleFlags.OPEN);
             }
+            sym.flags_field |= (tree.mods.flags & Flags.DEPRECATED);
 
             sym.requires = List.nil();
             sym.exports = List.nil();

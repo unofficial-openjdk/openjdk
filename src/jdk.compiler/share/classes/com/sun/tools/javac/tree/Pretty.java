@@ -442,7 +442,7 @@ public class Pretty extends JCTree.Visitor {
     @Override
     public void visitModuleDef(JCModuleDecl tree) {
         try {
-            printAnnotations(tree.annotations);
+            printAnnotations(tree.mods.annotations);
             if (tree.getModuleType() == ModuleKind.OPEN) {
                 print("open ");
             }

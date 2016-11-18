@@ -380,8 +380,8 @@ public class TreeInfo {
         switch(tree.getTag()) {
             case MODULEDEF: {
                 JCModuleDecl md = (JCModuleDecl)tree;
-                return md.annotations.isEmpty() ? md.pos :
-                       md.annotations.head.pos;
+                return md.mods.annotations.isEmpty() ? md.pos :
+                       md.mods.annotations.head.pos;
             }
             case PACKAGEDEF: {
                 JCPackageDecl pd = (JCPackageDecl)tree;
