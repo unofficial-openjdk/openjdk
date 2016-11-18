@@ -306,8 +306,11 @@ public class Modules extends JCTree.Visitor {
     private void enterModule(JCCompilationUnit toplevel, ClassSymbol c, Set<ModuleSymbol> modules) {
         boolean isModuleInfo = toplevel.sourcefile.isNameCompatible("module-info", Kind.SOURCE);
         boolean isModuleDecl = toplevel.getModuleDecl() != null;
-        if (isModuleInfo && isModuleDecl) {
+        if (isModuleDecl) {
             JCModuleDecl decl = toplevel.getModuleDecl();
+            if (!isModuleInfo) {
+                log.error(decl.pos(), Errors.ModuleDeclSbInModuleInfoJava);
+            }
             Name name = TreeInfo.fullName(decl.qualId);
             ModuleSymbol sym;
             if (c != null) {
@@ -343,9 +346,6 @@ public class Modules extends JCTree.Visitor {
                 JCTree tree = toplevel.defs.isEmpty() ? toplevel : toplevel.defs.head;
                 log.error(tree.pos(), Errors.ExpectedModule);
             }
-        } else if (isModuleDecl) {
-            JCTree tree = toplevel.defs.head;
-            log.error(tree.pos(), Errors.ModuleDeclSbInModuleInfoJava);
         }
     }
 
