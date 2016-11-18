@@ -36,16 +36,11 @@ module jdk.security.auth {
     exports com.sun.security.auth.login;
     exports com.sun.security.auth.module;
     provides javax.security.auth.spi.LoginModule with
-        com.sun.security.auth.module.Krb5LoginModule;
-    provides javax.security.auth.spi.LoginModule with
-        com.sun.security.auth.module.UnixLoginModule;
-    provides javax.security.auth.spi.LoginModule with
-        com.sun.security.auth.module.JndiLoginModule;
-    provides javax.security.auth.spi.LoginModule with
-        com.sun.security.auth.module.KeyStoreLoginModule;
-    provides javax.security.auth.spi.LoginModule with
-        com.sun.security.auth.module.LdapLoginModule;
-    provides javax.security.auth.spi.LoginModule with
+        com.sun.security.auth.module.Krb5LoginModule,
+        com.sun.security.auth.module.UnixLoginModule,
+        com.sun.security.auth.module.JndiLoginModule,
+        com.sun.security.auth.module.KeyStoreLoginModule,
+        com.sun.security.auth.module.LdapLoginModule,
         com.sun.security.auth.module.NTLoginModule;
 }
 

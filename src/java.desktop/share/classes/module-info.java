@@ -118,31 +118,43 @@ module java.desktop {
     provides java.net.ContentHandlerFactory with sun.awt.www.content.MultimediaContentHandlers;
     provides javax.print.PrintServiceLookup with sun.print.PrintServiceLookupProvider;
     provides javax.print.StreamPrintServiceFactory with sun.print.PSStreamPrinterFactory;
-    provides javax.sound.midi.spi.MidiDeviceProvider with com.sun.media.sound.MidiInDeviceProvider;
-    provides javax.sound.midi.spi.MidiDeviceProvider with com.sun.media.sound.MidiOutDeviceProvider;
-    provides javax.sound.midi.spi.MidiDeviceProvider with com.sun.media.sound.RealTimeSequencerProvider;
-    provides javax.sound.midi.spi.MidiDeviceProvider with com.sun.media.sound.SoftProvider;
+
+    provides javax.sound.midi.spi.MidiDeviceProvider with
+        com.sun.media.sound.MidiInDeviceProvider,
+        com.sun.media.sound.MidiOutDeviceProvider,
+        com.sun.media.sound.RealTimeSequencerProvider,
+        com.sun.media.sound.SoftProvider;
+
     provides javax.sound.midi.spi.MidiFileReader with com.sun.media.sound.StandardMidiFileReader;
     provides javax.sound.midi.spi.MidiFileWriter with com.sun.media.sound.StandardMidiFileWriter;
-    provides javax.sound.midi.spi.SoundbankReader with com.sun.media.sound.AudioFileSoundbankReader;
-    provides javax.sound.midi.spi.SoundbankReader with com.sun.media.sound.DLSSoundbankReader;
-    provides javax.sound.midi.spi.SoundbankReader with com.sun.media.sound.JARSoundbankReader;
-    provides javax.sound.midi.spi.SoundbankReader with com.sun.media.sound.SF2SoundbankReader;
-    provides javax.sound.sampled.spi.AudioFileReader with com.sun.media.sound.AiffFileReader;
-    provides javax.sound.sampled.spi.AudioFileReader with com.sun.media.sound.AuFileReader;
-    provides javax.sound.sampled.spi.AudioFileReader with com.sun.media.sound.SoftMidiAudioFileReader;
-    provides javax.sound.sampled.spi.AudioFileReader with com.sun.media.sound.WaveFileReader;
-    provides javax.sound.sampled.spi.AudioFileReader with com.sun.media.sound.WaveFloatFileReader;
-    provides javax.sound.sampled.spi.AudioFileReader with com.sun.media.sound.WaveExtensibleFileReader;
-    provides javax.sound.sampled.spi.AudioFileWriter with com.sun.media.sound.AiffFileWriter;
-    provides javax.sound.sampled.spi.AudioFileWriter with com.sun.media.sound.AuFileWriter;
-    provides javax.sound.sampled.spi.AudioFileWriter with com.sun.media.sound.WaveFileWriter;
-    provides javax.sound.sampled.spi.AudioFileWriter with com.sun.media.sound.WaveFloatFileWriter;
+
+    provides javax.sound.midi.spi.SoundbankReader with
+         com.sun.media.sound.AudioFileSoundbankReader,
+         com.sun.media.sound.DLSSoundbankReader,
+         com.sun.media.sound.JARSoundbankReader,
+         com.sun.media.sound.SF2SoundbankReader;
+
+    provides javax.sound.sampled.spi.AudioFileReader with
+        com.sun.media.sound.AiffFileReader,
+        com.sun.media.sound.AuFileReader,
+        com.sun.media.sound.SoftMidiAudioFileReader,
+        com.sun.media.sound.WaveFileReader,
+        com.sun.media.sound.WaveFloatFileReader,
+        com.sun.media.sound.WaveExtensibleFileReader;
+
+    provides javax.sound.sampled.spi.AudioFileWriter with
+        com.sun.media.sound.AiffFileWriter,
+        com.sun.media.sound.AuFileWriter,
+        com.sun.media.sound.WaveFileWriter,
+        com.sun.media.sound.WaveFloatFileWriter;
+
     provides javax.sound.sampled.spi.FormatConversionProvider with com.sun.media.sound.AlawCodec;
-    provides javax.sound.sampled.spi.FormatConversionProvider with com.sun.media.sound.AudioFloatFormatConverter;
-    provides javax.sound.sampled.spi.FormatConversionProvider with com.sun.media.sound.PCMtoPCMCodec;
-    provides javax.sound.sampled.spi.FormatConversionProvider with com.sun.media.sound.UlawCodec;
-    provides javax.sound.sampled.spi.MixerProvider with com.sun.media.sound.DirectAudioDeviceProvider;
-    provides javax.sound.sampled.spi.MixerProvider with com.sun.media.sound.PortMixerProvider;
+        com.sun.media.sound.AudioFloatFormatConverter,
+        com.sun.media.sound.PCMtoPCMCodec,
+        com.sun.media.sound.UlawCodec;
+
+    provides javax.sound.sampled.spi.MixerProvider with
+        com.sun.media.sound.DirectAudioDeviceProvider,
+        com.sun.media.sound.PortMixerProvider;
 }
 
