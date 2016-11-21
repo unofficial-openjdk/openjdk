@@ -52,6 +52,8 @@ import static java.util.stream.Collectors.*;
  * The extra exports, opens, uses, provides can be specified
  * in module-info.java.extra.
  * Injecting platform-specific requires is not supported.
+ *
+ * @see build.tools.module.ModuleInfoExtraTest for basic testing
  */
 public class GenModuleInfoSource {
     private final static String USAGE =
@@ -60,6 +62,7 @@ public class GenModuleInfoSource {
         "  --modules <module-name>[,<module-name>...]\n" +
         "  <module-info.java.extra> ...\n";
 
+    static boolean verbose = false;
     public static void main(String... args) throws Exception {
         Path outfile = null;
         Path moduleInfoJava = null;
@@ -85,6 +88,9 @@ public class GenModuleInfoSource {
                     modules = Arrays.stream(arg.split(","))
                                     .collect(toSet());
                     i++;
+                    break;
+                case "-v":
+                    verbose = true;
                     break;
                 default:
                     Path file = Paths.get(option);
@@ -164,12 +170,10 @@ public class GenModuleInfoSource {
 
 
     class ModuleInfo {
-        private final Map<String, Statement> exports = new HashMap<>();
-        private final Map<String, Statement> opens = new HashMap<>();
-        private final Map<String, Statement> uses = new HashMap<>();
-        private final Map<String, Statement> provides = new HashMap<>();
-        ModuleInfo() {
-        }
+        final Map<String, Statement> exports = new HashMap<>();
+        final Map<String, Statement> opens = new HashMap<>();
+        final Map<String, Statement> uses = new HashMap<>();
+        final Map<String, Statement> provides = new HashMap<>();
 
         Statement getStatement(String directive, String name) {
             switch (directive) {
@@ -358,8 +362,8 @@ public class GenModuleInfoSource {
             Statement statement = null;
             boolean hasTargets = false;
 
-            for (int lineNumber = 0; lineNumber < lines.size(); ) {
-                String l = lines.get(lineNumber).trim();
+            for (int lineNumber = 1; lineNumber <= lines.size(); ) {
+                String l = lines.get(lineNumber-1).trim();
                 int index = 0;
 
                 if (l.isEmpty()) {
@@ -370,7 +374,7 @@ public class GenModuleInfoSource {
                 // comment block starts
                 if (l.startsWith("/*")) {
                     while (l.indexOf("*/") == -1) { // end comment block
-                        l = lines.get(++lineNumber).trim();
+                        l = lines.get(lineNumber++).trim();
                     }
                     index = l.indexOf("*/") + 2;
                     if (index >= l.length()) {
@@ -378,7 +382,7 @@ public class GenModuleInfoSource {
                         continue;
                     } else {
                         // rest of the line
-                        l = l.substring(index, l.length());
+                        l = l.substring(index, l.length()).trim();
                         index = 0;
                     }
                 }
@@ -389,15 +393,31 @@ public class GenModuleInfoSource {
                     continue;
                 }
 
+                int current = lineNumber;
+                int count = 0;
                 while (index < l.length()) {
+                    if (current == lineNumber && ++count > 20)
+                        throw new Error("Fail to parse line " + lineNumber + " " + sourcefile);
+
                     int end = l.indexOf(';');
                     if (end == -1)
                         end = l.length();
-                    String[] s = l.substring(0, end).trim().split("\\s+");
+                    String content = l.substring(0, end).trim();
+                    if (content.isEmpty()) {
+                        index = end+1;
+                        if (index < l.length()) {
+                            // rest of the line
+                            l = l.substring(index, l.length()).trim();
+                            index = 0;
+                        }
+                        continue;
+                    }
+
+                    String[] s = content.split("\\s+");
                     String keyword = s[0].trim();
 
                     String name = s.length > 1 ? s[1].trim() : null;
-                    // System.out.format("%d: %s index=%d len=%d%n", lineNumber, l, index, l.length());
+                    trace("%d: %s index=%d len=%d%n", lineNumber, l, index, l.length());
                     switch (keyword) {
                         case "module":
                         case "requires":
@@ -413,7 +433,7 @@ public class GenModuleInfoSource {
                             statement = getStatement(keyword, name);
                             hasTargets = false;
 
-                            int i = l.indexOf(name, index) + name.length() + 1;
+                            int i = l.indexOf(name, keyword.length()+1) + name.length() + 1;
                             l = i < l.length() ? l.substring(i, l.length()).trim() : "";
                             index = 0;
 
@@ -423,7 +443,6 @@ public class GenModuleInfoSource {
                                         lineNumber + ", is malformed: " + s[2]);
                                 }
                             }
-
 
                             break;
 
@@ -442,17 +461,22 @@ public class GenModuleInfoSource {
                             break;
                     }
 
-                    // comment block starts
+                    if (index >= l.length()) {
+                        // skip to next line
+                        continue;
+                    }
+
+                        // comment block starts
                     if (l.startsWith("/*")) {
                         while (l.indexOf("*/") == -1) { // end comment block
-                            l = lines.get(++lineNumber).trim();
+                            l = lines.get(lineNumber++).trim();
                         }
                         index = l.indexOf("*/") + 2;
                         if (index >= l.length()) {
                             continue;
                         } else {
                             // rest of the line
-                            l = l.substring(index, l.length());
+                            l = l.substring(index, l.length()).trim();
                             index = 0;
                         }
                     }
@@ -462,26 +486,53 @@ public class GenModuleInfoSource {
                         continue;
                     }
 
+                    if (statement == null) {
+                        throw new RuntimeException(sourcefile + ", line " +
+                            lineNumber + ": missing keyword?");
+                    }
+
                     if (!hasTargets) {
                         continue;
                     }
 
-                    // parse the qualifiers
-                    int j = l.indexOf(';', index);
+                    if (index >= l.length()) {
+                        throw new RuntimeException(sourcefile + ", line " +
+                            lineNumber + ": " + l);
+                    }
+
+                    // parse the target module of exports, opens, or provides
                     Statement stmt = statement;
-                    String rhs = j != -1 ? l.substring(index, j) : l;
+
+                    int terminal = l.indexOf(';', index);
+                    // determine up to which position to parse
+                    int pos = terminal != -1 ? terminal : l.length();
+                    // parse up to comments
+                    int pos1 = l.indexOf("//", index);
+                    if (pos1 != -1 && pos1 < pos) {
+                        pos = pos1;
+                    }
+                    int pos2 = l.indexOf("/*", index);
+                    if (pos2 != -1 && pos2 < pos) {
+                        pos = pos2;
+                    }
+                    // target module(s) for qualitifed exports or opens
+                    // or provider implementation class(es)
+                    String rhs = l.substring(index, pos).trim();
                     index += rhs.length();
-                    // System.out.format("rhs: index=%d %s line: %s%n", index, rhs, l);
+                    trace("rhs: index=%d [%s] [line: %s]%n", index, rhs, l);
+
                     String[] targets = rhs.split(",");
                     for (String t : targets) {
                         String n = t.trim();
                         if (n.length() > 0)
                             stmt.addTarget(n);
                     }
-                    if (j != -1) {
+
+                    // start next statement
+                    if (pos == terminal) {
                         statement = null;
                         hasTargets = false;
-                        index = j + 1;
+                        index = terminal + 1;
                     }
                     l = index < l.length() ? l.substring(index, l.length()).trim() : "";
                     index = 0;
@@ -560,6 +611,12 @@ public class GenModuleInfoSource {
         public Stream<String> orderedTargets() {
             return ordered ? targets.stream()
                            : targets.stream().sorted();
+        }
+    }
+
+    static void trace(String fmt, Object... params) {
+        if (verbose) {
+            System.out.format(fmt, params);
         }
     }
 }
