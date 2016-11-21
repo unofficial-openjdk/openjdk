@@ -41,7 +41,7 @@ public class ClassFileConstants {
     public static final String VERSION            = "Version";
     public static final String MAIN_CLASS         = "MainClass";
     public static final String TARGET_PLATFORM    = "TargetPlatform";
-    public static final String HASHES             = "Hashes";
+    public static final String HASHES             = "jdk.Hashes";
 
     // access, requires, exports, and opens flags
     public static final int ACC_MODULE        = 0x8000;

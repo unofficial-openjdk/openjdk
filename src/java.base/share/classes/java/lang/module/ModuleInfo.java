@@ -63,7 +63,7 @@ final class ModuleInfo {
     // supplies the set of packages when Packages attribute not present
     private final Supplier<Set<String>> packageFinder;
 
-    // indicates if the Hashes attribute should be parsed
+    // indicates if the jdk.Hashes attribute should be parsed
     private final boolean parseHashes;
 
     private ModuleInfo(Supplier<Set<String>> pf, boolean ph) {
@@ -116,7 +116,7 @@ final class ModuleInfo {
 
     /**
      * Reads a {@code module-info.class} from the given byte buffer
-     * but ignore the {@code Hashes} attribute.
+     * but ignore the {@code jdk.Hashes} attribute.
      *
      * @throws InvalidModuleDescriptorException
      * @throws UncheckedIOException
@@ -503,7 +503,7 @@ final class ModuleInfo {
 
 
     /**
-     * Reads the Hashes attribute
+     * Reads the jdk.Hashes attribute
      *
      * @apiNote For now the hash is stored in base64 as a UTF-8 string, this
      * should be changed to be an array of u1.

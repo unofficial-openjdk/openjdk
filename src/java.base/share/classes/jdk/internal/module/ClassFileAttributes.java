@@ -632,13 +632,13 @@ public final class ClassFileAttributes {
     }
 
     /**
-     * Hashes attribute.
+     * jdk.Hashes attribute.
      *
      * <pre> {@code
      *
      * Hashes_attribute {
      *   // index to CONSTANT_utf8_info structure in constant pool representing
-     *   // the string "Hashes"
+     *   // the string "jdk.Hashes"
      *   u2 attribute_name_index;
      *   u4 attribute_length;
      *
