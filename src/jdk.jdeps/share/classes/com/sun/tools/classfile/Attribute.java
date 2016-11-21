@@ -47,7 +47,7 @@ public abstract class Attribute {
     public static final String Deprecated               = "Deprecated";
     public static final String EnclosingMethod          = "EnclosingMethod";
     public static final String Exceptions               = "Exceptions";
-    public static final String Hashes                   = "Hashes";
+    public static final String Hashes                   = "jdk.Hashes";
     public static final String InnerClasses             = "InnerClasses";
     public static final String LineNumberTable          = "LineNumberTable";
     public static final String LocalVariableTable       = "LocalVariableTable";

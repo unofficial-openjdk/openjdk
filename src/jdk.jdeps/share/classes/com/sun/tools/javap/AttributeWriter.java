@@ -324,7 +324,7 @@ public class AttributeWriter extends BasicWriter
 
     @Override
     public Void visitHashes(Hashes_attribute attr, Void ignore) {
-        println("Hashes:");
+        println("jdk.Hashes:");
         indent(+1);
         print("algorithm #" + attr.algorithm_index);
         tab();
