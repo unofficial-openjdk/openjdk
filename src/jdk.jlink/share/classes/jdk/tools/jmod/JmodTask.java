@@ -1359,7 +1359,6 @@ public class JmodTask {
                 throw new CommandException("err.classpath.must.be.specified").showUsage(true);
             if (options.mainClass != null && !isValidJavaIdentifier(options.mainClass))
                 throw new CommandException("err.invalid.main-class", options.mainClass);
-
         } catch (OptionException e) {
              throw new CommandException(e.getMessage());
         }

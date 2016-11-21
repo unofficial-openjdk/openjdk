@@ -55,7 +55,7 @@ public interface ResourcePoolEntry {
      * <ul>CONFIG: A configuration file.</ul>
      * <ul>NATIVE_CMD: A native process launcher.</ul>
      * <ul>NATIVE_LIB: A native library.</ul>
-     * <ul>OTHER_FILE: Other kind of file.</ul>
+     * <ul>TOP: A top-level file in the jdk run-time image directory.</ul>
      * <ul>OTHER: Other kind of file.</ul>
      * </li>
      */
@@ -199,22 +199,5 @@ public interface ResourcePoolEntry {
      */
     public static ResourcePoolEntry create(String path, Path file) {
         return create(path, Type.CLASS_OR_RESOURCE, file);
-    }
-
-    /**
-     * Returns the pathname of the entry relative to the image output directory.
-     */
-    public default String imagePath() {
-        String path = path();
-        Objects.requireNonNull(path);
-        if (path.isEmpty() || path.charAt(0) != '/') {
-            throw new IllegalArgumentException(path + " must start with /");
-        }
-        String subpath = path.substring(1);
-        int idx = subpath.indexOf('/');
-        if (idx == -1) {
-            throw new IllegalArgumentException("/ missing after module: " + path);
-        }
-        return subpath.substring(idx+1);
     }
 }

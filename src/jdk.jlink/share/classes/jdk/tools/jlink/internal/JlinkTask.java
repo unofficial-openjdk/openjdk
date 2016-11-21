@@ -197,14 +197,6 @@ public class JlinkTask {
                 if (options.modulePath.isEmpty()) {
                     throw taskHelper.newBadArgs("err.modulepath.must.be.specified").showUsage(true);
                 }
-                if (options.addMods.isEmpty()) {
-                    throw taskHelper.newBadArgs("err.mods.must.be.specified", "--add-modules")
-                        .showUsage(true);
-                }
-                if (options.output == null) {
-                    throw taskHelper.newBadArgs("err.output.must.be.specified").showUsage(true);
-                }
-
                 createImage();
             } else {
                 postProcessOnly(taskHelper.getExistingImage());
@@ -252,10 +244,6 @@ public class JlinkTask {
 
         if (config.getModulepaths().isEmpty()) {
             throw new IllegalArgumentException("Empty module paths");
-        }
-
-        if (config.getModules().isEmpty()) {
-            throw new IllegalArgumentException("No root module");
         }
 
         ModuleFinder finder = newModuleFinder(config.getModulepaths(),
