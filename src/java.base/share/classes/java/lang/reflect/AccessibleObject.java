@@ -140,6 +140,7 @@ public class AccessibleObject implements AnnotatedElement {
      * @throws SecurityException if the request is denied
      * @see SecurityManager#checkPermission
      * @see ReflectPermission
+     * @see java.lang.invoke.MethodHandles#privateLookupIn
      */
     public void setAccessible(boolean flag) {
         AccessibleObject.checkPermission();

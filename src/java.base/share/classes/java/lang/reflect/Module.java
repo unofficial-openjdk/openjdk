@@ -421,11 +421,12 @@ public final class Module implements AnnotatedElement {
      * Returns {@code true} if this module exports the given package to at
      * least the given module.
      *
-     * <p> A package is considered exported to a module at run-time when the
-     * package is {@link #isOpen open} to the module. This method always returns
-     * {@code true} when invoked on an unnamed module. Additionally, it always
-     * returns {@code true} when invoked on an {@link ModuleDescriptor#isOpen
-     * open} module with a package in the module. </p>
+     * <p> This method returns {@code true} if invoked to test if a package in
+     * this module is exported to itself. It always returns {@code true} when
+     * invoked on an unnamed module. A package that is {@link #isOpen open} to
+     * the given module is considered exported to that module at run-time and
+     * so this method returns {@code true} if the package is open to the given
+     * module. </p>
      *
      * <p> This method does not check if the given module reads this module. </p>
      *
@@ -450,10 +451,10 @@ public final class Module implements AnnotatedElement {
      * Returns {@code true} if this module has <em>opened</em> a package to at
      * least the given module.
      *
-     * <p> This method always returns {@code true} when invoked on an unnamed
-     * module. Additionally, it always returns {@code true} when invoked on an
-     * {@link ModuleDescriptor#isOpen open} module with a package in the
-     * module. </p>
+     * <p> This method returns {@code true} if invoked to test if a package in
+     * this module is open to itself. It returns {@code true} when invoked on an
+     * {@link ModuleDescriptor#isOpen open} module with a package in the module.
+     * It always returns {@code true} when invoked on an unnamed module. </p>
      *
      * <p> This method does not check if the given module reads this module. </p>
      *
@@ -468,6 +469,7 @@ public final class Module implements AnnotatedElement {
      * @see ModuleDescriptor#opens()
      * @see #addOpens(String,Module)
      * @see AccessibleObject#setAccessible(boolean)
+     * @see java.lang.invoke.MethodHandles#privateLookupIn
      */
     public boolean isOpen(String pn, Module other) {
         Objects.requireNonNull(pn);
@@ -479,11 +481,10 @@ public final class Module implements AnnotatedElement {
      * Returns {@code true} if this module exports the given package
      * unconditionally.
      *
-     * <p> A package is considered exported unconditionally at run-time when
-     * the package is {@link #isOpen open} unconditionally. This method always
-     * returns {@code true} when invoked on an unnamed module. Additionally,
-     * it always returns {@code true} when invoked on an {@link
-     * ModuleDescriptor#isOpen open} module with a package in the module. </p>
+     * <p> This method always returns {@code true} when invoked on an unnamed
+     * module. A package that is {@link #isOpen(String) opened} unconditionally
+     * is considered exported unconditionally at run-time and so this method
+     * returns {@code true} if the package is opened unconditionally. </p>
      *
      * <p> This method does not check if the given module reads this module. </p>
      *
@@ -534,11 +535,13 @@ public final class Module implements AnnotatedElement {
         if (!isNamed())
             return true;
 
+        // all packages are exported/open to self
+        if (other == this && containsPackage(pn))
+            return true;
+
         // all packages in open modules are open
-        if (descriptor.isOpen()) {
-            assert extraPackages == null;
-            return descriptor.packages().contains(pn);
-        }
+        if (descriptor.isOpen())
+            return containsPackage(pn);
 
         // exported/opened via module declaration/descriptor
         if (isStaticallyExportedOrOpen(pn, other, open))
@@ -677,8 +680,9 @@ public final class Module implements AnnotatedElement {
      * <em>open</em> the given package to the given module.
      * Opening a package with this method allows all types in the package,
      * and all their members, not just public types and their public members,
-     * to be reflected on by the given module when using APIs that bypass or
-     * suppress default Java language access control checks.
+     * to be reflected on by the given module when using APIs that support
+     * private access or a way to bypass or suppress default Java language
+     * access control checks.
      *
      * <p> This method has no effect if the package is already <em>open</em>
      * to the given module. It also has no effect if invoked on an {@link
@@ -699,6 +703,7 @@ public final class Module implements AnnotatedElement {
      *
      * @see #isOpen(String,Module)
      * @see AccessibleObject#setAccessible(boolean)
+     * @see java.lang.invoke.MethodHandles#privateLookupIn
      */
     @CallerSensitive
     public Module addOpens(String pn, Module other) {

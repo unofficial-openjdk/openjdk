@@ -479,8 +479,8 @@ public final class Configuration {
 
 
     /**
-     * Returns the <em>empty</em> configuration. The empty configuration does
-     * not contain any modules and does not have a parent.
+     * Returns the <em>empty</em> configuration. There are no modules in the
+     * empty configuration. It has no parents.
      *
      * @return The empty configuration
      */
@@ -601,7 +601,7 @@ public final class Configuration {
     /**
      * Returns a string describing this configuration.
      *
-     * @return A string describing this configuration
+     * @return A possibly empty string describing this configuration
      */
     @Override
     public String toString() {

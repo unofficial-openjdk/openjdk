@@ -46,6 +46,7 @@ import java.util.stream.Stream;
 import jdk.internal.loader.Loader;
 import jdk.internal.loader.LoaderPool;
 import jdk.internal.misc.SharedSecrets;
+import jdk.internal.module.Modules;
 import jdk.internal.module.ServicesCatalog;
 import sun.security.util.SecurityConstants;
 
@@ -74,7 +75,11 @@ import sun.security.util.SecurityConstants;
  * mapped to a single class loader or where each module is mapped to its own
  * class loader. The {@link #defineModules defineModules} method is for more
  * advanced cases where modules are mapped to custom class loaders by means of
- * a function specified to the method. </p>
+ * a function specified to the method. Each of these methods has an instance
+ * and static variant. The instance methods create a layer with the receiver
+ * as the parent layer. The static methods are for more advanced cases where
+ * there can be more than one parent layer or a {@link Layer.Controller
+ * Controller} is needed to control modules in the layer. </p>
  *
  * <p> A Java virtual machine has at least one non-empty layer, the {@link
  * #boot() boot} layer, that is created when the Java virtual machine is
@@ -137,7 +142,6 @@ public final class Layer {
     // maps module name to jlr.Module
     private final Map<String, Module> nameToModule;
 
-
     /**
      * Creates a new Layer from the modules in the given configuration.
      */
@@ -158,6 +162,98 @@ public final class Layer {
     }
 
     /**
+     * Controls a layer. The static methods defined by {@link Layer} to create
+     * module layers return a {@code Controller} that can be used to control
+     * modules in the layer.
+     *
+     * @apiNote Care should be taken with {@code Controller} objects, they
+     * should never be shared with untrusted code.
+     *
+     * @since 9
+     */
+    public static final class Controller {
+        private final Layer layer;
+
+        Controller(Layer layer) {
+            this.layer = layer;
+        }
+
+        /**
+         * Returns the layer that this object controls.
+         *
+         * @return the layer
+         */
+        public Layer layer() {
+            return layer;
+        }
+
+        private void ensureInLayer(Module source) {
+            if (!layer.modules().contains(source))
+                throw new IllegalArgumentException(source + " not in layer");
+        }
+
+
+        /**
+         * Updates module {@code source} in the layer to read module
+         * {@code target}. This method is a no-op if {@code source} already
+         * reads {@code target}.
+         *
+         * @implNote <em>Read edges</em> added by this method are <em>weak</em>
+         * and do not prevent {@code target} from being GC'ed when {@code source}
+         * is strongly reachable.
+         *
+         * @param  source
+         *         The source module
+         * @param  target
+         *         The target module to read
+         *
+         * @return This controller
+         *
+         * @throws IllegalArgumentException
+         *         If {@code source} is not in the layer
+         *
+         * @see Module#addReads
+         */
+        public Controller addReads(Module source, Module target) {
+            Objects.requireNonNull(source);
+            Objects.requireNonNull(target);
+            ensureInLayer(source);
+            Modules.addReads(source, target);
+            return this;
+        }
+
+        /**
+         * Updates module {@code source} in the layer to open a package to
+         * module {@code target}. This method is a no-op if {@code source}
+         * already opens the package to at least {@code target}.
+         *
+         * @param  source
+         *         The source module
+         * @param  pn
+         *         The package name
+         * @param  target
+         *         The target module to read
+         *
+         * @return This controller
+         *
+         * @throws IllegalArgumentException
+         *         If {@code source} is not in the layer or the package is not
+         *         in the source module
+         *
+         * @see Module#addOpens
+         */
+        public Controller addOpens(Module source, String pn, Module target) {
+            Objects.requireNonNull(source);
+            Objects.requireNonNull(source);
+            Objects.requireNonNull(target);
+            ensureInLayer(source);
+            Modules.addOpens(source, pn, target);
+            return this;
+        }
+    }
+
+
+    /**
      * Creates a new layer, with this layer as its parent, by defining the
      * modules in the given {@code Configuration} to the Java virtual machine.
      * This method creates one class loader and defines all modules to that
@@ -169,7 +265,7 @@ public final class Layer {
      * parent. In other words, if this layer is {@code thisLayer} then this
      * method is equivalent to invoking:
      * <pre> {@code
-     *     Layer.defineModulesWithOneLoader(cf, List.of(thisLayer), parentLoader);
+     *     Layer.defineModulesWithOneLoader(cf, List.of(thisLayer), parentLoader).layer();
      * }</pre>
      *
      * @param  cf
@@ -197,7 +293,7 @@ public final class Layer {
      */
     public Layer defineModulesWithOneLoader(Configuration cf,
                                             ClassLoader parentLoader) {
-        return defineModulesWithOneLoader(cf, List.of(this), parentLoader);
+        return defineModulesWithOneLoader(cf, List.of(this), parentLoader).layer();
     }
 
 
@@ -213,7 +309,7 @@ public final class Layer {
      * parent. In other words, if this layer is {@code thisLayer} then this
      * method is equivalent to invoking:
      * <pre> {@code
-     *     Layer.defineModulesWithManyLoaders(cf, List.of(thisLayer), parentLoader);
+     *     Layer.defineModulesWithManyLoaders(cf, List.of(thisLayer), parentLoader).layer();
      * }</pre>
      *
      * @param  cf
@@ -240,7 +336,7 @@ public final class Layer {
      */
     public Layer defineModulesWithManyLoaders(Configuration cf,
                                               ClassLoader parentLoader) {
-        return defineModulesWithManyLoaders(cf, List.of(this), parentLoader);
+        return defineModulesWithManyLoaders(cf, List.of(this), parentLoader).layer();
     }
 
 
@@ -254,7 +350,7 @@ public final class Layer {
      * this layer is {@code thisLayer} then this method is equivalent to
      * invoking:
      * <pre> {@code
-     *     Layer.defineModules(cf, List.of(thisLayer), clf);
+     *     Layer.defineModules(cf, List.of(thisLayer), clf).layer();
      * }</pre>
      *
      * @param  cf
@@ -282,7 +378,7 @@ public final class Layer {
      */
     public Layer defineModules(Configuration cf,
                                Function<String, ClassLoader> clf) {
-        return defineModules(cf, List.of(this), clf);
+        return defineModules(cf, List.of(this), clf).layer();
     }
 
     /**
@@ -329,7 +425,7 @@ public final class Layer {
      *         The parent class loader for the class loader created by this
      *         method; may be {@code null} for the bootstrap class loader
      *
-     * @return The newly created layer
+     * @return A controller that controls the newly created layer
      *
      * @throws IllegalArgumentException
      *         If the parent configurations do not match the configuration of
@@ -346,9 +442,9 @@ public final class Layer {
      *
      * @see #findLoader
      */
-    public static Layer defineModulesWithOneLoader(Configuration cf,
-                                                   List<Layer> parentLayers,
-                                                   ClassLoader parentLoader)
+    public static Controller defineModulesWithOneLoader(Configuration cf,
+                                                        List<Layer> parentLayers,
+                                                        ClassLoader parentLoader)
     {
         List<Layer> parents = new ArrayList<>(parentLayers);
         checkConfiguration(cf, parents);
@@ -359,7 +455,8 @@ public final class Layer {
         try {
             Loader loader = new Loader(cf.modules(), parentLoader);
             loader.initRemotePackageMap(cf, parents);
-            return new Layer(cf, parents, mn -> loader);
+            Layer layer =  new Layer(cf, parents, mn -> loader);
+            return new Controller(layer);
         } catch (IllegalArgumentException e) {
             throw new LayerInstantiationException(e.getMessage());
         }
@@ -398,7 +495,7 @@ public final class Layer {
      *         The parent class loader for each of the class loaders created by
      *         this method; may be {@code null} for the bootstrap class loader
      *
-     * @return The newly created layer
+     * @return A controller that controls the newly created layer
      *
      * @throws IllegalArgumentException
      *         If the parent configurations do not match the configuration of
@@ -414,9 +511,9 @@ public final class Layer {
      *
      * @see #findLoader
      */
-    public static Layer defineModulesWithManyLoaders(Configuration cf,
-                                                     List<Layer> parentLayers,
-                                                     ClassLoader parentLoader)
+    public static Controller defineModulesWithManyLoaders(Configuration cf,
+                                                          List<Layer> parentLayers,
+                                                          ClassLoader parentLoader)
     {
         List<Layer> parents = new ArrayList<>(parentLayers);
         checkConfiguration(cf, parents);
@@ -426,7 +523,8 @@ public final class Layer {
 
         LoaderPool pool = new LoaderPool(cf, parents, parentLoader);
         try {
-            return new Layer(cf, parents, pool::loaderFor);
+            Layer layer = new Layer(cf, parents, pool::loaderFor);
+            return new Controller(layer);
         } catch (IllegalArgumentException e) {
             throw new LayerInstantiationException(e.getMessage());
         }
@@ -475,7 +573,7 @@ public final class Layer {
      * @param  clf
      *         The function to map a module name to a class loader
      *
-     * @return The newly created layer
+     * @return A controller that controls the newly created layer
      *
      * @throws IllegalArgumentException
      *         If the parent configurations do not match the configuration of
@@ -493,7 +591,7 @@ public final class Layer {
      *         If {@code RuntimePermission("getClassLoader")} is denied by
      *         the security manager
      */
-    public static Layer defineModules(Configuration cf,
+    public static Controller defineModules(Configuration cf,
                                       List<Layer> parentLayers,
                                       Function<String, ClassLoader> clf)
     {
@@ -513,7 +611,8 @@ public final class Layer {
         }
 
         try {
-            return new Layer(cf, parents, clf);
+            Layer layer = new Layer(cf, parents, clf);
+            return new Controller(layer);
         } catch (IllegalArgumentException iae) {
             // IAE is thrown by VM when defining the module fails
             throw new LayerInstantiationException(iae.getMessage());
@@ -756,7 +855,7 @@ public final class Layer {
     /**
      * Returns a string describing this layer.
      *
-     * @return A string describing this layer
+     * @return A possibly empty string describing this layer
      */
     @Override
     public String toString() {
@@ -767,7 +866,7 @@ public final class Layer {
 
     /**
      * Returns the <em>empty</em> layer. There are no modules in the empty
-     * layer. It has no parent.
+     * layer. It has no parents.
      *
      * @return The empty layer
      */

@@ -50,8 +50,11 @@ public class Main {
 
         assertTrue(targetModule.isExported("p1"));
         assertTrue(targetModule.isExported("p1", thisModule));
+        assertTrue(targetModule.isExported("p1", targetModule));
+
         assertFalse(targetModule.isOpen("p1"));
         assertFalse(targetModule.isOpen("p1", thisModule));
+        assertTrue(targetModule.isOpen("p1", targetModule));
 
         Class<?> clazz = Class.forName("p1.Public");
         Constructor<?> ctor1 = clazz.getConstructor();   // public
@@ -100,8 +103,11 @@ public class Main {
 
         assertTrue(targetModule.isExported("p2"));
         assertTrue(targetModule.isExported("p2", thisModule));
+        assertTrue(targetModule.isExported("p2", targetModule));
+
         assertFalse(targetModule.isOpen("p2"));
         assertFalse(targetModule.isOpen("p2", thisModule));
+        assertTrue(targetModule.isOpen("p1", targetModule));
 
         Class<?> clazz = Class.forName("p2.NonPublic");
         Constructor<?> ctor1 = clazz.getConstructor();
@@ -166,8 +172,11 @@ public class Main {
 
         assertFalse(targetModule.isExported("q1"));
         assertFalse(targetModule.isExported("q1", thisModule));
+        assertTrue(targetModule.isExported("q1", targetModule));
+
         assertFalse(targetModule.isOpen("q1"));
         assertFalse(targetModule.isOpen("q1", thisModule));
+        assertTrue(targetModule.isOpen("q1", targetModule));
 
         Class<?> clazz = Class.forName("q1.Public");
         Constructor<?> ctor1 = clazz.getConstructor();  // public
@@ -232,8 +241,11 @@ public class Main {
 
         assertFalse(targetModule.isExported("q2"));
         assertFalse(targetModule.isExported("q2", thisModule));
+        assertTrue(targetModule.isExported("q2", targetModule));
+
         assertFalse(targetModule.isOpen("q2"));
         assertFalse(targetModule.isOpen("q2", thisModule));
+        assertTrue(targetModule.isOpen("q2", targetModule));
 
         Class<?> clazz = Class.forName("q2.NonPublic");
         Constructor<?> ctor1 = clazz.getConstructor();  // public

@@ -422,8 +422,8 @@ public class ModuleDescriptor
      * <p> The <em>opens</em> directive in a module declaration declares a
      * package to be open to allow all types in the package, and all their
      * members, not just public types and their public members to be reflected
-     * on when using APIs that bypass or suppress default Java language access
-     * control checks. </p>
+     * on by APIs that support private access or a way to bypass or suppress
+     * default Java language access control checks. </p>
      *
      * @see ModuleDescriptor#opens()
      * @since 9

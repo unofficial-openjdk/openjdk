@@ -325,7 +325,7 @@ public class Basic {
                 List.of(cf1, cf2),
                 ModuleFinder.of(),
                 Set.of());
-        Layer layer3 = Layer.defineModulesWithOneLoader(cf3, List.of(layer1, layer2), scl);
+        Layer layer3 = Layer.defineModulesWithOneLoader(cf3, List.of(layer1, layer2), scl).layer();
         assertTrue(layer3.modules().size() == 1);
 
 
