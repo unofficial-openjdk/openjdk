@@ -170,7 +170,7 @@ public class MethodHandles {
      * @throws IllegalArgumentException if {@code targetClass} is a primitve type
      * @throws NullPointerException if {@code targetClass} or {@code caller} is {@code null}
      * @throws IllegalAccessException if the access check specified above fails
-     * @throws SecurityManager if denied by the security manager
+     * @throws SecurityException if denied by the security manager
      * @since 9
      */
     public static Lookup privateLookupIn(Class<?> targetClass, Lookup lookup) throws IllegalAccessException {
