@@ -6560,7 +6560,7 @@ class C2 extends C1 implements I2 {
       </errors>
     </function>
 
-    <function id="AddModuleReads" num="94">
+    <function id="AddModuleReads" num="94" since="9">
       <synopsis>Add Module Reads</synopsis>
       <description>
          Update a module to read another module. This function is a no-op
@@ -6596,7 +6596,7 @@ class C2 extends C1 implements I2 {
       </errors>
     </function>
 
-    <function id="AddModuleExports" num="95">
+    <function id="AddModuleExports" num="95" since="9">
       <synopsis>Add Module Exports</synopsis>
       <description>
          Update a module to export a package to another module.
@@ -6646,7 +6646,7 @@ class C2 extends C1 implements I2 {
       </errors>
     </function>
 
-    <function id="AddModuleOpens" num="96">
+    <function id="AddModuleOpens" num="96" since="9">
       <synopsis>Add Module Opens</synopsis>
       <description>
          Update a module to open a package to another module.
@@ -6697,7 +6697,7 @@ class C2 extends C1 implements I2 {
       </errors>
     </function>
 
-    <function id="AddModuleUses" num="97">
+    <function id="AddModuleUses" num="97" since="9">
       <synopsis>Add Module Uses</synopsis>
       <description>
          Updates a module to add a service to the set of services that
@@ -6734,7 +6734,7 @@ class C2 extends C1 implements I2 {
       </errors>
     </function>
 
-    <function id="AddModuleProvides" num="98">
+    <function id="AddModuleProvides" num="98" since="9">
       <synopsis>Add Module Provides</synopsis>
       <description>
          Updates a module to add a service to the set of services that
