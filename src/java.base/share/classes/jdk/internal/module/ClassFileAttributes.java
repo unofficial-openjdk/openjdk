@@ -88,6 +88,10 @@ public final class ClassFileAttributes {
         {
             ModuleAttribute attr = new ModuleAttribute();
 
+            // module_name
+            String mn = cr.readUTF8(off, buf).replace('/', '.');
+            off += 2;
+
             // module_flags
             int module_flags = cr.readUnsignedShort(off);
             boolean open = ((module_flags & ACC_OPEN) != 0);
@@ -95,9 +99,9 @@ public final class ClassFileAttributes {
 
             ModuleDescriptor.Builder builder;
             if (open) {
-                builder = JLMA.newOpenModuleBuilder("m", false);
+                builder = JLMA.newOpenModuleBuilder(mn, false);
             } else {
-                builder = JLMA.newModuleBuilder("m", false);
+                builder = JLMA.newModuleBuilder(mn, false);
             }
 
             // requires_count and requires[requires_count]
@@ -242,6 +246,11 @@ public final class ClassFileAttributes {
             assert descriptor != null;
             ByteVector attr = new ByteVector();
 
+            // module_name
+            String mn = descriptor.name();
+            int module_name_index = cw.newUTF8(mn.replace('.', '/'));
+            attr.putShort(module_name_index);
+
             // module_flags
             int module_flags = 0;
             if (descriptor.isOpen())
@@ -265,7 +274,7 @@ public final class ClassFileAttributes {
                     flags |= ACC_SYNTHETIC;
                 if (md.modifiers().contains(Requires.Modifier.MANDATED))
                     flags |= ACC_MANDATED;
-                int index = cw.newUTF8(dn);
+                int index = cw.newUTF8(dn.replace('.', '/'));
                 attr.putShort(index);
                 attr.putShort(flags);
             }
@@ -286,7 +295,7 @@ public final class ClassFileAttributes {
                 if (e.isQualified()) {
                     Set<String> ts = e.targets();
                     attr.putShort(ts.size());
-                    ts.forEach(t -> attr.putShort(cw.newUTF8(t)));
+                    ts.forEach(t -> attr.putShort(cw.newUTF8(t.replace('.', '/'))));
                 } else {
                     attr.putShort(0);
                 }
@@ -309,7 +318,7 @@ public final class ClassFileAttributes {
                 if (obj.isQualified()) {
                     Set<String> ts = obj.targets();
                     attr.putShort(ts.size());
-                    ts.forEach(t -> attr.putShort(cw.newUTF8(t)));
+                    ts.forEach(t -> attr.putShort(cw.newUTF8(t.replace('.', '/'))));
                 } else {
                     attr.putShort(0);
                 }

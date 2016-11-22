@@ -163,11 +163,8 @@ final class ModuleInfo {
             throw invalidModuleDescriptor("access_flags should be ACC_MODULE");
 
         int this_class = in.readUnsignedShort();
-        String mn = cpool.getClassName(this_class);
-        int suffix = mn.indexOf("/module-info");
-        if (suffix < 1)
-            throw invalidModuleDescriptor("this_class not of form name/module-info");
-        mn = mn.substring(0, suffix).replace('/', '.');
+        if (this_class != 0)
+            throw invalidModuleDescriptor("this_class must be 0");
 
         int super_class = in.readUnsignedShort();
         if (super_class > 0)
@@ -211,7 +208,7 @@ final class ModuleInfo {
             switch (attribute_name) {
 
                 case MODULE :
-                    builder = readModuleAttribute(mn, in, cpool);
+                    builder = readModuleAttribute(in, cpool);
                     break;
 
                 case PACKAGES :
@@ -300,9 +297,13 @@ final class ModuleInfo {
      * Reads the Module attribute, returning the ModuleDescriptor.Builder to
      * build the corresponding ModuleDescriptor.
      */
-    private Builder readModuleAttribute(String mn, DataInput in, ConstantPool cpool)
+    private Builder readModuleAttribute(DataInput in, ConstantPool cpool)
         throws IOException
     {
+        // module_name
+        int module_name_index = in.readUnsignedShort();
+        String mn = cpool.getUtf8AsBinaryName(module_name_index);
+
         Builder builder = new ModuleDescriptor.Builder(mn, /*strict*/ false);
 
         int module_flags = in.readUnsignedShort();

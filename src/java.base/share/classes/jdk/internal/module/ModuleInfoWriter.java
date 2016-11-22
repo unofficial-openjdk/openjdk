@@ -51,10 +51,7 @@ public final class ModuleInfoWriter {
     private static byte[] toModuleInfo(ModuleDescriptor md) {
 
         ClassWriter cw = new ClassWriter(0);
-
-        String name = md.name().replace('.', '/') + "/module-info";
-        cw.visit(Opcodes.V1_9, ACC_MODULE, name, null, null, null);
-
+        cw.visit(Opcodes.V1_9, ACC_MODULE, null, null, null, null);
         cw.visitAttribute(new ModuleAttribute(md));
 
         // for tests: write the Packages attribute when there are packages that
