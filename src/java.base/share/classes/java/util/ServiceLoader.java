@@ -203,6 +203,10 @@ import jdk.internal.reflect.Reflection;
  *     loader. The ordering of modules defined to the same class loader, or the
  *     ordering of modules in a layer, is not defined. </li>
  *
+ *     <li> If a named module declares more than one provider then the providers
+ *     are located in the order that they appear in the {@code provides} table of
+ *     the {@code Module} class file attribute ({@code module-info.class}). </li>
+ *
  *     <li> When locating providers in unnamed modules then the ordering is
  *     based on the order that the class loader's {@link
  *     ClassLoader#getResources(String) ClassLoader.getResources(String)}
