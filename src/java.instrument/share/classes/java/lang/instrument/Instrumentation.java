@@ -27,6 +27,7 @@ package java.lang.instrument;
 
 import java.lang.reflect.Module;
 import java.security.ProtectionDomain;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarFile;
@@ -691,8 +692,8 @@ public interface Instrumentation {
      *
      * <p> The {@code extraProvides} parameter is the additional service providers
      * for the module to provide. The map key is the service type. The map value
-     * is set of implementation types, each of which is a member of the
-     * module and an implementation of the service. If the set of implementation
+     * is the list of implementation types, each of which is a member of the
+     * module and an implementation of the service. If the list of implementation
      * types is empty then the module is not updated to provide additional
      * service providers. </p>
      *
@@ -701,10 +702,10 @@ public interface Instrumentation {
      *
      * @param module the module to redefine
      * @param extraReads the possibly-empty set of additional modules to read
-     * @param extraExports the possibly-empty additional packages to export
-     * @param extraOpens the possibly-empty additional packages to open
+     * @param extraExports the possibly-empty map of additional packages to export
+     * @param extraOpens the possibly-empty map of additional packages to open
      * @param extraUses the possibly-empty set of additional services to use
-     * @param extraProvides the possibly-empty additional services to provide
+     * @param extraProvides the possibly-empty map of additional services to provide
      *
      * @throws IllegalArgumentException
      *         If {@code extraExports} or {@code extraOpens} contains a key
@@ -720,5 +721,5 @@ public interface Instrumentation {
                         Map<String, Set<Module>> extraExports,
                         Map<String, Set<Module>> extraOpens,
                         Set<Class<?>> extraUses,
-                        Map<Class<?>, Set<Class<?>>> extraProvides);
+                        Map<Class<?>, List<Class<?>>> extraProvides);
 }

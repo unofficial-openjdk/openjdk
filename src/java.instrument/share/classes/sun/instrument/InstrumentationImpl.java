@@ -36,8 +36,10 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.Collections;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarFile;
@@ -236,7 +238,7 @@ public class InstrumentationImpl implements Instrumentation {
                                Map<String, Set<Module>> extraExports,
                                Map<String, Set<Module>> extraOpens,
                                Set<Class<?>> extraUses,
-                               Map<Class<?>, Set<Class<?>>> extraProvides)
+                               Map<Class<?>, List<Class<?>>> extraProvides)
     {
         if (!module.isNamed())
             return;
@@ -256,12 +258,12 @@ public class InstrumentationImpl implements Instrumentation {
             throw new NullPointerException("'extraUses' contains null");
 
         // copy and check provides
-        Map<Class<?>, Set<Class<?>>> tmpProvides = new HashMap<>();
-        for (Map.Entry<Class<?>, Set<Class<?>>> e : extraProvides.entrySet()) {
+        Map<Class<?>, List<Class<?>>> tmpProvides = new HashMap<>();
+        for (Map.Entry<Class<?>, List<Class<?>>> e : extraProvides.entrySet()) {
             Class<?> service = e.getKey();
             if (service == null)
                 throw new NullPointerException("'extraProvides' contains null");
-            Set<Class<?>> providers = new HashSet<>(e.getValue());
+            List<Class<?>> providers = new ArrayList<>(e.getValue());
             providers.forEach(p -> {
                 if (p.getModule() != module)
                     throw new IllegalArgumentException(p + " not in " + module);
@@ -294,9 +296,9 @@ public class InstrumentationImpl implements Instrumentation {
         extraUses.forEach(service -> Modules.addUses(module, service));
 
         // update provides
-        for (Map.Entry<Class<?>, Set<Class<?>>> e : extraProvides.entrySet()) {
+        for (Map.Entry<Class<?>, List<Class<?>>> e : extraProvides.entrySet()) {
             Class<?> service = e.getKey();
-            Set<Class<?>> providers = e.getValue();
+            List<Class<?>> providers = e.getValue();
             providers.forEach(p -> Modules.addProvides(module, service, p));
         }
     }

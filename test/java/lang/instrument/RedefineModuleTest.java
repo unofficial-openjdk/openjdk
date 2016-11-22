@@ -39,9 +39,11 @@ import java.lang.reflect.Module;
 import java.net.URLStreamHandler;
 import java.net.spi.URLStreamHandlerProvider;
 import java.nio.file.FileSystems;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
@@ -57,7 +59,7 @@ public class RedefineModuleTest {
                                Map<String, Set<Module>> extraExports,
                                Map<String, Set<Module>> extraOpens,
                                Set<Class<?>> extraUses,
-                               Map<Class<?>, Set<Class<?>>> extraProvides) {
+                               Map<Class<?>, List<Class<?>>> extraProvides) {
         RedefineModuleAgent.redefineModule(module,
                                            extraReads,
                                            extraExports,
@@ -146,7 +148,7 @@ public class RedefineModuleTest {
 
         // update java.base to provide an implementation of TestProvider
         Class<?> type1 = Class.forName("jdk.internal.test.TestProviderImpl1");
-        Map<Class<?>, Set<Class<?>>> extraProvides = Map.of(service, Set.of(type1));
+        Map<Class<?>, List<Class<?>>> extraProvides = Map.of(service, List.of(type1));
         redefineModule(baseModule, Set.of(), Map.of(), Map.of(), Set.of(), extraProvides);
 
         // invoke ServiceLoader from java.base to find providers
@@ -166,7 +168,7 @@ public class RedefineModuleTest {
 
         // update java.base to provide a second implementation of TestProvider
         Class<?> type2 = Class.forName("jdk.internal.test.TestProviderImpl2");
-        extraProvides = Map.of(service, Set.of(type2));
+        extraProvides = Map.of(service, List.of(type2));
         redefineModule(baseModule, Set.of(), Map.of(), Map.of(), Set.of(), extraProvides);
 
         // invoke ServiceLoader from java.base to find providers
@@ -230,8 +232,8 @@ public class RedefineModuleTest {
         }
 
         // attempt to update java.base to provide MyProvider
-        Map<Class<?>, Set<Class<?>>> extraProvides
-            = Map.of(URLStreamHandlerProvider.class, Set.of(MyProvider.class));
+        Map<Class<?>, List<Class<?>>> extraProvides
+            = Map.of(URLStreamHandlerProvider.class, List.of(MyProvider.class));
         redefineModule(baseModule, Set.of(), Map.of(), Map.of(), Set.of(), extraProvides);
     }
 
@@ -247,7 +249,7 @@ public class RedefineModuleTest {
         Class<?> impl = FileSystems.getDefault().provider().getClass();
 
         // attempt to update java.base to provide an implementation of TestProvider
-        Map<Class<?>, Set<Class<?>>> extraProvides = Map.of(service, Set.of(impl));
+        Map<Class<?>, List<Class<?>>> extraProvides = Map.of(service, List.of(impl));
         redefineModule(baseModule, Set.of(), Map.of(), Map.of(), Set.of(), extraProvides);
     }
 
@@ -324,16 +326,16 @@ public class RedefineModuleTest {
         } catch (NullPointerException e) { }
 
         try {
-            Map<Class<?>, Set<Class<?>>> extraProvides = new HashMap<>();
-            extraProvides.put(null, Set.of());
+            Map<Class<?>, List<Class<?>>> extraProvides = new HashMap<>();
+            extraProvides.put(null, List.of());
             redefineModule(baseModule, Set.of(), Map.of(), Map.of(), Set.of(), extraProvides);
             assertTrue(false);
         } catch (NullPointerException e) { }
 
         try {
-            Set<Class<?>> containsNull = new HashSet<>();
+            List<Class<?>> containsNull = new ArrayList<>();
             containsNull.add(null);
-            Map<Class<?>, Set<Class<?>>> extraProvides = Map.of(TestProvider.class, containsNull);
+            Map<Class<?>, List<Class<?>>> extraProvides = Map.of(TestProvider.class, containsNull);
             redefineModule(baseModule, Set.of(), Map.of(), Map.of(), Set.of(), extraProvides);
             assertTrue(false);
         } catch (NullPointerException e) { }
