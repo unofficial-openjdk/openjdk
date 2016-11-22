@@ -317,7 +317,7 @@ final class ModuleInfo {
         for (int i=0; i<requires_count; i++) {
             int index = in.readUnsignedShort();
             int flags = in.readUnsignedShort();
-            String dn = cpool.getUtf8(index);
+            String dn = cpool.getUtf8AsBinaryName(index);
             Set<Requires.Modifier> mods;
             if (flags == 0) {
                 mods = Collections.emptySet();
@@ -350,7 +350,7 @@ final class ModuleInfo {
         if (exports_count > 0) {
             for (int i=0; i<exports_count; i++) {
                 int index = in.readUnsignedShort();
-                String pkg = cpool.getUtf8(index).replace('/', '.');
+                String pkg = cpool.getUtf8AsBinaryName(index);
 
                 Set<Exports.Modifier> mods;
                 int flags = in.readUnsignedShort();
@@ -369,7 +369,7 @@ final class ModuleInfo {
                     Set<String> targets = new HashSet<>(exports_to_count);
                     for (int j=0; j<exports_to_count; j++) {
                         int exports_to_index = in.readUnsignedShort();
-                        targets.add(cpool.getUtf8(exports_to_index));
+                        targets.add(cpool.getUtf8AsBinaryName(exports_to_index));
                     }
                     builder.exports(mods, pkg, targets);
                 } else {
@@ -386,7 +386,7 @@ final class ModuleInfo {
             }
             for (int i=0; i<opens_count; i++) {
                 int index = in.readUnsignedShort();
-                String pkg = cpool.getUtf8(index).replace('/', '.');
+                String pkg = cpool.getUtf8AsBinaryName(index);
 
                 Set<Opens.Modifier> mods;
                 int flags = in.readUnsignedShort();
@@ -405,7 +405,7 @@ final class ModuleInfo {
                     Set<String> targets = new HashSet<>(open_to_count);
                     for (int j=0; j<open_to_count; j++) {
                         int opens_to_index = in.readUnsignedShort();
-                        targets.add(cpool.getUtf8(opens_to_index));
+                        targets.add(cpool.getUtf8AsBinaryName(opens_to_index));
                     }
                     builder.opens(mods, pkg, targets);
                 } else {
@@ -418,7 +418,7 @@ final class ModuleInfo {
         if (uses_count > 0) {
             for (int i=0; i<uses_count; i++) {
                 int index = in.readUnsignedShort();
-                String sn = cpool.getClassName(index).replace('/', '.');
+                String sn = cpool.getClassNameAsBinaryName(index);
                 builder.uses(sn);
             }
         }
@@ -427,12 +427,12 @@ final class ModuleInfo {
         if (provides_count > 0) {
             for (int i=0; i<provides_count; i++) {
                 int index = in.readUnsignedShort();
-                String sn = cpool.getClassName(index).replace('/', '.');
+                String sn = cpool.getClassNameAsBinaryName(index);
                 int with_count = in.readUnsignedShort();
                 List<String> providers = new ArrayList<>(with_count);
                 for (int j=0; j<with_count; j++) {
                     index = in.readUnsignedShort();
-                    String pn = cpool.getClassName(index).replace('/', '.');
+                    String pn = cpool.getClassNameAsBinaryName(index);
                     providers.add(pn);
                 }
                 builder.provides(sn, providers);
@@ -452,7 +452,7 @@ final class ModuleInfo {
         Set<String> packages = new HashSet<>(package_count);
         for (int i=0; i<package_count; i++) {
             int index = in.readUnsignedShort();
-            String pn = cpool.getUtf8(index).replace('/', '.');
+            String pn = cpool.getUtf8AsBinaryName(index);
             packages.add(pn);
         }
         return packages;
@@ -475,7 +475,7 @@ final class ModuleInfo {
         throws IOException
     {
         int index = in.readUnsignedShort();
-        return cpool.getClassName(index).replace('/', '.');
+        return cpool.getClassNameAsBinaryName(index);
     }
 
     /**
@@ -519,7 +519,7 @@ final class ModuleInfo {
         Map<String, String> map = new HashMap<>(hash_count);
         for (int i=0; i<hash_count; i++) {
             index = in.readUnsignedShort();
-            String dn = cpool.getUtf8(index);
+            String dn = cpool.getUtf8AsBinaryName(index);
             index = in.readUnsignedShort();
             String hash = cpool.getUtf8(index);
             map.put(dn, hash);
@@ -718,6 +718,11 @@ final class ModuleInfo {
             return getUtf8(((IndexEntry) e).index);
         }
 
+        String getClassNameAsBinaryName(int index) {
+            String value = getClassName(index);
+            return value.replace('/', '.');  // internal form -> binary name
+        }
+
         String getUtf8(int index) {
             checkIndex(index);
             Entry e = pool[index];
@@ -726,6 +731,11 @@ final class ModuleInfo {
                                               + index);
             }
             return (String) (((ValueEntry) e).value);
+        }
+
+        String getUtf8AsBinaryName(int index) {
+            String value = getUtf8(index);
+            return value.replace('/', '.');  // internal -> binary name
         }
 
         void checkIndex(int index) {

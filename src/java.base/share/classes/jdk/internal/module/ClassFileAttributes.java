@@ -104,7 +104,7 @@ public final class ClassFileAttributes {
             int requires_count = cr.readUnsignedShort(off);
             off += 2;
             for (int i=0; i<requires_count; i++) {
-                String dn = cr.readUTF8(off, buf);
+                String dn = cr.readUTF8(off, buf).replace('/', '.');
                 int flags = cr.readUnsignedShort(off + 2);
                 Set<Requires.Modifier> mods;
                 if (flags == 0) {
@@ -150,7 +150,7 @@ public final class ClassFileAttributes {
                     if (exports_to_count > 0) {
                         Set<String> targets = new HashSet<>();
                         for (int j=0; j<exports_to_count; j++) {
-                            String t = cr.readUTF8(off, buf);
+                            String t = cr.readUTF8(off, buf).replace('/', '.');
                             off += 2;
                             targets.add(t);
                         }
@@ -187,7 +187,7 @@ public final class ClassFileAttributes {
                     if (opens_to_count > 0) {
                         Set<String> targets = new HashSet<>();
                         for (int j=0; j<opens_to_count; j++) {
-                            String t = cr.readUTF8(off, buf);
+                            String t = cr.readUTF8(off, buf).replace('/', '.');
                             off += 2;
                             targets.add(t);
                         }
@@ -642,7 +642,7 @@ public final class ClassFileAttributes {
      *   u2 attribute_name_index;
      *   u4 attribute_length;
      *
-     *   // index to CONSTANT_CONSTANT_utf8_info structure with algorithm name
+     *   // index to CONSTANT_utf8_info structure with algorithm name
      *   u2 algorithm_index;
      *
      *   // the number of entries in the hashes table
@@ -684,7 +684,7 @@ public final class ClassFileAttributes {
 
             Map<String, String> map = new HashMap<>();
             for (int i=0; i<hash_count; i++) {
-                String dn = cr.readUTF8(off, buf);
+                String dn = cr.readUTF8(off, buf).replace('/', '.');
                 off += 2;
                 String hash = cr.readUTF8(off, buf);
                 off += 2;
@@ -714,7 +714,7 @@ public final class ClassFileAttributes {
             for (String dn : names) {
                 String hash = hashes.hashFor(dn);
                 assert hash != null;
-                attr.putShort(cw.newUTF8(dn));
+                attr.putShort(cw.newUTF8(dn.replace('.', '/')));
                 attr.putShort(cw.newUTF8(hash));
             }
 
