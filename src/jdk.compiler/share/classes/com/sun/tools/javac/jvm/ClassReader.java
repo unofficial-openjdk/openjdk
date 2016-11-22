@@ -160,6 +160,9 @@ public class ClassReader {
      */
     protected ModuleSymbol currentModule = null;
 
+    // FIXME: temporary compatibility code
+    private boolean readNewModuleAttribute;
+
     /** The buffer containing the currently read class file.
      */
     byte[] buf = new byte[INITIAL_BUFFER_SIZE];
@@ -583,6 +586,20 @@ public class ClassReader {
             }
         }
         throw badClassFile("bad.module-info.name");
+    }
+
+    /** Read the name of a module.
+     * The name is stored in a CONSTANT_Utf8 entry, in
+     * JVMS 4.2 internal form (with '/' instead of '.')
+     */
+    Name readModuleName(int i) {
+        Name name = readName(i);
+        // FIXME: temporary compatibility code
+        if (readNewModuleAttribute) {
+            return names.fromUtf(internalize(name));
+        } else {
+            return name;
+        }
     }
 
     /** Read module_flags.
@@ -1253,13 +1270,20 @@ public class ClassReader {
                         ModuleSymbol msym = (ModuleSymbol) sym.owner;
                         ListBuffer<Directive> directives = new ListBuffer<>();
 
+                        // FIXME: temporary compatibility code
+                        if (readNewModuleAttribute) {
+                            Name moduleName = readModuleName(nextChar());
+                            if (currentModule.name != moduleName) {
+                                throw badClassFile("module.name.mismatch", moduleName, currentModule.name);
+                            }
+                        }
+
                         msym.flags.addAll(readModuleFlags(nextChar()));
 
                         ListBuffer<RequiresDirective> requires = new ListBuffer<>();
                         int nrequires = nextChar();
                         for (int i = 0; i < nrequires; i++) {
-                            Name name = readName(nextChar());
-                            ModuleSymbol rsym = syms.enterModule(name);
+                            ModuleSymbol rsym = syms.enterModule(readModuleName(nextChar()));
                             Set<RequiresFlag> flags = readRequiresFlags(nextChar());
                             requires.add(new RequiresDirective(rsym, flags));
                         }
@@ -1279,7 +1303,7 @@ public class ClassReader {
                             } else {
                                 ListBuffer<ModuleSymbol> lb = new ListBuffer<>();
                                 for (int t = 0; t < nto; t++)
-                                    lb.append(syms.enterModule(readName(nextChar())));
+                                    lb.append(syms.enterModule(readModuleName(nextChar())));
                                 to = lb.toList();
                             }
                             exports.add(new ExportsDirective(DirectiveKind.EXPORTS, p, to, flags));
@@ -1299,7 +1323,7 @@ public class ClassReader {
                             } else {
                                 ListBuffer<ModuleSymbol> lb = new ListBuffer<>();
                                 for (int t = 0; t < nto; t++)
-                                    lb.append(syms.enterModule(readName(nextChar())));
+                                    lb.append(syms.enterModule(readModuleName(nextChar())));
                                 to = lb.toList();
                             }
                             opens.add(new ExportsDirective(DirectiveKind.OPENS, p, to, flags));
@@ -2526,15 +2550,22 @@ public class ClassReader {
             }
         } else {
             c.flags_field = flags;
-            Name modInfoName = readModuleInfoName(nextChar());
             currentModule = (ModuleSymbol) c.owner;
-            if (currentModule.name.append('.', names.module_info) != modInfoName) {
-                //strip trailing .module-info, if exists:
-                int modInfoStart = modInfoName.length() - names.module_info.length();
-                modInfoName = modInfoName.subName(modInfoStart, modInfoName.length()) == names.module_info &&
-                              modInfoName.charAt(modInfoStart - 1) == '.' ?
-                                  modInfoName.subName(0, modInfoStart - 1) : modInfoName;
-                throw badClassFile("module.name.mismatch", modInfoName, currentModule.name);
+            int this_class = nextChar();
+            // FIXME: temporary compatibility code
+            if (this_class == 0) {
+                readNewModuleAttribute = true;
+            } else {
+                Name modInfoName = readModuleInfoName(this_class);
+                if (currentModule.name.append('.', names.module_info) != modInfoName) {
+                    //strip trailing .module-info, if exists:
+                    int modInfoStart = modInfoName.length() - names.module_info.length();
+                    modInfoName = modInfoName.subName(modInfoStart, modInfoName.length()) == names.module_info &&
+                                  modInfoName.charAt(modInfoStart - 1) == '.' ?
+                                      modInfoName.subName(0, modInfoStart - 1) : modInfoName;
+                    throw badClassFile("module.name.mismatch", modInfoName, currentModule.name);
+                }
+                readNewModuleAttribute = false;
             }
         }
 

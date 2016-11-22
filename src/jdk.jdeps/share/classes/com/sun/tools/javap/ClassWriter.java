@@ -157,25 +157,43 @@ public class ClassWriter extends BasicWriter {
             indent(-1);
         }
 
-        String name = getJavaName(classFile);
         AccessFlags flags = cf.access_flags;
-
         writeModifiers(flags.getClassModifiers());
 
-        if (classFile.access_flags.is(AccessFlags.ACC_MODULE) && name.endsWith(".module-info")) {
+        if (classFile.access_flags.is(AccessFlags.ACC_MODULE)) {
             Attribute attr = classFile.attributes.get(Attribute.Module);
-            if (attr instanceof Module_attribute && (((Module_attribute) attr).module_flags & Module_attribute.ACC_OPEN) != 0) {
-                print("open ");
+            if (attr instanceof Module_attribute) {
+                Module_attribute modAttr = (Module_attribute) attr;
+                // FIXME: temporary compatibility code
+                String name;
+                if (cf.this_class == 0) {
+                    // new-style
+                    try {
+                        name = getJavaName(constant_pool.getUTF8Value(modAttr.module_name));
+                    } catch (ConstantPoolException e) {
+                        name = report(e);
+                    }
+                } else {
+                    // old-style
+                    name = getJavaName(cf).replace(".module-info", "");
+                }
+                if ((modAttr.module_flags & Module_attribute.ACC_OPEN) != 0) {
+                    print("open ");
+                }
+                print("module ");
+                print(name);
+            } else {
+                // fallback for malformed class files
+                print("class ");
+                print(getJavaName(classFile));
             }
-            print("module ");
-            print(name.replace(".module-info", ""));
         } else {
             if (classFile.isClass())
                 print("class ");
             else if (classFile.isInterface())
                 print("interface ");
 
-            print(name);
+            print(getJavaName(classFile));
         }
 
         Signature_attribute sigAttr = getSignature(cf.attributes);
@@ -214,7 +232,23 @@ public class ClassWriter extends BasicWriter {
             indent(+1);
             println("minor version: " + cf.minor_version);
             println("major version: " + cf.major_version);
-            writeList("flags: ", flags.getClassFlags(), "\n");
+            writeList(String.format("flags: (0x%04x) ", flags.flags), flags.getClassFlags(), "\n");
+            print("this_class: #" + cf.this_class);
+            if (cf.this_class != 0) {
+                tab();
+                print("// " + constantWriter.stringValue(cf.this_class));
+            }
+            println();
+            print("super_class: #" + cf.super_class);
+            if (cf.super_class != 0) {
+                tab();
+                print("// " + constantWriter.stringValue(cf.super_class));
+            }
+            println();
+            print("interfaces: " + cf.interfaces.length);
+            print(", fields: " + cf.fields.length);
+            print(", methods: " + cf.methods.length);
+            println(", attributes: " + cf.attributes.attrs.length);
             indent(-1);
             constantWriter.writeConstantPool();
         } else {
@@ -413,7 +447,7 @@ public class ClassWriter extends BasicWriter {
             println("descriptor: " + getValue(f.descriptor));
 
         if (options.verbose)
-            writeList("flags: ", flags.getFieldFlags(), "\n");
+            writeList(String.format("flags: (0x%04x) ", flags.flags), flags.getFieldFlags(), "\n");
 
         if (options.showAllAttrs) {
             for (Attribute attr: f.attributes)
@@ -514,7 +548,7 @@ public class ClassWriter extends BasicWriter {
         }
 
         if (options.verbose) {
-            writeList("flags: ", flags.getMethodFlags(), "\n");
+            writeList(String.format("flags: (0x%04x) ", flags.flags), flags.getMethodFlags(), "\n");
         }
 
         Code_attribute code = null;

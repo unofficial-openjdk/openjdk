@@ -547,6 +547,11 @@ public class ClassWriter {
 
         @Override
         public Void visitModule(Module_attribute attr, ClassOutputStream out) {
+            // FIXME: temporary compatibility code
+            if (attr.module_name != 0) {
+                out.writeShort(attr.module_name);
+            }
+
             out.writeShort(attr.module_flags);
 
             out.writeShort(attr.requires.length);

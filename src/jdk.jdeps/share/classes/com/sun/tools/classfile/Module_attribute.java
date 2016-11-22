@@ -44,6 +44,14 @@ public class Module_attribute extends Attribute {
 
     Module_attribute(ClassReader cr, int name_index, int length) throws IOException {
         super(name_index, length);
+
+        // FIXME: temporary compatibility code
+        if (cr.getClassFile().this_class != 0) {
+            module_name = 0;                        // old-style: name is in this_class
+        } else {
+            module_name = cr.readUnsignedShort();   // new-style: name is in Module attribute
+        }
+
         module_flags = cr.readUnsignedShort();
         requires_count = cr.readUnsignedShort();
         requires = new RequiresEntry[requires_count];
@@ -68,6 +76,7 @@ public class Module_attribute extends Attribute {
     }
 
     public Module_attribute(int name_index,
+            int module_name,
             int module_flags,
             RequiresEntry[] requires,
             ExportsEntry[] exports,
@@ -75,6 +84,7 @@ public class Module_attribute extends Attribute {
             int[] uses,
             ProvidesEntry[] provides) {
         super(name_index, 2);
+        this.module_name = module_name;
         this.module_flags = module_flags;
         requires_count = requires.length;
         this.requires = requires;
@@ -99,6 +109,7 @@ public class Module_attribute extends Attribute {
         return visitor.visitModule(this, data);
     }
 
+    public final int module_name;
     public final int module_flags;
     public final int requires_count;
     public final RequiresEntry[] requires;

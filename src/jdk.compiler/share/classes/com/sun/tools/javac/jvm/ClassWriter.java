@@ -107,6 +107,8 @@ public class ClassWriter extends ClassFile {
      */
     public boolean multiModuleMode;
 
+    public final boolean useNewModuleAttribute;
+
     /** The initial sizes of the data and constant pool buffers.
      *  Sizes are increased when buffers get full.
      */
@@ -195,6 +197,8 @@ public class ClassWriter extends ClassFile {
             dumpInnerClassModifiers = modifierFlags.indexOf('i') != -1;
             dumpMethodModifiers = modifierFlags.indexOf('m') != -1;
         }
+
+        useNewModuleAttribute = true;
     }
 
 /******************************************************************
@@ -953,6 +957,10 @@ public class ClassWriter extends ClassFile {
         ModuleSymbol m = (ModuleSymbol) c.owner;
 
         int alenIdx = writeAttr(names.Module);
+
+        if (useNewModuleAttribute) {
+            databuf.appendChar(pool.put(names.fromUtf(externalize(m.name))));
+        }
         databuf.appendChar(ModuleFlags.value(m.flags)); // module_flags
 
         ListBuffer<RequiresDirective> requires = new ListBuffer<>();
@@ -962,7 +970,11 @@ public class ClassWriter extends ClassFile {
         }
         databuf.appendChar(requires.size());
         for (RequiresDirective r: requires) {
-            databuf.appendChar(pool.put(r.module.name));
+            if (useNewModuleAttribute) {
+                databuf.appendChar(pool.put(names.fromUtf(externalize(r.module.name))));
+            } else {
+                databuf.appendChar(pool.put(r.module.name));
+            }
             databuf.appendChar(RequiresFlag.value(r.flags));
         }
 
@@ -975,8 +987,13 @@ public class ClassWriter extends ClassFile {
                 databuf.appendChar(0);
             } else {
                 databuf.appendChar(e.modules.size());
-                for (ModuleSymbol msym: e.modules)
-                    databuf.appendChar(pool.put(msym.name));
+                for (ModuleSymbol msym: e.modules) {
+                    if (useNewModuleAttribute) {
+                        databuf.appendChar(pool.put(names.fromUtf(externalize(msym.name))));
+                    } else {
+                        databuf.appendChar(pool.put(msym.name));
+                    }
+                }
             }
         }
 
@@ -989,8 +1006,13 @@ public class ClassWriter extends ClassFile {
                 databuf.appendChar(0);
             } else {
                 databuf.appendChar(e.modules.size());
-                for (ModuleSymbol msym: e.modules)
-                    databuf.appendChar(pool.put(msym.name));
+                for (ModuleSymbol msym: e.modules) {
+                    if (useNewModuleAttribute) {
+                        databuf.appendChar(pool.put(names.fromUtf(externalize(msym.name))));
+                    } else {
+                        databuf.appendChar(pool.put(msym.name));
+                    }
+                }
             }
         }
 
@@ -1713,7 +1735,11 @@ public class ClassWriter extends ClassFile {
         }
         databuf.appendChar(flags);
 
-        databuf.appendChar(pool.put(c));
+        if (c.owner.kind == MDL && useNewModuleAttribute) {
+            databuf.appendChar(0);
+        } else {
+            databuf.appendChar(pool.put(c));
+        }
         databuf.appendChar(supertype.hasTag(CLASS) ? pool.put(supertype.tsym) : 0);
         databuf.appendChar(interfaces.length());
         for (List<Type> l = interfaces; l.nonEmpty(); l = l.tail)

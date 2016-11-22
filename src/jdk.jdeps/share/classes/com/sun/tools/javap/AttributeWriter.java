@@ -500,9 +500,28 @@ public class AttributeWriter extends BasicWriter
     public Void visitModule(Module_attribute attr, Void ignore) {
         println("Module:");
         indent(+1);
+
+        // FIXME: temporary compatibility code
+        if (attr.module_name != 0) {
+            print(attr.module_name);
+            tab();
+            println("// " + constantWriter.stringValue(attr.module_name));
+        }
+
+        print(String.format("%x", attr.module_flags));
+        tab();
+        print("// ");
+        if ((attr.module_flags & Module_attribute.ACC_OPEN) != 0)
+            print(" ACC_OPEN");
+        if ((attr.module_flags & Module_attribute.ACC_MANDATED) != 0)
+            print(" ACC_MANDATED");
+        if ((attr.module_flags & Module_attribute.ACC_SYNTHETIC) != 0)
+            print(" ACC_SYNTHETIC");
+        println();
+
         printRequiresTable(attr);
         printExportsTable(attr, true);
-        printExportsTable(attr, true);
+        printExportsTable(attr, false);
         printUsesTable(attr);
         printProvidesTable(attr);
         indent(-1);
