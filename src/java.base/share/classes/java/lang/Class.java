@@ -2421,8 +2421,9 @@ public final class Class<T> implements java.io.Serializable,
      * @param  name name of the desired resource
      * @return  A {@link java.io.InputStream} object; {@code null} if no
      *          resource with this name is found, the resource is in a package
-     *          that is not exported-private to the caller module, or access to
-     *          the resource is denied by the security manager.
+     *          that is not {@link Module#isOpen(String, Module) open} to the
+     *          caller module, or access to the resource is denied by the
+     *          security manager.
      * @throws  NullPointerException If {@code name} is {@code null}
      * @since  1.1
      */
@@ -2482,7 +2483,7 @@ public final class Class<T> implements java.io.Serializable,
      * {@code Module} {@link Module#getResourceAsStream getResourceAsStream}
      * method.
      *
-     * <p> Otherwise, if this class is not in a named module  then the rules for
+     * <p> Otherwise, if this class is not in a named module then the rules for
      * searching resources associated with a given class are implemented by the
      * defining {@linkplain ClassLoader class loader} of the class.  This method
      * delegates to this object's class loader. If this object was loaded by
@@ -2513,9 +2514,9 @@ public final class Class<T> implements java.io.Serializable,
      * @param  name name of the desired resource
      * @return A {@link java.net.URL} object; {@code null} if no resource with
      *         this name is found, the resource cannot be located by a URL, the
-     *         resource is in a package that is not exported-private to the
-     *         caller module, or access to the resource is denied by the
-     *         security manager.
+     *         resource is in a package that is not {@link
+     *         Module#isOpen(String, Module) open} to the caller module, or
+     *         access to the resource is denied by the security manager.
      * @throws NullPointerException If {@code name} is {@code null}
      * @since  1.1
      */
