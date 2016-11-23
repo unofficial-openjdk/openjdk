@@ -35,8 +35,8 @@ import java.io.IOException;
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
  */
-public class Hashes_attribute extends Attribute {
-    Hashes_attribute(ClassReader cr, int name_index, int length) throws IOException {
+public class ModuleHashes_attribute extends Attribute {
+    ModuleHashes_attribute(ClassReader cr, int name_index, int length) throws IOException {
         super(name_index, length);
         algorithm_index = cr.readUnsignedShort();
         hashes_table_length = cr.readUnsignedShort();
@@ -45,12 +45,12 @@ public class Hashes_attribute extends Attribute {
             hashes_table[i] = new Entry(cr);
     }
 
-    public Hashes_attribute(ConstantPool constant_pool, int algorithm_index, Entry[] hashes_table)
+    public ModuleHashes_attribute(ConstantPool constant_pool, int algorithm_index, Entry[] hashes_table)
             throws ConstantPoolException {
-        this(constant_pool.getUTF8Index(Attribute.Hashes), algorithm_index, hashes_table);
+        this(constant_pool.getUTF8Index(Attribute.ModuleHashes), algorithm_index, hashes_table);
     }
 
-    public Hashes_attribute(int name_index, int algorithm_index, Entry[] hashes_table) {
+    public ModuleHashes_attribute(int name_index, int algorithm_index, Entry[] hashes_table) {
         super(name_index, 4 + hashes_table.length * Entry.length());
         this.algorithm_index = algorithm_index;
         this.hashes_table_length = hashes_table.length;
@@ -59,7 +59,7 @@ public class Hashes_attribute extends Attribute {
 
     @Override
     public <R, D> R accept(Visitor<R, D> visitor, D data) {
-        return visitor.visitHashes(this, data);
+        return visitor.visitModuleHashes(this, data);
     }
 
     public final int algorithm_index;

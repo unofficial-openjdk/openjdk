@@ -425,7 +425,7 @@ public class ClassWriter {
         }
 
         @Override
-        public Void visitPackages(Packages_attribute attr, ClassOutputStream out) {
+        public Void visitModulePackages(ModulePackages_attribute attr, ClassOutputStream out) {
             out.writeShort(attr.packages_count);
             for (int i: attr.packages_index)
                 out.writeShort(i);
@@ -467,10 +467,10 @@ public class ClassWriter {
         }
 
         @Override
-        public Void visitHashes(Hashes_attribute attr, ClassOutputStream out) {
+        public Void visitModuleHashes(ModuleHashes_attribute attr, ClassOutputStream out) {
             out.writeShort(attr.algorithm_index);
             out.writeShort(attr.hashes_table.length);
-            for (Hashes_attribute.Entry e: attr.hashes_table) {
+            for (ModuleHashes_attribute.Entry e: attr.hashes_table) {
                 out.writeShort(e.requires_index);
                 out.writeShort(e.hash_index);
             }
@@ -540,7 +540,7 @@ public class ClassWriter {
         }
 
         @Override
-        public Void visitMainClass(MainClass_attribute attr, ClassOutputStream out) {
+        public Void visitModuleMainClass(ModuleMainClass_attribute attr, ClassOutputStream out) {
             out.writeShort(attr.main_class_index);
             return null;
         }
@@ -683,7 +683,7 @@ public class ClassWriter {
         }
 
         @Override
-        public Void visitTargetPlatform(TargetPlatform_attribute attr, ClassOutputStream out) {
+        public Void visitModuleTarget(ModuleTarget_attribute attr, ClassOutputStream out) {
             out.writeShort(attr.os_name_index);
             out.writeShort(attr.os_arch_index);
             out.writeShort(attr.os_version_index);
@@ -695,7 +695,7 @@ public class ClassWriter {
         }
 
         @Override
-        public Void visitVersion(Version_attribute attr, ClassOutputStream out) {
+        public Void visitModuleVersion(ModuleVersion_attribute attr, ClassOutputStream out) {
             out.writeShort(attr.version_index);
             return null;
         }

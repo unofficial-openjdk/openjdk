@@ -41,16 +41,18 @@ import com.sun.tools.classfile.DefaultAttribute;
 import com.sun.tools.classfile.Deprecated_attribute;
 import com.sun.tools.classfile.EnclosingMethod_attribute;
 import com.sun.tools.classfile.Exceptions_attribute;
-import com.sun.tools.classfile.Hashes_attribute;
 import com.sun.tools.classfile.InnerClasses_attribute;
 import com.sun.tools.classfile.InnerClasses_attribute.Info;
 import com.sun.tools.classfile.LineNumberTable_attribute;
 import com.sun.tools.classfile.LocalVariableTable_attribute;
 import com.sun.tools.classfile.LocalVariableTypeTable_attribute;
-import com.sun.tools.classfile.MainClass_attribute;
 import com.sun.tools.classfile.MethodParameters_attribute;
 import com.sun.tools.classfile.Module_attribute;
-import com.sun.tools.classfile.Packages_attribute;
+import com.sun.tools.classfile.ModuleHashes_attribute;
+import com.sun.tools.classfile.ModuleMainClass_attribute;
+import com.sun.tools.classfile.ModulePackages_attribute;
+import com.sun.tools.classfile.ModuleTarget_attribute;
+import com.sun.tools.classfile.ModuleVersion_attribute;
 import com.sun.tools.classfile.RuntimeInvisibleAnnotations_attribute;
 import com.sun.tools.classfile.RuntimeInvisibleParameterAnnotations_attribute;
 import com.sun.tools.classfile.RuntimeInvisibleTypeAnnotations_attribute;
@@ -64,8 +66,6 @@ import com.sun.tools.classfile.SourceID_attribute;
 import com.sun.tools.classfile.StackMapTable_attribute;
 import com.sun.tools.classfile.StackMap_attribute;
 import com.sun.tools.classfile.Synthetic_attribute;
-import com.sun.tools.classfile.TargetPlatform_attribute;
-import com.sun.tools.classfile.Version_attribute;
 
 import static com.sun.tools.classfile.AccessFlags.*;
 
@@ -237,7 +237,7 @@ public class AttributeWriter extends BasicWriter
         return null;
     }
 
-    private String getJavaPackage(Packages_attribute attr, int index) {
+    private String getJavaPackage(ModulePackages_attribute attr, int index) {
         try {
             return getJavaName(attr.getPackage(index, constant_pool));
         } catch (ConstantPoolException e) {
@@ -246,8 +246,8 @@ public class AttributeWriter extends BasicWriter
     }
 
     @Override
-    public Void visitPackages(Packages_attribute attr, Void ignore) {
-        println("Packages: ");
+    public Void visitModulePackages(ModulePackages_attribute attr, Void ignore) {
+        println("ModulePackages: ");
         indent(+1);
         for (int i = 0; i < attr.packages_count; i++) {
             print("#" + attr.packages_index[i]);
@@ -323,13 +323,13 @@ public class AttributeWriter extends BasicWriter
     }
 
     @Override
-    public Void visitHashes(Hashes_attribute attr, Void ignore) {
-        println("jdk.Hashes:");
+    public Void visitModuleHashes(ModuleHashes_attribute attr, Void ignore) {
+        println("ModuleHashes:");
         indent(+1);
         print("algorithm #" + attr.algorithm_index);
         tab();
         println("// " + getAlgorithm(attr));
-        for (Hashes_attribute.Entry e : attr.hashes_table) {
+        for (ModuleHashes_attribute.Entry e : attr.hashes_table) {
             print("#" + e.requires_index + ", #" + e.hash_index);
             tab();
             println("// " + getRequires(e) + ": " + getHash(e));
@@ -338,7 +338,7 @@ public class AttributeWriter extends BasicWriter
         return null;
     }
 
-    private String getAlgorithm(Hashes_attribute attr) {
+    private String getAlgorithm(ModuleHashes_attribute attr) {
         try {
             return constant_pool.getUTF8Value(attr.algorithm_index);
         } catch (ConstantPoolException e) {
@@ -346,7 +346,7 @@ public class AttributeWriter extends BasicWriter
         }
     }
 
-    private String getRequires(Hashes_attribute.Entry entry) {
+    private String getRequires(ModuleHashes_attribute.Entry entry) {
         try {
             return constant_pool.getUTF8Value(entry.requires_index);
         } catch (ConstantPoolException e) {
@@ -354,7 +354,7 @@ public class AttributeWriter extends BasicWriter
         }
     }
 
-    private String getHash(Hashes_attribute.Entry entry) {
+    private String getHash(ModuleHashes_attribute.Entry entry) {
         try {
             return constant_pool.getUTF8Value(entry.hash_index);
         } catch (ConstantPoolException e) {
@@ -456,15 +456,15 @@ public class AttributeWriter extends BasicWriter
     }
 
     @Override
-    public Void visitMainClass(MainClass_attribute attr, Void ignore) {
-        print("MainClass: #" + attr.main_class_index);
+    public Void visitModuleMainClass(ModuleMainClass_attribute attr, Void ignore) {
+        print("ModuleMainClass: #" + attr.main_class_index);
         tab();
         print("// " + getJavaClassName(attr));
         println();
         return null;
     }
 
-    private String getJavaClassName(MainClass_attribute a) {
+    private String getJavaClassName(ModuleMainClass_attribute a) {
         try {
             return getJavaName(a.getMainClassName(constant_pool));
         } catch (ConstantPoolException e) {
@@ -936,8 +936,8 @@ public class AttributeWriter extends BasicWriter
     }
 
     @Override
-    public Void visitTargetPlatform(TargetPlatform_attribute attr, Void ignore) {
-        println("TargetPlatform:");
+    public Void visitModuleTarget(ModuleTarget_attribute attr, Void ignore) {
+        println("ModuleTarget:");
         indent(+1);
         print("os_name: #" + attr.os_name_index);
         if (attr.os_name_index != 0) {
@@ -961,7 +961,7 @@ public class AttributeWriter extends BasicWriter
         return null;
     }
 
-    private String getOSName(TargetPlatform_attribute attr) {
+    private String getOSName(ModuleTarget_attribute attr) {
         try {
             return constant_pool.getUTF8Value(attr.os_name_index);
         } catch (ConstantPoolException e) {
@@ -969,7 +969,7 @@ public class AttributeWriter extends BasicWriter
         }
     }
 
-    private String getOSArch(TargetPlatform_attribute attr) {
+    private String getOSArch(ModuleTarget_attribute attr) {
         try {
             return constant_pool.getUTF8Value(attr.os_arch_index);
         } catch (ConstantPoolException e) {
@@ -977,7 +977,7 @@ public class AttributeWriter extends BasicWriter
         }
     }
 
-    private String getOSVersion(TargetPlatform_attribute attr) {
+    private String getOSVersion(ModuleTarget_attribute attr) {
         try {
             return constant_pool.getUTF8Value(attr.os_version_index);
         } catch (ConstantPoolException e) {
@@ -986,8 +986,8 @@ public class AttributeWriter extends BasicWriter
     }
 
     @Override
-    public Void visitVersion(Version_attribute attr, Void ignore) {
-        print("Version: #" + attr.version_index);
+    public Void visitModuleVersion(ModuleVersion_attribute attr, Void ignore) {
+        print("ModuleVersion: #" + attr.version_index);
         indent(+1);
         tab();
         println("// " + getVersion(attr));
@@ -995,7 +995,7 @@ public class AttributeWriter extends BasicWriter
         return null;
     }
 
-    private String getVersion(Version_attribute attr) {
+    private String getVersion(ModuleVersion_attribute attr) {
         try {
             return constant_pool.getUTF8Value(attr.version_index);
         } catch (ConstantPoolException e) {

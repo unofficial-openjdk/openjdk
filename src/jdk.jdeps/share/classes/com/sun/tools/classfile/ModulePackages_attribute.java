@@ -35,26 +35,40 @@ import java.io.IOException;
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
  */
-public class Version_attribute extends Attribute {
-    Version_attribute(ClassReader cr, int name_index, int length) throws IOException {
+public class ModulePackages_attribute extends Attribute {
+    ModulePackages_attribute(ClassReader cr, int name_index, int length)
+            throws IOException {
         super(name_index, length);
-        version_index = cr.readUnsignedShort();
+        packages_count = cr.readUnsignedShort();
+        packages_index = new int[packages_count];
+        for (int i = 0; i < packages_count; i++)
+            packages_index[i] = cr.readUnsignedShort();
     }
 
-    public Version_attribute(ConstantPool constant_pool, int version_index)
+    public ModulePackages_attribute(ConstantPool constant_pool,
+                              int[] packages_index)
             throws ConstantPoolException {
-        this(constant_pool.getUTF8Index(Attribute.Version), version_index);
+        this(constant_pool.getUTF8Index(Attribute.ModulePackages),
+             packages_index);
     }
 
-    public Version_attribute(int name_index, int version_index) {
-        super(name_index, 2);
-        this.version_index = version_index;
+    public ModulePackages_attribute(int name_index,
+                              int[] packages_index) {
+        super(name_index, 2 + packages_index.length * 2);
+        this.packages_count = packages_index.length;
+        this.packages_index = packages_index;
+    }
+
+    public String getPackage(int index, ConstantPool constant_pool) throws ConstantPoolException {
+        int package_index = packages_index[index];
+        return constant_pool.getUTF8Value(package_index);
     }
 
     @Override
     public <R, D> R accept(Visitor<R, D> visitor, D data) {
-        return visitor.visitVersion(this, data);
+        return visitor.visitModulePackages(this, data);
     }
 
-    public final int version_index;
+    public final int packages_count;
+    public final int[] packages_index;
 }

@@ -35,8 +35,8 @@ import java.io.IOException;
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
  */
-public class TargetPlatform_attribute extends Attribute {
-    TargetPlatform_attribute(ClassReader cr, int name_index, int length) throws IOException {
+public class ModuleTarget_attribute extends Attribute {
+    ModuleTarget_attribute(ClassReader cr, int name_index, int length) throws IOException {
         super(name_index, length);
         os_name_index = cr.readUnsignedShort();
         os_arch_index = cr.readUnsignedShort();
@@ -45,7 +45,7 @@ public class TargetPlatform_attribute extends Attribute {
 
     @Override
     public <R, D> R accept(Visitor<R, D> visitor, D data) {
-        return visitor.visitTargetPlatform(this, data);
+        return visitor.visitModuleTarget(this, data);
     }
 
     public final int os_name_index;
