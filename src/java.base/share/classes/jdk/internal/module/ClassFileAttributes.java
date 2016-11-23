@@ -357,13 +357,13 @@ public final class ClassFileAttributes {
     }
 
     /**
-     * Packages attribute.
+     * ModulePackages attribute.
      *
      * <pre> {@code
      *
-     * Packages_attribute {
+     * ModulePackages_attribute {
      *   // index to CONSTANT_utf8_info structure in constant pool representing
-     *   // the string "Packages"
+     *   // the string "ModulePackages"
      *   u2 attribute_name_index;
      *   u4 attribute_length;
      *
@@ -375,15 +375,15 @@ public final class ClassFileAttributes {
      *
      * }</pre>
      */
-    public static class PackagesAttribute extends Attribute {
+    public static class ModulePackagesAttribute extends Attribute {
         private final Set<String> packages;
 
-        public PackagesAttribute(Set<String> packages) {
-            super(PACKAGES);
+        public ModulePackagesAttribute(Set<String> packages) {
+            super(MODULE_PACKAGES);
             this.packages = packages;
         }
 
-        public PackagesAttribute() {
+        public ModulePackagesAttribute() {
             this(null);
         }
 
@@ -407,7 +407,7 @@ public final class ClassFileAttributes {
                 off += 2;
             }
 
-            return new PackagesAttribute(packages);
+            return new ModulePackagesAttribute(packages);
         }
 
         @Override
@@ -435,13 +435,13 @@ public final class ClassFileAttributes {
     }
 
     /**
-     * Version attribute.
+     * ModuleVersion attribute.
      *
      * <pre> {@code
      *
-     * Version_attribute {
+     * ModuleVersion_attribute {
      *   // index to CONSTANT_utf8_info structure in constant pool representing
-     *   // the string "Version"
+     *   // the string "ModuleVersion"
      *   u2 attribute_name_index;
      *   u4 attribute_length;
      *
@@ -451,15 +451,15 @@ public final class ClassFileAttributes {
      *
      * } </pre>
      */
-    public static class VersionAttribute extends Attribute {
+    public static class ModuleVersionAttribute extends Attribute {
         private final Version version;
 
-        public VersionAttribute(Version version) {
-            super(VERSION);
+        public ModuleVersionAttribute(Version version) {
+            super(MODULE_VERSION);
             this.version = version;
         }
 
-        public VersionAttribute() {
+        public ModuleVersionAttribute() {
             this(null);
         }
 
@@ -472,7 +472,7 @@ public final class ClassFileAttributes {
                                  Label[] labels)
         {
             String value = cr.readUTF8(off, buf);
-            return new VersionAttribute(Version.parse(value));
+            return new ModuleVersionAttribute(Version.parse(value));
         }
 
         @Override
@@ -490,13 +490,13 @@ public final class ClassFileAttributes {
     }
 
     /**
-     * MainClass attribute.
+     * ModuleMainClass attribute.
      *
      * <pre> {@code
      *
      * MainClass_attribute {
      *   // index to CONSTANT_utf8_info structure in constant pool representing
-     *   // the string "MainClass"
+     *   // the string "ModuleMainClass"
      *   u2 attribute_name_index;
      *   u4 attribute_length;
      *
@@ -506,15 +506,15 @@ public final class ClassFileAttributes {
      *
      * } </pre>
      */
-    public static class MainClassAttribute extends Attribute {
+    public static class ModuleMainClassAttribute extends Attribute {
         private final String mainClass;
 
-        public MainClassAttribute(String mainClass) {
-            super(MAIN_CLASS);
+        public ModuleMainClassAttribute(String mainClass) {
+            super(MODULE_MAIN_CLASS);
             this.mainClass = mainClass;
         }
 
-        public MainClassAttribute() {
+        public ModuleMainClassAttribute() {
             this(null);
         }
 
@@ -527,7 +527,7 @@ public final class ClassFileAttributes {
                                  Label[] labels)
         {
             String value = cr.readClass(off, buf);
-            return new MainClassAttribute(value);
+            return new ModuleMainClassAttribute(value);
         }
 
         @Override
@@ -545,13 +545,13 @@ public final class ClassFileAttributes {
     }
 
     /**
-     * TargetPlatform attribute.
+     * ModuleTarget attribute.
      *
      * <pre> {@code
      *
      * TargetPlatform_attribute {
      *   // index to CONSTANT_utf8_info structure in constant pool representing
-     *   // the string "TargetPlatform"
+     *   // the string "ModuleTarget"
      *   u2 attribute_name_index;
      *   u4 attribute_length;
      *
@@ -565,19 +565,19 @@ public final class ClassFileAttributes {
      *
      * } </pre>
      */
-    public static class TargetPlatformAttribute extends Attribute {
+    public static class ModuleTargetAttribute extends Attribute {
         private final String osName;
         private final String osArch;
         private final String osVersion;
 
-        public TargetPlatformAttribute(String osName, String osArch, String osVersion) {
-            super(TARGET_PLATFORM);
+        public ModuleTargetAttribute(String osName, String osArch, String osVersion) {
+            super(MODULE_TARGET);
             this.osName = osName;
             this.osArch = osArch;
             this.osVersion = osVersion;
         }
 
-        public TargetPlatformAttribute() {
+        public ModuleTargetAttribute() {
             this(null, null, null);
         }
 
@@ -609,7 +609,7 @@ public final class ClassFileAttributes {
                 osVersion = cr.readUTF8(off, buf);
             off += 2;
 
-            return new TargetPlatformAttribute(osName, osArch, osVersion);
+            return new ModuleTargetAttribute(osName, osArch, osVersion);
         }
 
         @Override
@@ -641,13 +641,13 @@ public final class ClassFileAttributes {
     }
 
     /**
-     * jdk.Hashes attribute.
+     * ModuleHashes attribute.
      *
      * <pre> {@code
      *
      * Hashes_attribute {
      *   // index to CONSTANT_utf8_info structure in constant pool representing
-     *   // the string "jdk.Hashes"
+     *   // the string "ModuleHashes"
      *   u2 attribute_name_index;
      *   u4 attribute_length;
      *
@@ -665,15 +665,15 @@ public final class ClassFileAttributes {
      * @apiNote For now the hash is stored in base64 as a UTF-8 string, an
      * alternative is to store it as an array of u1.
      */
-    static class HashesAttribute extends Attribute {
+    static class ModuleHashesAttribute extends Attribute {
         private final ModuleHashes hashes;
 
-        HashesAttribute(ModuleHashes hashes) {
-            super(HASHES);
+        ModuleHashesAttribute(ModuleHashes hashes) {
+            super(MODULE_HASHES);
             this.hashes = hashes;
         }
 
-        HashesAttribute() {
+        ModuleHashesAttribute() {
             this(null);
         }
 
@@ -702,7 +702,7 @@ public final class ClassFileAttributes {
 
             ModuleHashes hashes = new ModuleHashes(algorithm, map);
 
-            return new HashesAttribute(hashes);
+            return new ModuleHashesAttribute(hashes);
         }
 
         @Override

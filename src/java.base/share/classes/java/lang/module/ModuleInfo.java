@@ -60,10 +60,10 @@ import static jdk.internal.module.ClassFileConstants.*;
 
 final class ModuleInfo {
 
-    // supplies the set of packages when Packages attribute not present
+    // supplies the set of packages when ModulePackages attribute not present
     private final Supplier<Set<String>> packageFinder;
 
-    // indicates if the jdk.Hashes attribute should be parsed
+    // indicates if the ModuleHashes attribute should be parsed
     private final boolean parseHashes;
 
     private ModuleInfo(Supplier<Set<String>> pf, boolean ph) {
@@ -116,7 +116,7 @@ final class ModuleInfo {
 
     /**
      * Reads a {@code module-info.class} from the given byte buffer
-     * but ignore the {@code jdk.Hashes} attribute.
+     * but ignore the {@code ModuleHashes} attribute.
      *
      * @throws InvalidModuleDescriptorException
      * @throws UncheckedIOException
@@ -211,25 +211,25 @@ final class ModuleInfo {
                     builder = readModuleAttribute(in, cpool);
                     break;
 
-                case PACKAGES :
-                    packages = readPackagesAttribute(in, cpool);
+                case MODULE_PACKAGES :
+                    packages = readModulePackagesAttribute(in, cpool);
                     break;
 
-                case VERSION :
-                    version = readVersionAttribute(in, cpool);
+                case MODULE_VERSION :
+                    version = readModuleVersionAttribute(in, cpool);
                     break;
 
-                case MAIN_CLASS :
-                    mainClass = readMainClassAttribute(in, cpool);
+                case MODULE_MAIN_CLASS :
+                    mainClass = readModuleMainClassAttribute(in, cpool);
                     break;
 
-                case TARGET_PLATFORM :
-                    osValues = readTargetPlatformAttribute(in, cpool);
+                case MODULE_TARGET :
+                    osValues = readModuleTargetAttribute(in, cpool);
                     break;
 
-                case HASHES :
+                case MODULE_HASHES :
                     if (parseHashes) {
-                        hashes = readHashesAttribute(in, cpool);
+                        hashes = readModuleHashesAttribute(in, cpool);
                     } else {
                         in.skipBytes(length);
                     }
@@ -251,8 +251,8 @@ final class ModuleInfo {
             throw invalidModuleDescriptor(MODULE + " attribute not found");
         }
 
-        // If the Packages attribute is not present then the packageFinder is
-        // used to find the set of packages
+        // If the ModulePackages attribute is not present then the packageFinder
+        // is used to find the set of packages
         boolean usedPackageFinder = false;
         if (packages == null && packageFinder != null) {
             try {
@@ -269,7 +269,7 @@ final class ModuleInfo {
                     if (usedPackageFinder) {
                         tail = " not found by package finder";
                     } else {
-                        tail = " missing from Packages attribute";
+                        tail = " missing from ModulePackages attribute";
                     }
                     throw invalidModuleDescriptor("Package " + pn + tail);
                 }
@@ -444,9 +444,9 @@ final class ModuleInfo {
     }
 
     /**
-     * Reads the Packages attribute
+     * Reads the ModulePackages attribute
      */
-    private Set<String> readPackagesAttribute(DataInput in, ConstantPool cpool)
+    private Set<String> readModulePackagesAttribute(DataInput in, ConstantPool cpool)
         throws IOException
     {
         int package_count = in.readUnsignedShort();
@@ -460,9 +460,9 @@ final class ModuleInfo {
     }
 
     /**
-     * Reads the Version attribute
+     * Reads the ModuleVersion attribute
      */
-    private String readVersionAttribute(DataInput in, ConstantPool cpool)
+    private String readModuleVersionAttribute(DataInput in, ConstantPool cpool)
         throws IOException
     {
         int index = in.readUnsignedShort();
@@ -470,9 +470,9 @@ final class ModuleInfo {
     }
 
     /**
-     * Reads the MainClass attribute
+     * Reads the ModuleMainClass attribute
      */
-    private String readMainClassAttribute(DataInput in, ConstantPool cpool)
+    private String readModuleMainClassAttribute(DataInput in, ConstantPool cpool)
         throws IOException
     {
         int index = in.readUnsignedShort();
@@ -480,9 +480,9 @@ final class ModuleInfo {
     }
 
     /**
-     * Reads the TargetPlatform attribute
+     * Reads the ModuleTarget attribute
      */
-    private String[] readTargetPlatformAttribute(DataInput in, ConstantPool cpool)
+    private String[] readModuleTargetAttribute(DataInput in, ConstantPool cpool)
         throws IOException
     {
         String[] values = new String[3];
@@ -504,12 +504,12 @@ final class ModuleInfo {
 
 
     /**
-     * Reads the jdk.Hashes attribute
+     * Reads the ModuleHashes attribute
      *
      * @apiNote For now the hash is stored in base64 as a UTF-8 string, this
      * should be changed to be an array of u1.
      */
-    private ModuleHashes readHashesAttribute(DataInput in, ConstantPool cpool)
+    private ModuleHashes readModuleHashesAttribute(DataInput in, ConstantPool cpool)
         throws IOException
     {
         int index = in.readUnsignedShort();
@@ -539,11 +539,11 @@ final class ModuleInfo {
         if (name.equals(MODULE) ||
                 name.equals(SOURCE_FILE) ||
                 name.equals(SDE) ||
-                name.equals(PACKAGES) ||
-                name.equals(VERSION) ||
-                name.equals(MAIN_CLASS) ||
-                name.equals(TARGET_PLATFORM) ||
-                name.equals(HASHES))
+                name.equals(MODULE_PACKAGES) ||
+                name.equals(MODULE_VERSION) ||
+                name.equals(MODULE_MAIN_CLASS) ||
+                name.equals(MODULE_TARGET) ||
+                name.equals(MODULE_HASHES))
             return true;
 
         return false;

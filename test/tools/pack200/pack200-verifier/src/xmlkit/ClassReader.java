@@ -39,7 +39,6 @@ import com.sun.tools.classfile.CharacterRangeTable_attribute;
 import com.sun.tools.classfile.ClassFile;
 import com.sun.tools.classfile.Code_attribute;
 import com.sun.tools.classfile.CompilationID_attribute;
-import com.sun.tools.classfile.Packages_attribute;
 import com.sun.tools.classfile.ConstantPool;
 import com.sun.tools.classfile.ConstantPool.CONSTANT_Class_info;
 import com.sun.tools.classfile.ConstantPool.CONSTANT_Double_info;
@@ -65,8 +64,6 @@ import com.sun.tools.classfile.Descriptor.InvalidDescriptor;
 import com.sun.tools.classfile.EnclosingMethod_attribute;
 import com.sun.tools.classfile.Exceptions_attribute;
 import com.sun.tools.classfile.Field;
-import com.sun.tools.classfile.Hashes_attribute;
-import com.sun.tools.classfile.Hashes_attribute.Entry;
 import com.sun.tools.classfile.InnerClasses_attribute;
 import com.sun.tools.classfile.InnerClasses_attribute.Info;
 import com.sun.tools.classfile.Instruction;
@@ -74,13 +71,18 @@ import com.sun.tools.classfile.Instruction.TypeKind;
 import com.sun.tools.classfile.LineNumberTable_attribute;
 import com.sun.tools.classfile.LocalVariableTable_attribute;
 import com.sun.tools.classfile.LocalVariableTypeTable_attribute;
-import com.sun.tools.classfile.MainClass_attribute;
 import com.sun.tools.classfile.Method;
 import com.sun.tools.classfile.MethodParameters_attribute;
 import com.sun.tools.classfile.Module_attribute;
 import com.sun.tools.classfile.Module_attribute.ExportsEntry;
 import com.sun.tools.classfile.Module_attribute.ProvidesEntry;
 import com.sun.tools.classfile.Module_attribute.RequiresEntry;
+import com.sun.tools.classfile.ModuleHashes_attribute;
+import com.sun.tools.classfile.ModuleHashes_attribute.Entry;
+import com.sun.tools.classfile.ModuleMainClass_attribute;
+import com.sun.tools.classfile.ModuleTarget_attribute;
+import com.sun.tools.classfile.ModulePackages_attribute;
+import com.sun.tools.classfile.ModuleVersion_attribute;
 import com.sun.tools.classfile.Opcode;
 import com.sun.tools.classfile.RuntimeInvisibleAnnotations_attribute;
 import com.sun.tools.classfile.RuntimeInvisibleParameterAnnotations_attribute;
@@ -102,11 +104,9 @@ import com.sun.tools.classfile.StackMapTable_attribute.same_locals_1_stack_item_
 import com.sun.tools.classfile.StackMapTable_attribute.same_locals_1_stack_item_frame_extended;
 import com.sun.tools.classfile.StackMap_attribute;
 import com.sun.tools.classfile.Synthetic_attribute;
-import com.sun.tools.classfile.TargetPlatform_attribute;
 import com.sun.tools.classfile.TypeAnnotation;
 import com.sun.tools.classfile.TypeAnnotation.Position;
 import static com.sun.tools.classfile.TypeAnnotation.TargetType.THROWS;
-import com.sun.tools.classfile.Version_attribute;
 import java.io.*;
 import java.util.*;
 import java.util.jar.JarEntry;
@@ -1017,7 +1017,7 @@ class AttributeVisitor implements Attribute.Visitor<Element, Element> {
     }
 
     @Override
-    public Element visitPackages(Packages_attribute attr, Element p) {
+    public Element visitModulePackages(ModulePackages_attribute attr, Element p) {
         Element e = new Element(x.getCpString(attr.attribute_name_index));
         for (int i : attr.packages_index) {
             Element ee = new Element("Package");
@@ -1463,7 +1463,7 @@ class AttributeVisitor implements Attribute.Visitor<Element, Element> {
     }
 
     @Override
-    public Element visitHashes(Hashes_attribute attr, Element p) {
+    public Element visitModuleHashes(ModuleHashes_attribute attr, Element p) {
         Element e = new Element(x.getCpString(attr.attribute_name_index));
         e.setAttr("Algorithm", x.getCpString(attr.algorithm_index));
         for (Entry entry : attr.hashes_table) {
@@ -1480,7 +1480,7 @@ class AttributeVisitor implements Attribute.Visitor<Element, Element> {
     }
 
     @Override
-    public Element visitMainClass(MainClass_attribute attr, Element p) {
+    public Element visitModuleMainClass(ModuleMainClass_attribute attr, Element p) {
         Element e = new Element(x.getCpString(attr.attribute_name_index));
         e.add(x.getCpString(attr.main_class_index));
         e.trimToSize();
@@ -1489,7 +1489,7 @@ class AttributeVisitor implements Attribute.Visitor<Element, Element> {
     }
 
     @Override
-    public Element visitTargetPlatform(TargetPlatform_attribute attr, Element p) {
+    public Element visitModuleTarget(ModuleTarget_attribute attr, Element p) {
         Element e = new Element(x.getCpString(attr.attribute_name_index));
         e.add(x.getCpString(attr.os_name_index));
         e.add(x.getCpString(attr.os_arch_index));
@@ -1500,7 +1500,7 @@ class AttributeVisitor implements Attribute.Visitor<Element, Element> {
     }
 
     @Override
-    public Element visitVersion(Version_attribute attr, Element p) {
+    public Element visitModuleVersion(ModuleVersion_attribute attr, Element p) {
         Element e = new Element(x.getCpString(attr.attribute_name_index));
         e.add(x.getCpString(attr.version_index));
         e.trimToSize();

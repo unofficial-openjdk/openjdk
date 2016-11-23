@@ -62,19 +62,17 @@ public final class ModuleInfoWriter {
                 .map(ModuleDescriptor.Opens::source);
         long exportedOrOpen = Stream.concat(exported, open).distinct().count();
         if (md.packages().size() > exportedOrOpen)
-            cw.visitAttribute(new PackagesAttribute(md.packages()));
+            cw.visitAttribute(new ModulePackagesAttribute(md.packages()));
 
-        md.version().ifPresent(v -> cw.visitAttribute(new VersionAttribute(v)));
-        md.mainClass().ifPresent(mc -> cw.visitAttribute(new MainClassAttribute(mc)));
+        md.version().ifPresent(v -> cw.visitAttribute(new ModuleVersionAttribute(v)));
+        md.mainClass().ifPresent(mc -> cw.visitAttribute(new ModuleMainClassAttribute(mc)));
 
         // write the TargetPlatform attribute if have any of OS name/arch/version
         String osName = md.osName().orElse(null);
         String osArch = md.osArch().orElse(null);
         String osVersion = md.osVersion().orElse(null);
         if (osName != null || osArch != null || osVersion != null) {
-            cw.visitAttribute(new TargetPlatformAttribute(osName,
-                                                          osArch,
-                                                          osVersion));
+            cw.visitAttribute(new ModuleTargetAttribute(osName, osArch, osVersion));
         }
 
         cw.visitEnd();
