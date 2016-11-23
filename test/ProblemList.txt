@@ -125,9 +125,6 @@ java/beans/Introspector/8132566/OverrideUserDefPropertyInfoTest.java 8132565 gen
 
 java/lang/StringCoding/CheckEncodings.sh                        7008363 generic-all
 
-# Need to re-examine test
-java/lang/Class/getDeclaredField/FieldSetAccessibleTest.java	0000000 generic-all
-
 ############################################################################
 
 # jdk_instrument
