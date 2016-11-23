@@ -2421,9 +2421,9 @@ public final class Class<T> implements java.io.Serializable,
      * @param  name name of the desired resource
      * @return  A {@link java.io.InputStream} object; {@code null} if no
      *          resource with this name is found, the resource is in a package
-     *          that is not {@link Module#isOpen(String, Module) open} to the
-     *          caller module, or access to the resource is denied by the
-     *          security manager.
+     *          that is not {@link Module#isOpen(String, Module) open} to at
+     *          least the caller module, or access to the resource is denied
+     *          by the security manager.
      * @throws  NullPointerException If {@code name} is {@code null}
      * @since  1.1
      */
@@ -2514,9 +2514,10 @@ public final class Class<T> implements java.io.Serializable,
      * @param  name name of the desired resource
      * @return A {@link java.net.URL} object; {@code null} if no resource with
      *         this name is found, the resource cannot be located by a URL, the
-     *         resource is in a package that is not {@link
-     *         Module#isOpen(String, Module) open} to the caller module, or
-     *         access to the resource is denied by the security manager.
+     *         resource is in a package that is not
+     *         {@link Module#isOpen(String, Module) open} to at least the caller
+     *         module, or access to the resource is denied by the security
+     *         manager.
      * @throws NullPointerException If {@code name} is {@code null}
      * @since  1.1
      */

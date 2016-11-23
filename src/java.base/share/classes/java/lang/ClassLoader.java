@@ -1323,7 +1323,8 @@ public abstract class ClassLoader {
      * Additionally, and except for the special case where the resource has a
      * name ending with "{@code .class}", this method will only find resources in
      * packages of named modules when the package is {@link Module#isOpen(String)
-     * opened} unconditionally. </p>
+     * opened} unconditionally (even if the caller of this method is in the
+     * same module as the resource). </p>
      *
      * @apiNote Where several modules are defined to the same class loader,
      * and where more than one module contains a resource with the given name,
@@ -1373,7 +1374,8 @@ public abstract class ClassLoader {
      * Additionally, and except for the special case where the resource has a
      * name ending with "{@code .class}", this method will only find resources in
      * packages of named modules when the package is {@link Module#isOpen(String)
-     * opened} unconditionally. </p>
+     * opened} unconditionally (even if the caller of this method is in the
+     * same module as the resource).</p>
      *
      * @apiNote Where several modules are defined to the same class loader,
      * and where more than one module contains a resource with the given name,
@@ -1437,7 +1439,8 @@ public abstract class ClassLoader {
      * Additionally, and except for the special case where the resource has a
      * name ending with "{@code .class}", this method will only find resources in
      * packages of named modules when the package is {@link Module#isOpen(String)
-     * opened} unconditionally. </p>
+     * opened} unconditionally (even if the caller of this method is in the
+     * same module as the resource). </p>
      *
      * @apiNote When overriding this method it is recommended that an
      * implementation ensures that any delegation is consistent with the {@link
@@ -2805,7 +2808,6 @@ public abstract class ClassLoader {
         }
         layers.add(layer);
     }
-
 
     // -- Misc --
 
