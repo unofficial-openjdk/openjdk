@@ -566,11 +566,11 @@ public class ClassWriter {
             }
 
             out.writeShort(attr.opens.length);
-            for (Module_attribute.ExportsEntry e: attr.opens) {
-                out.writeShort(e.exports_index);
-                out.writeShort(e.exports_flags);
-                out.writeShort(e.exports_to_index.length);
-                for (int index: e.exports_to_index)
+            for (Module_attribute.OpensEntry e: attr.opens) {
+                out.writeShort(e.opens_index);
+                out.writeShort(e.opens_flags);
+                out.writeShort(e.opens_to_index.length);
+                for (int index: e.opens_to_index)
                     out.writeShort(index);
             }
 

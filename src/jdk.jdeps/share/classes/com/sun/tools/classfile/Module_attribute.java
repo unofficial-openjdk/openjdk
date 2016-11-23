@@ -59,9 +59,9 @@ public class Module_attribute extends Attribute {
             exports[i] = new ExportsEntry(cr);
 
         opens_count = cr.readUnsignedShort();
-        opens = new ExportsEntry[opens_count];
+        opens = new OpensEntry[opens_count];
         for (int i = 0; i < opens_count; i++)
-            opens[i] = new ExportsEntry(cr);
+            opens[i] = new OpensEntry(cr);
 
         uses_count = cr.readUnsignedShort();
         uses_index = new int[uses_count];
@@ -79,7 +79,7 @@ public class Module_attribute extends Attribute {
             int module_flags,
             RequiresEntry[] requires,
             ExportsEntry[] exports,
-            ExportsEntry[] opens,
+            OpensEntry[] opens,
             int[] uses,
             ProvidesEntry[] provides) {
         super(name_index, 2);
@@ -114,7 +114,7 @@ public class Module_attribute extends Attribute {
     public final int exports_count;
     public final ExportsEntry[] exports;
     public final int opens_count;
-    public final ExportsEntry[] opens;
+    public final OpensEntry[] opens;
     public final int uses_count;
     public final int[] uses_index;
     public final int provides_count;
@@ -166,6 +166,33 @@ public class Module_attribute extends Attribute {
         public final int exports_flags;
         public final int exports_to_count;
         public final int[] exports_to_index;
+    }
+
+    public static class OpensEntry {
+        OpensEntry(ClassReader cr) throws IOException {
+            opens_index = cr.readUnsignedShort();
+            opens_flags = cr.readUnsignedShort();
+            opens_to_count = cr.readUnsignedShort();
+            opens_to_index = new int[opens_to_count];
+            for (int i = 0; i < opens_to_count; i++)
+                opens_to_index[i] = cr.readUnsignedShort();
+        }
+
+        public OpensEntry(int index, int flags, int[] to) {
+            this.opens_index = index;
+            this.opens_flags = flags;
+            this.opens_to_count = to.length;
+            this.opens_to_index = to;
+        }
+
+        public int length() {
+            return 4 + 2 * opens_to_index.length;
+        }
+
+        public final int opens_index;
+        public final int opens_flags;
+        public final int opens_to_count;
+        public final int[] opens_to_index;
     }
 
     public static class ProvidesEntry {

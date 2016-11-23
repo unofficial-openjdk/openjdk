@@ -632,12 +632,12 @@ public class ClassWriter extends BasicWriter {
                 indent(-1);
         }
 
-        for (Module_attribute.ExportsEntry entry: m.opens) {
+        for (Module_attribute.OpensEntry entry: m.opens) {
             print("opens");
             print(" ");
-            print(getUTF8Value(entry.exports_index).replace('/', '.'));
+            print(getUTF8Value(entry.opens_index).replace('/', '.'));
             boolean first = true;
-            for (int i: entry.exports_to_index) {
+            for (int i: entry.opens_to_index) {
                 String mname;
                 try {
                     mname = classFile.constant_pool.getUTF8Value(i).replace('/', '.');

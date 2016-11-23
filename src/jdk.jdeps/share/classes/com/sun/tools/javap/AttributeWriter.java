@@ -517,8 +517,8 @@ public class AttributeWriter extends BasicWriter
         println();
 
         printRequiresTable(attr);
-        printExportsTable(attr, true);
-        printExportsTable(attr, false);
+        printExportsTable(attr);
+        printOpensTable(attr);
         printUsesTable(attr);
         printProvidesTable(attr);
         indent(-1);
@@ -548,39 +548,51 @@ public class AttributeWriter extends BasicWriter
         indent(-1);
     }
 
-    protected void printExportsTable(Module_attribute attr, boolean exports) {
-        Module_attribute.ExportsEntry[] entries = exports ? attr.exports : attr.opens;
+    protected void printExportsTable(Module_attribute attr) {
+        Module_attribute.ExportsEntry[] entries = attr.exports;
         print(entries.length);
         tab();
-        println("// " + (exports ? "exports" : "opens"));
+        println("// exports");
         indent(+1);
         for (Module_attribute.ExportsEntry e: entries) {
-            print("#" + e.exports_index + "," + String.format("%x", e.exports_flags));
-            tab();
-            print("// ");
-            if (e.exports_index == 0) {
-                print("default");
-            } else {
-                print(constantWriter.stringValue(e.exports_index));
-            }
-            if ((e.exports_flags & Module_attribute.ACC_MANDATED) != 0)
-                print(" ACC_MANDATED");
-            if ((e.exports_flags & Module_attribute.ACC_SYNTHETIC) != 0)
-                print(" ACC_SYNTHETIC");
-            if (e.exports_to_index.length == 0) {
-                println();
-            } else {
-                println(" to ... " + e.exports_to_index.length);
-                indent(+1);
-                for (int to: e.exports_to_index) {
-                    print("#" + to);
-                    tab();
-                    println("// ... to " + constantWriter.stringValue(to));
-                }
-                indent(-1);
-            }
+            printExportOpenEntry(e.exports_index, e.exports_flags, e.exports_to_index);
         }
         indent(-1);
+    }
+
+    protected void printOpensTable(Module_attribute attr) {
+        Module_attribute.OpensEntry[] entries = attr.opens;
+        print(entries.length);
+        tab();
+        println("// opens");
+        indent(+1);
+        for (Module_attribute.OpensEntry e: entries) {
+            printExportOpenEntry(e.opens_index, e.opens_flags, e.opens_to_index);
+        }
+        indent(-1);
+    }
+
+    protected void printExportOpenEntry(int index, int flags, int[] to_index) {
+        print("#" + index + "," + String.format("%x", flags));
+        tab();
+        print("// ");
+        print(constantWriter.stringValue(index));
+        if ((flags & Module_attribute.ACC_MANDATED) != 0)
+            print(" ACC_MANDATED");
+        if ((flags & Module_attribute.ACC_SYNTHETIC) != 0)
+            print(" ACC_SYNTHETIC");
+        if (to_index.length == 0) {
+            println();
+        } else {
+            println(" to ... " + to_index.length);
+            indent(+1);
+            for (int to: to_index) {
+                print("#" + to);
+                tab();
+                println("// ... to " + constantWriter.stringValue(to));
+            }
+            indent(-1);
+        }
     }
 
     protected void printUsesTable(Module_attribute attr) {
