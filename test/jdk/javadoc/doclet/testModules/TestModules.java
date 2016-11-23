@@ -196,6 +196,19 @@ public class TestModules extends JavadocTester {
         checkModuleDeprecation(true);
     }
 
+    /**
+     * Test annotations on modules.
+     */
+    @Test
+    void testModuleAnnotation() {
+        javadoc("-d", "out-moduleanno",
+                "--module-source-path", testSrc,
+                "--module", "module1,module2",
+                "testpkgmdl1", "testpkgmdl2");
+        checkExit(Exit.OK);
+        checkModuleAnnotation();
+    }
+
     void checkDescription(boolean found) {
         checkOutput("module1-summary.html", found,
                 "<!-- ============ MODULE DESCRIPTION =========== -->\n"
@@ -598,4 +611,13 @@ public class TestModules extends JavadocTester {
                 + "</p>",
                 "<div class=\"deprecatedContent\"><span class=\"deprecatedLabel\">Deprecated.</span></div>");
     }
+
+    void checkModuleAnnotation() {
+        checkOutput("module2-summary.html", true,
+                "<p><a href=\"testpkgmdl2/AnnotationType.html\" title=\"annotation in testpkgmdl2\">@AnnotationType</a>(<a href=\"testpkgmdl2/AnnotationType.html#optional--\">optional</a>=\"Module Annotation\",\n"
+                + "                <a href=\"testpkgmdl2/AnnotationType.html#required--\">required</a>=2016)\n"
+                + "</p>");
+        checkOutput("module2-summary.html", false,
+                "@AnnotationTypeUndocumented");
+}
 }

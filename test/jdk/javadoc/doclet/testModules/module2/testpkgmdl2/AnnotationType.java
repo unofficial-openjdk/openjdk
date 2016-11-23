@@ -4,9 +4,7 @@
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,19 +21,26 @@
  * questions.
  */
 
+package testpkgmdl2;
+
+import java.lang.annotation.*;
+
 /**
-  * This is a test description for the module2 module. Search word {@index search_word} with no description.
-  *
-  * @deprecated This module is deprecated using just the javadoc tag.
-  */
-@testpkgmdl2.AnnotationType(optional="Module Annotation", required=2016)
-@testpkgmdl2.AnnotationTypeUndocumented(optional="Module Annotation", required=2016)
-module module2 {
-    exports testpkgmdl2;
+ * This is a test annotation type.
+ */
+@Documented public @interface AnnotationType {
 
-    exports testpkg2mdl2 to module1;
+    /**
+     * The copyright holder.
+     *
+     * @return a string.
+     */
+    String optional() default "unknown";
 
-    uses testpkgmdl2.TestClassInModule2;
-
-    provides testpkg2mdl2.TestInterfaceInModule2 with testpkgmdl2.TestClassInModule2;
+   /**
+    * The year of the copyright.
+    *
+    * @return an int.
+    */
+    int required();
 }
