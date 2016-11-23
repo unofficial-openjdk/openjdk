@@ -501,9 +501,9 @@ public final class ServiceLoader<S>
      * module, and check that the module declare that it uses the service type.
      */
     private static void checkModule(Module module, Class<?> svc) {
-
-        // Check that the service type is in a package that is
-        // exported to the caller.
+        // Check that the service type is in a package that is exported to
+        // the caller. This needs to be promoted to a complete access check
+        // on the service type
         if (!Reflection.verifyModuleAccess(module, svc)) {
             fail(svc, "not accessible to " + module);
         }
@@ -513,7 +513,6 @@ public final class ServiceLoader<S>
         if (!module.canUse(svc)) {
             fail(svc, "use not declared in " + module);
         }
-
     }
 
     private static void fail(Class<?> service, String msg, Throwable cause)
@@ -1388,7 +1387,7 @@ public final class ServiceLoader<S>
      *
      * @throws ServiceConfigurationError
      *         if the service type is not accessible to the caller or the
-     *         caller is in a named module and its module descriptor does
+     *         caller is in an explicit module and its module descriptor does
      *         not declare that it uses {@code service}
      */
     @CallerSensitive
@@ -1431,7 +1430,7 @@ public final class ServiceLoader<S>
      *
      * @throws ServiceConfigurationError
      *         if the service type is not accessible to the caller or the
-     *         caller is in a named module and its module descriptor does
+     *         caller is in an explicit module and its module descriptor does
      *         not declare that it uses {@code service}
      */
     @CallerSensitive
@@ -1464,7 +1463,7 @@ public final class ServiceLoader<S>
      *
      * @throws ServiceConfigurationError
      *         if the service type is not accessible to the caller or the
-     *         caller is in a named module and its module descriptor does
+     *         caller is in an explicit module and its module descriptor does
      *         not declare that it uses {@code service}
      */
     @CallerSensitive
@@ -1494,7 +1493,7 @@ public final class ServiceLoader<S>
      *
      * @throws ServiceConfigurationError
      *         if the service type is not accessible to the caller or the
-     *         caller is in a named module and its module descriptor does
+     *         caller is in an explicit module and its module descriptor does
      *         not declare that it uses {@code service}
      *
      * @since 9

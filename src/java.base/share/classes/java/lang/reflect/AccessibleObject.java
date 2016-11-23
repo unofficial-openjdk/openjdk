@@ -83,7 +83,8 @@ public class AccessibleObject implements AnnotatedElement {
      * where the class is in a package that is not exported to the caller's
      * module. Additionally, if the member is non-public or its declaring
      * class is non-public, then this method can only be used to enable access
-     * if the package is {@link Module#isOpen open} to the caller's module.
+     * if the package is {@link Module#isOpen(String,Module) open} to at least
+     * the caller's module.
      *
      * <p>If there is a security manager, its
      * {@code checkPermission} method is first called with a
@@ -129,7 +130,8 @@ public class AccessibleObject implements AnnotatedElement {
      * where the class is in a package that is not exported to the caller's
      * module. Additionally, if the member is non-public or its declaring
      * class is non-public, then this method can only be used to enable access
-     * if the package is {@link Module#isOpen open} to the caller's module.
+     * if the package is {@link Module#isOpen(String,Module) open} to at least
+     * the caller's module.
      *
      * <p>If there is a security manager, its
      * {@code checkPermission} method is first called with a
