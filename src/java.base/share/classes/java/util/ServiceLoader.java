@@ -937,7 +937,7 @@ public final class ServiceLoader<S>
                 stream2 = Stream.empty();
             } else {
                 Layer bootLayer = Layer.boot();
-                stream2 = loader.layers()
+                stream2 = LANG_ACCESS.layers(loader)
                         .filter(l -> (l != bootLayer))
                         .map(l -> providers(l))
                         .flatMap(List::stream);

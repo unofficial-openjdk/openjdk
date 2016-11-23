@@ -2780,12 +2780,9 @@ public abstract class ClassLoader {
      * Returns a possible-empty stream of the layers with modules defined to
      * this class loader.
      *
-     * @apiNote TBD whether to keep this method or a variant of.
-     *
      * @return A stream of the layers with modules defined to this class loader
-     * @since 9
      */
-    public Stream<Layer> layers() {
+    Stream<Layer> layers() {
         Collection<Layer> layers = this.layers;
         if (layers == null) {
             return Stream.empty();
@@ -2793,8 +2790,6 @@ public abstract class ClassLoader {
             return layers.stream();
         }
     }
-
-    private volatile Collection<Layer> layers; // move to CLV?
 
     void bindToLayer(Layer layer) {
         Collection<Layer> layers = this.layers;
@@ -2808,6 +2803,9 @@ public abstract class ClassLoader {
         }
         layers.add(layer);
     }
+
+    private volatile Collection<Layer> layers; // move to CLV?
+
 
     // -- Misc --
 

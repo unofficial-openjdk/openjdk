@@ -2035,6 +2035,9 @@ public final class System {
             public Layer getBootLayer() {
                 return bootLayer;
             }
+            public Stream<Layer> layers(ClassLoader loader) {
+                return loader.layers();
+            }
             public void bindToLayer(ClassLoader loader, Layer layer) {
                 loader.bindToLayer(layer);
             }

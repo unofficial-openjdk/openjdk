@@ -145,6 +145,12 @@ public interface JavaLangAccess {
     Layer getBootLayer();
 
     /**
+     * Returns a possible-empty stream of the layers with modules defined to
+     * the class loader.
+     */
+    Stream<Layer> layers(ClassLoader loader);
+
+    /**
      * Records in the class loader that the given layer has at least one
      * module defined to the class loader.
      */
