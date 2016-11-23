@@ -127,6 +127,9 @@ public class ModuleWriterImpl extends HtmlDocletWriter implements ModuleSummaryW
         }
         HtmlTree div = new HtmlTree(HtmlTag.DIV);
         div.addStyle(HtmlStyle.header);
+        Content annotationContent = new HtmlTree(HtmlTag.P);
+        addAnnotationInfo(mdle, annotationContent);
+        div.addContent(annotationContent);
         Content tHeading = HtmlTree.HEADING(HtmlConstants.TITLE_HEADING, true,
                 HtmlStyle.title, contents.moduleLabel);
         tHeading.addContent(Contents.SPACE);
@@ -493,12 +496,36 @@ public class ModuleWriterImpl extends HtmlDocletWriter implements ModuleSummaryW
     }
 
     /**
+     * Add the module deprecation information to the documentation tree.
+     *
+     * @param div the content tree to which the deprecation information will be added
+     */
+    public void addDeprecationInfo(Content div) {
+        List<? extends DocTree> deprs = utils.getBlockTags(mdle, DocTree.Kind.DEPRECATED);
+        if (utils.isDeprecated(mdle)) {
+            CommentHelper ch = utils.getCommentHelper(mdle);
+            HtmlTree deprDiv = new HtmlTree(HtmlTag.DIV);
+            deprDiv.addStyle(HtmlStyle.deprecatedContent);
+            Content deprPhrase = HtmlTree.SPAN(HtmlStyle.deprecatedLabel, contents.deprecatedPhrase);
+            deprDiv.addContent(deprPhrase);
+            if (!deprs.isEmpty()) {
+                List<? extends DocTree> commentTags = ch.getDescription(configuration, deprs.get(0));
+                if (!commentTags.isEmpty()) {
+                    addInlineDeprecatedComment(mdle, deprs.get(0), deprDiv);
+                }
+            }
+            div.addContent(deprDiv);
+        }
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
     public void addModuleDescription(Content moduleContentTree) {
         if (!utils.getFullBody(mdle).isEmpty()) {
             Content tree = configuration.allowTag(HtmlTag.SECTION) ? HtmlTree.SECTION() : moduleContentTree;
+            addDeprecationInfo(tree);
             tree.addContent(HtmlConstants.START_OF_MODULE_DESCRIPTION);
             tree.addContent(getMarkerAnchor(SectionName.MODULE_DESCRIPTION));
             addInlineComment(mdle, tree);

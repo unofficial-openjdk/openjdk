@@ -25,6 +25,8 @@
 
 /**
   * This is a test description for the module2 module. Search word {@index search_word} with no description.
+  *
+  * @deprecated This module is deprecated using just the javadoc tag.
   */
 module module2 {
     exports testpkgmdl2;
