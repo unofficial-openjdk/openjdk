@@ -147,7 +147,7 @@ public final class Loader extends SecureClassLoader {
                   LoaderPool pool,
                   ClassLoader parent)
     {
-        super(parent);
+        super("Loader-" + resolvedModule.name(), parent);
 
         this.pool = pool;
         this.parent = parent;
