@@ -36,6 +36,8 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import jdk.internal.loader.ClassLoaderValue;
+
 /**
  * A <em>services catalog</em>. Each {@code ClassLoader} and {@code Layer} has
  * an optional {@code ServicesCatalog} for modules that provide services.
@@ -117,11 +119,12 @@ public final class ServicesCatalog {
         for (Provides provides : descriptor.provides()) {
             String service = provides.service();
             List<String> providerNames = provides.providers();
-            if (providerNames.size() == 1) {
+            int count = providerNames.size();
+            if (count == 1) {
                 String pn = providerNames.get(0);
                 providers(service).add(new ServiceProvider(module, pn));
             } else {
-                List<ServiceProvider> list = new ArrayList<>();
+                List<ServiceProvider> list = new ArrayList<>(count);
                 for (String pn : providerNames) {
                     list.add(new ServiceProvider(module, pn));
                 }
@@ -143,10 +146,34 @@ public final class ServicesCatalog {
     /**
      * Returns the (possibly empty) list of service providers that implement
      * the given service type.
-     *
-     * @apiNote This method is for use by ServiceLoader
      */
     public List<ServiceProvider> findServices(String service) {
         return map.getOrDefault(service, Collections.emptyList());
     }
+
+    /**
+     * Returns the ServicesCatalog for the given class loader or {@code null}
+     * if there is none.
+     */
+    public static ServicesCatalog getServicesCatalogOrNull(ClassLoader loader) {
+        return CLV.get(loader);
+    }
+
+    /**
+     * Returns the ServicesCatalog for the given class loader, creating it if
+     * needed.
+     */
+    public static ServicesCatalog getServicesCatalog(ClassLoader loader) {
+        // CLV.computeIfAbsent(loader, (cl, clv) -> create());
+        ServicesCatalog catalog = CLV.get(loader);
+        if (catalog == null) {
+            catalog = create();
+            ServicesCatalog previous = CLV.putIfAbsent(loader, catalog);
+            if (previous != null) catalog = previous;
+        }
+        return catalog;
+    }
+
+    // the ServicesCatalog registered to a class loader
+    private static final ClassLoaderValue<ServicesCatalog> CLV = new ClassLoaderValue<>();
 }

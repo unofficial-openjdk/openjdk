@@ -1122,8 +1122,7 @@ public final class Module implements AnnotatedElement {
             initExportsAndOpens(descriptor, nameToModule, m);
         }
 
-        // For now, register the modules in the boot layer. This will be
-        // re-examined once the ServiceLoader spec is updated.
+        // register the modules in the boot layer
         if (isBootLayer) {
             for (ResolvedModule resolvedModule : cf.modules()) {
                 ModuleReference mref = resolvedModule.reference();
@@ -1136,17 +1135,16 @@ public final class Module implements AnnotatedElement {
                     if (loader == null) {
                         catalog = BootLoader.getServicesCatalog();
                     } else {
-                        catalog = SharedSecrets.getJavaLangAccess()
-                                .createOrGetServicesCatalog(loader);
+                        catalog = ServicesCatalog.getServicesCatalog(loader);
                     }
                     catalog.register(m);
                 }
             }
         }
 
-        // ClassLoader::layers support, TBD whether to keep this
+        // record that there is a layer with modules defined to the class loader
         for (ClassLoader loader : loaders) {
-            SharedSecrets.getJavaLangAccess().bindToLayer(loader, layer);
+            layer.bindToLoader(loader);
         }
 
         return nameToModule;
@@ -1574,6 +1572,10 @@ public final class Module implements AnnotatedElement {
                 @Override
                 public Stream<Layer> layers(Layer layer) {
                     return layer.layers();
+                }
+                @Override
+                public Stream<Layer> layers(ClassLoader loader) {
+                    return Layer.layers(loader);
                 }
             });
     }

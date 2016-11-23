@@ -39,10 +39,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import jdk.internal.loader.ClassLoaderValue;
 import jdk.internal.loader.Loader;
 import jdk.internal.loader.LoaderPool;
 import jdk.internal.misc.SharedSecrets;
@@ -911,4 +913,36 @@ public final class Layer {
     }
 
     private volatile ServicesCatalog servicesCatalog;
+
+
+    /**
+     * Record that this layer has at least one module defined to the given
+     * class loader.
+     */
+    void bindToLoader(ClassLoader loader) {
+        // CLV.computeIfAbsent(loader, (cl, clv) -> new CopyOnWriteArrayList<>())
+        List<Layer> list = CLV.get(loader);
+        if (list == null) {
+            list = new CopyOnWriteArrayList<>();
+            List<Layer> previous = CLV.putIfAbsent(loader, list);
+            if (previous != null) list = previous;
+        }
+        list.add(this);
+    }
+
+    /**
+     * Returns a stream of the layers that have at least one module defined to
+     * the given class loader.
+     */
+    static Stream<Layer> layers(ClassLoader loader) {
+        List<Layer> list = CLV.get(loader);
+        if (list != null) {
+            return list.stream();
+        } else {
+            return Stream.empty();
+        }
+    }
+
+    // the list of layers with modules defined to a class loader
+    private static final ClassLoaderValue<List<Layer>> CLV = new ClassLoaderValue<>();
 }

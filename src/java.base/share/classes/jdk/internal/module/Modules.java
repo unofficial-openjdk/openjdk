@@ -26,7 +26,6 @@
 package jdk.internal.module;
 
 import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleFinder;
 import java.lang.reflect.Layer;
 import java.lang.reflect.Module;
 import java.net.URI;
@@ -170,8 +169,7 @@ public class Modules {
             if (loader == null) {
                 catalog = BootLoader.getServicesCatalog();
             } else {
-                catalog = SharedSecrets.getJavaLangAccess()
-                                       .createOrGetServicesCatalog(loader);
+                catalog = ServicesCatalog.getServicesCatalog(loader);
             }
             catalog.addProvider(m, service, impl);
         }

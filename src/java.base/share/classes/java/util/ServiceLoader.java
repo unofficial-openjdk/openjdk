@@ -922,7 +922,7 @@ public final class ServiceLoader<S>
             if (loader == null) {
                 catalog = BootLoader.getServicesCatalog();
             } else {
-                catalog = LANG_ACCESS.getServicesCatalog(loader);
+                catalog = ServicesCatalog.getServicesCatalogOrNull(loader);
             }
             Stream<ServiceProvider> stream1;
             if (catalog == null) {
@@ -937,7 +937,7 @@ public final class ServiceLoader<S>
                 stream2 = Stream.empty();
             } else {
                 Layer bootLayer = Layer.boot();
-                stream2 = LANG_ACCESS.layers(loader)
+                stream2 = JLRM_ACCESS.layers(loader)
                         .filter(l -> (l != bootLayer))
                         .map(l -> providers(l))
                         .flatMap(List::stream);

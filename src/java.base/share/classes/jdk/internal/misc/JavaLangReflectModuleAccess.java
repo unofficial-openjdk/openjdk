@@ -117,4 +117,10 @@ public interface JavaLangReflectModuleAccess {
      * given layer, the remaining elements are its parents, in DFS order.
      */
     Stream<Layer> layers(Layer layer);
+
+    /**
+     * Returns a stream of the layers that have modules defined to the
+     * given class loader.
+     */
+    Stream<Layer> layers(ClassLoader loader);
 }
