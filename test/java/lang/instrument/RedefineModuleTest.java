@@ -203,6 +203,31 @@ public class RedefineModuleTest {
         return false;
     }
 
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testExportPackageToEmptySet() {
+        // attempt to update java.base to export jdk.internal.misc to nobody
+        Module baseModule = Object.class.getModule();
+        Map<String, Set<Module>> extraExports = Map.of("jdk.internal.misc", Set.of());
+        redefineModule(baseModule, Set.of(), extraExports, Map.of(), Set.of(), Map.of());
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testOpenPackageToEmptySet() {
+        // attempt to update java.base to open jdk.internal.misc to nobody
+        Module baseModule = Object.class.getModule();
+        Map<String, Set<Module>> extraOpens = Map.of("jdk.internal.misc", Set.of());
+        redefineModule(baseModule, Set.of(), Map.of(), extraOpens, Set.of(), Map.of());
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testProvideServiceWithEmptyList() throws Exception {
+        // update java.base to provide an empty list of TestProvider
+        Module baseModule = Object.class.getModule();
+        Class<?> service = TestProvider.class;
+        Map<Class<?>, List<Class<?>>> extraProvides = Map.of(service, List.of());
+        redefineModule(baseModule, Set.of(), Map.of(), Map.of(), Set.of(), extraProvides);
+    }
+
     /**
      * Test redefineClass by attempting to update java.base to export a package
      * that it does not contain.

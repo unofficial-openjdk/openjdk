@@ -264,6 +264,8 @@ public class InstrumentationImpl implements Instrumentation {
             if (service == null)
                 throw new NullPointerException("'extraProvides' contains null");
             List<Class<?>> providers = new ArrayList<>(e.getValue());
+            if (providers.isEmpty())
+                throw new IllegalArgumentException("list of providers is empty");
             providers.forEach(p -> {
                 if (p.getModule() != module)
                     throw new IllegalArgumentException(p + " not in " + module);
@@ -318,6 +320,8 @@ public class InstrumentationImpl implements Instrumentation {
             if (!packages.contains(pkg))
                 throw new IllegalArgumentException(pkg + " not in module");
             Set<Module> targets = new HashSet<>(e.getValue());
+            if (targets.isEmpty())
+                throw new IllegalArgumentException("set of targets is empty");
             if (targets.contains(null))
                 throw new NullPointerException("set of targets cannot include null");
             result.put(pkg, targets);
