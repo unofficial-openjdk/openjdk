@@ -501,12 +501,9 @@ public class AttributeWriter extends BasicWriter
         println("Module:");
         indent(+1);
 
-        // FIXME: temporary compatibility code
-        if (attr.module_name != 0) {
-            print(attr.module_name);
-            tab();
-            println("// " + constantWriter.stringValue(attr.module_name));
-        }
+        print(attr.module_name);
+        tab();
+        println("// " + constantWriter.stringValue(attr.module_name));
 
         print(String.format("%x", attr.module_flags));
         tab();

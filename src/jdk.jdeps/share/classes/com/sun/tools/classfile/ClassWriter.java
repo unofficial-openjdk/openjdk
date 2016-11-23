@@ -547,11 +547,7 @@ public class ClassWriter {
 
         @Override
         public Void visitModule(Module_attribute attr, ClassOutputStream out) {
-            // FIXME: temporary compatibility code
-            if (attr.module_name != 0) {
-                out.writeShort(attr.module_name);
-            }
-
+            out.writeShort(attr.module_name);
             out.writeShort(attr.module_flags);
 
             out.writeShort(attr.requires.length);
@@ -559,6 +555,7 @@ public class ClassWriter {
                 out.writeShort(e.requires_index);
                 out.writeShort(e.requires_flags);
             }
+
             out.writeShort(attr.exports.length);
             for (Module_attribute.ExportsEntry e: attr.exports) {
                 out.writeShort(e.exports_index);
@@ -567,9 +564,21 @@ public class ClassWriter {
                 for (int index: e.exports_to_index)
                     out.writeShort(index);
             }
+
+            out.writeShort(attr.opens.length);
+            for (Module_attribute.ExportsEntry e: attr.opens) {
+                out.writeShort(e.exports_index);
+                out.writeShort(e.exports_flags);
+                out.writeShort(e.exports_to_index.length);
+                for (int index: e.exports_to_index)
+                    out.writeShort(index);
+            }
+
             out.writeShort(attr.uses_index.length);
-            for (int index: attr.uses_index)
+            for (int index: attr.uses_index) {
                 out.writeShort(index);
+            }
+
             out.writeShort(attr.provides.length);
             for (Module_attribute.ProvidesEntry e: attr.provides) {
                 out.writeShort(e.provides_index);
@@ -578,6 +587,7 @@ public class ClassWriter {
                     out.writeShort(with);
                 }
             }
+
             return null;
         }
 

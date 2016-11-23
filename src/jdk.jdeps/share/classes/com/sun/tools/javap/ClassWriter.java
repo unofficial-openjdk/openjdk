@@ -164,18 +164,11 @@ public class ClassWriter extends BasicWriter {
             Attribute attr = classFile.attributes.get(Attribute.Module);
             if (attr instanceof Module_attribute) {
                 Module_attribute modAttr = (Module_attribute) attr;
-                // FIXME: temporary compatibility code
                 String name;
-                if (cf.this_class == 0) {
-                    // new-style
-                    try {
-                        name = getJavaName(constant_pool.getUTF8Value(modAttr.module_name));
-                    } catch (ConstantPoolException e) {
-                        name = report(e);
-                    }
-                } else {
-                    // old-style
-                    name = getJavaName(cf).replace(".module-info", "");
+                try {
+                    name = getJavaName(constant_pool.getUTF8Value(modAttr.module_name));
+                } catch (ConstantPoolException e) {
+                    name = report(e);
                 }
                 if ((modAttr.module_flags & Module_attribute.ACC_OPEN) != 0) {
                     print("open ");

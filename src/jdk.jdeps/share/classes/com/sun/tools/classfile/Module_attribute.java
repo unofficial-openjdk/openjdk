@@ -45,30 +45,29 @@ public class Module_attribute extends Attribute {
     Module_attribute(ClassReader cr, int name_index, int length) throws IOException {
         super(name_index, length);
 
-        // FIXME: temporary compatibility code
-        if (cr.getClassFile().this_class != 0) {
-            module_name = 0;                        // old-style: name is in this_class
-        } else {
-            module_name = cr.readUnsignedShort();   // new-style: name is in Module attribute
-        }
-
+        module_name = cr.readUnsignedShort();
         module_flags = cr.readUnsignedShort();
+
         requires_count = cr.readUnsignedShort();
         requires = new RequiresEntry[requires_count];
         for (int i = 0; i < requires_count; i++)
             requires[i] = new RequiresEntry(cr);
+
         exports_count = cr.readUnsignedShort();
         exports = new ExportsEntry[exports_count];
         for (int i = 0; i < exports_count; i++)
             exports[i] = new ExportsEntry(cr);
+
         opens_count = cr.readUnsignedShort();
         opens = new ExportsEntry[opens_count];
         for (int i = 0; i < opens_count; i++)
             opens[i] = new ExportsEntry(cr);
+
         uses_count = cr.readUnsignedShort();
         uses_index = new int[uses_count];
         for (int i = 0; i < uses_count; i++)
             uses_index[i] = cr.readUnsignedShort();
+
         provides_count = cr.readUnsignedShort();
         provides = new ProvidesEntry[provides_count];
         for (int i = 0; i < provides_count; i++)
@@ -96,7 +95,6 @@ public class Module_attribute extends Attribute {
         this.uses_index = uses;
         provides_count = provides.length;
         this.provides = provides;
-
     }
 
     public String getUses(int index, ConstantPool constant_pool) throws ConstantPoolException {
