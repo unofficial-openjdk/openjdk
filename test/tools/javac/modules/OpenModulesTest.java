@@ -73,8 +73,7 @@ public class OpenModulesTest extends ModuleTestBase {
 
         String decompiled = new JavapTask(tb)
                 .options("--system", "none", "-bootclasspath", "")
-                .classpath(m1Classes.toString())
-                .classes("module-info")
+                .classes(m1Classes.resolve("module-info.class").toString())
                 .run()
                 .writeAll()
                 .getOutput(OutputKind.DIRECT)
@@ -137,8 +136,7 @@ public class OpenModulesTest extends ModuleTestBase {
 
         String decompiled = new JavapTask(tb)
                 .options("--system", "none", "-bootclasspath", "")
-                .classpath(m1Classes.toString())
-                .classes("module-info")
+                .classes(m1Classes.resolve("module-info.class").toString())
                 .run()
                 .writeAll()
                 .getOutput(OutputKind.DIRECT)

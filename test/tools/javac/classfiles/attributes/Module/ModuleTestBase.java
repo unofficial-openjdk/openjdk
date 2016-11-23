@@ -87,7 +87,8 @@ public class ModuleTestBase {
         List<Pair<String, Integer>> actualRequires = new ArrayList<>();
         for (Module_attribute.RequiresEntry require : module.requires) {
             actualRequires.add(Pair.of(
-                    require.getRequires(constantPool), require.requires_flags));
+                    require.getRequires(constantPool).replace('/', '.'),
+                    require.requires_flags));
         }
         tr.checkContains(actualRequires, moduleDescriptor.requires, "Lists of requires don't match");
     }
@@ -103,7 +104,7 @@ public class ModuleTestBase {
                 tr.checkEquals(export.exports_to_count, expectedTo.size(), "Wrong amount of exports to");
                 List<String> actualTo = new ArrayList<>();
                 for (int toIdx : export.exports_to_index) {
-                    actualTo.add(constantPool.getUTF8Value(toIdx));
+                    actualTo.add(constantPool.getUTF8Value(toIdx).replace('/', '.'));
                 }
                 tr.checkContains(actualTo, expectedTo, "Lists of \"exports to\" don't match.");
             }
