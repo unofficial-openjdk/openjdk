@@ -1357,7 +1357,7 @@ public class ClassReader {
                 }
             },
 
-            new AttributeReader(names.Version, V53, CLASS_ATTRIBUTE) {
+            new AttributeReader(names.ModuleVersion, V53, CLASS_ATTRIBUTE) {
                 @Override
                 protected boolean accepts(AttributeKind kind) {
                     return super.accepts(kind) && allowModules;
