@@ -610,25 +610,31 @@ public interface Tree {
 
         /**
          * Used for instances of {@link ExportsTree} representing
-         * export directives in a module declaration.
+         * exports directives in a module declaration.
          */
         EXPORTS(ExportsTree.class),
 
         /**
+         * Used for instances of {@link ExportsTree} representing
+         * opens directives in a module declaration.
+         */
+        OPENS(ExportsTree.class),
+
+        /**
          * Used for instances of {@link ProvidesTree} representing
-         * export directives in a module declaration.
+         * provides directives in a module declaration.
          */
         PROVIDES(ProvidesTree.class),
 
         /**
          * Used for instances of {@link RequiresTree} representing
-         * export directives in a module declaration.
+         * requires directives in a module declaration.
          */
         REQUIRES(RequiresTree.class),
 
         /**
          * Used for instances of {@link UsesTree} representing
-         * export directives in a module declaration.
+         * uses directives in a module declaration.
          */
         USES(UsesTree.class),
 

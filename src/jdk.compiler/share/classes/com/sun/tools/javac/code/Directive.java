@@ -53,7 +53,8 @@ public abstract class Directive implements ModuleElement.Directive {
 
     /** Flags for RequiresDirective. */
     public enum RequiresFlag {
-        PUBLIC(0x0020),
+        TRANSITIVE(0x0010),
+        STATIC_PHASE(0x0020),
         SYNTHETIC(0x1000),
         MANDATED(0x8000),
         EXTRA(0x10000);
@@ -73,31 +74,60 @@ public abstract class Directive implements ModuleElement.Directive {
         public final int value;
     }
 
+    /** Flags for ExportsDirective. */
+    public enum ExportsFlag {
+        SYNTHETIC(0x1000),
+        MANDATED(0x8000);
+
+        // overkill? move to ClassWriter?
+        public static int value(Set<ExportsFlag> s) {
+            int v = 0;
+            for (ExportsFlag f: s)
+                v |= f.value;
+            return v;
+        }
+
+        ExportsFlag(int value) {
+            this.value = value;
+        }
+
+        public final int value;
+    }
+
     /**
      * 'exports' Package ';'
+     * 'opens' Package ';'
      */
     public static class ExportsDirective extends Directive
             implements ModuleElement.ExportsDirective {
+        private final ModuleElement.DirectiveKind kind;
         public final PackageSymbol packge;
         public final List<ModuleSymbol> modules;
+        public final Set<ExportsFlag> flags;
 
-        public ExportsDirective(PackageSymbol packge, List<ModuleSymbol> modules) {
+        public ExportsDirective(ModuleElement.DirectiveKind kind, PackageSymbol packge, List<ModuleSymbol> modules) {
+            this(kind, packge, modules, EnumSet.noneOf(ExportsFlag.class));
+        }
+
+        public ExportsDirective(ModuleElement.DirectiveKind kind, PackageSymbol packge, List<ModuleSymbol> modules, Set<ExportsFlag> flags) {
+            this.kind = kind;
             this.packge = packge;
             this.modules = modules;
+            this.flags = flags;
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
         public ModuleElement.DirectiveKind getKind() {
-            return ModuleElement.DirectiveKind.EXPORTS;
+            return kind;
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
-        public PackageElement getPackage() {
+        public PackageSymbol getPackage() {
             return packge;
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
-        public java.util.List<? extends ModuleElement> getTargetModules() {
+        public java.util.List<ModuleSymbol> getTargetModules() {
             return modules == null
                     ? null
                     : Collections.unmodifiableList(modules);
@@ -105,10 +135,11 @@ public abstract class Directive implements ModuleElement.Directive {
 
         @Override
         public String toString() {
+            String name = kind == ModuleElement.DirectiveKind.EXPORTS ? "Exports" : "Opens";
             if (modules == null)
-                return "Exports[" + packge + "]";
+                return name + "[" + packge + "]";
             else
-                return "Exports[" + packge + ":" + modules + "]";
+                return name + "[" + packge + ":" + modules + "]";
         }
     }
 
@@ -118,11 +149,11 @@ public abstract class Directive implements ModuleElement.Directive {
     public static class ProvidesDirective extends Directive
             implements ModuleElement.ProvidesDirective {
         public final ClassSymbol service;
-        public final ClassSymbol impl;
+        public final List<ClassSymbol> impls;
 
-        public ProvidesDirective(ClassSymbol service, ClassSymbol impl) {
+        public ProvidesDirective(ClassSymbol service, List<ClassSymbol> impls) {
             this.service = service;
-            this.impl = impl;
+            this.impls = impls;
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
@@ -131,37 +162,39 @@ public abstract class Directive implements ModuleElement.Directive {
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
-        public TypeElement getService() {
+        public ClassSymbol getService() {
             return service;
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
-        public TypeElement getImplementation() {
-            return impl;
+        public List<ClassSymbol> getImplementations() {
+            return impls;
         }
 
         @Override
         public String toString() {
-            return "Provides[" + service + "," + impl + "]";
+            return "Provides[" + service + "," + impls + "]";
         }
 
+        // TODO: delete?
         @Override
         public boolean equals(Object obj) {
             if (!(obj instanceof ProvidesDirective)) {
                 return false;
             }
             ProvidesDirective other = (ProvidesDirective)obj;
-            return service == other.service && impl == other.impl;
+            return service == other.service && impls.equals(other.impls);
         }
 
+        // TODO: delete?
         @Override
         public int hashCode() {
-            return service.hashCode() * 31 + impl.hashCode() * 37;
+            return service.hashCode() * 31 + impls.hashCode() * 37;
         }
     }
 
     /**
-     * 'requires' ['public'] ModuleName ';'
+     * 'requires' ('static' | 'transitive')* ModuleName ';'
      */
     public static class RequiresDirective extends Directive
             implements ModuleElement.RequiresDirective {
@@ -183,12 +216,17 @@ public abstract class Directive implements ModuleElement.Directive {
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
-        public boolean isPublic() {
-            return flags.contains(RequiresFlag.PUBLIC);
+        public boolean isStatic() {
+            return flags.contains(RequiresFlag.STATIC_PHASE);
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
-        public ModuleElement getDependency() {
+        public boolean isTransitive() {
+            return flags.contains(RequiresFlag.TRANSITIVE);
+        }
+
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
+        public ModuleSymbol getDependency() {
             return module;
         }
 
@@ -215,7 +253,7 @@ public abstract class Directive implements ModuleElement.Directive {
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
-        public TypeElement getService() {
+        public ClassSymbol getService() {
             return service;
         }
 
@@ -224,6 +262,7 @@ public abstract class Directive implements ModuleElement.Directive {
             return "Uses[" + service + "]";
         }
 
+        // TODO: delete?
         @Override
         public boolean equals(Object obj) {
             if (!(obj instanceof UsesDirective)) {
@@ -233,6 +272,7 @@ public abstract class Directive implements ModuleElement.Directive {
             return service == other.service;
         }
 
+        // TODO: delete?
         @Override
         public int hashCode() {
             return service.hashCode() * 31;
