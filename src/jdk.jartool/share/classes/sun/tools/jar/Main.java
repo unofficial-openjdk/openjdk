@@ -56,9 +56,9 @@ import java.util.jar.Pack200.*;
 import java.util.jar.Manifest;
 import java.text.MessageFormat;
 
-import jdk.internal.loader.ResourceHelper;
 import jdk.internal.misc.JavaLangModuleAccess;
 import jdk.internal.misc.SharedSecrets;
+import jdk.internal.module.Checks;
 import jdk.internal.module.ModuleHashes;
 import jdk.internal.module.ModuleInfoExtender;
 import jdk.internal.util.jar.JarIndex;
@@ -91,6 +91,13 @@ class Main {
         final File file;
         final boolean isDir;
 
+        Entry(File file, String basename, String entryname) {
+            this.file = file;
+            this.isDir = file.isDirectory();
+            this.basename = basename;
+            this.entryname = entryname;
+        }
+
         Entry(int version, File file) {
             this.file = file;
             String path = file.getPath();
@@ -104,6 +111,21 @@ class Main {
             EntryName en = new EntryName(path, version);
             basename = en.baseName;
             entryname = en.entryName;
+        }
+
+        /**
+         * Returns a new Entry that trims the versions directory.
+         *
+         * This entry should be a valid entry matching the given version.
+         */
+        Entry toVersionedEntry(int version) {
+            assert isValidVersionedEntry(this, version);
+
+            if (version == BASE_VERSION)
+                return this;
+
+            EntryName en = new EntryName(trimVersionsDir(basename, version), version);
+            return new Entry(this.file, en.baseName, en.entryName);
         }
 
         @Override
@@ -825,16 +847,23 @@ class Main {
         return true;
     }
 
-    /**
-     * Returns true if this entry has an effective package.
+    /*
+     * Add the package of the given resource name if it's a .class
+     * or a resource in a named package.
      */
-    private static boolean isNamedPackageResource(String entryName) {
-        assert !entryName.startsWith(VERSIONS_DIR);
-        return entryName.endsWith(".class") || !ResourceHelper.isSimpleResource(entryName);
-    }
+    boolean addPackageIfNamed(String name) {
+        if (name.startsWith(VERSIONS_DIR)) {
+            throw new InternalError(name);
+        }
 
-    private static String toPackageName(ZipEntry entry) {
-        return toPackageName(entry.getName());
+        String pn = toPackageName(name);
+        // add if this is a class or resource in a package
+        if (Checks.isJavaIdentifier(pn)) {
+            packages.add(pn);
+            return true;
+        }
+
+        return false;
     }
 
     private static String toPackageName(String path) {
@@ -844,6 +873,48 @@ class Main {
         } else {
             return "";
         }
+    }
+
+    /*
+     * Returns true if the given entry is a valid entry of the given version.
+     */
+    private boolean isValidVersionedEntry(Entry entry, int version) {
+        String name = entry.basename;
+        if (name.startsWith(VERSIONS_DIR) && version != BASE_VERSION) {
+            int i = name.indexOf('/', VERSIONS_DIR.length());
+            // name == -1 -> not a versioned directory, something else
+            if (i == -1)
+                return false;
+            try {
+                String v = name.substring(VERSIONS_DIR.length(), i);
+                return Integer.valueOf(v) == version;
+            } catch (NumberFormatException x) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /*
+     * Trim META-INF/versions/$version/ from the given name if the
+     * given name is a versioned entry of the given version; or
+     * of any version if the given version is BASE_VERSION
+     */
+    private String trimVersionsDir(String name, int version) {
+        if (name.startsWith(VERSIONS_DIR)) {
+            int i = name.indexOf('/', VERSIONS_DIR.length());
+            if (i >= 0) {
+                try {
+                    String v = name.substring(VERSIONS_DIR.length(), i);
+                    if (version == BASE_VERSION || Integer.valueOf(v) == version) {
+                        return name.substring(i + 1, name.length());
+                    }
+                } catch (NumberFormatException x) {}
+            }
+            throw new InternalError("unexpected versioned entry: " +
+                    name + " version " + version);
+        }
+        return name;
     }
 
     /**
@@ -867,28 +938,47 @@ class Main {
             else
                 f = new File(dir, files[i]);
 
-            Entry entry = new Entry(version, f);
-            String entryName = entry.entryname;
-
+            Entry e = new Entry(version, f);
+            String entryName = e.entryname;
+            Entry entry = e;
+            if (e.basename.startsWith(VERSIONS_DIR) && isValidVersionedEntry(e, version)) {
+                entry = e.toVersionedEntry(version);
+            }
             if (f.isFile()) {
                 if (entryName.endsWith(MODULE_INFO)) {
                     moduleInfoPaths.put(entryName, f.toPath());
                     if (isUpdate)
                         entryMap.put(entryName, entry);
-                } else if (entries.add(entry)) {
-                    jarEntries.add(entryName);
-                    if (isNamedPackageResource(entry.basename))
-                        packages.add(toPackageName(entry.basename));
-                    if (isUpdate)
-                        entryMap.put(entryName, entry);
+                } else if (isValidVersionedEntry(entry, version)) {
+                    if (entries.add(entry)) {
+                        jarEntries.add(entryName);
+                        // add the package if it's a class or resource
+                        addPackageIfNamed(trimVersionsDir(entry.basename, version));
+                        if (isUpdate)
+                            entryMap.put(entryName, entry);
+                    }
+                } else {
+                    error(formatMsg2("error.release.unexpected.versioned.entry",
+                                      entry.basename, String.valueOf(version)));
+                    ok = false;
                 }
             } else if (f.isDirectory()) {
-                if (entries.add(entry)) {
-                    if (isUpdate) {
-                        entryMap.put(entryName, entry);
+                if (isValidVersionedEntry(entry, version)) {
+                    if (entries.add(entry)) {
+                        if (isUpdate) {
+                            entryMap.put(entryName, entry);
+                        }
                     }
-                    expand(f, f.list(), isUpdate, moduleInfoPaths, version);
+                } else if (entry.basename.equals(VERSIONS_DIR)) {
+                    if (vflag) {
+                        output(formatMsg("out.ignore.entry", entry.basename));
+                    }
+                } else {
+                    error(formatMsg2("error.release.unexpected.versioned.entry",
+                                      entry.basename, String.valueOf(version)));
+                    ok = false;
                 }
+                expand(f, f.list(), isUpdate, moduleInfoPaths, version);
             } else {
                 error(formatMsg("error.nosuch.fileordir", String.valueOf(f)));
                 ok = false;
@@ -1073,18 +1163,8 @@ class Main {
 
                 jarEntries.add(name);
                 if (!isDir) {
-                    if (name.startsWith(VERSIONS_DIR)) {
-                        int index = name.indexOf('/', VERSIONS_DIR.length());
-                        // name == -1 -> not a versioned directory, something else
-                        if (index == -1) {
-                            warn(formatMsg("warn.versioned.directory.unexpected.entry", name));
-                        } else {
-                            name = name.substring(index + 1);
-                        }
-                    }
-                    if (isNamedPackageResource(name)) {
-                        packages.add(toPackageName(name));
-                    }
+                    // add the package if it's a class or resource
+                    addPackageIfNamed(trimVersionsDir(name, BASE_VERSION));
                 }
             }
         }

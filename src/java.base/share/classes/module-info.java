@@ -124,7 +124,6 @@ module java.base {
     exports jdk.internal.loader to
         java.instrument,
         java.logging,
-        jdk.jartool,
         jdk.jlink;
     exports jdk.internal.jmod to
         jdk.compiler,
