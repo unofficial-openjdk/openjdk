@@ -997,7 +997,8 @@ public final class ServiceLoader<S>
 
         Enumeration<URL> configs;
         Iterator<String> pending;
-        Provider<T> next;
+        Class<?> nextClass;
+        String nextErrorMessage;  // when hasNext fails with CNFE
 
         LazyClassPathLookupIterator() { }
 
@@ -1055,7 +1056,7 @@ public final class ServiceLoader<S>
         }
 
         private boolean hasNextService() {
-            if (next != null) {
+            if (nextClass != null || nextErrorMessage != null) {
                 return true;
             }
 
@@ -1082,13 +1083,32 @@ public final class ServiceLoader<S>
                 try {
                     clazz = Class.forName(cn, false, loader);
                 } catch (ClassNotFoundException x) {
-                    fail(service, "Provider " + cn + " not found");
+                    // don't throw SCE here to long standing behavior
+                    nextErrorMessage = "Provider " + cn + " not found";
+                    return true;
                 }
 
             } while (clazz.getModule().isNamed()); // ignore if in named module
 
-            next = new ProviderImpl<T>(service, clazz, acc);
+            nextClass = clazz;
             return true;
+        }
+
+        private Provider<T> nextService() {
+            if (!hasNextService())
+                throw new NoSuchElementException();
+
+            // throw any SCE with error recorded by hasNext
+            if (nextErrorMessage != null) {
+                String msg = nextErrorMessage;
+                nextErrorMessage = null;
+                fail(service, msg);
+            }
+
+            // return next provider
+            Class<?> clazz = nextClass;
+            nextClass = null;
+            return new ProviderImpl<T>(service, clazz, acc);
         }
 
         @Override
@@ -1105,12 +1125,14 @@ public final class ServiceLoader<S>
 
         @Override
         public Provider<T> next() {
-            if (!hasNext())
-                throw new NoSuchElementException();
-
-            Provider<T> result = next;
-            next = null;
-            return result;
+            if (acc == null) {
+                return nextService();
+            } else {
+                PrivilegedAction<Provider<T>> action = new PrivilegedAction<>() {
+                    public Provider<T> run() { return nextService(); }
+                };
+                return AccessController.doPrivileged(action, acc);
+            }
         }
     }
 
