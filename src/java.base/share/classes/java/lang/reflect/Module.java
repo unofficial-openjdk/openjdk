@@ -755,15 +755,6 @@ public final class Module implements AnnotatedElement {
     }
 
     /**
-     * Updates the module to open package {@code pn} to module {@code other}.
-     *
-     * @apiNote This method will be removed once jtreg is updated
-     */
-    void implAddExportsPrivate(String pn, Module other) {
-        implAddExportsOrOpens(pn, other, true, true);
-    }
-
-    /**
      * Updates a module to export or open a module to another module.
      *
      * If {@code syncVM} is {@code true} then the VM is notified.
