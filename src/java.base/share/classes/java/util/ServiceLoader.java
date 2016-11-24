@@ -86,7 +86,7 @@ import jdk.internal.reflect.Reflection;
  * <p> Providers deployed as explicit modules on the module path are
  * instantiated by a <em>provider factory</em> or directly via the provider's
  * constructor. In the module declaration then the class name specified in the
- * <i>provides</i> clause is a provider factory if it public and defines a
+ * <i>provides</i> clause is a provider factory if it is public and defines a
  * public static no-args method named "{@code provider}". The return type of
  * the method must be assignable to the <i>service</i> type. If the class is
  * not a provider factory then it is public with a public zero-argument
@@ -174,7 +174,7 @@ import jdk.internal.reflect.Reflection;
  * module layer where each module is defined to its own class loader (see {@link
  * Layer#defineModulesWithManyLoaders defineModulesWithManyLoaders}). If the
  * {@code load} method is invoked to locate providers using any of these class
- * loaders for this layer then then it will locate all of the providers in that
+ * loaders for this layer then it will locate all of the providers in that
  * layer, irrespective of their defining class loader.
  *
  * <p> In the case of unnamed modules then the service configuration files are
