@@ -51,6 +51,7 @@ import java.util.zip.ZipFile;
 import jdk.internal.jmod.JmodFile;
 import jdk.internal.misc.JavaLangAccess;
 import jdk.internal.misc.SharedSecrets;
+import jdk.internal.module.ModuleBootstrap;
 import jdk.internal.module.ModuleHashes;
 import jdk.internal.module.ModuleHashes.HashSupplier;
 import jdk.internal.module.ModulePatcher;
@@ -80,9 +81,8 @@ class ModuleReferences {
                                              HashSupplier hasher) {
 
         ModuleReference mref = new ModuleReference(md, uri, supplier, hasher);
-
         if (JLA.getBootLayer() == null)
-            mref = ModulePatcher.interposeIfNeeded(mref);
+            mref = ModuleBootstrap.patcher().patchIfNeeded(mref);
 
         return mref;
     }

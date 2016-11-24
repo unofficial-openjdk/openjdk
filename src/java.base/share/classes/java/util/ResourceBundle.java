@@ -1036,8 +1036,7 @@ public abstract class ResourceBundle {
      * equivalent to calling {@link #getBundle(String, Locale, ClassLoader)
      * getBundle(baseName, targetLocale, module.getClassLoader()} to load
      * resource bundles that are in unnamed modules visible to the
-     * class loader of the given unnamed module.  It will not find resource
-     * bundles from named modules.
+     * class loader of the given unnamed module.
      *
      * @param baseName the base name of the resource bundle,
      *                 a fully qualified class name
@@ -3016,6 +3015,14 @@ public abstract class ResourceBundle {
          * indicates that this method is being called because the previously
          * loaded resource bundle has expired.
          *
+         * @implSpec
+         *
+         * Resource bundles in named modules are subject to the encapsulation
+         * rules specified by {@link Module#getResourceAsStream Module.getResourceAsStream}.
+         * A resource bundle in a named module visible to the given class loader
+         * is accessible when the package of the resource file corresponding
+         * to the resource bundle is open unconditionally.
+         *
          * <p>The default implementation instantiates a
          * <code>ResourceBundle</code> as follows.
          *
@@ -3026,12 +3033,15 @@ public abstract class ResourceBundle {
          * locale)}.</li>
          *
          * <li>If <code>format</code> is <code>"java.class"</code>, the
-         * {@link Class} specified by the bundle name is loaded by calling
-         * {@link ClassLoader#loadClass(String)}. Then, a
-         * <code>ResourceBundle</code> is instantiated by calling {@link
-         * Class#newInstance()}.  Note that the <code>reload</code> flag is
-         * ignored for loading class-based resource bundles in this default
-         * implementation.</li>
+         * {@link Class} specified by the bundle name is loaded with the
+         * given class loader. If the {@code Class} is found and accessible
+         * then the <code>ResourceBundle</code> is instantiated.  The
+         * resource bundle is accessible if the package of the bundle class file
+         * is open unconditionally; otherwise, {@code IllegalAccessException}
+         * will be thrown.
+         * Note that the <code>reload</code> flag is ignored for loading
+         * class-based resource bundles in this default implementation.
+         * </li>
          *
          * <li>If <code>format</code> is <code>"java.properties"</code>,
          * {@link #toResourceName(String, String) toResourceName(bundlename,
@@ -3105,7 +3115,6 @@ public abstract class ResourceBundle {
             /*
              * Legacy mechanism to locate resource bundle in unnamed module only
              * that is visible to the given loader and accessible to the given caller.
-             * This only finds resources on the class path but not in named modules.
              */
             String bundleName = toBundleName(baseName, locale);
             ResourceBundle bundle = null;
@@ -3117,18 +3126,15 @@ public abstract class ResourceBundle {
                     if (ResourceBundle.class.isAssignableFrom(c)) {
                         @SuppressWarnings("unchecked")
                         Class<ResourceBundle> bundleClass = (Class<ResourceBundle>)c;
+                        Module m = bundleClass.getModule();
 
-                        // This doesn't allow unnamed modules to find bundles in
-                        // named modules other than via the service loader mechanism.
-                        // Otherwise, this will make the newBundle method to be
-                        // caller-sensitive in order to verify access check.
-                        // So migrating resource bundles to named module can't
-                        // just export the package (in general, legacy resource
-                        // bundles have split package if they are packaged separate
-                        // from the consumer.)
-                        if (bundleClass.getModule().isNamed()) {
-                            throw new IllegalAccessException("unnamed modules can't load " + bundleName
-                                     + " in named module " + bundleClass.getModule().getName());
+                        // To access a resource bundle in a named module,
+                        // either class-based or properties-based, the resource
+                        // bundle must be opened unconditionally,
+                        // same rule as accessing a resource file.
+                        if (m.isNamed() && !m.isOpen(bundleClass.getPackageName())) {
+                            throw new IllegalAccessException("unnamed module can't load " +
+                                    bundleClass.getName() + " in " + m.toString());
                         }
                         try {
                             // bundle in a unnamed module
