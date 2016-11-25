@@ -949,6 +949,8 @@ public final class LauncherHelper {
                 ModuleDescriptor md = mref.descriptor();
                 if (md.isOpen())
                     ostream.print("open ");
+                if (md.isAutomatic())
+                    ostream.print("automatic ");
                 ostream.println("module " + midAndLocation(md, mref.location()));
 
                 // unqualified exports (sorted by package)
