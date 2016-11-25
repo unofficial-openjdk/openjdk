@@ -29,31 +29,6 @@ $(eval $(call IncludeCustomExtension, jdk, copy/Copy-java.base.gmk))
 
 ################################################################################
 #
-# Copy copyright, license, third-party readme files.
-
-JAVA_BASE_OTHER_FILES ?= LICENSE ASSEMBLY_EXCEPTION THIRD_PARTY_README
-JDK_DOC_LOCATION ?= $(JDK_TOPDIR)
-
-JAVA_BASE_OTHER_FILES_TARGETS := $(addprefix $(OTHER_FILES_DST_DIR)/, $(JAVA_BASE_OTHER_FILES))
-
-# Processing license files from source area to image area
-# These are modified to have the platform specific EOL chars.
-define process-doc-file
-	$(call LogInfo, Processing $(patsubst $(OUTPUT_ROOT)/%,%,$@))
-	$(MKDIR) -p $(@D)
-	$(RM) $@
-	LC_ALL=C $(SED) 's/$$//g' $< > $@
-	$(CHMOD) 444 $@
-endef
-
-$(OTHER_FILES_DST_DIR)/%: $(JDK_DOC_LOCATION)/%
-	$(process-doc-file)
-
-TARGETS += \
-    $(JAVA_BASE_OTHER_FILES_TARGETS)
-
-################################################################################
-#
 # Copy exported header files to outputdir.
 #
 TARGETS += \
