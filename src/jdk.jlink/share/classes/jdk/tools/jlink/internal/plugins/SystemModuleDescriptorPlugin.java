@@ -473,6 +473,9 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
             final Set<String> packages;
 
             ModuleDescriptorBuilder(ModuleDescriptor md, Set<String> packages) {
+                if (md.isAutomatic()) {
+                    throw new InternalError("linking automatic module is not supported");
+                }
                 this.md = md;
                 this.packages = packages;
             }
@@ -525,9 +528,6 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
 
                 if (md.isOpen()) {
                     setModuleBit("open", true);
-                }
-                if (md.isAutomatic()) {                 // check this, should have no automatic modules
-                    setModuleBit("automatic", true);
                 }
                 if (md.isSynthetic()) {
                     setModuleBit("synthetic", true);

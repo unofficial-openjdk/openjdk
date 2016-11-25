@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
-import java.util.Objects;
 
 import jdk.tools.jlink.internal.ResourcePoolEntryFactory;
 
