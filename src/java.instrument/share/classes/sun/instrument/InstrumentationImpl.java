@@ -249,8 +249,8 @@ public class InstrumentationImpl implements Instrumentation {
             throw new NullPointerException("'extraReads' contains null");
 
         // copy and check exports and opens
-        extraExports = cloneAndCheckSet(module, extraExports);
-        extraOpens = cloneAndCheckSet(module, extraOpens);
+        extraExports = cloneAndCheckMap(module, extraExports);
+        extraOpens = cloneAndCheckMap(module, extraOpens);
 
         // copy and check uses
         extraUses = new HashSet<>(extraUses);
@@ -306,14 +306,14 @@ public class InstrumentationImpl implements Instrumentation {
     }
 
     private Map<String, Set<Module>>
-        cloneAndCheckSet(Module module, Map<String, Set<Module>> set)
+        cloneAndCheckMap(Module module, Map<String, Set<Module>> map)
     {
-        if (set.isEmpty())
+        if (map.isEmpty())
             return Collections.emptyMap();
 
         Map<String, Set<Module>> result = new HashMap<>();
         Set<String> packages = Set.of(module.getPackages());
-        for (Map.Entry<String, Set<Module>> e : set.entrySet()) {
+        for (Map.Entry<String, Set<Module>> e : map.entrySet()) {
             String pkg = e.getKey();
             if (pkg == null)
                 throw new NullPointerException("package cannot be null");
