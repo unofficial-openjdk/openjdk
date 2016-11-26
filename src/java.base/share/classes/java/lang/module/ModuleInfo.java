@@ -505,25 +505,25 @@ final class ModuleInfo {
 
     /**
      * Reads the ModuleHashes attribute
-     *
-     * @apiNote For now the hash is stored in base64 as a UTF-8 string, this
-     * should be changed to be an array of u1.
      */
     private ModuleHashes readModuleHashesAttribute(DataInput in, ConstantPool cpool)
         throws IOException
     {
-        int index = in.readUnsignedShort();
-        String algorithm = cpool.getUtf8(index);
+        int algorithm_index = in.readUnsignedShort();
+        String algorithm = cpool.getUtf8(algorithm_index);
 
         int hash_count = in.readUnsignedShort();
-
-        Map<String, String> map = new HashMap<>(hash_count);
+        Map<String, byte[]> map = new HashMap<>(hash_count);
         for (int i=0; i<hash_count; i++) {
-            index = in.readUnsignedShort();
-            String dn = cpool.getUtf8AsBinaryName(index);
-            index = in.readUnsignedShort();
-            String hash = cpool.getUtf8(index);
-            map.put(dn, hash);
+            int module_name_index = in.readUnsignedShort();
+            String mn = cpool.getUtf8AsBinaryName(module_name_index);
+            int hash_length = in.readUnsignedShort();
+            if (hash_length == 0) {
+                throw invalidModuleDescriptor("hash_length == 0");
+            }
+            byte[] hash = new byte[hash_length];
+            in.readFully(hash);
+            map.put(mn, hash);
         }
 
         return new ModuleHashes(algorithm, map);
@@ -584,7 +584,6 @@ final class ModuleInfo {
 
     // lazily created set the pre-defined attributes that are not allowed
     private static volatile Set<String> predefinedNotAllowed;
-
 
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1468,9 +1468,15 @@ class AttributeVisitor implements Attribute.Visitor<Element, Element> {
         e.setAttr("Algorithm", x.getCpString(attr.algorithm_index));
         for (Entry entry : attr.hashes_table) {
             Element ee = new Element("Entry");
-            String requires = x.getCpString(entry.requires_index);
-            String hashValue = x.getCpString(entry.hash_index);
-            ee.setAttr(requires, hashValue);
+            String mn = x.getCpString(entry.module_name_index);
+            ee.setAttr("module_name", mn);
+            ee.setAttr("hash_length", "" + entry.hash.length);
+            StringBuilder sb = new StringBuilder();
+            for (byte b: entry.hash) {
+                sb.append(String.format("%02x", b & 0xff));
+            }
+            ee.setAttr("hash", sb.toString());
+            ee.trimToSize();
             e.add(ee);
         }
         e.trimToSize();
@@ -1815,7 +1821,7 @@ class AnnotationsElementVisitor implements Annotation.element_value.Visitor<Elem
 
     @Override
     public Element visitArray(Array_element_value a, Element p) {
-     Element el = new Element("Array");
+        Element el = new Element("Array");
         for (Annotation.element_value v : a.values) {
            Element child = visit(v, el);
            if (child != null) {

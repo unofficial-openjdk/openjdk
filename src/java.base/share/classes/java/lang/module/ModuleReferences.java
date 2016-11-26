@@ -93,7 +93,7 @@ class ModuleReferences {
     static ModuleReference newJarModule(ModuleDescriptor md, Path file) {
         URI uri = file.toUri();
         Supplier<ModuleReader> supplier = () -> new JarModuleReader(file, uri);
-        HashSupplier hasher = (a) -> ModuleHashes.computeHashAsString(file, a);
+        HashSupplier hasher = (a) -> ModuleHashes.computeHash(file, a);
         return newModule(md, uri, supplier, hasher);
     }
 
@@ -103,7 +103,7 @@ class ModuleReferences {
     static ModuleReference newJModModule(ModuleDescriptor md, Path file) {
         URI uri = file.toUri();
         Supplier<ModuleReader> supplier = () -> new JModModuleReader(file, uri);
-        HashSupplier hasher = (a) -> ModuleHashes.computeHashAsString(file, a);
+        HashSupplier hasher = (a) -> ModuleHashes.computeHash(file, a);
         return newModule(md, file.toUri(), supplier, hasher);
     }
 

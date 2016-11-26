@@ -30,6 +30,7 @@ import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Requires.Modifier;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
@@ -457,19 +458,27 @@ final class Resolver {
 
                 // skip checking the hash if the module has been patched
                 if (other != null && !other.isPatched()) {
-                    String recordedHash = hashes.hashFor(dn);
-                    String actualHash = other.computeHash(algorithm);
+                    byte[] recordedHash = hashes.hashFor(dn);
+                    byte[] actualHash = other.computeHash(algorithm);
                     if (actualHash == null)
                         fail("Unable to compute the hash of module %s", dn);
-                    if (!recordedHash.equals(actualHash)) {
+                    if (!Arrays.equals(recordedHash, actualHash)) {
                         fail("Hash of %s (%s) differs to expected hash (%s)" +
-                             " recorded in %s", dn, actualHash, recordedHash,
-                             descriptor.name());
+                             " recorded in %s", dn, toHexString(actualHash),
+                             toHexString(recordedHash), descriptor.name());
                     }
                 }
             }
 
         }
+    }
+
+    private static String toHexString(byte[] ba) {
+        StringBuilder sb = new StringBuilder(ba.length * 2);
+        for (byte b: ba) {
+            sb.append(String.format("%02x", b & 0xff));
+        }
+        return sb.toString();
     }
 
 

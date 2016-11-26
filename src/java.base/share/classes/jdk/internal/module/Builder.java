@@ -131,7 +131,7 @@ final class Builder {
     String osArch;
     String osVersion;
     String algorithm;
-    Map<String, String> hashes;
+    Map<String, byte[]> hashes;
 
     Builder(String name) {
         this.name = name;
@@ -285,7 +285,7 @@ final class Builder {
     /**
      * Sets the module hash for the given module name
      */
-    public Builder moduleHash(String mn, String hash) {
+    public Builder moduleHash(String mn, byte[] hash) {
         if (hashes == null)
             hashes = new HashMap<>();
 

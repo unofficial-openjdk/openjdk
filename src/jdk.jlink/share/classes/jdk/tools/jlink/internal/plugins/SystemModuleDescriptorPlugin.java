@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.IntSupplier;
 
@@ -260,7 +261,10 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
         private final List<ModuleDescriptorBuilder> builders = new ArrayList<>();
 
         // module name to hash
-        private final Map<String, String> modulesToHash = new HashMap<>();
+        private final Map<String, byte[]> modulesToHash = new HashMap<>();
+
+        // module name to index in MODULES_TO_HASH
+        private final Map<String, Integer> modulesToHashIndex = new HashMap<>();
 
         // A builder to create one single Set instance for a given set of
         // names or modifiers to reduce the footprint
@@ -291,9 +295,9 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                     "[Ljava/lang/String;", null, null)
                     .visitEnd();
 
-            // public static String[] MODULES_TO_HASH = new String[] {....};
+            // public static byte[][] MODULES_TO_HASH
             cw.visitField(ACC_PUBLIC+ACC_FINAL+ACC_STATIC, MODULES_TO_HASH,
-                "[Ljava/lang/String;", null, null)
+                "[[B", null, null)
                 .visitEnd();
 
             // public static int PACKAGES_IN_BOOT_LAYER;
@@ -322,23 +326,30 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
 
             // create the MODULES_TO_HASH array
             pushInt(numModules);
-            mv.visitTypeInsn(ANEWARRAY, "java/lang/String");
+            mv.visitTypeInsn(ANEWARRAY, "[B");
 
             index = 0;
             for (ModuleDescriptorBuilder builder : builders) {
                 String mn = builder.md.name();
-                String recordedHash = modulesToHash.get(mn);
+                byte[] recordedHash = modulesToHash.get(mn);
                 if (recordedHash != null) {
                     mv.visitInsn(DUP);              // arrayref
                     pushInt(index);
-                    mv.visitLdcInsn(recordedHash);  // value
+                    pushInt(recordedHash.length);
+                    mv.visitIntInsn(NEWARRAY, T_BYTE);
+                    for (int i = 0; i < recordedHash.length; i++) {
+                        mv.visitInsn(DUP);              // arrayref
+                        pushInt(i);
+                        mv.visitIntInsn(BIPUSH, recordedHash[i]);
+                        mv.visitInsn(BASTORE);
+                    }
                     mv.visitInsn(AASTORE);
+                    modulesToHashIndex.put(mn, index);
                 }
                 index++;
             }
 
-            mv.visitFieldInsn(PUTSTATIC, CLASSNAME, MODULES_TO_HASH,
-                    "[Ljava/lang/String;");
+            mv.visitFieldInsn(PUTSTATIC, CLASSNAME, MODULES_TO_HASH, "[[B");
 
             mv.visitInsn(RETURN);
             mv.visitMaxs(0, 0);
@@ -464,8 +475,8 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                 "([" + REQUIRES_TYPE + ")" + BUILDER_TYPE;
             static final String SET_SIG = "(Ljava/util/Set;)" + BUILDER_TYPE;
             static final String STRING_SIG = "(Ljava/lang/String;)" + BUILDER_TYPE;
-            static final String STRING_STRING_SIG =
-                "(Ljava/lang/String;Ljava/lang/String;)" + BUILDER_TYPE;
+            static final String STRING_BYTE_ARRAY_SIG =
+                "(Ljava/lang/String;[B)" + BUILDER_TYPE;
             static final String BOOLEAN_SIG = "(Z)" + BUILDER_TYPE;
 
 
@@ -809,14 +820,31 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
             }
 
             /*
-             * Invoke Builder.moduleHash(String name, String hashString);
+             * Invoke Builder.moduleHash(String name, byte[] hash);
              */
-            void moduleHash(String name, String hashString) {
+            void moduleHash(String name, byte[] hash) {
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
                 mv.visitLdcInsn(name);
-                mv.visitLdcInsn(hashString);
+
+                // must exist
+                Integer index = modulesToHashIndex.get(name);
+                if (index != null) {
+                    mv.visitFieldInsn(GETSTATIC, CLASSNAME, MODULES_TO_HASH, "[[B");
+                    pushInt(index);
+                    mv.visitInsn(AALOAD);
+                    assert(Objects.equals(hash, modulesToHash.get(name)));
+                } else {
+                    pushInt(hash.length);
+                    mv.visitIntInsn(NEWARRAY, T_BYTE);
+                    for (int i = 0; i < hash.length; i++) {
+                        mv.visitInsn(DUP);              // arrayref
+                        pushInt(i);
+                        mv.visitIntInsn(BIPUSH, hash[i]);
+                        mv.visitInsn(BASTORE);
+                    }
+                }
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                                   "moduleHash", STRING_STRING_SIG, false);
+                                   "moduleHash", STRING_BYTE_ARRAY_SIG, false);
                 mv.visitInsn(POP);
             }
         }

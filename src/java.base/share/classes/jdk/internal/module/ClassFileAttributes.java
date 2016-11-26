@@ -645,7 +645,7 @@ public final class ClassFileAttributes {
      *
      * <pre> {@code
      *
-     * Hashes_attribute {
+     * ModuleHashes_attribute {
      *   // index to CONSTANT_utf8_info structure in constant pool representing
      *   // the string "ModuleHashes"
      *   u2 attribute_name_index;
@@ -655,15 +655,13 @@ public final class ClassFileAttributes {
      *   u2 algorithm_index;
      *
      *   // the number of entries in the hashes table
-     *   u2 hash_count;
-     *   {   u2 requires_index
-     *       u2 hash_index;
-     *   } hashes[hash_count];
+     *   u2 hashes_count;
+     *   {   u2 module_name_index
+     *       u2 hash_length;
+     *       u1 hash[hash_length];
+     *   } hashes[hashes_count];
      *
      * } </pre>
-     *
-     * @apiNote For now the hash is stored in base64 as a UTF-8 string, an
-     * alternative is to store it as an array of u1.
      */
     static class ModuleHashesAttribute extends Attribute {
         private final ModuleHashes hashes;
@@ -688,16 +686,23 @@ public final class ClassFileAttributes {
             String algorithm = cr.readUTF8(off, buf);
             off += 2;
 
-            int hash_count = cr.readUnsignedShort(off);
+            int hashes_count = cr.readUnsignedShort(off);
             off += 2;
 
-            Map<String, String> map = new HashMap<>();
-            for (int i=0; i<hash_count; i++) {
-                String dn = cr.readUTF8(off, buf).replace('/', '.');
+            Map<String, byte[]> map = new HashMap<>();
+            for (int i=0; i<hashes_count; i++) {
+                String mn = cr.readUTF8(off, buf).replace('/', '.');
                 off += 2;
-                String hash = cr.readUTF8(off, buf);
+
+                int hash_length = cr.readUnsignedShort(off);
                 off += 2;
-                map.put(dn, hash);
+                byte[] hash = new byte[hash_length];
+                for (int j=0; j<hash_length; j++) {
+                    hash[j] = (byte) (0xff & cr.readByte(off+j));
+                }
+                off += hash_length;
+
+                map.put(mn, hash);
             }
 
             ModuleHashes hashes = new ModuleHashes(algorithm, map);
@@ -720,11 +725,15 @@ public final class ClassFileAttributes {
             Set<String> names = hashes.names();
             attr.putShort(names.size());
 
-            for (String dn : names) {
-                String hash = hashes.hashFor(dn);
+            for (String mn : names) {
+                byte[] hash = hashes.hashFor(mn);
                 assert hash != null;
-                attr.putShort(cw.newUTF8(dn.replace('.', '/')));
-                attr.putShort(cw.newUTF8(hash));
+                attr.putShort(cw.newUTF8(mn.replace('.', '/')));
+
+                attr.putShort(hash.length);
+                for (byte b: hash) {
+                    attr.putByte(b);
+                }
             }
 
             return attr;

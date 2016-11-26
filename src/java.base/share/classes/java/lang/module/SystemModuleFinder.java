@@ -204,7 +204,7 @@ class SystemModuleFinder implements ModuleFinder {
         if (isFastPathSupported()) {
             return new HashSupplier() {
                 @Override
-                public String generate(String algorithm) {
+                public byte[] generate(String algorithm) {
                     return SystemModules.MODULES_TO_HASH[index];
                 }
             };
@@ -218,7 +218,7 @@ class SystemModuleFinder implements ModuleFinder {
      * It will get the recorded hashes from module-info.class.
      */
     private static class Hashes {
-        static Map<String, String> hashes = new HashMap<>();
+        static Map<String, byte[]> hashes = new HashMap<>();
 
         static void add(ModuleDescriptor descriptor) {
             Optional<ModuleHashes> ohashes = descriptor.hashes();
@@ -233,7 +233,7 @@ class SystemModuleFinder implements ModuleFinder {
 
             return new HashSupplier() {
                 @Override
-                public String generate(String algorithm) {
+                public byte[] generate(String algorithm) {
                     return hashes.get(name);
                 }
             };
