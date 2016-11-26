@@ -377,7 +377,6 @@ public final class ServiceLoader<S>
         JLRM_ACCESS = SharedSecrets.getJavaLangReflectModuleAccess();
     }
 
-
     /**
      * Represents a service provider located by {@code ServiceLoader}.
      *
@@ -418,21 +417,19 @@ public final class ServiceLoader<S>
         @Override S get();
     }
 
-
     /**
      * Initializes a new instance of this class for locating service providers
      * in a module Layer.
      *
      * @throws ServiceConfigurationError
-     *         If {@code svc} is not accessible to {@code caller} or that the
-     *         caller's module does not declare that it uses the service type.
+     *         If {@code svc} is not accessible to {@code caller} or the caller
+     *         module does not use the service type.
      */
     private ServiceLoader(Class<?> caller, Layer layer, Class<S> svc) {
         Objects.requireNonNull(caller);
         Objects.requireNonNull(layer);
         Objects.requireNonNull(svc);
-
-        checkModule(caller.getModule(), svc);
+        checkCaller(caller, svc);
 
         this.service = svc;
         this.serviceName = svc.getName();
@@ -448,14 +445,14 @@ public final class ServiceLoader<S>
      * via a class loader.
      *
      * @throws ServiceConfigurationError
-     *         If {@code svc} is not accessible to {@code caller} or that the
-     *         caller's module does not declare that it uses the service type.
+     *         If {@code svc} is not accessible to {@code caller} or the caller
+     *         module does not use the service type.
      */
-    private ServiceLoader(Module callerModule, Class<S> svc, ClassLoader cl) {
+    private ServiceLoader(Class<?> caller, Class<S> svc, ClassLoader cl) {
         Objects.requireNonNull(svc);
 
         if (VM.isBooted()) {
-            checkModule(callerModule, svc);
+            checkCaller(caller, svc);
             if (cl == null) {
                 cl = ClassLoader.getSystemClassLoader();
             }
@@ -464,6 +461,7 @@ public final class ServiceLoader<S>
             // if we get here then it means that ServiceLoader is being used
             // before the VM initialization has completed. At this point then
             // only code in the java.base should be executing.
+            Module callerModule = caller.getModule();
             Module base = Object.class.getModule();
             Module svcModule = svc.getModule();
             if (callerModule != base || svcModule != base) {
@@ -487,31 +485,42 @@ public final class ServiceLoader<S>
      * Initializes a new instance of this class for locating service providers
      * via a class loader.
      *
+     * @apiNote For use by ResourceBundle
+     *
      * @throws ServiceConfigurationError
-     *         If {@code svc} is not accessible to {@code caller} or that the
-     *         caller's module does not declare that it uses the service type.
+     *         If the caller module does not use the service type.
      */
-    private ServiceLoader(Class<?> caller, Class<S> svc, ClassLoader cl) {
-        this(caller.getModule(), svc, cl);
-    }
+    private ServiceLoader(Module callerModule, Class<S> svc, ClassLoader cl) {
+        if (!callerModule.canUse(svc)) {
+            fail(svc, callerModule + " does not declare `uses`");
+        }
 
+        this.service = Objects.requireNonNull(svc);
+        this.serviceName = svc.getName();
+        this.layer = null;
+        this.loader = cl;
+        this.acc = (System.getSecurityManager() != null)
+                ? AccessController.getContext()
+                : null;
+    }
 
     /**
      * Checks that the given service type is accessible to types in the given
-     * module, and check that the module declare that it uses the service type.
+     * module, and check that the module declare that it uses the service type. ??
      */
-    private static void checkModule(Module module, Class<?> svc) {
-        // Check that the service type is in a package that is exported to
-        // the caller. This needs to be promoted to a complete access check
-        // on the service type
-        if (!Reflection.verifyModuleAccess(module, svc)) {
-            fail(svc, "not accessible to " + module);
+    private static void checkCaller(Class<?> caller, Class<?> svc) {
+        Module callerModule = caller.getModule();
+
+        // Check access to the service type
+        int mods = svc.getModifiers();
+        if (!Reflection.verifyMemberAccess(caller, svc, null, mods)) {
+            fail(svc, "service type not accessible to " + callerModule);
         }
 
         // If the caller is in a named module then it should "uses" the
         // service type
-        if (!module.canUse(svc)) {
-            fail(svc, "use not declared in " + module);
+        if (!callerModule.canUse(svc)) {
+            fail(svc, callerModule + " does not declare `uses`");
         }
     }
 
@@ -821,7 +830,7 @@ public final class ServiceLoader<S>
         Deque<Layer> stack = new ArrayDeque<>();
         Set<Layer> visited = new HashSet<>();
         Iterator<ServiceProvider> iterator;
-        Provider<T> next;
+        ServiceProvider next;  // next provider to load
 
         LayerLookupIterator() {
             visited.add(layer);
@@ -835,7 +844,6 @@ public final class ServiceLoader<S>
 
         @Override
         public boolean hasNext() {
-
             // already have the next provider cached
             if (next != null)
                 return true;
@@ -844,14 +852,7 @@ public final class ServiceLoader<S>
 
                 // next provider (or provider factory)
                 if (iterator != null && iterator.hasNext()) {
-                    ServiceProvider provider = iterator.next();
-
-                    // attempt to load it
-                    Module module = provider.module();
-                    String cn = provider.providerName();
-                    Class<?> clazz = loadProviderInModule(module, cn);
-                    next = new ProviderImpl<T>(service, clazz, acc);
-
+                    next = iterator.next();
                     return true;
                 }
 
@@ -877,9 +878,15 @@ public final class ServiceLoader<S>
             if (!hasNext())
                 throw new NoSuchElementException();
 
-            Provider<T> result = next;
+            // take next provider
+            ServiceProvider provider = next;
             next = null;
-            return result;
+
+            // attempt to load provider
+            Module module = provider.module();
+            String cn = provider.providerName();
+            Class<?> clazz = loadProviderInModule(module, cn);
+            return new ProviderImpl<T>(service, clazz, acc);
         }
     }
 
@@ -893,7 +900,7 @@ public final class ServiceLoader<S>
     {
         ClassLoader currentLoader;
         Iterator<ServiceProvider> iterator;
-        Provider<T> next;
+        ServiceProvider next;  // next provider to load
 
         ModuleServicesLookupIterator() {
             this.currentLoader = loader;
@@ -953,14 +960,7 @@ public final class ServiceLoader<S>
 
             while (true) {
                 if (iterator.hasNext()) {
-                    ServiceProvider provider = iterator.next();
-
-                    // attempt to load the provider (or provider factory)
-                    Module module = provider.module();
-                    String cn = provider.providerName();
-                    Class<?> clazz = loadProviderInModule(module, cn);
-                    next = new ProviderImpl<T>(service, clazz, acc);
-
+                    next = iterator.next();
                     return true;
                 }
 
@@ -979,9 +979,15 @@ public final class ServiceLoader<S>
             if (!hasNext())
                 throw new NoSuchElementException();
 
-            Provider<T> result = next;
+            // take next provider
+            ServiceProvider provider = next;
             next = null;
-            return result;
+
+            // attempt to load provider
+            Module module = provider.module();
+            String cn = provider.providerName();
+            Class<?> clazz = loadProviderInModule(module, cn);
+            return new ProviderImpl<T>(service, clazz, acc);
         }
     }
 
