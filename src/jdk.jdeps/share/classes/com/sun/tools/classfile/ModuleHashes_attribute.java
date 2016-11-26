@@ -51,7 +51,7 @@ public class ModuleHashes_attribute extends Attribute {
     }
 
     public ModuleHashes_attribute(int name_index, int algorithm_index, Entry[] hashes_table) {
-        super(name_index, 4 + hashes_table.length * Entry.length());
+        super(name_index, 2 + 2 + length(hashes_table));
         this.algorithm_index = algorithm_index;
         this.hashes_table_length = hashes_table.length;
         this.hashes_table = hashes_table;
@@ -62,22 +62,34 @@ public class ModuleHashes_attribute extends Attribute {
         return visitor.visitModuleHashes(this, data);
     }
 
+    private static int length(Entry[] hashes_table) {
+        int len = 0;
+        for (Entry e: hashes_table) {
+            len += e.length();
+        }
+        return len;
+    }
+
     public final int algorithm_index;
     public final int hashes_table_length;
     public final Entry[] hashes_table;
 
     public static class Entry {
         Entry(ClassReader cr) throws IOException {
-            requires_index = cr.readUnsignedShort();
-            hash_index = cr.readUnsignedShort();
+            module_name_index = cr.readUnsignedShort();
+            int hash_length = cr.readUnsignedShort();
+            hash = new byte[hash_length];
+            for (int i=0; i<hash_length; i++) {
+                hash[i] = (byte) cr.readUnsignedByte();
+            }
         }
 
-        public static int length() {
-            return 4;
+        public int length() {
+            return 4 + hash.length;
         }
 
-        public final int requires_index;
-        public final int hash_index;
+        public final int module_name_index;
+        public final byte[] hash;
     }
 
 }

@@ -471,8 +471,11 @@ public class ClassWriter {
             out.writeShort(attr.algorithm_index);
             out.writeShort(attr.hashes_table.length);
             for (ModuleHashes_attribute.Entry e: attr.hashes_table) {
-                out.writeShort(e.requires_index);
-                out.writeShort(e.hash_index);
+                out.writeShort(e.module_name_index);
+                out.writeShort(e.hash.length);
+                for (byte b: e.hash) {
+                    out.writeByte(b);
+                }
             }
             return null;
         }

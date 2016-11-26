@@ -330,9 +330,11 @@ public class AttributeWriter extends BasicWriter
         tab();
         println("// " + getAlgorithm(attr));
         for (ModuleHashes_attribute.Entry e : attr.hashes_table) {
-            print("#" + e.requires_index + ", #" + e.hash_index);
+            print("#" + e.module_name_index);
             tab();
-            println("// " + getRequires(e) + ": " + getHash(e));
+            println("// " + getModuleName(e));
+            println("hash_length: " + e.hash.length);
+            println("hash: [" + toHex(e.hash) + "]");
         }
         indent(-1);
         return null;
@@ -346,17 +348,9 @@ public class AttributeWriter extends BasicWriter
         }
     }
 
-    private String getRequires(ModuleHashes_attribute.Entry entry) {
+    private String getModuleName(ModuleHashes_attribute.Entry entry) {
         try {
-            return constant_pool.getUTF8Value(entry.requires_index);
-        } catch (ConstantPoolException e) {
-            return report(e);
-        }
-    }
-
-    private String getHash(ModuleHashes_attribute.Entry entry) {
-        try {
-            return constant_pool.getUTF8Value(entry.hash_index);
+            return constant_pool.getUTF8Value(entry.module_name_index);
         } catch (ConstantPoolException e) {
             return report(e);
         }
@@ -1020,6 +1014,14 @@ public class AttributeWriter extends BasicWriter
         while (s.length() < w)
             s = "0" + s;
         return StringUtils.toUpperCase(s);
+    }
+
+    static String toHex(byte[] ba) {
+        StringBuilder sb = new StringBuilder(ba.length);
+        for (byte b: ba) {
+            sb.append(String.format("%02x", b & 0xff));
+        }
+        return sb.toString();
     }
 
     private final AnnotationWriter annotationWriter;
