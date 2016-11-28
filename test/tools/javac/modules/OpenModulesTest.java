@@ -27,16 +27,26 @@
  * @library /tools/lib
  * @modules jdk.compiler/com.sun.tools.javac.api
  *          jdk.compiler/com.sun.tools.javac.main
+ *          jdk.jdeps/com.sun.tools.classfile
  *          jdk.jdeps/com.sun.tools.javap
  * @build toolbox.ToolBox toolbox.JavacTask toolbox.ModuleBuilder ModuleTestBase
  * @run main OpenModulesTest
  */
 
+import java.io.OutputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
+import com.sun.tools.classfile.Attribute;
+import com.sun.tools.classfile.Attributes;
+import com.sun.tools.classfile.ClassFile;
+import com.sun.tools.classfile.ClassWriter;
+import com.sun.tools.classfile.Module_attribute;
 import toolbox.JavacTask;
 import toolbox.JavapTask;
 import toolbox.Task;
@@ -200,6 +210,78 @@ public class OpenModulesTest extends ModuleTestBase {
         if (!expected.equals(log))
             throw new Exception("expected output not found: " + log);
 
+    }
+
+    @Test
+    public void testNonZeroOpensInOpen(Path base) throws Exception {
+        Path m1 = base.resolve("m1");
+        tb.writeJavaFiles(m1,
+                          "module m1 { opens api; }",
+                          "package api; public class Api {}");
+        Path classes = base.resolve("classes");
+        Path m1Classes = classes.resolve("m1");
+        tb.createDirectories(m1Classes);
+
+        new JavacTask(tb)
+            .options("-XDrawDiagnostics")
+            .outdir(m1Classes)
+            .files(findJavaFiles(m1))
+            .run(Expect.SUCCESS)
+            .writeAll();
+
+        Path miClass = m1Classes.resolve("module-info.class");
+        ClassFile cf = ClassFile.read(miClass);
+        Module_attribute module = (Module_attribute) cf.attributes.map.get(Attribute.Module);
+        Module_attribute newModule = new Module_attribute(module.attribute_name_index,
+                                                          module.module_name,
+                                                          module.module_flags | Module_attribute.ACC_OPEN,
+                                                          module.requires,
+                                                          module.exports,
+                                                          module.opens,
+                                                          module.uses_index,
+                                                          module.provides);
+        Map<String, Attribute> attrs = new HashMap<>(cf.attributes.map);
+
+        attrs.put(Attribute.Module, newModule);
+
+        Attributes newAttributes = new Attributes(attrs);
+        ClassFile newClassFile = new ClassFile(cf.magic,
+                                               cf.minor_version,
+                                               cf.major_version,
+                                               cf.constant_pool,
+                                               cf.access_flags,
+                                               cf.this_class,
+                                               cf.super_class,
+                                               cf.interfaces,
+                                               cf.fields,
+                                               cf.methods,
+                                               newAttributes);
+
+        try (OutputStream out = Files.newOutputStream(miClass)) {
+            new ClassWriter().write(newClassFile, out);
+        }
+
+        Path test = base.resolve("test");
+        tb.writeJavaFiles(test,
+                          "package impl; public class Impl extends api.Api {}");
+        Path testClasses = base.resolve("test-classes");
+        tb.createDirectories(testClasses);
+
+        List<String> log = new JavacTask(tb)
+                .options("-XDrawDiagnostics",
+                         "--module-path", classes.toString(),
+                         "--add-modules", "m1")
+                .outdir(testClasses)
+                .files(findJavaFiles(test))
+                .run(Expect.FAIL)
+                .writeAll()
+                .getOutputLines(Task.OutputKind.DIRECT);
+
+        List<String> expected = Arrays.asList("- compiler.err.cant.access: m1.module-info, (compiler.misc.bad.class.file.header: module-info.class, (compiler.misc.module.non.zero.opens: m1))",
+                                              "1 error");
+
+        if (!expected.equals(log))
+            throw new Exception("expected output not found: " + log);
     }
 
 }

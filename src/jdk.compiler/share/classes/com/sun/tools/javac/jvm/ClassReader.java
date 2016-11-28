@@ -1312,6 +1312,9 @@ public class ClassReader {
                         directives.addAll(msym.exports);
                         ListBuffer<ExportsDirective> opens = new ListBuffer<>();
                         int nopens = nextChar();
+                        if (nopens != 0 && msym.flags.contains(ModuleFlags.OPEN)) {
+                            throw badClassFile("module.non.zero.opens", currentModule.name);
+                        }
                         for (int i = 0; i < nopens; i++) {
                             Name n = readName(nextChar());
                             PackageSymbol p = syms.enterPackage(currentModule, names.fromUtf(internalize(n)));
