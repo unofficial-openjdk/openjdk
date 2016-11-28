@@ -146,8 +146,8 @@ public class MethodHandles {
      * Returns a {@link Lookup lookup object} with full capabilities to emulate all
      * supported bytecode behaviors, including <a href="MethodHandles.Lookup.html#privacc">
      * private access</a>, on a target class.
-     * This method checks that a caller, specified as a lookup object, is allowed to do
-     * <em>deep reflection</em> on the target class. If {@code m1} is the module containing
+     * This method checks that a caller, specified as a {@code Lookup} object, is allowed to
+     * do <em>deep reflection</em> on the target class. If {@code m1} is the module containing
      * the {@link Lookup#lookupClass() lookup class}, and {@code m2} is the module containing
      * the target class, then this check ensures that
      * <ul>

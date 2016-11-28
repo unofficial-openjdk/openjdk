@@ -36,7 +36,7 @@ import static java.lang.annotation.ElementType.*;
  * example, if you annotate a class to suppress one warning and annotate a
  * method to suppress another, both warnings will be suppressed in the method.
  * However, note that if a warning is suppressed in a {@code
- * module-info} file, the suppression applies to element within the
+ * module-info} file, the suppression applies to elements within the
  * file and <em>not</em> to types contained within the module.
  *
  * <p>As a matter of style, programmers should always use this annotation

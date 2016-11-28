@@ -109,8 +109,7 @@ import jdk.internal.reflect.Reflection;
  * of. For this example then {@code StandardCodecs}'s no-arg constructor will
  * be used to instantiate {@code StandardCodecs}. {@code ExtendedCodecsFactory}
  * will be treated as a provider factory and {@code
- * ExtendedCodecsFactory.provider()} will be invoked to instantiate the
- * provider.
+ * ExtendedCodecsFactory.provider()} will be invoked to obtain the provider.
  *
  * <p> Providers deployed on the class path or as {@link
  * java.lang.module.ModuleDescriptor#isAutomatic automatic-modules} on the
