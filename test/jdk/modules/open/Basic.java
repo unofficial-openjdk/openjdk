@@ -31,6 +31,7 @@
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodType;
 import java.lang.module.ModuleDescriptor;
 import java.lang.reflect.Constructor;
@@ -90,21 +91,30 @@ public class Basic {
         // invokespecial
         new p.PublicType();
 
-        // core reflection
         Class<?> clazz = p.PublicType.class;
-        clazz.getConstructor().newInstance();
+
+        // core reflection
+        Constructor<?> ctor = clazz.getConstructor();
+        ctor.newInstance();
+        ctor.setAccessible(true);
+        ctor.newInstance();
 
         // method handles
-        MethodHandles.Lookup lookup = MethodHandles.publicLookup();
-        MethodType mt = MethodType.methodType(void.class);
-        MethodHandle mh = lookup.findConstructor(clazz, mt);
-        mh.invoke();
+        findNoArgConstructorAndInvoke(clazz, MethodHandles.publicLookup());
+        findNoArgConstructorAndInvoke(clazz, MethodHandles.lookup());
+        try {
+            MethodHandles.privateLookupIn(clazz, MethodHandles.publicLookup());
+            assertTrue(false);
+        } catch (IllegalAccessException expected) { }
+        Lookup lookup = MethodHandles.privateLookupIn(clazz, MethodHandles.lookup());
+        findNoArgConstructorAndInvoke(clazz, lookup);
     }
 
     @Test
     public void testNotPublicTypeInExportedPackage() throws Throwable {
-        // core reflection
         Class<?> clazz = Class.forName("p.NotPublicType");
+
+        // core reflection
         Constructor<?> ctor = clazz.getConstructor();
         try {
             ctor.newInstance();
@@ -114,34 +124,49 @@ public class Basic {
         ctor.newInstance();
 
         // method handles
-        MethodHandles.Lookup lookup = MethodHandles.publicLookup();
-        MethodType mt = MethodType.methodType(void.class);
         try {
-            lookup.findConstructor(clazz, mt);
+            findNoArgConstructorAndInvoke(clazz, MethodHandles.publicLookup());
             assertTrue(false);
         } catch (IllegalAccessException expected) { }
+        try {
+            findNoArgConstructorAndInvoke(clazz, MethodHandles.lookup());
+            assertTrue(false);
+        } catch (IllegalAccessException expected) { }
+        try {
+            MethodHandles.privateLookupIn(clazz, MethodHandles.publicLookup());
+            assertTrue(false);
+        } catch (IllegalAccessException expected) { }
+
+        Lookup lookup = MethodHandles.privateLookupIn(clazz, MethodHandles.lookup());
+        findNoArgConstructorAndInvoke(clazz, lookup);
     }
 
     @Test
     public void testPublicTypeInNonExportedPackage() throws Throwable {
-        // core reflection
         Class<?> clazz = Class.forName("p.internal.PublicType");
+
+        // core reflection
         Constructor<?> ctor = clazz.getConstructor();
         ctor.newInstance(); // should succeed
         ctor.setAccessible(true);
         ctor.newInstance();
 
         // method handles
-        MethodHandles.Lookup lookup = MethodHandles.publicLookup();
-        MethodType mt = MethodType.methodType(void.class);
-        MethodHandle mh = lookup.findConstructor(clazz, mt);
-        mh.invoke();
+        findNoArgConstructorAndInvoke(clazz, MethodHandles.publicLookup());
+        findNoArgConstructorAndInvoke(clazz, MethodHandles.lookup());
+        try {
+            MethodHandles.privateLookupIn(clazz, MethodHandles.publicLookup());
+            assertTrue(false);
+        } catch (IllegalAccessException expected) { }
+        Lookup lookup = MethodHandles.privateLookupIn(clazz, MethodHandles.lookup());
+        findNoArgConstructorAndInvoke(clazz, lookup);
     }
 
     @Test
     public void testNotPublicTypeInNonExportedPackage() throws Throwable {
-        // core reflection
         Class<?> clazz = Class.forName("p.internal.NotPublicType");
+
+        // core reflection
         Constructor<?> ctor = clazz.getConstructor();
         try {
             ctor.newInstance();
@@ -151,12 +176,21 @@ public class Basic {
         ctor.newInstance();
 
         // method handles
-        MethodHandles.Lookup lookup = MethodHandles.publicLookup();
-        MethodType mt = MethodType.methodType(void.class);
         try {
-            lookup.findConstructor(clazz, mt);
+            findNoArgConstructorAndInvoke(clazz, MethodHandles.publicLookup());
             assertTrue(false);
         } catch (IllegalAccessException expected) { }
+        try {
+            findNoArgConstructorAndInvoke(clazz, MethodHandles.lookup());
+            assertTrue(false);
+        } catch (IllegalAccessException expected) { }
+        try {
+            MethodHandles.privateLookupIn(clazz, MethodHandles.publicLookup());
+            assertTrue(false);
+        } catch (IllegalAccessException expected) { }
+
+        Lookup lookup = MethodHandles.privateLookupIn(clazz, MethodHandles.lookup());
+        findNoArgConstructorAndInvoke(clazz, lookup);
     }
 
     @Test
@@ -169,16 +203,22 @@ public class Basic {
         clazz.getConstructor().newInstance();
 
         // method handles
-        MethodHandles.Lookup lookup = MethodHandles.publicLookup();
-        MethodType mt = MethodType.methodType(void.class);
-        MethodHandle mh = lookup.findConstructor(clazz, mt);
-        mh.invoke();
+        findNoArgConstructorAndInvoke(clazz, MethodHandles.publicLookup());
+        findNoArgConstructorAndInvoke(clazz, MethodHandles.lookup());
+        try {
+            MethodHandles.privateLookupIn(clazz, MethodHandles.publicLookup());
+            assertTrue(false);
+        } catch (IllegalAccessException expected) { }
+        Lookup lookup = MethodHandles.privateLookupIn(clazz, MethodHandles.lookup());
+        findNoArgConstructorAndInvoke(clazz, lookup);
+
     }
 
     @Test
     public void testNotPublicTypeInOpenPackage() throws Throwable {
-        // core reflection
         Class<?> clazz = Class.forName("q.NotPublicType");
+
+        // core reflection
         Constructor<?> ctor = clazz.getConstructor();
         try {
             ctor.newInstance();
@@ -188,18 +228,25 @@ public class Basic {
         ctor.newInstance();
 
         // method handles
-        MethodHandles.Lookup lookup = MethodHandles.publicLookup();
-        MethodType mt = MethodType.methodType(void.class);
         try {
-            lookup.findConstructor(clazz, mt);
+            findNoArgConstructorAndInvoke(clazz, MethodHandles.publicLookup());
+        } catch (IllegalAccessException expected) { }
+        try {
+            findNoArgConstructorAndInvoke(clazz, MethodHandles.lookup());
+        } catch (IllegalAccessException expected) { }
+        try {
+            MethodHandles.privateLookupIn(clazz, MethodHandles.publicLookup());
             assertTrue(false);
         } catch (IllegalAccessException expected) { }
+        Lookup lookup = MethodHandles.privateLookupIn(clazz, MethodHandles.lookup());
+        findNoArgConstructorAndInvoke(clazz, lookup);
     }
 
     @Test
     public void testPublicTypeInConcealedPackage() throws Throwable {
-        // core reflection
         Class<?> clazz = Class.forName("q.internal.PublicType");
+
+        // core reflection
         Constructor<?> ctor = clazz.getConstructor();
         try {
             ctor.newInstance();
@@ -211,18 +258,27 @@ public class Basic {
         } catch (InaccessibleObjectException expected) { }
 
         // method handles
-        MethodHandles.Lookup lookup = MethodHandles.publicLookup();
-        MethodType mt = MethodType.methodType(void.class);
         try {
-            lookup.findConstructor(clazz, mt);
+            findNoArgConstructorAndInvoke(clazz, MethodHandles.publicLookup());
+        } catch (IllegalAccessException expected) { }
+        try {
+            findNoArgConstructorAndInvoke(clazz, MethodHandles.lookup());
+        } catch (IllegalAccessException expected) { }
+        try {
+            MethodHandles.privateLookupIn(clazz, MethodHandles.publicLookup());
+            assertTrue(false);
+        } catch (IllegalAccessException expected) { }
+        try {
+            MethodHandles.privateLookupIn(clazz, MethodHandles.lookup());
             assertTrue(false);
         } catch (IllegalAccessException expected) { }
     }
 
     @Test
     public void testNotPublicTypeInConcealedPackage() throws Throwable {
-        // core reflection
         Class<?> clazz = Class.forName("q.internal.NotPublicType");
+
+        // core reflection
         Constructor<?> ctor = clazz.getConstructor();
         try {
             ctor.newInstance();
@@ -234,11 +290,28 @@ public class Basic {
         } catch (InaccessibleObjectException expected) { }
 
         // method handles
-        MethodHandles.Lookup lookup = MethodHandles.publicLookup();
-        MethodType mt = MethodType.methodType(void.class);
         try {
-            lookup.findConstructor(clazz, mt);
+            findNoArgConstructorAndInvoke(clazz, MethodHandles.publicLookup());
+        } catch (IllegalAccessException expected) { }
+        try {
+            findNoArgConstructorAndInvoke(clazz, MethodHandles.lookup());
+        } catch (IllegalAccessException expected) { }
+        try {
+            MethodHandles.privateLookupIn(clazz, MethodHandles.publicLookup());
             assertTrue(false);
         } catch (IllegalAccessException expected) { }
+        try {
+            MethodHandles.privateLookupIn(clazz, MethodHandles.lookup());
+            assertTrue(false);
+        } catch (IllegalAccessException expected) { }
+    }
+
+    /**
+     * Produces the method handle for the no-arg constructor and invokes it
+     */
+    Object findNoArgConstructorAndInvoke(Class<?> clazz, Lookup lookup) throws Throwable {
+        MethodType mt = MethodType.methodType(void.class);
+        MethodHandle mh = lookup.findConstructor(clazz, mt);
+        return mh.invoke();
     }
 }
