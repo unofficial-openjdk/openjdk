@@ -28,6 +28,7 @@ package java.lang.module;
 import java.io.PrintStream;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Requires.Modifier;
+import java.lang.reflect.Layer;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -208,13 +209,15 @@ final class Resolver {
         Deque<ModuleDescriptor> q = new ArrayDeque<>();
 
         // the initial set of modules that may use services
-        Set<ModuleDescriptor> initialConsumers = new HashSet<>();
-        for (Configuration parent : parents) {
-            if (parent != Configuration.empty()) {
-                parent.configurations()
-                        .map(Configuration::descriptors)
-                        .forEach(initialConsumers::addAll);
-            }
+        Set<ModuleDescriptor> initialConsumers;
+        if (Layer.boot() == null) {
+            initialConsumers = new HashSet<>();
+        } else {
+            initialConsumers = parents.stream()
+                    .flatMap(Configuration::configurations)
+                    .distinct()
+                    .flatMap(c -> c.descriptors().stream())
+                    .collect(Collectors.toSet());
         }
         for (ModuleReference mref : nameToReference.values()) {
             initialConsumers.add(mref.descriptor());
@@ -501,30 +504,35 @@ final class Resolver {
         Map<ResolvedModule, Set<ResolvedModule>> g1 = new HashMap<>(capacity);
 
         // the "requires transitive" graph, contains requires transitive edges only
-        Map<ResolvedModule, Set<ResolvedModule>> g2 = new HashMap<>(capacity);
-
+        Map<ResolvedModule, Set<ResolvedModule>> g2;
 
         // need "requires transitive" from the modules in parent configurations
         // as there may be selected modules that have a dependency on modules in
         // the parent configuration.
-        for (Configuration parent : parents) {
-            if (parent != Configuration.empty()) {
-                parent.configurations().forEach(c -> {
-                    c.modules().forEach(m1 -> {
+        if (Layer.boot() == null) {
+            g2 = new HashMap<>(capacity);
+        } else {
+            g2 = parents.stream()
+                .flatMap(Configuration::configurations)
+                .distinct()
+                .flatMap(c ->
+                    c.modules().stream().flatMap(m1 ->
                         m1.descriptor().requires().stream()
                             .filter(r -> r.modifiers().contains(Modifier.TRANSITIVE))
-                            .forEach(r -> {
-                                String dn = r.name();
-                                assert c.findModule(dn).isPresent() ||
-                                        r.modifiers().contains(Modifier.STATIC);
-                                c.findModule(dn).ifPresent(m2 -> {
-                                    g2.computeIfAbsent(m1, k -> new HashSet<>()).add(m2);
-                                });
-                            });
-
-                    });
-                });
-            }
+                            .flatMap(r -> {
+                                Optional<ResolvedModule> m2 = c.findModule(r.name());
+                                assert m2.isPresent()
+                                        || r.modifiers().contains(Modifier.STATIC);
+                                return m2.stream();
+                            })
+                            .map(m2 -> Map.entry(m1, m2))
+                    )
+                )
+                // stream of m1->m2
+                .collect(Collectors.groupingBy(Map.Entry::getKey,
+                        HashMap::new,
+                        Collectors.mapping(Map.Entry::getValue, Collectors.toSet())
+            ));
         }
 
         // populate g1 and g2 with the dependences from the selected modules

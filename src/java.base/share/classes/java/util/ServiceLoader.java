@@ -400,7 +400,7 @@ public final class ServiceLoader<S>
          *
          * @return The provider type
          */
-        Class<S> type();
+        Class<? extends S> type();
 
         /**
          * Returns an instance of the provider.
@@ -582,8 +582,8 @@ public final class ServiceLoader<S>
         final AccessControlContext acc;
 
         final Method factoryMethod;  // factory method or null
-        final Class<S> type;
-        final Constructor<S> ctor;   // public no-args constructor or null
+        final Class<? extends S> type;
+        final Constructor<? extends S> ctor; // public no-args constructor or null
 
         /**
          * Creates a Provider.
@@ -630,16 +630,16 @@ public final class ServiceLoader<S>
                 if (!service.isAssignableFrom(clazz)) {
                     fail(service, clazz.getName() + " not a subtype");
                 }
-                this.type = (Class<S>) clazz;
-                this.ctor = getConstructor(clazz);
+                this.type = (Class<? extends S>) clazz;
+                this.ctor = (Constructor<? extends S>) getConstructor(clazz);
             } else {
-                this.type = (Class<S>) factoryMethod.getReturnType();
+                this.type = (Class<? extends S>) factoryMethod.getReturnType();
                 this.ctor = null;
             }
         }
 
         @Override
-        public Class<S> type() {
+        public Class<? extends S> type() {
             return type;
         }
 
@@ -690,25 +690,23 @@ public final class ServiceLoader<S>
         }
 
         /**
-         * Returns the provider's public no-arg constructor.
+         * Returns the public no-arg constructor of a class.
          *
-         * @throws ServiceConfigurationError if the provider does not have
+         * @throws ServiceConfigurationError if the class does not have
          *         public no-arg constructor
          */
-        private Constructor<S> getConstructor(Class<?> clazz) {
-            PrivilegedExceptionAction<Constructor<S>> pa
+        private Constructor<?> getConstructor(Class<?> clazz) {
+            PrivilegedExceptionAction<Constructor<?>> pa
                 = new PrivilegedExceptionAction<>() {
                     @Override
-                    public Constructor<S> run() throws Exception {
+                    public Constructor<?> run() throws Exception {
                         Constructor<?> ctor = clazz.getConstructor();
                         if (inExplicitModule(clazz))
                             ctor.setAccessible(true);
-                        @SuppressWarnings("unchecked")
-                        Constructor<S> result = (Constructor<S>)ctor;
-                        return result;
+                        return ctor;
                     }
                 };
-            Constructor<S> ctor = null;
+            Constructor<?> ctor = null;
             try {
                 ctor = AccessController.doPrivileged(pa);
             } catch (Throwable x) {
