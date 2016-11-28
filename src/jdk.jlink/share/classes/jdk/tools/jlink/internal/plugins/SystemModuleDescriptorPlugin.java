@@ -567,8 +567,9 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                 mv.visitVarInsn(ALOAD, MD_VAR);
                 pushInt(nextModulesIndex++);
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
+                mv.visitLdcInsn(md.hashCode());
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                                   "build", "()Ljava/lang/module/ModuleDescriptor;",
+                                   "build", "(I)Ljava/lang/module/ModuleDescriptor;",
                                    false);
                 mv.visitInsn(AASTORE);
             }

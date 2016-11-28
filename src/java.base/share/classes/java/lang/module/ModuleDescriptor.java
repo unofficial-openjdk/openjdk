@@ -1108,6 +1108,7 @@ public class ModuleDescriptor
                      String osVersion,
                      Set<String> packages,
                      ModuleHashes hashes,
+                     int hashCode,
                      boolean unused) {
         this.name = name;
         this.open = open;
@@ -1125,6 +1126,7 @@ public class ModuleDescriptor
         this.osArch = osArch;
         this.osVersion = osVersion;
         this.hashes = hashes;
+        this.hash = hashCode;
     }
 
     /**
@@ -2463,7 +2465,8 @@ public class ModuleDescriptor
                                                             String osArch,
                                                             String osVersion,
                                                             Set<String> packages,
-                                                            ModuleHashes hashes) {
+                                                            ModuleHashes hashes,
+                                                            int hashCode) {
                     return new ModuleDescriptor(name,
                                                 open,
                                                 automatic,
@@ -2480,6 +2483,7 @@ public class ModuleDescriptor
                                                 osVersion,
                                                 packages,
                                                 hashes,
+                                                hashCode,
                                                 false);
                 }
 

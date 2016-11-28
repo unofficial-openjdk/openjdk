@@ -136,7 +136,8 @@ public interface JavaLangModuleAccess {
                                          String osArch,
                                          String osVersion,
                                          Set<String> packages,
-                                         ModuleHashes hashes);
+                                         ModuleHashes hashes,
+                                         int hashCode);
 
     /**
      * Returns the object with the hashes of other modules

@@ -296,7 +296,7 @@ final class Builder {
     /**
      * Builds a {@code ModuleDescriptor} from the components.
      */
-    public ModuleDescriptor build() {
+    public ModuleDescriptor build(int hashCode) {
         assert name != null;
 
         ModuleHashes moduleHashes =
@@ -317,6 +317,7 @@ final class Builder {
                                         osArch,
                                         osVersion,
                                         packages,
-                                        moduleHashes);
+                                        moduleHashes,
+                                        hashCode);
     }
 }
