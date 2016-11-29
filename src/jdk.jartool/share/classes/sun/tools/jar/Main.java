@@ -30,6 +30,7 @@ import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Provides;
+import java.lang.module.ModuleDescriptor.Opens;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Version;
 import java.lang.module.ModuleFinder;
@@ -1999,7 +2000,10 @@ class Main {
     {
         ModuleDescriptor md = ModuleDescriptor.read(entryInputStream);
         StringBuilder sb = new StringBuilder();
-        sb.append("\n").append(md.toNameAndVersion());
+        sb.append("\n");
+        if (md.isOpen())
+            sb.append("open ");
+        sb.append(md.toNameAndVersion());
 
         md.requires().stream()
             .sorted(Comparator.comparing(Requires::name))
@@ -2017,8 +2021,13 @@ class Main {
             .sorted(Comparator.comparing(Exports::source))
             .forEach(p -> sb.append("\n  exports ").append(p));
 
+        md.opens().stream()
+            .sorted(Comparator.comparing(Opens::source))
+            .forEach(p -> sb.append("\n  opens ").append(p));
+
         Set<String> concealed = new HashSet<>(md.packages());
         md.exports().stream().map(Exports::source).forEach(concealed::remove);
+        md.opens().stream().map(Opens::source).forEach(concealed::remove);
         concealed.stream().sorted()
             .forEach(p -> sb.append("\n  contains ").append(p));
 
