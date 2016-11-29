@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -214,20 +214,20 @@ public final class Optional<T> {
      * @apiNote
      * This method supports post-processing on {@code Optional} values, without
      * the need to explicitly check for a return status.  For example, the
-     * following code traverses a stream of file names, selects one that has not
-     * yet been processed, and then opens that file, returning an
-     * {@code Optional<FileInputStream>}:
+     * following code traverses a stream of URIs, selects one that has not
+     * yet been processed, and creates a path from that URI, returning
+     * an {@code Optional<Path>}:
      *
      * <pre>{@code
-     *     Optional<FileInputStream> fis =
-     *         names.stream().filter(name -> !isProcessedYet(name))
+     *     Optional<Path> p =
+     *         uris.stream().filter(uri -> !isProcessedYet(uri))
      *                       .findFirst()
-     *                       .map(name -> new FileInputStream(name));
+     *                       .map(Paths::get);
      * }</pre>
      *
-     * Here, {@code findFirst} returns an {@code Optional<String>}, and then
-     * {@code map} returns an {@code Optional<FileInputStream>} for the desired
-     * file if one exists.
+     * Here, {@code findFirst} returns an {@code Optional<URI>}, and then
+     * {@code map} returns an {@code Optional<Path>} for the desired
+     * URI if one exists.
      *
      * @param mapper the mapping function to apply to a value, if present
      * @param <U> The type of the value returned from the mapping function
@@ -236,7 +236,7 @@ public final class Optional<T> {
      *         present, otherwise an empty {@code Optional}
      * @throws NullPointerException if the mapping function is {@code null}
      */
-    public<U> Optional<U> map(Function<? super T, ? extends U> mapper) {
+    public <U> Optional<U> map(Function<? super T, ? extends U> mapper) {
         Objects.requireNonNull(mapper);
         if (!isPresent()) {
             return empty();
@@ -264,12 +264,14 @@ public final class Optional<T> {
      * @throws NullPointerException if the mapping function is {@code null} or
      *         returns a {@code null} result
      */
-    public<U> Optional<U> flatMap(Function<? super T, Optional<U>> mapper) {
+    public <U> Optional<U> flatMap(Function<? super T, ? extends Optional<? extends U>> mapper) {
         Objects.requireNonNull(mapper);
         if (!isPresent()) {
             return empty();
         } else {
-            return Objects.requireNonNull(mapper.apply(value));
+            @SuppressWarnings("unchecked")
+            Optional<U> r = (Optional<U>) mapper.apply(value);
+            return Objects.requireNonNull(r);
         }
     }
 
@@ -286,12 +288,14 @@ public final class Optional<T> {
      *         produces a {@code null} result
      * @since 9
      */
-    public Optional<T> or(Supplier<Optional<T>> supplier) {
+    public Optional<T> or(Supplier<? extends Optional<? extends T>> supplier) {
         Objects.requireNonNull(supplier);
         if (isPresent()) {
             return this;
         } else {
-            return Objects.requireNonNull(supplier.get());
+            @SuppressWarnings("unchecked")
+            Optional<T> r = (Optional<T>) supplier.get();
+            return Objects.requireNonNull(r);
         }
     }
 

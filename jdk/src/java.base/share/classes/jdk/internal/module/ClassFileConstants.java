@@ -37,11 +37,11 @@ public class ClassFileConstants {
     public static final String SOURCE_FILE        = "SourceFile";
     public static final String SDE                = "SourceDebugExtension";
 
-    public static final String PACKAGES           = "Packages";
-    public static final String VERSION            = "Version";
-    public static final String MAIN_CLASS         = "MainClass";
-    public static final String TARGET_PLATFORM    = "TargetPlatform";
-    public static final String HASHES             = "Hashes";
+    public static final String MODULE_PACKAGES    = "ModulePackages";
+    public static final String MODULE_VERSION     = "ModuleVersion";
+    public static final String MODULE_MAIN_CLASS  = "ModuleMainClass";
+    public static final String MODULE_TARGET      = "ModuleTarget";
+    public static final String MODULE_HASHES      = "ModuleHashes";
 
     // access, requires, exports, and opens flags
     public static final int ACC_MODULE        = 0x8000;

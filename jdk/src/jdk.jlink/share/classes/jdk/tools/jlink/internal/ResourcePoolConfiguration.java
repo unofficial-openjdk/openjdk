@@ -57,7 +57,7 @@ final class ResourcePoolConfiguration {
           .forEach(builder::exports);
         md.uses().stream()
           .forEach(builder::uses);
-        md.provides().values().stream()
+        md.provides().stream()
           .forEach(builder::provides);
 
         // build the proper concealed packages

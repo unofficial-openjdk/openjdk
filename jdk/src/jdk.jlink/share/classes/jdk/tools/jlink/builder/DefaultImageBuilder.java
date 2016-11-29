@@ -43,8 +43,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Collections;
 import java.util.HashMap;
@@ -55,7 +55,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
-import java.util.stream.Collectors;
+import static java.util.stream.Collectors.*;
 
 import jdk.tools.jlink.internal.BasicImageWriter;
 import jdk.tools.jlink.internal.plugins.FileCopierPlugin.SymImageFile;
@@ -172,31 +172,31 @@ public final class DefaultImageBuilder implements ImageBuilder {
             Properties release = releaseProperties(files);
             Path bin = root.resolve("bin");
 
-
-            Map<String, Set<String>> duplicates = new HashMap<>();
+            // check any duplicated resource files
+            Map<Path, Set<String>> duplicates = new HashMap<>();
             files.entries()
-                 .filter(f -> f.type() == ResourcePoolEntry.Type.OTHER_FILE)
-                 .collect(Collectors.groupingBy(ResourcePoolEntry::imagePath,
-                          Collectors.mapping(ResourcePoolEntry::moduleName, Collectors.toSet())))
-                 .entrySet()
-                 .stream()
-                 .filter(e -> e.getValue().size() > 1)
-                 .forEach(e -> duplicates.put(e.getKey(), e.getValue()));
+                .filter(f -> f.type() != ResourcePoolEntry.Type.CLASS_OR_RESOURCE)
+                .collect(groupingBy(this::entryToImagePath,
+                         mapping(ResourcePoolEntry::moduleName, toSet())))
+                .entrySet()
+                .stream()
+                .filter(e -> e.getValue().size() > 1)
+                .forEach(e -> duplicates.put(e.getKey(), e.getValue()));
 
+            // write non-classes resource files to the image
             files.entries()
                 .filter(f -> f.type() != ResourcePoolEntry.Type.CLASS_OR_RESOURCE)
                 .forEach(f -> {
                     try {
                         accept(f);
                     } catch (FileAlreadyExistsException e) {
-                        IOException x = e;
-                        Set<String> dups = duplicates.get(f.imagePath());
-                        if (dups != null) {
-                            x = new FileAlreadyExistsException(f.imagePath() +
-                                " duplicated in " + dups);
-                            x.addSuppressed(e);
-                        }
-                        throw new UncheckedIOException(x);
+                        // error for duplicated entries
+                        Path path = entryToImagePath(f);
+                        UncheckedIOException x =
+                            new UncheckedIOException(path + " duplicated in " +
+                                    duplicates.get(path), e);
+                        x.addSuppressed(e);
+                        throw x;
                     } catch (IOException ioExp) {
                         throw new UncheckedIOException(ioExp);
                     }
@@ -248,7 +248,7 @@ public final class DefaultImageBuilder implements ImageBuilder {
             version().
             stream().
             map(Object::toString).
-            collect(Collectors.joining("."));
+            collect(joining("."));
     }
 
     private static String quote(String str) {
@@ -366,29 +366,69 @@ public final class DefaultImageBuilder implements ImageBuilder {
         }
     }
 
-    private void accept(ResourcePoolEntry file) throws IOException {
-        String fullPath = file.path();
-        String module = "/" + file.moduleName() + "/";
-        String path = fullPath.substring(module.length());
+    /**
+     * Returns the file name of this entry
+     */
+    private String entryToFileName(ResourcePoolEntry entry) {
+        if (entry.type() == ResourcePoolEntry.Type.CLASS_OR_RESOURCE)
+            throw new IllegalArgumentException("invalid type: " + entry);
+
+        String module = "/" + entry.moduleName() + "/";
+        String filename = entry.path().substring(module.length());
         // Remove radical native|config|...
-        String filename = path.substring(path.indexOf('/') + 1);
+        return filename.substring(filename.indexOf('/') + 1);
+    }
+
+    /**
+     * Returns the path of the given entry to be written in the image
+     */
+    private Path entryToImagePath(ResourcePoolEntry entry) {
+        switch (entry.type()) {
+            case NATIVE_LIB:
+                String filename = entryToFileName(entry);
+                return Paths.get(nativeDir(filename), filename);
+            case NATIVE_CMD:
+                return Paths.get("bin", entryToFileName(entry));
+            case CONFIG:
+                return Paths.get("conf", entryToFileName(entry));
+            case HEADER_FILE:
+                return Paths.get("include", entryToFileName(entry));
+            case MAN_PAGE:
+                return Paths.get("man", entryToFileName(entry));
+            case TOP:
+                return Paths.get(entryToFileName(entry));
+            case OTHER:
+                return Paths.get("other", entryToFileName(entry));
+            default:
+                throw new IllegalArgumentException("invalid type: " + entry);
+        }
+    }
+
+    private void accept(ResourcePoolEntry file) throws IOException {
         try (InputStream in = file.content()) {
             switch (file.type()) {
                 case NATIVE_LIB:
-                    writeEntry(in, destFile(nativeDir(filename), filename));
+                    Path dest = root.resolve(entryToImagePath(file));
+                    writeEntry(in, dest);
                     break;
                 case NATIVE_CMD:
-                    Path p = destFile("bin", filename);
+                    Path p = root.resolve(entryToImagePath(file));
                     writeEntry(in, p);
                     p.toFile().setExecutable(true);
                     break;
                 case CONFIG:
-                    writeEntry(in, destFile("conf", filename));
+                    writeEntry(in, root.resolve(entryToImagePath(file)));
                     break;
-                case OTHER_FILE:
-                    writeEntry(in, root.resolve(path));
+                case HEADER_FILE:
+                    writeEntry(in, root.resolve(entryToImagePath(file)));
+                    break;
+                case MAN_PAGE:
+                    writeEntry(in, root.resolve(entryToImagePath(file)));
+                    break;
+                case TOP:
                     break;
                 case OTHER:
+                    String filename = entryToFileName(file);
                     if (file instanceof SymImageFile) {
                         SymImageFile sym = (SymImageFile) file;
                         Path target = root.resolve(sym.getTargetPath());
@@ -402,13 +442,9 @@ public final class DefaultImageBuilder implements ImageBuilder {
                     }
                     break;
                 default:
-                    throw new InternalError("unexpected entry: " + fullPath);
+                    throw new InternalError("unexpected entry: " + file.path());
             }
         }
-    }
-
-    private Path destFile(String dir, String filename) {
-        return root.resolve(dir).resolve(filename);
     }
 
     private void writeEntry(InputStream in, Path dstFile) throws IOException {

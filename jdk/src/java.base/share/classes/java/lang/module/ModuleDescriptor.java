@@ -235,16 +235,7 @@ public class ModuleDescriptor
          */
         @Override
         public String toString() {
-            return toString(mods, name);
-        }
-
-        private <T> Stream<String> toStringStream(Set<T> s) {
-            return s.stream().map(e -> e.toString().toLowerCase());
-        }
-
-        private <M> String toString(Set<M> mods, String what) {
-            return (Stream.concat(toStringStream(mods), Stream.of(what)))
-                    .collect(Collectors.joining(" "));
+            return ModuleDescriptor.toString(mods, name);
         }
     }
 
@@ -397,20 +388,11 @@ public class ModuleDescriptor
          */
         @Override
         public String toString() {
-            String s = toString(mods, source);
+            String s = ModuleDescriptor.toString(mods, source);
             if (targets.isEmpty())
                 return s;
             else
                 return s + " to " + targets;
-        }
-
-        private <T> Stream<String> toStringStream(Set<T> s) {
-            return s.stream().map(e -> e.toString().toLowerCase());
-        }
-
-        private <M> String toString(Set<M> mods, String what) {
-            return (Stream.concat(toStringStream(mods), Stream.of(what)))
-                    .collect(Collectors.joining(" "));
         }
     }
 
@@ -422,8 +404,8 @@ public class ModuleDescriptor
      * <p> The <em>opens</em> directive in a module declaration declares a
      * package to be open to allow all types in the package, and all their
      * members, not just public types and their public members to be reflected
-     * on when using APIs that bypass or suppress default Java language access
-     * control checks. </p>
+     * on by APIs that support private access or a way to bypass or suppress
+     * default Java language access control checks. </p>
      *
      * @see ModuleDescriptor#opens()
      * @since 9
@@ -569,20 +551,11 @@ public class ModuleDescriptor
          */
         @Override
         public String toString() {
-            String s = toString(mods, source);
+            String s = ModuleDescriptor.toString(mods, source);
             if (targets.isEmpty())
                 return s;
             else
                 return s + " to " + targets;
-        }
-
-        private <T> Stream<String> toStringStream(Set<T> s) {
-            return s.stream().map(e -> e.toString().toLowerCase());
-        }
-
-        private <M> String toString(Set<M> mods, String what) {
-            return (Stream.concat(toStringStream(mods), Stream.of(what)))
-                    .collect(Collectors.joining(" "));
         }
     }
 
@@ -597,16 +570,14 @@ public class ModuleDescriptor
     public final static class Provides {
 
         private final String service;
-        private final Set<String> providers;
+        private final List<String> providers;
 
-        private Provides(String service, Set<String> providers) {
-            // copy while preserving insertion order
-            providers = Collections.unmodifiableSet(new LinkedHashSet<>(providers));
+        private Provides(String service, List<String> providers) {
             this.service = service;
-            this.providers = providers;
+            this.providers = Collections.unmodifiableList(providers);
         }
 
-        private Provides(String service, Set<String> providers, boolean unused) {
+        private Provides(String service, List<String> providers, boolean unused) {
             this.service = service;
             this.providers = providers;
         }
@@ -619,13 +590,13 @@ public class ModuleDescriptor
         public String service() { return service; }
 
         /**
-         * Returns the set of the fully qualified class names of the providers
+         * Returns the list of the fully qualified class names of the providers
          * or provider factories.
          *
-         * @return A non-empty and unmodifiable set of the fully qualified class
+         * @return A non-empty and unmodifiable list of the fully qualified class
          *         names of the providers or provider factories
          */
-        public Set<String> providers() { return providers; }
+        public List<String> providers() { return providers; }
 
         /**
          * Computes a hash code for this provides.
@@ -646,7 +617,7 @@ public class ModuleDescriptor
          *
          * <p> If the given object is not a {@code Provides} then this method
          * returns {@code false}. Two {@code Provides} objects are equal if the
-         * service type is equal and the set of providers is equal. </p>
+         * service type is equal and the list of providers is equal. </p>
          *
          * <p> This method satisfies the general contract of the {@link
          * java.lang.Object#equals(Object) Object.equals} method. </p>
@@ -1011,7 +982,7 @@ public class ModuleDescriptor
     private final Set<Exports> exports;
     private final Set<Opens> opens;
     private final Set<String> uses;
-    private final Map<String, Provides> provides;
+    private final Set<Provides> provides;
 
     // "Extended" information, added post-compilation by tools
     private final Version version;
@@ -1028,10 +999,10 @@ public class ModuleDescriptor
                              boolean automatic,
                              boolean synthetic,
                              Set<Requires> requires,
-                             Set<String> uses,
                              Set<Exports> exports,
                              Set<Opens> opens,
-                             Map<String, Provides> provides,
+                             Set<String> uses,
+                             Set<Provides> provides,
                              Version version,
                              String mainClass,
                              String osName,
@@ -1053,7 +1024,7 @@ public class ModuleDescriptor
         this.exports = emptyOrUnmodifiableSet(exports);
         this.opens = emptyOrUnmodifiableSet(opens);
         this.uses = emptyOrUnmodifiableSet(uses);
-        this.provides = emptyOrUnmodifiableMap(provides);
+        this.provides = emptyOrUnmodifiableSet(provides);
         this.version = version;
         this.mainClass = mainClass;
         this.osName = osName;
@@ -1099,10 +1070,10 @@ public class ModuleDescriptor
                      boolean automatic,
                      boolean synthetic,
                      Set<Requires> requires,
-                     Set<String> uses,
                      Set<Exports> exports,
                      Set<Opens> opens,
-                     Map<String, Provides> provides,
+                     Set<String> uses,
+                     Set<Provides> provides,
                      Version version,
                      String mainClass,
                      String osName,
@@ -1110,6 +1081,7 @@ public class ModuleDescriptor
                      String osVersion,
                      Set<String> packages,
                      ModuleHashes hashes,
+                     int hashCode,
                      boolean unused) {
         this.name = name;
         this.open = open;
@@ -1127,6 +1099,7 @@ public class ModuleDescriptor
         this.osArch = osArch;
         this.osVersion = osVersion;
         this.hashes = hashes;
+        this.hash = hashCode;
     }
 
     /**
@@ -1229,11 +1202,10 @@ public class ModuleDescriptor
     /**
      * <p> The services that this module provides. </p>
      *
-     * @return The possibly-empty unmodifiable map of the services that this
-     *         module provides. The map key is fully qualified class name of
-     *         the service type.
+     * @return The possibly-empty unmodifiable set of the services that this
+     *         module provides
      */
-    public Map<String, Provides> provides() {
+    public Set<Provides> provides() {
         return provides;
     }
 
@@ -1761,7 +1733,7 @@ public class ModuleDescriptor
         public Builder uses(String service) {
             if (uses.contains(requireServiceTypeName(service)))
                 throw new IllegalStateException("Dependence upon service "
-                        + service + " already declared");
+                                                + service + " already declared");
             uses.add(service);
             return this;
         }
@@ -1793,27 +1765,27 @@ public class ModuleDescriptor
          * @param  service
          *         The service type
          * @param  providers
-         *         The set of provider or provide factory class names
+         *         The list of provider or provider factory class names
          *
          * @return This builder
          *
          * @throws IllegalArgumentException
          *         If the service type or any of the provider class names is
-         *         {@code null} or is not a legal Java identifier, or the set
+         *         {@code null} or is not a legal Java identifier, or the list
          *         of provider class names is empty
          * @throws IllegalStateException
          *         If the providers for the service type have already been
          *         declared
          */
-        public Builder provides(String service, Set<String> providers) {
+        public Builder provides(String service, List<String> providers) {
             if (provides.containsKey(service))
                 throw new IllegalStateException("Providers of service "
-                                                + service + " already declared");
+                                                + service + " already declared by " + name);
 
             Provides p = new Provides(requireServiceTypeName(service), providers);
 
             // check providers after the set has been copied.
-            Set<String> providerNames = p.providers();
+            List<String> providerNames = p.providers();
             if (providerNames.isEmpty())
                 throw new IllegalArgumentException("Empty providers set");
             providerNames.forEach(Checks::requireServiceProviderName);
@@ -1840,7 +1812,9 @@ public class ModuleDescriptor
          *         declared
          */
         public Builder provides(String service, String provider) {
-            return provides(service, Collections.singleton(provider));
+            if (provider == null)
+                throw new IllegalArgumentException("'provider' is null");
+            return provides(service, List.of(provider));
         }
 
         /**
@@ -2022,14 +1996,16 @@ public class ModuleDescriptor
             Set<Exports> exports = new HashSet<>(this.exports.values());
             Set<Opens> opens = new HashSet<>(this.opens.values());
 
+            Set<Provides> provides = new HashSet<>(this.provides.values());
+
             return new ModuleDescriptor(name,
                                         open,
                                         automatic,
                                         synthetic,
                                         requires,
-                                        uses,
                                         exports,
                                         opens,
+                                        uses,
                                         provides,
                                         version,
                                         mainClass,
@@ -2103,9 +2079,9 @@ public class ModuleDescriptor
                 && automatic == that.automatic
                 && synthetic == that.synthetic
                 && requires.equals(that.requires)
-                && uses.equals(that.uses)
                 && exports.equals(that.exports)
                 && opens.equals(that.opens)
+                && uses.equals(that.uses)
                 && provides.equals(that.provides)
                 && Objects.equals(version, that.version)
                 && Objects.equals(mainClass, that.mainClass)
@@ -2175,13 +2151,7 @@ public class ModuleDescriptor
         if (!opens.isEmpty())
             sb.append(", opens: ").append(opens);
         if (!provides.isEmpty()) {
-            sb.append(", provides: [");
-            for (Map.Entry<String, Provides> entry : provides.entrySet()) {
-                sb.append(entry.getKey())
-                   .append(" with ")
-                   .append(entry.getValue());
-            }
-            sb.append("]");
+            sb.append(", provides: ").append(provides);
         }
         sb.append(" }");
         return sb.toString();
@@ -2390,6 +2360,15 @@ public class ModuleDescriptor
         }
     }
 
+    /**
+     * Returns a string containing the given set of modifiers and label.
+     */
+    private static <M> String toString(Set<M> mods, String what) {
+        return (Stream.concat(mods.stream().map(e -> e.toString().toLowerCase()),
+                              Stream.of(what)))
+                .collect(Collectors.joining(" "));
+    }
+
     static {
         /**
          * Setup the shared secret to allow code in other packages access
@@ -2437,7 +2416,7 @@ public class ModuleDescriptor
                 }
 
                 @Override
-                public Provides newProvides(String service, Set<String> providers) {
+                public Provides newProvides(String service, List<String> providers) {
                     return new Provides(service, providers, true);
                 }
 
@@ -2458,25 +2437,26 @@ public class ModuleDescriptor
                                                             boolean automatic,
                                                             boolean synthetic,
                                                             Set<Requires> requires,
-                                                            Set<String> uses,
                                                             Set<Exports> exports,
                                                             Set<Opens> opens,
-                                                            Map<String, Provides> provides,
+                                                            Set<String> uses,
+                                                            Set<Provides> provides,
                                                             Version version,
                                                             String mainClass,
                                                             String osName,
                                                             String osArch,
                                                             String osVersion,
                                                             Set<String> packages,
-                                                            ModuleHashes hashes) {
+                                                            ModuleHashes hashes,
+                                                            int hashCode) {
                     return new ModuleDescriptor(name,
                                                 open,
                                                 automatic,
                                                 synthetic,
                                                 requires,
-                                                uses,
                                                 exports,
                                                 opens,
+                                                uses,
                                                 provides,
                                                 version,
                                                 mainClass,
@@ -2485,6 +2465,7 @@ public class ModuleDescriptor
                                                 osVersion,
                                                 packages,
                                                 hashes,
+                                                hashCode,
                                                 false);
                 }
 
@@ -2515,7 +2496,6 @@ public class ModuleDescriptor
                                                   Path... entries) {
                     return new ModulePath(version, isLinkPhase, entries);
                 }
-
             });
     }
 

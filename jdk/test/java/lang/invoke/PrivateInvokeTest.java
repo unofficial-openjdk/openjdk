@@ -23,7 +23,7 @@
 
 /* @test
  * @summary white-box testing of method handle sub-primitives
- * @modules java.base/java.lang.invoke:private
+ * @modules java.base/java.lang.invoke:open
  * @run junit test.java.lang.invoke.PrivateInvokeTest
  */
 

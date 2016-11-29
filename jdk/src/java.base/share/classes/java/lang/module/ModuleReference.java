@@ -60,8 +60,8 @@ public final class ModuleReference {
     // the function that computes the hash of this module reference
     private final HashSupplier hasher;
 
-    // cached hash string to avoid needing to compute it many times
-    private String cachedHash;
+    // cached hash to avoid needing to compute it many times
+    private byte[] cachedHash;
 
 
     /**
@@ -183,13 +183,13 @@ public final class ModuleReference {
     }
 
     /**
-     * Computes the hash of this module, returning it as a hex string.
-     * Returns {@code null} if the hash cannot be computed.
+     * Computes the hash of this module. Returns {@code null} if the hash
+     * cannot be computed.
      *
      * @throws java.io.UncheckedIOException if an I/O error occurs
      */
-    String computeHash(String algorithm) {
-        String result = cachedHash;
+    byte[] computeHash(String algorithm) {
+        byte[] result = cachedHash;
         if (result != null)
             return result;
         if (hasher == null)

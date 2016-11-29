@@ -37,7 +37,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
-import jdk.internal.module.ServicesCatalog;
 import jdk.internal.reflect.ConstantPool;
 import sun.reflect.annotation.AnnotationType;
 import sun.nio.ch.Interruptible;
@@ -143,23 +142,6 @@ public interface JavaLangAccess {
      * Returns the boot Layer
      */
     Layer getBootLayer();
-
-    /**
-     * Records in the class loader that the given layer has at least one
-     * module defined to the class loader.
-     */
-    void bindToLayer(ClassLoader loader, Layer layer);
-
-    /**
-     * Returns the ServicesCatalog for the given class loader.
-     */
-    ServicesCatalog getServicesCatalog(ClassLoader cl);
-
-    /**
-     * Returns the ServicesCatalog for the given class loader, creating it
-     * if doesn't already exist.
-     */
-    ServicesCatalog createOrGetServicesCatalog(ClassLoader cl);
 
     /**
      * Returns the ConcurrentHashMap used as a storage for ClassLoaderValue(s)

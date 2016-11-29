@@ -29,6 +29,7 @@ import java.lang.module.ModuleDescriptor;
 import java.lang.reflect.Layer;
 import java.lang.reflect.Module;
 import java.net.URI;
+import java.util.stream.Stream;
 
 import jdk.internal.module.ServicesCatalog;
 
@@ -111,4 +112,15 @@ public interface JavaLangReflectModuleAccess {
      */
     ServicesCatalog getServicesCatalog(Layer layer);
 
+    /**
+     * Returns an ordered stream of layers. The first element is is the
+     * given layer, the remaining elements are its parents, in DFS order.
+     */
+    Stream<Layer> layers(Layer layer);
+
+    /**
+     * Returns a stream of the layers that have modules defined to the
+     * given class loader.
+     */
+    Stream<Layer> layers(ClassLoader loader);
 }

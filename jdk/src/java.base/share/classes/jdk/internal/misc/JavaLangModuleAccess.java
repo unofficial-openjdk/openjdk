@@ -27,8 +27,6 @@ package jdk.internal.misc;
 
 import java.io.PrintStream;
 import java.lang.module.Configuration;
-import jdk.internal.module.ModuleHashes;
-
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Opens;
@@ -36,15 +34,18 @@ import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Version;
 import java.lang.module.ModuleFinder;
-import java.util.Collection;
 import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
+
+import jdk.internal.module.ModuleHashes;
 
 /**
  * Provides access to non-public methods in java.lang.module.
@@ -105,7 +106,7 @@ public interface JavaLangModuleAccess {
      * Returns a {@code ModuleDescriptor.Provides}
      * of the given service name and providers.
      */
-    Provides newProvides(String service, Set<String> providers);
+    Provides newProvides(String service, List<String> providers);
 
     /**
      * Returns a {@code ModuleDescriptor.Version} of the given version.
@@ -125,17 +126,18 @@ public interface JavaLangModuleAccess {
                                          boolean automatic,
                                          boolean synthetic,
                                          Set<Requires> requires,
-                                         Set<String> uses,
                                          Set<Exports> exports,
                                          Set<Opens> opens,
-                                         Map<String, Provides> provides,
+                                         Set<String> uses,
+                                         Set<Provides> provides,
                                          Version version,
                                          String mainClass,
                                          String osName,
                                          String osArch,
                                          String osVersion,
                                          Set<String> packages,
-                                         ModuleHashes hashes);
+                                         ModuleHashes hashes,
+                                         int hashCode);
 
     /**
      * Returns the object with the hashes of other modules

@@ -31,7 +31,6 @@ import java.io.UncheckedIOException;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.Layer;
 import java.lang.reflect.Module;
 import java.net.URL;
 import java.security.AccessController;
@@ -40,11 +39,9 @@ import java.security.CodeSource;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.security.cert.Certificate;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -56,13 +53,11 @@ import java.util.Stack;
 import java.util.Vector;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import jdk.internal.perf.PerfCounter;
-import jdk.internal.module.ServicesCatalog;
 import jdk.internal.loader.BootLoader;
 import jdk.internal.loader.ClassLoaders;
 import jdk.internal.misc.SharedSecrets;
@@ -107,9 +102,9 @@ import sun.security.util.SecurityConstants;
  * class or resource itself.
  *
  * <p> Class loaders that support concurrent loading of classes are known as
- * <em>parallel capable</em> class loaders and are required to register
- * themselves at their class initialization time by invoking the
- * {@link
+ * <em>{@linkplain #isParallelCapable() parallel capable}</em> class loaders and
+ * are required to register themselves at their class initialization time by
+ * invoking the {@link
  * #registerAsParallelCapable <tt>ClassLoader.registerAsParallelCapable</tt>}
  * method. Note that the <tt>ClassLoader</tt> class is registered as parallel
  * capable by default. However, its subclasses still need to register themselves
@@ -337,6 +332,14 @@ public abstract class ClassLoader {
     }
 
     private static Void checkCreateClassLoader() {
+        return checkCreateClassLoader(null);
+    }
+
+    private static Void checkCreateClassLoader(String name) {
+        if (name != null && name.isEmpty()) {
+            throw new IllegalArgumentException("name must be non-empty or null");
+        }
+
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkCreateClassLoader();
@@ -363,6 +366,27 @@ public abstract class ClassLoader {
     }
 
     /**
+     * Creates a new class loader of the specified name and using the
+     * specified parent class loader for delegation.
+     *
+     * @param  name   class loader name; or {@code null} if not named
+     * @param  parent the parent class loader
+     *
+     * @throws IllegalArgumentException if the given name is empty.
+     *
+     * @throws SecurityException
+     *         If a security manager exists and its
+     *         {@link SecurityManager#checkCreateClassLoader()}
+     *         method doesn't allow creation of a new class loader.
+     *
+     * @since  9
+     */
+    protected ClassLoader(String name, ClassLoader parent) {
+        this(checkCreateClassLoader(name), name, parent);
+    }
+
+
+    /**
      * Creates a new class loader using the specified parent class loader for
      * delegation.
      *
@@ -383,27 +407,6 @@ public abstract class ClassLoader {
      */
     protected ClassLoader(ClassLoader parent) {
         this(checkCreateClassLoader(), null, parent);
-    }
-
-    /**
-     * Creates a new class loader of the specified name and using the
-     * specified parent class loader for delegation.
-     *
-     * @param name
-     *        Class loader name; can be {@code null}
-     *
-     * @param parent
-     *        The parent class loader
-     *
-     * @throws  SecurityException
-     *          If a security manager exists and its
-     *          {@link SecurityManager#checkCreateClassLoader()}
-     *          method doesn't allow creation of a new class loader.
-     *
-     * @since  9
-     */
-    protected ClassLoader(String name, ClassLoader parent) {
-        this(checkCreateClassLoader(), name, parent);
     }
 
     /**
@@ -429,12 +432,22 @@ public abstract class ClassLoader {
      * Returns the name of this class loader or {@code null} if
      * this class loader is not named.
      *
+     * @apiNote This method is non-final for compatibility.  If this
+     * method is overridden, this method must return the same name
+     * as specified when this class loader was instantiated.
+     *
      * @return name of this class loader; or {@code null} if
      * this class loader is not named.
      *
      * @since 9
      */
     public String getName() {
+        return name;
+    }
+
+    // package-private used by StackTraceElement to avoid
+    // calling the overrideable getName method
+    final String name() {
         return name;
     }
 
@@ -1305,7 +1318,9 @@ public abstract class ClassLoader {
      * specified by {@link Module#getResourceAsStream Module.getResourceAsStream}.
      * Additionally, and except for the special case where the resource has a
      * name ending with "{@code .class}", this method will only find resources in
-     * packages of named modules when the package is exported-private. </p>
+     * packages of named modules when the package is {@link Module#isOpen(String)
+     * opened} unconditionally (even if the caller of this method is in the
+     * same module as the resource). </p>
      *
      * @apiNote Where several modules are defined to the same class loader,
      * and where more than one module contains a resource with the given name,
@@ -1321,8 +1336,8 @@ public abstract class ClassLoader {
      * @return  {@code URL} object for reading the resource; {@code null} if
      *          the resource could not be found, a {@code URL} could not be
      *          constructed to locate the resource, the resource is in a package
-     *          that is not unconditionally exported-private, or access to the
-     *          resource is denied by the security manager.
+     *          that is not opened unconditionally, or access to the resource is
+     *          denied by the security manager.
      *
      * @since  1.1
      */
@@ -1354,7 +1369,9 @@ public abstract class ClassLoader {
      * specified by {@link Module#getResourceAsStream Module.getResourceAsStream}.
      * Additionally, and except for the special case where the resource has a
      * name ending with "{@code .class}", this method will only find resources in
-     * packages of named modules when the package is exported-private. </p>
+     * packages of named modules when the package is {@link Module#isOpen(String)
+     * opened} unconditionally (even if the caller of this method is in the
+     * same module as the resource).</p>
      *
      * @apiNote Where several modules are defined to the same class loader,
      * and where more than one module contains a resource with the given name,
@@ -1372,9 +1389,9 @@ public abstract class ClassLoader {
      * @return  An enumeration of {@link java.net.URL <tt>URL</tt>} objects for
      *          the resource. If no resources could  be found, the enumeration
      *          will be empty. Resources for which a {@code URL} cannot be
-     *          constructed, are not in a package that is unconditionally
-     *          exported-private, or access to the resource is denied by the
-     *          security manager, are not returned in the enumeration.
+     *          constructed, are in package that is not opened unconditionally,
+     *          or access to the resource is denied by the security manager,
+     *          are not returned in the enumeration.
      *
      * @throws  IOException
      *          If I/O errors occur
@@ -1417,7 +1434,9 @@ public abstract class ClassLoader {
      * specified by {@link Module#getResourceAsStream Module.getResourceAsStream}.
      * Additionally, and except for the special case where the resource has a
      * name ending with "{@code .class}", this method will only find resources in
-     * packages of named modules when the package is exported-private. </p>
+     * packages of named modules when the package is {@link Module#isOpen(String)
+     * opened} unconditionally (even if the caller of this method is in the
+     * same module as the resource). </p>
      *
      * @apiNote When overriding this method it is recommended that an
      * implementation ensures that any delegation is consistent with the {@link
@@ -1429,9 +1448,10 @@ public abstract class ClassLoader {
      *         The resource name
      *
      * @return  A stream of resource {@link java.net.URL URL} objects. If no
-     *          resources could  be found, the stream will be empty.  Resources
-     *          that the class loader doesn't have access to will not be in the
-     *          stream.
+     *          resources could  be found, the stream will be empty. Resources
+     *          for which a {@code URL} cannot be constructed, are in a package
+     *          that is not opened unconditionally, or access to the resource
+     *          is denied by the security manager, will not be in the stream.
      *
      * @see  #findResources(String)
      *
@@ -1458,7 +1478,8 @@ public abstract class ClassLoader {
      * rules for encapsulation specified in the {@code Module} {@link
      * Module#getResourceAsStream getResourceAsStream} method. Additionally,
      * it must not find non-"{@code .class}" resources in packages of named
-     * modules unless the package is unconditionally exported-private. </p>
+     * modules unless the package is {@link Module#isOpen(String) opened}
+     * unconditionally. </p>
      *
      * @param  name
      *         The resource name
@@ -1466,8 +1487,8 @@ public abstract class ClassLoader {
      * @return  {@code URL} object for reading the resource; {@code null} if
      *          the resource could not be found, a {@code URL} could not be
      *          constructed to locate the resource, the resource is in a package
-     *          that is not unconditionally exported-private, or access to the
-     *          resource is denied by the security manager.
+     *          that is not opened unconditionally, or access to the resource is
+     *          denied by the security manager.
      *
      * @since  1.2
      */
@@ -1485,7 +1506,8 @@ public abstract class ClassLoader {
      * rules for encapsulation specified in the {@code Module} {@link
      * Module#getResourceAsStream getResourceAsStream} method. Additionally,
      * it must not find non-"{@code .class}" resources in packages of named
-     * modules unless the package is unconditionally exported-private. </p>
+     * modules unless the package is {@link Module#isOpen(String) opened}
+     * unconditionally. </p>
      *
      * @param  name
      *         The resource name
@@ -1493,9 +1515,9 @@ public abstract class ClassLoader {
      * @return  An enumeration of {@link java.net.URL <tt>URL</tt>} objects for
      *          the resource. If no resources could  be found, the enumeration
      *          will be empty. Resources for which a {@code URL} cannot be
-     *          constructed, are not in a package that is unconditionally
-     *          exported-private, or access to the resource is denied by the
-     *          security manager, are not returned in the enumeration.
+     *          constructed, are in a package that is not opened unconditionally,
+     *          or access to the resource is denied by the security manager,
+     *          are not returned in the enumeration.
      *
      * @throws  IOException
      *          If I/O errors occur
@@ -1507,7 +1529,7 @@ public abstract class ClassLoader {
     }
 
     /**
-     * Registers the caller as parallel capable.
+     * Registers the caller as {@linkplain #isParallelCapable() parallel capable}.
      * The registration succeeds if and only if all of the following
      * conditions are met:
      * <ol>
@@ -1518,8 +1540,10 @@ public abstract class ClassLoader {
      * <p>Note that once a class loader is registered as parallel capable, there
      * is no way to change it back.</p>
      *
-     * @return  true if the caller is successfully registered as
-     *          parallel capable and false if otherwise.
+     * @return  {@code true} if the caller is successfully registered as
+     *          parallel capable and {@code false} if otherwise.
+     *
+     * @see #isParallelCapable()
      *
      * @since   1.7
      */
@@ -1531,6 +1555,22 @@ public abstract class ClassLoader {
     }
 
     /**
+     * Returns {@code true} if this class loader is
+     * {@linkplain #registerAsParallelCapable parallel capable}, otherwise
+     * {@code false}.
+     *
+     * @return  {@code true} if this class loader is parallel capable,
+     *          otherwise {@code false}.
+     *
+     * @see #registerAsParallelCapable()
+     *
+     * @since   9
+     */
+    public final boolean isParallelCapable() {
+        return ParallelLoaders.isRegistered(this.getClass());
+    }
+
+    /**
      * Find a resource of the specified name from the search path used to load
      * classes.  This method locates the resource through the system class
      * loader (see {@link #getSystemClassLoader()}).
@@ -1539,7 +1579,8 @@ public abstract class ClassLoader {
      * specified by {@link Module#getResourceAsStream Module.getResourceAsStream}.
      * Additionally, and except for the special case where the resource has a
      * name ending with "{@code .class}", this method will only find resources in
-     * packages of named modules when the package is exported-private. </p>
+     * packages of named modules when the package is {@link Module#isOpen(String)
+     * opened} unconditionally. </p>
      *
      * @param  name
      *         The resource name
@@ -1547,8 +1588,8 @@ public abstract class ClassLoader {
      * @return  A {@link java.net.URL <tt>URL</tt>} to the resource; {@code
      *          null} if the resource could not be found, a URL could not be
      *          constructed to locate the resource, the resource is in a package
-     *          that is not unconditionally exported-private or access to the
-     *          resource is denied by the security manager.
+     *          that is not opened unconditionally or access to the resource is
+     *          denied by the security manager.
      *
      * @since  1.1
      */
@@ -1569,7 +1610,8 @@ public abstract class ClassLoader {
      * specified by {@link Module#getResourceAsStream Module.getResourceAsStream}.
      * Additionally, and except for the special case where the resource has a
      * name ending with "{@code .class}", this method will only find resources in
-     * packages of named modules when the package is exported-private. </p>
+     * packages of named modules when the package is {@link Module#isOpen(String)
+     * opened} unconditionally. </p>
      *
      * @param  name
      *         The resource name
@@ -1577,9 +1619,9 @@ public abstract class ClassLoader {
      * @return  An enumeration of {@link java.net.URL <tt>URL</tt>} objects for
      *          the resource. If no resources could  be found, the enumeration
      *          will be empty. Resources for which a {@code URL} cannot be
-     *          constructed, are not in a package that is unconditionally
-     *          exported-private, or access to the resource is denied by the
-     *          security manager, are not returned in the enumeration.
+     *          constructed, are in a package that is not opened unconditionally,
+     *          or access to the resource is denied by the security manager,
+     *          are not returned in the enumeration.
      *
      * @throws  IOException
      *          If I/O errors occur
@@ -1602,15 +1644,16 @@ public abstract class ClassLoader {
      * specified by {@link Module#getResourceAsStream Module.getResourceAsStream}.
      * Additionally, and except for the special case where the resource has a
      * name ending with "{@code .class}", this method will only find resources in
-     * packages of named modules when the package is exported-private. </p>
+     * packages of named modules when the package is {@link Module#isOpen(String)
+     * opened} unconditionally. </p>
      *
      * @param  name
      *         The resource name
      *
      * @return  An input stream for reading the resource; {@code null} if the
      *          resource could not be found, the resource is in a package that
-     *          is not unconditionally exported-private, or access to the
-     *          resource is denied by the security manager.
+     *          is not opened unconditionally, or access to the resource is
+     *          denied by the security manager.
      *
      * @since  1.1
      */
@@ -1632,15 +1675,16 @@ public abstract class ClassLoader {
      * specified by {@link Module#getResourceAsStream Module.getResourceAsStream}.
      * Additionally, and except for the special case where the resource has a
      * name ending with "{@code .class}", this method will only find resources in
-     * packages of named modules when the package is exported-private. </p>
+     * packages of named modules when the package is {@link Module#isOpen(String)
+     * opened} unconditionally. </p>
      *
      * @param  name
      *         The resource name
      *
      * @return  An input stream for reading the resource; {@code null} if the
      *          resource could not be found, the resource is in a package that
-     *          is not unconditionally exported-private, or access to the
-     *          resource is denied by the security manager.
+     *          is not opened unconditionally, or access to the resource is
+     *          denied by the security manager.
      *
      * @since  1.1
      */
@@ -1703,6 +1747,9 @@ public abstract class ClassLoader {
      * <a href="#builtinLoaders">platform classes</a> are visible to
      * the platform class loader.
      *
+     * @implNote The name of the builtin platform class loader is
+     * {@code "platform"}.
+     *
      * @return  The platform {@code ClassLoader}.
      *
      * @throws  SecurityException
@@ -1755,6 +1802,16 @@ public abstract class ClassLoader {
      * examined until the VM is almost fully initialized. Code that executes
      * this method during startup should take care not to cache the return
      * value until the system is fully initialized.
+     *
+     * <p> The name of the built-in system class loader is {@code "app"}.
+     * The class path used by the built-in system class loader is determined
+     * by the system property "{@code java.class.path}" during early
+     * initialization of the VM. If the system property is not defined,
+     * or its value is an empty string, then there is no class path
+     * when the initial module is a module on the application module path,
+     * i.e. <em>a named module</em>. If the initial module is not on
+     * the application module path then the class path defaults to
+     * the current working directory.
      *
      * @return  The system <tt>ClassLoader</tt> for delegation
      *
@@ -2713,72 +2770,7 @@ public abstract class ClassLoader {
     private static native AssertionStatusDirectives retrieveDirectives();
 
 
-    // -- Layers --
-
-    /**
-     * Returns a possible-empty stream of the layers with modules defined to
-     * this class loader.
-     *
-     * @apiNote TBD whether to keep this method or a variant of.
-     *
-     * @return A stream of the layers with modules defined to this class loader
-     * @since 9
-     */
-    public Stream<Layer> layers() {
-        Collection<Layer> layers = this.layers;
-        if (layers == null) {
-            return Stream.empty();
-        } else {
-            return layers.stream();
-        }
-    }
-
-    private volatile Collection<Layer> layers; // move to CLV?
-
-    void bindToLayer(Layer layer) {
-        Collection<Layer> layers = this.layers;
-        if (layers == null) {
-            layers = new CopyOnWriteArrayList<>();
-            boolean set = trySetObjectField("layers", layers);
-            if (!set) {
-                // beaten by someone else
-                layers = this.layers;
-            }
-        }
-        layers.add(layer);
-    }
-
-
     // -- Misc --
-
-
-    /**
-     * Returns the ServiceCatalog for modules defined to this class loader
-     * or {@code null} if this class loader does not have a services catalog.
-     */
-    ServicesCatalog getServicesCatalog() {
-        return servicesCatalog;
-    }
-
-    /**
-     * Returns the ServiceCatalog for modules defined to this class loader,
-     * creating it if it doesn't already exist.
-     */
-    ServicesCatalog createOrGetServicesCatalog() {
-        ServicesCatalog catalog = servicesCatalog;
-        if (catalog == null) {
-            catalog = ServicesCatalog.create();
-            boolean set = trySetObjectField("servicesCatalog", catalog);
-            if (!set) {
-                // beaten by someone else
-                catalog = servicesCatalog;
-            }
-        }
-        return catalog;
-    }
-
-    // the ServiceCatalog for modules associated with this class loader.
-    private volatile ServicesCatalog servicesCatalog;   // move to CLV?
 
     /**
      * Returns the ConcurrentHashMap used as a storage for ClassLoaderValue(s)

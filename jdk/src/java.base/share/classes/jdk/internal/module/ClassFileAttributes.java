@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,10 +31,11 @@ import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Opens;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Version;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -87,6 +88,10 @@ public final class ClassFileAttributes {
         {
             ModuleAttribute attr = new ModuleAttribute();
 
+            // module_name
+            String mn = cr.readUTF8(off, buf).replace('/', '.');
+            off += 2;
+
             // module_flags
             int module_flags = cr.readUnsignedShort(off);
             boolean open = ((module_flags & ACC_OPEN) != 0);
@@ -94,16 +99,16 @@ public final class ClassFileAttributes {
 
             ModuleDescriptor.Builder builder;
             if (open) {
-                builder = JLMA.newOpenModuleBuilder("m", false);
+                builder = JLMA.newOpenModuleBuilder(mn, false);
             } else {
-                builder = JLMA.newModuleBuilder("m", false);
+                builder = JLMA.newModuleBuilder(mn, false);
             }
 
             // requires_count and requires[requires_count]
             int requires_count = cr.readUnsignedShort(off);
             off += 2;
             for (int i=0; i<requires_count; i++) {
-                String dn = cr.readUTF8(off, buf);
+                String dn = cr.readUTF8(off, buf).replace('/', '.');
                 int flags = cr.readUnsignedShort(off + 2);
                 Set<Requires.Modifier> mods;
                 if (flags == 0) {
@@ -149,7 +154,7 @@ public final class ClassFileAttributes {
                     if (exports_to_count > 0) {
                         Set<String> targets = new HashSet<>();
                         for (int j=0; j<exports_to_count; j++) {
-                            String t = cr.readUTF8(off, buf);
+                            String t = cr.readUTF8(off, buf).replace('/', '.');
                             off += 2;
                             targets.add(t);
                         }
@@ -186,7 +191,7 @@ public final class ClassFileAttributes {
                     if (opens_to_count > 0) {
                         Set<String> targets = new HashSet<>();
                         for (int j=0; j<opens_to_count; j++) {
-                            String t = cr.readUTF8(off, buf);
+                            String t = cr.readUTF8(off, buf).replace('/', '.');
                             off += 2;
                             targets.add(t);
                         }
@@ -212,15 +217,19 @@ public final class ClassFileAttributes {
             int provides_count = cr.readUnsignedShort(off);
             off += 2;
             if (provides_count > 0) {
-                Map<String, Set<String>> provides = new HashMap<>();
                 for (int i=0; i<provides_count; i++) {
-                    String sn = cr.readClass(off, buf).replace('/', '.');
-                    String cn = cr.readClass(off + 2, buf).replace('/', '.');
-                    provides.computeIfAbsent(sn, k -> new LinkedHashSet<>()).add(cn);
-                    off += 4;
+                    String service = cr.readClass(off, buf).replace('/', '.');
+                    off += 2;
+                    int with_count = cr.readUnsignedShort(off);
+                    off += 2;
+                    List<String> providers = new ArrayList<>();
+                    for (int j=0; j<with_count; j++) {
+                        String cn = cr.readClass(off, buf).replace('/', '.');
+                        off += 2;
+                        providers.add(cn);
+                    }
+                    builder.provides(service, providers);
                 }
-                provides.entrySet().forEach(e -> builder.provides(e.getKey(),
-                                                                  e.getValue()));
             }
 
             attr.descriptor = builder.build();
@@ -236,6 +245,11 @@ public final class ClassFileAttributes {
         {
             assert descriptor != null;
             ByteVector attr = new ByteVector();
+
+            // module_name
+            String mn = descriptor.name();
+            int module_name_index = cw.newUTF8(mn.replace('.', '/'));
+            attr.putShort(module_name_index);
 
             // module_flags
             int module_flags = 0;
@@ -260,7 +274,7 @@ public final class ClassFileAttributes {
                     flags |= ACC_SYNTHETIC;
                 if (md.modifiers().contains(Requires.Modifier.MANDATED))
                     flags |= ACC_MANDATED;
-                int index = cw.newUTF8(dn);
+                int index = cw.newUTF8(dn.replace('.', '/'));
                 attr.putShort(index);
                 attr.putShort(flags);
             }
@@ -281,7 +295,7 @@ public final class ClassFileAttributes {
                 if (e.isQualified()) {
                     Set<String> ts = e.targets();
                     attr.putShort(ts.size());
-                    ts.forEach(t -> attr.putShort(cw.newUTF8(t)));
+                    ts.forEach(t -> attr.putShort(cw.newUTF8(t.replace('.', '/'))));
                 } else {
                     attr.putShort(0);
                 }
@@ -304,7 +318,7 @@ public final class ClassFileAttributes {
                 if (obj.isQualified()) {
                     Set<String> ts = obj.targets();
                     attr.putShort(ts.size());
-                    ts.forEach(t -> attr.putShort(cw.newUTF8(t)));
+                    ts.forEach(t -> attr.putShort(cw.newUTF8(t.replace('.', '/'))));
                 } else {
                     attr.putShort(0);
                 }
@@ -326,14 +340,13 @@ public final class ClassFileAttributes {
             if (descriptor.provides().isEmpty()) {
                 attr.putShort(0);
             } else {
-                int count = descriptor.provides().values()
-                    .stream().mapToInt(ps -> ps.providers().size()).sum();
-                attr.putShort(count);
-                for (Provides p : descriptor.provides().values()) {
+                attr.putShort(descriptor.provides().size());
+                for (Provides p : descriptor.provides()) {
                     String service = p.service().replace('.', '/');
-                    int index = cw.newClass(service);
+                    attr.putShort(cw.newClass(service));
+                    int with_count = p.providers().size();
+                    attr.putShort(with_count);
                     for (String provider : p.providers()) {
-                        attr.putShort(index);
                         attr.putShort(cw.newClass(provider.replace('.', '/')));
                     }
                 }
@@ -344,13 +357,13 @@ public final class ClassFileAttributes {
     }
 
     /**
-     * Packages attribute.
+     * ModulePackages attribute.
      *
      * <pre> {@code
      *
-     * Packages_attribute {
+     * ModulePackages_attribute {
      *   // index to CONSTANT_utf8_info structure in constant pool representing
-     *   // the string "Packages"
+     *   // the string "ModulePackages"
      *   u2 attribute_name_index;
      *   u4 attribute_length;
      *
@@ -362,15 +375,15 @@ public final class ClassFileAttributes {
      *
      * }</pre>
      */
-    public static class PackagesAttribute extends Attribute {
+    public static class ModulePackagesAttribute extends Attribute {
         private final Set<String> packages;
 
-        public PackagesAttribute(Set<String> packages) {
-            super(PACKAGES);
+        public ModulePackagesAttribute(Set<String> packages) {
+            super(MODULE_PACKAGES);
             this.packages = packages;
         }
 
-        public PackagesAttribute() {
+        public ModulePackagesAttribute() {
             this(null);
         }
 
@@ -394,7 +407,7 @@ public final class ClassFileAttributes {
                 off += 2;
             }
 
-            return new PackagesAttribute(packages);
+            return new ModulePackagesAttribute(packages);
         }
 
         @Override
@@ -422,13 +435,13 @@ public final class ClassFileAttributes {
     }
 
     /**
-     * Version attribute.
+     * ModuleVersion attribute.
      *
      * <pre> {@code
      *
-     * Version_attribute {
+     * ModuleVersion_attribute {
      *   // index to CONSTANT_utf8_info structure in constant pool representing
-     *   // the string "Version"
+     *   // the string "ModuleVersion"
      *   u2 attribute_name_index;
      *   u4 attribute_length;
      *
@@ -438,15 +451,15 @@ public final class ClassFileAttributes {
      *
      * } </pre>
      */
-    public static class VersionAttribute extends Attribute {
+    public static class ModuleVersionAttribute extends Attribute {
         private final Version version;
 
-        public VersionAttribute(Version version) {
-            super(VERSION);
+        public ModuleVersionAttribute(Version version) {
+            super(MODULE_VERSION);
             this.version = version;
         }
 
-        public VersionAttribute() {
+        public ModuleVersionAttribute() {
             this(null);
         }
 
@@ -459,7 +472,7 @@ public final class ClassFileAttributes {
                                  Label[] labels)
         {
             String value = cr.readUTF8(off, buf);
-            return new VersionAttribute(Version.parse(value));
+            return new ModuleVersionAttribute(Version.parse(value));
         }
 
         @Override
@@ -477,13 +490,13 @@ public final class ClassFileAttributes {
     }
 
     /**
-     * MainClass attribute.
+     * ModuleMainClass attribute.
      *
      * <pre> {@code
      *
      * MainClass_attribute {
      *   // index to CONSTANT_utf8_info structure in constant pool representing
-     *   // the string "MainClass"
+     *   // the string "ModuleMainClass"
      *   u2 attribute_name_index;
      *   u4 attribute_length;
      *
@@ -493,15 +506,15 @@ public final class ClassFileAttributes {
      *
      * } </pre>
      */
-    public static class MainClassAttribute extends Attribute {
+    public static class ModuleMainClassAttribute extends Attribute {
         private final String mainClass;
 
-        public MainClassAttribute(String mainClass) {
-            super(MAIN_CLASS);
+        public ModuleMainClassAttribute(String mainClass) {
+            super(MODULE_MAIN_CLASS);
             this.mainClass = mainClass;
         }
 
-        public MainClassAttribute() {
+        public ModuleMainClassAttribute() {
             this(null);
         }
 
@@ -514,7 +527,7 @@ public final class ClassFileAttributes {
                                  Label[] labels)
         {
             String value = cr.readClass(off, buf);
-            return new MainClassAttribute(value);
+            return new ModuleMainClassAttribute(value);
         }
 
         @Override
@@ -532,13 +545,13 @@ public final class ClassFileAttributes {
     }
 
     /**
-     * TargetPlatform attribute.
+     * ModuleTarget attribute.
      *
      * <pre> {@code
      *
      * TargetPlatform_attribute {
      *   // index to CONSTANT_utf8_info structure in constant pool representing
-     *   // the string "TargetPlatform"
+     *   // the string "ModuleTarget"
      *   u2 attribute_name_index;
      *   u4 attribute_length;
      *
@@ -552,19 +565,19 @@ public final class ClassFileAttributes {
      *
      * } </pre>
      */
-    public static class TargetPlatformAttribute extends Attribute {
+    public static class ModuleTargetAttribute extends Attribute {
         private final String osName;
         private final String osArch;
         private final String osVersion;
 
-        public TargetPlatformAttribute(String osName, String osArch, String osVersion) {
-            super(TARGET_PLATFORM);
+        public ModuleTargetAttribute(String osName, String osArch, String osVersion) {
+            super(MODULE_TARGET);
             this.osName = osName;
             this.osArch = osArch;
             this.osVersion = osVersion;
         }
 
-        public TargetPlatformAttribute() {
+        public ModuleTargetAttribute() {
             this(null, null, null);
         }
 
@@ -596,7 +609,7 @@ public final class ClassFileAttributes {
                 osVersion = cr.readUTF8(off, buf);
             off += 2;
 
-            return new TargetPlatformAttribute(osName, osArch, osVersion);
+            return new ModuleTargetAttribute(osName, osArch, osVersion);
         }
 
         @Override
@@ -628,39 +641,37 @@ public final class ClassFileAttributes {
     }
 
     /**
-     * Hashes attribute.
+     * ModuleHashes attribute.
      *
      * <pre> {@code
      *
-     * Hashes_attribute {
+     * ModuleHashes_attribute {
      *   // index to CONSTANT_utf8_info structure in constant pool representing
-     *   // the string "Hashes"
+     *   // the string "ModuleHashes"
      *   u2 attribute_name_index;
      *   u4 attribute_length;
      *
-     *   // index to CONSTANT_CONSTANT_utf8_info structure with algorithm name
+     *   // index to CONSTANT_utf8_info structure with algorithm name
      *   u2 algorithm_index;
      *
      *   // the number of entries in the hashes table
-     *   u2 hash_count;
-     *   {   u2 requires_index
-     *       u2 hash_index;
-     *   } hashes[hash_count];
+     *   u2 hashes_count;
+     *   {   u2 module_name_index
+     *       u2 hash_length;
+     *       u1 hash[hash_length];
+     *   } hashes[hashes_count];
      *
      * } </pre>
-     *
-     * @apiNote For now the hash is stored in base64 as a UTF-8 string, an
-     * alternative is to store it as an array of u1.
      */
-    static class HashesAttribute extends Attribute {
+    static class ModuleHashesAttribute extends Attribute {
         private final ModuleHashes hashes;
 
-        HashesAttribute(ModuleHashes hashes) {
-            super(HASHES);
+        ModuleHashesAttribute(ModuleHashes hashes) {
+            super(MODULE_HASHES);
             this.hashes = hashes;
         }
 
-        HashesAttribute() {
+        ModuleHashesAttribute() {
             this(null);
         }
 
@@ -675,21 +686,28 @@ public final class ClassFileAttributes {
             String algorithm = cr.readUTF8(off, buf);
             off += 2;
 
-            int hash_count = cr.readUnsignedShort(off);
+            int hashes_count = cr.readUnsignedShort(off);
             off += 2;
 
-            Map<String, String> map = new HashMap<>();
-            for (int i=0; i<hash_count; i++) {
-                String dn = cr.readUTF8(off, buf);
+            Map<String, byte[]> map = new HashMap<>();
+            for (int i=0; i<hashes_count; i++) {
+                String mn = cr.readUTF8(off, buf).replace('/', '.');
                 off += 2;
-                String hash = cr.readUTF8(off, buf);
+
+                int hash_length = cr.readUnsignedShort(off);
                 off += 2;
-                map.put(dn, hash);
+                byte[] hash = new byte[hash_length];
+                for (int j=0; j<hash_length; j++) {
+                    hash[j] = (byte) (0xff & cr.readByte(off+j));
+                }
+                off += hash_length;
+
+                map.put(mn, hash);
             }
 
             ModuleHashes hashes = new ModuleHashes(algorithm, map);
 
-            return new HashesAttribute(hashes);
+            return new ModuleHashesAttribute(hashes);
         }
 
         @Override
@@ -707,11 +725,15 @@ public final class ClassFileAttributes {
             Set<String> names = hashes.names();
             attr.putShort(names.size());
 
-            for (String dn : names) {
-                String hash = hashes.hashFor(dn);
+            for (String mn : names) {
+                byte[] hash = hashes.hashFor(mn);
                 assert hash != null;
-                attr.putShort(cw.newUTF8(dn));
-                attr.putShort(cw.newUTF8(hash));
+                attr.putShort(cw.newUTF8(mn.replace('.', '/')));
+
+                attr.putShort(hash.length);
+                for (byte b: hash) {
+                    attr.putByte(b);
+                }
             }
 
             return attr;

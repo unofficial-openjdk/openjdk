@@ -70,7 +70,6 @@ import jdk.internal.logger.LazyLoggers;
 import jdk.internal.logger.LocalizedLoggerWrapper;
 
 import jdk.internal.module.ModuleBootstrap;
-import jdk.internal.module.ServicesCatalog;
 
 /**
  * The <code>System</code> class contains several useful class fields
@@ -2034,15 +2033,6 @@ public final class System {
             }
             public Layer getBootLayer() {
                 return bootLayer;
-            }
-            public void bindToLayer(ClassLoader loader, Layer layer) {
-                loader.bindToLayer(layer);
-            }
-            public ServicesCatalog getServicesCatalog(ClassLoader cl) {
-                return cl.getServicesCatalog();
-            }
-            public ServicesCatalog createOrGetServicesCatalog(ClassLoader cl) {
-                return cl.createOrGetServicesCatalog();
             }
             public ConcurrentHashMap<?, ?> createOrGetClassLoaderValueMap(ClassLoader cl) {
                 return cl.createOrGetClassLoaderValueMap();

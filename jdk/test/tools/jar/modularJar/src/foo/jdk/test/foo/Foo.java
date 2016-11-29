@@ -26,6 +26,7 @@ package jdk.test.foo;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Requires;
+import java.lang.module.ModuleDescriptor.Provides;
 import java.util.StringJoiner;
 import java.util.HashSet;
 import java.util.Set;
@@ -55,7 +56,7 @@ public class Foo {
             System.out.println("uses:" + sj.toString());
 
         sj = new StringJoiner(",");
-        md.provides().keySet().stream().sorted().forEach(sj::add);
+        md.provides().stream().map(Provides::service).sorted().forEach(sj::add);
         if (!sj.toString().equals(""))
             System.out.println("provides:" + sj.toString());
 

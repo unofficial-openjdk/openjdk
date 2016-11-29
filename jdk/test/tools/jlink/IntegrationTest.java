@@ -37,14 +37,14 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.function.Function;
-import jdk.tools.jlink.Jlink;
-import jdk.tools.jlink.Jlink.JlinkConfiguration;
-import jdk.tools.jlink.Jlink.PluginsConfiguration;
+import jdk.tools.jlink.internal.Jlink;
 import jdk.tools.jlink.builder.DefaultImageBuilder;
 import jdk.tools.jlink.plugin.ResourcePool;
 import jdk.tools.jlink.plugin.ResourcePoolBuilder;
 import jdk.tools.jlink.plugin.Plugin;
 import jdk.tools.jlink.internal.ExecutableImage;
+import jdk.tools.jlink.internal.Jlink.JlinkConfiguration;
+import jdk.tools.jlink.internal.Jlink.PluginsConfiguration;
 import jdk.tools.jlink.internal.PostProcessor;
 import jdk.tools.jlink.internal.plugins.DefaultCompressPlugin;
 import jdk.tools.jlink.internal.plugins.StripDebugPlugin;
@@ -59,7 +59,6 @@ import tests.JImageGenerator;
  * @library ../lib
  * @modules java.base/jdk.internal.jimage
  *          jdk.jdeps/com.sun.tools.classfile
- *          jdk.jlink/jdk.tools.jlink
  *          jdk.jlink/jdk.tools.jlink.builder
  *          jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jlink.internal.plugins

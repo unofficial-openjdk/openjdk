@@ -24,7 +24,7 @@
 /* @test
    @bug 7149090
    @summary Nimbus:BorderFactory.createTitledBorder() the DEFAULT position of a title is not the same as the TOP
-   @modules java.desktop/javax.swing.border:private
+   @modules java.desktop/javax.swing.border:open
    @author Pavel Porvatov
 */
 

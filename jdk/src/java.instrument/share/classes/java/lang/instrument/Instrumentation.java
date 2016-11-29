@@ -27,6 +27,7 @@ package java.lang.instrument;
 
 import java.lang.reflect.Module;
 import java.security.ProtectionDomain;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarFile;
@@ -685,32 +686,31 @@ public interface Instrumentation {
      * packages to open. In both cases, the map key is the fully-qualified name
      * of the package as defined in section 6.5.3 of
      * <cite>The Java&trade; Language Specification </cite>, for example, {@code
-     * "java.lang"}. The map value is the set of modules that the package should
-     * be exported or opened to. If the set of modules is empty then the module
-     * is not updated to export or open the package to additional modules. </p>
+     * "java.lang"}. The map value is the non-empty set of modules that the
+     * package should be exported or opened to. </p>
      *
      * <p> The {@code extraProvides} parameter is the additional service providers
      * for the module to provide. The map key is the service type. The map value
-     * is set of implementation types, each of which is a member of the
-     * module and an implementation of the service. If the set of implementation
-     * types is empty then the module is not updated to provide additional
-     * service providers. </p>
+     * is the non-empty list of implementation types, each of which is a membe
+     * of the module and an implementation of the service. </p>
      *
      * <p> This method is safe for concurrent use and so allows multiple agents
      * to instrument and update the same module at around the same time. </p>
      *
      * @param module the module to redefine
      * @param extraReads the possibly-empty set of additional modules to read
-     * @param extraExports the possibly-empty additional packages to export
-     * @param extraOpens the possibly-empty additional packages to open
+     * @param extraExports the possibly-empty map of additional packages to export
+     * @param extraOpens the possibly-empty map of additional packages to open
      * @param extraUses the possibly-empty set of additional services to use
-     * @param extraProvides the possibly-empty additional services to provide
+     * @param extraProvides the possibly-empty map of additional services to provide
      *
      * @throws IllegalArgumentException
      *         If {@code extraExports} or {@code extraOpens} contains a key
-     *         that is not a package in the module; if a value in the
+     *         that is not a package in the module; if {@code extraExports} or
+     *         {@code extraOpens} maps a key to an empty set; if a value in the
      *         {@code extraProvides} map contains a service provider type that
-     *         is not a member of the module or an implementation of the service
+     *         is not a member of the module or an implementation of the service;
+     *         or {@code extraProvides} maps a key to an empty list
      * @throws NullPointerException if any of the arguments are {@code null} or
      *         any of the Sets or Maps contains a {@code null} key or value
      * @since 9
@@ -720,5 +720,5 @@ public interface Instrumentation {
                         Map<String, Set<Module>> extraExports,
                         Map<String, Set<Module>> extraOpens,
                         Set<Class<?>> extraUses,
-                        Map<Class<?>, Set<Class<?>>> extraProvides);
+                        Map<Class<?>, List<Class<?>>> extraProvides);
 }

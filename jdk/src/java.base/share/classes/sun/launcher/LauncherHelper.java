@@ -147,8 +147,7 @@ public final class LauncherHelper {
      *    line entirely.
      */
     static void showSettings(boolean printToStderr, String optionFlag,
-            long initialHeapSize, long maxHeapSize, long stackSize,
-            boolean isServer) {
+            long initialHeapSize, long maxHeapSize, long stackSize) {
 
         initOutput(printToStderr);
         String opts[] = optionFlag.split(":");
@@ -157,8 +156,7 @@ public final class LauncherHelper {
                 : "all";
         switch (optStr) {
             case "vm":
-                printVmSettings(initialHeapSize, maxHeapSize,
-                                stackSize, isServer);
+                printVmSettings(initialHeapSize, maxHeapSize, stackSize);
                 break;
             case "properties":
                 printProperties();
@@ -167,8 +165,7 @@ public final class LauncherHelper {
                 printLocale();
                 break;
             default:
-                printVmSettings(initialHeapSize, maxHeapSize, stackSize,
-                                isServer);
+                printVmSettings(initialHeapSize, maxHeapSize, stackSize);
                 printProperties();
                 printLocale();
                 break;
@@ -180,7 +177,7 @@ public final class LauncherHelper {
      */
     private static void printVmSettings(
             long initialHeapSize, long maxHeapSize,
-            long stackSize, boolean isServer) {
+            long stackSize) {
 
         ostream.println(VM_SETTINGS);
         if (stackSize != 0L) {
@@ -198,8 +195,6 @@ public final class LauncherHelper {
             ostream.println(INDENT + "Max. Heap Size (Estimated): "
                     + SizePrefix.scaleValue(Runtime.getRuntime().maxMemory()));
         }
-        ostream.println(INDENT + "Ergonomics Machine Class: "
-                + ((isServer) ? "server" : "client"));
         ostream.println(INDENT + "Using VM: "
                 + System.getProperty("java.vm.name"));
         ostream.println();
@@ -384,18 +379,6 @@ public final class LauncherHelper {
     static void appendVmSynonymMessage(String vm1, String vm2) {
         outBuf = outBuf.append(getLocalizedMessage("java.launcher.opt.hotspot",
                 vm1, vm2));
-    }
-
-    /**
-     * Appends the vm Ergo message to the header, already created.
-     * initHelpSystem must be called before using this method.
-     */
-    static void appendVmErgoMessage(boolean isServerClass, String vm) {
-        outBuf = outBuf.append(getLocalizedMessage("java.launcher.ergo.message1",
-                vm));
-        outBuf = (isServerClass) ? outBuf.append(",\n")
-                .append(getLocalizedMessage("java.launcher.ergo.message2"))
-                .append("\n\n") : outBuf.append(".\n\n");
     }
 
     /**
@@ -966,6 +949,8 @@ public final class LauncherHelper {
                 ModuleDescriptor md = mref.descriptor();
                 if (md.isOpen())
                     ostream.print("open ");
+                if (md.isAutomatic())
+                    ostream.print("automatic ");
                 ostream.println("module " + midAndLocation(md, mref.location()));
 
                 // unqualified exports (sorted by package)
@@ -985,10 +970,9 @@ public final class LauncherHelper {
                     ostream.format("  uses %s%n", s);
                 }
 
-                Map<String, Provides> provides = md.provides();
-                for (Provides ps : provides.values()) {
-                    for (String impl : ps.providers())
-                        ostream.format("  provides %s with %s%n", ps.service(), impl);
+                for (Provides ps : md.provides()) {
+                    ostream.format("  provides %s with %s%n", ps.service(),
+                            ps.providers().stream().collect(Collectors.joining(", ")));
                 }
 
                 // qualified exports

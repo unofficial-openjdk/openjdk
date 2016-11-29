@@ -34,8 +34,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.IntSupplier;
 
@@ -129,7 +131,7 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                 validateNames(md);
 
                 Set<String> packages = module.packages();
-                ModuleDescriptorBuilder mbuilder = generator.module(md, module.packages());
+                generator.addModule(md, module.packages());
 
                 // add Packages attribute if not exist
                 if (md.packages().isEmpty() && packages.size() > 0) {
@@ -196,10 +198,7 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
             if (opens.isQualified())
                 opens.targets().forEach(Checks::requireModuleName);
         }
-        for (Map.Entry<String, Provides> e : md.provides().entrySet()) {
-            String service = e.getKey();
-            Provides provides = e.getValue();
-            Checks.requireServiceTypeName(service);
+        for (Provides provides : md.provides()) {
             Checks.requireServiceTypeName(provides.service());
             provides.providers().forEach(Checks::requireServiceProviderName);
         }
@@ -262,7 +261,10 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
         private final List<ModuleDescriptorBuilder> builders = new ArrayList<>();
 
         // module name to hash
-        private final Map<String, String> modulesToHash = new HashMap<>();
+        private final Map<String, byte[]> modulesToHash = new HashMap<>();
+
+        // module name to index in MODULES_TO_HASH
+        private final Map<String, Integer> modulesToHashIndex = new HashMap<>();
 
         // A builder to create one single Set instance for a given set of
         // names or modifiers to reduce the footprint
@@ -293,9 +295,9 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                     "[Ljava/lang/String;", null, null)
                     .visitEnd();
 
-            // public static String[] MODULES_TO_HASH = new String[] {....};
+            // public static byte[][] MODULES_TO_HASH
             cw.visitField(ACC_PUBLIC+ACC_FINAL+ACC_STATIC, MODULES_TO_HASH,
-                "[Ljava/lang/String;", null, null)
+                "[[B", null, null)
                 .visitEnd();
 
             // public static int PACKAGES_IN_BOOT_LAYER;
@@ -324,23 +326,30 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
 
             // create the MODULES_TO_HASH array
             pushInt(numModules);
-            mv.visitTypeInsn(ANEWARRAY, "java/lang/String");
+            mv.visitTypeInsn(ANEWARRAY, "[B");
 
             index = 0;
             for (ModuleDescriptorBuilder builder : builders) {
                 String mn = builder.md.name();
-                String recordedHash = modulesToHash.get(mn);
+                byte[] recordedHash = modulesToHash.get(mn);
                 if (recordedHash != null) {
                     mv.visitInsn(DUP);              // arrayref
                     pushInt(index);
-                    mv.visitLdcInsn(recordedHash);  // value
+                    pushInt(recordedHash.length);
+                    mv.visitIntInsn(NEWARRAY, T_BYTE);
+                    for (int i = 0; i < recordedHash.length; i++) {
+                        mv.visitInsn(DUP);              // arrayref
+                        pushInt(i);
+                        mv.visitIntInsn(BIPUSH, recordedHash[i]);
+                        mv.visitInsn(BASTORE);
+                    }
                     mv.visitInsn(AASTORE);
+                    modulesToHashIndex.put(mn, index);
                 }
                 index++;
             }
 
-            mv.visitFieldInsn(PUTSTATIC, CLASSNAME, MODULES_TO_HASH,
-                    "[Ljava/lang/String;");
+            mv.visitFieldInsn(PUTSTATIC, CLASSNAME, MODULES_TO_HASH, "[[B");
 
             mv.visitInsn(RETURN);
             mv.visitMaxs(0, 0);
@@ -353,7 +362,7 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
          * prepares mapping from various Sets to SetBuilders to emit an
          * optimized number of sets during build.
          */
-        public ModuleDescriptorBuilder module(ModuleDescriptor md, Set<String> packages) {
+        public void addModule(ModuleDescriptor md, Set<String> packages) {
             ModuleDescriptorBuilder builder = new ModuleDescriptorBuilder(md, packages);
             builders.add(builder);
 
@@ -369,12 +378,6 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                 dedupSetBuilder.opensModifiers(opens.modifiers());
             }
 
-            // provides
-            for (Provides p : md.provides().values()) {
-                dedupSetBuilder.stringSet(p.providers(),
-                                          true /* preserve iteration order */);
-            }
-
             // requires
             for (Requires r : md.requires()) {
                 dedupSetBuilder.requiresModifiers(r.modifiers());
@@ -385,8 +388,6 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
 
             // hashes
             JLMA.hashes(md).ifPresent(mh -> modulesToHash.putAll(mh.hashes()));
-
-            return builder;
         }
 
         /*
@@ -457,8 +458,8 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                     + OPENS_TYPE;
             static final String OPENS_MODIFIER_SET_STRING_SIG =
                 "(Ljava/util/Set;Ljava/lang/String;)" + OPENS_TYPE;
-            static final String PROVIDES_STRING_SET_SIG =
-                "(Ljava/lang/String;Ljava/util/Set;)" + PROVIDES_TYPE;
+            static final String PROVIDES_STRING_LIST_SIG =
+                "(Ljava/lang/String;Ljava/util/List;)" + PROVIDES_TYPE;
             static final String REQUIRES_SET_STRING_SIG =
                 "(Ljava/util/Set;Ljava/lang/String;)" + REQUIRES_TYPE;
 
@@ -474,8 +475,8 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                 "([" + REQUIRES_TYPE + ")" + BUILDER_TYPE;
             static final String SET_SIG = "(Ljava/util/Set;)" + BUILDER_TYPE;
             static final String STRING_SIG = "(Ljava/lang/String;)" + BUILDER_TYPE;
-            static final String STRING_STRING_SIG =
-                "(Ljava/lang/String;Ljava/lang/String;)" + BUILDER_TYPE;
+            static final String STRING_BYTE_ARRAY_SIG =
+                "(Ljava/lang/String;[B)" + BUILDER_TYPE;
             static final String BOOLEAN_SIG = "(Z)" + BUILDER_TYPE;
 
 
@@ -483,6 +484,9 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
             final Set<String> packages;
 
             ModuleDescriptorBuilder(ModuleDescriptor md, Set<String> packages) {
+                if (md.isAutomatic()) {
+                    throw new InternalError("linking automatic module is not supported");
+                }
                 this.md = md;
                 this.packages = packages;
             }
@@ -504,7 +508,7 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                 uses(md.uses());
 
                 // provides
-                provides(md.provides().values());
+                provides(md.provides());
 
                 // all packages
                 packages(packages);
@@ -536,9 +540,6 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                 if (md.isOpen()) {
                     setModuleBit("open", true);
                 }
-                if (md.isAutomatic()) {                 // check this, should have no automatic modules
-                    setModuleBit("automatic", true);
-                }
                 if (md.isSynthetic()) {
                     setModuleBit("synthetic", true);
                 }
@@ -566,8 +567,9 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                 mv.visitVarInsn(ALOAD, MD_VAR);
                 pushInt(nextModulesIndex++);
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
+                mv.visitLdcInsn(md.hashCode());
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                                   "build", "()Ljava/lang/module/ModuleDescriptor;",
+                                   "build", "(I)Ljava/lang/module/ModuleDescriptor;",
                                    false);
                 mv.visitInsn(AASTORE);
             }
@@ -756,12 +758,21 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
              * :
              * Builder.newProvides(service, providers);
              */
-            void newProvides(String service, Set<String> providers) {
-                int varIndex = dedupSetBuilder.indexOfStringSet(providers);
+            void newProvides(String service, List<String> providers) {
                 mv.visitLdcInsn(service);
-                mv.visitVarInsn(ALOAD, varIndex);
+                pushInt(providers.size());
+                mv.visitTypeInsn(ANEWARRAY, "java/lang/String");
+                int arrayIndex = 0;
+                for (String provider : providers) {
+                    mv.visitInsn(DUP);    // arrayref
+                    pushInt(arrayIndex++);
+                    mv.visitLdcInsn(provider);
+                    mv.visitInsn(AASTORE);
+                }
+                mv.visitMethodInsn(INVOKESTATIC, "java/util/List",
+                                   "of", "([Ljava/lang/Object;)Ljava/util/List;", true);
                 mv.visitMethodInsn(INVOKESTATIC, MODULE_DESCRIPTOR_BUILDER,
-                                   "newProvides", PROVIDES_STRING_SET_SIG, false);
+                                   "newProvides", PROVIDES_STRING_LIST_SIG, false);
             }
 
             /*
@@ -810,14 +821,31 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
             }
 
             /*
-             * Invoke Builder.moduleHash(String name, String hashString);
+             * Invoke Builder.moduleHash(String name, byte[] hash);
              */
-            void moduleHash(String name, String hashString) {
+            void moduleHash(String name, byte[] hash) {
                 mv.visitVarInsn(ALOAD, BUILDER_VAR);
                 mv.visitLdcInsn(name);
-                mv.visitLdcInsn(hashString);
+
+                // must exist
+                Integer index = modulesToHashIndex.get(name);
+                if (index != null) {
+                    mv.visitFieldInsn(GETSTATIC, CLASSNAME, MODULES_TO_HASH, "[[B");
+                    pushInt(index);
+                    mv.visitInsn(AALOAD);
+                    assert(Objects.equals(hash, modulesToHash.get(name)));
+                } else {
+                    pushInt(hash.length);
+                    mv.visitIntInsn(NEWARRAY, T_BYTE);
+                    for (int i = 0; i < hash.length; i++) {
+                        mv.visitInsn(DUP);              // arrayref
+                        pushInt(i);
+                        mv.visitIntInsn(BIPUSH, hash[i]);
+                        mv.visitInsn(BASTORE);
+                    }
+                }
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
-                                   "moduleHash", STRING_STRING_SIG, false);
+                                   "moduleHash", STRING_BYTE_ARRAY_SIG, false);
                 mv.visitInsn(POP);
             }
         }
@@ -856,22 +884,12 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
             }
 
             /*
-             * Add the given set of names to this builder
+             * Add the given set of strings to this builder.
              */
-            void stringSet(Set<String> names) {
-                stringSet(names, false);
-            }
-
-            /*
-             * Add the given set of names to this builder.
-             *
-             * If preserveIterationOrder is true, the builder creates a set
-             * that preserves the order, for example, LinkedHashSet.
-             */
-            void stringSet(Set<String> names, boolean preserveIterationOrder) {
-                stringSets.computeIfAbsent(names,
+            void stringSet(Set<String> strings) {
+                stringSets.computeIfAbsent(strings,
                     s -> new SetBuilder<>(s, stringSetVar, localVarSupplier)
-                ).iterationOrder(preserveIterationOrder).increment();
+                ).increment();
             }
 
             /*
@@ -958,7 +976,6 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
             private final Set<T> elements;
             private final int defaultVarIndex;
             private final IntSupplier nextLocalVar;
-            private boolean linked;
             private int refCount;
             private int localVarIndex;
 
@@ -968,15 +985,6 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                 this.elements = elements;
                 this.defaultVarIndex = defaultVarIndex;
                 this.nextLocalVar = nextLocalVar;
-            }
-
-            /*
-             * Marks that the builder should maintain the iteration order of
-             * the elements, i.e., use a LinkedHashSet.
-             */
-            final SetBuilder<T> iterationOrder(boolean preserveOrder) {
-                this.linked = preserveOrder;
-                return this;
             }
 
             /*
@@ -1015,11 +1023,7 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                         index = defaultVarIndex;
                     }
 
-                    if (linked && elements.size() > 1) {
-                        generateLinkedSet(index);
-                    } else {
-                        generateSetOf(index);
-                    }
+                    generateSetOf(index);
                 }
                 return index;
             }
@@ -1050,30 +1054,6 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                     mv.visitMethodInsn(INVOKESTATIC, "java/util/Set",
                             "of", "([Ljava/lang/Object;)Ljava/util/Set;", true);
                 }
-                mv.visitVarInsn(ASTORE, index);
-            }
-
-            private void generateLinkedSet(int index) {
-                mv.visitTypeInsn(NEW, "java/util/LinkedHashSet");
-                mv.visitInsn(DUP);
-                pushInt(initialCapacity(elements.size()));
-                mv.visitMethodInsn(INVOKESPECIAL, "java/util/LinkedHashSet",
-                        "<init>", "(I)V", false);
-
-                mv.visitVarInsn(ASTORE, index);
-                for (T t : elements) {
-                    mv.visitVarInsn(ALOAD, index);
-                    visitElement(t, mv);
-                    mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Set",
-                            "add",
-                            "(Ljava/lang/Object;)Z", true);
-                    mv.visitInsn(POP);
-                }
-                mv.visitVarInsn(ALOAD, index);
-                mv.visitMethodInsn(INVOKESTATIC, "java/util/Collections",
-                        "unmodifiableSet",
-                        "(Ljava/util/Set;)Ljava/util/Set;",
-                        false);
                 mv.visitVarInsn(ASTORE, index);
             }
         }

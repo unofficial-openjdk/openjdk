@@ -23,6 +23,7 @@
 
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Module;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -41,9 +42,9 @@ public class RedefineModuleAgent {
     static void redefineModule(Module module,
                                Set<Module> extraReads,
                                Map<String, Set<Module>> extraExports,
-                               Map<String, Set<Module>> extraExportsPrivate,
+                               Map<String, Set<Module>> extraOpens,
                                Set<Class<?>> extraUses,
-                               Map<Class<?>, Set<Class<?>>> extraProvides) {
-        inst.redefineModule(module, extraReads, extraExports, extraExportsPrivate, extraUses, extraProvides);
+                               Map<Class<?>, List<Class<?>>> extraProvides) {
+        inst.redefineModule(module, extraReads, extraExports, extraOpens, extraUses, extraProvides);
     }
 }

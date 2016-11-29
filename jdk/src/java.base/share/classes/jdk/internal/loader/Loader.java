@@ -30,7 +30,6 @@ import java.io.FilePermission;
 import java.io.IOException;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
 import java.lang.module.ResolvedModule;
@@ -59,6 +58,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
+
+import jdk.internal.misc.SharedSecrets;
 
 
 /**
@@ -146,7 +147,7 @@ public final class Loader extends SecureClassLoader {
                   LoaderPool pool,
                   ClassLoader parent)
     {
-        super(parent);
+        super("Loader-" + resolvedModule.name(), parent);
 
         this.pool = pool;
         this.parent = parent;
@@ -205,12 +206,12 @@ public final class Loader extends SecureClassLoader {
      * @param cf the Configuration containing at least modules to be defined to
      *           this class loader
      *
-     * @param parentLayer the parent Layer
+     * @param parentLayers the parent Layers
      */
-    public Loader initRemotePackageMap(Configuration cf, Layer parentLayer) {
-
+    public Loader initRemotePackageMap(Configuration cf,
+                                       List<Layer> parentLayers)
+    {
         for (String name : nameToModule.keySet()) {
-
             ResolvedModule resolvedModule = cf.findModule(name).get();
             assert resolvedModule.configuration() == cf;
 
@@ -233,15 +234,13 @@ public final class Loader extends SecureClassLoader {
 
                 } else {
 
-                    // find the layer contains the module that is read
-                    Layer layer = parentLayer;
-                    while (layer != null) {
-                        if (layer.configuration() == other.configuration()) {
-                            break;
-                        }
-                        layer = layer.parent().orElse(null);
-                    }
-                    assert layer != null;
+                    // find the layer for the target module
+                    Layer layer = parentLayers.stream()
+                        .map(parent -> findLayer(parent, other.configuration()))
+                        .flatMap(Optional::stream)
+                        .findAny()
+                        .orElseThrow(() ->
+                            new InternalError("Unable to find parent layer"));
 
                     // find the class loader for the module
                     // For now we use the platform loader for modules defined to the
@@ -281,6 +280,17 @@ public final class Loader extends SecureClassLoader {
 
         return this;
     }
+
+    /**
+     * Find the layer corresponding to the given configuration in the tree
+     * of layers rooted at the given parent.
+     */
+    private Optional<Layer> findLayer(Layer parent, Configuration cf) {
+        return SharedSecrets.getJavaLangReflectModuleAccess().layers(parent)
+                .filter(l -> l.configuration() == cf)
+                .findAny();
+    }
+
 
     /**
      * Returns the loader pool that this loader is in or {@code null} if this

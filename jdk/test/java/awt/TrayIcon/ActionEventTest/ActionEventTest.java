@@ -25,7 +25,7 @@
  * @test
  * @bug 6191390 8154328
  * @summary Verify that ActionEvent is received with correct modifiers set.
- * @modules java.desktop/java.awt:private
+ * @modules java.desktop/java.awt:open
  * @modules java.desktop/java.awt.peer
  * @library ../../../../lib/testlibrary ../
  * @library /java/awt/patchlib

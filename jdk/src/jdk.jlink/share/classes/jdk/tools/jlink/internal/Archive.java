@@ -44,10 +44,11 @@ public interface Archive {
         public static enum EntryType {
             MODULE_NAME,
             CLASS_OR_RESOURCE,
+            CONFIG,
             NATIVE_LIB,
             NATIVE_CMD,
-            CONFIG,
-            OTHER_FILES,
+            HEADER_FILE,
+            MAN_PAGE,
             SERVICE;
         }
 

@@ -33,8 +33,8 @@ import java.security.Security;
 /**
  * @test
  * @bug 8051408
- * @modules java.base/java.lang.reflect:private
- *          java.base/sun.security.provider:private
+ * @modules java.base/java.lang.reflect:open
+ *          java.base/sun.security.provider:+open
  * @run main/othervm CommonSeeder
  * @summary check entropy reading of DRBGs
  */

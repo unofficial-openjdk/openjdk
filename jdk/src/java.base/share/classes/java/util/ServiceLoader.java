@@ -86,7 +86,7 @@ import jdk.internal.reflect.Reflection;
  * <p> Providers deployed as explicit modules on the module path are
  * instantiated by a <em>provider factory</em> or directly via the provider's
  * constructor. In the module declaration then the class name specified in the
- * <i>provides</i> clause is a provider factory if it public and defines a
+ * <i>provides</i> clause is a provider factory if it is public and defines a
  * public static no-args method named "{@code provider}". The return type of
  * the method must be assignable to the <i>service</i> type. If the class is
  * not a provider factory then it is public with a public zero-argument
@@ -109,8 +109,7 @@ import jdk.internal.reflect.Reflection;
  * of. For this example then {@code StandardCodecs}'s no-arg constructor will
  * be used to instantiate {@code StandardCodecs}. {@code ExtendedCodecsFactory}
  * will be treated as a provider factory and {@code
- * ExtendedCodecsFactory.provider()} will be invoked to instantiate the
- * provider.
+ * ExtendedCodecsFactory.provider()} will be invoked to obtain the provider.
  *
  * <p> Providers deployed on the class path or as {@link
  * java.lang.module.ModuleDescriptor#isAutomatic automatic-modules} on the
@@ -174,7 +173,7 @@ import jdk.internal.reflect.Reflection;
  * module layer where each module is defined to its own class loader (see {@link
  * Layer#defineModulesWithManyLoaders defineModulesWithManyLoaders}). If the
  * {@code load} method is invoked to locate providers using any of these class
- * loaders for this layer then then it will locate all of the providers in that
+ * loaders for this layer then it will locate all of the providers in that
  * layer, irrespective of their defining class loader.
  *
  * <p> In the case of unnamed modules then the service configuration files are
@@ -203,6 +202,10 @@ import jdk.internal.reflect.Reflection;
  *     loader. The ordering of modules defined to the same class loader, or the
  *     ordering of modules in a layer, is not defined. </li>
  *
+ *     <li> If a named module declares more than one provider then the providers
+ *     are located in the order that they appear in the {@code provides} table of
+ *     the {@code Module} class file attribute ({@code module-info.class}). </li>
+ *
  *     <li> When locating providers in unnamed modules then the ordering is
  *     based on the order that the class loader's {@link
  *     ClassLoader#getResources(String) ClassLoader.getResources(String)}
@@ -210,9 +213,14 @@ import jdk.internal.reflect.Reflection;
  * </ul>
  *
  * <p> Service loaders created to locate providers in a module {@link Layer}
- * will first locate providers in the layer, then its parent layer, then its
- * parent, and so on to the boot layer. The ordering of modules in a layer is
- * not defined.
+ * will first locate providers in the layer, before locating providers in
+ * parent layers. Traversal of parent layers is depth-first with each layer
+ * visited at most once. For example, suppose L0 is the boot layer, L1 and
+ * L2 are custom layers with L0 as their parent. Now suppose that L3 is
+ * created with L1 and L2 as the parents (in that order). Using a service
+ * loader to locate providers with L3 as the content will locate providers
+ * in the following order: L3, L1, L0, L2. The ordering of modules in a layer
+ * is not defined.
  *
  * <h2> Selection and filtering </h2>
  *
@@ -368,7 +376,6 @@ public final class ServiceLoader<S>
         JLRM_ACCESS = SharedSecrets.getJavaLangReflectModuleAccess();
     }
 
-
     /**
      * Represents a service provider located by {@code ServiceLoader}.
      *
@@ -392,7 +399,7 @@ public final class ServiceLoader<S>
          *
          * @return The provider type
          */
-        Class<S> type();
+        Class<? extends S> type();
 
         /**
          * Returns an instance of the provider.
@@ -409,21 +416,19 @@ public final class ServiceLoader<S>
         @Override S get();
     }
 
-
     /**
      * Initializes a new instance of this class for locating service providers
      * in a module Layer.
      *
      * @throws ServiceConfigurationError
-     *         If {@code svc} is not accessible to {@code caller} or that the
-     *         caller's module does not declare that it uses the service type.
+     *         If {@code svc} is not accessible to {@code caller} or the caller
+     *         module does not use the service type.
      */
     private ServiceLoader(Class<?> caller, Layer layer, Class<S> svc) {
         Objects.requireNonNull(caller);
         Objects.requireNonNull(layer);
         Objects.requireNonNull(svc);
-
-        checkModule(caller.getModule(), svc);
+        checkCaller(caller, svc);
 
         this.service = svc;
         this.serviceName = svc.getName();
@@ -439,14 +444,14 @@ public final class ServiceLoader<S>
      * via a class loader.
      *
      * @throws ServiceConfigurationError
-     *         If {@code svc} is not accessible to {@code caller} or that the
-     *         caller's module does not declare that it uses the service type.
+     *         If {@code svc} is not accessible to {@code caller} or the caller
+     *         module does not use the service type.
      */
-    private ServiceLoader(Module callerModule, Class<S> svc, ClassLoader cl) {
+    private ServiceLoader(Class<?> caller, Class<S> svc, ClassLoader cl) {
         Objects.requireNonNull(svc);
 
         if (VM.isBooted()) {
-            checkModule(callerModule, svc);
+            checkCaller(caller, svc);
             if (cl == null) {
                 cl = ClassLoader.getSystemClassLoader();
             }
@@ -455,6 +460,7 @@ public final class ServiceLoader<S>
             // if we get here then it means that ServiceLoader is being used
             // before the VM initialization has completed. At this point then
             // only code in the java.base should be executing.
+            Module callerModule = caller.getModule();
             Module base = Object.class.getModule();
             Module svcModule = svc.getModule();
             if (callerModule != base || svcModule != base) {
@@ -478,33 +484,43 @@ public final class ServiceLoader<S>
      * Initializes a new instance of this class for locating service providers
      * via a class loader.
      *
+     * @apiNote For use by ResourceBundle
+     *
      * @throws ServiceConfigurationError
-     *         If {@code svc} is not accessible to {@code caller} or that the
-     *         caller's module does not declare that it uses the service type.
+     *         If the caller module does not use the service type.
      */
-    private ServiceLoader(Class<?> caller, Class<S> svc, ClassLoader cl) {
-        this(caller.getModule(), svc, cl);
-    }
+    private ServiceLoader(Module callerModule, Class<S> svc, ClassLoader cl) {
+        if (!callerModule.canUse(svc)) {
+            fail(svc, callerModule + " does not declare `uses`");
+        }
 
+        this.service = Objects.requireNonNull(svc);
+        this.serviceName = svc.getName();
+        this.layer = null;
+        this.loader = cl;
+        this.acc = (System.getSecurityManager() != null)
+                ? AccessController.getContext()
+                : null;
+    }
 
     /**
      * Checks that the given service type is accessible to types in the given
-     * module, and check that the module declare that it uses the service type.
+     * module, and check that the module declare that it uses the service type. ??
      */
-    private static void checkModule(Module module, Class<?> svc) {
+    private static void checkCaller(Class<?> caller, Class<?> svc) {
+        Module callerModule = caller.getModule();
 
-        // Check that the service type is in a package that is
-        // exported to the caller.
-        if (!Reflection.verifyModuleAccess(module, svc)) {
-            fail(svc, "not accessible to " + module);
+        // Check access to the service type
+        int mods = svc.getModifiers();
+        if (!Reflection.verifyMemberAccess(caller, svc, null, mods)) {
+            fail(svc, "service type not accessible to " + callerModule);
         }
 
         // If the caller is in a named module then it should "uses" the
         // service type
-        if (!module.canUse(svc)) {
-            fail(svc, "use not declared in " + module);
+        if (!callerModule.canUse(svc)) {
+            fail(svc, callerModule + " does not declare `uses`");
         }
-
     }
 
     private static void fail(Class<?> service, String msg, Throwable cause)
@@ -565,8 +581,8 @@ public final class ServiceLoader<S>
         final AccessControlContext acc;
 
         final Method factoryMethod;  // factory method or null
-        final Class<S> type;
-        final Constructor<S> ctor;   // public no-args constructor or null
+        final Class<? extends S> type;
+        final Constructor<? extends S> ctor; // public no-args constructor or null
 
         /**
          * Creates a Provider.
@@ -613,16 +629,16 @@ public final class ServiceLoader<S>
                 if (!service.isAssignableFrom(clazz)) {
                     fail(service, clazz.getName() + " not a subtype");
                 }
-                this.type = (Class<S>) clazz;
-                this.ctor = getConstructor(clazz);
+                this.type = (Class<? extends S>) clazz;
+                this.ctor = (Constructor<? extends S>) getConstructor(clazz);
             } else {
-                this.type = (Class<S>) factoryMethod.getReturnType();
+                this.type = (Class<? extends S>) factoryMethod.getReturnType();
                 this.ctor = null;
             }
         }
 
         @Override
-        public Class<S> type() {
+        public Class<? extends S> type() {
             return type;
         }
 
@@ -673,25 +689,23 @@ public final class ServiceLoader<S>
         }
 
         /**
-         * Returns the provider's public no-arg constructor.
+         * Returns the public no-arg constructor of a class.
          *
-         * @throws ServiceConfigurationError if the provider does not have
+         * @throws ServiceConfigurationError if the class does not have
          *         public no-arg constructor
          */
-        private Constructor<S> getConstructor(Class<?> clazz) {
-            PrivilegedExceptionAction<Constructor<S>> pa
+        private Constructor<?> getConstructor(Class<?> clazz) {
+            PrivilegedExceptionAction<Constructor<?>> pa
                 = new PrivilegedExceptionAction<>() {
                     @Override
-                    public Constructor<S> run() throws Exception {
+                    public Constructor<?> run() throws Exception {
                         Constructor<?> ctor = clazz.getConstructor();
                         if (inExplicitModule(clazz))
                             ctor.setAccessible(true);
-                        @SuppressWarnings("unchecked")
-                        Constructor<S> result = (Constructor<S>)ctor;
-                        return result;
+                        return ctor;
                     }
                 };
-            Constructor<S> ctor = null;
+            Constructor<?> ctor = null;
             try {
                 ctor = AccessController.doPrivileged(pa);
             } catch (Throwable x) {
@@ -810,15 +824,14 @@ public final class ServiceLoader<S>
     private final class LayerLookupIterator<T>
         implements Iterator<Provider<T>>
     {
-        Layer currentLayer;
+        Deque<Layer> stack = new ArrayDeque<>();
+        Set<Layer> visited = new HashSet<>();
         Iterator<ServiceProvider> iterator;
-        Provider<T> next;
+        ServiceProvider next;  // next provider to load
 
         LayerLookupIterator() {
-            currentLayer = layer;
-
-            // need to get us started
-            iterator = providers(currentLayer);
+            visited.add(layer);
+            stack.push(layer);
         }
 
         private Iterator<ServiceProvider> providers(Layer layer) {
@@ -828,7 +841,6 @@ public final class ServiceLoader<S>
 
         @Override
         public boolean hasNext() {
-
             // already have the next provider cached
             if (next != null)
                 return true;
@@ -837,24 +849,24 @@ public final class ServiceLoader<S>
 
                 // next provider (or provider factory)
                 if (iterator != null && iterator.hasNext()) {
-                    ServiceProvider provider = iterator.next();
-
-                    // attempt to load it
-                    Module module = provider.module();
-                    String cn = provider.providerName();
-                    Class<?> clazz = loadProviderInModule(module, cn);
-                    next = new ProviderImpl<T>(service, clazz, acc);
-
+                    next = iterator.next();
                     return true;
                 }
 
-                // next layer
-                Layer parent = currentLayer.parent().orElse(null);
-                if (parent == null)
+                // next layer (DFS order)
+                if (stack.isEmpty())
                     return false;
 
-                currentLayer = parent;
-                iterator = providers(currentLayer);
+                Layer layer = stack.pop();
+                List<Layer> parents = layer.parents();
+                for (int i = parents.size() - 1; i >= 0; i--) {
+                    Layer parent = parents.get(i);
+                    if (!visited.contains(parent)) {
+                        visited.add(parent);
+                        stack.push(parent);
+                    }
+                }
+                iterator = providers(layer);
             }
         }
 
@@ -863,9 +875,15 @@ public final class ServiceLoader<S>
             if (!hasNext())
                 throw new NoSuchElementException();
 
-            Provider<T> result = next;
+            // take next provider
+            ServiceProvider provider = next;
             next = null;
-            return result;
+
+            // attempt to load provider
+            Module module = provider.module();
+            String cn = provider.providerName();
+            Class<?> clazz = loadProviderInModule(module, cn);
+            return new ProviderImpl<T>(service, clazz, acc);
         }
     }
 
@@ -879,7 +897,7 @@ public final class ServiceLoader<S>
     {
         ClassLoader currentLoader;
         Iterator<ServiceProvider> iterator;
-        Provider<T> next;
+        ServiceProvider next;  // next provider to load
 
         ModuleServicesLookupIterator() {
             this.currentLoader = loader;
@@ -890,7 +908,7 @@ public final class ServiceLoader<S>
          * Returns iterator to iterate over the implementations of {@code
          * service} in the given layer.
          */
-        private Set<ServiceProvider> providers(Layer layer) {
+        private List<ServiceProvider> providers(Layer layer) {
             ServicesCatalog catalog = JLRM_ACCESS.getServicesCatalog(layer);
             return catalog.findServices(serviceName);
         }
@@ -907,7 +925,7 @@ public final class ServiceLoader<S>
             if (loader == null) {
                 catalog = BootLoader.getServicesCatalog();
             } else {
-                catalog = LANG_ACCESS.getServicesCatalog(loader);
+                catalog = ServicesCatalog.getServicesCatalogOrNull(loader);
             }
             Stream<ServiceProvider> stream1;
             if (catalog == null) {
@@ -922,10 +940,10 @@ public final class ServiceLoader<S>
                 stream2 = Stream.empty();
             } else {
                 Layer bootLayer = Layer.boot();
-                stream2 = loader.layers()
+                stream2 = JLRM_ACCESS.layers(loader)
                         .filter(l -> (l != bootLayer))
                         .map(l -> providers(l))
-                        .flatMap(Set::stream);
+                        .flatMap(List::stream);
             }
 
             return Stream.concat(stream1, stream2).iterator();
@@ -939,14 +957,7 @@ public final class ServiceLoader<S>
 
             while (true) {
                 if (iterator.hasNext()) {
-                    ServiceProvider provider = iterator.next();
-
-                    // attempt to load the provider (or provider factory)
-                    Module module = provider.module();
-                    String cn = provider.providerName();
-                    Class<?> clazz = loadProviderInModule(module, cn);
-                    next = new ProviderImpl<T>(service, clazz, acc);
-
+                    next = iterator.next();
                     return true;
                 }
 
@@ -965,9 +976,15 @@ public final class ServiceLoader<S>
             if (!hasNext())
                 throw new NoSuchElementException();
 
-            Provider<T> result = next;
+            // take next provider
+            ServiceProvider provider = next;
             next = null;
-            return result;
+
+            // attempt to load provider
+            Module module = provider.module();
+            String cn = provider.providerName();
+            Class<?> clazz = loadProviderInModule(module, cn);
+            return new ProviderImpl<T>(service, clazz, acc);
         }
     }
 
@@ -983,7 +1000,8 @@ public final class ServiceLoader<S>
 
         Enumeration<URL> configs;
         Iterator<String> pending;
-        Provider<T> next;
+        Class<?> nextClass;
+        String nextErrorMessage;  // when hasNext fails with CNFE
 
         LazyClassPathLookupIterator() { }
 
@@ -1041,7 +1059,7 @@ public final class ServiceLoader<S>
         }
 
         private boolean hasNextService() {
-            if (next != null) {
+            if (nextClass != null || nextErrorMessage != null) {
                 return true;
             }
 
@@ -1068,13 +1086,32 @@ public final class ServiceLoader<S>
                 try {
                     clazz = Class.forName(cn, false, loader);
                 } catch (ClassNotFoundException x) {
-                    fail(service, "Provider " + cn + " not found");
+                    // don't throw SCE here to long standing behavior
+                    nextErrorMessage = "Provider " + cn + " not found";
+                    return true;
                 }
 
             } while (clazz.getModule().isNamed()); // ignore if in named module
 
-            next = new ProviderImpl<T>(service, clazz, acc);
+            nextClass = clazz;
             return true;
+        }
+
+        private Provider<T> nextService() {
+            if (!hasNextService())
+                throw new NoSuchElementException();
+
+            // throw any SCE with error recorded by hasNext
+            if (nextErrorMessage != null) {
+                String msg = nextErrorMessage;
+                nextErrorMessage = null;
+                fail(service, msg);
+            }
+
+            // return next provider
+            Class<?> clazz = nextClass;
+            nextClass = null;
+            return new ProviderImpl<T>(service, clazz, acc);
         }
 
         @Override
@@ -1091,12 +1128,14 @@ public final class ServiceLoader<S>
 
         @Override
         public Provider<T> next() {
-            if (!hasNext())
-                throw new NoSuchElementException();
-
-            Provider<T> result = next;
-            next = null;
-            return result;
+            if (acc == null) {
+                return nextService();
+            } else {
+                PrivilegedAction<Provider<T>> action = new PrivilegedAction<>() {
+                    public Provider<T> run() { return nextService(); }
+                };
+                return AccessController.doPrivileged(action, acc);
+            }
         }
     }
 
@@ -1299,13 +1338,12 @@ public final class ServiceLoader<S>
                 throw new ConcurrentModificationException();
             Provider<T> next = null;
             if (index < loadedProviders.size()) {
-                next = (Provider<T>) loadedProviders.get(index);
+                next = (Provider<T>) loadedProviders.get(index++);
             } else if (iterator.hasNext()) {
                 next = iterator.next();
             } else {
                 loadedAllProviders = true;
             }
-            index++;
             if (next != null) {
                 action.accept(next);
                 return true;
@@ -1316,7 +1354,6 @@ public final class ServiceLoader<S>
 
         @Override
         public int characteristics() {
-            // need to decide on DISTINCT
             // not IMMUTABLE as structural interference possible
             return Spliterator.ORDERED + Spliterator.NONNULL;
         }
@@ -1373,7 +1410,7 @@ public final class ServiceLoader<S>
      *
      * @throws ServiceConfigurationError
      *         if the service type is not accessible to the caller or the
-     *         caller is in a named module and its module descriptor does
+     *         caller is in an explicit module and its module descriptor does
      *         not declare that it uses {@code service}
      */
     @CallerSensitive
@@ -1416,7 +1453,7 @@ public final class ServiceLoader<S>
      *
      * @throws ServiceConfigurationError
      *         if the service type is not accessible to the caller or the
-     *         caller is in a named module and its module descriptor does
+     *         caller is in an explicit module and its module descriptor does
      *         not declare that it uses {@code service}
      */
     @CallerSensitive
@@ -1449,7 +1486,7 @@ public final class ServiceLoader<S>
      *
      * @throws ServiceConfigurationError
      *         if the service type is not accessible to the caller or the
-     *         caller is in a named module and its module descriptor does
+     *         caller is in an explicit module and its module descriptor does
      *         not declare that it uses {@code service}
      */
     @CallerSensitive
@@ -1479,7 +1516,7 @@ public final class ServiceLoader<S>
      *
      * @throws ServiceConfigurationError
      *         if the service type is not accessible to the caller or the
-     *         caller is in a named module and its module descriptor does
+     *         caller is in an explicit module and its module descriptor does
      *         not declare that it uses {@code service}
      *
      * @since 9

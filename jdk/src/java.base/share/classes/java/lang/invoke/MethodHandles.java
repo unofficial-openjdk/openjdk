@@ -42,6 +42,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Module;
 import java.lang.reflect.ReflectPermission;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -139,6 +140,59 @@ public class MethodHandles {
         } else {
             return LookupHelper.PUBLIC_LOOKUP;
         }
+    }
+
+    /**
+     * Returns a {@link Lookup lookup object} with full capabilities to emulate all
+     * supported bytecode behaviors, including <a href="MethodHandles.Lookup.html#privacc">
+     * private access</a>, on a target class.
+     * This method checks that a caller, specified as a {@code Lookup} object, is allowed to
+     * do <em>deep reflection</em> on the target class. If {@code m1} is the module containing
+     * the {@link Lookup#lookupClass() lookup class}, and {@code m2} is the module containing
+     * the target class, then this check ensures that
+     * <ul>
+     *     <li>{@code m1} {@link Module#canRead reads} {@code m2}.</li>
+     *     <li>{@code m2} {@link Module#isOpen(String,Module) opens} the package containing
+     *     the target class to at least {@code m1}.</li>
+     *     <li>The lookup has the {@link Lookup#MODULE MODULE} lookup mode.</li>
+     * </ul>
+     * <p>
+     * If there is a security manager, its {@code checkPermission} method is called to
+     * check {@code ReflectPermission("suppressAccessChecks")}.
+     * @apiNote The {@code MODULE} lookup mode serves to authenticate that the lookup object
+     * was created by code in the caller module (or derived from a lookup object originally
+     * created by the caller). A lookup object with the {@code MODULE} lookup mode can be
+     * shared with trusted parties without giving away {@code PRIVATE} and {@code PACKAGE}
+     * access to the caller.
+     * @param targetClass the target class
+     * @param lookup the caller lookup object
+     * @return a lookup object for the target class, with private access
+     * @throws IllegalArgumentException if {@code targetClass} is a primitve type or array class
+     * @throws NullPointerException if {@code targetClass} or {@code caller} is {@code null}
+     * @throws IllegalAccessException if the access check specified above fails
+     * @throws SecurityException if denied by the security manager
+     * @since 9
+     */
+    public static Lookup privateLookupIn(Class<?> targetClass, Lookup lookup) throws IllegalAccessException {
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) sm.checkPermission(ACCESS_PERMISSION);
+        if (targetClass.isPrimitive())
+            throw new IllegalArgumentException(targetClass + " is a primitive class");
+        if (targetClass.isArray())
+            throw new IllegalArgumentException(targetClass + " is an array class");
+        Module targetModule = targetClass.getModule();
+        Module callerModule = lookup.lookupClass().getModule();
+        if (callerModule != targetModule && targetModule.isNamed()) {
+            if (!callerModule.canRead(targetModule))
+                throw new IllegalAccessException(callerModule + " does not read " + targetModule);
+            String pn = targetClass.getPackageName();
+            assert pn != null && pn.length() > 0 : "unnamed package cannot be in named module";
+            if (!targetModule.isOpen(pn, callerModule))
+                throw new IllegalAccessException(targetModule + " does not open " + pn + " to " + callerModule);
+        }
+        if ((lookup.lookupModes() & Lookup.MODULE) == 0)
+            throw new IllegalAccessException("lookup does not have MODULE lookup mode");
+        return new Lookup(targetClass);
     }
 
     /**
@@ -1807,7 +1861,12 @@ return mh1;
             return callerClass;
         }
 
-        private boolean hasPrivateAccess() {
+        /**
+         * Returns {@code true} if this lookup has {@code PRIVATE} access.
+         * @return {@code true} if this lookup has {@code PRIVATE} acesss.
+         * @since 9
+         */
+        public boolean hasPrivateAccess() {
             return (allowedModes & PRIVATE) != 0;
         }
 
@@ -5347,7 +5406,7 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
      * {@code (V T A...)} must have at least one {@code A} type, and the default iterator
      * handle parameter is adjusted to accept the leading {@code A} type, as if by
      * the {@link MethodHandle#asType asType} conversion method.
-     * The leading {@code A} type must be {@code Iterable} or a subtype thereof, or an array type.
+     * The leading {@code A} type must be {@code Iterable} or a subtype thereof.
      * This conversion step, done at loop construction time, must not throw a {@code WrongMethodTypeException}.
      * </ul>
      * <p>
@@ -5374,7 +5433,8 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
      * V iteratedLoop(A... a...) {
      *   Iterator<T> it = iterator(a...);
      *   V v = init(a...);
-     *   for (T t : it) {
+     *   while (it.hasNext()) {
+     *     T t = it.next();
      *     v = body(v, t, a...);
      *   }
      *   return v;
@@ -5483,48 +5543,58 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
         Objects.requireNonNull(body);
         MethodType bodyType = body.type();
         Class<?> returnType = bodyType.returnType();
-        List<Class<?>> innerList = bodyType.parameterList();
+        List<Class<?>> internalParamList = bodyType.parameterList();
         // strip leading V value if present
         int vsize = (returnType == void.class ? 0 : 1);
-        if (vsize != 0 && (innerList.size() == 0 || innerList.get(0) != returnType)) {
+        if (vsize != 0 && (internalParamList.size() == 0 || internalParamList.get(0) != returnType)) {
             // argument list has no "V" => error
             MethodType expected = bodyType.insertParameterTypes(0, returnType);
             throw misMatchedTypes("body function", bodyType, expected);
-        } else if (innerList.size() <= vsize) {
+        } else if (internalParamList.size() <= vsize) {
             // missing T type => error
             MethodType expected = bodyType.insertParameterTypes(vsize, Object.class);
             throw misMatchedTypes("body function", bodyType, expected);
         }
-        //Class<?> elementType = innerList.get(vsize);  // do not need this
-        List<Class<?>> outerList = innerList.subList(vsize + 1, innerList.size());
-        if (outerList.isEmpty()) {
-            // special case; take lists from iterator handle
-            outerList = ((iterator != null)
-                    ? iterator.type().parameterList()
-                    : Arrays.asList(Iterable.class));
-            innerList = bodyType.insertParameterTypes(vsize + 1, outerList).parameterList();
-        }
+        List<Class<?>> externalParamList = internalParamList.subList(vsize + 1, internalParamList.size());
+        Class<?> iterableType = null;
         if (iterator != null) {
+            // special case; if the body handle only declares V and T then
+            // the external parameter list is obtained from iterator handle
+            if (externalParamList.isEmpty()) {
+                externalParamList = iterator.type().parameterList();
+            }
             MethodType itype = iterator.type();
             if (!Iterator.class.isAssignableFrom(itype.returnType())) {
                 throw newIllegalArgumentException("iteratedLoop first argument must have Iterator return type");
             }
-            if (!itype.effectivelyIdenticalParameters(0, outerList)) {
-                MethodType expected = methodType(itype.returnType(), outerList);
+            if (!itype.effectivelyIdenticalParameters(0, externalParamList)) {
+                MethodType expected = methodType(itype.returnType(), externalParamList);
                 throw misMatchedTypes("iterator parameters", itype, expected);
+            }
+        } else {
+            if (externalParamList.isEmpty()) {
+                // special case; if the iterator handle is null and the body handle
+                // only declares V and T then the external parameter list consists
+                // of Iterable
+                externalParamList = Arrays.asList(Iterable.class);
+                iterableType = Iterable.class;
+            } else {
+                // special case; if the iterator handle is null and the external
+                // parameter list is not empty then the first parameter must be
+                // assignable to Iterable
+                iterableType = externalParamList.get(0);
+                if (!Iterable.class.isAssignableFrom(iterableType)) {
+                    throw newIllegalArgumentException(
+                            "inferred first loop argument must inherit from Iterable: " + iterableType);
+                }
             }
         }
         if (init != null) {
             MethodType initType = init.type();
             if (initType.returnType() != returnType ||
-                    !initType.effectivelyIdenticalParameters(0, outerList)) {
-                throw misMatchedTypes("loop initializer", initType, methodType(returnType, outerList));
+                    !initType.effectivelyIdenticalParameters(0, externalParamList)) {
+                throw misMatchedTypes("loop initializer", initType, methodType(returnType, externalParamList));
             }
-        }
-        Class<?> iterableType = outerList.isEmpty() ? null : outerList.get(0);
-        if (iterableType != null && !Iterable.class.isAssignableFrom(iterableType) && !iterableType.isArray()) {
-            throw newIllegalArgumentException(
-                    "inferred first loop argument must be an array or inherit from Iterable: " + iterableType);
         }
         return iterableType;  // help the caller a bit
     }

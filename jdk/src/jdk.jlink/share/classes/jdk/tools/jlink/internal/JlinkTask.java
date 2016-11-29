@@ -34,7 +34,6 @@ import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
 import java.lang.module.ResolutionException;
 import java.lang.module.ResolvedModule;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
@@ -42,14 +41,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jdk.tools.jlink.internal.TaskHelper.BadArgs;
 import static jdk.tools.jlink.internal.TaskHelper.JLINK_BUNDLE;
+import jdk.tools.jlink.internal.Jlink.JlinkConfiguration;
+import jdk.tools.jlink.internal.Jlink.PluginsConfiguration;
 import jdk.tools.jlink.internal.TaskHelper.Option;
 import jdk.tools.jlink.internal.TaskHelper.OptionsHelper;
 import jdk.tools.jlink.internal.ImagePluginStack.ImageProvider;
-import jdk.tools.jlink.Jlink.JlinkConfiguration;
-import jdk.tools.jlink.Jlink.PluginsConfiguration;
 import jdk.tools.jlink.plugin.PluginException;
 import jdk.tools.jlink.builder.DefaultImageBuilder;
 import jdk.tools.jlink.plugin.Plugin;
@@ -63,20 +63,8 @@ import jdk.internal.misc.SharedSecrets;
 public class JlinkTask {
     static final boolean DEBUG = Boolean.getBoolean("jlink.debug");
 
-    private static <T extends Throwable> void fail(Class<T> type,
-            String format,
-            Object... args) throws T {
-        String msg = new Formatter().format(format, args).toString();
-        try {
-            T t = type.getConstructor(String.class).newInstance(msg);
-            throw t;
-        } catch (InstantiationException |
-                InvocationTargetException |
-                NoSuchMethodException |
-                IllegalAccessException e) {
-            throw new InternalError("Unable to create an instance of " + type, e);
-        }
-    }
+    // jlink API ignores by default. Remove when signing is implemented.
+    static final boolean IGNORE_SIGNING_DEFAULT = true;
 
     private static final TaskHelper taskHelper
             = new TaskHelper(JLINK_BUNDLE);
@@ -144,7 +132,10 @@ public class JlinkTask {
         }, "--save-opts"),
         new Option<JlinkTask>(false, (task, opt, arg) -> {
             task.options.fullVersion = true;
-        }, true, "--full-version"),};
+        }, true, "--full-version"),
+        new Option<JlinkTask>(false, (task, opt, arg) -> {
+            task.options.ignoreSigning = true;
+        }, true, "--ignore-signing-information"),};
 
     private static final String PROGNAME = "jlink";
     private final OptionsValues options = new OptionsValues();
@@ -161,7 +152,8 @@ public class JlinkTask {
     /**
      * Result codes.
      */
-    static final int EXIT_OK = 0, // Completed with no errors.
+    static final int
+            EXIT_OK = 0, // Completed with no errors.
             EXIT_ERROR = 1, // Completed but reported errors.
             EXIT_CMDERR = 2, // Bad command-line arguments
             EXIT_SYSERR = 3, // System error or resource exhaustion.
@@ -172,12 +164,13 @@ public class JlinkTask {
         String  saveoptsfile;
         boolean version;
         boolean fullVersion;
-        List<Path> modulePath = new ArrayList<>();
-        Set<String> limitMods = new HashSet<>();
-        Set<String> addMods = new HashSet<>();
+        final List<Path> modulePath = new ArrayList<>();
+        final Set<String> limitMods = new HashSet<>();
+        final Set<String> addMods = new HashSet<>();
         Path output;
         Path packagedModulesPath;
         ByteOrder endian = ByteOrder.nativeOrder();
+        boolean ignoreSigning = false;
     }
 
     int run(String[] args) {
@@ -186,7 +179,7 @@ public class JlinkTask {
                    new PrintWriter(System.err, true));
         }
         try {
-            optionsHelper.handleOptions(this, args);
+            optionsHelper.handleOptionsNoUnhandled(this, args);
             if (options.help) {
                 optionsHelper.showHelp(PROGNAME);
                 return EXIT_OK;
@@ -201,17 +194,9 @@ public class JlinkTask {
             }
 
             if (taskHelper.getExistingImage() == null) {
-                if (options.modulePath == null || options.modulePath.isEmpty()) {
+                if (options.modulePath.isEmpty()) {
                     throw taskHelper.newBadArgs("err.modulepath.must.be.specified").showUsage(true);
                 }
-                if (options.addMods.isEmpty()) {
-                    throw taskHelper.newBadArgs("err.mods.must.be.specified", "--add-modules")
-                        .showUsage(true);
-                }
-                if (options.output == null) {
-                    throw taskHelper.newBadArgs("err.output.must.be.specified").showUsage(true);
-                }
-
                 createImage();
             } else {
                 postProcessOnly(taskHelper.getExistingImage());
@@ -222,8 +207,8 @@ public class JlinkTask {
             }
 
             return EXIT_OK;
-        } catch (UncheckedIOException | PluginException | IllegalArgumentException |
-                 IOException | ResolutionException e) {
+        } catch (PluginException | IllegalArgumentException |
+                 UncheckedIOException |IOException | ResolutionException e) {
             log.println(taskHelper.getMessage("error.prefix") + " " + e.getMessage());
             if (DEBUG) {
                 e.printStackTrace(log);
@@ -261,20 +246,21 @@ public class JlinkTask {
             throw new IllegalArgumentException("Empty module paths");
         }
 
-        if (config.getModules().isEmpty()) {
-            throw new IllegalArgumentException("No root module");
-        }
-
         ModuleFinder finder = newModuleFinder(config.getModulepaths(),
                                               config.getLimitmods(),
                                               config.getModules());
 
+        if (config.getModules().isEmpty()) {
+            throw new IllegalArgumentException("No modules to add");
+        }
+
         // First create the image provider
-        ImageProvider imageProvider
-                = createImageProvider(finder,
-                                      config.getModules(),
-                                      config.getByteOrder(),
-                                      null);
+        ImageProvider imageProvider =
+                createImageProvider(finder,
+                                    config.getModules(),
+                                    config.getByteOrder(),
+                                    null,
+                                    IGNORE_SIGNING_DEFAULT);
 
         // Then create the Plugin Stack
         ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(plugins);
@@ -309,6 +295,15 @@ public class JlinkTask {
     // the token for "all modules on the module path"
     private static final String ALL_MODULE_PATH = "ALL-MODULE-PATH";
     private void createImage() throws Exception {
+        if (options.output == null) {
+            throw taskHelper.newBadArgs("err.output.must.be.specified").showUsage(true);
+        }
+
+        if (options.addMods.isEmpty()) {
+            throw taskHelper.newBadArgs("err.mods.must.be.specified", "--add-modules")
+                    .showUsage(true);
+        }
+
         Set<String> roots = new HashSet<>();
         for (String mod : options.addMods) {
             if (mod.equals(ALL_MODULE_PATH)) {
@@ -327,11 +322,13 @@ public class JlinkTask {
                                               options.limitMods,
                                               roots);
 
+
         // First create the image provider
         ImageProvider imageProvider = createImageProvider(finder,
                                                           roots,
                                                           options.endian,
-                                                          options.packagedModulesPath);
+                                                          options.packagedModulesPath,
+                                                          options.ignoreSigning);
 
         // Then create the Plugin Stack
         ImagePluginStack stack = ImagePluginConfiguration.
@@ -356,7 +353,7 @@ public class JlinkTask {
         return finder;
     }
 
-    /**
+    /*
      * Returns a module finder of the given module path that limits
      * the observable modules to those in the transitive closure of
      * the modules specified in {@code limitMods} plus other modules
@@ -377,7 +374,6 @@ public class JlinkTask {
         return finder;
     }
 
-
     private static Path toPathLocation(ResolvedModule m) {
         Optional<URI> ouri = m.reference().location();
         if (!ouri.isPresent())
@@ -389,7 +385,8 @@ public class JlinkTask {
     private static ImageProvider createImageProvider(ModuleFinder finder,
                                                      Set<String> roots,
                                                      ByteOrder order,
-                                                     Path retainModulesPath)
+                                                     Path retainModulesPath,
+                                                     boolean ignoreSigning)
             throws IOException
     {
         if (roots.isEmpty()) {
@@ -403,10 +400,10 @@ public class JlinkTask {
 
         Map<String, Path> mods = cf.modules().stream()
             .collect(Collectors.toMap(ResolvedModule::name, JlinkTask::toPathLocation));
-        return new ImageHelper(cf, mods, order, retainModulesPath);
+        return new ImageHelper(cf, mods, order, retainModulesPath, ignoreSigning);
     }
 
-    /**
+    /*
      * Returns a ModuleFinder that limits observability to the given root
      * modules, their transitive dependences, plus a set of other modules.
      */
@@ -490,36 +487,57 @@ public class JlinkTask {
     }
 
     private static class ImageHelper implements ImageProvider {
-
-        final Set<Archive> archives;
         final ByteOrder order;
         final Path packagedModulesPath;
+        final boolean ignoreSigning;
+        final Set<Archive> archives;
 
         ImageHelper(Configuration cf,
                     Map<String, Path> modsPaths,
                     ByteOrder order,
-                    Path packagedModulesPath) throws IOException {
-            archives = modsPaths.entrySet().stream()
-                                .map(e -> newArchive(e.getKey(), e.getValue()))
-                                .collect(Collectors.toSet());
+                    Path packagedModulesPath,
+                    boolean ignoreSigning) throws IOException {
             this.order = order;
             this.packagedModulesPath = packagedModulesPath;
+            this.ignoreSigning = ignoreSigning;
+            this.archives = modsPaths.entrySet().stream()
+                                .map(e -> newArchive(e.getKey(), e.getValue()))
+                                .collect(Collectors.toSet());
         }
 
         private Archive newArchive(String module, Path path) {
             if (path.toString().endsWith(".jmod")) {
                 return new JmodArchive(module, path);
             } else if (path.toString().endsWith(".jar")) {
-                return new ModularJarArchive(module, path);
+                ModularJarArchive modularJarArchive = new ModularJarArchive(module, path);
+
+                Stream<Archive.Entry> signatures = modularJarArchive.entries().filter((entry) -> {
+                    String name = entry.name().toUpperCase(Locale.ENGLISH);
+
+                    return name.startsWith("META-INF/") && name.indexOf('/', 9) == -1 && (
+                                name.endsWith(".SF") ||
+                                name.endsWith(".DSA") ||
+                                name.endsWith(".RSA") ||
+                                name.endsWith(".EC") ||
+                                name.startsWith("META-INF/SIG-")
+                            );
+                });
+
+                if (signatures.count() != 0) {
+                    if (ignoreSigning) {
+                        System.err.println(taskHelper.getMessage("warn.signing", path));
+                    } else {
+                        throw new IllegalArgumentException(taskHelper.getMessage("err.signing", path));
+                    }
+                }
+
+                return modularJarArchive;
             } else if (Files.isDirectory(path)) {
                 return new DirArchive(path);
             } else {
-                fail(RuntimeException.class,
-                        "Selected module %s (%s) not in jmod or modular jar format",
-                        module,
-                        path);
+                throw new IllegalArgumentException(
+                    taskHelper.getMessage("err.not.modular.format", module, path));
             }
-            return null;
         }
 
         @Override

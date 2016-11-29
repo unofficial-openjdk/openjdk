@@ -40,7 +40,6 @@ import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
-import java.lang.reflect.Method;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -77,7 +76,6 @@ public class HashesTest {
     private final Path jmods = Paths.get("jmods");
     private final String[] modules = new String[] { "m1", "m2", "m3"};
 
-    private static Method hashesMethod;
     @BeforeTest
     private void setup() throws Exception {
         if (Files.exists(jmods)) {

@@ -47,6 +47,7 @@ import java.lang.module.ResolutionException;
 import java.lang.module.ResolvedModule;
 import java.net.URI;
 import java.nio.file.FileSystems;
+import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
@@ -161,11 +162,12 @@ public class JmodTask {
         Path jmodFile;
         boolean help;
         boolean version;
-        List<Path> otherFiles;
         List<Path> classpath;
         List<Path> cmds;
         List<Path> configs;
         List<Path> libs;
+        List<Path> headerFiles;
+        List<Path> manPages;
         ModuleFinder moduleFinder;
         Version moduleVersion;
         String mainClass;
@@ -261,9 +263,9 @@ public class JmodTask {
         }
     }
 
-    static <T> String toString(Set<T> set) {
-        if (set.isEmpty()) { return ""; }
-        return set.stream().map(e -> e.toString().toLowerCase(Locale.ROOT))
+    static <T> String toString(Collection<T> c) {
+        if (c.isEmpty()) { return ""; }
+        return c.stream().map(e -> e.toString().toLowerCase(Locale.ROOT))
                   .collect(joining(" "));
     }
 
@@ -296,7 +298,7 @@ public class JmodTask {
         concealed.stream().sorted()
                  .forEach(p -> sb.append("\n  contains ").append(p));
 
-        md.provides().values().stream()
+        md.provides().stream()
             .sorted(Comparator.comparing(Provides::service))
             .forEach(p -> sb.append("\n  provides ").append(p.service())
                             .append(" with ")
@@ -345,11 +347,13 @@ public class JmodTask {
     }
 
     private class JmodFileWriter {
-        final List<Path> otherFiles = options.otherFiles;
         final List<Path> cmds = options.cmds;
         final List<Path> libs = options.libs;
         final List<Path> configs = options.configs;
         final List<Path> classpath = options.classpath;
+        final List<Path> headerFiles = options.headerFiles;
+        final List<Path> manPages = options.manPages;
+
         final Version moduleVersion = options.moduleVersion;
         final String mainClass = options.mainClass;
         final String osName = options.osName;
@@ -373,7 +377,8 @@ public class JmodTask {
             processSection(out, Section.NATIVE_CMDS, cmds);
             processSection(out, Section.NATIVE_LIBS, libs);
             processSection(out, Section.CONFIG, configs);
-            processSection(out, Section.OTHER_FILES, otherFiles);
+            processSection(out, Section.HEADER_FILES, headerFiles);
+            processSection(out, Section.MAN_PAGES, manPages);
 
         }
 
@@ -609,7 +614,7 @@ public class JmodTask {
             return "";
         }
 
-        void processClasses(JmodOutputStream zos, List<Path> classpaths)
+        void processClasses(JmodOutputStream out, List<Path> classpaths)
             throws IOException
         {
             if (classpaths == null)
@@ -617,30 +622,31 @@ public class JmodTask {
 
             for (Path p : classpaths) {
                 if (Files.isDirectory(p)) {
-                    processSection(zos, Section.CLASSES, p);
+                    processSection(out, Section.CLASSES, p);
                 } else if (Files.isRegularFile(p) && p.toString().endsWith(".jar")) {
                     try (JarFile jf = new JarFile(p.toFile())) {
-                        JarEntryConsumer jec = new JarEntryConsumer(zos, jf);
+                        JarEntryConsumer jec = new JarEntryConsumer(out, jf);
                         jf.stream().filter(jec).forEach(jec);
                     }
                 }
             }
         }
 
-        void processSection(JmodOutputStream zos, Section section, List<Path> paths)
+        void processSection(JmodOutputStream out, Section section, List<Path> paths)
             throws IOException
         {
             if (paths == null)
                 return;
 
             for (Path p : paths)
-                processSection(zos, section, p);
+                processSection(out, section, p);
         }
 
         void processSection(JmodOutputStream out, Section section, Path top)
             throws IOException
         {
-            Files.walkFileTree(top, new SimpleFileVisitor<Path>() {
+            Files.walkFileTree(top, Set.of(FileVisitOption.FOLLOW_LINKS),
+                    Integer.MAX_VALUE, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
                     throws IOException
@@ -1191,12 +1197,6 @@ public class JmodTask {
                         .withValuesSeparatedBy(File.pathSeparatorChar)
                         .withValuesConvertedBy(DirPathConverter.INSTANCE);
 
-        OptionSpec<Path> otherFiles
-            = parser.accepts("other-files", getMessage("main.opt.other-files"))
-                        .withRequiredArg()
-                        .withValuesSeparatedBy(File.pathSeparatorChar)
-                        .withValuesConvertedBy(DirPathConverter.INSTANCE);
-
         OptionSpec<Void> dryrun
             = parser.accepts("dry-run", getMessage("main.opt.dry-run"));
 
@@ -1214,6 +1214,12 @@ public class JmodTask {
                 = parser.acceptsAll(Set.of("h", "help"), getMessage("main.opt.help"))
                         .forHelp();
 
+        OptionSpec<Path> headerFiles
+            = parser.accepts("header-files", getMessage("main.opt.header-files"))
+                    .withRequiredArg()
+                    .withValuesSeparatedBy(File.pathSeparatorChar)
+                    .withValuesConvertedBy(DirPathConverter.INSTANCE);
+
         OptionSpec<Path> libs
                 = parser.accepts("libs", getMessage("main.opt.libs"))
                         .withRequiredArg()
@@ -1224,6 +1230,12 @@ public class JmodTask {
                 = parser.accepts("main-class", getMessage("main.opt.main-class"))
                         .withRequiredArg()
                         .describedAs(getMessage("main.opt.main-class.arg"));
+
+        OptionSpec<Path> manPages
+            = parser.accepts("man-pages", getMessage("main.opt.man-pages"))
+                        .withRequiredArg()
+                        .withValuesSeparatedBy(File.pathSeparatorChar)
+                        .withValuesConvertedBy(DirPathConverter.INSTANCE);
 
         OptionSpec<Path> modulePath
                 = parser.acceptsAll(Set.of("p", "module-path"),
@@ -1285,14 +1297,16 @@ public class JmodTask {
                 options.cmds = opts.valuesOf(cmds);
             if (opts.has(config))
                 options.configs = opts.valuesOf(config);
-            if (opts.has(otherFiles))
-                options.otherFiles = opts.valuesOf(otherFiles);
             if (opts.has(dryrun))
                 options.dryrun = true;
             if (opts.has(excludes))
                 options.excludes = opts.valuesOf(excludes);
             if (opts.has(libs))
                 options.libs = opts.valuesOf(libs);
+            if (opts.has(headerFiles))
+                options.headerFiles = opts.valuesOf(headerFiles);
+            if (opts.has(manPages))
+                options.manPages = opts.valuesOf(manPages);
             if (opts.has(modulePath)) {
                 Path[] dirs = opts.valuesOf(modulePath).toArray(new Path[0]);
                 options.moduleFinder = JLMA.newModulePath(Runtime.version(), true, dirs);
@@ -1345,30 +1359,8 @@ public class JmodTask {
                 throw new CommandException("err.classpath.must.be.specified").showUsage(true);
             if (options.mainClass != null && !isValidJavaIdentifier(options.mainClass))
                 throw new CommandException("err.invalid.main-class", options.mainClass);
-
-            // check other files that should not conflict with well-known paths
-            // in an image
-            checkOtherFilePaths(options.otherFiles);
         } catch (OptionException e) {
              throw new CommandException(e.getMessage());
-        }
-    }
-
-    static void checkOtherFilePaths(List<Path> paths) {
-        if (paths == null)
-            return;;
-
-        for (Path path : paths) {
-            try (Stream<Path> dirs = Files.walk(path, 1).filter(Files::isDirectory)) {
-                dirs.forEach(p -> {
-                    Path name = p.getFileName();
-                    if (name.equals("conf") || name.equals("lib") || name.equals("bin")) {
-                        throw new CommandException("Invalid path in top level section: " + p);
-                    }
-                });
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
         }
     }
 

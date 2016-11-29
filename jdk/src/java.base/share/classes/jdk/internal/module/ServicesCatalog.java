@@ -28,20 +28,22 @@ package jdk.internal.module;
 import java.lang.reflect.Module;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Provides;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import jdk.internal.loader.ClassLoaderValue;
 
 /**
  * A <em>services catalog</em>. Each {@code ClassLoader} and {@code Layer} has
  * an optional {@code ServicesCatalog} for modules that provide services.
  *
- * @apiNote This class will be replaced once the ServiceLoader spec is updated.
- *
- * @see java.util.ServiceLoader
+ * @apiNote This class will be replaced once the ServiceLoader is further
+ *          specified
  */
 public final class ServicesCatalog {
 
@@ -80,42 +82,10 @@ public final class ServicesCatalog {
         }
     }
 
-    // service name -> service providers
-    private Map<String, Set<ServiceProvider>> map = new ConcurrentHashMap<>();
+    // service name -> list of providers
+    private final Map<String, List<ServiceProvider>> map = new ConcurrentHashMap<>();
 
     private ServicesCatalog() { }
-
-    /**
-     * Returns a unmodifiable set that is the union of the given sets.
-     */
-    private <T> Set<T> union(Set<T> s1, Set<T> s2) {
-        Set<T> result = new HashSet<>(s1);
-        result.addAll(s2);
-        return Collections.unmodifiableSet(result);
-    }
-
-    /**
-     * Adds or replaces an entry in the map.
-     */
-    private void replace(String sn,
-                         Set<ServiceProvider> oldSet,
-                         Set<ServiceProvider> newSet) {
-        boolean replaced;
-        if (oldSet == null) {
-            replaced = (map.putIfAbsent(sn, newSet) == null);
-        } else {
-            replaced = map.replace(sn, oldSet, newSet);
-        }
-        if (replaced) {
-            // added or replaced
-            return;
-        }
-        synchronized (this) {
-            oldSet = map.get(sn); // re-read
-            assert oldSet != null;
-            map.put(sn, union(oldSet, newSet));
-        }
-    }
 
     /**
      * Creates a ServicesCatalog that supports concurrent registration and
@@ -126,60 +96,84 @@ public final class ServicesCatalog {
     }
 
     /**
+     * Returns the list of service provides for the given service type
+     * name, creating it if needed.
+     */
+    private List<ServiceProvider> providers(String service) {
+        // avoid computeIfAbsent here
+        List<ServiceProvider> list = map.get(service);
+        if (list == null) {
+            list = new CopyOnWriteArrayList<>();
+            List<ServiceProvider> prev = map.putIfAbsent(service, list);
+            if (prev != null)
+                list = prev;  // someone else got there
+        }
+        return list;
+    }
+
+    /**
      * Registers the providers in the given module in this services catalog.
-     *
-     * @throws UnsupportedOperationException
-     *         If this services catalog is immutable
      */
     public void register(Module module) {
         ModuleDescriptor descriptor = module.getDescriptor();
-        for (Provides provides : descriptor.provides().values()) {
-            String sn = provides.service();
-            Set<String> providerNames = provides.providers();
-
-            Set<ServiceProvider> oldSet = map.get(sn);
-            Set<ServiceProvider> newSet;
-            if (oldSet == null && providerNames.size() == 1) {
-                String pn = providerNames.iterator().next();
-                newSet = Set.of(new ServiceProvider(module, pn));
+        for (Provides provides : descriptor.provides()) {
+            String service = provides.service();
+            List<String> providerNames = provides.providers();
+            int count = providerNames.size();
+            if (count == 1) {
+                String pn = providerNames.get(0);
+                providers(service).add(new ServiceProvider(module, pn));
             } else {
-                newSet = new HashSet<>();
-                if (oldSet != null) {
-                    newSet.addAll(oldSet);
-                }
+                List<ServiceProvider> list = new ArrayList<>(count);
                 for (String pn : providerNames) {
-                    newSet.add(new ServiceProvider(module, pn));
+                    list.add(new ServiceProvider(module, pn));
                 }
+                providers(service).addAll(list);
             }
-
-            replace(sn, oldSet, newSet);
         }
     }
 
     /**
      * Add a provider in the given module to this services catalog
+     *
+     * @apiNote This method is for use by java.lang.instrument
      */
     public void addProvider(Module module, Class<?> service, Class<?> impl) {
-        String sn = service.getName();
-        ServiceProvider provider = new ServiceProvider(module, impl.getName());
-        Set<ServiceProvider> providers = Set.of(provider);
-
-        Set<ServiceProvider> oldSet = map.get(sn);
-        Set<ServiceProvider> newSet;
-        if (oldSet == null) {
-            newSet = providers;
-        } else {
-            newSet = union(oldSet, providers);
-        }
-
-        replace(sn, oldSet, newSet);
+        List<ServiceProvider> list = providers(service.getName());
+        list.add(new ServiceProvider(module, impl.getName()));
     }
 
     /**
-     * Returns the (possibly empty) set of service providers that implement the
-     * given service type.
+     * Returns the (possibly empty) list of service providers that implement
+     * the given service type.
      */
-    public Set<ServiceProvider> findServices(String service) {
-        return map.getOrDefault(service, Collections.emptySet());
+    public List<ServiceProvider> findServices(String service) {
+        return map.getOrDefault(service, Collections.emptyList());
     }
+
+    /**
+     * Returns the ServicesCatalog for the given class loader or {@code null}
+     * if there is none.
+     */
+    public static ServicesCatalog getServicesCatalogOrNull(ClassLoader loader) {
+        return CLV.get(loader);
+    }
+
+    /**
+     * Returns the ServicesCatalog for the given class loader, creating it if
+     * needed.
+     */
+    public static ServicesCatalog getServicesCatalog(ClassLoader loader) {
+        // CLV.computeIfAbsent(loader, (cl, clv) -> create());
+        ServicesCatalog catalog = CLV.get(loader);
+        if (catalog == null) {
+            catalog = create();
+            ServicesCatalog previous = CLV.putIfAbsent(loader, catalog);
+            if (previous != null) catalog = previous;
+        }
+        return catalog;
+    }
+
+    // the ServicesCatalog registered to a class loader
+    private static final ClassLoaderValue<ServicesCatalog> CLV = new ClassLoaderValue<>();
 }

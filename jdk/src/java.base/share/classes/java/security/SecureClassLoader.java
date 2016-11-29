@@ -115,8 +115,10 @@ public class SecureClassLoader extends ClassLoader {
      * Creates a new {@code SecureClassLoader} of the specified name and
      * using the specified parent class loader for delegation.
      *
-     * @param name class loader name; can be {@code null}.
+     * @param name class loader name; or {@code null} if not named
      * @param parent the parent class loader
+     *
+     * @throws IllegalArgumentException if the given name is empty.
      *
      * @throws SecurityException  if a security manager exists and its
      *         {@link SecurityManager#checkCreateClassLoader()} method
@@ -126,7 +128,6 @@ public class SecureClassLoader extends ClassLoader {
      */
     protected SecureClassLoader(String name, ClassLoader parent) {
         super(name, parent);
-        // this is to make the stack depth consistent with 1.1
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkCreateClassLoader();

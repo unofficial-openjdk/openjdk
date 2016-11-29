@@ -27,7 +27,7 @@
   @summary [macosx] TwentyThousandTest test intermittently hangs
   @author Oleg Pekhovskiy
   @modules java.desktop/sun.awt
-  @modules java.desktop/java.awt:private
+  @modules java.desktop/java.awt:open
   @run main EDTShutdownTest
  */
 

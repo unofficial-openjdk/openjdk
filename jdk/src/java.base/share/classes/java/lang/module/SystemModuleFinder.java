@@ -36,6 +36,7 @@ import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -51,6 +52,9 @@ import java.util.stream.StreamSupport;
 import jdk.internal.jimage.ImageLocation;
 import jdk.internal.jimage.ImageReader;
 import jdk.internal.jimage.ImageReaderFactory;
+import jdk.internal.misc.JavaNetUriAccess;
+import jdk.internal.misc.SharedSecrets;
+import jdk.internal.module.ModuleBootstrap;
 import jdk.internal.module.ModuleHashes;
 import jdk.internal.module.ModuleHashes.HashSupplier;
 import jdk.internal.module.SystemModules;
@@ -66,6 +70,8 @@ import jdk.internal.perf.PerfCounter;
  */
 
 class SystemModuleFinder implements ModuleFinder {
+
+    private static final JavaNetUriAccess JNUA = SharedSecrets.getJavaNetUriAccess();
 
     private static final PerfCounter initTime
         = PerfCounter.newPerfCounter("jdk.module.finder.jimage.initTime");
@@ -176,7 +182,7 @@ class SystemModuleFinder implements ModuleFinder {
                                                      HashSupplier hash)
     {
         String mn = md.name();
-        URI uri = URI.create("jrt:/" + mn);
+        URI uri = JNUA.create("jrt", "/".concat(mn));
 
         Supplier<ModuleReader> readerSupplier = new Supplier<>() {
             @Override
@@ -189,7 +195,7 @@ class SystemModuleFinder implements ModuleFinder {
             new ModuleReference(md, uri, readerSupplier, hash);
 
         // may need a reference to a patched module if --patch-module specified
-        mref = ModulePatcher.interposeIfNeeded(mref);
+        mref = ModuleBootstrap.patcher().patchIfNeeded(mref);
 
         return mref;
     }
@@ -198,7 +204,7 @@ class SystemModuleFinder implements ModuleFinder {
         if (isFastPathSupported()) {
             return new HashSupplier() {
                 @Override
-                public String generate(String algorithm) {
+                public byte[] generate(String algorithm) {
                     return SystemModules.MODULES_TO_HASH[index];
                 }
             };
@@ -212,7 +218,7 @@ class SystemModuleFinder implements ModuleFinder {
      * It will get the recorded hashes from module-info.class.
      */
     private static class Hashes {
-        static Map<String, String> hashes = new HashMap<>();
+        static Map<String, byte[]> hashes = new HashMap<>();
 
         static void add(ModuleDescriptor descriptor) {
             Optional<ModuleHashes> ohashes = descriptor.hashes();
@@ -227,7 +233,7 @@ class SystemModuleFinder implements ModuleFinder {
 
             return new HashSupplier() {
                 @Override
-                public String generate(String algorithm) {
+                public byte[] generate(String algorithm) {
                     return hashes.get(name);
                 }
             };
@@ -354,7 +360,7 @@ class SystemModuleFinder implements ModuleFinder {
 
     /**
      * A Spliterator for traversing the resources of a module linked into the
-     * run-time image. Traversal is depth first.
+     * run-time image.
      */
     static class ModuleContentSpliterator implements Spliterator<String> {
         final String moduleRoot;

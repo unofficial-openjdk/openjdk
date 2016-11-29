@@ -55,7 +55,7 @@ public class BasicLayerTest {
     public void testEmpty() {
         Layer emptyLayer = Layer.empty();
 
-        assertFalse(emptyLayer.parent().isPresent());
+        assertTrue(emptyLayer.parents().isEmpty());
 
         assertTrue(emptyLayer.configuration() == Configuration.empty());
 
@@ -99,8 +99,9 @@ public class BasicLayerTest {
         // findLoader
         assertTrue(bootLayer.findLoader("java.base") == null);
 
-        // parent
-        assertTrue(bootLayer.parent().get() == Layer.empty());
+        // parents
+        assertTrue(bootLayer.parents().size() == 1);
+        assertTrue(bootLayer.parents().get(0) == Layer.empty());
     }
 
 
@@ -180,8 +181,9 @@ public class BasicLayerTest {
             assertTrue(false);
         } catch (IllegalArgumentException ignore) { }
 
-        // parent
-        assertTrue(layer.parent().get() == Layer.empty());
+        // parents
+        assertTrue(layer.parents().size() == 1);
+        assertTrue(layer.parents().get(0) == Layer.empty());
     }
 
 
@@ -243,8 +245,9 @@ public class BasicLayerTest {
         assertTrue(layer.findLoader("m2") == loader);
         assertTrue(layer.findLoader("java.base") == null);
 
-        // parent
-        assertTrue(layer.parent().get() == Layer.boot());
+        // parents
+        assertTrue(layer.parents().size() == 1);
+        assertTrue(layer.parents().get(0) == Layer.boot());
     }
 
 
@@ -410,8 +413,11 @@ public class BasicLayerTest {
         ClassLoader cl2 = new ClassLoader() { };
         Layer layer2 = layer1.defineModules(cf2, mn -> cl2);
 
-        assertTrue(layer1.parent().get() == Layer.empty());
-        assertTrue(layer2.parent().get() == layer1);
+        assertTrue(layer1.parents().size() == 1);
+        assertTrue(layer1.parents().get(0) == Layer.empty());
+
+        assertTrue(layer2.parents().size() == 1);
+        assertTrue(layer2.parents().get(0) == layer1);
 
         Module m1 = layer2.findModule("m1").get();
         Module m2 = layer2.findModule("m2").get();
@@ -481,8 +487,11 @@ public class BasicLayerTest {
         ClassLoader cl2 = new ClassLoader() { };
         Layer layer2 = layer1.defineModules(cf2, mn -> cl2);
 
-        assertTrue(layer1.parent().get() == Layer.empty());
-        assertTrue(layer2.parent().get() == layer1);
+        assertTrue(layer1.parents().size() == 1);
+        assertTrue(layer1.parents().get(0) == Layer.empty());
+
+        assertTrue(layer2.parents().size() == 1);
+        assertTrue(layer2.parents().get(0) == layer1);
 
         Module m1 = layer2.findModule("m1").get();
         Module m2 = layer2.findModule("m2").get();
@@ -559,9 +568,14 @@ public class BasicLayerTest {
         ClassLoader cl3 = new ClassLoader() { };
         Layer layer3 = layer2.defineModules(cf3, mn -> cl3);
 
-        assertTrue(layer1.parent().get() == Layer.empty());
-        assertTrue(layer2.parent().get() == layer1);
-        assertTrue(layer3.parent().get() == layer2);
+        assertTrue(layer1.parents().size() == 1);
+        assertTrue(layer1.parents().get(0) == Layer.empty());
+
+        assertTrue(layer2.parents().size() == 1);
+        assertTrue(layer2.parents().get(0) == layer1);
+
+        assertTrue(layer3.parents().size() == 1);
+        assertTrue(layer3.parents().get(0) == layer2);
 
         Module m1 = layer3.findModule("m1").get();
         Module m2 = layer3.findModule("m2").get();
@@ -633,8 +647,11 @@ public class BasicLayerTest {
         ClassLoader cl2 = new ClassLoader() { };
         Layer layer2 = layer1.defineModules(cf2, mn -> cl2);
 
-        assertTrue(layer1.parent().get() == Layer.empty());
-        assertTrue(layer2.parent().get() == layer1);
+        assertTrue(layer1.parents().size() == 1);
+        assertTrue(layer1.parents().get(0) == Layer.empty());
+
+        assertTrue(layer2.parents().size() == 1);
+        assertTrue(layer2.parents().get(0) == layer1);
 
         Module m1 = layer2.findModule("m1").get();
         Module m2 = layer2.findModule("m2").get();

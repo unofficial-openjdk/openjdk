@@ -27,8 +27,8 @@
  * @summary Testing TLS engines do not enable RC4 ciphers by default.
  * @library /sun/security/krb5/auto /javax/net/ssl/TLSCommon
  * @modules java.security.jgss
- *          java.security.jgss/sun.security.krb5:private
- *          java.security.jgss/sun.security.krb5.internal:private
+ *          java.security.jgss/sun.security.krb5:+open
+ *          java.security.jgss/sun.security.krb5.internal:+open
  *          java.security.jgss/sun.security.krb5.internal.ccache
  *          java.security.jgss/sun.security.krb5.internal.crypto
  *          java.security.jgss/sun.security.krb5.internal.ktab

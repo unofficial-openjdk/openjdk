@@ -40,10 +40,10 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -358,7 +358,7 @@ class ModulePath implements ModuleFinder {
 
     /**
      * Returns the service type corresponding to the name of a services
-     * configuration file if it's a valid Java identifier.
+     * configuration file if it is a valid Java identifier.
      *
      * For example, if called with "META-INF/services/p.S" then this method
      * returns a container with the value "p.S".
@@ -454,7 +454,6 @@ class ModulePath implements ModuleFinder {
 
         Set<String> resources = map.get(Boolean.FALSE);
         Set<String> configFiles = map.get(Boolean.TRUE);
-
         // all packages are exported and open
         resources.stream()
                 .map(this::toPackageName)
@@ -471,7 +470,7 @@ class ModulePath implements ModuleFinder {
         // parse each service configuration file
         for (String sn : serviceNames) {
             JarEntry entry = jf.getJarEntry(SERVICES_PREFIX + sn);
-            Set<String> providerClasses = new LinkedHashSet<>();
+            List<String> providerClasses = new ArrayList<>();
             try (InputStream in = jf.getInputStream(entry)) {
                 BufferedReader reader
                     = new BufferedReader(new InputStreamReader(in, "UTF-8"));

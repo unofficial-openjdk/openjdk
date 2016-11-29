@@ -33,7 +33,6 @@ import java.lang.module.ModuleReference;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Opens;
-import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Version;
 import java.lang.module.ResolvedModule;
 import java.net.URI;
@@ -321,9 +320,13 @@ public final class Module implements AnnotatedElement {
      * If the caller's module is this module then update this module to read
      * the given module.
      *
-     * This method is a no-op if {@code other} is this module (all modules can
-     * read themselves) or this module is an unnamed module (as unnamed modules
-     * read all modules).
+     * This method is a no-op if {@code other} is this module (all modules read
+     * themselves), this module is an unnamed module (as unnamed modules read
+     * all modules), or this module already reads {@code other}.
+     *
+     * @implNote <em>Read edges</em> added by this method are <em>weak</em> and
+     * do not prevent {@code other} from being GC'ed when this module is
+     * strongly reachable.
      *
      * @param  other
      *         The other module
@@ -418,9 +421,11 @@ public final class Module implements AnnotatedElement {
      * Returns {@code true} if this module exports the given package to at
      * least the given module.
      *
-     * <p> A package is considered exported to a module at run-time when the
-     * package is {@link #isOpen open} to the module. This method always returns
-     * {@code true} when invoked on an {@link ModuleDescriptor#isOpen open}
+     * <p> This method returns {@code true} if invoked to test if a package in
+     * this module is exported to itself. It always returns {@code true} when
+     * invoked on an unnamed module. A package that is {@link #isOpen open} to
+     * the given module is considered exported to that module at run-time and
+     * so this method returns {@code true} if the package is open to the given
      * module. </p>
      *
      * <p> This method does not check if the given module reads this module. </p>
@@ -433,6 +438,7 @@ public final class Module implements AnnotatedElement {
      * @return {@code true} if this module exports the package to at least the
      *         given module
      *
+     * @see ModuleDescriptor#exports()
      * @see #addExports(String,Module)
      */
     public boolean isExported(String pn, Module other) {
@@ -445,8 +451,10 @@ public final class Module implements AnnotatedElement {
      * Returns {@code true} if this module has <em>opened</em> a package to at
      * least the given module.
      *
-     * <p> This method always returns {@code true} when invoked on an
-     * {@link ModuleDescriptor#isOpen open} module. </p>
+     * <p> This method returns {@code true} if invoked to test if a package in
+     * this module is open to itself. It returns {@code true} when invoked on an
+     * {@link ModuleDescriptor#isOpen open} module with a package in the module.
+     * It always returns {@code true} when invoked on an unnamed module. </p>
      *
      * <p> This method does not check if the given module reads this module. </p>
      *
@@ -458,8 +466,10 @@ public final class Module implements AnnotatedElement {
      * @return {@code true} if this module has <em>opened</em> the package
      *         to at least the given module
      *
+     * @see ModuleDescriptor#opens()
      * @see #addOpens(String,Module)
      * @see AccessibleObject#setAccessible(boolean)
+     * @see java.lang.invoke.MethodHandles#privateLookupIn
      */
     public boolean isOpen(String pn, Module other) {
         Objects.requireNonNull(pn);
@@ -471,10 +481,10 @@ public final class Module implements AnnotatedElement {
      * Returns {@code true} if this module exports the given package
      * unconditionally.
      *
-     * <p> A package is considered exported unconditionally at run-time when
-     * the package is {@link #isOpen open} unconditionally. This method always
-     * returns {@code true} when invoked on an {@link ModuleDescriptor#isOpen
-     * open} module. </p>
+     * <p> This method always returns {@code true} when invoked on an unnamed
+     * module. A package that is {@link #isOpen(String) opened} unconditionally
+     * is considered exported unconditionally at run-time and so this method
+     * returns {@code true} if the package is opened unconditionally. </p>
      *
      * <p> This method does not check if the given module reads this module. </p>
      *
@@ -482,6 +492,8 @@ public final class Module implements AnnotatedElement {
      *         The package name
      *
      * @return {@code true} if this module exports the package unconditionally
+     *
+     * @see ModuleDescriptor#exports()
      */
     public boolean isExported(String pn) {
         Objects.requireNonNull(pn);
@@ -492,8 +504,10 @@ public final class Module implements AnnotatedElement {
      * Returns {@code true} if this module has <em>opened</em> a package
      * unconditionally.
      *
-     * <p> This method always returns {@code true} when invoked on an
-     * {@link ModuleDescriptor#isOpen open} module. </p>
+     * <p> This method always returns {@code true} when invoked on an unnamed
+     * module. Additionally, it always returns {@code true} when invoked on an
+     * {@link ModuleDescriptor#isOpen open} module with a package in the
+     * module. </p>
      *
      * <p> This method does not check if the given module reads this module. </p>
      *
@@ -502,6 +516,8 @@ public final class Module implements AnnotatedElement {
      *
      * @return {@code true} if this module has <em>opened</em> the package
      *         unconditionally
+     *
+     * @see ModuleDescriptor#opens()
      */
     public boolean isOpen(String pn) {
         Objects.requireNonNull(pn);
@@ -515,9 +531,17 @@ public final class Module implements AnnotatedElement {
      * this method tests if the package is exported or opened unconditionally.
      */
     private boolean implIsExportedOrOpen(String pn, Module other, boolean open) {
-        // all packages in unnamed modules and open modules are open
-        if (!isNamed() || descriptor.isOpen())
+        // all packages in unnamed modules are open
+        if (!isNamed())
             return true;
+
+        // all packages are exported/open to self
+        if (other == this && containsPackage(pn))
+            return true;
+
+        // all packages in open modules are open
+        if (descriptor.isOpen())
+            return containsPackage(pn);
 
         // exported/opened via module declaration/descriptor
         if (isStaticallyExportedOrOpen(pn, other, open))
@@ -656,8 +680,9 @@ public final class Module implements AnnotatedElement {
      * <em>open</em> the given package to the given module.
      * Opening a package with this method allows all types in the package,
      * and all their members, not just public types and their public members,
-     * to be reflected on by the given module when using APIs that bypass or
-     * suppress default Java language access control checks.
+     * to be reflected on by the given module when using APIs that support
+     * private access or a way to bypass or suppress default Java language
+     * access control checks.
      *
      * <p> This method has no effect if the package is already <em>open</em>
      * to the given module. It also has no effect if invoked on an {@link
@@ -678,6 +703,7 @@ public final class Module implements AnnotatedElement {
      *
      * @see #isOpen(String,Module)
      * @see AccessibleObject#setAccessible(boolean)
+     * @see java.lang.invoke.MethodHandles#privateLookupIn
      */
     @CallerSensitive
     public Module addOpens(String pn, Module other) {
@@ -725,15 +751,6 @@ public final class Module implements AnnotatedElement {
      * @apiNote This method is for white-box tests and jtreg
      */
     void implAddOpens(String pn, Module other) {
-        implAddExportsOrOpens(pn, other, true, true);
-    }
-
-    /**
-     * Updates the module to open package {@code pn} to module {@code other}.
-     *
-     * @apiNote This method will be removed once jtreg is updated
-     */
-    void implAddExportsPrivate(String pn, Module other) {
         implAddExportsOrOpens(pn, other, true, true);
     }
 
@@ -962,8 +979,12 @@ public final class Module implements AnnotatedElement {
      * If {@code syncVM} is {@code true} then the VM is notified.
      */
     private void implAddPackage(String pn, boolean syncVM) {
-        if (pn.length() == 0)
-            throw new IllegalArgumentException("<unnamed> package not allowed");
+        if (!isNamed())
+            throw new InternalError("adding package to unnamed module?");
+        if (descriptor.isOpen())
+            throw new InternalError("adding package to open module?");
+        if (pn.isEmpty())
+            throw new InternalError("adding <unnamed> package to module?");
 
         if (descriptor.packages().contains(pn)) {
             // already in module
@@ -1062,15 +1083,19 @@ public final class Module implements AnnotatedElement {
 
             // reads
             Set<Module> reads = new HashSet<>();
-            for (ResolvedModule d : resolvedModule.reads()) {
-                Module m2;
-                if (d.configuration() == cf) {
-                    String dn = d.reference().descriptor().name();
+            for (ResolvedModule other : resolvedModule.reads()) {
+                Module m2 = null;
+                if (other.configuration() == cf) {
+                    String dn = other.reference().descriptor().name();
                     m2 = nameToModule.get(dn);
-                    assert m2 != null;
                 } else {
-                    m2 = find(d, layer.parent().orElse(null));
+                    for (Layer parent: layer.parents()) {
+                        m2 = findModule(parent, other);
+                        if (m2 != null)
+                            break;
+                    }
                 }
+                assert m2 != null;
 
                 reads.add(m2);
 
@@ -1088,14 +1113,12 @@ public final class Module implements AnnotatedElement {
             initExportsAndOpens(descriptor, nameToModule, m);
         }
 
-        // For now, register the modules in the boot layer. This will be
-        // re-examined once the ServiceLoader spec is updated.
+        // register the modules in the boot layer
         if (isBootLayer) {
             for (ResolvedModule resolvedModule : cf.modules()) {
                 ModuleReference mref = resolvedModule.reference();
                 ModuleDescriptor descriptor = mref.descriptor();
-                Map<String, Provides> services = descriptor.provides();
-                if (!services.isEmpty()) {
+                if (!descriptor.provides().isEmpty()) {
                     String name = descriptor.name();
                     Module m = nameToModule.get(name);
                     ClassLoader loader = moduleToLoader.get(name);
@@ -1103,17 +1126,16 @@ public final class Module implements AnnotatedElement {
                     if (loader == null) {
                         catalog = BootLoader.getServicesCatalog();
                     } else {
-                        catalog = SharedSecrets.getJavaLangAccess()
-                                .createOrGetServicesCatalog(loader);
+                        catalog = ServicesCatalog.getServicesCatalog(loader);
                     }
                     catalog.register(m);
                 }
             }
         }
 
-        // ClassLoader::layers support, TBD whether to keep this
+        // record that there is a layer with modules defined to the class loader
         for (ClassLoader loader : loaders) {
-            SharedSecrets.getJavaLangAccess().bindToLayer(loader, layer);
+            layer.bindToLoader(loader);
         }
 
         return nameToModule;
@@ -1122,23 +1144,22 @@ public final class Module implements AnnotatedElement {
 
     /**
      * Find the runtime Module corresponding to the given ResolvedModule
-     * in the given parent Layer (or its parents).
+     * in the given parent layer (or its parents).
      */
-    private static Module find(ResolvedModule resolvedModule, Layer layer) {
+    private static Module findModule(Layer parent, ResolvedModule resolvedModule) {
         Configuration cf = resolvedModule.configuration();
         String dn = resolvedModule.name();
-
-        Module m = null;
-        while (layer != null) {
-            if (layer.configuration() == cf) {
-                Optional<Module> om = layer.findModule(dn);
-                m = om.get();
-                assert m.getLayer() == layer;
-                break;
-            }
-            layer = layer.parent().orElse(null);
-        }
-        return m;
+        return parent.layers()
+                .filter(l -> l.configuration() == cf)
+                .findAny()
+                .map(layer -> {
+                    Optional<Module> om = layer.findModule(dn);
+                    assert om.isPresent() : dn + " not found in layer";
+                    Module m = om.get();
+                    assert m.getLayer() == layer : m + " not in expected layer";
+                    return m;
+                })
+                .orElse(null);
     }
 
     /**
@@ -1538,6 +1559,14 @@ public final class Module implements AnnotatedElement {
                 @Override
                 public ServicesCatalog getServicesCatalog(Layer layer) {
                     return layer.getServicesCatalog();
+                }
+                @Override
+                public Stream<Layer> layers(Layer layer) {
+                    return layer.layers();
+                }
+                @Override
+                public Stream<Layer> layers(ClassLoader loader) {
+                    return Layer.layers(loader);
                 }
             });
     }
