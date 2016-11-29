@@ -157,18 +157,22 @@ public class PrivateLookupInTests {
         Lookup lookup = MethodHandles.privateLookupIn(clazz, MethodHandles.lookup());
     }
 
-    // Invoke MethodHandles.privateLookupIn with an array class as the target class
-    public void testArrayClassAsTargetClass() throws Exception {
-        Class<?> targetClass = PrivateLookupInTests[].class;
-        Lookup lookup = MethodHandles.privateLookupIn(targetClass, MethodHandles.lookup());
-        assertTrue(lookup.lookupClass() == targetClass);
-        assertTrue(lookup.hasPrivateAccess());
-    }
-
     // Invoke MethodHandles.privateLookupIn with a primitive class
     @Test(expectedExceptions = {IllegalArgumentException.class})
     public void testPrimitiveClassAsTargetClass() throws Exception {
         MethodHandles.privateLookupIn(int.class, MethodHandles.lookup());
+    }
+
+    // Invoke MethodHandles.privateLookupIn with an array class
+    @Test(expectedExceptions = {IllegalArgumentException.class})
+    public void testArrayClassAsTargetClass() throws Exception {
+        MethodHandles.privateLookupIn(PrivateLookupInTests[].class, MethodHandles.lookup());
+    }
+
+    // Invoke MethodHandles.privateLookupIn with a primitive array class
+    @Test(expectedExceptions = {IllegalArgumentException.class})
+    public void testPrimitiveArrayClassAsTargetClass() throws Exception {
+        MethodHandles.privateLookupIn(int[].class, MethodHandles.lookup());
     }
 
     // Invoke MethodHandles.privateLookupIn with null

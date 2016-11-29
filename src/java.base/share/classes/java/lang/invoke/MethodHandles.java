@@ -167,7 +167,7 @@ public class MethodHandles {
      * @param targetClass the target class
      * @param lookup the caller lookup object
      * @return a lookup object for the target class, with private access
-     * @throws IllegalArgumentException if {@code targetClass} is a primitve type
+     * @throws IllegalArgumentException if {@code targetClass} is a primitve type or array class
      * @throws NullPointerException if {@code targetClass} or {@code caller} is {@code null}
      * @throws IllegalAccessException if the access check specified above fails
      * @throws SecurityException if denied by the security manager
@@ -178,16 +178,14 @@ public class MethodHandles {
         if (sm != null) sm.checkPermission(ACCESS_PERMISSION);
         if (targetClass.isPrimitive())
             throw new IllegalArgumentException(targetClass + " is a primitive class");
+        if (targetClass.isArray())
+            throw new IllegalArgumentException(targetClass + " is an array class");
         Module targetModule = targetClass.getModule();
         Module callerModule = lookup.lookupClass().getModule();
         if (callerModule != targetModule && targetModule.isNamed()) {
             if (!callerModule.canRead(targetModule))
                 throw new IllegalAccessException(callerModule + " does not read " + targetModule);
-            Class<?> clazz = targetClass;
-            while (clazz.isArray()) {
-                clazz = clazz.getComponentType();
-            }
-            String pn = clazz.getPackageName();
+            String pn = targetClass.getPackageName();
             assert pn != null && pn.length() > 0 : "unnamed package cannot be in named module";
             if (!targetModule.isOpen(pn, callerModule))
                 throw new IllegalAccessException(targetModule + " does not open " + pn + " to " + callerModule);
