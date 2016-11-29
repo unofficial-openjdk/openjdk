@@ -33,6 +33,7 @@ module java.corba {
     requires java.logging;
     requires java.naming;
     requires java.transaction;
+    requires jdk.unsupported;
 
     exports javax.activity;
     exports javax.rmi;
@@ -70,7 +71,7 @@ module java.corba {
     exports com.sun.corba.se.impl.util to jdk.rmic;
 
     // JNDI CosNaming provider
-    exports com.sun.jndi.cosnaming to java.naming;
+    opens com.sun.jndi.cosnaming to java.naming;  // jndiprovider.properties
     exports com.sun.jndi.url.corbaname to java.naming;
     exports com.sun.jndi.url.iiop to java.naming;
     exports com.sun.jndi.url.iiopname to java.naming;
