@@ -19,8 +19,8 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
+
 #include "precompiled.hpp"
 #include "logging/logDecorations.hpp"
 #include "logging/logTagSet.hpp"
@@ -31,7 +31,7 @@
 static const LogTagSet& tagset = LogTagSetMapping<LOG_TAGS(logging, safepoint)>::tagset();
 static const LogDecorators default_decorators;
 
-TEST(LogDecorations, level) {
+TEST_VM(LogDecorations, level) {
   for (uint l = LogLevel::First; l <= LogLevel::Last; l++) {
     LogLevelType level = static_cast<LogLevelType>(l);
     // Create a decorations object for the current level
@@ -52,7 +52,7 @@ TEST(LogDecorations, level) {
   }
 }
 
-TEST(LogDecorations, uptime) {
+TEST_VM(LogDecorations, uptime) {
   // Verify the format of the decoration
   int a, b;
   char decimal_point;
@@ -73,7 +73,7 @@ TEST(LogDecorations, uptime) {
   }
 }
 
-TEST(LogDecorations, tags) {
+TEST_VM(LogDecorations, tags) {
   char expected_tags[1 * K];
   tagset.label(expected_tags, sizeof(expected_tags));
   // Verify that the expected tags are included in the tags decoration
@@ -82,7 +82,7 @@ TEST(LogDecorations, tags) {
 }
 
 // Test each variation of the different timestamp decorations (ms, ns, uptime ms, uptime ns)
-TEST(LogDecorations, timestamps) {
+TEST_VM(LogDecorations, timestamps) {
   struct {
     const LogDecorators::Decorator decorator;
     const char* suffix;
@@ -133,8 +133,8 @@ TEST(LogDecorations, iso8601_time) {
   // Verify format
   int y, M, d, h, m;
   double s;
-  int read = sscanf(timestr, "%d-%d-%dT%d:%d:%lfZ", &y, &M, &d, &h, &m, &s);
-  ASSERT_EQ(6, read);
+  int read = sscanf(timestr, "%d-%d-%dT%d:%d:%lf", &y, &M, &d, &h, &m, &s);
+  ASSERT_EQ(6, read) << "Invalid format: " << timestr;
 
   // Verify reported time & date
   struct tm reported_time = {0};
@@ -147,6 +147,48 @@ TEST(LogDecorations, iso8601_time) {
   reported_time.tm_isdst = -1; // let mktime deduce DST settings
   time_t reported_ts = mktime(&reported_time);
   expected_ts = mktime(localtime(&expected_ts));
+  time_t diff = reported_ts - expected_ts;
+  if (diff < 0) {
+    diff = -diff;
+  }
+  // Allow up to 10 seconds in difference
+  ASSERT_LE(diff, 10) << "Reported time: " << reported_ts << " (" << timestr << ")"
+      << ", expected time: " << expected_ts;
+}
+
+// Test the utctime decoration
+TEST(LogDecorations, iso8601_utctime) {
+  LogDecorators decorator_selection;
+  ASSERT_TRUE(decorator_selection.parse("utctime"));
+  LogDecorations decorations(LogLevel::Info, tagset, decorator_selection);
+
+  const char *timestr = decorations.decoration(LogDecorators::utctime_decorator);
+  time_t expected_ts = time(NULL);
+
+  // Verify format
+  char trailing_character;
+  int y, M, d, h, m, offset;
+  double s;
+  int read = sscanf(timestr, "%d-%d-%dT%d:%d:%lf%c%d", &y, &M, &d, &h, &m, &s, &trailing_character, &offset);
+  ASSERT_GT(read, 7) << "Invalid format: " << timestr;
+
+  // Ensure time is UTC (no offset)
+  if (trailing_character == '+') {
+    ASSERT_EQ(0, offset) << "Invalid offset: " << timestr;
+  } else {
+    ASSERT_EQ('Z', trailing_character) << "Invalid offset: " << timestr;
+  }
+
+  struct tm reported_time = {0};
+  reported_time.tm_year = y - 1900;
+  reported_time.tm_mon = M - 1;
+  reported_time.tm_mday = d;
+  reported_time.tm_hour = h;
+  reported_time.tm_min = m;
+  reported_time.tm_sec = s;
+  reported_time.tm_isdst = 0; // No DST for UTC timestamps
+  time_t reported_ts = mktime(&reported_time);
+  expected_ts = mktime(gmtime(&expected_ts));
   time_t diff = reported_ts - expected_ts;
   if (diff < 0) {
     diff = -diff;

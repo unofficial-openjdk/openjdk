@@ -517,12 +517,14 @@ bool InstanceKlass::link_class_or_fail(TRAPS) {
 
 bool InstanceKlass::link_class_impl(
     instanceKlassHandle this_k, bool throw_verifyerror, TRAPS) {
-  // check for error state.
-  // This is checking for the wrong state.  If the state is initialization_error,
-  // then this class *was* linked.  The CDS code does a try_link_class and uses
-  // initialization_error to mark classes to not include in the archive during
-  // DumpSharedSpaces.  This should be removed when the CDS bug is fixed.
-  if (this_k->is_in_error_state()) {
+  if (DumpSharedSpaces && this_k->is_in_error_state()) {
+    // This is for CDS dumping phase only -- we use the in_error_state to indicate that
+    // the class has failed verification. Throwing the NoClassDefFoundError here is just
+    // a convenient way to stop repeat attempts to verify the same (bad) class.
+    //
+    // Note that the NoClassDefFoundError is not part of the JLS, and should not be thrown
+    // if we are executing Java code. This is not a problem for CDS dumping phase since
+    // it doesn't execute any Java code.
     ResourceMark rm(THREAD);
     THROW_MSG_(vmSymbols::java_lang_NoClassDefFoundError(),
                this_k->external_name(), false);
@@ -674,20 +676,20 @@ void InstanceKlass::link_methods(TRAPS) {
 
 // Eagerly initialize superinterfaces that declare default methods (concrete instance: any access)
 void InstanceKlass::initialize_super_interfaces(instanceKlassHandle this_k, TRAPS) {
-  assert (this_k->has_default_methods(), "caller should have checked this");
+  assert (this_k->has_nonstatic_concrete_methods(), "caller should have checked this");
   for (int i = 0; i < this_k->local_interfaces()->length(); ++i) {
     Klass* iface = this_k->local_interfaces()->at(i);
     InstanceKlass* ik = InstanceKlass::cast(iface);
 
     // Initialization is depth first search ie. we start with top of the inheritance tree
-    // has_default_methods drives searching superinterfaces since it
-    // means has_default_methods in its superinterface hierarchy
-    if (ik->has_default_methods()) {
+    // has_nonstatic_concrete_methods drives searching superinterfaces since it
+    // means has_nonstatic_concrete_methods in its superinterface hierarchy
+    if (ik->has_nonstatic_concrete_methods()) {
       ik->initialize_super_interfaces(ik, CHECK);
     }
 
     // Only initialize() interfaces that "declare" concrete methods.
-    if (ik->should_be_initialized() && ik->declares_default_methods()) {
+    if (ik->should_be_initialized() && ik->declares_nonstatic_concrete_methods()) {
       ik->initialize(CHECK);
     }
   }
@@ -761,11 +763,11 @@ void InstanceKlass::initialize_impl(instanceKlassHandle this_k, TRAPS) {
     if (super_klass != NULL && super_klass->should_be_initialized()) {
       super_klass->initialize(THREAD);
     }
-    // If C implements any interfaces that declares a non-abstract, non-static method,
+    // If C implements any interface that declares a non-static, concrete method,
     // the initialization of C triggers initialization of its super interfaces.
-    // Only need to recurse if has_default_methods which includes declaring and
-    // inheriting default methods
-    if (!HAS_PENDING_EXCEPTION && this_k->has_default_methods()) {
+    // Only need to recurse if has_nonstatic_concrete_methods which includes declaring and
+    // having a superinterface that declares, non-static, concrete methods
+    if (!HAS_PENDING_EXCEPTION && this_k->has_nonstatic_concrete_methods()) {
       this_k->initialize_super_interfaces(this_k, THREAD);
     }
 

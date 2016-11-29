@@ -40,6 +40,7 @@
   LOG_TAG(attach) \
   LOG_TAG(barrier) \
   LOG_TAG(biasedlocking) \
+  LOG_TAG(blocks) \
   LOG_TAG(bot) \
   LOG_TAG(breakpoint) \
   LOG_TAG(census) \
@@ -60,6 +61,7 @@
   LOG_TAG(exit) \
   LOG_TAG(freelist) \
   LOG_TAG(gc) \
+  LOG_TAG(hashtables) \
   LOG_TAG(heap) \
   LOG_TAG(humongous) \
   LOG_TAG(ihop) \
@@ -105,6 +107,7 @@
   LOG_TAG(scavenge) \
   LOG_TAG(scrub) \
   LOG_TAG(stacktrace) \
+  LOG_TAG(stackwalk) \
   LOG_TAG(start) \
   LOG_TAG(startuptime) \
   LOG_TAG(state) \
