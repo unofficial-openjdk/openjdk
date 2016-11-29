@@ -1962,6 +1962,18 @@ public class Parser extends AbstractParser implements Loggable {
             switch (type) {
             case SEMICOLON:
                 // for (init; test; modify)
+                if (varDeclList != null) {
+                    assert init == null;
+                    init = varDeclList.init;
+                    // late check for missing assignment, now we know it's a for (init; test; modify) loop
+                    if (varDeclList.missingAssignment != null) {
+                        if (varDeclList.missingAssignment instanceof IdentNode) {
+                            throw error(AbstractParser.message("missing.const.assignment", ((IdentNode)varDeclList.missingAssignment).getName()));
+                        } else {
+                            throw error(AbstractParser.message("missing.destructuring.assignment"), varDeclList.missingAssignment.getToken());
+                        }
+                    }
+                }
 
                 // for each (init; test; modify) is invalid
                 if ((flags & ForNode.IS_FOR_EACH) != 0) {
@@ -2607,13 +2619,23 @@ public class Parser extends AbstractParser implements Loggable {
                 next();
                 expect(LPAREN);
 
-                // FIXME: ES6 catch parameter can be a BindingIdentifier or a BindingPattern
-                // We need to generalize this here!
+                // ES6 catch parameter can be a BindingIdentifier or a BindingPattern
                 // http://www.ecma-international.org/ecma-262/6.0/
-                final IdentNode exception = getIdent();
+                final String contextString = "catch argument";
+                final Expression exception = bindingIdentifierOrPattern(contextString);
+                final boolean isDestructuring = !(exception instanceof IdentNode);
+                if (isDestructuring) {
+                    verifyDestructuringBindingPattern(exception, new Consumer<IdentNode>() {
+                        @Override
+                        public void accept(final IdentNode identNode) {
+                            verifyIdent(identNode, contextString);
+                        }
+                    });
+                } else {
+                    // ECMA 12.4.1 strict mode restrictions
+                    verifyStrictIdent((IdentNode) exception, "catch argument");
+                }
 
-                // ECMA 12.4.1 strict mode restrictions
-                verifyStrictIdent(exception, "catch argument");
 
                 // Nashorn extension: catch clause can have optional
                 // condition. So, a single try can have more than one

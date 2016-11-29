@@ -42,7 +42,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import jdk.dynalink.CallSiteDescriptor;
-import jdk.dynalink.StandardOperation;
 import jdk.dynalink.linker.GuardedInvocation;
 import jdk.dynalink.linker.LinkRequest;
 import jdk.nashorn.internal.lookup.MethodHandleFactory.LookupException;
@@ -127,15 +126,15 @@ public final class NativeString extends ScriptObject implements OptimisticBuilti
 
     // This is to support length as method call as well.
     @Override
-    protected GuardedInvocation findGetMethod(final CallSiteDescriptor desc, final LinkRequest request, final StandardOperation operation) {
+    protected GuardedInvocation findGetMethod(final CallSiteDescriptor desc, final LinkRequest request) {
         final String name = NashornCallSiteDescriptor.getOperand(desc);
 
         // if str.length(), then let the bean linker handle it
-        if ("length".equals(name) && operation == StandardOperation.GET_METHOD) {
+        if ("length".equals(name) && NashornCallSiteDescriptor.isMethodFirstOperation(desc)) {
             return null;
         }
 
-        return super.findGetMethod(desc, request, operation);
+        return super.findGetMethod(desc, request);
     }
 
     // This is to provide array-like access to string characters without creating a NativeString wrapper.
@@ -537,17 +536,6 @@ public final class NativeString extends ScriptObject implements OptimisticBuilti
     @SpecializedFunction(linkLogic=CharCodeAtLinkLogic.class)
     public static int charCodeAt(final Object self, final double pos) {
         return charCodeAt(self, (int)pos); //toInt pos is ok
-    }
-
-    /**
-     * ECMA 15.5.4.5 String.prototype.charCodeAt (pos) - specialized version for long position
-     * @param self self reference
-     * @param pos  position in string
-     * @return number representing charcode at position
-     */
-    @SpecializedFunction(linkLogic=CharCodeAtLinkLogic.class)
-    public static int charCodeAt(final Object self, final long pos) {
-        return charCodeAt(self, (int)pos);
     }
 
     /**
@@ -1177,24 +1165,7 @@ public final class NativeString extends ScriptObject implements OptimisticBuilti
     }
 
     /**
-     * ECMA 15.5.2.1 new String ( [ value ] ) - special version with exactly one {@code int} arg
-     *
-     * Constructor
-     *
-     * @param newObj is this constructor invoked with the new operator
-     * @param self   self reference
-     * @param arg    the arg
-     *
-     * @return new NativeString containing the string representation of the arg
-     */
-    @SpecializedFunction(isConstructor=true)
-    public static Object constructor(final boolean newObj, final Object self, final long arg) {
-        final String str = Long.toString(arg);
-        return newObj ? newObj(str) : str;
-    }
-
-    /**
-     * ECMA 15.5.2.1 new String ( [ value ] ) - special version with exactly one {@code int} arg
+     * ECMA 15.5.2.1 new String ( [ value ] ) - special version with exactly one {@code double} arg
      *
      * Constructor
      *
