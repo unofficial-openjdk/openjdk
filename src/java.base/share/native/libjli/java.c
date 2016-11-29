@@ -67,6 +67,7 @@
 static jboolean printVersion = JNI_FALSE; /* print and exit */
 static jboolean showVersion = JNI_FALSE;  /* print but continue */
 static jboolean printUsage = JNI_FALSE;   /* print and exit*/
+static jboolean printTo = USE_STDERR;     /* where to print version/usage */
 static jboolean printXUsage = JNI_FALSE;  /* print and exit*/
 static jboolean dryRun = JNI_FALSE;       /* initialize VM and exit */
 static char     *showSettings = NULL;     /* print but continue */
@@ -759,12 +760,15 @@ SetJvmEnvironment(int argc, char **argv) {
 
             if (*arg != '-'
                     || JLI_StrCmp(arg, "-version") == 0
+                    || JLI_StrCmp(arg, "--version") == 0
                     || JLI_StrCmp(arg, "-fullversion") == 0
+                    || JLI_StrCmp(arg, "--full-version") == 0
                     || JLI_StrCmp(arg, "-help") == 0
                     || JLI_StrCmp(arg, "--help") == 0
                     || JLI_StrCmp(arg, "-?") == 0
                     || JLI_StrCmp(arg, "-jar") == 0
-                    || JLI_StrCmp(arg, "-X") == 0) {
+                    || JLI_StrCmp(arg, "-X") == 0
+                    || JLI_StrCmp(arg, "--help-extra") == 0) {
                 return;
             }
         }
@@ -1297,21 +1301,35 @@ ParseArguments(int *pargc, char ***pargv,
 /*
  * The following cases will cause the argument parsing to stop
  */
-        } else if (JLI_StrCmp(arg, "--help") == 0 ||
-                   JLI_StrCmp(arg, "-help") == 0 ||
+        } else if (JLI_StrCmp(arg, "-help") == 0 ||
                    JLI_StrCmp(arg, "-h") == 0 ||
                    JLI_StrCmp(arg, "-?") == 0) {
             printUsage = JNI_TRUE;
             return JNI_TRUE;
+        } else if (JLI_StrCmp(arg, "--help") == 0) {
+            printUsage = JNI_TRUE;
+            printTo = USE_STDOUT;
+            return JNI_TRUE;
         } else if (JLI_StrCmp(arg, "-version") == 0) {
             printVersion = JNI_TRUE;
             return JNI_TRUE;
+        } else if (JLI_StrCmp(arg, "--version") == 0) {
+            printVersion = JNI_TRUE;
+            printTo = USE_STDOUT;
+            return JNI_TRUE;
         } else if (JLI_StrCmp(arg, "-showversion") == 0) {
             showVersion = JNI_TRUE;
+        } else if (JLI_StrCmp(arg, "--show-version") == 0) {
+            showVersion = JNI_TRUE;
+            printTo = USE_STDOUT;
         } else if (JLI_StrCmp(arg, "--dry-run") == 0) {
             dryRun = JNI_TRUE;
         } else if (JLI_StrCmp(arg, "-X") == 0) {
             printXUsage = JNI_TRUE;
+            return JNI_TRUE;
+        } else if (JLI_StrCmp(arg, "--help-extra") == 0) {
+            printXUsage = JNI_TRUE;
+            printTo = USE_STDOUT;
             return JNI_TRUE;
 /*
  * The following case checks for -XshowSettings OR -XshowSetting:SUBOPT.
@@ -1331,6 +1349,9 @@ ParseArguments(int *pargc, char ***pargv,
  */
         } else if (JLI_StrCmp(arg, "-fullversion") == 0) {
             JLI_ReportMessage("%s full version \"%s\"", _launcher_name, GetFullVersion());
+            return JNI_FALSE;
+        } else if (JLI_StrCmp(arg, "--full-version") == 0) {
+            JLI_ShowMessage("%s %s", _launcher_name, GetFullVersion());
             return JNI_FALSE;
         } else if (JLI_StrCmp(arg, "-verbosegc") == 0) {
             AddOption("-verbose:gc", NULL);
@@ -1754,11 +1775,11 @@ PrintJavaVersion(JNIEnv *env, jboolean extraLF)
     NULL_CHECK(print = (*env)->GetStaticMethodID(env,
                                                  ver,
                                                  (extraLF == JNI_TRUE) ? "println" : "print",
-                                                 "()V"
+                                                 "(Z)V"
                                                  )
               );
 
-    (*env)->CallStaticVoidMethod(env, ver, print);
+    (*env)->CallStaticVoidMethod(env, ver, print, printTo);
 }
 
 /*
@@ -1814,7 +1835,7 @@ PrintUsage(JNIEnv* env, jboolean doXUsage)
   if (doXUsage) {
     NULL_CHECK(printXUsageMessage = (*env)->GetStaticMethodID(env, cls,
                                         "printXUsageMessage", "(Z)V"));
-    (*env)->CallStaticVoidMethod(env, cls, printXUsageMessage, USE_STDERR);
+    (*env)->CallStaticVoidMethod(env, cls, printXUsageMessage, printTo);
   } else {
     NULL_CHECK(initHelp = (*env)->GetStaticMethodID(env, cls,
                                         "initHelpMessage", "(Ljava/lang/String;)V"));
@@ -1855,7 +1876,7 @@ PrintUsage(JNIEnv* env, jboolean doXUsage)
     }
 
     /* Complete the usage message and print to stderr*/
-    (*env)->CallStaticVoidMethod(env, cls, printHelp, USE_STDERR);
+    (*env)->CallStaticVoidMethod(env, cls, printHelp, printTo);
   }
   return;
 }
@@ -2255,5 +2276,18 @@ JLI_ReportMessage(const char* fmt, ...)
     va_start(vl, fmt);
     vfprintf(stderr, fmt, vl);
     fprintf(stderr, "\n");
+    va_end(vl);
+}
+
+/*
+ * A utility procedure to always print to stdout
+ */
+void
+JLI_ShowMessage(const char* fmt, ...)
+{
+    va_list vl;
+    va_start(vl, fmt);
+    vfprintf(stdout, fmt, vl);
+    fprintf(stdout, "\n");
     va_end(vl);
 }
