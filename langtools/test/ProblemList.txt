@@ -38,6 +38,9 @@ jdk/javadoc/doclet/testIOException/TestIOException.java                         
 
 jdk/jshell/EditorPadTest.java                                                   8161276    windows-all    Test set-up cannot press buttons
 jdk/jshell/ToolBasicTest.java                                                   8139873    generic-all    JShell tests failing
+jdk/jshell/ExternalEditorTest.java                                              8170108    generic-all
+jdk/jshell/ToolFormatTest.java                                                  8170216    solaris-sparcv9
+jdk/jshell/ReplaceTest.java                                                     8170216    solaris-sparcv9
 
 ###########################################################################
 #
@@ -55,6 +58,7 @@ tools/javac/annotations/typeAnnotations/referenceinfos/Lambda.java              
 tools/javac/annotations/typeAnnotations/referenceinfos/NestedTypes.java         8057687    generic-all    emit correct byte code an attributes for type annotations
 tools/javac/warnings/suppress/TypeAnnotations.java                              8057683    generic-all    improve ordering of errors with type annotations
 tools/javac/modules/T8159439/NPEForModuleInfoWithNonZeroSuperClassTest.java     8160396    generic-all    current version of jtreg needs a new promotion to include lastes version of ASM
+tools/javac/T8132562/ClassPathWithDoubleQuotesTest.java                         8169005    windows-all
 
 ###########################################################################
 #

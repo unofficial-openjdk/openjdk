@@ -30,6 +30,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.PrintStream;
+import java.net.InetAddress;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,7 +48,7 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 import jdk.internal.jshell.debug.InternalDebugControl;
 import jdk.jshell.Snippet.Status;
-import jdk.jshell.execution.JDIDefaultExecutionControl;
+import jdk.jshell.execution.JdiDefaultExecutionControl;
 import jdk.jshell.spi.ExecutionControl.EngineTerminationException;
 import jdk.jshell.spi.ExecutionControl.ExecutionControlException;
 import jdk.jshell.spi.ExecutionEnv;
@@ -92,7 +93,6 @@ public class JShell implements AutoCloseable {
     final BiFunction<Snippet, Integer, String> idGenerator;
     final List<String> extraRemoteVMOptions;
     final List<String> extraCompilerOptions;
-    final ExecutionControl.Generator executionControlGenerator;
 
     private int nextKeyIndex = 1;
 
@@ -102,13 +102,13 @@ public class JShell implements AutoCloseable {
     private final Map<Subscription, Consumer<SnippetEvent>> keyStatusListeners = new HashMap<>();
     private boolean closed = false;
 
-    private ExecutionControl executionControl = null;
+    private final ExecutionControl executionControl;
     private SourceCodeAnalysisImpl sourceCodeAnalysis = null;
 
     private static final String L10N_RB_NAME    = "jdk.jshell.resources.l10n";
     private static ResourceBundle outputRB  = null;
 
-    JShell(Builder b) {
+    JShell(Builder b) throws IllegalStateException {
         this.in = b.in;
         this.out = b.out;
         this.err = b.err;
@@ -116,12 +116,18 @@ public class JShell implements AutoCloseable {
         this.idGenerator = b.idGenerator;
         this.extraRemoteVMOptions = b.extraRemoteVMOptions;
         this.extraCompilerOptions = b.extraCompilerOptions;
-        this.executionControlGenerator = b.executionControlGenerator==null
+        ExecutionControl.Generator executionControlGenerator = b.executionControlGenerator==null
                 ? failOverExecutionControlGenerator(
-                        JDIDefaultExecutionControl.launch(),
-                        JDIDefaultExecutionControl.listen("localhost"),
-                        JDIDefaultExecutionControl.listen(null))
+                        JdiDefaultExecutionControl.listen(InetAddress.getLoopbackAddress().getHostAddress()),
+                        JdiDefaultExecutionControl.launch(),
+                        JdiDefaultExecutionControl.listen(null)
+                  )
                 : b.executionControlGenerator;
+        try {
+            executionControl = executionControlGenerator.generate(new ExecutionEnvImpl());
+        } catch (Throwable ex) {
+            throw new IllegalStateException("Launching JShell execution engine threw: " + ex.getMessage(), ex);
+        }
 
         this.maps = new SnippetMaps(this);
         this.keyMap = new KeyMap(this);
@@ -332,9 +338,10 @@ public class JShell implements AutoCloseable {
          * functionality. This creates a remote process for execution. It is
          * thus important to close the returned instance.
          *
+         * @throws IllegalStateException if the {@code JShell} instance could not be created.
          * @return the state engine
          */
-        public JShell build() {
+        public JShell build() throws IllegalStateException {
             return new JShell(this);
         }
     }
@@ -346,9 +353,10 @@ public class JShell implements AutoCloseable {
      * That is, create an instance of {@code JShell}.
      * <p>
      * Equivalent to {@link JShell#builder() JShell.builder()}{@link JShell.Builder#build() .build()}.
+     * @throws IllegalStateException if the {@code JShell} instance could not be created.
      * @return an instance of {@code JShell}.
      */
-    public static JShell create() {
+    public static JShell create() throws IllegalStateException {
         return builder().build();
     }
 
@@ -459,6 +467,7 @@ public class JShell implements AutoCloseable {
      * Note that the unnamed package is not accessible from the package in which
      * {@link JShell#eval(String)} code is placed.
      * @param path the path to add to the classpath.
+     * @throws IllegalStateException if this {@code JShell} instance is closed.
      */
     public void addToClasspath(String path) {
         // Compiler
@@ -505,7 +514,14 @@ public class JShell implements AutoCloseable {
     public void close() {
         if (!closed) {
             closeDown();
-            executionControl().close();
+            try {
+                executionControl().close();
+            } catch (Throwable ex) {
+                // don't care about exceptions on close
+            }
+            if (sourceCodeAnalysis != null) {
+                sourceCodeAnalysis.close();
+            }
         }
     }
 
@@ -731,14 +747,8 @@ public class JShell implements AutoCloseable {
     }
 
     // --- private / package-private implementation support ---
+
     ExecutionControl executionControl() {
-        if (executionControl == null) {
-            try {
-                executionControl =  executionControlGenerator.generate(new ExecutionEnvImpl());
-            } catch (Throwable ex) {
-                throw new InternalError("Launching execution engine threw: " + ex.getMessage(), ex);
-            }
-        }
         return executionControl;
     }
 
