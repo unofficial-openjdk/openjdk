@@ -90,6 +90,7 @@ public class JdepsConfiguration implements AutoCloseable {
                                List<Path> classpaths,
                                List<Archive> initialArchives,
                                boolean allDefaultModules,
+                               boolean allSystemModules,
                                Runtime.Version version)
         throws IOException
     {
@@ -107,6 +108,11 @@ public class JdepsConfiguration implements AutoCloseable {
         if (!initialArchives.isEmpty() || !classpaths.isEmpty() ||
                 roots.isEmpty() || allDefaultModules) {
             mods.addAll(systemModulePath.defaultSystemRoots());
+        }
+        if (allSystemModules) {
+            systemModulePath.findAll().stream()
+                .map(mref -> mref.descriptor().name())
+                .forEach(mods::add);
         }
 
         this.configuration = Configuration.empty()
@@ -419,7 +425,7 @@ public class JdepsConfiguration implements AutoCloseable {
             ModuleDescriptor.Builder builder = ModuleDescriptor.module(md.name());
             md.requires().forEach(builder::requires);
             md.exports().forEach(builder::exports);
-            md.provides().values().stream().forEach(builder::provides);
+            md.provides().stream().forEach(builder::provides);
             md.uses().stream().forEach(builder::uses);
 
             Set<String> concealed = new HashSet<>(md.packages());
@@ -493,6 +499,7 @@ public class JdepsConfiguration implements AutoCloseable {
         ModuleFinder appModulePath;
         boolean addAllApplicationModules;
         boolean addAllDefaultModules;
+        boolean addAllSystemModules;
         Runtime.Version version;
 
         public Builder() {
@@ -538,8 +545,7 @@ public class JdepsConfiguration implements AutoCloseable {
          * Include all system modules and modules found on modulepath
          */
         public Builder allModules() {
-            systemModulePath.moduleNames()
-                            .forEach(this.rootModules::add);
+            this.addAllSystemModules = true;
             this.addAllApplicationModules = true;
             return this;
         }
@@ -593,6 +599,7 @@ public class JdepsConfiguration implements AutoCloseable {
                                           classPaths,
                                           initialArchives,
                                           addAllDefaultModules,
+                                          addAllSystemModules,
                                           version);
         }
 

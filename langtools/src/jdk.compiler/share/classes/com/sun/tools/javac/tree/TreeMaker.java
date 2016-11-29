@@ -540,9 +540,9 @@ public class TreeMaker implements JCTree.Factory {
     }
 
     @Override
-    public JCModuleDecl ModuleDef(List<JCAnnotation> annotations, ModuleKind kind,
+    public JCModuleDecl ModuleDef(JCModifiers mods, ModuleKind kind,
             JCExpression qualid, List<JCDirective> directives) {
-        JCModuleDecl tree = new JCModuleDecl(annotations, kind, qualid, directives);
+        JCModuleDecl tree = new JCModuleDecl(mods, kind, qualid, directives);
         tree.pos = pos;
         return tree;
     }
@@ -562,8 +562,8 @@ public class TreeMaker implements JCTree.Factory {
     }
 
     @Override
-    public JCProvides Provides(JCExpression serviceName, JCExpression implName) {
-        JCProvides tree = new JCProvides(serviceName, implName);
+    public JCProvides Provides(JCExpression serviceName, List<JCExpression> implNames) {
+        JCProvides tree = new JCProvides(serviceName, implNames);
         tree.pos = pos;
         return tree;
     }

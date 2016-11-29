@@ -154,7 +154,7 @@ public interface ModuleElement extends Element, QualifiedNameable {
     interface ExportsDirective extends Directive {
 
         /**
-         * Returns the package being exported, or null if this is a default exports directive.
+         * Returns the package being exported.
          * @return the package being exported
          */
         PackageElement getPackage();
@@ -180,10 +180,10 @@ public interface ModuleElement extends Element, QualifiedNameable {
         TypeElement getService();
 
         /**
-         * Returns the implementation of the service being provided.
-         * @return the implementation of the service being provided
+         * Returns the implementations of the service being provided.
+         * @return the implementations of the service being provided
          */
-        TypeElement getImplementation();
+        List<? extends TypeElement> getImplementations();
     }
 
     /**

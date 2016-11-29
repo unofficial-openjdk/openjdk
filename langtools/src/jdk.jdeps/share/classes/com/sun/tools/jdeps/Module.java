@@ -82,7 +82,7 @@ class Module extends Archive {
      * Returns module name
      */
     public String name() {
-        return descriptor.name();
+        return descriptor != null ? descriptor.name() : getName();
     }
 
     public boolean isNamed() {
@@ -127,10 +127,11 @@ class Module extends Archive {
      * Tests if the package of the given name is exported.
      */
     public boolean isExported(String pn) {
-        if (JDK_UNSUPPORTED.equals(this.name())) {
-            return false;
-        }
         return exports.containsKey(pn) ? exports.get(pn).isEmpty() : false;
+    }
+
+    public boolean isJDKUnsupported() {
+        return JDK_UNSUPPORTED.equals(this.name());
     }
 
     /**
@@ -250,7 +251,7 @@ class Module extends Archive {
             });
             m.descriptor.exports().forEach(e -> builder.exports(e));
             m.descriptor.uses().forEach(s -> builder.uses(s));
-            m.descriptor.provides().values().forEach(p -> builder.provides(p));
+            m.descriptor.provides().forEach(p -> builder.provides(p));
 
             Set<String> concealed = new HashSet<>(m.descriptor.packages());
             m.descriptor.exports().stream().map(Exports::source).forEach(concealed::remove);

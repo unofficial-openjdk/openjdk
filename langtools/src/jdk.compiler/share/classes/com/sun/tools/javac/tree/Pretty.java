@@ -442,7 +442,7 @@ public class Pretty extends JCTree.Visitor {
     @Override
     public void visitModuleDef(JCModuleDecl tree) {
         try {
-            printAnnotations(tree.annotations);
+            printAnnotations(tree.mods.annotations);
             if (tree.getModuleType() == ModuleKind.OPEN) {
                 print("open ");
             }
@@ -484,7 +484,7 @@ public class Pretty extends JCTree.Visitor {
             print("provides ");
             printExpr(tree.serviceName);
             print(" with ");
-            printExpr(tree.implName);
+            printExprs(tree.implNames);
             print(";");
         } catch (IOException e) {
             throw new UncheckedIOException(e);

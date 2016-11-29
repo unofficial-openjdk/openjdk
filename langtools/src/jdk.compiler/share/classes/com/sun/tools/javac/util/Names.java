@@ -63,7 +63,6 @@ public class Names {
     public final Name _default;
     public final Name _super;
     public final Name _this;
-    public final Name dynamic;
     public final Name exports;
     public final Name opens;
     public final Name module;
@@ -91,6 +90,7 @@ public class Names {
     public final Name family;
     public final Name finalize;
     public final Name forName;
+    public final Name forRemoval;
     public final Name getClass;
     public final Name getClassLoader;
     public final Name getComponentType;
@@ -150,6 +150,7 @@ public class Names {
     public final Name LocalVariableTypeTable;
     public final Name MethodParameters;
     public final Name Module;
+    public final Name ModuleVersion;
     public final Name RuntimeInvisibleAnnotations;
     public final Name RuntimeInvisibleParameterAnnotations;
     public final Name RuntimeInvisibleTypeAnnotations;
@@ -164,7 +165,6 @@ public class Names {
     public final Name Synthetic;
     public final Name Value;
     public final Name Varargs;
-    public final Name Version;
 
     // members of java.lang.annotation.ElementType
     public final Name ANNOTATION_TYPE;
@@ -224,7 +224,6 @@ public class Names {
         _default = fromString("default");
         _super = fromString("super");
         _this = fromString("this");
-        dynamic = fromString("dynamic");
         exports = fromString("exports");
         opens = fromString("opens");
         module = fromString("module");
@@ -252,6 +251,7 @@ public class Names {
         family = fromString("family");
         finalize = fromString("finalize");
         forName = fromString("forName");
+        forRemoval = fromString("forRemoval");
         getClass = fromString("getClass");
         getClassLoader = fromString("getClassLoader");
         getComponentType = fromString("getComponentType");
@@ -312,6 +312,7 @@ public class Names {
         LocalVariableTypeTable = fromString("LocalVariableTypeTable");
         MethodParameters = fromString("MethodParameters");
         Module = fromString("Module");
+        ModuleVersion = fromString("ModuleVersion");
         RuntimeInvisibleAnnotations = fromString("RuntimeInvisibleAnnotations");
         RuntimeInvisibleParameterAnnotations = fromString("RuntimeInvisibleParameterAnnotations");
         RuntimeInvisibleTypeAnnotations = fromString("RuntimeInvisibleTypeAnnotations");
@@ -326,7 +327,6 @@ public class Names {
         Synthetic = fromString("Synthetic");
         Value = fromString("Value");
         Varargs = fromString("Varargs");
-        Version = fromString("Version");
 
         // members of java.lang.annotation.ElementType
         ANNOTATION_TYPE = fromString("ANNOTATION_TYPE");

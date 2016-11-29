@@ -44,23 +44,30 @@ public class Module_attribute extends Attribute {
 
     Module_attribute(ClassReader cr, int name_index, int length) throws IOException {
         super(name_index, length);
+
+        module_name = cr.readUnsignedShort();
         module_flags = cr.readUnsignedShort();
+
         requires_count = cr.readUnsignedShort();
         requires = new RequiresEntry[requires_count];
         for (int i = 0; i < requires_count; i++)
             requires[i] = new RequiresEntry(cr);
+
         exports_count = cr.readUnsignedShort();
         exports = new ExportsEntry[exports_count];
         for (int i = 0; i < exports_count; i++)
             exports[i] = new ExportsEntry(cr);
+
         opens_count = cr.readUnsignedShort();
-        opens = new ExportsEntry[opens_count];
+        opens = new OpensEntry[opens_count];
         for (int i = 0; i < opens_count; i++)
-            opens[i] = new ExportsEntry(cr);
+            opens[i] = new OpensEntry(cr);
+
         uses_count = cr.readUnsignedShort();
         uses_index = new int[uses_count];
         for (int i = 0; i < uses_count; i++)
             uses_index[i] = cr.readUnsignedShort();
+
         provides_count = cr.readUnsignedShort();
         provides = new ProvidesEntry[provides_count];
         for (int i = 0; i < provides_count; i++)
@@ -68,13 +75,15 @@ public class Module_attribute extends Attribute {
     }
 
     public Module_attribute(int name_index,
+            int module_name,
             int module_flags,
             RequiresEntry[] requires,
             ExportsEntry[] exports,
-            ExportsEntry[] opens,
+            OpensEntry[] opens,
             int[] uses,
             ProvidesEntry[] provides) {
         super(name_index, 2);
+        this.module_name = module_name;
         this.module_flags = module_flags;
         requires_count = requires.length;
         this.requires = requires;
@@ -86,7 +95,6 @@ public class Module_attribute extends Attribute {
         this.uses_index = uses;
         provides_count = provides.length;
         this.provides = provides;
-
     }
 
     public String getUses(int index, ConstantPool constant_pool) throws ConstantPoolException {
@@ -99,13 +107,14 @@ public class Module_attribute extends Attribute {
         return visitor.visitModule(this, data);
     }
 
+    public final int module_name;
     public final int module_flags;
     public final int requires_count;
     public final RequiresEntry[] requires;
     public final int exports_count;
     public final ExportsEntry[] exports;
     public final int opens_count;
-    public final ExportsEntry[] opens;
+    public final OpensEntry[] opens;
     public final int uses_count;
     public final int[] uses_index;
     public final int provides_count;
@@ -159,20 +168,52 @@ public class Module_attribute extends Attribute {
         public final int[] exports_to_index;
     }
 
+    public static class OpensEntry {
+        OpensEntry(ClassReader cr) throws IOException {
+            opens_index = cr.readUnsignedShort();
+            opens_flags = cr.readUnsignedShort();
+            opens_to_count = cr.readUnsignedShort();
+            opens_to_index = new int[opens_to_count];
+            for (int i = 0; i < opens_to_count; i++)
+                opens_to_index[i] = cr.readUnsignedShort();
+        }
+
+        public OpensEntry(int index, int flags, int[] to) {
+            this.opens_index = index;
+            this.opens_flags = flags;
+            this.opens_to_count = to.length;
+            this.opens_to_index = to;
+        }
+
+        public int length() {
+            return 4 + 2 * opens_to_index.length;
+        }
+
+        public final int opens_index;
+        public final int opens_flags;
+        public final int opens_to_count;
+        public final int[] opens_to_index;
+    }
+
     public static class ProvidesEntry {
         ProvidesEntry(ClassReader cr) throws IOException {
             provides_index = cr.readUnsignedShort();
-            with_index = cr.readUnsignedShort();
+            with_count = cr.readUnsignedShort();
+            with_index = new int[with_count];
+            for (int i = 0; i < with_count; i++)
+                with_index[i] = cr.readUnsignedShort();
         }
 
-        public ProvidesEntry(int provides, int with) {
+        public ProvidesEntry(int provides, int[] with) {
             this.provides_index = provides;
+            this.with_count = with.length;
             this.with_index = with;
         }
 
         public static final int length = 4;
 
         public final int provides_index;
-        public final int with_index;
+        public final int with_count;
+        public final int[] with_index;
     }
 }

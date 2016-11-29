@@ -47,14 +47,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import static java.util.stream.Collectors.*;
 
 
 public class ModuleInfoBuilder {
     final JdepsConfiguration configuration;
     final Path outputdir;
-    final boolean weak;
+    final boolean open;
 
     final DependencyFinder dependencyFinder;
     final Analyzer analyzer;
@@ -65,10 +65,10 @@ public class ModuleInfoBuilder {
     public ModuleInfoBuilder(JdepsConfiguration configuration,
                              List<String> args,
                              Path outputdir,
-                             boolean weak) {
+                             boolean open) {
         this.configuration = configuration;
         this.outputdir = outputdir;
-        this.weak = weak;
+        this.open = open;
 
         this.dependencyFinder = new DependencyFinder(configuration, DEFAULT_FILTER);
         this.analyzer = new Analyzer(configuration, Type.CLASS, DEFAULT_FILTER);
@@ -76,13 +76,13 @@ public class ModuleInfoBuilder {
         // add targets to modulepath if it has module-info.class
         List<Path> paths = args.stream()
             .map(fn -> Paths.get(fn))
-            .collect(Collectors.toList());
+            .collect(toList());
 
         // automatic module to convert to explicit module
         this.automaticToExplicitModule = ModuleFinder.of(paths.toArray(new Path[0]))
                 .findAll().stream()
                 .map(configuration::toModule)
-                .collect(Collectors.toMap(Function.identity(), Function.identity()));
+                .collect(toMap(Function.identity(), Function.identity()));
 
         Optional<Module> om = automaticToExplicitModule.keySet().stream()
                                     .filter(m -> !m.descriptor().isAutomatic())
@@ -198,7 +198,7 @@ public class ModuleInfoBuilder {
     }
 
     private void printModuleInfo(PrintWriter writer, ModuleDescriptor md) {
-        writer.format("%smodule %s {%n", weak ? "weak " : "", md.name());
+        writer.format("%smodule %s {%n", open ? "open " : "", md.name());
 
         Map<String, Module> modules = configuration.getModules();
         // first print the JDK modules
@@ -207,7 +207,7 @@ public class ModuleInfoBuilder {
           .sorted(Comparator.comparing(Requires::name))
           .forEach(req -> writer.format("    requires %s;%n", req));
 
-        if (!weak) {
+        if (!open) {
             md.exports().stream()
               .peek(exp -> {
                  if (exp.targets().size() > 0)
@@ -217,15 +217,18 @@ public class ModuleInfoBuilder {
               .forEach(exp -> writer.format("    exports %s;%n", exp.source()));
         }
 
-        md.provides().values().stream()
+        md.provides().stream()
           .sorted(Comparator.comparing(Provides::service))
-          .forEach(p -> p.providers().stream()
-          .sorted()
-          .forEach(impl -> writer.format("    provides %s with %s;%n", p.service(), impl)));
+          .map(p -> p.providers().stream()
+                     .map(impl -> "        " + impl.replace('$', '.'))
+                     .collect(joining(",\n",
+                                      String.format("    provides %s with%n",
+                                                    p.service().replace('$', '.')),
+                                      ";")))
+          .forEach(writer::println);
 
         writer.println("}");
     }
-
 
     private Set<Module> automaticModules() {
         return automaticToExplicitModule.keySet();

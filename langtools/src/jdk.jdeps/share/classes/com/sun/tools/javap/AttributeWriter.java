@@ -41,16 +41,18 @@ import com.sun.tools.classfile.DefaultAttribute;
 import com.sun.tools.classfile.Deprecated_attribute;
 import com.sun.tools.classfile.EnclosingMethod_attribute;
 import com.sun.tools.classfile.Exceptions_attribute;
-import com.sun.tools.classfile.Hashes_attribute;
 import com.sun.tools.classfile.InnerClasses_attribute;
 import com.sun.tools.classfile.InnerClasses_attribute.Info;
 import com.sun.tools.classfile.LineNumberTable_attribute;
 import com.sun.tools.classfile.LocalVariableTable_attribute;
 import com.sun.tools.classfile.LocalVariableTypeTable_attribute;
-import com.sun.tools.classfile.MainClass_attribute;
 import com.sun.tools.classfile.MethodParameters_attribute;
 import com.sun.tools.classfile.Module_attribute;
-import com.sun.tools.classfile.Packages_attribute;
+import com.sun.tools.classfile.ModuleHashes_attribute;
+import com.sun.tools.classfile.ModuleMainClass_attribute;
+import com.sun.tools.classfile.ModulePackages_attribute;
+import com.sun.tools.classfile.ModuleTarget_attribute;
+import com.sun.tools.classfile.ModuleVersion_attribute;
 import com.sun.tools.classfile.RuntimeInvisibleAnnotations_attribute;
 import com.sun.tools.classfile.RuntimeInvisibleParameterAnnotations_attribute;
 import com.sun.tools.classfile.RuntimeInvisibleTypeAnnotations_attribute;
@@ -64,8 +66,6 @@ import com.sun.tools.classfile.SourceID_attribute;
 import com.sun.tools.classfile.StackMapTable_attribute;
 import com.sun.tools.classfile.StackMap_attribute;
 import com.sun.tools.classfile.Synthetic_attribute;
-import com.sun.tools.classfile.TargetPlatform_attribute;
-import com.sun.tools.classfile.Version_attribute;
 
 import static com.sun.tools.classfile.AccessFlags.*;
 
@@ -237,7 +237,7 @@ public class AttributeWriter extends BasicWriter
         return null;
     }
 
-    private String getJavaPackage(Packages_attribute attr, int index) {
+    private String getJavaPackage(ModulePackages_attribute attr, int index) {
         try {
             return getJavaName(attr.getPackage(index, constant_pool));
         } catch (ConstantPoolException e) {
@@ -246,8 +246,8 @@ public class AttributeWriter extends BasicWriter
     }
 
     @Override
-    public Void visitPackages(Packages_attribute attr, Void ignore) {
-        println("Packages: ");
+    public Void visitModulePackages(ModulePackages_attribute attr, Void ignore) {
+        println("ModulePackages: ");
         indent(+1);
         for (int i = 0; i < attr.packages_count; i++) {
             print("#" + attr.packages_index[i]);
@@ -323,22 +323,24 @@ public class AttributeWriter extends BasicWriter
     }
 
     @Override
-    public Void visitHashes(Hashes_attribute attr, Void ignore) {
-        println("Hashes:");
+    public Void visitModuleHashes(ModuleHashes_attribute attr, Void ignore) {
+        println("ModuleHashes:");
         indent(+1);
         print("algorithm #" + attr.algorithm_index);
         tab();
         println("// " + getAlgorithm(attr));
-        for (Hashes_attribute.Entry e : attr.hashes_table) {
-            print("#" + e.requires_index + ", #" + e.hash_index);
+        for (ModuleHashes_attribute.Entry e : attr.hashes_table) {
+            print("#" + e.module_name_index);
             tab();
-            println("// " + getRequires(e) + ": " + getHash(e));
+            println("// " + getModuleName(e));
+            println("hash_length: " + e.hash.length);
+            println("hash: [" + toHex(e.hash) + "]");
         }
         indent(-1);
         return null;
     }
 
-    private String getAlgorithm(Hashes_attribute attr) {
+    private String getAlgorithm(ModuleHashes_attribute attr) {
         try {
             return constant_pool.getUTF8Value(attr.algorithm_index);
         } catch (ConstantPoolException e) {
@@ -346,17 +348,9 @@ public class AttributeWriter extends BasicWriter
         }
     }
 
-    private String getRequires(Hashes_attribute.Entry entry) {
+    private String getModuleName(ModuleHashes_attribute.Entry entry) {
         try {
-            return constant_pool.getUTF8Value(entry.requires_index);
-        } catch (ConstantPoolException e) {
-            return report(e);
-        }
-    }
-
-    private String getHash(Hashes_attribute.Entry entry) {
-        try {
-            return constant_pool.getUTF8Value(entry.hash_index);
+            return constant_pool.getUTF8Value(entry.module_name_index);
         } catch (ConstantPoolException e) {
             return report(e);
         }
@@ -456,15 +450,15 @@ public class AttributeWriter extends BasicWriter
     }
 
     @Override
-    public Void visitMainClass(MainClass_attribute attr, Void ignore) {
-        print("MainClass: #" + attr.main_class_index);
+    public Void visitModuleMainClass(ModuleMainClass_attribute attr, Void ignore) {
+        print("ModuleMainClass: #" + attr.main_class_index);
         tab();
         print("// " + getJavaClassName(attr));
         println();
         return null;
     }
 
-    private String getJavaClassName(MainClass_attribute a) {
+    private String getJavaClassName(ModuleMainClass_attribute a) {
         try {
             return getJavaName(a.getMainClassName(constant_pool));
         } catch (ConstantPoolException e) {
@@ -500,9 +494,25 @@ public class AttributeWriter extends BasicWriter
     public Void visitModule(Module_attribute attr, Void ignore) {
         println("Module:");
         indent(+1);
+
+        print(attr.module_name);
+        tab();
+        println("// " + constantWriter.stringValue(attr.module_name));
+
+        print(String.format("%x", attr.module_flags));
+        tab();
+        print("// ");
+        if ((attr.module_flags & Module_attribute.ACC_OPEN) != 0)
+            print(" ACC_OPEN");
+        if ((attr.module_flags & Module_attribute.ACC_MANDATED) != 0)
+            print(" ACC_MANDATED");
+        if ((attr.module_flags & Module_attribute.ACC_SYNTHETIC) != 0)
+            print(" ACC_SYNTHETIC");
+        println();
+
         printRequiresTable(attr);
-        printExportsTable(attr, true);
-        printExportsTable(attr, true);
+        printExportsTable(attr);
+        printOpensTable(attr);
         printUsesTable(attr);
         printProvidesTable(attr);
         indent(-1);
@@ -532,39 +542,51 @@ public class AttributeWriter extends BasicWriter
         indent(-1);
     }
 
-    protected void printExportsTable(Module_attribute attr, boolean exports) {
-        Module_attribute.ExportsEntry[] entries = exports ? attr.exports : attr.opens;
+    protected void printExportsTable(Module_attribute attr) {
+        Module_attribute.ExportsEntry[] entries = attr.exports;
         print(entries.length);
         tab();
-        println("// " + (exports ? "exports" : "opens"));
+        println("// exports");
         indent(+1);
         for (Module_attribute.ExportsEntry e: entries) {
-            print("#" + e.exports_index + "," + String.format("%x", e.exports_flags));
-            tab();
-            print("// ");
-            if (e.exports_index == 0) {
-                print("default");
-            } else {
-                print(constantWriter.stringValue(e.exports_index));
-            }
-            if ((e.exports_flags & Module_attribute.ACC_MANDATED) != 0)
-                print(" ACC_MANDATED");
-            if ((e.exports_flags & Module_attribute.ACC_SYNTHETIC) != 0)
-                print(" ACC_SYNTHETIC");
-            if (e.exports_to_index.length == 0) {
-                println();
-            } else {
-                println(" to ... " + e.exports_to_index.length);
-                indent(+1);
-                for (int to: e.exports_to_index) {
-                    print("#" + to);
-                    tab();
-                    println("// ... to " + constantWriter.stringValue(to));
-                }
-                indent(-1);
-            }
+            printExportOpenEntry(e.exports_index, e.exports_flags, e.exports_to_index);
         }
         indent(-1);
+    }
+
+    protected void printOpensTable(Module_attribute attr) {
+        Module_attribute.OpensEntry[] entries = attr.opens;
+        print(entries.length);
+        tab();
+        println("// opens");
+        indent(+1);
+        for (Module_attribute.OpensEntry e: entries) {
+            printExportOpenEntry(e.opens_index, e.opens_flags, e.opens_to_index);
+        }
+        indent(-1);
+    }
+
+    protected void printExportOpenEntry(int index, int flags, int[] to_index) {
+        print("#" + index + "," + String.format("%x", flags));
+        tab();
+        print("// ");
+        print(constantWriter.stringValue(index));
+        if ((flags & Module_attribute.ACC_MANDATED) != 0)
+            print(" ACC_MANDATED");
+        if ((flags & Module_attribute.ACC_SYNTHETIC) != 0)
+            print(" ACC_SYNTHETIC");
+        if (to_index.length == 0) {
+            println();
+        } else {
+            println(" to ... " + to_index.length);
+            indent(+1);
+            for (int to: to_index) {
+                print("#" + to);
+                tab();
+                println("// ... to " + constantWriter.stringValue(to));
+            }
+            indent(-1);
+        }
     }
 
     protected void printUsesTable(Module_attribute attr) {
@@ -588,13 +610,18 @@ public class AttributeWriter extends BasicWriter
         println("// " + "provides");
         indent(+1);
         for (Module_attribute.ProvidesEntry e: entries) {
-            print("#" + e.provides_index + ",#" +
-                    e.with_index);
+            print("#" + e.provides_index);
             tab();
             print("// ");
             print(constantWriter.stringValue(e.provides_index));
-            print (" with ");
-            println(constantWriter.stringValue(e.with_index));
+            println(" with ... " + e.with_count);
+            indent(+1);
+            for (int with : e.with_index) {
+                print("#" + with);
+                tab();
+                println("// ... with " + constantWriter.stringValue(with));
+            }
+            indent(-1);
         }
         indent(-1);
     }
@@ -903,8 +930,8 @@ public class AttributeWriter extends BasicWriter
     }
 
     @Override
-    public Void visitTargetPlatform(TargetPlatform_attribute attr, Void ignore) {
-        println("TargetPlatform:");
+    public Void visitModuleTarget(ModuleTarget_attribute attr, Void ignore) {
+        println("ModuleTarget:");
         indent(+1);
         print("os_name: #" + attr.os_name_index);
         if (attr.os_name_index != 0) {
@@ -928,7 +955,7 @@ public class AttributeWriter extends BasicWriter
         return null;
     }
 
-    private String getOSName(TargetPlatform_attribute attr) {
+    private String getOSName(ModuleTarget_attribute attr) {
         try {
             return constant_pool.getUTF8Value(attr.os_name_index);
         } catch (ConstantPoolException e) {
@@ -936,7 +963,7 @@ public class AttributeWriter extends BasicWriter
         }
     }
 
-    private String getOSArch(TargetPlatform_attribute attr) {
+    private String getOSArch(ModuleTarget_attribute attr) {
         try {
             return constant_pool.getUTF8Value(attr.os_arch_index);
         } catch (ConstantPoolException e) {
@@ -944,7 +971,7 @@ public class AttributeWriter extends BasicWriter
         }
     }
 
-    private String getOSVersion(TargetPlatform_attribute attr) {
+    private String getOSVersion(ModuleTarget_attribute attr) {
         try {
             return constant_pool.getUTF8Value(attr.os_version_index);
         } catch (ConstantPoolException e) {
@@ -953,8 +980,8 @@ public class AttributeWriter extends BasicWriter
     }
 
     @Override
-    public Void visitVersion(Version_attribute attr, Void ignore) {
-        print("Version: #" + attr.version_index);
+    public Void visitModuleVersion(ModuleVersion_attribute attr, Void ignore) {
+        print("ModuleVersion: #" + attr.version_index);
         indent(+1);
         tab();
         println("// " + getVersion(attr));
@@ -962,7 +989,7 @@ public class AttributeWriter extends BasicWriter
         return null;
     }
 
-    private String getVersion(Version_attribute attr) {
+    private String getVersion(ModuleVersion_attribute attr) {
         try {
             return constant_pool.getUTF8Value(attr.version_index);
         } catch (ConstantPoolException e) {
@@ -987,6 +1014,14 @@ public class AttributeWriter extends BasicWriter
         while (s.length() < w)
             s = "0" + s;
         return StringUtils.toUpperCase(s);
+    }
+
+    static String toHex(byte[] ba) {
+        StringBuilder sb = new StringBuilder(ba.length);
+        for (byte b: ba) {
+            sb.append(String.format("%02x", b & 0xff));
+        }
+        return sb.toString();
     }
 
     private final AnnotationWriter annotationWriter;

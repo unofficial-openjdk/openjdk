@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -113,7 +113,7 @@ public class Flags {
      * Internal compiler flags (no bits in the lower 16).
      *****************************************/
 
-    /** Flag is set if symbol is deprecated.
+    /** Flag is set if symbol is deprecated.  See also DEPRECATED_REMOVAL.
      */
     public static final int DEPRECATED   = 1<<17;
 
@@ -294,9 +294,19 @@ public class Flags {
     public static final long SYSTEM_MODULE = 1L<<53;
 
     /**
+     * Flag to indicate the given symbol has a @Deprecated annotation.
+     */
+    public static final long DEPRECATED_ANNOTATION = 1L<<54;
+
+    /**
+     * Flag to indicate the given symbol has been deprecated and marked for removal.
+     */
+    public static final long DEPRECATED_REMOVAL = 1L<<55;
+
+    /**
      * Flag to indicate the given PackageSymbol contains any non-.java and non-.class resources.
      */
-    public static final long HAS_RESOURCE = 1L<<54;
+    public static final long HAS_RESOURCE = 1L<<56;
 
     /** Modifier masks.
      */
@@ -407,7 +417,12 @@ public class Flags {
         THROWS(Flags.THROWS),
         LAMBDA_METHOD(Flags.LAMBDA_METHOD),
         TYPE_TRANSLATED(Flags.TYPE_TRANSLATED),
-        MODULE(Flags.MODULE);
+        MODULE(Flags.MODULE),
+        AUTOMATIC_MODULE(Flags.AUTOMATIC_MODULE),
+        SYSTEM_MODULE(Flags.SYSTEM_MODULE),
+        DEPRECATED_ANNOTATION(Flags.DEPRECATED_ANNOTATION),
+        DEPRECATED_REMOVAL(Flags.DEPRECATED_REMOVAL),
+        HAS_RESOURCE(Flags.HAS_RESOURCE);
 
         Flag(long flag) {
             this.value = flag;

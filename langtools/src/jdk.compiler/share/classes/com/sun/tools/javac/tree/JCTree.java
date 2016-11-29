@@ -2632,16 +2632,16 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     }
 
     public static class JCModuleDecl extends JCTree implements ModuleTree {
-        public List<JCAnnotation> annotations;
+        public JCModifiers mods;
         public ModuleType type;
         private final ModuleKind kind;
         public JCExpression qualId;
         public List<JCDirective> directives;
         public ModuleSymbol sym;
 
-        protected JCModuleDecl(List<JCAnnotation> annotations, ModuleKind kind,
+        protected JCModuleDecl(JCModifiers mods, ModuleKind kind,
                 JCExpression qualId, List<JCDirective> directives) {
-            this.annotations = annotations;
+            this.mods = mods;
             this.kind = kind;
             this.qualId = qualId;
             this.directives = directives;
@@ -2657,7 +2657,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
         @Override @DefinedBy(Api.COMPILER_TREE)
         public List<? extends AnnotationTree> getAnnotations() {
-            return annotations;
+            return mods.annotations;
         }
 
         @Override @DefinedBy(Api.COMPILER_TREE)
@@ -2731,11 +2731,11 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     public static class JCProvides extends JCDirective
             implements ProvidesTree {
         public JCExpression serviceName;
-        public JCExpression implName;
+        public List<JCExpression> implNames;
 
-        protected JCProvides(JCExpression serviceName, JCExpression implName) {
+        protected JCProvides(JCExpression serviceName, List<JCExpression> implNames) {
             this.serviceName = serviceName;
-            this.implName = implName;
+            this.implNames = implNames;
         }
 
         @Override
@@ -2757,8 +2757,8 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         }
 
         @Override @DefinedBy(Api.COMPILER_TREE)
-        public JCExpression getImplementationName() {
-            return implName;
+        public List<JCExpression> getImplementationNames() {
+            return implNames;
         }
 
         @Override
@@ -2984,10 +2984,10 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         JCAnnotation Annotation(JCTree annotationType, List<JCExpression> args);
         JCModifiers Modifiers(long flags, List<JCAnnotation> annotations);
         JCErroneous Erroneous(List<? extends JCTree> errs);
-        JCModuleDecl ModuleDef(List<JCAnnotation> annotations, ModuleKind kind, JCExpression qualId, List<JCDirective> directives);
+        JCModuleDecl ModuleDef(JCModifiers mods, ModuleKind kind, JCExpression qualId, List<JCDirective> directives);
         JCExports Exports(JCExpression qualId, List<JCExpression> moduleNames);
         JCExports Opens(JCExpression qualId, List<JCExpression> moduleNames);
-        JCProvides Provides(JCExpression serviceName, JCExpression implName);
+        JCProvides Provides(JCExpression serviceName, List<JCExpression> implNames);
         JCRequires Requires(boolean isTransitive, boolean isStaticPhase, JCExpression qualId);
         JCUses Uses(JCExpression qualId);
         LetExpr LetExpr(List<JCVariableDecl> defs, JCExpression expr);

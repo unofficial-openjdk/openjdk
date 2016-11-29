@@ -3157,13 +3157,10 @@ public class JavacParser implements Parser {
                         nextToken();
                     }
                     if (token.kind == IDENTIFIER && token.name() == names.module) {
-                        List<JCAnnotation> annotations = List.nil();
                         if (mods != null) {
-                            checkNoMods(mods.flags);
-                            annotations = mods.annotations;
-                            mods = null;
+                            checkNoMods(mods.flags & ~Flags.DEPRECATED);
                         }
-                        defs.append(moduleDecl(annotations, kind, docComment));
+                        defs.append(moduleDecl(mods, kind, docComment));
                         consumedToplevelDoc = true;
                         break;
                     } else if (kind != ModuleKind.STRONG) {
@@ -3194,7 +3191,7 @@ public class JavacParser implements Parser {
         return toplevel;
     }
 
-    JCModuleDecl moduleDecl(List<JCAnnotation> annotations, ModuleKind kind, Comment dc) {
+    JCModuleDecl moduleDecl(JCModifiers mods, ModuleKind kind, Comment dc) {
         int pos = token.pos;
         if (!allowModules) {
             log.error(pos, Errors.ModulesNotSupportedInSource(source.name));
@@ -3210,7 +3207,7 @@ public class JavacParser implements Parser {
         accept(RBRACE);
         accept(EOF);
 
-        JCModuleDecl result = toP(F.at(pos).ModuleDef(annotations, kind, name, directives));
+        JCModuleDecl result = toP(F.at(pos).ModuleDef(mods, kind, name, directives));
         attach(result, dc);
         return result;
     }
@@ -3221,7 +3218,6 @@ public class JavacParser implements Parser {
             int pos = token.pos;
             if (token.name() == names.requires) {
                 nextToken();
-                boolean isPublic = false;
                 boolean isTransitive = false;
                 boolean isStaticPhase = false;
             loop:
@@ -3233,20 +3229,11 @@ public class JavacParser implements Parser {
                                 if (t1.kind == SEMI || t1.kind == DOT) {
                                     break loop;
                                 }
-                                if (isPublic) { // temporary
-                                    error(token.pos, "repeated.modifier");
-                                }
                                 isTransitive = true;
                                 break;
                             } else {
                                 break loop;
                             }
-                        case PUBLIC: // temporary
-                            if (isPublic || isTransitive) {
-                                error(token.pos, "repeated.modifier");
-                            }
-                            isPublic = isTransitive = true;
-                            break;
                         case STATIC:
                             if (isStaticPhase) {
                                 error(token.pos, "repeated.modifier");
@@ -3283,9 +3270,9 @@ public class JavacParser implements Parser {
                 JCExpression serviceName = qualident(false);
                 if (token.kind == IDENTIFIER && token.name() == names.with) {
                     nextToken();
-                    JCExpression implName = qualident(false);
+                    List<JCExpression> implNames = qualidentList(false);
                     accept(SEMI);
-                    defs.append(toP(F.at(pos).Provides(serviceName, implName)));
+                    defs.append(toP(F.at(pos).Provides(serviceName, implNames)));
                 } else {
                     error(token.pos, "expected", "'" + names.with + "'");
                     skip(false, false, false, false);

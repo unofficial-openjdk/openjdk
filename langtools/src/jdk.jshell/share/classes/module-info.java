@@ -30,14 +30,16 @@
  */
 module jdk.jshell {
     requires transitive java.compiler;
-    requires java.desktop;
     requires java.prefs;
     requires jdk.compiler;
     requires jdk.internal.le;
+    requires jdk.internal.ed;
     requires jdk.internal.opt;
     requires jdk.jdi;
 
     exports jdk.jshell;
     exports jdk.jshell.spi;
     exports jdk.jshell.execution;
+
+    uses jdk.internal.editor.spi.BuildInEditorProvider;
 }

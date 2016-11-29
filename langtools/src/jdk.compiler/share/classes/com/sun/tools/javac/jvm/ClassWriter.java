@@ -30,6 +30,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 
 import javax.tools.JavaFileManager;
 import javax.tools.FileObject;
@@ -952,6 +953,8 @@ public class ClassWriter extends ClassFile {
         ModuleSymbol m = (ModuleSymbol) c.owner;
 
         int alenIdx = writeAttr(names.Module);
+
+        databuf.appendChar(pool.put(names.fromUtf(externalize(m.name))));
         databuf.appendChar(ModuleFlags.value(m.flags)); // module_flags
 
         ListBuffer<RequiresDirective> requires = new ListBuffer<>();
@@ -961,7 +964,7 @@ public class ClassWriter extends ClassFile {
         }
         databuf.appendChar(requires.size());
         for (RequiresDirective r: requires) {
-            databuf.appendChar(pool.put(r.module.name));
+            databuf.appendChar(pool.put(names.fromUtf(externalize(r.module.name))));
             databuf.appendChar(RequiresFlag.value(r.flags));
         }
 
@@ -974,8 +977,9 @@ public class ClassWriter extends ClassFile {
                 databuf.appendChar(0);
             } else {
                 databuf.appendChar(e.modules.size());
-                for (ModuleSymbol msym: e.modules)
-                    databuf.appendChar(pool.put(msym.name));
+                for (ModuleSymbol msym: e.modules) {
+                    databuf.appendChar(pool.put(names.fromUtf(externalize(msym.name))));
+                }
             }
         }
 
@@ -988,8 +992,9 @@ public class ClassWriter extends ClassFile {
                 databuf.appendChar(0);
             } else {
                 databuf.appendChar(e.modules.size());
-                for (ModuleSymbol msym: e.modules)
-                    databuf.appendChar(pool.put(msym.name));
+                for (ModuleSymbol msym: e.modules) {
+                    databuf.appendChar(pool.put(names.fromUtf(externalize(msym.name))));
+                }
             }
         }
 
@@ -999,12 +1004,19 @@ public class ClassWriter extends ClassFile {
             databuf.appendChar(pool.put(s.service));
         }
 
-        List<ProvidesDirective> services = m.provides;
-        databuf.appendChar(services.size());
-        for (ProvidesDirective s: services) {
-            databuf.appendChar(pool.put(s.service));
-            databuf.appendChar(pool.put(s.impl));
+        // temporary fix to merge repeated provides clause for same service;
+        // eventually this should be disallowed when analyzing the module,
+        // so that each service type only appears once.
+        Map<ClassSymbol, Set<ClassSymbol>> mergedProvides = new LinkedHashMap<>();
+        for (ProvidesDirective p : m.provides) {
+            mergedProvides.computeIfAbsent(p.service, s -> new LinkedHashSet<>()).addAll(p.impls);
         }
+        databuf.appendChar(mergedProvides.size());
+        mergedProvides.forEach((srvc, impls) -> {
+            databuf.appendChar(pool.put(srvc));
+            databuf.appendChar(impls.size());
+            impls.forEach(impl -> databuf.appendChar(pool.put(impl)));
+        });
 
         endAttr(alenIdx);
         return 1;
@@ -1705,7 +1717,11 @@ public class ClassWriter extends ClassFile {
         }
         databuf.appendChar(flags);
 
-        databuf.appendChar(pool.put(c));
+        if (c.owner.kind == MDL) {
+            databuf.appendChar(0);
+        } else {
+            databuf.appendChar(pool.put(c));
+        }
         databuf.appendChar(supertype.hasTag(CLASS) ? pool.put(supertype.tsym) : 0);
         databuf.appendChar(interfaces.length());
         for (List<Type> l = interfaces; l.nonEmpty(); l = l.tail)
