@@ -253,8 +253,7 @@ JvmtiEnv::AddModuleReads(jobject module, jobject to_module) {
 jvmtiError
 JvmtiEnv::AddModuleExports(jobject module, const char* pkg_name, jobject to_module) {
   JavaThread* THREAD = JavaThread::current();
-  oop str_oop = StringTable::intern((char*)pkg_name, THREAD);
-  Handle h_pkg(THREAD, str_oop);
+  Handle h_pkg = java_lang_String::create_from_str(pkg_name, THREAD);
 
   // check module
   Handle h_module(THREAD, JNIHandles::resolve(module));
@@ -276,8 +275,7 @@ JvmtiEnv::AddModuleExports(jobject module, const char* pkg_name, jobject to_modu
 jvmtiError
 JvmtiEnv::AddModuleOpens(jobject module, const char* pkg_name, jobject to_module) {
   JavaThread* THREAD = JavaThread::current();
-  oop str_oop = StringTable::intern((char*)pkg_name, THREAD);
-  Handle h_pkg(THREAD, str_oop);
+  Handle h_pkg = java_lang_String::create_from_str(pkg_name, THREAD);
 
   // check module
   Handle h_module(THREAD, JNIHandles::resolve(module));
