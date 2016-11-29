@@ -8,7 +8,7 @@
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.    See the GNU General Public License
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
  *
@@ -25,8 +25,8 @@
  * @test
  * @bug 8033735
  * @summary check backtrace field introspection
- * @modules java.base/jdk.internal.misc:private
- * @modules java.base/java.lang:private
+ * @modules java.base/jdk.internal.misc:open
+ * @modules java.base/java.lang:open
  * @run main ThrowableIntrospectionSegfault
  */
 

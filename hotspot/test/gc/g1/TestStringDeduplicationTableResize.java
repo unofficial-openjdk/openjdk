@@ -28,8 +28,8 @@
  * @key gc
  * @requires vm.gc.G1
  * @library /test/lib
- * @modules java.base/jdk.internal.misc:private
- * @modules java.base/java.lang:private
+ * @modules java.base/jdk.internal.misc:open
+ * @modules java.base/java.lang:open
  *          java.management
  */
 

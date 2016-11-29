@@ -867,8 +867,8 @@ Agent_OnUnload_L(JavaVM *vm)</example>
   <functionlink id="AddModuleExports"/>, <functionlink id="AddModuleOpens"/>,
   <functionlink id="AddModuleUses"/> and <functionlink id="AddModuleProvides"/>
   to update a module to expand the set of modules that it reads, the set of
-  packaegs that it exports (or exports-private), or the services that it uses
-  and provides.
+  packages that it exports or opens to other modules, or the services that it
+  uses and provides.
   <p/>
   As an aid to agents that deploy supporting classes on the search path of
   the bootstrap class loader, or the search path of the class loader that
@@ -6560,7 +6560,7 @@ class C2 extends C1 implements I2 {
       </errors>
     </function>
 
-    <function id="AddModuleReads" num="94">
+    <function id="AddModuleReads" num="94" since="9">
       <synopsis>Add Module Reads</synopsis>
       <description>
          Update a module to read another module. This function is a no-op
@@ -6596,12 +6596,12 @@ class C2 extends C1 implements I2 {
       </errors>
     </function>
 
-    <function id="AddModuleExports" num="95">
+    <function id="AddModuleExports" num="95" since="9">
       <synopsis>Add Module Exports</synopsis>
       <description>
          Update a module to export a package to another module.
          This function is a no-op when <paramlink id="module"></paramlink>
-         is an unnamed module.
+         is an unnamed module or an open module.
          This function facilitates the instrumentation of code
          in named modules where that instrumentation requires
          expanding the set of packages that a module exports.
@@ -6646,12 +6646,12 @@ class C2 extends C1 implements I2 {
       </errors>
     </function>
 
-    <function id="AddModuleOpens" num="96">
+    <function id="AddModuleOpens" num="96" since="9">
       <synopsis>Add Module Opens</synopsis>
       <description>
          Update a module to open a package to another module.
          This function is a no-op when <paramlink id="module"></paramlink>
-         is an open module.
+         is an unnamed module or an open module.
          This function facilitates the instrumentation of code
          in modules where that instrumentation requires
          expanding the set of packages that a module opens to
@@ -6697,7 +6697,7 @@ class C2 extends C1 implements I2 {
       </errors>
     </function>
 
-    <function id="AddModuleUses" num="97">
+    <function id="AddModuleUses" num="97" since="9">
       <synopsis>Add Module Uses</synopsis>
       <description>
          Updates a module to add a service to the set of services that
@@ -6734,7 +6734,7 @@ class C2 extends C1 implements I2 {
       </errors>
     </function>
 
-    <function id="AddModuleProvides" num="98">
+    <function id="AddModuleProvides" num="98" since="9">
       <synopsis>Add Module Provides</synopsis>
       <description>
          Updates a module to add a service to the set of services that

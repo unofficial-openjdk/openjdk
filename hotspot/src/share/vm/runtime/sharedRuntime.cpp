@@ -1983,8 +1983,10 @@ JRT_END
 // Handles the uncommon case in locking, i.e., contention or an inflated lock.
 JRT_BLOCK_ENTRY(void, SharedRuntime::complete_monitor_locking_C(oopDesc* _obj, BasicLock* lock, JavaThread* thread))
   // Disable ObjectSynchronizer::quick_enter() in default config
-  // on AARCH64 until JDK-8153107 is resolved.
-  if (AARCH64_ONLY((SyncFlags & 256) != 0 &&) !SafepointSynchronize::is_synchronizing()) {
+  // on AARCH64 and ARM until JDK-8153107 is resolved.
+  if (ARM_ONLY((SyncFlags & 256) != 0 &&)
+      AARCH64_ONLY((SyncFlags & 256) != 0 &&)
+      !SafepointSynchronize::is_synchronizing()) {
     // Only try quick_enter() if we're not trying to reach a safepoint
     // so that the calling thread reaches the safepoint more quickly.
     if (ObjectSynchronizer::quick_enter(_obj, thread, lock)) return;
@@ -2881,8 +2883,6 @@ VMRegPair *SharedRuntime::find_callee_arguments(Symbol* sig, bool has_receiver, 
   char *s = sig->as_C_string();
   int len = (int)strlen(s);
   s++; len--;                   // Skip opening paren
-  char *t = s+len;
-  while (*(--t) != ')');      // Find close paren
 
   BasicType *sig_bt = NEW_RESOURCE_ARRAY(BasicType, 256);
   VMRegPair *regs = NEW_RESOURCE_ARRAY(VMRegPair, 256);
@@ -2891,7 +2891,7 @@ VMRegPair *SharedRuntime::find_callee_arguments(Symbol* sig, bool has_receiver, 
     sig_bt[cnt++] = T_OBJECT; // Receiver is argument 0; not in signature
   }
 
-  while (s < t) {
+  while (*s != ')') {          // Find closing right paren
     switch (*s++) {            // Switch on signature character
     case 'B': sig_bt[cnt++] = T_BYTE;    break;
     case 'C': sig_bt[cnt++] = T_CHAR;    break;

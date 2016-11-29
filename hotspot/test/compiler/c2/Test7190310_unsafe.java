@@ -19,15 +19,14 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
 /*
  * @test
  * @bug 7190310
  * @summary Inlining WeakReference.get(), and hoisting $referent may lead to non-terminating loops
- * @modules java.base/jdk.internal.misc:private
- * @modules java.base/java.lang.ref:private
+ * @modules java.base/jdk.internal.misc:+open
+ * @modules java.base/java.lang.ref:open
  *
  * @run main/othervm -Xbatch compiler.c2.Test7190310_unsafe
  */

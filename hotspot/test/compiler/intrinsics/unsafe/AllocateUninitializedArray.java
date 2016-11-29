@@ -19,14 +19,13 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
 /*
  * @test
  * @bug 8150465
  * @summary Unsafe methods to produce uninitialized arrays
- * @modules java.base/jdk.internal.misc:private
+ * @modules java.base/jdk.internal.misc:+open
  *
  * @run main/othervm -ea -Diters=200   -Xint
  *      compiler.intrinsics.unsafe.AllocateUninitializedArray

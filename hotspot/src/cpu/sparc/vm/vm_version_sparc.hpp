@@ -34,30 +34,30 @@ class VM_Version: public Abstract_VM_Version {
 
 protected:
   enum Feature_Flag {
-    v8_instructions      = 0,
-    hardware_mul32       = 1,
-    hardware_div32       = 2,
-    hardware_fsmuld      = 3,
-    hardware_popc        = 4,
-    v9_instructions      = 5,
-    vis1_instructions    = 6,
-    vis2_instructions    = 7,
-    sun4v_instructions   = 8,
+    v8_instructions       = 0,
+    hardware_mul32        = 1,
+    hardware_div32        = 2,
+    hardware_fsmuld       = 3,
+    hardware_popc         = 4,
+    v9_instructions       = 5,
+    vis1_instructions     = 6,
+    vis2_instructions     = 7,
+    sun4v_instructions    = 8,
     blk_init_instructions = 9,
-    fmaf_instructions    = 10,
-    fmau_instructions    = 11,
-    vis3_instructions    = 12,
-    cbcond_instructions  = 13,
-    sparc64_family       = 14,
-    M_family             = 15,
-    T_family             = 16,
-    T1_model             = 17,
-    sparc5_instructions  = 18,
-    aes_instructions     = 19,
-    sha1_instruction     = 20,
-    sha256_instruction   = 21,
-    sha512_instruction   = 22,
-    crc32c_instruction   = 23
+    fmaf_instructions     = 10,
+    vis3_instructions     = 11,
+    cbcond_instructions   = 12,
+    sparc64_family        = 13,
+    M_family              = 14,
+    S_family              = 15,
+    T_family              = 16,
+    T1_model              = 17,
+    sparc5_instructions   = 18,
+    aes_instructions      = 19,
+    sha1_instruction      = 20,
+    sha256_instruction    = 21,
+    sha512_instruction    = 22,
+    crc32c_instruction    = 23
   };
 
   enum Feature_Flag_Set {
@@ -75,11 +75,11 @@ protected:
     sun4v_m                 = 1 << sun4v_instructions,
     blk_init_instructions_m = 1 << blk_init_instructions,
     fmaf_instructions_m     = 1 << fmaf_instructions,
-    fmau_instructions_m     = 1 << fmau_instructions,
     vis3_instructions_m     = 1 << vis3_instructions,
     cbcond_instructions_m   = 1 << cbcond_instructions,
     sparc64_family_m        = 1 << sparc64_family,
     M_family_m              = 1 << M_family,
+    S_family_m              = 1 << S_family,
     T_family_m              = 1 << T_family,
     T1_model_m              = 1 << T1_model,
     sparc5_instructions_m   = 1 << sparc5_instructions,
@@ -107,6 +107,7 @@ protected:
 
   // Returns true if the platform is in the niagara line (T series)
   static bool is_M_family(int features) { return (features & M_family_m) != 0; }
+  static bool is_S_family(int features) { return (features & S_family_m) != 0; }
   static bool is_T_family(int features) { return (features & T_family_m) != 0; }
   static bool is_niagara() { return is_T_family(_features); }
 #ifdef ASSERT
@@ -155,6 +156,7 @@ public:
   static bool is_niagara_plus()         { return is_T_family(_features) && !is_T1_model(_features); }
 
   static bool is_M_series()             { return is_M_family(_features); }
+  static bool is_S_series()             { return is_S_family(_features); }
   static bool is_T4()                   { return is_T_family(_features) && has_cbcond(); }
   static bool is_T7()                   { return is_T_family(_features) && has_sparc5_instr(); }
 

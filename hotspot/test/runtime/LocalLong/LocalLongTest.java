@@ -39,9 +39,9 @@ public class LocalLongTest {
     public static void main(String... args) throws Exception {
         if (Platform.is64bit()) {
             ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-Xint",
-                                                                      "--add-exports-private",
+                                                                      "--add-opens",
                                                                       "java.base/java.lang=ALL-UNNAMED",
-                                                                      "--add-exports-private",
+                                                                      "--add-opens",
                                                                       "java.base/java.lang.invoke=ALL-UNNAMED",
                                                                       "LocalLongHelper");
             OutputAnalyzer o = new OutputAnalyzer(pb.start());

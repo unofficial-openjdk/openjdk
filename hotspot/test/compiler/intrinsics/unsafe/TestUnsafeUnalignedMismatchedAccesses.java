@@ -19,14 +19,13 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
 /**
  * @test
  * @bug 8136473
  * @summary Mismatched stores on same slice possible with Unsafe.Put*Unaligned methods
- * @modules java.base/jdk.internal.misc:private
+ * @modules java.base/jdk.internal.misc:+open
  *
  * @run main/othervm -XX:-UseOnStackReplacement -XX:-BackgroundCompilation
  *      compiler.intrinsics.unsafe.TestUnsafeUnalignedMismatchedAccesses

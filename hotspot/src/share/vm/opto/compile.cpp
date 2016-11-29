@@ -574,6 +574,10 @@ uint Compile::scratch_emit_size(const Node* n) {
   buf.consts()->initialize_shared_locs(&locs_buf[lsize * 0], lsize);
   buf.insts()->initialize_shared_locs( &locs_buf[lsize * 1], lsize);
   buf.stubs()->initialize_shared_locs( &locs_buf[lsize * 2], lsize);
+  // Mark as scratch buffer.
+  buf.consts()->set_scratch_emit();
+  buf.insts()->set_scratch_emit();
+  buf.stubs()->set_scratch_emit();
 
   // Do the emission.
 
@@ -2867,15 +2871,20 @@ void Compile::final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc) {
         addp->Opcode() == Op_ConP &&
         addp == n->in(AddPNode::Base) &&
         n->in(AddPNode::Offset)->is_Con()) {
+      // If the transformation of ConP to ConN+DecodeN is beneficial depends
+      // on the platform and on the compressed oops mode.
       // Use addressing with narrow klass to load with offset on x86.
-      // On sparc loading 32-bits constant and decoding it have less
-      // instructions (4) then load 64-bits constant (7).
+      // Some platforms can use the constant pool to load ConP.
       // Do this transformation here since IGVN will convert ConN back to ConP.
       const Type* t = addp->bottom_type();
-      if (t->isa_oopptr() || t->isa_klassptr()) {
+      bool is_oop   = t->isa_oopptr() != NULL;
+      bool is_klass = t->isa_klassptr() != NULL;
+
+      if ((is_oop   && Matcher::const_oop_prefer_decode()  ) ||
+          (is_klass && Matcher::const_klass_prefer_decode())) {
         Node* nn = NULL;
 
-        int op = t->isa_oopptr() ? Op_ConN : Op_ConNKlass;
+        int op = is_oop ? Op_ConN : Op_ConNKlass;
 
         // Look for existing ConN node of the same exact type.
         Node* r  = root();
@@ -2891,7 +2900,7 @@ void Compile::final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc) {
         if (nn != NULL) {
           // Decode a narrow oop to match address
           // [R12 + narrow_oop_reg<<3 + offset]
-          if (t->isa_oopptr()) {
+          if (is_oop) {
             nn = new DecodeNNode(nn, t);
           } else {
             nn = new DecodeNKlassNode(nn, t);
@@ -3164,65 +3173,45 @@ void Compile::final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc) {
     break;
 #endif
 
-  case Op_ModI: {
-    Node* di = NULL;
+  case Op_ModI:
     if (UseDivMod) {
       // Check if a%b and a/b both exist
-      di = n->find_similar(Op_DivI);
-      if (di) {
+      Node* d = n->find_similar(Op_DivI);
+      if (d) {
         // Replace them with a fused divmod if supported
         if (Matcher::has_match_rule(Op_DivModI)) {
           DivModINode* divmod = DivModINode::make(n);
-          di->subsume_by(divmod->div_proj(), this);
+          d->subsume_by(divmod->div_proj(), this);
           n->subsume_by(divmod->mod_proj(), this);
         } else {
           // replace a%b with a-((a/b)*b)
-          Node* mult = new MulINode(di, di->in(2));
-          Node* sub  = new SubINode(di->in(1), mult);
+          Node* mult = new MulINode(d, d->in(2));
+          Node* sub  = new SubINode(d->in(1), mult);
           n->subsume_by(sub, this);
         }
       }
     }
-    if (di == NULL) {
-      // Remove useless control edge in case of not mod-zero.
-      const Type *t = n->in(2)->bottom_type();
-      const TypeInt *ti = t->is_int();
-      if (n->in(0) && (ti->_hi < 0 || ti->_lo > 0)) {
-        n->set_req(0, NULL);
-      }
-    }
     break;
-  }
 
-  case Op_ModL: {
-    Node* dl = NULL;
+  case Op_ModL:
     if (UseDivMod) {
       // Check if a%b and a/b both exist
-      dl = n->find_similar(Op_DivL);
-      if (dl) {
+      Node* d = n->find_similar(Op_DivL);
+      if (d) {
         // Replace them with a fused divmod if supported
         if (Matcher::has_match_rule(Op_DivModL)) {
           DivModLNode* divmod = DivModLNode::make(n);
-          dl->subsume_by(divmod->div_proj(), this);
+          d->subsume_by(divmod->div_proj(), this);
           n->subsume_by(divmod->mod_proj(), this);
         } else {
           // replace a%b with a-((a/b)*b)
-          Node* mult = new MulLNode(dl, dl->in(2));
-          Node* sub  = new SubLNode(dl->in(1), mult);
+          Node* mult = new MulLNode(d, d->in(2));
+          Node* sub  = new SubLNode(d->in(1), mult);
           n->subsume_by(sub, this);
         }
       }
     }
-    if (dl == NULL) {
-      // Remove useless control edge in case of not mod-zero.
-      const Type *t = n->in(2)->bottom_type();
-      const TypeLong *tl = t->is_long();
-      if (n->in(0) && (tl->_hi < 0 || tl->_lo > 0)) {
-        n->set_req(0, NULL);
-      }
-    }
     break;
-  }
 
   case Op_LoadVector:
   case Op_StoreVector:

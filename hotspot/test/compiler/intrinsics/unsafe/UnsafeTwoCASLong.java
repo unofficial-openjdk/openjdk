@@ -19,14 +19,13 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
 /*
  * @test
  * @bug 8143930
  * @summary C1 LinearScan asserts when compiling two back-to-back CompareAndSwapLongs
- * @modules java.base/jdk.internal.misc:private
+ * @modules java.base/jdk.internal.misc:+open
  *
  * @run testng/othervm -Diters=200000 -XX:TieredStopAtLevel=1
  *      compiler.intrinsics.unsafe.UnsafeTwoCASLong

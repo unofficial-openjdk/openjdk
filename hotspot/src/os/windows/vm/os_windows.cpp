@@ -403,6 +403,15 @@ struct tm* os::localtime_pd(const time_t* clock, struct tm* res) {
   return NULL;
 }
 
+struct tm* os::gmtime_pd(const time_t* clock, struct tm* res) {
+  const struct tm* time_struct_ptr = gmtime(clock);
+  if (time_struct_ptr != NULL) {
+    *res = *time_struct_ptr;
+    return res;
+  }
+  return NULL;
+}
+
 LONG WINAPI topLevelExceptionFilter(struct _EXCEPTION_POINTERS* exceptionInfo);
 
 // Thread start routine for all newly created threads
@@ -784,7 +793,7 @@ void os::set_native_thread_name(const char *name) {
 
   __try {
     RaiseException (MS_VC_EXCEPTION, 0, sizeof(info)/sizeof(DWORD), (const ULONG_PTR*)&info );
-  } __except(EXCEPTION_CONTINUE_EXECUTION) {}
+  } __except(EXCEPTION_EXECUTE_HANDLER) {}
 }
 
 bool os::distribute_processes(uint length, uint* distribution) {

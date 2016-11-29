@@ -46,6 +46,7 @@ import java.util.*;
  * @library /test/lib
  * @modules java.base/jdk.internal.misc
  * @compile -XDignore.symbol.file=true
+ *          --add-modules=jdk.hotspot.agent
  *          --add-exports=jdk.hotspot.agent/sun.jvm.hotspot=ALL-UNNAMED
  *          --add-exports=jdk.hotspot.agent/sun.jvm.hotspot.utilities=ALL-UNNAMED
  *          --add-exports=jdk.hotspot.agent/sun.jvm.hotspot.oops=ALL-UNNAMED
@@ -98,7 +99,6 @@ public class TestInstanceKlassSize {
         OutputAnalyzer output = null;
         try {
             List<String> vmArgs = new ArrayList<String>();
-            vmArgs.add("-XX:+UnlockDiagnosticVMOptions");
             vmArgs.add("-XX:+UsePerfData");
             vmArgs.addAll(Utils.getVmOptions());
             app = LingeredApp.startApp(vmArgs);

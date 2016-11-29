@@ -253,8 +253,7 @@ JvmtiEnv::AddModuleReads(jobject module, jobject to_module) {
 jvmtiError
 JvmtiEnv::AddModuleExports(jobject module, const char* pkg_name, jobject to_module) {
   JavaThread* THREAD = JavaThread::current();
-  oop str_oop = StringTable::intern((char*)pkg_name, THREAD);
-  Handle h_pkg(THREAD, str_oop);
+  Handle h_pkg = java_lang_String::create_from_str(pkg_name, THREAD);
 
   // check module
   Handle h_module(THREAD, JNIHandles::resolve(module));
@@ -266,7 +265,7 @@ JvmtiEnv::AddModuleExports(jobject module, const char* pkg_name, jobject to_modu
   if (!java_lang_reflect_Module::is_instance(h_to_module())) {
     return JVMTI_ERROR_INVALID_MODULE;
   }
-  return JvmtiExport::add_module_exports_or_opens(h_module, h_pkg, h_to_module, false, THREAD);
+  return JvmtiExport::add_module_exports(h_module, h_pkg, h_to_module, THREAD);
 } /* end AddModuleExports */
 
 
@@ -276,8 +275,7 @@ JvmtiEnv::AddModuleExports(jobject module, const char* pkg_name, jobject to_modu
 jvmtiError
 JvmtiEnv::AddModuleOpens(jobject module, const char* pkg_name, jobject to_module) {
   JavaThread* THREAD = JavaThread::current();
-  oop str_oop = StringTable::intern((char*)pkg_name, THREAD);
-  Handle h_pkg(THREAD, str_oop);
+  Handle h_pkg = java_lang_String::create_from_str(pkg_name, THREAD);
 
   // check module
   Handle h_module(THREAD, JNIHandles::resolve(module));
@@ -289,7 +287,7 @@ JvmtiEnv::AddModuleOpens(jobject module, const char* pkg_name, jobject to_module
   if (!java_lang_reflect_Module::is_instance(h_to_module())) {
     return JVMTI_ERROR_INVALID_MODULE;
   }
-  return JvmtiExport::add_module_exports_or_opens(h_module, h_pkg, h_to_module, true, THREAD);
+  return JvmtiExport::add_module_opens(h_module, h_pkg, h_to_module, THREAD);
 } /* end AddModuleOpens */
 
 
@@ -1116,7 +1114,8 @@ JvmtiEnv::GetThreadInfo(jthread thread, jvmtiThreadInfo* info_ptr) {
     if (name() != NULL) {
       n = java_lang_String::as_utf8_string(name());
     } else {
-      n = UNICODE::as_utf8((jchar*) NULL, 0);
+      int utf8_length = 0;
+      n = UNICODE::as_utf8((jchar*) NULL, utf8_length);
     }
 
     info_ptr->name = (char *) jvmtiMalloc(strlen(n)+1);
