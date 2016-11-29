@@ -284,16 +284,11 @@ ALL_TARGETS += $(JMOD_TARGETS)
 ################################################################################
 # Images targets
 
-# Stores the tips for each repository. This file is be used when constructing
-# the jdk image and can be used to track the exact sources used to build that
-# image.
-source-tips: $(SUPPORT_OUTPUTDIR)/source_tips
-$(SUPPORT_OUTPUTDIR)/source_tips: FRC
-	$(call MakeDir, $(@D))
-	$(call GetSourceTips)
+store-source-revision:
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f SourceRevision.gmk store-source-revision)
 
-create-hgtip-files:
-	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f CreateHgtipFiles.gmk)
+create-source-revision-tracker:
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f SourceRevision.gmk create-source-revision-tracker)
 
 BOOTCYCLE_TARGET := product-images
 bootcycle-images:
@@ -332,7 +327,7 @@ mac-bundles-jdk:
 exploded-image-optimize:
 	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f ExplodedImageOptimize.gmk)
 
-ALL_TARGETS += source-tips create-hgtip-files bootcycle-images zip-security \
+ALL_TARGETS += store-source-revision create-source-revision-tracker bootcycle-images zip-security \
     zip-source jrtfs-jar jdk-image jre-image \
     symbols-image profiles mac-bundles-jdk \
     exploded-image-optimize
@@ -376,15 +371,29 @@ ALL_TARGETS += create-buildjdk-copy create-buildjdk-interim-image
 # The interim-image is a small jlinked image that is used to generate artifacts
 # at build time for use when linking the real images.
 
+INTERIM_JMOD_TARGETS := $(addsuffix -interim-jmod, $(INTERIM_IMAGE_MODULES))
+
+define DeclareInterimJmodRecipe
+  $1-interim-jmod:
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f CreateJmods.gmk \
+	    MODULE=$1 \
+	    JMODS_DIR=$(INTERIM_JMODS_DIR) \
+	    JMODS_TEMPDIR=$(INTERIM_JMODS_DIR)/temp \
+	    INTERIM_JMOD=true \
+	)
+endef
+
+$(foreach m, $(INTERIM_IMAGE_MODULES), $(eval $(call DeclareInterimJmodRecipe,$m)))
+
 interim-image:
 	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f InterimImage.gmk)
 
 ifeq ($(ENABLE_GENERATE_CLASSLIST), true)
-  generate-classlist:
-	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f GenerateClasslist.gmk)
+  generate-link-opt-data:
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f GenerateLinkOptData.gmk)
 endif
 
-ALL_TARGETS += interim-image generate-classlist
+ALL_TARGETS += $(INTERIM_JMOD_TARGETS) interim-image generate-link-opt-data
 
 ################################################################################
 # Build tests
@@ -594,12 +603,12 @@ else
 
   jdk.jdeps-gendata: java rmic
 
-  # Declare dependencies between jmod targets. Only java.base jmod needs access
-  # to the other jmods to be built.
+  # Declare dependencies between jmod targets.
+  # java.base jmod needs jrt-fs.jar and access to the other jmods to be built.
   # When creating a BUILDJDK, we don't need to add hashes to java.base, thus
   # we don't need to depend on all other jmods
   ifneq ($(CREATING_BUILDJDK), true)
-    java.base-jmod: $(filter-out java.base-jmod \
+    java.base-jmod: jrtfs-jar $(filter-out java.base-jmod \
         $(addsuffix -jmod, $(call FindAllUpgradeableModules)), $(JMOD_TARGETS))
   endif
 
@@ -607,13 +616,15 @@ else
   # When creating a BUILDJDK, the java compilation has already been done by the
   # normal build and copied in.
   ifneq ($(CREATING_BUILDJDK), true)
-    $(foreach m, $(JAVA_MODULES), $(eval $m-jmod: $m-java))
+    $(foreach m, $(JAVA_MODULES), $(eval $m_JMOD_DEPS += $m-java))
   endif
-  $(foreach m, $(GENDATA_MODULES), $(eval $m-jmod: $m-gendata))
-  $(foreach m, $(RMIC_MODULES), $(eval $m-jmod: $m-rmic))
-  $(foreach m, $(LIBS_MODULES), $(eval $m-jmod: $m-libs))
-  $(foreach m, $(LAUNCHER_MODULES), $(eval $m-jmod: $m-launchers))
-  $(foreach m, $(COPY_MODULES), $(eval $m-jmod: $m-copy))
+  $(foreach m, $(GENDATA_MODULES), $(eval $m_JMOD_DEPS += $m-gendata))
+  $(foreach m, $(RMIC_MODULES), $(eval $m_JMOD_DEPS += $m-rmic))
+  $(foreach m, $(LIBS_MODULES), $(eval $m_JMOD_DEPS += $m-libs))
+  $(foreach m, $(LAUNCHER_MODULES), $(eval $m_JMOD_DEPS += $m-launchers))
+  $(foreach m, $(COPY_MODULES), $(eval $m_JMOD_DEPS += $m-copy))
+  $(foreach m, $(ALL_MODULES), $(eval $m-jmod: $($(m)_JMOD_DEPS)))
+  $(foreach m, $(INTERIM_IMAGE_MODULES), $(eval $m-interim-jmod: $($(m)_JMOD_DEPS)))
 
   # Jmods cannot be created until we have the jmod tool ready to run. During
   # a normal build we run it from the exploded image, but when cross compiling
@@ -636,12 +647,13 @@ else
       buildtools-modules: create-buildjdk
     else
       # While actually creating the buildjdk, the default deps applies.
-      $(JMOD_TARGETS): $(DEFAULT_JMOD_DEPS)
+      $(JMOD_TARGETS) $(INTERIM_JMOD_TARGETS): $(DEFAULT_JMOD_DEPS)
     endif
   else
     # The normal non cross compilation case uses the default deps.
     # To avoid races with the optimize target, that also needs to happen first.
-    $(JMOD_TARGETS): $(DEFAULT_JMOD_DEPS) exploded-image-optimize
+    $(JMOD_TARGETS) $(INTERIM_JMOD_TARGETS): $(DEFAULT_JMOD_DEPS) \
+        exploded-image-optimize
   endif
 
   zip-security: java.base-java java.security.jgss-java java.security.jgss-libs \
@@ -654,22 +666,23 @@ else
   ifeq ($(ENABLE_GENERATE_CLASSLIST), true)
     ifeq ($(CREATE_BUILDJDK), true)
       # If creating a buildjdk, the interim image needs to be based on that.
-      generate-classlist: create-buildjdk
+      generate-link-opt-data: create-buildjdk
     else ifeq ($(EXTERNAL_BUILDJDK), false)
       # If an external buildjdk has been provided, we skip generating an
       # interim-image and just use the external buildjdk for generating
       # classlist.
-      generate-classlist: interim-image
+      generate-link-opt-data: interim-image
     endif
-    generate-classlist: buildtools-jdk
+    generate-link-opt-data: buildtools-jdk
 
-    jdk-image jre-image: generate-classlist
+    # The generated classlist needs to go into java.base-jmod.
+    java.base-jmod jdk-image jre-image: generate-link-opt-data
   endif
 
-  jdk-image: jmods zip-source source-tips demos samples jrtfs-jar
-  jre-image: jmods source-tips jrtfs-jar
+  jdk-image: jmods zip-source create-source-revision-tracker demos samples
+  jre-image: jmods create-source-revision-tracker
 
-  profiles: jmods zip-source source-tips jrtfs-jar
+  profiles: jmods zip-source create-source-revision-tracker
 
   mac-bundles-jdk: jdk-image jre-image
 
@@ -683,7 +696,8 @@ else
 
   docs-javadoc: $(GENSRC_TARGETS) rmic
 
-  docs-copy: hotspot
+  # The gensrc step for jdk.jdi creates an html file that is used by docs-copy.
+  docs-copy: hotspot jdk.jdi-gensrc
 
   docs-zip: docs-javadoc docs-copy
 
@@ -694,7 +708,7 @@ else
 
   create-buildjdk-interim-image: create-buildjdk-copy
 
-  interim-image: $(addsuffix -jmod, $(INTERIM_IMAGE_MODULES))
+  interim-image: $(INTERIM_JMOD_TARGETS)
 
   test-make: clean-test-make
 

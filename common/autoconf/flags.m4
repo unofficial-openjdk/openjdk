@@ -280,7 +280,7 @@ AC_DEFUN([FLAGS_SETUP_COMPILER_FLAGS_FOR_LIBS],
     else
       # Default works for linux, might work on other platforms as well.
       SHARED_LIBRARY_FLAGS='-shared'
-      SET_EXECUTABLE_ORIGIN='-Wl,-rpath,\$$$$ORIGIN[$]1'
+      SET_EXECUTABLE_ORIGIN='-Wl,-rpath,\$$ORIGIN[$]1'
       SET_SHARED_LIBRARY_ORIGIN="-Wl,-z,origin $SET_EXECUTABLE_ORIGIN"
       SET_SHARED_LIBRARY_NAME='-Wl,-soname=[$]1'
       SET_SHARED_LIBRARY_MAPFILE='-Wl,-version-script=[$]1'
@@ -305,17 +305,21 @@ AC_DEFUN([FLAGS_SETUP_COMPILER_FLAGS_FOR_LIBS],
       # Default works for linux, might work on other platforms as well.
       PICFLAG='-fPIC'
       SHARED_LIBRARY_FLAGS='-shared'
-      SET_EXECUTABLE_ORIGIN='-Wl,-rpath,\$$$$ORIGIN[$]1'
+      SET_EXECUTABLE_ORIGIN='-Wl,-rpath,\$$ORIGIN[$]1'
       SET_SHARED_LIBRARY_ORIGIN="-Wl,-z,origin $SET_EXECUTABLE_ORIGIN"
       SET_SHARED_LIBRARY_NAME='-Wl,-soname=[$]1'
       SET_SHARED_LIBRARY_MAPFILE='-Wl,-version-script=[$]1'
     fi
   elif test "x$TOOLCHAIN_TYPE" = xsolstudio; then
-    PICFLAG="-KPIC"
+    if test "x$OPENJDK_TARGET_CPU" = xsparcv9; then
+      PICFLAG="-xcode=pic32"
+    else
+      PICFLAG="-KPIC"
+    fi
     C_FLAG_REORDER='-xF'
     CXX_FLAG_REORDER='-xF'
     SHARED_LIBRARY_FLAGS="-G"
-    SET_EXECUTABLE_ORIGIN='-R\$$$$ORIGIN[$]1'
+    SET_EXECUTABLE_ORIGIN='-R\$$ORIGIN[$]1'
     SET_SHARED_LIBRARY_ORIGIN="$SET_EXECUTABLE_ORIGIN"
     SET_SHARED_LIBRARY_NAME='-h [$]1'
     SET_SHARED_LIBRARY_MAPFILE='-M[$]1'
@@ -838,7 +842,6 @@ AC_DEFUN([FLAGS_SETUP_COMPILER_FLAGS_FOR_JDK_HELPER],
     fastdebug | slowdebug )
       $2CFLAGS_JDK="[$]$2CFLAGS_JDK $CFLAGS_DEBUG_SYMBOLS $CFLAGS_DEBUG_OPTIONS"
       $2CXXFLAGS_JDK="[$]$2CXXFLAGS_JDK $CXXFLAGS_DEBUG_SYMBOLS $CXXFLAGS_DEBUG_OPTIONS"
-      JAVAC_FLAGS="$JAVAC_FLAGS -g"
       ;;
     release )
       ;;
@@ -894,12 +897,12 @@ AC_DEFUN([FLAGS_SETUP_COMPILER_FLAGS_FOR_JDK_HELPER],
   # Set some additional per-OS defines.
   if test "x$OPENJDK_$1_OS" = xlinux; then
     $2JVM_CFLAGS="[$]$2JVM_CFLAGS -DLINUX"
-    $2JVM_CFLAGS="[$]$2JVM_CFLAGS -pipe -fPIC -fno-rtti -fno-exceptions \
+    $2JVM_CFLAGS="[$]$2JVM_CFLAGS -pipe $PICFLAG -fno-rtti -fno-exceptions \
         -fvisibility=hidden -fno-strict-aliasing -fno-omit-frame-pointer"
   elif test "x$OPENJDK_$1_OS" = xsolaris; then
     $2JVM_CFLAGS="[$]$2JVM_CFLAGS -DSOLARIS"
     $2JVM_CFLAGS="[$]$2JVM_CFLAGS -template=no%extdef -features=no%split_init \
-        -D_Crun_inline_placement -library=%none -KPIC -mt -features=no%except"
+        -D_Crun_inline_placement -library=%none $PICFLAG -mt -features=no%except"
   elif test "x$OPENJDK_$1_OS" = xmacosx; then
     $2COMMON_CCXXFLAGS_JDK="[$]$2COMMON_CCXXFLAGS_JDK -D_ALLBSD_SOURCE -D_DARWIN_UNLIMITED_SELECT"
     $2JVM_CFLAGS="[$]$2JVM_CFLAGS -D_ALLBSD_SOURCE"
@@ -942,7 +945,7 @@ AC_DEFUN([FLAGS_SETUP_COMPILER_FLAGS_FOR_JDK_HELPER],
       # Little endian machine uses ELFv2 ABI.
       $2JVM_CFLAGS="[$]$2JVM_CFLAGS -DABI_ELFv2"
       # Use Power8, this is the first CPU to support PPC64 LE with ELFv2 ABI.
-      $2JVM_CFLAGS="[$]$2JVM_CFLAGS -mcpu=power7 -mtune=power8"
+      $2JVM_CFLAGS="[$]$2JVM_CFLAGS -mcpu=power8 -mtune=power8"
     fi
   elif test "x$OPENJDK_$1_CPU" = xs390x; then
     if test "x$OPENJDK_$1_OS" = xlinux; then
@@ -1007,6 +1010,7 @@ AC_DEFUN([FLAGS_SETUP_COMPILER_FLAGS_FOR_JDK_HELPER],
 
   # Setup some hard coded includes
   $2COMMON_CCXXFLAGS_JDK="[$]$2COMMON_CCXXFLAGS_JDK \
+      -I\$(SUPPORT_OUTPUTDIR)/modules_include/java.base \
       -I${JDK_TOPDIR}/src/java.base/share/native/include \
       -I${JDK_TOPDIR}/src/java.base/$OPENJDK_$1_OS/native/include \
       -I${JDK_TOPDIR}/src/java.base/$OPENJDK_$1_OS_TYPE/native/include \
@@ -1309,7 +1313,7 @@ BASIC_DEFUN_NAMED([FLAGS_COMPILER_CHECK_ARGUMENTS],
   AC_MSG_CHECKING([if both compilers support "ARG_ARGUMENT"])
   supports=no
   if test "x$C_COMP_SUPPORTS" = "xyes" -a "x$CXX_COMP_SUPPORTS" = "xyes"; then supports=yes; fi
-  
+
   AC_MSG_RESULT([$supports])
   if test "x$supports" = "xyes" ; then
     :

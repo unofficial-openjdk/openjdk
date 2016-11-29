@@ -101,7 +101,7 @@ define SetupBundleFileBody
 	          ( $(TAR) cf - $(TAR_CREATE_EXTRA_PARAM) $$($1_SUBDIR) $(TAR_IGNORE_EXIT_VALUE) ) \
 	          | $(GZIP) > $$@
             else ifeq ($$($1_TYPE), zip)
-	      $(CD) $(SUPPORT_OUTPUTDIR)/bundles/$1 && $(ZIP) -qr $$@ .
+	      $(CD) $(SUPPORT_OUTPUTDIR)/bundles/$1 && $(ZIPEXE) -qr $$@ .
             endif
           endif
         else
@@ -113,7 +113,7 @@ define SetupBundleFileBody
 	        | $(GZIP) > $$@
           else ifeq ($$($1_TYPE), zip)
 	    $(CD) $$($1_BASE_DIR) \
-	        && $(ZIP) -qr $$@ . -i@$(SUPPORT_OUTPUTDIR)/bundles/_$1_files
+	        && $(ZIPEXE) -qr $$@ . -i@$(SUPPORT_OUTPUTDIR)/bundles/_$1_files
           endif
         endif
 
@@ -256,7 +256,7 @@ ifneq ($(filter product-bundles, $(MAKECMDGOALS)), )
 
   $(eval $(call SetupBundleFile, BUILD_DEMOS_BUNDLE, \
       BUNDLE_NAME := $(DEMOS_BUNDLE_NAME), \
-      FILES := $(call DoubleDollar, $(DEMOS_BUNDLE_FILES)), \
+      FILES := $(DEMOS_BUNDLE_FILES), \
       BASE_DIR := $(JDK_IMAGE_DIR), \
       SUBDIR := $(JDK_BUNDLE_SUBDIR), \
   ))
@@ -271,7 +271,7 @@ ifneq ($(filter test-bundles, $(MAKECMDGOALS)), )
 
   $(eval $(call SetupBundleFile, BUILD_TEST_BUNDLE, \
       BUNDLE_NAME := $(TEST_BUNDLE_NAME), \
-      FILES := $(call DoubleDollar, $(TEST_BUNDLE_FILES)), \
+      FILES := $(TEST_BUNDLE_FILES), \
       BASE_DIR := $(TEST_IMAGE_DIR), \
   ))
 
