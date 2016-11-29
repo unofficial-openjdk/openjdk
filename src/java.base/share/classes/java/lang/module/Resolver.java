@@ -450,13 +450,9 @@ final class Resolver {
             for (String dn : hashes.names()) {
                 ModuleReference other = nameToReference.get(dn);
                 if (other == null) {
-                    for (Configuration parent: parents) {
-                        Optional<ResolvedModule> om = parent.findModule(dn);
-                        if (om.isPresent()) {
-                            other = om.get().reference();
-                            break;
-                        }
-                    }
+                    ResolvedModule resolvedModule = findInParent(dn);
+                    if (resolvedModule != null)
+                        other = resolvedModule.reference();
                 }
 
                 // skip checking the hash if the module has been patched
@@ -546,7 +542,7 @@ final class Resolver {
             ResolvedModule m1 = computeIfAbsent(nameToResolved, name, cf, mref);
 
             Set<ResolvedModule> reads = new HashSet<>();
-            Set<ResolvedModule> requiresTransitive= new HashSet<>();
+            Set<ResolvedModule> requiresTransitive = new HashSet<>();
 
             for (ModuleDescriptor.Requires requires : descriptor.requires()) {
                 String dn = requires.name();

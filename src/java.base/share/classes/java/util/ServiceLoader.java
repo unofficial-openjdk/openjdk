@@ -1338,13 +1338,12 @@ public final class ServiceLoader<S>
                 throw new ConcurrentModificationException();
             Provider<T> next = null;
             if (index < loadedProviders.size()) {
-                next = (Provider<T>) loadedProviders.get(index);
+                next = (Provider<T>) loadedProviders.get(index++);
             } else if (iterator.hasNext()) {
                 next = iterator.next();
             } else {
                 loadedAllProviders = true;
             }
-            index++;
             if (next != null) {
                 action.accept(next);
                 return true;
@@ -1355,7 +1354,6 @@ public final class ServiceLoader<S>
 
         @Override
         public int characteristics() {
-            // need to decide on DISTINCT
             // not IMMUTABLE as structural interference possible
             return Spliterator.ORDERED + Spliterator.NONNULL;
         }

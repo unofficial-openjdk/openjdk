@@ -235,16 +235,7 @@ public class ModuleDescriptor
          */
         @Override
         public String toString() {
-            return toString(mods, name);
-        }
-
-        private <T> Stream<String> toStringStream(Set<T> s) {
-            return s.stream().map(e -> e.toString().toLowerCase());
-        }
-
-        private <M> String toString(Set<M> mods, String what) {
-            return (Stream.concat(toStringStream(mods), Stream.of(what)))
-                    .collect(Collectors.joining(" "));
+            return ModuleDescriptor.toString(mods, name);
         }
     }
 
@@ -397,20 +388,11 @@ public class ModuleDescriptor
          */
         @Override
         public String toString() {
-            String s = toString(mods, source);
+            String s = ModuleDescriptor.toString(mods, source);
             if (targets.isEmpty())
                 return s;
             else
                 return s + " to " + targets;
-        }
-
-        private <T> Stream<String> toStringStream(Set<T> s) {
-            return s.stream().map(e -> e.toString().toLowerCase());
-        }
-
-        private <M> String toString(Set<M> mods, String what) {
-            return (Stream.concat(toStringStream(mods), Stream.of(what)))
-                    .collect(Collectors.joining(" "));
         }
     }
 
@@ -569,20 +551,11 @@ public class ModuleDescriptor
          */
         @Override
         public String toString() {
-            String s = toString(mods, source);
+            String s = ModuleDescriptor.toString(mods, source);
             if (targets.isEmpty())
                 return s;
             else
                 return s + " to " + targets;
-        }
-
-        private <T> Stream<String> toStringStream(Set<T> s) {
-            return s.stream().map(e -> e.toString().toLowerCase());
-        }
-
-        private <M> String toString(Set<M> mods, String what) {
-            return (Stream.concat(toStringStream(mods), Stream.of(what)))
-                    .collect(Collectors.joining(" "));
         }
     }
 
@@ -2385,6 +2358,15 @@ public class ModuleDescriptor
         } else {
             return Collections.unmodifiableSet(set);
         }
+    }
+
+    /**
+     * Returns a string containing the given set of modifiers and label.
+     */
+    private static <M> String toString(Set<M> mods, String what) {
+        return (Stream.concat(mods.stream().map(e -> e.toString().toLowerCase()),
+                              Stream.of(what)))
+                .collect(Collectors.joining(" "));
     }
 
     static {
