@@ -125,6 +125,8 @@ java/beans/Introspector/8132566/OverrideUserDefPropertyInfoTest.java 8132565 gen
 
 java/lang/StringCoding/CheckEncodings.sh                        7008363 generic-all
 
+java/lang/invoke/lambda/LogGeneratedClassesTest.java            8170408 generic-all
+
 ############################################################################
 
 # jdk_instrument
@@ -135,7 +137,7 @@ java/lang/instrument/RetransformBigClass.sh                     8065756 generic-
 java/lang/instrument/BootClassPath/BootClassPathTest.sh         8072130 macosx-all
 
 java/lang/management/MemoryMXBean/Pending.java                  8158837 generic-all
-java/lang/management/MemoryMXBean/PendingAllGC.sh               8158760 generic-all
+java/lang/management/MemoryMXBean/PendingAllGC.sh               8158837 generic-all
 
 ############################################################################
 
@@ -184,6 +186,8 @@ java/nio/file/WatchService/Basic.java                           7158947 solaris-
 java/nio/file/WatchService/MayFlies.java                        7158947 solaris-all Solaris 11
 java/nio/file/WatchService/LotsOfEvents.java                    7158947 solaris-all Solaris 11
 
+sun/nio/cs/OLD/TestIBMDB.java                                   8167525 generic-all
+
 ############################################################################
 
 # jdk_rmi
@@ -217,6 +221,15 @@ sun/security/ssl/SSLSocketImpl/AsyncSSLSocketClose.java         8161232 macosx-a
 ############################################################################
 
 # jdk_sound
+javax/sound/sampled/DirectAudio/bug6372428.java        8055097 generic-all
+javax/sound/sampled/Clip/bug5070081.java               8055097 generic-all
+javax/sound/sampled/DataLine/LongFramePosition.java    8055097 generic-all
+
+javax/sound/sampled/Clip/Drain/ClipDrain.java          7062792 generic-all
+
+javax/sound/sampled/Mixers/DisabledAssertionCrash.java 7067310 generic-all
+
+javax/sound/sampled/Clip/OpenNonIntegralNumberOfSampleframes.java 8168881 generic-all
 
 ############################################################################
 
@@ -241,9 +254,13 @@ sanity/client/SwingSet/src/ButtonDemoScreenshotTest.java        8157338 generic-
 
 # core_tools
 
-tools/pack200/CommandLineTests.java                             7143279,8059906 generic-all
+tools/pack200/CommandLineTests.java                             8059906 generic-all
 
 tools/launcher/FXLauncherTest.java                              8068049 linux-all,macosx-all
+
+tools/jimage/JImageExtractTest.java                             8169713 generic-all
+tools/jimage/JImageListTest.java                                8169713 generic-all
+tools/jimage/JImageVerifyTest.java                              8169713 generic-all
 
 ############################################################################
 
@@ -281,16 +298,6 @@ java/util/BitSet/BitSetStreamTest.java                          8079538 generic-
 
 sun/tools/jcmd/TestJcmdSanity.java                              8031482 windows-all
 
-sun/tools/jhsdb/BasicLauncherTest.java                          8160376 macosx-all
-
-sun/tools/jhsdb/HeapDumpTest.java                               8160376 macosx-all
-
-sun/tools/jhsdb/heapconfig/JMapHeapConfigTest.java              8160376 macosx-all
-
-sun/tools/jps/TestJpsJar.java                                   8165500 generic-all
-
-sun/tools/jps/TestJpsJarRelative.java                           6456333 generic-all
-
 sun/jvmstat/monitor/MonitoredVm/MonitorVmStartTerminate.java    8057732 generic-all
 
 demo/jvmti/compiledMethodLoad/CompiledMethodLoadTest.java       8151899 generic-all
@@ -299,6 +306,6 @@ demo/jvmti/compiledMethodLoad/CompiledMethodLoadTest.java       8151899 generic-
 
 # jdk_other
 
-com/sun/jndi/ldap/DeadSSLLdapTimeoutTest.java                   8141370 linux-i586,macosx-all
+com/sun/jndi/ldap/DeadSSLLdapTimeoutTest.java                   8169942 linux-i586,macosx-all,windows-x64
 
 ############################################################################

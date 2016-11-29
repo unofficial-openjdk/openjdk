@@ -120,6 +120,24 @@ import sun.security.util.Debug;
  * gathered, for example, if the entropy source is /dev/random on various
  * Unix-like operating systems.
  *
+ * <h2> Thread safety </h2>
+ * {@code SecureRandom} objects are safe for use by multiple concurrent threads.
+ *
+ * @implSpec
+ * A {@code SecureRandom} service provider can advertise that it is thread-safe
+ * by setting the <a href=
+ * "{@docRoot}/../technotes/guides/security/StandardNames.html#Service">service
+ * provider attribute</a> "ThreadSafe" to "true" when registering the provider.
+ * Otherwise, this class will instead synchronize access to the following
+ * methods of the {@code SecureRandomSpi} implementation:
+ * <ul>
+ * <li>{@link SecureRandomSpi#engineSetSeed(byte[])}
+ * <li>{@link SecureRandomSpi#engineNextBytes(byte[])}
+ * <li>{@link SecureRandomSpi#engineNextBytes(byte[], SecureRandomParameters)}
+ * <li>{@link SecureRandomSpi#engineGenerateSeed(int)}
+ * <li>{@link SecureRandomSpi#engineReseed(SecureRandomParameters)}
+ * </ul>
+ *
  * @see java.security.SecureRandomSpi
  * @see java.util.Random
  *
@@ -149,6 +167,14 @@ public class SecureRandom extends java.util.Random {
      * @since 1.2
      */
     private SecureRandomSpi secureRandomSpi = null;
+
+    /**
+     * Thread safety.
+     *
+     * @serial
+     * @since 9
+     */
+    private final boolean threadSafe;
 
     /*
      * The algorithm name of null if unknown.
@@ -189,6 +215,16 @@ public class SecureRandom extends java.util.Random {
          */
         super(0);
         getDefaultPRNG(false, null);
+        this.threadSafe = getThreadSafe();
+    }
+
+    private boolean getThreadSafe() {
+        if (provider == null || algorithm == null) {
+            return false;
+        } else {
+            return Boolean.parseBoolean(provider.getProperty(
+                    "SecureRandom." + algorithm + " ThreadSafe", "false"));
+        }
     }
 
     /**
@@ -217,6 +253,7 @@ public class SecureRandom extends java.util.Random {
     public SecureRandom(byte[] seed) {
         super(0);
         getDefaultPRNG(true, seed);
+        this.threadSafe = getThreadSafe();
     }
 
     private void getDefaultPRNG(boolean setSeed, byte[] seed) {
@@ -269,6 +306,7 @@ public class SecureRandom extends java.util.Random {
         this.secureRandomSpi = secureRandomSpi;
         this.provider = provider;
         this.algorithm = algorithm;
+        this.threadSafe = getThreadSafe();
 
         if (!skipDebug && pdebug != null) {
             pdebug.println("SecureRandom." + algorithm +
@@ -303,11 +341,13 @@ public class SecureRandom extends java.util.Random {
      * Java Cryptography Architecture Standard Algorithm Name Documentation</a>
      * for information about standard RNG algorithm names.
      *
-     * @return the new {@code SecureRandom} object.
+     * @return the new {@code SecureRandom} object
      *
-     * @exception NoSuchAlgorithmException if no Provider supports a
-     *          {@code SecureRandomSpi} implementation for the
-     *          specified algorithm.
+     * @throws NoSuchAlgorithmException if no {@code Provider} supports a
+     *         {@code SecureRandomSpi} implementation for the
+     *         specified algorithm
+     *
+     * @throws NullPointerException if {@code algorithm} is {@code null}
      *
      * @see Provider
      *
@@ -315,6 +355,7 @@ public class SecureRandom extends java.util.Random {
      */
     public static SecureRandom getInstance(String algorithm)
             throws NoSuchAlgorithmException {
+        Objects.requireNonNull(algorithm, "null algorithm name");
         Instance instance = GetInstance.getInstance("SecureRandom",
                 SecureRandomSpi.class, algorithm);
         return new SecureRandom((SecureRandomSpi)instance.impl,
@@ -341,17 +382,19 @@ public class SecureRandom extends java.util.Random {
      *
      * @param provider the name of the provider.
      *
-     * @return the new {@code SecureRandom} object.
+     * @return the new {@code SecureRandom} object
+     *
+     * @throws IllegalArgumentException if the provider name is {@code null}
+     *         or empty
      *
      * @throws NoSuchAlgorithmException if a {@code SecureRandomSpi}
      *         implementation for the specified algorithm is not
-     *         available from the specified provider.
+     *         available from the specified provider
      *
      * @throws NoSuchProviderException if the specified provider is not
-     *         registered in the security provider list.
+     *         registered in the security provider list
      *
-     * @throws IllegalArgumentException if the provider name is null
-     *         or empty.
+     * @throws NullPointerException if {@code algorithm} is {@code null}
      *
      * @see Provider
      *
@@ -359,6 +402,7 @@ public class SecureRandom extends java.util.Random {
      */
     public static SecureRandom getInstance(String algorithm, String provider)
             throws NoSuchAlgorithmException, NoSuchProviderException {
+        Objects.requireNonNull(algorithm, "null algorithm name");
         Instance instance = GetInstance.getInstance("SecureRandom",
             SecureRandomSpi.class, algorithm, provider);
         return new SecureRandom((SecureRandomSpi)instance.impl,
@@ -382,13 +426,16 @@ public class SecureRandom extends java.util.Random {
      *
      * @param provider the provider.
      *
-     * @return the new {@code SecureRandom} object.
+     * @return the new {@code SecureRandom} object
+     *
+     * @throws IllegalArgumentException if the specified provider is
+     *         {@code null}
      *
      * @throws NoSuchAlgorithmException if a {@code SecureRandomSpi}
      *         implementation for the specified algorithm is not available
-     *         from the specified {@code Provider} object.
+     *         from the specified {@code Provider} object
      *
-     * @throws IllegalArgumentException if the specified provider is null.
+     * @throws NullPointerException if {@code algorithm} is {@code null}
      *
      * @see Provider
      *
@@ -396,6 +443,7 @@ public class SecureRandom extends java.util.Random {
      */
     public static SecureRandom getInstance(String algorithm,
             Provider provider) throws NoSuchAlgorithmException {
+        Objects.requireNonNull(algorithm, "null algorithm name");
         Instance instance = GetInstance.getInstance("SecureRandom",
             SecureRandomSpi.class, algorithm, provider);
         return new SecureRandom((SecureRandomSpi)instance.impl,
@@ -433,13 +481,16 @@ public class SecureRandom extends java.util.Random {
      * @param params the {@code SecureRandomParameters}
      *               the newly created {@code SecureRandom} object must support.
      *
-     * @return the new {@code SecureRandom} object.
+     * @return the new {@code SecureRandom} object
+     *
+     * @throws IllegalArgumentException if the specified params is
+     *         {@code null}
      *
      * @throws NoSuchAlgorithmException if no Provider supports a
      *         {@code SecureRandomSpi} implementation for the specified
-     *         algorithm and parameters.
+     *         algorithm and parameters
      *
-     * @throws IllegalArgumentException if the specified params is null.
+     * @throws NullPointerException if {@code algorithm} is {@code null}
      *
      * @see Provider
      *
@@ -448,6 +499,7 @@ public class SecureRandom extends java.util.Random {
     public static SecureRandom getInstance(
             String algorithm, SecureRandomParameters params)
             throws NoSuchAlgorithmException {
+        Objects.requireNonNull(algorithm, "null algorithm name");
         if (params == null) {
             throw new IllegalArgumentException("params cannot be null");
         }
@@ -481,17 +533,19 @@ public class SecureRandom extends java.util.Random {
      *
      * @param provider the name of the provider.
      *
-     * @return the new {@code SecureRandom} object.
+     * @return the new {@code SecureRandom} object
+     *
+     * @throws IllegalArgumentException if the provider name is {@code null}
+     *         or empty, or params is {@code null}
      *
      * @throws NoSuchAlgorithmException if the specified provider does not
      *         support a {@code SecureRandomSpi} implementation for the
-     *         specified algorithm and parameters.
+     *         specified algorithm and parameters
      *
      * @throws NoSuchProviderException if the specified provider is not
-     *         registered in the security provider list.
+     *         registered in the security provider list
      *
-     * @throws IllegalArgumentException if the provider name is null
-     *         or empty, or params is null.
+     * @throws NullPointerException if {@code algorithm} is {@code null}
      *
      * @see Provider
      *
@@ -500,6 +554,7 @@ public class SecureRandom extends java.util.Random {
     public static SecureRandom getInstance(String algorithm,
             SecureRandomParameters params, String provider)
             throws NoSuchAlgorithmException, NoSuchProviderException {
+        Objects.requireNonNull(algorithm, "null algorithm name");
         if (params == null) {
             throw new IllegalArgumentException("params cannot be null");
         }
@@ -531,14 +586,16 @@ public class SecureRandom extends java.util.Random {
      *
      * @param provider the provider.
      *
-     * @return the new {@code SecureRandom} object.
+     * @return the new {@code SecureRandom} object
+     *
+     * @throws IllegalArgumentException if the specified provider or params
+     *         is {@code null}
      *
      * @throws NoSuchAlgorithmException if the specified provider does not
      *         support a {@code SecureRandomSpi} implementation for the
-     *         specified algorithm and parameters.
+     *         specified algorithm and parameters
      *
-     * @throws IllegalArgumentException if the specified provider or params
-     *         is null.
+     * @throws NullPointerException if {@code algorithm} is {@code null}
      *
      * @see Provider
      *
@@ -547,6 +604,7 @@ public class SecureRandom extends java.util.Random {
     public static SecureRandom getInstance(String algorithm,
             SecureRandomParameters params, Provider provider)
             throws NoSuchAlgorithmException {
+        Objects.requireNonNull(algorithm, "null algorithm name");
         if (params == null) {
             throw new IllegalArgumentException("params cannot be null");
         }
@@ -633,8 +691,14 @@ public class SecureRandom extends java.util.Random {
      *
      * @see #getSeed
      */
-    public synchronized void setSeed(byte[] seed) {
-        secureRandomSpi.engineSetSeed(seed);
+    public void setSeed(byte[] seed) {
+        if (threadSafe) {
+            secureRandomSpi.engineSetSeed(seed);
+        } else {
+            synchronized (this) {
+                secureRandomSpi.engineSetSeed(seed);
+            }
+        }
     }
 
     /**
@@ -659,7 +723,7 @@ public class SecureRandom extends java.util.Random {
          * yet been initialized at that point.
          */
         if (seed != 0) {
-            this.secureRandomSpi.engineSetSeed(longToByteArray(seed));
+            setSeed(longToByteArray(seed));
         }
     }
 
@@ -670,7 +734,13 @@ public class SecureRandom extends java.util.Random {
      */
     @Override
     public void nextBytes(byte[] bytes) {
-        secureRandomSpi.engineNextBytes(bytes);
+        if (threadSafe) {
+            secureRandomSpi.engineNextBytes(bytes);
+        } else {
+            synchronized (this) {
+                secureRandomSpi.engineNextBytes(bytes);
+            }
+        }
     }
 
     /**
@@ -687,12 +757,19 @@ public class SecureRandom extends java.util.Random {
      *
      * @since 9
      */
-    public synchronized void nextBytes(
-            byte[] bytes, SecureRandomParameters params) {
+    public void nextBytes(byte[] bytes, SecureRandomParameters params) {
         if (params == null) {
             throw new IllegalArgumentException("params cannot be null");
         }
-        secureRandomSpi.engineNextBytes(Objects.requireNonNull(bytes), params);
+        if (threadSafe) {
+            secureRandomSpi.engineNextBytes(
+                    Objects.requireNonNull(bytes), params);
+        } else {
+            synchronized (this) {
+                secureRandomSpi.engineNextBytes(
+                        Objects.requireNonNull(bytes), params);
+            }
+        }
     }
 
     /**
@@ -736,6 +813,7 @@ public class SecureRandom extends java.util.Random {
      *
      * @param numBytes the number of seed bytes to generate.
      *
+     * @throws IllegalArgumentException if {@code numBytes} is negative
      * @return the seed bytes.
      *
      * @see #setSeed
@@ -762,7 +840,13 @@ public class SecureRandom extends java.util.Random {
         if (numBytes < 0) {
             throw new IllegalArgumentException("numBytes cannot be negative");
         }
-        return secureRandomSpi.engineGenerateSeed(numBytes);
+        if (threadSafe) {
+            return secureRandomSpi.engineGenerateSeed(numBytes);
+        } else {
+            synchronized (this) {
+                return secureRandomSpi.engineGenerateSeed(numBytes);
+            }
+        }
     }
 
     /**
@@ -897,8 +981,14 @@ public class SecureRandom extends java.util.Random {
      *
      * @since 9
      */
-    public synchronized void reseed() {
-        secureRandomSpi.engineReseed(null);
+    public void reseed() {
+        if (threadSafe) {
+            secureRandomSpi.engineReseed(null);
+        } else {
+            synchronized (this) {
+                secureRandomSpi.engineReseed(null);
+            }
+        }
     }
 
     /**
@@ -917,11 +1007,17 @@ public class SecureRandom extends java.util.Random {
      *
      * @since 9
      */
-    public synchronized void reseed(SecureRandomParameters params) {
+    public void reseed(SecureRandomParameters params) {
         if (params == null) {
             throw new IllegalArgumentException("params cannot be null");
         }
-        secureRandomSpi.engineReseed(params);
+        if (threadSafe) {
+            secureRandomSpi.engineReseed(params);
+        } else {
+            synchronized (this) {
+                secureRandomSpi.engineReseed(params);
+            }
+        }
     }
 
     // Declare serialVersionUID to be compatible with JDK1.1
