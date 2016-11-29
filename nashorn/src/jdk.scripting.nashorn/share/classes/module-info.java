@@ -23,6 +23,9 @@
  * questions.
  */
 
+/**
+ * Nashorn
+ */
 module jdk.scripting.nashorn {
     requires java.logging;
     requires transitive java.scripting;
