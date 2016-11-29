@@ -426,9 +426,12 @@ var getJibProfilesDependencies = function (input, common) {
 
         jtreg: {
             server: "javare",
-            path: "java/re/jtreg/4.2/nightly/bundles/jtreg_bin-4.2.zip",
-            checksum_path: "java/re/jtreg/4.2/nightly/bundles/MD5_VALUES",
-            environment_name: "JT_HOME"
+            revision: "4.2",
+            build_number: "b04",
+            checksum_file: "MD5_VALUES",
+            file: "jtreg_bin-4.2.zip",
+            environment_name: "JT_HOME",
+            environment_path: input.get("jtreg", "install_path") + "/jtreg/bin"
         },
 
         gnumake: {

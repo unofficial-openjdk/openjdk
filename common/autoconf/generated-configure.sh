@@ -5093,7 +5093,7 @@ VS_SDK_PLATFORM_NAME_2013=
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1476275292
+DATE_WHEN_GENERATED=1479992729
 
 ###############################################################################
 #
@@ -31196,6 +31196,12 @@ $as_echo "$as_me: The path of IMPORT_MODULES_TOPDIR, which resolves as \"$path\"
   if test -d "$IMPORT_MODULES_TOPDIR/modules_src"; then
     IMPORT_MODULES_SRC="$IMPORT_MODULES_TOPDIR/modules_src"
   fi
+  # Workaround for using different imported module-info.java in Jake due to a
+  # change in format. Remove once new format is standard in JDK 9 and javafx
+  # delivers just that.
+  if test -d "$IMPORT_MODULES_TOPDIR/modules_src_jake"; then
+    IMPORT_MODULES_SRC="$IMPORT_MODULES_TOPDIR/modules_src_jake $IMPORT_MODULES_SRC"
+  fi
   if test -d "$IMPORT_MODULES_TOPDIR/make"; then
     IMPORT_MODULES_MAKE="$IMPORT_MODULES_TOPDIR/make"
   fi
@@ -49070,7 +49076,7 @@ $as_echo "$ac_cv_c_bigendian" >&6; }
     else
       # Default works for linux, might work on other platforms as well.
       SHARED_LIBRARY_FLAGS='-shared'
-      SET_EXECUTABLE_ORIGIN='-Wl,-rpath,\$$$$ORIGIN$1'
+      SET_EXECUTABLE_ORIGIN='-Wl,-rpath,\$$ORIGIN$1'
       SET_SHARED_LIBRARY_ORIGIN="-Wl,-z,origin $SET_EXECUTABLE_ORIGIN"
       SET_SHARED_LIBRARY_NAME='-Wl,-soname=$1'
       SET_SHARED_LIBRARY_MAPFILE='-Wl,-version-script=$1'
@@ -49095,7 +49101,7 @@ $as_echo "$ac_cv_c_bigendian" >&6; }
       # Default works for linux, might work on other platforms as well.
       PICFLAG='-fPIC'
       SHARED_LIBRARY_FLAGS='-shared'
-      SET_EXECUTABLE_ORIGIN='-Wl,-rpath,\$$$$ORIGIN$1'
+      SET_EXECUTABLE_ORIGIN='-Wl,-rpath,\$$ORIGIN$1'
       SET_SHARED_LIBRARY_ORIGIN="-Wl,-z,origin $SET_EXECUTABLE_ORIGIN"
       SET_SHARED_LIBRARY_NAME='-Wl,-soname=$1'
       SET_SHARED_LIBRARY_MAPFILE='-Wl,-version-script=$1'
@@ -49105,7 +49111,7 @@ $as_echo "$ac_cv_c_bigendian" >&6; }
     C_FLAG_REORDER='-xF'
     CXX_FLAG_REORDER='-xF'
     SHARED_LIBRARY_FLAGS="-G"
-    SET_EXECUTABLE_ORIGIN='-R\$$$$ORIGIN$1'
+    SET_EXECUTABLE_ORIGIN='-R\$$ORIGIN$1'
     SET_SHARED_LIBRARY_ORIGIN="$SET_EXECUTABLE_ORIGIN"
     SET_SHARED_LIBRARY_NAME='-h $1'
     SET_SHARED_LIBRARY_MAPFILE='-M$1'
@@ -49840,6 +49846,10 @@ $as_echo "$supports" >&6; }
         # on ppc we don't prevent gcc to omit frame pointer but do prevent strict aliasing
         CFLAGS_JDK="${CFLAGS_JDK} -fno-strict-aliasing"
         ;;
+      s390 )
+        COMMON_CCXXFLAGS_JDK="$COMMON_CCXXFLAGS_JDK -fno-omit-frame-pointer -mbackchain -march=z10"
+        CFLAGS_JDK="${CFLAGS_JDK} -fno-strict-aliasing"
+        ;;
       * )
         COMMON_CCXXFLAGS_JDK="$COMMON_CCXXFLAGS_JDK -fno-omit-frame-pointer"
         CFLAGS_JDK="${CFLAGS_JDK} -fno-strict-aliasing"
@@ -50077,7 +50087,7 @@ $as_echo "$as_me: GCC >= 6 detected; adding ${NO_DELETE_NULL_POINTER_CHECKS_CFLA
   elif test "x$OPENJDK_TARGET_OS" = xsolaris; then
     JVM_CFLAGS="$JVM_CFLAGS -DSOLARIS"
     JVM_CFLAGS="$JVM_CFLAGS -template=no%extdef -features=no%split_init \
-        -D_Crun_inline_placement -library=%none -KPIC -mt -xwe -features=no%except"
+        -D_Crun_inline_placement -library=%none -KPIC -mt -features=no%except"
   elif test "x$OPENJDK_TARGET_OS" = xmacosx; then
     COMMON_CCXXFLAGS_JDK="$COMMON_CCXXFLAGS_JDK -D_ALLBSD_SOURCE -D_DARWIN_UNLIMITED_SELECT"
     JVM_CFLAGS="$JVM_CFLAGS -D_ALLBSD_SOURCE"
@@ -50120,7 +50130,11 @@ $as_echo "$as_me: GCC >= 6 detected; adding ${NO_DELETE_NULL_POINTER_CHECKS_CFLA
       # Little endian machine uses ELFv2 ABI.
       JVM_CFLAGS="$JVM_CFLAGS -DABI_ELFv2"
       # Use Power8, this is the first CPU to support PPC64 LE with ELFv2 ABI.
-      JVM_CFLAGS="$JVM_CFLAGS -mcpu=power7 -mtune=power8"
+      JVM_CFLAGS="$JVM_CFLAGS -mcpu=power8 -mtune=power8"
+    fi
+  elif test "x$OPENJDK_TARGET_CPU" = xs390x; then
+    if test "x$OPENJDK_TARGET_OS" = xlinux; then
+      JVM_CFLAGS="$JVM_CFLAGS -mbackchain -march=z10"
     fi
   fi
 
@@ -50270,6 +50284,7 @@ $as_echo "$as_me: GCC >= 6 detected; adding ${NO_DELETE_NULL_POINTER_CHECKS_CFLA
 
   # Setup some hard coded includes
   COMMON_CCXXFLAGS_JDK="$COMMON_CCXXFLAGS_JDK \
+      -I\$(SUPPORT_OUTPUTDIR)/modules_include/java.base \
       -I${JDK_TOPDIR}/src/java.base/share/native/include \
       -I${JDK_TOPDIR}/src/java.base/$OPENJDK_TARGET_OS/native/include \
       -I${JDK_TOPDIR}/src/java.base/$OPENJDK_TARGET_OS_TYPE/native/include \
@@ -50655,6 +50670,10 @@ $as_echo "$supports" >&6; }
         # on ppc we don't prevent gcc to omit frame pointer but do prevent strict aliasing
         OPENJDK_BUILD_CFLAGS_JDK="${OPENJDK_BUILD_CFLAGS_JDK} -fno-strict-aliasing"
         ;;
+      s390 )
+        OPENJDK_BUILD_COMMON_CCXXFLAGS_JDK="$OPENJDK_BUILD_COMMON_CCXXFLAGS_JDK -fno-omit-frame-pointer -mbackchain -march=z10"
+        OPENJDK_BUILD_CFLAGS_JDK="${OPENJDK_BUILD_CFLAGS_JDK} -fno-strict-aliasing"
+        ;;
       * )
         OPENJDK_BUILD_COMMON_CCXXFLAGS_JDK="$OPENJDK_BUILD_COMMON_CCXXFLAGS_JDK -fno-omit-frame-pointer"
         OPENJDK_BUILD_CFLAGS_JDK="${OPENJDK_BUILD_CFLAGS_JDK} -fno-strict-aliasing"
@@ -50892,7 +50911,7 @@ $as_echo "$as_me: GCC >= 6 detected; adding ${NO_DELETE_NULL_POINTER_CHECKS_CFLA
   elif test "x$OPENJDK_BUILD_OS" = xsolaris; then
     OPENJDK_BUILD_JVM_CFLAGS="$OPENJDK_BUILD_JVM_CFLAGS -DSOLARIS"
     OPENJDK_BUILD_JVM_CFLAGS="$OPENJDK_BUILD_JVM_CFLAGS -template=no%extdef -features=no%split_init \
-        -D_Crun_inline_placement -library=%none -KPIC -mt -xwe -features=no%except"
+        -D_Crun_inline_placement -library=%none -KPIC -mt -features=no%except"
   elif test "x$OPENJDK_BUILD_OS" = xmacosx; then
     OPENJDK_BUILD_COMMON_CCXXFLAGS_JDK="$OPENJDK_BUILD_COMMON_CCXXFLAGS_JDK -D_ALLBSD_SOURCE -D_DARWIN_UNLIMITED_SELECT"
     OPENJDK_BUILD_JVM_CFLAGS="$OPENJDK_BUILD_JVM_CFLAGS -D_ALLBSD_SOURCE"
@@ -50935,7 +50954,11 @@ $as_echo "$as_me: GCC >= 6 detected; adding ${NO_DELETE_NULL_POINTER_CHECKS_CFLA
       # Little endian machine uses ELFv2 ABI.
       OPENJDK_BUILD_JVM_CFLAGS="$OPENJDK_BUILD_JVM_CFLAGS -DABI_ELFv2"
       # Use Power8, this is the first CPU to support PPC64 LE with ELFv2 ABI.
-      OPENJDK_BUILD_JVM_CFLAGS="$OPENJDK_BUILD_JVM_CFLAGS -mcpu=power7 -mtune=power8"
+      OPENJDK_BUILD_JVM_CFLAGS="$OPENJDK_BUILD_JVM_CFLAGS -mcpu=power8 -mtune=power8"
+    fi
+  elif test "x$OPENJDK_BUILD_CPU" = xs390x; then
+    if test "x$OPENJDK_BUILD_OS" = xlinux; then
+      OPENJDK_BUILD_JVM_CFLAGS="$OPENJDK_BUILD_JVM_CFLAGS -mbackchain -march=z10"
     fi
   fi
 
@@ -51085,6 +51108,7 @@ $as_echo "$as_me: GCC >= 6 detected; adding ${NO_DELETE_NULL_POINTER_CHECKS_CFLA
 
   # Setup some hard coded includes
   OPENJDK_BUILD_COMMON_CCXXFLAGS_JDK="$OPENJDK_BUILD_COMMON_CCXXFLAGS_JDK \
+      -I\$(SUPPORT_OUTPUTDIR)/modules_include/java.base \
       -I${JDK_TOPDIR}/src/java.base/share/native/include \
       -I${JDK_TOPDIR}/src/java.base/$OPENJDK_BUILD_OS/native/include \
       -I${JDK_TOPDIR}/src/java.base/$OPENJDK_BUILD_OS_TYPE/native/include \
