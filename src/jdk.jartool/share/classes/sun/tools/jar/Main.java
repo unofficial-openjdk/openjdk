@@ -82,7 +82,7 @@ class Main {
     String fname, mname, ename;
     String zname = "";
     String rootjar = null;
-    Set<String> concealedPackages = new HashSet<>();
+    Set<String> concealedPackages = new HashSet<>(); // used by Validator
 
     private static final int BASE_VERSION = 0;
 

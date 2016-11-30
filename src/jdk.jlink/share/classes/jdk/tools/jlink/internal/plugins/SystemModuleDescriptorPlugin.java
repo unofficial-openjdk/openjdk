@@ -1074,7 +1074,7 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
             }
 
             /**
-             * Loads a Enum field.
+             * Loads an Enum field.
              */
             void visitElement(T t, MethodVisitor mv) {
                 mv.visitFieldInsn(GETSTATIC, className, t.toString(),

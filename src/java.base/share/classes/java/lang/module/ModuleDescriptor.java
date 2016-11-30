@@ -1118,7 +1118,7 @@ public class ModuleDescriptor
      * opens} method returns an empty set) but the resulting module is treated
      * as if all packages are open. </p>
      *
-     * @return  {@code true} if this is a open module
+     * @return  {@code true} if this is an open module
      */
     public boolean isOpen() {
         return open;

@@ -258,7 +258,7 @@ public class Proc {
         if (hasModules) {
             Stream.of(jdk.internal.misc.VM.getRuntimeArguments())
                     .filter(arg -> arg.startsWith("--add-exports=") ||
-                                   arg.startsWith("--add-opens"))
+                                   arg.startsWith("--add-opens="))
                     .forEach(cmd::add);
         }
 
