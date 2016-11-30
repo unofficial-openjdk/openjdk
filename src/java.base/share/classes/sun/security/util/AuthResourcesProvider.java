@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,27 +23,7 @@
  * questions.
  */
 
-/**
- * Contains the implementation of the javax.security.auth.* interfaces and
- * various authentication modules.
- */
-module jdk.security.auth {
-    requires transitive java.naming;
-    requires java.security.jgss;
+package sun.security.util;
 
-    exports com.sun.security.auth;
-    exports com.sun.security.auth.callback;
-    exports com.sun.security.auth.login;
-    exports com.sun.security.auth.module;
-
-    uses sun.security.util.AuthResourcesProvider;
-
-    provides javax.security.auth.spi.LoginModule with
-        com.sun.security.auth.module.Krb5LoginModule,
-        com.sun.security.auth.module.UnixLoginModule,
-        com.sun.security.auth.module.JndiLoginModule,
-        com.sun.security.auth.module.KeyStoreLoginModule,
-        com.sun.security.auth.module.LdapLoginModule,
-        com.sun.security.auth.module.NTLoginModule;
+public interface AuthResourcesProvider extends java.util.spi.ResourceBundleProvider {
 }
-
