@@ -85,6 +85,12 @@ public class TreeScanner extends Visitor {
     }
 
     @Override
+    public void visitOpens(JCOpens tree) {
+        scan(tree.qualid);
+        scan(tree.moduleNames);
+    }
+
+    @Override
     public void visitProvides(JCProvides tree) {
         scan(tree.serviceName);
         scan(tree.implNames);

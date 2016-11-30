@@ -856,7 +856,14 @@ public class TreeScanner<R,P> implements TreeVisitor<R,P> {
 
     @Override
     public R visitExports(ExportsTree node, P p) {
-        R r = scan(node.getExportName(), p);
+        R r = scan(node.getPackageName(), p);
+        r = scanAndReduce(node.getModuleNames(), p, r);
+        return r;
+    }
+
+    @Override
+    public R visitOpens(OpensTree node, P p) {
+        R r = scan(node.getPackageName(), p);
         r = scanAndReduce(node.getModuleNames(), p, r);
         return r;
     }

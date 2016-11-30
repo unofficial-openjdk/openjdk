@@ -305,13 +305,13 @@ public class ModuleInfoTest extends ModuleTestBase {
                                           null);
         verifyConflictingExports_packages(base,
                                           "opens p; opens p;",
-                                          "module-info.java:1:28: compiler.err.conflicting.exports: p");
+                                          "module-info.java:1:28: compiler.err.conflicting.opens: p");
         verifyConflictingExports_packages(base,
                                           "opens p; exports p to m2;",
                                           null);
         verifyConflictingExports_packages(base,
                                           "opens p; opens p to m2;",
-                                          "module-info.java:1:28: compiler.err.conflicting.exports: p");
+                                          "module-info.java:1:28: compiler.err.conflicting.opens: p");
         verifyConflictingExports_packages(base,
                                           "exports p to m2; exports p;",
                                           "module-info.java:1:38: compiler.err.conflicting.exports: p");
@@ -329,13 +329,13 @@ public class ModuleInfoTest extends ModuleTestBase {
                                           null);
         verifyConflictingExports_packages(base,
                                           "opens p to m2; opens p;",
-                                          "module-info.java:1:34: compiler.err.conflicting.exports: p");
+                                          "module-info.java:1:34: compiler.err.conflicting.opens: p");
         verifyConflictingExports_packages(base,
                                           "opens p to m2; exports p to m2;",
                                           null);
         verifyConflictingExports_packages(base,
                                           "opens p to m2; opens p to m2;",
-                                          "module-info.java:1:34: compiler.err.conflicting.exports: p");
+                                          "module-info.java:1:34: compiler.err.conflicting.opens: p");
         verifyConflictingExports_packages(base,
                                           "exports p to m2; exports p to m3;",
                                           "module-info.java:1:38: compiler.err.conflicting.exports: p");
@@ -347,7 +347,7 @@ public class ModuleInfoTest extends ModuleTestBase {
                                           null);
         verifyConflictingExports_packages(base,
                                           "opens p to m2; opens p to m3;",
-                                          "module-info.java:1:34: compiler.err.conflicting.exports: p");
+                                          "module-info.java:1:34: compiler.err.conflicting.opens: p");
     }
 
     private void verifyConflictingExports_packages(Path base, String code, String expected) throws Exception {

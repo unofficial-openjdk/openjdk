@@ -169,6 +169,27 @@ public interface ModuleElement extends Element, QualifiedNameable {
     }
 
     /**
+     * An opened package of a module.
+     * @since 9
+     */
+    interface OpensDirective extends Directive {
+
+        /**
+         * Returns the package being opened.
+         * @return the package being opened
+         */
+        PackageElement getPackage();
+
+        /**
+         * Returns the specific modules to which the package is being open
+         * or null, if the package is open all modules which
+         * have readability to this module.
+         * @return the specific modules to which the package is being opened
+         */
+        List<? extends ModuleElement> getTargetModules();
+    }
+
+    /**
      * An implementation of a service provided by a module.
      * @since 9
      */

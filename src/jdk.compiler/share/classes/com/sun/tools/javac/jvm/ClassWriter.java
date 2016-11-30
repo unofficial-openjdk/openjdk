@@ -983,16 +983,16 @@ public class ClassWriter extends ClassFile {
             }
         }
 
-        List<ExportsDirective> opens = m.opens;
+        List<OpensDirective> opens = m.opens;
         databuf.appendChar(opens.size());
-        for (ExportsDirective e: opens) {
-            databuf.appendChar(pool.put(names.fromUtf(externalize(e.packge.flatName()))));
-            databuf.appendChar(ExportsFlag.value(e.flags));
-            if (e.modules == null) {
+        for (OpensDirective o: opens) {
+            databuf.appendChar(pool.put(names.fromUtf(externalize(o.packge.flatName()))));
+            databuf.appendChar(OpensFlag.value(o.flags));
+            if (o.modules == null) {
                 databuf.appendChar(0);
             } else {
-                databuf.appendChar(e.modules.size());
-                for (ModuleSymbol msym: e.modules) {
+                databuf.appendChar(o.modules.size());
+                for (ModuleSymbol msym: o.modules) {
                     databuf.appendChar(pool.put(names.fromUtf(externalize(msym.name))));
                 }
             }

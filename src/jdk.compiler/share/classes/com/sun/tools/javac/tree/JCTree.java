@@ -49,6 +49,7 @@ import javax.tools.JavaFileManager.Location;
 
 import com.sun.source.tree.ModuleTree.ModuleKind;
 import com.sun.tools.javac.code.Directive.ExportsDirective;
+import com.sun.tools.javac.code.Directive.OpensDirective;
 import com.sun.tools.javac.code.Type.ModuleType;
 
 /**
@@ -2688,13 +2689,11 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
     public static class JCExports extends JCDirective
             implements ExportsTree {
-        private final Tag tag;
         public JCExpression qualid;
         public List<JCExpression> moduleNames;
         public ExportsDirective directive;
 
-        protected JCExports(Tag tag, JCExpression qualId, List<JCExpression> moduleNames) {
-            this.tag = tag;
+        protected JCExports(JCExpression qualId, List<JCExpression> moduleNames) {
             this.qualid = qualId;
             this.moduleNames = moduleNames;
         }
@@ -2704,11 +2703,11 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
         @Override @DefinedBy(Api.COMPILER_TREE)
         public Kind getKind() {
-            return TreeInfo.tagToKind(tag);
+            return Kind.EXPORTS;
         }
 
         @Override @DefinedBy(Api.COMPILER_TREE)
-        public JCExpression getExportName() {
+        public JCExpression getPackageName() {
             return qualid;
         }
 
@@ -2724,7 +2723,47 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
         @Override
         public Tag getTag() {
-            return tag;
+            return Tag.EXPORTS;
+        }
+    }
+
+    public static class JCOpens extends JCDirective
+            implements OpensTree {
+        public JCExpression qualid;
+        public List<JCExpression> moduleNames;
+        public OpensDirective directive;
+
+        protected JCOpens(JCExpression qualId, List<JCExpression> moduleNames) {
+            this.qualid = qualId;
+            this.moduleNames = moduleNames;
+        }
+
+        @Override
+        public void accept(Visitor v) { v.visitOpens(this); }
+
+        @Override @DefinedBy(Api.COMPILER_TREE)
+        public Kind getKind() {
+            return Kind.OPENS;
+        }
+
+        @Override @DefinedBy(Api.COMPILER_TREE)
+        public JCExpression getPackageName() {
+            return qualid;
+        }
+
+        @Override @DefinedBy(Api.COMPILER_TREE)
+        public List<JCExpression> getModuleNames() {
+            return moduleNames;
+        }
+
+        @Override @DefinedBy(Api.COMPILER_TREE)
+        public <R, D> R accept(TreeVisitor<R, D> v, D d) {
+            return v.visitOpens(this, d);
+        }
+
+        @Override
+        public Tag getTag() {
+            return Tag.OPENS;
         }
     }
 
@@ -2986,7 +3025,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         JCErroneous Erroneous(List<? extends JCTree> errs);
         JCModuleDecl ModuleDef(JCModifiers mods, ModuleKind kind, JCExpression qualId, List<JCDirective> directives);
         JCExports Exports(JCExpression qualId, List<JCExpression> moduleNames);
-        JCExports Opens(JCExpression qualId, List<JCExpression> moduleNames);
+        JCOpens Opens(JCExpression qualId, List<JCExpression> moduleNames);
         JCProvides Provides(JCExpression serviceName, List<JCExpression> implNames);
         JCRequires Requires(boolean isTransitive, boolean isStaticPhase, JCExpression qualId);
         JCUses Uses(JCExpression qualId);
@@ -3052,6 +3091,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         public void visitErroneous(JCErroneous that)         { visitTree(that); }
         public void visitModuleDef(JCModuleDecl that)        { visitTree(that); }
         public void visitExports(JCExports that)             { visitTree(that); }
+        public void visitOpens(JCOpens that)                 { visitTree(that); }
         public void visitProvides(JCProvides that)           { visitTree(that); }
         public void visitRequires(JCRequires that)           { visitTree(that); }
         public void visitUses(JCUses that)                   { visitTree(that); }
