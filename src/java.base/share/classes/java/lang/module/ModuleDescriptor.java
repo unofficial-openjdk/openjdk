@@ -359,7 +359,7 @@ public class ModuleDescriptor
          *
          * <p> If the given object is not an {@code Exports} then this method
          * returns {@code false}. Two module exports objects are equal if their
-         * set of modifiers is equals, the package names are equal and the set
+         * set of modifiers is equal, the package names are equal and the set
          * of target module names is equal. </p>
          *
          * <p> This method satisfies the general contract of the {@link
@@ -522,7 +522,7 @@ public class ModuleDescriptor
          *
          * <p> If the given object is not an {@code Opens} then this method
          * returns {@code false}. Two {@code Opens} objects are equal if their
-         * set of modifiers is equals, the package names are equal and the set
+         * set of modifiers is equal, the package names are equal and the set
          * of target module names is equal. </p>
          *
          * <p> This method satisfies the general contract of the {@link
