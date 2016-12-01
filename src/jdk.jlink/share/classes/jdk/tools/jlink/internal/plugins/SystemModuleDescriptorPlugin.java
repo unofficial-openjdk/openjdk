@@ -187,13 +187,11 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
             Checks.requireModuleName(req.name());
         }
         for (Exports e : md.exports()) {
-            String source = e.source();
             Checks.requirePackageName(e.source());
             if (e.isQualified())
                 e.targets().forEach(Checks::requireModuleName);
         }
         for (Opens opens : md.opens()) {
-            String source = opens.source();
             Checks.requirePackageName(opens.source());
             if (opens.isQualified())
                 opens.targets().forEach(Checks::requireModuleName);
