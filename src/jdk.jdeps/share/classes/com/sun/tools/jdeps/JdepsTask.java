@@ -546,8 +546,9 @@ class JdepsTask {
             config.splitPackages().entrySet()
                 .stream()
                 .sorted(Map.Entry.comparingByKey())
-                .forEach(e -> System.out.format("split package: %s %s%n", e.getKey(),
-                                                e.getValue().toString()));
+                .forEach(e -> log.println(getMessage("split.package",
+                                                     e.getKey(),
+                                                     e.getValue().toString())));
 
             // check if any module specified in --require is missing
             Stream.concat(options.addmods.stream(), options.requires.stream())
@@ -754,8 +755,12 @@ class JdepsTask {
 
                 if (!jdkInternals.isEmpty()) {
                     log.println();
-                    log.format("%-40s %s%n", "JDK Internal API", "Suggested Replacement");
-                    log.format("%-40s %s%n", "----------------", "---------------------");
+                    String internalApiTitle = getMessage("internal.api.column.header");
+                    String replacementApiTitle = getMessage("public.api.replacement.column.header");
+                    log.format("%-40s %s%n", internalApiTitle, replacementApiTitle);
+                    log.format("%-40s %s%n",
+                               internalApiTitle.replaceAll(".", "-"),
+                               replacementApiTitle.replaceAll(".", "-"));
                     jdkInternals.entrySet().stream()
                         .forEach(e -> {
                             String key = e.getKey();
@@ -809,12 +814,13 @@ class JdepsTask {
 
             log.println();
             if (!options.requires.isEmpty())
-                log.format("Inverse transitive dependences on %s%n", options.requires);
+                log.println(getMessage("inverse.transitive.dependencies.on",
+                    options.requires));
             else
-                log.format("Inverse transitive dependences matching %s%n",
+                log.println(getMessage("inverse.transitive.dependencies.matching",
                     options.regex != null
                         ? options.regex.toString()
-                        : "packages " + options.packageNames);
+                        : "packages " + options.packageNames));
 
             analyzer.inverseDependences().stream()
                 .sorted(Comparator.comparing(this::sortPath))
@@ -881,7 +887,7 @@ class JdepsTask {
             boolean ok = builder.run();
 
             if (!ok && !options.nowarning) {
-                log.println("ERROR: missing dependencies");
+                reportError("err.missing.dependences");
                 builder.visitMissingDeps(
                     new Analyzer.Visitor() {
                         @Override

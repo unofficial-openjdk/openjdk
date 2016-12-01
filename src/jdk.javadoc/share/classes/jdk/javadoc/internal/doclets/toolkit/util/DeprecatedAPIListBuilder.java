@@ -104,7 +104,7 @@ public class DeprecatedAPIListBuilder {
                 pset.add(pe);
             }
         }
-        for (Element e : configuration.docEnv.getIncludedTypeElements()) {
+        for (Element e : configuration.getIncludedTypeElements()) {
             TypeElement te = (TypeElement)e;
             SortedSet<Element> eset;
             if (utils.isDeprecated(e)) {
