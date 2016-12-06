@@ -890,6 +890,8 @@ public class Locations {
      * like UPGRADE_MODULE_PATH and MODULE_PATH.
      */
     private class ModulePathLocationHandler extends SimpleLocationHandler {
+        private Map<String, ModuleLocationHandler> pathModules;
+
         ModulePathLocationHandler(Location location, Option... options) {
             super(location, options);
         }
@@ -901,6 +903,12 @@ public class Locations {
             }
             setPaths(value == null ? null : getPathEntries(value));
             return true;
+        }
+
+        @Override
+        public Location getLocationForModule(String moduleName) {
+            initPathModules();
+            return pathModules.get(moduleName);
         }
 
         @Override
@@ -919,6 +927,23 @@ public class Locations {
                 }
             }
             super.setPaths(paths);
+        }
+
+        private void initPathModules() {
+            if (pathModules != null) {
+                return;
+            }
+
+            pathModules = new LinkedHashMap<>();
+
+            for (Set<Location> set : listLocationsForModules()) {
+                for (Location locn : set) {
+                    if (locn instanceof ModuleLocationHandler) {
+                        ModuleLocationHandler h = (ModuleLocationHandler) locn;
+                        pathModules.put(h.moduleName, h);
+                    }
+                }
+            }
         }
 
         private void checkValidModulePathEntry(Path p) {
@@ -1091,7 +1116,8 @@ public class Locations {
                     }
 
                     // finally clean up the module name
-                    mn =  mn.replaceAll("[^A-Za-z0-9]", ".")  // replace non-alphanumeric
+                    mn =  mn.replaceAll("(\\.|\\d)*$", "")    // remove trailing version
+                            .replaceAll("[^A-Za-z0-9]", ".")  // replace non-alphanumeric
                             .replaceAll("(\\.)(\\1)+", ".")   // collapse repeating dots
                             .replaceAll("^\\.", "")           // drop leading dots
                             .replaceAll("\\.$", "");          // drop trailing dots
@@ -1156,7 +1182,6 @@ public class Locations {
 
         private Map<String, Location> moduleLocations;
         private Map<Path, Location> pathLocations;
-
 
         ModuleSourcePathLocationHandler() {
             super(StandardLocation.MODULE_SOURCE_PATH,
