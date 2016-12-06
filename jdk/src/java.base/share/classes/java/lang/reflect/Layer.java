@@ -594,8 +594,8 @@ public final class Layer {
      *         the security manager
      */
     public static Controller defineModules(Configuration cf,
-                                      List<Layer> parentLayers,
-                                      Function<String, ClassLoader> clf)
+                                           List<Layer> parentLayers,
+                                           Function<String, ClassLoader> clf)
     {
         List<Layer> parents = new ArrayList<>(parentLayers);
         checkConfiguration(cf, parents);

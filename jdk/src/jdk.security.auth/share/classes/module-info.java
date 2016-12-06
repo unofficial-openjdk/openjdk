@@ -35,6 +35,9 @@ module jdk.security.auth {
     exports com.sun.security.auth.callback;
     exports com.sun.security.auth.login;
     exports com.sun.security.auth.module;
+
+    uses sun.security.util.AuthResourcesProvider;
+
     provides javax.security.auth.spi.LoginModule with
         com.sun.security.auth.module.Krb5LoginModule,
         com.sun.security.auth.module.UnixLoginModule,

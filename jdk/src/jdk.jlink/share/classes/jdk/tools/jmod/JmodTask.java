@@ -40,6 +40,7 @@ import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
+import java.lang.module.ModuleDescriptor.Opens;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Version;
@@ -293,8 +294,13 @@ public class JmodTask {
             .sorted(Comparator.comparing(Exports::source))
             .forEach(p -> sb.append("\n  exports ").append(p));
 
+        md.opens().stream()
+            .sorted(Comparator.comparing(Opens::source))
+            .forEach(p -> sb.append("\n  opens ").append(p));
+
         Set<String> concealed = new HashSet<>(md.packages());
         md.exports().stream().map(Exports::source).forEach(concealed::remove);
+        md.opens().stream().map(Opens::source).forEach(concealed::remove);
         concealed.stream().sorted()
                  .forEach(p -> sb.append("\n  contains ").append(p));
 

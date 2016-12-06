@@ -304,6 +304,7 @@ module java.base {
     // JDK-internal service types
     uses jdk.internal.logger.DefaultLoggerFinder;
     uses sun.security.ssl.ClientKeyExchangeService;
+    uses sun.security.util.AuthResourcesProvider;
     uses sun.util.spi.CalendarProvider;
     uses sun.util.locale.provider.LocaleDataMetaInfo;
     uses sun.util.resources.LocaleData.CommonResourceBundleProvider;
@@ -314,4 +315,6 @@ module java.base {
 
     provides java.nio.file.spi.FileSystemProvider with
         jdk.internal.jrtfs.JrtFileSystemProvider;
+    provides sun.security.util.AuthResourcesProvider with
+        sun.security.util.AuthResourcesProviderImpl;
 }

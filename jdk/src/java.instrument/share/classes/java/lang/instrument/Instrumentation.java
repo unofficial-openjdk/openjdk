@@ -691,7 +691,7 @@ public interface Instrumentation {
      *
      * <p> The {@code extraProvides} parameter is the additional service providers
      * for the module to provide. The map key is the service type. The map value
-     * is the non-empty list of implementation types, each of which is a membe
+     * is the non-empty list of implementation types, each of which is a member
      * of the module and an implementation of the service. </p>
      *
      * <p> This method is safe for concurrent use and so allows multiple agents

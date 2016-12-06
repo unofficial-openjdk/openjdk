@@ -82,7 +82,7 @@ class Main {
     String fname, mname, ename;
     String zname = "";
     String rootjar = null;
-    Set<String> concealedPackages = new HashSet<>();
+    Set<String> concealedPackages = new HashSet<>(); // used by Validator
 
     private static final int BASE_VERSION = 0;
 
@@ -2099,16 +2099,12 @@ class Main {
         return true;
     }
 
-    private Set<String> findConcealedPackages(ModuleDescriptor md){
+    private Set<String> findConcealedPackages(ModuleDescriptor md) {
         Objects.requireNonNull(md);
-        Set<String> exports = md.exports()
-                .stream()
-                .map(Exports::source)
-                .collect(toSet());
-
-        return packages.stream()
-                .filter(p -> !exports.contains(p))
-                .collect(toSet());
+        Set<String> concealed = new HashSet<>(packages);
+        md.exports().stream().map(Exports::source).forEach(concealed::remove);
+        md.opens().stream().map(Opens::source).forEach(concealed::remove);
+        return concealed;
     }
 
     private static boolean isPlatformModule(String name) {
@@ -2159,6 +2155,10 @@ class Main {
         }
         if (!rd.exports().equals(vd.exports())) {
             fatalError(getMsg("error.versioned.info.exports.notequal"));
+            return false;
+        }
+        if (!rd.opens().equals(vd.opens())) {
+            fatalError(getMsg("error.versioned.info.opens.notequal"));
             return false;
         }
         if (!rd.provides().equals(vd.provides())) {

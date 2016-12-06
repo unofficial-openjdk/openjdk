@@ -1355,7 +1355,9 @@ public final class ServiceLoader<S>
         @Override
         public int characteristics() {
             // not IMMUTABLE as structural interference possible
-            return Spliterator.ORDERED + Spliterator.NONNULL;
+            // not NOTNULL so that the characteristics are a subset of the
+            // characteristics when all Providers have been located.
+            return Spliterator.ORDERED;
         }
 
         @Override
