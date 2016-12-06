@@ -289,13 +289,13 @@ public class AnnotationsOnModules extends ModuleTestBase {
     @Test
     public void testAttributeValues(Path base) throws Exception {
         class TestCase {
-            public final String auxDecl;
+            public final String extraDecl;
             public final String decl;
             public final String use;
             public final String expectedAnnotations;
 
-            public TestCase(String auxDecl, String decl, String use, String expectedAnnotations) {
-                this.auxDecl = auxDecl;
+            public TestCase(String extraDecl, String decl, String use, String expectedAnnotations) {
+                this.extraDecl = extraDecl;
                 this.decl = decl;
                 this.use = use;
                 this.expectedAnnotations = expectedAnnotations;
@@ -311,22 +311,22 @@ public class AnnotationsOnModules extends ModuleTestBase {
                          "public E[] value();",
                          "{test.E.A, test.E.B}",
                          "@test.A({test.E.A, test.E.B})"),
-            new TestCase("package test; public class Aux {}",
+            new TestCase("package test; public class Extra {}",
                          "public Class value();",
-                         "test.Aux.class",
-                         "@test.A(test.Aux.class)"),
-            new TestCase("package test; public class Aux {}",
+                         "test.Extra.class",
+                         "@test.A(test.Extra.class)"),
+            new TestCase("package test; public class Extra {}",
                          "public Class[] value();",
-                         "{test.Aux.class, String.class}",
-                         "@test.A({test.Aux.class, java.lang.String.class})"),
-            new TestCase("package test; public @interface Aux { public Class value(); }",
-                         "public test.Aux value();",
-                         "@test.Aux(String.class)",
-                         "@test.A(@test.Aux(java.lang.String.class))"),
-            new TestCase("package test; public @interface Aux { public Class value(); }",
-                         "public test.Aux[] value();",
-                         "{@test.Aux(String.class), @test.Aux(Integer.class)}",
-                         "@test.A({@test.Aux(java.lang.String.class), @test.Aux(java.lang.Integer.class)})"),
+                         "{test.Extra.class, String.class}",
+                         "@test.A({test.Extra.class, java.lang.String.class})"),
+            new TestCase("package test; public @interface Extra { public Class value(); }",
+                         "public test.Extra value();",
+                         "@test.Extra(String.class)",
+                         "@test.A(@test.Extra(java.lang.String.class))"),
+            new TestCase("package test; public @interface Extra { public Class value(); }",
+                         "public test.Extra[] value();",
+                         "{@test.Extra(String.class), @test.Extra(Integer.class)}",
+                         "@test.A({@test.Extra(java.lang.String.class), @test.Extra(java.lang.Integer.class)})"),
             new TestCase("package test; public class Any { }",
                          "public int value();",
                          "1",
@@ -337,8 +337,8 @@ public class AnnotationsOnModules extends ModuleTestBase {
                          "@test.A({1, 2})"),
         };
 
-        Path auxSrc = base.resolve("aux-src");
-        tb.writeJavaFiles(auxSrc,
+        Path extraSrc = base.resolve("extra-src");
+        tb.writeJavaFiles(extraSrc,
                           "class Any {}");
 
         int count = 0;
@@ -351,7 +351,7 @@ public class AnnotationsOnModules extends ModuleTestBase {
             tb.writeJavaFiles(m,
                               "@test.A(" + tc.use + ") module m { }",
                               "package test; @java.lang.annotation.Target(java.lang.annotation.ElementType.MODULE) public @interface A { " + tc.decl + "}",
-                              tc.auxDecl);
+                              tc.extraDecl);
 
             Path modulePath = testBase.resolve("module-path");
 
@@ -375,7 +375,7 @@ public class AnnotationsOnModules extends ModuleTestBase {
                          "-processor", ProxyTypeValidator.class.getName(),
                          "-A" + OPT_EXPECTED_ANNOTATIONS + "=" + tc.expectedAnnotations)
                 .outdir(classes)
-                .files(findJavaFiles(auxSrc))
+                .files(findJavaFiles(extraSrc))
                 .run()
                 .writeAll();
         }

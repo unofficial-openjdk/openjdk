@@ -37,7 +37,6 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.lang.model.element.Modifier;
-import javax.lang.model.element.ModuleElement.DirectiveKind;
 import javax.lang.model.element.NestingKind;
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
@@ -63,7 +62,9 @@ import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
 
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Kinds.Kind.*;
+
 import com.sun.tools.javac.code.Scope.LookupKind;
+
 import static com.sun.tools.javac.code.TypeTag.ARRAY;
 import static com.sun.tools.javac.code.TypeTag.CLASS;
 import static com.sun.tools.javac.code.TypeTag.TYPEVAR;
@@ -618,6 +619,17 @@ public class ClassReader {
     Set<ExportsFlag> readExportsFlags(int flags) {
         Set<ExportsFlag> set = EnumSet.noneOf(ExportsFlag.class);
         for (ExportsFlag f: ExportsFlag.values()) {
+            if ((flags & f.value) != 0)
+                set.add(f);
+        }
+        return set;
+    }
+
+    /** Read opens_flags.
+     */
+    Set<OpensFlag> readOpensFlags(int flags) {
+        Set<OpensFlag> set = EnumSet.noneOf(OpensFlag.class);
+        for (OpensFlag f: OpensFlag.values()) {
             if ((flags & f.value) != 0)
                 set.add(f);
         }
@@ -1306,11 +1318,11 @@ public class ClassReader {
                                     lb.append(syms.enterModule(readModuleName(nextChar())));
                                 to = lb.toList();
                             }
-                            exports.add(new ExportsDirective(DirectiveKind.EXPORTS, p, to, flags));
+                            exports.add(new ExportsDirective(p, to, flags));
                         }
                         msym.exports = exports.toList();
                         directives.addAll(msym.exports);
-                        ListBuffer<ExportsDirective> opens = new ListBuffer<>();
+                        ListBuffer<OpensDirective> opens = new ListBuffer<>();
                         int nopens = nextChar();
                         if (nopens != 0 && msym.flags.contains(ModuleFlags.OPEN)) {
                             throw badClassFile("module.non.zero.opens", currentModule.name);
@@ -1318,7 +1330,7 @@ public class ClassReader {
                         for (int i = 0; i < nopens; i++) {
                             Name n = readName(nextChar());
                             PackageSymbol p = syms.enterPackage(currentModule, names.fromUtf(internalize(n)));
-                            Set<ExportsFlag> flags = readExportsFlags(nextChar());
+                            Set<OpensFlag> flags = readOpensFlags(nextChar());
                             int nto = nextChar();
                             List<ModuleSymbol> to;
                             if (nto == 0) {
@@ -1329,7 +1341,7 @@ public class ClassReader {
                                     lb.append(syms.enterModule(readModuleName(nextChar())));
                                 to = lb.toList();
                             }
-                            opens.add(new ExportsDirective(DirectiveKind.OPENS, p, to, flags));
+                            opens.add(new OpensDirective(p, to, flags));
                         }
                         msym.opens = opens.toList();
                         directives.addAll(msym.opens);

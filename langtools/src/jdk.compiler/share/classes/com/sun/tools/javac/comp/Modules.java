@@ -44,7 +44,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.ModuleElement.DirectiveKind;
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileManager.Location;
 import javax.tools.JavaFileObject;
@@ -57,6 +56,8 @@ import com.sun.tools.javac.code.DeferredLintHandler;
 import com.sun.tools.javac.code.Directive;
 import com.sun.tools.javac.code.Directive.ExportsDirective;
 import com.sun.tools.javac.code.Directive.ExportsFlag;
+import com.sun.tools.javac.code.Directive.OpensDirective;
+import com.sun.tools.javac.code.Directive.OpensFlag;
 import com.sun.tools.javac.code.Directive.RequiresDirective;
 import com.sun.tools.javac.code.Directive.RequiresFlag;
 import com.sun.tools.javac.code.Directive.UsesDirective;
@@ -70,6 +71,7 @@ import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.Completer;
 import com.sun.tools.javac.code.Symbol.CompletionFailure;
 import com.sun.tools.javac.code.Symbol.MethodSymbol;
+import com.sun.tools.javac.code.Symbol.ModuleFlags;
 import com.sun.tools.javac.code.Symbol.ModuleSymbol;
 import com.sun.tools.javac.code.Symbol.PackageSymbol;
 import com.sun.tools.javac.code.Symtab;
@@ -82,14 +84,18 @@ import com.sun.tools.javac.resources.CompilerProperties.Errors;
 import com.sun.tools.javac.resources.CompilerProperties.Warnings;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.JCCompilationUnit;
+import com.sun.tools.javac.tree.JCTree.JCDirective;
 import com.sun.tools.javac.tree.JCTree.JCExports;
 import com.sun.tools.javac.tree.JCTree.JCExpression;
 import com.sun.tools.javac.tree.JCTree.JCModuleDecl;
+import com.sun.tools.javac.tree.JCTree.JCOpens;
 import com.sun.tools.javac.tree.JCTree.JCPackageDecl;
 import com.sun.tools.javac.tree.JCTree.JCProvides;
 import com.sun.tools.javac.tree.JCTree.JCRequires;
 import com.sun.tools.javac.tree.JCTree.JCUses;
+import com.sun.tools.javac.tree.JCTree.Tag;
 import com.sun.tools.javac.tree.TreeInfo;
+import com.sun.tools.javac.util.Abort;
 import com.sun.tools.javac.util.Assert;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.JCDiagnostic;
@@ -100,21 +106,15 @@ import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
 import com.sun.tools.javac.util.Options;
+import com.sun.tools.javac.util.Position;
 
+import static com.sun.tools.javac.code.Flags.ABSTRACT;
+import static com.sun.tools.javac.code.Flags.ENUM;
 import static com.sun.tools.javac.code.Flags.PUBLIC;
 import static com.sun.tools.javac.code.Flags.UNATTRIBUTED;
 import static com.sun.tools.javac.code.Kinds.Kind.MDL;
 import static com.sun.tools.javac.code.Kinds.Kind.MTH;
 import static com.sun.tools.javac.code.TypeTag.CLASS;
-
-import com.sun.tools.javac.tree.JCTree.JCDirective;
-import com.sun.tools.javac.tree.JCTree.Tag;
-import com.sun.tools.javac.util.Abort;
-import com.sun.tools.javac.util.Position;
-
-import static com.sun.tools.javac.code.Flags.ABSTRACT;
-import static com.sun.tools.javac.code.Flags.ENUM;
-import com.sun.tools.javac.code.Symbol.ModuleFlags;
 
 /**
  *  TODO: fill in
@@ -377,7 +377,7 @@ public class Modules extends JCTree.Visitor {
                         if (msym.sourceLocation == null) {
                             msym.sourceLocation = locn;
                             if (fileManager.hasLocation(StandardLocation.CLASS_OUTPUT)) {
-                                msym.classLocation = fileManager.getModuleLocation(
+                                msym.classLocation = fileManager.getLocationForModule(
                                         StandardLocation.CLASS_OUTPUT, msym.name.toString());
                             }
                         }
@@ -476,7 +476,7 @@ public class Modules extends JCTree.Visitor {
     private Location getModuleLocation(JavaFileObject fo, Name pkgName) throws IOException {
         // For now, just check module source path.
         // We may want to check source path as well.
-        return fileManager.getModuleLocation(StandardLocation.MODULE_SOURCE_PATH,
+        return fileManager.getLocationForModule(StandardLocation.MODULE_SOURCE_PATH,
                 fo, (pkgName == null) ? null : pkgName.toString());
     }
 
@@ -544,7 +544,7 @@ public class Modules extends JCTree.Visitor {
                 String binName = fileManager.inferBinaryName(msym.classLocation, clazz);
                 String pack = binName.lastIndexOf('.') != (-1) ? binName.substring(0, binName.lastIndexOf('.')) : ""; //unnamed package????
                 if (seenPackages.add(pack)) {
-                    ExportsDirective d = new ExportsDirective(DirectiveKind.EXPORTS, syms.enterPackage(msym, names.fromString(pack)), null);
+                    ExportsDirective d = new ExportsDirective(syms.enterPackage(msym, names.fromString(pack)), null);
                     //TODO: opens?
                     directives.add(d);
                     exports.add(d);
@@ -618,6 +618,7 @@ public class Modules extends JCTree.Visitor {
         private ModuleSymbol sym;
         private final Set<ModuleSymbol> allRequires = new HashSet<>();
         private final Map<PackageSymbol,List<ExportsDirective>> allExports = new HashMap<>();
+        private final Map<PackageSymbol,List<OpensDirective>> allOpens = new HashMap<>();
 
         @Override
         public void visitModuleDef(JCModuleDecl tree) {
@@ -669,7 +670,7 @@ public class Modules extends JCTree.Visitor {
             }
             List<ExportsDirective> exportsForPackage = allExports.computeIfAbsent(packge, p -> List.nil());
             for (ExportsDirective d : exportsForPackage) {
-                checkDuplicateExports(tree, packge, d);
+                reportExportsConflict(tree, packge);
             }
 
             List<ModuleSymbol> toModules = null;
@@ -681,12 +682,10 @@ public class Modules extends JCTree.Visitor {
                         log.error(n.pos(), Errors.ModuleNotFound(msym));
                     } else {
                         for (ExportsDirective d : exportsForPackage) {
-                            if (!(tree.hasTag(Tag.EXPORTS) ^ d.getKind() == DirectiveKind.EXPORTS)) {
-                                checkDuplicateExportsToModule(n, msym, d);
-                            }
+                            checkDuplicateExportsToModule(n, msym, d);
                         }
                         if (!to.add(msym)) {
-                            reportExportConflictToModule(n, msym);
+                            reportExportsConflictToModule(n, msym);
                         }
                     }
                 }
@@ -695,34 +694,16 @@ public class Modules extends JCTree.Visitor {
 
             if (toModules == null || !toModules.isEmpty()) {
                 Set<ExportsFlag> flags = EnumSet.noneOf(ExportsFlag.class);
-                ExportsDirective d;
-                if (tree.hasTag(Tag.EXPORTS)) {
-                    d = new ExportsDirective(DirectiveKind.EXPORTS, packge, toModules, flags);
-                    sym.exports = sym.exports.prepend(d);
-                } else {
-                    d = new ExportsDirective(DirectiveKind.OPENS, packge, toModules, flags);
-                    sym.opens = sym.opens.prepend(d);
-                }
+                ExportsDirective d = new ExportsDirective(packge, toModules, flags);
+                sym.exports = sym.exports.prepend(d);
                 tree.directive = d;
 
                 allExports.put(packge, exportsForPackage.prepend(d));
             }
         }
 
-        /**
-         * Check if an exports tree conflicts with an earlier exports, represented by an exports directive
-         * @param tree the tree to check
-         * @param packge the package being exported, or null for exports default
-         * @param d the directive to compare against
-         */
-        private void checkDuplicateExports(JCExports tree, PackageSymbol packge, ExportsDirective d) {
-            if (!(tree.hasTag(Tag.EXPORTS) ^ d.getKind() == DirectiveKind.EXPORTS)) {
-                reportExportConflict(tree, packge);
-            }
-        }
-
-        private void reportExportConflict(JCExports tree, PackageSymbol packge) {
-            log.error(tree.qualid.pos(), Errors.ConflictingExports(packge)); //XXX: different errors for exports and opens
+        private void reportExportsConflict(JCExports tree, PackageSymbol packge) {
+            log.error(tree.qualid.pos(), Errors.ConflictingExports(packge));
         }
 
         private void checkDuplicateExportsToModule(JCExpression name, ModuleSymbol msym,
@@ -730,14 +711,76 @@ public class Modules extends JCTree.Visitor {
             if (d.modules != null) {
                 for (ModuleSymbol other : d.modules) {
                     if (msym == other) {
-                        reportExportConflictToModule(name, msym);
+                        reportExportsConflictToModule(name, msym);
                     }
                 }
             }
         }
 
-        private void reportExportConflictToModule(JCExpression name, ModuleSymbol msym) {
-            log.error(name.pos(), Errors.ConflictingExportsToModule(msym)); //XXX: different errors for exports and opens
+        private void reportExportsConflictToModule(JCExpression name, ModuleSymbol msym) {
+            log.error(name.pos(), Errors.ConflictingExportsToModule(msym));
+        }
+
+        @Override
+        public void visitOpens(JCOpens tree) {
+            Name name = TreeInfo.fullName(tree.qualid);
+            PackageSymbol packge = syms.enterPackage(sym, name);
+            attr.setPackageSymbols(tree.qualid, packge);
+
+            if (sym.flags.contains(ModuleFlags.OPEN)) {
+                log.error(tree.pos(), Errors.NoOpensUnlessStrong);
+            }
+            List<OpensDirective> opensForPackage = allOpens.computeIfAbsent(packge, p -> List.nil());
+            for (OpensDirective d : opensForPackage) {
+                reportOpensConflict(tree, packge);
+            }
+
+            List<ModuleSymbol> toModules = null;
+            if (tree.moduleNames != null) {
+                Set<ModuleSymbol> to = new LinkedHashSet<>();
+                for (JCExpression n: tree.moduleNames) {
+                    ModuleSymbol msym = lookupModule(n);
+                    if (msym.kind != MDL) {
+                        log.error(n.pos(), Errors.ModuleNotFound(msym));
+                    } else {
+                        for (OpensDirective d : opensForPackage) {
+                            checkDuplicateOpensToModule(n, msym, d);
+                        }
+                        if (!to.add(msym)) {
+                            reportOpensConflictToModule(n, msym);
+                        }
+                    }
+                }
+                toModules = List.from(to);
+            }
+
+            if (toModules == null || !toModules.isEmpty()) {
+                Set<OpensFlag> flags = EnumSet.noneOf(OpensFlag.class);
+                OpensDirective d = new OpensDirective(packge, toModules, flags);
+                sym.opens = sym.opens.prepend(d);
+                tree.directive = d;
+
+                allOpens.put(packge, opensForPackage.prepend(d));
+            }
+        }
+
+        private void reportOpensConflict(JCOpens tree, PackageSymbol packge) {
+            log.error(tree.qualid.pos(), Errors.ConflictingOpens(packge));
+        }
+
+        private void checkDuplicateOpensToModule(JCExpression name, ModuleSymbol msym,
+                OpensDirective d) {
+            if (d.modules != null) {
+                for (ModuleSymbol other : d.modules) {
+                    if (msym == other) {
+                        reportOpensConflictToModule(name, msym);
+                    }
+                }
+            }
+        }
+
+        private void reportOpensConflictToModule(JCExpression name, ModuleSymbol msym) {
+            log.error(name.pos(), Errors.ConflictingOpensToModule(msym));
         }
 
         @Override
@@ -823,8 +866,16 @@ public class Modules extends JCTree.Visitor {
 
         @Override
         public void visitExports(JCExports tree) {
+            if (tree.directive.packge.members().isEmpty()) {
+                log.error(tree.qualid.pos(), Errors.PackageEmptyOrNotFound(tree.directive.packge));
+            }
+            msym.directives = msym.directives.prepend(tree.directive);
+        }
+
+        @Override
+        public void visitOpens(JCOpens tree) {
             if (tree.directive.packge.members().isEmpty() &&
-                (tree.hasTag(Tag.EXPORTS) || (tree.directive.packge.flags() & Flags.HAS_RESOURCE) == 0)) {
+                ((tree.directive.packge.flags() & Flags.HAS_RESOURCE) == 0)) {
                 log.error(tree.qualid.pos(), Errors.PackageEmptyOrNotFound(tree.directive.packge));
             }
             msym.directives = msym.directives.prepend(tree.directive);
@@ -1360,7 +1411,7 @@ public class Modules extends JCTree.Visitor {
             }
 
             Set<ExportsDirective> extra = addExports.computeIfAbsent(msym, _x -> new LinkedHashSet<>());
-            ExportsDirective d = new ExportsDirective(DirectiveKind.EXPORTS, p, targetModules);
+            ExportsDirective d = new ExportsDirective(p, targetModules);
             extra.add(d);
         }
     }

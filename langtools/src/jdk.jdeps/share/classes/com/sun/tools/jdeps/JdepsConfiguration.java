@@ -39,6 +39,7 @@ import java.io.UncheckedIOException;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
+import java.lang.module.ModuleDescriptor.Opens;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
@@ -425,11 +426,13 @@ public class JdepsConfiguration implements AutoCloseable {
             ModuleDescriptor.Builder builder = ModuleDescriptor.module(md.name());
             md.requires().forEach(builder::requires);
             md.exports().forEach(builder::exports);
+            md.opens().forEach(builder::opens);
             md.provides().stream().forEach(builder::provides);
             md.uses().stream().forEach(builder::uses);
 
             Set<String> concealed = new HashSet<>(md.packages());
             md.exports().stream().map(Exports::source).forEach(concealed::remove);
+            md.opens().stream().map(Opens::source).forEach(concealed::remove);
             concealed.forEach(builder::contains);
 
             return builder.build();

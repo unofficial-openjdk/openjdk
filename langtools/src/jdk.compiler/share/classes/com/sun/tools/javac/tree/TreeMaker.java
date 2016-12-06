@@ -549,14 +549,14 @@ public class TreeMaker implements JCTree.Factory {
 
     @Override
     public JCExports Exports(JCExpression qualId, List<JCExpression> moduleNames) {
-        JCExports tree = new JCExports(Tag.EXPORTS, qualId, moduleNames);
+        JCExports tree = new JCExports(qualId, moduleNames);
         tree.pos = pos;
         return tree;
     }
 
     @Override
-    public JCExports Opens(JCExpression qualId, List<JCExpression> moduleNames) {
-        JCExports tree = new JCExports(Tag.OPENS, qualId, moduleNames);
+    public JCOpens Opens(JCExpression qualId, List<JCExpression> moduleNames) {
+        JCOpens tree = new JCOpens(qualId, moduleNames);
         tree.pos = pos;
         return tree;
     }

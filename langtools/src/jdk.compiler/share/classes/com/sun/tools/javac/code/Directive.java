@@ -96,21 +96,19 @@ public abstract class Directive implements ModuleElement.Directive {
 
     /**
      * 'exports' Package ';'
-     * 'opens' Package ';'
+     * 'exports' Package 'to' ModuleList ';'
      */
     public static class ExportsDirective extends Directive
             implements ModuleElement.ExportsDirective {
-        private final ModuleElement.DirectiveKind kind;
         public final PackageSymbol packge;
         public final List<ModuleSymbol> modules;
         public final Set<ExportsFlag> flags;
 
-        public ExportsDirective(ModuleElement.DirectiveKind kind, PackageSymbol packge, List<ModuleSymbol> modules) {
-            this(kind, packge, modules, EnumSet.noneOf(ExportsFlag.class));
+        public ExportsDirective(PackageSymbol packge, List<ModuleSymbol> modules) {
+            this(packge, modules, EnumSet.noneOf(ExportsFlag.class));
         }
 
-        public ExportsDirective(ModuleElement.DirectiveKind kind, PackageSymbol packge, List<ModuleSymbol> modules, Set<ExportsFlag> flags) {
-            this.kind = kind;
+        public ExportsDirective(PackageSymbol packge, List<ModuleSymbol> modules, Set<ExportsFlag> flags) {
             this.packge = packge;
             this.modules = modules;
             this.flags = flags;
@@ -118,7 +116,7 @@ public abstract class Directive implements ModuleElement.Directive {
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
         public ModuleElement.DirectiveKind getKind() {
-            return kind;
+            return ModuleElement.DirectiveKind.EXPORTS;
         }
 
         @Override @DefinedBy(Api.LANGUAGE_MODEL)
@@ -135,11 +133,76 @@ public abstract class Directive implements ModuleElement.Directive {
 
         @Override
         public String toString() {
-            String name = kind == ModuleElement.DirectiveKind.EXPORTS ? "Exports" : "Opens";
             if (modules == null)
-                return name + "[" + packge + "]";
+                return "Exports[" + packge + "]";
             else
-                return name + "[" + packge + ":" + modules + "]";
+                return "Exports[" + packge + ":" + modules + "]";
+        }
+    }
+
+    /** Flags for OpensDirective. */
+    public enum OpensFlag {
+        SYNTHETIC(0x1000),
+        MANDATED(0x8000);
+
+        // overkill? move to ClassWriter?
+        public static int value(Set<OpensFlag> s) {
+            int v = 0;
+            for (OpensFlag f: s)
+                v |= f.value;
+            return v;
+        }
+
+        OpensFlag(int value) {
+            this.value = value;
+        }
+
+        public final int value;
+    }
+
+    /**
+     * 'opens' Package ';'
+     * 'opens' Package 'to' ModuleList ';'
+     */
+    public static class OpensDirective extends Directive
+            implements ModuleElement.OpensDirective {
+        public final PackageSymbol packge;
+        public final List<ModuleSymbol> modules;
+        public final Set<OpensFlag> flags;
+
+        public OpensDirective(PackageSymbol packge, List<ModuleSymbol> modules) {
+            this(packge, modules, EnumSet.noneOf(OpensFlag.class));
+        }
+
+        public OpensDirective(PackageSymbol packge, List<ModuleSymbol> modules, Set<OpensFlag> flags) {
+            this.packge = packge;
+            this.modules = modules;
+            this.flags = flags;
+        }
+
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
+        public ModuleElement.DirectiveKind getKind() {
+            return ModuleElement.DirectiveKind.OPENS;
+        }
+
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
+        public PackageSymbol getPackage() {
+            return packge;
+        }
+
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
+        public java.util.List<ModuleSymbol> getTargetModules() {
+            return modules == null
+                    ? null
+                    : Collections.unmodifiableList(modules);
+        }
+
+        @Override
+        public String toString() {
+            if (modules == null)
+                return "Opens[" + packge + "]";
+            else
+                return "Opens[" + packge + ":" + modules + "]";
         }
     }
 

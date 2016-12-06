@@ -913,7 +913,7 @@ public abstract class Symbol extends AnnoConstruct implements Element {
         public List<com.sun.tools.javac.code.Directive> directives;
         public List<com.sun.tools.javac.code.Directive.RequiresDirective> requires;
         public List<com.sun.tools.javac.code.Directive.ExportsDirective> exports;
-        public List<com.sun.tools.javac.code.Directive.ExportsDirective> opens;
+        public List<com.sun.tools.javac.code.Directive.OpensDirective> opens;
         public List<com.sun.tools.javac.code.Directive.ProvidesDirective> provides;
         public List<com.sun.tools.javac.code.Directive.UsesDirective> uses;
 
