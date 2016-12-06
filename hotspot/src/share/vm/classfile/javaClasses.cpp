@@ -2172,7 +2172,6 @@ void java_lang_StackTraceElement::fill_in(Handle element,
 
   // Fill in class name
   ResourceMark rm(THREAD);
-
   const char* str = holder->external_name();
   oop classname = StringTable::intern((char*) str, CHECK);
   java_lang_StackTraceElement::set_declaringClass(element(), classname);
