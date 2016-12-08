@@ -623,11 +623,6 @@ void  JLI_ReportExceptionDescription(JNIEnv * env) {
     }
 }
 
-jboolean
-ServerClassMachine() {
-    return (GetErgoPolicy() == ALWAYS_SERVER_CLASS) ? JNI_TRUE : JNI_FALSE;
-}
-
 /*
  * Wrapper for platform dependent unsetenv function.
  */

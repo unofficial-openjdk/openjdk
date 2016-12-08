@@ -135,7 +135,7 @@ java/lang/instrument/RetransformBigClass.sh                     8065756 generic-
 java/lang/instrument/BootClassPath/BootClassPathTest.sh         8072130 macosx-all
 
 java/lang/management/MemoryMXBean/Pending.java                  8158837 generic-all
-java/lang/management/MemoryMXBean/PendingAllGC.sh               8158760 generic-all
+java/lang/management/MemoryMXBean/PendingAllGC.sh               8158837 generic-all
 
 ############################################################################
 
@@ -145,10 +145,17 @@ java/io/pathNames/GeneralWin32.java                             8156595 windows-
 
 ############################################################################
 
-# jdk_jmx
+# jdk_management
 
 com/sun/management/OperatingSystemMXBean/GetProcessCpuLoad.java 8030957 aix-all
 com/sun/management/OperatingSystemMXBean/GetSystemCpuLoad.java  8030957 aix-all
+
+com/sun/management/DiagnosticCommandMBean/DcmdMBeanPermissionsTest.java 8169575 generic-all
+
+############################################################################
+
+# jdk_jmx
+
 javax/management/MBeanServer/OldMBeanServerTest.java            8030957 aix-all
 
 javax/management/remote/mandatory/notif/NotifReconnectDeadlockTest.java 8042215 generic-all
@@ -252,9 +259,13 @@ sanity/client/SwingSet/src/ButtonDemoScreenshotTest.java        8157338 generic-
 
 # core_tools
 
-tools/pack200/CommandLineTests.java                             7143279,8059906 generic-all
+tools/pack200/CommandLineTests.java                             8059906 generic-all
 
 tools/launcher/FXLauncherTest.java                              8068049 linux-all,macosx-all
+
+tools/jimage/JImageExtractTest.java                             8169713 generic-all
+tools/jimage/JImageListTest.java                                8169713 generic-all
+tools/jimage/JImageVerifyTest.java                              8169713 generic-all
 
 ############################################################################
 
@@ -282,6 +293,8 @@ java/util/spi/ResourceBundleControlProvider/UserDefaultControlTest.java 8062512 
 
 java/util/BitSet/BitSetStreamTest.java                          8079538 generic-all
 
+java/util/Locale/LocaleTest.java                                8170840 generic-all
+
 ############################################################################
 
 # jdk_instrument
@@ -300,6 +313,10 @@ demo/jvmti/compiledMethodLoad/CompiledMethodLoadTest.java       8151899 generic-
 
 # jdk_other
 
-com/sun/jndi/ldap/DeadSSLLdapTimeoutTest.java                   8141370 linux-i586,macosx-all
+com/sun/jndi/ldap/DeadSSLLdapTimeoutTest.java                   8169942 linux-i586,macosx-all,windows-x64
+
+javax/rmi/PortableRemoteObject/8146975/RmiIiopReturnValueTest.java 8169737 linux-all
+
+javax/xml/ws/clientjar/TestWsImport.java			8170370 generic-all
 
 ############################################################################
