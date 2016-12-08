@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,23 +21,11 @@
  * questions.
  */
 
-/**
- * This document is the API specification for JShell -- support for
- * Java&#x2122; Programming Language 'snippet' evaluating tools, such as
- * Read-Eval-Print Loops (REPLs).
- */
-module jdk.jshell {
-    requires transitive java.compiler;
-    requires transitive jdk.jdi;
-    requires java.prefs;
-    requires jdk.compiler;
-    requires jdk.internal.le;
-    requires jdk.internal.ed;
-    requires jdk.internal.opt;
+package pkg;
 
-    exports jdk.jshell;
-    exports jdk.jshell.spi;
-    exports jdk.jshell.execution;
+public class ClassWithStaticMethod implements InterfaceWithStaticMethod {
 
-    uses jdk.internal.editor.spi.BuildInEditorProvider;
+    public static void staticMethod() {
+    }
+
 }
