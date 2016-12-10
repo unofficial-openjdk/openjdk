@@ -1346,12 +1346,6 @@ public class ClassfileInspector {
         public Void visitModuleTarget(ModuleTarget_attribute attr, T p) {
             return null;
         }
-
-        @Override
-        public Void visitModuleVersion(ModuleVersion_attribute attr, T p) {
-            return null;
-        }
-
     }
 
     private static final Attribute.Visitor<Void, ExpectedTypeAnnotation> typeAnnoMatcher
