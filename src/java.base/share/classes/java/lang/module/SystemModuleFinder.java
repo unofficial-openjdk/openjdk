@@ -114,7 +114,7 @@ class SystemModuleFinder implements ModuleFinder {
             ModuleDescriptor md = descriptors[i];
 
             // create the ModuleReference
-            ModuleReference mref = toModuleReference(md, hashSupplier(i, names[i]));
+            ModuleReference mref = toModuleReference(md);
 
             mods[i] = mref;
             map[i] = Map.entry(names[i], mref);
@@ -157,9 +157,6 @@ class SystemModuleFinder implements ModuleFinder {
             String mn = names[i];
             ImageLocation loc = imageReader.findLocation(mn, "module-info.class");
             descriptors[i] = ModuleDescriptor.read(imageReader.getResourceBuffer(loc));
-
-            // add the recorded hashes of tied modules
-            Hashes.add(descriptors[i]);
         }
         return descriptors;
     }
@@ -178,9 +175,7 @@ class SystemModuleFinder implements ModuleFinder {
         return imageReader.getModuleNames();
     }
 
-    private static ModuleReference toModuleReference(ModuleDescriptor md,
-                                                     HashSupplier hash)
-    {
+    private static ModuleReference toModuleReference(ModuleDescriptor md) {
         String mn = md.name();
         URI uri = JNUA.create("jrt", "/".concat(mn));
 
@@ -191,8 +186,7 @@ class SystemModuleFinder implements ModuleFinder {
             }
         };
 
-        ModuleReference mref =
-            new ModuleReference(md, uri, readerSupplier, hash);
+        ModuleReference mref = new ModuleReference(md, uri, readerSupplier);
 
         // may need a reference to a patched module if --patch-module specified
         mref = ModuleBootstrap.patcher().patchIfNeeded(mref);
@@ -220,11 +214,8 @@ class SystemModuleFinder implements ModuleFinder {
     private static class Hashes {
         static Map<String, byte[]> hashes = new HashMap<>();
 
-        static void add(ModuleDescriptor descriptor) {
-            Optional<ModuleHashes> ohashes = descriptor.hashes();
-            if (ohashes.isPresent()) {
-                hashes.putAll(ohashes.get().hashes());
-            }
+        static void add(ModuleHashes recordedHashes) {
+            hashes.putAll(recordedHashes.hashes());
         }
 
         static HashSupplier hashFor(String name) {

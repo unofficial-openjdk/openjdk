@@ -41,6 +41,8 @@ import com.sun.tools.classfile.Code_attribute;
 import com.sun.tools.classfile.CompilationID_attribute;
 import com.sun.tools.classfile.ConstantPool;
 import com.sun.tools.classfile.ConstantPool.CONSTANT_Class_info;
+import com.sun.tools.classfile.ConstantPool.CONSTANT_Module_info;
+import com.sun.tools.classfile.ConstantPool.CONSTANT_Package_info;
 import com.sun.tools.classfile.ConstantPool.CONSTANT_Double_info;
 import com.sun.tools.classfile.ConstantPool.CONSTANT_Fieldref_info;
 import com.sun.tools.classfile.ConstantPool.CONSTANT_Float_info;
@@ -82,7 +84,6 @@ import com.sun.tools.classfile.ModuleHashes_attribute.Entry;
 import com.sun.tools.classfile.ModuleMainClass_attribute;
 import com.sun.tools.classfile.ModuleTarget_attribute;
 import com.sun.tools.classfile.ModulePackages_attribute;
-import com.sun.tools.classfile.ModuleVersion_attribute;
 import com.sun.tools.classfile.Opcode;
 import com.sun.tools.classfile.RuntimeInvisibleAnnotations_attribute;
 import com.sun.tools.classfile.RuntimeInvisibleParameterAnnotations_attribute;
@@ -660,6 +661,40 @@ class ConstantPoolVisitor implements ConstantPool.Visitor<String, Integer> {
                 value = visit(cfpool.get(c.name_index), c.name_index);
                 slist.set(p, value);
                 xpool.add(new Element("CONSTANT_Class",
+                        new String[]{"id", p.toString()},
+                        value));
+            } catch (ConstantPoolException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return value;
+    }
+
+    @Override
+    public String visitModule(CONSTANT_Module_info info, Integer p) {
+        String value = slist.get(p);
+        if (value == null) {
+            try {
+                value = visit(cfpool.get(info.name_index), info.name_index);
+                slist.set(p, value);
+                xpool.add(new Element("CONSTANT_Module",
+                        new String[]{"id", p.toString()},
+                        value));
+            } catch (ConstantPoolException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return value;
+    }
+
+    @Override
+    public String visitPackage(CONSTANT_Package_info info, Integer p) {
+        String value = slist.get(p);
+        if (value == null) {
+            try {
+                value = visit(cfpool.get(info.name_index), info.name_index);
+                slist.set(p, value);
+                xpool.add(new Element("CONSTANT_Package",
                         new String[]{"id", p.toString()},
                         value));
             } catch (ConstantPoolException ex) {
@@ -1500,15 +1535,6 @@ class AttributeVisitor implements Attribute.Visitor<Element, Element> {
         e.add(x.getCpString(attr.os_name_index));
         e.add(x.getCpString(attr.os_arch_index));
         e.add(x.getCpString(attr.os_version_index));
-        e.trimToSize();
-        p.add(e);
-        return null;
-    }
-
-    @Override
-    public Element visitModuleVersion(ModuleVersion_attribute attr, Element p) {
-        Element e = new Element(x.getCpString(attr.attribute_name_index));
-        e.add(x.getCpString(attr.version_index));
         e.trimToSize();
         p.add(e);
         return null;

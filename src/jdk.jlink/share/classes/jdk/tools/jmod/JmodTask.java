@@ -318,12 +318,6 @@ public class JmodTask {
 
         md.osVersion().ifPresent(v -> sb.append("\n  operating-system-version " + v));
 
-        JLMA.hashes(md).ifPresent(
-            hashes -> hashes.names().stream().sorted().forEach(
-                mod -> sb.append("\n  hashes ").append(mod).append(" ")
-                         .append(hashes.algorithm()).append(" ")
-                         .append(hashes.hashFor(mod))));
-
         out.println(sb.toString());
     }
 

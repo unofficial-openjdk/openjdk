@@ -58,7 +58,6 @@ import java.util.jar.Manifest;
 import java.text.MessageFormat;
 
 import jdk.internal.misc.JavaLangModuleAccess;
-import jdk.internal.misc.SharedSecrets;
 import jdk.internal.module.Checks;
 import jdk.internal.module.ModuleHashes;
 import jdk.internal.module.ModuleInfoExtender;
@@ -1999,8 +1998,6 @@ class Main {
                   .collect(joining(" "));
     }
 
-    private static final JavaLangModuleAccess JLMA = SharedSecrets.getJavaLangModuleAccess();
-
     private void printModuleDescriptor(InputStream entryInputStream)
         throws IOException
     {
@@ -2050,12 +2047,6 @@ class Main {
         md.osArch().ifPresent(v -> sb.append("\n  operating-system-architecture " + v));
 
         md.osVersion().ifPresent(v -> sb.append("\n  operating-system-version " + v));
-
-        JLMA.hashes(md).ifPresent(hashes ->
-                hashes.names().stream().sorted().forEach(
-                    mod -> sb.append("\n  hashes ").append(mod).append(" ")
-                             .append(hashes.algorithm()).append(" ")
-                             .append(hashes.hashFor(mod))));
 
         output(sb.toString());
     }

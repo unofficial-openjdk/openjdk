@@ -343,11 +343,11 @@ class ModulePath implements ModuleFinder {
      */
     private ModuleReference readJMod(Path file) throws IOException {
         try (JmodFile jf = new JmodFile(file)) {
-            ModuleDescriptor md;
+            ModuleInfo.Attributes attrs;
             try (InputStream in = jf.getInputStream(Section.CLASSES, MODULE_INFO)) {
-                md = ModuleDescriptor.read(in, () -> jmodPackages(jf));
+                attrs  = ModuleInfo.read(in, () -> jmodPackages(jf));
             }
-            return ModuleReferences.newJModModule(md, file);
+            return ModuleReferences.newJModModule(attrs, file);
         }
     }
 
@@ -557,13 +557,14 @@ class ModulePath implements ModuleFinder {
                                       ZipFile.OPEN_READ,
                                       releaseVersion))
         {
-            ModuleDescriptor md;
+            ModuleInfo.Attributes attrs;
             JarEntry entry = jf.getJarEntry(MODULE_INFO);
             if (entry == null) {
 
                 // no module-info.class so treat it as automatic module
                 try {
-                    md = deriveModuleDescriptor(jf);
+                    ModuleDescriptor md = deriveModuleDescriptor(jf);
+                    attrs = new ModuleInfo.Attributes(md, null);
                 } catch (IllegalArgumentException iae) {
                     throw new FindException(
                         "Unable to derive module descriptor for: "
@@ -571,11 +572,11 @@ class ModulePath implements ModuleFinder {
                 }
 
             } else {
-                md = ModuleDescriptor.read(jf.getInputStream(entry),
-                                           () -> jarPackages(jf));
+                attrs = ModuleInfo.read(jf.getInputStream(entry),
+                                        () -> jarPackages(jf));
             }
 
-            return ModuleReferences.newJarModule(md, file);
+            return ModuleReferences.newJarModule(attrs, file);
         }
     }
 
@@ -604,15 +605,15 @@ class ModulePath implements ModuleFinder {
      */
     private ModuleReference readExplodedModule(Path dir) throws IOException {
         Path mi = dir.resolve(MODULE_INFO);
-        ModuleDescriptor md;
+        ModuleInfo.Attributes attrs;
         try (InputStream in = Files.newInputStream(mi)) {
-            md = ModuleDescriptor.read(new BufferedInputStream(in),
-                                       () -> explodedPackages(dir));
+            attrs = ModuleInfo.read(new BufferedInputStream(in),
+                                    () -> explodedPackages(dir));
         } catch (NoSuchFileException e) {
             // for now
             return null;
         }
-        return ModuleReferences.newExplodedModule(md, dir);
+        return ModuleReferences.newExplodedModule(attrs, dir);
     }
 
     /**

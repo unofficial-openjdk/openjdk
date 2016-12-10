@@ -137,7 +137,7 @@ public interface ModuleFinder {
 
     /**
      * Returns a module finder that locates the <em>system modules</em>. The
-     * system modules are typically linked into the Java run-time image.
+     * system modules are the modules in the Java run-time image.
      * The module finder will always find {@code java.base}.
      *
      * <p> If there is a security manager set then its {@link

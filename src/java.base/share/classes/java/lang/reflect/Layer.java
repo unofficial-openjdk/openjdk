@@ -246,7 +246,6 @@ public final class Layer {
          */
         public Controller addOpens(Module source, String pn, Module target) {
             Objects.requireNonNull(source);
-            Objects.requireNonNull(source);
             Objects.requireNonNull(target);
             ensureInLayer(source);
             Modules.addOpens(source, pn, target);

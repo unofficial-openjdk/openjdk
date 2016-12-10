@@ -38,10 +38,8 @@ import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
 import java.net.URI;
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -73,7 +71,7 @@ public interface JavaLangModuleAccess {
      * Returns a {@code ModuleDescriptor.Requires} of the given modifiers
      * and module name.
      */
-    Requires newRequires(Set<Requires.Modifier> ms, String mn);
+    Requires newRequires(Set<Requires.Modifier> ms, String mn, Version v);
 
     /**
      * Returns an unqualified {@code ModuleDescriptor.Exports}
@@ -122,6 +120,7 @@ public interface JavaLangModuleAccess {
      * Returns a new {@code ModuleDescriptor} instance.
      */
     ModuleDescriptor newModuleDescriptor(String name,
+                                         Version version,
                                          boolean open,
                                          boolean automatic,
                                          boolean synthetic,
@@ -130,19 +129,17 @@ public interface JavaLangModuleAccess {
                                          Set<Opens> opens,
                                          Set<String> uses,
                                          Set<Provides> provides,
-                                         Version version,
+                                         Set<String> packages,
                                          String mainClass,
                                          String osName,
                                          String osArch,
                                          String osVersion,
-                                         Set<String> packages,
-                                         ModuleHashes hashes,
                                          int hashCode);
 
     /**
-     * Returns the object with the hashes of other modules
+     * Returns the hashes recorded for the given module or {@code null}.
      */
-    Optional<ModuleHashes> hashes(ModuleDescriptor descriptor);
+    ModuleHashes recordedHashes(ModuleReference mref);
 
     /**
      * Resolves a collection of root modules, with service binding

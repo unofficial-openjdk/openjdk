@@ -438,14 +438,12 @@ final class Resolver {
      */
     private void checkHashes() {
         for (ModuleReference mref : nameToReference.values()) {
-            ModuleDescriptor descriptor = mref.descriptor();
-
-            // get map of module hashes
-            Optional<ModuleHashes> ohashes = descriptor.hashes();
-            if (!ohashes.isPresent())
+            // get the recorded hashes, if any
+            ModuleHashes hashes = mref.recordedHashes();
+            if (hashes == null)
                 continue;
-            ModuleHashes hashes = ohashes.get();
 
+            ModuleDescriptor descriptor = mref.descriptor();
             String algorithm = hashes.algorithm();
             for (String dn : hashes.names()) {
                 ModuleReference other = nameToReference.get(dn);
