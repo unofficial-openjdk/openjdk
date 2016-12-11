@@ -290,13 +290,6 @@ public class ClassWriter {
         }
 
         @Override
-        public Integer visitNameAndType(CONSTANT_NameAndType_info info, ClassOutputStream out) {
-            out.writeShort(info.name_index);
-            out.writeShort(info.type_index);
-            return 1;
-        }
-
-        @Override
         public Integer visitMethodHandle(CONSTANT_MethodHandle_info info, ClassOutputStream out) {
             out.writeByte(info.reference_kind.tag);
             out.writeShort(info.reference_index);
@@ -312,6 +305,25 @@ public class ClassWriter {
         @Override
         public Integer visitMethodref(CONSTANT_Methodref_info info, ClassOutputStream out) {
             return writeRef(info, out);
+        }
+
+        @Override
+        public Integer visitModule(CONSTANT_Module_info info, ClassOutputStream out) {
+            out.writeShort(info.name_index);
+            return 1;
+        }
+
+        @Override
+        public Integer visitNameAndType(CONSTANT_NameAndType_info info, ClassOutputStream out) {
+            out.writeShort(info.name_index);
+            out.writeShort(info.type_index);
+            return 1;
+        }
+
+        @Override
+        public Integer visitPackage(CONSTANT_Package_info info, ClassOutputStream out) {
+            out.writeShort(info.name_index);
+            return 1;
         }
 
         @Override
@@ -552,11 +564,13 @@ public class ClassWriter {
         public Void visitModule(Module_attribute attr, ClassOutputStream out) {
             out.writeShort(attr.module_name);
             out.writeShort(attr.module_flags);
+            out.writeShort(attr.module_version_index);
 
             out.writeShort(attr.requires.length);
             for (Module_attribute.RequiresEntry e: attr.requires) {
                 out.writeShort(e.requires_index);
                 out.writeShort(e.requires_flags);
+                out.writeShort(e.requires_version_index);
             }
 
             out.writeShort(attr.exports.length);
@@ -695,12 +709,6 @@ public class ClassWriter {
 
         protected void writeAccessFlags(AccessFlags flags, ClassOutputStream p) {
             sharedOut.writeShort(flags.flags);
-        }
-
-        @Override
-        public Void visitModuleVersion(ModuleVersion_attribute attr, ClassOutputStream out) {
-            out.writeShort(attr.version_index);
-            return null;
         }
 
         protected StackMapTableWriter stackMapWriter;

@@ -158,6 +158,7 @@ public class Modules extends JCTree.Visitor {
     private final Set<String> extraAddMods = new HashSet<>();
     private final String limitModsOpt;
     private final Set<String> extraLimitMods = new HashSet<>();
+    private final String moduleVersionOpt;
 
     private final boolean lintOptions;
 
@@ -203,6 +204,7 @@ public class Modules extends JCTree.Visitor {
         addReadsOpt = options.get(Option.ADD_READS);
         addModsOpt = options.get(Option.ADD_MODULES);
         limitModsOpt = options.get(Option.LIMIT_MODULES);
+        moduleVersionOpt = options.get(Option.MODULE_VERSION);
     }
 
     int depth = -1;
@@ -1133,6 +1135,12 @@ public class Modules extends JCTree.Visitor {
         result.add(syms.unnamedModule);
 
         allModules = result;
+
+        //add module versions from options, if any:
+        if (moduleVersionOpt != null) {
+            Name version = names.fromString(moduleVersionOpt);
+            rootModules.forEach(m -> m.version = version);
+        }
     }
 
     public boolean isInModuleGraph(ModuleSymbol msym) {

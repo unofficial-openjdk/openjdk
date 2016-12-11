@@ -150,7 +150,6 @@ public class Names {
     public final Name LocalVariableTypeTable;
     public final Name MethodParameters;
     public final Name Module;
-    public final Name ModuleVersion;
     public final Name RuntimeInvisibleAnnotations;
     public final Name RuntimeInvisibleParameterAnnotations;
     public final Name RuntimeInvisibleTypeAnnotations;
@@ -312,7 +311,6 @@ public class Names {
         LocalVariableTypeTable = fromString("LocalVariableTypeTable");
         MethodParameters = fromString("MethodParameters");
         Module = fromString("Module");
-        ModuleVersion = fromString("ModuleVersion");
         RuntimeInvisibleAnnotations = fromString("RuntimeInvisibleAnnotations");
         RuntimeInvisibleParameterAnnotations = fromString("RuntimeInvisibleParameterAnnotations");
         RuntimeInvisibleTypeAnnotations = fromString("RuntimeInvisibleTypeAnnotations");

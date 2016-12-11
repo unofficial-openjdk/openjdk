@@ -87,7 +87,8 @@ public class OpenModulesTest extends ModuleTestBase {
                 .run()
                 .writeAll()
                 .getOutput(OutputKind.DIRECT)
-                .replace(System.getProperty("line.separator"), "\n");
+                .replace(System.getProperty("line.separator"), "\n")
+                .replaceAll("@[^;]*;", ";");
 
         String expected = "module m1 {\n" +
                           "  requires java.base;\n" +
@@ -150,7 +151,8 @@ public class OpenModulesTest extends ModuleTestBase {
                 .run()
                 .writeAll()
                 .getOutput(OutputKind.DIRECT)
-                .replace(System.getProperty("line.separator"), "\n");
+                .replace(System.getProperty("line.separator"), "\n")
+                .replaceAll("@[^;]*;", ";");
 
         String expected = "open module m1 {\n" +
                           "  requires java.base;\n" +
@@ -235,6 +237,7 @@ public class OpenModulesTest extends ModuleTestBase {
         Module_attribute newModule = new Module_attribute(module.attribute_name_index,
                                                           module.module_name,
                                                           module.module_flags | Module_attribute.ACC_OPEN,
+                                                          module.module_version_index,
                                                           module.requires,
                                                           module.exports,
                                                           module.opens,

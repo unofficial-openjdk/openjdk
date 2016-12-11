@@ -57,7 +57,6 @@ public abstract class Attribute {
     public static final String ModuleMainClass          = "ModuleMainClass";
     public static final String ModulePackages           = "ModulePackages";
     public static final String ModuleTarget             = "ModuleTarget";
-    public static final String ModuleVersion            = "ModuleVersion";
     public static final String RuntimeVisibleAnnotations = "RuntimeVisibleAnnotations";
     public static final String RuntimeInvisibleAnnotations = "RuntimeInvisibleAnnotations";
     public static final String RuntimeVisibleParameterAnnotations = "RuntimeVisibleParameterAnnotations";
@@ -129,7 +128,6 @@ public abstract class Attribute {
             standardAttributes.put(ModuleMainClass,   ModuleMainClass_attribute.class);
             standardAttributes.put(ModulePackages,    ModulePackages_attribute.class);
             standardAttributes.put(ModuleTarget,      ModuleTarget_attribute.class);
-            standardAttributes.put(ModuleVersion,     ModuleVersion_attribute.class);
             standardAttributes.put(RuntimeInvisibleAnnotations, RuntimeInvisibleAnnotations_attribute.class);
             standardAttributes.put(RuntimeInvisibleParameterAnnotations, RuntimeInvisibleParameterAnnotations_attribute.class);
             standardAttributes.put(RuntimeVisibleAnnotations, RuntimeVisibleAnnotations_attribute.class);
@@ -192,7 +190,6 @@ public abstract class Attribute {
         R visitModuleMainClass(ModuleMainClass_attribute attr, P p);
         R visitModulePackages(ModulePackages_attribute attr, P p);
         R visitModuleTarget(ModuleTarget_attribute attr, P p);
-        R visitModuleVersion(ModuleVersion_attribute attr, P p);
         R visitRuntimeVisibleAnnotations(RuntimeVisibleAnnotations_attribute attr, P p);
         R visitRuntimeInvisibleAnnotations(RuntimeInvisibleAnnotations_attribute attr, P p);
         R visitRuntimeVisibleParameterAnnotations(RuntimeVisibleParameterAnnotations_attribute attr, P p);
