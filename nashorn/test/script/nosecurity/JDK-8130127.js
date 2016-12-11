@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -24,17 +22,34 @@
  */
 
 /**
- * Dynalink
+ * JDK-8130127: streamline input parameter of Nashorn scripting $EXEC function
+ *
+ * Test different variants of stdin passing to $EXEC.
+ *
+ * @test
+ * @option -scripting
+ * @run
  */
-module jdk.dynalink {
-    requires java.logging;
 
-    exports jdk.dynalink;
-    exports jdk.dynalink.beans;
-    exports jdk.dynalink.linker;
-    exports jdk.dynalink.linker.support;
-    exports jdk.dynalink.support;
+var File = java.io.File,
+    sep = File.separator,
+    System = java.lang.System,
+    os = System.getProperty("os.name"),
+    win = os.startsWith("Windows"),
+    jjsName = "jjs" + (win ? ".exe" : ""),
+    javaHome = System.getProperty("java.home")
 
-    uses jdk.dynalink.linker.GuardingDynamicLinkerExporter;
+var jjs = javaHome + "/../bin/".replace(/\//g, sep) + jjsName
+if (!new File(jjs).isFile()) {
+    jjs = javaHome + "/bin/".replace(/\//g, sep) + jjsName
 }
+
+var jjsCmd = jjs + " readprint.js"
+
+print($EXEC(jjsCmd))
+print($EXEC(jjsCmd, null))
+print($EXEC(jjsCmd, undefined))
+print($EXEC(jjsCmd, ""))
+
+print($EXEC(jjs, "print('hello')\n"))
 
