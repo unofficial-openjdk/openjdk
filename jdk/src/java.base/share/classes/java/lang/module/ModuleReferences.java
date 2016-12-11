@@ -75,12 +75,16 @@ class ModuleReferences {
      * Creates a ModuleReference to a module or to patched module when
      * creating modules for the boot Layer and --patch-module is specified.
      */
-    private static ModuleReference newModule(ModuleDescriptor md,
+    private static ModuleReference newModule(ModuleInfo.Attributes attrs,
                                              URI uri,
                                              Supplier<ModuleReader> supplier,
                                              HashSupplier hasher) {
 
-        ModuleReference mref = new ModuleReference(md, uri, supplier, hasher);
+        ModuleReference mref = new ModuleReference(attrs.descriptor(),
+                                                   uri,
+                                                   supplier,
+                                                   attrs.recordedHashes(),
+                                                   hasher);
         if (JLA.getBootLayer() == null)
             mref = ModuleBootstrap.patcher().patchIfNeeded(mref);
 
@@ -90,29 +94,29 @@ class ModuleReferences {
     /**
      * Creates a ModuleReference to a module packaged as a modular JAR.
      */
-    static ModuleReference newJarModule(ModuleDescriptor md, Path file) {
+    static ModuleReference newJarModule(ModuleInfo.Attributes attrs, Path file) {
         URI uri = file.toUri();
         Supplier<ModuleReader> supplier = () -> new JarModuleReader(file, uri);
         HashSupplier hasher = (a) -> ModuleHashes.computeHash(file, a);
-        return newModule(md, uri, supplier, hasher);
+        return newModule(attrs, uri, supplier, hasher);
     }
 
     /**
      * Creates a ModuleReference to a module packaged as a JMOD.
      */
-    static ModuleReference newJModModule(ModuleDescriptor md, Path file) {
+    static ModuleReference newJModModule(ModuleInfo.Attributes attrs, Path file) {
         URI uri = file.toUri();
         Supplier<ModuleReader> supplier = () -> new JModModuleReader(file, uri);
         HashSupplier hasher = (a) -> ModuleHashes.computeHash(file, a);
-        return newModule(md, file.toUri(), supplier, hasher);
+        return newModule(attrs, uri, supplier, hasher);
     }
 
     /**
      * Creates a ModuleReference to an exploded module.
      */
-    static ModuleReference newExplodedModule(ModuleDescriptor md, Path dir) {
+    static ModuleReference newExplodedModule(ModuleInfo.Attributes attrs, Path dir) {
         Supplier<ModuleReader> supplier = () -> new ExplodedModuleReader(dir);
-        return newModule(md, dir.toUri(), supplier, null);
+        return newModule(attrs, dir.toUri(), supplier, null);
     }
 
 

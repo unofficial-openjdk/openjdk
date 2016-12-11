@@ -31,6 +31,8 @@ import jdk.internal.misc.VM;
 import jdk.internal.module.ModuleHashes;
 
 import java.lang.module.ModuleDescriptor.Version;
+import java.lang.module.ModuleReference;
+import java.lang.module.ResolvedModule;
 import java.lang.reflect.Layer;
 import java.lang.reflect.Module;
 import java.util.HashSet;
@@ -484,13 +486,16 @@ public final class StackTraceElement implements java.io.Serializable {
         static Set<String> HASHED_MODULES = hashedModules();
 
         static Set<String> hashedModules() {
-            Module javaBase = Layer.boot().findModule("java.base").get();
-            Optional<ModuleHashes> ohashes =
-                SharedSecrets.getJavaLangModuleAccess()
-                             .hashes(javaBase.getDescriptor());
 
-            if (ohashes.isPresent()) {
-                Set<String> names = new HashSet<>(ohashes.get().names());
+            Optional<ResolvedModule> resolvedModule = Layer.boot()
+                    .configuration()
+                    .findModule("java.base");
+            assert resolvedModule.isPresent();
+            ModuleReference mref = resolvedModule.get().reference();
+            ModuleHashes hashes = SharedSecrets.getJavaLangModuleAccess()
+                    .recordedHashes(mref);
+            if (hashes != null) {
+                Set<String> names = new HashSet<>(hashes.names());
                 names.add("java.base");
                 return names;
             }

@@ -30,7 +30,6 @@ import java.lang.module.ModuleDescriptor.Opens;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Version;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -60,13 +59,19 @@ final class Builder {
     static Version cachedVersion;
 
     /**
-     * Returns a {@link Requires} for a dependence on a module
-     * with the given (and possibly empty) set of modifiers.
+     * Returns a {@link Requires} for a dependence on a module with the given
+     * (and possibly empty) set of modifiers, and optionally the version
+     * recorded at compile time.
      */
     public static Requires newRequires(Set<Requires.Modifier> mods,
-                                       String mn)
+                                       String mn,
+                                       Version compiledVersion)
     {
-        return jlma.newRequires(mods, mn);
+        return jlma.newRequires(mods, mn, compiledVersion);
+    }
+
+    public static Requires newRequires(Set<Requires.Modifier> mods, String mn) {
+        return newRequires(mods, mn, null);
     }
 
     /**
@@ -299,10 +304,8 @@ final class Builder {
     public ModuleDescriptor build(int hashCode) {
         assert name != null;
 
-        ModuleHashes moduleHashes =
-            hashes != null ? new ModuleHashes(algorithm, hashes) : null;
-
         return jlma.newModuleDescriptor(name,
+                                        version,
                                         open,
                                         automatic,
                                         synthetic,
@@ -311,13 +314,11 @@ final class Builder {
                                         opens,
                                         uses,
                                         provides,
-                                        version,
+                                        packages,
                                         mainClass,
                                         osName,
                                         osArch,
                                         osVersion,
-                                        packages,
-                                        moduleHashes,
                                         hashCode);
     }
 }

@@ -32,6 +32,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import jdk.internal.module.ModuleHashes;
 import jdk.internal.module.ModuleHashes.HashSupplier;
 
 
@@ -57,12 +58,14 @@ public final class ModuleReference {
     // true if this is a reference to a patched module
     private boolean patched;
 
-    // the function that computes the hash of this module reference
+    // the hashes of other modules recorded in this module
+    private final ModuleHashes recordedHashes;
+
+    // the function that computes the hash of this module
     private final HashSupplier hasher;
 
-    // cached hash to avoid needing to compute it many times
+    // cached hash of this module to avoid needing to compute it many times
     private byte[] cachedHash;
-
 
     /**
      * Constructs a new instance of this class.
@@ -71,6 +74,7 @@ public final class ModuleReference {
                     URI location,
                     Supplier<ModuleReader> readerSupplier,
                     boolean patched,
+                    ModuleHashes recordedHashes,
                     HashSupplier hasher)
 
     {
@@ -78,6 +82,7 @@ public final class ModuleReference {
         this.location = location;
         this.readerSupplier = Objects.requireNonNull(readerSupplier);
         this.patched = patched;
+        this.recordedHashes = recordedHashes;
         this.hasher = hasher;
     }
 
@@ -87,12 +92,12 @@ public final class ModuleReference {
     ModuleReference(ModuleDescriptor descriptor,
                     URI location,
                     Supplier<ModuleReader> readerSupplier,
+                    ModuleHashes recordedHashes,
                     HashSupplier hasher)
 
     {
-        this(descriptor, location, readerSupplier, false, hasher);
+        this(descriptor, location, readerSupplier, false, recordedHashes, hasher);
     }
-
 
     /**
      * Constructs a new instance of this class.
@@ -115,9 +120,8 @@ public final class ModuleReference {
                            URI location,
                            Supplier<ModuleReader> readerSupplier)
     {
-        this(descriptor, location, readerSupplier, false, null);
+        this(descriptor,location, readerSupplier, false, null, null);
     }
-
     /**
      * Returns the module descriptor.
      *
@@ -126,7 +130,6 @@ public final class ModuleReference {
     public ModuleDescriptor descriptor() {
         return descriptor;
     }
-
 
     /**
      * Returns the location of this module's content, if known.
@@ -142,7 +145,6 @@ public final class ModuleReference {
     public Optional<URI> location() {
         return Optional.ofNullable(location);
     }
-
 
     /**
      * Opens the module content for reading.
@@ -167,7 +169,6 @@ public final class ModuleReference {
 
     }
 
-
     /**
      * Returns {@code true} if this module has been patched via --patch-module.
      */
@@ -176,7 +177,15 @@ public final class ModuleReference {
     }
 
     /**
-     * Returns the hash supplier for this module.
+     * Returns the hashes recorded in this module or {@code null} if there
+     * are no hashes recorded.
+     */
+    ModuleHashes recordedHashes() {
+        return recordedHashes;
+    }
+
+    /**
+     * Returns the supplier that computes the hash of this module.
      */
     HashSupplier hasher() {
         return hasher;
@@ -214,8 +223,9 @@ public final class ModuleReference {
             hc = descriptor.hashCode();
             hc = 43 * hc + readerSupplier.hashCode();
             hc = 43 * hc + Objects.hashCode(location);
-            hc = 43 * hc + Objects.hashCode(hasher);
             hc = 43 * hc + Boolean.hashCode(patched);
+            hc = 43 * hc * Objects.hashCode(recordedHashes);
+            hc = 43 * hc + Objects.hashCode(hasher);
             if (hc == 0)
                 hc = -1;
             hash = hc;
@@ -252,8 +262,9 @@ public final class ModuleReference {
         return Objects.equals(this.descriptor, that.descriptor)
                 && Objects.equals(this.location, that.location)
                 && Objects.equals(this.readerSupplier, that.readerSupplier)
-                && Objects.equals(this.hasher, that.hasher)
-                && this.patched == that.patched;
+                && this.patched == that.patched
+                && Objects.equals(this.recordedHashes, that.recordedHashes)
+                && Objects.equals(this.hasher, that.hasher);
     }
 
     /**

@@ -383,9 +383,6 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
 
             // uses
             dedupSetBuilder.stringSet(md.uses());
-
-            // hashes
-            JLMA.hashes(md).ifPresent(mh -> modulesToHash.putAll(mh.hashes()));
         }
 
         /*
@@ -516,12 +513,6 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
 
                 // main class
                 md.mainClass().ifPresent(this::mainClass);
-
-                // hashes
-                JLMA.hashes(md).ifPresent(mh -> {
-                    algorithm(mh.algorithm());
-                    mh.names().forEach(mn -> moduleHash(mn, mh.hashFor(mn)));
-                });
 
                 putModuleDescriptor();
             }
