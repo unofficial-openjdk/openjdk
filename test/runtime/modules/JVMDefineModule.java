@@ -160,25 +160,41 @@ public class JVMDefineModule {
             // Expected
         }
 
-        // Module name with ';', should be okay
-        m = ModuleHelper.ModuleObject("bad;name", cl, new String[] { "mypackage9" });
-        assertNotNull(m, "Module should not be null");
-        ModuleHelper.DefineModule(m, "9.0", "module.name/here", new String[] { "mypackage9" });
+        // Module name with ';', not allowed in java source
+        try {
+            m = ModuleHelper.ModuleObject("bad;name", cl, new String[] { "mypackage9" });
+            ModuleHelper.DefineModule(m, "9.0", "module.name/here", new String[] { "mypackage9" });
+            throw new RuntimeException("Failed to get expected IAE for bad;name");
+        } catch(IllegalArgumentException e) {
+            // Expected
+        }
 
-        // Module name with leading dot, should be okay
-        m = ModuleHelper.ModuleObject(".leadingdot", cl, new String[] { "mypackage9a" });
-        assertNotNull(m, "Module should not be null");
-        ModuleHelper.DefineModule(m, "9.0", "module.name/here", new String[] { "mypackage9a" });
+        // Module name with leading dot, not allowed in java source
+        try {
+            m = ModuleHelper.ModuleObject(".leadingdot", cl, new String[] { "mypackage9a" });
+            ModuleHelper.DefineModule(m, "9.0", "module.name/here", new String[] { "mypackage9a" });
+            throw new RuntimeException("Failed to get expected IAE for .leadingdot");
+        } catch(IllegalArgumentException e) {
+            // Expected
+        }
 
-        // Module name with trailing dot, should be okay
-        m = ModuleHelper.ModuleObject("trailingdot.", cl, new String[] { "mypackage9b" });
-        assertNotNull(m, "Module should not be null");
-        ModuleHelper.DefineModule(m, "9.0", "module.name/here", new String[] { "mypackage9b" });
+        // Module name with trailing dot, not allowed in java source
+        try {
+            m = ModuleHelper.ModuleObject("trailingdot.", cl, new String[] { "mypackage9b" });
+            ModuleHelper.DefineModule(m, "9.0", "module.name/here", new String[] { "mypackage9b" });
+            throw new RuntimeException("Failed to get expected IAE for trailingdot.");
+        } catch(IllegalArgumentException e) {
+            // Expected
+        }
 
-        // Module name with consecutive dots, should be okay
-        m = ModuleHelper.ModuleObject("consecutive..dots", cl, new String[] { "mypackage9c" });
-        assertNotNull(m, "Module should not be null");
-        ModuleHelper.DefineModule(m, "9.0", "module.name/here", new String[] { "mypackage9c" });
+        // Module name with consecutive dots, not allowed in java source
+        try {
+            m = ModuleHelper.ModuleObject("trailingdot.", cl, new String[] { "mypackage9b" });
+            ModuleHelper.DefineModule(m, "9.0", "module.name/here", new String[] { "mypackage9b" });
+            throw new RuntimeException("Failed to get expected IAE for trailingdot.");
+        } catch(IllegalArgumentException e) {
+            // Expected
+        }
 
         // module name with multiple dots, should be okay
         m = ModuleHelper.ModuleObject("more.than.one.dat", cl, new String[] { "mypackage9d" });
