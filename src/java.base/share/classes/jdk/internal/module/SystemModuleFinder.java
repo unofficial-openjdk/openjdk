@@ -161,16 +161,19 @@ public class SystemModuleFinder implements ModuleFinder {
 
         ModuleDescriptor[] descriptors;
         ModuleHashes[] recordedHashes;
+        ModuleResolution[] moduleResolutions;
 
         // fast loading of ModuleDescriptor of system modules
         if (isFastPathSupported() && !disabled) {
             descriptors = SystemModules.modules();
             recordedHashes = SystemModules.hashes();
+            moduleResolutions = SystemModules.moduleResolutions();
         } else {
             // if fast loading of ModuleDescriptors is disabled
             // fallback to read module-info.class
             descriptors = new ModuleDescriptor[n];
             recordedHashes = new ModuleHashes[n];
+            moduleResolutions = new ModuleResolution[n];
             for (int i = 0; i < names.length; i++) {
                 String mn = names[i];
                 ImageLocation loc = imageReader.findLocation(mn, "module-info.class");
@@ -178,6 +181,7 @@ public class SystemModuleFinder implements ModuleFinder {
                     ModuleInfo.read(imageReader.getResourceBuffer(loc), null);
                 descriptors[i] = attrs.descriptor();
                 recordedHashes[i] = attrs.recordedHashes();
+                moduleResolutions[i] = attrs.moduleResolution();
             }
         }
 
@@ -198,7 +202,8 @@ public class SystemModuleFinder implements ModuleFinder {
             // create the ModuleReference
             ModuleReference mref = toModuleReference(md,
                                                      recordedHashes[i],
-                                                     Hashes.hashSupplierFor(names[i]));
+                                                     Hashes.hashSupplierFor(names[i]),
+                                                     moduleResolutions[i]);
             mods[i] = mref;
             map[i] = Map.entry(names[i], mref);
 
@@ -224,7 +229,8 @@ public class SystemModuleFinder implements ModuleFinder {
 
     private ModuleReference toModuleReference(ModuleDescriptor md,
                                               ModuleHashes recordedHashes,
-                                              HashSupplier hasher) {
+                                              HashSupplier hasher,
+                                              ModuleResolution mres) {
         String mn = md.name();
         URI uri = JNUA.create("jrt", "/".concat(mn));
 
@@ -237,7 +243,7 @@ public class SystemModuleFinder implements ModuleFinder {
 
         ModuleReference mref =
             new ModuleReferenceImpl(md, uri, readerSupplier, false,
-                                    recordedHashes, hasher);
+                                    recordedHashes, hasher, mres);
 
         // may need a reference to a patched module if --patch-module specified
         mref = ModuleBootstrap.patcher().patchIfNeeded(mref);

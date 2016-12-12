@@ -54,7 +54,7 @@ import jdk.tools.jlink.plugin.PluginException;
 import jdk.tools.jlink.builder.DefaultImageBuilder;
 import jdk.tools.jlink.plugin.Plugin;
 import jdk.internal.module.ModulePath;
-import jdk.internal.misc.SharedSecrets;
+import jdk.internal.module.ModuleResolution;
 
 /**
  * Implementation for the jlink tool.
@@ -261,7 +261,8 @@ public class JlinkTask {
                                     config.getModules(),
                                     config.getByteOrder(),
                                     null,
-                                    IGNORE_SIGNING_DEFAULT);
+                                    IGNORE_SIGNING_DEFAULT,
+                                    null);
 
         // Then create the Plugin Stack
         ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(plugins);
@@ -329,7 +330,8 @@ public class JlinkTask {
                                                           roots,
                                                           options.endian,
                                                           options.packagedModulesPath,
-                                                          options.ignoreSigning);
+                                                          options.ignoreSigning,
+                                                          log);
 
         // Then create the Plugin Stack
         ImagePluginStack stack = ImagePluginConfiguration.
@@ -384,7 +386,8 @@ public class JlinkTask {
                                                      Set<String> roots,
                                                      ByteOrder order,
                                                      Path retainModulesPath,
-                                                     boolean ignoreSigning)
+                                                     boolean ignoreSigning,
+                                                     PrintWriter log)
             throws IOException
     {
         if (roots.isEmpty()) {
@@ -395,6 +398,20 @@ public class JlinkTask {
                 .resolveRequires(finder,
                                  ModuleFinder.of(),
                                  roots);
+
+        // issue a warning for any incubating modules in the configuration
+        if (log != null) {
+            String im = cf.modules()
+                          .stream()
+                          .map(ResolvedModule::reference)
+                          .filter(ModuleResolution::hasIncubatingWarning)
+                          .map(ModuleReference::descriptor)
+                          .map(ModuleDescriptor::name)
+                          .collect(Collectors.joining(", "));
+
+            if (!"".equals(im))
+                log.println("WARNING: using incubating module(s): " + im);
+        }
 
         Map<String, Path> mods = cf.modules().stream()
             .collect(Collectors.toMap(ResolvedModule::name, JlinkTask::toPathLocation));

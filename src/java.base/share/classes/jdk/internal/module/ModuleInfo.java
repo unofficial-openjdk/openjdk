@@ -51,6 +51,7 @@ import java.util.function.Supplier;
 
 import jdk.internal.misc.JavaLangModuleAccess;
 import jdk.internal.misc.SharedSecrets;
+import jdk.internal.module.ModuleResolution;
 
 import static jdk.internal.module.ClassFileConstants.*;
 
@@ -91,15 +92,22 @@ public final class ModuleInfo {
     public static final class Attributes {
         private final ModuleDescriptor descriptor;
         private final ModuleHashes recordedHashes;
-        Attributes(ModuleDescriptor descriptor, ModuleHashes recordedHashes) {
+        private final ModuleResolution moduleResolution;
+        Attributes(ModuleDescriptor descriptor,
+                   ModuleHashes recordedHashes,
+                   ModuleResolution moduleResolution) {
             this.descriptor = descriptor;
             this.recordedHashes = recordedHashes;
+            this.moduleResolution = moduleResolution;
         }
         public ModuleDescriptor descriptor() {
             return descriptor;
         }
         public ModuleHashes recordedHashes() {
             return recordedHashes;
+        }
+        public ModuleResolution moduleResolution() {
+            return moduleResolution;
         }
     }
 
@@ -217,6 +225,7 @@ public final class ModuleInfo {
         String mainClass = null;
         String[] osValues = null;
         ModuleHashes hashes = null;
+        ModuleResolution moduleResolution = null;
 
         for (int i = 0; i < attributes_count ; i++) {
             int name_index = in.readUnsignedShort();
@@ -253,6 +262,10 @@ public final class ModuleInfo {
                     } else {
                         in.skipBytes(length);
                     }
+                    break;
+
+                case MODULE_RESOLUTION :
+                    moduleResolution = readModuleResolution(in, cpool);
                     break;
 
                 default:
@@ -319,7 +332,7 @@ public final class ModuleInfo {
         }
 
         ModuleDescriptor descriptor = builder.build();
-        return new Attributes(descriptor, hashes);
+        return new Attributes(descriptor, hashes, moduleResolution);
     }
 
     /**
@@ -569,6 +582,31 @@ public final class ModuleInfo {
         return new ModuleHashes(algorithm, map);
     }
 
+    /**
+     * Reads the ModuleResolution attribute.
+     */
+    private ModuleResolution readModuleResolution(DataInput in,
+                                                  ConstantPool cpool)
+        throws IOException
+    {
+        int flags = in.readUnsignedShort();
+
+        int reason = 0;
+        if ((flags & WARN_DEPRECATED) != 0)
+            reason = WARN_DEPRECATED;
+        if ((flags & WARN_DEPRECATED_FOR_REMOVAL) != 0) {
+            if (reason != 0)
+                throw invalidModuleDescriptor("Bad module resolution flags:" + flags);
+            reason = WARN_DEPRECATED_FOR_REMOVAL;
+        }
+        if ((flags & WARN_INCUBATING) != 0) {
+            if (reason != 0)
+                throw invalidModuleDescriptor("Bad module resolution flags:" + flags);
+        }
+
+        return new ModuleResolution(flags);
+    }
+
 
     /**
      * Returns true if the given attribute can be present at most once
@@ -582,7 +620,8 @@ public final class ModuleInfo {
                 name.equals(MODULE_PACKAGES) ||
                 name.equals(MODULE_MAIN_CLASS) ||
                 name.equals(MODULE_TARGET) ||
-                name.equals(MODULE_HASHES))
+                name.equals(MODULE_HASHES) ||
+                name.equals(MODULE_RESOLUTION))
             return true;
 
         return false;

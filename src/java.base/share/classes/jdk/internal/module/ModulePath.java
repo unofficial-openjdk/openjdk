@@ -568,7 +568,7 @@ public class ModulePath implements ModuleFinder {
                 // no module-info.class so treat it as automatic module
                 try {
                     ModuleDescriptor md = deriveModuleDescriptor(jf);
-                    attrs = new ModuleInfo.Attributes(md, null);
+                    attrs = new ModuleInfo.Attributes(md, null, null);
                 } catch (IllegalArgumentException iae) {
                     throw new FindException(
                         "Unable to derive module descriptor for: "

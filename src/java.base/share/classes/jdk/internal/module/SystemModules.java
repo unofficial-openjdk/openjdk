@@ -74,4 +74,11 @@ public final class SystemModules {
     public static ModuleHashes[] hashes() {
         throw new InternalError("expected to be overridden at link time");
     }
+
+    /**
+     * Returns a non-empty array of ModuleResolutions in the run-time image.
+     */
+    public static ModuleResolution[] moduleResolutions() {
+        throw new InternalError("expected to be overridden at link time");
+    }
 }

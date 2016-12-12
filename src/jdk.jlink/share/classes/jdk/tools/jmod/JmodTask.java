@@ -100,11 +100,11 @@ import jdk.internal.joptsimple.OptionSet;
 import jdk.internal.joptsimple.OptionSpec;
 import jdk.internal.joptsimple.ValueConverter;
 import jdk.internal.loader.ResourceHelper;
-import jdk.internal.misc.JavaLangModuleAccess;
 import jdk.internal.module.ModuleHashes;
 import jdk.internal.module.ModuleInfo;
 import jdk.internal.module.ModuleInfoExtender;
 import jdk.internal.module.ModulePath;
+import jdk.internal.module.ModuleResolution;
 import jdk.tools.jlink.internal.Utils;
 
 import static java.util.stream.Collectors.joining;
@@ -177,6 +177,7 @@ public class JmodTask {
         String osArch;
         String osVersion;
         Pattern modulesToHash;
+        ModuleResolution moduleResolution;
         boolean dryrun;
         List<PathMatcher> excludes;
     }
@@ -375,6 +376,7 @@ public class JmodTask {
         final String osVersion = options.osVersion;
         final List<PathMatcher> excludes = options.excludes;
         final Hasher hasher = hasher();
+        final ModuleResolution moduleResolution = options.moduleResolution;
 
         JmodFileWriter() { }
 
@@ -481,6 +483,10 @@ public class JmodTask {
                     } else {
                         warning("warn.no.module.hashes", descriptor.name());
                     }
+                }
+
+                if (moduleResolution != null && moduleResolution.value() != 0) {
+                    extender.moduleResolution(moduleResolution);
                 }
 
                 // write the (possibly extended or modified) module-info.class
@@ -1088,6 +1094,28 @@ public class JmodTask {
         @Override public String valuePattern() { return "module-version"; }
     }
 
+    static class WarnIfResolvedReasonConverter
+        implements ValueConverter<ModuleResolution>
+    {
+        @Override
+        public ModuleResolution convert(String value) {
+            if (value.equals("deprecated"))
+                return (new ModuleResolution(0)).withDeprecated();
+            else if (value.equals("deprecated-for-removal"))
+                return (new ModuleResolution(0)).withDeprecatedForRemoval();
+            else if (value.equals("incubating"))
+                return (new ModuleResolution(0)).withIncubating();
+            else
+                throw new CommandException("err.bad.WarnIfResolvedReason", value);
+        }
+
+        @Override public Class<ModuleResolution> valueType() {
+            return ModuleResolution.class;
+        }
+
+        @Override public String valuePattern() { return "reason"; }
+    }
+
     static class PatternConverter implements ValueConverter<Pattern> {
         @Override
         public Pattern convert(String value) {
@@ -1137,6 +1165,11 @@ public class JmodTask {
         public String format(Map<String, ? extends OptionDescriptor> options) {
             Map<String, OptionDescriptor> all = new HashMap<>();
             all.putAll(options);
+
+            // hidden options
+            all.remove("do-not-resolve-by-default");
+            all.remove("warn-if-resolved");
+
             all.put(CMD_FILENAME, new OptionDescriptor() {
                 @Override
                 public Collection<String> options() {
@@ -1278,6 +1311,14 @@ public class JmodTask {
                         .withRequiredArg()
                         .describedAs(getMessage("main.opt.os-version.arg"));
 
+        OptionSpec<Void> doNotResolveByDefault
+                = parser.accepts("do-not-resolve-by-default");
+
+        OptionSpec<ModuleResolution> warnIfResolved
+                = parser.accepts("warn-if-resolved")
+                        .withRequiredArg()
+                        .withValuesConvertedBy(new WarnIfResolvedReasonConverter());
+
         OptionSpec<Void> version
                 = parser.accepts("version", getMessage("main.opt.version"));
 
@@ -1335,6 +1376,13 @@ public class JmodTask {
                 options.osArch = opts.valueOf(osArch);
             if (opts.has(osVersion))
                 options.osVersion = opts.valueOf(osVersion);
+            if (opts.has(warnIfResolved))
+                options.moduleResolution = opts.valueOf(warnIfResolved);
+            if (opts.has(doNotResolveByDefault)) {
+                if (options.moduleResolution == null)
+                    options.moduleResolution = new ModuleResolution(0);
+                options.moduleResolution = options.moduleResolution.withDoNotResolveByDefault();
+            }
             if (opts.has(hashModules)) {
                 options.modulesToHash = opts.valueOf(hashModules);
                 // if storing hashes then the module path is required

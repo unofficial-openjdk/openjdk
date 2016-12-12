@@ -200,7 +200,9 @@ public final class ModuleBootstrap {
         // module is the unnamed module of the application class loader. This
         // is implemented by resolving "java.se" and all (non-java.*) modules
         // that export an API. If "java.se" is not observable then all java.*
-        // modules are resolved.
+        // modules are resolved. Modules that have the DO_NOT_RESOLVE_BY_DEFAULT
+        // bit set in their ModuleResolution attribute flags are excluded from
+        // the default set of roots.
         if (mainModule == null || addAllDefaultModules) {
             boolean hasJava = false;
             if (systemModules.find(JAVA_SE).isPresent()) {
@@ -215,6 +217,9 @@ public final class ModuleBootstrap {
             for (ModuleReference mref : systemModules.findAll()) {
                 String mn = mref.descriptor().name();
                 if (hasJava && mn.startsWith("java."))
+                    continue;
+
+                if (ModuleResolution.doNotResolveByDefault(mref))
                     continue;
 
                 // add as root if observable and exports at least one package
@@ -236,6 +241,7 @@ public final class ModuleBootstrap {
             ModuleFinder f = finder;  // observable modules
             systemModules.findAll()
                 .stream()
+                .filter(md -> !ModuleResolution.doNotResolveByDefault(md))
                 .map(ModuleReference::descriptor)
                 .map(ModuleDescriptor::name)
                 .filter(mn -> f.find(mn).isPresent())  // observable
@@ -282,6 +288,8 @@ public final class ModuleBootstrap {
         // time to create configuration
         PerfCounters.resolveTime.addElapsedTimeFrom(t3);
 
+        // issue a warning for any incubator modules in the configuration
+        warnIfAnyIncubating(cf);
 
         // mapping of modules to class loaders
         Function<String, ClassLoader> clf = ModuleLoaderMap.mappingFunction(cf);
@@ -670,6 +678,25 @@ public final class ModuleBootstrap {
      */
     private static String getAndRemoveProperty(String key) {
         return (String)System.getProperties().remove(key);
+    }
+
+    /**
+     * Issues a warning is there are any modules in the configuration that
+     * have their WARN_INCUBATING module resolution bit set.
+     */
+    private static void warnIfAnyIncubating(Configuration cf) {
+        String incubating = null;
+        for (ResolvedModule rm : cf.modules()) {
+            ModuleReference mref = rm.reference();
+            if (ModuleResolution.hasIncubatingWarning(mref)) {
+                if (incubating == null)
+                    incubating = mref.descriptor().name();
+                else
+                    incubating += ", " + mref.descriptor().name();
+            }
+        }
+        if (incubating != null)
+            warn("using incubating module(s): " + incubating);
     }
 
     /**

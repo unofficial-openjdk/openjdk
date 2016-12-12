@@ -84,7 +84,8 @@ class ModuleReferences {
                                                        supplier,
                                                        false,
                                                        attrs.recordedHashes(),
-                                                       hasher);
+                                                       hasher,
+                                                       attrs.moduleResolution());
         if (JLA.getBootLayer() == null)
             mref = ModuleBootstrap.patcher().patchIfNeeded(mref);
 

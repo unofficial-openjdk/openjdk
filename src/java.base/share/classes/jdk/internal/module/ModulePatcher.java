@@ -149,12 +149,18 @@ public final class ModulePatcher {
 
         // return a module reference to the patched module
         URI location = mref.location().orElse(null);
+        ModuleResolution mres = null;
+        if (mref instanceof ModuleReferenceImpl) {
+            mres = ((ModuleReferenceImpl)mref).moduleResolution();
+        }
+
         return new ModuleReferenceImpl(descriptor,
                                        location,
                                        () -> new PatchedModuleReader(paths, mref),
                                        true,
                                        null,
-                                       null);
+                                       null,
+                                       mres);
 
     }
 

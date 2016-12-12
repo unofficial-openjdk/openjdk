@@ -46,6 +46,7 @@ import jdk.internal.module.Checks;
 import jdk.internal.module.ModuleHashes;
 import jdk.internal.module.ModuleInfo.Attributes;
 import jdk.internal.module.ModuleInfoExtender;
+import jdk.internal.module.ModuleResolution;
 import jdk.internal.module.SystemModules;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.MethodVisitor;
@@ -165,6 +166,7 @@ public final class SystemModulesPlugin implements Plugin {
     class ModuleInfo {
         final ModuleDescriptor descriptor;
         final ModuleHashes recordedHashes;
+        final ModuleResolution moduleResolution;
         final Set<String> packages;
         final ByteArrayInputStream bain;
 
@@ -175,6 +177,7 @@ public final class SystemModulesPlugin implements Plugin {
             Attributes attrs = jdk.internal.module.ModuleInfo.read(bain, null);
             this.descriptor = attrs.descriptor();
             this.recordedHashes = attrs.recordedHashes();
+            this.moduleResolution = attrs.moduleResolution();
 
             if (descriptor.isAutomatic()) {
                 throw new InternalError("linking automatic module is not supported");
@@ -295,6 +298,10 @@ public final class SystemModulesPlugin implements Plugin {
             "java/lang/module/ModuleDescriptor$Opens$Modifier";
         private static final String MODULE_HASHES_ARRAY_SIGNATURE  =
             "[Ljdk/internal/module/ModuleHashes;";
+        private static final String MODULE_RESOLUTION_CLASSNAME  =
+                "jdk/internal/module/ModuleResolution";
+        private static final String MODULE_RESOLUTIONS_ARRAY_SIGNATURE  =
+            "[Ljdk/internal/module/ModuleResolution;";
 
         // static variables in SystemModules class
         private static final String MODULE_NAMES = "MODULE_NAMES";
@@ -460,6 +467,34 @@ public final class SystemModulesPlugin implements Plugin {
             hmv.visitInsn(ARETURN);
             hmv.visitMaxs(0, 0);
             hmv.visitEnd();
+
+            // generate moduleResolutions() method
+            MethodVisitor mresmv =
+                    cw.visitMethod(ACC_PUBLIC+ACC_STATIC,
+                            "moduleResolutions", "()" + MODULE_RESOLUTIONS_ARRAY_SIGNATURE,
+                            "()" + MODULE_RESOLUTIONS_ARRAY_SIGNATURE, null);
+            mresmv.visitCode();
+            pushInt(mresmv, numModules);
+            mresmv.visitTypeInsn(ANEWARRAY, MODULE_RESOLUTION_CLASSNAME);
+            mresmv.visitVarInsn(ASTORE, 0);
+
+            for (int index=0; index < moduleInfos.size(); index++) {
+                ModuleInfo minfo = moduleInfos.get(index);
+                if (minfo.moduleResolution != null) {
+                    mresmv.visitVarInsn(ALOAD, 0);
+                    pushInt(mresmv, index);
+                    mresmv.visitTypeInsn(NEW, MODULE_RESOLUTION_CLASSNAME);
+                    mresmv.visitInsn(DUP);
+                    mresmv.visitLdcInsn(minfo.moduleResolution.value());
+                    mresmv.visitMethodInsn(INVOKESPECIAL, MODULE_RESOLUTION_CLASSNAME,
+                            "<init>", "(I)V", false);
+                    mresmv.visitInsn(AASTORE);
+                }
+            }
+            mresmv.visitVarInsn(ALOAD, 0);
+            mresmv.visitInsn(ARETURN);
+            mresmv.visitMaxs(0, 0);
+            mresmv.visitEnd();
 
             return cw;
         }

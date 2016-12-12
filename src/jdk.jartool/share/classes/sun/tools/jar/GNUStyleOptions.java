@@ -34,6 +34,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import jdk.internal.module.ModuleResolution;
 
 /**
  * Parser for GNU Style Options.
@@ -168,6 +169,31 @@ class GNUStyleOptions {
             new Option(false, OptionType.OTHER, "-P") {
                 void process(Main jartool, String opt, String arg) {
                     jartool.pflag = true;
+                }
+                boolean isHidden() { return true; }
+            },
+            new Option(false, OptionType.CREATE_UPDATE, "--do-not-resolve-by-default") {
+                void process(Main jartool, String opt, String arg) {
+                    ModuleResolution mres = jartool.moduleResolution;
+                    jartool.moduleResolution = mres.withDoNotResolveByDefault();
+                }
+                boolean isHidden() { return true; }
+            },
+            new Option(true, OptionType.CREATE_UPDATE, "--warn-if-resolved") {
+                void process(Main jartool, String opt, String arg) throws BadArgs {
+                    ModuleResolution mres = new ModuleResolution(0);
+                    if (jartool.moduleResolution.doNotResolveByDefault())
+                        mres.withDoNotResolveByDefault();
+
+                    if (arg.equals("deprecated")) {
+                        jartool.moduleResolution = mres.withDeprecated();
+                    } else if (arg.equals("deprecated-for-removal")) {
+                        jartool.moduleResolution = mres.withDeprecatedForRemoval();
+                    } else if (arg.equals("incubating")) {
+                        jartool.moduleResolution = mres.withIncubating();
+                    } else {
+                        throw new BadArgs("error.bad.reason", arg);
+                    }
                 }
                 boolean isHidden() { return true; }
             },

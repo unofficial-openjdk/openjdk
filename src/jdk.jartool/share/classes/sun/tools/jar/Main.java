@@ -56,11 +56,11 @@ import java.util.jar.Pack200.*;
 import java.util.jar.Manifest;
 import java.text.MessageFormat;
 
-import jdk.internal.misc.JavaLangModuleAccess;
 import jdk.internal.module.Checks;
 import jdk.internal.module.ModuleHashes;
 import jdk.internal.module.ModuleInfo;
 import jdk.internal.module.ModuleInfoExtender;
+import jdk.internal.module.ModuleResolution;
 import jdk.internal.util.jar.JarIndex;
 
 import static jdk.internal.util.jar.JarIndex.INDEX_NAME;
@@ -223,6 +223,7 @@ class Main {
     boolean printModuleDescriptor;
     Version moduleVersion;
     Pattern modulesToHash;
+    ModuleResolution moduleResolution = new ModuleResolution(0);
     ModuleFinder moduleFinder = ModuleFinder.of();
 
     private static final String MODULE_INFO = "module-info.class";
@@ -2227,6 +2228,10 @@ class Main {
                 // should it issue warning or silent?
                 System.out.println("warning: no module is recorded in hash in " + mn);
             }
+        }
+
+        if (moduleResolution.value() != 0) {
+            extender.moduleResolution(moduleResolution);
         }
 
         extender.write(baos);

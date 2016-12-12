@@ -55,6 +55,9 @@ public class ModuleReferenceImpl extends ModuleReference {
     // cached hash of this module to avoid needing to compute it many times
     private byte[] cachedHash;
 
+    // ModuleResolution flags
+    private final ModuleResolution moduleResolution;
+
     /**
      * Constructs a new instance of this class.
      */
@@ -63,19 +66,22 @@ public class ModuleReferenceImpl extends ModuleReference {
                         Supplier<ModuleReader> readerSupplier,
                         boolean patched,
                         ModuleHashes recordedHashes,
-                        ModuleHashes.HashSupplier hasher)
+                        ModuleHashes.HashSupplier hasher,
+                        ModuleResolution moduleResolution)
     {
         super(descriptor, location);
         this.readerSupplier = readerSupplier;
         this.patched = patched;
         this.recordedHashes = recordedHashes;
         this.hasher = hasher;
+        this.moduleResolution = moduleResolution;
     }
 
     ModuleReferenceImpl(ModuleDescriptor descriptor,
                         URI location,
-                        Supplier<ModuleReader> readerSupplier) {
-        this(descriptor, location, readerSupplier, false, null, null);
+                        Supplier<ModuleReader> readerSupplier,
+                        ModuleResolution mres) {
+        this(descriptor, location, readerSupplier, false, null, null, mres);
     }
 
     @Override
@@ -107,6 +113,13 @@ public class ModuleReferenceImpl extends ModuleReference {
      */
     ModuleHashes.HashSupplier hasher() {
         return hasher;
+    }
+
+    /**
+     * Returns the ModuleResolution flags.
+     */
+    public ModuleResolution moduleResolution() {
+        return moduleResolution;
     }
 
     /**
