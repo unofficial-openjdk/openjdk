@@ -99,14 +99,13 @@ public final class ClassFileAttributes {
             // module_flags
             int module_flags = cr.readUnsignedShort(off);
             boolean open = ((module_flags & ACC_OPEN) != 0);
+            boolean synthetic = ((module_flags & ACC_SYNTHETIC) != 0);
             off += 2;
 
-            ModuleDescriptor.Builder builder;
-            if (open) {
-                builder = JLMA.newOpenModuleBuilder(mn, false);
-            } else {
-                builder = JLMA.newModuleBuilder(mn, false);
-            }
+            ModuleDescriptor.Builder builder = JLMA.newModuleBuilder(mn,
+                                                                     false,
+                                                                     open,
+                                                                     synthetic);
 
             // module_version
             String module_version = cr.readUTF8(off, buf);

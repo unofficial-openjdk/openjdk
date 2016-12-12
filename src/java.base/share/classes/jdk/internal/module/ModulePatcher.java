@@ -149,9 +149,12 @@ public final class ModulePatcher {
 
         // return a module reference to the patched module
         URI location = mref.location().orElse(null);
-        return JLMA.newPatchedModule(descriptor,
-                                     location,
-                                     () -> new PatchedModuleReader(paths, mref));
+        return new ModuleReferenceImpl(descriptor,
+                                       location,
+                                       () -> new PatchedModuleReader(paths, mref),
+                                       true,
+                                       null,
+                                       null);
 
     }
 

@@ -57,15 +57,22 @@ public interface JavaLangModuleAccess {
      * @param strict
      *        Indicates whether module names are checked or not
      */
-    ModuleDescriptor.Builder newModuleBuilder(String mn, boolean strict);
+    ModuleDescriptor.Builder newModuleBuilder(String mn,
+                                              boolean strict,
+                                              boolean open,
+                                              boolean synthetic);
 
     /**
-     * Creates a builder for building an open module with the given module name.
-     *
-     * @param strict
-     *        Indicates whether module names are checked or not
+     * Returns the set of packages that are exported (unconditionally or
+     * unconditionally).
      */
-    ModuleDescriptor.Builder newOpenModuleBuilder(String mn, boolean strict);
+    Set<String> exportedPackages(ModuleDescriptor.Builder builder);
+
+    /**
+     * Returns the set of packages that are opened (unconditionally or
+     * unconditionally).
+     */
+    Set<String> openPackages(ModuleDescriptor.Builder builder);
 
     /**
      * Returns a {@code ModuleDescriptor.Requires} of the given modifiers
@@ -137,11 +144,6 @@ public interface JavaLangModuleAccess {
                                          int hashCode);
 
     /**
-     * Returns the hashes recorded for the given module or {@code null}.
-     */
-    ModuleHashes recordedHashes(ModuleReference mref);
-
-    /**
      * Resolves a collection of root modules, with service binding
      * and the empty configuration as the parent. The post resolution
      * checks are optionally run.
@@ -150,19 +152,5 @@ public interface JavaLangModuleAccess {
                                          Collection<String> roots,
                                          boolean check,
                                          PrintStream traceOutput);
-
-    /**
-     * Creates a ModuleReference to a "patched" module.
-     */
-    ModuleReference newPatchedModule(ModuleDescriptor descriptor,
-                                     URI location,
-                                     Supplier<ModuleReader> readerSupplier);
-
-    /**
-     * Creates a ModuleFinder for a module path.
-     */
-    ModuleFinder newModulePath(Runtime.Version version,
-                               boolean isLinkPhase,
-                               Path... entries);
 
 }

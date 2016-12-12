@@ -42,6 +42,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import jdk.internal.module.ModulePath;
+import jdk.internal.module.SystemModuleFinder;
 import sun.security.action.GetPropertyAction;
 
 /**

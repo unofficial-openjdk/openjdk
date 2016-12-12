@@ -23,7 +23,7 @@
  * questions.
  */
 
-package java.lang.module;
+package jdk.internal.module;
 
 import java.io.DataInput;
 import java.io.DataInputStream;
@@ -31,6 +31,8 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.lang.module.InvalidModuleDescriptorException;
+import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Builder;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Exports;
@@ -47,7 +49,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 
-import jdk.internal.module.ModuleHashes;
+import jdk.internal.misc.JavaLangModuleAccess;
+import jdk.internal.misc.SharedSecrets;
 
 import static jdk.internal.module.ClassFileConstants.*;
 
@@ -59,7 +62,10 @@ import static jdk.internal.module.ClassFileConstants.*;
  * and fine control over the throwing of InvalidModuleDescriptorException.
  */
 
-final class ModuleInfo {
+public final class ModuleInfo {
+
+    private static final JavaLangModuleAccess JLMA
+        = SharedSecrets.getJavaLangModuleAccess();
 
     // supplies the set of packages when ModulePackages attribute not present
     private final Supplier<Set<String>> packageFinder;
@@ -82,17 +88,17 @@ final class ModuleInfo {
      * that represent the non-standard class file attributes that are read from
      * the class file.
      */
-    static final class Attributes {
+    public static final class Attributes {
         private final ModuleDescriptor descriptor;
         private final ModuleHashes recordedHashes;
         Attributes(ModuleDescriptor descriptor, ModuleHashes recordedHashes) {
             this.descriptor = descriptor;
             this.recordedHashes = recordedHashes;
         }
-        ModuleDescriptor descriptor() {
+        public ModuleDescriptor descriptor() {
             return descriptor;
         }
-        ModuleHashes recordedHashes() {
+        public ModuleHashes recordedHashes() {
             return recordedHashes;
         }
     }
@@ -104,7 +110,7 @@ final class ModuleInfo {
      * @throws InvalidModuleDescriptorException
      * @throws IOException
      */
-    static Attributes read(InputStream in, Supplier<Set<String>> pf)
+    public static Attributes read(InputStream in, Supplier<Set<String>> pf)
         throws IOException
     {
         try {
@@ -122,7 +128,7 @@ final class ModuleInfo {
      * @throws InvalidModuleDescriptorException
      * @throws UncheckedIOException
      */
-    static Attributes read(ByteBuffer bb, Supplier<Set<String>> pf) {
+    public static Attributes read(ByteBuffer bb, Supplier<Set<String>> pf) {
         try {
             return new ModuleInfo(pf).doRead(new DataInputWrapper(bb));
         } catch (IllegalArgumentException | IllegalStateException e) {
@@ -141,7 +147,7 @@ final class ModuleInfo {
      * @throws InvalidModuleDescriptorException
      * @throws UncheckedIOException
      */
-    static Attributes readIgnoringHashes(ByteBuffer bb, Supplier<Set<String>> pf) {
+    public static Attributes readIgnoringHashes(ByteBuffer bb, Supplier<Set<String>> pf) {
         try {
             return new ModuleInfo(pf, false).doRead(new DataInputWrapper(bb));
         } catch (IllegalArgumentException | IllegalStateException e) {
@@ -277,17 +283,29 @@ final class ModuleInfo {
             usedPackageFinder = true;
         }
         if (packages != null) {
-            for (String pn : builder.exportedAndOpenPackages()) {
-                if (!packages.contains(pn)) {
-                    String tail;
-                    if (usedPackageFinder) {
-                        tail = " not found by package finder";
-                    } else {
-                        tail = " missing from ModulePackages attribute";
+            Set<String> exportedPackages = JLMA.exportedPackages(builder);
+            Set<String> openPackages = JLMA.openPackages(builder);
+            if (packages.containsAll(exportedPackages)
+                    && packages.containsAll(openPackages)) {
+                packages.removeAll(exportedPackages);
+                packages.removeAll(openPackages);
+            } else {
+                // the set of packages is not complete
+                Set<String> exportedAndOpenPackages = new HashSet<>();
+                exportedAndOpenPackages.addAll(exportedPackages);
+                exportedAndOpenPackages.addAll(openPackages);
+                for (String pn : exportedAndOpenPackages) {
+                    if (!packages.contains(pn)) {
+                        String tail;
+                        if (usedPackageFinder) {
+                            tail = " not found by package finder";
+                        } else {
+                            tail = " missing from ModulePackages attribute";
+                        }
+                        throw invalidModuleDescriptor("Package " + pn + tail);
                     }
-                    throw invalidModuleDescriptor("Package " + pn + tail);
                 }
-                packages.remove(pn);
+                assert false; // should not get here
             }
             builder.contains(packages);
         }
@@ -315,14 +333,11 @@ final class ModuleInfo {
         int module_name_index = in.readUnsignedShort();
         String mn = cpool.getModuleName(module_name_index);
 
-        Builder builder = new ModuleDescriptor.Builder(mn, /*strict*/ false);
-
         int module_flags = in.readUnsignedShort();
         boolean open = ((module_flags & ACC_OPEN) != 0);
-        if (open)
-            builder.open(true);
-        if ((module_flags & ACC_SYNTHETIC) != 0)
-            builder.synthetic(true);
+        boolean synthetic = ((module_flags & ACC_SYNTHETIC) != 0);
+
+        Builder builder = JLMA.newModuleBuilder(mn, false, open, synthetic);
 
         int module_version_index = in.readUnsignedShort();
         if (module_version_index != 0) {

@@ -47,7 +47,6 @@ import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -60,6 +59,7 @@ import java.text.MessageFormat;
 import jdk.internal.misc.JavaLangModuleAccess;
 import jdk.internal.module.Checks;
 import jdk.internal.module.ModuleHashes;
+import jdk.internal.module.ModuleInfo;
 import jdk.internal.module.ModuleInfoExtender;
 import jdk.internal.util.jar.JarIndex;
 
@@ -2001,7 +2001,10 @@ class Main {
     private void printModuleDescriptor(InputStream entryInputStream)
         throws IOException
     {
-        ModuleDescriptor md = ModuleDescriptor.read(entryInputStream);
+        ModuleInfo.Attributes attrs = ModuleInfo.read(entryInputStream, null);
+        ModuleDescriptor md = attrs.descriptor();
+        ModuleHashes hashes = attrs.recordedHashes();
+
         StringBuilder sb = new StringBuilder();
         sb.append("\n");
         if (md.isOpen())
@@ -2048,7 +2051,22 @@ class Main {
 
         md.osVersion().ifPresent(v -> sb.append("\n  operating-system-version " + v));
 
+        if (hashes != null) {
+            hashes.names().stream().sorted().forEach(
+                    mod -> sb.append("\n  hashes ").append(mod).append(" ")
+                             .append(hashes.algorithm()).append(" ")
+                             .append(toHex(hashes.hashFor(mod))));
+        }
+
         output(sb.toString());
+    }
+
+    private static String toHex(byte[] ba) {
+        StringBuilder sb = new StringBuilder(ba.length);
+        for (byte b: ba) {
+            sb.append(String.format("%02x", b & 0xff));
+        }
+        return sb.toString();
     }
 
     private static String toBinaryName(String classname) {
@@ -2227,13 +2245,12 @@ class Main {
             // Create a module finder that finds the modular JAR
             // being created/updated
             URI uri = Paths.get(fname).toUri();
-            ModuleReference mref = new ModuleReference(descriptor, uri,
-                new Supplier<>() {
-                    @Override
-                    public ModuleReader get() {
-                        throw new UnsupportedOperationException("should not reach here");
-                    }
-                });
+            ModuleReference mref = new ModuleReference(descriptor, uri) {
+                @Override
+                public ModuleReader open() {
+                    throw new UnsupportedOperationException("should not reach here");
+                }
+            };
 
             // Compose a module finder with the module path and
             // the modular JAR being created or updated

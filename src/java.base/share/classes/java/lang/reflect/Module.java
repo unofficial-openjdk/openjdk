@@ -643,6 +643,12 @@ public final class Module implements AnnotatedElement {
      * <em>open</em>) to the given module. It also has no effect if
      * invoked on an {@link ModuleDescriptor#isOpen open} module. </p>
      *
+     * @apiNote As specified in section 5.4.3 of the <cite>The Java&trade;
+     * Virtual Machine Specification </cite>, if an attempt to resolve a
+     * symbolic reference fails because of a linkage error, then subsequent
+     * attempts to resolve the reference always fail with the same error that
+     * was thrown as a result of the initial resolution attempt.
+     *
      * @param  pn
      *         The package name
      * @param  other
@@ -656,6 +662,7 @@ public final class Module implements AnnotatedElement {
      * @throws IllegalStateException
      *         If this is a named module and the caller is not this module
      *
+     * @jvms 5.4.3 Resolution
      * @see #isExported(String,Module)
      */
     @CallerSensitive

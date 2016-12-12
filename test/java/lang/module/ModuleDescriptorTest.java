@@ -24,6 +24,7 @@
 /**
  * @test
  * @modules java.base/java.lang.module:open
+ *          java.base/jdk.internal.misc
  *          java.base/jdk.internal.module
  * @run testng ModuleDescriptorTest
  * @summary Basic test for java.lang.module.ModuleDescriptor and its builder
@@ -41,19 +42,18 @@ import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Requires.Modifier;
 import java.lang.module.ModuleDescriptor.Version;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Module;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.lang.module.ModuleDescriptor.Requires.Modifier.*;
 
+import jdk.internal.misc.SharedSecrets;
 import jdk.internal.module.ModuleInfoWriter;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -76,6 +76,7 @@ public class ModuleDescriptorTest {
             { "1foo.bar",       null },
             { "foo.1bar",       null },
             { "foo.[bar]",      null },
+            { "foo..bar",       null },
             { "foo.bar.1",      null },
             { "foo.bar.1gus",   null },
             { "foo.bar.[gus]",  null },
@@ -1029,11 +1030,8 @@ public class ModuleDescriptorTest {
      * Java Language.
      */
     public void testRead2() throws Exception {
-        // use non-public constructor to create a Builder that is not strict
-        Constructor<?> ctor = Builder.class.getDeclaredConstructor(String.class, boolean.class);
-        ctor.setAccessible(true);
-
-        Builder builder = (ModuleDescriptor.Builder) ctor.newInstance("m?1", false);
+        Builder builder = SharedSecrets.getJavaLangModuleAccess()
+                .newModuleBuilder("m?1", false, false, false);
         ModuleDescriptor descriptor = builder
                 .requires("java.base")
                 .requires("-m1")

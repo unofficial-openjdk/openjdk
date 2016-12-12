@@ -26,9 +26,9 @@
 package java.lang;
 
 import jdk.internal.loader.BuiltinClassLoader;
-import jdk.internal.misc.SharedSecrets;
 import jdk.internal.misc.VM;
 import jdk.internal.module.ModuleHashes;
+import jdk.internal.module.ModuleReferenceImpl;
 
 import java.lang.module.ModuleDescriptor.Version;
 import java.lang.module.ModuleReference;
@@ -492,8 +492,8 @@ public final class StackTraceElement implements java.io.Serializable {
                     .findModule("java.base");
             assert resolvedModule.isPresent();
             ModuleReference mref = resolvedModule.get().reference();
-            ModuleHashes hashes = SharedSecrets.getJavaLangModuleAccess()
-                    .recordedHashes(mref);
+            assert mref instanceof ModuleReferenceImpl;
+            ModuleHashes hashes = ((ModuleReferenceImpl)mref).recordedHashes();
             if (hashes != null) {
                 Set<String> names = new HashSet<>(hashes.names());
                 names.add("java.base");

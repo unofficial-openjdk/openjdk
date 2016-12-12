@@ -29,7 +29,6 @@ import java.io.InputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UncheckedIOException;
-import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -51,7 +50,7 @@ import static jdk.internal.module.Checks.*;
 import static java.util.Objects.*;
 
 import jdk.internal.module.Checks;
-import jdk.internal.module.ModuleHashes;
+import jdk.internal.module.ModuleInfo;
 
 
 /**
@@ -1342,15 +1341,13 @@ public class ModuleDescriptor
     public static final class Builder {
         final String name;
         final boolean strict; // true if module names are checked
-        boolean open;
+        final boolean open;
+        final boolean synthetic;
         boolean automatic;
-        boolean synthetic;
         final Map<String, Requires> requires = new HashMap<>();
-
         final Map<String, Exports> exports = new HashMap<>();
         final Map<String, Opens> opens = new HashMap<>();
         final Set<String> concealedPackages = new HashSet<>();
-
         final Set<String> uses = new HashSet<>();
         final Map<String, Provides> provides = new HashMap<>();
         Version version;
@@ -1365,14 +1362,11 @@ public class ModuleDescriptor
          * @param strict
          *        Indicates whether module names are checked or not
          */
-        Builder(String name, boolean strict) {
-            this.strict = strict;
+        Builder(String name, boolean strict, boolean open, boolean synthetic) {
             this.name = (strict) ? requireModuleName(name) : name;
-        }
-
-        /* package */ Builder open(boolean open) {
+            this.strict = strict;
             this.open = open;
-            return this;
+            this.synthetic = synthetic;
         }
 
         /* package */ Builder automatic(boolean automatic) {
@@ -1380,10 +1374,20 @@ public class ModuleDescriptor
             return this;
         }
 
-        /* package */ boolean isOpen() { return open; }
+        /**
+         * Returns the set of packages that are exported (unconditionally or
+         * unconditionally).
+         */
+        /* package */ Set<String> exportedPackages() {
+            return exports.keySet();
+        }
 
-        /* package */ boolean isAutomatic() {
-            return automatic;
+        /**
+         * Returns the set of packages that are opened (unconditionally or
+         * unconditionally).
+         */
+        /* package */Set<String> openPackages() {
+            return opens.keySet();
         }
 
         /**
@@ -1759,17 +1763,6 @@ public class ModuleDescriptor
             return opens(Collections.emptySet(), pn);
         }
 
-
-        // Used by ModuleInfo, after a packageFinder is invoked
-        /* package */ Set<String> exportedAndOpenPackages() {
-            if (opens.isEmpty())
-                return exports.keySet();
-            Set<String> result = new HashSet<>();
-            result.addAll(exports.keySet());
-            result.addAll(opens.keySet());
-            return result;
-        }
-
         /**
          * Adds a service dependence.
          *
@@ -1843,7 +1836,6 @@ public class ModuleDescriptor
             if (providerNames.isEmpty())
                 throw new IllegalArgumentException("Empty providers set");
             providerNames.forEach(Checks::requireServiceProviderName);
-
             provides.put(service, p);
             return this;
         }
@@ -2026,11 +2018,6 @@ public class ModuleDescriptor
             return this;
         }
 
-        /* package */ Builder synthetic(boolean v) {
-            this.synthetic = v;
-            return this;
-        }
-
         /**
          * Builds and returns a {@code ModuleDescriptor} from its components.
          *
@@ -2039,7 +2026,9 @@ public class ModuleDescriptor
         public ModuleDescriptor build() {
             Set<Requires> requires = new HashSet<>(this.requires.values());
 
-            Set<String> packages = new HashSet<>(exportedAndOpenPackages());
+            Set<String> packages = new HashSet<>();
+            packages.addAll(exports.keySet());
+            packages.addAll(opens.keySet());
             packages.addAll(concealedPackages);
 
             Set<Exports> exports = new HashSet<>(this.exports.values());
@@ -2217,7 +2206,7 @@ public class ModuleDescriptor
      *         identifier
      */
     public static Builder module(String name) {
-        return new Builder(name, true);
+        return new Builder(name, true, false, false);
     }
 
     /**
@@ -2245,7 +2234,7 @@ public class ModuleDescriptor
      *         identifier
      */
     public static Builder openModule(String name) {
-        return new Builder(name, true).open(true);
+        return new Builder(name, true, true, false);
     }
 
     /**
@@ -2267,7 +2256,7 @@ public class ModuleDescriptor
      * @see ModuleFinder#of(Path[])
      */
     public static Builder automaticModule(String name) {
-        return new Builder(name, true).automatic(true);
+        return new Builder(name, true, false, false).automatic(true);
     }
 
 
@@ -2423,13 +2412,21 @@ public class ModuleDescriptor
         jdk.internal.misc.SharedSecrets
             .setJavaLangModuleAccess(new jdk.internal.misc.JavaLangModuleAccess() {
                 @Override
-                public Builder newModuleBuilder(String mn, boolean strict) {
-                    return new Builder(mn, strict);
+                public Builder newModuleBuilder(String mn,
+                                                boolean strict,
+                                                boolean open,
+                                                boolean synthetic) {
+                    return new Builder(mn, strict, open, synthetic);
                 }
 
                 @Override
-                public Builder newOpenModuleBuilder(String mn, boolean strict) {
-                    return new Builder(mn, strict).open(true);
+                public Set<String> exportedPackages(ModuleDescriptor.Builder builder) {
+                    return builder.exportedPackages();
+                }
+
+                @Override
+                public Set<String> openPackages(ModuleDescriptor.Builder builder) {
+                    return builder.openPackages();
                 }
 
                 @Override
@@ -2509,15 +2506,8 @@ public class ModuleDescriptor
                                                 osName,
                                                 osArch,
                                                 osVersion,
-
                                                 hashCode,
                                                 false);
-                }
-
-
-                @Override
-                public ModuleHashes recordedHashes(ModuleReference mref) {
-                    return mref.recordedHashes();
                 }
 
                 @Override
@@ -2527,20 +2517,6 @@ public class ModuleDescriptor
                                                             PrintStream traceOutput)
                 {
                     return Configuration.resolveRequiresAndUses(finder, roots, check, traceOutput);
-                }
-
-                @Override
-                public ModuleReference newPatchedModule(ModuleDescriptor descriptor,
-                                                        URI location,
-                                                        Supplier<ModuleReader> s) {
-                    return new ModuleReference(descriptor, location, s, true, null, null);
-                }
-
-                @Override
-                public ModuleFinder newModulePath(Runtime.Version version,
-                                                  boolean isLinkPhase,
-                                                  Path... entries) {
-                    return new ModulePath(version, isLinkPhase, entries);
                 }
             });
     }

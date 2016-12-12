@@ -53,6 +53,7 @@ import jdk.tools.jlink.internal.ImagePluginStack.ImageProvider;
 import jdk.tools.jlink.plugin.PluginException;
 import jdk.tools.jlink.builder.DefaultImageBuilder;
 import jdk.tools.jlink.plugin.Plugin;
+import jdk.internal.module.ModulePath;
 import jdk.internal.misc.SharedSecrets;
 
 /**
@@ -344,9 +345,7 @@ public class JlinkTask {
      */
     private ModuleFinder modulePathFinder() {
         Path[] entries = options.modulePath.toArray(new Path[0]);
-        ModuleFinder finder = SharedSecrets.getJavaLangModuleAccess()
-            .newModulePath(Runtime.version(), true, entries);
-
+        ModuleFinder finder = new ModulePath(Runtime.version(), true, entries);
         if (!options.limitMods.isEmpty()) {
             finder = limitFinder(finder, options.limitMods, Collections.emptySet());
         }
@@ -364,8 +363,7 @@ public class JlinkTask {
                                                Set<String> roots)
     {
         Path[] entries = paths.toArray(new Path[0]);
-        ModuleFinder finder = SharedSecrets.getJavaLangModuleAccess()
-            .newModulePath(Runtime.version(), true, entries);
+        ModuleFinder finder = new ModulePath(Runtime.version(), true, entries);
 
         // if limitmods is specified then limit the universe
         if (!limitMods.isEmpty()) {

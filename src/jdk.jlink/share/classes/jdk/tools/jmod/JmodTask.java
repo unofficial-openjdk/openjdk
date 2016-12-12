@@ -101,9 +101,10 @@ import jdk.internal.joptsimple.OptionSpec;
 import jdk.internal.joptsimple.ValueConverter;
 import jdk.internal.loader.ResourceHelper;
 import jdk.internal.misc.JavaLangModuleAccess;
-import jdk.internal.misc.SharedSecrets;
 import jdk.internal.module.ModuleHashes;
+import jdk.internal.module.ModuleInfo;
 import jdk.internal.module.ModuleInfoExtender;
+import jdk.internal.module.ModulePath;
 import jdk.tools.jlink.internal.Utils;
 
 import static java.util.stream.Collectors.joining;
@@ -255,8 +256,8 @@ public class JmodTask {
     private boolean describe() throws IOException {
         try (JmodFile jf = new JmodFile(options.jmodFile)) {
             try (InputStream in = jf.getInputStream(Section.CLASSES, MODULE_INFO)) {
-                ModuleDescriptor md = ModuleDescriptor.read(in);
-                printModuleDescriptor(md);
+                ModuleInfo.Attributes attrs = ModuleInfo.read(in, null);
+                printModuleDescriptor(attrs.descriptor(), attrs.recordedHashes());
                 return true;
             } catch (IOException e) {
                 throw new CommandException("err.module.descriptor.not.found");
@@ -270,9 +271,7 @@ public class JmodTask {
                   .collect(joining(" "));
     }
 
-    private static final JavaLangModuleAccess JLMA = SharedSecrets.getJavaLangModuleAccess();
-
-    private void printModuleDescriptor(ModuleDescriptor md)
+    private void printModuleDescriptor(ModuleDescriptor md, ModuleHashes hashes)
         throws IOException
     {
         StringBuilder sb = new StringBuilder();
@@ -318,7 +317,22 @@ public class JmodTask {
 
         md.osVersion().ifPresent(v -> sb.append("\n  operating-system-version " + v));
 
+        if (hashes != null) {
+            hashes.names().stream().sorted().forEach(
+                    mod -> sb.append("\n  hashes ").append(mod).append(" ")
+                             .append(hashes.algorithm()).append(" ")
+                             .append(toHex(hashes.hashFor(mod))));
+        }
+
         out.println(sb.toString());
+    }
+
+    private String toHex(byte[] ba) {
+        StringBuilder sb = new StringBuilder(ba.length);
+        for (byte b: ba) {
+            sb.append(String.format("%02x", b & 0xff));
+        }
+        return sb.toString();
     }
 
     private boolean create() throws IOException {
@@ -497,12 +511,12 @@ public class JmodTask {
                 }
 
                 URI uri = options.jmodFile.toUri();
-                ModuleReference mref = new ModuleReference(descriptor, uri, new Supplier<>() {
+                ModuleReference mref = new ModuleReference(descriptor, uri) {
                     @Override
-                    public ModuleReader get() {
+                    public ModuleReader open() {
                         throw new UnsupportedOperationException();
                     }
-                });
+                };
 
                 // compose a module finder with the module path and also
                 // a module finder that can find the jmod file being created
@@ -1309,7 +1323,7 @@ public class JmodTask {
                 options.manPages = opts.valuesOf(manPages);
             if (opts.has(modulePath)) {
                 Path[] dirs = opts.valuesOf(modulePath).toArray(new Path[0]);
-                options.moduleFinder = JLMA.newModulePath(Runtime.version(), true, dirs);
+                options.moduleFinder = new ModulePath(Runtime.version(), true, dirs);
             }
             if (opts.has(moduleVersion))
                 options.moduleVersion = opts.valueOf(moduleVersion);

@@ -50,7 +50,6 @@ public final class ModuleHashes {
         byte[] generate(String algorithm);
     }
 
-
     private final String algorithm;
     private final Map<String, byte[]> nameToHash;
 

@@ -44,6 +44,8 @@ import java.util.function.IntSupplier;
 import jdk.internal.misc.JavaLangModuleAccess;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.module.Checks;
+import jdk.internal.module.ModuleHashes;
+import jdk.internal.module.ModuleInfo;
 import jdk.internal.module.ModuleInfoExtender;
 import jdk.internal.module.SystemModules;
 import jdk.internal.org.objectweb.asm.ClassWriter;
@@ -127,7 +129,9 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
             assert module.name().equals(data.moduleName());
             try {
                 ByteArrayInputStream bain = new ByteArrayInputStream(data.contentBytes());
-                ModuleDescriptor md = ModuleDescriptor.read(bain);
+                ModuleInfo.Attributes attrs = ModuleInfo.read(bain, null);
+                ModuleDescriptor md = attrs.descriptor();
+                ModuleHashes hashes = attrs.recordedHashes();
                 validateNames(md);
 
                 Set<String> packages = module.packages();
@@ -142,6 +146,11 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
                     data = data.copyWithContent(minfoWriter.getBytes());
                 }
                 out.add(data);
+
+                if (hashes != null) {
+                    generator.addHashes(hashes);
+                }
+
             } catch (IOException e) {
                 throw new PluginException(e);
             }
@@ -383,6 +392,13 @@ public final class SystemModuleDescriptorPlugin implements Plugin {
 
             // uses
             dedupSetBuilder.stringSet(md.uses());
+        }
+
+        /**
+         * Adds the module hashes to the modulesToHash map
+         */
+        public void addHashes(ModuleHashes hashes) {
+            modulesToHash.putAll(hashes.hashes());
         }
 
         /*

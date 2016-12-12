@@ -23,12 +23,16 @@
  * questions.
  */
 
-package java.lang.module;
+package jdk.internal.module;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleReader;
+import java.lang.module.ModuleReference;
 import java.net.URI;
 import java.net.URLConnection;
 import java.nio.ByteBuffer;
@@ -36,7 +40,6 @@ import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -54,11 +57,7 @@ import jdk.internal.jimage.ImageReader;
 import jdk.internal.jimage.ImageReaderFactory;
 import jdk.internal.misc.JavaNetUriAccess;
 import jdk.internal.misc.SharedSecrets;
-import jdk.internal.module.ModuleBootstrap;
-import jdk.internal.module.ModuleHashes;
 import jdk.internal.module.ModuleHashes.HashSupplier;
-import jdk.internal.module.SystemModules;
-import jdk.internal.module.ModulePatcher;
 import jdk.internal.perf.PerfCounter;
 
 /**
@@ -69,7 +68,7 @@ import jdk.internal.perf.PerfCounter;
  * Packages attribute.
  */
 
-class SystemModuleFinder implements ModuleFinder {
+public class SystemModuleFinder implements ModuleFinder {
 
     private static final JavaNetUriAccess JNUA = SharedSecrets.getJavaNetUriAccess();
 
@@ -186,7 +185,7 @@ class SystemModuleFinder implements ModuleFinder {
             }
         };
 
-        ModuleReference mref = new ModuleReference(md, uri, readerSupplier);
+        ModuleReference mref = new ModuleReferenceImpl(md, uri, readerSupplier);
 
         // may need a reference to a patched module if --patch-module specified
         mref = ModuleBootstrap.patcher().patchIfNeeded(mref);
@@ -231,7 +230,7 @@ class SystemModuleFinder implements ModuleFinder {
         }
     }
 
-    SystemModuleFinder() { }
+    public SystemModuleFinder() { }
 
     @Override
     public Optional<ModuleReference> find(String name) {

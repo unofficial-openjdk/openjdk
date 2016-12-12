@@ -23,13 +23,15 @@
  * questions.
  */
 
-package java.lang.module;
+package jdk.internal.module;
 
 import java.io.File;
 import java.io.IOError;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.lang.module.ModuleReader;
+import java.lang.module.ModuleReference;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
@@ -51,10 +53,7 @@ import java.util.zip.ZipFile;
 import jdk.internal.jmod.JmodFile;
 import jdk.internal.misc.JavaLangAccess;
 import jdk.internal.misc.SharedSecrets;
-import jdk.internal.module.ModuleBootstrap;
-import jdk.internal.module.ModuleHashes;
 import jdk.internal.module.ModuleHashes.HashSupplier;
-import jdk.internal.module.ModulePatcher;
 import jdk.internal.util.jar.VersionedStream;
 import sun.net.www.ParseUtil;
 
@@ -80,11 +79,12 @@ class ModuleReferences {
                                              Supplier<ModuleReader> supplier,
                                              HashSupplier hasher) {
 
-        ModuleReference mref = new ModuleReference(attrs.descriptor(),
-                                                   uri,
-                                                   supplier,
-                                                   attrs.recordedHashes(),
-                                                   hasher);
+        ModuleReference mref = new ModuleReferenceImpl(attrs.descriptor(),
+                                                       uri,
+                                                       supplier,
+                                                       false,
+                                                       attrs.recordedHashes(),
+                                                       hasher);
         if (JLA.getBootLayer() == null)
             mref = ModuleBootstrap.patcher().patchIfNeeded(mref);
 
