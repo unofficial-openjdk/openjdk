@@ -83,11 +83,12 @@ public class SystemModuleFinder implements ModuleFinder {
     // ImageReader used to access all modules in the image
     private static final ImageReader imageReader;
 
-    // the set of modules in the run-time image
-    private static final Set<ModuleReference> modules;
+    // singleton finder to find modules in the run-time images
+    private static final SystemModuleFinder INSTANCE;
 
-    // maps module name to module reference
-    private static final Map<String, ModuleReference> nameToModule;
+    public static SystemModuleFinder getInstance() {
+        return INSTANCE;
+    }
 
     /**
      * For now, the module references are created eagerly on the assumption
@@ -97,67 +98,9 @@ public class SystemModuleFinder implements ModuleFinder {
         long t0 = System.nanoTime();
         imageReader = ImageReaderFactory.getImageReader();
 
-        String[] names = moduleNames();
-        ModuleDescriptor[] descriptors = descriptors(names);
-
-        int n = names.length;
-        moduleCount.add(n);
-
-        ModuleReference[] mods = new ModuleReference[n];
-
-        @SuppressWarnings(value = {"rawtypes", "unchecked"})
-        Entry<String, ModuleReference>[] map
-            = (Entry<String, ModuleReference>[])new Entry[n];
-
-        for (int i = 0; i < n; i++) {
-            ModuleDescriptor md = descriptors[i];
-
-            // create the ModuleReference
-            ModuleReference mref = toModuleReference(md);
-
-            mods[i] = mref;
-            map[i] = Map.entry(names[i], mref);
-
-            // counters
-            packageCount.add(md.packages().size());
-            exportsCount.add(md.exports().size());
-        }
-
-        modules = Set.of(mods);
-        nameToModule = Map.ofEntries(map);
+        INSTANCE = new SystemModuleFinder();
 
         initTime.addElapsedTimeFrom(t0);
-    }
-
-    /*
-     * Returns an array of ModuleDescriptor of the given module names.
-     *
-     * This obtains ModuleDescriptors from SystemModules class that is generated
-     * from the jlink system-modules plugin.  ModuleDescriptors have already
-     * been validated at link time.
-     *
-     * If java.base is patched, or fastpath is disabled for troubleshooting
-     * purpose, it will fall back to find system modules via jrt file system.
-     */
-    private static ModuleDescriptor[] descriptors(String[] names) {
-        // fastpath is enabled by default.
-        // It can be disabled for troubleshooting purpose.
-        boolean disabled =
-            System.getProperty("jdk.system.module.finder.disabledFastPath") != null;
-
-        // fast loading of ModuleDescriptor of system modules
-        if (isFastPathSupported() && !disabled)
-            return SystemModules.modules();
-
-        // if fast loading of ModuleDescriptors is disabled
-        // fallback to read module-info.class
-        ModuleDescriptor[] descriptors = new ModuleDescriptor[names.length];
-        for (int i = 0; i < names.length; i++) {
-            String mn = names[i];
-            ImageLocation loc = imageReader.findLocation(mn, "module-info.class");
-            descriptors[i] = ModuleDescriptor.read(imageReader.getResourceBuffer(loc));
-        }
-        return descriptors;
     }
 
     private static boolean isFastPathSupported() {
@@ -174,50 +117,20 @@ public class SystemModuleFinder implements ModuleFinder {
         return imageReader.getModuleNames();
     }
 
-    private static ModuleReference toModuleReference(ModuleDescriptor md) {
-        String mn = md.name();
-        URI uri = JNUA.create("jrt", "/".concat(mn));
 
-        Supplier<ModuleReader> readerSupplier = new Supplier<>() {
-            @Override
-            public ModuleReader get() {
-                return new ImageModuleReader(mn, uri);
-            }
-        };
-
-        ModuleReference mref = new ModuleReferenceImpl(md, uri, readerSupplier);
-
-        // may need a reference to a patched module if --patch-module specified
-        mref = ModuleBootstrap.patcher().patchIfNeeded(mref);
-
-        return mref;
-    }
-
-    private static HashSupplier hashSupplier(int index, String name) {
-        if (isFastPathSupported()) {
-            return new HashSupplier() {
-                @Override
-                public byte[] generate(String algorithm) {
-                    return SystemModules.MODULES_TO_HASH[index];
-                }
-            };
-        } else {
-            return Hashes.hashFor(name);
-        }
-    }
-
-    /*
-     * This helper class is only used when SystemModules is patched.
-     * It will get the recorded hashes from module-info.class.
+    /**
+     * Helper class to use the recorded hashes to create a HashSupplier
      */
     private static class Hashes {
         static Map<String, byte[]> hashes = new HashMap<>();
 
         static void add(ModuleHashes recordedHashes) {
-            hashes.putAll(recordedHashes.hashes());
+            if (recordedHashes != null) {
+                hashes.putAll(recordedHashes.hashes());
+            }
         }
 
-        static HashSupplier hashFor(String name) {
+        static HashSupplier hashSupplierFor(String name) {
             if (!hashes.containsKey(name))
                 return null;
 
@@ -230,7 +143,73 @@ public class SystemModuleFinder implements ModuleFinder {
         }
     }
 
-    public SystemModuleFinder() { }
+    // the set of modules in the run-time image
+    private final Set<ModuleReference> modules;
+
+    // maps module name to module reference
+    private final Map<String, ModuleReference> nameToModule;
+
+    private SystemModuleFinder() {
+        String[] names = moduleNames();
+        int n = names.length;
+        moduleCount.add(n);
+
+        // fastpath is enabled by default.
+        // It can be disabled for troubleshooting purpose.
+        boolean disabled =
+            System.getProperty("jdk.system.module.finder.disabledFastPath") != null;
+
+        ModuleDescriptor[] descriptors;
+        ModuleHashes[] recordedHashes;
+
+        // fast loading of ModuleDescriptor of system modules
+        if (isFastPathSupported() && !disabled) {
+            descriptors = SystemModules.modules();
+            recordedHashes = SystemModules.hashes();
+        } else {
+            // if fast loading of ModuleDescriptors is disabled
+            // fallback to read module-info.class
+            descriptors = new ModuleDescriptor[n];
+            recordedHashes = new ModuleHashes[n];
+            for (int i = 0; i < names.length; i++) {
+                String mn = names[i];
+                ImageLocation loc = imageReader.findLocation(mn, "module-info.class");
+                ModuleInfo.Attributes attrs =
+                    ModuleInfo.read(imageReader.getResourceBuffer(loc), null);
+                descriptors[i] = attrs.descriptor();
+                recordedHashes[i] = attrs.recordedHashes();
+            }
+        }
+
+        // record the hashes to build HashSupplier
+        for (ModuleHashes mh : recordedHashes) {
+            Hashes.add(mh);
+        }
+
+        ModuleReference[] mods = new ModuleReference[n];
+
+        @SuppressWarnings(value = {"rawtypes", "unchecked"})
+        Entry<String, ModuleReference>[] map
+            = (Entry<String, ModuleReference>[])new Entry[n];
+
+        for (int i = 0; i < n; i++) {
+            ModuleDescriptor md = descriptors[i];
+
+            // create the ModuleReference
+            ModuleReference mref = toModuleReference(md,
+                                                     recordedHashes[i],
+                                                     Hashes.hashSupplierFor(names[i]));
+            mods[i] = mref;
+            map[i] = Map.entry(names[i], mref);
+
+            // counters
+            packageCount.add(md.packages().size());
+            exportsCount.add(md.exports().size());
+        }
+
+        modules = Set.of(mods);
+        nameToModule = Map.ofEntries(map);
+    }
 
     @Override
     public Optional<ModuleReference> find(String name) {
@@ -241,6 +220,29 @@ public class SystemModuleFinder implements ModuleFinder {
     @Override
     public Set<ModuleReference> findAll() {
         return modules;
+    }
+
+    private ModuleReference toModuleReference(ModuleDescriptor md,
+                                              ModuleHashes recordedHashes,
+                                              HashSupplier hasher) {
+        String mn = md.name();
+        URI uri = JNUA.create("jrt", "/".concat(mn));
+
+        Supplier<ModuleReader> readerSupplier = new Supplier<>() {
+            @Override
+            public ModuleReader get() {
+                return new ImageModuleReader(mn, uri);
+            }
+        };
+
+        ModuleReference mref =
+            new ModuleReferenceImpl(md, uri, readerSupplier, false,
+                                    recordedHashes, hasher);
+
+        // may need a reference to a patched module if --patch-module specified
+        mref = ModuleBootstrap.patcher().patchIfNeeded(mref);
+
+        return mref;
     }
 
 

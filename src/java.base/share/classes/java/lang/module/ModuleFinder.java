@@ -168,7 +168,7 @@ public interface ModuleFinder {
 
         Path modules = Paths.get(home, "lib", "modules");
         if (Files.isRegularFile(modules)) {
-            return new SystemModuleFinder();
+            return SystemModuleFinder.getInstance();
         } else {
             Path mlib = Paths.get(home, "modules");
             if (Files.isDirectory(mlib)) {
