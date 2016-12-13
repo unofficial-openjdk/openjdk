@@ -822,8 +822,7 @@ public final class ModuleInfo {
                                               + index);
             }
             String value = getUtf8(((IndexEntry) e).index);
-            checkModuleName(index, value);
-            return value;
+            return decodeModuleName(index, value);
         }
 
         String getUtf8(int index) {
@@ -857,12 +856,81 @@ public final class ModuleInfo {
             }
         }
 
-        void checkModuleName(int index, String value) {
+        /**
+         * "Decode" a module name that has been read from the constant pool.
+         */
+        String decodeModuleName(int index, String value) {
             int len = value.length();
             if (len == 0) {
-                throw invalidModuleDescriptor("Module name is zero length");
+                throw invalidModuleDescriptor("CONSTANT_Module at entry "
+                                              + index + " is zero length");
             }
-            // TBD catch illegal characters
+            int i = 0;
+            while (i < len) {
+                int cp = value.codePointAt(i);
+                if (cp == ':' || cp == '@' || cp < 0x20) {
+                    throw invalidModuleDescriptor("CONSTANT_Module at entry "
+                                                  + index + " has illegal character: "
+                                                  + Character.getName(cp));
+                }
+
+                // blackslash is the escape character
+                if (cp == '\\')
+                    return decodeModuleName(index, i, value);
+
+                i += Character.charCount(cp);
+            }
+            return value;
+        }
+
+        /**
+         * "Decode" a module name that has been read from the constant pool and
+         * partly checked for illegal characters (up to position {@code i}).
+         */
+        String decodeModuleName(int index, int i, String value) {
+            StringBuilder sb = new StringBuilder();
+
+            // copy the code points that have been checked
+            int j = 0;
+            while (j < i) {
+                int cp = value.codePointAt(j);
+                sb.appendCodePoint(cp);
+                j += Character.charCount(cp);
+            }
+
+            // decode from position {@code i} to end
+            int len = value.length();
+            while (i < len) {
+                int cp = value.codePointAt(i);
+                if (cp == ':' || cp == '@' || cp < 0x20) {
+                    throw invalidModuleDescriptor("CONSTANT_Module at entry "
+                                                  + index + " has illegal character: "
+                                                  + Character.getName(cp));
+                }
+
+                // blackslash is the escape character
+                if (cp == '\\') {
+                    j = i + Character.charCount(cp);
+                    if (j >= len) {
+                        throw invalidModuleDescriptor("CONSTANT_Module at entry "
+                                                       + index + " has illegal "
+                                                       + "escape sequence");
+                    }
+                    int next = value.codePointAt(j);
+                    if (next != '\\' && next != ':' && next != '@') {
+                        throw invalidModuleDescriptor("CONSTANT_Module at entry "
+                                                      + index + " has illegal "
+                                                      + "escape sequence");
+                    }
+                    sb.appendCodePoint(next);
+                    i += Character.charCount(next);
+                } else {
+                    sb.appendCodePoint(cp);
+                }
+
+                i += Character.charCount(cp);
+            }
+            return sb.toString();
         }
     }
 

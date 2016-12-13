@@ -23,9 +23,7 @@
 
 /**
  * @test
- * @modules java.base/java.lang.module:open
- *          java.base/jdk.internal.misc
- *          java.base/jdk.internal.module
+ * @modules java.base/jdk.internal.module
  * @run testng ModuleDescriptorTest
  * @summary Basic test for java.lang.module.ModuleDescriptor and its builder
  */
@@ -49,11 +47,9 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static java.lang.module.ModuleDescriptor.Requires.Modifier.*;
 
-import jdk.internal.misc.SharedSecrets;
 import jdk.internal.module.ModuleInfoWriter;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -1007,7 +1003,7 @@ public class ModuleDescriptorTest {
     };
 
     // basic test reading module-info.class
-    public void testRead1() throws Exception {
+    public void testRead() throws Exception {
         Module base = Object.class.getModule();
 
         try (InputStream in = base.getResourceAsStream("module-info.class")) {
@@ -1023,42 +1019,6 @@ public class ModuleDescriptorTest {
             assertEquals(descriptor.name(), "java.base");
         }
     }
-
-    /**
-     * Test reading a module-info.class that has a module name, requires,
-     * and qualified exports with module names that are not supported in the
-     * Java Language.
-     */
-    public void testRead2() throws Exception {
-        Builder builder = SharedSecrets.getJavaLangModuleAccess()
-                .newModuleBuilder("m?1", false, false, false);
-        ModuleDescriptor descriptor = builder
-                .requires("java.base")
-                .requires("-m1")
-                .exports("p", Set.of("m2-"))
-                .build();
-
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ModuleInfoWriter.write(descriptor, baos);
-        ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
-
-        descriptor = ModuleDescriptor.read(bb);
-        assertEquals(descriptor.name(), "m?1");
-
-        Set<String> requires = descriptor.requires()
-                .stream()
-                .map(Requires::name)
-                .collect(Collectors.toSet());
-        assertTrue(requires.size() == 2);
-        assertTrue(requires.contains("java.base"));
-        assertTrue(requires.contains("-m1"));
-
-        assertTrue(descriptor.exports().size() == 1);
-        Exports e = descriptor.exports().iterator().next();
-        assertTrue(e.targets().size() == 1);
-        assertTrue(e.targets().contains("m2-"));
-    }
-
     /**
      * Test ModuleDescriptor with a packager finder
      */

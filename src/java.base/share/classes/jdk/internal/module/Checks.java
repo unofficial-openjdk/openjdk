@@ -58,9 +58,28 @@ public final class Checks {
             throw new IllegalArgumentException(name + ": Invalid module name"
                     + ": '" + id + "' is not a Java identifier");
         }
-        //if (Character.isJavaIdentifierStart(last))
+        //if (!Character.isJavaIdentifierStart(last))
         //    throw new IllegalArgumentException(name + ": Module name ends in digit");
         return name;
+    }
+
+    /**
+     * Returns {@code true} if the given name is a legal module name.
+     */
+    public static boolean isModuleName(String name) {
+        int next;
+        int off = 0;
+        while ((next = name.indexOf('.', off)) != -1) {
+            if (isJavaIdentifier(name, off, (next - off)) == -1)
+                return false;
+            off = next+1;
+        }
+        int last = isJavaIdentifier(name, off, name.length() - off);
+        if (last == -1)
+            return false;
+        //if (!Character.isJavaIdentifierStart(last))
+        //    return false;
+        return true;
     }
 
     /**
@@ -152,13 +171,16 @@ public final class Checks {
         int first = Character.codePointAt(cs, offset);
         if (!Character.isJavaIdentifierStart(first))
             return -1;
+
+        int cp = first;
         int i = Character.charCount(first);
-        int cp = Character.charCount(first);
-        for (; i < count; i += Character.charCount(cp)) {
+        while (i < count) {
             cp = Character.codePointAt(cs, offset+i);
             if (!Character.isJavaIdentifierPart(cp))
                 return -1;
+            i += Character.charCount(cp);
         }
+
         return cp;
     }
 }
