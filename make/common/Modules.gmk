@@ -48,7 +48,6 @@ BOOT_MODULES += \
     java.base \
     java.datatransfer \
     java.desktop \
-    java.httpclient \
     java.instrument \
     java.logging \
     java.management \
@@ -98,6 +97,7 @@ PLATFORM_MODULES += \
 
 PLATFORM_MODULES += \
     java.compiler \
+    jdk.incubator.httpclient \
     java.scripting \
     java.security.jgss \
     java.smartcardio \
@@ -283,6 +283,21 @@ FindAllUpgradeableModules = \
           ) \
         )) \
     )
+
+################################################################################
+
+LEGAL_SUBDIRS += $(OPENJDK_TARGET_OS)/legal
+ifneq ($(OPENJDK_TARGET_OS), $(OPENJDK_TARGET_OS_TYPE))
+  LEGAL_SUBDIRS += $(OPENJDK_TARGET_OS_TYPE)/legal
+endif
+LEGAL_SUBDIRS += share/legal
+
+# Find all legal dirs for a particular module
+# $1 - Module to find legal dirs for
+FindModuleLegalDirs = \
+    $(strip $(wildcard \
+        $(addsuffix /$(strip $1), $(IMPORT_MODULES_LEGAL)) \
+        $(foreach sub, $(LEGAL_SUBDIRS), $(addsuffix /$(strip $1)/$(sub), $(TOP_SRC_DIRS)))))
 
 ################################################################################
 
