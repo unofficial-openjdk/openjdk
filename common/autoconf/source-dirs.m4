@@ -105,8 +105,20 @@ AC_DEFUN_ONCE([SRCDIRS_SETUP_IMPORT_MODULES],
   if test -d "$IMPORT_MODULES_TOPDIR/modules_conf"; then
     IMPORT_MODULES_CONF="$IMPORT_MODULES_TOPDIR/modules_conf"
   fi
+  if test -d "$IMPORT_MODULES_TOPDIR/modules_legal"; then
+    IMPORT_MODULES_LEGAL="$IMPORT_MODULES_TOPDIR/modules_legal"
+  fi
+  if test -d "$IMPORT_MODULES_TOPDIR/modules_man"; then
+    IMPORT_MODULES_MAN="$IMPORT_MODULES_TOPDIR/modules_man"
+  fi
   if test -d "$IMPORT_MODULES_TOPDIR/modules_src"; then
     IMPORT_MODULES_SRC="$IMPORT_MODULES_TOPDIR/modules_src"
+  fi
+  # Workaround for using different imported module-info.java in Jake due to a
+  # change in format. Remove once new format is standard in JDK 9 and javafx
+  # delivers just that.
+  if test -d "$IMPORT_MODULES_TOPDIR/modules_src_jake"; then
+    IMPORT_MODULES_SRC="$IMPORT_MODULES_TOPDIR/modules_src_jake $IMPORT_MODULES_SRC"
   fi
   if test -d "$IMPORT_MODULES_TOPDIR/make"; then
     IMPORT_MODULES_MAKE="$IMPORT_MODULES_TOPDIR/make"

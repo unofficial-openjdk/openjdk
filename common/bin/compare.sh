@@ -372,7 +372,7 @@ compare_general_files() {
                 $CAT $OTHER_DIR/$f | eval "$HTML_FILTER" > $OTHER_FILE &
                 $CAT $THIS_DIR/$f  | eval "$HTML_FILTER" > $THIS_FILE &
                 wait
-            elif [ "$f" = "./lib/classlist" ]; then
+            elif [[ "$f" = *"/lib/classlist" ]]; then
                 # The classlist files may have some lines in random order
                 OTHER_FILE=$WORK_DIR/$f.other
                 THIS_FILE=$WORK_DIR/$f.this
@@ -509,30 +509,32 @@ compare_zip_file() {
             | $CUT -f 2 -d ' ' | $SED "s|$OTHER_UNZIPDIR/||g")
     fi
 
-    $RM -f $WORK_DIR/$ZIP_FILE.diffs
-    for file in $DIFFING_FILES; do
-        if [[ "$ACCEPTED_JARZIP_CONTENTS $EXCEPTIONS" != *"$file"* ]]; then
-            diff_text $OTHER_UNZIPDIR/$file $THIS_UNZIPDIR/$file >> $WORK_DIR/$ZIP_FILE.diffs
-        fi
-    done
+    if [ "$CMP_ZIPS_CONTENTS" = "true" ]; then
+        $RM -f $WORK_DIR/$ZIP_FILE.diffs
+        for file in $DIFFING_FILES; do
+            if [[ "$ACCEPTED_JARZIP_CONTENTS $EXCEPTIONS" != *"$file"* ]]; then
+                diff_text $OTHER_UNZIPDIR/$file $THIS_UNZIPDIR/$file >> $WORK_DIR/$ZIP_FILE.diffs
+            fi
+        done
 
-    if [ -s "$WORK_DIR/$ZIP_FILE.diffs" ]; then
-        return_value=1
-        echo "        Differing files in $ZIP_FILE"
-        $CAT $WORK_DIR/$ZIP_FILE.diffs | $GREP 'differ$' | cut -f 2 -d ' ' | \
-            $SED "s|$OTHER_UNZIPDIR|            |g" > $WORK_DIR/$ZIP_FILE.difflist
-        $CAT $WORK_DIR/$ZIP_FILE.difflist
+        if [ -s "$WORK_DIR/$ZIP_FILE.diffs" ]; then
+            return_value=1
+            echo "        Differing files in $ZIP_FILE"
+            $CAT $WORK_DIR/$ZIP_FILE.diffs | $GREP 'differ$' | cut -f 2 -d ' ' | \
+                $SED "s|$OTHER_UNZIPDIR|            |g" > $WORK_DIR/$ZIP_FILE.difflist
+            $CAT $WORK_DIR/$ZIP_FILE.difflist
 
-        if [ -n "$SHOW_DIFFS" ]; then
-            for i in $(cat $WORK_DIR/$ZIP_FILE.difflist) ; do
-                if [ -f "${OTHER_UNZIPDIR}/$i.javap" ]; then
-                    LC_ALL=C $DIFF ${OTHER_UNZIPDIR}/$i.javap ${THIS_UNZIPDIR}/$i.javap
-                elif [ -f "${OTHER_UNZIPDIR}/$i.cleaned" ]; then
-                    LC_ALL=C $DIFF ${OTHER_UNZIPDIR}/$i.cleaned ${THIS_UNZIPDIR}/$i
-                else
-                    LC_ALL=C $DIFF ${OTHER_UNZIPDIR}/$i ${THIS_UNZIPDIR}/$i
-                fi
-            done
+            if [ -n "$SHOW_DIFFS" ]; then
+                for i in $(cat $WORK_DIR/$ZIP_FILE.difflist) ; do
+                    if [ -f "${OTHER_UNZIPDIR}/$i.javap" ]; then
+                        LC_ALL=C $DIFF ${OTHER_UNZIPDIR}/$i.javap ${THIS_UNZIPDIR}/$i.javap
+                    elif [ -f "${OTHER_UNZIPDIR}/$i.cleaned" ]; then
+                        LC_ALL=C $DIFF ${OTHER_UNZIPDIR}/$i.cleaned ${THIS_UNZIPDIR}/$i
+                    else
+                        LC_ALL=C $DIFF ${OTHER_UNZIPDIR}/$i ${THIS_UNZIPDIR}/$i
+                    fi
+                done
+            fi
         fi
     fi
 
@@ -642,69 +644,18 @@ compare_bin_file() {
 
     if [ "$OPENJDK_TARGET_OS" = "windows" ]; then
         unset _NT_SYMBOL_PATH
-        # On windows we need to unzip the debug symbols, if present
-        OTHER_FILE_BASE=${OTHER_FILE/.dll/}
-        OTHER_FILE_BASE=${OTHER_FILE_BASE/.exe/}
-        OTHER_FILE_BASE=${OTHER_FILE_BASE/.cpl/}
-        DIZ_NAME=$(basename $OTHER_FILE_BASE).diz
-        # Some .exe files have the same name as a .dll file. Make sure the exe
-        # files get the right debug symbols.
-        if [ "$NAME" = "java.exe" ] \
-               && [ -f "$OTHER/support/native/java.base/java_objs/java.diz" ]; then
-            OTHER_DIZ_FILE="$OTHER/support/native/java.base/java_objs/java.diz"
-        elif [ "$NAME" = "jimage.exe" ] \
-               && [ -f "$OTHER/support/native/jdk.jlink/jimage_objs/jimage.diz" ]; then
-            OTHER_DIZ_FILE="$OTHER/support/modules_cmds/jdk.jlink/jimage.diz"
-        elif [ "$NAME" = "javacpl.exe" ] \
-               && [ -f "$OTHER/support/native/jdk.plugin/javacpl/javacpl.diz" ]; then
-            OTHER_DIZ_FILE="$OTHER/support/modules_cmds/jdk.deploy.controlpanel/javacpl.diz"
-        elif [ -f "${OTHER_FILE_BASE}.diz" ]; then
-            OTHER_DIZ_FILE=${OTHER_FILE_BASE}.diz
-        else
-            # Some files, jli.dll, appears twice in the image but only one of
-            # them has a diz file next to it.
-            OTHER_DIZ_FILE="$($FIND $OTHER_DIR -name $DIZ_NAME | $SED 1q)"
-            if [ ! -f "$OTHER_DIZ_FILE" ]; then
-                # As a last resort, look for diz file in the whole build output
-                # dir.
-                OTHER_DIZ_FILE="$($FIND $OTHER -name $DIZ_NAME | $SED 1q)"
-            fi
+        if [ "$(uname -o)" = "Cygwin" ]; then
+            THIS=$(cygpath -msa $THIS)
+            OTHER=$(cygpath -msa $OTHER)
         fi
-        if [ -n "$OTHER_DIZ_FILE" ]; then
-            $MKDIR -p $FILE_WORK_DIR/other
-            (cd $FILE_WORK_DIR/other ; $UNARCHIVE -o $OTHER_DIZ_FILE)
-            export _NT_SYMBOL_PATH="$FILE_WORK_DIR/other"
-        fi
-
-        THIS_FILE_BASE=${THIS_FILE/.dll/}
-        THIS_FILE_BASE=${THIS_FILE_BASE/.exe/}
-        THIS_FILE_BASE=${THIS_FILE_BASE/.cpl/}
-        # Some .exe files have the same name as a .dll file. Make sure the exe
-        # files get the right debug symbols.
-        if [ "$NAME" = "java.exe" ] \
-               && [ -f "$THIS/support/native/java.base/java_objs/java.diz" ]; then
-            THIS_DIZ_FILE="$THIS/support/native/java.base/java_objs/java.diz"
-        elif [ "$NAME" = "jimage.exe" ] \
-               && [ -f "$THIS/support/native/jdk.jlink/jimage_objs/jimage.diz" ]; then
-            THIS_DIZ_FILE="$THIS/support/modules_cmds/jdk.jlink/jimage.diz"
-        elif [ "$NAME" = "javacpl.exe" ] \
-               && [ -f "$THIS/support/native/jdk.plugin/javacpl/javacpl.diz" ]; then
-            THIS_DIZ_FILE="$THIS/support/modules_cmds/jdk.deploy.controlpanel/javacpl.diz"
-        elif [ -f "${THIS_FILE_BASE}.diz" ]; then
-            THIS_DIZ_FILE=${THIS_FILE/.dll/}.diz
-        else
-            THIS_DIZ_FILE="$($FIND $THIS_DIR -name $DIZ_NAME | $SED 1q)"
-            if [ ! -f "$THIS_DIZ_FILE" ]; then
-                # As a last resort, look for diz file in the whole build output
-                # dir.
-                THIS_DIZ_FILE="$($FIND $THIS -name $DIZ_NAME | $SED 1q)"
-            fi
-        fi
-        if [ -n "$THIS_DIZ_FILE" ]; then
-            $MKDIR -p $FILE_WORK_DIR/this
-            (cd $FILE_WORK_DIR/this ; $UNARCHIVE -o $THIS_DIZ_FILE)
-            export _NT_SYMBOL_PATH="$_NT_SYMBOL_PATH;$FILE_WORK_DIR/this"
-        fi
+        # Build an _NT_SYMBOL_PATH that contains all known locations for
+        # pdb files.
+        PDB_DIRS="$(ls -d \
+            {$OTHER,$THIS}/support/modules_{cmds,libs}/{*,*/*} \
+            {$OTHER,$THIS}/support/demos/image/jvmti/*/lib \
+            {$OTHER,$THIS}/support/native/java.base/java_objs \
+            )"
+        export _NT_SYMBOL_PATH="$(echo $PDB_DIRS | tr ' ' ';')"
     fi
 
     if [ -z "$SKIP_BIN_DIFF" ]; then
@@ -1123,7 +1074,8 @@ if [ -z "$1" ] || [ "$1" = "-h" ] || [ "$1" = "-?" ] || [ "$1" = "/h" ] || [ "$1
     echo "-perms              Compare the permission bits on all files and directories"
     echo "-types              Compare the output of the file command on all files"
     echo "-general            Compare the files not convered by the specialized comparisons"
-    echo "-zips               Compare the contents of all zip files"
+    echo "-zips               Compare the contents of all zip files and files in them"
+    echo "-zips-names         Compare the file names inside all zip files"
     echo "-jars               Compare the contents of all jar files"
     echo "-libs               Compare all native libraries"
     echo "-execs              Compare all executables"
@@ -1151,6 +1103,7 @@ CMP_PERMS=false
 CMP_TYPES=false
 CMP_GENERAL=false
 CMP_ZIPS=false
+CMP_ZIPS_CONTENTS=true
 CMP_JARS=false
 CMP_LIBS=false
 CMP_EXECS=false
@@ -1194,6 +1147,11 @@ while [ -n "$1" ]; do
             ;;
         -zips)
             CMP_ZIPS=true
+            CMP_ZIPS_CONTENTS=true
+            ;;
+        -zips-names)
+            CMP_ZIPS=true
+            CMP_ZIPS_CONTENTS=false
             ;;
         -jars)
             CMP_JARS=true
@@ -1346,8 +1304,8 @@ if [ "$SKIP_DEFAULT" != "true" ]; then
         OTHER_JDK="$OTHER/images/jdk"
         OTHER_JRE="$OTHER/images/jre"
         echo "Selecting jdk images for compare"
-    elif [ -d "$(ls -d $THIS/licensee-src/build/*/images/jdk)" ] \
-        && [ -d "$(ls -d $OTHER/licensee-src/build/*/images/jdk)" ]
+    elif [ -d "$(ls -d $THIS/licensee-src/build/*/images/jdk 2> /dev/null)" ] \
+        && [ -d "$(ls -d $OTHER/licensee-src/build/*/images/jdk 2> /dev/null)" ]
     then
         echo "Selecting licensee images for compare"
         # Simply override the THIS and OTHER dir with the build dir from
