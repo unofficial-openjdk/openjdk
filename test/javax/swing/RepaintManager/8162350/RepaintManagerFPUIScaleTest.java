@@ -22,17 +22,27 @@
  */
 
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics2D;
+import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.geom.AffineTransform;
+import java.awt.image.BaseMultiResolutionImage;
+import java.awt.image.BufferedImage;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import javax.swing.BoxLayout;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -40,29 +50,28 @@ import javax.swing.SwingUtilities;
 
 /*
  * @test
- * @bug 8166591
- * @key headful
- * @summary [macos 10.12] Trackpad scrolling of text on OS X 10.12 Sierra
- *    is very fast (Trackpad, Retina only)
- * @requires (os.family == "windows" | os.family == "mac")
- * @run main/manual/othervm TooMuchWheelRotationEventsTest
+ * @bug 8162350
+ * @summary RepaintManager shifts repainted region when the floating point UI scale is used
+ * @run main/manual/othervm -Dsun.java2d.uiScale=1.5 RepaintManagerFPUIScaleTest
  */
-public class TooMuchWheelRotationEventsTest {
+public class RepaintManagerFPUIScaleTest {
 
     private static volatile boolean testResult = false;
     private static volatile CountDownLatch countDownLatch;
-    private static final String INSTRUCTIONS = " INSTRUCTIONS:\n"
-            + " Try to check the issue with trackpad\n"
+    private static final String INSTRUCTIONS = "INSTRUCTIONS:\n"
+            + "Check JScrollPane correctly repaints the view"
+            + " when UI scale has floating point value:\n"
             + "\n"
-            + " If the trackpad is not supported, press PASS\n"
-            + "\n"
-            + " Use the trackpad to slightly scroll the JTextArea horizontally and vertically.\n"
-            + " If the text area is scrolled too fast press FAIL, else press PASS.";
+            + "1. Scroll down the JScrollPane\n"
+            + "2. Select some values\n"
+            + "If the scrolled selected value is painted without artifacts,"
+            + "press PASS, else press FAIL.";
 
     public static void main(String args[]) throws Exception {
+
         countDownLatch = new CountDownLatch(1);
 
-        SwingUtilities.invokeLater(TooMuchWheelRotationEventsTest::createUI);
+        SwingUtilities.invokeLater(RepaintManagerFPUIScaleTest::createUI);
         countDownLatch.await(15, TimeUnit.MINUTES);
 
         if (!testResult) {
@@ -72,15 +81,14 @@ public class TooMuchWheelRotationEventsTest {
 
     private static void createUI() {
 
-        final JFrame mainFrame = new JFrame("Trackpad scrolling test");
+        final JFrame mainFrame = new JFrame("Motif L&F icons test");
         GridBagLayout layout = new GridBagLayout();
         JPanel mainControlPanel = new JPanel(layout);
         JPanel resultButtonPanel = new JPanel(layout);
 
         GridBagConstraints gbc = new GridBagConstraints();
 
-        JPanel testPanel = createTestPanel();
-
+        JComponent testPanel = createComponent();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -138,53 +146,78 @@ public class TooMuchWheelRotationEventsTest {
                 countDownLatch.countDown();
             }
         });
-        mainFrame.setLocationRelativeTo(null);
         mainFrame.setVisible(true);
     }
 
-    private static JPanel createTestPanel() {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        JTextArea textArea = new JTextArea(20, 20);
-        textArea.setText(getLongString());
-        JScrollPane scrollPane = new JScrollPane(textArea);
-        panel.add(scrollPane);
-        return panel;
+    private static JComponent createComponent() {
+
+        int N = 100;
+        String[] data = new String[N];
+        for (int i = 0; i < N; i++) {
+            data[i] = "Floating point test List Item: " + i;
+        }
+        JList list = new JList(data);
+        list.setCellRenderer(new TestListCellRenderer());
+
+        JScrollPane scrollPane = new JScrollPane(list);
+        return scrollPane;
     }
 
-    private static String getLongString() {
+    private static Color[] COLORS = {
+        Color.RED, Color.ORANGE, Color.GREEN, Color.BLUE, Color.GRAY
+    };
 
-        String lowCaseString = getLongString('a', 'z');
-        String upperCaseString = getLongString('A', 'Z');
-        String digitsString = getLongString('0', '9');
+    private static Image createTestImage(int width, int height, int colorindex) {
 
-        int repeat = 30;
-        StringBuilder lowCaseBuilder = new StringBuilder();
-        StringBuilder upperCaseBuilder = new StringBuilder();
-        StringBuilder digitsBuilder = new StringBuilder();
+        Color color = COLORS[colorindex % COLORS.length];
 
-        for (int i = 0; i < repeat; i++) {
-            lowCaseBuilder.append(lowCaseString).append(' ');
-            upperCaseBuilder.append(upperCaseString).append(' ');
-            digitsBuilder.append(digitsString).append(' ');
-        }
+        AffineTransform tx = GraphicsEnvironment
+                .getLocalGraphicsEnvironment()
+                .getDefaultScreenDevice()
+                .getDefaultConfiguration()
+                .getDefaultTransform();
 
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < 200; i++) {
-            builder.append(upperCaseBuilder).append('\n')
-                    .append(lowCaseBuilder).append('\n')
-                    .append(digitsBuilder).append("\n\n\n");
-        }
+        Image baseImage = createTestImage(width, height, 1, 1, color);
+        Image rvImage = createTestImage(width, height, tx.getScaleX(), tx.getScaleY(), color);
 
-        return builder.toString();
+        return new BaseMultiResolutionImage(baseImage, rvImage);
     }
 
-    private static String getLongString(char c1, char c2) {
+    private static Image createTestImage(int w, int h,
+            double scaleX, double scaleY, Color color) {
 
-        char[] chars = new char[c2 - c1 + 1];
-        for (char i = c1; i <= c2; i++) {
-            chars[i - c1] = i;
+        int width = (int) Math.ceil(scaleX * w);
+        int height = (int) Math.ceil(scaleY * h);
+        BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+
+        Graphics2D g = img.createGraphics();
+        g.setColor(Color.WHITE);
+        g.fillRect(0, 0, width, height);
+        g.scale(scaleX, scaleY);
+        g.setColor(color);
+        int d = 1;
+        int d2 = 2 * d;
+        g.drawLine(d, h / 2, w - d2, h / 2);
+        g.drawLine(w / 2, d, w / 2, h - d2);
+        g.drawRect(d, d, w - d2, h - d2);
+        g.dispose();
+
+        return img;
+    }
+
+    static class TestListCellRenderer extends DefaultListCellRenderer {
+
+        public Component getListCellRendererComponent(
+                JList list,
+                Object value,
+                int index,
+                boolean isSelected,
+                boolean cellHasFocus) {
+            Component retValue = super.getListCellRendererComponent(
+                    list, value, index, isSelected, cellHasFocus
+            );
+            setIcon(new ImageIcon(createTestImage(20, 10, index)));
+            return retValue;
         }
-        return new String(chars);
     }
 }
