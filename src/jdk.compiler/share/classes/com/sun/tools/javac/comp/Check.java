@@ -2116,6 +2116,18 @@ public class Check {
         }
     }
 
+    public void checkModuleName (JCModuleDecl tree) {
+        Name moduleName = tree.sym.name;
+        Assert.checkNonNull(moduleName);
+        if (lint.isEnabled(LintCategory.MODULE)) {
+            String moduleNameString = moduleName.toString();
+            int nameLength = moduleNameString.length();
+            if (nameLength > 0 && Character.isDigit(moduleNameString.charAt(nameLength - 1))) {
+                log.warning(Lint.LintCategory.MODULE, tree.qualId.pos(), Warnings.PoorChoiceForModuleName(moduleName));
+            }
+        }
+    }
+
     private boolean checkNameClash(ClassSymbol origin, Symbol s1, Symbol s2) {
         ClashFilter cf = new ClashFilter(origin.type);
         return (cf.accepts(s1) &&

@@ -205,6 +205,11 @@ public class Lint
         FINALLY("finally"),
 
         /**
+         * Warn about module system related issues.
+         */
+        MODULE("module"),
+
+        /**
          * Warn about issues relating to use of command line options
          */
         OPTIONS("options"),
