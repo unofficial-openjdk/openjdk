@@ -82,7 +82,7 @@ class ModuleReferences {
         ModuleReference mref = new ModuleReferenceImpl(attrs.descriptor(),
                                                        uri,
                                                        supplier,
-                                                       false,
+                                                       null,
                                                        attrs.recordedHashes(),
                                                        hasher,
                                                        attrs.moduleResolution());

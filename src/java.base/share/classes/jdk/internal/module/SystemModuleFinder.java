@@ -242,7 +242,7 @@ public class SystemModuleFinder implements ModuleFinder {
         };
 
         ModuleReference mref =
-            new ModuleReferenceImpl(md, uri, readerSupplier, false,
+            new ModuleReferenceImpl(md, uri, readerSupplier, null,
                                     recordedHashes, hasher, mres);
 
         // may need a reference to a patched module if --patch-module specified

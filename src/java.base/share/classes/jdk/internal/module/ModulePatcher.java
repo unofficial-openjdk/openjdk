@@ -158,7 +158,7 @@ public final class ModulePatcher {
         return new ModuleReferenceImpl(descriptor,
                                        location,
                                        () -> new PatchedModuleReader(paths, mref),
-                                       true,
+                                       this,
                                        null,
                                        null,
                                        mres);

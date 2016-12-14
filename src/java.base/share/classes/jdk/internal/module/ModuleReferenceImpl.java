@@ -43,8 +43,8 @@ public class ModuleReferenceImpl extends ModuleReference {
 
     private final Supplier<ModuleReader> readerSupplier;
 
-    // true if this is a reference to a patched module
-    private final boolean patched;
+    // non-null if the module is patched
+    private final ModulePatcher patcher;
 
     // the hashes of other modules recorded in this module
     private final ModuleHashes recordedHashes;
@@ -64,14 +64,14 @@ public class ModuleReferenceImpl extends ModuleReference {
     ModuleReferenceImpl(ModuleDescriptor descriptor,
                         URI location,
                         Supplier<ModuleReader> readerSupplier,
-                        boolean patched,
+                        ModulePatcher patcher,
                         ModuleHashes recordedHashes,
                         ModuleHashes.HashSupplier hasher,
                         ModuleResolution moduleResolution)
     {
         super(descriptor, location);
         this.readerSupplier = readerSupplier;
-        this.patched = patched;
+        this.patcher = patcher;
         this.recordedHashes = recordedHashes;
         this.hasher = hasher;
         this.moduleResolution = moduleResolution;
@@ -90,7 +90,7 @@ public class ModuleReferenceImpl extends ModuleReference {
      * Returns {@code true} if this module has been patched via --patch-module.
      */
     public boolean isPatched() {
-        return patched;
+        return (patcher != null);
     }
 
     /**
@@ -136,11 +136,8 @@ public class ModuleReferenceImpl extends ModuleReference {
         int hc = hash;
         if (hc == 0) {
             hc = descriptor().hashCode();
-            hc = 43 * hc + readerSupplier.hashCode();
             hc = 43 * hc + Objects.hashCode(location());
-            hc = 43 * hc + Boolean.hashCode(patched);
-            hc = 43 * hc * Objects.hashCode(recordedHashes);
-            hc = 43 * hc + Objects.hashCode(hasher);
+            hc = 43 * hc + Objects.hashCode(patcher);
             if (hc == 0)
                 hc = -1;
             hash = hc;
@@ -156,12 +153,12 @@ public class ModuleReferenceImpl extends ModuleReference {
             return false;
         ModuleReferenceImpl that = (ModuleReferenceImpl)ob;
 
+        // assume module content, recorded hashes, etc. are the same
+        // when the modules have equal module descriptors, are at the
+        // same location, and are patched by the same patcher.
         return Objects.equals(this.descriptor(), that.descriptor())
                 && Objects.equals(this.location(), that.location())
-                && Objects.equals(this.readerSupplier, that.readerSupplier)
-                && this.patched == that.patched
-                && Objects.equals(this.recordedHashes, that.recordedHashes)
-                && Objects.equals(this.hasher, that.hasher);
+                && Objects.equals(this.patcher, that.patcher);
     }
 
     @Override
