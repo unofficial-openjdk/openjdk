@@ -399,7 +399,14 @@ public class JlinkTask {
                                  ModuleFinder.of(),
                                  roots);
 
-        // issue a warning for any incubating modules in the configuration
+        // emit warning for modules that end with a digit
+        cf.modules().stream()
+            .map(ResolvedModule::name)
+            .filter(mn -> Character.isDigit(mn.charAt(mn.length()-1)))
+            .forEach(mn -> System.err.format("WARNING: " + mn
+                                             + " may not be a legal module name in the future%n"));
+
+        // emit a warning for any incubating modules in the configuration
         if (log != null) {
             String im = cf.modules()
                           .stream()

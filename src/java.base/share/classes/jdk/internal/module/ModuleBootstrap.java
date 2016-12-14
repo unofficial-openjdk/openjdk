@@ -288,8 +288,8 @@ public final class ModuleBootstrap {
         // time to create configuration
         PerfCounters.resolveTime.addElapsedTimeFrom(t3);
 
-        // issue a warning for any incubator modules in the configuration
-        warnIfAnyIncubating(cf);
+        // check module names and incubating status
+        checkModuleNamesAndStatus(cf);
 
         // mapping of modules to class loaders
         Function<String, ClassLoader> clf = ModuleLoaderMap.mappingFunction(cf);
@@ -681,18 +681,28 @@ public final class ModuleBootstrap {
     }
 
     /**
-     * Issues a warning is there are any modules in the configuration that
-     * have their WARN_INCUBATING module resolution bit set.
+     * Checks the names and resolution bit of each module in the configuration,
+     * emitting warnings if needed.
      */
-    private static void warnIfAnyIncubating(Configuration cf) {
+    private static void checkModuleNamesAndStatus(Configuration cf) {
         String incubating = null;
         for (ResolvedModule rm : cf.modules()) {
             ModuleReference mref = rm.reference();
+            String mn = mref.descriptor().name();
+
+            // emit warning if ends with a non-Java letter. For now, this
+            // uses isDigit to avoid iterating to find the last code point.
+            //char last = mn.charAt(mn.length()-1);
+            //if (Character.isDigit(last))
+            //    warn(mn + " may not be a legal module name in the future");
+
+            // emit warning if the WARN_INCUBATING module resolution bit set
             if (ModuleResolution.hasIncubatingWarning(mref)) {
-                if (incubating == null)
-                    incubating = mref.descriptor().name();
-                else
-                    incubating += ", " + mref.descriptor().name();
+                if (incubating == null) {
+                    incubating = mn;
+                } else {
+                    incubating += ", " + mn;
+                }
             }
         }
         if (incubating != null)
