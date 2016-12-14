@@ -168,6 +168,30 @@ public class ImageModules {
         }
     }
 
+    @Test
+    public void singleModularJar() throws Throwable {
+        FileUtils.deleteFileTreeUnchecked(JARS_DIR);
+        Files.createDirectories(JARS_DIR);
+        Path converterJar = JARS_DIR.resolve("converter.jar");
+
+        jar("--create",
+            "--file", converterJar.toString(),
+            "--warn-if-resolved=incubating",
+            "-C", MODS_DIR.resolve("message.converter").toString() , ".")
+            .assertSuccess();
+
+
+        java(Paths.get(JAVA_HOME),
+             "--module-path", JARS_DIR.toString(),
+             "--add-modules", "message.converter",
+             "-cp", CP_DIR.toString(),
+             "test.ConvertToLowerCase", "HEllo WoRlD")
+            .assertSuccess()
+            .resultChecker(r -> {
+                r.assertContains("WARNING: using incubating module(s): message.converter");
+            });
+    }
+
     @DataProvider(name = "twoModules")
     public Object[][] twoModulesValues() throws IOException {
         Object[][] values = new Object[][]{
