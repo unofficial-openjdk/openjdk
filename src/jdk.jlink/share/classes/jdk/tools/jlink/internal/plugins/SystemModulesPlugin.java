@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -421,18 +421,33 @@ public final class SystemModulesPlugin implements Plugin {
                 numPackages += minfo.packages.size();
             }
 
-            this.clinit(numModules, numPackages);
+            clinit(numModules, numPackages);
 
-            // generate modules() method
-            this.mv = cw.visitMethod(ACC_PUBLIC+ACC_STATIC,
-                                     "modules", "()" + MODULE_DESCRIPTOR_ARRAY_SIGNATURE,
-                                     "()" + MODULE_DESCRIPTOR_ARRAY_SIGNATURE, null);
+            // generate SystemModules::descriptors
+            genDescriptorsMethod();
+            // generate SystemModules::hashes
+            genHashesMethod();
+            // generate SystemModules::moduleResolutions
+            genModuleResolutionsMethod();
+
+            return cw;
+        }
+
+        /*
+         * Generate bytecode for SystemModules::descriptors method
+         */
+        private void genDescriptorsMethod() {
+            this.mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC,
+                                     "descriptors",
+                                     "()" + MODULE_DESCRIPTOR_ARRAY_SIGNATURE,
+                                     "()" + MODULE_DESCRIPTOR_ARRAY_SIGNATURE,
+                                     null);
             mv.visitCode();
-            pushInt(mv, numModules);
+            pushInt(mv, moduleInfos.size());
             mv.visitTypeInsn(ANEWARRAY, "java/lang/module/ModuleDescriptor");
             mv.visitVarInsn(ASTORE, MD_VAR);
 
-            for (int index=0; index < moduleInfos.size(); index++) {
+            for (int index = 0; index < moduleInfos.size(); index++) {
                 ModuleInfo minfo = moduleInfos.get(index);
                 new ModuleDescriptorBuilder(minfo.descriptor,
                                             minfo.packages,
@@ -443,18 +458,24 @@ public final class SystemModulesPlugin implements Plugin {
             mv.visitMaxs(0, 0);
             mv.visitEnd();
 
+        }
 
-            // generate hashes() method
+        /*
+         * Generate bytecode for SystemModules::hashes method
+         */
+        private void genHashesMethod() {
             MethodVisitor hmv =
-                cw.visitMethod(ACC_PUBLIC+ACC_STATIC,
-                               "hashes", "()" + MODULE_HASHES_ARRAY_SIGNATURE,
-                               "()" + MODULE_HASHES_ARRAY_SIGNATURE, null);
+                cw.visitMethod(ACC_PUBLIC + ACC_STATIC,
+                               "hashes",
+                               "()" + MODULE_HASHES_ARRAY_SIGNATURE,
+                               "()" + MODULE_HASHES_ARRAY_SIGNATURE,
+                               null);
             hmv.visitCode();
-            pushInt(hmv, numModules);
+            pushInt(hmv, moduleInfos.size());
             hmv.visitTypeInsn(ANEWARRAY, "jdk/internal/module/ModuleHashes");
             hmv.visitVarInsn(ASTORE, MH_VAR);
 
-            for (int index=0; index < moduleInfos.size(); index++) {
+            for (int index = 0; index < moduleInfos.size(); index++) {
                 ModuleInfo minfo = moduleInfos.get(index);
                 if (minfo.recordedHashes != null) {
                     new ModuleHashesBuilder(minfo.recordedHashes,
@@ -468,13 +489,20 @@ public final class SystemModulesPlugin implements Plugin {
             hmv.visitMaxs(0, 0);
             hmv.visitEnd();
 
-            // generate moduleResolutions() method
+        }
+
+        /*
+         * Generate bytecode for SystemModules::methodResoultions method
+         */
+        private void genModuleResolutionsMethod() {
             MethodVisitor mresmv =
-                    cw.visitMethod(ACC_PUBLIC+ACC_STATIC,
-                            "moduleResolutions", "()" + MODULE_RESOLUTIONS_ARRAY_SIGNATURE,
-                            "()" + MODULE_RESOLUTIONS_ARRAY_SIGNATURE, null);
+                cw.visitMethod(ACC_PUBLIC+ACC_STATIC,
+                               "moduleResolutions",
+                               "()" + MODULE_RESOLUTIONS_ARRAY_SIGNATURE,
+                               "()" + MODULE_RESOLUTIONS_ARRAY_SIGNATURE,
+                               null);
             mresmv.visitCode();
-            pushInt(mresmv, numModules);
+            pushInt(mresmv, moduleInfos.size());
             mresmv.visitTypeInsn(ANEWARRAY, MODULE_RESOLUTION_CLASSNAME);
             mresmv.visitVarInsn(ASTORE, 0);
 
@@ -486,8 +514,10 @@ public final class SystemModulesPlugin implements Plugin {
                     mresmv.visitTypeInsn(NEW, MODULE_RESOLUTION_CLASSNAME);
                     mresmv.visitInsn(DUP);
                     mresmv.visitLdcInsn(minfo.moduleResolution.value());
-                    mresmv.visitMethodInsn(INVOKESPECIAL, MODULE_RESOLUTION_CLASSNAME,
-                            "<init>", "(I)V", false);
+                    mresmv.visitMethodInsn(INVOKESPECIAL,
+                                           MODULE_RESOLUTION_CLASSNAME,
+                                           "<init>",
+                                           "(I)V", false);
                     mresmv.visitInsn(AASTORE);
                 }
             }
@@ -495,8 +525,6 @@ public final class SystemModulesPlugin implements Plugin {
             mresmv.visitInsn(ARETURN);
             mresmv.visitMaxs(0, 0);
             mresmv.visitEnd();
-
-            return cw;
         }
 
         public boolean isOverriddenClass(String path) {
@@ -542,6 +570,8 @@ public final class SystemModulesPlugin implements Plugin {
                 "(Ljava/lang/String;Ljava/util/List;)" + PROVIDES_TYPE;
             static final String REQUIRES_SET_STRING_SIG =
                 "(Ljava/util/Set;Ljava/lang/String;)" + REQUIRES_TYPE;
+            static final String REQUIRES_SET_STRING_STRING_SIG =
+                "(Ljava/util/Set;Ljava/lang/String;Ljava/lang/String;)" + REQUIRES_TYPE;
 
             // method signature for Builder instance methods that
             // return this Builder instance
@@ -658,9 +688,14 @@ public final class SystemModulesPlugin implements Plugin {
                 mv.visitTypeInsn(ANEWARRAY, "java/lang/module/ModuleDescriptor$Requires");
                 int arrayIndex = 0;
                 for (Requires require : requires) {
-                    mv.visitInsn(DUP);    // arrayref
+                    String compiledVersion = null;
+                    if (require.compiledVersion().isPresent()) {
+                        compiledVersion = require.compiledVersion().get().toString();
+                    }
+
+                    mv.visitInsn(DUP);               // arrayref
                     pushInt(mv, arrayIndex++);
-                    newRequires(require.modifiers(), require.name());
+                    newRequires(require.modifiers(), require.name(), compiledVersion);
                     mv.visitInsn(AASTORE);
                 }
                 mv.visitMethodInsn(INVOKEVIRTUAL, MODULE_DESCRIPTOR_BUILDER,
@@ -668,17 +703,23 @@ public final class SystemModulesPlugin implements Plugin {
             }
 
             /*
-             * Invoke Builder.newRequires(Set<Modifier> mods, String mn)
+             * Invoke Builder.newRequires(Set<Modifier> mods, String mn, String compiledVersion)
              *
              * Set<Modifier> mods = ...
-             * Builder.newRequires(mods, mn);
+             * Builder.newRequires(mods, mn, compiledVersion);
              */
-            void newRequires(Set<Requires.Modifier> mods, String name) {
+            void newRequires(Set<Requires.Modifier> mods, String name, String compiledVersion) {
                 int varIndex = dedupSetBuilder.indexOfRequiresModifiers(mods);
                 mv.visitVarInsn(ALOAD, varIndex);
                 mv.visitLdcInsn(name);
-                mv.visitMethodInsn(INVOKESTATIC, MODULE_DESCRIPTOR_BUILDER,
-                    "newRequires", REQUIRES_SET_STRING_SIG, false);
+                if (compiledVersion != null) {
+                    mv.visitLdcInsn(compiledVersion);
+                    mv.visitMethodInsn(INVOKESTATIC, MODULE_DESCRIPTOR_BUILDER,
+                        "newRequires", REQUIRES_SET_STRING_STRING_SIG, false);
+                } else {
+                    mv.visitMethodInsn(INVOKESTATIC, MODULE_DESCRIPTOR_BUILDER,
+                        "newRequires", REQUIRES_SET_STRING_SIG, false);
+                }
             }
 
             /*

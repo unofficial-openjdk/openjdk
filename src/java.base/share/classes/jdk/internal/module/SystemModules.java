@@ -29,7 +29,7 @@ import java.lang.module.ModuleDescriptor;
 
 /*
  * SystemModules class will be generated at link time to create
- * ModuleDescriptor for the installed modules directly to improve
+ * ModuleDescriptor for the system modules directly to improve
  * the module descriptor reconstitution time.
  *
  * This will skip parsing of module-info.class file and validating
@@ -61,7 +61,7 @@ public final class SystemModules {
      *
      * When running an exploded image it returns an empty array.
      */
-    public static ModuleDescriptor[] modules() {
+    public static ModuleDescriptor[] descriptors() {
         throw new InternalError("expected to be overridden at link time");
     }
 

@@ -165,7 +165,7 @@ public class SystemModuleFinder implements ModuleFinder {
 
         // fast loading of ModuleDescriptor of system modules
         if (isFastPathSupported() && !disabled) {
-            descriptors = SystemModules.modules();
+            descriptors = SystemModules.descriptors();
             recordedHashes = SystemModules.hashes();
             moduleResolutions = SystemModules.moduleResolutions();
         } else {
