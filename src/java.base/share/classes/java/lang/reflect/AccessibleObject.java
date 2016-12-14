@@ -231,6 +231,10 @@ public class AccessibleObject implements AnnotatedElement {
             super(msg);
         }
 
+        public String toString() {
+            return "WARNING: " + getMessage();
+        }
+
     }
 
     private void printStackTraceIfExposedReflectively(Module module,
@@ -239,7 +243,7 @@ public class AccessibleObject implements AnnotatedElement {
                                                       boolean open) {
         if (Reflection.printStackTraceWhenAccessSucceeds()
                 && !module.isStaticallyExportedOrOpen(pn, other, open)) {
-            String msg = other + " allowed to setAccessible on ";
+            String msg = other + " allowed to invoke setAccessible on ";
             if (this instanceof Field)
                 msg += "field ";
             msg += this;
