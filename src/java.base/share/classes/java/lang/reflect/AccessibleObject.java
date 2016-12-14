@@ -223,6 +223,16 @@ public class AccessibleObject implements AnnotatedElement {
         printStackTraceIfExposedReflectively(module, pn, other, false);
     }
 
+    private static class WARNING extends Exception {
+
+        private static final long serialVersionUID = 42L;
+
+        private WARNING(String msg) {
+            super(msg);
+        }
+
+    }
+
     private void printStackTraceIfExposedReflectively(Module module,
                                                       String pn,
                                                       Module other,
@@ -233,7 +243,7 @@ public class AccessibleObject implements AnnotatedElement {
             if (this instanceof Field)
                 msg += "field ";
             msg += this;
-            new Exception(msg).printStackTrace(System.err);
+            new WARNING(msg).printStackTrace(System.err);
         }
     }
 

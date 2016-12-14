@@ -514,7 +514,7 @@ public final class ModuleBootstrap {
         String home = System.getProperty("java.home");
         Path file = Paths.get(home, "conf", "DEBUG_ADD_OPENS");
         if (Files.exists(file)) {
-            warn(file + " used break encapsulation");
+            warn(file + " detected; may break encapsulation");
             try (Stream<String> lines = Files.lines(file)) {
                 lines.map(line -> line.trim())
                     .filter(line -> (!line.isEmpty() && !line.startsWith("#")))
@@ -536,7 +536,7 @@ public final class ModuleBootstrap {
     }
 
     private static void openPackage(Layer bootLayer, String mn, String pkg) {
-        if (mn.equals("RESOLVED") && pkg.equals("ALL-PACKAGES")) {
+        if (mn.equals("ALL-RESOLVED") && pkg.equals("ALL-PACKAGES")) {
             bootLayer.modules().stream().forEach(m ->
                 m.getDescriptor().packages().forEach(pn -> openPackage(m, pn)));
         } else {
@@ -548,7 +548,7 @@ public final class ModuleBootstrap {
 
     private static void openPackage(Module m, String pn) {
         Modules.addOpensToAllUnnamed(m, pn);
-        System.err.println(m.getName()  + "/" + pn + " opened for deep reflection");
+        warn("Opened for deep reflection: " + m.getName()  + "/" + pn);
     }
 
 
