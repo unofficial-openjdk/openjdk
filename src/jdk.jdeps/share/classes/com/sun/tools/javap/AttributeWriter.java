@@ -51,6 +51,7 @@ import com.sun.tools.classfile.Module_attribute;
 import com.sun.tools.classfile.ModuleHashes_attribute;
 import com.sun.tools.classfile.ModuleMainClass_attribute;
 import com.sun.tools.classfile.ModulePackages_attribute;
+import com.sun.tools.classfile.ModuleResolution_attribute;
 import com.sun.tools.classfile.ModuleTarget_attribute;
 import com.sun.tools.classfile.RuntimeInvisibleAnnotations_attribute;
 import com.sun.tools.classfile.RuntimeInvisibleParameterAnnotations_attribute;
@@ -638,6 +639,27 @@ public class AttributeWriter extends BasicWriter
         } catch (ConstantPoolException e) {
             return report(e);
         }
+    }
+
+    @Override
+    public Void visitModuleResolution(ModuleResolution_attribute attr, Void ignore) {
+        println("ModuleResolution:");
+        indent(+1);
+        print(String.format("%x", attr.resolution_flags));
+        tab();
+        print("// ");
+        int flags = attr.resolution_flags;
+        if ((flags & ModuleResolution_attribute.DO_NOT_RESOLVE_BY_DEFAULT) != 0)
+            print(" DO_NOT_RESOLVE_BY_DEFAULT");
+        if ((flags & ModuleResolution_attribute.WARN_DEPRECATED) != 0)
+            print(" WARN_DEPRECATED");
+        if ((flags & ModuleResolution_attribute.WARN_DEPRECATED_FOR_REMOVAL) != 0)
+            print(" WARN_DEPRECATED_FOR_REMOVAL");
+        if ((flags & ModuleResolution_attribute.WARN_INCUBATING) != 0)
+            print(" WARN_INCUBATING");
+        println();
+        indent(-1);
+        return null;
     }
 
     @Override

@@ -437,14 +437,6 @@ public class ClassWriter {
         }
 
         @Override
-        public Void visitModulePackages(ModulePackages_attribute attr, ClassOutputStream out) {
-            out.writeShort(attr.packages_count);
-            for (int i: attr.packages_index)
-                out.writeShort(i);
-            return null;
-        }
-
-        @Override
         public Void visitConstantValue(ConstantValue_attribute attr, ClassOutputStream out) {
             out.writeShort(attr.constantvalue_index);
             return null;
@@ -475,20 +467,6 @@ public class ClassWriter {
             out.writeShort(attr.classes.length);
             for (InnerClasses_attribute.Info info: attr.classes)
                 writeInnerClassesInfo(info, out);
-            return null;
-        }
-
-        @Override
-        public Void visitModuleHashes(ModuleHashes_attribute attr, ClassOutputStream out) {
-            out.writeShort(attr.algorithm_index);
-            out.writeShort(attr.hashes_table.length);
-            for (ModuleHashes_attribute.Entry e: attr.hashes_table) {
-                out.writeShort(e.module_name_index);
-                out.writeShort(e.hash.length);
-                for (byte b: e.hash) {
-                    out.writeByte(b);
-                }
-            }
             return null;
         }
 
@@ -555,12 +533,6 @@ public class ClassWriter {
         }
 
         @Override
-        public Void visitModuleMainClass(ModuleMainClass_attribute attr, ClassOutputStream out) {
-            out.writeShort(attr.main_class_index);
-            return null;
-        }
-
-        @Override
         public Void visitModule(Module_attribute attr, ClassOutputStream out) {
             out.writeShort(attr.module_name);
             out.writeShort(attr.module_flags);
@@ -609,8 +581,44 @@ public class ClassWriter {
         }
 
         @Override
-        public Void visitRuntimeVisibleAnnotations(RuntimeVisibleAnnotations_attribute attr, ClassOutputStream out) {
-            annotationWriter.write(attr.annotations, out);
+        public Void visitModuleHashes(ModuleHashes_attribute attr, ClassOutputStream out) {
+            out.writeShort(attr.algorithm_index);
+            out.writeShort(attr.hashes_table.length);
+            for (ModuleHashes_attribute.Entry e: attr.hashes_table) {
+                out.writeShort(e.module_name_index);
+                out.writeShort(e.hash.length);
+                for (byte b: e.hash) {
+                    out.writeByte(b);
+                }
+            }
+            return null;
+        }
+
+        @Override
+        public Void visitModuleMainClass(ModuleMainClass_attribute attr, ClassOutputStream out) {
+            out.writeShort(attr.main_class_index);
+            return null;
+        }
+
+        @Override
+        public Void visitModulePackages(ModulePackages_attribute attr, ClassOutputStream out) {
+            out.writeShort(attr.packages_count);
+            for (int i: attr.packages_index)
+                out.writeShort(i);
+            return null;
+        }
+
+        @Override
+        public Void visitModuleResolution(ModuleResolution_attribute attr, ClassOutputStream out) {
+            out.writeShort(attr.resolution_flags);
+            return null;
+        }
+
+        @Override
+        public Void visitModuleTarget(ModuleTarget_attribute attr, ClassOutputStream out) {
+            out.writeShort(attr.os_name_index);
+            out.writeShort(attr.os_arch_index);
+            out.writeShort(attr.os_version_index);
             return null;
         }
 
@@ -621,13 +629,21 @@ public class ClassWriter {
         }
 
         @Override
-        public Void visitRuntimeVisibleTypeAnnotations(RuntimeVisibleTypeAnnotations_attribute attr, ClassOutputStream out) {
-            annotationWriter.write(attr.annotations, out);
+        public Void visitRuntimeInvisibleParameterAnnotations(RuntimeInvisibleParameterAnnotations_attribute attr, ClassOutputStream out) {
+            out.writeByte(attr.parameter_annotations.length);
+            for (Annotation[] annos: attr.parameter_annotations)
+                annotationWriter.write(annos, out);
             return null;
         }
 
         @Override
         public Void visitRuntimeInvisibleTypeAnnotations(RuntimeInvisibleTypeAnnotations_attribute attr, ClassOutputStream out) {
+            annotationWriter.write(attr.annotations, out);
+            return null;
+        }
+
+        @Override
+        public Void visitRuntimeVisibleAnnotations(RuntimeVisibleAnnotations_attribute attr, ClassOutputStream out) {
             annotationWriter.write(attr.annotations, out);
             return null;
         }
@@ -641,10 +657,8 @@ public class ClassWriter {
         }
 
         @Override
-        public Void visitRuntimeInvisibleParameterAnnotations(RuntimeInvisibleParameterAnnotations_attribute attr, ClassOutputStream out) {
-            out.writeByte(attr.parameter_annotations.length);
-            for (Annotation[] annos: attr.parameter_annotations)
-                annotationWriter.write(annos, out);
+        public Void visitRuntimeVisibleTypeAnnotations(RuntimeVisibleTypeAnnotations_attribute attr, ClassOutputStream out) {
+            annotationWriter.write(attr.annotations, out);
             return null;
         }
 
@@ -696,14 +710,6 @@ public class ClassWriter {
 
         @Override
         public Void visitSynthetic(Synthetic_attribute attr, ClassOutputStream out) {
-            return null;
-        }
-
-        @Override
-        public Void visitModuleTarget(ModuleTarget_attribute attr, ClassOutputStream out) {
-            out.writeShort(attr.os_name_index);
-            out.writeShort(attr.os_arch_index);
-            out.writeShort(attr.os_version_index);
             return null;
         }
 
