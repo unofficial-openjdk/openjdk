@@ -53,6 +53,7 @@ import jdk.tools.jlink.internal.ImagePluginStack.ImageProvider;
 import jdk.tools.jlink.plugin.PluginException;
 import jdk.tools.jlink.builder.DefaultImageBuilder;
 import jdk.tools.jlink.plugin.Plugin;
+import jdk.internal.module.Checks;
 import jdk.internal.module.ModulePath;
 import jdk.internal.module.ModuleResolution;
 
@@ -402,9 +403,9 @@ public class JlinkTask {
         // emit warning for modules that end with a digit
         cf.modules().stream()
             .map(ResolvedModule::name)
-            .filter(mn -> Character.isDigit(mn.charAt(mn.length()-1)))
-            .forEach(mn -> System.err.format("WARNING: " + mn
-                                             + " may not be a legal module name in the future%n"));
+            .filter(mn -> !Checks.hasLegalModuleNameLastCharacter(mn))
+            .forEach(mn -> System.err.println("WARNING: Module name \""
+                                              + mn + "\" may soon be illegal"));
 
         // emit a warning for any incubating modules in the configuration
         if (log != null) {

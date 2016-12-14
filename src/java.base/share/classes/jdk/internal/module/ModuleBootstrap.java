@@ -241,7 +241,7 @@ public final class ModuleBootstrap {
             ModuleFinder f = finder;  // observable modules
             systemModules.findAll()
                 .stream()
-                .filter(md -> !ModuleResolution.doNotResolveByDefault(md))
+                .filter(mref -> !ModuleResolution.doNotResolveByDefault(mref))
                 .map(ModuleReference::descriptor)
                 .map(ModuleDescriptor::name)
                 .filter(mn -> f.find(mn).isPresent())  // observable
@@ -690,11 +690,9 @@ public final class ModuleBootstrap {
             ModuleReference mref = rm.reference();
             String mn = mref.descriptor().name();
 
-            // emit warning if ends with a non-Java letter. For now, this
-            // uses isDigit to avoid iterating to find the last code point.
-            //char last = mn.charAt(mn.length()-1);
-            //if (Character.isDigit(last))
-            //    warn(mn + " may not be a legal module name in the future");
+            // emit warning if module name ends with a non-Java letter
+            //if (!Checks.hasLegalModuleNameLastCharacter(mn))
+            //    warn("Module name \"" + mn + "\" may soon be illegal");
 
             // emit warning if the WARN_INCUBATING module resolution bit set
             if (ModuleResolution.hasIncubatingWarning(mref)) {

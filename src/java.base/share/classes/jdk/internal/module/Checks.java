@@ -162,6 +162,44 @@ public final class Checks {
     }
 
     /**
+     * Returns {@code true} if the last character of the given name is legal
+     * as the last character of a module name.
+     *
+     * @throws IllegalArgumentException if name is empty
+     */
+    public static boolean hasLegalModuleNameLastCharacter(String name) {
+        if (name.isEmpty())
+            throw new IllegalArgumentException("name is empty");
+        int len = name.length();
+        if (isASCIIString(name)) {
+            char c = name.charAt(len-1);
+            return Character.isJavaIdentifierStart(c);
+        } else {
+            int i = 0;
+            int cp = -1;
+            while (i < len) {
+                cp = name.codePointAt(i);
+                i += Character.charCount(cp);
+            }
+            return Character.isJavaIdentifierStart(cp);
+        }
+    }
+
+    /**
+     * Returns true if the given string only contains ASCII characters.
+     */
+    private static boolean isASCIIString(String s) {
+        int i = 0;
+        while (i < s.length()) {
+            int c = s.charAt(i);
+            if (c > 0x7F)
+                return false;
+            i++;
+        }
+        return true;
+    }
+
+    /**
      * Checks if a char sequence is a legal Java identifier, returning the code
      * point of the last character if legal or {@code -1} if not legal.
      */
