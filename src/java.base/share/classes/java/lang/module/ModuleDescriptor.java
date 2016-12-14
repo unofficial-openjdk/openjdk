@@ -173,9 +173,12 @@ public class ModuleDescriptor
          * <p> Two {@code Requires} objects are compared by comparing their
          * module name lexicographically.  Where the module names are equal then
          * the sets of modifiers are compared based on a value computed from the
-         * ordinal of each modifier.  When the module names are equal and the
+         * ordinal of each modifier. Where the module names are equal and the
          * set of modifiers are equal then the version of the modules recorded
-         * at compile-time are compared. </p>
+         * at compile-time are compared. When comparing the versions recorded
+         * at compile-time then a dependence that has a recorded version is
+         * considered to succeed a dependence that does not have a recorded
+         * version. </p>
          *
          * @return A negative integer, zero, or a positive integer if this module
          *         dependence is less than, equal to, or greater than the given
