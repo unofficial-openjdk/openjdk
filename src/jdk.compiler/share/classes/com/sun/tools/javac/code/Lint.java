@@ -118,6 +118,7 @@ public class Lint
             if (source.compareTo(Source.JDK1_9) >= 0) {
                 values.add(LintCategory.DEP_ANN);
             }
+            values.add(LintCategory.MODULE);
             values.add(LintCategory.REMOVAL);
         }
 
