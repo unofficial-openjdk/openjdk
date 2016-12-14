@@ -597,13 +597,16 @@ public class Modules extends JCTree.Visitor {
                 msym.flags_field |= UNATTRIBUTED;
                 ModuleVisitor v = new ModuleVisitor();
                 JavaFileObject prev = log.useSource(tree.sourcefile);
+                JCModuleDecl moduleDecl = tree.getModuleDecl();
+                DiagnosticPosition prevLintPos = deferredLintHandler.setPos(moduleDecl.pos());
+
                 try {
-                    JCModuleDecl moduleDecl = tree.getModuleDecl();
                     moduleDecl.accept(v);
                     completeModule(msym);
                     checkCyclicDependencies(moduleDecl);
                 } finally {
                     log.useSource(prev);
+                    deferredLintHandler.setPos(prevLintPos);
                     msym.flags_field &= ~UNATTRIBUTED;
                 }
             }
@@ -680,15 +683,12 @@ public class Modules extends JCTree.Visitor {
                 Set<ModuleSymbol> to = new LinkedHashSet<>();
                 for (JCExpression n: tree.moduleNames) {
                     ModuleSymbol msym = lookupModule(n);
-                    if (msym.kind != MDL) {
-                        log.error(n.pos(), Errors.ModuleNotFound(msym));
-                    } else {
-                        for (ExportsDirective d : exportsForPackage) {
-                            checkDuplicateExportsToModule(n, msym, d);
-                        }
-                        if (!to.add(msym)) {
-                            reportExportsConflictToModule(n, msym);
-                        }
+                    chk.checkModuleExists(n.pos(), msym);
+                    for (ExportsDirective d : exportsForPackage) {
+                        checkDuplicateExportsToModule(n, msym, d);
+                    }
+                    if (!to.add(msym)) {
+                        reportExportsConflictToModule(n, msym);
                     }
                 }
                 toModules = List.from(to);
@@ -742,15 +742,12 @@ public class Modules extends JCTree.Visitor {
                 Set<ModuleSymbol> to = new LinkedHashSet<>();
                 for (JCExpression n: tree.moduleNames) {
                     ModuleSymbol msym = lookupModule(n);
-                    if (msym.kind != MDL) {
-                        log.error(n.pos(), Errors.ModuleNotFound(msym));
-                    } else {
-                        for (OpensDirective d : opensForPackage) {
-                            checkDuplicateOpensToModule(n, msym, d);
-                        }
-                        if (!to.add(msym)) {
-                            reportOpensConflictToModule(n, msym);
-                        }
+                    chk.checkModuleExists(n.pos(), msym);
+                    for (OpensDirective d : opensForPackage) {
+                        checkDuplicateOpensToModule(n, msym, d);
+                    }
+                    if (!to.add(msym)) {
+                        reportOpensConflictToModule(n, msym);
                     }
                 }
                 toModules = List.from(to);

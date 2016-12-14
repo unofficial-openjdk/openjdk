@@ -135,21 +135,129 @@ public class ModuleInfoTest extends ModuleTestBase {
     }
 
     /**
-     * Verify that missing exports are reported.
+     * Verify that missing exports targets are reported.
      */
     @Test
     public void testExportsNotFound(Path base) throws Exception {
         Path src = base.resolve("src");
-        tb.writeJavaFiles(src, "module M1 { exports p to M2; }");
+        tb.writeJavaFiles(src,
+                          "module M { exports p to N; }",
+                          "package p; public class C {}");
         String log = new JavacTask(tb)
-                .options("-XDrawDiagnostics")
+                .options("-XDrawDiagnostics",
+                         "-Xlint:module")
+                .files(findJavaFiles(src))
+                .run()
+                .writeAll()
+                .getOutput(Task.OutputKind.DIRECT);
+
+        if (!log.contains("module-info.java:1:25: compiler.warn.module.not.found: N"))
+            throw new Exception("expected output not found, actual output: " + log);
+    }
+
+    /**
+     * Verify that duplicated qualified missing exports targets are reported.
+     */
+    @Test
+    public void testExportsNotFoundDuplicated(Path base) throws Exception {
+        Path src = base.resolve("src");
+        tb.writeJavaFiles(src,
+                          "module M { exports p to N, N; }",
+                          "package p; public class C {}");
+        String log = new JavacTask(tb)
+                .options("-XDrawDiagnostics",
+                         "-Xlint:module")
                 .files(findJavaFiles(src))
                 .run(Task.Expect.FAIL)
                 .writeAll()
                 .getOutput(Task.OutputKind.DIRECT);
 
-        if (!log.contains("module-info.java:1:26: compiler.err.module.not.found: M2"))
-            throw new Exception("expected output not found");
+        if (!log.contains("module-info.java:1:28: compiler.err.conflicting.exports.to.module: N"))
+            throw new Exception("expected output not found, actual output: " + log);
+    }
+
+    /**
+     * Verify that missing exports target warning can be suppressed.
+     */
+    @Test
+    public void testExportsNotFoundSuppress(Path base) throws Exception {
+        Path src = base.resolve("src");
+        tb.writeJavaFiles(src,
+                          "@SuppressWarnings(\"module\") module M { exports p to N; }",
+                          "package p; public class C {}");
+        String log = new JavacTask(tb)
+                .options("-XDrawDiagnostics",
+                         "-Xlint:module")
+                .files(findJavaFiles(src))
+                .run()
+                .writeAll()
+                .getOutput(Task.OutputKind.DIRECT);
+
+        if (!log.isEmpty())
+            throw new Exception("expected output not found, actual output: " + log);
+    }
+
+    /**
+     * Verify that missing opens targets are reported.
+     */
+    @Test
+    public void testOpensNotFound(Path base) throws Exception {
+        Path src = base.resolve("src");
+        tb.writeJavaFiles(src,
+                          "module M { opens p to N; }",
+                          "package p; public class C {}");
+        String log = new JavacTask(tb)
+                .options("-XDrawDiagnostics",
+                         "-Xlint:module")
+                .files(findJavaFiles(src))
+                .run()
+                .writeAll()
+                .getOutput(Task.OutputKind.DIRECT);
+
+        if (!log.contains("module-info.java:1:23: compiler.warn.module.not.found: N"))
+            throw new Exception("expected output not found, actual output: " + log);
+    }
+
+    /**
+     * Verify that duplicated qualified missing opens targets are reported.
+     */
+    @Test
+    public void testOpensNotFoundDuplicated(Path base) throws Exception {
+        Path src = base.resolve("src");
+        tb.writeJavaFiles(src,
+                          "module M { opens p to N, N; }",
+                          "package p; public class C {}");
+        String log = new JavacTask(tb)
+                .options("-XDrawDiagnostics",
+                         "-Xlint:module")
+                .files(findJavaFiles(src))
+                .run(Task.Expect.FAIL)
+                .writeAll()
+                .getOutput(Task.OutputKind.DIRECT);
+
+        if (!log.contains("module-info.java:1:26: compiler.err.conflicting.opens.to.module: N"))
+            throw new Exception("expected output not found, actual output: " + log);
+    }
+
+    /**
+     * Verify that missing opens target warning can be suppressed.
+     */
+    @Test
+    public void testOpensNotFoundSuppress(Path base) throws Exception {
+        Path src = base.resolve("src");
+        tb.writeJavaFiles(src,
+                          "@SuppressWarnings(\"module\") module M { opens p to N; }",
+                          "package p; public class C {}");
+        String log = new JavacTask(tb)
+                .options("-XDrawDiagnostics",
+                         "-Xlint:module")
+                .files(findJavaFiles(src))
+                .run()
+                .writeAll()
+                .getOutput(Task.OutputKind.DIRECT);
+
+        if (!log.isEmpty())
+            throw new Exception("expected output not found, actual output: " + log);
     }
 
     /**

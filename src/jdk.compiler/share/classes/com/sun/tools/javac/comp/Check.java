@@ -3889,4 +3889,17 @@ public class Check {
                 log.warning(LintCategory.EXPORTS, pos, Warnings.LeaksNotAccessibleNotRequiredTransitive(kindName(what), what, what.packge().modle));
             }
         }
+
+    void checkModuleExists(final DiagnosticPosition pos, ModuleSymbol msym) {
+        if (msym.kind != MDL) {
+            deferredLintHandler.report(new DeferredLintHandler.LintLogger() {
+                @Override
+                public void report() {
+                    if (lint.isEnabled(Lint.LintCategory.MODULE))
+                        log.warning(LintCategory.MODULE, pos, Warnings.ModuleNotFound(msym));
+                }
+            });
+        }
+    }
+
 }
