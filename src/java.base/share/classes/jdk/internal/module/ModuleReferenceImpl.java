@@ -69,7 +69,7 @@ public class ModuleReferenceImpl extends ModuleReference {
                         ModuleHashes.HashSupplier hasher,
                         ModuleResolution moduleResolution)
     {
-        super(descriptor, location);
+        super(descriptor, Objects.requireNonNull(location));
         this.readerSupplier = readerSupplier;
         this.patcher = patcher;
         this.recordedHashes = recordedHashes;
