@@ -117,37 +117,14 @@ public class SystemModuleFinder implements ModuleFinder {
         return imageReader.getModuleNames();
     }
 
-
-    /**
-     * Helper class to use the recorded hashes to create a HashSupplier
-     */
-    private static class Hashes {
-        static Map<String, byte[]> hashes = new HashMap<>();
-
-        static void add(ModuleHashes recordedHashes) {
-            if (recordedHashes != null) {
-                hashes.putAll(recordedHashes.hashes());
-            }
-        }
-
-        static HashSupplier hashSupplierFor(String name) {
-            if (!hashes.containsKey(name))
-                return null;
-
-            return new HashSupplier() {
-                @Override
-                public byte[] generate(String algorithm) {
-                    return hashes.get(name);
-                }
-            };
-        }
-    }
-
     // the set of modules in the run-time image
     private final Set<ModuleReference> modules;
 
     // maps module name to module reference
     private final Map<String, ModuleReference> nameToModule;
+
+    // module name to hashes
+    private final Map<String, byte[]> hashes = new HashMap<>();
 
     private SystemModuleFinder() {
         String[] names = moduleNames();
@@ -187,7 +164,9 @@ public class SystemModuleFinder implements ModuleFinder {
 
         // record the hashes to build HashSupplier
         for (ModuleHashes mh : recordedHashes) {
-            Hashes.add(mh);
+            if (mh != null) {
+                hashes.putAll(mh.hashes());
+            }
         }
 
         ModuleReference[] mods = new ModuleReference[n];
@@ -202,7 +181,7 @@ public class SystemModuleFinder implements ModuleFinder {
             // create the ModuleReference
             ModuleReference mref = toModuleReference(md,
                                                      recordedHashes[i],
-                                                     Hashes.hashSupplierFor(names[i]),
+                                                     hashSupplier(names[i]),
                                                      moduleResolutions[i]);
             mods[i] = mref;
             map[i] = Map.entry(names[i], mref);
@@ -251,6 +230,17 @@ public class SystemModuleFinder implements ModuleFinder {
         return mref;
     }
 
+    private HashSupplier hashSupplier(String name) {
+        if (!hashes.containsKey(name))
+            return null;
+
+        return new HashSupplier() {
+            @Override
+            public byte[] generate(String algorithm) {
+                return hashes.get(name);
+            }
+        };
+    }
 
     /**
      * A ModuleReader for reading resources from a module linked into the
