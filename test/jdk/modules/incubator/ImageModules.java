@@ -26,7 +26,7 @@
  * @bug 8170859
  * @summary Basic test for incubator modules in jmods and images
  * @library /lib/testlibrary
- * @modules jdk.compiler
+ * @modules jdk.compiler jdk.jartool jdk.jlink
  * @build CompilerUtils
  * @run testng/othervm ImageModules
  */

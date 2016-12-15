@@ -40,7 +40,7 @@ import static org.testng.Assert.*;
 /**
  * @test
  * @library /lib/testlibrary
- * @modules jdk.compiler
+ * @modules jdk.compiler jdk.jlink
  * @build CompiledVersionTest CompilerUtils jdk.testlibrary.FileUtils jdk.testlibrary.ProcessTools
  * @run testng CompiledVersionTest
  */
