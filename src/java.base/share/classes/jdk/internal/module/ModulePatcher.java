@@ -150,16 +150,19 @@ public final class ModulePatcher {
         // return a module reference to the patched module
         URI location = mref.location().orElse(null);
 
+        ModuleHashes recordedHashes = null;
         ModuleResolution mres = null;
         if (mref instanceof ModuleReferenceImpl) {
-            mres = ((ModuleReferenceImpl)mref).moduleResolution();
+            ModuleReferenceImpl impl = (ModuleReferenceImpl)mref;
+            recordedHashes = impl.recordedHashes();
+            mres = impl.moduleResolution();
         }
 
         return new ModuleReferenceImpl(descriptor,
                                        location,
                                        () -> new PatchedModuleReader(paths, mref),
                                        this,
-                                       null,
+                                       recordedHashes,
                                        null,
                                        mres);
 
