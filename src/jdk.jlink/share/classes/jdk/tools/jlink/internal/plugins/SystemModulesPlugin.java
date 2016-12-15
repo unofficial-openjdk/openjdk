@@ -299,7 +299,7 @@ public final class SystemModulesPlugin implements Plugin {
         private static final String MODULE_HASHES_ARRAY_SIGNATURE  =
             "[Ljdk/internal/module/ModuleHashes;";
         private static final String MODULE_RESOLUTION_CLASSNAME  =
-                "jdk/internal/module/ModuleResolution";
+            "jdk/internal/module/ModuleResolution";
         private static final String MODULE_RESOLUTIONS_ARRAY_SIGNATURE  =
             "[Ljdk/internal/module/ModuleResolution;";
 
