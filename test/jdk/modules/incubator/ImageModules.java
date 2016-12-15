@@ -106,7 +106,7 @@ public class ImageModules {
               List.of("ALL-DEFAULT", "ALL-SYSTEM"),
               ToolResult.ASSERT_SUCCESS,
               List.of("hello world", "message.converter", "java.base",
-                      "WARNING: using incubating module(s): message.converter"),
+                      "WARNING: Using incubator modules: message.converter"),
               List.of() },
             { "--do-not-resolve-by-default --warn-if-resolved=incubating",
               List.of("ALL-DEFAULT", "ALL-SYSTEM"),
@@ -188,7 +188,7 @@ public class ImageModules {
              "test.ConvertToLowerCase", "HEllo WoRlD")
             .assertSuccess()
             .resultChecker(r -> {
-                r.assertContains("WARNING: using incubating module(s): message.converter");
+                r.assertContains("WARNING: Using incubator modules: message.converter");
             });
     }
 
@@ -231,14 +231,14 @@ public class ImageModules {
               List.of("message.writer"),
               ToolResult.ASSERT_SUCCESS,
               List.of("HELLO CHEGAR !!!", "message.writer", "message.converter", "java.base",
-                      "WARNING: using incubating module(s): message.writer"),
+                      "WARNING: Using incubator modules: message.writer"),
               List.of() },
             { "",
               "--do-not-resolve-by-default --warn-if-resolved=incubating",
               List.of("message.writer"),
               ToolResult.ASSERT_SUCCESS,
               List.of("HELLO CHEGAR !!!", "message.writer", "message.converter", "java.base",
-                      "WARNING: using incubating module(s): message.converter"),
+                      "WARNING: Using incubator modules: message.converter"),
               List.of() } };
         return values;
     }

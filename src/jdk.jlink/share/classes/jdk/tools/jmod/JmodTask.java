@@ -1156,11 +1156,11 @@ public class JmodTask {
         @Override
         public ModuleResolution convert(String value) {
             if (value.equals("deprecated"))
-                return (new ModuleResolution(0)).withDeprecated();
+                return ModuleResolution.empty().withDeprecated();
             else if (value.equals("deprecated-for-removal"))
-                return (new ModuleResolution(0)).withDeprecatedForRemoval();
+                return ModuleResolution.empty().withDeprecatedForRemoval();
             else if (value.equals("incubating"))
-                return (new ModuleResolution(0)).withIncubating();
+                return ModuleResolution.empty().withIncubating();
             else
                 throw new CommandException("err.bad.WarnIfResolvedReason", value);
         }
@@ -1444,7 +1444,7 @@ public class JmodTask {
                 options.moduleResolution = opts.valueOf(warnIfResolved);
             if (opts.has(doNotResolveByDefault)) {
                 if (options.moduleResolution == null)
-                    options.moduleResolution = new ModuleResolution(0);
+                    options.moduleResolution = ModuleResolution.empty();
                 options.moduleResolution = options.moduleResolution.withDoNotResolveByDefault();
             }
             if (opts.has(hashModules)) {

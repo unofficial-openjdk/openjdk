@@ -418,7 +418,7 @@ public class JlinkTask {
                           .collect(Collectors.joining(", "));
 
             if (!"".equals(im))
-                log.println("WARNING: using incubating module(s): " + im);
+                log.println("WARNING: Using incubator modules: " + im);
         }
 
         Map<String, Path> mods = cf.modules().stream()

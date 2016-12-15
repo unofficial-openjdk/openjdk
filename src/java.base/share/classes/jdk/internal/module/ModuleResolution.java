@@ -35,8 +35,12 @@ public final class ModuleResolution {
 
     final int value;
 
-    public ModuleResolution(int value) {
+    ModuleResolution(int value) {
         this.value = value;
+    }
+
+    public static ModuleResolution empty() {
+        return new ModuleResolution(0);
     }
 
     public boolean doNotResolveByDefault() {
@@ -61,18 +65,18 @@ public final class ModuleResolution {
 
     public ModuleResolution withDeprecated() {
         if ((value & (WARN_DEPRECATED_FOR_REMOVAL | WARN_INCUBATING)) != 0)
-            throw new RuntimeException("cannot add deprecated to " + value);
+            throw new InternalError("cannot add deprecated to " + value);
         return new ModuleResolution(value | WARN_DEPRECATED);
     }
 
     public ModuleResolution withDeprecatedForRemoval() {
         if ((value & (WARN_DEPRECATED | WARN_INCUBATING)) != 0)
-            throw new RuntimeException("cannot add deprecated for removal to " + value);
+            throw new InternalError("cannot add deprecated for removal to " + value);
         return new ModuleResolution(value | WARN_DEPRECATED_FOR_REMOVAL);
     }
     public ModuleResolution withIncubating() {
         if ((value & (WARN_DEPRECATED | WARN_DEPRECATED_FOR_REMOVAL)) != 0)
-            throw new RuntimeException("cannot add incubating to " + value);
+            throw new InternalError("cannot add incubating to " + value);
         return new ModuleResolution(value | WARN_INCUBATING);
     }
 
@@ -105,6 +109,6 @@ public final class ModuleResolution {
 
     @Override
     public String toString() {
-        return String.valueOf(value);
+        return super.toString() + "[value=" + value + "]";
     }
 }

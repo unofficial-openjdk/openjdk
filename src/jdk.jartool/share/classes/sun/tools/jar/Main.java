@@ -224,7 +224,7 @@ class Main {
     /* Modular jar related options */
     Version moduleVersion;
     Pattern modulesToHash;
-    ModuleResolution moduleResolution = new ModuleResolution(0);
+    ModuleResolution moduleResolution = ModuleResolution.empty();
     ModuleFinder moduleFinder = ModuleFinder.of();
 
     private static final String MODULE_INFO = "module-info.class";

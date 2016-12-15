@@ -704,7 +704,7 @@ public final class ModuleBootstrap {
             }
         }
         if (incubating != null)
-            warn("using incubating module(s): " + incubating);
+            warn("Using incubator modules: " + incubating);
     }
 
     /**

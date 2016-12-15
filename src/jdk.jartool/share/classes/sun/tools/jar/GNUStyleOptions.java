@@ -181,7 +181,7 @@ class GNUStyleOptions {
             },
             new Option(true, OptionType.CREATE_UPDATE, "--warn-if-resolved") {
                 void process(Main jartool, String opt, String arg) throws BadArgs {
-                    ModuleResolution mres = new ModuleResolution(0);
+                    ModuleResolution mres = ModuleResolution.empty();
                     if (jartool.moduleResolution.doNotResolveByDefault())
                         mres.withDoNotResolveByDefault();
 
