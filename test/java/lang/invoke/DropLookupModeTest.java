@@ -50,6 +50,10 @@ public class DropLookupModeTest {
         assertTrue(lookup.lookupClass() == lc);
         assertTrue(lookup.lookupModes() == (PUBLIC|MODULE|PACKAGE));
 
+        lookup = fullPowerLookup.dropLookupMode(PROTECTED);
+        assertTrue(lookup.lookupClass() == lc);
+        assertTrue(lookup.lookupModes() == (PUBLIC|MODULE|PACKAGE|PRIVATE));
+
         lookup = fullPowerLookup.dropLookupMode(PACKAGE);
         assertTrue(lookup.lookupClass() == lc);
         assertTrue(lookup.lookupModes() == (PUBLIC|MODULE));
@@ -71,6 +75,10 @@ public class DropLookupModeTest {
         Lookup lookup = MethodHandles.lookup();
         final Class<?> lc = lookup.lookupClass();
         assertTrue(lookup.lookupModes() == (PUBLIC|MODULE|PACKAGE|PROTECTED|PRIVATE));
+
+        lookup = lookup.dropLookupMode(PROTECTED);
+        assertTrue(lookup.lookupClass() == lc);
+        assertTrue(lookup.lookupModes() == (PUBLIC|MODULE|PACKAGE|PRIVATE));
 
         lookup = lookup.dropLookupMode(PRIVATE);
         assertTrue(lookup.lookupClass() == lc);
@@ -106,6 +114,10 @@ public class DropLookupModeTest {
         assertTrue(lookup.lookupClass() == lc);
         assertTrue(lookup.lookupModes() == PUBLIC);
 
+        lookup = publicLookup.dropLookupMode(PROTECTED);
+        assertTrue(lookup.lookupClass() == lc);
+        assertTrue(lookup.lookupModes() == PUBLIC);
+
         lookup = publicLookup.dropLookupMode(PACKAGE);
         assertTrue(lookup.lookupClass() == lc);
         assertTrue(lookup.lookupModes() == PUBLIC);
@@ -122,11 +134,10 @@ public class DropLookupModeTest {
     @DataProvider(name = "badInput")
     public Object[][] badInput() {
         return new Object[][] {
-                { 0,                                null },
-                { PROTECTED,                        null },
-                { (PUBLIC|MODULE|PACKAGE|PRIVATE),  null },
-                { Integer.MAX_VALUE,                null },
-                { Integer.MIN_VALUE,                null },
+                { 0,                        null },
+                { (PACKAGE|PRIVATE),        null },    // two modes
+                { Integer.MAX_VALUE,        null },
+                { Integer.MIN_VALUE,        null },
         };
     }
 
