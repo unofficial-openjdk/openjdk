@@ -159,25 +159,12 @@ class GNUStyleOptions {
                                                                 ModuleFinder.of(paths));
                 }
             },
-            new Option(false, OptionType.CREATE_UPDATE_INDEX, "--no-compress", "-0") {
-                void process(Main jartool, String opt, String arg) {
-                    jartool.flag0 = true;
-                }
-            },
-
-            // Hidden options
-            new Option(false, OptionType.OTHER, "-P") {
-                void process(Main jartool, String opt, String arg) {
-                    jartool.pflag = true;
-                }
-                boolean isHidden() { return true; }
-            },
             new Option(false, OptionType.CREATE_UPDATE, "--do-not-resolve-by-default") {
                 void process(Main jartool, String opt, String arg) {
                     ModuleResolution mres = jartool.moduleResolution;
                     jartool.moduleResolution = mres.withDoNotResolveByDefault();
                 }
-                boolean isHidden() { return true; }
+                boolean isExtra() { return true; }
             },
             new Option(true, OptionType.CREATE_UPDATE, "--warn-if-resolved") {
                 void process(Main jartool, String opt, String arg) throws BadArgs {
@@ -195,23 +182,39 @@ class GNUStyleOptions {
                         throw new BadArgs("error.bad.reason", arg);
                     }
                 }
+                boolean isExtra() { return true; }
+            },
+            new Option(false, OptionType.CREATE_UPDATE_INDEX, "--no-compress", "-0") {
+                void process(Main jartool, String opt, String arg) {
+                    jartool.flag0 = true;
+                }
+            },
+
+            // Hidden options
+            new Option(false, OptionType.OTHER, "-P") {
+                void process(Main jartool, String opt, String arg) {
+                    jartool.pflag = true;
+                }
                 boolean isHidden() { return true; }
             },
 
             // Other options
             new Option(true, true, OptionType.OTHER, "--help", "-h") {
                 void process(Main jartool, String opt, String arg) throws BadArgs {
-                    if (jartool.info == null) {
-                        if (arg == null) {
-                            jartool.info = Main.Info.HELP;
-                            return;
-                        }
-
-                        if (!arg.equals("compat"))
-                            throw new BadArgs("error.illegal.option", arg).showUsage(true);
-
-                        jartool.info = Main.Info.COMPAT_HELP;
+                    if (arg == null) {
+                        jartool.info = Main.Info.HELP;
+                        return;
                     }
+
+                    if (!arg.equals("compat"))
+                        throw new BadArgs("error.illegal.option", arg).showUsage(true);
+
+                    jartool.info = Main.Info.COMPAT_HELP;
+                }
+            },
+            new Option(false, OptionType.OTHER, "--help-extra") {
+                void process(Main jartool, String opt, String arg) throws BadArgs {
+                    jartool.info = Main.Info.HELP_EXTRA;
                 }
             },
             new Option(false, OptionType.OTHER, "--version") {
@@ -254,6 +257,8 @@ class GNUStyleOptions {
         }
 
         boolean isHidden() { return false; }
+
+        boolean isExtra() { return false; }
 
         boolean matches(String opt) {
             for (String a : aliases) {
@@ -318,6 +323,14 @@ class GNUStyleOptions {
     }
 
     static void printHelp(PrintWriter out) {
+        printHelp(out, false);
+    }
+
+    static void printHelpExtra(PrintWriter out) {
+        printHelp(out, true);
+    }
+
+    private static void printHelp(PrintWriter out, boolean printExtra) {
         out.format("%s%n", Main.getMsg("main.help.preopt"));
         for (OptionType type : OptionType.values()) {
             boolean typeHeadingWritten = false;
@@ -328,6 +341,9 @@ class GNUStyleOptions {
                 String name = o.aliases[0].substring(1); // there must always be at least one name
                 name = name.charAt(0) == '-' ? name.substring(1) : name;
                 if (o.isHidden() || name.equals("h")) {
+                    continue;
+                }
+                if (o.isExtra() && !printExtra) {
                     continue;
                 }
                 if (!typeHeadingWritten) {

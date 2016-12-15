@@ -67,6 +67,7 @@ import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -166,6 +167,7 @@ public class JmodTask {
         Mode mode;
         Path jmodFile;
         boolean help;
+        boolean helpExtra;
         boolean version;
         List<Path> classpath;
         List<Path> cmds;
@@ -194,7 +196,7 @@ public class JmodTask {
                 showUsageSummary();
                 return EXIT_CMDERR;
             }
-            if (options.help) {
+            if (options.help || options.helpExtra) {
                 showHelp();
                 return EXIT_OK;
             }
@@ -1215,16 +1217,23 @@ public class JmodTask {
      */
     private static final class JmodHelpFormatter extends BuiltinHelpFormatter {
 
-        private JmodHelpFormatter() { super(80, 2); }
+        private final Options opts;
+
+        private JmodHelpFormatter(Options opts) {
+            super(80, 2);
+            this.opts = opts;
+        }
 
         @Override
         public String format(Map<String, ? extends OptionDescriptor> options) {
-            Map<String, OptionDescriptor> all = new HashMap<>();
+            Map<String, OptionDescriptor> all = new LinkedHashMap<>();
             all.putAll(options);
 
-            // hidden options
-            all.remove("do-not-resolve-by-default");
-            all.remove("warn-if-resolved");
+            // extra options
+            if (!opts.helpExtra) {
+                all.remove("do-not-resolve-by-default");
+                all.remove("warn-if-resolved");
+            }
 
             all.put(CMD_FILENAME, new OptionDescriptor() {
                 @Override
@@ -1281,7 +1290,8 @@ public class JmodTask {
     private final OptionParser parser = new OptionParser("hp");
 
     private void handleOptions(String[] args) {
-        parser.formatHelpWith(new JmodHelpFormatter());
+        options = new Options();
+        parser.formatHelpWith(new JmodHelpFormatter(options));
 
         OptionSpec<Path> classPath
                 = parser.accepts("class-path", getMessage("main.opt.class-path"))
@@ -1322,6 +1332,9 @@ public class JmodTask {
         OptionSpec<Void> help
                 = parser.acceptsAll(Set.of("h", "help"), getMessage("main.opt.help"))
                         .forHelp();
+
+        OptionSpec<Void> helpExtra
+                = parser.accepts("help-extra", getMessage("main.opt.help-extra"));
 
         OptionSpec<Path> headerFiles
             = parser.accepts("header-files", getMessage("main.opt.header-files"))
@@ -1374,10 +1387,11 @@ public class JmodTask {
                         .describedAs(getMessage("main.opt.os-version.arg"));
 
         OptionSpec<Void> doNotResolveByDefault
-                = parser.accepts("do-not-resolve-by-default");
+                = parser.accepts("do-not-resolve-by-default",
+                                 getMessage("main.opt.do-not-resolve-by-default"));
 
         OptionSpec<ModuleResolution> warnIfResolved
-                = parser.accepts("warn-if-resolved")
+                = parser.accepts("warn-if-resolved", getMessage("main.opt.warn-if-resolved"))
                         .withRequiredArg()
                         .withValuesConvertedBy(new WarnIfResolvedReasonConverter());
 
@@ -1390,9 +1404,9 @@ public class JmodTask {
         try {
             OptionSet opts = parser.parse(args);
 
-            if (opts.has(help) || opts.has(version)) {
-                options = new Options();
+            if (opts.has(help) || opts.has(helpExtra) || opts.has(version)) {
                 options.help = opts.has(help);
+                options.helpExtra = opts.has(helpExtra);
                 options.version = opts.has(version);
                 return;  // informational message will be shown
             }
@@ -1401,7 +1415,6 @@ public class JmodTask {
             if (words.isEmpty())
                 throw new CommandException("err.missing.mode").showUsage(true);
             String verb = words.get(0);
-            options = new Options();
             try {
                 options.mode = Enum.valueOf(Mode.class, verb.toUpperCase());
             } catch (IllegalArgumentException e) {

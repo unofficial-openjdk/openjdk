@@ -60,6 +60,11 @@ public class DefaultImage {
     }
 
     public void test() throws Throwable {
+        if (isExplodedBuild()) {
+            System.out.println("Test cannot run on exploded build");
+            return;
+        }
+
         java("-cp", CP_DIR.toString(),
              "listmods.ListModules")
             .assertSuccess()
@@ -74,6 +79,11 @@ public class DefaultImage {
 
     @Test(dataProvider = "tokens")
     public void testAddMods(String addModsToken) throws Throwable {
+        if (isExplodedBuild()) {
+            System.out.println("Test cannot run on exploded build");
+            return;
+        }
+
         java("--add-modules", addModsToken,
              "-cp", CP_DIR.toString(),
              "listmods.ListModules")
@@ -139,5 +149,10 @@ public class DefaultImage {
         if (Files.notExists(java))
             throw new RuntimeException(java + " not found");
         return java.toAbsolutePath().toString();
+    }
+
+    static boolean isExplodedBuild() {
+        Path modulesPath = Paths.get(JAVA_HOME).resolve("lib").resolve("modules");
+        return Files.notExists(modulesPath);
     }
 }
