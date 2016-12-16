@@ -691,8 +691,8 @@ public final class ModuleBootstrap {
             String mn = mref.descriptor().name();
 
             // emit warning if module name ends with a non-Java letter
-            //if (!Checks.hasLegalModuleNameLastCharacter(mn))
-            //    warn("Module name \"" + mn + "\" may soon be illegal");
+            if (!Checks.hasLegalModuleNameLastCharacter(mn))
+                warn("Module name \"" + mn + "\" may soon be illegal");
 
             // emit warning if the WARN_INCUBATING module resolution bit set
             if (ModuleResolution.hasIncubatingWarning(mref)) {
