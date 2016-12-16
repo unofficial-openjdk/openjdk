@@ -26,9 +26,7 @@
 package jdk.internal.module;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.PrintStream;
-import java.io.UncheckedIOException;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
@@ -37,7 +35,6 @@ import java.lang.module.ResolvedModule;
 import java.lang.reflect.Layer;
 import java.lang.reflect.Module;
 import java.net.URI;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -49,13 +46,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 import jdk.internal.loader.BootLoader;
 import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.perf.PerfCounter;
-import jdk.internal.reflect.Reflection;
 
 /**
  * Initializes/boots the module system.
@@ -509,48 +504,7 @@ public final class ModuleBootstrap {
         if (!extraOpens.isEmpty()) {
             addExtraExportsOrOpens(bootLayer, extraOpens, true);
         }
-
-        // DEBUG_ADD_OPENS is for debugging purposes only
-        String home = System.getProperty("java.home");
-        Path file = Paths.get(home, "conf", "DEBUG_ADD_OPENS");
-        if (Files.exists(file)) {
-            warn(file + " detected; may break encapsulation");
-            try (Stream<String> lines = Files.lines(file)) {
-                lines.map(line -> line.trim())
-                    .filter(line -> (!line.isEmpty() && !line.startsWith("#")))
-                    .forEach(line -> {
-                        String[] s = line.split("/");
-                        if (s.length != 2) {
-                            fail("Unable to parse as <module>/<package>: " + line);
-                        } else {
-                            String mn = s[0];
-                            String pkg = s[1];
-                            openPackage(bootLayer, mn, pkg);
-                        }
-                    });
-            } catch (IOException ioe) {
-                throw new UncheckedIOException(ioe);
-            }
-            Reflection.enableStackTraces();
-        }
     }
-
-    private static void openPackage(Layer bootLayer, String mn, String pkg) {
-        if (mn.equals("ALL-RESOLVED") && pkg.equals("ALL-PACKAGES")) {
-            bootLayer.modules().stream().forEach(m ->
-                m.getDescriptor().packages().forEach(pn -> openPackage(m, pn)));
-        } else {
-            bootLayer.findModule(mn)
-                     .filter(m -> m.getDescriptor().packages().contains(pkg))
-                     .ifPresent(m -> openPackage(m, pkg));
-        }
-    }
-
-    private static void openPackage(Module m, String pn) {
-        Modules.addOpensToAllUnnamed(m, pn);
-        warn("Opened for deep reflection: " + m.getName()  + "/" + pn);
-    }
-
 
     private static void addExtraExportsOrOpens(Layer bootLayer,
                                                Map<String, List<String>> map,
@@ -691,8 +645,8 @@ public final class ModuleBootstrap {
             String mn = mref.descriptor().name();
 
             // emit warning if module name ends with a non-Java letter
-            //if (!Checks.hasLegalModuleNameLastCharacter(mn))
-            //    warn("Module name \"" + mn + "\" may soon be illegal");
+            if (!Checks.hasLegalModuleNameLastCharacter(mn))
+                warn("Module name \"" + mn + "\" may soon be illegal");
 
             // emit warning if the WARN_INCUBATING module resolution bit set
             if (ModuleResolution.hasIncubatingWarning(mref)) {
