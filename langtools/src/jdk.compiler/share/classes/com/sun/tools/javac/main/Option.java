@@ -337,7 +337,7 @@ public enum Option {
         }
     },
 
-    VERSION("-version", "opt.version", STANDARD, INFO) {
+    VERSION("--version -version", "opt.version", STANDARD, INFO) {
         @Override
         public void process(OptionHelper helper, String option) throws InvalidValueException {
             Log log = helper.getLog();
@@ -347,7 +347,7 @@ public enum Option {
         }
     },
 
-    FULLVERSION("-fullversion", null, HIDDEN, INFO) {
+    FULLVERSION("--full-version -fullversion", null, HIDDEN, INFO) {
         @Override
         public void process(OptionHelper helper, String option) throws InvalidValueException {
             Log log = helper.getLog();
@@ -397,7 +397,7 @@ public enum Option {
         }
     },
 
-    X("-X", "opt.X", STANDARD, INFO) {
+    X("--help-extra -X", "opt.X", STANDARD, INFO) {
         @Override
         public void process(OptionHelper helper, String option) throws InvalidValueException {
             Log log = helper.getLog();

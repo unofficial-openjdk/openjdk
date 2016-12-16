@@ -590,6 +590,17 @@ public class ClassReader {
         return set;
     }
 
+    /** Read resolution_flags.
+     */
+    Set<ModuleResolutionFlags> readModuleResolutionFlags(int flags) {
+        Set<ModuleResolutionFlags> set = EnumSet.noneOf(ModuleResolutionFlags.class);
+        for (ModuleResolutionFlags f : ModuleResolutionFlags.values()) {
+            if ((flags & f.value) != 0)
+                set.add(f);
+        }
+        return set;
+    }
+
     /** Read exports_flags.
      */
     Set<ExportsFlag> readExportsFlags(int flags) {
@@ -1343,6 +1354,19 @@ public class ClassReader {
                             }
                         }
                         interimProvides = provides.toList();
+                    }
+                }
+            },
+
+            new AttributeReader(names.ModuleResolution, V53, CLASS_ATTRIBUTE) {
+                @Override
+                protected boolean accepts(AttributeKind kind) {
+                    return super.accepts(kind) && allowModules;
+                }
+                protected void read(Symbol sym, int attrLen) {
+                    if (sym.kind == TYP && sym.owner.kind == MDL) {
+                        ModuleSymbol msym = (ModuleSymbol) sym.owner;
+                        msym.resolutionFlags.addAll(readModuleResolutionFlags(nextChar()));
                     }
                 }
             },
@@ -2441,7 +2465,7 @@ public class ClassReader {
                     ? parameterNameIndices[index] : 0);
             Name name = nameIdx == 0 ? names.empty : readName(nameIdx);
             paramNames = paramNames.prepend(name);
-            index += Code.width(t);
+            index += sawMethodParameters ? 1 : Code.width(t);
         }
         sym.savedParameterNames = paramNames.reverse();
     }

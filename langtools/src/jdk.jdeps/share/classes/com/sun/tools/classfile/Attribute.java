@@ -56,6 +56,7 @@ public abstract class Attribute {
     public static final String ModuleHashes             = "ModuleHashes";
     public static final String ModuleMainClass          = "ModuleMainClass";
     public static final String ModulePackages           = "ModulePackages";
+    public static final String ModuleResolution         = "ModuleResolution";
     public static final String ModuleTarget             = "ModuleTarget";
     public static final String RuntimeVisibleAnnotations = "RuntimeVisibleAnnotations";
     public static final String RuntimeInvisibleAnnotations = "RuntimeInvisibleAnnotations";
@@ -127,6 +128,7 @@ public abstract class Attribute {
             standardAttributes.put(ModuleHashes,      ModuleHashes_attribute.class);
             standardAttributes.put(ModuleMainClass,   ModuleMainClass_attribute.class);
             standardAttributes.put(ModulePackages,    ModulePackages_attribute.class);
+            standardAttributes.put(ModuleResolution,  ModuleResolution_attribute.class);
             standardAttributes.put(ModuleTarget,      ModuleTarget_attribute.class);
             standardAttributes.put(RuntimeInvisibleAnnotations, RuntimeInvisibleAnnotations_attribute.class);
             standardAttributes.put(RuntimeInvisibleParameterAnnotations, RuntimeInvisibleParameterAnnotations_attribute.class);
@@ -189,6 +191,7 @@ public abstract class Attribute {
         R visitModuleHashes(ModuleHashes_attribute attr, P p);
         R visitModuleMainClass(ModuleMainClass_attribute attr, P p);
         R visitModulePackages(ModulePackages_attribute attr, P p);
+        R visitModuleResolution(ModuleResolution_attribute attr, P p);
         R visitModuleTarget(ModuleTarget_attribute attr, P p);
         R visitRuntimeVisibleAnnotations(RuntimeVisibleAnnotations_attribute attr, P p);
         R visitRuntimeInvisibleAnnotations(RuntimeInvisibleAnnotations_attribute attr, P p);
