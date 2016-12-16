@@ -4349,13 +4349,34 @@ static void check_super_class_access(const InstanceKlass* this_klass, TRAPS) {
   assert(this_klass != NULL, "invariant");
   const Klass* const super = this_klass->super();
   if (super != NULL) {
+
+    // If the loader is not the boot loader then throw an exception if its
+    // superclass is in package jdk.internal.reflect and its loader is not a
+    // special reflection class loader
+    if (!this_klass->class_loader_data()->is_the_null_class_loader_data()) {
+      assert(super->is_instance_klass(), "super is not instance klass");
+      PackageEntry* super_package = super->package();
+      if (super_package != NULL &&
+          super_package->name()->fast_compare(vmSymbols::jdk_internal_reflect()) == 0 &&
+          !java_lang_ClassLoader::is_reflection_class_loader(this_klass->class_loader())) {
+        ResourceMark rm(THREAD);
+        Exceptions::fthrow(
+          THREAD_AND_LOCATION,
+          vmSymbols::java_lang_IllegalAccessError(),
+          "class %s loaded by %s cannot access jdk/internal/reflect superclass %s",
+          this_klass->external_name(),
+          this_klass->class_loader_data()->loader_name(),
+          super->external_name());
+        return;
+      }
+    }
+
     Reflection::VerifyClassAccessResults vca_result =
       Reflection::verify_class_access(this_klass, super, false);
     if (vca_result != Reflection::ACCESS_OK) {
       ResourceMark rm(THREAD);
       char* msg =  Reflection::verify_class_access_msg(this_klass, super, vca_result);
       if (msg == NULL) {
-        ResourceMark rm(THREAD);
         Exceptions::fthrow(
           THREAD_AND_LOCATION,
           vmSymbols::java_lang_IllegalAccessError(),
@@ -4684,16 +4705,7 @@ bool ClassFileParser::verify_unqualified_name(const char* name,
   for (const char* p = name; p != name + length;) {
     jchar ch = *p;
     if (ch < 128) {
-      if (ch == '.') {
-        // permit '.' in module names unless it's the first char, or
-        // preceding char is also a '.', or last char is a '.'.
-        if ((type != ClassFileParser::LegalModule) ||
-          (p == name) || (*(p-1) == '.') ||
-          (p == name + length - 1)) {
-          return false;
-        }
-      }
-      if (ch == ';' || ch == '[' ) {
+      if (ch == '.' || ch == ';' || ch == '[' ) {
         return false;   // do not permit '.', ';', or '['
       }
       if (ch == '/') {
