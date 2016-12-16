@@ -4,9 +4,7 @@
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,14 +21,22 @@
  * questions.
  */
 
-/**
-  * This is a test description for the moduleA module. Search phrase {@index "search phrase" with description}.
-  *
-  * @deprecated This module is deprecated.
-  */
-@Deprecated(forRemoval=true)
-module moduleA {
-    requires moduleB;
+/*
+ * @test
+ * @bug 8075793
+ * @summary Capture variable as an inference lower bound followed by an invariant assignment
+ * @compile CaptureLowerBoundAssign.java
+ * @compile -Xlint:-options -source 7 CaptureLowerBoundAssign.java
+ */
 
-    exports testpkgmdlA;
+class CaptureLowerBoundAssign {
+
+    static class C<T> {}
+
+    <T> C<T> m(C<? extends T> x) { return null; }
+
+    void test(C<? extends Number> arg) {
+        C<Number> c = m(arg);
+    }
+
 }
