@@ -58,9 +58,28 @@ public final class Checks {
             throw new IllegalArgumentException(name + ": Invalid module name"
                     + ": '" + id + "' is not a Java identifier");
         }
-        //if (Character.isJavaIdentifierStart(last))
+        //if (!Character.isJavaIdentifierStart(last))
         //    throw new IllegalArgumentException(name + ": Module name ends in digit");
         return name;
+    }
+
+    /**
+     * Returns {@code true} if the given name is a legal module name.
+     */
+    public static boolean isModuleName(String name) {
+        int next;
+        int off = 0;
+        while ((next = name.indexOf('.', off)) != -1) {
+            if (isJavaIdentifier(name, off, (next - off)) == -1)
+                return false;
+            off = next+1;
+        }
+        int last = isJavaIdentifier(name, off, name.length() - off);
+        if (last == -1)
+            return false;
+        //if (!Character.isJavaIdentifierStart(last))
+        //    return false;
+        return true;
     }
 
     /**
@@ -143,6 +162,44 @@ public final class Checks {
     }
 
     /**
+     * Returns {@code true} if the last character of the given name is legal
+     * as the last character of a module name.
+     *
+     * @throws IllegalArgumentException if name is empty
+     */
+    public static boolean hasLegalModuleNameLastCharacter(String name) {
+        if (name.isEmpty())
+            throw new IllegalArgumentException("name is empty");
+        int len = name.length();
+        if (isASCIIString(name)) {
+            char c = name.charAt(len-1);
+            return Character.isJavaIdentifierStart(c);
+        } else {
+            int i = 0;
+            int cp = -1;
+            while (i < len) {
+                cp = name.codePointAt(i);
+                i += Character.charCount(cp);
+            }
+            return Character.isJavaIdentifierStart(cp);
+        }
+    }
+
+    /**
+     * Returns true if the given string only contains ASCII characters.
+     */
+    private static boolean isASCIIString(String s) {
+        int i = 0;
+        while (i < s.length()) {
+            int c = s.charAt(i);
+            if (c > 0x7F)
+                return false;
+            i++;
+        }
+        return true;
+    }
+
+    /**
      * Checks if a char sequence is a legal Java identifier, returning the code
      * point of the last character if legal or {@code -1} if not legal.
      */
@@ -152,13 +209,16 @@ public final class Checks {
         int first = Character.codePointAt(cs, offset);
         if (!Character.isJavaIdentifierStart(first))
             return -1;
+
+        int cp = first;
         int i = Character.charCount(first);
-        int cp = Character.charCount(first);
-        for (; i < count; i += Character.charCount(cp)) {
+        while (i < count) {
             cp = Character.codePointAt(cs, offset+i);
             if (!Character.isJavaIdentifierPart(cp))
                 return -1;
+            i += Character.charCount(cp);
         }
+
         return cp;
     }
 }

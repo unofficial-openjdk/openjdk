@@ -99,14 +99,13 @@ public final class ClassFileAttributes {
             // module_flags
             int module_flags = cr.readUnsignedShort(off);
             boolean open = ((module_flags & ACC_OPEN) != 0);
+            boolean synthetic = ((module_flags & ACC_SYNTHETIC) != 0);
             off += 2;
 
-            ModuleDescriptor.Builder builder;
-            if (open) {
-                builder = JLMA.newOpenModuleBuilder(mn, false);
-            } else {
-                builder = JLMA.newModuleBuilder(mn, false);
-            }
+            ModuleDescriptor.Builder builder = JLMA.newModuleBuilder(mn,
+                                                                     false,
+                                                                     open,
+                                                                     synthetic);
 
             // module_version
             String module_version = cr.readUTF8(off, buf);
@@ -734,4 +733,58 @@ public final class ClassFileAttributes {
         }
     }
 
+    /**
+     *  ModuleResolution_attribute {
+     *    u2 attribute_name_index;    // "ModuleResolution"
+     *    u4 attribute_length;        // 2
+     *    u2 resolution_flags;
+     *
+     *  The value of the resolution_flags item is a mask of flags used to denote
+     *  properties of module resolution. The flags are as follows:
+     *
+     *   // Optional
+     *   0x0001 (DO_NOT_RESOLVE_BY_DEFAULT)
+     *
+     *   // At most one of:
+     *   0x0002 (WARN_DEPRECATED)
+     *   0x0004 (WARN_DEPRECATED_FOR_REMOVAL)
+     *   0x0008 (WARN_INCUBATING)
+     */
+    static class ModuleResolutionAttribute extends Attribute {
+        private final int value;
+
+        ModuleResolutionAttribute() {
+            super(MODULE_RESOLUTION);
+            value = 0;
+        }
+
+        ModuleResolutionAttribute(int value) {
+            super(MODULE_RESOLUTION);
+            this.value = value;
+        }
+
+        @Override
+        protected Attribute read(ClassReader cr,
+                                 int off,
+                                 int len,
+                                 char[] buf,
+                                 int codeOff,
+                                 Label[] labels)
+        {
+            int flags = cr.readUnsignedShort(off);
+            return new ModuleResolutionAttribute(flags);
+        }
+
+        @Override
+        protected ByteVector write(ClassWriter cw,
+                                   byte[] code,
+                                   int len,
+                                   int maxStack,
+                                   int maxLocals)
+        {
+            ByteVector attr = new ByteVector();
+            attr.putShort(value);
+            return attr;
+        }
+    }
 }

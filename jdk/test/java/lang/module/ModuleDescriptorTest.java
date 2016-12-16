@@ -23,8 +23,7 @@
 
 /**
  * @test
- * @modules java.base/java.lang.module:open
- *          java.base/jdk.internal.module
+ * @modules java.base/jdk.internal.module
  * @run testng ModuleDescriptorTest
  * @summary Basic test for java.lang.module.ModuleDescriptor and its builder
  */
@@ -41,16 +40,13 @@ import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Requires.Modifier;
 import java.lang.module.ModuleDescriptor.Version;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Module;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static java.lang.module.ModuleDescriptor.Requires.Modifier.*;
 
@@ -76,6 +72,7 @@ public class ModuleDescriptorTest {
             { "1foo.bar",       null },
             { "foo.1bar",       null },
             { "foo.[bar]",      null },
+            { "foo..bar",       null },
             { "foo.bar.1",      null },
             { "foo.bar.1gus",   null },
             { "foo.bar.[gus]",  null },
@@ -1006,7 +1003,7 @@ public class ModuleDescriptorTest {
     };
 
     // basic test reading module-info.class
-    public void testRead1() throws Exception {
+    public void testRead() throws Exception {
         Module base = Object.class.getModule();
 
         try (InputStream in = base.getResourceAsStream("module-info.class")) {
@@ -1022,45 +1019,6 @@ public class ModuleDescriptorTest {
             assertEquals(descriptor.name(), "java.base");
         }
     }
-
-    /**
-     * Test reading a module-info.class that has a module name, requires,
-     * and qualified exports with module names that are not supported in the
-     * Java Language.
-     */
-    public void testRead2() throws Exception {
-        // use non-public constructor to create a Builder that is not strict
-        Constructor<?> ctor = Builder.class.getDeclaredConstructor(String.class, boolean.class);
-        ctor.setAccessible(true);
-
-        Builder builder = (ModuleDescriptor.Builder) ctor.newInstance("m?1", false);
-        ModuleDescriptor descriptor = builder
-                .requires("java.base")
-                .requires("-m1")
-                .exports("p", Set.of("m2-"))
-                .build();
-
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ModuleInfoWriter.write(descriptor, baos);
-        ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
-
-        descriptor = ModuleDescriptor.read(bb);
-        assertEquals(descriptor.name(), "m?1");
-
-        Set<String> requires = descriptor.requires()
-                .stream()
-                .map(Requires::name)
-                .collect(Collectors.toSet());
-        assertTrue(requires.size() == 2);
-        assertTrue(requires.contains("java.base"));
-        assertTrue(requires.contains("-m1"));
-
-        assertTrue(descriptor.exports().size() == 1);
-        Exports e = descriptor.exports().iterator().next();
-        assertTrue(e.targets().size() == 1);
-        assertTrue(e.targets().contains("m2-"));
-    }
-
     /**
      * Test ModuleDescriptor with a packager finder
      */

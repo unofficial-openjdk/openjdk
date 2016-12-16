@@ -226,14 +226,21 @@ public class AccessibleObject implements AnnotatedElement {
     private void printStackTraceIfExposedReflectively(Module module,
                                                       String pn,
                                                       Module other,
-                                                      boolean open) {
+                                                      boolean open)
+    {
         if (Reflection.printStackTraceWhenAccessSucceeds()
-                && !module.isStaticallyExportedOrOpen(pn, other, open)) {
-            String msg = other + " allowed to setAccessible on ";
+            && !module.isStaticallyExportedOrOpen(pn, other, open))
+        {
+            String msg = other + " allowed to invoke setAccessible on ";
             if (this instanceof Field)
                 msg += "field ";
             msg += this;
-            new Exception(msg).printStackTrace(System.err);
+            new Exception(msg) {
+                private static final long serialVersionUID = 42L;
+                public String toString() {
+                    return "WARNING: " + getMessage();
+                }
+            }.printStackTrace(System.err);
         }
     }
 

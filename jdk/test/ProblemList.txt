@@ -171,11 +171,7 @@ java/net/MulticastSocket/Test.java                              7145658 macosx-a
 
 java/net/DatagramSocket/SendDatagramToBadAddress.java           7143960 macosx-all
 
-java/net/httpclient/SplitResponse.java                          8157533 generic-all 
-
-java/net/httpclient/http2/BasicTest.java                        8157408 linux-all
-java/net/httpclient/http2/ErrorTest.java                        8158127 solaris-all,windows-all
-java/net/httpclient/http2/TLSConnection.java                    8157482 macosx-all
+java/net/httpclient/TimeoutOrdering.java                        8170940 solaris-all,windows-all
 
 ############################################################################
 
@@ -219,9 +215,9 @@ sun/security/tools/keytool/ListKeychainStore.sh                 8156889 macosx-a
 
 sun/security/tools/jarsigner/warnings/BadKeyUsageTest.java      8026393 generic-all
 
-sun/security/krb5/auto/HttpNegotiateServer.java                 8038079 generic-all
-
 sun/security/ssl/SSLSocketImpl/AsyncSSLSocketClose.java         8161232 macosx-all
+
+javax/net/ssl/DTLS/PacketLossRetransmission.java                8169086 macosx-x64
 
 ############################################################################
 
@@ -233,6 +229,8 @@ javax/sound/sampled/DataLine/LongFramePosition.java    8055097 generic-all
 javax/sound/sampled/Clip/Drain/ClipDrain.java          7062792 generic-all
 
 javax/sound/sampled/Mixers/DisabledAssertionCrash.java 7067310 generic-all
+
+javax/sound/sampled/Clip/OpenNonIntegralNumberOfSampleframes.java 8168881 generic-all
 
 ############################################################################
 
@@ -265,6 +263,9 @@ tools/jimage/JImageExtractTest.java                             8169713 generic-
 tools/jimage/JImageListTest.java                                8169713 generic-all
 tools/jimage/JImageVerifyTest.java                              8169713 generic-all
 
+
+tools/jlink/multireleasejar/JLinkMultiReleaseJarTest.java       8169971 windows-x64
+
 ############################################################################
 
 # jdk_jdi
@@ -290,6 +291,7 @@ com/sun/jdi/sde/SourceDebugExtensionTest.java                   8158066 windows-
 java/util/spi/ResourceBundleControlProvider/UserDefaultControlTest.java 8062512 generic-all
 
 java/util/BitSet/BitSetStreamTest.java                          8079538 generic-all
+
 
 ############################################################################
 

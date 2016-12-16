@@ -82,6 +82,7 @@ import com.sun.tools.classfile.Module_attribute.RequiresEntry;
 import com.sun.tools.classfile.ModuleHashes_attribute;
 import com.sun.tools.classfile.ModuleHashes_attribute.Entry;
 import com.sun.tools.classfile.ModuleMainClass_attribute;
+import com.sun.tools.classfile.ModuleResolution_attribute;
 import com.sun.tools.classfile.ModuleTarget_attribute;
 import com.sun.tools.classfile.ModulePackages_attribute;
 import com.sun.tools.classfile.Opcode;
@@ -1524,6 +1525,15 @@ class AttributeVisitor implements Attribute.Visitor<Element, Element> {
     public Element visitModuleMainClass(ModuleMainClass_attribute attr, Element p) {
         Element e = new Element(x.getCpString(attr.attribute_name_index));
         e.add(x.getCpString(attr.main_class_index));
+        e.trimToSize();
+        p.add(e);
+        return null;
+    }
+
+    @Override
+    public Element visitModuleResolution(ModuleResolution_attribute attr, Element p) {
+        Element e = new Element("ModuleResolution");
+        e.setAttr("flags", Integer.toString(attr.resolution_flags));
         e.trimToSize();
         p.add(e);
         return null;

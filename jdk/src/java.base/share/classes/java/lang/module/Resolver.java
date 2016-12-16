@@ -46,6 +46,7 @@ import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 import jdk.internal.module.ModuleHashes;
+import jdk.internal.module.ModuleReferenceImpl;
 
 /**
  * The resolver used by {@link Configuration#resolveRequires} and
@@ -438,22 +439,32 @@ final class Resolver {
      */
     private void checkHashes() {
         for (ModuleReference mref : nameToReference.values()) {
+
             // get the recorded hashes, if any
-            ModuleHashes hashes = mref.recordedHashes();
+            if (!(mref instanceof ModuleReferenceImpl))
+                continue;
+            ModuleHashes hashes = ((ModuleReferenceImpl)mref).recordedHashes();
             if (hashes == null)
                 continue;
 
             ModuleDescriptor descriptor = mref.descriptor();
             String algorithm = hashes.algorithm();
             for (String dn : hashes.names()) {
-                ModuleReference other = nameToReference.get(dn);
-                if (other == null) {
+                ModuleReference mref2 = nameToReference.get(dn);
+                if (mref2 == null) {
                     ResolvedModule resolvedModule = findInParent(dn);
                     if (resolvedModule != null)
-                        other = resolvedModule.reference();
+                        mref2 = resolvedModule.reference();
+                }
+                if (mref2 == null)
+                    continue;
+
+                if (!(mref2 instanceof ModuleReferenceImpl)) {
+                    fail("Unable to compute the hash of module %s", dn);
                 }
 
                 // skip checking the hash if the module has been patched
+                ModuleReferenceImpl other = (ModuleReferenceImpl)mref2;
                 if (other != null && !other.isPatched()) {
                     byte[] recordedHash = hashes.hashFor(dn);
                     byte[] actualHash = other.computeHash(algorithm);

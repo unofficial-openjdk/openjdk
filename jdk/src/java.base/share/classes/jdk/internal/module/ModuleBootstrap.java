@@ -200,7 +200,9 @@ public final class ModuleBootstrap {
         // module is the unnamed module of the application class loader. This
         // is implemented by resolving "java.se" and all (non-java.*) modules
         // that export an API. If "java.se" is not observable then all java.*
-        // modules are resolved.
+        // modules are resolved. Modules that have the DO_NOT_RESOLVE_BY_DEFAULT
+        // bit set in their ModuleResolution attribute flags are excluded from
+        // the default set of roots.
         if (mainModule == null || addAllDefaultModules) {
             boolean hasJava = false;
             if (systemModules.find(JAVA_SE).isPresent()) {
@@ -215,6 +217,9 @@ public final class ModuleBootstrap {
             for (ModuleReference mref : systemModules.findAll()) {
                 String mn = mref.descriptor().name();
                 if (hasJava && mn.startsWith("java."))
+                    continue;
+
+                if (ModuleResolution.doNotResolveByDefault(mref))
                     continue;
 
                 // add as root if observable and exports at least one package
@@ -236,6 +241,7 @@ public final class ModuleBootstrap {
             ModuleFinder f = finder;  // observable modules
             systemModules.findAll()
                 .stream()
+                .filter(mref -> !ModuleResolution.doNotResolveByDefault(mref))
                 .map(ModuleReference::descriptor)
                 .map(ModuleDescriptor::name)
                 .filter(mn -> f.find(mn).isPresent())  // observable
@@ -282,6 +288,8 @@ public final class ModuleBootstrap {
         // time to create configuration
         PerfCounters.resolveTime.addElapsedTimeFrom(t3);
 
+        // check module names and incubating status
+        checkModuleNamesAndStatus(cf);
 
         // mapping of modules to class loaders
         Function<String, ClassLoader> clf = ModuleLoaderMap.mappingFunction(cf);
@@ -506,7 +514,7 @@ public final class ModuleBootstrap {
         String home = System.getProperty("java.home");
         Path file = Paths.get(home, "conf", "DEBUG_ADD_OPENS");
         if (Files.exists(file)) {
-            warn(file + " used break encapsulation");
+            warn(file + " detected; may break encapsulation");
             try (Stream<String> lines = Files.lines(file)) {
                 lines.map(line -> line.trim())
                     .filter(line -> (!line.isEmpty() && !line.startsWith("#")))
@@ -528,7 +536,7 @@ public final class ModuleBootstrap {
     }
 
     private static void openPackage(Layer bootLayer, String mn, String pkg) {
-        if (mn.equals("RESOLVED") && pkg.equals("ALL-PACKAGES")) {
+        if (mn.equals("ALL-RESOLVED") && pkg.equals("ALL-PACKAGES")) {
             bootLayer.modules().stream().forEach(m ->
                 m.getDescriptor().packages().forEach(pn -> openPackage(m, pn)));
         } else {
@@ -540,7 +548,7 @@ public final class ModuleBootstrap {
 
     private static void openPackage(Module m, String pn) {
         Modules.addOpensToAllUnnamed(m, pn);
-        System.err.println(m.getName()  + "/" + pn + " opened for deep reflection");
+        warn("Opened for deep reflection: " + m.getName()  + "/" + pn);
     }
 
 
@@ -670,6 +678,33 @@ public final class ModuleBootstrap {
      */
     private static String getAndRemoveProperty(String key) {
         return (String)System.getProperties().remove(key);
+    }
+
+    /**
+     * Checks the names and resolution bit of each module in the configuration,
+     * emitting warnings if needed.
+     */
+    private static void checkModuleNamesAndStatus(Configuration cf) {
+        String incubating = null;
+        for (ResolvedModule rm : cf.modules()) {
+            ModuleReference mref = rm.reference();
+            String mn = mref.descriptor().name();
+
+            // emit warning if module name ends with a non-Java letter
+            if (!Checks.hasLegalModuleNameLastCharacter(mn))
+                warn("Module name \"" + mn + "\" may soon be illegal");
+
+            // emit warning if the WARN_INCUBATING module resolution bit set
+            if (ModuleResolution.hasIncubatingWarning(mref)) {
+                if (incubating == null) {
+                    incubating = mn;
+                } else {
+                    incubating += ", " + mn;
+                }
+            }
+        }
+        if (incubating != null)
+            warn("Using incubator modules: " + incubating);
     }
 
     /**

@@ -42,6 +42,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import jdk.internal.module.ModulePath;
+import jdk.internal.module.SystemModuleFinder;
 import sun.security.action.GetPropertyAction;
 
 /**
@@ -166,7 +168,7 @@ public interface ModuleFinder {
 
         Path modules = Paths.get(home, "lib", "modules");
         if (Files.isRegularFile(modules)) {
-            return new SystemModuleFinder();
+            return SystemModuleFinder.getInstance();
         } else {
             Path mlib = Paths.get(home, "modules");
             if (Files.isDirectory(mlib)) {
