@@ -671,6 +671,8 @@ LLVM_LIBS
 LLVM_LDFLAGS
 LLVM_CFLAGS
 LLVM_CONFIG
+LIBFFI_LIB_FILE
+ENABLE_LIBFFI_BUNDLING
 LIBFFI_LIBS
 LIBFFI_CFLAGS
 ALSA_LIBS
@@ -865,8 +867,6 @@ IMPORT_MODULES_CONF
 IMPORT_MODULES_LIBS
 IMPORT_MODULES_CMDS
 IMPORT_MODULES_CLASSES
-BUILD_HOTSPOT
-HOTSPOT_DIST
 BUILD_OUTPUT
 JDK_TOPDIR
 NASHORN_TOPDIR
@@ -959,6 +959,7 @@ CONF_NAME
 SPEC
 SDKROOT
 XCODEBUILD
+JVM_VARIANT_MAIN
 VALID_JVM_VARIANTS
 JVM_VARIANTS
 DEBUG_LEVEL
@@ -1208,6 +1209,7 @@ with_alsa_lib
 with_libffi
 with_libffi_include
 with_libffi_lib
+enable_libffi_bundling
 with_libjpeg
 with_giflib
 with_libpng
@@ -1990,6 +1992,9 @@ Optional Features:
                           disable bundling of the freetype library with the
                           build result [enabled on Windows or when using
                           --with-freetype, disabled otherwise]
+  --enable-libffi-bundling
+                          enable bundling of libffi.so to make the built JDK
+                          runnable on more systems
   --enable-jtreg-failure-handler
                           forces build of the jtreg failure handler to be
                           enabled, missing dependencies become fatal errors.
@@ -2091,9 +2096,8 @@ Optional Packages:
                           compatibility and is ignored
   --with-override-jdk     Deprecated. Option is kept for backwards
                           compatibility and is ignored
-  --with-import-hotspot   import hotspot binaries from this jdk image or
-                          hotspot build dist dir instead of building from
-                          source
+  --with-import_hotspot   Deprecated. Option is kept for backwards
+                          compatibility and is ignored
   --with-import-modules   import a set of prebuilt modules either as a zip
                           file or an exploded directory
   --with-toolchain-type   the toolchain type (or family) to use, use '--help'
@@ -4171,7 +4175,7 @@ apt_help() {
     ffi)
       PKGHANDLER_COMMAND="sudo apt-get install libffi-dev" ;;
     x11)
-      PKGHANDLER_COMMAND="sudo apt-get install libX11-dev libxext-dev libxrender-dev libxtst-dev libxt-dev" ;;
+      PKGHANDLER_COMMAND="sudo apt-get install libx11-dev libxext-dev libxrender-dev libxtst-dev libxt-dev" ;;
     ccache)
       PKGHANDLER_COMMAND="sudo apt-get install ccache" ;;
     dtrace)
@@ -5082,7 +5086,7 @@ VS_SDK_PLATFORM_NAME_2013=
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1480714260
+DATE_WHEN_GENERATED=1481663811
 
 ###############################################################################
 #
@@ -16744,6 +16748,21 @@ $as_echo "$as_me: Unknown variant(s) specified: $INVALID_VARIANTS" >&6;}
     as_fn_error $? "You cannot build multiple variants with anything else than $VALID_MULTIPLE_JVM_VARIANTS." "$LINENO" 5
   fi
 
+  # The "main" variant is the one used by other libs to link against during the
+  # build.
+  if test "x$BUILDING_MULTIPLE_JVM_VARIANTS" = "xtrue"; then
+    MAIN_VARIANT_PRIO_ORDER="server client minimal"
+    for variant in $MAIN_VARIANT_PRIO_ORDER; do
+      if   [[ " $JVM_VARIANTS " =~ " $variant " ]]  ; then
+        JVM_VARIANT_MAIN="$variant"
+        break
+      fi
+    done
+  else
+    JVM_VARIANT_MAIN="$JVM_VARIANTS"
+  fi
+
+
 
 
 
@@ -24451,11 +24470,10 @@ $as_echo "$as_me: WARNING: --with-version-opt value has been sanitized from '$wi
     fi
   else
     if test "x$NO_DEFAULT_VERSION_PARTS" != xtrue; then
-      # Default is to calculate a string like this <timestamp>.<username>.<base dir name>
-      timestamp=`$DATE '+%Y-%m-%d-%H%M%S'`
+      # Default is to calculate a string like this 'adhoc.<username>.<base dir name>'
       # Outer [ ] to quote m4.
        basedirname=`$BASENAME "$TOPDIR" | $TR -d -c '[a-z][A-Z][0-9].-'`
-      VERSION_OPT="$timestamp.$USERNAME.$basedirname"
+      VERSION_OPT="adhoc.$USERNAME.$basedirname"
     fi
   fi
 
@@ -30987,33 +31005,17 @@ fi
 
   BUILD_OUTPUT="$OUTPUT_ROOT"
 
-
-  HOTSPOT_DIST="$OUTPUT_ROOT/hotspot/dist"
-  BUILD_HOTSPOT=true
+  JDK_OUTPUTDIR="$OUTPUT_ROOT/jdk"
 
 
 
-# Check whether --with-import-hotspot was given.
+# Check whether --with-import_hotspot was given.
 if test "${with_import_hotspot+set}" = set; then :
-  withval=$with_import_hotspot;
+  withval=$with_import_hotspot; { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Option --with-import_hotspot is deprecated and will be ignored." >&5
+$as_echo "$as_me: WARNING: Option --with-import_hotspot is deprecated and will be ignored." >&2;}
 fi
 
-  if test "x$with_import_hotspot" != x; then
-    CURDIR="$PWD"
-    cd "$with_import_hotspot"
-    HOTSPOT_DIST="`pwd`"
-    cd "$CURDIR"
-    if ! (test -d $HOTSPOT_DIST/lib && test -d $HOTSPOT_DIST/jre/lib); then
-      as_fn_error $? "You have to import hotspot from a full jdk image or hotspot build dist dir!" "$LINENO" 5
-    fi
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking if hotspot should be imported" >&5
-$as_echo_n "checking if hotspot should be imported... " >&6; }
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes from $HOTSPOT_DIST" >&5
-$as_echo "yes from $HOTSPOT_DIST" >&6; }
-    BUILD_HOTSPOT=false
-  fi
 
-  JDK_OUTPUTDIR="$OUTPUT_ROOT/jdk"
 
 
 
@@ -31183,6 +31185,12 @@ $as_echo "$as_me: The path of IMPORT_MODULES_TOPDIR, which resolves as \"$path\"
   fi
   if test -d "$IMPORT_MODULES_TOPDIR/modules_conf"; then
     IMPORT_MODULES_CONF="$IMPORT_MODULES_TOPDIR/modules_conf"
+  fi
+  if test -d "$IMPORT_MODULES_TOPDIR/modules_legal"; then
+    IMPORT_MODULES_LEGAL="$IMPORT_MODULES_TOPDIR/modules_legal"
+  fi
+  if test -d "$IMPORT_MODULES_TOPDIR/modules_man"; then
+    IMPORT_MODULES_MAN="$IMPORT_MODULES_TOPDIR/modules_man"
   fi
   if test -d "$IMPORT_MODULES_TOPDIR/modules_src"; then
     IMPORT_MODULES_SRC="$IMPORT_MODULES_TOPDIR/modules_src"
@@ -50377,19 +50385,18 @@ $as_echo "$as_me: GCC >= 6 detected; adding ${NO_DELETE_NULL_POINTER_CHECKS_CFLA
         -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)"
 
     if test "xTARGET" = "xTARGET"; then
-    # On some platforms (mac) the linker warns about non existing -L dirs.
-    # Add server first if available. Linking aginst client does not always produce the same results.
-      # Only add client/minimal dir if client/minimal is being built.
-    # Default to server for other variants.
-      if   [[ " $JVM_VARIANTS " =~ " server " ]]  ; then
-        JAVA_BASE_LDFLAGS="${JAVA_BASE_LDFLAGS} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/server"
-      elif   [[ " $JVM_VARIANTS " =~ " client " ]]  ; then
-        JAVA_BASE_LDFLAGS="${JAVA_BASE_LDFLAGS} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/client"
-      elif   [[ " $JVM_VARIANTS " =~ " minimal " ]]  ; then
-        JAVA_BASE_LDFLAGS="${JAVA_BASE_LDFLAGS} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/minimal"
-    else
-        JAVA_BASE_LDFLAGS="${JAVA_BASE_LDFLAGS} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/server"
-    fi
+      # On some platforms (mac) the linker warns about non existing -L dirs.
+      # For any of the variants server, client or minimal, the dir matches the
+      # variant name. The "main" variant should be used for linking. For the
+      # rest, the dir is just server.
+      if   [[ " $JVM_VARIANTS " =~ " server " ]]   ||   [[ " $JVM_VARIANTS " =~ " client " ]]   \
+          ||   [[ " $JVM_VARIANTS " =~ " minimal " ]]  ; then
+        JAVA_BASE_LDFLAGS="${JAVA_BASE_LDFLAGS} \
+            -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/$JVM_VARIANT_MAIN"
+      else
+        JAVA_BASE_LDFLAGS="${JAVA_BASE_LDFLAGS} \
+            -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_TARGET_CPU_LIBDIR)/server"
+      fi
     elif test "xTARGET" = "xBUILD"; then
       # When building a buildjdk, it's always only the server variant
       JAVA_BASE_LDFLAGS="${JAVA_BASE_LDFLAGS} \
@@ -51200,19 +51207,18 @@ $as_echo "$as_me: GCC >= 6 detected; adding ${NO_DELETE_NULL_POINTER_CHECKS_CFLA
         -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_BUILD_CPU_LIBDIR)"
 
     if test "xBUILD" = "xTARGET"; then
-    # On some platforms (mac) the linker warns about non existing -L dirs.
-    # Add server first if available. Linking aginst client does not always produce the same results.
-      # Only add client/minimal dir if client/minimal is being built.
-    # Default to server for other variants.
-      if   [[ " $JVM_VARIANTS " =~ " server " ]]  ; then
-        OPENJDK_BUILD_JAVA_BASE_LDFLAGS="${OPENJDK_BUILD_JAVA_BASE_LDFLAGS} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_BUILD_CPU_LIBDIR)/server"
-      elif   [[ " $JVM_VARIANTS " =~ " client " ]]  ; then
-        OPENJDK_BUILD_JAVA_BASE_LDFLAGS="${OPENJDK_BUILD_JAVA_BASE_LDFLAGS} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_BUILD_CPU_LIBDIR)/client"
-      elif   [[ " $JVM_VARIANTS " =~ " minimal " ]]  ; then
-        OPENJDK_BUILD_JAVA_BASE_LDFLAGS="${OPENJDK_BUILD_JAVA_BASE_LDFLAGS} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_BUILD_CPU_LIBDIR)/minimal"
-    else
-        OPENJDK_BUILD_JAVA_BASE_LDFLAGS="${OPENJDK_BUILD_JAVA_BASE_LDFLAGS} -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_BUILD_CPU_LIBDIR)/server"
-    fi
+      # On some platforms (mac) the linker warns about non existing -L dirs.
+      # For any of the variants server, client or minimal, the dir matches the
+      # variant name. The "main" variant should be used for linking. For the
+      # rest, the dir is just server.
+      if   [[ " $JVM_VARIANTS " =~ " server " ]]   ||   [[ " $JVM_VARIANTS " =~ " client " ]]   \
+          ||   [[ " $JVM_VARIANTS " =~ " minimal " ]]  ; then
+        OPENJDK_BUILD_JAVA_BASE_LDFLAGS="${OPENJDK_BUILD_JAVA_BASE_LDFLAGS} \
+            -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_BUILD_CPU_LIBDIR)/$JVM_VARIANT_MAIN"
+      else
+        OPENJDK_BUILD_JAVA_BASE_LDFLAGS="${OPENJDK_BUILD_JAVA_BASE_LDFLAGS} \
+            -L\$(SUPPORT_OUTPUTDIR)/modules_libs/java.base\$(OPENJDK_BUILD_CPU_LIBDIR)/server"
+      fi
     elif test "xBUILD" = "xBUILD"; then
       # When building a buildjdk, it's always only the server variant
       OPENJDK_BUILD_JAVA_BASE_LDFLAGS="${OPENJDK_BUILD_JAVA_BASE_LDFLAGS} \
@@ -62634,6 +62640,11 @@ if test "${with_libffi_lib+set}" = set; then :
   withval=$with_libffi_lib;
 fi
 
+  # Check whether --enable-libffi-bundling was given.
+if test "${enable_libffi_bundling+set}" = set; then :
+  enableval=$enable_libffi_bundling;
+fi
+
 
   if test "x$NEEDS_LIB_FFI" = xfalse; then
     if (test "x${with_libffi}" != x && test "x${with_libffi}" != xno) || \
@@ -62652,6 +62663,7 @@ $as_echo "$as_me: WARNING: libffi not used, so --with-libffi[-*] is ignored" >&2
     fi
 
     if test "x${with_libffi}" != x; then
+      LIBFFI_LIB_PATH="${with_libffi}/lib"
       LIBFFI_LIBS="-L${with_libffi}/lib -lffi"
       LIBFFI_CFLAGS="-I${with_libffi}/include"
       LIBFFI_FOUND=yes
@@ -62661,6 +62673,7 @@ $as_echo "$as_me: WARNING: libffi not used, so --with-libffi[-*] is ignored" >&2
       LIBFFI_FOUND=yes
     fi
     if test "x${with_libffi_lib}" != x; then
+      LIBFFI_LIB_PATH="${with_libffi_lib}"
       LIBFFI_LIBS="-L${with_libffi_lib} -lffi"
       LIBFFI_FOUND=yes
     fi
@@ -62870,7 +62883,70 @@ $as_echo "$LIBFFI_WORKS" >&6; }
 
       as_fn_error $? "Found libffi but could not link and compile with it. $HELP_MSG" "$LINENO" 5
     fi
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking if libffi should be bundled" >&5
+$as_echo_n "checking if libffi should be bundled... " >&6; }
+    if test "x$enable_libffi_bundling" = "x"; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+      ENABLE_LIBFFI_BUNDLING=false
+    elif  test "x$enable_libffi_bundling" = "xno"; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, forced" >&5
+$as_echo "no, forced" >&6; }
+      ENABLE_LIBFFI_BUNDLING=false
+    elif  test "x$enable_libffi_bundling" = "xyes"; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes, forced" >&5
+$as_echo "yes, forced" >&6; }
+      ENABLE_LIBFFI_BUNDLING=true
+    else
+      as_fn_error $? "Invalid value for --enable-libffi-bundling" "$LINENO" 5
+    fi
+
+    # Find the libffi.so.X to bundle
+    if test "x${ENABLE_LIBFFI_BUNDLING}" = "xtrue"; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libffi lib file location" >&5
+$as_echo_n "checking for libffi lib file location... " >&6; }
+      if test "x${LIBFFI_LIB_PATH}" != x; then
+        if test -e ${LIBFFI_LIB_PATH}/libffi.so.?; then
+          LIBFFI_LIB_FILE="${LIBFFI_LIB_PATH}/libffi.so.?"
+        else
+          as_fn_error $? "Could not locate libffi.so.? for bundling in ${LIBFFI_LIB_PATH}" "$LINENO" 5
+        fi
+      else
+        # If we don't have an explicit path, look in a few obvious places
+        if test "x${OPENJDK_TARGET_CPU}" = "xx86"; then
+          if test -e ${SYSROOT}/usr/lib/libffi.so.? ; then
+            LIBFFI_LIB_FILE="${SYSROOT}/usr/lib/libffi.so.?"
+          elif test -e ${SYSROOT}/usr/lib/i386-linux-gnu/libffi.so.? ; then
+            LIBFFI_LIB_FILE="${SYSROOT}/usr/lib/i386-linux-gnu/libffi.so.?"
+          else
+            as_fn_error $? "Could not locate libffi.so.? for bundling" "$LINENO" 5
+          fi
+        elif test "x${OPENJDK_TARGET_CPU}" = "xx86_64"; then
+          if test -e ${SYSROOT}/usr/lib64/libffi.so.? ; then
+            LIBFFI_LIB_FILE="${SYSROOT}/usr/lib64/libffi.so.?"
+          elif test -e ${SYSROOT}/usr/lib/x86_64-linux-gnu/libffi.so.? ; then
+            LIBFFI_LIB_FILE="${SYSROOT}/usr/lib/x86_64-linux-gnu/libffi.so.?"
+          else
+            as_fn_error $? "Could not locate libffi.so.? for bundling" "$LINENO" 5
+          fi
+        else
+          # Fallback on the default /usr/lib dir
+          if test -e ${SYSROOT}/usr/lib/libffi.so.? ; then
+            LIBFFI_LIB_FILE="${SYSROOT}/usr/lib/libffi.so.?"
+          else
+            as_fn_error $? "Could not locate libffi.so.? for bundling" "$LINENO" 5
+          fi
+        fi
+      fi
+      # Make sure the wildcard is evaluated
+      LIBFFI_LIB_FILE="$(ls ${LIBFFI_LIB_FILE})"
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${LIBFFI_LIB_FILE}" >&5
+$as_echo "${LIBFFI_LIB_FILE}" >&6; }
+    fi
   fi
+
+
 
 
 
