@@ -60,7 +60,6 @@ import java.security.PrivilegedExceptionAction;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.jar.JarEntry;
-import java.util.spi.ResourceBundleControlProvider;
 import java.util.spi.ResourceBundleProvider;
 
 import jdk.internal.loader.BootLoader;
@@ -232,8 +231,6 @@ import static sun.security.util.SecurityConstants.GET_CLASSLOADER_PERMISSION;
  * <li>{@code ResourceBundle.Control} is <em>not</em> supported in named modules.
  * If the {@code getBundle} method with a {@code ResourceBundle.Control} is called
  * in a named module, the method will throw an {@code UnsupportedOperationException}.
- * Any service providers of {@link ResourceBundleControlProvider} are ignored in
- * named modules.
  * </li>
  * </ul>
  *
@@ -263,17 +260,6 @@ import static sun.security.util.SecurityConstants.GET_CLASSLOADER_PERMISSION;
  * define caching parameters. Refer to the descriptions of the class and the
  * {@link #getBundle(String, Locale, ClassLoader, Control) getBundle}
  * factory method for details.
- *
- * <p><a name="modify_default_behavior">For the {@code getBundle} factory</a>
- * methods that take no {@link Control} instance, their <a
- * href="#default_behavior"> default behavior</a> of resource bundle loading
- * can be modified with <em>installed</em> {@link
- * ResourceBundleControlProvider} implementations. Any installed providers are
- * detected at the {@code ResourceBundle} class loading time. If any of the
- * providers provides a {@link Control} for the given base name, that {@link
- * Control} will be used instead of the default {@link Control}. If there is
- * more than one service provider installed for supporting the same base name,
- * the first one returned from {@link ServiceLoader} will be used.
  *
  * <h3>Cache Management</h3>
  *
@@ -469,21 +455,6 @@ public abstract class ResourceBundle {
      */
     private volatile Set<String> keySet;
 
-    private static final List<ResourceBundleControlProvider> providers;
-
-    static {
-        List<ResourceBundleControlProvider> list = null;
-        ServiceLoader<ResourceBundleControlProvider> serviceLoaders
-                = ServiceLoader.loadInstalled(ResourceBundleControlProvider.class);
-        for (ResourceBundleControlProvider provider : serviceLoaders) {
-            if (list == null) {
-                list = new ArrayList<>();
-            }
-            list.add(provider);
-        }
-        providers = list;
-    }
-
     /**
      * Sole constructor.  (For invocation by subclass constructors, typically
      * implicit.)
@@ -650,6 +621,7 @@ public abstract class ResourceBundle {
         private Locale locale;
         private KeyElementReference<ClassLoader> loaderRef;
         private KeyElementReference<Module> moduleRef;
+        private KeyElementReference<Module> callerRef;
 
 
         // bundle format which is necessary for calling
@@ -680,7 +652,7 @@ public abstract class ResourceBundle {
         // Boolean.TRUE if the factory method caller provides a ResourceBundleProvier.
         private Boolean callerHasProvider;
 
-        CacheKey(String baseName, Locale locale, ClassLoader loader, Module module) {
+        CacheKey(String baseName, Locale locale, ClassLoader loader, Module module, Module caller) {
             Objects.requireNonNull(module);
 
             this.name = baseName;
@@ -691,6 +663,8 @@ public abstract class ResourceBundle {
                 this.loaderRef = new KeyElementReference<>(loader, referenceQueue, this);
             }
             this.moduleRef = new KeyElementReference<>(module, referenceQueue, this);
+            this.callerRef = new KeyElementReference<>(caller, referenceQueue, this);
+
             calculateHashCode();
         }
 
@@ -724,6 +698,10 @@ public abstract class ResourceBundle {
 
         Module getModule() {
             return moduleRef.get();
+        }
+
+        Module getCallerModule() {
+            return callerRef.get();
         }
 
         ServiceLoader<ResourceBundleProvider> getProviders() {
@@ -767,6 +745,8 @@ public abstract class ResourceBundle {
                 }
                 ClassLoader loader = getLoader();
                 Module module = getModule();
+                Module caller = getCallerModule();
+
                 return (otherEntry.loaderRef != null)
                         // with a null reference we can no longer find
                         // out which class loader or module was referenced; so
@@ -774,7 +754,9 @@ public abstract class ResourceBundle {
                         && (loader != null)
                         && (loader == otherEntry.getLoader())
                         && (module != null)
-                        && (module.equals(otherEntry.getModule()));
+                        && (module.equals(otherEntry.getModule()))
+                        && (caller != null)
+                        && (caller.equals(otherEntry.getCallerModule()));
             } catch (NullPointerException | ClassCastException e) {
             }
             return false;
@@ -796,6 +778,10 @@ public abstract class ResourceBundle {
             if (module != null) {
                 hashCodeCache ^= module.hashCode();
             }
+            Module caller = getCallerModule();
+            if (caller != null) {
+                hashCodeCache ^= caller.hashCode();
+            }
         }
 
         @Override
@@ -808,6 +794,9 @@ public abstract class ResourceBundle {
                 }
                 clone.moduleRef = new KeyElementReference<>(getModule(),
                                                             referenceQueue, clone);
+                clone.callerRef = new KeyElementReference<>(getCallerModule(),
+                                                            referenceQueue, clone);
+
                 // Clear the reference to ResourceBundleProviders and the flag
                 clone.providers = null;
                 clone.providersChecked = false;
@@ -930,7 +919,7 @@ public abstract class ResourceBundle {
     {
         Class<?> caller = Reflection.getCallerClass();
         return getBundleImpl(baseName, Locale.getDefault(),
-                             caller, getDefaultControl(caller, baseName));
+                             caller, Control.INSTANCE);
     }
 
     /**
@@ -1004,7 +993,7 @@ public abstract class ResourceBundle {
     {
         Class<?> caller = Reflection.getCallerClass();
         return getBundleImpl(baseName, locale,
-                             caller, getDefaultControl(caller, baseName));
+                             caller, Control.INSTANCE);
     }
 
     /**
@@ -1145,10 +1134,7 @@ public abstract class ResourceBundle {
      *
      * <p>This method behaves the same as calling
      * {@link #getBundle(String, Locale, ClassLoader, Control)} passing a
-     * default instance of {@link Control} unless another {@link Control} is
-     * provided with the {@link ResourceBundleControlProvider} SPI. Refer to the
-     * description of <a href="#modify_default_behavior">modifying the default
-     * behavior</a>.
+     * default instance of {@link Control}.
      *
      * <p><a name="default_behavior">The following describes the default
      * behavior</a>.
@@ -1346,7 +1332,7 @@ public abstract class ResourceBundle {
             throw new NullPointerException();
         }
         Class<?> caller = Reflection.getCallerClass();
-        return getBundleImpl(baseName, locale, caller, loader, getDefaultControl(caller, baseName));
+        return getBundleImpl(baseName, locale, caller, loader, Control.INSTANCE);
     }
 
     /**
@@ -1571,18 +1557,6 @@ public abstract class ResourceBundle {
         return getBundleImpl(baseName, targetLocale, caller, loader, control);
     }
 
-    private static Control getDefaultControl(Class<?> caller, String baseName) {
-        if (providers != null && !caller.getModule().isNamed()) {
-            for (ResourceBundleControlProvider provider : providers) {
-                Control control = provider.getControl(baseName);
-                if (control != null) {
-                    return control;
-                }
-            }
-        }
-        return Control.INSTANCE;
-    }
-
     private static void checkNamedModule(Class<?> caller) {
         if (caller.getModule().isNamed()) {
             throw new UnsupportedOperationException(
@@ -1665,7 +1639,7 @@ public abstract class ResourceBundle {
         // loader, and module will never change during the bundle loading
         // process. We have to make sure that the locale is set before
         // using it as a cache key.
-        CacheKey cacheKey = new CacheKey(baseName, locale, loader, module);
+        CacheKey cacheKey = new CacheKey(baseName, locale, loader, module, callerModule);
         ResourceBundle bundle = null;
 
         // Quick lookup of the cache.
@@ -1869,7 +1843,7 @@ public abstract class ResourceBundle {
                     bundle = loadBundleFromProviders(baseName,
                                                      targetLocale,
                                                      cacheKey.getProviders(),
-                                                      cacheKey);
+                                                     cacheKey);
                 }
             }
 
@@ -2303,8 +2277,9 @@ public abstract class ResourceBundle {
 
     private static void clearCache(ClassLoader loader, Module module) {
         Set<CacheKey> set = cacheList.keySet();
-        set.stream().filter((key) -> (key.getLoader() == loader && key.getModule() == module))
-                .forEach(set::remove);
+        set.stream()
+           .filter((key) -> (key.getLoader() == loader && key.getModule() == module))
+           .forEach(set::remove);
     }
 
     /**
@@ -2554,8 +2529,7 @@ public abstract class ResourceBundle {
      * @apiNote <a name="note">{@code ResourceBundle.Control} is not supported
      * in named modules.</a> If the {@code ResourceBundle.getBundle} method with
      * a {@code ResourceBundle.Control} is called in a named module, the method
-     * will throw an {@link UnsupportedOperationException}. Any service providers
-     * of {@link ResourceBundleControlProvider} are ignored in named modules.
+     * will throw an {@link UnsupportedOperationException}.
      *
      * @since 1.6
      * @see java.util.spi.ResourceBundleProvider
