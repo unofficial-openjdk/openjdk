@@ -5170,7 +5170,7 @@ VS_SDK_PLATFORM_NAME_2013=
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1482274004
+DATE_WHEN_GENERATED=1482309967
 
 ###############################################################################
 #
@@ -24677,7 +24677,7 @@ $as_echo "$as_me: WARNING: Value for VERSION_MINOR has been sanitized from '$wit
   else
     if test "x$NO_DEFAULT_VERSION_PARTS" != xtrue; then
       # Default is 0, if unspecified
-      VERSION_MINOR=0
+      VERSION_MINOR=$DEFAULT_VERSION_MINOR
     fi
   fi
 
@@ -24724,7 +24724,7 @@ $as_echo "$as_me: WARNING: Value for VERSION_SECURITY has been sanitized from '$
   else
     if test "x$NO_DEFAULT_VERSION_PARTS" != xtrue; then
       # Default is 0, if unspecified
-      VERSION_SECURITY=0
+      VERSION_SECURITY=$DEFAULT_VERSION_SECURITY
     fi
   fi
 
@@ -24771,7 +24771,7 @@ $as_echo "$as_me: WARNING: Value for VERSION_PATCH has been sanitized from '$wit
   else
     if test "x$NO_DEFAULT_VERSION_PARTS" != xtrue; then
       # Default is 0, if unspecified
-      VERSION_PATCH=0
+      VERSION_PATCH=$DEFAULT_VERSION_PATCH
     fi
   fi
 
@@ -52997,7 +52997,7 @@ $as_echo "yes, forced" >&6; }
 $as_echo "no, forced" >&6; }
     BUILD_GTEST="false"
   elif test "x$enable_hotspot_gtest" = "x"; then
-    if test "x$GTEST_DIR_EXISTS" = "xtrue"; then
+    if test "x$GTEST_DIR_EXISTS" = "xtrue" && test "x$OPENJDK_TARGET_OS" != "xaix"; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
       BUILD_GTEST="true"
