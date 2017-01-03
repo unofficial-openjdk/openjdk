@@ -73,6 +73,7 @@ import javax.tools.StandardJavaFileManager.PathFactory;
 import javax.tools.StandardLocation;
 
 import com.sun.tools.javac.code.Lint;
+import com.sun.tools.javac.code.Lint.LintCategory;
 import com.sun.tools.javac.main.Option;
 import com.sun.tools.javac.resources.CompilerProperties.Errors;
 import com.sun.tools.javac.resources.CompilerProperties.Warnings;
@@ -207,7 +208,13 @@ public class Locations {
                     entries.add(emptyPathDefault);
                 }
             } else {
-                entries.add(getPath(s));
+                try {
+                    entries.add(getPath(s));
+                } catch (IllegalArgumentException e) {
+                    if (warn) {
+                        log.warning(LintCategory.PATH, "invalid.path", s);
+                    }
+                }
             }
         }
         return entries;
@@ -272,7 +279,7 @@ public class Locations {
             }
 
             try (Stream<Path> s = Files.list(dir)) {
-                s.filter(dirEntry -> isArchive(dirEntry))
+                s.filter(Locations.this::isArchive)
                         .forEach(dirEntry -> addFile(dirEntry, warn));
             } catch (IOException ignore) {
             }
@@ -946,7 +953,7 @@ public class Locations {
             if (searchPath == null)
                 return Collections.emptyList();
 
-            return () -> new ModulePathIterator();
+            return ModulePathIterator::new;
         }
 
         @Override
