@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
  * questions.
  */
 
+#include <unistd.h>
 #include <assert.h>
 #include <sys/types.h>
 #include <sys/time.h>
@@ -47,13 +48,26 @@
 #include "java_io_FileSystem.h"
 #include "java_io_UnixFileSystem.h"
 
-#if defined(_ALLBSD_SOURCE)
-#define dirent64 dirent
-#define readdir64_r readdir_r
-#define stat64 stat
-#ifndef MACOSX
-#define statvfs64 statvfs
+#if defined(_AIX)
+  #if !defined(NAME_MAX)
+    #define NAME_MAX MAXNAMLEN
+  #endif
+  #define DIR DIR64
+  #define opendir opendir64
+  #define closedir closedir64
 #endif
+
+#if defined(__solaris__) && !defined(NAME_MAX)
+  #define NAME_MAX MAXNAMLEN
+#endif
+
+#if defined(_ALLBSD_SOURCE)
+  #define dirent64 dirent
+  #define readdir64_r readdir_r
+  #define stat64 stat
+  #ifndef MACOSX
+    #define statvfs64 statvfs
+  #endif
 #endif
 
 /* -- Field IDs -- */
@@ -486,4 +500,15 @@ Java_java_io_UnixFileSystem_getSpace(JNIEnv *env, jobject this,
 #endif
     } END_PLATFORM_STRING(env, path);
     return rv;
+}
+
+JNIEXPORT jlong JNICALL
+Java_java_io_UnixFileSystem_getNameMax0(JNIEnv *env, jobject this,
+                                        jstring pathname)
+{
+    jlong length = -1;
+    WITH_PLATFORM_STRING(env, pathname, path) {
+        length = (jlong)pathconf(path, _PC_NAME_MAX);
+    } END_PLATFORM_STRING(env, path);
+    return length != -1 ? length : (jlong)NAME_MAX;
 }

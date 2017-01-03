@@ -203,7 +203,7 @@ java/rmi/activation/Activatable/extLoadedImpl/ext.sh            8062724 generic-
 
 sun/rmi/rmic/newrmic/equivalence/run.sh                         8145980 generic-all
 
-java/rmi/transport/dgcDeadLock/DGCDeadLock.java                 8029360 macosx-all
+java/rmi/registry/readTest/readTest.sh                          7146543 generic-all
 
 ############################################################################
 
@@ -214,8 +214,6 @@ sun/security/pkcs11/ec/TestKeyFactory.java                      8026976 generic-
 sun/security/tools/keytool/ListKeychainStore.sh                 8156889 macosx-all
 
 sun/security/tools/jarsigner/warnings/BadKeyUsageTest.java      8026393 generic-all
-
-sun/security/ssl/SSLSocketImpl/AsyncSSLSocketClose.java         8161232 macosx-all
 
 javax/net/ssl/DTLS/PacketLossRetransmission.java                8169086 macosx-x64
 
@@ -229,8 +227,6 @@ javax/sound/sampled/DataLine/LongFramePosition.java    8055097 generic-all
 javax/sound/sampled/Clip/Drain/ClipDrain.java          7062792 generic-all
 
 javax/sound/sampled/Mixers/DisabledAssertionCrash.java 7067310 generic-all
-
-javax/sound/sampled/Clip/OpenNonIntegralNumberOfSampleframes.java 8168881 generic-all
 
 ############################################################################
 
@@ -287,8 +283,6 @@ com/sun/jdi/sde/SourceDebugExtensionTest.java                   8158066 windows-
 ############################################################################
 
 # jdk_util
-
-java/util/spi/ResourceBundleControlProvider/UserDefaultControlTest.java 8062512 generic-all
 
 java/util/BitSet/BitSetStreamTest.java                          8079538 generic-all
 
