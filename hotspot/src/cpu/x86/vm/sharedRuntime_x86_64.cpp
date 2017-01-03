@@ -474,7 +474,7 @@ int SharedRuntime::java_calling_convention(const BasicType *sig_bt,
       regs[i].set_bad();
       break;
     case T_LONG:
-      assert(sig_bt[i + 1] == T_VOID, "expecting half");
+      assert((i + 1) < total_args_passed && sig_bt[i + 1] == T_VOID, "expecting half");
       // fall through
     case T_OBJECT:
     case T_ARRAY:
@@ -495,7 +495,7 @@ int SharedRuntime::java_calling_convention(const BasicType *sig_bt,
       }
       break;
     case T_DOUBLE:
-      assert(sig_bt[i + 1] == T_VOID, "expecting half");
+      assert((i + 1) < total_args_passed && sig_bt[i + 1] == T_VOID, "expecting half");
       if (fp_args < Argument::n_float_register_parameters_j) {
         regs[i].set2(FP_ArgReg[fp_args++]->as_VMReg());
       } else {
@@ -800,7 +800,7 @@ void SharedRuntime::gen_i2c_adapter(MacroAssembler *masm,
   __ movptr(r11, Address(rbx, in_bytes(Method::from_compiled_offset())));
 
 #if INCLUDE_JVMCI
-  if (EnableJVMCI) {
+  if (EnableJVMCI || UseAOT) {
     // check if this call should be routed towards a specific entry point
     __ cmpptr(Address(r15_thread, in_bytes(JavaThread::jvmci_alternate_call_target_offset())), 0);
     Label no_alternative_target;
@@ -1014,7 +1014,7 @@ int SharedRuntime::c_calling_convention(const BasicType *sig_bt,
         }
         break;
       case T_LONG:
-        assert(sig_bt[i + 1] == T_VOID, "expecting half");
+        assert((i + 1) < total_args_passed && sig_bt[i + 1] == T_VOID, "expecting half");
         // fall through
       case T_OBJECT:
       case T_ARRAY:
@@ -1045,7 +1045,7 @@ int SharedRuntime::c_calling_convention(const BasicType *sig_bt,
         }
         break;
       case T_DOUBLE:
-        assert(sig_bt[i + 1] == T_VOID, "expecting half");
+        assert((i + 1) < total_args_passed && sig_bt[i + 1] == T_VOID, "expecting half");
         if (fp_args < Argument::n_float_register_parameters_c) {
           regs[i].set2(FP_ArgReg[fp_args++]->as_VMReg());
 #ifdef _WIN64
@@ -2758,7 +2758,7 @@ void SharedRuntime::generate_deopt_blob() {
   // Setup code generation tools
   int pad = 0;
 #if INCLUDE_JVMCI
-  if (EnableJVMCI) {
+  if (EnableJVMCI || UseAOT) {
     pad += 512; // Increase the buffer size when compiling for JVMCI
   }
 #endif
@@ -2832,7 +2832,7 @@ void SharedRuntime::generate_deopt_blob() {
   int implicit_exception_uncommon_trap_offset = 0;
   int uncommon_trap_offset = 0;
 
-  if (EnableJVMCI) {
+  if (EnableJVMCI || UseAOT) {
     implicit_exception_uncommon_trap_offset = __ pc() - start;
 
     __ pushptr(Address(r15_thread, in_bytes(JavaThread::jvmci_implicit_exception_pc_offset())));
@@ -2947,7 +2947,7 @@ void SharedRuntime::generate_deopt_blob() {
   __ reset_last_Java_frame(false);
 
 #if INCLUDE_JVMCI
-  if (EnableJVMCI) {
+  if (EnableJVMCI || UseAOT) {
     __ bind(after_fetch_unroll_info_call);
   }
 #endif
@@ -3112,7 +3112,7 @@ void SharedRuntime::generate_deopt_blob() {
   _deopt_blob = DeoptimizationBlob::create(&buffer, oop_maps, 0, exception_offset, reexecute_offset, frame_size_in_words);
   _deopt_blob->set_unpack_with_exception_in_tls_offset(exception_in_tls_offset);
 #if INCLUDE_JVMCI
-  if (EnableJVMCI) {
+  if (EnableJVMCI || UseAOT) {
     _deopt_blob->set_uncommon_trap_offset(uncommon_trap_offset);
     _deopt_blob->set_implicit_exception_uncommon_trap_offset(implicit_exception_uncommon_trap_offset);
   }

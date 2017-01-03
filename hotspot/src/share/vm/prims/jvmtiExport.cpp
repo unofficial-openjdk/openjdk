@@ -130,15 +130,15 @@ class JvmtiEventMark : public StackObj {
 private:
   JavaThread *_thread;
   JNIEnv* _jni_env;
-  bool _exception_detected;
-  bool _exception_caught;
+  JvmtiThreadState::ExceptionState _saved_exception_state;
 #if 0
   JNIHandleBlock* _hblock;
 #endif
 
 public:
   JvmtiEventMark(JavaThread *thread) :  _thread(thread),
-                                         _jni_env(thread->jni_environment()) {
+                                        _jni_env(thread->jni_environment()),
+                                        _saved_exception_state(JvmtiThreadState::ES_CLEARED) {
 #if 0
     _hblock = thread->active_handles();
     _hblock->clear_thoroughly(); // so we can be safe
@@ -149,11 +149,7 @@ public:
     // we are before an event.
     // Save current jvmti thread exception state.
     if (state != NULL) {
-      _exception_detected = state->is_exception_detected();
-      _exception_caught = state->is_exception_caught();
-    } else {
-      _exception_detected = false;
-      _exception_caught = false;
+      _saved_exception_state = state->get_exception_state();
     }
 
     JNIHandleBlock* old_handles = thread->active_handles();
@@ -186,12 +182,7 @@ public:
     // we are continuing after an event.
     if (state != NULL) {
       // Restore the jvmti thread exception state.
-      if (_exception_detected) {
-        state->set_exception_detected();
-      }
-      if (_exception_caught) {
-        state->set_exception_caught();
-      }
+      state->restore_exception_state(_saved_exception_state);
     }
   }
 
@@ -746,6 +737,7 @@ class JvmtiClassFileLoadHookPoster : public StackObj {
   JvmtiThreadState *   _state;
   KlassHandle *        _h_class_being_redefined;
   JvmtiClassLoadKind   _load_kind;
+  bool                 _has_been_modified;
 
  public:
   inline JvmtiClassFileLoadHookPoster(Symbol* h_name, Handle class_loader,
@@ -762,6 +754,7 @@ class JvmtiClassFileLoadHookPoster : public StackObj {
     _curr_data = *data_ptr;
     _curr_env = NULL;
     _cached_class_file_ptr = cache_ptr;
+    _has_been_modified = false;
 
     _state = _thread->jvmti_thread_state();
     if (_state != NULL) {
@@ -799,6 +792,8 @@ class JvmtiClassFileLoadHookPoster : public StackObj {
     post_all_envs();
     copy_modified_data();
   }
+
+  bool has_been_modified() { return _has_been_modified; }
 
  private:
   void post_all_envs() {
@@ -846,6 +841,7 @@ class JvmtiClassFileLoadHookPoster : public StackObj {
     }
     if (new_data != NULL) {
       // this agent has modified class data.
+      _has_been_modified = true;
       if (caching_needed && *_cached_class_file_ptr == NULL) {
         // data has been changed by the new retransformable agent
         // and it hasn't already been cached, cache it
@@ -893,14 +889,14 @@ class JvmtiClassFileLoadHookPoster : public StackObj {
 bool JvmtiExport::_should_post_class_file_load_hook = false;
 
 // this entry is for class file load hook on class load, redefine and retransform
-void JvmtiExport::post_class_file_load_hook(Symbol* h_name,
+bool JvmtiExport::post_class_file_load_hook(Symbol* h_name,
                                             Handle class_loader,
                                             Handle h_protection_domain,
                                             unsigned char **data_ptr,
                                             unsigned char **end_ptr,
                                             JvmtiCachedClassFileData **cache_ptr) {
   if (JvmtiEnv::get_phase() < JVMTI_PHASE_PRIMORDIAL) {
-    return;
+    return false;
   }
 
   JvmtiClassFileLoadHookPoster poster(h_name, class_loader,
@@ -908,6 +904,7 @@ void JvmtiExport::post_class_file_load_hook(Symbol* h_name,
                                       data_ptr, end_ptr,
                                       cache_ptr);
   poster.post();
+  return poster.has_been_modified();
 }
 
 void JvmtiExport::report_unsupported(bool on) {
@@ -1545,7 +1542,6 @@ void JvmtiExport::post_single_step(JavaThread *thread, Method* method, address l
     }
   }
 }
-
 
 void JvmtiExport::post_exception_throw(JavaThread *thread, Method* method, address location, oop exception) {
   HandleMark hm(thread);
@@ -2448,7 +2444,7 @@ void JvmtiExport::clear_detected_exception(JavaThread* thread) {
 
   JvmtiThreadState* state = thread->jvmti_thread_state();
   if (state != NULL) {
-    state->clear_exception_detected();
+    state->clear_exception_state();
   }
 }
 
