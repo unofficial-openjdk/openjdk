@@ -85,6 +85,9 @@ public interface PackageElement extends Element, QualifiedNameable {
      * Returns the enclosing module.
      *
      * @return the enclosing module
+     *
+     * @revised 9
+     * @spec JPMS
      */
     @Override
     Element getEnclosingElement();

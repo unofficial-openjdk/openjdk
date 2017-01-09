@@ -198,6 +198,7 @@ public class ElementFilter {
      * @return a list of modules in {@code elements}
      * @param elements the elements to filter
      * @since 9
+     * @spec JPMS
      */
     public static List<ModuleElement>
             modulesIn(Iterable<? extends Element> elements) {
@@ -209,6 +210,7 @@ public class ElementFilter {
      * @return a set of modules in {@code elements}
      * @param elements the elements to filter
      * @since 9
+     * @spec JPMS
      */
     public static Set<ModuleElement>
             modulesIn(Set<? extends Element> elements) {
@@ -245,6 +247,7 @@ public class ElementFilter {
      * @return a list of {@code exports} directives in {@code directives}
      * @param directives the directives to filter
      * @since 9
+     * @spec JPMS
      */
     public static List<ExportsDirective>
             exportsIn(Iterable<? extends Directive> directives) {
@@ -267,6 +270,7 @@ public class ElementFilter {
      * @return a list of {@code provides} directives in {@code directives}
      * @param directives the directives to filter
      * @since 9
+     * @spec JPMS
      */
     public static List<ProvidesDirective>
             providesIn(Iterable<? extends Directive> directives) {
@@ -278,6 +282,7 @@ public class ElementFilter {
      * @return a list of {@code requires} directives in {@code directives}
      * @param directives the directives to filter
      * @since 9
+     * @spec JPMS
      */
     public static List<RequiresDirective>
             requiresIn(Iterable<? extends Directive> directives) {
@@ -289,6 +294,7 @@ public class ElementFilter {
      * @return a list of {@code uses} directives in {@code directives}
      * @param directives the directives to filter
      * @since 9
+     * @spec JPMS
      */
     public static List<UsesDirective>
             usesIn(Iterable<? extends Directive> directives) {
