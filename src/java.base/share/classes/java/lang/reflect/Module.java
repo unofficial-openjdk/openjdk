@@ -901,14 +901,13 @@ public final class Module implements AnnotatedElement {
     // -- packages --
 
     // Additional packages that are added to the module at run-time.
-    // The field is volatile as it may be replaced at run-time
-    private volatile Set<String> extraPackages;
+    private volatile Map<String, Boolean> extraPackages;
 
     private boolean containsPackage(String pn) {
         if (descriptor.packages().contains(pn))
             return true;
-        Set<String> extraPackages = this.extraPackages;
-        if (extraPackages != null && extraPackages.contains(pn))
+        Map<String, Boolean> extraPackages = this.extraPackages;
+        if (extraPackages != null && extraPackages.containsKey(pn))
             return true;
         return false;
     }
@@ -922,7 +921,7 @@ public final class Module implements AnnotatedElement {
      * added to the module, <a href="Proxy.html#dynamicmodule">dynamic modules</a>
      * for example, after it was loaded.
      *
-     * <p> For unnamed modules, this method is the equivalent of invoking the
+     * <p> For unnamed modules, this method is the equivalent to invoking the
      * {@link ClassLoader#getDefinedPackages() getDefinedPackages} method of
      * this module's class loader and returning the array of package names. </p>
      *
@@ -937,12 +936,12 @@ public final class Module implements AnnotatedElement {
         if (isNamed()) {
 
             Set<String> packages = descriptor.packages();
-            Set<String> extraPackages = this.extraPackages;
+            Map<String, Boolean> extraPackages = this.extraPackages;
             if (extraPackages == null) {
                 return packages.toArray(new String[0]);
             } else {
                 return Stream.concat(packages.stream(),
-                                     extraPackages.stream())
+                                     extraPackages.keySet().stream())
                         .toArray(String[]::new);
             }
 
@@ -962,10 +961,6 @@ public final class Module implements AnnotatedElement {
      * Add a package to this module.
      *
      * @apiNote This method is for Proxy use.
-     *
-     * @apiNote This is an expensive operation, not expected to be used often.
-     * At this time then it does not validate that the package name is a
-     * valid java identifier.
      */
     void addPackage(String pn) {
         implAddPackage(pn, true);
@@ -983,49 +978,53 @@ public final class Module implements AnnotatedElement {
     /**
      * Add a package to this module.
      *
-     * If {@code syncVM} is {@code true} then the VM is notified.
+     * If {@code syncVM} is {@code true} then the VM is notified. This method is
+     * a no-op if this is an unnamed module or the module already contains the
+     * package.
+     *
+     * @throws IllegalArgumentException if the package name is not legal
+     * @throws IllegalStateException if the package is defined to another module
      */
     private void implAddPackage(String pn, boolean syncVM) {
+        // no-op if unnamed module
         if (!isNamed())
-            throw new InternalError("adding package to unnamed module?");
-        if (descriptor.isOpen())
-            throw new InternalError("adding package to open module?");
+            return;
+
+        // no-op if module contains the package
+        if (containsPackage(pn))
+            return;
+
+        // check package name is legal for named modules
         if (pn.isEmpty())
-            throw new InternalError("adding <unnamed> package to module?");
-
-        if (descriptor.packages().contains(pn)) {
-            // already in module
-            return;
-        }
-
-        Set<String> extraPackages = this.extraPackages;
-        if (extraPackages != null && extraPackages.contains(pn)) {
-            // already added
-            return;
-        }
-        synchronized (this) {
-            // recheck under lock
-            extraPackages = this.extraPackages;
-            if (extraPackages != null) {
-                if (extraPackages.contains(pn)) {
-                    // already added
-                    return;
-                }
-
-                // copy the set
-                extraPackages = new HashSet<>(extraPackages);
-                extraPackages.add(pn);
-            } else {
-                extraPackages = Collections.singleton(pn);
+            throw new IllegalArgumentException("Cannot add <unnamed> package");
+        for (int i=0; i<pn.length(); i++) {
+            char c = pn.charAt(i);
+            if (c == '/' || c == ';' || c == '[') {
+                throw new IllegalArgumentException("Illegal character: " + c);
             }
-
-            // update VM first, just in case it fails
-            if (syncVM)
-                addPackage0(this, pn.replace('.', '/'));
-
-            // replace with new set
-            this.extraPackages = extraPackages; // volatile write
         }
+
+        // create extraPackages if needed
+        Map<String, Boolean> extraPackages = this.extraPackages;
+        if (extraPackages == null) {
+            synchronized (this) {
+                extraPackages = this.extraPackages;
+                if (extraPackages == null)
+                    this.extraPackages = extraPackages = new ConcurrentHashMap<>();
+            }
+        }
+
+        // update VM first in case it fails. This is a no-op another thread
+        // beats us to add the package first
+        if (syncVM) {
+            try {
+                addPackage0(this, pn.replace('.', '/'));
+            } catch (IllegalArgumentException e) {
+                // the package is defined to another module
+                throw new IllegalStateException(e.getMessage());
+            }
+        }
+        extraPackages.putIfAbsent(pn, Boolean.TRUE);
     }
 
 
@@ -1401,7 +1400,7 @@ public final class Module implements AnnotatedElement {
      *     named "{@code a/b/c/foo.properties}" is "{@code a.b.c}". </li>
      *
      *     <li> If the package name is a package in the module then the package
-     *     must be {@link #isOpen open} the module of the caller of this method.
+     *     must be {@link #isOpen open} to at least the caller of this method.
      *     If the package is not in the module then the resource is not
      *     encapsulated. Resources in the unnamed package or "{@code META-INF}",
      *     for example, are never encapsulated because they can never be
