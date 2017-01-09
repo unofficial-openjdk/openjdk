@@ -433,6 +433,7 @@ public final class Class<T> implements java.io.Serializable,
      *         </ul>
      *
      * @since 9
+     * @spec JPMS
      */
     @CallerSensitive
     public static Class<?> forName(Module module, String name) {
@@ -825,6 +826,7 @@ public final class Class<T> implements java.io.Serializable,
      * @return the module that this class or interface is a member of
      *
      * @since 9
+     * @spec JPMS
      */
     public Module getModule() {
         return module;
@@ -930,6 +932,8 @@ public final class Class<T> implements java.io.Serializable,
      * this method returns {@code null}.
      *
      * @return the package of this class.
+     * @revised 9
+     * @spec JPMS
      */
     public Package getPackage() {
         if (isPrimitive() || isArray()) {
@@ -963,6 +967,7 @@ public final class Class<T> implements java.io.Serializable,
      * @return the fully qualified package name
      *
      * @since 9
+     * @spec JPMS
      * @jls 6.7  Fully Qualified Names
      */
     public String getPackageName() {
@@ -2443,6 +2448,8 @@ public final class Class<T> implements java.io.Serializable,
      *          by the security manager.
      * @throws  NullPointerException If {@code name} is {@code null}
      * @since  1.1
+     * @revised 9
+     * @spec JPMS
      */
     @CallerSensitive
     public InputStream getResourceAsStream(String name) {
@@ -2537,6 +2544,8 @@ public final class Class<T> implements java.io.Serializable,
      *         manager.
      * @throws NullPointerException If {@code name} is {@code null}
      * @since  1.1
+     * @revised 9
+     * @spec JPMS
      */
     @CallerSensitive
     public URL getResource(String name) {

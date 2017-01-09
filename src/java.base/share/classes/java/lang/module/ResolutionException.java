@@ -30,6 +30,7 @@ package java.lang.module;
  *
  * @see Configuration
  * @since 9
+ * @spec JPMS
  */
 public class ResolutionException extends RuntimeException {
     private static final long serialVersionUID = -1031186845316729450L;

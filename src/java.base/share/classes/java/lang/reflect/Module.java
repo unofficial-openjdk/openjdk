@@ -91,6 +91,7 @@ import sun.security.util.SecurityConstants;
  * be thrown. </p>
  *
  * @since 9
+ * @spec JPMS
  * @see java.lang.Class#getModule
  */
 

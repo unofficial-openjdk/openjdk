@@ -346,6 +346,8 @@ import static sun.security.util.SecurityConstants.GET_CLASSLOADER_PERMISSION;
  * @see MissingResourceException
  * @see ResourceBundleProvider
  * @since 1.1
+ * @revised 9
+ * @spec JPMS
  */
 public abstract class ResourceBundle {
 
@@ -985,6 +987,8 @@ public abstract class ResourceBundle {
      * @throws UnsupportedOperationException
      *         if this method is called in a named module
      * @since 1.6
+     * @revised 9
+     * @spec JPMS
      */
     @CallerSensitive
     public static final ResourceBundle getBundle(String baseName,
@@ -1053,6 +1057,7 @@ public abstract class ResourceBundle {
      *         specified module
      * @return a resource bundle for the given base name and the default locale
      * @since 9
+     * @spec JPMS
      * @see ResourceBundleProvider
      */
     @CallerSensitive
@@ -1103,6 +1108,7 @@ public abstract class ResourceBundle {
      *         be found in the specified {@code module}
      * @return a resource bundle for the given base name and locale in the module
      * @since 9
+     * @spec JPMS
      */
     @CallerSensitive
     public static ResourceBundle getBundle(String baseName, Locale targetLocale, Module module) {
@@ -1148,6 +1154,8 @@ public abstract class ResourceBundle {
      * @throws UnsupportedOperationException
      *         if this method is called in a named module
      * @since 1.6
+     * @revised 9
+     * @spec JPMS
      */
     @CallerSensitive
     public static final ResourceBundle getBundle(String baseName, Locale targetLocale,
@@ -1355,6 +1363,8 @@ public abstract class ResourceBundle {
      * @exception MissingResourceException
      *        if no resource bundle for the specified base name can be found
      * @since 1.2
+     * @revised 9
+     * @spec JPMS
      */
     @CallerSensitive
     public static ResourceBundle getBundle(String baseName, Locale locale,
@@ -1577,6 +1587,8 @@ public abstract class ResourceBundle {
      * @throws UnsupportedOperationException
      *         if this method is called in a named module
      * @since 1.6
+     * @revised 9
+     * @spec JPMS
      */
     @CallerSensitive
     public static ResourceBundle getBundle(String baseName, Locale targetLocale,
@@ -2278,6 +2290,8 @@ public abstract class ResourceBundle {
      * by the caller's module using the caller's class loader.
      *
      * @since 1.6
+     * @revised 9
+     * @spec JPMS
      * @see ResourceBundle.Control#getTimeToLive(String,Locale)
      */
     @CallerSensitive
@@ -2293,6 +2307,8 @@ public abstract class ResourceBundle {
      * @param loader the class loader
      * @exception NullPointerException if <code>loader</code> is null
      * @since 1.6
+     * @revised 9
+     * @spec JPMS
      * @see ResourceBundle.Control#getTimeToLive(String,Locale)
      */
     @CallerSensitive
@@ -2313,6 +2329,7 @@ public abstract class ResourceBundle {
      *         {@linkplain Module#getClassLoader() get the class loader}
      *         of the given {@code module}
      * @since 9
+     * @spec JPMS
      * @see ResourceBundle.Control#getTimeToLive(String,Locale)
      */
     public static final void clearCache(Module module) {
@@ -2577,6 +2594,8 @@ public abstract class ResourceBundle {
      * of {@link ResourceBundleControlProvider} are ignored in named modules.
      *
      * @since 1.6
+     * @revised 9
+     * @spec JPMS
      * @see java.util.spi.ResourceBundleProvider
      */
     public static class Control {
@@ -3201,6 +3220,8 @@ public abstract class ResourceBundle {
          *        if an error occurred when reading resources using
          *        any I/O operations
          * @see java.util.spi.ResourceBundleProvider#getBundle(String, Locale)
+         * @revised 9
+         * @spec JPMS
          */
         public ResourceBundle newBundle(String baseName, Locale locale, String format,
                                         ClassLoader loader, boolean reload)
@@ -3477,6 +3498,8 @@ public abstract class ResourceBundle {
          *        if <code>baseName</code> or <code>locale</code>
          *        is <code>null</code>
          * @see java.util.spi.AbstractResourceBundleProvider#toBundleName(String, Locale)
+         * @revised 9
+         * @spec JPMS
          */
         public String toBundleName(String baseName, Locale locale) {
             if (locale == Locale.ROOT) {

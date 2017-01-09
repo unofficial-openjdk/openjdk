@@ -172,6 +172,7 @@ import java.util.stream.Stream;
  * }</pre>
  *
  * @since 9
+ * @spec JPMS
  * @see java.lang.reflect.Layer
  */
 public final class Configuration {

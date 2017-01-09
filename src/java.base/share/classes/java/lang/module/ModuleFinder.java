@@ -85,6 +85,7 @@ import sun.security.action.GetPropertyAction;
  * <p> A {@code ModuleFinder} is not required to be thread safe. </p>
  *
  * @since 9
+ * @spec JPMS
  */
 
 public interface ModuleFinder {

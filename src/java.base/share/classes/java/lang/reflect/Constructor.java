@@ -168,6 +168,8 @@ public final class Constructor<T> extends Executable {
      * is true. </p>
      *
      * @param flag {@inheritDoc}
+     * @since 9
+     * @spec JPMS
      */
     @Override
     @CallerSensitive

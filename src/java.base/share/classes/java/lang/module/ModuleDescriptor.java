@@ -67,6 +67,7 @@ import jdk.internal.module.ModuleInfo;
  * multiple concurrent threads.</p>
  *
  * @since 9
+ * @spec JPMS
  * @see java.lang.reflect.Module
  */
 
@@ -79,6 +80,7 @@ public class ModuleDescriptor
      *
      * @see ModuleDescriptor#requires()
      * @since 9
+     * @spec JPMS
      */
 
     public final static class Requires
@@ -89,6 +91,7 @@ public class ModuleDescriptor
          * A modifier on a module dependence.
          *
          * @since 9
+         * @spec JPMS
          */
         public static enum Modifier {
 
@@ -289,6 +292,7 @@ public class ModuleDescriptor
      *
      * @see ModuleDescriptor#exports()
      * @since 9
+     * @spec JPMS
      */
 
     public final static class Exports {
@@ -297,6 +301,7 @@ public class ModuleDescriptor
          * A modifier on a module export.
          *
          * @since 9
+         * @spec JPMS
          */
         public static enum Modifier {
 
@@ -452,6 +457,7 @@ public class ModuleDescriptor
      *
      * @see ModuleDescriptor#opens()
      * @since 9
+     * @spec JPMS
      */
 
     public final static class Opens {
@@ -460,6 +466,7 @@ public class ModuleDescriptor
          * A modifier on a module <em>opens</em> directive.
          *
          * @since 9
+         * @spec JPMS
          */
         public static enum Modifier {
 
@@ -608,6 +615,7 @@ public class ModuleDescriptor
      *
      * @see ModuleDescriptor#provides()
      * @since 9
+     * @spec JPMS
      */
 
     public final static class Provides {
@@ -740,6 +748,7 @@ public class ModuleDescriptor
      *
      * @see ModuleDescriptor#version()
      * @since 9
+     * @spec JPMS
      */
 
     public final static class Version
@@ -1340,6 +1349,7 @@ public class ModuleDescriptor
      * a {@link ModuleDescriptor#isSynthetic() synthetic} module.
      *
      * @since 9
+     * @spec JPMS
      */
     public static final class Builder {
         final String name;

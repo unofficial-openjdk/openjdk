@@ -44,6 +44,7 @@ import java.util.Optional;
  * @see ModuleFinder
  * @see ModuleReader
  * @since 9
+ * @spec JPMS
  */
 
 public abstract class ModuleReference {
