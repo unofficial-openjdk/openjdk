@@ -362,7 +362,7 @@ public class ModulePath implements ModuleFinder {
 
     /**
      * Returns the service type corresponding to the name of a services
-     * configuration file if it is a valid Java identifier.
+     * configuration file if it is a legal type name.
      *
      * For example, if called with "META-INF/services/p.S" then this method
      * returns a container with the value "p.S".
@@ -374,7 +374,7 @@ public class ModulePath implements ModuleFinder {
             String prefix = cf.substring(0, index);
             if (prefix.equals(SERVICES_PREFIX)) {
                 String sn = cf.substring(index);
-                if (Checks.isJavaIdentifier(sn))
+                if (Checks.isTypeName(sn))
                     return Optional.of(sn);
             }
         }
@@ -641,7 +641,7 @@ public class ModulePath implements ModuleFinder {
         }
 
         String pn = name.substring(0, index).replace('/', '.');
-        if (Checks.isJavaIdentifier(pn)) {
+        if (Checks.isTypeName(pn)) {
             return Optional.of(pn);
         } else {
             // not a valid package name
@@ -671,7 +671,7 @@ public class ModulePath implements ModuleFinder {
         }
 
         String pn = parent.toString().replace(File.separatorChar, '.');
-        if (Checks.isJavaIdentifier(pn)) {
+        if (Checks.isTypeName(pn)) {
             return Optional.of(pn);
         } else {
             // not a valid package name

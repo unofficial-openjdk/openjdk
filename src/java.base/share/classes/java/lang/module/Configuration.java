@@ -356,10 +356,6 @@ public final class Configuration {
      *     module {@code M} nor exported to {@code M} by any module that
      *     {@code M} reads. </p></li>
      *
-     *     <li><p> A module {@code M} declares that it
-     *     "{@code provides ... with q.T}" but package {@code q} is not in
-     *     module {@code M}. </p></li>
-     *
      *     <li><p> Two or more modules in the configuration are specific to
      *     different {@link ModuleDescriptor#osName() operating systems},
      *     {@link ModuleDescriptor#osArch() architectures}, or {@link

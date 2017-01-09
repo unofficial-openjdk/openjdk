@@ -63,16 +63,9 @@ public interface JavaLangModuleAccess {
                                               boolean synthetic);
 
     /**
-     * Returns the set of packages that are exported (unconditionally or
-     * unconditionally).
+     * Returns a snapshot of the packages in the module.
      */
-    Set<String> exportedPackages(ModuleDescriptor.Builder builder);
-
-    /**
-     * Returns the set of packages that are opened (unconditionally or
-     * unconditionally).
-     */
-    Set<String> openPackages(ModuleDescriptor.Builder builder);
+    Set<String> packages(ModuleDescriptor.Builder builder);
 
     /**
      * Returns a {@code ModuleDescriptor.Requires} of the given modifiers

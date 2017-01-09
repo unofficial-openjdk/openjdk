@@ -221,7 +221,7 @@ public final class ModuleInfo {
         Set<String> attributes = new HashSet<>();
 
         Builder builder = null;
-        Set<String> packages = null;
+        Set<String> allPackages = null;
         String mainClass = null;
         String[] osValues = null;
         ModuleHashes hashes = null;
@@ -245,7 +245,7 @@ public final class ModuleInfo {
                     break;
 
                 case MODULE_PACKAGES :
-                    packages = readModulePackagesAttribute(in, cpool);
+                    allPackages = readModulePackagesAttribute(in, cpool);
                     break;
 
                 case MODULE_MAIN_CLASS :
@@ -284,51 +284,44 @@ public final class ModuleInfo {
             throw invalidModuleDescriptor(MODULE + " attribute not found");
         }
 
+        // ModuleMainClass and ModuleTarget attributes
+        if (mainClass != null) {
+            builder.mainClass(mainClass);
+        }
+        if (osValues != null) {
+            if (osValues[0] != null) builder.osName(osValues[0]);
+            if (osValues[1] != null) builder.osArch(osValues[1]);
+            if (osValues[2] != null) builder.osVersion(osValues[2]);
+        }
+
         // If the ModulePackages attribute is not present then the packageFinder
         // is used to find the set of packages
         boolean usedPackageFinder = false;
-        if (packages == null && packageFinder != null) {
+        if (allPackages == null && packageFinder != null) {
             try {
-                packages = new HashSet<>(packageFinder.get());
+                allPackages = packageFinder.get();
             } catch (UncheckedIOException x) {
                 throw x.getCause();
             }
             usedPackageFinder = true;
         }
-        if (packages != null) {
-            Set<String> exportedPackages = JLMA.exportedPackages(builder);
-            Set<String> openPackages = JLMA.openPackages(builder);
-            if (packages.containsAll(exportedPackages)
-                    && packages.containsAll(openPackages)) {
-                packages.removeAll(exportedPackages);
-                packages.removeAll(openPackages);
-            } else {
-                // the set of packages is not complete
-                Set<String> exportedAndOpenPackages = new HashSet<>();
-                exportedAndOpenPackages.addAll(exportedPackages);
-                exportedAndOpenPackages.addAll(openPackages);
-                for (String pn : exportedAndOpenPackages) {
-                    if (!packages.contains(pn)) {
-                        String tail;
-                        if (usedPackageFinder) {
-                            tail = " not found by package finder";
-                        } else {
-                            tail = " missing from ModulePackages attribute";
-                        }
-                        throw invalidModuleDescriptor("Package " + pn + tail);
-                    }
+        if (allPackages != null) {
+            Set<String> knownPackages = JLMA.packages(builder);
+            if (!allPackages.containsAll(knownPackages)) {
+                Set<String> missingPackages = new HashSet<>(knownPackages);
+                missingPackages.removeAll(allPackages);
+                assert !missingPackages.isEmpty();
+                String missingPackage = missingPackages.iterator().next();
+                String tail;
+                if (usedPackageFinder) {
+                    tail = " not found by package finder";
+                } else {
+                    tail = " missing from ModulePackages attribute";
                 }
-                assert false; // should not get here
-            }
-            builder.contains(packages);
-        }
+                throw invalidModuleDescriptor("Package " + missingPackage + tail);
 
-        if (mainClass != null)
-            builder.mainClass(mainClass);
-        if (osValues != null) {
-            if (osValues[0] != null) builder.osName(osValues[0]);
-            if (osValues[1] != null) builder.osArch(osValues[1]);
-            if (osValues[2] != null) builder.osVersion(osValues[2]);
+            }
+            builder.contains(allPackages);
         }
 
         ModuleDescriptor descriptor = builder.build();

@@ -747,13 +747,6 @@ final class Resolver {
                         fail("Module %s does not read a module that exports %s",
                              descriptor1.name(), pn);
                     }
-
-                    for (String provider : provides.providers()) {
-                        if (!packages.contains(packageName(provider))) {
-                            fail("Provider %s not in module %s",
-                                 provider, descriptor1.name());
-                        }
-                    }
                 }
 
             }

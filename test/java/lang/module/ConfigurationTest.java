@@ -1924,30 +1924,6 @@ public class ConfigurationTest {
 
 
     /**
-     * Test "provides p.S with q.T" where q.T is not local
-     */
-    @Test(expectedExceptions = { ResolutionException.class })
-    public void testProviderPackageNotLocal() {
-        ModuleDescriptor descriptor1
-            = ModuleDescriptor.module("m1")
-                .exports("p")
-                .exports("q")
-                .build();
-
-        ModuleDescriptor descriptor2
-            = ModuleDescriptor.module("m2")
-                .requires("m1")
-                .provides("p.S", "q.T")
-                .build();
-
-        ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);
-
-        // q.T not in module m2
-        resolveRequires(finder, "m2");
-    }
-
-
-    /**
      * Test the empty configuration.
      */
     public void testEmptyConfiguration() {

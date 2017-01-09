@@ -228,13 +228,10 @@ final class Builder {
      *
      * @throws IllegalArgumentException if {@code v} is null or cannot be
      *         parsed as a version string
-     * @throws IllegalStateException if the module version is already set
      *
      * @see Version#parse(String)
      */
     public Builder version(String v) {
-        if (version != null)
-            throw new IllegalStateException("module version already set");
         Version ver = cachedVersion;
         if (ver != null && v.equals(ver.toString())) {
             version = ver;
@@ -246,36 +243,24 @@ final class Builder {
 
     /**
      * Sets the module main class.
-     *
-     * @throws IllegalStateException if already set
      */
     public Builder mainClass(String mc) {
-        if (mainClass != null)
-            throw new IllegalStateException("main class already set");
         mainClass = mc;
         return this;
     }
 
     /**
      * Sets the OS name.
-     *
-     * @throws IllegalStateException if already set
      */
     public Builder osName(String name) {
-        if (osName != null)
-            throw new IllegalStateException("OS name already set");
         this.osName = name;
         return this;
     }
 
     /**
      * Sets the OS arch.
-     *
-     * @throws IllegalStateException if already set
      */
     public Builder osArch(String arch) {
-        if (osArch != null)
-            throw new IllegalStateException("OS arch already set");
         this.osArch = arch;
         return this;
     }
@@ -286,8 +271,6 @@ final class Builder {
      * @throws IllegalStateException if already set
      */
     public Builder osVersion(String version) {
-        if (osVersion != null)
-            throw new IllegalStateException("OS version already set");
         this.osVersion = version;
         return this;
     }

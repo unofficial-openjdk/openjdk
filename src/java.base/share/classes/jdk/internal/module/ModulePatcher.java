@@ -119,7 +119,7 @@ public final class ModulePatcher {
                     try (JarFile jf = new JarFile(file.toFile())) {
                         jf.stream()
                           .map(e -> toPackageName(file, e))
-                          .filter(Checks::isJavaIdentifier)
+                          .filter(Checks::isTypeName)
                           .forEach(packages::add);
                     }
 
@@ -130,7 +130,7 @@ public final class ModulePatcher {
                     Files.find(top, Integer.MAX_VALUE,
                                ((path, attrs) -> attrs.isRegularFile()))
                             .map(path -> toPackageName(top, path))
-                            .filter(Checks::isJavaIdentifier)
+                            .filter(Checks::isTypeName)
                             .forEach(packages::add);
 
                 }
