@@ -622,10 +622,7 @@ public final class ModuleInfo {
 
     /**
      * Return true if the given attribute name is the name of a pre-defined
-     * attribute that is not allowed in the class file.
-     *
-     * Except for Module, InnerClasses, SourceFile, SourceDebugExtension, and
-     * Deprecated, none of the pre-defined attributes in JVMS 4.7 may appear.
+     * attribute in JVMS 4.7 that is not allowed in a module-info class.
      */
     private static boolean isAttributeDisallowed(String name) {
         Set<String> notAllowed = predefinedNotAllowed;
@@ -633,6 +630,7 @@ public final class ModuleInfo {
             notAllowed = Set.of(
                     "ConstantValue",
                     "Code",
+                    "Deprecated",
                     "StackMapTable",
                     "Exceptions",
                     "EnclosingMethod",
