@@ -1388,7 +1388,7 @@ public final class Module implements AnnotatedElement {
      * {@code name} parameter is a {@code '/'}-separated path name that
      * identifies the resource.
      *
-     * <p> A resource in a named modules may be <em>encapsulated</em> so that
+     * <p> A resource in a named module may be <em>encapsulated</em> so that
      * it cannot be located by code in other modules. Whether a resource can be
      * located or not is determined as follows:
      *

@@ -699,7 +699,7 @@ public class ModuleDescriptor
      *
      * <p> A version string has three components: The version number itself, an
      * optional pre-release version, and an optional build version.  Each
-     * component is sequence of tokens; each token is either a non-negative
+     * component is a sequence of tokens; each token is either a non-negative
      * integer or a string.  Tokens are separated by the punctuation characters
      * {@code '.'}, {@code '-'}, or {@code '+'}, or by transitions from a
      * sequence of digits to a sequence of characters that are neither digits
