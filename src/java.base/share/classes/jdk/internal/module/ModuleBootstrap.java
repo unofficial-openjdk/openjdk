@@ -55,7 +55,6 @@ import jdk.internal.loader.BootLoader;
 import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.perf.PerfCounter;
-import jdk.internal.reflect.Reflection;
 
 /**
  * Initializes/boots the module system.
@@ -555,7 +554,6 @@ public final class ModuleBootstrap {
             } catch (IOException ioe) {
                 throw new UncheckedIOException(ioe);
             }
-            Reflection.enableStackTraces();
         }
     }
 
