@@ -278,8 +278,8 @@ public final class Configuration {
      *         The possibly-empty collection of module names of the modules
      *         to resolve
      *
-     * @return The configuration that is the result of resolving the given
-     *         root modules
+     * @return The configuration that is the result of resolving, with service
+     *         binding, the given root modules
      *
      * @throws ResolutionException
      *         If resolution or the post-resolution checks fail
@@ -444,8 +444,8 @@ public final class Configuration {
      *         The possibly-empty collection of module names of the modules
      *         to resolve
      *
-     * @return The configuration that is the result of resolving the given
-     *         root modules
+     * @return The configuration that is the result of resolving, with service
+     *         binding, the given root modules
      *
      * @throws ResolutionException
      *         If resolution or the post-resolution checks fail
