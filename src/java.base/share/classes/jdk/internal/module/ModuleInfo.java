@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,7 +51,6 @@ import java.util.function.Supplier;
 
 import jdk.internal.misc.JavaLangModuleAccess;
 import jdk.internal.misc.SharedSecrets;
-import jdk.internal.module.ModuleResolution;
 
 import static jdk.internal.module.ClassFileConstants.*;
 
@@ -343,7 +342,10 @@ public final class ModuleInfo {
         boolean open = ((module_flags & ACC_OPEN) != 0);
         boolean synthetic = ((module_flags & ACC_SYNTHETIC) != 0);
 
-        Builder builder = JLMA.newModuleBuilder(mn, false, open, synthetic);
+        boolean strict = false;
+        boolean automatic = false;
+
+        Builder builder = JLMA.newModuleBuilder(mn, strict, open, automatic, synthetic);
 
         int module_version_index = in.readUnsignedShort();
         if (module_version_index != 0) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -102,9 +102,13 @@ public final class ClassFileAttributes {
             boolean synthetic = ((module_flags & ACC_SYNTHETIC) != 0);
             off += 2;
 
+            boolean strict = false;
+            boolean automatic = false;
+
             ModuleDescriptor.Builder builder = JLMA.newModuleBuilder(mn,
-                                                                     false,
+                                                                     strict,
                                                                      open,
+                                                                     automatic,
                                                                      synthetic);
 
             // module_version

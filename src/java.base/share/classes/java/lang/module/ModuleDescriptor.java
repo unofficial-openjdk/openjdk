@@ -1012,6 +1012,8 @@ public class ModuleDescriptor
 
     private final String name;
     private final Version version;
+
+    // true if open module
     private final boolean open;
 
     // Indicates if synthesised for a JAR file found on the module path
@@ -1069,32 +1071,6 @@ public class ModuleDescriptor
         this.osName = osName;
         this.osArch = osArch;
         this.osVersion = osVersion;
-    }
-
-    /**
-     * Clones the given module descriptor with an augmented set of packages
-     */
-    ModuleDescriptor(ModuleDescriptor md, Set<String> pkgs) {
-        this.name = md.name;
-        this.version = md.version;
-        this.open = md.open;
-        this.automatic = md.automatic;
-        this.synthetic = md.synthetic;
-
-        this.requires = md.requires;
-        this.exports = md.exports;
-        this.opens = md.opens;
-        this.uses = md.uses;
-        this.provides = md.provides;
-
-        Set<String> packages = new HashSet<>(md.packages);
-        packages.addAll(pkgs);
-        this.packages = emptyOrUnmodifiableSet(packages);
-
-        this.mainClass = md.mainClass;
-        this.osName = md.osName;
-        this.osArch = md.osArch;
-        this.osVersion = md.osVersion;
     }
 
     /**
@@ -1352,8 +1328,8 @@ public class ModuleDescriptor
         final String name;
         final boolean strict; // true if module names are checked
         final boolean open;
+        final boolean automatic;
         final boolean synthetic;
-        boolean automatic;
         final Set<String> packages = new HashSet<>();
         final Map<String, Requires> requires = new HashMap<>();
         final Map<String, Exports> exports = new HashMap<>();
@@ -1372,16 +1348,18 @@ public class ModuleDescriptor
          * @param strict
          *        Indicates whether module names are checked or not
          */
-        Builder(String name, boolean strict, boolean open, boolean synthetic) {
+        Builder(String name,
+                boolean strict,
+                boolean open,
+                boolean automatic,
+                boolean synthetic)
+        {
+            assert !open || !automatic;
             this.name = (strict) ? requireModuleName(name) : name;
             this.strict = strict;
             this.open = open;
-            this.synthetic = synthetic;
-        }
-
-        /* package */ Builder automatic(boolean automatic) {
             this.automatic = automatic;
-            return this;
+            this.synthetic = synthetic;
         }
 
         /**
@@ -2159,7 +2137,11 @@ public class ModuleDescriptor
      *         identifier
      */
     public static Builder module(String name) {
-        return new Builder(name, true, false, false);
+        boolean strict = true;
+        boolean open = false;
+        boolean automatic = false;
+        boolean synthetic = false;
+        return new Builder(name, strict, open, automatic, synthetic);
     }
 
     /**
@@ -2187,7 +2169,11 @@ public class ModuleDescriptor
      *         identifier
      */
     public static Builder openModule(String name) {
-        return new Builder(name, true, true, false);
+        boolean strict = true;
+        boolean open = true;
+        boolean automatic = false;
+        boolean synthetic = false;
+        return new Builder(name, strict, open, automatic, synthetic);
     }
 
     /**
@@ -2209,7 +2195,11 @@ public class ModuleDescriptor
      * @see ModuleFinder#of(Path[])
      */
     public static Builder automaticModule(String name) {
-        return new Builder(name, true, false, false).automatic(true);
+        boolean strict = true;
+        boolean open = false;
+        boolean automatic = true;
+        boolean synthetic = false;
+        return new Builder(name, strict, open, automatic, synthetic);
     }
 
 
@@ -2373,8 +2363,9 @@ public class ModuleDescriptor
                 public Builder newModuleBuilder(String mn,
                                                 boolean strict,
                                                 boolean open,
+                                                boolean automatic,
                                                 boolean synthetic) {
-                    return new Builder(mn, strict, open, synthetic);
+                    return new Builder(mn, strict, open, automatic, synthetic);
                 }
 
                 @Override
@@ -2419,12 +2410,6 @@ public class ModuleDescriptor
                 @Override
                 public Version newVersion(String v) {
                     return new Version(v);
-                }
-
-                @Override
-                public ModuleDescriptor newModuleDescriptor(ModuleDescriptor md,
-                                                            Set<String> pkgs) {
-                    return new ModuleDescriptor(md, pkgs);
                 }
 
                 @Override
