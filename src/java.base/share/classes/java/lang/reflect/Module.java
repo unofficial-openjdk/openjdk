@@ -83,7 +83,7 @@ import sun.security.util.SecurityConstants;
  *
  * <p> The package names that are parameters or returned by methods defined in
  * this class are the fully-qualified names of the packages as defined in
- * section 6.5.3 of <cite>The Java&trade; Language Specification </cite>, for
+ * section 6.5.3 of <cite>The Java&trade; Language Specification</cite>, for
  * example, {@code "java.lang"}. </p>
  *
  * <p> Unless otherwise specified, passing a {@code null} argument to a method
@@ -1017,12 +1017,7 @@ public final class Module implements AnnotatedElement {
         // update VM first in case it fails. This is a no-op another thread
         // beats us to add the package first
         if (syncVM) {
-            try {
-                addPackage0(this, pn.replace('.', '/'));
-            } catch (IllegalArgumentException e) {
-                // the package is defined to another module
-                throw new IllegalStateException(e.getMessage());
-            }
+            addPackage0(this, pn.replace('.', '/'));
         }
         extraPackages.putIfAbsent(pn, Boolean.TRUE);
     }

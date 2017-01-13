@@ -168,6 +168,10 @@ public final class Layer {
      * module layers return a {@code Controller} that can be used to control
      * modules in the layer.
      *
+     * <p> Unless otherwise specified, passing a {@code null} argument to a
+     * method in this class causes a {@link NullPointerException
+     * NullPointerException} to be thrown. </p>
+     *
      * @apiNote Care should be taken with {@code Controller} objects, they
      * should never be shared with untrusted code.
      *
