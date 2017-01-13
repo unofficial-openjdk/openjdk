@@ -1308,6 +1308,11 @@ public class ModuleDescriptor
      * packages can be added to the module using the {@link #contains contains}
      * method. </p>
      *
+     * <p> The module names, package names, and class names that are parameters
+     * specified to the builder methods are the module names, package names,
+     * and qualified names of classes as defined in the <cite>The Java&trade;
+     * Language Specification</cite>. </p>
+     *
      * <p> Example usage: </p>
      * <pre>{@code    ModuleDescriptor descriptor = ModuleDescriptor.module("m1")
      *         .requires("m2")
@@ -1726,8 +1731,8 @@ public class ModuleDescriptor
          * @return This builder
          *
          * @throws IllegalArgumentException
-         *         If the service type is {@code null} or is not a qualified
-         *         type name
+         *         If the service type is {@code null} or not a qualified name of
+         *         a Java class
          * @throws IllegalStateException
          *         If a dependency on the service type has already been declared
          */
@@ -1776,8 +1781,8 @@ public class ModuleDescriptor
          *
          * @throws IllegalArgumentException
          *         If the service type or any of the provider class names is
-         *         {@code null} or is not a legal qualified type name or the
-         *         list of provider class names is empty
+         *         {@code null} or not a qualified name of a Java class, or
+         *         the list of provider class names is empty
          * @throws IllegalStateException
          *         If the providers for the service type have already been
          *         declared
@@ -1807,7 +1812,7 @@ public class ModuleDescriptor
          *
          * @throws IllegalArgumentException
          *         If the service type or the provider class name is {@code
-         *         null} or not a legal qualified type name
+         *         null} or not a qualified name of a Java class
          * @throws IllegalStateException
          *         If the providers for the service type have already been
          *         declared
@@ -1893,11 +1898,11 @@ public class ModuleDescriptor
          * @return This builder
          *
          * @throws IllegalArgumentException
-         *         If {@code mainClass} is null or is not a legal qualified
-         *         type name
+         *         If {@code mainClass} is null or not a qualified name of a
+         *         Java class
          */
         public Builder mainClass(String mc) {
-            mainClass = requireQualifiedTypeName("main class name", mc);
+            mainClass = requireQualifiedClassName("main class name", mc);
             packages.add(packageName(mainClass));
             return this;
         }

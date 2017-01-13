@@ -858,7 +858,7 @@ class Main {
 
         String pn = toPackageName(name);
         // add if this is a class or resource in a package
-        if (Checks.isTypeName(pn)) {
+        if (Checks.isPackageName(pn)) {
             packages.add(pn);
             return true;
         }

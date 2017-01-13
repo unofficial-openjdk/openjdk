@@ -125,7 +125,7 @@ public final class ModulePatcher {
                           .filter(e -> !e.isDirectory()
                                   && (!isAutomatic || e.getName().endsWith(".class")))
                           .map(e -> toPackageName(file, e))
-                          .filter(Checks::isTypeName)
+                          .filter(Checks::isPackageName)
                           .forEach(packages::add);
                     }
 
@@ -138,7 +138,7 @@ public final class ModulePatcher {
                             .filter(path -> !isAutomatic
                                     || path.toString().endsWith(".class"))
                             .map(path -> toPackageName(top, path))
-                            .filter(Checks::isTypeName)
+                            .filter(Checks::isPackageName)
                             .forEach(packages::add);
 
                 }

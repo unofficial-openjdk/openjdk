@@ -55,7 +55,7 @@ public final class ResourceHelper {
         if (len > 6 && name.endsWith(".class")) {
             return true;
         }
-        if (!Checks.isTypeName(getPackageName(name))) {
+        if (!Checks.isPackageName(getPackageName(name))) {
             return true;
         }
         return false;

@@ -374,7 +374,7 @@ public class ModulePath implements ModuleFinder {
             String prefix = cf.substring(0, index);
             if (prefix.equals(SERVICES_PREFIX)) {
                 String sn = cf.substring(index);
-                if (Checks.isTypeName(sn))
+                if (Checks.isClassName(sn))
                     return Optional.of(sn);
             }
         }
@@ -665,7 +665,7 @@ public class ModulePath implements ModuleFinder {
         }
 
         String pn = name.substring(0, index).replace('/', '.');
-        if (Checks.isTypeName(pn)) {
+        if (Checks.isPackageName(pn)) {
             return Optional.of(pn);
         } else {
             // not a valid package name
@@ -695,7 +695,7 @@ public class ModulePath implements ModuleFinder {
         }
 
         String pn = parent.toString().replace(File.separatorChar, '.');
-        if (Checks.isTypeName(pn)) {
+        if (Checks.isPackageName(pn)) {
             return Optional.of(pn);
         } else {
             // not a valid package name
