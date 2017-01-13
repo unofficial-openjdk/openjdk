@@ -1414,8 +1414,8 @@ public class ModuleDescriptor
          * @return This builder
          *
          * @throws IllegalArgumentException
-         *         If the module name is {@code null}, is not a legal Java
-         *         identifier, or is equal to the module name that this builder
+         *         If the module name is {@code null}, is not a legal module
+         *         name, or is equal to the module name that this builder
          *         was initialized to build
          * @throws IllegalStateException
          *         If the dependence on the module has already been declared
@@ -1441,8 +1441,8 @@ public class ModuleDescriptor
          * @return This builder
          *
          * @throws IllegalArgumentException
-         *         If the module name is {@code null}, is not a legal Java
-         *         identifier, or is equal to the module name that this builder
+         *         If the module name is {@code null}, is not a legal module
+         *         name, or is equal to the module name that this builder
          *         was initialized to build
          * @throws IllegalStateException
          *         If the dependence on the module has already been declared
@@ -1462,8 +1462,8 @@ public class ModuleDescriptor
          * @return This builder
          *
          * @throws IllegalArgumentException
-         *         If the module name is {@code null}, is not a legal Java
-         *         identifier, or is equal to the module name that this builder
+         *         If the module name is {@code null}, is not a legal module
+         *         name, or is equal to the module name that this builder
          *         was initialized to build
          * @throws IllegalStateException
          *         If the dependence on the module has already been declared
@@ -1509,9 +1509,10 @@ public class ModuleDescriptor
          * @return This builder
          *
          * @throws IllegalArgumentException
-         *         If the package name or any of the target modules is {@code
-         *         null} or is not a legal Java identifier, or the set of
-         *         targets is empty
+         *         If the package name is {@code null} or is not a legal
+         *         package name, the set of target modules is empty, or the set
+         *         of target modules contains a name that is not a legal module
+         *         name
          * @throws IllegalStateException
          *         If the package is already declared as exported
          */
@@ -1543,8 +1544,8 @@ public class ModuleDescriptor
          * @return This builder
          *
          * @throws IllegalArgumentException
-         *         If the package name is {@code null} or is not a legal Java
-         *         identifier
+         *         If the package name is {@code null} or is not a legal
+         *         package name
          * @throws IllegalStateException
          *         If the package is already declared as exported
          */
@@ -1565,9 +1566,10 @@ public class ModuleDescriptor
          * @return This builder
          *
          * @throws IllegalArgumentException
-         *         If the package name or any of the target modules is {@code
-         *         null} or is not a legal Java identifier, or the set of
-         *         targets is empty
+         *         If the package name is {@code null} or is not a legal
+         *         package name, the set of target modules is empty, or the set
+         *         of target modules contains a name that is not a legal module
+         *         name
          * @throws IllegalStateException
          *         If the package is already declared as exported
          */
@@ -1584,8 +1586,8 @@ public class ModuleDescriptor
          * @return This builder
          *
          * @throws IllegalArgumentException
-         *         If the package name is {@code null} or is not a legal Java
-         *         identifier
+         *         If the package name is {@code null} or is not a legal
+         *         package name
          * @throws IllegalStateException
          *         If the package is already declared as exported
          */
@@ -1635,9 +1637,10 @@ public class ModuleDescriptor
          * @return This builder
          *
          * @throws IllegalArgumentException
-         *         If the package name or any of the target modules is {@code
-         *         null} or is not a legal Java identifier, or the set of
-         *         targets is empty
+         *         If the package name is {@code null} or is not a legal
+         *         package name, the set of target modules is empty, or the set
+         *         of target modules contains a name that is not a legal module
+         *         name
          * @throws IllegalStateException
          *         If the package is already declared as open or this is a
          *         builder for an open module
@@ -1670,8 +1673,8 @@ public class ModuleDescriptor
          * @return This builder
          *
          * @throws IllegalArgumentException
-         *         If the package name is {@code null} or is not a legal Java
-         *         identifier
+         *         If the package name is {@code null} or is not a legal
+         *         package name
          * @throws IllegalStateException
          *         If the package is already declared as open or this is a
          *         builder for an open module
@@ -1692,9 +1695,10 @@ public class ModuleDescriptor
          * @return This builder
          *
          * @throws IllegalArgumentException
-         *         If the package name or any of the target modules is {@code
-         *         null} or is not a legal Java identifier, or the set of
-         *         targets is empty
+         *         If the package name is {@code null} or is not a legal
+         *         package name, the set of target modules is empty, or the set
+         *         of target modules contains a name that is not a legal module
+         *         name
          * @throws IllegalStateException
          *         If the package is already declared as open or this is a
          *         builder for an open module
@@ -1712,8 +1716,8 @@ public class ModuleDescriptor
          * @return This builder
          *
          * @throws IllegalArgumentException
-         *         If the package name is {@code null} or is not a legal Java
-         *         identifier
+         *         If the package name is {@code null} or is not a legal
+         *         package name
          * @throws IllegalStateException
          *         If the package is already declared as open or this is a
          *         builder for an open module
@@ -1833,7 +1837,7 @@ public class ModuleDescriptor
          *
          * @throws IllegalArgumentException
          *         If any of the package names is {@code null} or is not a
-         *         legal Java identifier
+         *         legal package name
          */
         public Builder contains(Set<String> pns) {
             pns.forEach(this::contains);
@@ -1849,8 +1853,8 @@ public class ModuleDescriptor
          * @return This builder
          *
          * @throws IllegalArgumentException
-         *         If the package name is {@code null}, or is not a legal Java
-         *         identifier
+         *         If the package name is {@code null}, or is not a legal
+         *         package name
          */
         public Builder contains(String pn) {
             Checks.requirePackageName(pn);
@@ -2138,8 +2142,8 @@ public class ModuleDescriptor
      * @return A new builder
      *
      * @throws IllegalArgumentException
-     *         If the module name is {@code null} or is not a legal Java
-     *         identifier
+     *         If the module name is {@code null} or is not a legal module
+     *         name
      */
     public static Builder module(String name) {
         boolean strict = true;
@@ -2170,8 +2174,8 @@ public class ModuleDescriptor
      * @return A new builder that builds an open module
      *
      * @throws IllegalArgumentException
-     *         If the module name is {@code null} or is not a legal Java
-     *         identifier
+     *         If the module name is {@code null} or is not a legal module
+     *         name
      */
     public static Builder openModule(String name) {
         boolean strict = true;
@@ -2194,8 +2198,8 @@ public class ModuleDescriptor
      * @return A new builder that builds an automatic module
      *
      * @throws IllegalArgumentException
-     *         If the module name is {@code null} or is not a legal Java
-     *         identifier
+     *         If the module name is {@code null} or is not a legal module
+     *         name
      *
      * @see ModuleFinder#of(Path[])
      */
