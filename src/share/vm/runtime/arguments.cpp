@@ -25,9 +25,9 @@
 #include "precompiled.hpp"
 #include "classfile/classLoader.hpp"
 #include "classfile/javaAssertions.hpp"
+#include "classfile/moduleEntry.hpp"
 #include "classfile/stringTable.hpp"
 #include "classfile/symbolTable.hpp"
-#include "code/codeCacheExtensions.hpp"
 #include "gc/shared/cardTableRS.hpp"
 #include "gc/shared/genCollectedHeap.hpp"
 #include "gc/shared/referenceProcessor.hpp"
@@ -1323,26 +1323,32 @@ void Arguments::check_unsupported_dumping_properties() {
                                            "jdk.module.limitmods",
                                            "jdk.module.path",
                                            "jdk.module.upgrade.path",
-                                           "jdk.module.addmods.0" };
-  const char* unsupported_options[] = { "-m",
-                                        "--limit-modules",
-                                        "--module-path",
-                                        "--upgrade-module-path",
-                                        "--add-modules" };
+                                           "jdk.module.addmods.0",
+                                           "jdk.module.patch.0" };
+  const char* unsupported_options[] = { "-m", // cannot use at dump time
+                                        "--limit-modules", // ignored at dump time
+                                        "--module-path", // ignored at dump time
+                                        "--upgrade-module-path", // ignored at dump time
+                                        "--add-modules", // ignored at dump time
+                                        "--patch-module" // ignored at dump time
+                                      };
   assert(ARRAY_SIZE(unsupported_properties) == ARRAY_SIZE(unsupported_options), "must be");
-  // If a vm option is found in the unsupported_options array with index less than the warning_idx,
-  // vm will exit with an error message. Otherwise, it will result in a warning message.
-  uint warning_idx = 2;
+  // If a vm option is found in the unsupported_options array with index less than the info_idx,
+  // vm will exit with an error message. Otherwise, it will print an informational message if
+  // PrintSharedSpaces is enabled.
+  uint info_idx = 1;
   SystemProperty* sp = system_properties();
   while (sp != NULL) {
     for (uint i = 0; i < ARRAY_SIZE(unsupported_properties); i++) {
       if (strcmp(sp->key(), unsupported_properties[i]) == 0) {
-        if (i < warning_idx) {
+        if (i < info_idx) {
           vm_exit_during_initialization(
             "Cannot use the following option when dumping the shared archive", unsupported_options[i]);
         } else {
-          warning(
-            "the %s option is ignored when dumping the shared archive", unsupported_options[i]);
+          if (PrintSharedSpaces) {
+            tty->print_cr(
+              "Info: the %s option is ignored when dumping the shared archive", unsupported_options[i]);
+          }
         }
       }
     }
@@ -1419,10 +1425,8 @@ void Arguments::set_mode_flags(Mode mode) {
   }
 }
 
-#if defined(COMPILER2) || INCLUDE_JVMCI || defined(_LP64) || !INCLUDE_CDS
 // Conflict: required to use shared spaces (-Xshare:on), but
 // incompatible command line options were chosen.
-
 static void no_shared_spaces(const char* message) {
   if (RequireSharedSpaces) {
     jio_fprintf(defaultStream::error_stream(),
@@ -1432,7 +1436,6 @@ static void no_shared_spaces(const char* message) {
     FLAG_SET_DEFAULT(UseSharedSpaces, false);
   }
 }
-#endif
 
 // Returns threshold scaled with the value of scale.
 // If scale < 0.0, threshold is returned without scaling.
@@ -1881,7 +1884,6 @@ void Arguments::set_ergonomics_flags() {
 #endif // _LP64
 #endif // !ZERO
 
-  CodeCacheExtensions::set_ergonomics_flags();
 }
 
 void Arguments::set_parallel_gc_flags() {
@@ -2037,9 +2039,35 @@ julong Arguments::limit_by_allocatable_memory(julong limit) {
 static const size_t DefaultHeapBaseMinAddress = HeapBaseMinAddress;
 
 void Arguments::set_heap_size() {
-  const julong phys_mem =
+  julong phys_mem =
     FLAG_IS_DEFAULT(MaxRAM) ? MIN2(os::physical_memory(), (julong)MaxRAM)
                             : (julong)MaxRAM;
+
+  // Experimental support for CGroup memory limits
+  if (UseCGroupMemoryLimitForHeap) {
+    // This is a rough indicator that a CGroup limit may be in force
+    // for this process
+    const char* lim_file = "/sys/fs/cgroup/memory/memory.limit_in_bytes";
+    FILE *fp = fopen(lim_file, "r");
+    if (fp != NULL) {
+      julong cgroup_max = 0;
+      int ret = fscanf(fp, JULONG_FORMAT, &cgroup_max);
+      if (ret == 1 && cgroup_max > 0) {
+        // If unlimited, cgroup_max will be a very large, but unspecified
+        // value, so use initial phys_mem as a limit
+        log_info(gc, heap)("Setting phys_mem to the min of cgroup limit ("
+                           JULONG_FORMAT "MB) and initial phys_mem ("
+                           JULONG_FORMAT "MB)", cgroup_max/M, phys_mem/M);
+        phys_mem = MIN2(cgroup_max, phys_mem);
+      } else {
+        warning("Unable to read/parse cgroup memory limit from %s: %s",
+                lim_file, errno != 0 ? strerror(errno) : "unknown error");
+      }
+      fclose(fp);
+    } else {
+      warning("Unable to open cgroup memory limit file %s (%s)", lim_file, strerror(errno));
+    }
+  }
 
   // If the maximum heap size has not been set with -Xmx,
   // then set it as fraction of the size of physical memory,
@@ -2654,6 +2682,12 @@ jint Arguments::parse_vm_init_args(const JavaVMInitArgs *java_tool_options_args,
   if (result != JNI_OK) {
     return result;
   }
+
+#if INCLUDE_CDS
+  if (UseSharedSpaces && patch_mod_javabase) {
+    no_shared_spaces("CDS is disabled when " JAVA_BASE_NAME " module is patched.");
+  }
+#endif
 
   return JNI_OK;
 }
@@ -3435,9 +3469,9 @@ void Arguments::add_patch_mod_prefix(const char* module_name, const char* path, 
   // This check is only required for java.base, all other duplicate module specifications
   // will be checked during module system initialization.  The module system initialization
   // will throw an ExceptionInInitializerError if this situation occurs.
-  if (strcmp(module_name, "java.base") == 0) {
+  if (strcmp(module_name, JAVA_BASE_NAME) == 0) {
     if (*patch_mod_javabase) {
-      vm_exit_during_initialization("Cannot specify java.base more than once to --patch-module");
+      vm_exit_during_initialization("Cannot specify " JAVA_BASE_NAME " more than once to --patch-module");
     } else {
       *patch_mod_javabase = true;
     }
@@ -4383,7 +4417,6 @@ jint Arguments::parse(const JavaVMInitArgs* initial_cmd_args) {
 }
 
 jint Arguments::apply_ergo() {
-
   // Set flags based on ergonomics.
   set_ergonomics_flags();
 

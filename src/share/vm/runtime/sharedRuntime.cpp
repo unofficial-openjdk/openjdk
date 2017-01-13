@@ -23,12 +23,12 @@
  */
 
 #include "precompiled.hpp"
+#include "aot/aotLoader.hpp"
 #include "classfile/stringTable.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "classfile/vmSymbols.hpp"
 #include "code/codeCache.hpp"
 #include "code/compiledIC.hpp"
-#include "code/codeCacheExtensions.hpp"
 #include "code/scopeDesc.hpp"
 #include "code/vtableStubs.hpp"
 #include "compiler/abstractCompiler.hpp"
@@ -79,6 +79,7 @@ RuntimeStub*        SharedRuntime::_ic_miss_blob;
 RuntimeStub*        SharedRuntime::_resolve_opt_virtual_call_blob;
 RuntimeStub*        SharedRuntime::_resolve_virtual_call_blob;
 RuntimeStub*        SharedRuntime::_resolve_static_call_blob;
+address             SharedRuntime::_resolve_static_call_entry;
 
 DeoptimizationBlob* SharedRuntime::_deopt_blob;
 SafepointBlob*      SharedRuntime::_polling_page_vectors_safepoint_handler_blob;
@@ -98,6 +99,7 @@ void SharedRuntime::generate_stubs() {
   _resolve_opt_virtual_call_blob       = generate_resolve_blob(CAST_FROM_FN_PTR(address, SharedRuntime::resolve_opt_virtual_call_C),   "resolve_opt_virtual_call");
   _resolve_virtual_call_blob           = generate_resolve_blob(CAST_FROM_FN_PTR(address, SharedRuntime::resolve_virtual_call_C),       "resolve_virtual_call");
   _resolve_static_call_blob            = generate_resolve_blob(CAST_FROM_FN_PTR(address, SharedRuntime::resolve_static_call_C),        "resolve_static_call");
+  _resolve_static_call_entry           = _resolve_static_call_blob->entry_point();
 
 #if defined(COMPILER2) || INCLUDE_JVMCI
   // Vectors are generated only by C2 and JVMCI.
@@ -476,7 +478,7 @@ address SharedRuntime::raw_exception_handler_for_return_address(JavaThread* thre
   // JVMCI's ExceptionHandlerStub expects the thread local exception PC to be clear
   // and other exception handler continuations do not read it
   thread->set_exception_pc(NULL);
-#endif
+#endif // INCLUDE_JVMCI
 
   // The fastest case first
   CodeBlob* blob = CodeCache::find_blob(return_address);
@@ -503,6 +505,13 @@ address SharedRuntime::raw_exception_handler_for_return_address(JavaThread* thre
       return nm->exception_begin();
     }
   }
+
+#if INCLUDE_AOT
+  if (UseAOT && blob->is_aot()) {
+    // AOT Compiled code
+    return AOTLoader::exception_begin(thread, blob, return_address);
+  }
+#endif
 
   // Entry code
   if (StubRoutines::returns_to_call_stub(return_address)) {
@@ -989,17 +998,12 @@ address SharedRuntime::native_method_throw_unsatisfied_link_error_entry() {
 }
 
 JRT_ENTRY_NO_ASYNC(void, SharedRuntime::register_finalizer(JavaThread* thread, oopDesc* obj))
-  assert(obj->is_oop(), "must be a valid oop");
 #if INCLUDE_JVMCI
-  // This removes the requirement for JVMCI compilers to emit code
-  // performing a dynamic check that obj has a finalizer before
-  // calling this routine. There should be no performance impact
-  // for C1 since it emits a dynamic check. C2 and the interpreter
-  // uses other runtime routines for registering finalizers.
   if (!obj->klass()->has_finalizer()) {
     return;
   }
 #endif // INCLUDE_JVMCI
+  assert(obj->is_oop(), "must be a valid oop");
   assert(obj->klass()->has_finalizer(), "shouldn't be here otherwise");
   InstanceKlass::register_finalizer(instanceOop(obj), CHECK);
 JRT_END
@@ -1226,7 +1230,6 @@ methodHandle SharedRuntime::find_callee_method(JavaThread* thread, TRAPS) {
     assert(fr.is_entry_frame(), "must be");
     // fr is now pointing to the entry frame.
     callee_method = methodHandle(THREAD, fr.entry_frame_call_wrapper()->callee_method());
-    assert(fr.entry_frame_call_wrapper()->receiver() == NULL || !callee_method->is_static(), "non-null receiver for static call??");
   } else {
     Bytecodes::Code bc;
     CallInfo callinfo;
@@ -1355,16 +1358,18 @@ methodHandle SharedRuntime::resolve_sub_helper(JavaThread *thread,
   address dest_entry_point = callee == NULL ? 0 : callee->entry_point(); // used below
 #endif
 
+  bool is_nmethod = caller_nm->is_nmethod();
+
   if (is_virtual) {
     assert(receiver.not_null() || invoke_code == Bytecodes::_invokehandle, "sanity check");
     bool static_bound = call_info.resolved_method()->can_be_statically_bound();
     KlassHandle h_klass(THREAD, invoke_code == Bytecodes::_invokehandle ? NULL : receiver->klass());
     CompiledIC::compute_monomorphic_entry(callee_method, h_klass,
-                     is_optimized, static_bound, virtual_call_info,
+                     is_optimized, static_bound, is_nmethod, virtual_call_info,
                      CHECK_(methodHandle()));
   } else {
     // static call
-    CompiledStaticCall::compute_entry(callee_method, static_call_info);
+    CompiledStaticCall::compute_entry(callee_method, is_nmethod, static_call_info);
   }
 
   // grab lock, check for deoptimization and potentially patch caller
@@ -1395,7 +1400,7 @@ methodHandle SharedRuntime::resolve_sub_helper(JavaThread *thread,
           inline_cache->set_to_monomorphic(virtual_call_info);
         }
       } else {
-        CompiledStaticCall* ssc = compiledStaticCall_before(caller_frame.pc());
+        CompiledStaticCall* ssc = caller_nm->compiledStaticCall_before(caller_frame.pc());
         if (ssc->is_clean()) ssc->set(static_call_info);
       }
     }
@@ -1511,6 +1516,7 @@ JRT_BLOCK_ENTRY(address, SharedRuntime::resolve_opt_virtual_call_C(JavaThread *t
 JRT_END
 
 
+
 methodHandle SharedRuntime::handle_ic_miss_helper(JavaThread *thread, TRAPS) {
   ResourceMark rm(thread);
   CallInfo call_info;
@@ -1623,7 +1629,7 @@ methodHandle SharedRuntime::handle_ic_miss_helper(JavaThread *thread, TRAPS) {
         inline_cache->compute_monomorphic_entry(callee_method,
                                                 receiver_klass,
                                                 inline_cache->is_optimized(),
-                                                false,
+                                                false, caller_nm->is_nmethod(),
                                                 info, CHECK_(methodHandle()));
         inline_cache->set_to_monomorphic(info);
       } else if (!inline_cache->is_megamorphic() && !inline_cache->is_clean()) {
@@ -1692,10 +1698,7 @@ methodHandle SharedRuntime::reresolve_call_site(JavaThread *thread, TRAPS) {
       // busy patching it.
       MutexLockerEx ml_patch(Patching_lock, Mutex::_no_safepoint_check_flag);
       // Location of call instruction
-      if (NativeCall::is_call_before(pc)) {
-        NativeCall *ncall = nativeCall_before(pc);
-        call_addr = ncall->instruction_address();
-      }
+      call_addr = caller_nm->call_instruction_address(pc);
     }
     // Make sure nmethod doesn't get deoptimized and removed until
     // this is done with it.
@@ -1725,9 +1728,10 @@ methodHandle SharedRuntime::reresolve_call_site(JavaThread *thread, TRAPS) {
       // to a wrong method). It should not be performance critical, since the
       // resolve is only done once.
 
+      bool is_nmethod = caller_nm->is_nmethod();
       MutexLocker ml(CompiledIC_lock);
       if (is_static_call) {
-        CompiledStaticCall* ssc= compiledStaticCall_at(call_addr);
+        CompiledStaticCall* ssc = caller_nm->compiledStaticCall_at(call_addr);
         ssc->set_to_clean();
       } else {
         // compiled, dispatched call (which used to call an interpreted method)
@@ -1794,6 +1798,37 @@ void SharedRuntime::check_member_name_argument_is_last_argument(const methodHand
 }
 #endif
 
+bool SharedRuntime::should_fixup_call_destination(address destination, address entry_point, address caller_pc, Method* moop, CodeBlob* cb) {
+  if (destination != entry_point) {
+    CodeBlob* callee = CodeCache::find_blob(destination);
+    // callee == cb seems weird. It means calling interpreter thru stub.
+    if (callee == cb || callee->is_adapter_blob()) {
+      // static call or optimized virtual
+      if (TraceCallFixup) {
+        tty->print("fixup callsite           at " INTPTR_FORMAT " to compiled code for", p2i(caller_pc));
+        moop->print_short_name(tty);
+        tty->print_cr(" to " INTPTR_FORMAT, p2i(entry_point));
+      }
+      return true;
+    } else {
+      if (TraceCallFixup) {
+        tty->print("failed to fixup callsite at " INTPTR_FORMAT " to compiled code for", p2i(caller_pc));
+        moop->print_short_name(tty);
+        tty->print_cr(" to " INTPTR_FORMAT, p2i(entry_point));
+      }
+      // assert is too strong could also be resolve destinations.
+      // assert(InlineCacheBuffer::contains(destination) || VtableStubs::contains(destination), "must be");
+    }
+  } else {
+    if (TraceCallFixup) {
+      tty->print("already patched callsite at " INTPTR_FORMAT " to compiled code for", p2i(caller_pc));
+      moop->print_short_name(tty);
+      tty->print_cr(" to " INTPTR_FORMAT, p2i(entry_point));
+    }
+  }
+  return false;
+}
+
 // ---------------------------------------------------------------------------
 // We are calling the interpreter via a c2i. Normally this would mean that
 // we were called by a compiled method. However we could have lost a race
@@ -1843,7 +1878,8 @@ IRT_LEAF(void, SharedRuntime::fixup_callers_callsite(Method* method, address cal
     // Expect to find a native call there (unless it was no-inline cache vtable dispatch)
     MutexLockerEx ml_patch(Patching_lock, Mutex::_no_safepoint_check_flag);
     if (NativeCall::is_call_before(return_pc)) {
-      NativeCall *call = nativeCall_before(return_pc);
+      ResourceMark mark;
+      NativeCallWrapper* call = nm->call_wrapper_before(return_pc);
       //
       // bug 6281185. We might get here after resolving a call site to a vanilla
       // virtual call. Because the resolvee uses the verified entry it may then
@@ -1864,32 +1900,8 @@ IRT_LEAF(void, SharedRuntime::fixup_callers_callsite(Method* method, address cal
         return;
       }
       address destination = call->destination();
-      if (destination != entry_point) {
-        CodeBlob* callee = CodeCache::find_blob(destination);
-        // callee == cb seems weird. It means calling interpreter thru stub.
-        if (callee == cb || callee->is_adapter_blob()) {
-          // static call or optimized virtual
-          if (TraceCallFixup) {
-            tty->print("fixup callsite           at " INTPTR_FORMAT " to compiled code for", p2i(caller_pc));
-            moop->print_short_name(tty);
-            tty->print_cr(" to " INTPTR_FORMAT, p2i(entry_point));
-          }
-          call->set_destination_mt_safe(entry_point);
-        } else {
-          if (TraceCallFixup) {
-            tty->print("failed to fixup callsite at " INTPTR_FORMAT " to compiled code for", p2i(caller_pc));
-            moop->print_short_name(tty);
-            tty->print_cr(" to " INTPTR_FORMAT, p2i(entry_point));
-          }
-          // assert is too strong could also be resolve destinations.
-          // assert(InlineCacheBuffer::contains(destination) || VtableStubs::contains(destination), "must be");
-        }
-      } else {
-          if (TraceCallFixup) {
-            tty->print("already patched callsite at " INTPTR_FORMAT " to compiled code for", p2i(caller_pc));
-            moop->print_short_name(tty);
-            tty->print_cr(" to " INTPTR_FORMAT, p2i(entry_point));
-          }
+      if (should_fixup_call_destination(destination, entry_point, caller_pc, moop, cb)) {
+        call->set_destination_mt_safe(entry_point);
       }
     }
   }
@@ -2567,27 +2579,15 @@ void AdapterHandlerLibrary::initialize() {
   if (_adapters != NULL) return;
   _adapters = new AdapterHandlerTable();
 
-  if (!CodeCacheExtensions::skip_compiler_support()) {
-    // Create a special handler for abstract methods.  Abstract methods
-    // are never compiled so an i2c entry is somewhat meaningless, but
-    // throw AbstractMethodError just in case.
-    // Pass wrong_method_abstract for the c2i transitions to return
-    // AbstractMethodError for invalid invocations.
-    address wrong_method_abstract = SharedRuntime::get_handle_wrong_method_abstract_stub();
-    _abstract_method_handler = AdapterHandlerLibrary::new_entry(new AdapterFingerPrint(0, NULL),
-                                                                StubRoutines::throw_AbstractMethodError_entry(),
-                                                                wrong_method_abstract, wrong_method_abstract);
-  } else {
-    // Adapters are not supposed to be used.
-    // Generate a special one to cause an error if used (and store this
-    // singleton in place of the useless _abstract_method_error adapter).
-    address entry = (address) &unexpected_adapter_call;
-    _abstract_method_handler = AdapterHandlerLibrary::new_entry(new AdapterFingerPrint(0, NULL),
-                                                                entry,
-                                                                entry,
-                                                                entry);
-
-  }
+  // Create a special handler for abstract methods.  Abstract methods
+  // are never compiled so an i2c entry is somewhat meaningless, but
+  // throw AbstractMethodError just in case.
+  // Pass wrong_method_abstract for the c2i transitions to return
+  // AbstractMethodError for invalid invocations.
+  address wrong_method_abstract = SharedRuntime::get_handle_wrong_method_abstract_stub();
+  _abstract_method_handler = AdapterHandlerLibrary::new_entry(new AdapterFingerPrint(0, NULL),
+                                                              StubRoutines::throw_AbstractMethodError_entry(),
+                                                              wrong_method_abstract, wrong_method_abstract);
 }
 
 AdapterHandlerEntry* AdapterHandlerLibrary::new_entry(AdapterFingerPrint* fingerprint,
@@ -2637,17 +2637,6 @@ AdapterHandlerEntry* AdapterHandlerLibrary::get_adapter0(const methodHandle& met
     MutexLocker mu(AdapterHandlerLibrary_lock);
     // make sure data structure is initialized
     initialize();
-
-    // during dump time, always generate adapters, even if the
-    // compiler has been turned off.
-    if (!DumpSharedSpaces && CodeCacheExtensions::skip_compiler_support()) {
-      // adapters are useless and should not be used, including the
-      // abstract_method_handler. However, some callers check that
-      // an adapter was installed.
-      // Return the singleton adapter, stored into _abstract_method_handler
-      // and modified to cause an error if we ever call it.
-      return _abstract_method_handler;
-    }
 
     if (method->is_abstract()) {
       return _abstract_method_handler;

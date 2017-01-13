@@ -965,10 +965,7 @@ static int cc_to_biint(int cc, int flags_reg) {
 // is the number of bytes (not instructions) which will be inserted before
 // the instruction. The padding must match the size of a NOP instruction.
 
-int inlineCallClearArrayNode::compute_padding(int current_offset) const {
-  int desired_padding = (2*4-current_offset)&31; // see MacroAssembler::clear_memory_doubleword
-  return (desired_padding <= 3*4) ? desired_padding : 0;
-}
+// Currently not used on this platform.
 
 //=============================================================================
 
@@ -4062,6 +4059,14 @@ operand immP_0or1() %{
 operand immL() %{
   match(ConL);
   op_cost(40);
+  format %{ %}
+  interface(CONST_INTER);
+%}
+
+operand immLmax30() %{
+  predicate((n->get_long() <= 30));
+  match(ConL);
+  op_cost(0);
   format %{ %}
   interface(CONST_INTER);
 %}
@@ -9564,6 +9569,117 @@ instruct roundFloat_nop(regF dst) %{
   ins_pipe(pipe_class_default);
 %}
 
+
+// Multiply-Accumulate
+// src1 * src2 + src3
+instruct maddF_reg_reg(regF dst, regF src1, regF src2, regF src3) %{
+  match(Set dst (FmaF src3 (Binary src1 src2)));
+
+  format %{ "FMADDS  $dst, $src1, $src2, $src3" %}
+  size(4);
+  ins_encode %{
+    // TODO: PPC port $archOpcode(ppc64Opcode_fmadds);
+    __ fmadds($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister, $src3$$FloatRegister);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+// src1 * src2 + src3
+instruct maddD_reg_reg(regD dst, regD src1, regD src2, regD src3) %{
+  match(Set dst (FmaD src3 (Binary src1 src2)));
+
+  format %{ "FMADD   $dst, $src1, $src2, $src3" %}
+  size(4);
+  ins_encode %{
+    // TODO: PPC port $archOpcode(ppc64Opcode_fmadd);
+    __ fmadd($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister, $src3$$FloatRegister);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+// -src1 * src2 + src3 = -(src1*src2-src3)
+instruct mnsubF_reg_reg(regF dst, regF src1, regF src2, regF src3) %{
+  match(Set dst (FmaF src3 (Binary (NegF src1) src2)));
+  match(Set dst (FmaF src3 (Binary src1 (NegF src2))));
+
+  format %{ "FNMSUBS $dst, $src1, $src2, $src3" %}
+  size(4);
+  ins_encode %{
+    // TODO: PPC port $archOpcode(ppc64Opcode_fnmsubs);
+    __ fnmsubs($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister, $src3$$FloatRegister);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+// -src1 * src2 + src3 = -(src1*src2-src3)
+instruct mnsubD_reg_reg(regD dst, regD src1, regD src2, regD src3) %{
+  match(Set dst (FmaD src3 (Binary (NegD src1) src2)));
+  match(Set dst (FmaD src3 (Binary src1 (NegD src2))));
+
+  format %{ "FNMSUB  $dst, $src1, $src2, $src3" %}
+  size(4);
+  ins_encode %{
+    // TODO: PPC port $archOpcode(ppc64Opcode_fnmsub);
+    __ fnmsub($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister, $src3$$FloatRegister);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+// -src1 * src2 - src3 = -(src1*src2+src3)
+instruct mnaddF_reg_reg(regF dst, regF src1, regF src2, regF src3) %{
+  match(Set dst (FmaF (NegF src3) (Binary (NegF src1) src2)));
+  match(Set dst (FmaF (NegF src3) (Binary src1 (NegF src2))));
+
+  format %{ "FNMADDS $dst, $src1, $src2, $src3" %}
+  size(4);
+  ins_encode %{
+    // TODO: PPC port $archOpcode(ppc64Opcode_fnmadds);
+    __ fnmadds($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister, $src3$$FloatRegister);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+// -src1 * src2 - src3 = -(src1*src2+src3)
+instruct mnaddD_reg_reg(regD dst, regD src1, regD src2, regD src3) %{
+  match(Set dst (FmaD (NegD src3) (Binary (NegD src1) src2)));
+  match(Set dst (FmaD (NegD src3) (Binary src1 (NegD src2))));
+
+  format %{ "FNMADD  $dst, $src1, $src2, $src3" %}
+  size(4);
+  ins_encode %{
+    // TODO: PPC port $archOpcode(ppc64Opcode_fnmadd);
+    __ fnmadd($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister, $src3$$FloatRegister);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+// src1 * src2 - src3
+instruct msubF_reg_reg(regF dst, regF src1, regF src2, regF src3) %{
+  match(Set dst (FmaF (NegF src3) (Binary src1 src2)));
+
+  format %{ "FMSUBS  $dst, $src1, $src2, $src3" %}
+  size(4);
+  ins_encode %{
+    // TODO: PPC port $archOpcode(ppc64Opcode_fmsubs);
+    __ fmsubs($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister, $src3$$FloatRegister);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+// src1 * src2 - src3
+instruct msubD_reg_reg(regD dst, regD src1, regD src2, regD src3) %{
+  match(Set dst (FmaD (NegD src3) (Binary src1 src2)));
+
+  format %{ "FMSUB   $dst, $src1, $src2, $src3" %}
+  size(4);
+  ins_encode %{
+    // TODO: PPC port $archOpcode(ppc64Opcode_fmsub);
+    __ fmsub($dst$$FloatRegister, $src1$$FloatRegister, $src2$$FloatRegister, $src3$$FloatRegister);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+
 //----------Logical Instructions-----------------------------------------------
 
 // And Instructions
@@ -11735,18 +11851,44 @@ instruct array_size(iRegLdst dst, iRegPsrc end, iRegPsrc start) %{
   ins_pipe(pipe_class_default);
 %}
 
-// Clear-array with dynamic array-size.
-instruct inlineCallClearArray(rarg1RegL cnt, rarg2RegP base, Universe dummy, regCTR ctr) %{
+// Clear-array with constant short array length. The versions below can use dcbz with cnt > 30.
+instruct inlineCallClearArrayShort(immLmax30 cnt, rarg2RegP base, Universe dummy, regCTR ctr) %{
   match(Set dummy (ClearArray cnt base));
-  effect(USE_KILL cnt, USE_KILL base, KILL ctr);
-  ins_cost(MEMORY_REF_COST);
-
-  ins_alignment(4); // 'compute_padding()' gets called, up to this number-1 nops will get inserted.
+  effect(USE_KILL base, KILL ctr);
+  ins_cost(2 * MEMORY_REF_COST);
 
   format %{ "ClearArray $cnt, $base" %}
   ins_encode %{
     // TODO: PPC port $archOpcode(ppc64Opcode_compound);
-    __ clear_memory_doubleword($base$$Register, $cnt$$Register); // kills cnt, base, R0
+    __ clear_memory_constlen($base$$Register, $cnt$$constant, R0); // kills base, R0
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+// Clear-array with constant large array length.
+instruct inlineCallClearArrayLarge(immL cnt, rarg2RegP base, Universe dummy, iRegLdst tmp, regCTR ctr) %{
+  match(Set dummy (ClearArray cnt base));
+  effect(USE_KILL base, TEMP tmp, KILL ctr);
+  ins_cost(3 * MEMORY_REF_COST);
+
+  format %{ "ClearArray $cnt, $base \t// KILL $tmp" %}
+  ins_encode %{
+    // TODO: PPC port $archOpcode(ppc64Opcode_compound);
+    __ clear_memory_doubleword($base$$Register, $tmp$$Register, R0, $cnt$$constant); // kills base, R0
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+// Clear-array with dynamic array length.
+instruct inlineCallClearArray(rarg1RegL cnt, rarg2RegP base, Universe dummy, regCTR ctr) %{
+  match(Set dummy (ClearArray cnt base));
+  effect(USE_KILL cnt, USE_KILL base, KILL ctr);
+  ins_cost(4 * MEMORY_REF_COST);
+
+  format %{ "ClearArray $cnt, $base" %}
+  ins_encode %{
+    // TODO: PPC port $archOpcode(ppc64Opcode_compound);
+    __ clear_memory_doubleword($base$$Register, $cnt$$Register, R0); // kills cnt, base, R0
   %}
   ins_pipe(pipe_class_default);
 %}

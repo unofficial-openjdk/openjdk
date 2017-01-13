@@ -108,6 +108,18 @@ bool ModuleEntry::can_read(ModuleEntry* m) const {
   }
 
   MutexLocker m1(Module_lock);
+  // This is a guard against possible race between agent threads that redefine
+  // or retransform classes in this module. Only one of them is adding the
+  // default read edges to the unnamed modules of the boot and app class loaders
+  // with an upcall to jdk.internal.module.Modules.transformedByAgent.
+  // At the same time, another thread can instrument the module classes by
+  // injecting dependencies that require the default read edges for resolution.
+  if (this->has_default_read_edges() && !m->is_named()) {
+    ClassLoaderData* cld = m->loader_data();
+    if (cld->is_the_null_class_loader_data() || cld->is_system_class_loader_data()) {
+      return true; // default read edge
+    }
+  }
   if (!has_reads()) {
     return false;
   } else {
@@ -301,7 +313,15 @@ ModuleEntry* ModuleEntryTable::new_entry(unsigned int hash, Handle module_handle
   entry->set_version(version);
   entry->set_location(location);
 
-  TRACE_INIT_MODULE_ID(entry);
+  if (ClassLoader::is_in_patch_mod_entries(name)) {
+    entry->set_is_patched();
+    if (log_is_enabled(Trace, modules, patch)) {
+      ResourceMark rm;
+      log_trace(modules, patch)("Marked module %s as patched from --patch-module", name->as_C_string());
+    }
+  }
+
+  TRACE_INIT_ID(entry);
 
   return entry;
 }
@@ -365,12 +385,12 @@ void ModuleEntryTable::finalize_javabase(Handle module_handle, Symbol* version, 
   assert(module_table != NULL, "boot loader's ModuleEntryTable not defined");
 
   if (module_handle.is_null()) {
-    fatal("Unable to finalize module definition for java.base");
+    fatal("Unable to finalize module definition for " JAVA_BASE_NAME);
   }
 
   // Set java.lang.reflect.Module, version and location for java.base
   ModuleEntry* jb_module = javabase_moduleEntry();
-  assert(jb_module != NULL, "java.base ModuleEntry not defined");
+  assert(jb_module != NULL, JAVA_BASE_NAME " ModuleEntry not defined");
   jb_module->set_version(version);
   jb_module->set_location(location);
   // Once java.base's ModuleEntry _module field is set with the known
@@ -387,7 +407,8 @@ void ModuleEntryTable::finalize_javabase(Handle module_handle, Symbol* version, 
 // Their module field is set once java.base's java.lang.reflect.Module is known to the VM.
 void ModuleEntryTable::patch_javabase_entries(Handle module_handle) {
   if (module_handle.is_null()) {
-    fatal("Unable to patch the module field of classes loaded prior to java.base's definition, invalid java.lang.reflect.Module");
+    fatal("Unable to patch the module field of classes loaded prior to "
+          JAVA_BASE_NAME "'s definition, invalid java.lang.reflect.Module");
   }
 
   // Do the fixups for the basic primitive types

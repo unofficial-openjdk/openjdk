@@ -153,7 +153,7 @@ int LIR_Assembler::emit_exception_handler() {
   __ nop();
 
   // Generate code for the exception handler.
-  address handler_base = __ start_a_stub(exception_handler_size);
+  address handler_base = __ start_a_stub(exception_handler_size());
 
   if (handler_base == NULL) {
     // Not enough space left for the handler.
@@ -168,7 +168,7 @@ int LIR_Assembler::emit_exception_handler() {
   __ mtctr(R0);
   __ bctr();
 
-  guarantee(code_offset() - offset <= exception_handler_size, "overflow");
+  guarantee(code_offset() - offset <= exception_handler_size(), "overflow");
   __ end_a_stub();
 
   return offset;
@@ -233,7 +233,7 @@ int LIR_Assembler::emit_deopt_handler() {
   __ nop();
 
   // Generate code for deopt handler.
-  address handler_base = __ start_a_stub(deopt_handler_size);
+  address handler_base = __ start_a_stub(deopt_handler_size());
 
   if (handler_base == NULL) {
     // Not enough space left for the handler.
@@ -244,7 +244,7 @@ int LIR_Assembler::emit_deopt_handler() {
   int offset = code_offset();
   __ bl64_patchable(SharedRuntime::deopt_blob()->unpack(), relocInfo::runtime_call_type);
 
-  guarantee(code_offset() - offset <= deopt_handler_size, "overflow");
+  guarantee(code_offset() - offset <= deopt_handler_size(), "overflow");
   __ end_a_stub();
 
   return offset;
@@ -292,28 +292,28 @@ void LIR_Assembler::klass2reg_with_patching(Register reg, CodeEmitInfo *info) {
 }
 
 
-void LIR_Assembler::emit_op3(LIR_Op3* op) {
-  const bool is_int = op->result_opr()->is_single_cpu();
-  Register Rdividend = is_int ? op->in_opr1()->as_register() : op->in_opr1()->as_register_lo();
+void LIR_Assembler::arithmetic_idiv(LIR_Code code, LIR_Opr left, LIR_Opr right, LIR_Opr temp, LIR_Opr result, CodeEmitInfo* info) {
+  const bool is_int = result->is_single_cpu();
+  Register Rdividend = is_int ? left->as_register() : left->as_register_lo();
   Register Rdivisor  = noreg;
-  Register Rscratch  = op->in_opr3()->as_register();
-  Register Rresult   = is_int ? op->result_opr()->as_register() : op->result_opr()->as_register_lo();
+  Register Rscratch  = temp->as_register();
+  Register Rresult   = is_int ? result->as_register() : result->as_register_lo();
   long divisor = -1;
 
-  if (op->in_opr2()->is_register()) {
-    Rdivisor = is_int ? op->in_opr2()->as_register() : op->in_opr2()->as_register_lo();
+  if (right->is_register()) {
+    Rdivisor = is_int ? right->as_register() : right->as_register_lo();
   } else {
-    divisor = is_int ? op->in_opr2()->as_constant_ptr()->as_jint()
-                     : op->in_opr2()->as_constant_ptr()->as_jlong();
+    divisor = is_int ? right->as_constant_ptr()->as_jint()
+                     : right->as_constant_ptr()->as_jlong();
   }
 
   assert(Rdividend != Rscratch, "");
   assert(Rdivisor  != Rscratch, "");
-  assert(op->code() == lir_idiv || op->code() == lir_irem, "Must be irem or idiv");
+  assert(code == lir_idiv || code == lir_irem, "Must be irem or idiv");
 
   if (Rdivisor == noreg) {
     if (divisor == 1) { // stupid, but can happen
-      if (op->code() == lir_idiv) {
+      if (code == lir_idiv) {
         __ mr_if_needed(Rresult, Rdividend);
       } else {
         __ li(Rresult, 0);
@@ -340,7 +340,7 @@ void LIR_Assembler::emit_op3(LIR_Op3* op) {
       }
       __ add(Rscratch, Rdividend, Rscratch);
 
-      if (op->code() == lir_idiv) {
+      if (code == lir_idiv) {
         if (is_int) {
           __ srawi(Rresult, Rscratch, log2);
         } else {
@@ -352,7 +352,7 @@ void LIR_Assembler::emit_op3(LIR_Op3* op) {
       }
 
     } else if (divisor == -1) {
-      if (op->code() == lir_idiv) {
+      if (code == lir_idiv) {
         __ neg(Rresult, Rdividend);
       } else {
         __ li(Rresult, 0);
@@ -360,7 +360,7 @@ void LIR_Assembler::emit_op3(LIR_Op3* op) {
 
     } else {
       __ load_const_optimized(Rscratch, divisor);
-      if (op->code() == lir_idiv) {
+      if (code == lir_idiv) {
         if (is_int) {
           __ divw(Rresult, Rdividend, Rscratch); // Can't divide minint/-1.
         } else {
@@ -389,7 +389,7 @@ void LIR_Assembler::emit_op3(LIR_Op3* op) {
     __ cmpdi(CCR0, Rdivisor, -1);
   }
   __ bne(CCR0, regular);
-  if (op->code() == lir_idiv) {
+  if (code == lir_idiv) {
     __ neg(Rresult, Rdividend);
     __ b(done);
     __ bind(regular);
@@ -412,6 +412,26 @@ void LIR_Assembler::emit_op3(LIR_Op3* op) {
     __ sub(Rresult, Rdividend, Rscratch);
   }
   __ bind(done);
+}
+
+
+void LIR_Assembler::emit_op3(LIR_Op3* op) {
+  switch (op->code()) {
+  case lir_idiv:
+  case lir_irem:
+    arithmetic_idiv(op->code(), op->in_opr1(), op->in_opr2(), op->in_opr3(),
+                    op->result_opr(), op->info());
+    break;
+  case lir_fmad:
+    __ fmadd(op->result_opr()->as_double_reg(), op->in_opr1()->as_double_reg(),
+             op->in_opr2()->as_double_reg(), op->in_opr3()->as_double_reg());
+    break;
+  case lir_fmaf:
+    __ fmadds(op->result_opr()->as_float_reg(), op->in_opr1()->as_float_reg(),
+              op->in_opr2()->as_float_reg(), op->in_opr3()->as_float_reg());
+    break;
+  default: ShouldNotReachHere(); break;
+  }
 }
 
 
@@ -1307,7 +1327,7 @@ int LIR_Assembler::safepoint_poll(LIR_Opr tmp, CodeEmitInfo* info) {
 
 void LIR_Assembler::emit_static_call_stub() {
   address call_pc = __ pc();
-  address stub = __ start_a_stub(max_static_call_stub_size);
+  address stub = __ start_a_stub(static_call_stub_size());
   if (stub == NULL) {
     bailout("static call stub overflow");
     return;
@@ -1346,7 +1366,7 @@ void LIR_Assembler::emit_static_call_stub() {
     return;
   }
 
-  assert(__ offset() - start <= max_static_call_stub_size, "stub too big");
+  assert(__ offset() - start <= static_call_stub_size(), "stub too big");
   __ end_a_stub();
 }
 
