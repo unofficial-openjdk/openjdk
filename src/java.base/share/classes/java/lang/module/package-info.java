@@ -34,6 +34,7 @@
  * will cause a {@code NullPointerException}, unless otherwise specified. </p>
  *
  * @since 9
+ * @spec JPMS
  */
 
 package java.lang.module;

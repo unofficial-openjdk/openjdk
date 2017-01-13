@@ -272,6 +272,8 @@ import sun.security.util.SecurityConstants;
  * @author      Peter Jones
  * @see         InvocationHandler
  * @since       1.3
+ * @revised 9
+ * @spec JPMS
  */
 public class Proxy implements java.io.Serializable {
     private static final long serialVersionUID = -2222568056686623797L;
@@ -358,6 +360,8 @@ public class Proxy implements java.io.Serializable {
      *      to create a proxy instance instead.
      *
      * @see <a href="#membership">Package and Module Membership of Proxy Class</a>
+     * @revised 9
+     * @spec JPMS
      */
     @Deprecated
     @CallerSensitive
@@ -955,6 +959,8 @@ public class Proxy implements java.io.Serializable {
      *          {@code null}
      *
      * @see <a href="#membership">Package and Module Membership of Proxy Class</a>
+     * @revised 9
+     * @spec JPMS
      */
     @CallerSensitive
     public static Object newProxyInstance(ClassLoader loader,
@@ -1039,6 +1045,9 @@ public class Proxy implements java.io.Serializable {
      * @return  {@code true} if the class is a proxy class and
      *          {@code false} otherwise
      * @throws  NullPointerException if {@code cl} is {@code null}
+     *
+     * @revised 9
+     * @spec JPMS
      */
     public static boolean isProxyClass(Class<?> cl) {
         return Proxy.class.isAssignableFrom(cl) && ProxyBuilder.isProxyClass(cl);

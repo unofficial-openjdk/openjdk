@@ -60,6 +60,8 @@ import sun.security.action.GetPropertyAction;
  * @see ReflectPermission
  *
  * @since 1.2
+ * @revised 9
+ * @spec JPMS
  */
 public class AccessibleObject implements AnnotatedElement {
 
@@ -103,6 +105,8 @@ public class AccessibleObject implements AnnotatedElement {
      * @throws SecurityException if the request is denied.
      * @see SecurityManager#checkPermission
      * @see ReflectPermission
+     * @revised 9
+     * @spec JPMS
      */
     @CallerSensitive
     public static void setAccessible(AccessibleObject[] array, boolean flag) {
@@ -145,6 +149,8 @@ public class AccessibleObject implements AnnotatedElement {
      * @see SecurityManager#checkPermission
      * @see ReflectPermission
      * @see java.lang.invoke.MethodHandles#privateLookupIn
+     * @revised 9
+     * @spec JPMS
      */
     public void setAccessible(boolean flag) {
         AccessibleObject.checkPermission();

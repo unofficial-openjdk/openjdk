@@ -126,6 +126,7 @@ import sun.security.util.SecurityConstants;
  * }</pre>
  *
  * @since 9
+ * @spec JPMS
  * @see Module#getLayer()
  */
 
@@ -172,6 +173,7 @@ public final class Layer {
      * should never be shared with untrusted code.
      *
      * @since 9
+     * @spec JPMS
      */
     public static final class Controller {
         private final Layer layer;

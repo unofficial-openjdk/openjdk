@@ -30,6 +30,7 @@ package java.lang.module;
  *
  * @see ModuleFinder
  * @since 9
+ * @spec JPMS
  */
 
 public class FindException extends RuntimeException {

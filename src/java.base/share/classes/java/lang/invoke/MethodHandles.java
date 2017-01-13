@@ -129,6 +129,9 @@ public class MethodHandles {
      * Also, it cannot access
      * <a href="MethodHandles.Lookup.html#callsens">caller sensitive methods</a>.
      * @return a lookup object which is trusted minimally
+     *
+     * @revised 9
+     * @spec JPMS
      */
     public static Lookup publicLookup() {
         // During VM startup then only classes in the java.base module can be
@@ -172,6 +175,7 @@ public class MethodHandles {
      * @throws IllegalAccessException if the access check specified above fails
      * @throws SecurityException if denied by the security manager
      * @since 9
+     * @spec JPMS
      * @see Lookup#dropLookupMode
      */
     public static Lookup privateLookupIn(Class<?> targetClass, Lookup lookup) throws IllegalAccessException {
@@ -601,6 +605,8 @@ public class MethodHandles {
      * so that there can be a secure foundation for lookups.
      * Nearly all other methods in the JSR 292 API rely on lookup
      * objects to check access requests.
+     *
+     * @revised 9
      */
     public static final
     class Lookup {
@@ -647,6 +653,7 @@ public class MethodHandles {
          *  lookup class and public types in packages exported by other modules
          *  to the module of the lookup class.
          *  @since 9
+         *  @spec JPMS
          */
         public static final int MODULE = PACKAGE << 1;
 
@@ -701,6 +708,9 @@ public class MethodHandles {
          *  @return the lookup modes, which limit the kinds of access performed by this lookup object
          *  @see #in
          *  @see #dropLookupMode
+         *
+         *  @revised 9
+         *  @spec JPMS
          */
         public int lookupModes() {
             return allowedModes & ALL_MODES;
@@ -757,6 +767,9 @@ public class MethodHandles {
          * @return a lookup object which reports the desired lookup class, or the same object
          * if there is no change
          * @throws NullPointerException if the argument is null
+         *
+         * @revised 9
+         * @spec JPMS
          */
         public Lookup in(Class<?> requestedLookupClass) {
             Objects.requireNonNull(requestedLookupClass);
@@ -811,8 +824,8 @@ public class MethodHandles {
          * @return a lookup object which lacks the indicated mode, or the same object if there is no change
          * @throws IllegalArgumentException if {@code modeToDrop} is not one of {@code PUBLIC},
          * {@code MODULE}, {@code PACKAGE}, {@code PROTECTED} or {@code PRIVATE}
-         * @since 9
          * @see MethodHandles#privateLookupIn
+         * @since 9
          */
         public Lookup dropLookupMode(int modeToDrop) {
             int oldModes = lookupModes();
@@ -881,6 +894,9 @@ public class MethodHandles {
          * because it requires a direct subclass relationship between
          * caller and callee.)
          * @see #in
+         *
+         * @revised 9
+         * @spec JPMS
          */
         @Override
         public String toString() {
