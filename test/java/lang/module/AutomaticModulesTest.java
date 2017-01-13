@@ -230,9 +230,8 @@ public class AutomaticModulesTest {
 
         ModuleDescriptor descriptor = mref.get().descriptor();
 
-        assertTrue(descriptor.packages().size() == 2);
+        assertTrue(descriptor.packages().size() == 1);
         assertTrue(descriptor.packages().contains("p"));
-        assertTrue(descriptor.packages().contains("p.resources"));
     }
 
     /**
@@ -254,9 +253,17 @@ public class AutomaticModulesTest {
         String provider = "p.S1";
 
         Path tmpdir = Files.createTempDirectory(USER_DIR, "tmp");
+
+        // provider class
+        Path providerClass = tmpdir.resolve(provider.replace('.', '/') + ".class");
+        Files.createDirectories(providerClass.getParent());
+        Files.createFile(providerClass);
+
+        // services configuration file
         Path services = tmpdir.resolve("META-INF").resolve("services");
         Files.createDirectories(services);
         Files.write(services.resolve(service), Set.of(provider));
+
         Path dir = Files.createTempDirectory(USER_DIR, "mods");
         JarUtils.createJarFile(dir.resolve("m.jar"), tmpdir);
 
@@ -314,7 +321,7 @@ public class AutomaticModulesTest {
 
                 // service type         provider type
                 { "p.S",                "-" },
-                { "p.S",                ".S1" },
+                { "p.S",                "p..S1" },
                 { "p.S",                "S1." },
         };
     }
@@ -324,13 +331,41 @@ public class AutomaticModulesTest {
      * values or names.
      */
     @Test(dataProvider = "badproviders", expectedExceptions = FindException.class)
-    public void testBadProvideNames(String service, String provider)
+    public void testBadProviderNames(String service, String provider)
         throws IOException
     {
         Path tmpdir = Files.createTempDirectory(USER_DIR, "tmp");
+
+        // provider class
+        Path providerClass = tmpdir.resolve(provider.replace('.', '/') + ".class");
+        Files.createDirectories(providerClass.getParent());
+        Files.createFile(providerClass);
+
+        // services configuration file
         Path services = tmpdir.resolve("META-INF").resolve("services");
         Files.createDirectories(services);
         Files.write(services.resolve(service), Set.of(provider));
+
+        Path dir = Files.createTempDirectory(USER_DIR, "mods");
+        JarUtils.createJarFile(dir.resolve("m.jar"), tmpdir);
+
+        // should throw FindException
+        ModuleFinder.of(dir).findAll();
+    }
+
+    /**
+     * Test JAR file with META-INF/services configuration file listing a
+     * provider that is not in the module.
+     */
+    @Test(expectedExceptions = FindException.class)
+    public void testMissingProviderPackage() throws IOException {
+        Path tmpdir = Files.createTempDirectory(USER_DIR, "tmp");
+
+        // services configuration file
+        Path services = tmpdir.resolve("META-INF").resolve("services");
+        Files.createDirectories(services);
+        Files.write(services.resolve("p.S"), Set.of("q.P"));
+
         Path dir = Files.createTempDirectory(USER_DIR, "mods");
         JarUtils.createJarFile(dir.resolve("m.jar"), tmpdir);
 
@@ -352,7 +387,8 @@ public class AutomaticModulesTest {
         attrs.put(Attributes.Name.MAIN_CLASS, mainClass);
 
         Path dir = Files.createTempDirectory(USER_DIR, "mods");
-        createDummyJarFile(dir.resolve("m.jar"), man);
+        String entry = mainClass.replace('.', '/') + ".class";
+        createDummyJarFile(dir.resolve("m.jar"), man, entry);
 
         ModuleFinder finder = ModuleFinder.of(dir);
 
@@ -366,20 +402,21 @@ public class AutomaticModulesTest {
     }
 
 
-    // Main-Class files that do not map to a legal Java identifier
+    // Main-Class files that do not map to a legal qualified type name
     @DataProvider(name = "badmainclass")
     public Object[][] createBadMainClass() {
         return new Object[][]{
 
+            { "Main",        null },
+            { "p..Main",     null },
             { "p-.Main",     null },
-            { ".Main",       null }
 
         };
     }
 
     /**
-     * Test that a JAR file with a Main-Class attribute that is not a valid
-     * Java identifier
+     * Test that a JAR file with a Main-Class attribute that is not a qualified
+     * type name.
      */
     @Test(dataProvider = "badmainclass", expectedExceptions = FindException.class)
     public void testBadMainClass(String mainClass, String ignore) throws IOException {
@@ -387,6 +424,24 @@ public class AutomaticModulesTest {
         Attributes attrs = man.getMainAttributes();
         attrs.put(Attributes.Name.MANIFEST_VERSION, "1.0.0");
         attrs.put(Attributes.Name.MAIN_CLASS, mainClass);
+
+        Path dir = Files.createTempDirectory(USER_DIR, "mods");
+        String entry = mainClass.replace('.', '/') + ".class";
+        createDummyJarFile(dir.resolve("m.jar"), man, entry);
+
+        // should throw FindException
+        ModuleFinder.of(dir).findAll();
+    }
+
+    /**
+     * Test that a JAR file with a Main-Class attribute that is not in the module
+     */
+    @Test(expectedExceptions = FindException.class)
+    public void testMissingMainClassPackage() throws IOException {
+        Manifest man = new Manifest();
+        Attributes attrs = man.getMainAttributes();
+        attrs.put(Attributes.Name.MANIFEST_VERSION, "1.0.0");
+        attrs.put(Attributes.Name.MAIN_CLASS, "p.Main");
 
         Path dir = Files.createTempDirectory(USER_DIR, "mods");
         createDummyJarFile(dir.resolve("m.jar"), man);

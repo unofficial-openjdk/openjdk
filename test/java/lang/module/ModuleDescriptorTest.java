@@ -46,6 +46,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import static java.lang.module.ModuleDescriptor.Requires.Modifier.*;
@@ -388,16 +389,6 @@ public class ModuleDescriptorTest {
         ModuleDescriptor.module("foo").exports("p").exports("p");
     }
 
-    @Test(expectedExceptions = IllegalStateException.class)
-    public void testExportsOnContainedPackage() {
-        ModuleDescriptor.module("foo").contains("p").exports("p");
-    }
-
-    @Test(expectedExceptions = IllegalStateException.class)
-    public void testExportsToTargetOnContainedPackage() {
-        ModuleDescriptor.module("foo").contains("p").exports("p", Set.of("bar"));
-    }
-
     @Test(expectedExceptions = IllegalArgumentException.class )
     public void testExportsWithEmptySet() {
         ModuleDescriptor.module("foo").exports("p", Collections.emptySet());
@@ -565,16 +556,6 @@ public class ModuleDescriptorTest {
         ModuleDescriptor.module("foo").opens("p").opens("p");
     }
 
-    @Test(expectedExceptions = IllegalStateException.class)
-    public void testOpensOnContainedPackage() {
-        ModuleDescriptor.module("foo").contains("p").opens("p");
-    }
-
-    @Test(expectedExceptions = IllegalStateException.class)
-    public void testOpensToTargetOnContainedPackage() {
-        ModuleDescriptor.module("foo").contains("p").opens("p", Set.of("bar"));
-    }
-
     @Test(expectedExceptions = IllegalArgumentException.class )
     public void testOpensWithEmptySet() {
         ModuleDescriptor.module("foo").opens("p", Collections.emptySet());
@@ -650,6 +631,11 @@ public class ModuleDescriptorTest {
         ModuleDescriptor.module("foo").uses("p.S").uses("p.S");
     }
 
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testUsesWithSimpleIdentifier() {
+        ModuleDescriptor.module("foo").uses("S");
+    }
+
     @Test(dataProvider = "invalidjavaidentifiers",
           expectedExceptions = IllegalArgumentException.class )
     public void testUsesWithBadName(String service, String ignore) {
@@ -702,6 +688,16 @@ public class ModuleDescriptorTest {
     @Test(expectedExceptions = IllegalArgumentException.class )
     public void testProvidesWithEmptySet() {
         ModuleDescriptor.module("foo").provides("p.Service", Collections.emptyList());
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class )
+    public void testProvidesWithSimpleIdentifier1() {
+        ModuleDescriptor.module("foo").provides("S", "q.P");
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class )
+    public void testProvidesWithSimpleIdentifier2() {
+        ModuleDescriptor.module("foo").provides("p.S", "P");
     }
 
     @Test(dataProvider = "invalidjavaidentifiers",
@@ -764,14 +760,94 @@ public class ModuleDescriptorTest {
         assertTrue(packages.size() == 0);
     }
 
-    @Test(expectedExceptions = IllegalStateException.class)
-    public void testContainsWithDuplicate() {
-        ModuleDescriptor.module("foo").contains("p").contains("p");
+    public void testContainsDuplicate() {
+        Set<String> packages = ModuleDescriptor.module("foo")
+                .contains("p")
+                .contains("p")
+                .build()
+                .packages();
+        assertTrue(packages.size() == 1);
+        assertTrue(packages.contains("p"));
     }
 
-    @Test(expectedExceptions = IllegalStateException.class)
-    public void testContainsWithExportedPackage() {
-        ModuleDescriptor.module("foo").exports("p").contains("p");
+    public void testContainsAndExportsPackage1() {
+        Set<String> packages = ModuleDescriptor.module("foo")
+                .contains("p")
+                .exports("p")
+                .build()
+                .packages();
+        assertTrue(packages.size() == 1);
+        assertTrue(packages.contains("p"));
+    }
+
+    public void testContainsAndExportsPackage2() {
+        Set<String> packages = ModuleDescriptor.module("foo")
+                .exports("p")
+                .contains("p")
+                .build()
+                .packages();
+        assertTrue(packages.size() == 1);
+        assertTrue(packages.contains("p"));
+    }
+
+    public void testContainsAndOpensPackage1() {
+        Set<String> packages = ModuleDescriptor.module("foo")
+                .contains("p")
+                .opens("p")
+                .build()
+                .packages();
+        assertTrue(packages.size() == 1);
+        assertTrue(packages.contains("p"));
+    }
+
+    public void testContainsAndOpensPackage2() {
+        Set<String> packages = ModuleDescriptor.module("foo")
+                .opens("p")
+                .contains("p")
+                .build()
+                .packages();
+        assertTrue(packages.size() == 1);
+        assertTrue(packages.contains("p"));
+    }
+
+    public void testContainsAndProvides1() {
+        Set<String> packages = ModuleDescriptor.module("foo")
+                .contains("p")
+                .provides("q.S", "p.T")
+                .build()
+                .packages();
+        assertTrue(packages.size() == 1);
+        assertTrue(packages.contains("p"));
+    }
+
+    public void testContainsAndProvides2() {
+        Set<String> packages = ModuleDescriptor.module("foo")
+                .provides("q.S", "p.T")
+                .contains("p")
+                .build()
+                .packages();
+        assertTrue(packages.size() == 1);
+        assertTrue(packages.contains("p"));
+    }
+
+    public void testContainsAndMainClass1() {
+        Set<String> packages = ModuleDescriptor.module("foo")
+                .contains("p")
+                .mainClass("p.Main")
+                .build()
+                .packages();
+        assertTrue(packages.size() == 1);
+        assertTrue(packages.contains("p"));
+    }
+
+    public void testContainsAndMainClass2() {
+        Set<String> packages = ModuleDescriptor.module("foo")
+                .mainClass("p.Main")
+                .contains("p")
+                .build()
+                .packages();
+        assertTrue(packages.size() == 1);
+        assertTrue(packages.contains("p"));
     }
 
     @Test(dataProvider = "invalidjavaidentifiers",
@@ -785,15 +861,15 @@ public class ModuleDescriptorTest {
 
     public void testPackages() {
         Set<String> packages = ModuleDescriptor.module("foo")
-                .exports("p")
-                .contains("q")
+                .exports("p1")
+                .opens("p2")
+                .contains("p3")
+                .provides("q.S", "p4.T")
+                .mainClass("p5.Main")
                 .build()
                 .packages();
-        assertTrue(packages.size() == 2);
-        assertTrue(packages.contains("p"));
-        assertTrue(packages.contains("q"));
+        assertTrue(Objects.equals(packages, Set.of("p1", "p2", "p3", "p4", "p5")));
     }
-
 
     // name
 
@@ -923,6 +999,11 @@ public class ModuleDescriptorTest {
         String mainClass
             = ModuleDescriptor.module("foo").mainClass("p.Main").build().mainClass().get();
         assertEquals(mainClass, "p.Main");
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testMainClassWithSimpleIdentifier() {
+        ModuleDescriptor.module("foo").mainClass("Main");
     }
 
     @Test(dataProvider = "invalidjavaidentifiers",

@@ -278,8 +278,8 @@ public final class Configuration {
      *         The possibly-empty collection of module names of the modules
      *         to resolve
      *
-     * @return The configuration that is the result of resolving the given
-     *         root modules
+     * @return The configuration that is the result of resolving, with service
+     *         binding, the given root modules
      *
      * @throws ResolutionException
      *         If resolution or the post-resolution checks fail
@@ -355,10 +355,6 @@ public final class Configuration {
      *     "{@code provides p.S with ...}" but package {@code p} is neither in
      *     module {@code M} nor exported to {@code M} by any module that
      *     {@code M} reads. </p></li>
-     *
-     *     <li><p> A module {@code M} declares that it
-     *     "{@code provides ... with q.T}" but package {@code q} is not in
-     *     module {@code M}. </p></li>
      *
      *     <li><p> Two or more modules in the configuration are specific to
      *     different {@link ModuleDescriptor#osName() operating systems},
@@ -448,8 +444,8 @@ public final class Configuration {
      *         The possibly-empty collection of module names of the modules
      *         to resolve
      *
-     * @return The configuration that is the result of resolving the given
-     *         root modules
+     * @return The configuration that is the result of resolving, with service
+     *         binding, the given root modules
      *
      * @throws ResolutionException
      *         If resolution or the post-resolution checks fail

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,19 +60,14 @@ public interface JavaLangModuleAccess {
     ModuleDescriptor.Builder newModuleBuilder(String mn,
                                               boolean strict,
                                               boolean open,
+                                              boolean automatic,
                                               boolean synthetic);
 
-    /**
-     * Returns the set of packages that are exported (unconditionally or
-     * unconditionally).
-     */
-    Set<String> exportedPackages(ModuleDescriptor.Builder builder);
 
     /**
-     * Returns the set of packages that are opened (unconditionally or
-     * unconditionally).
+     * Returns a snapshot of the packages in the module.
      */
-    Set<String> openPackages(ModuleDescriptor.Builder builder);
+    Set<String> packages(ModuleDescriptor.Builder builder);
 
     /**
      * Returns a {@code ModuleDescriptor.Requires} of the given modifiers
@@ -117,11 +112,6 @@ public interface JavaLangModuleAccess {
      * Returns a {@code ModuleDescriptor.Version} of the given version.
      */
     Version newVersion(String v);
-
-    /**
-     * Clones the given module descriptor with an augmented set of packages
-     */
-    ModuleDescriptor newModuleDescriptor(ModuleDescriptor md, Set<String> pkgs);
 
     /**
      * Returns a new {@code ModuleDescriptor} instance.
