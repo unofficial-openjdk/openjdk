@@ -25,15 +25,18 @@
 
 package jdk.internal.jshell.tool;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.Reader;
 import java.io.StringReader;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.FileSystems;
@@ -136,24 +139,11 @@ public class JShellTool implements MessageHandler {
     final InputStream userin;
     final PrintStream userout;
     final PrintStream usererr;
-    final Preferences prefs;
+    final PersistentStorage prefs;
     final Map<String, String> envvars;
     final Locale locale;
 
     final Feedback feedback = new Feedback();
-
-    /**
-     * Simple constructor for the tool used by main.
-     * @param in command line input
-     * @param out command line output, feedback including errors, user System.out
-     * @param err start-up errors and debugging info, user System.err
-     */
-    public JShellTool(InputStream in, PrintStream out, PrintStream err) {
-        this(in, out, err, out, null, out, err,
-                Preferences.userRoot().node("tool/JShell"),
-                System.getenv(),
-                Locale.getDefault());
-    }
 
     /**
      * The complete constructor for the tool (used by test harnesses).
@@ -164,14 +154,14 @@ public class JShellTool implements MessageHandler {
      * @param userin code execution input, or null to use IOContext
      * @param userout code execution output  -- System.out.printf("hi")
      * @param usererr code execution error stream  -- System.err.printf("Oops")
-     * @param prefs preferences to use
+     * @param prefs persistence implementation to use
      * @param envvars environment variable mapping to use
      * @param locale locale to use
      */
-    public JShellTool(InputStream cmdin, PrintStream cmdout, PrintStream cmderr,
+    JShellTool(InputStream cmdin, PrintStream cmdout, PrintStream cmderr,
             PrintStream console,
             InputStream userin, PrintStream userout, PrintStream usererr,
-            Preferences prefs, Map<String, String> envvars, Locale locale) {
+            PersistentStorage prefs, Map<String, String> envvars, Locale locale) {
         this.cmdin = cmdin;
         this.cmdout = cmdout;
         this.cmderr = cmderr;
@@ -209,7 +199,9 @@ public class JShellTool implements MessageHandler {
     private boolean debug = false;
     public boolean testPrompt = false;
     private String cmdlineClasspath = null;
+    private String defaultStartup = null;
     private String startup = null;
+    private String executionControlSpec = null;
     private EditorSetting editor = BUILT_IN_EDITOR;
 
     private static final String[] EDITOR_ENV_VARS = new String[] {
@@ -225,16 +217,9 @@ public class JShellTool implements MessageHandler {
     static final String MODE_KEY     = "MODE";
     static final String REPLAY_RESTORE_KEY = "REPLAY_RESTORE";
 
-    static final String DEFAULT_STARTUP =
-            "\n" +
-            "import java.util.*;\n" +
-            "import java.io.*;\n" +
-            "import java.math.*;\n" +
-            "import java.net.*;\n" +
-            "import java.util.concurrent.*;\n" +
-            "import java.util.prefs.*;\n" +
-            "import java.util.regex.*;\n" +
-            "void printf(String format, Object... args) { System.out.printf(format, args); }\n";
+    static final String DEFAULT_STARTUP_NAME = "DEFAULT";
+    static final Pattern BUILTIN_FILE_PATTERN = Pattern.compile("\\w+");
+    static final String BUILTIN_FILE_PATH_FORMAT = "jrt:/jdk.jshell/jdk/jshell/tool/resources/%s.jsh";
 
     // Tool id (tid) mapping: the three name spaces
     NameSpace mainNamespace;
@@ -452,7 +437,7 @@ public class JShellTool implements MessageHandler {
     <T> void hardPairs(Stream<T> stream, Function<T, String> a, Function<T, String> b) {
         Map<String, String> a2b = stream.collect(toMap(a, b,
                 (m1, m2) -> m1,
-                () -> new LinkedHashMap<>()));
+                LinkedHashMap::new));
         for (Entry<String, String> e : a2b.entrySet()) {
             hard("%s", e.getKey());
             rawout(prefix(e.getValue(), feedback.getPre() + "\t", feedback.getPost()));
@@ -478,16 +463,6 @@ public class JShellTool implements MessageHandler {
         }
     }
 
-    /**
-     * Normal start entry point
-     * @param args
-     * @throws Exception
-     */
-    public static void main(String[] args) throws Exception {
-        new JShellTool(System.in, System.out, System.err)
-                .start(args);
-    }
-
     public void start(String[] args) throws Exception {
         List<String> loadList = processCommandArgs(args);
         if (loadList == null) {
@@ -502,9 +477,9 @@ public class JShellTool implements MessageHandler {
     private void start(IOContext in, List<String> loadList) {
         // If startup hasn't been set by command line, set from retained/default
         if (startup == null) {
-            startup = prefs.get(STARTUP_KEY, null);
+            startup = prefs.get(STARTUP_KEY);
             if (startup == null) {
-                startup = DEFAULT_STARTUP;
+                startup = defaultStartup();
             }
         }
 
@@ -513,7 +488,7 @@ public class JShellTool implements MessageHandler {
         resetState(); // Initialize
 
         // Read replay history from last jshell session into previous history
-        String prevReplay = prefs.get(REPLAY_RESTORE_KEY, null);
+        String prevReplay = prefs.get(REPLAY_RESTORE_KEY);
         if (prevReplay != null) {
             replayableHistoryPrevious = Arrays.asList(prevReplay.split(RECORD_SEPARATOR));
         }
@@ -569,6 +544,7 @@ public class JShellTool implements MessageHandler {
         OptionSpec<String> st = parser.accepts("startup").withRequiredArg();
         parser.acceptsAll(asList("n", "no-startup"));
         OptionSpec<String> fb = parser.accepts("feedback").withRequiredArg();
+        OptionSpec<String> ec = parser.accepts("execution").withRequiredArg();
         parser.accepts("q");
         parser.accepts("s");
         parser.accepts("v");
@@ -627,14 +603,19 @@ public class JShellTool implements MessageHandler {
         }
         if (options.has(st)) {
             List<String> sts = options.valuesOf(st);
-            if (sts.size() != 1 || options.has("no-startup")) {
-                startmsg("jshell.err.opt.startup.one");
+            if (options.has("no-startup")) {
+                startmsg("jshell.err.opt.startup.conflict");
                 return null;
             }
-            startup = readFile(sts.get(0), "--startup");
-            if (startup == null) {
-                return null;
+            StringBuilder sb = new StringBuilder();
+            for (String fn : sts) {
+                String s = readFile(fn, "--startup");
+                if (s == null) {
+                    return null;
+                }
+                sb.append(s);
             }
+            startup = sb.toString();
         } else if (options.has("no-startup")) {
             startup = "";
         }
@@ -670,6 +651,9 @@ public class JShellTool implements MessageHandler {
             compilerOptions.addAll(options.valuesOf(amods));
             remoteVMOptions.add("--add-modules");
             remoteVMOptions.addAll(options.valuesOf(amods));
+        }
+        if (options.has(ec)) {
+            executionControlSpec = options.valueOf(ec);
         }
 
         if (options.has(addExports)) {
@@ -741,18 +725,21 @@ public class JShellTool implements MessageHandler {
         // Reset the replayable history, saving the old for restore
         replayableHistoryPrevious = replayableHistory;
         replayableHistory = new ArrayList<>();
-
-        state = JShell.builder()
+        JShell.Builder builder =
+               JShell.builder()
                 .in(userin)
                 .out(userout)
                 .err(usererr)
-                .tempVariableNameGenerator(()-> "$" + currentNameSpace.tidNext())
+                .tempVariableNameGenerator(() -> "$" + currentNameSpace.tidNext())
                 .idGenerator((sn, i) -> (currentNameSpace == startNamespace || state.status(sn).isActive())
                         ? currentNameSpace.tid(sn)
                         : errorNamespace.tid(sn))
                 .remoteVMOptions(remoteVMOptions.stream().toArray(String[]::new))
-                .compilerOptions(compilerOptions.stream().toArray(String[]::new))
-                .build();
+                .compilerOptions(compilerOptions.stream().toArray(String[]::new));
+        if (executionControlSpec != null) {
+            builder.executionEngine(executionControlSpec);
+        }
+        state = builder.build();
         shutdownSubscription = state.onShutdown((JShell deadState) -> {
             if (deadState == state) {
                 hardmsg("jshell.msg.terminated");
@@ -788,7 +775,7 @@ public class JShellTool implements MessageHandler {
         // These predefined modes are read-only
         feedback.markModesReadOnly();
         // Restore user defined modes retained on previous run with /set mode -retain
-        String encoded = prefs.get(MODE_KEY, null);
+        String encoded = prefs.get(MODE_KEY);
         if (encoded != null && !encoded.isEmpty()) {
             if (!feedback.restoreEncodedModes(initmh, encoded)) {
                 // Catastrophic corruption -- remove the retained modes
@@ -802,7 +789,7 @@ public class JShellTool implements MessageHandler {
             }
             commandLineFeedbackMode = null;
         } else {
-            String fb = prefs.get(FEEDBACK_KEY, null);
+            String fb = prefs.get(FEEDBACK_KEY);
             if (fb != null) {
                 // Restore the feedback mode to use that was retained
                 // on a previous run with /set feedback -retain
@@ -813,7 +800,7 @@ public class JShellTool implements MessageHandler {
 
     //where
     private void startUpRun(String start) {
-        try (IOContext suin = new FileScannerIOContext(new StringReader(start))) {
+        try (IOContext suin = new ScannerIOContext(new StringReader(start))) {
             run(suin);
         } catch (Exception ex) {
             hardmsg("jshell.err.startup.unexpected.exception", ex);
@@ -953,7 +940,7 @@ public class JShellTool implements MessageHandler {
                        .stream()
                        .filter(filter)
                        .filter(command -> command.command.startsWith(cmd))
-                       .toArray(size -> new Command[size]);
+                       .toArray(Command[]::new);
     }
 
     private static Path toPathResolvingUserHome(String pathString) {
@@ -1125,7 +1112,7 @@ public class JShellTool implements MessageHandler {
                                 ? Stream.of(String.valueOf(k.id()) + " ", ((DeclarationSnippet) k).name() + " ")
                                 : Stream.of(String.valueOf(k.id()) + " "))
                         .filter(k -> k.startsWith(argPrefix))
-                        .map(k -> new ArgSuggestion(k))
+                        .map(ArgSuggestion::new)
                         .collect(Collectors.toList());
         };
     }
@@ -1154,7 +1141,7 @@ public class JShellTool implements MessageHandler {
                 result = new FixedCompletionProvider(commands.values().stream()
                         .filter(cmd -> cmd.kind.showInHelp || cmd.kind == CommandKind.HELP_SUBJECT)
                         .map(c -> c.command + " ")
-                        .toArray(size -> new String[size]))
+                        .toArray(String[]::new))
                         .completionSuggestions(code, cursor, anchor);
             } else if (code.startsWith("/se")) {
                 result = new FixedCompletionProvider(SET_SUBCOMMANDS)
@@ -1264,33 +1251,33 @@ public class JShellTool implements MessageHandler {
 
     {
         registerCommand(new Command("/list",
-                arg -> cmdList(arg),
+                this::cmdList,
                 snippetWithOptionCompletion(SNIPPET_HISTORY_OPTION_COMPLETION_PROVIDER,
                         this::allSnippets)));
         registerCommand(new Command("/edit",
-                arg -> cmdEdit(arg),
+                this::cmdEdit,
                 snippetWithOptionCompletion(SNIPPET_OPTION_COMPLETION_PROVIDER,
                         this::allSnippets)));
         registerCommand(new Command("/drop",
-                arg -> cmdDrop(arg),
+                this::cmdDrop,
                 snippetCompletion(this::dropableSnippets),
                 CommandKind.REPLAY));
         registerCommand(new Command("/save",
-                arg -> cmdSave(arg),
+                this::cmdSave,
                 saveCompletion()));
         registerCommand(new Command("/open",
-                arg -> cmdOpen(arg),
+                this::cmdOpen,
                 FILE_COMPLETION_PROVIDER));
         registerCommand(new Command("/vars",
-                arg -> cmdVars(arg),
+                this::cmdVars,
                 snippetWithOptionCompletion(SNIPPET_OPTION_COMPLETION_PROVIDER,
                         this::allVarSnippets)));
         registerCommand(new Command("/methods",
-                arg -> cmdMethods(arg),
+                this::cmdMethods,
                 snippetWithOptionCompletion(SNIPPET_OPTION_COMPLETION_PROVIDER,
                         this::allMethodSnippets)));
         registerCommand(new Command("/types",
-                arg -> cmdTypes(arg),
+                this::cmdTypes,
                 snippetWithOptionCompletion(SNIPPET_OPTION_COMPLETION_PROVIDER,
                         this::allTypeSnippets)));
         registerCommand(new Command("/imports",
@@ -1303,24 +1290,24 @@ public class JShellTool implements MessageHandler {
                 arg -> cmdReset(),
                 EMPTY_COMPLETION_PROVIDER));
         registerCommand(new Command("/reload",
-                arg -> cmdReload(arg),
+                this::cmdReload,
                 reloadCompletion()));
         registerCommand(new Command("/classpath",
-                arg -> cmdClasspath(arg),
+                this::cmdClasspath,
                 classPathCompletion(),
                 CommandKind.REPLAY));
         registerCommand(new Command("/history",
                 arg -> cmdHistory(),
                 EMPTY_COMPLETION_PROVIDER));
         registerCommand(new Command("/debug",
-                arg -> cmdDebug(arg),
+                this::cmdDebug,
                 EMPTY_COMPLETION_PROVIDER,
                 CommandKind.HIDDEN));
         registerCommand(new Command("/help",
-                arg -> cmdHelp(arg),
+                this::cmdHelp,
                 helpCompletion()));
         registerCommand(new Command("/set",
-                arg -> cmdSet(arg),
+                this::cmdSet,
                 new ContinuousCompletionProvider(Map.of(
                         // need more completion for format for usability
                         "format", feedback.modeCompletions(),
@@ -1335,7 +1322,7 @@ public class JShellTool implements MessageHandler {
                         STARTSWITH_MATCHER)));
         registerCommand(new Command("/?",
                 "help.quest",
-                arg -> cmdHelp(arg),
+                this::cmdHelp,
                 helpCompletion(),
                 CommandKind.NORMAL));
         registerCommand(new Command("/!",
@@ -1450,7 +1437,7 @@ public class JShellTool implements MessageHandler {
         }
         String[] matches = Arrays.stream(subs)
                 .filter(s -> s.startsWith(sub))
-                .toArray(size -> new String[size]);
+                .toArray(String[]::new);
         if (matches.length == 0) {
             // There are no matching sub-commands
             errormsg("jshell.err.arg", cmd, sub);
@@ -1485,9 +1472,9 @@ public class JShellTool implements MessageHandler {
         }
 
         // returns null if not stored in preferences
-        static EditorSetting fromPrefs(Preferences prefs) {
+        static EditorSetting fromPrefs(PersistentStorage prefs) {
             // Read retained editor setting (if any)
-            String editorString = prefs.get(EDITOR_KEY, "");
+            String editorString = prefs.get(EDITOR_KEY);
             if (editorString == null || editorString.isEmpty()) {
                 return null;
             } else if (editorString.equals(BUILT_IN_REP)) {
@@ -1504,11 +1491,11 @@ public class JShellTool implements MessageHandler {
             }
         }
 
-        static void removePrefs(Preferences prefs) {
+        static void removePrefs(PersistentStorage prefs) {
             prefs.remove(EDITOR_KEY);
         }
 
-        void toPrefs(Preferences prefs) {
+        void toPrefs(PersistentStorage prefs) {
             prefs.put(EDITOR_KEY, (this == BUILT_IN_EDITOR)
                     ? BUILT_IN_REP
                     : (wait ? WAIT_PREFIX : NORMAL_PREFIX) + String.join(RECORD_SEPARATOR, cmd));
@@ -1638,14 +1625,17 @@ public class JShellTool implements MessageHandler {
     // The sub-command:  /set start <start-file>
     boolean setStart(ArgTokenizer at) {
         at.allowedOptions("-default", "-none", "-retain");
-        String fn = at.next();
+        List<String> fns = new ArrayList<>();
+        while (at.next() != null) {
+            fns.add(at.val());
+        }
         if (!checkOptionsAndRemainingInput(at)) {
             return false;
         }
         boolean defaultOption = at.hasOption("-default");
         boolean noneOption = at.hasOption("-none");
         boolean retainOption = at.hasOption("-retain");
-        boolean hasFile = fn != null;
+        boolean hasFile = !fns.isEmpty();
 
         int argCount = (defaultOption ? 1 : 0) + (noneOption ? 1 : 0) + (hasFile ? 1 : 0);
         if (argCount > 1) {
@@ -1658,13 +1648,17 @@ public class JShellTool implements MessageHandler {
             return true;
         }
         if (hasFile) {
-            String init = readFile(fn, "/set start");
-            if (init == null) {
-                return false;
+            StringBuilder sb = new StringBuilder();
+            for (String fn : fns) {
+                String s = readFile(fn, "/set start");
+                if (s == null) {
+                    return false;
+                }
+                sb.append(s);
             }
-            startup = init;
+            startup = sb.toString();
         } else if (defaultOption) {
-            startup = DEFAULT_STARTUP;
+            startup = defaultStartup();
         } else if (noneOption) {
             startup = "";
         }
@@ -1676,7 +1670,7 @@ public class JShellTool implements MessageHandler {
     }
 
     void showSetStart() {
-        String retained = prefs.get(STARTUP_KEY, null);
+        String retained = prefs.get(STARTUP_KEY);
         if (retained != null) {
             showSetStart(true, retained);
         }
@@ -1688,7 +1682,7 @@ public class JShellTool implements MessageHandler {
     void showSetStart(boolean isRetained, String start) {
         String cmd = "/set start" + (isRetained ? " -retain " : " ");
         String stset;
-        if (start.equals(DEFAULT_STARTUP)) {
+        if (start.equals(defaultStartup())) {
             stset = cmd + "-default";
         } else if (start.isEmpty()) {
             stset = cmd + "-none";
@@ -1774,6 +1768,7 @@ public class JShellTool implements MessageHandler {
                     replayableHistory.subList(first + 1, replayableHistory.size()));
             prefs.put(REPLAY_RESTORE_KEY, hist);
         }
+        prefs.flush();
         fluffmsg("jshell.msg.goodbye");
         return true;
     }
@@ -1784,7 +1779,7 @@ public class JShellTool implements MessageHandler {
         if (subject != null) {
             Command[] matches = commands.values().stream()
                     .filter(c -> c.command.startsWith(subject))
-                    .toArray(size -> new Command[size]);
+                    .toArray(Command[]::new);
             if (matches.length == 1) {
                 String cmd = matches[0].command;
                 if (cmd.equals("/set")) {
@@ -2180,7 +2175,16 @@ public class JShellTool implements MessageHandler {
     private boolean runFile(String filename, String context) {
         if (!filename.isEmpty()) {
             try {
-                run(new FileScannerIOContext(toPathResolvingUserHome(filename).toString()));
+                Path path = toPathResolvingUserHome(filename);
+                Reader reader;
+                String resource;
+                if (!Files.exists(path) && (resource = getResource(filename)) != null) {
+                    // Not found as file, but found as resource
+                    reader = new StringReader(resource);
+                } else {
+                    reader = new FileReader(path.toString());
+                }
+                run(new ScannerIOContext(reader));
                 return true;
             } catch (FileNotFoundException e) {
                 errormsg("jshell.err.file.not.found", context, filename, e.getMessage());
@@ -2203,11 +2207,16 @@ public class JShellTool implements MessageHandler {
     String readFile(String filename, String context) {
         if (filename != null) {
             try {
-                byte[] encoded = Files.readAllBytes(Paths.get(filename));
+                byte[] encoded = Files.readAllBytes(toPathResolvingUserHome(filename));
                 return new String(encoded);
             } catch (AccessDeniedException e) {
                 errormsg("jshell.err.file.not.accessible", context, filename, e.getMessage());
             } catch (NoSuchFileException e) {
+                String resource = getResource(filename);
+                if (resource != null) {
+                    // Not found as file, but found as resource
+                    return resource;
+                }
                 errormsg("jshell.err.file.not.found", context, filename);
             } catch (Exception e) {
                 errormsg("jshell.err.file.exception", context, filename, e);
@@ -2217,6 +2226,44 @@ public class JShellTool implements MessageHandler {
         }
         return null;
 
+    }
+
+    // Read a built-in file from resources or null
+    String getResource(String name) {
+        if (BUILTIN_FILE_PATTERN.matcher(name).matches()) {
+            try {
+                return readResource(name);
+            } catch (Throwable t) {
+                // Fall-through to null
+            }
+        }
+        return null;
+    }
+
+    // Read a built-in file from resources
+    String readResource(String name) throws IOException {
+        // Attempt to find the file as a resource
+        String spec = String.format(BUILTIN_FILE_PATH_FORMAT, name);
+        URL url = new URL(spec);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
+        return reader.lines().collect(Collectors.joining("\n"));
+    }
+
+    // retrieve the default startup string
+    String defaultStartup() {
+        if (defaultStartup == null) {
+            defaultStartup = ""; // failure case
+            try {
+                defaultStartup = readResource(DEFAULT_STARTUP_NAME);
+            } catch (AccessDeniedException e) {
+                errormsg("jshell.err.file.not.accessible", "jshell", DEFAULT_STARTUP_NAME, e.getMessage());
+            } catch (NoSuchFileException e) {
+                errormsg("jshell.err.file.not.found", "jshell", DEFAULT_STARTUP_NAME);
+            } catch (Exception e) {
+                errormsg("jshell.err.file.exception", "jshell", DEFAULT_STARTUP_NAME, e);
+            }
+        }
+        return defaultStartup;
     }
 
     private boolean cmdReset() {
@@ -2414,7 +2461,7 @@ public class JShellTool implements MessageHandler {
      */
     List<Diag> errorsOnly(List<Diag> diagnostics) {
         return diagnostics.stream()
-                .filter(d -> d.isError())
+                .filter(Diag::isError)
                 .collect(toList());
     }
 
@@ -2924,6 +2971,10 @@ class ScannerIOContext extends NonInteractiveIOContext {
         this.scannerIn = scannerIn;
     }
 
+    ScannerIOContext(Reader rdr) throws FileNotFoundException {
+        this(new Scanner(rdr));
+    }
+
     @Override
     public String readLine(String prompt, String prefix) {
         if (scannerIn.hasNextLine()) {
@@ -2941,17 +2992,6 @@ class ScannerIOContext extends NonInteractiveIOContext {
     @Override
     public int readUserInput() {
         return -1;
-    }
-}
-
-class FileScannerIOContext extends ScannerIOContext {
-
-    FileScannerIOContext(String fn) throws FileNotFoundException {
-        this(new FileReader(fn));
-    }
-
-    FileScannerIOContext(Reader rdr) throws FileNotFoundException {
-        super(new Scanner(rdr));
     }
 }
 

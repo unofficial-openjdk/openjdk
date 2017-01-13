@@ -39,7 +39,7 @@
   */
 @Deprecated
 module moduletags {
-    requires moduleB;
+    requires transitive static moduleA;
 
     exports testpkgmdltags;
 }

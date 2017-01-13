@@ -324,7 +324,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
         if (platformProvider != null) {
             platformProcessors = platformProvider.getAnnotationProcessors()
                                                  .stream()
-                                                 .map(ap -> ap.getPlugin())
+                                                 .map(PluginInfo::getPlugin)
                                                  .collect(Collectors.toList());
         }
         List<Iterator<? extends Processor>> iterators = List.of(processorIterator,
@@ -1226,8 +1226,8 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
         /** Print info about this round. */
         private void printRoundInfo(boolean lastRound) {
             if (printRounds || verbose) {
-                List<ClassSymbol> tlc = lastRound ? List.<ClassSymbol>nil() : topLevelClasses;
-                Set<TypeElement> ap = lastRound ? Collections.<TypeElement>emptySet() : annotationsPresent;
+                List<ClassSymbol> tlc = lastRound ? List.nil() : topLevelClasses;
+                Set<TypeElement> ap = lastRound ? Collections.emptySet() : annotationsPresent;
                 log.printLines("x.print.rounds",
                         number,
                         "{" + tlc.toString(", ") + "}",
@@ -1363,14 +1363,14 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
         // Free resources
         this.close();
 
-        if (!taskListener.isEmpty())
-            taskListener.finished(new TaskEvent(TaskEvent.Kind.ANNOTATION_PROCESSING));
-
         if (errorStatus && compiler.errorCount() == 0) {
             compiler.log.nerrors++;
         }
 
         compiler.enterTreesIfNeeded(roots);
+
+        if (!taskListener.isEmpty())
+            taskListener.finished(new TaskEvent(TaskEvent.Kind.ANNOTATION_PROCESSING));
 
         return true;
     }
