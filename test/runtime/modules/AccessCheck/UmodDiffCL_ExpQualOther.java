@@ -70,7 +70,7 @@ public class UmodDiffCL_ExpQualOther {
         // Packages:          none
         // Packages exported: none
         ModuleDescriptor descriptor_m1 =
-                ModuleDescriptor.module("m1")
+                ModuleDescriptor.newModule("m1")
                         .requires("java.base")
                         .requires("m2")
                         .build();
@@ -80,7 +80,7 @@ public class UmodDiffCL_ExpQualOther {
         // Packages:          p2
         // Packages exported: none
         ModuleDescriptor descriptor_m2 =
-                ModuleDescriptor.module("m2")
+                ModuleDescriptor.newModule("m2")
                         .requires("java.base")
                         .exports("p2", Set.of("m1"))
                         .build();

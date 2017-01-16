@@ -70,7 +70,7 @@ public class ExpQualOther {
         // Packages:          p1
         // Packages exported: p1 is exported unqualifiedly
         ModuleDescriptor descriptor_m1 =
-                ModuleDescriptor.module("m1")
+                ModuleDescriptor.newModule("m1")
                         .requires("java.base")
                         .requires("m2")
                         .requires("m3")
@@ -82,7 +82,7 @@ public class ExpQualOther {
         // Packages:          p2
         // Packages exported: p2 is exported to m3
         ModuleDescriptor descriptor_m2 =
-                ModuleDescriptor.module("m2")
+                ModuleDescriptor.newModule("m2")
                         .requires("java.base")
                         .exports("p2", Set.of("m3"))
                         .build();
@@ -92,10 +92,10 @@ public class ExpQualOther {
         // Packages:          p3
         // Packages exported: none
         ModuleDescriptor descriptor_m3 =
-                ModuleDescriptor.module("m3")
+                ModuleDescriptor.newModule("m3")
                         .requires("java.base")
                         .requires("m2")
-                        .contains("p3")
+                        .packages(Set.of("p3"))
                         .build();
 
         // Set up a ModuleFinder containing all modules for this layer.

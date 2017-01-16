@@ -69,7 +69,7 @@ public class Umod_ExpUnqual {
         // Packages:          none
         // Packages exported: none
         ModuleDescriptor descriptor_m1 =
-                ModuleDescriptor.module("m1")
+                ModuleDescriptor.newModule("m1")
                         .requires("java.base")
                         .requires("m2")
                         .build();
@@ -79,7 +79,7 @@ public class Umod_ExpUnqual {
         // Packages:          p2
         // Packages exported: p2 is exported unqualifiedly
         ModuleDescriptor descriptor_m2 =
-                ModuleDescriptor.module("m2")
+                ModuleDescriptor.newModule("m2")
                         .requires("java.base")
                         .exports("p2")
                         .build();

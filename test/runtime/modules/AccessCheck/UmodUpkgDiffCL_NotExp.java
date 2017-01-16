@@ -69,7 +69,7 @@ public class UmodUpkgDiffCL_NotExp {
         // Packages:          none
         // Packages exported: none
         ModuleDescriptor descriptor_m1 =
-                ModuleDescriptor.module("m1")
+                ModuleDescriptor.newModule("m1")
                         .requires("java.base")
                         .requires("m2")
                         .build();
@@ -79,9 +79,9 @@ public class UmodUpkgDiffCL_NotExp {
         // Packages:          p6
         // Packages exported: none
         ModuleDescriptor descriptor_m2 =
-                ModuleDescriptor.module("m2")
+                ModuleDescriptor.newModule("m2")
                         .requires("java.base")
-                        .contains("p6")
+                        .packages(Set.of("p6"))
                         .build();
 
         // Set up a ModuleFinder containing all modules for this layer.

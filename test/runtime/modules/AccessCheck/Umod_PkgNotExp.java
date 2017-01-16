@@ -67,7 +67,7 @@ public class Umod_PkgNotExp {
         // Packages:          none
         // Packages exported: none
         ModuleDescriptor descriptor_m1 =
-                ModuleDescriptor.module("m1")
+                ModuleDescriptor.newModule("m1")
                         .requires("java.base")
                         .requires("m2")
                         .build();
@@ -77,9 +77,9 @@ public class Umod_PkgNotExp {
         // Packages:          p2
         // Packages exported: none
         ModuleDescriptor descriptor_m2 =
-                ModuleDescriptor.module("m2")
+                ModuleDescriptor.newModule("m2")
                         .requires("java.base")
-                        .contains("p2")
+                        .packages(Set.of("p2"))
                         .build();
 
         // Set up a ModuleFinder containing all modules for this layer.
