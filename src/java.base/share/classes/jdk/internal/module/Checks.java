@@ -58,8 +58,6 @@ public final class Checks {
             throw new IllegalArgumentException(name + ": Invalid module name"
                     + ": '" + id + "' is not a Java identifier");
         }
-        //if (!Character.isJavaIdentifierStart(last))
-        //    throw new IllegalArgumentException(name + ": Module name ends in digit");
         return name;
     }
 
@@ -77,8 +75,6 @@ public final class Checks {
         int last = isJavaIdentifier(name, off, name.length() - off);
         if (last == -1)
             return false;
-        //if (!Character.isJavaIdentifierStart(last))
-        //    return false;
         return true;
     }
 

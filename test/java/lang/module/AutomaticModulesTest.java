@@ -460,7 +460,7 @@ public class AutomaticModulesTest {
      */
     public void testConfiguration1() throws Exception {
         ModuleDescriptor descriptor1
-            = ModuleDescriptor.module("a")
+            = ModuleDescriptor.newModule("a")
                 .requires("b")
                 .requires("c")
                 .requires("java.base")
@@ -520,13 +520,13 @@ public class AutomaticModulesTest {
      */
     public void testInConfiguration2() throws IOException {
         ModuleDescriptor descriptor1
-            = ModuleDescriptor.module("a")
+            = ModuleDescriptor.newModule("a")
                 .requires("b")
                 .requires("java.base")
                 .build();
 
         ModuleDescriptor descriptor2
-            = ModuleDescriptor.module("b")
+            = ModuleDescriptor.newModule("b")
                 .requires("c")
                 .requires("java.base")
                 .build();
@@ -593,13 +593,13 @@ public class AutomaticModulesTest {
      */
     public void testInConfiguration3() throws IOException {
         ModuleDescriptor descriptor1
-            = ModuleDescriptor.module("a")
+            = ModuleDescriptor.newModule("a")
                 .requires("b")
                 .requires("java.base")
                 .build();
 
         ModuleDescriptor descriptor2
-            = ModuleDescriptor.module("b")
+            = ModuleDescriptor.newModule("b")
                 .requires(Set.of(Modifier.TRANSITIVE), "c")
                 .requires("java.base")
                 .build();
@@ -668,7 +668,7 @@ public class AutomaticModulesTest {
      */
     public void testInLayer() throws IOException {
         ModuleDescriptor descriptor
-            = ModuleDescriptor.module("a")
+            = ModuleDescriptor.newModule("a")
                 .requires("b")
                 .requires("c")
                 .build();
@@ -719,7 +719,7 @@ public class AutomaticModulesTest {
 
         // test miscellaneous methods
         assertTrue(m.isAutomatic());
-        assertFalse(m.isSynthetic());
+        assertFalse(m.modifiers().contains(ModuleDescriptor.Modifier.SYNTHETIC));
         assertFalse(m.osName().isPresent());
         assertFalse(m.osArch().isPresent());
         assertFalse(m.osVersion().isPresent());

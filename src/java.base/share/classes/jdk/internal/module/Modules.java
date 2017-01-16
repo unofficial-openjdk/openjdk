@@ -82,8 +82,8 @@ public class Modules {
                                       String name,
                                       Set<String> packages)
     {
-        ModuleDescriptor descriptor = ModuleDescriptor.module(name)
-                .contains(packages)
+        ModuleDescriptor descriptor = ModuleDescriptor.newModule(name)
+                .packages(packages)
                 .build();
 
         return JLRMA.defineModule(loader, descriptor, null);

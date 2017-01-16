@@ -320,7 +320,7 @@ public final class ModuleInfo {
                 throw invalidModuleDescriptor("Package " + missingPackage + tail);
 
             }
-            builder.contains(allPackages);
+            builder.packages(allPackages);
         }
 
         ModuleDescriptor descriptor = builder.build();
@@ -339,13 +339,17 @@ public final class ModuleInfo {
         String mn = cpool.getModuleName(module_name_index);
 
         int module_flags = in.readUnsignedShort();
+
+        Set<ModuleDescriptor.Modifier> modifiers = new HashSet<>();
         boolean open = ((module_flags & ACC_OPEN) != 0);
-        boolean synthetic = ((module_flags & ACC_SYNTHETIC) != 0);
+        if (open)
+            modifiers.add(ModuleDescriptor.Modifier.OPEN);
+        if ((module_flags & ACC_SYNTHETIC) != 0)
+            modifiers.add(ModuleDescriptor.Modifier.SYNTHETIC);
+        if ((module_flags & ACC_MANDATED) != 0)
+            modifiers.add(ModuleDescriptor.Modifier.MANDATED);
 
-        boolean strict = false;
-        boolean automatic = false;
-
-        Builder builder = JLMA.newModuleBuilder(mn, strict, open, automatic, synthetic);
+        Builder builder = JLMA.newModuleBuilder(mn, false, modifiers);
 
         int module_version_index = in.readUnsignedShort();
         if (module_version_index != 0) {

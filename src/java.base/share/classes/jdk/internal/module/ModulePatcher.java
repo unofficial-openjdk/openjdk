@@ -134,7 +134,7 @@ public final class ModulePatcher {
                     // exploded directory without following sym links
                     Path top = file;
                     Files.find(top, Integer.MAX_VALUE,
-                            ((path, attrs) -> attrs.isRegularFile()))
+                               ((path, attrs) -> attrs.isRegularFile()))
                             .filter(path -> !isAutomatic
                                     || path.toString().endsWith(".class"))
                             .map(path -> toPackageName(top, path))
@@ -153,9 +153,7 @@ public final class ModulePatcher {
         if (!packages.isEmpty()) {
             Builder builder = JLMA.newModuleBuilder(descriptor.name(),
                                                     /*strict*/ false,
-                                                    descriptor.isOpen(),
-                                                    descriptor.isAutomatic(),
-                                                    descriptor.isSynthetic());
+                                                    descriptor.modifiers());
 
             descriptor.requires().forEach(builder::requires);
             descriptor.exports().forEach(builder::exports);
@@ -169,13 +167,9 @@ public final class ModulePatcher {
             descriptor.osArch().ifPresent(builder::osArch);
             descriptor.osVersion().ifPresent(builder::osVersion);
 
-            // new packages
-            if (isAutomatic) {
-                packages.forEach(pn -> builder.exports(pn).opens(pn));
-            } else {
-                builder.contains(descriptor.packages());
-                builder.contains(packages);
-            }
+            // original + new packages
+            builder.packages(descriptor.packages());
+            builder.packages(packages);
 
             descriptor = builder.build();
         }

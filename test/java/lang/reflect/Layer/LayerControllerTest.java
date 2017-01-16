@@ -50,15 +50,15 @@ public class LayerControllerTest {
      */
     private Layer.Controller createTestLayer() {
         ModuleDescriptor descriptor1
-            = ModuleDescriptor.module("m1")
-                .contains("p1")
+            = ModuleDescriptor.newModule("m1")
+                .packages(Set.of("p1"))
                 .requires("java.base")
                 .build();
 
         ModuleDescriptor descriptor2
-            = ModuleDescriptor.module("m2")
+            = ModuleDescriptor.newModule("m2")
                 .requires("java.base")
-                .contains("p2")
+                .packages(Set.of("p2"))
                 .build();
 
         ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);

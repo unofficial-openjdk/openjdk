@@ -59,10 +59,7 @@ public interface JavaLangModuleAccess {
      */
     ModuleDescriptor.Builder newModuleBuilder(String mn,
                                               boolean strict,
-                                              boolean open,
-                                              boolean automatic,
-                                              boolean synthetic);
-
+                                              Set<ModuleDescriptor.Modifier> ms);
 
     /**
      * Returns a snapshot of the packages in the module.
@@ -109,18 +106,11 @@ public interface JavaLangModuleAccess {
     Provides newProvides(String service, List<String> providers);
 
     /**
-     * Returns a {@code ModuleDescriptor.Version} of the given version.
-     */
-    Version newVersion(String v);
-
-    /**
      * Returns a new {@code ModuleDescriptor} instance.
      */
     ModuleDescriptor newModuleDescriptor(String name,
                                          Version version,
-                                         boolean open,
-                                         boolean automatic,
-                                         boolean synthetic,
+                                         Set<ModuleDescriptor.Modifier> ms,
                                          Set<Requires> requires,
                                          Set<Exports> exports,
                                          Set<Opens> opens,

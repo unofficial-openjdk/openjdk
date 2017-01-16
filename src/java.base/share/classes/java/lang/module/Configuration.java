@@ -361,11 +361,11 @@ public final class Configuration {
      *     {@link ModuleDescriptor#osArch() architectures}, or {@link
      *     ModuleDescriptor#osVersion() versions}. </p></li>
      *
-     *     <li><p> Other implementation specific checks, for example referential
-     *     integrity checks to ensure that different versions of tighly coupled
-     *     modules cannot be combined in the same configuration. </p></li>
-     *
      * </ul>
+     *
+     * @implNote In the implementation then observability of modules may depend
+     * on referential integrity checks that ensure that different versions of
+     * tightly coupled modules cannot be combined in the same configuration.
      *
      * @param  before
      *         The <em>before</em> module finder to find modules

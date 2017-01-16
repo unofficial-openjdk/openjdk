@@ -403,11 +403,10 @@ public class ModulePath implements ModuleFinder {
      *
      * 1. The module name (and optionally the version) is derived from the file
      *    name of the JAR file
-     * 2. All packages are exported and open
-     * 3. It has no non-exported/non-open packages
-     * 4. The contents of any META-INF/services configuration files are mapped
+     * 2. All packages are derived from the .class files in the JAR file
+     * 3. The contents of any META-INF/services configuration files are mapped
      *    to "provides" declarations
-     * 5. The Main-Class attribute in the main attributes of the JAR manifest
+     * 4. The Main-Class attribute in the main attributes of the JAR manifest
      *    is mapped to the module descriptor mainClass
      */
     private ModuleDescriptor deriveModuleDescriptor(JarFile jf)
@@ -443,9 +442,7 @@ public class ModulePath implements ModuleFinder {
         mn = cleanModuleName(mn);
 
         // Builder throws IAE if module name is empty or invalid
-        ModuleDescriptor.Builder builder
-            = ModuleDescriptor.automaticModule(mn)
-                .requires(Set.of(Requires.Modifier.MANDATED), "java.base");
+        ModuleDescriptor.Builder builder = ModuleDescriptor.newAutomaticModule(mn);
         if (vs != null)
             builder.version(vs);
 
@@ -468,7 +465,7 @@ public class ModulePath implements ModuleFinder {
                 .collect(Collectors.toSet());
 
         // all packages are exported and open
-        packages.forEach(pn -> builder.exports(pn).opens(pn));
+        builder.packages(packages);
 
         // map names of service configuration files to service names
         Set<String> serviceNames = configFiles.stream()

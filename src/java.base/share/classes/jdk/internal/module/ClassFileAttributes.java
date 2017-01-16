@@ -26,6 +26,7 @@
 package jdk.internal.module;
 
 import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleDescriptor.Builder;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Opens;
@@ -98,18 +99,17 @@ public final class ClassFileAttributes {
 
             // module_flags
             int module_flags = cr.readUnsignedShort(off);
-            boolean open = ((module_flags & ACC_OPEN) != 0);
-            boolean synthetic = ((module_flags & ACC_SYNTHETIC) != 0);
             off += 2;
 
-            boolean strict = false;
-            boolean automatic = false;
+            Set<ModuleDescriptor.Modifier> modifiers = new HashSet<>();
+            if ((module_flags & ACC_OPEN) != 0)
+                modifiers.add(ModuleDescriptor.Modifier.OPEN);
+            if ((module_flags & ACC_SYNTHETIC) != 0)
+                modifiers.add(ModuleDescriptor.Modifier.SYNTHETIC);
+            if ((module_flags & ACC_MANDATED) != 0)
+                modifiers.add(ModuleDescriptor.Modifier.MANDATED);
 
-            ModuleDescriptor.Builder builder = JLMA.newModuleBuilder(mn,
-                                                                     strict,
-                                                                     open,
-                                                                     automatic,
-                                                                     synthetic);
+            Builder builder = JLMA.newModuleBuilder(mn, false, modifiers);
 
             // module_version
             String module_version = cr.readUTF8(off, buf);
@@ -287,11 +287,14 @@ public final class ClassFileAttributes {
             attr.putShort(module_name_index);
 
             // module_flags
+            Set<ModuleDescriptor.Modifier> modifiers = descriptor.modifiers();
             int module_flags = 0;
-            if (descriptor.isOpen())
+            if (modifiers.contains(ModuleDescriptor.Modifier.OPEN))
                 module_flags |= ACC_OPEN;
-            if (descriptor.isSynthetic())
+            if (modifiers.contains(ModuleDescriptor.Modifier.SYNTHETIC))
                 module_flags |= ACC_SYNTHETIC;
+            if (modifiers.contains(ModuleDescriptor.Modifier.MANDATED))
+                module_flags |= ACC_MANDATED;
             attr.putShort(module_flags);
 
             // module_version
