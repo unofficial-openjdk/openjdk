@@ -242,7 +242,7 @@ class Module extends Archive {
         private StrictModule(Module m, Map<String, Boolean> requires) {
             super(m.name(), m.location, m.descriptor, m.exports, m.isSystem, m.reader());
 
-            ModuleDescriptor.Builder builder = ModuleDescriptor.module(m.name());
+            ModuleDescriptor.Builder builder = ModuleDescriptor.newModule(m.name());
             requires.keySet().forEach(mn -> {
                 if (requires.get(mn).equals(Boolean.TRUE)) {
                     builder.requires(Set.of(ModuleDescriptor.Requires.Modifier.TRANSITIVE), mn);
@@ -250,15 +250,11 @@ class Module extends Archive {
                     builder.requires(mn);
                 }
             });
-            m.descriptor.exports().forEach(e -> builder.exports(e));
-            m.descriptor.opens().forEach(o -> builder.opens(o));
-            m.descriptor.uses().forEach(s -> builder.uses(s));
-            m.descriptor.provides().forEach(p -> builder.provides(p));
-
-            Set<String> concealed = new HashSet<>(m.descriptor.packages());
-            m.descriptor.exports().stream().map(Exports::source).forEach(concealed::remove);
-            m.descriptor.opens().stream().map(Opens::source).forEach(concealed::remove);
-            concealed.forEach(builder::contains);
+            m.descriptor.exports().forEach(builder::exports);
+            m.descriptor.opens().forEach(builder::opens);
+            m.descriptor.uses().forEach(builder::uses);
+            m.descriptor.provides().forEach(builder::provides);
+            builder.packages(m.descriptor.packages());
 
             this.md = builder.build();
         }
