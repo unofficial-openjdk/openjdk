@@ -345,8 +345,8 @@ public class TimestampCheck {
                         .shouldHaveExitValue(0);
                 checkTimestamp("tsaalg.jar", defaultPolicyId, "SHA-1");
 
-                sign("weak", "-digestalg", "MD2",
-                                "-sigalg", "MD2withRSA", "-tsadigestalg", "MD2")
+                sign("weak", "-digestalg", "MD5",
+                                "-sigalg", "MD5withRSA", "-tsadigestalg", "MD5")
                         .shouldHaveExitValue(0);
                 checkWeak("weak.jar");
 
