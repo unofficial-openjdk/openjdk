@@ -73,21 +73,24 @@ import jdk.internal.module.ModuleInfo;
  * access all types in the package and all their members (not just the
  * public types and their public members) using reflective APIs that
  * support private access or suppress default Java language access control
- * checks. Open modules do not declare any open packages (the {@link #opens()
- * opens} method returns an empty set) but the resulting module is treated by
- * the Java virtual machine as if all packages are open. </p>
+ * checks. The module descriptor for an open modules does not declare any open
+ * packages (the {@link #opens() opens} method returns an empty set) but
+ * when instantiated in the Java virtual machine then it is treated as if
+ * all packages are open. </p>
  *
  * <p> An automatic module is defined implicitly rather than explicitly and
  * therefore does not have a module declaration. JAR files located on the
  * module path, or by the {@link ModuleFinder} returned by {@link
  * ModuleFinder#of(java.nio.file.Path[]) ModuleFinder.of}, are created as
  * automatic modules if the JAR file does not contain a {@code
- * module-info.class} file. Automatic modules export and open all packages
- * and receive <a href="Configuration.html#automaticmoduleresolution">special
- * treatment</a> during resolution so that they read all other modules in
- * the configuration. In addition, when an automatic module is instantiated
- * in the Java virtual machine then the {@link java.lang.reflect.Module} reads
- * every unnamed {@code Module} in the Java virtual machine. </p>
+ * module-info.class} file. The module descriptor for an automatic module
+ * does not declare any dependences (except for the mandatory dependency
+ * on {@code java.base}), exports or open packages. Automatic modules receive
+ * <a href="Configuration.html#automaticmoduleresolution">special treatment</a>
+ * during resolution so that they read all other modules in the configuration.
+ * When an automatic module is instantiated in the Java virtual machine then it
+ * reads every unnamed module and is treated as if all packages are exported
+ * and open. </p>
  *
  * <p> {@code ModuleDescriptor} objects are immutable and safe for use by
  * multiple concurrent threads.</p>
@@ -1076,6 +1079,7 @@ public class ModuleDescriptor
     private final Version version;
     private final Set<Modifier> modifiers;
     private final boolean open;  // true if modifiers contains OPEN
+    private final boolean automatic;  // true if modifiers contains AUTOMATIC
     private final Set<Requires> requires;
     private final Set<Exports> exports;
     private final Set<Opens> opens;
@@ -1105,6 +1109,7 @@ public class ModuleDescriptor
         this.version = version;
         this.modifiers = emptyOrUnmodifiableSet(modifiers);
         this.open = modifiers.contains(Modifier.OPEN);
+        this.automatic = modifiers.contains(Modifier.AUTOMATIC);
         assert (requires.stream().map(Requires::name).distinct().count()
                 == requires.size());
         this.requires = emptyOrUnmodifiableSet(requires);
@@ -1143,6 +1148,7 @@ public class ModuleDescriptor
         this.version = version;
         this.modifiers = modifiers;
         this.open = modifiers.contains(Modifier.OPEN);
+        this.automatic = modifiers.contains(Modifier.AUTOMATIC);
         this.requires = requires;
         this.exports = exports;
         this.opens = opens;
@@ -1195,14 +1201,16 @@ public class ModuleDescriptor
      * @return  {@code true} if this is an automatic module
      */
     public boolean isAutomatic() {
-        return modifiers.contains(Modifier.AUTOMATIC);
+        return automatic;
     }
 
     /**
      * <p> The dependences of this module. </p>
      *
      * <p> The set includes a dependency on "{@code java.base}" when this
-     * module is not named "{@code java.base}". </p>
+     * module is not named "{@code java.base}". If this module is an automatic
+     * module then it does not have a dependency on any module other than
+     * "{@code java.base}". </p>
      *
      * @return  A possibly-empty unmodifiable set of {@link Requires} objects
      */
@@ -1213,8 +1221,8 @@ public class ModuleDescriptor
     /**
      * <p> The module exports. </p>
      *
-     * <p> If this module is an automatic module then the set contains an export
-     * for every package in the module. </p>
+     * <p> If this module is an automatic module then the set of exports
+     * is empty. </p>
      *
      * @return  A possibly-empty unmodifiable set of exported packages
      */
@@ -1225,9 +1233,8 @@ public class ModuleDescriptor
     /**
      * <p> The module <em>opens</em> directives. </p>
      *
-     * <p> This method returns an empty set when invoked on {@link #isOpen()
-     * open} module. If this module is an automatic module then the set
-     * contains an {@code Opens} object for every package in the module. </p>
+     * <p> If this module is an open module or an automatic module then the
+     * set of open packages is empty. </p>
      *
      * @return  A possibly-empty unmodifiable set of open packages
      */
@@ -2033,29 +2040,12 @@ public class ModuleDescriptor
          * has not been declared (the exception is when building a module named
          * "{@code java.base}" as it cannot require itself). </p>
          *
-         * <p> If building an automatic module then all packages will be
-         * exported and opened to all modules. </p>
-         *
          * @return The module descriptor
          */
         public ModuleDescriptor build() {
-            Set<Requires> requires;
-            Set<Exports> exports;
-            Set<Opens> opens;
-
-            if (automatic) {
-                requires = new HashSet<>();
-                exports = new HashSet<>();
-                opens = new HashSet<>();
-                for (String pn : packages) {
-                    exports.add(new Exports(Set.of(), pn, Set.of()));
-                    opens.add(new Opens(Set.of(), pn, Set.of()));
-                }
-            } else {
-                requires = new HashSet<>(this.requires.values());
-                exports = new HashSet<>(this.exports.values());
-                opens = new HashSet<>(this.opens.values());
-            }
+            Set<Requires> requires = new HashSet<>(this.requires.values());
+            Set<Exports> exports = new HashSet<>(this.exports.values());
+            Set<Opens> opens = new HashSet<>(this.opens.values());
 
             // add dependency on java.base
             if (strict

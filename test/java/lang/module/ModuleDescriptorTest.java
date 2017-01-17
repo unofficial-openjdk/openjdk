@@ -1033,22 +1033,8 @@ public class ModuleDescriptorTest {
 
         // packages
         assertEquals(descriptor.packages(), Set.of("p", "q"));
-
-        // exports
-        assertTrue(descriptor.exports().size() == 2);
-        names = descriptor.exports()
-                .stream()
-                .map(Exports::source)
-                .collect(Collectors.toSet());
-        assertEquals(names, Set.of("p", "q"));
-
-        // opens
-        assertTrue(descriptor.opens().size() == 2);
-        names = descriptor.opens()
-                .stream()
-                .map(Opens::source)
-                .collect(Collectors.toSet());
-        assertEquals(names, Set.of("p", "q"));
+        assertTrue(descriptor.exports().isEmpty());
+        assertTrue(descriptor.opens().isEmpty());
     }
 
     @Test(expectedExceptions = IllegalStateException.class)

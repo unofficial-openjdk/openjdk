@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -539,8 +539,8 @@ public final class Module implements AnnotatedElement {
         if (other == this && containsPackage(pn))
             return true;
 
-        // all packages in open modules are open
-        if (descriptor.isOpen())
+        // all packages in open and automatic modules are open
+        if (descriptor.isOpen() || descriptor.isAutomatic())
             return containsPackage(pn);
 
         // exported/opened via module declaration/descriptor
@@ -640,8 +640,7 @@ public final class Module implements AnnotatedElement {
      * the given package to the given module.
      *
      * <p> This method has no effect if the package is already exported (or
-     * <em>open</em>) to the given module. It also has no effect if
-     * invoked on an {@link ModuleDescriptor#isOpen open} module. </p>
+     * <em>open</em>) to the given module. </p>
      *
      * @apiNote As specified in section 5.4.3 of the <cite>The Java&trade;
      * Virtual Machine Specification </cite>, if an attempt to resolve a
@@ -671,7 +670,7 @@ public final class Module implements AnnotatedElement {
             throw new IllegalArgumentException("package is null");
         Objects.requireNonNull(other);
 
-        if (isNamed() && !descriptor.isOpen()) {
+        if (isNamed()) {
             Module caller = Reflection.getCallerClass().getModule();
             if (caller != this) {
                 throw new IllegalStateException(caller + " != " + this);
@@ -692,8 +691,7 @@ public final class Module implements AnnotatedElement {
      * access control checks.
      *
      * <p> This method has no effect if the package is already <em>open</em>
-     * to the given module. It also has no effect if invoked on an {@link
-     * ModuleDescriptor#isOpen open} module. </p>
+     * to the given module. </p>
      *
      * @param  pn
      *         The package name
@@ -719,7 +717,7 @@ public final class Module implements AnnotatedElement {
             throw new IllegalArgumentException("package is null");
         Objects.requireNonNull(other);
 
-        if (isNamed() && !descriptor.isOpen()) {
+        if (isNamed()) {
             Module caller = Reflection.getCallerClass().getModule();
             if (caller != this && !isOpen(pn, caller))
                 throw new IllegalStateException(pn + " is not open to " + caller);
@@ -773,8 +771,8 @@ public final class Module implements AnnotatedElement {
         Objects.requireNonNull(other);
         Objects.requireNonNull(pn);
 
-        // all packages are open in unnamed and open modules
-        if (!isNamed() || descriptor.isOpen())
+        // all packages are open in unnamed, open, and automatic modules
+        if (!isNamed() || descriptor.isOpen() || descriptor.isAutomatic())
             return;
 
         // nothing to do if already exported/open to other
@@ -1014,10 +1012,14 @@ public final class Module implements AnnotatedElement {
             }
         }
 
-        // update VM first in case it fails. This is a no-op another thread
+        // update VM first in case it fails. This is a no-op if another thread
         // beats us to add the package first
         if (syncVM) {
-            addPackage0(this, pn.replace('.', '/'));
+            String inInternalForm = pn.replace('.', '/');
+            addPackage0(this, inInternalForm);
+            if (descriptor.isOpen() || descriptor.isAutomatic()) {
+                addExportsToAll0(this, inInternalForm);
+            }
         }
         extraPackages.putIfAbsent(pn, Boolean.TRUE);
     }
@@ -1170,8 +1172,9 @@ public final class Module implements AnnotatedElement {
                                             Map<String, Module> nameToModule,
                                             Module m)
     {
-        // The VM doesn't know about open modules so need to export all packages
-        if (descriptor.isOpen()) {
+        // The VM doesn't special case open or automatic modules so need to
+        // export all packages
+        if (descriptor.isOpen() || descriptor.isAutomatic()) {
             assert descriptor.opens().isEmpty();
             for (String source : descriptor.packages()) {
                 String sourceInternalForm = source.replace('.', '/');

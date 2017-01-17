@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,10 +33,10 @@ import java.io.IOException;
 import java.lang.module.Configuration;
 import java.lang.module.FindException;
 import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Requires.Modifier;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
+import java.lang.module.ResolutionException;
 import java.lang.module.ResolvedModule;
 import java.lang.reflect.Layer;
 import java.lang.reflect.Module;
@@ -137,6 +137,7 @@ public class AutomaticModulesTest {
         assertTrue(mref.isPresent(), mn + " not found");
 
         ModuleDescriptor descriptor = mref.get().descriptor();
+        assertTrue(descriptor.isAutomatic());
         assertEquals(descriptor.name(), mn);
         if (vs == null) {
             assertFalse(descriptor.version().isPresent());
@@ -175,17 +176,14 @@ public class AutomaticModulesTest {
         assertTrue(mref.isPresent(), "m not found");
 
         ModuleDescriptor descriptor = mref.get().descriptor();
+        assertTrue(descriptor.isAutomatic());
 
         assertTrue(descriptor.packages().size() == 2);
         assertTrue(descriptor.packages().contains("p"));
         assertTrue(descriptor.packages().contains("q"));
 
-        Set<String> exports = descriptor.exports().stream()
-                .map(Exports::source)
-                .collect(Collectors.toSet());
-        assertTrue(exports.size() == 2);
-        assertTrue(exports.contains("p"));
-        assertTrue(exports.contains("q"));
+        assertTrue(descriptor.exports().isEmpty());
+        assertTrue(descriptor.opens().isEmpty());
     }
 
     /**
@@ -201,15 +199,13 @@ public class AutomaticModulesTest {
         assertTrue(mref.isPresent(), "m not found");
 
         ModuleDescriptor descriptor = mref.get().descriptor();
+        assertTrue(descriptor.isAutomatic());
 
         assertTrue(descriptor.packages().size() == 1);
         assertTrue(descriptor.packages().contains("p"));
 
-        Set<String> exports = descriptor.exports().stream()
-                .map(Exports::source)
-                .collect(Collectors.toSet());
-        assertTrue(exports.size() == 1);
-        assertTrue(exports.contains("p"));
+        assertTrue(descriptor.exports().isEmpty());
+        assertTrue(descriptor.opens().isEmpty());
     }
 
     /**
@@ -229,6 +225,7 @@ public class AutomaticModulesTest {
         assertTrue(mref.isPresent(), "m not found");
 
         ModuleDescriptor descriptor = mref.get().descriptor();
+        assertTrue(descriptor.isAutomatic());
 
         assertTrue(descriptor.packages().size() == 1);
         assertTrue(descriptor.packages().contains("p"));
@@ -660,6 +657,62 @@ public class AutomaticModulesTest {
         assertTrue(d.reads().contains(b));
         assertTrue(d.reads().contains(c));
         testReadAllBootModules(cf, "d");    // d reads all modules in boot layer
+    }
+
+
+    /**
+     * Basic test of a configuration created with automatic modules
+     *   a requires b* and c*
+     *   b* contains p
+     *   c* contains p
+     */
+    @Test(expectedExceptions = { ResolutionException.class })
+    public void testDuplicateSuppliers1() throws IOException {
+        ModuleDescriptor descriptor
+            = ModuleDescriptor.newModule("a")
+                .requires("b")
+                .requires("c")
+                .build();
+
+        // c and d are automatic modules with the same package
+        Path dir = Files.createTempDirectory(USER_DIR, "mods");
+        createDummyJarFile(dir.resolve("b.jar"), "p/T.class");
+        createDummyJarFile(dir.resolve("c.jar"), "p/T.class");
+
+        // module finder locates 'a' and the modules in the directory
+        ModuleFinder finder
+            = ModuleFinder.compose(ModuleUtils.finderOf(descriptor),
+                                   ModuleFinder.of(dir));
+
+        Configuration parent = Layer.boot().configuration();
+        resolve(parent, finder, "a");
+    }
+
+
+    /**
+     * Basic test of a configuration created with automatic modules
+     *   a contains p, requires b*
+     *   b* contains p
+     */
+    @Test(expectedExceptions = { ResolutionException.class })
+    public void testDuplicateSuppliers2() throws IOException {
+        ModuleDescriptor descriptor
+            = ModuleDescriptor.newModule("a")
+                .packages(Set.of("p"))
+                .requires("b")
+                .build();
+
+        // c and d are automatic modules with the same package
+        Path dir = Files.createTempDirectory(USER_DIR, "mods");
+        createDummyJarFile(dir.resolve("b.jar"), "p/T.class");
+
+        // module finder locates 'a' and the modules in the directory
+        ModuleFinder finder
+            = ModuleFinder.compose(ModuleUtils.finderOf(descriptor),
+                                   ModuleFinder.of(dir));
+
+        Configuration parent = Layer.boot().configuration();
+        resolve(parent, finder, "a");
     }
 
 
