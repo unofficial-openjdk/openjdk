@@ -1359,8 +1359,8 @@ public class ModuleDescriptor
      *
      * <p> The module names, package names, and class names that are parameters
      * specified to the builder methods are the module names, package names,
-     * and qualified names of classes as defined in the <cite>The Java&trade;
-     * Language Specification</cite>. </p>
+     * and qualified names of classes (in named packages) as defined in the
+     * <cite>The Java&trade; Language Specification</cite>. </p>
      *
      * <p> Example usage: </p>
      * <pre>{@code    ModuleDescriptor descriptor = ModuleDescriptor.newModule("stats.core")
@@ -1808,7 +1808,7 @@ public class ModuleDescriptor
          *
          * @throws IllegalArgumentException
          *         If the service type is {@code null} or not a qualified name of
-         *         a Java class
+         *         a Java class in a named package
          * @throws IllegalStateException
          *         If a dependency on the service type has already been declared
          *          or this is a builder for an an automatic module
@@ -1861,8 +1861,8 @@ public class ModuleDescriptor
          *
          * @throws IllegalArgumentException
          *         If the service type or any of the provider class names is
-         *         {@code null} or not a qualified name of a Java class, or
-         *         the list of provider class names is empty
+         *         {@code null} or not a qualified name of a Java class in a
+         *         named package, or the list of provider class names is empty
          * @throws IllegalStateException
          *         If the providers for the service type have already been
          *         declared
@@ -1959,7 +1959,7 @@ public class ModuleDescriptor
          *
          * @throws IllegalArgumentException
          *         If {@code mainClass} is {@code null} or not a qualified
-         *         name of a Java class
+         *         name of a Java class in a named package
          */
         public Builder mainClass(String mc) {
             String pn;

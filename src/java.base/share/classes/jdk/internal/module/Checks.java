@@ -116,16 +116,17 @@ public final class Checks {
     }
 
     /**
-     * Checks a name to ensure that it's a legal qualified class name.
+     * Checks a name to ensure that it's a legal qualified class name in
+     * a named package.
      *
      * @throws IllegalArgumentException if name is null or not a legal
-     *         qualified class name
+     *         qualified class name in a named package
      */
     public static String requireQualifiedClassName(String what, String name) {
         requireTypeName(what, name);
         if (name.indexOf('.') == -1)
-            throw new IllegalArgumentException(name
-                    + ": is not a qualified name of a Java class");
+            throw new IllegalArgumentException(name + ": is not a qualified name of"
+                                               + " a Java class in a named package");
         return name;
     }
 
