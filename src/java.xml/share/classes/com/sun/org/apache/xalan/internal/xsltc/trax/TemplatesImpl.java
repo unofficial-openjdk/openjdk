@@ -428,7 +428,7 @@ public final class TemplatesImpl implements Templates, Serializable {
         Layer bootLayer = Layer.boot();
 
         Configuration cf = bootLayer.configuration()
-                .resolveRequires(finder, ModuleFinder.of(), Set.of(mn));
+                .resolve(finder, ModuleFinder.of(), Set.of(mn));
 
         PrivilegedAction<Layer> pa = () -> bootLayer.defineModules(cf, name -> loader);
         Layer layer = AccessController.doPrivileged(pa);
