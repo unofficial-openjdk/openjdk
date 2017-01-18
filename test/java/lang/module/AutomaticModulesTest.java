@@ -780,12 +780,12 @@ public class AutomaticModulesTest {
 
 
     /**
-     * Invokes parent.resolveRequires to resolve the given root modules.
+     * Invokes parent.resolve to resolve the given root modules.
      */
     static Configuration resolve(Configuration parent,
                                  ModuleFinder finder,
                                  String... roots) {
-        return parent.resolveRequires(finder, ModuleFinder.of(), Set.of(roots));
+        return parent.resolve(finder, ModuleFinder.of(), Set.of(roots));
     }
 
     /**

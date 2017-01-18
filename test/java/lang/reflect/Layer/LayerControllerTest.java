@@ -65,7 +65,7 @@ public class LayerControllerTest {
         Layer bootLayer = Layer.boot();
 
         Configuration cf = bootLayer.configuration()
-                .resolveRequires(finder, ModuleFinder.of(), Set.of("m1", "m2"));
+                .resolve(finder, ModuleFinder.of(), Set.of("m1", "m2"));
 
         ClassLoader scl = ClassLoader.getSystemClassLoader();
 

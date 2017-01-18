@@ -418,9 +418,9 @@ public class JlinkTask {
         }
 
         Configuration cf = Configuration.empty()
-                .resolveRequires(finder,
-                                 ModuleFinder.of(),
-                                 roots);
+                .resolve(finder,
+                         ModuleFinder.of(),
+                         roots);
 
         // emit warning for modules that end with a digit
         cf.modules().stream()
@@ -458,9 +458,9 @@ public class JlinkTask {
 
         // resolve all root modules
         Configuration cf = Configuration.empty()
-                .resolveRequires(finder,
-                                 ModuleFinder.of(),
-                                 roots);
+                .resolve(finder,
+                         ModuleFinder.of(),
+                         roots);
 
         // module name -> reference
         Map<String, ModuleReference> map = new HashMap<>();

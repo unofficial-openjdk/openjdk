@@ -39,7 +39,6 @@ import java.net.URI;
 import java.net.URL;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -333,8 +332,9 @@ public final class Module implements AnnotatedElement {
      *
      * @return this module
      *
-     * @throws IllegalStateException
-     *         If this is a named module and the caller is not this module
+     * @throws IllegalCallerException
+     *         If this is a named module and the caller's module is not this
+     *         module
      *
      * @see #canRead
      */
@@ -344,7 +344,7 @@ public final class Module implements AnnotatedElement {
         if (this.isNamed()) {
             Module caller = Reflection.getCallerClass().getModule();
             if (caller != this) {
-                throw new IllegalStateException(caller + " != " + this);
+                throw new IllegalCallerException(caller + " != " + this);
             }
             implAddReads(other, true);
         }
@@ -658,8 +658,9 @@ public final class Module implements AnnotatedElement {
      * @throws IllegalArgumentException
      *         If {@code pn} is {@code null}, or this is a named module and the
      *         package {@code pn} is not a package in this module
-     * @throws IllegalStateException
-     *         If this is a named module and the caller is not this module
+     * @throws IllegalCallerException
+     *         If this is a named module and the caller's module is not this
+     *         module
      *
      * @jvms 5.4.3 Resolution
      * @see #isExported(String,Module)
@@ -673,7 +674,7 @@ public final class Module implements AnnotatedElement {
         if (isNamed()) {
             Module caller = Reflection.getCallerClass().getModule();
             if (caller != this) {
-                throw new IllegalStateException(caller + " != " + this);
+                throw new IllegalCallerException(caller + " != " + this);
             }
             implAddExportsOrOpens(pn, other, /*open*/false, /*syncVM*/true);
         }
@@ -703,9 +704,9 @@ public final class Module implements AnnotatedElement {
      * @throws IllegalArgumentException
      *         If {@code pn} is {@code null}, or this is a named module and the
      *         package {@code pn} is not a package in this module
-     * @throws IllegalStateException
+     * @throws IllegalCallerException
      *         If this is a named module and this module has not opened the
-     *         package to at least the caller
+     *         package to at least the caller's module
      *
      * @see #isOpen(String,Module)
      * @see AccessibleObject#setAccessible(boolean)
@@ -720,7 +721,7 @@ public final class Module implements AnnotatedElement {
         if (isNamed()) {
             Module caller = Reflection.getCallerClass().getModule();
             if (caller != this && !isOpen(pn, caller))
-                throw new IllegalStateException(pn + " is not open to " + caller);
+                throw new IllegalCallerException(pn + " is not open to " + caller);
             implAddExportsOrOpens(pn, other, /*open*/true, /*syncVM*/true);
         }
 
@@ -824,17 +825,17 @@ public final class Module implements AnnotatedElement {
      * passed a reference to the service type by other code. This method is
      * a no-op when invoked on an unnamed module or an automatic module.
      *
-     * <p> This method does not cause {@link
-     * Configuration#resolveRequiresAndUses resolveRequiresAndUses} to be
-     * re-run. </p>
+     * <p> This method does not cause {@link Configuration#resolveAndBind
+     * resolveAndBind} to be re-run. </p>
      *
      * @param  service
      *         The service type
      *
      * @return this module
      *
-     * @throws IllegalStateException
-     *         If this is a named module and the caller is not this module
+     * @throws IllegalCallerException
+     *         If this is a named module and the caller's module is not this
+     *         module
      *
      * @see #canUse(Class)
      * @see ModuleDescriptor#uses()
@@ -846,7 +847,7 @@ public final class Module implements AnnotatedElement {
         if (isNamed() && !descriptor.isAutomatic()) {
             Module caller = Reflection.getCallerClass().getModule();
             if (caller != this) {
-                throw new IllegalStateException(caller + " != " + this);
+                throw new IllegalCallerException(caller + " != " + this);
             }
             implAddUses(service);
         }
@@ -1016,6 +1017,7 @@ public final class Module implements AnnotatedElement {
         // beats us to add the package first
         if (syncVM) {
             String inInternalForm = pn.replace('.', '/');
+            // throws IllegalStateException if defined to another module
             addPackage0(this, inInternalForm);
             if (descriptor.isOpen() || descriptor.isAutomatic()) {
                 addExportsToAll0(this, inInternalForm);
@@ -1419,8 +1421,6 @@ public final class Module implements AnnotatedElement {
      *
      * @throws IOException
      *         If an I/O error occurs
-     *
-     * @see java.lang.module.ModuleReader#open(String)
      */
     @CallerSensitive
     public InputStream getResourceAsStream(String name) throws IOException {

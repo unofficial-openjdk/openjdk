@@ -128,9 +128,9 @@ public interface JavaLangModuleAccess {
      * and the empty configuration as the parent. The post resolution
      * checks are optionally run.
      */
-    Configuration resolveRequiresAndUses(ModuleFinder finder,
-                                         Collection<String> roots,
-                                         boolean check,
-                                         PrintStream traceOutput);
+    Configuration resolveAndBind(ModuleFinder finder,
+                                 Collection<String> roots,
+                                 boolean check,
+                                 PrintStream traceOutput);
 
 }

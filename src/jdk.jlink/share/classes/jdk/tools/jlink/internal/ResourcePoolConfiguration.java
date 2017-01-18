@@ -119,7 +119,7 @@ final class ResourcePoolConfiguration {
             }
         };
 
-        return Configuration.empty().resolveRequires(
+        return Configuration.empty().resolve(
             finder, ModuleFinder.of(), nameToModRef.keySet());
     }
 }

@@ -2283,7 +2283,7 @@ class Main {
             Configuration config = null;
             try {
                 config = Configuration.empty()
-                    .resolveRequires(ModuleFinder.ofSystem(), finder, modules);
+                    .resolve(ModuleFinder.ofSystem(), finder, modules);
             } catch (ResolutionException e) {
                 // should it throw an error?  or emit a warning
                 System.out.println("warning: " + e.getMessage());

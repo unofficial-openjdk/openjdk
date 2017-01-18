@@ -115,8 +115,7 @@ import sun.security.util.SecurityConstants;
  *
  *     Layer parent = Layer.boot();
  *
- *     Configuration cf = parent.configuration()
- *         .resolveRequires(finder, ModuleFinder.of(), Set.of("myapp"));
+ *     Configuration cf = parent.configuration().resolve(finder, ModuleFinder.of(), Set.of("myapp"));
  *
  *     ClassLoader scl = ClassLoader.getSystemClassLoader();
  *

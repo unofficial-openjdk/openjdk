@@ -811,7 +811,7 @@ public class JmodTask {
             Configuration config = null;
             try {
                 config = Configuration.empty()
-                    .resolveRequires(ModuleFinder.ofSystem(), moduleFinder, modules);
+                    .resolve(ModuleFinder.ofSystem(), moduleFinder, modules);
             } catch (ResolutionException e) {
                 warning("warn.module.resolution.fail", e.getMessage());
             }

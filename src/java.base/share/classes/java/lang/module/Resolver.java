@@ -49,8 +49,8 @@ import jdk.internal.module.ModuleHashes;
 import jdk.internal.module.ModuleReferenceImpl;
 
 /**
- * The resolver used by {@link Configuration#resolveRequires} and
- * {@link Configuration#resolveRequiresAndUses}.
+ * The resolver used by {@link Configuration#resolve} and {@link
+ * Configuration#resolveAndBind}.
  *
  * @implNote The resolver is used at VM startup and so deliberately avoids
  * using lambda and stream usages in code paths used during startup.
@@ -83,7 +83,7 @@ final class Resolver {
      *
      * @throws ResolutionException
      */
-    Resolver resolveRequires(Collection<String> roots) {
+    Resolver resolve(Collection<String> roots) {
 
         // create the visit stack to get us started
         Deque<ModuleDescriptor> q = new ArrayDeque<>();
@@ -181,7 +181,7 @@ final class Resolver {
      * Augments the set of resolved modules with modules induced by the
      * service-use relation.
      */
-    Resolver resolveUses() {
+    Resolver bind() {
 
         // Scan the finders for all available service provider modules. As
         // java.base uses services then then module finders will be scanned

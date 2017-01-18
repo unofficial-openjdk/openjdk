@@ -78,7 +78,7 @@ public class ConfigurationTest {
         ModuleFinder finder
             = ModuleUtils.finderOf(descriptor1, descriptor2, descriptor3);
 
-        Configuration cf = resolveRequires(finder, "m1");
+        Configuration cf = resolve(finder, "m1");
 
         assertTrue(cf.modules().size() == 3);
 
@@ -131,7 +131,7 @@ public class ConfigurationTest {
         ModuleFinder finder
             = ModuleUtils.finderOf(descriptor1, descriptor2, descriptor3);
 
-        Configuration cf = resolveRequires(finder, "m1");
+        Configuration cf = resolve(finder, "m1");
 
         assertTrue(cf.modules().size() == 3);
 
@@ -180,7 +180,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
 
-        Configuration cf1 = resolveRequires(finder1, "m2");
+        Configuration cf1 = resolve(finder1, "m2");
 
         assertTrue(cf1.modules().size() == 2);
         assertTrue(cf1.findModule("m1").isPresent());
@@ -204,7 +204,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder2 = ModuleUtils.finderOf(descriptor3);
 
-        Configuration cf2 = resolveRequires(cf1, finder2, "m3");
+        Configuration cf2 = resolve(cf1, finder2, "m3");
 
         assertTrue(cf2.modules().size() == 1);
         assertTrue(cf2.findModule("m1").isPresent());  // in parent
@@ -236,7 +236,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1);
 
-        Configuration cf1 = resolveRequires(finder1, "m1");
+        Configuration cf1 = resolve(finder1, "m1");
 
         assertTrue(cf1.modules().size() == 1);
         assertTrue(cf1.findModule("m1").isPresent());
@@ -259,7 +259,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder2 = ModuleUtils.finderOf(descriptor2, descriptor3);
 
-        Configuration cf2 = resolveRequires(cf1, finder2, "m3");
+        Configuration cf2 = resolve(cf1, finder2, "m3");
 
         assertTrue(cf2.modules().size() == 2);
         assertTrue(cf2.findModule("m1").isPresent());   // in parent
@@ -298,7 +298,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1);
 
-        Configuration cf1 = resolveRequires(finder1, "m1");
+        Configuration cf1 = resolve(finder1, "m1");
 
         assertTrue(cf1.modules().size() == 1);
         assertTrue(cf1.findModule("m1").isPresent());
@@ -317,7 +317,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder2 = ModuleUtils.finderOf(descriptor2);
 
-        Configuration cf2 = resolveRequires(cf1, finder2, "m2");
+        Configuration cf2 = resolve(cf1, finder2, "m2");
 
         assertTrue(cf2.modules().size() == 1);
         assertTrue(cf2.findModule("m1").isPresent());  // in parent
@@ -340,7 +340,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder3 = ModuleUtils.finderOf(descriptor3);
 
-        Configuration cf3 = resolveRequires(cf2, finder3, "m3");
+        Configuration cf3 = resolve(cf2, finder3, "m3");
 
         assertTrue(cf3.modules().size() == 1);
         assertTrue(cf3.findModule("m1").isPresent());  // in parent
@@ -378,7 +378,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
 
-        Configuration cf1 = resolveRequires(finder1, "m2");
+        Configuration cf1 = resolve(finder1, "m2");
 
         assertTrue(cf1.modules().size() == 2);
         assertTrue(cf1.findModule("m1").isPresent());
@@ -410,7 +410,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder2 = ModuleUtils.finderOf(descriptor3, descriptor4);
 
-        Configuration cf2 = resolveRequires(cf1, finder2, "m3", "m4");
+        Configuration cf2 = resolve(cf1, finder2, "m3", "m4");
 
         assertTrue(cf2.modules().size() == 2);
         assertTrue(cf2.findModule("m1").isPresent());   // in parent
@@ -462,7 +462,7 @@ public class ConfigurationTest {
                 .build();
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
-        Configuration cf1 = resolveRequires(finder1, "m2");
+        Configuration cf1 = resolve(finder1, "m2");
         assertTrue(cf1.modules().size() == 2);
         assertTrue(cf1.findModule("m1").isPresent());
         assertTrue(cf1.findModule("m2").isPresent());
@@ -470,7 +470,7 @@ public class ConfigurationTest {
         assertTrue(cf1.parents().get(0) == Configuration.empty());
 
         ModuleFinder finder2 = ModuleUtils.finderOf(descriptor1, descriptor3);
-        Configuration cf2 = resolveRequires(finder2, "m3");
+        Configuration cf2 = resolve(finder2, "m3");
         assertTrue(cf2.modules().size() == 2);
         assertTrue(cf2.findModule("m3").isPresent());
         assertTrue(cf2.findModule("m1").isPresent());
@@ -478,7 +478,7 @@ public class ConfigurationTest {
         assertTrue(cf2.parents().get(0) == Configuration.empty());
 
         ModuleFinder finder3 = ModuleUtils.finderOf(descriptor4);
-        Configuration cf3 = Configuration.resolveRequires(finder3,
+        Configuration cf3 = Configuration.resolve(finder3,
                 List.of(cf1, cf2),
                 ModuleFinder.of(),
                 Set.of("m4"));
@@ -513,7 +513,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder = ModuleUtils.finderOf(descriptor1);
 
-        Configuration cf = resolveRequires(finder, "m1");
+        Configuration cf = resolve(finder, "m1");
 
         assertTrue(cf.modules().size() == 1);
 
@@ -538,7 +538,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);
 
-        Configuration cf = resolveRequires(finder, "m1");
+        Configuration cf = resolve(finder, "m1");
 
         assertTrue(cf.modules().size() == 1);
 
@@ -563,7 +563,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);
 
-        Configuration cf = resolveRequires(finder, "m1", "m2");
+        Configuration cf = resolve(finder, "m1", "m2");
 
         assertTrue(cf.modules().size() == 2);
 
@@ -599,7 +599,7 @@ public class ConfigurationTest {
         ModuleFinder finder
             = ModuleUtils.finderOf(descriptor1, descriptor2, descriptor3);
 
-        Configuration cf = resolveRequires(finder, "m1");
+        Configuration cf = resolve(finder, "m1");
 
         assertTrue(cf.modules().size() == 3);
 
@@ -633,7 +633,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
 
-        Configuration cf1 = resolveRequires(finder1, "m1", "m2");
+        Configuration cf1 = resolve(finder1, "m1", "m2");
 
         assertTrue(cf1.modules().size() == 2);
         assertTrue(cf1.findModule("m1").isPresent());
@@ -646,7 +646,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder2 = ModuleUtils.finderOf(descriptor3);
 
-        Configuration cf2 = resolveRequires(cf1, finder2, "m3");
+        Configuration cf2 = resolve(cf1, finder2, "m3");
 
         assertTrue(cf2.modules().size() == 1);
         assertTrue(cf2.findModule("m3").isPresent());
@@ -673,7 +673,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1);
 
-        Configuration cf1 = resolveRequires(finder1, "m1");
+        Configuration cf1 = resolve(finder1, "m1");
 
         assertTrue(cf1.modules().size() == 1);
         assertTrue(cf1.findModule("m1").isPresent());
@@ -685,7 +685,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder2 = ModuleUtils.finderOf(descriptor3);
 
-        Configuration cf2 = resolveRequires(cf1, finder2, "m3");
+        Configuration cf2 = resolve(cf1, finder2, "m3");
 
         assertTrue(cf2.modules().size() == 1);
         assertTrue(cf2.findModule("m3").isPresent());
@@ -719,7 +719,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder = ModuleUtils.finderOf(descriptor2, descriptor3);
 
-        Configuration cf = resolveRequires(finder, "m3");
+        Configuration cf = resolve(finder, "m3");
 
         assertTrue(cf.modules().size() == 2);
         assertTrue(cf.findModule("m2").isPresent());
@@ -748,7 +748,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor2);
 
-        Configuration cf1 = resolveRequires(finder1, "m2");
+        Configuration cf1 = resolve(finder1, "m2");
 
         assertTrue(cf1.modules().size() == 1);
         assertTrue(cf1.findModule("m2").isPresent());
@@ -761,7 +761,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder2 = ModuleUtils.finderOf(descriptor3);
 
-        Configuration cf2 = resolveRequires(cf1, finder2, "m3");
+        Configuration cf2 = resolve(cf1, finder2, "m3");
 
         assertTrue(cf2.modules().size() == 1);
         assertTrue(cf2.findModule("m3").isPresent());
@@ -790,7 +790,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);
 
-        Configuration cf = resolveRequiresAndUses(finder, "m1");
+        Configuration cf = resolveAndBind(finder, "m1");
 
         assertTrue(cf.modules().size() == 2);
         assertTrue(cf.findModule("m1").isPresent());
@@ -837,7 +837,7 @@ public class ConfigurationTest {
         ModuleFinder finder
             = ModuleUtils.finderOf(descriptor1, descriptor2, descriptor3);
 
-        Configuration cf = resolveRequiresAndUses(finder, "m1");
+        Configuration cf = resolveAndBind(finder, "m1");
 
         assertTrue(cf.modules().size() == 3);
         assertTrue(cf.findModule("m1").isPresent());
@@ -879,7 +879,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1);
 
-        Configuration cf1 = resolveRequires(finder1, "m1");
+        Configuration cf1 = resolve(finder1, "m1");
 
         assertTrue(cf1.modules().size() == 1);
         assertTrue(cf1.findModule("m1").isPresent());
@@ -891,7 +891,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder2 = ModuleUtils.finderOf(descriptor2);
 
-        Configuration cf2 = resolveRequiresAndUses(cf1, finder2); // no roots
+        Configuration cf2 = resolveAndBind(cf1, finder2); // no roots
 
         assertTrue(cf2.parents().size() == 1);
         assertTrue(cf2.parents().get(0) == cf1);
@@ -931,7 +931,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
 
-        Configuration cf1 = resolveRequiresAndUses(finder1, "m1");
+        Configuration cf1 = resolveAndBind(finder1, "m1");
 
         assertTrue(cf1.modules().size() == 2);
         assertTrue(cf1.findModule("m1").isPresent());
@@ -950,7 +950,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder2 = ModuleUtils.finderOf(descriptor3, descriptor4);
 
-        Configuration cf2 = resolveRequiresAndUses(cf1, finder2); // no roots
+        Configuration cf2 = resolveAndBind(cf1, finder2); // no roots
 
         assertTrue(cf2.parents().size() == 1);
         assertTrue(cf2.parents().get(0) == cf1);
@@ -998,7 +998,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder1 = ModuleUtils.finderOf(service, provider_v1);
 
-        Configuration cf1 = resolveRequires(finder1, "p");
+        Configuration cf1 = resolve(finder1, "p");
 
         assertTrue(cf1.modules().size() == 2);
         assertTrue(cf1.findModule("s").isPresent());
@@ -1025,7 +1025,7 @@ public class ConfigurationTest {
 
         // finder2 is the before ModuleFinder and so p@2.0 should be located
 
-        Configuration cf2 = resolveRequiresAndUses(cf1, finder2, "m1");
+        Configuration cf2 = resolveAndBind(cf1, finder2, "m1");
 
         assertTrue(cf2.parents().size() == 1);
         assertTrue(cf2.parents().get(0) == cf1);
@@ -1040,7 +1040,7 @@ public class ConfigurationTest {
         // finder2 is the after ModuleFinder and so p@2.0 should not be located
         // as module p is in parent configuration.
 
-        cf2 = resolveRequiresAndUses(cf1, ModuleFinder.of(), finder2, "m1");
+        cf2 = resolveAndBind(cf1, ModuleFinder.of(), finder2, "m1");
 
         assertTrue(cf2.parents().size() == 1);
         assertTrue(cf2.parents().get(0) == cf1);
@@ -1075,7 +1075,7 @@ public class ConfigurationTest {
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor2_v1);
         ModuleFinder finder2 = ModuleUtils.finderOf(descriptor1, descriptor2_v2);
 
-        Configuration cf = resolveRequires(finder1, finder2, "m1");
+        Configuration cf = resolve(finder1, finder2, "m1");
 
         assertTrue(cf.modules().size() == 2);
         assertTrue(cf.findModule("m1").isPresent());
@@ -1115,7 +1115,7 @@ public class ConfigurationTest {
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2_v1);
         ModuleFinder finder2 = ModuleUtils.finderOf(descriptor2_v2);
 
-        Configuration cf = resolveRequiresAndUses(finder1, finder2, "m1");
+        Configuration cf = resolveAndBind(finder1, finder2, "m1");
 
         assertTrue(cf.modules().size() == 2);
         assertTrue(cf.findModule("m1").isPresent());
@@ -1140,12 +1140,12 @@ public class ConfigurationTest {
 
         ModuleFinder finder = ModuleUtils.finderOf(descriptor1);
 
-        Configuration cf1 = resolveRequires(finder, "m1");
+        Configuration cf1 = resolve(finder, "m1");
 
         assertTrue(cf1.modules().size() == 1);
         assertTrue(cf1.findModule("m1").isPresent());
 
-        Configuration cf2 = resolveRequires(cf1, finder, "m1");
+        Configuration cf2 = resolve(cf1, finder, "m1");
 
         assertTrue(cf2.modules().size() == 1);
     }
@@ -1161,7 +1161,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1);
 
-        Configuration cf1 = resolveRequires(finder1, "m1");
+        Configuration cf1 = resolve(finder1, "m1");
 
         assertTrue(cf1.modules().size() == 1);
         assertTrue(cf1.findModule("m1").isPresent());
@@ -1173,7 +1173,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder2 = ModuleUtils.finderOf(descriptor2);
 
-        Configuration cf2 = resolveRequires(cf1, ModuleFinder.of(), finder2, "m2");
+        Configuration cf2 = resolve(cf1, ModuleFinder.of(), finder2, "m2");
 
         assertTrue(cf2.modules().size() == 1);
         assertTrue(cf2.findModule("m2").isPresent());
@@ -1200,7 +1200,7 @@ public class ConfigurationTest {
 
         // Configuration cf1: m1
         ModuleDescriptor descriptor1 = newBuilder("m1").build();
-        Configuration cf1 = resolveRequires(ModuleUtils.finderOf(descriptor1), "m1");
+        Configuration cf1 = resolve(ModuleUtils.finderOf(descriptor1), "m1");
         assertEquals(cf1.parents(), List.of(Configuration.empty()));
         assertTrue(cf1.findModule("m1").isPresent());
         ResolvedModule m1 = cf1.findModule("m1").get();
@@ -1208,7 +1208,7 @@ public class ConfigurationTest {
 
         // Configuration cf2: m2
         ModuleDescriptor descriptor2 = newBuilder("m2").build();
-        Configuration cf2 = resolveRequires(ModuleUtils.finderOf(descriptor2), "m2");
+        Configuration cf2 = resolve(ModuleUtils.finderOf(descriptor2), "m2");
         assertEquals(cf2.parents(), List.of(Configuration.empty()));
         assertTrue(cf2.findModule("m2").isPresent());
         ResolvedModule m2 = cf2.findModule("m2").get();
@@ -1220,7 +1220,7 @@ public class ConfigurationTest {
                 .requires("m2")
                 .build();
         ModuleFinder finder = ModuleUtils.finderOf(descriptor3);
-        Configuration cf3 = Configuration.resolveRequires(
+        Configuration cf3 = Configuration.resolve(
                 finder,
                 List.of(cf1, cf2),  // parents
                 ModuleFinder.of(),
@@ -1250,7 +1250,7 @@ public class ConfigurationTest {
     public void testResolvedInMultipleParents2() {
         // Configuration cf1: m1
         ModuleDescriptor descriptor1 = newBuilder("m1").build();
-        Configuration cf1 = resolveRequires(ModuleUtils.finderOf(descriptor1), "m1");
+        Configuration cf1 = resolve(ModuleUtils.finderOf(descriptor1), "m1");
         assertEquals(cf1.parents(), List.of(Configuration.empty()));
         assertTrue(cf1.findModule("m1").isPresent());
         ResolvedModule m1 = cf1.findModule("m1").get();
@@ -1260,7 +1260,7 @@ public class ConfigurationTest {
         ModuleDescriptor descriptor2 = newBuilder("m2")
                 .requires("m1")
                 .build();
-        Configuration cf2 = Configuration.resolveRequires(
+        Configuration cf2 = Configuration.resolve(
                 ModuleUtils.finderOf(descriptor2),
                 List.of(cf1),  // parents
                 ModuleFinder.of(),
@@ -1274,7 +1274,7 @@ public class ConfigurationTest {
         ModuleDescriptor descriptor3 = newBuilder("m3")
                 .requires("m1")
                 .build();
-        Configuration cf3 = Configuration.resolveRequires(
+        Configuration cf3 = Configuration.resolve(
                 ModuleUtils.finderOf(descriptor3),
                 List.of(cf1),  // parents
                 ModuleFinder.of(),
@@ -1290,7 +1290,7 @@ public class ConfigurationTest {
                 .requires("m2")
                 .requires("m3")
                 .build();
-        Configuration cf4 = Configuration.resolveRequires(
+        Configuration cf4 = Configuration.resolve(
                 ModuleUtils.finderOf(descriptor4),
                 List.of(cf2, cf3),  // parents
                 ModuleFinder.of(),
@@ -1323,13 +1323,13 @@ public class ConfigurationTest {
 
         // Configuration cf1: m1@1
         descriptor1 = newBuilder("m1").version("1").build();
-        Configuration cf1 = resolveRequires(ModuleUtils.finderOf(descriptor1), "m1");
+        Configuration cf1 = resolve(ModuleUtils.finderOf(descriptor1), "m1");
         assertEquals(cf1.parents(), List.of(Configuration.empty()));
 
         // Configuration cf2: m1@2, m2@2
         descriptor1 = newBuilder("m1").version("2").build();
         descriptor2 = newBuilder("m2").version("2").build();
-        Configuration cf2 = resolveRequires(
+        Configuration cf2 = resolve(
                 ModuleUtils.finderOf(descriptor1, descriptor2),
                 "m1", "m2");
         assertEquals(cf2.parents(), List.of(Configuration.empty()));
@@ -1338,7 +1338,7 @@ public class ConfigurationTest {
         descriptor1 = newBuilder("m1").version("3").build();
         descriptor2 = newBuilder("m2").version("3").build();
         descriptor3 = newBuilder("m3").version("3").build();
-        Configuration cf3 = resolveRequires(
+        Configuration cf3 = resolve(
                 ModuleUtils.finderOf(descriptor1, descriptor2, descriptor3),
                 "m1", "m2", "m3");
         assertEquals(cf3.parents(), List.of(Configuration.empty()));
@@ -1349,7 +1349,7 @@ public class ConfigurationTest {
                 .requires("m2")
                 .requires("m3")
                 .build();
-        Configuration cf4 = Configuration.resolveRequires(
+        Configuration cf4 = Configuration.resolve(
                 ModuleUtils.finderOf(descriptor4),
                 List.of(cf1, cf2, cf3),  // parents
                 ModuleFinder.of(),
@@ -1400,11 +1400,11 @@ public class ConfigurationTest {
 
         ModuleFinder finder = ModuleUtils.finderOf(descriptor1);
 
-        Configuration cf1 = resolveRequires(finder, "m1");
+        Configuration cf1 = resolve(finder, "m1");
         assertTrue(cf1.modules().size() == 1);
         assertTrue(cf1.findModule("m1").isPresent());
 
-        Configuration cf2 = resolveRequires(cf1, finder, "m1");
+        Configuration cf2 = resolve(cf1, finder, "m1");
         assertTrue(cf2.modules().size() == 1);
         assertTrue(cf2.findModule("m1").isPresent());
     }
@@ -1415,23 +1415,23 @@ public class ConfigurationTest {
      */
     public void testOverriding2() {
         ModuleDescriptor descriptor1 = newBuilder("m1").build();
-        Configuration cf1 = resolveRequires(ModuleUtils.finderOf(descriptor1), "m1");
+        Configuration cf1 = resolve(ModuleUtils.finderOf(descriptor1), "m1");
         assertTrue(cf1.modules().size() == 1);
         assertTrue(cf1.findModule("m1").isPresent());
 
         ModuleDescriptor descriptor2 = newBuilder("m2").build();
-        Configuration cf2 = resolveRequires(ModuleUtils.finderOf(descriptor2), "m2");
+        Configuration cf2 = resolve(ModuleUtils.finderOf(descriptor2), "m2");
         assertTrue(cf2.modules().size() == 1);
         assertTrue(cf2.findModule("m2").isPresent());
 
         ModuleDescriptor descriptor3 = newBuilder("m3").build();
-        Configuration cf3 = resolveRequires(ModuleUtils.finderOf(descriptor3), "m3");
+        Configuration cf3 = resolve(ModuleUtils.finderOf(descriptor3), "m3");
         assertTrue(cf3.modules().size() == 1);
         assertTrue(cf3.findModule("m3").isPresent());
 
         // override m2, m1 and m3 should be found in parent configurations
         ModuleFinder finder = ModuleUtils.finderOf(descriptor2);
-        Configuration cf4 = Configuration.resolveRequires(
+        Configuration cf4 = Configuration.resolve(
                 finder,
                 List.of(cf1, cf2, cf3),
                 ModuleFinder.of(),
@@ -1463,7 +1463,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
 
-        Configuration cf1 = resolveRequires(finder1, "m2");
+        Configuration cf1 = resolve(finder1, "m2");
 
         assertTrue(cf1.modules().size() == 2);
         assertTrue(cf1.findModule("m1").isPresent());
@@ -1477,7 +1477,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder2 = ModuleUtils.finderOf(descriptor1, descriptor3);
 
-        Configuration cf2 = resolveRequires(cf1, finder2, "m1", "m3");
+        Configuration cf2 = resolve(cf1, finder2, "m1", "m3");
 
         assertTrue(cf2.parents().size() == 1);
         assertTrue(cf2.parents().get(0) == cf1);
@@ -1508,7 +1508,7 @@ public class ConfigurationTest {
      */
     @Test(expectedExceptions = { ResolutionException.class })
     public void testRootNotFound() {
-        resolveRequires(ModuleFinder.of(), "m1");
+        resolve(ModuleFinder.of(), "m1");
     }
 
 
@@ -1519,7 +1519,7 @@ public class ConfigurationTest {
     public void testDirectDependencyNotFound() {
         ModuleDescriptor descriptor1 = newBuilder("m1").requires("m2").build();
         ModuleFinder finder = ModuleUtils.finderOf(descriptor1);
-        resolveRequires(finder, "m1");
+        resolve(finder, "m1");
     }
 
 
@@ -1531,7 +1531,7 @@ public class ConfigurationTest {
         ModuleDescriptor descriptor1 = newBuilder("m1").requires("m2").build();
         ModuleDescriptor descriptor2 = newBuilder("m2").requires("m3").build();
         ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);
-        resolveRequires(finder, "m1");
+        resolve(finder, "m1");
     }
 
 
@@ -1557,7 +1557,7 @@ public class ConfigurationTest {
         ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);
 
         // should throw ResolutionException because m3 is not found
-        Configuration cf = resolveRequiresAndUses(finder, "m1");
+        Configuration cf = resolveAndBind(finder, "m1");
     }
 
 
@@ -1571,7 +1571,7 @@ public class ConfigurationTest {
         ModuleDescriptor descriptor3 = newBuilder("m3").requires("m1").build();
         ModuleFinder finder
             = ModuleUtils.finderOf(descriptor1, descriptor2, descriptor3);
-        resolveRequires(finder, "m1");
+        resolve(finder, "m1");
     }
 
     /**
@@ -1597,7 +1597,7 @@ public class ConfigurationTest {
             = ModuleUtils.finderOf(descriptor1, descriptor2, descriptor3);
 
         // should throw ResolutionException because of the m2 <--> m3 cycle
-        resolveRequiresAndUses(finder, "m1");
+        resolveAndBind(finder, "m1");
     }
 
 
@@ -1624,7 +1624,7 @@ public class ConfigurationTest {
             = ModuleUtils.finderOf(descriptor1, descriptor2, descriptor3);
 
         // m2 and m3 export package p to module m1
-        resolveRequires(finder, "m1");
+        resolve(finder, "m1");
     }
 
 
@@ -1647,7 +1647,7 @@ public class ConfigurationTest {
         ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);
 
         // m1 contains package p, module m2 exports package p to m1
-        resolveRequires(finder, "m1");
+        resolve(finder, "m1");
     }
 
 
@@ -1667,7 +1667,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);
 
-        Configuration cf = resolveRequires(finder, "m1");
+        Configuration cf = resolve(finder, "m1");
 
         assertTrue(cf.modules().size() == 2);
         assertTrue(cf.findModule("m1").isPresent());
@@ -1698,7 +1698,7 @@ public class ConfigurationTest {
         Configuration bootConfiguration = Layer.boot().configuration();
 
         // m1 contains package java.lang, java.base exports package java.lang to m1
-        resolveRequires(bootConfiguration, finder, "m1");
+        resolve(bootConfiguration, finder, "m1");
     }
 
 
@@ -1713,7 +1713,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder = ModuleUtils.finderOf(descriptor1);
 
-        Configuration cf = resolveRequires(finder, "m1");
+        Configuration cf = resolve(finder, "m1");
 
         assertTrue(cf.modules().size() == 1);
         assertTrue(cf.findModule("m1").isPresent());
@@ -1737,7 +1737,7 @@ public class ConfigurationTest {
         ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);
 
         // m2 does not read a module that exports p
-        resolveRequires(finder, "m2");
+        resolve(finder, "m2");
     }
 
 
@@ -1752,7 +1752,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder = ModuleUtils.finderOf(descriptor1);
 
-        Configuration cf = resolveRequires(finder, "m1");
+        Configuration cf = resolve(finder, "m1");
 
         assertTrue(cf.modules().size() == 1);
         assertTrue(cf.findModule("m1").isPresent());
@@ -1776,7 +1776,7 @@ public class ConfigurationTest {
         ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);
 
         // m2 does not read a module that exports p
-        resolveRequires(finder, "m2");
+        resolve(finder, "m2");
     }
 
 
@@ -1792,7 +1792,7 @@ public class ConfigurationTest {
         ModuleFinder finder = ModuleUtils.finderOf(descriptor1);
 
         // m1 does not read a module that exports p
-        resolveRequires(finder, "m1");
+        resolve(finder, "m1");
     }
 
 
@@ -1808,7 +1808,7 @@ public class ConfigurationTest {
         ModuleFinder finder = ModuleUtils.finderOf(descriptor1);
 
         // m1 does not read a module that exports p
-        resolveRequires(finder, "m1");
+        resolve(finder, "m1");
     }
 
 
@@ -1898,7 +1898,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);
 
-        Configuration cf = resolveRequires(finder, "m1");
+        Configuration cf = resolve(finder, "m1");
 
         assertTrue(cf.modules().size() == 2);
         assertTrue(cf.findModule("m1").isPresent());
@@ -1921,13 +1921,13 @@ public class ConfigurationTest {
     @Test(expectedExceptions = { IllegalArgumentException.class })
     public void testResolveRequiresWithNoParents() {
         ModuleFinder empty = ModuleFinder.of();
-        Configuration.resolveRequires(empty, List.of(), empty, Set.of());
+        Configuration.resolve(empty, List.of(), empty, Set.of());
     }
 
     @Test(expectedExceptions = { IllegalArgumentException.class })
     public void testResolveRequiresAndUsesWithNoParents() {
         ModuleFinder empty = ModuleFinder.of();
-        Configuration.resolveRequiresAndUses(empty, List.of(), empty, Set.of());
+        Configuration.resolveAndBind(empty, List.of(), empty, Set.of());
     }
 
 
@@ -1938,72 +1938,72 @@ public class ConfigurationTest {
 
     @Test(expectedExceptions = { NullPointerException.class })
     public void testResolveRequiresWithNull1() {
-        resolveRequires((ModuleFinder)null, ModuleFinder.of());
+        resolve((ModuleFinder)null, ModuleFinder.of());
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
     public void testResolveRequiresWithNull2() {
-        resolveRequires(ModuleFinder.of(), (ModuleFinder)null);
+        resolve(ModuleFinder.of(), (ModuleFinder)null);
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
     public void testResolveRequiresWithNull3() {
         Configuration empty = Configuration.empty();
-        Configuration.resolveRequires(null, List.of(empty),  ModuleFinder.of(), Set.of());
+        Configuration.resolve(null, List.of(empty),  ModuleFinder.of(), Set.of());
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
     public void testResolveRequiresWithNull4() {
         ModuleFinder empty = ModuleFinder.of();
-        Configuration.resolveRequires(empty, null, empty, Set.of());
+        Configuration.resolve(empty, null, empty, Set.of());
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
     public void testResolveRequiresWithNull5() {
         Configuration cf = Layer.boot().configuration();
-        Configuration.resolveRequires(ModuleFinder.of(), List.of(cf), null, Set.of());
+        Configuration.resolve(ModuleFinder.of(), List.of(cf), null, Set.of());
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
     public void testResolveRequiresWithNull6() {
         ModuleFinder empty = ModuleFinder.of();
         Configuration cf = Layer.boot().configuration();
-        Configuration.resolveRequires(empty, List.of(cf), empty, null);
+        Configuration.resolve(empty, List.of(cf), empty, null);
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
     public void testResolveRequiresAndUsesWithNull1() {
-        resolveRequiresAndUses((ModuleFinder) null, ModuleFinder.of());
+        resolveAndBind((ModuleFinder) null, ModuleFinder.of());
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
     public void testResolveRequiresAndUsesWithNull2() {
-        resolveRequiresAndUses(ModuleFinder.of(), (ModuleFinder) null);
+        resolveAndBind(ModuleFinder.of(), (ModuleFinder) null);
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
     public void testResolveRequiresAndUsesWithNull3() {
         Configuration empty = Configuration.empty();
-        Configuration.resolveRequiresAndUses(null, List.of(empty), ModuleFinder.of(), Set.of());
+        Configuration.resolveAndBind(null, List.of(empty), ModuleFinder.of(), Set.of());
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
     public void testResolveRequiresAndUsesWithNull4() {
         ModuleFinder empty = ModuleFinder.of();
-        Configuration.resolveRequiresAndUses(empty, null, empty, Set.of());
+        Configuration.resolveAndBind(empty, null, empty, Set.of());
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
     public void testResolveRequiresAndUsesWithNull5() {
         Configuration cf = Layer.boot().configuration();
-        Configuration.resolveRequiresAndUses(ModuleFinder.of(), List.of(cf), null, Set.of());
+        Configuration.resolveAndBind(ModuleFinder.of(), List.of(cf), null, Set.of());
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
     public void testResolveRequiresAndUsesWithNull6() {
         ModuleFinder empty = ModuleFinder.of();
         Configuration cf = Layer.boot().configuration();
-        Configuration.resolveRequiresAndUses(empty, List.of(cf), empty, null);
+        Configuration.resolveAndBind(empty, List.of(cf), empty, null);
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
@@ -2029,58 +2029,58 @@ public class ConfigurationTest {
 
 
     /**
-     * Invokes parent.resolveRequires(...)
+     * Invokes parent.resolve(...)
      */
-    private Configuration resolveRequires(Configuration parent,
-                                          ModuleFinder before,
-                                          ModuleFinder after,
-                                          String... roots) {
-        return parent.resolveRequires(before, after, Set.of(roots));
+    private Configuration resolve(Configuration parent,
+                                  ModuleFinder before,
+                                  ModuleFinder after,
+                                  String... roots) {
+        return parent.resolve(before, after, Set.of(roots));
     }
 
-    private Configuration resolveRequires(Configuration parent,
-                                          ModuleFinder before,
-                                          String... roots) {
-        return resolveRequires(parent, before, ModuleFinder.of(), roots);
+    private Configuration resolve(Configuration parent,
+                                  ModuleFinder before,
+                                  String... roots) {
+        return resolve(parent, before, ModuleFinder.of(), roots);
     }
 
-    private Configuration resolveRequires(ModuleFinder before,
-                                          ModuleFinder after,
-                                          String... roots) {
-        return resolveRequires(Configuration.empty(), before, after, roots);
+    private Configuration resolve(ModuleFinder before,
+                                  ModuleFinder after,
+                                  String... roots) {
+        return resolve(Configuration.empty(), before, after, roots);
     }
 
-    private Configuration resolveRequires(ModuleFinder before,
-                                          String... roots) {
-        return resolveRequires(Configuration.empty(), before, roots);
+    private Configuration resolve(ModuleFinder before,
+                                  String... roots) {
+        return resolve(Configuration.empty(), before, roots);
     }
 
 
     /**
-     * Invokes parent.resolveRequiresAndUses(...)
+     * Invokes parent.resolveAndBind(...)
      */
-    private Configuration resolveRequiresAndUses(Configuration parent,
-                                                 ModuleFinder before,
-                                                 ModuleFinder after,
-                                                 String... roots) {
-        return parent.resolveRequiresAndUses(before, after, Set.of(roots));
+    private Configuration resolveAndBind(Configuration parent,
+                                         ModuleFinder before,
+                                         ModuleFinder after,
+                                         String... roots) {
+        return parent.resolveAndBind(before, after, Set.of(roots));
     }
 
-    private Configuration resolveRequiresAndUses(Configuration parent,
-                                                 ModuleFinder before,
-                                                 String... roots) {
-        return resolveRequiresAndUses(parent, before, ModuleFinder.of(), roots);
+    private Configuration resolveAndBind(Configuration parent,
+                                         ModuleFinder before,
+                                         String... roots) {
+        return resolveAndBind(parent, before, ModuleFinder.of(), roots);
     }
 
-    private Configuration resolveRequiresAndUses(ModuleFinder before,
-                                                 ModuleFinder after,
-                                                 String... roots) {
-        return resolveRequiresAndUses(Configuration.empty(), before, after, roots);
+    private Configuration resolveAndBind(ModuleFinder before,
+                                         ModuleFinder after,
+                                         String... roots) {
+        return resolveAndBind(Configuration.empty(), before, after, roots);
     }
 
-    private Configuration resolveRequiresAndUses(ModuleFinder before,
-                                                 String... roots) {
-        return resolveRequiresAndUses(Configuration.empty(), before, roots);
+    private Configuration resolveAndBind(ModuleFinder before,
+                                         String... roots) {
+        return resolveAndBind(Configuration.empty(), before, roots);
     }
 
 

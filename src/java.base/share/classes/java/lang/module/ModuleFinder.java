@@ -124,8 +124,8 @@ public interface ModuleFinder {
      * to find that module. </p>
      *
      * @apiNote This is important to have for methods such as {@link
-     * Configuration#resolveRequiresAndUses resolveRequiresAndUses} that need
-     * to scan the module path to find modules that provide a specific service.
+     * Configuration#resolveAndBind resolveAndBind} that need to scan the
+     * module path to find modules that provide a specific service.
      *
      * @return The set of all module references that this finder locates
      *

@@ -2502,12 +2502,12 @@ public class ModuleDescriptor
                 }
 
                 @Override
-                public Configuration resolveRequiresAndUses(ModuleFinder finder,
-                                                            Collection<String> roots,
-                                                            boolean check,
-                                                            PrintStream traceOutput)
+                public Configuration resolveAndBind(ModuleFinder finder,
+                                                    Collection<String> roots,
+                                                    boolean check,
+                                                    PrintStream traceOutput)
                 {
-                    return Configuration.resolveRequiresAndUses(finder, roots, check, traceOutput);
+                    return Configuration.resolveAndBind(finder, roots, check, traceOutput);
                 }
             });
     }

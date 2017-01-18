@@ -279,10 +279,10 @@ public final class ModuleBootstrap {
 
         // run the resolver to create the configuration
         Configuration cf = SharedSecrets.getJavaLangModuleAccess()
-                .resolveRequiresAndUses(finder,
-                                        roots,
-                                        needPostResolutionChecks,
-                                        traceOutput);
+                .resolveAndBind(finder,
+                                roots,
+                                needPostResolutionChecks,
+                                traceOutput);
 
         // time to create configuration
         PerfCounters.resolveTime.addElapsedTimeFrom(t3);
@@ -384,10 +384,9 @@ public final class ModuleBootstrap {
                                             Set<String> otherMods)
     {
         // resolve all root modules
-        Configuration cf = Configuration.empty()
-                .resolveRequires(finder,
-                                 ModuleFinder.of(),
-                                 roots);
+        Configuration cf = Configuration.empty().resolve(finder,
+                                                         ModuleFinder.of(),
+                                                         roots);
 
         // module name -> reference
         Map<String, ModuleReference> map = new HashMap<>();
