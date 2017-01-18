@@ -105,20 +105,20 @@ public class JdepsConfiguration implements AutoCloseable {
         // build root set for resolution
         Set<String> mods = new HashSet<>(roots);
 
-        // add default modules to the root set
-        // unnamed module
-        if (!initialArchives.isEmpty() || !classpaths.isEmpty() ||
-                roots.isEmpty() || allDefaultModules) {
-            mods.addAll(systemModulePath.defaultSystemRoots());
-        }
-        if (allSystemModules) {
+        // add all system modules to the root set for unnamed module or set explicitly
+        boolean unnamed = !initialArchives.isEmpty() || !classpaths.isEmpty();
+        if (allSystemModules || (unnamed && !allDefaultModules)) {
             systemModulePath.findAll().stream()
                 .map(mref -> mref.descriptor().name())
                 .forEach(mods::add);
         }
 
+        if (allDefaultModules) {
+            mods.addAll(systemModulePath.defaultSystemRoots());
+        }
+
         this.configuration = Configuration.empty()
-                .resolveRequires(finder, ModuleFinder.of(), mods);
+                .resolve(finder, ModuleFinder.of(), mods);
 
         this.configuration.modules().stream()
                 .map(ResolvedModule::reference)
@@ -272,7 +272,7 @@ public class JdepsConfiguration implements AutoCloseable {
             return nameToModule.values().stream();
         } else {
             return Configuration.empty()
-                    .resolveRequires(finder, ModuleFinder.of(), roots)
+                    .resolve(finder, ModuleFinder.of(), roots)
                     .modules().stream()
                     .map(ResolvedModule::name)
                     .map(nameToModule::get);
@@ -422,18 +422,13 @@ public class JdepsConfiguration implements AutoCloseable {
         }
 
         private ModuleDescriptor dropHashes(ModuleDescriptor md) {
-            ModuleDescriptor.Builder builder = ModuleDescriptor.module(md.name());
+            ModuleDescriptor.Builder builder = ModuleDescriptor.newModule(md.name());
             md.requires().forEach(builder::requires);
             md.exports().forEach(builder::exports);
             md.opens().forEach(builder::opens);
             md.provides().stream().forEach(builder::provides);
             md.uses().stream().forEach(builder::uses);
-
-            Set<String> concealed = new HashSet<>(md.packages());
-            md.exports().stream().map(Exports::source).forEach(concealed::remove);
-            md.opens().stream().map(Opens::source).forEach(concealed::remove);
-            concealed.forEach(builder::contains);
-
+            builder.packages(md.packages());
             return builder.build();
         }
 
@@ -502,6 +497,7 @@ public class JdepsConfiguration implements AutoCloseable {
         boolean addAllApplicationModules;
         boolean addAllDefaultModules;
         boolean addAllSystemModules;
+        boolean allModules;
         Runtime.Version version;
 
         public Builder() {
@@ -550,8 +546,7 @@ public class JdepsConfiguration implements AutoCloseable {
          * Include all system modules and modules found on modulepath
          */
         public Builder allModules() {
-            this.addAllSystemModules = true;
-            this.addAllApplicationModules = true;
+            this.allModules = true;
             return this;
         }
 
@@ -592,8 +587,19 @@ public class JdepsConfiguration implements AutoCloseable {
                         .map(mref -> mref.descriptor().name())
                         .forEach(rootModules::add);
             }
-            if (addAllApplicationModules && appModulePath != null) {
+
+            if ((addAllApplicationModules || allModules) && appModulePath != null) {
                 appModulePath.findAll().stream()
+                    .map(mref -> mref.descriptor().name())
+                    .forEach(rootModules::add);
+            }
+
+            // no archive is specified for analysis
+            // add all system modules as root if --add-modules ALL-SYSTEM is specified
+            if (addAllSystemModules && rootModules.isEmpty() &&
+                    initialArchives.isEmpty() && classPaths.isEmpty()) {
+                systemModulePath.findAll()
+                    .stream()
                     .map(mref -> mref.descriptor().name())
                     .forEach(rootModules::add);
             }
@@ -604,7 +610,7 @@ public class JdepsConfiguration implements AutoCloseable {
                                           classPaths,
                                           initialArchives,
                                           addAllDefaultModules,
-                                          addAllSystemModules,
+                                          allModules,
                                           version);
         }
 
