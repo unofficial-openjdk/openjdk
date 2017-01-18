@@ -48,15 +48,14 @@ public final class ResourceHelper {
     /**
      * Returns true if the resource is a <em>simple resource</em> that can
      * never be encapsulated. Resources ending in "{@code .class}" or where
-     * the package name is not a Java identifier are resources that can
-     * never be encapsulated.
+     * the package name is not a legal package name can not be encapsulated.
      */
     public static boolean isSimpleResource(String name) {
         int len = name.length();
         if (len > 6 && name.endsWith(".class")) {
             return true;
         }
-        if (!Checks.isJavaIdentifier(getPackageName(name))) {
+        if (!Checks.isPackageName(getPackageName(name))) {
             return true;
         }
         return false;

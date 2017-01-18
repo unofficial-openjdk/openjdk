@@ -858,7 +858,7 @@ class Main {
 
         String pn = toPackageName(name);
         // add if this is a class or resource in a package
-        if (Checks.isJavaIdentifier(pn)) {
+        if (Checks.isPackageName(pn)) {
             packages.add(pn);
             return true;
         }
@@ -2283,7 +2283,7 @@ class Main {
             Configuration config = null;
             try {
                 config = Configuration.empty()
-                    .resolveRequires(ModuleFinder.ofSystem(), finder, modules);
+                    .resolve(ModuleFinder.ofSystem(), finder, modules);
             } catch (ResolutionException e) {
                 // should it throw an error?  or emit a warning
                 System.out.println("warning: " + e.getMessage());

@@ -55,7 +55,6 @@ import jdk.internal.loader.BootLoader;
 import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.perf.PerfCounter;
-import jdk.internal.reflect.Reflection;
 
 /**
  * Initializes/boots the module system.
@@ -280,10 +279,10 @@ public final class ModuleBootstrap {
 
         // run the resolver to create the configuration
         Configuration cf = SharedSecrets.getJavaLangModuleAccess()
-                .resolveRequiresAndUses(finder,
-                                        roots,
-                                        needPostResolutionChecks,
-                                        traceOutput);
+                .resolveAndBind(finder,
+                                roots,
+                                needPostResolutionChecks,
+                                traceOutput);
 
         // time to create configuration
         PerfCounters.resolveTime.addElapsedTimeFrom(t3);
@@ -323,20 +322,20 @@ public final class ModuleBootstrap {
         // if needed check that there are no split packages in the set of
         // resolved modules for the boot layer
         if (SystemModules.hasSplitPackages() || needPostResolutionChecks) {
-                Map<String, String> packageToModule = new HashMap<>();
-                for (ResolvedModule resolvedModule : cf.modules()) {
-                    ModuleDescriptor descriptor =
-                        resolvedModule.reference().descriptor();
-                    String name = descriptor.name();
-                    for (String p : descriptor.packages()) {
-                        String other = packageToModule.putIfAbsent(p, name);
-                        if (other != null) {
-                            fail("Package " + p + " in both module "
-                                 + name + " and module " + other);
-                        }
+            Map<String, String> packageToModule = new HashMap<>();
+            for (ResolvedModule resolvedModule : cf.modules()) {
+                ModuleDescriptor descriptor =
+                    resolvedModule.reference().descriptor();
+                String name = descriptor.name();
+                for (String p : descriptor.packages()) {
+                    String other = packageToModule.putIfAbsent(p, name);
+                    if (other != null) {
+                        fail("Package " + p + " in both module "
+                             + name + " and module " + other);
                     }
                 }
             }
+        }
 
         long t4 = System.nanoTime();
 
@@ -385,10 +384,9 @@ public final class ModuleBootstrap {
                                             Set<String> otherMods)
     {
         // resolve all root modules
-        Configuration cf = Configuration.empty()
-                .resolveRequires(finder,
-                                 ModuleFinder.of(),
-                                 roots);
+        Configuration cf = Configuration.empty().resolve(finder,
+                                                         ModuleFinder.of(),
+                                                         roots);
 
         // module name -> reference
         Map<String, ModuleReference> map = new HashMap<>();
@@ -555,7 +553,6 @@ public final class ModuleBootstrap {
             } catch (IOException ioe) {
                 throw new UncheckedIOException(ioe);
             }
-            Reflection.enableStackTraces();
         }
     }
 

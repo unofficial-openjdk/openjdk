@@ -149,8 +149,8 @@ import java.util.stream.Stream;
  *
  * <h3> Example </h3>
  *
- * <p> The following example uses the {@code resolveRequires} method to resolve
- * a module named <em>myapp</em> with the configuration for the boot layer as
+ * <p> The following example uses the {@code resolve} method to resolve a
+ * module named <em>myapp</em> with the configuration for the boot layer as
  * the parent configuration. It prints the name of each resolved module and
  * the names of the modules that each module reads. </p>
  *
@@ -159,9 +159,7 @@ import java.util.stream.Stream;
  *
  *    Configuration parent = Layer.boot().configuration();
  *
- *    Configuration cf = parent.resolveRequires(finder,
- *                                              ModuleFinder.of(),
- *                                              Set.of("myapp"));
+ *    Configuration cf = parent.resolve(finder, ModuleFinder.of(), Set.of("myapp"));
  *    cf.modules().forEach(m -> {
  *        System.out.format("%s -> %s%n",
  *            m.name(),
@@ -221,12 +219,12 @@ public final class Configuration {
      * Resolves a collection of root modules, with this configuration as its
      * parent, to create a new configuration. This method works exactly as
      * specified by the static {@link
-     * #resolveRequires(ModuleFinder,List,ModuleFinder,Collection) resolveRequires}
+     * #resolve(ModuleFinder,List,ModuleFinder,Collection) resolve}
      * method when invoked with this configuration as the parent. In other words,
      * if this configuration is {@code cf} then this method is equivalent to
      * invoking:
      * <pre> {@code
-     *     Configuration.resolveRequires(before, List.of(cf), after, roots);
+     *     Configuration.resolve(before, List.of(cf), after, roots);
      * }</pre>
      *
      * @param  before
@@ -247,11 +245,11 @@ public final class Configuration {
      * @throws SecurityException
      *         If locating a module is denied by the security manager
      */
-    public Configuration resolveRequires(ModuleFinder before,
-                                         ModuleFinder after,
-                                         Collection<String> roots)
+    public Configuration resolve(ModuleFinder before,
+                                 ModuleFinder after,
+                                 Collection<String> roots)
     {
-        return resolveRequires(before, List.of(this), after, roots);
+        return resolve(before, List.of(this), after, roots);
     }
 
 
@@ -259,12 +257,12 @@ public final class Configuration {
      * Resolves a collection of root modules, with service binding, and with
      * this configuration as its parent, to create a new configuration.
      * This method works exactly as specified by the static {@link
-     * #resolveRequiresAndUses(ModuleFinder,List,ModuleFinder,Collection)
-     * resolveRequiresAndUses} method when invoked with this configuration
+     * #resolveAndBind(ModuleFinder,List,ModuleFinder,Collection)
+     * resolveAndBind} method when invoked with this configuration
      * as the parent. In other words, if this configuration is {@code cf} then
      * this method is equivalent to invoking:
      * <pre> {@code
-     *     Configuration.resolveRequiresAndUses(before, List.of(cf), after, roots);
+     *     Configuration.resolveAndBind(before, List.of(cf), after, roots);
      * }</pre>
      *
      *
@@ -278,19 +276,19 @@ public final class Configuration {
      *         The possibly-empty collection of module names of the modules
      *         to resolve
      *
-     * @return The configuration that is the result of resolving the given
-     *         root modules
+     * @return The configuration that is the result of resolving, with service
+     *         binding, the given root modules
      *
      * @throws ResolutionException
      *         If resolution or the post-resolution checks fail
      * @throws SecurityException
      *         If locating a module is denied by the security manager
      */
-    public Configuration resolveRequiresAndUses(ModuleFinder before,
-                                                ModuleFinder after,
-                                                Collection<String> roots)
+    public Configuration resolveAndBind(ModuleFinder before,
+                                        ModuleFinder after,
+                                        Collection<String> roots)
     {
-        return resolveRequiresAndUses(before, List.of(this), after, roots);
+        return resolveAndBind(before, List.of(this), after, roots);
     }
 
 
@@ -301,14 +299,14 @@ public final class Configuration {
      *
      * This method is used to create the configuration for the boot layer.
      */
-    static Configuration resolveRequiresAndUses(ModuleFinder finder,
-                                                Collection<String> roots,
-                                                boolean check,
-                                                PrintStream traceOutput)
+    static Configuration resolveAndBind(ModuleFinder finder,
+                                        Collection<String> roots,
+                                        boolean check,
+                                        PrintStream traceOutput)
     {
         List<Configuration> parents = List.of(empty());
         Resolver resolver = new Resolver(finder, parents, ModuleFinder.of(), traceOutput);
-        resolver.resolveRequires(roots).resolveUses();
+        resolver.resolve(roots).bind();
 
         return new Configuration(parents, resolver, check);
     }
@@ -356,20 +354,16 @@ public final class Configuration {
      *     module {@code M} nor exported to {@code M} by any module that
      *     {@code M} reads. </p></li>
      *
-     *     <li><p> A module {@code M} declares that it
-     *     "{@code provides ... with q.T}" but package {@code q} is not in
-     *     module {@code M}. </p></li>
-     *
      *     <li><p> Two or more modules in the configuration are specific to
      *     different {@link ModuleDescriptor#osName() operating systems},
      *     {@link ModuleDescriptor#osArch() architectures}, or {@link
      *     ModuleDescriptor#osVersion() versions}. </p></li>
      *
-     *     <li><p> Other implementation specific checks, for example referential
-     *     integrity checks to ensure that different versions of tighly coupled
-     *     modules cannot be combined in the same configuration. </p></li>
-     *
      * </ul>
+     *
+     * @implNote In the implementation then observability of modules may depend
+     * on referential integrity checks that ensure that different versions of
+     * tightly coupled modules cannot be combined in the same configuration.
      *
      * @param  before
      *         The <em>before</em> module finder to find modules
@@ -393,10 +387,10 @@ public final class Configuration {
      * @throws SecurityException
      *         If locating a module is denied by the security manager
      */
-    public static Configuration resolveRequires(ModuleFinder before,
-                                                List<Configuration> parents,
-                                                ModuleFinder after,
-                                                Collection<String> roots)
+    public static Configuration resolve(ModuleFinder before,
+                                        List<Configuration> parents,
+                                        ModuleFinder after,
+                                        Collection<String> roots)
     {
         Objects.requireNonNull(before);
         Objects.requireNonNull(after);
@@ -407,7 +401,7 @@ public final class Configuration {
             throw new IllegalArgumentException("'parents' is empty");
 
         Resolver resolver = new Resolver(before, parentList, after, null);
-        resolver.resolveRequires(roots);
+        resolver.resolve(roots);
 
         return new Configuration(parentList, resolver, true);
     }
@@ -417,24 +411,24 @@ public final class Configuration {
      * configuration.
      *
      * <p> This method works exactly as specified by {@link
-     * #resolveRequires(ModuleFinder,List,ModuleFinder,Collection)
-     * resolveRequires} except that the graph of resolved modules is augmented
+     * #resolve(ModuleFinder,List,ModuleFinder,Collection)
+     * resolve} except that the graph of resolved modules is augmented
      * with modules induced by the service-use dependence relation. </p>
      *
      * <p> More specifically, the root modules are resolved as if by calling
-     * {@code resolveRequires}. The resolved modules, and all modules in the
+     * {@code resolve}. The resolved modules, and all modules in the
      * parent configurations, with {@link ModuleDescriptor#uses() service
      * dependences} are then examined. All modules found by the given module
      * finders that {@link ModuleDescriptor#provides() provide} an
      * implementation of one or more of the service types are added to the
      * module graph and then resolved as if by calling the {@code
-     * resolveRequires} method. Adding modules to the module graph may
-     * introduce new service-use dependences and so the process works
-     * iteratively until no more modules are added. </p>
+     * resolve} method. Adding modules to the module graph may introduce new
+     * service-use dependences and so the process works iteratively until no
+     * more modules are added. </p>
      *
      * <p> As service binding involves resolution then it may fail with {@link
      * ResolutionException} for exactly the same reasons specified in
-     * {@code resolveRequires}.  </p>
+     * {@code resolve}.  </p>
      *
      * @param  before
      *         The <em>before</em> module finder to find modules
@@ -448,8 +442,8 @@ public final class Configuration {
      *         The possibly-empty collection of module names of the modules
      *         to resolve
      *
-     * @return The configuration that is the result of resolving the given
-     *         root modules
+     * @return The configuration that is the result of resolving, with service
+     *         binding, the given root modules
      *
      * @throws ResolutionException
      *         If resolution or the post-resolution checks fail
@@ -458,10 +452,10 @@ public final class Configuration {
      * @throws SecurityException
      *         If locating a module is denied by the security manager
      */
-    public static Configuration resolveRequiresAndUses(ModuleFinder before,
-                                                       List<Configuration> parents,
-                                                       ModuleFinder after,
-                                                       Collection<String> roots)
+    public static Configuration resolveAndBind(ModuleFinder before,
+                                               List<Configuration> parents,
+                                               ModuleFinder after,
+                                               Collection<String> roots)
     {
         Objects.requireNonNull(before);
         Objects.requireNonNull(after);
@@ -472,7 +466,7 @@ public final class Configuration {
             throw new IllegalArgumentException("'parents' is empty");
 
         Resolver resolver = new Resolver(before, parentList, after, null);
-        resolver.resolveRequires(roots).resolveUses();
+        resolver.resolve(roots).bind();
 
         return new Configuration(parentList, resolver, true);
     }

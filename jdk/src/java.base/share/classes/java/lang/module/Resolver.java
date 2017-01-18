@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,8 +49,8 @@ import jdk.internal.module.ModuleHashes;
 import jdk.internal.module.ModuleReferenceImpl;
 
 /**
- * The resolver used by {@link Configuration#resolveRequires} and
- * {@link Configuration#resolveRequiresAndUses}.
+ * The resolver used by {@link Configuration#resolve} and {@link
+ * Configuration#resolveAndBind}.
  *
  * @implNote The resolver is used at VM startup and so deliberately avoids
  * using lambda and stream usages in code paths used during startup.
@@ -83,7 +83,7 @@ final class Resolver {
      *
      * @throws ResolutionException
      */
-    Resolver resolveRequires(Collection<String> roots) {
+    Resolver resolve(Collection<String> roots) {
 
         // create the visit stack to get us started
         Deque<ModuleDescriptor> q = new ArrayDeque<>();
@@ -181,7 +181,7 @@ final class Resolver {
      * Augments the set of resolved modules with modules induced by the
      * service-use relation.
      */
-    Resolver resolveUses() {
+    Resolver bind() {
 
         // Scan the finders for all available service provider modules. As
         // java.base uses services then then module finders will be scanned
@@ -319,8 +319,7 @@ final class Resolver {
         if (!visited.contains(descriptor)) {
             boolean added = visitPath.add(descriptor);
             if (!added) {
-                throw new ResolutionException("Cycle detected: " +
-                        cycleAsString(descriptor));
+                fail("Cycle detected: %s", cycleAsString(descriptor));
             }
             for (ModuleDescriptor.Requires requires : descriptor.requires()) {
                 String dn = requires.name();
@@ -694,37 +693,38 @@ final class Resolver {
             for (ResolvedModule endpoint : reads) {
                 ModuleDescriptor descriptor2 = endpoint.descriptor();
 
-                for (ModuleDescriptor.Exports export : descriptor2.exports()) {
+                if (descriptor2.isAutomatic()) {
+                    // automatic modules read self and export all packages
+                    if (descriptor2 != descriptor1){
+                        for (String source : descriptor2.packages()) {
+                            ModuleDescriptor supplier
+                                = packageToExporter.putIfAbsent(source, descriptor2);
 
-                    if (export.isQualified()) {
-                        if (!export.targets().contains(descriptor1.name()))
-                            continue;
-                    }
-
-                    // source is exported to descriptor2
-                    String source = export.source();
-                    ModuleDescriptor other
-                        = packageToExporter.putIfAbsent(source, descriptor2);
-
-                    if (other != null && other != descriptor2) {
-                        // package might be local to descriptor1
-                        if (other == descriptor1) {
-                            fail("Module %s contains package %s"
-                                 + ", module %s exports package %s to %s",
-                                    descriptor1.name(),
-                                    source,
-                                    descriptor2.name(),
-                                    source,
-                                    descriptor1.name());
-                        } else {
-                            fail("Modules %s and %s export package %s to module %s",
-                                    descriptor2.name(),
-                                    other.name(),
-                                    source,
-                                    descriptor1.name());
+                            // descriptor2 and 'supplier' export source to descriptor1
+                            if (supplier != null) {
+                                failTwoSuppliers(descriptor1, source, descriptor2, supplier);
+                            }
                         }
 
                     }
+                } else {
+                    for (ModuleDescriptor.Exports export : descriptor2.exports()) {
+                        if (export.isQualified()) {
+                            if (!export.targets().contains(descriptor1.name()))
+                                continue;
+                        }
+
+                        // source is exported by descriptor2
+                        String source = export.source();
+                        ModuleDescriptor supplier
+                            = packageToExporter.putIfAbsent(source, descriptor2);
+
+                        // descriptor2 and 'supplier' export source to descriptor1
+                        if (supplier != null) {
+                            failTwoSuppliers(descriptor1, source, descriptor2, supplier);
+                        }
+                    }
+
                 }
             }
 
@@ -747,13 +747,6 @@ final class Resolver {
                         fail("Module %s does not read a module that exports %s",
                              descriptor1.name(), pn);
                     }
-
-                    for (String provider : provides.providers()) {
-                        if (!packages.contains(packageName(provider))) {
-                            fail("Provider %s not in module %s",
-                                 provider, descriptor1.name());
-                        }
-                    }
                 }
 
             }
@@ -761,6 +754,42 @@ final class Resolver {
         }
 
     }
+
+    /**
+     * Fail because a module in the configuration exports the same package to
+     * a module that reads both. This includes the case where a module M
+     * containing a package p reads another module that exports p to at least
+     * module M.
+     */
+    private void failTwoSuppliers(ModuleDescriptor descriptor,
+                                  String source,
+                                  ModuleDescriptor supplier1,
+                                  ModuleDescriptor supplier2) {
+
+        if (supplier2 == descriptor) {
+            ModuleDescriptor tmp = supplier1;
+            supplier1 = supplier2;
+            supplier2 = tmp;
+        }
+
+        if (supplier1 == descriptor) {
+            fail("Module %s contains package %s"
+                  + ", module %s exports package %s to %s",
+                    descriptor.name(),
+                    source,
+                    supplier2.name(),
+                    source,
+                    descriptor.name());
+        } else {
+            fail("Modules %s and %s export package %s to module %s",
+                    supplier1.name(),
+                    supplier2.name(),
+                    source,
+                    descriptor.name());
+        }
+
+    }
+
 
     /**
      * Find a module of the given name in the parent configurations

@@ -115,8 +115,7 @@ import sun.security.util.SecurityConstants;
  *
  *     Layer parent = Layer.boot();
  *
- *     Configuration cf = parent.configuration()
- *         .resolveRequires(finder, ModuleFinder.of(), Set.of("myapp"));
+ *     Configuration cf = parent.configuration().resolve(finder, ModuleFinder.of(), Set.of("myapp"));
  *
  *     ClassLoader scl = ClassLoader.getSystemClassLoader();
  *
@@ -167,6 +166,10 @@ public final class Layer {
      * Controls a layer. The static methods defined by {@link Layer} to create
      * module layers return a {@code Controller} that can be used to control
      * modules in the layer.
+     *
+     * <p> Unless otherwise specified, passing a {@code null} argument to a
+     * method in this class causes a {@link NullPointerException
+     * NullPointerException} to be thrown. </p>
      *
      * @apiNote Care should be taken with {@code Controller} objects, they
      * should never be shared with untrusted code.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -124,8 +124,8 @@ public interface ModuleFinder {
      * to find that module. </p>
      *
      * @apiNote This is important to have for methods such as {@link
-     * Configuration#resolveRequiresAndUses resolveRequiresAndUses} that need
-     * to scan the module path to find modules that provide a specific service.
+     * Configuration#resolveAndBind resolveAndBind} that need to scan the
+     * module path to find modules that provide a specific service.
      *
      * @return The set of all module references that this finder locates
      *
@@ -198,13 +198,9 @@ public interface ModuleFinder {
      *
      * <p> If an element is a path to a directory of modules then each entry in
      * the directory is a packaged module or the top-level directory of an
-     * exploded module. The module finder's {@link #find(String) find} or
-     * {@link #findAll() findAll} methods throw {@link FindException} if a
-     * directory containing more than one module with the same name is
-     * encountered. </p>
-     *
-     * <p> If an element in the array is a path to a directory, and that
-     * directory contains a file named {@code module-info.class}, then the
+     * exploded module. It it an error if a directory contains more than one
+     * module with the same name. If an element is a path to a directory, and
+     * that directory contains a file named {@code module-info.class}, then the
      * directory is treated as an exploded module rather than a directory of
      * modules. </p>
      *
@@ -214,9 +210,8 @@ public interface ModuleFinder {
      * entry in a {@link java.util.jar.JarFile#isMultiRelease() multi-release}
      * JAR file) is a modular JAR and is an <em>explicit module</em>.
      * A JAR file that does not have a {@code module-info.class} in the
-     * top-level directory is an {@link ModuleDescriptor#isAutomatic automatic}
-     * module. The {@link ModuleDescriptor} for an automatic module is created as
-     * follows:
+     * top-level directory is created as an automatic module. The components
+     * for the automatic module are derived as follows:
      *
      * <ul>
      *
@@ -248,39 +243,39 @@ public interface ModuleFinder {
      *
      *     </ul></li>
      *
-     *     <li><p> It {@link ModuleDescriptor#requires() requires} {@code
-     *     java.base}. </p></li>
-     *
-     *     <li><p> The set of packages in the module is derived from the names
-     *     of non-directory entries in the JAR file. A candidate package name
-     *     is derived from an entry using the characters up to, but not
-     *     including, the last forward slash. All remaining forward slashes are
-     *     replaced with dot ({@code "."}). If the resulting string is a valid
-     *     Java identifier then it is assumed to be a package name. For example,
-     *     if the JAR file contains an entry "{@code p/q/Foo.class}" then the
-     *     package name derived is "{@code p.q}". All packages are {@link
-     *     ModuleDescriptor#exports() exported}. </p></li>
+     *     <li><p> The set of packages in the module is derived from the
+     *     non-directory entries in the JAR file that have names ending in
+     *     "{@code .class}". A candidate package name is derived from the name
+     *     using the characters up to, but not including, the last forward slash.
+     *     All remaining forward slashes are replaced with dot ({@code "."}). If
+     *     the resulting string is a legal package name then it is assumed to be
+     *     a package name. For example, if the JAR file contains the entry
+     *     "{@code p/q/Foo.class}" then the package name derived is
+     *     "{@code p.q}".</p></li>
      *
      *     <li><p> The contents of entries starting with {@code
      *     META-INF/services/} are assumed to be service configuration files
      *     (see {@link java.util.ServiceLoader}). If the name of a file
-     *     (that follows {@code META-INF/services/}) is a legal Java identifier
-     *     then it is assumed to be the fully-qualified binary name of a
-     *     service type. The entries in the file are assumed to be the
-     *     fully-qualified binary names of provider classes. </p></li>
+     *     (that follows {@code META-INF/services/}) is a legal class name
+     *     then it is assumed to be the fully-qualified class name of a service
+     *     type. The entries in the file are assumed to be the fully-qualified
+     *     class names of provider classes. </p></li>
      *
      *     <li><p> If the JAR file has a {@code Main-Class} attribute in its
-     *     main manifest then its value is the {@link
+     *     main manifest then its value is the module {@link
      *     ModuleDescriptor#mainClass() main class}. </p></li>
      *
      * </ul>
      *
      * <p> If a {@code ModuleDescriptor} cannot be created (by means of the
      * {@link ModuleDescriptor.Builder ModuleDescriptor.Builder} API) for an
-     * automatic module then {@code FindException} is thrown. This can arise,
-     * for example, when a legal Java identifier name cannot be derived from
-     * the file name of the JAR file or where the JAR file contains a {@code
-     * .class} in the top-level directory of the JAR file. </p>
+     * automatic module then {@code FindException} is thrown. This can arise
+     * when a legal module name cannot be derived from the file name of the JAR
+     * file, where the JAR file contains a {@code .class} in the top-level
+     * directory of the JAR file, where an entry in a service configuration
+     * file is not a legal class name or its package name is not in the set of
+     * packages derived for the module, or where the module main class is not
+     * a legal class name or its package is not in the module. </p>
      *
      * <p> In addition to JAR files, an implementation may also support modules
      * that are packaged in other implementation specific module formats. When

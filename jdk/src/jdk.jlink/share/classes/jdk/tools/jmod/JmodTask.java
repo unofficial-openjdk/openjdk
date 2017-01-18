@@ -74,6 +74,7 @@ import java.util.MissingResourceException;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -497,6 +498,7 @@ public class JmodTask {
 
                 // Add (or replace) the Packages attribute
                 if (packages != null) {
+                    validatePackages(descriptor, packages);
                     extender.packages(packages);
                 }
 
@@ -527,6 +529,24 @@ public class JmodTask {
 
                 // write the (possibly extended or modified) module-info.class
                 out.writeEntry(extender.toByteArray(), Section.CLASSES, MODULE_INFO);
+            }
+        }
+
+        private void validatePackages(ModuleDescriptor descriptor, Set<String> packages) {
+            Set<String> nonExistPackages = new TreeSet<>();
+            descriptor.exports().stream()
+                .map(Exports::source)
+                .filter(pn -> !packages.contains(pn))
+                .forEach(nonExistPackages::add);
+
+            descriptor.opens().stream()
+                .map(Opens::source)
+                .filter(pn -> !packages.contains(pn))
+                .forEach(nonExistPackages::add);
+
+            if (!nonExistPackages.isEmpty()) {
+                throw new CommandException("err.missing.export.or.open.packages",
+                    descriptor.name(), nonExistPackages);
             }
         }
 
@@ -791,7 +811,7 @@ public class JmodTask {
             Configuration config = null;
             try {
                 config = Configuration.empty()
-                    .resolveRequires(ModuleFinder.ofSystem(), moduleFinder, modules);
+                    .resolve(ModuleFinder.ofSystem(), moduleFinder, modules);
             } catch (ResolutionException e) {
                 warning("warn.module.resolution.fail", e.getMessage());
             }

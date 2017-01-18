@@ -378,12 +378,6 @@ public class Reflection {
         }
     }
 
-    public static void enableStackTraces() {
-        printStackWhenAccessFails = true;
-        printStackWhenAccessSucceeds = true;
-        printStackPropertiesSet = true;
-    }
-
     public static boolean printStackTraceWhenAccessFails() {
         ensurePrintStackPropertiesSet();
         return printStackWhenAccessFails;
