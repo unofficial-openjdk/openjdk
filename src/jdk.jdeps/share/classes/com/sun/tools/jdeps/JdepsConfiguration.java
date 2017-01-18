@@ -118,7 +118,7 @@ public class JdepsConfiguration implements AutoCloseable {
         }
 
         this.configuration = Configuration.empty()
-                .resolveRequires(finder, ModuleFinder.of(), mods);
+                .resolve(finder, ModuleFinder.of(), mods);
 
         this.configuration.modules().stream()
                 .map(ResolvedModule::reference)
@@ -272,7 +272,7 @@ public class JdepsConfiguration implements AutoCloseable {
             return nameToModule.values().stream();
         } else {
             return Configuration.empty()
-                    .resolveRequires(finder, ModuleFinder.of(), roots)
+                    .resolve(finder, ModuleFinder.of(), roots)
                     .modules().stream()
                     .map(ResolvedModule::name)
                     .map(nameToModule::get);
