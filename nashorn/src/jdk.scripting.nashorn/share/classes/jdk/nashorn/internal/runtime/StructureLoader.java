@@ -33,6 +33,7 @@ import static jdk.nashorn.internal.codegen.CompilerConstants.JS_OBJECT_SINGLE_FI
 import java.lang.module.ModuleDescriptor;
 import java.lang.reflect.Module;
 import java.security.ProtectionDomain;
+import java.util.Set;
 import jdk.nashorn.internal.codegen.ObjectClassGenerator;
 
 /**
@@ -63,10 +64,10 @@ final class StructureLoader extends NashornLoader {
 
     private Module createModule(final String moduleName) {
         final ModuleDescriptor descriptor
-                = ModuleDescriptor.module(moduleName)
+                = ModuleDescriptor.newModule(moduleName)
                     .requires("java.base")
                     .requires(NASHORN_MODULE.getName())
-                    .contains(SCRIPTS_PKG)
+                    .packages(Set.of(SCRIPTS_PKG))
                     .build();
 
         final Module mod = Context.createModuleTrusted(descriptor, this);
