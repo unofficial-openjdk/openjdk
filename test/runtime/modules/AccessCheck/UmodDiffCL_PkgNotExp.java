@@ -90,7 +90,7 @@ public class UmodDiffCL_PkgNotExp {
         // Resolves "m1"
         Configuration cf = Layer.boot()
                 .configuration()
-                .resolveRequires(finder, ModuleFinder.of(), Set.of("m1"));
+                .resolve(finder, ModuleFinder.of(), Set.of("m1"));
 
         // map each module to differing class loaders for this test
         Map<String, ClassLoader> map = new HashMap<>();
