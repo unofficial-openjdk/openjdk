@@ -154,11 +154,12 @@ public final class ModulePatcher {
             Builder builder = JLMA.newModuleBuilder(descriptor.name(),
                                                     /*strict*/ false,
                                                     descriptor.modifiers());
-
-            descriptor.requires().forEach(builder::requires);
-            descriptor.exports().forEach(builder::exports);
-            descriptor.opens().forEach(builder::opens);
-            descriptor.uses().forEach(builder::uses);
+            if (!descriptor.isAutomatic()) {
+                descriptor.requires().forEach(builder::requires);
+                descriptor.exports().forEach(builder::exports);
+                descriptor.opens().forEach(builder::opens);
+                descriptor.uses().forEach(builder::uses);
+            }
             descriptor.provides().forEach(builder::provides);
 
             descriptor.version().ifPresent(builder::version);
