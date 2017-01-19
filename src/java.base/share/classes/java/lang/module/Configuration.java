@@ -230,9 +230,9 @@ public final class Configuration {
      * @param  before
      *         The <em>before</em> module finder to find modules
      * @param  after
-     *         The <em>after</em> module finder to locate modules when a
-     *         module cannot be located by the {@code before} module finder
-     *         and the module is not in this configuration
+     *         The <em>after</em> module finder to locate modules when not
+     *         located by the {@code before} module finder or in parent
+     *         configurations
      * @param  roots
      *         The possibly-empty collection of module names of the modules
      *         to resolve
@@ -270,8 +270,8 @@ public final class Configuration {
      *         The <em>before</em> module finder to find modules
      * @param  after
      *         The <em>after</em> module finder to locate modules when not
-     *         located by the {@code before} module finder and this
-     *         configuration
+     *         located by the {@code before} module finder or in parent
+     *         configurations
      * @param  roots
      *         The possibly-empty collection of module names of the modules
      *         to resolve

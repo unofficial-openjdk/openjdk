@@ -73,11 +73,10 @@ import sun.security.util.SecurityConstants;
  * Java Virtual Machine when a graph of modules is defined to the Java virtual
  * machine to create a module {@link Layer Layer}. </p>
  *
- * <p> An unnamed module does not have a name. There is an unnamed module
- * per {@link ClassLoader ClassLoader} that is obtained by invoking the class
- * loader's {@link ClassLoader#getUnnamedModule() getUnnamedModule} method. The
- * {@link Class#getModule() getModule} method of all types defined by a class
- * loader that are not in a named module return the class loader's unnamed
+ * <p> An unnamed module does not have a name. There is an unnamed module for
+ * each {@link ClassLoader ClassLoader}, obtained by invoking its {@link
+ * ClassLoader#getUnnamedModule() getUnnamedModule} method. All types that are
+ * not in a named module are members of their defining class loader's unnamed
  * module. </p>
  *
  * <p> The package names that are parameters or returned by methods defined in
