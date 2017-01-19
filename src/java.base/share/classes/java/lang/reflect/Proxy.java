@@ -164,7 +164,8 @@ import sun.security.util.SecurityConstants;
  * methods is specified as follows:
  *
  * <ol>
- * <li>If all the proxy interfaces are in <em>exported</em> packages:
+ * <li>If all the proxy interfaces are in <em>exported</em> or <em>open</em>
+ *     packages:
  * <ol type="a">
  * <li>if all the proxy interfaces are <em>public</em>, then the proxy class is
  *     <em>public</em> in a package exported by the
@@ -178,10 +179,11 @@ import sun.security.util.SecurityConstants;
  *     <a href="#restrictions">not possible</a>.</li>
  * </ol>
  * </li>
- * <li>If at least one proxy interface is a <em>non-exported</em> package:
+ * <li>If at least one proxy interface is in a package that is
+ *     <em>non-exported</em> or <em>non-open</em>:
  * <ol type="a">
  * <li>if all the proxy interfaces are <em>public</em>, then the proxy class is
- *     <em>public</em> in a <em>non-exported</em> package of
+ *     <em>public</em> in a <em>non-exported</em>, <em>non-open</em> package of
  *     <a href="#dynamicmodule"><em>dynamic module</em>.</a>
  *     The names of the package and the module are unspecified.</li>
  *
@@ -195,21 +197,22 @@ import sun.security.util.SecurityConstants;
  * </ol>
  *
  * <p>
- * Note that if proxy interfaces with a mix of accessibilities --
- * exported public, exported non-public, non-exported public, non-exported non-public --
- * are proxied by the same instance, then the proxy class's accessibility is
- * governed by the least accessible proxy interface.
+ * Note that if proxy interfaces with a mix of accessibilities -- for example,
+ * an exported open public interface and a non-exported non-open non-public
+ * interface -- are proxied by the same instance, then the proxy class's
+ * accessibility is governed by the least accessible proxy interface.
  * <p>
  * Note that it is possible for arbitrary code to obtain access to a proxy class
- * in an exported package with {@link AccessibleObject#setAccessible setAccessible},
- * whereas a proxy class in a non-exported package is never accessible to
+ * in an open package with {@link AccessibleObject#setAccessible setAccessible},
+ * whereas a proxy class in a non-open package is never accessible to
  * code outside the module of the proxy class.
  *
  * <p>
- * Throughout this specification, a "non-exported package" refers to a package that
- * is not exported to all modules. Specifically, it refers to a package that
- * either is not exported at all by its containing module or is exported in a
- * qualified fashion by its containing module.
+ * Throughout this specification, a "non-exported package" refers to a package
+ * that is not exported to all modules, and a "non-open package" refers to
+ * a package that is not open to all modules.  Specifically, these terms refer to
+ * a package that either is not exported/opened at all by its containing module
+ * or is exported/opened in a qualified fashion by its containing module.
  *
  * <h3><a name="dynamicmodule">Dynamic Modules</a></h3>
  * <p>
