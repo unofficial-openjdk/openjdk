@@ -527,7 +527,7 @@ public final class StackWalker {
      * @throws UnsupportedOperationException if this {@code StackWalker}
      *         is not configured with {@link Option#RETAIN_CLASS_REFERENCE
      *         Option.RETAIN_CLASS_REFERENCE}.
-     * @throws IllegalStateException if there is no caller frame, i.e.
+     * @throws IllegalCallerException if there is no caller frame, i.e.
      *         when this {@code getCallerClass} method is called from a method
      *         which is the last frame on the stack.
      */
