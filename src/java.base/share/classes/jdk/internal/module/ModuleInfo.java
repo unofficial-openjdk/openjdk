@@ -313,9 +313,9 @@ public final class ModuleInfo {
                 String missingPackage = missingPackages.iterator().next();
                 String tail;
                 if (usedPackageFinder) {
-                    tail = " not found by package finder";
+                    tail = " not found in module";
                 } else {
-                    tail = " missing from ModulePackages attribute";
+                    tail = " missing from ModulePackages class file attribute";
                 }
                 throw invalidModuleDescriptor("Package " + missingPackage + tail);
 

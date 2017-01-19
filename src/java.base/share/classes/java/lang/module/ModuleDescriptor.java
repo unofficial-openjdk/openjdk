@@ -2273,8 +2273,12 @@ public class ModuleDescriptor
      *
      * <p> If the descriptor encoded in the input stream does not indicate a
      * set of packages in the module then the {@code packageFinder} will be
-     * invoked. If the {@code packageFinder} throws an {@link UncheckedIOException}
-     * then {@link IOException} cause will be re-thrown. </p>
+     * invoked. The set of packages that the {@code packageFinder} returns
+     * must include all the packages that the module exports, opens, as well
+     * as the packages of the service implementations that the module provides,
+     * and the package of the main class (if the module has a main class). If
+     * the {@code packageFinder} throws an {@link UncheckedIOException} then
+     * {@link IOException} cause will be re-thrown. </p>
      *
      * <p> If there are bytes following the module descriptor then it is
      * implementation specific as to whether those bytes are read, ignored,
@@ -2296,7 +2300,9 @@ public class ModuleDescriptor
      * @return The module descriptor
      *
      * @throws InvalidModuleDescriptorException
-     *         If an invalid module descriptor is detected
+     *         If an invalid module descriptor is detected or the set of
+     *         packages returned by the {@code packageFinder} does not include
+     *         all of the packages obtained from the module descriptor
      * @throws IOException
      *         If an I/O error occurs reading from the input stream or {@code
      *         UncheckedIOException} is thrown by the package finder
@@ -2331,7 +2337,13 @@ public class ModuleDescriptor
      * as a module descriptor.
      *
      * <p> If the descriptor encoded in the byte buffer does not indicate a
-     * set of packages then the {@code packageFinder} will be invoked. </p>
+     * set of packages in the module then the {@code packageFinder} will be
+     * invoked. The set of packages that the {@code packageFinder} returns
+     * must include all the packages that the module exports, opens, as well
+     * as the packages of the service implementations that the module provides,
+     * and the package of the main class (if the module has a main class). If
+     * the {@code packageFinder} throws an {@link UncheckedIOException} then
+     * {@link IOException} cause will be re-thrown. </p>
      *
      * <p> The module descriptor is read from the buffer stating at index
      * {@code p}, where {@code p} is the buffer's {@link ByteBuffer#position()
@@ -2357,7 +2369,9 @@ public class ModuleDescriptor
      * @return The module descriptor
      *
      * @throws InvalidModuleDescriptorException
-     *         If an invalid module descriptor is detected
+     *         If an invalid module descriptor is detected or the set of
+     *         packages returned by the {@code packageFinder} does not include
+     *         all of the packages obtained from the module descriptor
      */
     public static ModuleDescriptor read(ByteBuffer bb,
                                         Supplier<Set<String>> packageFinder)
