@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1994, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -950,8 +950,9 @@ public final class Class<T> implements java.io.Serializable,
      * declaring class} of the {@link #getEnclosingMethod enclosing method} or
      * {@link #getEnclosingConstructor enclosing constructor}.
      *
-     * <p> This method returns {@code null} if this class represents an array type,
-     * a primitive type or void.
+     * <p> If this class represents an array type then this method returns the
+     * package name of the element type. If this class represents a primitive
+     * type or void then the package name "{@code java.lang}" is returned.
      *
      * @return the fully qualified package name
      *
@@ -960,10 +961,18 @@ public final class Class<T> implements java.io.Serializable,
      */
     public String getPackageName() {
         String pn = this.packageName;
-        if (pn == null && !isArray() && !isPrimitive()) {
-            String cn = getName();
-            int dot = cn.lastIndexOf('.');
-            pn = (dot != -1) ? cn.substring(0, dot).intern() : "";
+        if (pn == null) {
+            Class<?> c = this;
+            while (c.isArray()) {
+                c = c.getComponentType();
+            }
+            if (c.isPrimitive()) {
+                pn = "java.lang";
+            } else {
+                String cn = c.getName();
+                int dot = cn.lastIndexOf('.');
+                pn = (dot != -1) ? cn.substring(0, dot).intern() : "";
+            }
             this.packageName = pn;
         }
         return pn;
