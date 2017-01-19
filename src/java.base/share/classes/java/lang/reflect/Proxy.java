@@ -180,7 +180,7 @@ import sun.security.util.SecurityConstants;
  * </ol>
  * </li>
  * <li>If at least one proxy interface is in a package that is
- *     <em>non-exported</em> or <em>non-open</em>:
+ *     <em>non-exported</em> and <em>non-open</em>:
  * <ol type="a">
  * <li>if all the proxy interfaces are <em>public</em>, then the proxy class is
  *     <em>public</em> in a <em>non-exported</em>, <em>non-open</em> package of
