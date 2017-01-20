@@ -847,7 +847,7 @@ public class JmodTask {
             // get a resolved module graph
             Configuration config = null;
             try {
-                config = Configuration.empty().resolveRequires(system, finder, roots);
+                config = Configuration.empty().resolve(system, finder, roots);
             } catch (ResolutionException e) {
                 throw new CommandException("err.module.resolution.fail", e.getMessage());
             }

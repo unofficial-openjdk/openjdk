@@ -950,8 +950,9 @@ public final class Class<T> implements java.io.Serializable,
      * declaring class} of the {@link #getEnclosingMethod enclosing method} or
      * {@link #getEnclosingConstructor enclosing constructor}.
      *
-     * <p> This method returns {@code null} if this class represents an array type,
-     * a primitive type or void.
+     * <p> If this class represents an array type then this method returns the
+     * package name of the element type. If this class represents a primitive
+     * type or void then the package name "{@code java.lang}" is returned.
      *
      * @return the fully qualified package name
      *
@@ -960,10 +961,18 @@ public final class Class<T> implements java.io.Serializable,
      */
     public String getPackageName() {
         String pn = this.packageName;
-        if (pn == null && !isArray() && !isPrimitive()) {
-            String cn = getName();
-            int dot = cn.lastIndexOf('.');
-            pn = (dot != -1) ? cn.substring(0, dot).intern() : "";
+        if (pn == null) {
+            Class<?> c = this;
+            while (c.isArray()) {
+                c = c.getComponentType();
+            }
+            if (c.isPrimitive()) {
+                pn = "java.lang";
+            } else {
+                String cn = c.getName();
+                int dot = cn.lastIndexOf('.');
+                pn = (dot != -1) ? cn.substring(0, dot).intern() : "";
+            }
             this.packageName = pn;
         }
         return pn;
@@ -2458,10 +2467,16 @@ public final class Class<T> implements java.io.Serializable,
      * Finds a resource with a given name.
      *
      * <p> If this class is in a named {@link Module Module} then this method
-     * will attempt to find the resource in the module by means of the absolute
-     * resource name, subject to the rules for encapsulation specified in the
-     * {@code Module} {@link Module#getResourceAsStream getResourceAsStream}
-     * method.
+     * will attempt to find the resource in the module. This is done by
+     * delegating to the module's class loader {@link
+     * ClassLoader#findResource(String,String) findResource(String,String)}
+     * method, invoking it with the module name and the absolute name of the
+     * resource. Resources in named modules are subject to the rules for
+     * encapsulation specified in the {@code Module} {@link
+     * Module#getResourceAsStream getResourceAsStream} method and so this
+     * method returns {@code null} when the resource is a
+     * non-"{@code .class}" resource in a package that is not open to the
+     * caller's module.
      *
      * <p> Otherwise, if this class is not in a named module then the rules for
      * searching resources associated with a given class are implemented by the
@@ -2552,10 +2567,16 @@ public final class Class<T> implements java.io.Serializable,
      * Finds a resource with a given name.
      *
      * <p> If this class is in a named {@link Module Module} then this method
-     * will attempt to find the resource in the module by means of the absolute
-     * resource name, subject to the rules for encapsulation specified in the
-     * {@code Module} {@link Module#getResourceAsStream getResourceAsStream}
-     * method.
+     * will attempt to find the resource in the module. This is done by
+     * delegating to the module's class loader {@link
+     * ClassLoader#findResource(String,String) findResource(String,String)}
+     * method, invoking it with the module name and the absolute name of the
+     * resource. Resources in named modules are subject to the rules for
+     * encapsulation specified in the {@code Module} {@link
+     * Module#getResourceAsStream getResourceAsStream} method and so this
+     * method returns {@code null} when the resource is a
+     * non-"{@code .class}" resource in a package that is not open to the
+     * caller's module.
      *
      * <p> Otherwise, if this class is not in a named module then the rules for
      * searching resources associated with a given class are implemented by the

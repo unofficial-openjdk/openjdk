@@ -148,6 +148,9 @@ public interface ModuleReader extends Closeable {
      *         If an I/O error occurs or the module reader is closed
      * @throws SecurityException
      *         If denied by the security manager
+     * @throws OutOfMemoryError
+     *         If the resource is larger than {@code Integer.MAX_VALUE},
+     *         the maximum capacity of a byte buffer
      *
      * @see ClassLoader#defineClass(String, ByteBuffer, java.security.ProtectionDomain)
      */
