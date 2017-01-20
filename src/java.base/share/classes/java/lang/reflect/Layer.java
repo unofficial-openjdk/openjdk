@@ -68,8 +68,8 @@ import sun.security.util.SecurityConstants;
  * {@link ResolvedModule#reads() read}, the {@code Module} {@link
  * Module#canRead reads} the corresponding run-time {@code Module}, which may
  * be in the same layer or a parent layer. The {@code Module} {@link
- * Module#isExported(String) exports} the packages described by its {@link
- * ModuleDescriptor}. </p>
+ * Module#isExported(String) exports} and {@link Module#isOpen(String) opens}
+ * the packages described by its {@link ModuleDescriptor}. </p>
  *
  * <p> The {@link #defineModulesWithOneLoader defineModulesWithOneLoader} and
  * {@link #defineModulesWithManyLoaders defineModulesWithManyLoaders} methods
@@ -80,7 +80,7 @@ import sun.security.util.SecurityConstants;
  * a function specified to the method. Each of these methods has an instance
  * and static variant. The instance methods create a layer with the receiver
  * as the parent layer. The static methods are for more advanced cases where
- * there can be more than one parent layer or a {@link Layer.Controller
+ * there can be more than one parent layer or where a {@link Layer.Controller
  * Controller} is needed to control modules in the layer. </p>
  *
  * <p> A Java virtual machine has at least one non-empty layer, the {@link
@@ -93,9 +93,8 @@ import sun.security.util.SecurityConstants;
  * the {@link #parents() parent} when creating additional layers. </p>
  *
  * <p> As when creating a {@code Configuration},
- * {@link ModuleDescriptor#isAutomatic() automatic} modules receive
- * <a href="../module/Configuration.html#automaticmoduleresolution">special
- * treatment</a> when creating a layer. An automatic module is created in the
+ * {@link ModuleDescriptor#isAutomatic() automatic} modules receive special
+ * treatment when creating a layer. An automatic module is created in the
  * Java virtual machine as a {@code Module} that reads every unnamed {@code
  * Module} in the Java virtual machine. </p>
  *
@@ -553,10 +552,11 @@ public final class Layer {
      * </ul>
      *
      * <p> In addition, a layer cannot be created if the configuration contains
-     * a module named "{@code java.base}", a module with a package name starting
-     * with "{@code java.}" is mapped to a class loader other than the {@link
-     * ClassLoader#getPlatformClassLoader() platform class loader}, or the
-     * function to map a module name to a class loader returns {@code null}. </p>
+     * a module named "{@code java.base}", a configuration contains a module
+     * with a package name starting with "{@code java.}" is mapped to a class
+     * loader other than the {@link ClassLoader#getPlatformClassLoader()
+     * platform class loader}, or the function to map a module name to a class
+     * loader returns {@code null}. </p>
      *
      * <p> If the function to map a module name to class loader throws an error
      * or runtime exception then it is propagated to the caller of this method.
@@ -565,7 +565,7 @@ public final class Layer {
      * @apiNote It is implementation specific as to whether creating a Layer
      * with this method is an atomic operation or not. Consequentially it is
      * possible for this method to fail with some modules, but not all, defined
-     * to Java virtual machine.
+     * to the Java virtual machine.
      *
      * @param  cf
      *         The configuration for the layer
@@ -758,7 +758,7 @@ public final class Layer {
 
     /**
      * Returns the module with the given name in this layer, or if not in this
-     * layer, the {@linkplain #parents parents} layers. Finding a module in
+     * layer, the {@linkplain #parents parent} layers. Finding a module in
      * parent layers is equivalent to invoking {@code findModule} on each
      * parent, in search order, until the module is found or all parents have
      * been searched. In a <em>tree of layers</em>  then this is equivalent to

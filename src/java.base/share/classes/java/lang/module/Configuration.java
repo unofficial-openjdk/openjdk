@@ -326,7 +326,7 @@ public final class Configuration {
      *
      * <p> When all modules have been resolved then the resulting dependency
      * graph is checked to ensure that it does not contain cycles. A
-     * readability graph is constructed and in conjunction with the module
+     * readability graph is constructed, and in conjunction with the module
      * exports and service use, checked for consistency. </p>
      *
      * <p> Resolution and the (post-resolution) consistency checks may fail for

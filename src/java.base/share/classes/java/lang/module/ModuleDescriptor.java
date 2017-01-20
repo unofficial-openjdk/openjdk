@@ -58,39 +58,29 @@ import jdk.internal.module.ModuleInfo;
  *
  * <p> A module descriptor describes a named module and defines methods to
  * obtain each of its components. The module descriptor for a named module
- * in the Java virtual machine is obtained by invoking the module's {@link
- * java.lang.reflect.Module#getDescriptor getDescriptor} method. Module
- * descriptors can also be created using the {@link ModuleDescriptor.Builder}
- * class or by reading the binary form of a module declaration
- * ({@code module-info.class}) using the {@link #read(InputStream,Supplier)
- * read} methods defined here. </p>
+ * in the Java virtual machine is obtained by invoking the {@link
+ * java.lang.reflect.Module Module}'s {@link java.lang.reflect.Module#getDescriptor
+ * getDescriptor} method. Module descriptors can also be created using the
+ * {@link ModuleDescriptor.Builder} class or by reading the binary form of a
+ * module declaration ({@code module-info.class}) using the {@link
+ * #read(InputStream,Supplier) read} methods defined here. </p>
  *
  * <p> A module descriptor describes a <em>normal</em>, open, or automatic
- * module. <em>Normal</em> modules and open modules describe their dependences,
- * exported packages, the services that they use or provide, and other
- * components. <em>Normal</em> modules may open specific packages. A module
- * in the Java virtual machine with an open package allows other modules to
- * access all types in the package and all their members (not just the
- * public types and their public members) using reflective APIs that
- * support private access or suppress default Java language access control
- * checks. The module descriptor for an open modules does not declare any open
- * packages (the {@link #opens() opens} method returns an empty set) but
- * when instantiated in the Java virtual machine then it is treated as if
- * all packages are open. </p>
- *
- * <p> An automatic module is defined implicitly rather than explicitly and
- * therefore does not have a module declaration. JAR files located on the
- * module path, or by the {@link ModuleFinder} returned by {@link
- * ModuleFinder#of(java.nio.file.Path[]) ModuleFinder.of}, are created as
- * automatic modules if the JAR file does not contain a {@code
- * module-info.class} file. The module descriptor for an automatic module
- * does not declare any dependences (except for the mandatory dependency
- * on {@code java.base}), exports or open packages. Automatic modules receive
- * <a href="Configuration.html#automaticmoduleresolution">special treatment</a>
- * during resolution so that they read all other modules in the configuration.
- * When an automatic module is instantiated in the Java virtual machine then it
- * reads every unnamed module and is treated as if all packages are exported
- * and open. </p>
+ * module. <em>Normal</em> modules and open modules describe their {@link
+ * #requires() dependences}, {@link #exports() exported-packages}, the services
+ * that they {@link #uses() use} or {@link #provides() provide}, and other
+ * components. <em>Normal</em> modules may {@link #opens() open} specific
+ * packages. The module descriptor for an open modules does not declare any
+ * open packages (its {@code opens} method returns an empty set) but when
+ * instantiated in the Java virtual machine then it is treated as if all
+ * packages are open. The module descriptor for an automatic module does not
+ * declare any dependences (except for the mandatory dependency on {@code
+ * java.base}), and does not declare any exported or open packages. Automatic
+ * module receive <a href="Configuration.html#automaticmoduleresolution">special
+ * treatment</a> during resolution so that they read all other modules in the
+ * configuration. When an automatic module is instantiated in the Java virtual
+ * machine then it reads every unnamed module and is treated as if all
+ * packages are exported and open. </p>
  *
  * <p> {@code ModuleDescriptor} objects are immutable and safe for use by
  * multiple concurrent threads.</p>
@@ -116,8 +106,8 @@ public class ModuleDescriptor
         OPEN,
 
         /**
-         * An automatic module. An automatic module exports and opens all
-         * packages.
+         * An automatic module. An automatic module is treated as if it exports
+         * and opens all packages.
          *
          * @apiNote This modifier does not correspond to a module flag in the
          * binary form of a module declaration ({@code module-info.class}).
@@ -2211,7 +2201,6 @@ public class ModuleDescriptor
 
     /**
      * Instantiates a builder to build a module descriptor.
-     *
      * @param  name
      *         The module name
      *
