@@ -80,7 +80,7 @@ public class DiffCL_Umod {
      // Packages:          p1
      // Packages exported: p1 is exported unqualifiedly
      ModuleDescriptor descriptor_m1 =
-             ModuleDescriptor.module("m1")
+             ModuleDescriptor.newModule("m1")
                      .requires("java.base")
                      .exports("p1")
                      .build();
@@ -91,7 +91,7 @@ public class DiffCL_Umod {
      // Resolves "m1"
      Configuration cf = Layer.boot()
              .configuration()
-             .resolveRequires(finder, ModuleFinder.of(), Set.of("m1"));
+             .resolve(finder, ModuleFinder.of(), Set.of("m1"));
 
      MyDiffClassLoader.loader1 = new MyDiffClassLoader();
      MyDiffClassLoader.loader2 = new MyDiffClassLoader();
@@ -129,7 +129,7 @@ public class DiffCL_Umod {
      // Packages:          p1
      // Packages exported: p1 is exported unqualifiedly
      ModuleDescriptor descriptor_m1 =
-             ModuleDescriptor.module("m1")
+             ModuleDescriptor.newModule("m1")
                      .requires("java.base")
                      .exports("p1")
                      .build();
@@ -140,7 +140,7 @@ public class DiffCL_Umod {
      // Resolves "m1"
      Configuration cf = Layer.boot()
              .configuration()
-             .resolveRequires(finder, ModuleFinder.of(), Set.of("m1"));
+             .resolve(finder, ModuleFinder.of(), Set.of("m1"));
 
      MyDiffClassLoader.loader1 = new MyDiffClassLoader();
      MyDiffClassLoader.loader2 = new MyDiffClassLoader();
@@ -178,7 +178,7 @@ public class DiffCL_Umod {
      // Packages:          p1
      // Packages exported: p1 is exported unqualifiedly
      ModuleDescriptor descriptor_m1 =
-             ModuleDescriptor.module("m1")
+             ModuleDescriptor.newModule("m1")
                      .requires("java.base")
                      .exports("p1")
                      .build();
@@ -189,7 +189,7 @@ public class DiffCL_Umod {
      // Resolves "m1"
      Configuration cf = Layer.boot()
              .configuration()
-             .resolveRequires(finder, ModuleFinder.of(), Set.of("m1"));
+             .resolve(finder, ModuleFinder.of(), Set.of("m1"));
 
      MyDiffClassLoader.loader1 = new MyDiffClassLoader();
      MyDiffClassLoader.loader2 = new MyDiffClassLoader();

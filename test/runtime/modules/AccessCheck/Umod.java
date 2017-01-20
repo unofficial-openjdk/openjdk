@@ -80,7 +80,7 @@ public class Umod {
      // Packages:          p1
      // Packages exported: p1 is exported unqualifiedly
      ModuleDescriptor descriptor_m1 =
-             ModuleDescriptor.module("m1")
+             ModuleDescriptor.newModule("m1")
                      .requires("java.base")
                      .exports("p1")
                      .build();
@@ -91,7 +91,7 @@ public class Umod {
      // Resolves "m1"
      Configuration cf = Layer.boot()
              .configuration()
-             .resolveRequires(finder, ModuleFinder.of(), Set.of("m1"));
+             .resolve(finder, ModuleFinder.of(), Set.of("m1"));
 
      // map module m1 to class loader.
      // class c2 will be loaded in an unnamed module/loader.
@@ -126,7 +126,7 @@ public class Umod {
      // Packages:          p1
      // Packages exported: p1 is exported unqualifiedly
      ModuleDescriptor descriptor_m1 =
-             ModuleDescriptor.module("m1")
+             ModuleDescriptor.newModule("m1")
                      .requires("java.base")
                      .exports("p1")
                      .build();
@@ -137,7 +137,7 @@ public class Umod {
      // Resolves "m1"
      Configuration cf = Layer.boot()
              .configuration()
-             .resolveRequires(finder, ModuleFinder.of(), Set.of("m1"));
+             .resolve(finder, ModuleFinder.of(), Set.of("m1"));
 
      MySameClassLoader loader = new MySameClassLoader();
      // map module m1 to class loader.
@@ -172,7 +172,7 @@ public class Umod {
      // Packages:          p1
      // Packages exported: p1 is exported unqualifiedly
      ModuleDescriptor descriptor_m1 =
-             ModuleDescriptor.module("m1")
+             ModuleDescriptor.newModule("m1")
                      .requires("java.base")
                      .exports("p1")
                      .build();
@@ -183,7 +183,7 @@ public class Umod {
      // Resolves "m1"
      Configuration cf = Layer.boot()
              .configuration()
-             .resolveRequires(finder, ModuleFinder.of(), Set.of("m1"));
+             .resolve(finder, ModuleFinder.of(), Set.of("m1"));
 
      MySameClassLoader loader = new MySameClassLoader();
      // map module m1 to class loader.

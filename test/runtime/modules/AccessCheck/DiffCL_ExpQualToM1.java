@@ -68,7 +68,7 @@ public class DiffCL_ExpQualToM1 {
         // Packages:          p1
         // Packages exported: p1 is exported to unqualifiedly
         ModuleDescriptor descriptor_m1 =
-                ModuleDescriptor.module("m1")
+                ModuleDescriptor.newModule("m1")
                         .requires("java.base")
                         .requires("m2")
                         .exports("p1")
@@ -79,7 +79,7 @@ public class DiffCL_ExpQualToM1 {
         // Packages:          p2
         // Packages exported: package p2 is exported to m1
         ModuleDescriptor descriptor_m2 =
-                ModuleDescriptor.module("m2")
+                ModuleDescriptor.newModule("m2")
                         .requires("java.base")
                         .exports("p2", Set.of("m1"))
                         .build();
@@ -90,7 +90,7 @@ public class DiffCL_ExpQualToM1 {
         // Resolves "m1"
         Configuration cf = Layer.boot()
                 .configuration()
-                .resolveRequires(finder, ModuleFinder.of(), Set.of("m1"));
+                .resolve(finder, ModuleFinder.of(), Set.of("m1"));
 
         // map each module to differing class loaders for this test
         Map<String, ClassLoader> map = new HashMap<>();

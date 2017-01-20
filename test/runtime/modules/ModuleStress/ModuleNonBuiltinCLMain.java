@@ -57,7 +57,7 @@ public class ModuleNonBuiltinCLMain {
         // Packages:          p1
         // Packages exported: p1 is exported to unqualifiedly
         ModuleDescriptor descriptor_m1 =
-                ModuleDescriptor.module("m1")
+                ModuleDescriptor.newModule("m1")
                         .requires("java.base")
                         .requires("m2")
                         .exports("p1")
@@ -71,7 +71,7 @@ public class ModuleNonBuiltinCLMain {
         targets.add("m1");
         targets.add("m3");
         ModuleDescriptor descriptor_m2 =
-                ModuleDescriptor.module("m2")
+                ModuleDescriptor.newModule("m2")
                         .requires("java.base")
                         .requires("m3")
                         .exports("p2", targets)
@@ -82,7 +82,7 @@ public class ModuleNonBuiltinCLMain {
         // Packages:          p3
         // Packages exported: none
         ModuleDescriptor descriptor_m3 =
-                ModuleDescriptor.module("m3")
+                ModuleDescriptor.newModule("m3")
                         .requires("java.base")
                         .build();
 
@@ -92,7 +92,7 @@ public class ModuleNonBuiltinCLMain {
         // Resolves "m1"
         Configuration cf = Layer.boot()
                 .configuration()
-                .resolveRequires(finder, ModuleFinder.of(), Set.of("m1"));
+                .resolve(finder, ModuleFinder.of(), Set.of("m1"));
 
         // map each module to differing user defined class loaders for this test
         Map<String, ClassLoader> map = new HashMap<>();
