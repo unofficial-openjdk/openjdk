@@ -1279,8 +1279,10 @@ public final class ServiceLoader<S>
      * provider to be loaded. </p>
      *
      * <p> If this loader's provider caches are cleared by invoking the {@link
-     * #reload() reload} method then existing streams for this service
-     * loader should be discarded. </p>
+     * #reload() reload} method then existing streams for this service loader
+     * should be discarded. The returned stream's source {@code Spliterator} is
+     * <em>fail-fast</em> and will throw {@link ConcurrentModificationException}
+     * if the provider cache has been cleared. </p>
      *
      * <p> The following examples demonstrate usage. The first example
      * creates a stream of providers, the second example is the same except
