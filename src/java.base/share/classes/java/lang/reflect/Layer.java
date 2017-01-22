@@ -580,8 +580,7 @@ public final class Layer {
      *         If the parent configurations do not match the configuration of
      *         the parent layers, including order
      * @throws LayerInstantiationException
-     *         If all modules cannot be defined to the same class loader for any
-     *         of the reasons listed above
+     *         If creating the layer fails for any of the reasons listed above
      * @throws SecurityException
      *         If {@code RuntimePermission("getClassLoader")} is denied by
      *         the security manager
