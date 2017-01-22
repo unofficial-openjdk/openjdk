@@ -55,6 +55,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import jdk.internal.loader.Resource;
+import jdk.internal.loader.ResourceHelper;
 import jdk.internal.misc.JavaLangModuleAccess;
 import jdk.internal.misc.SharedSecrets;
 import sun.net.www.ParseUtil;
@@ -499,23 +500,14 @@ public final class ModulePatcher {
 
         @Override
         public Resource find(String name) throws IOException {
-            Path file = Paths.get(name.replace('/', File.separatorChar));
-            if (file.getRoot() == null) {
-                file = dir.resolve(file);
-            } else {
-                // drop the root component so that the resource is
-                // located relative to the module directory
-                int n = file.getNameCount();
-                if (n == 0)
-                    return null;
-                file = dir.resolve(file.subpath(0, n));
+            Path path = ResourceHelper.toFilePath(name);
+            if (path != null) {
+                Path file = dir.resolve(path);
+                if (Files.isRegularFile(file)) {
+                    return newResource(name, dir, file);
+                }
             }
-
-            if (Files.isRegularFile(file)) {
-                return newResource(name, dir, file);
-            } else {
-                return null;
-            }
+            return null;
         }
 
         private Resource newResource(String name, Path top, Path file) {

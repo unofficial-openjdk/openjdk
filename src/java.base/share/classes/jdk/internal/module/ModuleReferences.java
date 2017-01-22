@@ -51,6 +51,7 @@ import java.util.stream.Stream;
 import java.util.zip.ZipFile;
 
 import jdk.internal.jmod.JmodFile;
+import jdk.internal.loader.ResourceHelper;
 import jdk.internal.misc.JavaLangAccess;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.module.ModuleHashes.HashSupplier;
@@ -370,32 +371,33 @@ class ModuleReferences {
         }
 
         /**
-         * Returns a Path to access to the given resource.
-         */
-        private Path toPath(String name) {
-            Path path = Paths.get(name.replace('/', File.separatorChar));
-            if (path.getRoot() == null) {
-                return dir.resolve(path);
-            } else {
-                // drop the root component so that the resource is
-                // located relative to the module directory
-                int n = path.getNameCount();
-                return (n > 0) ? dir.resolve(path.subpath(0, n)) : null;
-            }
-        }
-
-        /**
          * Throws IOException if the module reader is closed;
          */
         private void ensureOpen() throws IOException {
             if (closed) throw new IOException("ModuleReader is closed");
         }
 
+        /**
+         * Returns a Path to access the given resource. Returns null if the
+         * resource name does not convert to a file path that locates a regular
+         * file in the module.
+         */
+        private Path toFilePath(String name) {
+            Path path = ResourceHelper.toFilePath(name);
+            if (path != null) {
+                Path file = dir.resolve(path);
+                if (Files.isRegularFile(file)) {
+                    return file;
+                }
+            }
+            return null;
+        }
+
         @Override
         public Optional<URI> find(String name) throws IOException {
             ensureOpen();
-            Path path = toPath(name);
-            if (path != null && Files.isRegularFile(path)) {
+            Path path = toFilePath(name);
+            if (path != null) {
                 try {
                     return Optional.of(path.toUri());
                 } catch (IOError e) {
@@ -409,8 +411,8 @@ class ModuleReferences {
         @Override
         public Optional<InputStream> open(String name) throws IOException {
             ensureOpen();
-            Path path = toPath(name);
-            if (path != null && Files.isRegularFile(path)) {
+            Path path = toFilePath(name);
+            if (path != null) {
                 return Optional.of(Files.newInputStream(path));
             } else {
                 return Optional.empty();
@@ -420,8 +422,8 @@ class ModuleReferences {
         @Override
         public Optional<ByteBuffer> read(String name) throws IOException {
             ensureOpen();
-            Path path = toPath(name);
-            if (path != null && Files.isRegularFile(path)) {
+            Path path = toFilePath(name);
+            if (path != null) {
                 return Optional.of(ByteBuffer.wrap(Files.readAllBytes(path)));
             } else {
                 return Optional.empty();
