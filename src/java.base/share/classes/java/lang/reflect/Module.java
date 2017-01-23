@@ -1383,35 +1383,44 @@ public final class Module implements AnnotatedElement {
 
 
     /**
-     * Returns an input stream for reading a resource in this module. The
-     * {@code name} parameter is a {@code '/'}-separated path name that
-     * identifies the resource.
+     * Returns an input stream for reading a resource in this module.
+     * The {@code name} parameter is a {@code '/'}-separated path name that
+     * identifies the resource. As with {@link Class#getResourceAsStream
+     * Class.getResourceAsStream}, this method delegates to the module's class
+     * loader {@link ClassLoader#findResource(String,String)
+     * findResource(String,String)} method, invoking it with the module name
+     * (or {@code null} when the module is unnamed) and the name of the
+     * resource. If the resource name has a leading slash then it is dropped
+     * before delegation.
      *
      * <p> A resource in a named module may be <em>encapsulated</em> so that
      * it cannot be located by code in other modules. Whether a resource can be
-     * located or not is determined as follows:
+     * located or not is determined as follows: </p>
      *
      * <ul>
-     *     <li> The <em>package name</em> of the resource is derived from the
-     *     subsequence of characters that precedes the last {@code '/'} and then
-     *     replacing each {@code '/'} character in the subsequence with
-     *     {@code '.'}. For example, the package name derived for a resource
-     *     named "{@code a/b/c/foo.properties}" is "{@code a.b.c}". </li>
+     *     <li> If the resource name ends with  "{@code .class}" then it is not
+     *     encapsulated. </li>
      *
-     *     <li> If the package name is a package in the module then the package
-     *     must be {@link #isOpen open} to at least the caller of this method.
-     *     If the package is not in the module then the resource is not
-     *     encapsulated. Resources in the unnamed package or "{@code META-INF}",
-     *     for example, are never encapsulated because they can never be
-     *     packages in a named module. </li>
-     *
-     *     <li> As a special case, resources ending with "{@code .class}" are
-     *     never encapsulated. </li>
+     *     <li> A <em>package name</em> is derived from the resource name. If
+     *     the package name is a {@link #getPackages() package} in the module
+     *     then the resource can only be located by the caller of this method
+     *     when the package is {@link #isOpen(String,Module) open} to at least
+     *     the caller's module. If the resource is not in a package in the module
+     *     then the resource is not encapsulated. </li>
      * </ul>
+     *
+     * <p> In the above, the <em>package name</em> for a resource is derived
+     * from the subsequence of characters that precedes the last {@code '/'} in
+     * the name and then replacing each {@code '/'} character in the subsequence
+     * with {@code '.'}. A leading slash is ignored when deriving the package
+     * name. As an example, the package name derived for a resource named
+     * "{@code a/b/c/foo.properties}" is "{@code a.b.c}". A resource name
+     * with the name "{@code META-INF/MANIFEST.MF}" is never encapsulated
+     * because "{@code META-INF}" is not a legal package name. </p>
      *
      * <p> This method returns {@code null} if the resource is not in this
      * module, the resource is encapsulated and cannot be located by the caller,
-     * or access to the resource is denied by the security manager.
+     * or access to the resource is denied by the security manager. </p>
      *
      * @param  name
      *         The resource name
@@ -1420,10 +1429,14 @@ public final class Module implements AnnotatedElement {
      *
      * @throws IOException
      *         If an I/O error occurs
+     *
+     * @see Class#getResourceAsStream(String)
      */
     @CallerSensitive
     public InputStream getResourceAsStream(String name) throws IOException {
-        Objects.requireNonNull(name);
+        if (name.startsWith("/")) {
+            name = name.substring(1);
+        }
 
         if (isNamed() && !ResourceHelper.isSimpleResource(name)) {
             Module caller = Reflection.getCallerClass().getModule();

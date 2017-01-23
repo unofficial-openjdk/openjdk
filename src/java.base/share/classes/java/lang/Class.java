@@ -2485,9 +2485,8 @@ public final class Class<T> implements java.io.Serializable,
      * the bootstrap class loader, the method delegates to {@link
      * ClassLoader#getSystemResourceAsStream}.
      *
-     * <p> Before finding a resource in the caller's module or delegation to a
-     * class loader, an absolute resource name is constructed from the given
-     * resource name using this algorithm:
+     * <p> Before delegation, an absolute resource name is constructed from the
+     * given resource name using this algorithm:
      *
      * <ul>
      *
@@ -2515,6 +2514,7 @@ public final class Class<T> implements java.io.Serializable,
      *          by the security manager.
      * @throws  NullPointerException If {@code name} is {@code null}
      * @since  1.1
+     * @see Module#getResourceAsStream(String)
      */
     @CallerSensitive
     public InputStream getResourceAsStream(String name) {
