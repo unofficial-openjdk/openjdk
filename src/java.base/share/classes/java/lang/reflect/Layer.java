@@ -59,17 +59,16 @@ import sun.security.util.SecurityConstants;
  * <p> A layer is created from a graph of modules in a {@link Configuration}
  * and a function that maps each module to a {@link ClassLoader}.
  * Creating a layer informs the Java virtual machine about the classes that
- * may be loaded from modules so that the Java virtual machine knows which
- * module that each class is a member of. Each layer, except the {@link
- * #empty() empty} layer, has at least one {@link #parents() parent}. </p>
+ * may be loaded from the modules so that the Java virtual machine knows which
+ * module that each class is a member of. </p>
  *
  * <p> Creating a layer creates a {@link Module} object for each {@link
  * ResolvedModule} in the configuration. For each resolved module that is
  * {@link ResolvedModule#reads() read}, the {@code Module} {@link
  * Module#canRead reads} the corresponding run-time {@code Module}, which may
- * be in the same layer or a parent layer. The {@code Module} {@link
- * Module#isExported(String) exports} and {@link Module#isOpen(String) opens}
- * the packages described by its {@link ModuleDescriptor}. </p>
+ * be in the same layer or a {@link #parents() parent} layer. The {@code Module}
+ * {@link Module#isExported(String) exports} and {@link Module#isOpen(String)
+ * opens} the packages described by its {@link ModuleDescriptor}. </p>
  *
  * <p> The {@link #defineModulesWithOneLoader defineModulesWithOneLoader} and
  * {@link #defineModulesWithManyLoaders defineModulesWithManyLoaders} methods
@@ -526,15 +525,19 @@ public final class Layer {
 
     /**
      * Creates a new layer by defining the modules in the given {@code
-     * Configuration} to the Java virtual machine.
-     * Each module is mapped, by name, to its class loader by means of the
-     * given function. The class loader delegation implemented by these class
-     * loaders must respect module readability. The class loaders should be
+     * Configuration} to the Java virtual machine. The given function maps each
+     * module in the configuration, by name, to a class loader. Creating the
+     * layer informs the Java virtual machine about the classes that may be
+     * loaded so that the Java virtual machine knows which module that each
+     * class is a member of.
+     *
+     * <p> The class loader delegation implemented by the class loaders must
+     * respect module readability. The class loaders should be
      * {@link ClassLoader#registerAsParallelCapable parallel-capable} so as to
      * avoid deadlocks during class loading. In addition, the entity creating
-     * a new layer with this method should arrange that the class loaders are
+     * a new layer with this method should arrange that the class loaders be
      * ready to load from these modules before there are any attempts to load
-     * classes or resources.
+     * classes or resources. </p>
      *
      * <p> Creating a {@code Layer} can fail for the following reasons: </p>
      *
