@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,117 +42,41 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * The configuration that is the result of resolution or resolution with
- * service binding.
+ * A configuration that is the result of <a href="package-summary.html#resolution">
+ * resolution</a> or resolution with <a href="package-summary.html#servicebinding">
+ * service binding</a>.
  *
- * <h2><a name="resolution">Resolution</a></h2>
+ * <p> A configuration encapsulates the <em>readability graph</em> that is the
+ * output of resolution. A readability graph is a directed graph where the nodes
+ * are of type {@link ResolvedModule} and the edges represent the readability
+ * amongst the modules. {@code Configuration} defines the {@link #modules()
+ * modules()} method to get the set of resolved modules in the graph. {@code
+ * ResolvedModule} defines the {@link ResolvedModule#reads() reads()} method to
+ * get the set of modules that a resolved module reads. The modules that are
+ * read may be in the same configuration or may be in {@link #parents() parent}
+ * configurations. </p>
  *
- * <p> Resolution is the process of computing the transitive closure of a set
- * of root modules over a set of observable modules by resolving the
- * dependences expressed by {@code requires} clauses.
+ * <p> Configuration defines the {@link #resolve(ModuleFinder,List,ModuleFinder,Collection)
+ * resolve} method to resolve a collection of root modules, and the {@link
+ * #resolveAndBind(ModuleFinder,List,ModuleFinder,Collection) resolveAndBind}
+ * method to do resolution with service binding. There are instance and
+ * static variants of both methods. The instance methods create a configuration
+ * with the receiver as the parent configuration. The static methods are for
+ * more advanced cases where there can be more than one parent configuration. </p>
  *
- * The <em>dependence graph</em> is augmented with edges that take account of
- * implicitly declared dependences ({@code requires transitive}) to create a
- * <em>readability graph</em>. A {@code Configuration} encapsulates the
- * resulting graph of {@link ResolvedModule resolved modules}.
- *
- * <p> Suppose we have the following observable modules: </p>
- * <pre> {@code
- *     module m1 { requires m2; }
- *     module m2 { requires transitive m3; }
- *     module m3 { }
- *     module m4 { }
- * } </pre>
- *
- * <p> If the module {@code m1} is resolved then the resulting configuration
- * contains three modules ({@code m1}, {@code m2}, {@code m3}). The edges in
- * its readability graph are: </p>
- * <pre> {@code
- *     m1 --> m2  (meaning m1 reads m2)
- *     m1 --> m3
- *     m2 --> m3
- * } </pre>
- *
- * <p> Resolution is an additive process. When computing the transitive closure
- * then the dependence relation may include dependences on modules in parent
- * configurations. The result is a <em>relative configuration</em> that is
- * relative to one or more parent configurations and where the readability graph
- * may have edges from modules in the configuration to modules in parent
- * configurations.
- *
- * </p>
- *
- * <p> Suppose we have the following observable modules: </p>
- * <pre> {@code
- *     module m1 { requires m2; requires java.xml; }
- *     module m2 { }
- * } </pre>
- *
- * <p> If module {@code m1} is resolved with the configuration for the {@link
- * java.lang.reflect.Layer#boot() boot} layer as the parent then the resulting
- * configuration contains two modules ({@code m1}, {@code m2}). The edges in
- * its readability graph are:
- * <pre> {@code
- *     m1 --> m2
- *     m1 --> java.xml
- * } </pre>
- * where module {@code java.xml} is in the parent configuration. For
- * simplicity, this example omits the implicitly declared dependence on the
- * {@code java.base} module.
- *
- * <a name="automaticmoduleresolution"></a>
- * <p> {@link ModuleDescriptor#isAutomatic() Automatic} modules receive special
- * treatment during resolution. Each automatic module is resolved so that it
- * reads all other modules in the configuration and all parent configurations.
- * Each automatic module is also resolved as if it {@code requires transitive}
- * all other automatic modules in the configuration (and all automatic modules
- * in parent configurations). </p>
-
- * <h2><a name="servicebinding">Service binding</a></h2>
- *
- * <p> Service binding is the process of augmenting a graph of resolved modules
- * from the set of observable modules induced by the service-use dependence
- * ({@code uses} and {@code provides} clauses). Any module that was not
- * previously in the graph requires resolution to compute its transitive
- * closure. Service binding is an iterative process in that adding a module
- * that satisfies some service-use dependence may introduce new service-use
- * dependences. </p>
- *
- * <p> Suppose we have the following observable modules: </p>
- * <pre> {@code
- *     module m1 { exports p; uses p.S; }
- *     module m2 { requires m1; provides p.S with p2.S2; }
- *     module m3 { requires m1; requires m4; provides p.S with p3.S3; }
- *     module m4 { }
- * } </pre>
- *
- * <p> If the module {@code m1} is resolved then the resulting graph of modules
- * has one module ({@code m1}). If the graph is augmented with modules induced
- * by the service-use dependence relation then the configuration will contain
- * four modules ({@code m1}, {@code m2}, {@code m3}, {@code m4}). The edges in
- * its readability graph are: </p>
- * <pre> {@code
- *     m2 --> m1
- *     m3 --> m1
- *     m3 --> m4
- * } </pre>
- * <p> The edges in the conceptual service-use graph are: </p>
- * <pre> {@code
- *     m1 --> m2  (meaning m1 uses a service that is provided by m2)
- *     m1 --> m3
- * } </pre>
- *
- * <p> If this configuration is instantiated as a {@code Layer}, and if code in
- * module {@code m1} uses {@link java.util.ServiceLoader ServiceLoader} to
- * iterate over implementations of {@code p.S.class}, then it will iterate over
- * an instance of {@code p2.S2} and {@code p3.S3}. </p>
+ * <p> Each {@link java.lang.reflect.Layer layer} of modules in the Java virtual
+ * machine is created from a configuration. The configuration for the {@link
+ * java.lang.reflect.Layer#boot() boot} layer is obtained by invoking {@code
+ * Layer.boot().configuration()}. The configuration for the boot layer will
+ * often be the parent when creating new configurations. </p>
  *
  * <h3> Example </h3>
  *
- * <p> The following example uses the {@code resolve} method to resolve a
- * module named <em>myapp</em> with the configuration for the boot layer as
- * the parent configuration. It prints the name of each resolved module and
- * the names of the modules that each module reads. </p>
+ * <p> The following example uses the {@link
+ * #resolve(ModuleFinder,ModuleFinder,Collection) resolve} method to resolve a
+ * module named <em>myapp</em> with the configuration for the boot layer as the
+ * parent configuration. It prints the name of each resolved module and the
+ * names of the modules that each module reads. </p>
  *
  * <pre>{@code
  *    ModuleFinder finder = ModuleFinder.of(dir1, dir2, dir3);

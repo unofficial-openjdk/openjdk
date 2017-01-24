@@ -48,8 +48,8 @@ import sun.security.action.GetPropertyAction;
 
 /**
  * A finder of modules. A {@code ModuleFinder} is used to find modules during
- * <a href="Configuration.html#resolution">resolution</a> or
- * <a href="Configuration.html#servicebinding">service binding</a>.
+ * <a href="package-summary.html#resolution">resolution</a> or
+ * <a href="package-summary.html#servicebinding">service binding</a>.
  *
  * <p> A {@code ModuleFinder} can only find one module with a given name. A
  * {@code ModuleFinder} that finds modules in a sequence of directories, for

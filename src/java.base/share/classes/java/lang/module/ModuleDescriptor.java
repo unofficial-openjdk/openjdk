@@ -76,11 +76,10 @@ import jdk.internal.module.ModuleInfo;
  * packages are open. The module descriptor for an automatic module does not
  * declare any dependences (except for the mandatory dependency on {@code
  * java.base}), and does not declare any exported or open packages. Automatic
- * module receive <a href="Configuration.html#automaticmoduleresolution">special
- * treatment</a> during resolution so that they read all other modules in the
- * configuration. When an automatic module is instantiated in the Java virtual
- * machine then it reads every unnamed module and is treated as if all
- * packages are exported and open. </p>
+ * module receive special treatment during resolution so that they read all
+ * other modules in the configuration. When an automatic module is instantiated
+ * in the Java virtual machine then it reads every unnamed module and is
+ * treated as if all packages are exported and open. </p>
  *
  * <p> {@code ModuleDescriptor} objects are immutable and safe for use by
  * multiple concurrent threads.</p>
@@ -2238,7 +2237,8 @@ public class ModuleDescriptor
      * module.
      *
      * <p> The builder for an automatic module cannot be used to declare module
-     * or service dependences, or exported or open packages. </p>
+     * or service dependences. It also cannot be used to declare any exported
+     * or open packages. </p>
      *
      * @param  name
      *         The module name

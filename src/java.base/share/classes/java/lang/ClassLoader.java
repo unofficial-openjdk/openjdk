@@ -1264,11 +1264,11 @@ public abstract class ClassLoader {
      * Class loader implementations that support the loading from modules
      * should override this method.
      *
-     * @apiNote This method is the basis for the {@code Class} {@link
-     * Class#getResource getResource} and {@link Class#getResourceAsStream
-     * getResourceAsStream} methods. It is not subject to the rules for
-     * encapsulation specified by {@code Module} {@link
-     * Module#getResourceAsStream getResourceAsStream}.
+     * @apiNote This method is the basis for the {@link
+     * Class#getResource Class.getResource}, {@link Class#getResourceAsStream
+     * Class.getResourceAsStream}, and {@link Module#getResourceAsStream
+     * Module.getResourceAsStream} methods. It is not subject to the rules for
+     * encapsulation specified by {@code Module.getResourceAsStream}.
      *
      * @implSpec The default implementation attempts to find the resource by
      * invoking {@link #findResource(String)} when the {@code moduleName} is
