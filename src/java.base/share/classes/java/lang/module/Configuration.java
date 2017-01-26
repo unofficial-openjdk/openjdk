@@ -108,11 +108,23 @@ public final class Configuration {
     private final Set<ResolvedModule> modules;
     private final Map<String, ResolvedModule> nameToModule;
 
+    // module constraints on target
+    private final String osName;
+    private final String osArch;
+    private final String osVersion;
+
+    String osName() { return osName; }
+    String osArch() { return osArch; }
+    String osVersion() { return osVersion; }
+
     private Configuration() {
         this.parents = Collections.emptyList();
         this.graph = Collections.emptyMap();
         this.modules = Collections.emptySet();
         this.nameToModule = Collections.emptyMap();
+        this.osName = null;
+        this.osArch = null;
+        this.osVersion = null;
     }
 
     private Configuration(List<Configuration> parents,
@@ -136,8 +148,11 @@ public final class Configuration {
         this.graph = g;
         this.modules = Set.of(moduleArray);
         this.nameToModule = Map.ofEntries(nameEntries);
-    }
 
+        this.osName = resolver.osName();
+        this.osArch = resolver.osArch();
+        this.osVersion = resolver.osVersion();
+    }
 
     /**
      * Resolves a collection of root modules, with this configuration as its
@@ -164,8 +179,12 @@ public final class Configuration {
      * @return The configuration that is the result of resolving the given
      *         root modules
      *
+     * @throws FindException
+     *         If resolution fails for any of the observability-related reasons
+     *         specified by the static {@code resolve} method
      * @throws ResolutionException
-     *         If resolution or the post-resolution checks fail
+     *         If any of the post-resolution consistency checks specified by
+     *         the  static {@code resolve} method fail
      * @throws SecurityException
      *         If locating a module is denied by the security manager
      */
@@ -203,8 +222,12 @@ public final class Configuration {
      * @return The configuration that is the result of resolving, with service
      *         binding, the given root modules
      *
+     * @throws FindException
+     *         If resolution fails for any of the observability-related reasons
+     *         specified by the static {@code resolve} method
      * @throws ResolutionException
-     *         If resolution or the post-resolution checks fail
+     *         If any of the post-resolution consistency checks specified by
+     *         the  static {@code resolve} method fail
      * @throws SecurityException
      *         If locating a module is denied by the security manager
      */
@@ -253,8 +276,8 @@ public final class Configuration {
      * readability graph is constructed, and in conjunction with the module
      * exports and service use, checked for consistency. </p>
      *
-     * <p> Resolution and the (post-resolution) consistency checks may fail for
-     * following reasons: </p>
+     * <p> Resolution may fail with {@code FindException} for the following
+     * <em>observability-related</em> reasons: </p>
      *
      * <ul>
      *     <li><p> A root module, or a direct or transitive dependency, is not
@@ -264,6 +287,20 @@ public final class Configuration {
      *     Possible errors include I/O errors, errors detected parsing a module
      *     descriptor ({@code module-info.class}) or two versions of the same
      *     module are found in the same directory. </p></li>
+     *
+     *     <li><p> A module with the required name is found but the module
+     *     requires a different {@link ModuleDescriptor#osName() operating
+     *     system}, {@link ModuleDescriptor#osArch() architecture}, or {@link
+     *     ModuleDescriptor#osVersion() version} to other modules that have
+     *     been resolved for the new configuration or modules in the parent
+     *     configurations. </p></li>
+     *
+     * </ul>
+     *
+     * <p> Post-resolution consistency checks may fail with {@code
+     * ResolutionException} for the following reasons: </p>
+     *
+     * <ul>
      *
      *     <li><p> A cycle is detected, say where module {@code m1} requires
      *     module {@code m2} and {@code m2} requires {@code m1}. </p></li>
@@ -278,15 +315,10 @@ public final class Configuration {
      *     module {@code M} nor exported to {@code M} by any module that
      *     {@code M} reads. </p></li>
      *
-     *     <li><p> Two or more modules in the configuration are specific to
-     *     different {@link ModuleDescriptor#osName() operating systems},
-     *     {@link ModuleDescriptor#osArch() architectures}, or {@link
-     *     ModuleDescriptor#osVersion() versions}. </p></li>
-     *
      * </ul>
      *
      * @implNote In the implementation then observability of modules may depend
-     * on referential integrity checks that ensure that different versions of
+     * on referential integrity checks that ensure that different builds of
      * tightly coupled modules cannot be combined in the same configuration.
      *
      * @param  before
@@ -304,10 +336,15 @@ public final class Configuration {
      * @return The configuration that is the result of resolving the given
      *         root modules
      *
+     * @throws FindException
+     *         If resolution fails for an observability-related reason
      * @throws ResolutionException
-     *         If resolution or the post-resolution checks fail
+     *         If a post-resolution consistency checks fails
      * @throws IllegalArgumentException
-     *         If the list of parents is empty
+     *         If the list of parents is empty, or the list has two or more
+     *         parents with modules for different target operating systems,
+     *         architectures, or versions
+     *
      * @throws SecurityException
      *         If locating a module is denied by the security manager
      */
@@ -350,9 +387,9 @@ public final class Configuration {
      * service-use dependences and so the process works iteratively until no
      * more modules are added. </p>
      *
-     * <p> As service binding involves resolution then it may fail with {@link
-     * ResolutionException} for exactly the same reasons specified in
-     * {@code resolve}.  </p>
+     * <p> As service binding involves resolution then it may fail with {@code
+     * FindException} or {@code ResolutionException} for exactly the same
+     * reasons specified in {@code resolve}. </p>
      *
      * @param  before
      *         The <em>before</em> module finder to find modules
@@ -369,10 +406,16 @@ public final class Configuration {
      * @return The configuration that is the result of resolving, with service
      *         binding, the given root modules
      *
+     * @throws FindException
+     *         If resolution fails for any of the observability-related reasons
+     *         specified by the static {@code resolve} method
      * @throws ResolutionException
-     *         If resolution or the post-resolution checks fail
+     *         If any of the post-resolution consistency checks specified by
+     *         the  static {@code resolve} method fail
      * @throws IllegalArgumentException
-     *         If the list of parents is empty
+     *         If the list of parents is empty, or the list has two or more
+     *         parents with modules for different target operating systems,
+     *         architectures, or versions
      * @throws SecurityException
      *         If locating a module is denied by the security manager
      */

@@ -34,6 +34,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
 import java.lang.module.Configuration;
+import java.lang.module.FindException;
 import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
@@ -848,7 +849,7 @@ public class JmodTask {
             Configuration config = null;
             try {
                 config = Configuration.empty().resolve(system, finder, roots);
-            } catch (ResolutionException e) {
+            } catch (FindException | ResolutionException e) {
                 throw new CommandException("err.module.resolution.fail", e.getMessage());
             }
 

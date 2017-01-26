@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
 import java.lang.module.Configuration;
+import java.lang.module.FindException;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
@@ -232,7 +233,7 @@ public class JlinkTask {
 
             return EXIT_OK;
         } catch (PluginException | IllegalArgumentException |
-                 UncheckedIOException |IOException | ResolutionException e) {
+                 UncheckedIOException |IOException | FindException | ResolutionException e) {
             log.println(taskHelper.getMessage("error.prefix") + " " + e.getMessage());
             if (DEBUG) {
                 e.printStackTrace(log);
