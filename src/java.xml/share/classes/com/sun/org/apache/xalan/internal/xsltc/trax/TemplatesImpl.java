@@ -438,7 +438,7 @@ public final class TemplatesImpl implements Templates, Serializable {
         Layer bootLayer = Layer.boot();
 
         Configuration cf = bootLayer.configuration()
-                .resolveRequires(finder, ModuleFinder.of(), Set.of(mn));
+                .resolve(finder, ModuleFinder.of(), Set.of(mn));
 
         PrivilegedAction<Layer> pa = () -> bootLayer.defineModules(cf, name -> loader);
         Layer layer = AccessController.doPrivileged(pa);
@@ -483,7 +483,7 @@ public final class TemplatesImpl implements Templates, Serializable {
             String pn = _tfactory.getPackageName();
             assert pn != null && pn.length() > 0;
 
-            ModuleDescriptor descriptor = ModuleDescriptor.module(mn)
+            ModuleDescriptor descriptor = ModuleDescriptor.newModule(mn)
                     .requires("java.xml")
                     .exports(pn)
                     .build();
