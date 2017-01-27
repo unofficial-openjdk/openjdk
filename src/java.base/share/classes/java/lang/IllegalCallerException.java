@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,55 +23,52 @@
  * questions.
  */
 
-package java.lang.module;
+package java.lang;
 
 /**
- * Thrown when resolving a set of modules, or resolving a set of modules with
- * service binding, fails.
+ * Thrown to indicate that a method has been called by an inappropriate caller.
  *
- * @see Configuration
  * @since 9
  */
-public class ResolutionException extends RuntimeException {
-    private static final long serialVersionUID = -1031186845316729450L;
-
+public class IllegalCallerException extends RuntimeException {
     /**
-     * Constructs a {@code ResolutionException} with no detail message.
+     * Constructs an IllegalCallerException with no detail message.
      */
-    public ResolutionException() { }
-
-    /**
-     * Constructs a {@code ResolutionException} with the given detail
-     * message.
-     *
-     * @param msg
-     *        The detail message; can be {@code null}
-     */
-    public ResolutionException(String msg) {
-        super(msg);
+    public IllegalCallerException() {
+        super();
     }
 
     /**
-     * Constructs an instance of this exception with the given cause.
+     * Constructs an IllegalCallerException with the specified detail
+     * message.
      *
-     * @param cause
-     *        The cause; can be {@code null}
+     * @param s the String that contains a detailed message (can be null)
      */
-    public ResolutionException(Throwable cause) {
+    public IllegalCallerException(String s) {
+        super(s);
+    }
+
+    /**
+     * Constructs a new exception with the specified detail message and
+     * cause.
+     *
+     * @param  message the detail message (can be null)
+     * @param  cause the cause (can be null)
+     */
+    public IllegalCallerException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    /**
+     * Constructs a new exception with the specified cause and a detail
+     * message of {@code (cause==null ? null : cause.toString())} (which
+     * typically contains the class and detail message of {@code cause}).
+     *
+     * @param  cause the cause (can be null)
+     */
+    public IllegalCallerException(Throwable cause) {
         super(cause);
     }
 
-    /**
-     * Constructs a {@code ResolutionException} with the given detail message
-     * and cause.
-     *
-     * @param msg
-     *        The detail message; can be {@code null}
-     * @param cause
-     *        The cause; can be {@code null}
-     */
-    public ResolutionException(String msg, Throwable cause) {
-        super(msg, cause);
-    }
-
+    static final long serialVersionUID = -2349421918363102232L;
 }

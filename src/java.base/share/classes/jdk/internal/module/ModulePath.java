@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -362,7 +362,7 @@ public class ModulePath implements ModuleFinder {
 
     /**
      * Returns the service type corresponding to the name of a services
-     * configuration file if it is a valid Java identifier.
+     * configuration file if it is a legal type name.
      *
      * For example, if called with "META-INF/services/p.S" then this method
      * returns a container with the value "p.S".
@@ -374,7 +374,7 @@ public class ModulePath implements ModuleFinder {
             String prefix = cf.substring(0, index);
             if (prefix.equals(SERVICES_PREFIX)) {
                 String sn = cf.substring(index);
-                if (Checks.isJavaIdentifier(sn))
+                if (Checks.isClassName(sn))
                     return Optional.of(sn);
             }
         }
@@ -403,11 +403,10 @@ public class ModulePath implements ModuleFinder {
      *
      * 1. The module name (and optionally the version) is derived from the file
      *    name of the JAR file
-     * 2. All packages are exported and open
-     * 3. It has no non-exported/non-open packages
-     * 4. The contents of any META-INF/services configuration files are mapped
+     * 2. All packages are derived from the .class files in the JAR file
+     * 3. The contents of any META-INF/services configuration files are mapped
      *    to "provides" declarations
-     * 5. The Main-Class attribute in the main attributes of the JAR manifest
+     * 4. The Main-Class attribute in the main attributes of the JAR manifest
      *    is mapped to the module descriptor mainClass
      */
     private ModuleDescriptor deriveModuleDescriptor(JarFile jf)
@@ -443,9 +442,7 @@ public class ModulePath implements ModuleFinder {
         mn = cleanModuleName(mn);
 
         // Builder throws IAE if module name is empty or invalid
-        ModuleDescriptor.Builder builder
-            = ModuleDescriptor.automaticModule(mn)
-                .requires(Set.of(Requires.Modifier.MANDATED), "java.base");
+        ModuleDescriptor.Builder builder = ModuleDescriptor.newAutomaticModule(mn);
         if (vs != null)
             builder.version(vs);
 
@@ -453,17 +450,22 @@ public class ModulePath implements ModuleFinder {
         Map<Boolean, Set<String>> map = VersionedStream.stream(jf)
                 .filter(e -> !e.isDirectory())
                 .map(JarEntry::getName)
+                .filter(e -> (e.endsWith(".class") ^ e.startsWith(SERVICES_PREFIX)))
                 .collect(Collectors.partitioningBy(e -> e.startsWith(SERVICES_PREFIX),
                                                    Collectors.toSet()));
 
-        Set<String> resources = map.get(Boolean.FALSE);
+        Set<String> classFiles = map.get(Boolean.FALSE);
         Set<String> configFiles = map.get(Boolean.TRUE);
-        // all packages are exported and open
-        resources.stream()
+
+        // the packages containing class files
+        Set<String> packages = classFiles.stream()
                 .map(this::toPackageName)
                 .flatMap(Optional::stream)
                 .distinct()
-                .forEach(pn -> builder.exports(pn).opens(pn));
+                .collect(Collectors.toSet());
+
+        // all packages are exported and open
+        builder.packages(packages);
 
         // map names of service configuration files to service names
         Set<String> serviceNames = configFiles.stream()
@@ -481,6 +483,11 @@ public class ModulePath implements ModuleFinder {
                 String cn;
                 while ((cn = nextLine(reader)) != null) {
                     if (cn.length() > 0) {
+                        String pn = packageName(cn);
+                        if (!packages.contains(pn)) {
+                            String msg = "Provider class " + cn + " not in module";
+                            throw new IOException(msg);
+                        }
                         providerClasses.add(cn);
                     }
                 }
@@ -494,8 +501,15 @@ public class ModulePath implements ModuleFinder {
         if (man != null) {
             Attributes attrs = man.getMainAttributes();
             String mainClass = attrs.getValue(Attributes.Name.MAIN_CLASS);
-            if (mainClass != null)
-                builder.mainClass(mainClass.replace("/", "."));
+            if (mainClass != null) {
+                mainClass = mainClass.replace("/", ".");
+                String pn = packageName(mainClass);
+                if (!packages.contains(pn)) {
+                    String msg = "Main-Class " + mainClass + " not in module";
+                    throw new IOException(msg);
+                }
+                builder.mainClass(mainClass);
+            }
         }
 
         return builder.build();
@@ -569,10 +583,10 @@ public class ModulePath implements ModuleFinder {
                 try {
                     ModuleDescriptor md = deriveModuleDescriptor(jf);
                     attrs = new ModuleInfo.Attributes(md, null, null);
-                } catch (IllegalArgumentException iae) {
+                } catch (IllegalArgumentException e) {
                     throw new FindException(
                         "Unable to derive module descriptor for: "
-                        + jf.getName(), iae);
+                        + jf.getName(), e);
                 }
 
             } else {
@@ -621,6 +635,14 @@ public class ModulePath implements ModuleFinder {
     }
 
     /**
+     * Maps a type name to its package name.
+     */
+    private static String packageName(String cn) {
+        int index = cn.lastIndexOf('.');
+        return (index == -1) ? "" : cn.substring(0, index);
+    }
+
+    /**
      * Maps the name of an entry in a JAR or ZIP file to a package name.
      *
      * @throws IllegalArgumentException if the name is a class file in
@@ -629,19 +651,18 @@ public class ModulePath implements ModuleFinder {
      */
     private Optional<String> toPackageName(String name) {
         assert !name.endsWith("/");
-
         int index = name.lastIndexOf("/");
         if (index == -1) {
             if (name.endsWith(".class") && !name.equals(MODULE_INFO)) {
                 throw new IllegalArgumentException(name
-                        + " found in top-level directory:"
+                        + " found in top-level directory"
                         + " (unnamed package not allowed in module)");
             }
             return Optional.empty();
         }
 
         String pn = name.substring(0, index).replace('/', '.');
-        if (Checks.isJavaIdentifier(pn)) {
+        if (Checks.isPackageName(pn)) {
             return Optional.of(pn);
         } else {
             // not a valid package name
@@ -654,7 +675,7 @@ public class ModulePath implements ModuleFinder {
      * name.
      *
      * @throws IllegalArgumentException if the name is a class file in
-     *         the top-level directory (and it's not module-info.class)
+     *          the top-level directory (and it's not module-info.class)
      */
     private Optional<String> toPackageName(Path file) {
         assert file.getRoot() == null;
@@ -664,14 +685,14 @@ public class ModulePath implements ModuleFinder {
             String name = file.toString();
             if (name.endsWith(".class") && !name.equals(MODULE_INFO)) {
                 throw new IllegalArgumentException(name
-                        + " found in in top-level directory"
+                        + " found in top-level directory"
                         + " (unnamed package not allowed in module)");
             }
             return Optional.empty();
         }
 
         String pn = parent.toString().replace(File.separatorChar, '.');
-        if (Checks.isJavaIdentifier(pn)) {
+        if (Checks.isPackageName(pn)) {
             return Optional.of(pn);
         } else {
             // not a valid package name

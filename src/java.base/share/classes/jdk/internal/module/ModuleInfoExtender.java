@@ -79,6 +79,10 @@ public final class ModuleInfoExtender {
 
     /**
      * Sets the set of packages for the Packages attribute
+     *
+     * @apiNote This method does not check that the package names are legal
+     * package names or that the set of packages is a super set of the
+     * packages in the module.
      */
     public ModuleInfoExtender packages(Set<String> packages) {
         this.packages = Collections.unmodifiableSet(packages);
@@ -95,6 +99,9 @@ public final class ModuleInfoExtender {
 
     /**
      * Sets the value of the MainClass attribute.
+     *
+     * @apiNote This method does not check that the main class is a legal
+     * qualified type name.
      */
     public ModuleInfoExtender mainClass(String mainClass) {
         this.mainClass = mainClass;

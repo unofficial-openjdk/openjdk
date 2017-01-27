@@ -183,11 +183,11 @@ public class MethodHandles {
             throw new IllegalArgumentException(targetClass + " is an array class");
         Module targetModule = targetClass.getModule();
         Module callerModule = lookup.lookupClass().getModule();
-        if (callerModule != targetModule && targetModule.isNamed()) {
-            if (!callerModule.canRead(targetModule))
-                throw new IllegalAccessException(callerModule + " does not read " + targetModule);
+        if (!callerModule.canRead(targetModule))
+            throw new IllegalAccessException(callerModule + " does not read " + targetModule);
+        if (targetModule.isNamed()) {
             String pn = targetClass.getPackageName();
-            assert pn != null && pn.length() > 0 : "unnamed package cannot be in named module";
+            assert pn.length() > 0 : "unnamed package cannot be in named module";
             if (!targetModule.isOpen(pn, callerModule))
                 throw new IllegalAccessException(targetModule + " does not open " + pn + " to " + callerModule);
         }

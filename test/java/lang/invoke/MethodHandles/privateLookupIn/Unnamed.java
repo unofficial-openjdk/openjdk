@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,9 +21,4 @@
  * questions.
  */
 
-/**
- * @test
- * @build test/* m1/* m2/* m3/* Unnamed
- * @run testng/othervm test/p.PrivateLookupInTests
- * @summary Unit tests for MethodHandles.privateLookupIn
- */
+public class Unnamed { }
