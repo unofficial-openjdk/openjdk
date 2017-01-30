@@ -195,8 +195,7 @@ public class ModulePath implements ModuleFinder {
             if (attrs.isDirectory()) {
                 Path mi = entry.resolve(MODULE_INFO);
                 if (!Files.exists(mi)) {
-                    // does not exist or unable to determine so assume a
-                    // directory of modules
+                    // assume a directory of modules
                     return scanDirectory(entry);
                 }
             }
@@ -206,10 +205,16 @@ public class ModulePath implements ModuleFinder {
             if (mref != null) {
                 String name = mref.descriptor().name();
                 return Collections.singletonMap(name, mref);
-            } else {
-                // skipped
-                return Collections.emptyMap();
             }
+
+            // not recognized
+            String msg;
+            if (!isLinkPhase && entry.toString().endsWith(".jmod")) {
+                msg = "JMOD format not supported at execution time";
+            } else {
+                msg = "Module format not recognized";
+            }
+            throw new FindException(msg + ": " + entry);
 
         } catch (IOException ioe) {
             throw new FindException(ioe);
@@ -266,14 +271,11 @@ public class ModulePath implements ModuleFinder {
 
 
     /**
-     * Locates a packaged or exploded module, returning a {@code ModuleReference}
-     * to the module. Returns {@code null} if the entry is skipped because it is
-     * to a directory that does not contain a module-info.class or it's a hidden
-     * file.
+     * Reads a packaged or exploded module, returning a {@code ModuleReference}
+     * to the module. Returns {@code null} if the entry is not recognized.
      *
      * @throws IOException if an I/O error occurs
-     * @throws FindException if the file is not recognized as a module or an
-     *         error occurs parsing its module descriptor
+     * @throws FindException if an error occurs parsing its module descriptor
      */
     private ModuleReference readModule(Path entry, BasicFileAttributes attrs)
         throws IOException
@@ -282,24 +284,16 @@ public class ModulePath implements ModuleFinder {
 
             if (attrs.isDirectory()) {
                 return readExplodedModule(entry); // may return null
-            }
-
-            String fn = entry.getFileName().toString();
-            if (attrs.isRegularFile()) {
-                if (fn.endsWith(".jar")) {
-                    return readJar(entry);
-                } else if (fn.endsWith(".jmod")) {
-                    if (isLinkPhase)
-                        return readJMod(entry);
-                    throw new FindException("JMOD files not supported: " + entry);
-                }
-            }
-
-            // skip hidden files
-            if (fn.startsWith(".") || Files.isHidden(entry)) {
-                return null;
             } else {
-                throw new FindException("Unrecognized module: " + entry);
+                String fn = entry.getFileName().toString();
+                if (attrs.isRegularFile()) {
+                    if (fn.endsWith(".jar")) {
+                        return readJar(entry);
+                    } else if (isLinkPhase && fn.endsWith(".jmod")) {
+                        return readJMod(entry);
+                    }
+                }
+                return null;
             }
 
         } catch (InvalidModuleDescriptorException e) {

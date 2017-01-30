@@ -278,11 +278,13 @@ public interface ModuleFinder {
      * a legal class name or its package is not in the module. </p>
      *
      * <p> In addition to JAR files, an implementation may also support modules
-     * that are packaged in other implementation specific module formats. When
-     * a file is encountered that is not recognized as a packaged module then
-     * {@code FindException} is thrown. An implementation may choose to ignore
-     * some files, {@link java.nio.file.Files#isHidden hidden} files for
-     * example. Paths to files that do not exist are always ignored. </p>
+     * that are packaged in other implementation specific module formats. If
+     * an element in the array specified to this method is a path to a directory
+     * of modules then entries in the directory that not recognized as modules
+     * are ignored. If an element in the array is a path to a packaged module
+     * that is not recognized then a {@code FindException} is thrown when the
+     * file is encountered. Paths to files that do not exist are always ignored.
+     * </p>
      *
      * <p> As with automatic modules, the contents of a packaged or exploded
      * module may need to be <em>scanned</em> in order to determine the packages
