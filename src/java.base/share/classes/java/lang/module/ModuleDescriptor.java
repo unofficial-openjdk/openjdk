@@ -37,11 +37,13 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -223,14 +225,18 @@ public class ModuleDescriptor
          * Compares this module dependence to another.
          *
          * <p> Two {@code Requires} objects are compared by comparing their
-         * module name lexicographically.  Where the module names are equal then
-         * the sets of modifiers are compared based on a value computed from the
-         * ordinal of each modifier. Where the module names are equal and the
-         * set of modifiers are equal then the version of the modules recorded
-         * at compile-time are compared. When comparing the versions recorded
-         * at compile-time then a dependence that has a recorded version is
-         * considered to succeed a dependence that does not have a recorded
-         * version. </p>
+         * module names lexicographically. Where the module names are equal
+         * then the sets of modifiers are compared in the same way that
+         * module modifiers are compared (see {@link ModuleDescriptor#compareTo
+         * ModuleDescriptor.compareTo}). Where the module names are equal and
+         * the set of modifiers are equal then the version of the modules
+         * recorded at compile-time are compared. When comparing the versions
+         * recorded at compile-time then a dependence that has a recorded
+         * version is considered to succeed a dependence that does not have a
+         * recorded version. </p>
+         *
+         * @param  that
+         *         The module dependence to compare
          *
          * @return A negative integer, zero, or a positive integer if this module
          *         dependence is less than, equal to, or greater than the given
@@ -238,39 +244,22 @@ public class ModuleDescriptor
          */
         @Override
         public int compareTo(Requires that) {
+            if (this == that) return 0;
+
             int c = this.name().compareTo(that.name());
-            if (c != 0)
-                return c;
+            if (c != 0) return c;
 
             // modifiers
-            c = Long.compare(this.modsValue(), that.modsValue());
-            if (c != 0)
-                return c;
+            long v1 = modsValue(this.modifiers());
+            long v2 = modsValue(that.modifiers());
+            c = Long.compare(v1, v2);
+            if (c != 0) return c;
 
             // compiledVersion
-            if (this.compiledVersion != null) {
-                if (that.compiledVersion != null)
-                    c = this.compiledVersion.compareTo(that.compiledVersion);
-                else
-                    c = 1;
-            } else {
-                if (that.compiledVersion != null)
-                    c = -1;
-            }
+            c = compare(this.compiledVersion, that.compiledVersion);
+            if (c != 0) return c;
 
-            return c;
-        }
-
-        /**
-         * Return a value for the modifiers to allow sets of modifiers to be
-         * compared.
-         */
-        private long modsValue() {
-            long value = 0;
-            for (Modifier m : mods) {
-                value += 1 << m.ordinal();
-            }
-            return value;
+            return 0;
         }
 
         /**
@@ -343,7 +332,9 @@ public class ModuleDescriptor
      * @since 9
      */
 
-    public final static class Exports {
+    public final static class Exports
+        implements Comparable<Exports>
+    {
 
         /**
          * A modifier on a module export.
@@ -434,6 +425,51 @@ public class ModuleDescriptor
         }
 
         /**
+         * Compares this module export to another.
+         *
+         * <p> Two {@code Exports} objects are compared by comparing the package
+         * names lexicographically. Where the packages names are equal then the
+         * sets of modifiers are compared in the same way that module modifiers
+         * are compared (see {@link ModuleDescriptor#compareTo
+         * ModuleDescriptor.compareTo}). Where the package names are equal and
+         * the set of modifiers are equal then the set of target modules are
+         * compared. This is done by sorting the sets, iterating over both sets
+         * in ascending order, and comparing the corresponding elements
+         * lexicographically. Where the sets differ in size, and the larger set
+         * contains all elements of the smaller set, then the larger set is
+         * considered to succeed the smaller set. </p>
+         *
+         * @param  that
+         *         The module export to compare
+         *
+         * @return A negative integer, zero, or a positive integer if this module
+         *         export is less than, equal to, or greater than the given
+         *         export dependence
+         */
+        @Override
+        public int compareTo(Exports that) {
+            if (this == that) return 0;
+
+            int c = source.compareTo(that.source);
+            if (c != 0)
+                return c;
+
+            // modifiers
+            long v1 = modsValue(this.modifiers());
+            long v2 = modsValue(that.modifiers());
+            c = Long.compare(v1, v2);
+            if (c != 0)
+                return c;
+
+            // targets
+            c = compare(targets, that.targets);
+            if (c != 0)
+                return c;
+
+            return 0;
+        }
+
+        /**
          * Computes a hash code for this module export.
          *
          * <p> The hash code is based upon the modifiers, the package name,
@@ -507,8 +543,9 @@ public class ModuleDescriptor
      * @since 9
      */
 
-    public final static class Opens {
-
+    public final static class Opens
+        implements Comparable<Opens>
+    {
         /**
          * A modifier on a module <em>opens</em> directive.
          *
@@ -598,6 +635,51 @@ public class ModuleDescriptor
         }
 
         /**
+         * Compares this module opens to another.
+         *
+         * <p> Two {@code Opens} objects are compared by comparing the package
+         * names lexicographically. Where the packages names are equal then the
+         * sets of modifiers are compared in the same way that module modifiers
+         * are compared (see {@link ModuleDescriptor#compareTo
+         * ModuleDescriptor.compareTo}). Where the package names are equal and
+         * the set of modifiers are equal then the set of target modules are
+         * compared. This is done by sorting the sets, iterating over both sets
+         * in ascending order, and comparing the corresponding elements
+         * lexicographically. Where the sets differ in size, and the larger set
+         * contains all elements of the smaller set, then the larger set is
+         * considered to succeed the smaller set. </p>
+         *
+         * @param  that
+         *         The module opens to compare
+         *
+         * @return A negative integer, zero, or a positive integer if this module
+         *         opens is less than, equal to, or greater than the given
+         *         module opens
+         */
+        @Override
+        public int compareTo(Opens that) {
+            if (this == that) return 0;
+
+            int c = source.compareTo(that.source);
+            if (c != 0)
+                return c;
+
+            // modifiers
+            long v1 = modsValue(this.modifiers());
+            long v2 = modsValue(that.modifiers());
+            c = Long.compare(v1, v2);
+            if (c != 0)
+                return c;
+
+            // targets
+            c = compare(targets, that.targets);
+            if (c != 0)
+                return c;
+
+            return 0;
+        }
+
+        /**
          * Computes a hash code for this module opens.
          *
          * <p> The hash code is based upon the modifiers, the package name,
@@ -664,8 +746,9 @@ public class ModuleDescriptor
      * @since 9
      */
 
-    public final static class Provides {
-
+    public final static class Provides
+        implements Comparable<Provides>
+    {
         private final String service;
         private final List<String> providers;
 
@@ -694,6 +777,46 @@ public class ModuleDescriptor
          *         names of the providers or provider factories
          */
         public List<String> providers() { return providers; }
+
+        /**
+         * Compares this provides to another.
+         *
+         * <p> Two {@code Provides} objects are compared by comparing the fully
+         * qualified class name of the service type lexicographically. Where the
+         * class names are equal then the list of the provider class names are
+         * compared by comparing the corresponding elements of both lists
+         * lexicographically and in sequence. Where the lists differ in size,
+         * {@code N} is the size of the shorter list, and the first {@code N}
+         * corresponding elements are equal, then the longer list is considered
+         * to succeed the shorter list. </p>
+         *
+         * @param  that
+         *         The {@code Provides} to compare
+         *
+         * @return A negative integer, zero, or a positive integer if this provides
+         *         is less than, equal to, or greater than the given provides
+         */
+        public int compareTo(Provides that) {
+            if (this == that) return 0;
+
+            int c = service.compareTo(that.service);
+            if (c != 0) return c;
+
+            // compare provider class names in sequence
+            int size1 = this.providers.size();
+            int size2 = that.providers.size();
+            for (int index=0; index<Math.min(size1, size2); index++) {
+                String e1 = this.providers.get(index);
+                String e2 = that.providers.get(index);
+                c = e1.compareTo(e2);
+                if (c != 0) return c;
+            }
+            if (size1 == size2) {
+                return 0;
+            } else {
+                return (size1 > size2) ? 1 : -1;
+            }
+        }
 
         /**
          * Computes a hash code for this provides.
@@ -1472,6 +1595,23 @@ public class ModuleDescriptor
             return requires(new Requires(ms, mn, compiledVersion));
         }
 
+        /* package */Builder requires(Set<Requires.Modifier> ms,
+                                      String mn,
+                                      String compiledVersion) {
+            Version v = null;
+            try {
+                v = Version.parse(compiledVersion);
+            } catch (IllegalArgumentException e) {
+                // for now, drop un-parsable version when non-strict
+                if (strict) throw e;
+            }
+            if (v == null) {
+                return requires(ms, mn);
+            } else {
+                return requires(ms, mn, v);
+            }
+        }
+
         /**
          * Adds a dependence on a module with the given (and possibly empty)
          * set of modifiers.
@@ -1922,19 +2062,30 @@ public class ModuleDescriptor
         /**
          * Sets the module version.
          *
-         * @param  v
+         * @param  vs
          *         The version string to parse
          *
          * @return This builder
          *
          * @throws IllegalArgumentException
-         *         If {@code v} is {@code null} or cannot be parsed as a
+         *         If {@code vs} is {@code null} or cannot be parsed as a
          *         version string
          *
          * @see Version#parse(String)
          */
-        public Builder version(String v) {
-            return version(Version.parse(v));
+        public Builder version(String vs) {
+            Version v;
+            if (strict) {
+                v = Version.parse(vs);
+            } else {
+                try {
+                    v = Version.parse(vs);
+                } catch (IllegalArgumentException ignore) {
+                    // for now, ignore when non-strict
+                    return this;
+                }
+            }
+            return version(v);
         }
 
         /**
@@ -2068,16 +2219,20 @@ public class ModuleDescriptor
      * Compares this module descriptor to another.
      *
      * <p> Two {@code ModuleDescriptor} objects are compared by comparing their
-     * module name lexicographically.  Where the module names are equal then
-     * the versions, if present, are compared. </p>
-     *
-     * @apiNote For now, the natural ordering is not consistent with equals.
-     * If two module descriptors have equal module names, equal versions if
-     * present, but their corresponding components are not equal, then they
-     * will be considered equal by this method.
+     * module names lexicographically. Where the module names are equal then the
+     * module versions are compared. When comparing the module versions then a
+     * module descriptor with a version is considered to succeed a module
+     * descriptor that does not have a version. Where the module names are equal
+     * and the versions are equal (or not present in both), then the set of
+     * modifiers are compared. Sets of modifiers are compared by comparing
+     * a <em>binary value</em> computed for each set. If a modifier is present
+     * in the set then the bit at the position of its ordinal is {@code 1}
+     * in the binary value, otherwise {@code 0}. If the two set of modifiers
+     * are also equal then the other components of the module descriptors are
+     * compared in a manner that is consistent with {@code equals}. </p>
      *
      * @param  that
-     *         The object to which this module descriptor is to be compared
+     *         The module descriptor to compare
      *
      * @return A negative integer, zero, or a positive integer if this module
      *         descriptor is less than, equal to, or greater than the given
@@ -2085,16 +2240,50 @@ public class ModuleDescriptor
      */
     @Override
     public int compareTo(ModuleDescriptor that) {
+        if (this == that) return 0;
+
         int c = this.name().compareTo(that.name());
         if (c != 0) return c;
-        if (version == null) {
-            if (that.version == null)
-                return 0;
-            return -1;
-        }
-        if (that.version == null)
-            return +1;
-        return version.compareTo(that.version);
+
+        c = compare(this.version, that.version);
+        if (c != 0) return c;
+
+        long v1 = modsValue(this.modifiers());
+        long v2 = modsValue(that.modifiers());
+        c = Long.compare(v1, v2);
+        if (c != 0) return c;
+
+        c = compare(this.requires, that.requires);
+        if (c != 0) return c;
+
+        c = compare(this.packages, that.packages);
+        if (c != 0) return c;
+
+        c = compare(this.exports, that.exports);
+        if (c != 0) return c;
+
+        c = compare(this.opens, that.opens);
+        if (c != 0) return c;
+
+        c = compare(this.uses, that.uses);
+        if (c != 0) return c;
+
+        c = compare(this.provides, that.provides);
+        if (c != 0) return c;
+
+        c = compare(this.mainClass, that.mainClass);
+        if (c != 0) return c;
+
+        c = compare(this.osName, that.osName);
+        if (c != 0) return c;
+
+        c = compare(this.osArch, that.osArch);
+        if (c != 0) return c;
+
+        c = compare(this.osVersion, that.osVersion);
+        if (c != 0) return c;
+
+        return 0;
     }
 
     /**
@@ -2123,6 +2312,7 @@ public class ModuleDescriptor
         return (name.equals(that.name)
                 && modifiers.equals(that.modifiers)
                 && requires.equals(that.requires)
+                && Objects.equals(packages, that.packages)
                 && exports.equals(that.exports)
                 && opens.equals(that.opens)
                 && uses.equals(that.uses)
@@ -2131,11 +2321,8 @@ public class ModuleDescriptor
                 && Objects.equals(mainClass, that.mainClass)
                 && Objects.equals(osName, that.osName)
                 && Objects.equals(osArch, that.osArch)
-                && Objects.equals(osVersion, that.osVersion)
-                && Objects.equals(packages, that.packages));
+                && Objects.equals(osVersion, that.osVersion));
     }
-
-    private transient int hash;  // cached hash code
 
     /**
      * Computes a hash code for this module descriptor.
@@ -2153,6 +2340,7 @@ public class ModuleDescriptor
             hc = name.hashCode();
             hc = hc * 43 + Objects.hashCode(modifiers);
             hc = hc * 43 + requires.hashCode();
+            hc = hc * 43 + Objects.hashCode(packages);
             hc = hc * 43 + exports.hashCode();
             hc = hc * 43 + opens.hashCode();
             hc = hc * 43 + uses.hashCode();
@@ -2162,13 +2350,13 @@ public class ModuleDescriptor
             hc = hc * 43 + Objects.hashCode(osName);
             hc = hc * 43 + Objects.hashCode(osArch);
             hc = hc * 43 + Objects.hashCode(osVersion);
-            hc = hc * 43 + Objects.hashCode(packages);
             if (hc == 0)
                 hc = -1;
             hash = hc;
         }
         return hc;
     }
+    private transient int hash;  // cached hash code
 
     /**
      * Returns a string describing this descriptor.
@@ -2419,6 +2607,46 @@ public class ModuleDescriptor
                 .collect(Collectors.joining(" "));
     }
 
+    private static <T extends Object & Comparable<? super T>>
+    int compare(T obj1, T obj2) {
+        if (obj1 != null) {
+            return (obj2 != null) ? obj1.compareTo(obj2) : 1;
+        } else {
+            return (obj2 == null) ? 0 : -1;
+        }
+    }
+
+    /**
+     * Compares two sets of {@code Comparable} objects.
+     */
+    private static <T extends Object & Comparable<? super T>>
+    int compare(Set<T> s1, Set<T> s2) {
+        Iterator<T> iterator1 = new TreeSet<>(s1).iterator();
+        Iterator<T> iterator2 =  new TreeSet<>(s2).iterator();
+        while (iterator1.hasNext()) {
+            if (!iterator2.hasNext())
+                return 1; // s1 has more elements
+            T e1 = iterator1.next();
+            T e2 = iterator2.next();
+            int c = e1.compareTo(e2);
+            if (c != 0)
+                return c;
+        }
+        if (iterator2.hasNext()) {
+            return -1;  // s2 has more elements
+        } else {
+            return 0;
+        }
+    }
+
+    private static <E extends Enum<E>> long modsValue(Set<E> set) {
+        long value = 0;
+        for (Enum<E> e : set) {
+            value += 1 << e.ordinal();
+        }
+        return value;
+    }
+
     static {
         /**
          * Setup the shared secret to allow code in other packages access
@@ -2436,6 +2664,14 @@ public class ModuleDescriptor
                 @Override
                 public Set<String> packages(ModuleDescriptor.Builder builder) {
                     return builder.packages();
+                }
+
+                @Override
+                public void requires(ModuleDescriptor.Builder builder,
+                                     Set<Requires.Modifier> ms,
+                                     String mn,
+                                     String compiledVersion) {
+                    builder.requires(ms, mn, compiledVersion);
                 }
 
                 @Override
