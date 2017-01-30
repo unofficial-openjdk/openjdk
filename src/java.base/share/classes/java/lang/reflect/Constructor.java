@@ -168,6 +168,10 @@ public final class Constructor<T> extends Executable {
      * is true. </p>
      *
      * @param flag {@inheritDoc}
+     *
+     * @throws InaccessibleObjectException {@inheritDoc}
+     * @throws SecurityException if the request is denied by the security manager
+     *         or this is a constructor for {@code java.lang.Class}
      */
     @Override
     @CallerSensitive
