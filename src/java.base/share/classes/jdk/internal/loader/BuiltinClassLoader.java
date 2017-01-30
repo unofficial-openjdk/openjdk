@@ -922,7 +922,7 @@ public class BuiltinClassLoader
      * Returns the ModuleReader for the given module.
      */
     private ModuleReader moduleReaderFor(ModuleReference mref) {
-        return moduleToReader.computeIfAbsent(mref, m -> createModuleReader(mref));
+        return moduleToReader.computeIfAbsent(mref, m -> createModuleReader(m));
     }
 
     /**

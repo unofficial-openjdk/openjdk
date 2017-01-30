@@ -55,6 +55,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import jdk.internal.loader.Resource;
+import jdk.internal.loader.ResourceHelper;
 import jdk.internal.misc.JavaLangModuleAccess;
 import jdk.internal.misc.SharedSecrets;
 import sun.net.www.ParseUtil;
@@ -125,7 +126,7 @@ public final class ModulePatcher {
                           .filter(e -> !e.isDirectory()
                                   && (!isAutomatic || e.getName().endsWith(".class")))
                           .map(e -> toPackageName(file, e))
-                          .filter(Checks::isTypeName)
+                          .filter(Checks::isPackageName)
                           .forEach(packages::add);
                     }
 
@@ -134,11 +135,11 @@ public final class ModulePatcher {
                     // exploded directory without following sym links
                     Path top = file;
                     Files.find(top, Integer.MAX_VALUE,
-                            ((path, attrs) -> attrs.isRegularFile()))
+                               ((path, attrs) -> attrs.isRegularFile()))
                             .filter(path -> !isAutomatic
                                     || path.toString().endsWith(".class"))
                             .map(path -> toPackageName(top, path))
-                            .filter(Checks::isTypeName)
+                            .filter(Checks::isPackageName)
                             .forEach(packages::add);
 
                 }
@@ -153,14 +154,13 @@ public final class ModulePatcher {
         if (!packages.isEmpty()) {
             Builder builder = JLMA.newModuleBuilder(descriptor.name(),
                                                     /*strict*/ false,
-                                                    descriptor.isOpen(),
-                                                    descriptor.isAutomatic(),
-                                                    descriptor.isSynthetic());
-
-            descriptor.requires().forEach(builder::requires);
-            descriptor.exports().forEach(builder::exports);
-            descriptor.opens().forEach(builder::opens);
-            descriptor.uses().forEach(builder::uses);
+                                                    descriptor.modifiers());
+            if (!descriptor.isAutomatic()) {
+                descriptor.requires().forEach(builder::requires);
+                descriptor.exports().forEach(builder::exports);
+                descriptor.opens().forEach(builder::opens);
+                descriptor.uses().forEach(builder::uses);
+            }
             descriptor.provides().forEach(builder::provides);
 
             descriptor.version().ifPresent(builder::version);
@@ -169,13 +169,9 @@ public final class ModulePatcher {
             descriptor.osArch().ifPresent(builder::osArch);
             descriptor.osVersion().ifPresent(builder::osVersion);
 
-            // new packages
-            if (isAutomatic) {
-                packages.forEach(pn -> builder.exports(pn).opens(pn));
-            } else {
-                builder.contains(descriptor.packages());
-                builder.contains(packages);
-            }
+            // original + new packages
+            builder.packages(descriptor.packages());
+            builder.packages(packages);
 
             descriptor = builder.build();
         }
@@ -504,23 +500,14 @@ public final class ModulePatcher {
 
         @Override
         public Resource find(String name) throws IOException {
-            Path file = Paths.get(name.replace('/', File.separatorChar));
-            if (file.getRoot() == null) {
-                file = dir.resolve(file);
-            } else {
-                // drop the root component so that the resource is
-                // located relative to the module directory
-                int n = file.getNameCount();
-                if (n == 0)
-                    return null;
-                file = dir.resolve(file.subpath(0, n));
+            Path path = ResourceHelper.toFilePath(name);
+            if (path != null) {
+                Path file = dir.resolve(path);
+                if (Files.isRegularFile(file)) {
+                    return newResource(name, dir, file);
+                }
             }
-
-            if (Files.isRegularFile(file)) {
-                return newResource(name, dir, file);
-            } else {
-                return null;
-            }
+            return null;
         }
 
         private Resource newResource(String name, Path top, Path file) {

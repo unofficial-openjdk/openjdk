@@ -59,15 +59,21 @@ public interface JavaLangModuleAccess {
      */
     ModuleDescriptor.Builder newModuleBuilder(String mn,
                                               boolean strict,
-                                              boolean open,
-                                              boolean automatic,
-                                              boolean synthetic);
-
+                                              Set<ModuleDescriptor.Modifier> ms);
 
     /**
      * Returns a snapshot of the packages in the module.
      */
     Set<String> packages(ModuleDescriptor.Builder builder);
+
+    /**
+     * Adds a dependence on a module with the given (possibly un-parsable)
+     * version string.
+     */
+    void requires(ModuleDescriptor.Builder builder,
+                  Set<Requires.Modifier> ms,
+                  String mn,
+                  String compiledVersion);
 
     /**
      * Returns a {@code ModuleDescriptor.Requires} of the given modifiers
@@ -109,18 +115,11 @@ public interface JavaLangModuleAccess {
     Provides newProvides(String service, List<String> providers);
 
     /**
-     * Returns a {@code ModuleDescriptor.Version} of the given version.
-     */
-    Version newVersion(String v);
-
-    /**
      * Returns a new {@code ModuleDescriptor} instance.
      */
     ModuleDescriptor newModuleDescriptor(String name,
                                          Version version,
-                                         boolean open,
-                                         boolean automatic,
-                                         boolean synthetic,
+                                         Set<ModuleDescriptor.Modifier> ms,
                                          Set<Requires> requires,
                                          Set<Exports> exports,
                                          Set<Opens> opens,
@@ -138,9 +137,9 @@ public interface JavaLangModuleAccess {
      * and the empty configuration as the parent. The post resolution
      * checks are optionally run.
      */
-    Configuration resolveRequiresAndUses(ModuleFinder finder,
-                                         Collection<String> roots,
-                                         boolean check,
-                                         PrintStream traceOutput);
+    Configuration resolveAndBind(ModuleFinder finder,
+                                 Collection<String> roots,
+                                 boolean check,
+                                 PrintStream traceOutput);
 
 }

@@ -195,8 +195,7 @@ public class ModulePath implements ModuleFinder {
             if (attrs.isDirectory()) {
                 Path mi = entry.resolve(MODULE_INFO);
                 if (!Files.exists(mi)) {
-                    // does not exist or unable to determine so assume a
-                    // directory of modules
+                    // assume a directory of modules
                     return scanDirectory(entry);
                 }
             }
@@ -206,10 +205,16 @@ public class ModulePath implements ModuleFinder {
             if (mref != null) {
                 String name = mref.descriptor().name();
                 return Collections.singletonMap(name, mref);
-            } else {
-                // skipped
-                return Collections.emptyMap();
             }
+
+            // not recognized
+            String msg;
+            if (!isLinkPhase && entry.toString().endsWith(".jmod")) {
+                msg = "JMOD format not supported at execution time";
+            } else {
+                msg = "Module format not recognized";
+            }
+            throw new FindException(msg + ": " + entry);
 
         } catch (IOException ioe) {
             throw new FindException(ioe);
@@ -266,14 +271,11 @@ public class ModulePath implements ModuleFinder {
 
 
     /**
-     * Locates a packaged or exploded module, returning a {@code ModuleReference}
-     * to the module. Returns {@code null} if the entry is skipped because it is
-     * to a directory that does not contain a module-info.class or it's a hidden
-     * file.
+     * Reads a packaged or exploded module, returning a {@code ModuleReference}
+     * to the module. Returns {@code null} if the entry is not recognized.
      *
      * @throws IOException if an I/O error occurs
-     * @throws FindException if the file is not recognized as a module or an
-     *         error occurs parsing its module descriptor
+     * @throws FindException if an error occurs parsing its module descriptor
      */
     private ModuleReference readModule(Path entry, BasicFileAttributes attrs)
         throws IOException
@@ -282,24 +284,16 @@ public class ModulePath implements ModuleFinder {
 
             if (attrs.isDirectory()) {
                 return readExplodedModule(entry); // may return null
-            }
-
-            String fn = entry.getFileName().toString();
-            if (attrs.isRegularFile()) {
-                if (fn.endsWith(".jar")) {
-                    return readJar(entry);
-                } else if (fn.endsWith(".jmod")) {
-                    if (isLinkPhase)
-                        return readJMod(entry);
-                    throw new FindException("JMOD files not supported: " + entry);
-                }
-            }
-
-            // skip hidden files
-            if (fn.startsWith(".") || Files.isHidden(entry)) {
-                return null;
             } else {
-                throw new FindException("Unrecognized module: " + entry);
+                String fn = entry.getFileName().toString();
+                if (attrs.isRegularFile()) {
+                    if (fn.endsWith(".jar")) {
+                        return readJar(entry);
+                    } else if (isLinkPhase && fn.endsWith(".jmod")) {
+                        return readJMod(entry);
+                    }
+                }
+                return null;
             }
 
         } catch (InvalidModuleDescriptorException e) {
@@ -374,7 +368,7 @@ public class ModulePath implements ModuleFinder {
             String prefix = cf.substring(0, index);
             if (prefix.equals(SERVICES_PREFIX)) {
                 String sn = cf.substring(index);
-                if (Checks.isTypeName(sn))
+                if (Checks.isClassName(sn))
                     return Optional.of(sn);
             }
         }
@@ -403,11 +397,10 @@ public class ModulePath implements ModuleFinder {
      *
      * 1. The module name (and optionally the version) is derived from the file
      *    name of the JAR file
-     * 2. All packages are exported and open
-     * 3. It has no non-exported/non-open packages
-     * 4. The contents of any META-INF/services configuration files are mapped
+     * 2. All packages are derived from the .class files in the JAR file
+     * 3. The contents of any META-INF/services configuration files are mapped
      *    to "provides" declarations
-     * 5. The Main-Class attribute in the main attributes of the JAR manifest
+     * 4. The Main-Class attribute in the main attributes of the JAR manifest
      *    is mapped to the module descriptor mainClass
      */
     private ModuleDescriptor deriveModuleDescriptor(JarFile jf)
@@ -443,9 +436,7 @@ public class ModulePath implements ModuleFinder {
         mn = cleanModuleName(mn);
 
         // Builder throws IAE if module name is empty or invalid
-        ModuleDescriptor.Builder builder
-            = ModuleDescriptor.automaticModule(mn)
-                .requires(Set.of(Requires.Modifier.MANDATED), "java.base");
+        ModuleDescriptor.Builder builder = ModuleDescriptor.newAutomaticModule(mn);
         if (vs != null)
             builder.version(vs);
 
@@ -468,7 +459,7 @@ public class ModulePath implements ModuleFinder {
                 .collect(Collectors.toSet());
 
         // all packages are exported and open
-        packages.forEach(pn -> builder.exports(pn).opens(pn));
+        builder.packages(packages);
 
         // map names of service configuration files to service names
         Set<String> serviceNames = configFiles.stream()
@@ -665,7 +656,7 @@ public class ModulePath implements ModuleFinder {
         }
 
         String pn = name.substring(0, index).replace('/', '.');
-        if (Checks.isTypeName(pn)) {
+        if (Checks.isPackageName(pn)) {
             return Optional.of(pn);
         } else {
             // not a valid package name
@@ -695,7 +686,7 @@ public class ModulePath implements ModuleFinder {
         }
 
         String pn = parent.toString().replace(File.separatorChar, '.');
-        if (Checks.isTypeName(pn)) {
+        if (Checks.isPackageName(pn)) {
             return Optional.of(pn);
         } else {
             // not a valid package name

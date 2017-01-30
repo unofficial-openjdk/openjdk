@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -187,11 +187,11 @@ public class MethodHandles {
             throw new IllegalArgumentException(targetClass + " is an array class");
         Module targetModule = targetClass.getModule();
         Module callerModule = lookup.lookupClass().getModule();
-        if (callerModule != targetModule && targetModule.isNamed()) {
-            if (!callerModule.canRead(targetModule))
-                throw new IllegalAccessException(callerModule + " does not read " + targetModule);
+        if (!callerModule.canRead(targetModule))
+            throw new IllegalAccessException(callerModule + " does not read " + targetModule);
+        if (targetModule.isNamed()) {
             String pn = targetClass.getPackageName();
-            assert pn != null && pn.length() > 0 : "unnamed package cannot be in named module";
+            assert pn.length() > 0 : "unnamed package cannot be in named module";
             if (!targetModule.isOpen(pn, callerModule))
                 throw new IllegalAccessException(targetModule + " does not open " + pn + " to " + callerModule);
         }
@@ -859,8 +859,11 @@ public class MethodHandles {
             // that does not bluntly restrict classes under packages within
             // java.base from looking up MethodHandles or VarHandles.
             if (allowedModes == ALL_MODES && lookupClass.getClassLoader() == null) {
-                if ((name.startsWith("java.") && !name.startsWith("java.util.concurrent.")) ||
-                        (name.startsWith("sun.") && !name.startsWith("sun.invoke."))) {
+                if ((name.startsWith("java.") &&
+                     !name.equals("java.lang.Thread") &&
+                     !name.startsWith("java.util.concurrent.")) ||
+                    (name.startsWith("sun.") &&
+                     !name.startsWith("sun.invoke."))) {
                     throw newIllegalArgumentException("illegal lookupClass: " + lookupClass);
                 }
             }

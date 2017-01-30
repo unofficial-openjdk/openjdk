@@ -930,26 +930,28 @@ public final class ServiceLoader<S>
             } else {
                 catalog = ServicesCatalog.getServicesCatalogOrNull(loader);
             }
-            Stream<ServiceProvider> stream1;
+            List<ServiceProvider> providers;
             if (catalog == null) {
-                stream1 = Stream.empty();
+                providers = List.of();
             } else {
-                stream1 = catalog.findServices(serviceName).stream();
+                providers = catalog.findServices(serviceName);
             }
 
             // modules in custom layers that define modules to the class loader
-            Stream<ServiceProvider> stream2;
             if (loader == null) {
-                stream2 = Stream.empty();
+                return providers.iterator();
             } else {
+                List<ServiceProvider> allProviders = new ArrayList<>(providers);
                 Layer bootLayer = Layer.boot();
-                stream2 = JLRM_ACCESS.layers(loader)
-                        .filter(l -> (l != bootLayer))
-                        .map(l -> providers(l))
-                        .flatMap(List::stream);
+                Iterator<Layer> iterator = JLRM_ACCESS.layers(loader).iterator();
+                while (iterator.hasNext()) {
+                    Layer layer = iterator.next();
+                    if (layer != bootLayer) {
+                        allProviders.addAll(providers(layer));
+                    }
+                }
+                return allProviders.iterator();
             }
-
-            return Stream.concat(stream1, stream2).iterator();
         }
 
         @Override
@@ -1285,8 +1287,10 @@ public final class ServiceLoader<S>
      * provider to be loaded. </p>
      *
      * <p> If this loader's provider caches are cleared by invoking the {@link
-     * #reload() reload} method then existing streams for this service
-     * loader should be discarded. </p>
+     * #reload() reload} method then existing streams for this service loader
+     * should be discarded. The returned stream's source {@code Spliterator} is
+     * <em>fail-fast</em> and will throw {@link ConcurrentModificationException}
+     * if the provider cache has been cleared. </p>
      *
      * <p> The following examples demonstrate usage. The first example
      * creates a stream of providers, the second example is the same except

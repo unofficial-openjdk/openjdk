@@ -80,7 +80,7 @@ public class MultiReleaseJarTest {
     public void testBasic() throws Exception {
         String name = "m1";
 
-        ModuleDescriptor descriptor = ModuleDescriptor.module(name)
+        ModuleDescriptor descriptor = ModuleDescriptor.newModule(name)
                 .requires("java.base")
                 .build();
 
@@ -117,12 +117,12 @@ public class MultiReleaseJarTest {
     public void testModuleInfoInVersionedSection() throws Exception {
         String name = "m1";
 
-        ModuleDescriptor descriptor1 = ModuleDescriptor.module(name)
+        ModuleDescriptor descriptor1 = ModuleDescriptor.newModule(name)
                 .requires("java.base")
                 .build();
 
         // module descriptor for versioned section
-        ModuleDescriptor descriptor2 = ModuleDescriptor.module(name)
+        ModuleDescriptor descriptor2 = ModuleDescriptor.newModule(name)
                 .requires("java.base")
                 .requires("jdk.unsupported")
                 .build();
@@ -188,12 +188,12 @@ public class MultiReleaseJarTest {
     public void testModuleReader() throws Exception {
         String name = "m1";
 
-        ModuleDescriptor descriptor1 = ModuleDescriptor.module(name)
+        ModuleDescriptor descriptor1 = ModuleDescriptor.newModule(name)
                 .requires("java.base")
                 .build();
 
         // module descriptor for versioned section
-        ModuleDescriptor descriptor2 = ModuleDescriptor.module(name)
+        ModuleDescriptor descriptor2 = ModuleDescriptor.newModule(name)
                 .requires("java.base")
                 .requires("jdk.unsupported")
                 .build();

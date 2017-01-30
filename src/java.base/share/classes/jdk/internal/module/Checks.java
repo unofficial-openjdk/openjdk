@@ -26,7 +26,7 @@
 package jdk.internal.module;
 
 /**
- * Utility class for checking module name and binary names.
+ * Utility class for checking module, package, and class names.
  */
 
 public final class Checks {
@@ -58,8 +58,6 @@ public final class Checks {
             throw new IllegalArgumentException(name + ": Invalid module name"
                     + ": '" + id + "' is not a Java identifier");
         }
-        //if (!Character.isJavaIdentifierStart(last))
-        //    throw new IllegalArgumentException(name + ": Module name ends in digit");
         return name;
     }
 
@@ -77,8 +75,6 @@ public final class Checks {
         int last = isJavaIdentifier(name, off, name.length() - off);
         if (last == -1)
             return false;
-        //if (!Character.isJavaIdentifierStart(last))
-        //    return false;
         return true;
     }
 
@@ -93,29 +89,58 @@ public final class Checks {
     }
 
     /**
-     * Checks a name to ensure that it's a legal qualified type name.
-     *
-     * @throws IllegalArgumentException if name is null or not a legal
-     *         qualified type name
+     * Returns {@code true} if the given name is a legal package name.
      */
-    public static String requireServiceTypeName(String name) {
-        return requireQualifiedTypeName("service type name", name);
+    public static boolean isPackageName(String name) {
+        return isTypeName(name);
     }
 
     /**
-     * Checks a name to ensure that it's a legal qualified type name.
+     * Checks a name to ensure that it's a legal qualified class name
      *
      * @throws IllegalArgumentException if name is null or not a legal
-     *         qualified type name
+     *         qualified class name
+     */
+    public static String requireServiceTypeName(String name) {
+        return requireQualifiedClassName("service type name", name);
+    }
+
+    /**
+     * Checks a name to ensure that it's a legal qualified class name.
+     *
+     * @throws IllegalArgumentException if name is null or not a legal
+     *         qualified class name
      */
     public static String requireServiceProviderName(String name) {
-        return requireQualifiedTypeName("service provider name", name);
+        return requireQualifiedClassName("service provider name", name);
+    }
+
+    /**
+     * Checks a name to ensure that it's a legal qualified class name in
+     * a named package.
+     *
+     * @throws IllegalArgumentException if name is null or not a legal
+     *         qualified class name in a named package
+     */
+    public static String requireQualifiedClassName(String what, String name) {
+        requireTypeName(what, name);
+        if (name.indexOf('.') == -1)
+            throw new IllegalArgumentException(name + ": is not a qualified name of"
+                                               + " a Java class in a named package");
+        return name;
+    }
+
+    /**
+     * Returns {@code true} if the given name is a legal class name.
+     */
+    public static boolean isClassName(String name) {
+        return isTypeName(name);
     }
 
     /**
      * Returns {@code true} if the given name is a legal type name.
      */
-    public static boolean isTypeName(String name) {
+    private static boolean isTypeName(String name) {
         int next;
         int off = 0;
         while ((next = name.indexOf('.', off)) != -1) {
@@ -133,7 +158,7 @@ public final class Checks {
      * @throws IllegalArgumentException if name is null or not a legal
      *         type name
      */
-    public static String requireTypeName(String what, String name) {
+    private static String requireTypeName(String what, String name) {
         if (name == null)
             throw new IllegalArgumentException("Null " + what);
         int next;
@@ -151,19 +176,6 @@ public final class Checks {
             throw new IllegalArgumentException(name + ": Invalid " + what
                     + ": '" + id + "' is not a Java identifier");
         }
-        return name;
-    }
-
-    /**
-     * Checks a name to ensure that it's a legal qualified type name.
-     *
-     * @throws IllegalArgumentException if name is null or not a legal
-     *         qualified type name
-     */
-    public static String requireQualifiedTypeName(String what, String name) {
-        requireTypeName(what, name);
-        if (name.indexOf('.') == -1)
-            throw new IllegalArgumentException(name + ": is not a qualified type name");
         return name;
     }
 

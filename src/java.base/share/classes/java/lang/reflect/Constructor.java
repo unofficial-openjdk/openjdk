@@ -168,6 +168,11 @@ public final class Constructor<T> extends Executable {
      * is true. </p>
      *
      * @param flag {@inheritDoc}
+     *
+     * @throws InaccessibleObjectException {@inheritDoc}
+     * @throws SecurityException if the request is denied by the security manager
+     *         or this is a constructor for {@code java.lang.Class}
+     *
      * @since 9
      * @spec JPMS
      */
@@ -241,6 +246,11 @@ public final class Constructor<T> extends Executable {
           return (TypeVariable<Constructor<T>>[])new TypeVariable[0];
     }
 
+
+    @Override
+    Class<?>[] getSharedParameterTypes() {
+        return parameterTypes;
+    }
 
     /**
      * {@inheritDoc}

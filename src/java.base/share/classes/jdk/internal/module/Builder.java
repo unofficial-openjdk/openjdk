@@ -31,6 +31,7 @@ import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Version;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -137,7 +138,6 @@ final class Builder {
 
     final String name;
     boolean open;
-    boolean automatic;
     boolean synthetic;
     Set<Requires> requires;
     Set<Exports> exports;
@@ -162,11 +162,6 @@ final class Builder {
 
     Builder open(boolean value) {
         this.open = value;
-        return this;
-    }
-
-    Builder automatic(boolean value) {
-        this.automatic = value;
         return this;
     }
 
@@ -281,11 +276,19 @@ final class Builder {
     public ModuleDescriptor build(int hashCode) {
         assert name != null;
 
+        Set<ModuleDescriptor.Modifier> modifiers;
+        if (open || synthetic) {
+            modifiers = new HashSet<>();
+            if (open) modifiers.add(ModuleDescriptor.Modifier.OPEN);
+            if (synthetic) modifiers.add(ModuleDescriptor.Modifier.SYNTHETIC);
+            modifiers = Collections.unmodifiableSet(modifiers);
+        } else {
+            modifiers = Collections.emptySet();
+        }
+
         return JLMA.newModuleDescriptor(name,
                                         version,
-                                        open,
-                                        automatic,
-                                        synthetic,
+                                        modifiers,
                                         requires,
                                         exports,
                                         opens,

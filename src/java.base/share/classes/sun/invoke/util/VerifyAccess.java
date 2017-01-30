@@ -195,18 +195,12 @@ public class VerifyAccess {
             if (lookupModule.canRead(refModule)) {
 
                 // check that refc is in an exported package
-                Class<?> c = refc;
-                while (c.isArray()) {
-                    c = c.getComponentType();
-                }
-                if (c.isPrimitive())
-                    return true;
                 if ((allowedModes & MODULE_ALLOWED) != 0) {
-                    if (refModule.isExported(c.getPackageName(), lookupModule))
+                    if (refModule.isExported(refc.getPackageName(), lookupModule))
                         return true;
                 } else {
                     // exported unconditionally
-                    if (refModule.isExported(c.getPackageName()))
+                    if (refModule.isExported(refc.getPackageName()))
                         return true;
                 }
 

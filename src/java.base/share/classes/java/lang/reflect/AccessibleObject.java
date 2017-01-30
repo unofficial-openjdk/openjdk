@@ -82,13 +82,9 @@ public class AccessibleObject implements AnnotatedElement {
      * Convenience method to set the {@code accessible} flag for an
      * array of objects with a single security check (for efficiency).
      *
-     * <p>This method cannot be used to enable access to an object that is a
-     * {@link Member member} of a class in a different module to the caller and
-     * where the class is in a package that is not exported to the caller's
-     * module. Additionally, if the member is non-public or its declaring
-     * class is non-public, then this method can only be used to enable access
-     * if the package is {@link Module#isOpen(String,Module) open} to at least
-     * the caller's module.
+     * <p> This method may be used to enable access to all objects in the array
+     * when access to each object can be enabled as specified in {@link
+     * #setAccessible(boolean) setAccessible(boolean)}. </p>
      *
      * <p>If there is a security manager, its
      * {@code checkPermission} method is first called with a
@@ -101,8 +97,11 @@ public class AccessibleObject implements AnnotatedElement {
      * @param array the array of AccessibleObjects
      * @param flag  the new value for the {@code accessible} flag
      *              in each object
-     * @throws InaccessibleObjectException if access cannot be enabled
-     * @throws SecurityException if the request is denied.
+     * @throws InaccessibleObjectException if access cannot be enabled for all
+     *         objects in the array
+     * @throws SecurityException if the request is denied by the security manager
+     *         or an element in the array is a constructor for {@code
+     *         java.lang.Class}
      * @see SecurityManager#checkPermission
      * @see ReflectPermission
      * @revised 9
@@ -131,13 +130,36 @@ public class AccessibleObject implements AnnotatedElement {
      * that the reflected object should enforce Java language access checks
      * while assuming readability (as noted in the class description).
      *
-     * <p>This method cannot be used to enable access to an object that is a
-     * {@link Member member} of a class in a different module to the caller and
-     * where the class is in a package that is not exported to the caller's
-     * module. Additionally, if the member is non-public or its declaring
-     * class is non-public, then this method can only be used to enable access
-     * if the package is {@link Module#isOpen(String,Module) open} to at least
-     * the caller's module.
+     * <p> This method may be used by a caller in class {@code C} to enable
+     * access to a {@link Member member} in {@link Member#getDeclaringClass()
+     * declaring class} {@code D} if any of the following hold: </p>
+     *
+     * <ul>
+     *     <li> {@code C} and {@code D} are in the same module. </li>
+     *
+     *     <li> {@code D} is in a package that the module containing {@code D}
+     *     {@link Module#isOpen(String,Module) opens} to at least the module
+     *     containing {@code C}.
+     *     All packages in unnamed and open modules are open to all modules and
+     *     so this method always succeeds when {@code D} is in an unnamed or
+     *     open module. </li>
+     *
+     *     <li> The member is {@code public} and {@code D} is {@code public} in
+     *     a package that the module containing {@code D} {@link
+     *     Module#isExported(String,Module) exports} to at least the module
+     *     containing {@code C}. </li>
+     *
+     *     <li> The member is {@code protected} {@code static}, {@code D} is
+     *     {@code public} in a package that the module containing {@code D}
+     *     exports to at least the module containing {@code C}, and {@code C}
+     *     is a subclass of {@code D}. </li>
+     * </ul>
+     *
+     * <p> This method cannot be used to enable access to private members,
+     * package-private members, protected-instance members, or protected
+     * constructors when the declaring class is in a different module to the
+     * caller and the package containing the declaring class is not open to
+     * the caller's module. </p>
      *
      * <p>If there is a security manager, its
      * {@code checkPermission} method is first called with a
@@ -145,7 +167,7 @@ public class AccessibleObject implements AnnotatedElement {
      *
      * @param flag the new value for the {@code accessible} flag
      * @throws InaccessibleObjectException if access cannot be enabled
-     * @throws SecurityException if the request is denied
+     * @throws SecurityException if the request is denied by the security manager
      * @see SecurityManager#checkPermission
      * @see ReflectPermission
      * @see java.lang.invoke.MethodHandles#privateLookupIn
@@ -181,11 +203,11 @@ public class AccessibleObject implements AnnotatedElement {
         // package is open to caller
         String pn = packageName(declaringClass);
         if (declaringModule.isOpen(pn, callerModule)) {
-            printStackTraceIfOpenedReflectively(declaringModule, pn, callerModule);
+            dumpStackIfOpenedReflectively(declaringModule, pn, callerModule);
             return;
         }
 
-        // package is exported to caller and class/member is public
+        // package is exported to caller
         boolean isExported = declaringModule.isExported(pn, callerModule);
         boolean isClassPublic = Modifier.isPublic(declaringClass.getModifiers());
         int modifiers;
@@ -194,10 +216,21 @@ public class AccessibleObject implements AnnotatedElement {
         } else {
             modifiers = ((Field) this).getModifiers();
         }
-        boolean isMemberPublic = Modifier.isPublic(modifiers);
-        if (isExported && isClassPublic && isMemberPublic) {
-            printStackTraceIfExportedReflectively(declaringModule, pn, callerModule);
-            return;
+        if (isExported && isClassPublic) {
+
+            // member is public
+            if (Modifier.isPublic(modifiers)) {
+                dumpStackIfExportedReflectively(declaringModule, pn, callerModule);
+                return;
+            }
+
+            // member is protected-static
+            if (Modifier.isProtected(modifiers)
+                && Modifier.isStatic(modifiers)
+                && isSubclassOf(caller, declaringClass)) {
+                dumpStackIfExportedReflectively(declaringModule, pn, callerModule);
+                return;
+            }
         }
 
         // not accessible
@@ -205,7 +238,7 @@ public class AccessibleObject implements AnnotatedElement {
         if (this instanceof Field)
             msg += "field ";
         msg += this + " accessible: " + declaringModule + " does not \"";
-        if (isClassPublic && isMemberPublic)
+        if (isClassPublic && Modifier.isPublic(modifiers))
             msg += "exports";
         else
             msg += "opens";
@@ -217,25 +250,35 @@ public class AccessibleObject implements AnnotatedElement {
         throw e;
     }
 
-    private void printStackTraceIfOpenedReflectively(Module module,
-                                                     String pn,
-                                                     Module other) {
-        printStackTraceIfExposedReflectively(module, pn, other, true);
+    private boolean isSubclassOf(Class<?> queryClass, Class<?> ofClass) {
+        while (queryClass != null) {
+            if (queryClass == ofClass) {
+                return true;
+            }
+            queryClass = queryClass.getSuperclass();
+        }
+        return false;
     }
 
-    private void printStackTraceIfExportedReflectively(Module module,
-                                                       String pn,
-                                                       Module other) {
-        printStackTraceIfExposedReflectively(module, pn, other, false);
+    private void dumpStackIfOpenedReflectively(Module module,
+                                               String pn,
+                                               Module other) {
+        dumpStackIfExposedReflectively(module, pn, other, true);
     }
 
-    private void printStackTraceIfExposedReflectively(Module module,
-                                                      String pn,
-                                                      Module other,
-                                                      boolean open)
+    private void dumpStackIfExportedReflectively(Module module,
+                                                 String pn,
+                                                 Module other) {
+        dumpStackIfExposedReflectively(module, pn, other, false);
+    }
+
+    private void dumpStackIfExposedReflectively(Module module,
+                                                String pn,
+                                                Module other,
+                                                boolean open)
     {
         if (Reflection.printStackTraceWhenAccessSucceeds()
-            && !module.isStaticallyExportedOrOpen(pn, other, open))
+                && !module.isStaticallyExportedOrOpen(pn, other, open))
         {
             String msg = other + " allowed to invoke setAccessible on ";
             if (this instanceof Field)
