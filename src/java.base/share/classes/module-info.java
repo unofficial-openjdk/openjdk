@@ -154,7 +154,6 @@ module java.base {
         jdk.jartool,
         jdk.jlink;
     exports jdk.internal.misc to
-        java.corba,
         java.desktop,
         jdk.incubator.httpclient,
         java.logging,
@@ -183,7 +182,6 @@ module java.base {
         java.desktop,
         jdk.unsupported;
     exports jdk.internal.reflect to
-        java.corba,
         java.logging,
         java.sql,
         java.sql.rowset,
@@ -219,7 +217,7 @@ module java.base {
         java.security.jgss;
     exports sun.nio.ch to
         java.management,
-        jdk.crypto.token,
+        jdk.crypto.cryptoki,
         jdk.sctp,
         jdk.unsupported;
     exports sun.nio.cs to
@@ -232,7 +230,6 @@ module java.base {
     exports sun.reflect.generics.reflectiveObjects to
         java.desktop;
     exports sun.reflect.misc to
-        java.corba,
         java.desktop,
         java.datatransfer,
         java.management,
@@ -244,13 +241,13 @@ module java.base {
         java.desktop,
         java.security.jgss;
     exports sun.security.internal.interfaces to
-        jdk.crypto.token;
+        jdk.crypto.cryptoki;
     exports sun.security.internal.spec to
-        jdk.crypto.token;
+        jdk.crypto.cryptoki;
     exports sun.security.jca to
         java.smartcardio,
         jdk.crypto.ec,
-        jdk.crypto.token,
+        jdk.crypto.cryptoki,
         jdk.naming.dns;
     exports sun.security.pkcs to
         jdk.crypto.ec,
@@ -258,13 +255,13 @@ module java.base {
     exports sun.security.provider to
         java.rmi,
         java.security.jgss,
-        jdk.crypto.token,
+        jdk.crypto.cryptoki,
         jdk.policytool,
         jdk.security.auth;
     exports sun.security.provider.certpath to
         java.naming;
     exports sun.security.rsa to
-        jdk.crypto.token;
+        jdk.crypto.cryptoki;
     exports sun.security.ssl to
         java.security.jgss;
     exports sun.security.timestamp to
@@ -280,14 +277,14 @@ module java.base {
         java.smartcardio,
         java.xml.crypto,
         jdk.crypto.ec,
-        jdk.crypto.token,
+        jdk.crypto.cryptoki,
         jdk.jartool,
         jdk.policytool,
         jdk.security.auth,
         jdk.security.jgss;
     exports sun.security.x509 to
         jdk.crypto.ec,
-        jdk.crypto.token,
+        jdk.crypto.cryptoki,
         jdk.jartool,
         jdk.security.auth;
     exports sun.security.validator to
