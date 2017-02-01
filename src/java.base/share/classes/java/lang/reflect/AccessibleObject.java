@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,30 +35,30 @@ import jdk.internal.reflect.ReflectionFactory;
 import sun.security.action.GetPropertyAction;
 
 /**
- * The AccessibleObject class is the base class for Field, Method and
- * Constructor objects.  It provides the ability to flag a reflected
- * object as suppressing default Java language access control checks
- * when it is used. The access checks -- <em>module boundaries</em>,
- * public, default (package) access, protected, and private members --
- * are performed when Fields, Methods or Constructors are used to set
- * or get fields, to invoke methods or to create and initialize new
- * instances of classes, respectively. Unlike access control specified
- * in the <cite>The Java&trade; Language Specification</cite> and
- * <cite>The Java Virtual Machine Specification</cite>, access checks
- * with reflected objects assume {@link Module#canRead readability}.
+ * The {@code AccessibleObject} class is the base class for {@code Field},
+ * {@code Method}, and {@code Constructor} objects (known as <em>reflected
+ * objects</em>). It provides the ability to flag a reflected object as
+ * suppressing checks for Java language access control when it is used. This
+ * permits sophisticated applications with sufficient privilege, such as Java
+ * Object Serialization or other persistence mechanisms, to manipulate objects
+ * in a manner that would normally be prohibited.
  *
- * <p>Setting the {@code accessible} flag in a reflected object
- * permits sophisticated applications with sufficient privilege, such
- * as Java Object Serialization or other persistence mechanisms, to
- * manipulate objects in a manner that would normally be prohibited.
+ * <p> Java language access control prevents use of private members outside
+ * their class; package access members outside their package; protected members
+ * outside their package or subclasses; and public members outside their
+ * module unless they are declared in an {@link Module#isExported(String,Module)
+ * exported} package and the user {@link Module#canRead reads} their module. By
+ * default, Java language access control is enforced (with one variation) when
+ * {@code Field}s, {@code Method}s, or {@code Constructor}s are used to get or
+ * set fields, to invoke methods, or to create and initialize new instances of
+ * classes, respectively. Every reflected object checks that the code using it
+ * is in an appropriate class, package, or module. The one variation from Java
+ * language access control is that the checks by reflected objects assume
+ * readability. That is, the module containing the use of a reflected object is
+ * assumed to read the module in which the underlying field, method, or
+ * constructor is declared. </p>
  *
- * <p>By default, a reflected object is <em>not</em> accessible.
- *
- * @see Field
- * @see Method
- * @see Constructor
- * @see ReflectPermission
- *
+ * @jls 6.6
  * @since 1.2
  * @revised 9
  * @spec JPMS
@@ -80,11 +80,11 @@ public class AccessibleObject implements AnnotatedElement {
 
     /**
      * Convenience method to set the {@code accessible} flag for an
-     * array of objects with a single security check (for efficiency).
+     * array of reflected objects with a single security check (for efficiency).
      *
-     * <p> This method may be used to enable access to all objects in the array
-     * when access to each object can be enabled as specified in {@link
-     * #setAccessible(boolean) setAccessible(boolean)}. </p>
+     * <p> This method may be used to enable access to all reflected objects in
+     * the array when access to each reflected object can be enabled as
+     * specified by {@link #setAccessible(boolean) setAccessible(boolean)}. </p>
      *
      * <p>If there is a security manager, its
      * {@code checkPermission} method is first called with a
@@ -123,7 +123,7 @@ public class AccessibleObject implements AnnotatedElement {
     }
 
     /**
-     * Set the {@code accessible} flag for this object to
+     * Set the {@code accessible} flag for this reflected object to
      * the indicated boolean value.  A value of {@code true} indicates that
      * the reflected object should suppress Java language access
      * checking when it is used.  A value of {@code false} indicates
@@ -131,18 +131,11 @@ public class AccessibleObject implements AnnotatedElement {
      * while assuming readability (as noted in the class description).
      *
      * <p> This method may be used by a caller in class {@code C} to enable
-     * access to a {@link Member member} in {@link Member#getDeclaringClass()
+     * access to a {@link Member member} of {@link Member#getDeclaringClass()
      * declaring class} {@code D} if any of the following hold: </p>
      *
      * <ul>
      *     <li> {@code C} and {@code D} are in the same module. </li>
-     *
-     *     <li> {@code D} is in a package that the module containing {@code D}
-     *     {@link Module#isOpen(String,Module) opens} to at least the module
-     *     containing {@code C}.
-     *     All packages in unnamed and open modules are open to all modules and
-     *     so this method always succeeds when {@code D} is in an unnamed or
-     *     open module. </li>
      *
      *     <li> The member is {@code public} and {@code D} is {@code public} in
      *     a package that the module containing {@code D} {@link
@@ -153,13 +146,20 @@ public class AccessibleObject implements AnnotatedElement {
      *     {@code public} in a package that the module containing {@code D}
      *     exports to at least the module containing {@code C}, and {@code C}
      *     is a subclass of {@code D}. </li>
+     *
+     *     <li> {@code D} is in a package that the module containing {@code D}
+     *     {@link Module#isOpen(String,Module) opens} to at least the module
+     *     containing {@code C}.
+     *     All packages in unnamed and open modules are open to all modules and
+     *     so this method always succeeds when {@code D} is in an unnamed or
+     *     open module. </li>
      * </ul>
      *
      * <p> This method cannot be used to enable access to private members,
-     * package-private members, protected-instance members, or protected
-     * constructors when the declaring class is in a different module to the
-     * caller and the package containing the declaring class is not open to
-     * the caller's module. </p>
+     * members with default (package) access, protected instance members, or
+     * protected constructors when the declaring class is in a different module
+     * to the caller and the package containing the declaring class is not open
+     * to the caller's module. </p>
      *
      * <p>If there is a security manager, its
      * {@code checkPermission} method is first called with a
