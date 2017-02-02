@@ -57,8 +57,9 @@ import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import java.util.stream.Stream;
 
-import jdk.internal.module.ModulePatcher.PatchedModuleReader;
 import jdk.internal.misc.VM;
+import jdk.internal.module.ModulePatcher.PatchedModuleReader;
+import jdk.internal.module.SystemModules;
 
 
 /**
@@ -135,7 +136,7 @@ public class BuiltinClassLoader
 
     // maps package name to loaded module for modules in the boot layer
     private static final Map<String, LoadedModule> packageToModule
-        = new ConcurrentHashMap<>(1024);
+        = new ConcurrentHashMap<>(SystemModules.PACKAGES_IN_BOOT_LAYER);
 
     // maps a module name to a module reference
     private final Map<String, ModuleReference> nameToModule;
