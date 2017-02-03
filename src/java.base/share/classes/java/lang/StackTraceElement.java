@@ -221,6 +221,7 @@ public final class StackTraceElement implements java.io.Serializable {
      *         if the class loader is not named.
      *
      * @since 9
+     * @spec JPMS
      * @see java.lang.ClassLoader#getName()
      */
     public String getClassLoaderName() {
