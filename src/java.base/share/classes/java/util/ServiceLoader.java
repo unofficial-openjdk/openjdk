@@ -119,7 +119,7 @@ import jdk.internal.reflect.Reflection;
  * and deployed as an explicit module must have an appropriate <i>uses</i>
  * clause in its <i>module descriptor</i> to declare that the module uses
  * implementations of the service. A corresponding requirement is that a
- * provider deployed as a named module must have an appropriate
+ * provider deployed as an explicit module must have an appropriate
  * <i>provides</i> clause in its module descriptor to declare that the module
  * provides an implementation of the service. The <i>uses</i> and
  * <i>provides</i> allow consumers of a service to be <i>linked</i> to modules
@@ -203,8 +203,8 @@ import jdk.internal.reflect.Reflection;
  *     ordering of modules in a layer, is not defined. </li>
  *
  *     <li> If a named module declares more than one provider then the providers
- *     are located in the order that they appear in the {@code provides} table of
- *     the {@code Module} class file attribute ({@code module-info.class}). </li>
+ *     are located in the iteration order of the {@link
+ *     java.lang.module.ModuleDescriptor.Provides#providers() providers} list. </li>
  *
  *     <li> When locating providers in unnamed modules then the ordering is
  *     based on the order that the class loader's {@link
