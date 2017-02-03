@@ -89,6 +89,12 @@ public class ModuleReaderTest {
         "/java/lang/Object.class",
         "java/lang/Object.class/",
         "java//lang//Object.class",
+        "./java/lang/Object.class",
+        "java/./lang/Object.class",
+        "java/lang/./Object.class",
+        "../java/lang/Object.class",
+        "java/../lang/Object.class",
+        "java/lang/../Object.class",
     };
 
     // resources in test module (can't use module-info.class as a test
@@ -103,6 +109,10 @@ public class ModuleReaderTest {
         "/p/Main.class",
         "p/Main.class/",
         "p//Main.class",
+        "./p/Main.class",
+        "p/./Main.class",
+        "../p/Main.class",
+        "p/../p/Main.class"
     };
 
 

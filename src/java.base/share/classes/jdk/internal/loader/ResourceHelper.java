@@ -68,13 +68,27 @@ public final class ResourceHelper {
     }
 
     /**
-     * Converts a resource name to file path that does not have a root
+     * Converts a resource name to a file path. Returns {@code null} if the
+     * resource name cannot be converted into a file path. Resource names
+     * with empty elements, or elements that are "." or ".." are rejected,
+     * as is a resource name that translates to a file path with a root
      * component.
      */
     public static Path toFilePath(String name) {
-        // consecutive slashes do not collapse
-        if (name.startsWith("/") || name.contains("//") || name.endsWith("/"))
+        // scan the resource name to eagerly reject obviously invalid names
+        int next;
+        int off = 0;
+        while ((next = name.indexOf('/', off)) != -1) {
+            int len = next - off;
+            if (!mayTranslate(name, off, len)) {
+                return null;
+            }
+            off = next + 1;
+        }
+        int rem = name.length() - off;
+        if (!mayTranslate(name, off, rem)) {
             return null;
+        }
 
         // convert to file path
         Path path;
@@ -89,6 +103,23 @@ public final class ResourceHelper {
 
         // file path not allowed to have root component
         return (path.getRoot() == null) ? path : null;
+    }
+
+    /**
+     * Returns {@code true} if the element in a resource name is a candidate
+     * to translate to the element of a file path.
+     */
+    private static boolean mayTranslate(String name, int off, int len) {
+        if (len <= 2) {
+            if (len == 0)
+                return false;
+            boolean starsWithDot = (name.charAt(off) == '.');
+            if (len == 1 && starsWithDot)
+                return false;
+            if (len == 2 && starsWithDot && (name.charAt(off+1) == '.'))
+                return false;
+        }
+        return true;
     }
 
 }
