@@ -127,14 +127,8 @@ public final class Module implements AnnotatedElement {
         Version version = descriptor.version().orElse(null);
         String vs = Objects.toString(version, null);
         String loc = Objects.toString(uri, null);
-        Set<String> packages = descriptor.packages();
-        int n = packages.size();
-        String[] array = new String[n];
-        int i = 0;
-        for (String pn : packages) {
-            array[i++] = pn.replace('.', '/');
-        }
-        defineModule0(this, isOpen, vs, loc, array);
+        String[] packages = descriptor.packages().toArray(new String[0]);
+        defineModule0(this, isOpen, vs, loc, packages);
     }
 
 
@@ -788,13 +782,12 @@ public final class Module implements AnnotatedElement {
 
         // update VM first, just in case it fails
         if (syncVM) {
-            String pkgInternalForm = pn.replace('.', '/');
             if (other == EVERYONE_MODULE) {
-                addExportsToAll0(this, pkgInternalForm);
+                addExportsToAll0(this, pn);
             } else if (other == ALL_UNNAMED_MODULE) {
-                addExportsToAllUnnamed0(this, pkgInternalForm);
+                addExportsToAllUnnamed0(this, pn);
             } else {
-                addExports0(this, pkgInternalForm, other);
+                addExports0(this, pn, other);
             }
         }
 
@@ -1016,11 +1009,10 @@ public final class Module implements AnnotatedElement {
         // update VM first in case it fails. This is a no-op if another thread
         // beats us to add the package first
         if (syncVM) {
-            String inInternalForm = pn.replace('.', '/');
             // throws IllegalStateException if defined to another module
-            addPackage0(this, inInternalForm);
+            addPackage0(this, pn);
             if (descriptor.isOpen() || descriptor.isAutomatic()) {
-                addExportsToAll0(this, inInternalForm);
+                addExportsToAll0(this, pn);
             }
         }
         extraPackages.putIfAbsent(pn, Boolean.TRUE);
@@ -1179,8 +1171,7 @@ public final class Module implements AnnotatedElement {
         if (descriptor.isOpen() || descriptor.isAutomatic()) {
             assert descriptor.opens().isEmpty();
             for (String source : descriptor.packages()) {
-                String sourceInternalForm = source.replace('.', '/');
-                addExportsToAll0(m, sourceInternalForm);
+                addExportsToAll0(m, source);
             }
             return;
         }
@@ -1191,7 +1182,6 @@ public final class Module implements AnnotatedElement {
         // process the open packages first
         for (Opens opens : descriptor.opens()) {
             String source = opens.source();
-            String sourceInternalForm = source.replace('.', '/');
 
             if (opens.isQualified()) {
                 // qualified opens
@@ -1200,7 +1190,7 @@ public final class Module implements AnnotatedElement {
                     // only open to modules that are in this configuration
                     Module m2 = nameToModule.get(target);
                     if (m2 != null) {
-                        addExports0(m, sourceInternalForm, m2);
+                        addExports0(m, source, m2);
                         targets.add(m2);
                     }
                 }
@@ -1209,7 +1199,7 @@ public final class Module implements AnnotatedElement {
                 }
             } else {
                 // unqualified opens
-                addExportsToAll0(m, sourceInternalForm);
+                addExportsToAll0(m, source);
                 openPackages.put(source, EVERYONE_SET);
             }
         }
@@ -1217,7 +1207,6 @@ public final class Module implements AnnotatedElement {
         // next the exports, skipping exports when the package is open
         for (Exports exports : descriptor.exports()) {
             String source = exports.source();
-            String sourceInternalForm = source.replace('.', '/');
 
             // skip export if package is already open to everyone
             Set<Module> openToTargets = openPackages.get(source);
@@ -1233,7 +1222,7 @@ public final class Module implements AnnotatedElement {
                     if (m2 != null) {
                         // skip qualified export if already open to m2
                         if (openToTargets == null || !openToTargets.contains(m2)) {
-                            addExports0(m, sourceInternalForm, m2);
+                            addExports0(m, source, m2);
                             targets.add(m2);
                         }
                     }
@@ -1244,7 +1233,7 @@ public final class Module implements AnnotatedElement {
 
             } else {
                 // unqualified exports
-                addExportsToAll0(m, sourceInternalForm);
+                addExportsToAll0(m, source);
                 exportedPackages.put(source, EVERYONE_SET);
             }
         }
