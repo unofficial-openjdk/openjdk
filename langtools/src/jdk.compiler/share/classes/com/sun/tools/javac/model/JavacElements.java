@@ -140,8 +140,6 @@ public class JavacElements implements Elements {
 
     private PackageSymbol doGetPackageElement(ModuleElement module, CharSequence name) {
         ensureEntered("getPackageElement");
-        if (name.length() == 0)
-            return syms.unnamedModule.unnamedPackage;
         return doGetElement(module, "getPackageElement", name, PackageSymbol.class);
     }
 
@@ -165,7 +163,7 @@ public class JavacElements implements Elements {
     private <S extends Symbol> S doGetElement(ModuleElement module, String methodName,
                                               CharSequence name, Class<S> clazz) {
         String strName = name.toString();
-        if (!SourceVersion.isName(strName)) {
+        if (!SourceVersion.isName(strName) && (!strName.isEmpty() || clazz == ClassSymbol.class)) {
             return null;
         }
         if (module == null) {
@@ -184,39 +182,34 @@ public class JavacElements implements Elements {
             return nameToSymbol(syms.noModule, nameStr, clazz);
         }
 
-        RecoveryLoadClass prevRecoveryLoadClass = resolve.setRecoveryLoadClass((env, name) -> null);
-        try {
-            Set<S> found = new LinkedHashSet<>();
+        Set<S> found = new LinkedHashSet<>();
 
-            for (ModuleSymbol msym : modules.allModules()) {
-                S sym = nameToSymbol(msym, nameStr, clazz);
+        for (ModuleSymbol msym : modules.allModules()) {
+            S sym = nameToSymbol(msym, nameStr, clazz);
 
-                if (sym != null) {
-                    if (!allowModules || clazz == ClassSymbol.class || !sym.members().isEmpty()) {
-                        //do not add packages without members:
-                        found.add(sym);
-                    }
+            if (sym != null) {
+                if (!allowModules || clazz == ClassSymbol.class || !sym.members().isEmpty()) {
+                    //do not add packages without members:
+                    found.add(sym);
                 }
             }
+        }
 
-            if (found.size() == 1) {
-                return found.iterator().next();
-            } else if (found.size() > 1) {
-                //more than one element found, produce a note:
-                if (alreadyWarnedDuplicates.add(methodName + ":" + nameStr)) {
-                    String moduleNames = found.stream()
-                                              .map(s -> s.packge().modle)
-                                              .map(m -> m.toString())
-                                              .collect(Collectors.joining(", "));
-                    log.note(Notes.MultipleElements(methodName, nameStr, moduleNames));
-                }
-                return null;
-            } else {
-                //not found, or more than one element found:
-                return null;
+        if (found.size() == 1) {
+            return found.iterator().next();
+        } else if (found.size() > 1) {
+            //more than one element found, produce a note:
+            if (alreadyWarnedDuplicates.add(methodName + ":" + nameStr)) {
+                String moduleNames = found.stream()
+                                          .map(s -> s.packge().modle)
+                                          .map(m -> m.toString())
+                                          .collect(Collectors.joining(", "));
+                log.note(Notes.MultipleElements(methodName, nameStr, moduleNames));
             }
-        } finally {
-            resolve.setRecoveryLoadClass(prevRecoveryLoadClass);
+            return null;
+        } else {
+            //not found, or more than one element found:
+            return null;
         }
     }
 
