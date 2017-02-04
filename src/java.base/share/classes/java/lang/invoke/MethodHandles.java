@@ -1615,6 +1615,7 @@ return mh1;
             if (refKind == REF_invokeSpecial)
                 refKind = REF_invokeVirtual;
             assert(method.isMethod());
+            @SuppressWarnings("deprecation")
             Lookup lookup = m.isAccessible() ? IMPL_LOOKUP : this;
             return lookup.getDirectMethodNoSecurityManager(refKind, method.getDeclaringClass(), method, findBoundCallerClass(method));
         }
@@ -1697,6 +1698,7 @@ return mh1;
         public MethodHandle unreflectConstructor(Constructor<?> c) throws IllegalAccessException {
             MemberName ctor = new MemberName(c);
             assert(ctor.isConstructor());
+            @SuppressWarnings("deprecation")
             Lookup lookup = c.isAccessible() ? IMPL_LOOKUP : this;
             return lookup.getDirectConstructorNoSecurityManager(ctor.getDeclaringClass(), ctor);
         }
@@ -1727,6 +1729,7 @@ return mh1;
             assert(isSetter
                     ? MethodHandleNatives.refKindIsSetter(field.getReferenceKind())
                     : MethodHandleNatives.refKindIsGetter(field.getReferenceKind()));
+            @SuppressWarnings("deprecation")
             Lookup lookup = f.isAccessible() ? IMPL_LOOKUP : this;
             return lookup.getDirectFieldNoSecurityManager(field.getReferenceKind(), f.getDeclaringClass(), field);
         }

@@ -2049,6 +2049,9 @@ public final class System {
             public String fastUUID(long lsb, long msb) {
                 return Long.fastUUID(lsb, msb);
             }
+            public void invalidatePackageAccessCache() {
+                SecurityManager.invalidatePackageAccessCache();
+            }
         });
     }
 }

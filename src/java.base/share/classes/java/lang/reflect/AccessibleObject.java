@@ -28,11 +28,9 @@ package java.lang.reflect;
 import java.lang.annotation.Annotation;
 import java.security.AccessController;
 
-import jdk.internal.misc.VM;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 import jdk.internal.reflect.ReflectionFactory;
-import sun.security.action.GetPropertyAction;
 
 /**
  * The {@code AccessibleObject} class is the base class for {@code Field},
@@ -52,11 +50,17 @@ import sun.security.action.GetPropertyAction;
  * {@code Field}s, {@code Method}s, or {@code Constructor}s are used to get or
  * set fields, to invoke methods, or to create and initialize new instances of
  * classes, respectively. Every reflected object checks that the code using it
- * is in an appropriate class, package, or module. The one variation from Java
- * language access control is that the checks by reflected objects assume
- * readability. That is, the module containing the use of a reflected object is
- * assumed to read the module in which the underlying field, method, or
- * constructor is declared. </p>
+ * is in an appropriate class, package, or module. </p>
+ *
+ * <p> The one variation from Java language access control is that the checks
+ * by reflected objects assume readability. That is, the module containing
+ * the use of a reflected object is assumed to read the module in which
+ * the underlying field, method, or constructor is declared. </p>
+ *
+ * <p> Whether the checks for Java language access control can be suppressed
+ * (and thus, whether access can be enabled) depends on whether the reflected
+ * object corresponds to a member in an exported or open package
+ * (see {@link #setAccessible(boolean)}). </p>
  *
  * @jls 6.6
  * @since 1.2
@@ -125,10 +129,10 @@ public class AccessibleObject implements AnnotatedElement {
     /**
      * Set the {@code accessible} flag for this reflected object to
      * the indicated boolean value.  A value of {@code true} indicates that
-     * the reflected object should suppress Java language access
-     * checking when it is used.  A value of {@code false} indicates
-     * that the reflected object should enforce Java language access checks
-     * while assuming readability (as noted in the class description).
+     * the reflected object should suppress checks for Java language access
+     * control when it is used. A value of {@code false} indicates that
+     * the reflected object should enforce checks for Java language access
+     * control when it is used, with the variation noted in the class description.
      *
      * <p> This method may be used by a caller in class {@code C} to enable
      * access to a {@link Member member} of {@link Member#getDeclaringClass()
@@ -161,15 +165,14 @@ public class AccessibleObject implements AnnotatedElement {
      * to the caller and the package containing the declaring class is not open
      * to the caller's module. </p>
      *
-     * <p>If there is a security manager, its
+     * <p> If there is a security manager, its
      * {@code checkPermission} method is first called with a
      * {@code ReflectPermission("suppressAccessChecks")} permission.
      *
      * @param flag the new value for the {@code accessible} flag
      * @throws InaccessibleObjectException if access cannot be enabled
      * @throws SecurityException if the request is denied by the security manager
-     * @see SecurityManager#checkPermission
-     * @see ReflectPermission
+     * @see #trySetAccessible
      * @see java.lang.invoke.MethodHandles#privateLookupIn
      * @revised 9
      * @spec JPMS
@@ -179,9 +182,91 @@ public class AccessibleObject implements AnnotatedElement {
         setAccessible0(flag);
     }
 
-    void setAccessible0(boolean flag) {
+    /**
+     * Sets the accessible flag and returns the new value
+     */
+    boolean setAccessible0(boolean flag) {
         this.override = flag;
+        return flag;
     }
+
+    /**
+     * Set the {@code accessible} flag for this reflected object to {@code true}.
+     * This method sets the {@code accessible} flag as if by invocation of
+     * {@link #setAccessible(boolean) setAccessible(true)} where the caller of
+     * {@code setAccessible} is deemed to be the caller of
+     * {@code trySetAccessible} and returns the new value for the
+     * {@code accessible} flag. If access cannot be enabled i.e. the checks
+     * for Java language access control cannot be suppressed, this method
+     * returns {@code false} as opposed to {@link #setAccessible(boolean)}
+     * that throws an {@code InaccessibleObjectException}.
+     *
+     * <p> This method is a no-op if the {@code accessible} flag for
+     * this reflected object is {@code true}.
+     *
+     * <p>For example, a caller can invoke {@code trySetAccessible}
+     * on a {@code Method} object for a private instance method
+     * {@code p.T::privateMethod} to suppress the checks for Java language access
+     * control when the {@code Method} is invoked.
+     * If {@code p.T} class is in a different module to the caller and
+     * package {@code p} is open to at least the caller's module,
+     * the code below successfully sets the {@code accessible} flag
+     * to {@code true}.
+     *
+     * <pre>
+     * {@code
+     *     p.T obj = ....;  // instance of p.T
+     *     :
+     *     Method m = p.T.class.getDeclaredMethod("privateMethod");
+     *     if (m.trySetAccessible()) {
+     *         m.invoke(obj);
+     *     } else {
+     *         // package p is not opened to the caller to access private member of T
+     *         ...
+     *     }
+     * }</pre>
+     *
+     * <p> If there is a security manager, its {@code checkPermission} method
+     * is first called with a {@code ReflectPermission("suppressAccessChecks")}
+     * permission. </p>
+     *
+     * @return {@code true} if the {@code accessible} flag is set to {@code true};
+     *         {@code false} if access cannot be enabled.
+     * @throws SecurityException if the request is denied by the security manager
+     *
+     * @since 9
+     * @spec JPMS
+     * @see java.lang.invoke.MethodHandles#privateLookupIn
+     */
+    @CallerSensitive
+    public final boolean trySetAccessible() {
+        AccessibleObject.checkPermission();
+
+        if (override == true) return true;
+
+        // if it's not a Constructor, Method, Field then no access check
+        if (!Member.class.isInstance(this)) {
+            return setAccessible0(true);
+        }
+
+        // does not allow to suppress access check for Class's constructor
+        Class<?> declaringClass = ((Member) this).getDeclaringClass();
+        if (declaringClass == Class.class && this instanceof Constructor) {
+            return false;
+        }
+
+        boolean canSet;   // true if access can be enabled
+        if (true) {
+            canSet = checkCanSetAccessible(Reflection.getCallerClass(),
+                                           declaringClass,
+                                           false);
+        } else {
+            canSet = true;
+        }
+
+        return canSet ? setAccessible0(true) : false;
+    }
+
 
    /**
     * If the given AccessibleObject is a {@code Constructor}, {@code Method}
@@ -192,19 +277,26 @@ public class AccessibleObject implements AnnotatedElement {
         // do nothing, needs to be overridden by Constructor, Method, Field
     }
 
+
     void checkCanSetAccessible(Class<?> caller, Class<?> declaringClass) {
+        checkCanSetAccessible(caller, declaringClass, true);
+    }
+
+    private boolean checkCanSetAccessible(Class<?> caller,
+                                          Class<?> declaringClass,
+                                          boolean throwExceptionIfDenied) {
         Module callerModule = caller.getModule();
         Module declaringModule = declaringClass.getModule();
 
-        if (callerModule == declaringModule) return;
-        if (callerModule == Object.class.getModule()) return;
-        if (!declaringModule.isNamed()) return;
+        if (callerModule == declaringModule) return true;
+        if (callerModule == Object.class.getModule()) return true;
+        if (!declaringModule.isNamed()) return true;
 
         // package is open to caller
         String pn = packageName(declaringClass);
         if (declaringModule.isOpen(pn, callerModule)) {
             dumpStackIfOpenedReflectively(declaringModule, pn, callerModule);
-            return;
+            return true;
         }
 
         // package is exported to caller
@@ -221,7 +313,7 @@ public class AccessibleObject implements AnnotatedElement {
             // member is public
             if (Modifier.isPublic(modifiers)) {
                 dumpStackIfExportedReflectively(declaringModule, pn, callerModule);
-                return;
+                return true;
             }
 
             // member is protected-static
@@ -229,25 +321,28 @@ public class AccessibleObject implements AnnotatedElement {
                 && Modifier.isStatic(modifiers)
                 && isSubclassOf(caller, declaringClass)) {
                 dumpStackIfExportedReflectively(declaringModule, pn, callerModule);
-                return;
+                return true;
             }
         }
 
-        // not accessible
-        String msg = "Unable to make ";
-        if (this instanceof Field)
-            msg += "field ";
-        msg += this + " accessible: " + declaringModule + " does not \"";
-        if (isClassPublic && Modifier.isPublic(modifiers))
-            msg += "exports";
-        else
-            msg += "opens";
-        msg += " " + pn + "\" to " + callerModule;
-        InaccessibleObjectException e = new InaccessibleObjectException(msg);
-        if (Reflection.printStackTraceWhenAccessFails()) {
-            e.printStackTrace(System.err);
+        if (throwExceptionIfDenied) {
+            // not accessible
+            String msg = "Unable to make ";
+            if (this instanceof Field)
+                msg += "field ";
+            msg += this + " accessible: " + declaringModule + " does not \"";
+            if (isClassPublic && Modifier.isPublic(modifiers))
+                msg += "exports";
+            else
+                msg += "opens";
+            msg += " " + pn + "\" to " + callerModule;
+            InaccessibleObjectException e = new InaccessibleObjectException(msg);
+            if (Reflection.printStackTraceWhenAccessFails()) {
+                e.printStackTrace(System.err);
+            }
+            throw e;
         }
-        throw e;
+        return false;
     }
 
     private boolean isSubclassOf(Class<?> queryClass, Class<?> ofClass) {
@@ -305,12 +400,100 @@ public class AccessibleObject implements AnnotatedElement {
     }
 
     /**
-     * Get the value of the {@code accessible} flag for this object.
+     * Get the value of the {@code accessible} flag for this reflected object.
      *
      * @return the value of the object's {@code accessible} flag
+     *
+     * @deprecated
+     * This method is deprecated because its name hints that it checks
+     * if the reflected object is accessible when it actually indicates
+     * if the checks for Java language access control are suppressed.
+     * This method may return {@code false} on a reflected object that is
+     * accessible to the caller. To test if this reflected object is accessible,
+     * it should use {@link #canAccess(Object)}.
+     *
+     * @revised 9
      */
+    @Deprecated(since="9")
     public boolean isAccessible() {
         return override;
+    }
+
+    /**
+     * Test if the caller can access this reflected object. Specifically,
+     * if this reflected object corresponds to an instance method or field,
+     * this method tests if the caller can access the given {@code obj} with
+     * the reflected object.  The given {@code obj} argument must be an
+     * instance object of the {@link Member#getDeclaringClass() declaring class}
+     * on which this method checks if the caller can reflectively access.
+     *
+     * <p> This method returns {@code true} if the {@code accessible} flag
+     * is set to {@code true} i.e. the checks for Java language access control
+     * are suppressed, or if the caller can access the member as
+     * specified in <cite>The Java&trade; Language Specification</cite>,
+     * with the variation noted in the class description. </p>
+     *
+     *
+     * @param obj an instance object of the declaring class of this reflected
+     *            object if it is an instance method or field
+     *
+     * @return {@code true} if the caller can access this reflected object.
+     *
+     * @throws IllegalArgumentException
+     *         <ul>
+     *         <li> if this reflected object is a static member or constructor and
+     *              the given {@code obj} is non-{@code null}, or </li>
+     *         <li> if this reflected object is an instance method or field
+     *              and the given {@code obj} is {@code null} or of type
+     *              that is not a subclass of the {@link Member#getDeclaringClass()
+     *              declaring class} of the member.</li>
+     *         </ul>
+     *
+     * @since 9
+     * @spec JPMS
+     *
+     * @see #trySetAccessible
+     * @see #setAccessible(boolean)
+     */
+    @CallerSensitive
+    public final boolean canAccess(Object obj) {
+        if (!Member.class.isInstance(this)) {
+            return override;
+        }
+
+        Class<?> declaringClass = ((Member) this).getDeclaringClass();
+        int modifiers = ((Member) this).getModifiers();
+        if (!Modifier.isStatic(modifiers) &&
+                (this instanceof Method || this instanceof Field)) {
+            if (obj == null) {
+                throw new IllegalArgumentException("null object for "
+                    + this.toString());
+            }
+            // if this object is an instance member, the given object
+            // must be a subclass of the declaring class of this reflected object
+            if (!declaringClass.isAssignableFrom(obj.getClass())) {
+                throw new IllegalArgumentException("object is not an instance of "
+                    + declaringClass.getName());
+            }
+        } else if (obj != null) {
+            throw new IllegalArgumentException("non-null object for "
+                    + this.toString());
+        }
+
+        // access check is suppressed
+        if (override) return true;
+
+        Class<?> caller = Reflection.getCallerClass();
+        Class<?> targetClass;
+        if (this instanceof Constructor) {
+            targetClass = declaringClass;
+        } else {
+            targetClass = Modifier.isStatic(modifiers) ? null : obj.getClass();
+        }
+        return Reflection.verifyMemberAccess(caller,
+                                             declaringClass,
+                                             targetClass,
+                                             modifiers);
     }
 
     /**
