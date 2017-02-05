@@ -255,16 +255,13 @@ public class AccessibleObject implements AnnotatedElement {
             return false;
         }
 
-        boolean canSet;   // true if access can be enabled
-        if (true) {
-            canSet = checkCanSetAccessible(Reflection.getCallerClass(),
-                                           declaringClass,
-                                           false);
+        if (checkCanSetAccessible(Reflection.getCallerClass(),
+                                  declaringClass,
+                                  false)) {
+            return setAccessible0(true);
         } else {
-            canSet = true;
+            return false;
         }
-
-        return canSet ? setAccessible0(true) : false;
     }
 
 
