@@ -204,7 +204,10 @@ import jdk.internal.reflect.Reflection;
  *
  *     <li> If a named module declares more than one provider then the providers
  *     are located in the iteration order of the {@link
- *     java.lang.module.ModuleDescriptor.Provides#providers() providers} list. </li>
+ *     java.lang.module.ModuleDescriptor.Provides#providers() providers} list.
+ *     Providers added dynamically by instrumentation agents ({@link
+ *     java.lang.instrument.Instrumentation#redefineModule redefineModule})
+ *     are always located after providers declared by the module. </li>
  *
  *     <li> When locating providers in unnamed modules then the ordering is
  *     based on the order that the class loader's {@link

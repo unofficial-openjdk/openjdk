@@ -330,7 +330,7 @@ public class ModuleDescriptor
 
 
     /**
-     * <p> A module export, may be qualified or unqualified. </p>
+     * <p> Represents an exported package, may be qualified or unqualified. </p>
      *
      * @see ModuleDescriptor#exports()
      * @since 9
@@ -536,8 +536,7 @@ public class ModuleDescriptor
 
 
     /**
-     * <p> Represents a module <em>opens</em> directive, may be qualified or
-     * unqualified. </p>
+     * <p> Represents an open package, may be qualified or unqualified. </p>
      *
      * <p> The <em>opens</em> directive in a module declaration declares a
      * package to be open to allow all types in the package, and all their
@@ -1341,7 +1340,7 @@ public class ModuleDescriptor
     }
 
     /**
-     * <p> The module exports. </p>
+     * <p> The set of exported packages. </p>
      *
      * <p> If this module is an automatic module then the set of exports
      * is empty. </p>
@@ -1353,7 +1352,7 @@ public class ModuleDescriptor
     }
 
     /**
-     * <p> The module <em>opens</em> directives. </p>
+     * <p> The set of open packages. </p>
      *
      * <p> If this module is an open module or an automatic module then the
      * set of open packages is empty. </p>
@@ -1948,10 +1947,10 @@ public class ModuleDescriptor
          *
          * @throws IllegalArgumentException
          *         If the service type is {@code null} or not a qualified name of
-         *         a Java class in a named package
+         *         a class in a named package
          * @throws IllegalStateException
          *         If a dependency on the service type has already been declared
-         *          or this is a builder for an an automatic module
+         *         or this is a builder for an an automatic module
          */
         public Builder uses(String service) {
             if (automatic)
@@ -2001,8 +2000,8 @@ public class ModuleDescriptor
          *
          * @throws IllegalArgumentException
          *         If the service type or any of the provider class names is
-         *         {@code null} or not a qualified name of a Java class in a
-         *         named package, or the list of provider class names is empty
+         *         {@code null} or not a qualified name of a class in a named
+         *         package, or the list of provider class names is empty
          * @throws IllegalStateException
          *         If the providers for the service type have already been
          *         declared
@@ -2110,7 +2109,7 @@ public class ModuleDescriptor
          *
          * @throws IllegalArgumentException
          *         If {@code mainClass} is {@code null} or not a qualified
-         *         name of a Java class in a named package
+         *         name of a class in a named package
          */
         public Builder mainClass(String mc) {
             String pn;
@@ -2189,7 +2188,10 @@ public class ModuleDescriptor
          *
          * <p> The module will require "{@code java.base}" even if the dependence
          * has not been declared (the exception is when building a module named
-         * "{@code java.base}" as it cannot require itself). </p>
+         * "{@code java.base}" as it cannot require itself). The dependence on
+         * "{@code java.base}" will have the {@link
+         * java.lang.module.ModuleDescriptor.Requires.Modifier#MANDATED MANDATED}
+         * modifier if the dependence was not declared. </p>
          *
          * @return The module descriptor
          */

@@ -115,8 +115,11 @@ public class MethodHandles {
      * <p>
      * As a matter of pure convention, the {@linkplain Lookup#lookupClass lookup class}
      * of this lookup object will be {@link java.lang.Object}.
-     * Consequently, the lookup context of this lookup object will be the bootstrap
-     * class loader, which means it cannot find user classes.
+     *
+     * @apiNote The use of Object is conventional, and because the lookup modes are
+     * limited, there is no special access provided to the internals of Object, its package
+     * or its module. Consequently, the lookup context of this lookup object will be the
+     * bootstrap class loader, which means it cannot find user classes.
      *
      * <p style="font-size:smaller;">
      * <em>Discussion:</em>
