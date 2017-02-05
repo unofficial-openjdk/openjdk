@@ -48,7 +48,7 @@ import java.util.stream.Stream;
 
 /*
  * @test
- * @summary @CallerSensitive methods should be static or final instance
+ * @summary CallerSensitive methods should be static or final instance
  *          methods except the known list of non-final instance methods
  * @modules jdk.jdeps/com.sun.tools.classfile
  *          jdk.jdeps/com.sun.tools.jdeps
