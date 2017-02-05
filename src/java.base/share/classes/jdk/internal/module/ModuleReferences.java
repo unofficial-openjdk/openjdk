@@ -244,7 +244,8 @@ class ModuleReferences {
         }
 
         private JarEntry getEntry(String name) {
-            return jf.getJarEntry(Objects.requireNonNull(name));
+            JarEntry entry = jf.getJarEntry(Objects.requireNonNull(name));
+            return (entry == null || entry.isDirectory()) ? null : entry;
         }
 
         @Override

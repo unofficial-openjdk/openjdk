@@ -82,11 +82,17 @@ public class ModuleReaderTest {
     // resource names that should not be found in the base module
     private static final String[] BAD_BASE_RESOURCES = {
         "NotFound",
+        "java",
+        "/java",
+        "//java",
+        "java/",
         "java/lang",
         "/java/lang",
+        "//java/lang",
         "java/lang/",
         "java//lang",
         "/java/lang/Object.class",
+        "//java/lang/Object.class",
         "java/lang/Object.class/",
         "java//lang//Object.class",
         "./java/lang/Object.class",
@@ -106,7 +112,12 @@ public class ModuleReaderTest {
     // resource names that should not be found in the test module
     private static final String[] BAD_TEST_RESOURCES = {
         "NotFound",
+        "p",
+        "/p",
+        "//p",
+        "p/",
         "/p/Main.class",
+        "//p/Main.class",
         "p/Main.class/",
         "p//Main.class",
         "./p/Main.class",
