@@ -118,7 +118,12 @@ public final class ModuleBootstrap {
         long t0 = System.nanoTime();
 
         // system modules (may be patched)
-        ModuleFinder systemModules = ModuleFinder.ofSystem();
+        ModuleFinder systemModules;
+        if (SystemModules.MODULE_NAMES.length > 0) {
+            systemModules = SystemModuleFinder.getInstance();
+        } else {
+            systemModules = ModuleFinder.ofSystem();
+        }
 
         PerfCounters.systemModulesTime.addElapsedTimeFrom(t0);
 
