@@ -342,7 +342,7 @@ public class ModuleDescriptor
     {
 
         /**
-         * A modifier on a module export.
+         * A modifier on an exported package.
          *
          * @see Exports#modifiers()
          * @since 9
@@ -553,7 +553,7 @@ public class ModuleDescriptor
         implements Comparable<Opens>
     {
         /**
-         * A modifier on a module <em>opens</em> directive.
+         * A modifier on an open package.
          *
          * @see Opens#modifiers()
          * @since 9
@@ -562,14 +562,14 @@ public class ModuleDescriptor
         public static enum Modifier {
 
             /**
-             * The opens was not explicitly or implicitly declared in the
-             * source of the module declaration.
+             * The open package was not explicitly or implicitly declared in
+             * the source of the module declaration.
              */
             SYNTHETIC,
 
             /**
-             * The opens was implicitly declared in the source of the module
-             * declaration.
+             * The open package was implicitly declared in the source of the
+             * module declaration.
              */
             MANDATED;
 
@@ -2505,8 +2505,12 @@ public class ModuleDescriptor
     }
 
     /**
-     * Reads the binary form of a module declaration from an input stream
-     * as a module descriptor.
+     * Reads the binary form of a module declaration from an input stream as a
+     * module descriptor. This method works exactly as specified by the 2-arg
+     * {@link #read(InputStream,Supplier) read} method with the exception that
+     * a packager finder is not used to find additional packages when the
+     * module descriptor read from the stream does not indicate the set of
+     * packages.
      *
      * @param  in
      *         The input stream
@@ -2570,8 +2574,11 @@ public class ModuleDescriptor
     }
 
     /**
-     * Reads the binary form of a module declaration from a byte buffer
-     * as a module descriptor.
+     * Reads the binary form of a module declaration from a byte buffer as a
+     * module descriptor. This method works exactly as specified by the 2-arg
+     * {@link #read(ByteBuffer,Supplier) read} method with the exception that a
+     * packager finder is not used to find additional packages when the module
+     * descriptor encoded in the buffer does not indicate the set of packages.
      *
      * @param  bb
      *         The byte buffer

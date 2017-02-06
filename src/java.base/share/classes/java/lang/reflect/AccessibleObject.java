@@ -192,19 +192,17 @@ public class AccessibleObject implements AnnotatedElement {
 
     /**
      * Set the {@code accessible} flag for this reflected object to {@code true}.
-     * This method sets the {@code accessible} flag as if by invocation of
-     * {@link #setAccessible(boolean) setAccessible(true)} where the caller of
-     * {@code setAccessible} is deemed to be the caller of
-     * {@code trySetAccessible} and returns the new value for the
-     * {@code accessible} flag. If access cannot be enabled i.e. the checks
-     * for Java language access control cannot be suppressed, this method
+     * This method sets the {@code accessible} flag, as if by invoking {@link
+     * #setAccessible(boolean) setAccessible(true)}, and returns the new value
+     * for the {@code accessible} flag. If access cannot be enabled, i.e. the
+     * checks or Java language access control cannot be suppressed, this method
      * returns {@code false} as opposed to {@link #setAccessible(boolean)}
-     * that throws an {@code InaccessibleObjectException}.
+     * which throws {@code InaccessibleObjectException} when it fails.
      *
      * <p> This method is a no-op if the {@code accessible} flag for
      * this reflected object is {@code true}.
      *
-     * <p>For example, a caller can invoke {@code trySetAccessible}
+     * <p> For example, a caller can invoke {@code trySetAccessible}
      * on a {@code Method} object for a private instance method
      * {@code p.T::privateMethod} to suppress the checks for Java language access
      * control when the {@code Method} is invoked.
@@ -417,19 +415,18 @@ public class AccessibleObject implements AnnotatedElement {
     }
 
     /**
-     * Test if the caller can access this reflected object. Specifically,
-     * if this reflected object corresponds to an instance method or field,
-     * this method tests if the caller can access the given {@code obj} with
-     * the reflected object.  The given {@code obj} argument must be an
-     * instance object of the {@link Member#getDeclaringClass() declaring class}
-     * on which this method checks if the caller can reflectively access.
+     * Test if the caller can access this reflected object. If this reflected
+     * object corresponds to an instance method or field then this method tests
+     * if the caller can access the given {@code obj} with the reflected object.
+     * For instance methods or fields then the {@code obj} argument must be an
+     * instance of the {@link Member#getDeclaringClass() declaring class}. For
+     * static members and constructors then {@code obj} must be {@code null}.
      *
      * <p> This method returns {@code true} if the {@code accessible} flag
-     * is set to {@code true} i.e. the checks for Java language access control
+     * is set to {@code true}, i.e. the checks for Java language access control
      * are suppressed, or if the caller can access the member as
      * specified in <cite>The Java&trade; Language Specification</cite>,
      * with the variation noted in the class description. </p>
-     *
      *
      * @param obj an instance object of the declaring class of this reflected
      *            object if it is an instance method or field
@@ -463,18 +460,16 @@ public class AccessibleObject implements AnnotatedElement {
         if (!Modifier.isStatic(modifiers) &&
                 (this instanceof Method || this instanceof Field)) {
             if (obj == null) {
-                throw new IllegalArgumentException("null object for "
-                    + this.toString());
+                throw new IllegalArgumentException("null object for " + this);
             }
             // if this object is an instance member, the given object
             // must be a subclass of the declaring class of this reflected object
             if (!declaringClass.isAssignableFrom(obj.getClass())) {
                 throw new IllegalArgumentException("object is not an instance of "
-                    + declaringClass.getName());
+                                                   + declaringClass.getName());
             }
         } else if (obj != null) {
-            throw new IllegalArgumentException("non-null object for "
-                    + this.toString());
+            throw new IllegalArgumentException("non-null object for " + this);
         }
 
         // access check is suppressed

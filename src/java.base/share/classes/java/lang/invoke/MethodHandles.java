@@ -758,14 +758,13 @@ public class MethodHandles {
          * publicLookup}, in which case {@code PUBLIC} access is not lost.
          * <li>If the old lookup class is in an unnamed module, and the new lookup class
          * is a different module then {@link #MODULE MODULE} access is lost.
-         * <li>If the new lookup class differs from the old one then {@code UNCONDITIONAL}
-         * is lost. If the new lookup class is not within the same package member as the
-         * old one, protected members will not be accessible by virtue of inheritance.
-         * (Protected members may continue to be accessible because of package sharing.)
+         * <li>If the new lookup class differs from the old one then {@code UNCONDITIONAL} is lost.
          * <li>If the new lookup class is in a different package
          * than the old one, protected and default (package) members will not be accessible.
          * <li>If the new lookup class is not within the same package member
-         * as the old one, private members will not be accessible.
+         * as the old one, private members will not be accessible, and protected members
+         * will not be accessible by virtue of inheritance.
+         * (Protected members may continue to be accessible because of package sharing.)
          * <li>If the new lookup class is not accessible to the old lookup class,
          * then no members, not even public members, will be accessible.
          * (In all other cases, public members will continue to be accessible.)

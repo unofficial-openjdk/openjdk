@@ -198,9 +198,9 @@ import sun.security.util.SecurityConstants;
  *
  * <p>
  * Note that if proxy interfaces with a mix of accessibilities -- for example,
- * an exported open public interface and a non-exported non-open non-public
- * interface -- are proxied by the same instance, then the proxy class's
- * accessibility is governed by the least accessible proxy interface.
+ * an exported public interface and a non-exported non-public interface -- are
+ * proxied by the same instance, then the proxy class's accessibility is
+ * governed by the least accessible proxy interface.
  * <p>
  * Note that it is possible for arbitrary code to obtain access to a proxy class
  * in an open package with {@link AccessibleObject#setAccessible setAccessible},
@@ -211,8 +211,8 @@ import sun.security.util.SecurityConstants;
  * Throughout this specification, a "non-exported package" refers to a package
  * that is not exported to all modules, and a "non-open package" refers to
  * a package that is not open to all modules.  Specifically, these terms refer to
- * a package that either is not exported/opened at all by its containing module
- * or is exported/opened in a qualified fashion by its containing module.
+ * a package that either is not exported/open by its containing module or is
+ * exported/open in a qualified fashion by its containing module.
  *
  * <h3><a name="dynamicmodule">Dynamic Modules</a></h3>
  * <p>
