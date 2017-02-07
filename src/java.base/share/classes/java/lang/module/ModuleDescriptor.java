@@ -311,9 +311,9 @@ public class ModuleDescriptor
         }
 
         /**
-         * Returns a string describing module dependence.
+         * Returns a string describing this module dependence.
          *
-         * @return A string describing module dependence
+         * @return A string describing this module dependence
          */
         @Override
         public String toString() {
@@ -330,7 +330,7 @@ public class ModuleDescriptor
 
 
     /**
-     * <p> Represents an exported package, may be qualified or unqualified. </p>
+     * <p> A package exported by a module, may be qualified or unqualified. </p>
      *
      * @see ModuleDescriptor#exports()
      * @since 9
@@ -520,9 +520,9 @@ public class ModuleDescriptor
         }
 
         /**
-         * Returns a string describing module export.
+         * Returns a string describing the exported package.
          *
-         * @return A string describing module export
+         * @return A string describing the exported package
          */
         @Override
         public String toString() {
@@ -536,7 +536,7 @@ public class ModuleDescriptor
 
 
     /**
-     * <p> Represents an open package, may be qualified or unqualified. </p>
+     * <p> A package opened by a module, may be qualified or unqualified. </p>
      *
      * <p> The <em>opens</em> directive in a module declaration declares a
      * package to be open to allow all types in the package, and all their
@@ -731,9 +731,9 @@ public class ModuleDescriptor
         }
 
         /**
-         * Returns a string describing module opens.
+         * Returns a string describing the open package.
          *
-         * @return A string describing module opens
+         * @return A string describing the open package
          */
         @Override
         public String toString() {
@@ -1284,7 +1284,7 @@ public class ModuleDescriptor
     }
 
     /**
-     * <p> The module name. </p>
+     * <p> Returns the module name. </p>
      *
      * @return The module name
      */
@@ -1293,7 +1293,7 @@ public class ModuleDescriptor
     }
 
     /**
-     * <p> The set of module modifiers. </p>
+     * <p> Returns the set of module modifiers. </p>
      *
      * @return A possibly-empty unmodifiable set of modifiers
      */
@@ -1326,7 +1326,7 @@ public class ModuleDescriptor
     }
 
     /**
-     * <p> The dependences of this module. </p>
+     * <p> Returns the set of module dependences. </p>
      *
      * <p> The set includes a dependency on "{@code java.base}" when this
      * module is not named "{@code java.base}". If this module is an automatic
@@ -1340,7 +1340,7 @@ public class ModuleDescriptor
     }
 
     /**
-     * <p> The set of exported packages. </p>
+     * <p> Returns the set of exported packages. </p>
      *
      * <p> If this module is an automatic module then the set of exports
      * is empty. </p>
@@ -1352,7 +1352,7 @@ public class ModuleDescriptor
     }
 
     /**
-     * <p> The set of open packages. </p>
+     * <p> Returns the set of open packages. </p>
      *
      * <p> If this module is an open module or an automatic module then the
      * set of open packages is empty. </p>
@@ -1364,7 +1364,7 @@ public class ModuleDescriptor
     }
 
     /**
-     * <p> The service dependences of this module. </p>
+     * <p> Returns the set of service dependences. </p>
      *
      * <p> If this module is an automatic module then the set of service
      * dependences is empty. </p>
@@ -1377,7 +1377,7 @@ public class ModuleDescriptor
     }
 
     /**
-     * <p> The services that this module provides. </p>
+     * <p> Returns the set of services that the module provides. </p>
      *
      * @return The possibly-empty unmodifiable set of the services that this
      *         module provides
@@ -1387,7 +1387,7 @@ public class ModuleDescriptor
     }
 
     /**
-     * Returns this module's version.
+     * <p> Returns the module version. </p>
      *
      * @return This module's version
      */
@@ -1396,10 +1396,10 @@ public class ModuleDescriptor
     }
 
     /**
-     * Returns a string containing this module's name and, if present, its
-     * version.
+     * <p> Returns a string containing the module name and, if present, its
+     * version. </p>
      *
-     * @return A string containing this module's name and, if present, its
+     * @return A string containing the module name and, if present, its
      *         version.
      */
     public String toNameAndVersion() {
@@ -1411,51 +1411,51 @@ public class ModuleDescriptor
     }
 
     /**
-     * Returns the module's main class.
+     * <p> Returns the module main class. </p>
      *
-     * @return The fully qualified class name of this module's main class
+     * @return The fully qualified class name of the module's main class
      */
     public Optional<String> mainClass() {
         return Optional.ofNullable(mainClass);
     }
 
     /**
-     * Returns the operating system name if this module is operating system
+     * Returns the operating system name if the module is operating system
      * specific.
      *
      * @return The operating system name or an empty {@code Optional}
-     *         if this module is not operating system specific
+     *         if the module is not operating system specific
      */
     public Optional<String> osName() {
         return Optional.ofNullable(osName);
     }
 
     /**
-     * Returns the operating system architecture if this module is operating
+     * Returns the operating system architecture if the module is operating
      * system architecture specific.
      *
      * @return The operating system architecture or an empty {@code Optional}
-     *         if this module is not operating system architecture specific
+     *         if the module is not operating system architecture specific
      */
     public Optional<String> osArch() {
         return Optional.ofNullable(osArch);
     }
 
     /**
-     * Returns the operating system version if this module is operating
+     * Returns the operating system version if the module is operating
      * system version specific.
      *
      * @return The operating system version or an empty {@code Optional}
-     *         if this module is not operating system version specific
+     *         if the module is not operating system version specific
      */
     public Optional<String> osVersion() {
         return Optional.ofNullable(osVersion);
     }
 
     /**
-     * Returns the names of all packages in this module.
+     * Returns the set of packages in the module.
      *
-     * @return A possibly-empty unmodifiable set of all packages in the module
+     * @return A possibly-empty unmodifiable set of the packages in the module
      */
     public Set<String> packages() {
         return packages;
@@ -1463,7 +1463,7 @@ public class ModuleDescriptor
 
 
     /**
-     * A builder used for building {@link ModuleDescriptor} objects.
+     * A builder for building {@link ModuleDescriptor} objects.
      *
      * <p> {@code ModuleDescriptor} defines the {@link #newModule newModule},
      * {@link #newOpenModule newOpenModule}, and {@link #newAutomaticModule
@@ -1496,9 +1496,6 @@ public class ModuleDescriptor
      * components are added to the builder. The rationale for this is to detect
      * errors as early as possible and not defer all validation to the
      * {@link #build build} method.
-     * A {@code Builder} cannot be used to create a module with the
-     * {@link ModuleDescriptor.Modifier#MANDATED MANDATED} or
-     * {@link ModuleDescriptor.Modifier#SYNTHETIC SYNTHETIC} modifiers.
      *
      * @since 9
      * @spec JPMS
@@ -2372,9 +2369,9 @@ public class ModuleDescriptor
     private transient int hash;  // cached hash code
 
     /**
-     * Returns a string describing this descriptor.
+     * <p> Returns a string describing the module. </p>
      *
-     * @return A string describing this descriptor
+     * @return A string describing the module
      */
     @Override
     public String toString() {
@@ -2401,6 +2398,29 @@ public class ModuleDescriptor
 
     /**
      * Instantiates a builder to build a module descriptor.
+     *
+     * @param  name
+     *         The module name
+     * @param  ms
+     *         The set of module modifiers
+     *
+     * @return A new builder
+     *
+     * @throws IllegalArgumentException
+     *         If the module name is {@code null} or is not a legal module
+     *         name, or the set of modifiers contains both {@link Modifier#OPEN
+     *         OPEN} and {@link Modifier#AUTOMATIC AUTOMATIC}
+     */
+    public static Builder newModule(String name, Set<Modifier> ms) {
+        Set<Modifier> mods = new HashSet<>(ms);
+        if (mods.contains(Modifier.OPEN) && mods.contains(Modifier.AUTOMATIC))
+            throw new IllegalArgumentException("OPEN and AUTOMATIC not allowed");
+        return new Builder(name, true, mods);
+    }
+
+    /**
+     * Instantiates a builder to build a module descriptor.
+     *
      * @param  name
      *         The module name
      *

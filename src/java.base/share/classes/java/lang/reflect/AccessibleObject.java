@@ -191,13 +191,14 @@ public class AccessibleObject implements AnnotatedElement {
     }
 
     /**
-     * Set the {@code accessible} flag for this reflected object to {@code true}.
-     * This method sets the {@code accessible} flag, as if by invoking {@link
-     * #setAccessible(boolean) setAccessible(true)}, and returns the new value
-     * for the {@code accessible} flag. If access cannot be enabled, i.e. the
-     * checks or Java language access control cannot be suppressed, this method
-     * returns {@code false} as opposed to {@link #setAccessible(boolean)}
-     * which throws {@code InaccessibleObjectException} when it fails.
+     * Set the {@code accessible} flag for this reflected object to {@code true}
+     * if possible. This method sets the {@code accessible} flag, as if by
+     * invoking {@link #setAccessible(boolean) setAccessible(true)}, and returns
+     * the possibly-updated value for the {@code accessible} flag. If access
+     * cannot be enabled, i.e. the checks or Java language access control cannot
+     * be suppressed, this method returns {@code false} (as opposed to {@code
+     * setAccessible(true)} throwing {@code InaccessibleObjectException} when
+     * it fails).
      *
      * <p> This method is a no-op if the {@code accessible} flag for
      * this reflected object is {@code true}.

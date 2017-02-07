@@ -1120,6 +1120,40 @@ public class ModuleDescriptorTest {
     }
 
 
+    // newModule with modifiers
+
+    public void testNewModuleToBuildAutomaticModule() {
+        Set<ModuleDescriptor.Modifier> ms = Set.of(ModuleDescriptor.Modifier.AUTOMATIC);
+        ModuleDescriptor descriptor = ModuleDescriptor.newModule("foo", ms).build();
+        assertTrue(descriptor.modifiers().equals(ms));
+        assertTrue(descriptor.isAutomatic());
+
+        ms = Set.of(ModuleDescriptor.Modifier.AUTOMATIC, ModuleDescriptor.Modifier.SYNTHETIC);
+        descriptor = ModuleDescriptor.newModule("foo", ms).build();
+        assertTrue(descriptor.modifiers().equals(ms));
+        assertTrue(descriptor.isAutomatic());
+    }
+
+    public void testNewModuleToBuildOpenModule() {
+        Set<ModuleDescriptor.Modifier> ms = Set.of(ModuleDescriptor.Modifier.OPEN);
+        ModuleDescriptor descriptor = ModuleDescriptor.newModule("foo", ms).build();
+        assertTrue(descriptor.modifiers().equals(ms));
+        assertTrue(descriptor.isOpen());
+
+        ms = Set.of(ModuleDescriptor.Modifier.OPEN, ModuleDescriptor.Modifier.SYNTHETIC);
+        descriptor = ModuleDescriptor.newModule("foo", ms).build();
+        assertTrue(descriptor.modifiers().equals(ms));
+        assertTrue(descriptor.isOpen());
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testNewModuleToBuildAutomaticAndOpenModule() {
+        Set<ModuleDescriptor.Modifier> ms = Set.of(ModuleDescriptor.Modifier.AUTOMATIC,
+                                                   ModuleDescriptor.Modifier.OPEN);
+        ModuleDescriptor.newModule("foo", ms);
+    }
+
+
     // mainClass
 
     public void testMainClass() {

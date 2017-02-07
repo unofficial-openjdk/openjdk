@@ -64,11 +64,11 @@ import java.util.stream.Stream;
  * @implSpec Implementations of {@code ModuleReader} should take great care
  * when translating an abstract resource name to the location of a resource in
  * a packaged module or on the file system. Implementations are advised to
- * treat resource names with elements such as '{@code .}'and '{@code ..}',
- * file separators, or empty elements as "not found". More generally, if the
- * resource name is not in the stream of elements that the {@code list} method
- * returns then the resource should be treated as "not found" to avoid
- * inconsistencies.
+ * treat resource names with elements such as '{@code .},  '{@code ..}',
+ * elements containing file separators, or empty elements as "not found". More
+ * generally, if the resource name is not in the stream of elements that the
+ * {@code list} method returns then the resource should be treated as "not
+ * found" to avoid inconsistencies.
  *
  * @see ModuleReference
  * @since 9
