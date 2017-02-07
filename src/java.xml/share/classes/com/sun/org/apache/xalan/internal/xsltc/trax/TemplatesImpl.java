@@ -483,10 +483,11 @@ public final class TemplatesImpl implements Templates, Serializable {
             String pn = _tfactory.getPackageName();
             assert pn != null && pn.length() > 0;
 
-            ModuleDescriptor descriptor = ModuleDescriptor.newModule(mn)
-                    .requires("java.xml")
-                    .exports(pn)
-                    .build();
+            ModuleDescriptor descriptor =
+                ModuleDescriptor.newModule(mn, Set.of(ModuleDescriptor.Modifier.SYNTHETIC))
+                                .requires("java.xml")
+                                .exports(pn)
+                                .build();
 
             Module m = createModule(descriptor, loader);
 
