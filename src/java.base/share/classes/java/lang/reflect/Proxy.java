@@ -25,6 +25,7 @@
 
 package java.lang.reflect;
 
+import java.lang.module.ModuleDescriptor;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Arrays;
@@ -51,6 +52,9 @@ import jdk.internal.loader.ClassLoaderValue;
 import sun.reflect.misc.ReflectUtil;
 import sun.security.action.GetPropertyAction;
 import sun.security.util.SecurityConstants;
+
+import static java.lang.module.ModuleDescriptor.Modifier.SYNTHETIC;
+
 
 /**
  *
@@ -862,7 +866,11 @@ public class Proxy implements java.io.Serializable {
                 // create a dynamic module and setup module access
                 String mn = "jdk.proxy" + counter.incrementAndGet();
                 String pn = PROXY_PACKAGE_PREFIX + "." + mn;
-                Module m = Modules.defineModule(ld, mn, Collections.singleton(pn));
+                ModuleDescriptor descriptor =
+                    ModuleDescriptor.newModule(mn, Set.of(SYNTHETIC))
+                                    .packages(Set.of(pn))
+                                    .build();
+                Module m = Modules.defineModule(ld, descriptor, null);
                 Modules.addReads(m, Proxy.class.getModule());
                 // java.base to create proxy instance
                 Modules.addExports(m, pn, Object.class.getModule());
