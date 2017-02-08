@@ -923,13 +923,13 @@ public class BuiltinClassLoader
      * Returns the ModuleReader for the given module.
      */
     private ModuleReader moduleReaderFor(ModuleReference mref) {
-        return moduleToReader.computeIfAbsent(mref, m -> createModuleReader(m));
+        return moduleToReader.computeIfAbsent(mref, BuiltinClassLoader::createModuleReader);
     }
 
     /**
      * Creates a ModuleReader for the given module.
      */
-    private ModuleReader createModuleReader(ModuleReference mref) {
+    private static ModuleReader createModuleReader(ModuleReference mref) {
         try {
             return mref.open();
         } catch (IOException e) {
