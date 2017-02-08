@@ -319,8 +319,8 @@ public final class Configuration {
      * </ul>
      *
      * @implNote In the implementation then observability of modules may depend
-     * on referential integrity checks that ensure that different builds of
-     * tightly coupled modules cannot be combined in the same configuration.
+     * on referential integrity checks that ensure different builds of tightly
+     * coupled modules are not combined in the same configuration.
      *
      * @param  before
      *         The <em>before</em> module finder to find modules

@@ -32,18 +32,17 @@ import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -439,11 +438,12 @@ public class ModuleDescriptor
          * are compared (see {@link ModuleDescriptor#compareTo
          * ModuleDescriptor.compareTo}). Where the package names are equal and
          * the set of modifiers are equal then the set of target modules are
-         * compared. This is done by sorting the sets, iterating over both sets
-         * in ascending order, and comparing the corresponding elements
-         * lexicographically. Where the sets differ in size, and the larger set
-         * contains all elements of the smaller set, then the larger set is
-         * considered to succeed the smaller set. </p>
+         * compared. This is done by sorting the names of the target modules
+         * in ascending order, and according to their natural ordering, and then
+         * comparing the corresponding elements lexicographically. Where the
+         * sets differ in size, and the larger set contains all elements of the
+         * smaller set, then the larger set is considered to succeed the smaller
+         * set. </p>
          *
          * @param  that
          *         The module export to compare
@@ -650,11 +650,12 @@ public class ModuleDescriptor
          * are compared (see {@link ModuleDescriptor#compareTo
          * ModuleDescriptor.compareTo}). Where the package names are equal and
          * the set of modifiers are equal then the set of target modules are
-         * compared. This is done by sorting the sets, iterating over both sets
-         * in ascending order, and comparing the corresponding elements
-         * lexicographically. Where the sets differ in size, and the larger set
-         * contains all elements of the smaller set, then the larger set is
-         * considered to succeed the smaller set. </p>
+         * compared. This is done by sorting the names of the target modules
+         * in ascending order, and according to their natural ordering, and then
+         * comparing the corresponding elements lexicographically. Where the
+         * sets differ in size, and the larger set contains all elements of the
+         * smaller set, then the larger set is considered to succeed the smaller
+         * set. </p>
          *
          * @param  that
          *         The module opens to compare
@@ -1326,7 +1327,8 @@ public class ModuleDescriptor
     }
 
     /**
-     * <p> Returns the set of module dependences. </p>
+     * <p> Returns the set of {@code Requires} objects representing the module
+     * dependences. </p>
      *
      * <p> The set includes a dependency on "{@code java.base}" when this
      * module is not named "{@code java.base}". If this module is an automatic
@@ -1340,7 +1342,8 @@ public class ModuleDescriptor
     }
 
     /**
-     * <p> Returns the set of exported packages. </p>
+     * <p> Returns the set of {@code Exports} objects representing the exported
+     * packages. </p>
      *
      * <p> If this module is an automatic module then the set of exports
      * is empty. </p>
@@ -1352,7 +1355,8 @@ public class ModuleDescriptor
     }
 
     /**
-     * <p> Returns the set of open packages. </p>
+     * <p> Returns the set of {@code Opens} objects representing the open
+     * packages. </p>
      *
      * <p> If this module is an open module or an automatic module then the
      * set of open packages is empty. </p>
@@ -1377,7 +1381,8 @@ public class ModuleDescriptor
     }
 
     /**
-     * <p> Returns the set of services that the module provides. </p>
+     * <p> Returns the set of {@code Provides} objects representing the
+     * services that the module provides. </p>
      *
      * @return The possibly-empty unmodifiable set of the services that this
      *         module provides
@@ -2659,24 +2664,14 @@ public class ModuleDescriptor
     /**
      * Compares two sets of {@code Comparable} objects.
      */
+    @SuppressWarnings("unchecked")
     private static <T extends Object & Comparable<? super T>>
     int compare(Set<T> s1, Set<T> s2) {
-        Iterator<T> iterator1 = new TreeSet<>(s1).iterator();
-        Iterator<T> iterator2 =  new TreeSet<>(s2).iterator();
-        while (iterator1.hasNext()) {
-            if (!iterator2.hasNext())
-                return 1; // s1 has more elements
-            T e1 = iterator1.next();
-            T e2 = iterator2.next();
-            int c = e1.compareTo(e2);
-            if (c != 0)
-                return c;
-        }
-        if (iterator2.hasNext()) {
-            return -1;  // s2 has more elements
-        } else {
-            return 0;
-        }
+        T[] a1 = (T[]) s1.toArray();
+        T[] a2 = (T[]) s2.toArray();
+        Arrays.sort(a1);
+        Arrays.sort(a2);
+        return Arrays.compare(a1, a2);
     }
 
     private static <E extends Enum<E>> long modsValue(Set<E> set) {

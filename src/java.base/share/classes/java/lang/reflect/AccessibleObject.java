@@ -62,7 +62,7 @@ import jdk.internal.reflect.ReflectionFactory;
  * object corresponds to a member in an exported or open package
  * (see {@link #setAccessible(boolean)}). </p>
  *
- * @jls 6.6
+ * @jls 6.6 Access Control
  * @since 1.2
  * @revised 9
  * @spec JPMS
