@@ -42,6 +42,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import jdk.internal.module.ModuleBootstrap;
 import jdk.internal.module.ModulePath;
 import jdk.internal.module.SystemModuleFinder;
 import sun.security.action.GetPropertyAction;
@@ -173,7 +174,8 @@ public interface ModuleFinder {
         } else {
             Path mlib = Paths.get(home, "modules");
             if (Files.isDirectory(mlib)) {
-                return of(mlib);
+                // exploded build may be patched
+                return ModulePath.of(ModuleBootstrap.patcher(), mlib);
             } else {
                 throw new InternalError("Unable to detect the run-time image");
             }
@@ -323,7 +325,7 @@ public interface ModuleFinder {
             };
         }
 
-        return new ModulePath(entries);
+        return ModulePath.of(entries);
     }
 
     /**

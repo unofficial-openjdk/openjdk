@@ -371,7 +371,7 @@ public class JlinkTask {
      */
     private ModuleFinder modulePathFinder() {
         Path[] entries = options.modulePath.toArray(new Path[0]);
-        ModuleFinder finder = new ModulePath(Runtime.version(), true, entries);
+        ModuleFinder finder = ModulePath.of(Runtime.version(), true, entries);
         if (!options.limitMods.isEmpty()) {
             finder = limitFinder(finder, options.limitMods, Collections.emptySet());
         }
@@ -389,7 +389,7 @@ public class JlinkTask {
                                                Set<String> roots)
     {
         Path[] entries = paths.toArray(new Path[0]);
-        ModuleFinder finder = new ModulePath(Runtime.version(), true, entries);
+        ModuleFinder finder = ModulePath.of(Runtime.version(), true, entries);
 
         // if limitmods is specified then limit the universe
         if (!limitMods.isEmpty()) {

@@ -36,7 +36,6 @@ import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -52,7 +51,6 @@ import java.util.zip.ZipFile;
 
 import jdk.internal.jmod.JmodFile;
 import jdk.internal.loader.ResourceHelper;
-import jdk.internal.misc.JavaLangAccess;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.module.ModuleHashes.HashSupplier;
 import jdk.internal.util.jar.VersionedStream;
@@ -66,20 +64,16 @@ import sun.net.www.ParseUtil;
  */
 
 class ModuleReferences {
-
-    private static final JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
-
     private ModuleReferences() { }
 
     /**
-     * Creates a ModuleReference to a module or to patched module when
-     * creating modules for the boot Layer and --patch-module is specified.
+     * Creates a ModuleReference to a possibly-patched module
      */
     private static ModuleReference newModule(ModuleInfo.Attributes attrs,
                                              URI uri,
                                              Supplier<ModuleReader> supplier,
+                                             ModulePatcher patcher,
                                              HashSupplier hasher) {
-
         ModuleReference mref = new ModuleReferenceImpl(attrs.descriptor(),
                                                        uri,
                                                        supplier,
@@ -87,38 +81,42 @@ class ModuleReferences {
                                                        attrs.recordedHashes(),
                                                        hasher,
                                                        attrs.moduleResolution());
-        if (JLA.getBootLayer() == null)
-            mref = ModuleBootstrap.patcher().patchIfNeeded(mref);
+        if (patcher != null)
+            mref = patcher.patchIfNeeded(mref);
 
         return mref;
     }
 
     /**
-     * Creates a ModuleReference to a module packaged as a modular JAR.
+     * Creates a ModuleReference to a possibly-patched module in a modular JAR.
      */
-    static ModuleReference newJarModule(ModuleInfo.Attributes attrs, Path file) {
+    static ModuleReference newJarModule(ModuleInfo.Attributes attrs,
+                                        ModulePatcher patcher,
+                                        Path file) {
         URI uri = file.toUri();
         Supplier<ModuleReader> supplier = () -> new JarModuleReader(file, uri);
         HashSupplier hasher = (a) -> ModuleHashes.computeHash(file, a);
-        return newModule(attrs, uri, supplier, hasher);
+        return newModule(attrs, uri, supplier, patcher, hasher);
     }
 
     /**
-     * Creates a ModuleReference to a module packaged as a JMOD.
+     * Creates a ModuleReference to a module in a JMOD file.
      */
     static ModuleReference newJModModule(ModuleInfo.Attributes attrs, Path file) {
         URI uri = file.toUri();
         Supplier<ModuleReader> supplier = () -> new JModModuleReader(file, uri);
         HashSupplier hasher = (a) -> ModuleHashes.computeHash(file, a);
-        return newModule(attrs, uri, supplier, hasher);
+        return newModule(attrs, uri, supplier, null, hasher);
     }
 
     /**
-     * Creates a ModuleReference to an exploded module.
+     * Creates a ModuleReference to a possibly-patched exploded module.
      */
-    static ModuleReference newExplodedModule(ModuleInfo.Attributes attrs, Path dir) {
+    static ModuleReference newExplodedModule(ModuleInfo.Attributes attrs,
+                                             ModulePatcher patcher,
+                                             Path dir) {
         Supplier<ModuleReader> supplier = () -> new ExplodedModuleReader(dir);
-        return newModule(attrs, dir.toUri(), supplier, null);
+        return newModule(attrs, dir.toUri(), supplier, patcher, null);
     }
 
 

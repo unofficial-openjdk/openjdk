@@ -424,7 +424,7 @@ public final class ModuleBootstrap {
 
     /**
      * Creates a finder from the module path that is the value of the given
-     * system property.
+     * system property and optionally patched by --patch-module
      */
     private static ModuleFinder createModulePathFinder(String prop) {
         String s = System.getProperty(prop);
@@ -437,7 +437,7 @@ public final class ModuleBootstrap {
             for (String dir: dirs) {
                 paths[i++] = Paths.get(dir);
             }
-            return ModuleFinder.of(paths);
+            return ModulePath.of(patcher, paths);
         }
     }
 

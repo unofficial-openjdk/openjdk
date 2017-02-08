@@ -255,7 +255,7 @@ public class ModuleReaderTest {
      */
     void test(Path mp) throws IOException {
 
-        ModuleFinder finder = new ModulePath(Runtime.version(), true, mp);
+        ModuleFinder finder = ModulePath.of(Runtime.version(), true, mp);
         ModuleReference mref = finder.find(TEST_MODULE).get();
         ModuleReader reader = mref.open();
 

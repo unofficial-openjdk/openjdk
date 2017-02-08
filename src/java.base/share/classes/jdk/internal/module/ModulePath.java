@@ -35,7 +35,6 @@ import java.io.UncheckedIOException;
 import java.lang.module.FindException;
 import java.lang.module.InvalidModuleDescriptorException;
 import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
 import java.net.URI;
@@ -70,12 +69,11 @@ import jdk.internal.util.jar.VersionedStream;
 
 /**
  * A {@code ModuleFinder} that locates modules on the file system by searching
- * a sequence of directories or packaged modules.
- *
- * The {@code ModuleFinder} can be created to work in either the run-time
- * or link-time phases. In both cases it locates modular JAR and exploded
- * modules. When created for link-time then it additionally locates
- * modules in JMOD files.
+ * a sequence of directories or packaged modules. The ModuleFinder can be
+ * created to work in either the run-time or link-time phases. In both cases it
+ * locates modular JAR and exploded modules. When created for link-time then it
+ * additionally locates modules in JMOD files. The ModuleFinder can also
+ * optionally patch any modules that it locates with a ModulePatcher.
  */
 
 public class ModulePath implements ModuleFinder {
@@ -87,6 +85,9 @@ public class ModulePath implements ModuleFinder {
     // true for the link phase (supports modules packaged in JMOD format)
     private final boolean isLinkPhase;
 
+    // for patching modules, can be null
+    private final ModulePatcher patcher;
+
     // the entries on this module path
     private final Path[] entries;
     private int next;
@@ -94,18 +95,50 @@ public class ModulePath implements ModuleFinder {
     // map of module name to module reference map for modules already located
     private final Map<String, ModuleReference> cachedModules = new HashMap<>();
 
-    public ModulePath(Runtime.Version version, boolean isLinkPhase, Path... entries) {
+
+    private ModulePath(Runtime.Version version,
+                       boolean isLinkPhase,
+                       ModulePatcher patcher,
+                       Path... entries) {
         this.releaseVersion = version;
         this.isLinkPhase = isLinkPhase;
+        this.patcher = patcher;
         this.entries = entries.clone();
         for (Path entry : this.entries) {
             Objects.requireNonNull(entry);
         }
     }
 
-    public ModulePath(Path... entries) {
-        this(JarFile.runtimeVersion(), false, entries);
+    /**
+     * Returns a ModuleFinder that that locates modules on the file system by
+     * searching a sequence of directories and/or packaged modules. The modules
+     * may be patched by the given ModulePatcher.
+     */
+    public static ModuleFinder of(ModulePatcher patcher, Path... entries) {
+        return new ModulePath(JarFile.runtimeVersion(), false, patcher, entries);
     }
+
+    /**
+     * Returns a ModuleFinder that that locates modules on the file system by
+     * searching a sequence of directories and/or packaged modules.
+     */
+    public static ModuleFinder of(Path... entries) {
+        return of((ModulePatcher)null, entries);
+    }
+
+    /**
+     * Returns a ModuleFinder that that locates modules on the file system by
+     * searching a sequence of directories and/or packaged modules.
+     *
+     * @param version The release version to use for multi-release JAR files
+     * @param isLinkPhase {@code true} if the link phase to locate JMOD files
+     */
+    public static ModuleFinder of(Runtime.Version version,
+                                  boolean isLinkPhase,
+                                  Path... entries) {
+        return new ModulePath(version, isLinkPhase, null, entries);
+    }
+
 
     @Override
     public Optional<ModuleReference> find(String name) {
@@ -321,7 +354,7 @@ public class ModulePath implements ModuleFinder {
         }
     }
 
-    // -- jmod files --
+    // -- JMOD files --
 
     private Set<String> jmodPackages(JmodFile jf) {
         return jf.stream()
@@ -333,7 +366,7 @@ public class ModulePath implements ModuleFinder {
     }
 
     /**
-     * Returns a {@code ModuleReference} to a module in jmod file on the
+     * Returns a {@code ModuleReference} to a module in JMOD file on the
      * file system.
      *
      * @throws IOException
@@ -588,7 +621,7 @@ public class ModulePath implements ModuleFinder {
                                         () -> jarPackages(jf));
             }
 
-            return ModuleReferences.newJarModule(attrs, file);
+            return ModuleReferences.newJarModule(attrs, patcher, file);
         }
     }
 
@@ -625,7 +658,7 @@ public class ModulePath implements ModuleFinder {
             // for now
             return null;
         }
-        return ModuleReferences.newExplodedModule(attrs, dir);
+        return ModuleReferences.newExplodedModule(attrs, patcher, dir);
     }
 
     /**

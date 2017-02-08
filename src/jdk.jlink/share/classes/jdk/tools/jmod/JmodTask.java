@@ -1393,7 +1393,7 @@ public class JmodTask {
                 options.legalNotices = getLastElement(opts.valuesOf(legalNotices));
             if (opts.has(modulePath)) {
                 Path[] dirs = getLastElement(opts.valuesOf(modulePath)).toArray(new Path[0]);
-                options.moduleFinder = new ModulePath(Runtime.version(), true, dirs);
+                options.moduleFinder = ModulePath.of(Runtime.version(), true, dirs);
             }
             if (opts.has(moduleVersion))
                 options.moduleVersion = getLastElement(opts.valuesOf(moduleVersion));
