@@ -213,8 +213,8 @@ public class ModuleInfoBuilder {
         if (!open) {
             md.exports().stream()
               .peek(exp -> {
-                 if (exp.targets().size() > 0)
-                    throw new InternalError(md.name() + " qualified exports: " + exp);
+                  if (exp.isQualified())
+                      throw new InternalError(md.name() + " qualified exports: " + exp);
               })
               .sorted(Comparator.comparing(Exports::source))
               .forEach(exp -> writer.format("    exports %s;%n", exp.source()));
