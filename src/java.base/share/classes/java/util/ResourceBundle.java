@@ -3397,8 +3397,6 @@ public abstract class ResourceBundle {
          *        if <code>baseName</code> or <code>locale</code>
          *        is <code>null</code>
          * @see java.util.spi.AbstractResourceBundleProvider#toBundleName(String, Locale)
-         * @revised 9
-         * @spec JPMS
          */
         public String toBundleName(String baseName, Locale locale) {
             if (locale == Locale.ROOT) {
