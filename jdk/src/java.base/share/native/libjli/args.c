@@ -34,7 +34,7 @@
     #define NO_JNI
   #endif
   #define JLI_ReportMessage(...) printf(__VA_ARGS__)
-  #define JAVA_OPTIONS "JAVA_OPTIONS"
+  #define JDK_JAVA_OPTIONS "JDK_JAVA_OPTIONS"
   int IsWhiteSpaceOption(const char* name) { return 1; }
 #else
   #include "java.h"

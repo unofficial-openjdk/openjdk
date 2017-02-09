@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -200,14 +200,14 @@ void JLI_CmdToArgs(char* cmdline) {
     int nargs = 0;
     StdArg* argv = NULL;
     jboolean wildcard = JNI_FALSE;
-    char* src = cmdline;
+    char* src = cmdline, *arg = NULL;
     JLI_List argsInFile;
     size_t i, cnt;
 
     JLI_List envArgs = JLI_List_new(1);
-    if (JLI_AddArgsFromEnvVar(envArgs, JAVA_OPTIONS)) {
+    if (JLI_AddArgsFromEnvVar(envArgs, JDK_JAVA_OPTIONS)) {
         // JLI_SetTraceLauncher is not called yet
-        // Show _JAVA_OPTIONS content along with JAVA_OPTIONS to aid diagnosis
+        // Show _JAVA_OPTIONS content along with JDK_JAVA_OPTIONS to aid diagnosis
         if (getenv(JLDEBUG_ENV_ENTRY)) {
             char *tmp = getenv("_JAVA_OPTIONS");
             if (NULL != tmp) {
@@ -219,7 +219,7 @@ void JLI_CmdToArgs(char* cmdline) {
     argv = JLI_MemAlloc(cnt * sizeof(StdArg));
 
     // allocate arg buffer with sufficient space to receive the largest arg
-    char* arg = JLI_StringDup(cmdline);
+    arg = JLI_StringDup(cmdline);
 
     src = next_arg(src, arg, &wildcard);
     // first argument is the app name, do not preprocess and make sure remains first
