@@ -453,7 +453,7 @@ public final class Layer {
             loader.initRemotePackageMap(cf, parents);
             Layer layer =  new Layer(cf, parents, mn -> loader);
             return new Controller(layer);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
             throw new LayerInstantiationException(e.getMessage());
         }
     }
@@ -520,7 +520,7 @@ public final class Layer {
         try {
             Layer layer = new Layer(cf, parents, pool::loaderFor);
             return new Controller(layer);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
             throw new LayerInstantiationException(e.getMessage());
         }
     }
@@ -608,9 +608,8 @@ public final class Layer {
         try {
             Layer layer = new Layer(cf, parents, clf);
             return new Controller(layer);
-        } catch (IllegalArgumentException iae) {
-            // IAE is thrown by VM when defining the module fails
-            throw new LayerInstantiationException(iae.getMessage());
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            throw new LayerInstantiationException(e.getMessage());
         }
     }
 
