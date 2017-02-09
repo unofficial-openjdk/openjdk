@@ -661,8 +661,9 @@ public class MethodHandles {
          *  with this lookup mode can access all public members of public types
          *  of all modules where the type is in a package that is {@link
          *  java.lang.reflect.Module#isExported(String) exported unconditionally}.
-         *  @see #publicLookup()
          *  @since 9
+         *  @spec JPMS
+         *  @see #publicLookup()
          */
         public static final int UNCONDITIONAL = PACKAGE << 2;
 

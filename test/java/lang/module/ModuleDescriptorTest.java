@@ -1127,11 +1127,6 @@ public class ModuleDescriptorTest {
         ModuleDescriptor descriptor = ModuleDescriptor.newModule("foo", ms).build();
         assertTrue(descriptor.modifiers().equals(ms));
         assertTrue(descriptor.isAutomatic());
-
-        ms = Set.of(ModuleDescriptor.Modifier.AUTOMATIC, ModuleDescriptor.Modifier.SYNTHETIC);
-        descriptor = ModuleDescriptor.newModule("foo", ms).build();
-        assertTrue(descriptor.modifiers().equals(ms));
-        assertTrue(descriptor.isAutomatic());
     }
 
     public void testNewModuleToBuildOpenModule() {

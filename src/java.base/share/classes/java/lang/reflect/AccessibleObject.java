@@ -446,7 +446,7 @@ public class AccessibleObject implements AnnotatedElement {
      *
      * @since 9
      * @spec JPMS
-     *
+     * @jls 6.6 Access Control
      * @see #trySetAccessible
      * @see #setAccessible(boolean)
      */

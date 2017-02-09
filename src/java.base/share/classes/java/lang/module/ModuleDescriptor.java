@@ -2413,18 +2413,22 @@ public class ModuleDescriptor
      *
      * @throws IllegalArgumentException
      *         If the module name is {@code null} or is not a legal module
-     *         name, or the set of modifiers contains both {@link Modifier#OPEN
-     *         OPEN} and {@link Modifier#AUTOMATIC AUTOMATIC}
+     *         name, or the set of modifiers contains {@link
+     *         Modifier#AUTOMATIC AUTOMATIC} with other modifiers
      */
     public static Builder newModule(String name, Set<Modifier> ms) {
         Set<Modifier> mods = new HashSet<>(ms);
-        if (mods.contains(Modifier.OPEN) && mods.contains(Modifier.AUTOMATIC))
-            throw new IllegalArgumentException("OPEN and AUTOMATIC not allowed");
+        if (mods.contains(Modifier.AUTOMATIC) && mods.size() > 1)
+            throw new IllegalArgumentException("AUTOMATIC cannot be used with"
+                                               + " other modifiers");
+
         return new Builder(name, true, mods);
     }
 
     /**
-     * Instantiates a builder to build a module descriptor.
+     * Instantiates a builder to build a module descriptor for a <em>normal</em>
+     * module. This method is equivalent to invoking {@link #newModule(String,Set)
+     * newModule} with an empty set of {@link ModuleDescriptor.Modifier modifiers}.
      *
      * @param  name
      *         The module name
@@ -2441,6 +2445,8 @@ public class ModuleDescriptor
 
     /**
      * Instantiates a builder to build a module descriptor for an open module.
+     * This method is equivalent to invoking {@link #newModule(String,Set)
+     * newModule} with the {@link ModuleDescriptor.Modifier#OPEN OPEN} modifier.
      *
      * <p> The builder for an open module cannot be used to declare any open
      * packages. </p>
@@ -2460,7 +2466,9 @@ public class ModuleDescriptor
 
     /**
      * Instantiates a builder to build a module descriptor for an automatic
-     * module.
+     * module. This method is equivalent to invoking {@link #newModule(String,Set)
+     * newModule} with the {@link ModuleDescriptor.Modifier#AUTOMATIC AUTOMATIC}
+     * modifier.
      *
      * <p> The builder for an automatic module cannot be used to declare module
      * or service dependences. It also cannot be used to declare any exported
