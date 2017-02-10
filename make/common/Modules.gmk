@@ -107,7 +107,6 @@ PLATFORM_MODULES += \
     jdk.charsets \
     jdk.crypto.ec \
     jdk.crypto.cryptoki \
-    jdk.desktop \
     jdk.dynalink \
     jdk.jsobject \
     jdk.localedata \
