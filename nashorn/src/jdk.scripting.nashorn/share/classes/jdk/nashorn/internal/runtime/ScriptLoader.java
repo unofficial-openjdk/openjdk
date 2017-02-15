@@ -26,6 +26,7 @@
 package jdk.nashorn.internal.runtime;
 
 import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleDescriptor.Modifier;
 import java.lang.reflect.Module;
 import java.security.CodeSource;
 import java.util.Objects;
@@ -70,8 +71,7 @@ final class ScriptLoader extends NashornLoader {
     private Module createModule(final String moduleName) {
         final Module structMod = context.getStructLoader().getModule();
         final ModuleDescriptor.Builder builder =
-            ModuleDescriptor.newModule(moduleName)
-                    .requires("java.base")
+            ModuleDescriptor.newModule(moduleName, Set.of(Modifier.SYNTHETIC))
                     .requires("java.logging")
                     .requires(NASHORN_MODULE.getName())
                     .requires(structMod.getName())

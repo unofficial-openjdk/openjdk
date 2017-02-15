@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,16 +22,32 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package jdk.nashorn.test.models;
 
-/**
- * Nashorn shell module
- *
- * @since 9
- */
-module jdk.scripting.nashorn.shell {
-    requires java.desktop;
-    requires java.compiler;
-    requires jdk.scripting.nashorn;
-    requires jdk.internal.le;
+import jdk.nashorn.api.scripting.ScriptObjectMirror;
+import org.testng.Assert;
+
+import java.util.List;
+
+public class FunctionalInterfaceProvider {
+
+    private final static Object RETURN_TOKEN = new Object();
+
+    public static Functional getImpl() {
+        return (l) -> {
+            // Make sure parameters are properly exported
+            for (final Object o : l) {
+                Assert.assertTrue(o == RETURN_TOKEN
+                        || o instanceof ScriptObjectMirror
+                        || o instanceof String);
+            }
+            return RETURN_TOKEN;
+        };
+    }
+
+    @FunctionalInterface
+    public interface Functional {
+        Object method(List<Object> args);
+    }
+
 }
-

@@ -31,6 +31,7 @@ import static jdk.nashorn.internal.codegen.CompilerConstants.JS_OBJECT_DUAL_FIEL
 import static jdk.nashorn.internal.codegen.CompilerConstants.JS_OBJECT_SINGLE_FIELD_PREFIX;
 
 import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleDescriptor.Modifier;
 import java.lang.reflect.Module;
 import java.security.ProtectionDomain;
 import java.util.Set;
@@ -63,12 +64,11 @@ final class StructureLoader extends NashornLoader {
     }
 
     private Module createModule(final String moduleName) {
-        final ModuleDescriptor descriptor
-                = ModuleDescriptor.newModule(moduleName)
-                    .requires("java.base")
-                    .requires(NASHORN_MODULE.getName())
-                    .packages(Set.of(SCRIPTS_PKG))
-                    .build();
+        final ModuleDescriptor descriptor =
+            ModuleDescriptor.newModule(moduleName, Set.of(Modifier.SYNTHETIC))
+                            .requires(NASHORN_MODULE.getName())
+                            .packages(Set.of(SCRIPTS_PKG))
+                            .build();
 
         final Module mod = Context.createModuleTrusted(descriptor, this);
         loadModuleManipulator();
