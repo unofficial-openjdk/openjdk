@@ -704,7 +704,6 @@ FIXPATH_DETACH_FLAG
 FIXPATH
 BUILD_GTEST
 ENABLE_AOT
-INCLUDE_DTRACE
 GCOV_ENABLED
 ZIP_EXTERNAL_DEBUG_SYMBOLS
 COPY_DEBUG_SYMBOLS
@@ -712,10 +711,8 @@ COMPILE_WITH_DEBUG_SYMBOLS
 CFLAGS_WARNINGS_ARE_ERRORS
 BUILD_CC_DISABLE_WARNING_PREFIX
 DISABLE_WARNING_PREFIX
-HOTSPOT_SET_WARNINGS_AS_ERRORS
 WARNINGS_AS_ERRORS
 COMPILER_SUPPORTS_TARGET_BITS_FLAG
-ZERO_ARCHFLAG
 LDFLAGS_TESTEXE
 LDFLAGS_TESTLIB
 CXXFLAGS_TESTEXE
@@ -884,7 +881,6 @@ BUILD_JDK
 CREATE_BUILDJDK
 JLINK
 JMOD
-BOOT_JDK_BITS
 JAVAC_FLAGS
 BOOT_JDK_MODULAR
 BOOT_JDK_SOURCETARGET
@@ -974,15 +970,12 @@ CANONICAL_TOPDIR
 ORIGINAL_TOPDIR
 TOPDIR
 PATH_SEP
-ZERO_ARCHDEF
 HOTSPOT_BUILD_CPU_DEFINE
 HOTSPOT_BUILD_CPU_ARCH
 HOTSPOT_BUILD_CPU
 HOTSPOT_BUILD_OS_TYPE
 HOTSPOT_BUILD_OS
 OPENJDK_BUILD_BUNDLE_PLATFORM
-OPENJDK_BUILD_CPU_BUNDLE
-OPENJDK_BUILD_OS_BUNDLE
 OPENJDK_BUILD_OS_EXPORT_DIR
 OPENJDK_BUILD_CPU_OSARCH
 OPENJDK_BUILD_CPU_ISADIR
@@ -994,10 +987,7 @@ HOTSPOT_TARGET_CPU
 HOTSPOT_TARGET_OS_TYPE
 HOTSPOT_TARGET_OS
 DEFINE_CROSS_COMPILE_ARCH
-LP64
 OPENJDK_TARGET_BUNDLE_PLATFORM
-OPENJDK_TARGET_CPU_BUNDLE
-OPENJDK_TARGET_OS_BUNDLE
 OPENJDK_TARGET_OS_EXPORT_DIR
 OPENJDK_TARGET_CPU_OSARCH
 OPENJDK_TARGET_CPU_ISADIR
@@ -3564,7 +3554,7 @@ ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
 
 # Include these first...
 #
-# Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -3731,6 +3721,8 @@ ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
 
 
 
+
+
 # Check if build directory is on local disk. If not possible to determine,
 # we prefer to claim it's local.
 # Argument 1: directory to test
@@ -3816,7 +3808,7 @@ ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
 
 # ... then the rest
 #
-# Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -3996,7 +3988,7 @@ ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
 
 
 #
-# Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -4122,7 +4114,7 @@ ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
 
 
 #
-# Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -4237,6 +4229,17 @@ yum_help() {
   esac
 }
 
+brew_help() {
+  case $1 in
+    openjdk)
+      PKGHANDLER_COMMAND="brew cask install java" ;;
+    freetype)
+      PKGHANDLER_COMMAND="brew install freetype" ;;
+    ccache)
+      PKGHANDLER_COMMAND="brew install ccache" ;;
+  esac
+}
+
 port_help() {
   PKGHANDLER_COMMAND=""
 }
@@ -4260,7 +4263,7 @@ pkgadd_help() {
 
 
 #
-# Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -4362,7 +4365,7 @@ VALID_JVM_VARIANTS="server client minimal core zero zeroshark custom"
 
 
 #
-# Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -4548,7 +4551,7 @@ VALID_JVM_VARIANTS="server client minimal core zero zeroshark custom"
 
 
 #
-# Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -4667,7 +4670,7 @@ VALID_JVM_VARIANTS="server client minimal core zero zeroshark custom"
 
 
 #
-# Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -4828,7 +4831,7 @@ VALID_JVM_VARIANTS="server client minimal core zero zeroshark custom"
 
 
 #
-# Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -5167,7 +5170,7 @@ VS_SDK_PLATFORM_NAME_2013=
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1483542685
+DATE_WHEN_GENERATED=1486679715
 
 ###############################################################################
 #
@@ -15923,18 +15926,14 @@ $as_echo "$COMPILE_TYPE" >&6; }
   OPENJDK_TARGET_BUNDLE_PLATFORM="${OPENJDK_TARGET_OS_BUNDLE}-${OPENJDK_TARGET_CPU_BUNDLE}"
 
 
-
-
   if test "x$OPENJDK_TARGET_CPU_BITS" = x64; then
-    A_LP64="LP64:="
     # -D_LP64=1 is only set on linux and mac. Setting on windows causes diff in
-    # unpack200.exe
+    # unpack200.exe. This variable is used in
+    # FLAGS_SETUP_COMPILER_FLAGS_FOR_JDK_HELPER.
     if test "x$OPENJDK_TARGET_OS" = xlinux || test "x$OPENJDK_TARGET_OS" = xmacosx; then
       OPENJDK_TARGET_ADD_LP64="-D_LP64=1"
     fi
   fi
-  LP64=$A_LP64
-
 
   if test "x$COMPILE_TYPE" = "xcross"; then
     # FIXME: ... or should this include reduced builds..?
@@ -16079,18 +16078,14 @@ $as_echo "$COMPILE_TYPE" >&6; }
   OPENJDK_BUILD_BUNDLE_PLATFORM="${OPENJDK_BUILD_OS_BUNDLE}-${OPENJDK_BUILD_CPU_BUNDLE}"
 
 
-
-
   if test "x$OPENJDK_BUILD_CPU_BITS" = x64; then
-    A_LP64="LP64:="
     # -D_LP64=1 is only set on linux and mac. Setting on windows causes diff in
-    # unpack200.exe
+    # unpack200.exe. This variable is used in
+    # FLAGS_SETUP_COMPILER_FLAGS_FOR_JDK_HELPER.
     if test "x$OPENJDK_BUILD_OS" = xlinux || test "x$OPENJDK_BUILD_OS" = xmacosx; then
       OPENJDK_BUILD_ADD_LP64="-D_LP64=1"
     fi
   fi
-  LP64=$A_LP64
-
 
   if test "x$COMPILE_TYPE" = "xcross"; then
     # FIXME: ... or should this include reduced builds..?
@@ -16157,12 +16152,6 @@ $as_echo "$COMPILE_TYPE" >&6; }
     HOTSPOT_BUILD_CPU_DEFINE=$(echo $OPENJDK_BUILD_CPU | tr a-z A-Z)
   fi
 
-
-
-
-  # ZERO_ARCHDEF is used to enable architecture-specific code.
-  # This is used in legacy hotspot build.
-  ZERO_ARCHDEF="$HOTSPOT_TARGET_CPU_DEFINE"
 
 
 
@@ -17267,7 +17256,7 @@ $as_echo "$as_me: WARNING: Both SYSROOT and --with-sdk-name are set, only SYSROO
     fi
 
     # set SDKROOT too, Xcode tools will pick it up
-    SDKROOT=$SYSROOT
+    SDKROOT="$SYSROOT"
 
   fi
 
@@ -17515,11 +17504,9 @@ $as_echo "$as_me: The path of OUTPUT_ROOT, which resolves as \"$path\", is inval
   CONFIGURESUPPORT_OUTPUTDIR="$OUTPUT_ROOT/configure-support"
   $MKDIR -p "$CONFIGURESUPPORT_OUTPUTDIR"
 
-  SPEC=$OUTPUT_ROOT/spec.gmk
+  SPEC="$OUTPUT_ROOT/spec.gmk"
 
-  CONF_NAME=$CONF_NAME
 
-  OUTPUT_ROOT=$OUTPUT_ROOT
 
 
 
@@ -17544,7 +17531,7 @@ $as_echo "$as_me: The path of OUTPUT_ROOT, which resolves as \"$path\", is inval
 
 # Must be done before we can call HELP_MSG_MISSING_DEPENDENCY.
 
-  for ac_prog in apt-get yum port pkgutil pkgadd
+  for ac_prog in apt-get yum brew port pkgutil pkgadd
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -21209,6 +21196,8 @@ $as_echo "yes" >&6; }
   # Test which kind of tar was found
   if test "x$($TAR --version | $GREP "GNU tar")" != "x"; then
     TAR_TYPE="gnu"
+  elif test "x$($TAR --version | $GREP "bsdtar")" != "x"; then
+    TAR_TYPE="bsd"
   elif test "x$($TAR -v | $GREP "bsdtar")" != "x"; then
     TAR_TYPE="bsd"
   elif test "x$OPENJDK_BUILD_OS" = "xsolaris"; then
@@ -21236,6 +21225,29 @@ $as_echo "$TAR_TYPE" >&6; }
 
 
 
+
+
+  # Test that grep supports -Fx with a list of pattern which includes null pattern.
+  # This is a problem for the grep resident on AIX.
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking that grep ($GREP) -Fx handles empty lines in the pattern list correctly" >&5
+$as_echo_n "checking that grep ($GREP) -Fx handles empty lines in the pattern list correctly... " >&6; }
+  # Multiple subsequent spaces..
+  STACK_SPACES='aaa   bbb   ccc'
+  # ..converted to subsequent newlines, causes STACK_LIST to be a list with some empty
+  # patterns in it.
+  STACK_LIST=${STACK_SPACES// /$'\n'}
+  NEEDLE_SPACES='ccc bbb aaa'
+  NEEDLE_LIST=${NEEDLE_SPACES// /$'\n'}
+  RESULT="$($GREP -Fvx "$STACK_LIST" <<< "$NEEDLE_LIST")"
+  if test "x$RESULT" == "x"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+  else
+    if test "x$OPENJDK_TARGET_OS" = "xaix"; then
+      ADDINFO="Please make sure you use GNU grep, usually found at /opt/freeware/bin."
+    fi
+    as_fn_error $? "grep does not handle -Fx correctly. ${ADDINFO}" "$LINENO" 5
+  fi
 
 
   # These tools might not be installed by default,
@@ -24080,6 +24092,20 @@ $as_echo "$tool_specified" >&6; }
   fi
 
 
+  # Check bash version
+  # Extra [ ] to stop m4 mangling
+   BASH_VER=`$BASH --version | $SED -n  -e 's/^.*bash.*ersion *\([0-9.]*\).*$/\1/ p'`
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking bash version" >&5
+$as_echo_n "checking bash version... " >&6; }
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $BASH_VER" >&5
+$as_echo "$BASH_VER" >&6; }
+
+  BASH_MAJOR=`$ECHO $BASH_VER | $CUT -d . -f 1`
+  BASH_MINOR=`$ECHO $BASH_VER | $CUT -d . -f 2`
+  if test $BASH_MAJOR -lt 3 || (test $BASH_MAJOR -eq 3 && test $BASH_MINOR -lt 2); then
+    as_fn_error $? "bash version 3.2 or better is required" "$LINENO" 5
+  fi
+
   # Test if bash supports pipefail.
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking if bash supports pipefail" >&5
 $as_echo_n "checking if bash supports pipefail... " >&6; }
@@ -24359,15 +24385,13 @@ if test "${enable_keep_packaged_modules+set}" = set; then :
 fi
 
 
-  if test "x$enable_keep_packaged_modules" = "xyes"; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking if packaged modules are kept" >&5
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking if packaged modules are kept" >&5
 $as_echo_n "checking if packaged modules are kept... " >&6; }
+  if test "x$enable_keep_packaged_modules" = "xyes"; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
     JLINK_KEEP_PACKAGED_MODULES=true
   elif test "x$enable_keep_packaged_modules" = "xno"; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking if packaged modules are kept" >&5
-$as_echo_n "checking if packaged modules are kept... " >&6; }
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
     JLINK_KEEP_PACKAGED_MODULES=false
@@ -24376,6 +24400,8 @@ $as_echo "no" >&6; }
 $as_echo "yes (default)" >&6; }
     JLINK_KEEP_PACKAGED_MODULES=true
   else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: error" >&5
+$as_echo "error" >&6; }
     as_fn_error $? "--enable-keep-packaged-modules accepts no argument" "$LINENO" 5
   fi
 
@@ -29942,6 +29968,8 @@ $as_echo "$BOOT_JDK_VERSION" >&6; }
         apt_help     $MISSING_DEPENDENCY ;;
       yum)
         yum_help     $MISSING_DEPENDENCY ;;
+      brew)
+        brew_help    $MISSING_DEPENDENCY ;;
       port)
         port_help    $MISSING_DEPENDENCY ;;
       pkgutil)
@@ -30690,7 +30718,6 @@ $as_echo "$BOOT_JDK_BITS" >&6; }
 
 
 
-
 # Check whether --with-build-jdk was given.
 if test "${with_build_jdk+set}" = set; then :
   withval=$with_build_jdk;
@@ -31242,12 +31269,6 @@ $as_echo "$as_me: The path of IMPORT_MODULES_TOPDIR, which resolves as \"$path\"
   fi
   if test -d "$IMPORT_MODULES_TOPDIR/modules_src"; then
     IMPORT_MODULES_SRC="$IMPORT_MODULES_TOPDIR/modules_src"
-  fi
-  # Workaround for using different imported module-info.java in Jake due to a
-  # change in format. Remove once new format is standard in JDK 9 and javafx
-  # delivers just that.
-  if test -d "$IMPORT_MODULES_TOPDIR/modules_src_jake"; then
-    IMPORT_MODULES_SRC="$IMPORT_MODULES_TOPDIR/modules_src_jake $IMPORT_MODULES_SRC"
   fi
   if test -d "$IMPORT_MODULES_TOPDIR/make"; then
     IMPORT_MODULES_MAKE="$IMPORT_MODULES_TOPDIR/make"
@@ -33235,6 +33256,8 @@ done
         apt_help     $MISSING_DEPENDENCY ;;
       yum)
         yum_help     $MISSING_DEPENDENCY ;;
+      brew)
+        brew_help    $MISSING_DEPENDENCY ;;
       port)
         port_help    $MISSING_DEPENDENCY ;;
       pkgutil)
@@ -34534,6 +34557,8 @@ done
         apt_help     $MISSING_DEPENDENCY ;;
       yum)
         yum_help     $MISSING_DEPENDENCY ;;
+      brew)
+        brew_help    $MISSING_DEPENDENCY ;;
       port)
         port_help    $MISSING_DEPENDENCY ;;
       pkgutil)
@@ -48601,6 +48626,8 @@ $as_echo "$as_me: Failed to compile stdio.h. This likely implies missing compile
         apt_help     $MISSING_DEPENDENCY ;;
       yum)
         yum_help     $MISSING_DEPENDENCY ;;
+      brew)
+        brew_help    $MISSING_DEPENDENCY ;;
       port)
         port_help    $MISSING_DEPENDENCY ;;
       pkgutil)
@@ -48762,6 +48789,8 @@ $as_echo "$as_me: The tested number of bits in the target ($TESTED_TARGET_CPU_BI
         apt_help     $MISSING_DEPENDENCY ;;
       yum)
         yum_help     $MISSING_DEPENDENCY ;;
+      brew)
+        brew_help    $MISSING_DEPENDENCY ;;
       port)
         port_help    $MISSING_DEPENDENCY ;;
       pkgutil)
@@ -49897,11 +49926,6 @@ $as_echo "$supports" >&6; }
     CXXFLAGS_JDK="${CXXFLAGS_JDK} -D__solaris__"
   fi
 
-  if test "x$OPENJDK_TARGET_OS" = xsolaris; then
-    CFLAGS_JDK="${CFLAGS_JDK} -D__solaris__"
-    CXXFLAGS_JDK="${CXXFLAGS_JDK} -D__solaris__"
-  fi
-
   CFLAGS_JDK="${CFLAGS_JDK} ${EXTRA_CFLAGS}"
   CXXFLAGS_JDK="${CXXFLAGS_JDK} ${EXTRA_CXXFLAGS}"
   LDFLAGS_JDK="${LDFLAGS_JDK} ${EXTRA_LDFLAGS}"
@@ -50720,11 +50744,6 @@ $as_echo "$supports" >&6; }
     OPENJDK_BUILD_CXXFLAGS_JDK="${OPENJDK_BUILD_CXXFLAGS_JDK} -D__solaris__"
   fi
 
-  if test "x$OPENJDK_TARGET_OS" = xsolaris; then
-    OPENJDK_BUILD_CFLAGS_JDK="${OPENJDK_BUILD_CFLAGS_JDK} -D__solaris__"
-    OPENJDK_BUILD_CXXFLAGS_JDK="${OPENJDK_BUILD_CXXFLAGS_JDK} -D__solaris__"
-  fi
-
   OPENJDK_BUILD_CFLAGS_JDK="${OPENJDK_BUILD_CFLAGS_JDK} ${OPENJDK_BUILD_EXTRA_CFLAGS}"
   OPENJDK_BUILD_CXXFLAGS_JDK="${OPENJDK_BUILD_CXXFLAGS_JDK} ${OPENJDK_BUILD_EXTRA_CXXFLAGS}"
   OPENJDK_BUILD_LDFLAGS_JDK="${OPENJDK_BUILD_LDFLAGS_JDK} ${OPENJDK_BUILD_EXTRA_LDFLAGS}"
@@ -51448,282 +51467,6 @@ OPENJDK_BUILD_LDFLAGS_JDKLIB="${OPENJDK_BUILD_LDFLAGS_JDKLIB} ${OPENJDK_BUILD_JA
 
 
 
-  # Some Zero and Shark settings.
-  # ZERO_ARCHFLAG tells the compiler which mode to build for
-  case "${OPENJDK_TARGET_CPU}" in
-    s390)
-      ZERO_ARCHFLAG="${COMPILER_TARGET_BITS_FLAG}31"
-      ;;
-    *)
-      ZERO_ARCHFLAG="${COMPILER_TARGET_BITS_FLAG}${OPENJDK_TARGET_CPU_BITS}"
-  esac
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # Execute function body
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # Execute function body
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking if the C compiler supports \"$ZERO_ARCHFLAG\"" >&5
-$as_echo_n "checking if the C compiler supports \"$ZERO_ARCHFLAG\"... " >&6; }
-  supports=yes
-
-  saved_cflags="$CFLAGS"
-  CFLAGS="$CFLAGS $ZERO_ARCHFLAG"
-  ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int i;
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-
-else
-  supports=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-  ac_ext=cpp
-ac_cpp='$CXXCPP $CPPFLAGS'
-ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
-
-  CFLAGS="$saved_cflags"
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $supports" >&5
-$as_echo "$supports" >&6; }
-  if test "x$supports" = "xyes" ; then
-    :
-    C_COMP_SUPPORTS="yes"
-  else
-    :
-    C_COMP_SUPPORTS="no"
-  fi
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # Execute function body
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking if the C++ compiler supports \"$ZERO_ARCHFLAG\"" >&5
-$as_echo_n "checking if the C++ compiler supports \"$ZERO_ARCHFLAG\"... " >&6; }
-  supports=yes
-
-  saved_cxxflags="$CXXFLAGS"
-  CXXFLAGS="$CXXFLAG $ZERO_ARCHFLAG"
-  ac_ext=cpp
-ac_cpp='$CXXCPP $CPPFLAGS'
-ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
-
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int i;
-_ACEOF
-if ac_fn_cxx_try_compile "$LINENO"; then :
-
-else
-  supports=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-  ac_ext=cpp
-ac_cpp='$CXXCPP $CPPFLAGS'
-ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
-
-  CXXFLAGS="$saved_cxxflags"
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $supports" >&5
-$as_echo "$supports" >&6; }
-  if test "x$supports" = "xyes" ; then
-    :
-    CXX_COMP_SUPPORTS="yes"
-  else
-    :
-    CXX_COMP_SUPPORTS="no"
-  fi
-
-
-
-
-
-
-
-
-
-
-
-
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking if both compilers support \"$ZERO_ARCHFLAG\"" >&5
-$as_echo_n "checking if both compilers support \"$ZERO_ARCHFLAG\"... " >&6; }
-  supports=no
-  if test "x$C_COMP_SUPPORTS" = "xyes" -a "x$CXX_COMP_SUPPORTS" = "xyes"; then supports=yes; fi
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $supports" >&5
-$as_echo "$supports" >&6; }
-  if test "x$supports" = "xyes" ; then
-    :
-
-  else
-    :
-    ZERO_ARCHFLAG=""
-  fi
-
-
-
-
-
-
-
-
   # Check that the compiler supports -mX (or -qX on AIX) flags
   # Set COMPILER_SUPPORTS_TARGET_BITS_FLAG to 'true' if it does
 
@@ -52021,14 +51764,6 @@ $as_echo "yes (default)" >&6; }
   else
     as_fn_error $? "--enable-warnings-as-errors accepts no argument" "$LINENO" 5
   fi
-
-  if test "x$WARNINGS_AS_ERRORS" = "xfalse"; then
-    # Set legacy hotspot variable
-    HOTSPOT_SET_WARNINGS_AS_ERRORS="WARNINGS_ARE_ERRORS="
-  else
-    HOTSPOT_SET_WARNINGS_AS_ERRORS=""
-  fi
-
 
 
 
@@ -52844,6 +52579,8 @@ $as_echo "no, missing dependencies" >&6; }
         apt_help     $MISSING_DEPENDENCY ;;
       yum)
         yum_help     $MISSING_DEPENDENCY ;;
+      brew)
+        brew_help    $MISSING_DEPENDENCY ;;
       port)
         port_help    $MISSING_DEPENDENCY ;;
       pkgutil)
@@ -52880,7 +52617,6 @@ $as_echo "yes, dependencies present" >&6; }
   else
     as_fn_error $? "Invalid value for --enable-dtrace: $enable_dtrace" "$LINENO" 5
   fi
-
 
 
   # Check whether --enable-aot was given.
@@ -56649,6 +56385,8 @@ fi
         apt_help     $MISSING_DEPENDENCY ;;
       yum)
         yum_help     $MISSING_DEPENDENCY ;;
+      brew)
+        brew_help    $MISSING_DEPENDENCY ;;
       port)
         port_help    $MISSING_DEPENDENCY ;;
       pkgutil)
@@ -56721,6 +56459,8 @@ done
         apt_help     $MISSING_DEPENDENCY ;;
       yum)
         yum_help     $MISSING_DEPENDENCY ;;
+      brew)
+        brew_help    $MISSING_DEPENDENCY ;;
       port)
         port_help    $MISSING_DEPENDENCY ;;
       pkgutil)
@@ -56864,6 +56604,8 @@ done
         apt_help     $MISSING_DEPENDENCY ;;
       yum)
         yum_help     $MISSING_DEPENDENCY ;;
+      brew)
+        brew_help    $MISSING_DEPENDENCY ;;
       port)
         port_help    $MISSING_DEPENDENCY ;;
       pkgutil)
@@ -60741,6 +60483,345 @@ $as_echo "$FREETYPE_LIB_PATH" >&6; }
   fi
 
           fi
+          if test "x$FOUND_FREETYPE" != xyes; then
+            FREETYPE_BASE_DIR="$SYSROOT/usr/local"
+
+  POTENTIAL_FREETYPE_INCLUDE_PATH="$FREETYPE_BASE_DIR/include"
+  POTENTIAL_FREETYPE_LIB_PATH="$FREETYPE_BASE_DIR/lib"
+  METHOD="well-known location"
+
+  # Let's start with an optimistic view of the world :-)
+  FOUND_FREETYPE=yes
+
+  # First look for the canonical freetype main include file ft2build.h.
+  if ! test -s "$POTENTIAL_FREETYPE_INCLUDE_PATH/ft2build.h"; then
+    # Oh no! Let's try in the freetype2 directory. This is needed at least at Mac OS X Yosemite.
+    POTENTIAL_FREETYPE_INCLUDE_PATH="$POTENTIAL_FREETYPE_INCLUDE_PATH/freetype2"
+    if ! test -s "$POTENTIAL_FREETYPE_INCLUDE_PATH/ft2build.h"; then
+      # Fail.
+      FOUND_FREETYPE=no
+    fi
+  fi
+
+  if test "x$FOUND_FREETYPE" = xyes; then
+    # Include file found, let's continue the sanity check.
+    { $as_echo "$as_me:${as_lineno-$LINENO}: Found freetype include files at $POTENTIAL_FREETYPE_INCLUDE_PATH using $METHOD" >&5
+$as_echo "$as_me: Found freetype include files at $POTENTIAL_FREETYPE_INCLUDE_PATH using $METHOD" >&6;}
+
+    # Reset to default value
+    FREETYPE_BASE_NAME=freetype
+    FREETYPE_LIB_NAME="${LIBRARY_PREFIX}${FREETYPE_BASE_NAME}${SHARED_LIBRARY_SUFFIX}"
+    if ! test -s "$POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME"; then
+      if test "x$OPENJDK_TARGET_OS" = xmacosx \
+          && test -s "$POTENTIAL_FREETYPE_LIB_PATH/${LIBRARY_PREFIX}freetype.6${SHARED_LIBRARY_SUFFIX}"; then
+        # On Mac OS X Yosemite, the symlink from libfreetype.dylib to libfreetype.6.dylib disappeared. Check
+        # for the .6 version explicitly.
+        FREETYPE_BASE_NAME=freetype.6
+        FREETYPE_LIB_NAME="${LIBRARY_PREFIX}${FREETYPE_BASE_NAME}${SHARED_LIBRARY_SUFFIX}"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Compensating for missing symlink by using version 6 explicitly" >&5
+$as_echo "$as_me: Compensating for missing symlink by using version 6 explicitly" >&6;}
+      else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME. Ignoring location." >&5
+$as_echo "$as_me: Could not find $POTENTIAL_FREETYPE_LIB_PATH/$FREETYPE_LIB_NAME. Ignoring location." >&6;}
+        FOUND_FREETYPE=no
+      fi
+    else
+      if test "x$OPENJDK_TARGET_OS" = xwindows; then
+        # On Windows, we will need both .lib and .dll file.
+        if ! test -s "$POTENTIAL_FREETYPE_LIB_PATH/${FREETYPE_BASE_NAME}.lib"; then
+          { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $POTENTIAL_FREETYPE_LIB_PATH/${FREETYPE_BASE_NAME}.lib. Ignoring location." >&5
+$as_echo "$as_me: Could not find $POTENTIAL_FREETYPE_LIB_PATH/${FREETYPE_BASE_NAME}.lib. Ignoring location." >&6;}
+          FOUND_FREETYPE=no
+        fi
+      elif test "x$OPENJDK_TARGET_OS" = xsolaris \
+          && test -s "$POTENTIAL_FREETYPE_LIB_PATH$OPENJDK_TARGET_CPU_ISADIR/$FREETYPE_LIB_NAME"; then
+        # Found lib in isa dir, use that instead.
+        POTENTIAL_FREETYPE_LIB_PATH="$POTENTIAL_FREETYPE_LIB_PATH$OPENJDK_TARGET_CPU_ISADIR"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting to use $POTENTIAL_FREETYPE_LIB_PATH instead" >&5
+$as_echo "$as_me: Rewriting to use $POTENTIAL_FREETYPE_LIB_PATH instead" >&6;}
+      fi
+    fi
+  fi
+
+  if test "x$FOUND_FREETYPE" = xyes; then
+
+  # Only process if variable expands to non-empty
+
+  if test "x$POTENTIAL_FREETYPE_INCLUDE_PATH" != x; then
+    if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
+
+  # Input might be given as Windows format, start by converting to
+  # unix format.
+  path="$POTENTIAL_FREETYPE_INCLUDE_PATH"
+  new_path=`$CYGPATH -u "$path"`
+
+  # Cygwin tries to hide some aspects of the Windows file system, such that binaries are
+  # named .exe but called without that suffix. Therefore, "foo" and "foo.exe" are considered
+  # the same file, most of the time (as in "test -f"). But not when running cygpath -s, then
+  # "foo.exe" is OK but "foo" is an error.
+  #
+  # This test is therefore slightly more accurate than "test -f" to check for file precense.
+  # It is also a way to make sure we got the proper file name for the real test later on.
+  test_shortpath=`$CYGPATH -s -m "$new_path" 2> /dev/null`
+  if test "x$test_shortpath" = x; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: The path of POTENTIAL_FREETYPE_INCLUDE_PATH, which resolves as \"$path\", is invalid." >&5
+$as_echo "$as_me: The path of POTENTIAL_FREETYPE_INCLUDE_PATH, which resolves as \"$path\", is invalid." >&6;}
+    as_fn_error $? "Cannot locate the the path of POTENTIAL_FREETYPE_INCLUDE_PATH" "$LINENO" 5
+  fi
+
+  # Call helper function which possibly converts this using DOS-style short mode.
+  # If so, the updated path is stored in $new_path.
+
+  input_path="$new_path"
+  # Check if we need to convert this using DOS-style short mode. If the path
+  # contains just simple characters, use it. Otherwise (spaces, weird characters),
+  # take no chances and rewrite it.
+  # Note: m4 eats our [], so we need to use [ and ] instead.
+  has_forbidden_chars=`$ECHO "$input_path" | $GREP [^-._/a-zA-Z0-9]`
+  if test "x$has_forbidden_chars" != x; then
+    # Now convert it to mixed DOS-style, short mode (no spaces, and / instead of \)
+    shortmode_path=`$CYGPATH -s -m -a "$input_path"`
+    path_after_shortmode=`$CYGPATH -u "$shortmode_path"`
+    if test "x$path_after_shortmode" != "x$input_to_shortpath"; then
+      # Going to short mode and back again did indeed matter. Since short mode is
+      # case insensitive, let's make it lowercase to improve readability.
+      shortmode_path=`$ECHO "$shortmode_path" | $TR 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
+      # Now convert it back to Unix-style (cygpath)
+      input_path=`$CYGPATH -u "$shortmode_path"`
+      new_path="$input_path"
+    fi
+  fi
+
+  test_cygdrive_prefix=`$ECHO $input_path | $GREP ^/cygdrive/`
+  if test "x$test_cygdrive_prefix" = x; then
+    # As a simple fix, exclude /usr/bin since it's not a real path.
+    if test "x`$ECHO $new_path | $GREP ^/usr/bin/`" = x; then
+      # The path is in a Cygwin special directory (e.g. /home). We need this converted to
+      # a path prefixed by /cygdrive for fixpath to work.
+      new_path="$CYGWIN_ROOT_PATH$input_path"
+    fi
+  fi
+
+
+  if test "x$path" != "x$new_path"; then
+    POTENTIAL_FREETYPE_INCLUDE_PATH="$new_path"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting POTENTIAL_FREETYPE_INCLUDE_PATH to \"$new_path\"" >&5
+$as_echo "$as_me: Rewriting POTENTIAL_FREETYPE_INCLUDE_PATH to \"$new_path\"" >&6;}
+  fi
+
+    elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
+
+  path="$POTENTIAL_FREETYPE_INCLUDE_PATH"
+  has_colon=`$ECHO $path | $GREP ^.:`
+  new_path="$path"
+  if test "x$has_colon" = x; then
+    # Not in mixed or Windows style, start by that.
+    new_path=`cmd //c echo $path`
+  fi
+
+
+  input_path="$new_path"
+  # Check if we need to convert this using DOS-style short mode. If the path
+  # contains just simple characters, use it. Otherwise (spaces, weird characters),
+  # take no chances and rewrite it.
+  # Note: m4 eats our [], so we need to use [ and ] instead.
+  has_forbidden_chars=`$ECHO "$input_path" | $GREP [^-_/:a-zA-Z0-9]`
+  if test "x$has_forbidden_chars" != x; then
+    # Now convert it to mixed DOS-style, short mode (no spaces, and / instead of \)
+    new_path=`cmd /c "for %A in (\"$input_path\") do @echo %~sA"|$TR \\\\\\\\ / | $TR 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
+  fi
+
+
+  windows_path="$new_path"
+  if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
+    unix_path=`$CYGPATH -u "$windows_path"`
+    new_path="$unix_path"
+  elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
+    unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
+    new_path="$unix_path"
+  fi
+
+  if test "x$path" != "x$new_path"; then
+    POTENTIAL_FREETYPE_INCLUDE_PATH="$new_path"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting POTENTIAL_FREETYPE_INCLUDE_PATH to \"$new_path\"" >&5
+$as_echo "$as_me: Rewriting POTENTIAL_FREETYPE_INCLUDE_PATH to \"$new_path\"" >&6;}
+  fi
+
+  # Save the first 10 bytes of this path to the storage, so fixpath can work.
+  all_fixpath_prefixes=("${all_fixpath_prefixes[@]}" "${new_path:0:10}")
+
+    else
+      # We're on a unix platform. Hooray! :)
+      path="$POTENTIAL_FREETYPE_INCLUDE_PATH"
+      has_space=`$ECHO "$path" | $GREP " "`
+      if test "x$has_space" != x; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: The path of POTENTIAL_FREETYPE_INCLUDE_PATH, which resolves as \"$path\", is invalid." >&5
+$as_echo "$as_me: The path of POTENTIAL_FREETYPE_INCLUDE_PATH, which resolves as \"$path\", is invalid." >&6;}
+        as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
+      fi
+
+      # Use eval to expand a potential ~
+      eval path="$path"
+      if test ! -f "$path" && test ! -d "$path"; then
+        as_fn_error $? "The path of POTENTIAL_FREETYPE_INCLUDE_PATH, which resolves as \"$path\", is not found." "$LINENO" 5
+      fi
+
+      if test -d "$path"; then
+        POTENTIAL_FREETYPE_INCLUDE_PATH="`cd "$path"; $THEPWDCMD -L`"
+      else
+        dir="`$DIRNAME "$path"`"
+        base="`$BASENAME "$path"`"
+        POTENTIAL_FREETYPE_INCLUDE_PATH="`cd "$dir"; $THEPWDCMD -L`/$base"
+      fi
+    fi
+  fi
+
+
+  # Only process if variable expands to non-empty
+
+  if test "x$POTENTIAL_FREETYPE_LIB_PATH" != x; then
+    if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
+
+  # Input might be given as Windows format, start by converting to
+  # unix format.
+  path="$POTENTIAL_FREETYPE_LIB_PATH"
+  new_path=`$CYGPATH -u "$path"`
+
+  # Cygwin tries to hide some aspects of the Windows file system, such that binaries are
+  # named .exe but called without that suffix. Therefore, "foo" and "foo.exe" are considered
+  # the same file, most of the time (as in "test -f"). But not when running cygpath -s, then
+  # "foo.exe" is OK but "foo" is an error.
+  #
+  # This test is therefore slightly more accurate than "test -f" to check for file precense.
+  # It is also a way to make sure we got the proper file name for the real test later on.
+  test_shortpath=`$CYGPATH -s -m "$new_path" 2> /dev/null`
+  if test "x$test_shortpath" = x; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: The path of POTENTIAL_FREETYPE_LIB_PATH, which resolves as \"$path\", is invalid." >&5
+$as_echo "$as_me: The path of POTENTIAL_FREETYPE_LIB_PATH, which resolves as \"$path\", is invalid." >&6;}
+    as_fn_error $? "Cannot locate the the path of POTENTIAL_FREETYPE_LIB_PATH" "$LINENO" 5
+  fi
+
+  # Call helper function which possibly converts this using DOS-style short mode.
+  # If so, the updated path is stored in $new_path.
+
+  input_path="$new_path"
+  # Check if we need to convert this using DOS-style short mode. If the path
+  # contains just simple characters, use it. Otherwise (spaces, weird characters),
+  # take no chances and rewrite it.
+  # Note: m4 eats our [], so we need to use [ and ] instead.
+  has_forbidden_chars=`$ECHO "$input_path" | $GREP [^-._/a-zA-Z0-9]`
+  if test "x$has_forbidden_chars" != x; then
+    # Now convert it to mixed DOS-style, short mode (no spaces, and / instead of \)
+    shortmode_path=`$CYGPATH -s -m -a "$input_path"`
+    path_after_shortmode=`$CYGPATH -u "$shortmode_path"`
+    if test "x$path_after_shortmode" != "x$input_to_shortpath"; then
+      # Going to short mode and back again did indeed matter. Since short mode is
+      # case insensitive, let's make it lowercase to improve readability.
+      shortmode_path=`$ECHO "$shortmode_path" | $TR 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
+      # Now convert it back to Unix-style (cygpath)
+      input_path=`$CYGPATH -u "$shortmode_path"`
+      new_path="$input_path"
+    fi
+  fi
+
+  test_cygdrive_prefix=`$ECHO $input_path | $GREP ^/cygdrive/`
+  if test "x$test_cygdrive_prefix" = x; then
+    # As a simple fix, exclude /usr/bin since it's not a real path.
+    if test "x`$ECHO $new_path | $GREP ^/usr/bin/`" = x; then
+      # The path is in a Cygwin special directory (e.g. /home). We need this converted to
+      # a path prefixed by /cygdrive for fixpath to work.
+      new_path="$CYGWIN_ROOT_PATH$input_path"
+    fi
+  fi
+
+
+  if test "x$path" != "x$new_path"; then
+    POTENTIAL_FREETYPE_LIB_PATH="$new_path"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting POTENTIAL_FREETYPE_LIB_PATH to \"$new_path\"" >&5
+$as_echo "$as_me: Rewriting POTENTIAL_FREETYPE_LIB_PATH to \"$new_path\"" >&6;}
+  fi
+
+    elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
+
+  path="$POTENTIAL_FREETYPE_LIB_PATH"
+  has_colon=`$ECHO $path | $GREP ^.:`
+  new_path="$path"
+  if test "x$has_colon" = x; then
+    # Not in mixed or Windows style, start by that.
+    new_path=`cmd //c echo $path`
+  fi
+
+
+  input_path="$new_path"
+  # Check if we need to convert this using DOS-style short mode. If the path
+  # contains just simple characters, use it. Otherwise (spaces, weird characters),
+  # take no chances and rewrite it.
+  # Note: m4 eats our [], so we need to use [ and ] instead.
+  has_forbidden_chars=`$ECHO "$input_path" | $GREP [^-_/:a-zA-Z0-9]`
+  if test "x$has_forbidden_chars" != x; then
+    # Now convert it to mixed DOS-style, short mode (no spaces, and / instead of \)
+    new_path=`cmd /c "for %A in (\"$input_path\") do @echo %~sA"|$TR \\\\\\\\ / | $TR 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
+  fi
+
+
+  windows_path="$new_path"
+  if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
+    unix_path=`$CYGPATH -u "$windows_path"`
+    new_path="$unix_path"
+  elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
+    unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
+    new_path="$unix_path"
+  fi
+
+  if test "x$path" != "x$new_path"; then
+    POTENTIAL_FREETYPE_LIB_PATH="$new_path"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting POTENTIAL_FREETYPE_LIB_PATH to \"$new_path\"" >&5
+$as_echo "$as_me: Rewriting POTENTIAL_FREETYPE_LIB_PATH to \"$new_path\"" >&6;}
+  fi
+
+  # Save the first 10 bytes of this path to the storage, so fixpath can work.
+  all_fixpath_prefixes=("${all_fixpath_prefixes[@]}" "${new_path:0:10}")
+
+    else
+      # We're on a unix platform. Hooray! :)
+      path="$POTENTIAL_FREETYPE_LIB_PATH"
+      has_space=`$ECHO "$path" | $GREP " "`
+      if test "x$has_space" != x; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: The path of POTENTIAL_FREETYPE_LIB_PATH, which resolves as \"$path\", is invalid." >&5
+$as_echo "$as_me: The path of POTENTIAL_FREETYPE_LIB_PATH, which resolves as \"$path\", is invalid." >&6;}
+        as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
+      fi
+
+      # Use eval to expand a potential ~
+      eval path="$path"
+      if test ! -f "$path" && test ! -d "$path"; then
+        as_fn_error $? "The path of POTENTIAL_FREETYPE_LIB_PATH, which resolves as \"$path\", is not found." "$LINENO" 5
+      fi
+
+      if test -d "$path"; then
+        POTENTIAL_FREETYPE_LIB_PATH="`cd "$path"; $THEPWDCMD -L`"
+      else
+        dir="`$DIRNAME "$path"`"
+        base="`$BASENAME "$path"`"
+        POTENTIAL_FREETYPE_LIB_PATH="`cd "$dir"; $THEPWDCMD -L`/$base"
+      fi
+    fi
+  fi
+
+
+    FREETYPE_INCLUDE_PATH="$POTENTIAL_FREETYPE_INCLUDE_PATH"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for freetype includes" >&5
+$as_echo_n "checking for freetype includes... " >&6; }
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $FREETYPE_INCLUDE_PATH" >&5
+$as_echo "$FREETYPE_INCLUDE_PATH" >&6; }
+    FREETYPE_LIB_PATH="$POTENTIAL_FREETYPE_LIB_PATH"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for freetype libraries" >&5
+$as_echo_n "checking for freetype libraries... " >&6; }
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $FREETYPE_LIB_PATH" >&5
+$as_echo "$FREETYPE_LIB_PATH" >&6; }
+  fi
+
+          fi
 
           if test "x$OPENJDK_TARGET_OS" = xmacosx; then
             if test "x$FOUND_FREETYPE" != xyes; then
@@ -62122,6 +62203,8 @@ $as_echo "$FREETYPE_LIB_PATH" >&6; }
         apt_help     $MISSING_DEPENDENCY ;;
       yum)
         yum_help     $MISSING_DEPENDENCY ;;
+      brew)
+        brew_help    $MISSING_DEPENDENCY ;;
       port)
         port_help    $MISSING_DEPENDENCY ;;
       pkgutil)
@@ -62477,6 +62560,8 @@ $as_echo "$as_me: Using FREETYPE_CFLAGS=$FREETYPE_CFLAGS and FREETYPE_LIBS=$FREE
         apt_help     $MISSING_DEPENDENCY ;;
       yum)
         yum_help     $MISSING_DEPENDENCY ;;
+      brew)
+        brew_help    $MISSING_DEPENDENCY ;;
       port)
         port_help    $MISSING_DEPENDENCY ;;
       pkgutil)
@@ -62682,6 +62767,8 @@ done
         apt_help     $MISSING_DEPENDENCY ;;
       yum)
         yum_help     $MISSING_DEPENDENCY ;;
+      brew)
+        brew_help    $MISSING_DEPENDENCY ;;
       port)
         port_help    $MISSING_DEPENDENCY ;;
       pkgutil)
@@ -62870,6 +62957,8 @@ done
         apt_help     $MISSING_DEPENDENCY ;;
       yum)
         yum_help     $MISSING_DEPENDENCY ;;
+      brew)
+        brew_help    $MISSING_DEPENDENCY ;;
       port)
         port_help    $MISSING_DEPENDENCY ;;
       pkgutil)
@@ -62949,6 +63038,8 @@ $as_echo "$LIBFFI_WORKS" >&6; }
         apt_help     $MISSING_DEPENDENCY ;;
       yum)
         yum_help     $MISSING_DEPENDENCY ;;
+      brew)
+        brew_help    $MISSING_DEPENDENCY ;;
       port)
         port_help    $MISSING_DEPENDENCY ;;
       pkgutil)
@@ -63305,12 +63396,14 @@ $as_echo_n "checking for which libpng to use... " >&6; }
   DEFAULT_LIBPNG=bundled
   # if user didn't specify, use DEFAULT_LIBPNG
   if test "x${with_libpng}" = "x"; then
-      with_libpng=${DEFAULT_LIBPNG}
+    with_libpng=${DEFAULT_LIBPNG}
   fi
 
   if test "x${with_libpng}" = "xbundled"; then
-      USE_EXTERNAL_LIBPNG=false
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result: bundled" >&5
+    USE_EXTERNAL_LIBPNG=false
+    PNG_CFLAGS=""
+    PNG_LIBS=""
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: bundled" >&5
 $as_echo "bundled" >&6; }
   elif test "x${with_libpng}" = "xsystem"; then
 
@@ -63370,28 +63463,31 @@ fi
 
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-                 LIBPNG_FOUND=no
+                LIBPNG_FOUND=no
 elif test $pkg_failed = untried; then
-	 LIBPNG_FOUND=no
+	LIBPNG_FOUND=no
 else
 	PNG_CFLAGS=$pkg_cv_PNG_CFLAGS
 	PNG_LIBS=$pkg_cv_PNG_LIBS
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-	 LIBPNG_FOUND=yes
+	LIBPNG_FOUND=yes
 fi
-      if test "x${LIBPNG_FOUND}" = "xyes"; then
-          USE_EXTERNAL_LIBPNG=true
-          { $as_echo "$as_me:${as_lineno-$LINENO}: result: system" >&5
+    if test "x${LIBPNG_FOUND}" = "xyes"; then
+      # PKG_CHECK_MODULES will set PNG_CFLAGS and PNG_LIBS
+      USE_EXTERNAL_LIBPNG=true
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: system" >&5
 $as_echo "system" >&6; }
-      else
-          { $as_echo "$as_me:${as_lineno-$LINENO}: result: system not found" >&5
+    else
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: system not found" >&5
 $as_echo "system not found" >&6; }
-          as_fn_error $? "--with-libpng=system specified, but no libpng found!" "$LINENO" 5
-      fi
+      as_fn_error $? "--with-libpng=system specified, but no libpng found!" "$LINENO" 5
+    fi
   else
-      as_fn_error $? "Invalid value of --with-libpng: ${with_libpng}, use 'system' or 'bundled'" "$LINENO" 5
+    as_fn_error $? "Invalid value of --with-libpng: ${with_libpng}, use 'system' or 'bundled'" "$LINENO" 5
   fi
+
+
 
 
 
@@ -63499,11 +63595,13 @@ $as_echo_n "checking for which lcms to use... " >&6; }
   DEFAULT_LCMS=bundled
   # If user didn't specify, use DEFAULT_LCMS
   if test "x${with_lcms}" = "x"; then
-      with_lcms=${DEFAULT_LCMS}
+    with_lcms=${DEFAULT_LCMS}
   fi
 
   if test "x${with_lcms}" = "xbundled"; then
     USE_EXTERNAL_LCMS=false
+    LCMS_CFLAGS=""
+    LCMS_LIBS=""
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: bundled" >&5
 $as_echo "bundled" >&6; }
   elif test "x${with_lcms}" = "xsystem"; then
@@ -63577,6 +63675,7 @@ $as_echo "yes" >&6; }
 	LCMS_FOUND=yes
 fi
     if test "x${LCMS_FOUND}" = "xyes"; then
+      # PKG_CHECK_MODULES will set LCMS_CFLAGS and LCMS_LIBS
       USE_EXTERNAL_LCMS=true
     else
       as_fn_error $? "--with-lcms=system specified, but no lcms found!" "$LINENO" 5
@@ -63584,6 +63683,8 @@ fi
   else
     as_fn_error $? "Invalid value for --with-lcms: ${with_lcms}, use 'system' or 'bundled'" "$LINENO" 5
   fi
+
+
 
 
 
@@ -64058,6 +64159,8 @@ done
         apt_help     $MISSING_DEPENDENCY ;;
       yum)
         yum_help     $MISSING_DEPENDENCY ;;
+      brew)
+        brew_help    $MISSING_DEPENDENCY ;;
       port)
         port_help    $MISSING_DEPENDENCY ;;
       pkgutil)
@@ -64142,6 +64245,8 @@ $as_echo "$LIBELF_WORKS" >&6; }
         apt_help     $MISSING_DEPENDENCY ;;
       yum)
         yum_help     $MISSING_DEPENDENCY ;;
+      brew)
+        brew_help    $MISSING_DEPENDENCY ;;
       port)
         port_help    $MISSING_DEPENDENCY ;;
       pkgutil)
@@ -64375,11 +64480,11 @@ fi
 $as_echo_n "checking if elliptic curve crypto implementation is present... " >&6; }
 
   if test -d "${SRC_ROOT}/jdk/src/jdk.crypto.ec/share/native/libsunec/impl"; then
-    ENABLE_INTREE_EC=yes
+    ENABLE_INTREE_EC=true
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
   else
-    ENABLE_INTREE_EC=no
+    ENABLE_INTREE_EC=false
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
   fi
@@ -65746,25 +65851,25 @@ else
 fi
 
 
-  USE_PRECOMPILED_HEADER=1
+  USE_PRECOMPILED_HEADER=true
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking If precompiled header is enabled" >&5
 $as_echo_n "checking If precompiled header is enabled... " >&6; }
   if test "x$ENABLE_PRECOMPH" = xno; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, forced" >&5
 $as_echo "no, forced" >&6; }
-    USE_PRECOMPILED_HEADER=0
+    USE_PRECOMPILED_HEADER=false
   elif test "x$ICECC" != "x"; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, does not work effectively with icecc" >&5
 $as_echo "no, does not work effectively with icecc" >&6; }
-    USE_PRECOMPILED_HEADER=0
+    USE_PRECOMPILED_HEADER=false
   elif test "x$TOOLCHAIN_TYPE" = xsolstudio; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, does not work with Solaris Studio" >&5
 $as_echo "no, does not work with Solaris Studio" >&6; }
-    USE_PRECOMPILED_HEADER=0
+    USE_PRECOMPILED_HEADER=false
   elif test "x$TOOLCHAIN_TYPE" = xxlc; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, does not work with xlc" >&5
 $as_echo "no, does not work with xlc" >&6; }
-    USE_PRECOMPILED_HEADER=0
+    USE_PRECOMPILED_HEADER=false
   else
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
@@ -65778,7 +65883,7 @@ $as_echo_n "checking that precompiled headers work... " >&6; }
       echo "int alfa();" > conftest.h
       $CXX -x c++-header conftest.h -o conftest.hpp.gch 2>&5 >&5
       if test ! -f conftest.hpp.gch; then
-        USE_PRECOMPILED_HEADER=0
+        USE_PRECOMPILED_HEADER=false
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
       else
@@ -66065,7 +66170,7 @@ $as_echo "$as_me: WARNING: --with-ccache-dir has no meaning when ccache is not e
         as_fn_error $? "On macosx, ccache 3.2 or later is required, found $CCACHE_VERSION" "$LINENO" 5
       fi
     fi
-    if test "x$USE_PRECOMPILED_HEADER" = "x1"; then
+    if test "x$USE_PRECOMPILED_HEADER" = "xtrue"; then
       HAS_BAD_CCACHE=`$ECHO $CCACHE_VERSION | \
           $GREP -e '^1.*' -e '^2.*' -e '^3\.0.*' -e '^3\.1\.[0123]$'`
       if test "x$HAS_BAD_CCACHE" != "x"; then
