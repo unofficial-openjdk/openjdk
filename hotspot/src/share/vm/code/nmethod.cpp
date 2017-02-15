@@ -1151,6 +1151,7 @@ void nmethod::clear_inline_caches() {
 // Clear ICStubs of all compiled ICs
 void nmethod::clear_ic_stubs() {
   assert_locked_or_safepoint(CompiledIC_lock);
+  ResourceMark rm;
   RelocIterator iter(this);
   while(iter.next()) {
     if (iter.type() == relocInfo::virtual_call_type) {
@@ -1505,7 +1506,7 @@ bool nmethod::make_not_entrant_or_zombie(unsigned int state) {
     if (method() != NULL && (method()->code() == this ||
                              method()->from_compiled_entry() == verified_entry_point())) {
       HandleMark hm;
-      method()->clear_code();
+      method()->clear_code(false /* already owns Patching_lock */);
     }
   } // leave critical region under Patching_lock
 
