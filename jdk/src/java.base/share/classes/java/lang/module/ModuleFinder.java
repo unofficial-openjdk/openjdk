@@ -42,14 +42,15 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import jdk.internal.module.ModuleBootstrap;
 import jdk.internal.module.ModulePath;
 import jdk.internal.module.SystemModuleFinder;
 import sun.security.action.GetPropertyAction;
 
 /**
  * A finder of modules. A {@code ModuleFinder} is used to find modules during
- * <a href="Configuration.html#resolution">resolution</a> or
- * <a href="Configuration.html#servicebinding">service binding</a>.
+ * <a href="package-summary.html#resolution">resolution</a> or
+ * <a href="package-summary.html#servicebinding">service binding</a>.
  *
  * <p> A {@code ModuleFinder} can only find one module with a given name. A
  * {@code ModuleFinder} that finds modules in a sequence of directories, for
@@ -85,6 +86,7 @@ import sun.security.action.GetPropertyAction;
  * <p> A {@code ModuleFinder} is not required to be thread safe. </p>
  *
  * @since 9
+ * @spec JPMS
  */
 
 public interface ModuleFinder {
@@ -172,7 +174,8 @@ public interface ModuleFinder {
         } else {
             Path mlib = Paths.get(home, "modules");
             if (Files.isDirectory(mlib)) {
-                return of(mlib);
+                // exploded build may be patched
+                return ModulePath.of(ModuleBootstrap.patcher(), mlib);
             } else {
                 throw new InternalError("Unable to detect the run-time image");
             }
@@ -278,11 +281,13 @@ public interface ModuleFinder {
      * a legal class name or its package is not in the module. </p>
      *
      * <p> In addition to JAR files, an implementation may also support modules
-     * that are packaged in other implementation specific module formats. When
-     * a file is encountered that is not recognized as a packaged module then
-     * {@code FindException} is thrown. An implementation may choose to ignore
-     * some files, {@link java.nio.file.Files#isHidden hidden} files for
-     * example. Paths to files that do not exist are always ignored. </p>
+     * that are packaged in other implementation specific module formats. If
+     * an element in the array specified to this method is a path to a directory
+     * of modules then entries in the directory that not recognized as modules
+     * are ignored. If an element in the array is a path to a packaged module
+     * that is not recognized then a {@code FindException} is thrown when the
+     * file is encountered. Paths to files that do not exist are always ignored.
+     * </p>
      *
      * <p> As with automatic modules, the contents of a packaged or exploded
      * module may need to be <em>scanned</em> in order to determine the packages
@@ -320,7 +325,7 @@ public interface ModuleFinder {
             };
         }
 
-        return new ModulePath(entries);
+        return ModulePath.of(entries);
     }
 
     /**

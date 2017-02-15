@@ -67,6 +67,15 @@ public interface JavaLangModuleAccess {
     Set<String> packages(ModuleDescriptor.Builder builder);
 
     /**
+     * Adds a dependence on a module with the given (possibly un-parsable)
+     * version string.
+     */
+    void requires(ModuleDescriptor.Builder builder,
+                  Set<Requires.Modifier> ms,
+                  String mn,
+                  String compiledVersion);
+
+    /**
      * Returns a {@code ModuleDescriptor.Requires} of the given modifiers
      * and module name.
      */

@@ -73,11 +73,10 @@ import sun.security.util.SecurityConstants;
  * Java Virtual Machine when a graph of modules is defined to the Java virtual
  * machine to create a module {@link Layer Layer}. </p>
  *
- * <p> An unnamed module does not have a name. There is an unnamed module
- * per {@link ClassLoader ClassLoader} that is obtained by invoking the class
- * loader's {@link ClassLoader#getUnnamedModule() getUnnamedModule} method. The
- * {@link Class#getModule() getModule} method of all types defined by a class
- * loader that are not in a named module return the class loader's unnamed
+ * <p> An unnamed module does not have a name. There is an unnamed module for
+ * each {@link ClassLoader ClassLoader}, obtained by invoking its {@link
+ * ClassLoader#getUnnamedModule() getUnnamedModule} method. All types that are
+ * not in a named module are members of their defining class loader's unnamed
  * module. </p>
  *
  * <p> The package names that are parameters or returned by methods defined in
@@ -90,6 +89,7 @@ import sun.security.util.SecurityConstants;
  * be thrown. </p>
  *
  * @since 9
+ * @spec JPMS
  * @see java.lang.Class#getModule
  */
 
@@ -127,14 +127,8 @@ public final class Module implements AnnotatedElement {
         Version version = descriptor.version().orElse(null);
         String vs = Objects.toString(version, null);
         String loc = Objects.toString(uri, null);
-        Set<String> packages = descriptor.packages();
-        int n = packages.size();
-        String[] array = new String[n];
-        int i = 0;
-        for (String pn : packages) {
-            array[i++] = pn.replace('.', '/');
-        }
-        defineModule0(this, isOpen, vs, loc, array);
+        String[] packages = descriptor.packages().toArray(new String[0]);
+        defineModule0(this, isOpen, vs, loc, packages);
     }
 
 
@@ -788,13 +782,12 @@ public final class Module implements AnnotatedElement {
 
         // update VM first, just in case it fails
         if (syncVM) {
-            String pkgInternalForm = pn.replace('.', '/');
             if (other == EVERYONE_MODULE) {
-                addExportsToAll0(this, pkgInternalForm);
+                addExportsToAll0(this, pn);
             } else if (other == ALL_UNNAMED_MODULE) {
-                addExportsToAllUnnamed0(this, pkgInternalForm);
+                addExportsToAllUnnamed0(this, pn);
             } else {
-                addExports0(this, pkgInternalForm, other);
+                addExports0(this, pn, other);
             }
         }
 
@@ -1016,11 +1009,10 @@ public final class Module implements AnnotatedElement {
         // update VM first in case it fails. This is a no-op if another thread
         // beats us to add the package first
         if (syncVM) {
-            String inInternalForm = pn.replace('.', '/');
             // throws IllegalStateException if defined to another module
-            addPackage0(this, inInternalForm);
+            addPackage0(this, pn);
             if (descriptor.isOpen() || descriptor.isAutomatic()) {
-                addExportsToAll0(this, inInternalForm);
+                addExportsToAll0(this, pn);
             }
         }
         extraPackages.putIfAbsent(pn, Boolean.TRUE);
@@ -1179,8 +1171,7 @@ public final class Module implements AnnotatedElement {
         if (descriptor.isOpen() || descriptor.isAutomatic()) {
             assert descriptor.opens().isEmpty();
             for (String source : descriptor.packages()) {
-                String sourceInternalForm = source.replace('.', '/');
-                addExportsToAll0(m, sourceInternalForm);
+                addExportsToAll0(m, source);
             }
             return;
         }
@@ -1191,7 +1182,6 @@ public final class Module implements AnnotatedElement {
         // process the open packages first
         for (Opens opens : descriptor.opens()) {
             String source = opens.source();
-            String sourceInternalForm = source.replace('.', '/');
 
             if (opens.isQualified()) {
                 // qualified opens
@@ -1200,7 +1190,7 @@ public final class Module implements AnnotatedElement {
                     // only open to modules that are in this configuration
                     Module m2 = nameToModule.get(target);
                     if (m2 != null) {
-                        addExports0(m, sourceInternalForm, m2);
+                        addExports0(m, source, m2);
                         targets.add(m2);
                     }
                 }
@@ -1209,7 +1199,7 @@ public final class Module implements AnnotatedElement {
                 }
             } else {
                 // unqualified opens
-                addExportsToAll0(m, sourceInternalForm);
+                addExportsToAll0(m, source);
                 openPackages.put(source, EVERYONE_SET);
             }
         }
@@ -1217,7 +1207,6 @@ public final class Module implements AnnotatedElement {
         // next the exports, skipping exports when the package is open
         for (Exports exports : descriptor.exports()) {
             String source = exports.source();
-            String sourceInternalForm = source.replace('.', '/');
 
             // skip export if package is already open to everyone
             Set<Module> openToTargets = openPackages.get(source);
@@ -1233,7 +1222,7 @@ public final class Module implements AnnotatedElement {
                     if (m2 != null) {
                         // skip qualified export if already open to m2
                         if (openToTargets == null || !openToTargets.contains(m2)) {
-                            addExports0(m, sourceInternalForm, m2);
+                            addExports0(m, source, m2);
                             targets.add(m2);
                         }
                     }
@@ -1244,7 +1233,7 @@ public final class Module implements AnnotatedElement {
 
             } else {
                 // unqualified exports
-                addExportsToAll0(m, sourceInternalForm);
+                addExportsToAll0(m, source);
                 exportedPackages.put(source, EVERYONE_SET);
             }
         }
@@ -1384,35 +1373,44 @@ public final class Module implements AnnotatedElement {
 
 
     /**
-     * Returns an input stream for reading a resource in this module. The
-     * {@code name} parameter is a {@code '/'}-separated path name that
-     * identifies the resource.
+     * Returns an input stream for reading a resource in this module.
+     * The {@code name} parameter is a {@code '/'}-separated path name that
+     * identifies the resource. As with {@link Class#getResourceAsStream
+     * Class.getResourceAsStream}, this method delegates to the module's class
+     * loader {@link ClassLoader#findResource(String,String)
+     * findResource(String,String)} method, invoking it with the module name
+     * (or {@code null} when the module is unnamed) and the name of the
+     * resource. If the resource name has a leading slash then it is dropped
+     * before delegation.
      *
      * <p> A resource in a named module may be <em>encapsulated</em> so that
      * it cannot be located by code in other modules. Whether a resource can be
-     * located or not is determined as follows:
+     * located or not is determined as follows: </p>
      *
      * <ul>
-     *     <li> The <em>package name</em> of the resource is derived from the
-     *     subsequence of characters that precedes the last {@code '/'} and then
-     *     replacing each {@code '/'} character in the subsequence with
-     *     {@code '.'}. For example, the package name derived for a resource
-     *     named "{@code a/b/c/foo.properties}" is "{@code a.b.c}". </li>
+     *     <li> If the resource name ends with  "{@code .class}" then it is not
+     *     encapsulated. </li>
      *
-     *     <li> If the package name is a package in the module then the package
-     *     must be {@link #isOpen open} to at least the caller of this method.
-     *     If the package is not in the module then the resource is not
-     *     encapsulated. Resources in the unnamed package or "{@code META-INF}",
-     *     for example, are never encapsulated because they can never be
-     *     packages in a named module. </li>
-     *
-     *     <li> As a special case, resources ending with "{@code .class}" are
-     *     never encapsulated. </li>
+     *     <li> A <em>package name</em> is derived from the resource name. If
+     *     the package name is a {@link #getPackages() package} in the module
+     *     then the resource can only be located by the caller of this method
+     *     when the package is {@link #isOpen(String,Module) open} to at least
+     *     the caller's module. If the resource is not in a package in the module
+     *     then the resource is not encapsulated. </li>
      * </ul>
+     *
+     * <p> In the above, the <em>package name</em> for a resource is derived
+     * from the subsequence of characters that precedes the last {@code '/'} in
+     * the name and then replacing each {@code '/'} character in the subsequence
+     * with {@code '.'}. A leading slash is ignored when deriving the package
+     * name. As an example, the package name derived for a resource named
+     * "{@code a/b/c/foo.properties}" is "{@code a.b.c}". A resource name
+     * with the name "{@code META-INF/MANIFEST.MF}" is never encapsulated
+     * because "{@code META-INF}" is not a legal package name. </p>
      *
      * <p> This method returns {@code null} if the resource is not in this
      * module, the resource is encapsulated and cannot be located by the caller,
-     * or access to the resource is denied by the security manager.
+     * or access to the resource is denied by the security manager. </p>
      *
      * @param  name
      *         The resource name
@@ -1421,10 +1419,14 @@ public final class Module implements AnnotatedElement {
      *
      * @throws IOException
      *         If an I/O error occurs
+     *
+     * @see Class#getResourceAsStream(String)
      */
     @CallerSensitive
     public InputStream getResourceAsStream(String name) throws IOException {
-        Objects.requireNonNull(name);
+        if (name.startsWith("/")) {
+            name = name.substring(1);
+        }
 
         if (isNamed() && !ResourceHelper.isSimpleResource(name)) {
             Module caller = Reflection.getCallerClass().getModule();

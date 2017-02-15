@@ -31,13 +31,14 @@
  */
 
 import java.lang.module.Configuration;
+import java.lang.module.FindException;
 import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleDescriptor.Builder;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ResolutionException;
 import java.lang.module.ResolvedModule;
 import java.lang.reflect.Layer;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -1506,7 +1507,7 @@ public class ConfigurationTest {
     /**
      * Root module not found
      */
-    @Test(expectedExceptions = { ResolutionException.class })
+    @Test(expectedExceptions = { FindException.class })
     public void testRootNotFound() {
         resolve(ModuleFinder.of(), "m1");
     }
@@ -1515,7 +1516,7 @@ public class ConfigurationTest {
     /**
      * Direct dependency not found
      */
-    @Test(expectedExceptions = { ResolutionException.class })
+    @Test(expectedExceptions = { FindException.class })
     public void testDirectDependencyNotFound() {
         ModuleDescriptor descriptor1 = newBuilder("m1").requires("m2").build();
         ModuleFinder finder = ModuleUtils.finderOf(descriptor1);
@@ -1526,7 +1527,7 @@ public class ConfigurationTest {
     /**
      * Transitive dependency not found
      */
-    @Test(expectedExceptions = { ResolutionException.class })
+    @Test(expectedExceptions = { FindException.class })
     public void testTransitiveDependencyNotFound() {
         ModuleDescriptor descriptor1 = newBuilder("m1").requires("m2").build();
         ModuleDescriptor descriptor2 = newBuilder("m2").requires("m3").build();
@@ -1538,7 +1539,7 @@ public class ConfigurationTest {
     /**
      * Service provider dependency not found
      */
-    @Test(expectedExceptions = { ResolutionException.class })
+    @Test(expectedExceptions = { FindException.class })
     public void testServiceProviderDependencyNotFound() {
 
         // service provider dependency (on m3) not found
@@ -1872,28 +1873,12 @@ public class ConfigurationTest {
     @Test(dataProvider = "platformmatch")
     public void testPlatformMatch(String s1, String s2) {
 
-        ModuleDescriptor.Builder builder = newBuilder("m1").requires("m2");
-
-        String[] s = s1.split("-");
-        if (!s[0].equals("*"))
-            builder.osName(s[0]);
-        if (!s[1].equals("*"))
-            builder.osArch(s[1]);
-        if (!s[2].equals("*"))
-            builder.osVersion(s[2]);
-
+        Builder builder = newBuilder("m1").requires("m2");
+        addPlatformConstraints(builder, s1);
         ModuleDescriptor descriptor1 = builder.build();
 
         builder = newBuilder("m2");
-
-        s = s2.split("-");
-        if (!s[0].equals("*"))
-            builder.osName(s[0]);
-        if (!s[1].equals("*"))
-            builder.osArch(s[1]);
-        if (!s[2].equals("*"))
-            builder.osVersion(s[2]);
-
+        addPlatformConstraints(builder, s2);
         ModuleDescriptor descriptor2 = builder.build();
 
         ModuleFinder finder = ModuleUtils.finderOf(descriptor1, descriptor2);
@@ -1910,7 +1895,7 @@ public class ConfigurationTest {
      * platforms.
      */
     @Test(dataProvider = "platformmismatch",
-          expectedExceptions = ResolutionException.class )
+          expectedExceptions = FindException.class )
     public void testPlatformMisMatch(String s1, String s2) {
         testPlatformMatch(s1, s2);
     }
@@ -1929,6 +1914,57 @@ public class ConfigurationTest {
         ModuleFinder empty = ModuleFinder.of();
         Configuration.resolveAndBind(empty, List.of(), empty, Set.of());
     }
+
+
+    // parents with modules for specific platforms
+
+    @Test(dataProvider = "platformmatch")
+    public void testResolveRequiresWithCompatibleParents(String s1, String s2) {
+        Builder builder = newBuilder("m1");
+        addPlatformConstraints(builder, s1);
+        ModuleDescriptor descriptor1 = builder.build();
+
+        builder = newBuilder("m2");
+        addPlatformConstraints(builder, s2);
+        ModuleDescriptor descriptor2 = builder.build();
+
+        ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1);
+        Configuration cf1 = resolve(finder1, "m1");
+
+        ModuleFinder finder2 = ModuleUtils.finderOf(descriptor2);
+        Configuration cf2 = resolve(finder2, "m2");
+
+        Configuration cf3 = Configuration.resolve(ModuleFinder.of(),
+                                                  List.of(cf1, cf2),
+                                                  ModuleFinder.of(),
+                                                  Set.of());
+        assertTrue(cf3.parents().size() == 2);
+    }
+
+    @Test(dataProvider = "platformmismatch",
+          expectedExceptions = IllegalArgumentException.class )
+    public void testResolveRequiresWithConflictingParents(String s1, String s2) {
+        Builder builder = newBuilder("m1");
+        addPlatformConstraints(builder, s1);
+        ModuleDescriptor descriptor1 = builder.build();
+
+        builder = newBuilder("m2");
+        addPlatformConstraints(builder, s2);
+        ModuleDescriptor descriptor2 = builder.build();
+
+        ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1);
+        Configuration cf1 = resolve(finder1, "m1");
+
+        ModuleFinder finder2 = ModuleUtils.finderOf(descriptor2);
+        Configuration cf2 = resolve(finder2, "m2");
+
+        // should throw IAE
+        Configuration.resolve(ModuleFinder.of(),
+                              List.of(cf1, cf2),
+                              ModuleFinder.of(),
+                              Set.of());
+    }
+
 
 
     // null handling
@@ -2098,5 +2134,17 @@ public class ConfigurationTest {
                 .anyMatch(mn2::equals);
     }
 
-
+    /**
+     * Decodes the platform string and calls the builder osName/osArch/osVersion
+     * methods to set the platform constraints.
+     */
+    static void addPlatformConstraints(Builder builder, String platformString) {
+        String[] s = platformString.split("-");
+        if (!s[0].equals("*"))
+            builder.osName(s[0]);
+        if (!s[1].equals("*"))
+            builder.osArch(s[1]);
+        if (!s[2].equals("*"))
+            builder.osVersion(s[2]);
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -118,7 +118,12 @@ public final class ModuleBootstrap {
         long t0 = System.nanoTime();
 
         // system modules (may be patched)
-        ModuleFinder systemModules = ModuleFinder.ofSystem();
+        ModuleFinder systemModules;
+        if (SystemModules.MODULE_NAMES.length > 0) {
+            systemModules = SystemModuleFinder.getInstance();
+        } else {
+            systemModules = ModuleFinder.ofSystem();
+        }
 
         PerfCounters.systemModulesTime.addElapsedTimeFrom(t0);
 
@@ -419,7 +424,7 @@ public final class ModuleBootstrap {
 
     /**
      * Creates a finder from the module path that is the value of the given
-     * system property.
+     * system property and optionally patched by --patch-module
      */
     private static ModuleFinder createModulePathFinder(String prop) {
         String s = System.getProperty(prop);
@@ -432,7 +437,7 @@ public final class ModuleBootstrap {
             for (String dir: dirs) {
                 paths[i++] = Paths.get(dir);
             }
-            return ModuleFinder.of(paths);
+            return ModulePath.of(patcher, paths);
         }
     }
 

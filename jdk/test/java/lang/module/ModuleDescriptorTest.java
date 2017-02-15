@@ -421,26 +421,47 @@ public class ModuleDescriptorTest {
         ModuleDescriptor.newModule("foo").exports("p", (Set<String>) null);
     }
 
-    public void testExportsEqualsAndHashCode() {
-        Exports e1, e2;
-
-        e1 = exports("p");
-        e2 = exports("p");
+    public void testExportsCompare() {
+        Exports e1 = exports("p");
+        Exports e2 = exports("p");
         assertEquals(e1, e2);
         assertTrue(e1.hashCode() == e2.hashCode());
+        assertTrue(e1.compareTo(e2) == 0);
+        assertTrue(e2.compareTo(e1) == 0);
+    }
 
-        e1 = exports(Set.of(Exports.Modifier.SYNTHETIC), "p");
-        e2 = exports(Set.of(Exports.Modifier.SYNTHETIC), "p");
+    public void testExportsCompareWithSameModifiers() {
+        Exports e1 = exports(Set.of(Exports.Modifier.SYNTHETIC), "p");
+        Exports e2 = exports(Set.of(Exports.Modifier.SYNTHETIC), "p");
         assertEquals(e1, e2);
         assertTrue(e1.hashCode() == e2.hashCode());
+        assertTrue(e1.compareTo(e2) == 0);
+        assertTrue(e2.compareTo(e1) == 0);
+    }
 
-        e1 = exports("p");
-        e2 = exports("q");
+    public void testExportsCompareWithDifferentModifiers() {
+        Exports e1 = exports(Set.of(Exports.Modifier.SYNTHETIC), "p");
+        Exports e2 = exports("p");
         assertNotEquals(e1, e2);
+        assertTrue(e1.compareTo(e2) == 1);
+        assertTrue(e2.compareTo(e1) == -1);
+    }
 
-        e1 = exports(Set.of(Exports.Modifier.SYNTHETIC), "p");
-        e2 = exports(Set.of(), "p");
+    public void testExportsCompareWithSameTargets() {
+        Exports e1 = exports("p", "x");
+        Exports e2 = exports("p", "x");
+        assertEquals(e1, e2);
+        assertTrue(e1.hashCode() == e2.hashCode());
+        assertTrue(e1.compareTo(e2) == 0);
+        assertTrue(e2.compareTo(e1) == 0);
+    }
+
+    public void testExportsCompareWithDifferentTargets() {
+        Exports e1 = exports("p", "y");
+        Exports e2 = exports("p", "x");
         assertNotEquals(e1, e2);
+        assertTrue(e1.compareTo(e2) == 1);
+        assertTrue(e2.compareTo(e1) == -1);
     }
 
     public void testExportsToString() {
@@ -530,32 +551,6 @@ public class ModuleDescriptorTest {
         assertTrue(o.targets().contains("gus"));
     }
 
-    /*
-
-    public void testOpensToAllWithModifier() {
-        Exports e = exports(Set.of(Exports.Modifier.SYNTHETIC), "p");
-        assertEquals(e, e);
-        assertTrue(e.modifiers().size() == 1);
-        assertTrue(e.modifiers().contains(Exports.Modifier.SYNTHETIC));
-        assertEquals(e.source(), "p");
-        assertFalse(e.isQualified());
-        assertTrue(e.targets().isEmpty());
-    }
-
-    public void testOpensToTargetWithModifier() {
-        Exports e = exports(Set.of(Exports.Modifier.SYNTHETIC), "p", Set.of("bar"));
-        assertEquals(e, e);
-        assertTrue(e.modifiers().size() == 1);
-        assertTrue(e.modifiers().contains(Exports.Modifier.SYNTHETIC));
-        assertEquals(e.source(), "p");
-        assertTrue(e.isQualified());
-        assertTrue(e.targets().size() == 1);
-        assertTrue(e.targets().contains("bar"));
-    }
-
-
-    */
-
     @Test(expectedExceptions = IllegalStateException.class)
     public void testOpensWithDuplicate1() {
         Opens o = opens("p");
@@ -588,26 +583,47 @@ public class ModuleDescriptorTest {
         ModuleDescriptor.newModule("foo").opens("p", (Set<String>) null);
     }
 
-    public void testOpensEqualsAndHashCode() {
-        Opens o1, o2;
-
-        o1 = opens("p");
-        o2 = opens("p");
-        assertEquals(o1, o2);
-        assertTrue(o1.hashCode() == o1.hashCode());
-
-        o1 = opens(Set.of(Opens.Modifier.SYNTHETIC), "p");
-        o2 = opens(Set.of(Opens.Modifier.SYNTHETIC), "p");
+    public void testOpensCompare() {
+        Opens o1 = opens("p");
+        Opens o2 = opens("p");
         assertEquals(o1, o2);
         assertTrue(o1.hashCode() == o2.hashCode());
+        assertTrue(o1.compareTo(o2) == 0);
+        assertTrue(o2.compareTo(o1) == 0);
+    }
 
-        o1 = opens("p");
-        o2 = opens("q");
-        assertNotEquals(o1, o2);
+    public void testOpensCompareWithSameModifiers() {
+        Opens o1 = opens(Set.of(Opens.Modifier.SYNTHETIC), "p");
+        Opens o2 = opens(Set.of(Opens.Modifier.SYNTHETIC), "p");
+        assertEquals(o1, o2);
+        assertTrue(o1.hashCode() == o2.hashCode());
+        assertTrue(o1.compareTo(o2) == 0);
+        assertTrue(o2.compareTo(o1) == 0);
+    }
 
-        o1 = opens(Set.of(Opens.Modifier.SYNTHETIC), "p");
-        o2 = opens(Set.of(), "p");
+    public void testOpensCompareWithDifferentModifiers() {
+        Opens o1 = opens(Set.of(Opens.Modifier.SYNTHETIC), "p");
+        Opens o2 = opens("p");
         assertNotEquals(o1, o2);
+        assertTrue(o1.compareTo(o2) == 1);
+        assertTrue(o2.compareTo(o1) == -1);
+    }
+
+    public void testOpensCompareWithSameTargets() {
+        Opens o1 = opens("p", "x");
+        Opens o2 = opens("p", "x");
+        assertEquals(o1, o2);
+        assertTrue(o1.hashCode() == o2.hashCode());
+        assertTrue(o1.compareTo(o2) == 0);
+        assertTrue(o2.compareTo(o1) == 0);
+    }
+
+    public void testOpensCompareWithDifferentTargets() {
+        Opens o1 = opens("p", "y");
+        Opens o2 = opens("p", "x");
+        assertNotEquals(o1, o2);
+        assertTrue(o1.compareTo(o2) == 1);
+        assertTrue(o2.compareTo(o1) == -1);
     }
 
     public void testOpensToString() {
@@ -663,6 +679,15 @@ public class ModuleDescriptorTest {
             .provides()
             .iterator()
             .next();
+    }
+
+    private Provides provides(String st, List<String> pns) {
+        return ModuleDescriptor.newModule("foo")
+                .provides(st, pns)
+                .build()
+                .provides()
+                .iterator()
+                .next();
     }
 
     public void testProvidesWithProvides() {
@@ -735,21 +760,37 @@ public class ModuleDescriptorTest {
         ModuleDescriptor.newModule("foo").provides("p.S", (List<String>) null);
     }
 
-    public void testProvidesEqualsAndHashCode() {
-        Provides p1, p2;
-
-        p1 = provides("p.S", "q.S1");
-        p2 = provides("p.S", "q.S1");
+    public void testProvidesCompare() {
+        Provides p1 = provides("p.S", "q.S1");
+        Provides p2 = provides("p.S", "q.S1");
         assertEquals(p1, p2);
         assertTrue(p1.hashCode() == p2.hashCode());
+        assertTrue(p1.compareTo(p2) == 0);
+        assertTrue(p2.compareTo(p1) == 0);
+    }
 
-        p1 = provides("p.S", "q.S1");
-        p2 = provides("p.S", "q.S2");
+    public void testProvidesCompareWithDifferentService() {
+        Provides p1 = provides("p.S2", "q.S1");
+        Provides p2 = provides("p.S1", "q.S1");
         assertNotEquals(p1, p2);
+        assertTrue(p1.compareTo(p2) == 1);
+        assertTrue(p2.compareTo(p1) == -1);
+    }
 
-        p1 = provides("p.S", "q.S1");
-        p2 = provides("p.S2", "q.S1");
+    public void testProvidesCompareWithDifferentProviders1() {
+        Provides p1 = provides("p.S", "q.S2");
+        Provides p2 = provides("p.S", "q.S1");
         assertNotEquals(p1, p2);
+        assertTrue(p1.compareTo(p2) == 1);
+        assertTrue(p2.compareTo(p1) == -1);
+    }
+
+    public void testProvidesCompareWithDifferentProviders2() {
+        Provides p1 = provides("p.S", List.of("q.S1", "q.S2"));
+        Provides p2 = provides("p.S", "q.S1");
+        assertNotEquals(p1, p2);
+        assertTrue(p1.compareTo(p2) == 1);
+        assertTrue(p2.compareTo(p1) == -1);
     }
 
     // packages
@@ -1079,6 +1120,35 @@ public class ModuleDescriptorTest {
     }
 
 
+    // newModule with modifiers
+
+    public void testNewModuleToBuildAutomaticModule() {
+        Set<ModuleDescriptor.Modifier> ms = Set.of(ModuleDescriptor.Modifier.AUTOMATIC);
+        ModuleDescriptor descriptor = ModuleDescriptor.newModule("foo", ms).build();
+        assertTrue(descriptor.modifiers().equals(ms));
+        assertTrue(descriptor.isAutomatic());
+    }
+
+    public void testNewModuleToBuildOpenModule() {
+        Set<ModuleDescriptor.Modifier> ms = Set.of(ModuleDescriptor.Modifier.OPEN);
+        ModuleDescriptor descriptor = ModuleDescriptor.newModule("foo", ms).build();
+        assertTrue(descriptor.modifiers().equals(ms));
+        assertTrue(descriptor.isOpen());
+
+        ms = Set.of(ModuleDescriptor.Modifier.OPEN, ModuleDescriptor.Modifier.SYNTHETIC);
+        descriptor = ModuleDescriptor.newModule("foo", ms).build();
+        assertTrue(descriptor.modifiers().equals(ms));
+        assertTrue(descriptor.isOpen());
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testNewModuleToBuildAutomaticAndOpenModule() {
+        Set<ModuleDescriptor.Modifier> ms = Set.of(ModuleDescriptor.Modifier.AUTOMATIC,
+                                                   ModuleDescriptor.Modifier.OPEN);
+        ModuleDescriptor.newModule("foo", ms);
+    }
+
+
     // mainClass
 
     public void testMainClass() {
@@ -1304,22 +1374,50 @@ public class ModuleDescriptorTest {
     // equals/hashCode/compareTo/toString
 
     public void testEqualsAndHashCode() {
-        ModuleDescriptor md1 = ModuleDescriptor.newModule("foo").build();
-        ModuleDescriptor md2 = ModuleDescriptor.newModule("foo").build();
+        ModuleDescriptor md1 = ModuleDescriptor.newModule("m").build();
+        ModuleDescriptor md2 = ModuleDescriptor.newModule("m").build();
         assertEquals(md1, md1);
         assertEquals(md1.hashCode(), md2.hashCode());
+        assertTrue(md1.compareTo(md2) == 0);
+        assertTrue(md2.compareTo(md1) == 0);
     }
 
-    public void testCompare() {
-        ModuleDescriptor md1 = ModuleDescriptor.newModule("foo").build();
-        ModuleDescriptor md2 = ModuleDescriptor.newModule("bar").build();
-        int n = "foo".compareTo("bar");
-        assertTrue(md1.compareTo(md2) == n);
-        assertTrue(md2.compareTo(md1) == -n);
+    @DataProvider(name = "sortedModuleDescriptors")
+    public Object[][] sortedModuleDescriptors() {
+        return new Object[][]{
+
+            { ModuleDescriptor.newModule("m2").build(),
+              ModuleDescriptor.newModule("m1").build()
+            },
+
+            { ModuleDescriptor.newModule("m").version("2").build(),
+              ModuleDescriptor.newModule("m").version("1").build()
+            },
+
+            { ModuleDescriptor.newModule("m").version("1").build(),
+              ModuleDescriptor.newModule("m").build()
+            },
+
+            { ModuleDescriptor.newOpenModule("m").build(),
+              ModuleDescriptor.newModule("m").build()
+            },
+
+        };
+    }
+
+    @Test(dataProvider = "sortedModuleDescriptors")
+    public void testCompare(ModuleDescriptor md1, ModuleDescriptor md2) {
+        assertNotEquals(md1, md2);
+        assertTrue(md1.compareTo(md2) == 1);
+        assertTrue(md2.compareTo(md1) == -1);
     }
 
     public void testToString() {
-        String s = ModuleDescriptor.newModule("m1").requires("m2").exports("p1").build().toString();
+        String s = ModuleDescriptor.newModule("m1")
+                .requires("m2")
+                .exports("p1")
+                .build()
+                .toString();
         assertTrue(s.contains("m1"));
         assertTrue(s.contains("m2"));
         assertTrue(s.contains("p1"));

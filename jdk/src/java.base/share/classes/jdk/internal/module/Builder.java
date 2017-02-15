@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,6 @@ import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Version;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -39,7 +38,7 @@ import jdk.internal.misc.JavaLangModuleAccess;
 import jdk.internal.misc.SharedSecrets;
 
 /**
- * This builder is optimized for reconstituting ModuleDescriptor
+ * This builder is optimized for reconstituting the {@code ModuleDescriptor}s
  * for system modules.  The validation should be done at jlink time.
  *
  * 1. skip name validation
@@ -137,8 +136,7 @@ final class Builder {
     }
 
     final String name;
-    boolean open;
-    boolean synthetic;
+    boolean open, synthetic, mandated;
     Set<Requires> requires;
     Set<Exports> exports;
     Set<Opens> opens;
@@ -167,6 +165,11 @@ final class Builder {
 
     Builder synthetic(boolean value) {
         this.synthetic = value;
+        return this;
+    }
+
+    Builder mandated(boolean value) {
+        this.mandated = value;
         return this;
     }
 
@@ -262,8 +265,6 @@ final class Builder {
 
     /**
      * Sets the OS version.
-     *
-     * @throws IllegalStateException if already set
      */
     public Builder osVersion(String version) {
         this.osVersion = version;
@@ -271,24 +272,32 @@ final class Builder {
     }
 
     /**
+     * Returns an immutable set of the module modifiers derived from the flags.
+     */
+    private Set<ModuleDescriptor.Modifier> modifiers() {
+        int n = 0;
+        if (open) n++;
+        if (synthetic) n++;
+        if (mandated) n++;
+        if (n == 0) {
+            return Collections.emptySet();
+        } else {
+            ModuleDescriptor.Modifier[] mods = new ModuleDescriptor.Modifier[n];
+            if (open) mods[--n] = ModuleDescriptor.Modifier.OPEN;
+            if (synthetic) mods[--n] = ModuleDescriptor.Modifier.SYNTHETIC;
+            if (mandated) mods[--n] = ModuleDescriptor.Modifier.MANDATED;
+            return Set.of(mods);
+        }
+    }
+
+    /**
      * Builds a {@code ModuleDescriptor} from the components.
      */
     public ModuleDescriptor build(int hashCode) {
         assert name != null;
-
-        Set<ModuleDescriptor.Modifier> modifiers;
-        if (open || synthetic) {
-            modifiers = new HashSet<>();
-            if (open) modifiers.add(ModuleDescriptor.Modifier.OPEN);
-            if (synthetic) modifiers.add(ModuleDescriptor.Modifier.SYNTHETIC);
-            modifiers = Collections.unmodifiableSet(modifiers);
-        } else {
-            modifiers = Collections.emptySet();
-        }
-
         return JLMA.newModuleDescriptor(name,
                                         version,
-                                        modifiers,
+                                        modifiers(),
                                         requires,
                                         exports,
                                         opens,

@@ -37,7 +37,6 @@ import java.lang.module.ModuleDescriptor.Builder;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Opens;
-import java.lang.module.ModuleDescriptor.Version;
 import java.nio.ByteBuffer;
 import java.nio.BufferUnderflowException;
 import java.util.ArrayList;
@@ -313,9 +312,9 @@ public final class ModuleInfo {
                 String missingPackage = missingPackages.iterator().next();
                 String tail;
                 if (usedPackageFinder) {
-                    tail = " not found by package finder";
+                    tail = " not found in module";
                 } else {
-                    tail = " missing from ModulePackages attribute";
+                    tail = " missing from ModulePackages class file attribute";
                 }
                 throw invalidModuleDescriptor("Package " + missingPackage + tail);
 
@@ -380,16 +379,11 @@ public final class ModuleInfo {
             }
 
             int requires_version_index = in.readUnsignedShort();
-            Version compiledVersion = null;
-            if (requires_version_index != 0) {
-                String vs = cpool.getUtf8(requires_version_index);
-                compiledVersion = Version.parse(vs);
-            }
-
-            if (compiledVersion == null) {
+            if (requires_version_index == 0) {
                 builder.requires(mods, dn);
             } else {
-                builder.requires(mods, dn, compiledVersion);
+                String vs = cpool.getUtf8(requires_version_index);
+                JLMA.requires(builder, mods, dn, vs);
             }
 
             if (dn.equals("java.base"))

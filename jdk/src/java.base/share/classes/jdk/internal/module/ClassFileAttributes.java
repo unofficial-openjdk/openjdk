@@ -146,19 +146,13 @@ public final class ClassFileAttributes {
                         mods.add(Requires.Modifier.MANDATED);
                 }
 
-
                 // requires_version
-                Version compiledVersion = null;
                 String requires_version = cr.readUTF8(off, buf);
                 off += 2;
-                if (requires_version != null) {
-                    compiledVersion = Version.parse(requires_version);
-                }
-
-                if (compiledVersion == null) {
+                if (requires_version == null) {
                     builder.requires(mods, dn);
                 } else {
-                    builder.requires(mods, dn, compiledVersion);
+                    JLMA.requires(builder, mods, dn, requires_version);
                 }
             }
 

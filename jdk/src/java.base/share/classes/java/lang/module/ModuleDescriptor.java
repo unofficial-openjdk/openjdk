@@ -32,6 +32,7 @@ import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -58,44 +59,35 @@ import jdk.internal.module.ModuleInfo;
  *
  * <p> A module descriptor describes a named module and defines methods to
  * obtain each of its components. The module descriptor for a named module
- * in the Java virtual machine is obtained by invoking the module's {@link
- * java.lang.reflect.Module#getDescriptor getDescriptor} method. Module
- * descriptors can also be created using the {@link ModuleDescriptor.Builder}
- * class or by reading the binary form of a module declaration
- * ({@code module-info.class}) using the {@link #read(InputStream,Supplier)
- * read} methods defined here. </p>
+ * in the Java virtual machine is obtained by invoking the {@link
+ * java.lang.reflect.Module Module}'s {@link java.lang.reflect.Module#getDescriptor
+ * getDescriptor} method. Module descriptors can also be created using the
+ * {@link ModuleDescriptor.Builder} class or by reading the binary form of a
+ * module declaration ({@code module-info.class}) using the {@link
+ * #read(InputStream,Supplier) read} methods defined here. </p>
  *
  * <p> A module descriptor describes a <em>normal</em>, open, or automatic
- * module. <em>Normal</em> modules and open modules describe their dependences,
- * exported packages, the services that they use or provide, and other
- * components. <em>Normal</em> modules may open specific packages. A module
- * in the Java virtual machine with an open package allows other modules to
- * access all types in the package and all their members (not just the
- * public types and their public members) using reflective APIs that
- * support private access or suppress default Java language access control
- * checks. The module descriptor for an open modules does not declare any open
- * packages (the {@link #opens() opens} method returns an empty set) but
- * when instantiated in the Java virtual machine then it is treated as if
- * all packages are open. </p>
- *
- * <p> An automatic module is defined implicitly rather than explicitly and
- * therefore does not have a module declaration. JAR files located on the
- * module path, or by the {@link ModuleFinder} returned by {@link
- * ModuleFinder#of(java.nio.file.Path[]) ModuleFinder.of}, are created as
- * automatic modules if the JAR file does not contain a {@code
- * module-info.class} file. The module descriptor for an automatic module
- * does not declare any dependences (except for the mandatory dependency
- * on {@code java.base}), exports or open packages. Automatic modules receive
- * <a href="Configuration.html#automaticmoduleresolution">special treatment</a>
- * during resolution so that they read all other modules in the configuration.
- * When an automatic module is instantiated in the Java virtual machine then it
- * reads every unnamed module and is treated as if all packages are exported
- * and open. </p>
+ * module. <em>Normal</em> modules and open modules describe their {@link
+ * #requires() dependences}, {@link #exports() exported-packages}, the services
+ * that they {@link #uses() use} or {@link #provides() provide}, and other
+ * components. <em>Normal</em> modules may {@link #opens() open} specific
+ * packages. The module descriptor for an open modules does not declare any
+ * open packages (its {@code opens} method returns an empty set) but when
+ * instantiated in the Java virtual machine then it is treated as if all
+ * packages are open. The module descriptor for an automatic module does not
+ * declare any dependences (except for the mandatory dependency on {@code
+ * java.base}), and does not declare any exported or open packages. Automatic
+ * module receive special treatment during resolution so that they read all
+ * other modules in the configuration. When an automatic module is instantiated
+ * in the Java virtual machine then it reads every unnamed module and is
+ * treated as if all packages are exported and open. </p>
  *
  * <p> {@code ModuleDescriptor} objects are immutable and safe for use by
  * multiple concurrent threads.</p>
  *
+ * @see java.lang.reflect.Module
  * @since 9
+ * @spec JPMS
  */
 
 public class ModuleDescriptor
@@ -116,8 +108,8 @@ public class ModuleDescriptor
         OPEN,
 
         /**
-         * An automatic module. An automatic module exports and opens all
-         * packages.
+         * An automatic module. An automatic module is treated as if it exports
+         * and opens all packages.
          *
          * @apiNote This modifier does not correspond to a module flag in the
          * binary form of a module declaration ({@code module-info.class}).
@@ -141,6 +133,7 @@ public class ModuleDescriptor
      *
      * @see ModuleDescriptor#requires()
      * @since 9
+     * @spec JPMS
      */
 
     public final static class Requires
@@ -152,6 +145,7 @@ public class ModuleDescriptor
          *
          * @see Requires#modifiers()
          * @since 9
+         * @spec JPMS
          */
         public static enum Modifier {
 
@@ -234,14 +228,18 @@ public class ModuleDescriptor
          * Compares this module dependence to another.
          *
          * <p> Two {@code Requires} objects are compared by comparing their
-         * module name lexicographically.  Where the module names are equal then
-         * the sets of modifiers are compared based on a value computed from the
-         * ordinal of each modifier. Where the module names are equal and the
-         * set of modifiers are equal then the version of the modules recorded
-         * at compile-time are compared. When comparing the versions recorded
-         * at compile-time then a dependence that has a recorded version is
-         * considered to succeed a dependence that does not have a recorded
-         * version. </p>
+         * module names lexicographically. Where the module names are equal
+         * then the sets of modifiers are compared in the same way that
+         * module modifiers are compared (see {@link ModuleDescriptor#compareTo
+         * ModuleDescriptor.compareTo}). Where the module names are equal and
+         * the set of modifiers are equal then the version of the modules
+         * recorded at compile-time are compared. When comparing the versions
+         * recorded at compile-time then a dependence that has a recorded
+         * version is considered to succeed a dependence that does not have a
+         * recorded version. </p>
+         *
+         * @param  that
+         *         The module dependence to compare
          *
          * @return A negative integer, zero, or a positive integer if this module
          *         dependence is less than, equal to, or greater than the given
@@ -249,39 +247,22 @@ public class ModuleDescriptor
          */
         @Override
         public int compareTo(Requires that) {
+            if (this == that) return 0;
+
             int c = this.name().compareTo(that.name());
-            if (c != 0)
-                return c;
+            if (c != 0) return c;
 
             // modifiers
-            c = Long.compare(this.modsValue(), that.modsValue());
-            if (c != 0)
-                return c;
+            long v1 = modsValue(this.modifiers());
+            long v2 = modsValue(that.modifiers());
+            c = Long.compare(v1, v2);
+            if (c != 0) return c;
 
             // compiledVersion
-            if (this.compiledVersion != null) {
-                if (that.compiledVersion != null)
-                    c = this.compiledVersion.compareTo(that.compiledVersion);
-                else
-                    c = 1;
-            } else {
-                if (that.compiledVersion != null)
-                    c = -1;
-            }
+            c = compare(this.compiledVersion, that.compiledVersion);
+            if (c != 0) return c;
 
-            return c;
-        }
-
-        /**
-         * Return a value for the modifiers to allow sets of modifiers to be
-         * compared.
-         */
-        private long modsValue() {
-            long value = 0;
-            for (Modifier m : mods) {
-                value += 1 << m.ordinal();
-            }
-            return value;
+            return 0;
         }
 
         /**
@@ -329,9 +310,9 @@ public class ModuleDescriptor
         }
 
         /**
-         * Returns a string describing module dependence.
+         * Returns a string describing this module dependence.
          *
-         * @return A string describing module dependence
+         * @return A string describing this module dependence
          */
         @Override
         public String toString() {
@@ -348,19 +329,23 @@ public class ModuleDescriptor
 
 
     /**
-     * <p> A module export, may be qualified or unqualified. </p>
+     * <p> A package exported by a module, may be qualified or unqualified. </p>
      *
      * @see ModuleDescriptor#exports()
      * @since 9
+     * @spec JPMS
      */
 
-    public final static class Exports {
+    public final static class Exports
+        implements Comparable<Exports>
+    {
 
         /**
-         * A modifier on a module export.
+         * A modifier on an exported package.
          *
          * @see Exports#modifiers()
          * @since 9
+         * @spec JPMS
          */
         public static enum Modifier {
 
@@ -445,6 +430,52 @@ public class ModuleDescriptor
         }
 
         /**
+         * Compares this module export to another.
+         *
+         * <p> Two {@code Exports} objects are compared by comparing the package
+         * names lexicographically. Where the packages names are equal then the
+         * sets of modifiers are compared in the same way that module modifiers
+         * are compared (see {@link ModuleDescriptor#compareTo
+         * ModuleDescriptor.compareTo}). Where the package names are equal and
+         * the set of modifiers are equal then the set of target modules are
+         * compared. This is done by sorting the names of the target modules
+         * in ascending order, and according to their natural ordering, and then
+         * comparing the corresponding elements lexicographically. Where the
+         * sets differ in size, and the larger set contains all elements of the
+         * smaller set, then the larger set is considered to succeed the smaller
+         * set. </p>
+         *
+         * @param  that
+         *         The module export to compare
+         *
+         * @return A negative integer, zero, or a positive integer if this module
+         *         export is less than, equal to, or greater than the given
+         *         export dependence
+         */
+        @Override
+        public int compareTo(Exports that) {
+            if (this == that) return 0;
+
+            int c = source.compareTo(that.source);
+            if (c != 0)
+                return c;
+
+            // modifiers
+            long v1 = modsValue(this.modifiers());
+            long v2 = modsValue(that.modifiers());
+            c = Long.compare(v1, v2);
+            if (c != 0)
+                return c;
+
+            // targets
+            c = compare(targets, that.targets);
+            if (c != 0)
+                return c;
+
+            return 0;
+        }
+
+        /**
          * Computes a hash code for this module export.
          *
          * <p> The hash code is based upon the modifiers, the package name,
@@ -489,9 +520,9 @@ public class ModuleDescriptor
         }
 
         /**
-         * Returns a string describing module export.
+         * Returns a string describing the exported package.
          *
-         * @return A string describing module export
+         * @return A string describing the exported package
          */
         @Override
         public String toString() {
@@ -505,8 +536,7 @@ public class ModuleDescriptor
 
 
     /**
-     * <p> Represents a module <em>opens</em> directive, may be qualified or
-     * unqualified. </p>
+     * <p> A package opened by a module, may be qualified or unqualified. </p>
      *
      * <p> The <em>opens</em> directive in a module declaration declares a
      * package to be open to allow all types in the package, and all their
@@ -516,27 +546,30 @@ public class ModuleDescriptor
      *
      * @see ModuleDescriptor#opens()
      * @since 9
+     * @spec JPMS
      */
 
-    public final static class Opens {
-
+    public final static class Opens
+        implements Comparable<Opens>
+    {
         /**
-         * A modifier on a module <em>opens</em> directive.
+         * A modifier on an open package.
          *
          * @see Opens#modifiers()
          * @since 9
+         * @spec JPMS
          */
         public static enum Modifier {
 
             /**
-             * The opens was not explicitly or implicitly declared in the
-             * source of the module declaration.
+             * The open package was not explicitly or implicitly declared in
+             * the source of the module declaration.
              */
             SYNTHETIC,
 
             /**
-             * The opens was implicitly declared in the source of the module
-             * declaration.
+             * The open package was implicitly declared in the source of the
+             * module declaration.
              */
             MANDATED;
 
@@ -609,6 +642,52 @@ public class ModuleDescriptor
         }
 
         /**
+         * Compares this module opens to another.
+         *
+         * <p> Two {@code Opens} objects are compared by comparing the package
+         * names lexicographically. Where the packages names are equal then the
+         * sets of modifiers are compared in the same way that module modifiers
+         * are compared (see {@link ModuleDescriptor#compareTo
+         * ModuleDescriptor.compareTo}). Where the package names are equal and
+         * the set of modifiers are equal then the set of target modules are
+         * compared. This is done by sorting the names of the target modules
+         * in ascending order, and according to their natural ordering, and then
+         * comparing the corresponding elements lexicographically. Where the
+         * sets differ in size, and the larger set contains all elements of the
+         * smaller set, then the larger set is considered to succeed the smaller
+         * set. </p>
+         *
+         * @param  that
+         *         The module opens to compare
+         *
+         * @return A negative integer, zero, or a positive integer if this module
+         *         opens is less than, equal to, or greater than the given
+         *         module opens
+         */
+        @Override
+        public int compareTo(Opens that) {
+            if (this == that) return 0;
+
+            int c = source.compareTo(that.source);
+            if (c != 0)
+                return c;
+
+            // modifiers
+            long v1 = modsValue(this.modifiers());
+            long v2 = modsValue(that.modifiers());
+            c = Long.compare(v1, v2);
+            if (c != 0)
+                return c;
+
+            // targets
+            c = compare(targets, that.targets);
+            if (c != 0)
+                return c;
+
+            return 0;
+        }
+
+        /**
          * Computes a hash code for this module opens.
          *
          * <p> The hash code is based upon the modifiers, the package name,
@@ -653,9 +732,9 @@ public class ModuleDescriptor
         }
 
         /**
-         * Returns a string describing module opens.
+         * Returns a string describing the open package.
          *
-         * @return A string describing module opens
+         * @return A string describing the open package
          */
         @Override
         public String toString() {
@@ -673,10 +752,12 @@ public class ModuleDescriptor
      *
      * @see ModuleDescriptor#provides()
      * @since 9
+     * @spec JPMS
      */
 
-    public final static class Provides {
-
+    public final static class Provides
+        implements Comparable<Provides>
+    {
         private final String service;
         private final List<String> providers;
 
@@ -705,6 +786,46 @@ public class ModuleDescriptor
          *         names of the providers or provider factories
          */
         public List<String> providers() { return providers; }
+
+        /**
+         * Compares this provides to another.
+         *
+         * <p> Two {@code Provides} objects are compared by comparing the fully
+         * qualified class name of the service type lexicographically. Where the
+         * class names are equal then the list of the provider class names are
+         * compared by comparing the corresponding elements of both lists
+         * lexicographically and in sequence. Where the lists differ in size,
+         * {@code N} is the size of the shorter list, and the first {@code N}
+         * corresponding elements are equal, then the longer list is considered
+         * to succeed the shorter list. </p>
+         *
+         * @param  that
+         *         The {@code Provides} to compare
+         *
+         * @return A negative integer, zero, or a positive integer if this provides
+         *         is less than, equal to, or greater than the given provides
+         */
+        public int compareTo(Provides that) {
+            if (this == that) return 0;
+
+            int c = service.compareTo(that.service);
+            if (c != 0) return c;
+
+            // compare provider class names in sequence
+            int size1 = this.providers.size();
+            int size2 = that.providers.size();
+            for (int index=0; index<Math.min(size1, size2); index++) {
+                String e1 = this.providers.get(index);
+                String e2 = that.providers.get(index);
+                c = e1.compareTo(e2);
+                if (c != 0) return c;
+            }
+            if (size1 == size2) {
+                return 0;
+            } else {
+                return (size1 > size2) ? 1 : -1;
+            }
+        }
 
         /**
          * Computes a hash code for this provides.
@@ -805,6 +926,7 @@ public class ModuleDescriptor
      *
      * @see ModuleDescriptor#version()
      * @since 9
+     * @spec JPMS
      */
 
     public final static class Version
@@ -1163,7 +1285,7 @@ public class ModuleDescriptor
     }
 
     /**
-     * <p> The module name. </p>
+     * <p> Returns the module name. </p>
      *
      * @return The module name
      */
@@ -1172,7 +1294,7 @@ public class ModuleDescriptor
     }
 
     /**
-     * <p> The set of module modifiers. </p>
+     * <p> Returns the set of module modifiers. </p>
      *
      * @return A possibly-empty unmodifiable set of modifiers
      */
@@ -1205,7 +1327,8 @@ public class ModuleDescriptor
     }
 
     /**
-     * <p> The dependences of this module. </p>
+     * <p> Returns the set of {@code Requires} objects representing the module
+     * dependences. </p>
      *
      * <p> The set includes a dependency on "{@code java.base}" when this
      * module is not named "{@code java.base}". If this module is an automatic
@@ -1219,7 +1342,8 @@ public class ModuleDescriptor
     }
 
     /**
-     * <p> The module exports. </p>
+     * <p> Returns the set of {@code Exports} objects representing the exported
+     * packages. </p>
      *
      * <p> If this module is an automatic module then the set of exports
      * is empty. </p>
@@ -1231,7 +1355,8 @@ public class ModuleDescriptor
     }
 
     /**
-     * <p> The module <em>opens</em> directives. </p>
+     * <p> Returns the set of {@code Opens} objects representing the open
+     * packages. </p>
      *
      * <p> If this module is an open module or an automatic module then the
      * set of open packages is empty. </p>
@@ -1243,7 +1368,7 @@ public class ModuleDescriptor
     }
 
     /**
-     * <p> The service dependences of this module. </p>
+     * <p> Returns the set of service dependences. </p>
      *
      * <p> If this module is an automatic module then the set of service
      * dependences is empty. </p>
@@ -1256,7 +1381,8 @@ public class ModuleDescriptor
     }
 
     /**
-     * <p> The services that this module provides. </p>
+     * <p> Returns the set of {@code Provides} objects representing the
+     * services that the module provides. </p>
      *
      * @return The possibly-empty unmodifiable set of the services that this
      *         module provides
@@ -1266,7 +1392,7 @@ public class ModuleDescriptor
     }
 
     /**
-     * Returns this module's version.
+     * <p> Returns the module version. </p>
      *
      * @return This module's version
      */
@@ -1275,10 +1401,10 @@ public class ModuleDescriptor
     }
 
     /**
-     * Returns a string containing this module's name and, if present, its
-     * version.
+     * <p> Returns a string containing the module name and, if present, its
+     * version. </p>
      *
-     * @return A string containing this module's name and, if present, its
+     * @return A string containing the module name and, if present, its
      *         version.
      */
     public String toNameAndVersion() {
@@ -1290,51 +1416,51 @@ public class ModuleDescriptor
     }
 
     /**
-     * Returns the module's main class.
+     * <p> Returns the module main class. </p>
      *
-     * @return The fully qualified class name of this module's main class
+     * @return The fully qualified class name of the module's main class
      */
     public Optional<String> mainClass() {
         return Optional.ofNullable(mainClass);
     }
 
     /**
-     * Returns the operating system name if this module is operating system
+     * Returns the operating system name if the module is operating system
      * specific.
      *
      * @return The operating system name or an empty {@code Optional}
-     *         if this module is not operating system specific
+     *         if the module is not operating system specific
      */
     public Optional<String> osName() {
         return Optional.ofNullable(osName);
     }
 
     /**
-     * Returns the operating system architecture if this module is operating
+     * Returns the operating system architecture if the module is operating
      * system architecture specific.
      *
      * @return The operating system architecture or an empty {@code Optional}
-     *         if this module is not operating system architecture specific
+     *         if the module is not operating system architecture specific
      */
     public Optional<String> osArch() {
         return Optional.ofNullable(osArch);
     }
 
     /**
-     * Returns the operating system version if this module is operating
+     * Returns the operating system version if the module is operating
      * system version specific.
      *
      * @return The operating system version or an empty {@code Optional}
-     *         if this module is not operating system version specific
+     *         if the module is not operating system version specific
      */
     public Optional<String> osVersion() {
         return Optional.ofNullable(osVersion);
     }
 
     /**
-     * Returns the names of all packages in this module.
+     * Returns the set of packages in the module.
      *
-     * @return A possibly-empty unmodifiable set of all packages in the module
+     * @return A possibly-empty unmodifiable set of the packages in the module
      */
     public Set<String> packages() {
         return packages;
@@ -1342,7 +1468,7 @@ public class ModuleDescriptor
 
 
     /**
-     * A builder used for building {@link ModuleDescriptor} objects.
+     * A builder for building {@link ModuleDescriptor} objects.
      *
      * <p> {@code ModuleDescriptor} defines the {@link #newModule newModule},
      * {@link #newOpenModule newOpenModule}, and {@link #newAutomaticModule
@@ -1375,11 +1501,9 @@ public class ModuleDescriptor
      * components are added to the builder. The rationale for this is to detect
      * errors as early as possible and not defer all validation to the
      * {@link #build build} method.
-     * A {@code Builder} cannot be used to create a module with the
-     * {@link ModuleDescriptor.Modifier#MANDATED MANDATED} or
-     * {@link ModuleDescriptor.Modifier#SYNTHETIC SYNTHETIC} modifiers.
      *
      * @since 9
+     * @spec JPMS
      */
     public static final class Builder {
         final String name;
@@ -1481,6 +1605,23 @@ public class ModuleDescriptor
             if (strict)
                 mn = requireModuleName(mn);
             return requires(new Requires(ms, mn, compiledVersion));
+        }
+
+        /* package */Builder requires(Set<Requires.Modifier> ms,
+                                      String mn,
+                                      String compiledVersion) {
+            Version v = null;
+            try {
+                v = Version.parse(compiledVersion);
+            } catch (IllegalArgumentException e) {
+                // for now, drop un-parsable version when non-strict
+                if (strict) throw e;
+            }
+            if (v == null) {
+                return requires(ms, mn);
+            } else {
+                return requires(ms, mn, v);
+            }
         }
 
         /**
@@ -1808,10 +1949,10 @@ public class ModuleDescriptor
          *
          * @throws IllegalArgumentException
          *         If the service type is {@code null} or not a qualified name of
-         *         a Java class in a named package
+         *         a class in a named package
          * @throws IllegalStateException
          *         If a dependency on the service type has already been declared
-         *          or this is a builder for an an automatic module
+         *         or this is a builder for an an automatic module
          */
         public Builder uses(String service) {
             if (automatic)
@@ -1861,8 +2002,8 @@ public class ModuleDescriptor
          *
          * @throws IllegalArgumentException
          *         If the service type or any of the provider class names is
-         *         {@code null} or not a qualified name of a Java class in a
-         *         named package, or the list of provider class names is empty
+         *         {@code null} or not a qualified name of a class in a named
+         *         package, or the list of provider class names is empty
          * @throws IllegalStateException
          *         If the providers for the service type have already been
          *         declared
@@ -1933,19 +2074,30 @@ public class ModuleDescriptor
         /**
          * Sets the module version.
          *
-         * @param  v
+         * @param  vs
          *         The version string to parse
          *
          * @return This builder
          *
          * @throws IllegalArgumentException
-         *         If {@code v} is {@code null} or cannot be parsed as a
+         *         If {@code vs} is {@code null} or cannot be parsed as a
          *         version string
          *
          * @see Version#parse(String)
          */
-        public Builder version(String v) {
-            return version(Version.parse(v));
+        public Builder version(String vs) {
+            Version v;
+            if (strict) {
+                v = Version.parse(vs);
+            } else {
+                try {
+                    v = Version.parse(vs);
+                } catch (IllegalArgumentException ignore) {
+                    // for now, ignore when non-strict
+                    return this;
+                }
+            }
+            return version(v);
         }
 
         /**
@@ -1959,7 +2111,7 @@ public class ModuleDescriptor
          *
          * @throws IllegalArgumentException
          *         If {@code mainClass} is {@code null} or not a qualified
-         *         name of a Java class in a named package
+         *         name of a class in a named package
          */
         public Builder mainClass(String mc) {
             String pn;
@@ -2038,7 +2190,10 @@ public class ModuleDescriptor
          *
          * <p> The module will require "{@code java.base}" even if the dependence
          * has not been declared (the exception is when building a module named
-         * "{@code java.base}" as it cannot require itself). </p>
+         * "{@code java.base}" as it cannot require itself). The dependence on
+         * "{@code java.base}" will have the {@link
+         * java.lang.module.ModuleDescriptor.Requires.Modifier#MANDATED MANDATED}
+         * modifier if the dependence was not declared. </p>
          *
          * @return The module descriptor
          */
@@ -2079,16 +2234,20 @@ public class ModuleDescriptor
      * Compares this module descriptor to another.
      *
      * <p> Two {@code ModuleDescriptor} objects are compared by comparing their
-     * module name lexicographically.  Where the module names are equal then
-     * the versions, if present, are compared. </p>
-     *
-     * @apiNote For now, the natural ordering is not consistent with equals.
-     * If two module descriptors have equal module names, equal versions if
-     * present, but their corresponding components are not equal, then they
-     * will be considered equal by this method.
+     * module names lexicographically. Where the module names are equal then the
+     * module versions are compared. When comparing the module versions then a
+     * module descriptor with a version is considered to succeed a module
+     * descriptor that does not have a version. Where the module names are equal
+     * and the versions are equal (or not present in both), then the set of
+     * modifiers are compared. Sets of modifiers are compared by comparing
+     * a <em>binary value</em> computed for each set. If a modifier is present
+     * in the set then the bit at the position of its ordinal is {@code 1}
+     * in the binary value, otherwise {@code 0}. If the two set of modifiers
+     * are also equal then the other components of the module descriptors are
+     * compared in a manner that is consistent with {@code equals}. </p>
      *
      * @param  that
-     *         The object to which this module descriptor is to be compared
+     *         The module descriptor to compare
      *
      * @return A negative integer, zero, or a positive integer if this module
      *         descriptor is less than, equal to, or greater than the given
@@ -2096,16 +2255,50 @@ public class ModuleDescriptor
      */
     @Override
     public int compareTo(ModuleDescriptor that) {
+        if (this == that) return 0;
+
         int c = this.name().compareTo(that.name());
         if (c != 0) return c;
-        if (version == null) {
-            if (that.version == null)
-                return 0;
-            return -1;
-        }
-        if (that.version == null)
-            return +1;
-        return version.compareTo(that.version);
+
+        c = compare(this.version, that.version);
+        if (c != 0) return c;
+
+        long v1 = modsValue(this.modifiers());
+        long v2 = modsValue(that.modifiers());
+        c = Long.compare(v1, v2);
+        if (c != 0) return c;
+
+        c = compare(this.requires, that.requires);
+        if (c != 0) return c;
+
+        c = compare(this.packages, that.packages);
+        if (c != 0) return c;
+
+        c = compare(this.exports, that.exports);
+        if (c != 0) return c;
+
+        c = compare(this.opens, that.opens);
+        if (c != 0) return c;
+
+        c = compare(this.uses, that.uses);
+        if (c != 0) return c;
+
+        c = compare(this.provides, that.provides);
+        if (c != 0) return c;
+
+        c = compare(this.mainClass, that.mainClass);
+        if (c != 0) return c;
+
+        c = compare(this.osName, that.osName);
+        if (c != 0) return c;
+
+        c = compare(this.osArch, that.osArch);
+        if (c != 0) return c;
+
+        c = compare(this.osVersion, that.osVersion);
+        if (c != 0) return c;
+
+        return 0;
     }
 
     /**
@@ -2134,6 +2327,7 @@ public class ModuleDescriptor
         return (name.equals(that.name)
                 && modifiers.equals(that.modifiers)
                 && requires.equals(that.requires)
+                && Objects.equals(packages, that.packages)
                 && exports.equals(that.exports)
                 && opens.equals(that.opens)
                 && uses.equals(that.uses)
@@ -2142,11 +2336,8 @@ public class ModuleDescriptor
                 && Objects.equals(mainClass, that.mainClass)
                 && Objects.equals(osName, that.osName)
                 && Objects.equals(osArch, that.osArch)
-                && Objects.equals(osVersion, that.osVersion)
-                && Objects.equals(packages, that.packages));
+                && Objects.equals(osVersion, that.osVersion));
     }
-
-    private transient int hash;  // cached hash code
 
     /**
      * Computes a hash code for this module descriptor.
@@ -2164,6 +2355,7 @@ public class ModuleDescriptor
             hc = name.hashCode();
             hc = hc * 43 + Objects.hashCode(modifiers);
             hc = hc * 43 + requires.hashCode();
+            hc = hc * 43 + Objects.hashCode(packages);
             hc = hc * 43 + exports.hashCode();
             hc = hc * 43 + opens.hashCode();
             hc = hc * 43 + uses.hashCode();
@@ -2173,18 +2365,18 @@ public class ModuleDescriptor
             hc = hc * 43 + Objects.hashCode(osName);
             hc = hc * 43 + Objects.hashCode(osArch);
             hc = hc * 43 + Objects.hashCode(osVersion);
-            hc = hc * 43 + Objects.hashCode(packages);
             if (hc == 0)
                 hc = -1;
             hash = hc;
         }
         return hc;
     }
+    private transient int hash;  // cached hash code
 
     /**
-     * Returns a string describing this descriptor.
+     * <p> Returns a string describing the module. </p>
      *
-     * @return A string describing this descriptor
+     * @return A string describing the module
      */
     @Override
     public String toString() {
@@ -2214,6 +2406,32 @@ public class ModuleDescriptor
      *
      * @param  name
      *         The module name
+     * @param  ms
+     *         The set of module modifiers
+     *
+     * @return A new builder
+     *
+     * @throws IllegalArgumentException
+     *         If the module name is {@code null} or is not a legal module
+     *         name, or the set of modifiers contains {@link
+     *         Modifier#AUTOMATIC AUTOMATIC} with other modifiers
+     */
+    public static Builder newModule(String name, Set<Modifier> ms) {
+        Set<Modifier> mods = new HashSet<>(ms);
+        if (mods.contains(Modifier.AUTOMATIC) && mods.size() > 1)
+            throw new IllegalArgumentException("AUTOMATIC cannot be used with"
+                                               + " other modifiers");
+
+        return new Builder(name, true, mods);
+    }
+
+    /**
+     * Instantiates a builder to build a module descriptor for a <em>normal</em>
+     * module. This method is equivalent to invoking {@link #newModule(String,Set)
+     * newModule} with an empty set of {@link ModuleDescriptor.Modifier modifiers}.
+     *
+     * @param  name
+     *         The module name
      *
      * @return A new builder
      *
@@ -2227,6 +2445,8 @@ public class ModuleDescriptor
 
     /**
      * Instantiates a builder to build a module descriptor for an open module.
+     * This method is equivalent to invoking {@link #newModule(String,Set)
+     * newModule} with the {@link ModuleDescriptor.Modifier#OPEN OPEN} modifier.
      *
      * <p> The builder for an open module cannot be used to declare any open
      * packages. </p>
@@ -2246,10 +2466,13 @@ public class ModuleDescriptor
 
     /**
      * Instantiates a builder to build a module descriptor for an automatic
-     * module.
+     * module. This method is equivalent to invoking {@link #newModule(String,Set)
+     * newModule} with the {@link ModuleDescriptor.Modifier#AUTOMATIC AUTOMATIC}
+     * modifier.
      *
      * <p> The builder for an automatic module cannot be used to declare module
-     * or service dependences, or exported or open packages. </p>
+     * or service dependences. It also cannot be used to declare any exported
+     * or open packages. </p>
      *
      * @param  name
      *         The module name
@@ -2273,8 +2496,12 @@ public class ModuleDescriptor
      *
      * <p> If the descriptor encoded in the input stream does not indicate a
      * set of packages in the module then the {@code packageFinder} will be
-     * invoked. If the {@code packageFinder} throws an {@link UncheckedIOException}
-     * then {@link IOException} cause will be re-thrown. </p>
+     * invoked. The set of packages that the {@code packageFinder} returns
+     * must include all the packages that the module exports, opens, as well
+     * as the packages of the service implementations that the module provides,
+     * and the package of the main class (if the module has a main class). If
+     * the {@code packageFinder} throws an {@link UncheckedIOException} then
+     * {@link IOException} cause will be re-thrown. </p>
      *
      * <p> If there are bytes following the module descriptor then it is
      * implementation specific as to whether those bytes are read, ignored,
@@ -2296,7 +2523,9 @@ public class ModuleDescriptor
      * @return The module descriptor
      *
      * @throws InvalidModuleDescriptorException
-     *         If an invalid module descriptor is detected
+     *         If an invalid module descriptor is detected or the set of
+     *         packages returned by the {@code packageFinder} does not include
+     *         all of the packages obtained from the module descriptor
      * @throws IOException
      *         If an I/O error occurs reading from the input stream or {@code
      *         UncheckedIOException} is thrown by the package finder
@@ -2309,8 +2538,12 @@ public class ModuleDescriptor
     }
 
     /**
-     * Reads the binary form of a module declaration from an input stream
-     * as a module descriptor.
+     * Reads the binary form of a module declaration from an input stream as a
+     * module descriptor. This method works exactly as specified by the 2-arg
+     * {@link #read(InputStream,Supplier) read} method with the exception that
+     * a packager finder is not used to find additional packages when the
+     * module descriptor read from the stream does not indicate the set of
+     * packages.
      *
      * @param  in
      *         The input stream
@@ -2331,7 +2564,13 @@ public class ModuleDescriptor
      * as a module descriptor.
      *
      * <p> If the descriptor encoded in the byte buffer does not indicate a
-     * set of packages then the {@code packageFinder} will be invoked. </p>
+     * set of packages in the module then the {@code packageFinder} will be
+     * invoked. The set of packages that the {@code packageFinder} returns
+     * must include all the packages that the module exports, opens, as well
+     * as the packages of the service implementations that the module provides,
+     * and the package of the main class (if the module has a main class). If
+     * the {@code packageFinder} throws an {@link UncheckedIOException} then
+     * {@link IOException} cause will be re-thrown. </p>
      *
      * <p> The module descriptor is read from the buffer stating at index
      * {@code p}, where {@code p} is the buffer's {@link ByteBuffer#position()
@@ -2357,7 +2596,9 @@ public class ModuleDescriptor
      * @return The module descriptor
      *
      * @throws InvalidModuleDescriptorException
-     *         If an invalid module descriptor is detected
+     *         If an invalid module descriptor is detected or the set of
+     *         packages returned by the {@code packageFinder} does not include
+     *         all of the packages obtained from the module descriptor
      */
     public static ModuleDescriptor read(ByteBuffer bb,
                                         Supplier<Set<String>> packageFinder)
@@ -2366,8 +2607,11 @@ public class ModuleDescriptor
     }
 
     /**
-     * Reads the binary form of a module declaration from a byte buffer
-     * as a module descriptor.
+     * Reads the binary form of a module declaration from a byte buffer as a
+     * module descriptor. This method works exactly as specified by the 2-arg
+     * {@link #read(ByteBuffer,Supplier) read} method with the exception that a
+     * packager finder is not used to find additional packages when the module
+     * descriptor encoded in the buffer does not indicate the set of packages.
      *
      * @param  bb
      *         The byte buffer
@@ -2416,6 +2660,36 @@ public class ModuleDescriptor
                 .collect(Collectors.joining(" "));
     }
 
+    private static <T extends Object & Comparable<? super T>>
+    int compare(T obj1, T obj2) {
+        if (obj1 != null) {
+            return (obj2 != null) ? obj1.compareTo(obj2) : 1;
+        } else {
+            return (obj2 == null) ? 0 : -1;
+        }
+    }
+
+    /**
+     * Compares two sets of {@code Comparable} objects.
+     */
+    @SuppressWarnings("unchecked")
+    private static <T extends Object & Comparable<? super T>>
+    int compare(Set<T> s1, Set<T> s2) {
+        T[] a1 = (T[]) s1.toArray();
+        T[] a2 = (T[]) s2.toArray();
+        Arrays.sort(a1);
+        Arrays.sort(a2);
+        return Arrays.compare(a1, a2);
+    }
+
+    private static <E extends Enum<E>> long modsValue(Set<E> set) {
+        long value = 0;
+        for (Enum<E> e : set) {
+            value += 1 << e.ordinal();
+        }
+        return value;
+    }
+
     static {
         /**
          * Setup the shared secret to allow code in other packages access
@@ -2433,6 +2707,14 @@ public class ModuleDescriptor
                 @Override
                 public Set<String> packages(ModuleDescriptor.Builder builder) {
                     return builder.packages();
+                }
+
+                @Override
+                public void requires(ModuleDescriptor.Builder builder,
+                                     Set<Requires.Modifier> ms,
+                                     String mn,
+                                     String compiledVersion) {
+                    builder.requires(ms, mn, compiledVersion);
                 }
 
                 @Override

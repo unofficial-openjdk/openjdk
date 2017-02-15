@@ -65,7 +65,7 @@ public class MultiReleaseJarTest {
 
     private static final String MODULE_INFO = "module-info.class";
 
-    private static final int RELEASE = Runtime.version().major();
+    private static final int VERSION = Runtime.version().major();
 
     // are multi-release JARs enabled?
     private static final boolean MULTI_RELEASE;
@@ -88,8 +88,8 @@ public class MultiReleaseJarTest {
                 .moduleInfo("module-info.class", descriptor)
                 .resource("p/Main.class")
                 .resource("p/Helper.class")
-                .resource("META-INF/versions/9/p/Helper.class")
-                .resource("META-INF/versions/9/p/internal/Helper9.class")
+                .resource("META-INF/versions/" + VERSION + "/p/Helper.class")
+                .resource("META-INF/versions/" + VERSION + "/p/internal/Helper.class")
                 .build();
 
         // find the module
@@ -131,9 +131,9 @@ public class MultiReleaseJarTest {
                 .moduleInfo(MODULE_INFO, descriptor1)
                 .resource("p/Main.class")
                 .resource("p/Helper.class")
-                .moduleInfo("META-INF/versions/9/" + MODULE_INFO, descriptor2)
-                .resource("META-INF/versions/9/p/Helper.class")
-                .resource("META-INF/versions/9/p/internal/Helper9.class")
+                .moduleInfo("META-INF/versions/" + VERSION + "/" + MODULE_INFO, descriptor2)
+                .resource("META-INF/versions/" + VERSION + "/p/Helper.class")
+                .resource("META-INF/versions/" + VERSION + "/p/internal/Helper.class")
                 .build();
 
         // find the module
@@ -161,8 +161,8 @@ public class MultiReleaseJarTest {
         Path jar = new JarBuilder(name)
                 .resource("p/Main.class")
                 .resource("p/Helper.class")
-                .resource("META-INF/versions/9/p/Helper.class")
-                .resource("META-INF/versions/9/p/internal/Helper9.class")
+                .resource("META-INF/versions/" + VERSION + "/p/Helper.class")
+                .resource("META-INF/versions/" + VERSION + "/p/internal/Helper.class")
                 .build();
 
         // find the module
@@ -200,7 +200,7 @@ public class MultiReleaseJarTest {
 
         Path jar = new JarBuilder(name)
                 .moduleInfo(MODULE_INFO, descriptor1)
-                .moduleInfo("META-INF/versions/9/" + MODULE_INFO, descriptor2)
+                .moduleInfo("META-INF/versions/" + VERSION + "/" + MODULE_INFO, descriptor2)
                 .build();
 
         // find the module
@@ -243,7 +243,7 @@ public class MultiReleaseJarTest {
 
             String expectedTail = "!/";
             if (MULTI_RELEASE)
-                expectedTail += "META-INF/versions/" + RELEASE + "/";
+                expectedTail += "META-INF/versions/" + VERSION + "/";
             expectedTail += MODULE_INFO;
             assertTrue(uri.toString().endsWith(expectedTail));
 
