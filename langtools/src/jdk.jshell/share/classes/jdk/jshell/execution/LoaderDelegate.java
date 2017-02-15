@@ -34,6 +34,8 @@ import jdk.jshell.spi.ExecutionControl.NotImplementedException;
  * This interface specifies the loading specific subset of
  * {@link jdk.jshell.spi.ExecutionControl}.  For use in encapsulating the
  * {@link java.lang.ClassLoader} implementation.
+ *
+ * @since 9
  */
 public interface LoaderDelegate {
 
@@ -57,16 +59,6 @@ public interface LoaderDelegate {
      * @throws InternalException an internal problem occurred
      */
     void addToClasspath(String path)
-            throws EngineTerminationException, InternalException;
-
-    /**
-     * Sets the execution class path to the specified path.
-     *
-     * @param path the path to add
-     * @throws EngineTerminationException the execution engine has terminated
-     * @throws InternalException an internal problem occurred
-     */
-    void setClasspath(String path)
             throws EngineTerminationException, InternalException;
 
     /**

@@ -281,8 +281,8 @@ class Module extends Archive {
                     builder.requires(mn);
                 }
             });
+            // exports all packages
             m.descriptor.packages().forEach(builder::exports);
-            m.descriptor.packages().forEach(builder::opens);
             m.descriptor.uses().forEach(builder::uses);
             m.descriptor.provides().forEach(builder::provides);
             this.md = builder.build();

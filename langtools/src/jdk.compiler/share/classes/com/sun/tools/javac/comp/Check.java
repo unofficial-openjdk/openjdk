@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -436,8 +436,10 @@ public class Check {
     }
 
     void clearLocalClassNameIndexes(ClassSymbol c) {
-        localClassNameIndexes.remove(new Pair<>(
-                c.owner.enclClass().flatname, c.name));
+        if (c.owner != null && c.owner.kind != NIL) {
+            localClassNameIndexes.remove(new Pair<>(
+                    c.owner.enclClass().flatname, c.name));
+        }
     }
 
     public void newRound() {
@@ -2818,7 +2820,7 @@ public class Check {
     private void validateAnnotation(JCAnnotation a, Symbol s) {
         validateAnnotationTree(a);
 
-        if (!annotationApplicable(a, s))
+        if (a.type.tsym.isAnnotationType() && !annotationApplicable(a, s))
             log.error(a.pos(), "annotation.type.not.applicable");
 
         if (a.annotationType.type.tsym == syms.functionalInterfaceType.tsym) {
@@ -3870,6 +3872,16 @@ public class Check {
             deferredLintHandler.report(() -> {
                 if (lint.isEnabled(LintCategory.MODULE))
                     log.warning(LintCategory.MODULE, pos, Warnings.ModuleNotFound(msym));
+            });
+        }
+    }
+
+    void checkPackageExistsForOpens(final DiagnosticPosition pos, PackageSymbol packge) {
+        if (packge.members().isEmpty() &&
+            ((packge.flags() & Flags.HAS_RESOURCE) == 0)) {
+            deferredLintHandler.report(() -> {
+                if (lint.isEnabled(LintCategory.OPENS))
+                    log.warning(pos, Warnings.PackageEmptyOrNotFound(packge));
             });
         }
     }

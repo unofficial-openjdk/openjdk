@@ -45,6 +45,8 @@ import java.util.Set;
  * <p>
  * Methods defined in this interface should only be called by the core JShell
  * implementation.
+ *
+ * @since 9
  */
 public interface ExecutionControl extends AutoCloseable {
 
@@ -115,16 +117,6 @@ public interface ExecutionControl extends AutoCloseable {
      * @throws InternalException an internal problem occurred
      */
     void addToClasspath(String path)
-            throws EngineTerminationException, InternalException;
-
-    /**
-     * Sets the execution class path to the specified path.
-     *
-     * @param path the path to add
-     * @throws EngineTerminationException the execution engine has terminated
-     * @throws InternalException an internal problem occurred
-     */
-    void setClasspath(String path)
             throws EngineTerminationException, InternalException;
 
     /**

@@ -43,6 +43,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -212,8 +213,8 @@ public class ModuleInfoBuilder {
         if (!open) {
             md.exports().stream()
               .peek(exp -> {
-                 if (exp.targets().size() > 0)
-                    throw new InternalError(md.name() + " qualified exports: " + exp);
+                  if (exp.isQualified())
+                      throw new InternalError(md.name() + " qualified exports: " + exp);
               })
               .sorted(Comparator.comparing(Exports::source))
               .forEach(exp -> writer.format("    exports %s;%n", exp.source()));
@@ -240,7 +241,7 @@ public class ModuleInfoBuilder {
      * Returns a string containing the given set of modifiers and label.
      */
     private static <M> String toString(Set<M> mods, String what) {
-        return (Stream.concat(mods.stream().map(e -> e.toString().toLowerCase()),
+        return (Stream.concat(mods.stream().map(e -> e.toString().toLowerCase(Locale.US)),
                               Stream.of(what)))
                       .collect(Collectors.joining(" "));
     }

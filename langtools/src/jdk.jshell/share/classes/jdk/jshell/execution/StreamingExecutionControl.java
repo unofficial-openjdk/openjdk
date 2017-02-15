@@ -37,6 +37,7 @@ import static jdk.jshell.execution.RemoteCodes.*;
  * execution takes place.
  *
  * @author Robert Field
+ * @since 9
  */
 public class StreamingExecutionControl implements ExecutionControl {
 
@@ -133,21 +134,6 @@ public class StreamingExecutionControl implements ExecutionControl {
             readAndReportClassSimpleResult();
         } catch (IOException ex) {
             throw new EngineTerminationException("Exception writing remote add to classpath: " + ex);
-        }
-    }
-
-    @Override
-    public void setClasspath(String path)
-            throws EngineTerminationException, InternalException {
-        try {
-            // Send the classpath addition command to the remote agent.
-            writeCommand(CMD_SET_CLASSPATH);
-            out.writeUTF(path);
-            out.flush();
-            // Retrieve and report results from the remote agent.
-            readAndReportClassSimpleResult();
-        } catch (IOException ex) {
-            throw new EngineTerminationException("Exception writing remote set classpath: " + ex);
         }
     }
 
