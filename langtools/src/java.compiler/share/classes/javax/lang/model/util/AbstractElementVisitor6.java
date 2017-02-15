@@ -136,9 +136,11 @@ public abstract class AbstractElementVisitor6<R, P> implements ElementVisitor<R,
      * @return the result of {@code visitUnknown}
      *
      * @since 9
+     * @spec JPMS
      */
     @Override
     public R visitModule(ModuleElement e, P p) {
-        return visitUnknown(e, p);
+        // Use implementation from interface default method
+        return ElementVisitor.super.visitModule(e, p);
     }
 }
