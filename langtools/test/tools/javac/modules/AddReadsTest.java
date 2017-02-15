@@ -81,7 +81,7 @@ public class AddReadsTest extends ModuleTestBase {
                 .getOutput(Task.OutputKind.DIRECT);
 
         checkOutputContains(log,
-            "Test.java:1:44: compiler.err.not.def.access.package.cant.access: api.Api, api");
+            "Test.java:1:41: compiler.err.package.not.visible: api, (compiler.misc.not.def.access.does.not.read: m2x, api, m1x)");
 
         //test add dependencies:
         new JavacTask(tb)
@@ -217,7 +217,7 @@ public class AddReadsTest extends ModuleTestBase {
         new JavacTask(tb)
           .options("--class-path", jar.toString(),
                    "--add-reads", "java.base=ALL-UNNAMED",
-                   "-Xmodule:java.base")
+                   "--patch-module", "java.base=" + src)
           .outdir(classes)
           .files(src.resolve("impl").resolve("Impl.java"))
           .run()
@@ -237,7 +237,7 @@ public class AddReadsTest extends ModuleTestBase {
         new JavacTask(tb)
           .options("--add-modules", "java.desktop",
                    "--add-reads", "java.base=java.desktop",
-                   "-Xmodule:java.base")
+                   "--patch-module", "java.base=" + src)
           .outdir(classes)
           .files(findJavaFiles(src))
           .run()
@@ -304,7 +304,7 @@ public class AddReadsTest extends ModuleTestBase {
 
         new JavacTask(tb)
           .options("--add-reads", "m1x=ALL-UNNAMED",
-                   "-Xmodule:m1x",
+                   "--patch-module", "m1x=" + unnamedSrc,
                    "--module-path", classes.toString())
           .outdir(unnamedClasses)
           .files(findJavaFiles(unnamedSrc))

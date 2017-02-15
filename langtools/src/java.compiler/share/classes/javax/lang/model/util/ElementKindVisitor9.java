@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,10 +34,10 @@ import javax.lang.model.SourceVersion;
  * A visitor of program elements based on their {@linkplain
  * ElementKind kind} with default behavior appropriate for the {@link
  * SourceVersion#RELEASE_9 RELEASE_9} source version.  For {@linkplain
- * Element elements} <tt><i>XYZ</i></tt> that may have more than one
- * kind, the <tt>visit<i>XYZ</i></tt> methods in this class delegate
- * to the <tt>visit<i>XYZKind</i></tt> method corresponding to the
- * first argument's kind.  The <tt>visit<i>XYZKind</i></tt> methods
+ * Element elements} <code><i>Xyz</i></code> that may have more than one
+ * kind, the <code>visit<i>Xyz</i></code> methods in this class delegate
+ * to the <code>visit<i>Xyz</i>As<i>Kind</i></code> method corresponding to the
+ * first argument's kind.  The <code>visit<i>Xyz</i>As<i>Kind</i></code> methods
  * call {@link #defaultAction defaultAction}, passing their arguments
  * to {@code defaultAction}'s corresponding parameters.
  *
@@ -75,6 +75,7 @@ import javax.lang.model.SourceVersion;
  * @see ElementKindVisitor7
  * @see ElementKindVisitor8
  * @since 9
+ * @spec JPMS
  */
 @SupportedSourceVersion(RELEASE_9)
 public class ElementKindVisitor9<R, P> extends ElementKindVisitor8<R, P> {
