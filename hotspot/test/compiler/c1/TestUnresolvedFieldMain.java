@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,22 +21,28 @@
  * questions.
  */
 
-package compiler.aot.fingerprint;
+/*
+ * @test
+ * @bug 8173373
+ * @compile TestUnresolvedField.jasm
+ * @run main/othervm -XX:TieredStopAtLevel=1 -Xcomp
+ *                   -XX:CompileCommand=compileonly,compiler.c1.TestUnresolvedField::test*
+ *                   compiler.c1.TestUnresolvedFieldMain
+ */
 
-import jdk.test.lib.process.OutputAnalyzer;
-import jdk.test.lib.process.ProcessTools;
+package compiler.c1;
 
-// Usage:
-// java CDSRunner <vmargs> <class> <args> ...
-public class CDSRunner {
-    public static void main(String[] args) throws Exception {
-        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(args);
-        OutputAnalyzer output = new OutputAnalyzer(pb.start());
-
-        System.out.println("[stdout = " + output.getStdout() + "]");
-        System.out.println("[stderr = " + output.getStderr() + "]");
-
-        output.shouldContain("PASSED");
-        output.shouldHaveExitValue(0);
+public class TestUnresolvedFieldMain {
+    public static void main(String[] args) {
+        try {
+          TestUnresolvedField.testGetField();
+        } catch (java.lang.NoClassDefFoundError error) {
+          // Expected
+        }
+        try {
+          TestUnresolvedField.testPutField();
+        } catch (java.lang.NoClassDefFoundError error) {
+          // Expected
+        }
     }
 }
