@@ -162,7 +162,7 @@ public final class DefaultImageBuilder implements ImageBuilder {
             });
 
             if (this.targetOsName == null) {
-                throw new PluginException("TargetPlatform attribute is missing for java.base module");
+                throw new PluginException("ModuleTarget attribute is missing for java.base module");
             }
 
             checkResourcePool(files);
@@ -362,7 +362,7 @@ public final class DefaultImageBuilder implements ImageBuilder {
         String module = "/" + entry.moduleName() + "/";
         String filename = entry.path().substring(module.length());
 
-        // Remove radical native|config|...
+        // Remove radical lib|config|...
         return filename.substring(filename.indexOf('/') + 1);
     }
 
