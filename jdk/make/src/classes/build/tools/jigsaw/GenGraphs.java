@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -126,7 +126,7 @@ public class GenGraphs {
         ranks.add(Set.of("java.compiler", "java.instrument"));
         ranks.add(Set.of("java.desktop", "java.management"));
         ranks.add(Set.of("java.corba", "java.xml.ws"));
-        ranks.add(Set.of("java.xml.bind", "java.annotations.common"));
+        ranks.add(Set.of("java.xml.bind", "java.xml.ws.annotation"));
 
     }
 
@@ -153,9 +153,9 @@ public class GenGraphs {
      */
     void genDotFile(String name, Set<String> roots) throws IOException {
         Configuration cf =
-            Configuration.empty().resolveRequires(ModuleFinder.ofSystem(),
-                                                  ModuleFinder.of(),
-                                                  roots);
+            Configuration.empty().resolve(ModuleFinder.ofSystem(),
+                                          ModuleFinder.of(),
+                                          roots);
 
         Set<ModuleDescriptor> mds = cf.modules().stream()
                 .map(ResolvedModule::reference)

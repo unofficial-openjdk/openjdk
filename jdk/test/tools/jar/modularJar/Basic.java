@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,7 +46,7 @@ import static java.lang.System.out;
 
 /*
  * @test
- * @bug 8167328
+ * @bug 8167328 8171830 8165640
  * @library /lib/testlibrary
  * @modules jdk.compiler
  *          jdk.jartool
@@ -323,7 +323,7 @@ public class Basic {
             .resultChecker(r -> assertModuleData(r, FOO));
     }
 
-    @Test
+    @Test(enabled = false)
     public void partialUpdateFooMainClass() throws IOException {
         Path mp = Paths.get("partialUpdateFooMainClass");
         createTestDir(mp);
@@ -417,6 +417,7 @@ public class Basic {
         jar("--update",
             "--file=" + modularJar.toString(),
             "--main-class=" + FOO.mainClass,
+            "--module-version=" + FOO.version,
             "-m", mrjarDir.resolve("META-INF/MANIFEST.MF").toRealPath().toString(),
             "-C", mrjarDir.toString(), "META-INF/versions/9/module-info.class")
             .assertSuccess();
@@ -478,7 +479,7 @@ public class Basic {
             .resultChecker(r -> {
                 // Expect similar output: "bar, requires mandated foo, ...
                 // conceals jdk.test.foo, conceals jdk.test.foo.internal"
-                Pattern p = Pattern.compile("\\s+bar\\s+requires\\s++foo");
+                Pattern p = Pattern.compile("module bar \\(module-info.class\\)\\s+requires\\s++foo");
                 assertTrue(p.matcher(r.output).find(),
                            "Expecting to find \"bar, requires foo,...\"",
                            "in output, but did not: [" + r.output + "]");
@@ -731,6 +732,72 @@ public class Basic {
             "-C", modClasses.toString(), "jdk/test/baz/BazService.class",
             "-C", modClasses.toString(), "jdk/test/baz/internal/BazServiceImpl.class")
             .assertSuccess();
+    }
+
+    @Test
+    public void servicesCreateWithoutFailureNonRootMRMJAR() throws IOException {
+        // without a root module-info.class
+        Path mp = Paths.get("servicesCreateWithoutFailureNonRootMRMJAR");
+        createTestDir(mp);
+        Path modClasses = MODULE_CLASSES.resolve("baz");
+        Path mrjarDir = MRJAR_DIR.resolve("baz");
+        Path modularJar = mp.resolve("baz.jar");
+
+        jar("--create",
+            "--file=" + modularJar.toString(),
+            "--main-class=" + "jdk.test.baz.Baz",
+            "-m", mrjarDir.resolve("META-INF/MANIFEST.MF").toRealPath().toString(),
+            "-C", mrjarDir.toString(), "META-INF/versions/9/module-info.class",
+            "-C", modClasses.toString(), "jdk/test/baz/BazService.class",
+            "-C", modClasses.toString(), "jdk/test/baz/Baz.class",
+            "-C", modClasses.toString(), "jdk/test/baz/internal/BazServiceImpl.class")
+            .assertSuccess();
+
+
+        for (String option : new String[]  {"--print-module-descriptor", "-d" }) {
+
+            jar(option,
+                "--file=" + modularJar.toString())
+                .assertSuccess()
+                .resultChecker(r ->
+                    assertTrue(r.output.contains("main-class jdk.test.baz.Baz"),
+                              "Expected to find ", "main-class jdk.test.baz.Baz",
+                               " in [", r.output, "]"));
+
+            jarWithStdin(modularJar.toFile(),  option)
+                .assertSuccess()
+                .resultChecker(r ->
+                    assertTrue(r.output.contains("main-class jdk.test.baz.Baz"),
+                              "Expected to find ", "main-class jdk.test.baz.Baz",
+                               " in [", r.output, "]"));
+
+        }
+        // run module maain class
+        java(mp, "baz/jdk.test.baz.Baz")
+            .assertSuccess()
+            .resultChecker(r ->
+               assertTrue(r.output.contains("mainClass:jdk.test.baz.Baz"),
+                          "Expected to find ", "mainClass:jdk.test.baz.Baz",
+                          " in [", r.output, "]"));
+    }
+
+    @Test
+    public void exportCreateWithMissingPkg() throws IOException {
+
+        Path foobar = TEST_SRC.resolve("src").resolve("foobar");
+        Path dst = Files.createDirectories(MODULE_CLASSES.resolve("foobar"));
+        javac(dst, null, sourceList(foobar));
+
+        Path mp = Paths.get("exportWithMissingPkg");
+        createTestDir(mp);
+        Path modClasses = dst;
+        Path modularJar = mp.resolve("foofoo.jar");
+
+        jar("--create",
+            "--file=" + modularJar.toString(),
+            "-C", modClasses.toString(), "module-info.class",
+            "-C", modClasses.toString(), "jdk/test/foo/Foo.class")
+            .assertFailure();
     }
 
     @Test
