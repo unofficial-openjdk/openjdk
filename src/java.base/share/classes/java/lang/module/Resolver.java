@@ -47,6 +47,7 @@ import java.util.stream.Collectors;
 
 import jdk.internal.module.ModuleHashes;
 import jdk.internal.module.ModuleReferenceImpl;
+import jdk.internal.module.ModuleTarget;
 
 /**
  * The resolver used by {@link Configuration#resolve} and {@link
@@ -69,11 +70,9 @@ final class Resolver {
     // module constraints on target platform
     private String osName;
     private String osArch;
-    private String osVersion;
 
     String osName() { return osName; }
     String osArch() { return osArch; }
-    String osVersion() { return osVersion; }
 
     /**
      * @throws IllegalArgumentException if there are more than one parent and
@@ -107,16 +106,6 @@ final class Resolver {
                 } else {
                     if (!value.equals(osArch)) {
                         failParentConflict("OS architecture", osArch, value);
-                    }
-                }
-            }
-            value = parent.osVersion();
-            if (value != null) {
-                if (osVersion == null) {
-                    osVersion  = value;
-                } else {
-                    if (!value.equals(osVersion)) {
-                        failParentConflict("OS version", osVersion, value);
                     }
                 }
             }
@@ -318,13 +307,15 @@ final class Resolver {
      * the target platform with the constraints of other modules.
      */
     private void addFoundModule(ModuleReference mref) {
-        ModuleDescriptor descriptor = mref.descriptor();
-        nameToReference.put(descriptor.name(), mref);
+        String mn = mref.descriptor().name();
 
-        if (descriptor.osName().isPresent()
-                || descriptor.osArch().isPresent()
-                || descriptor.osVersion().isPresent())
-            checkTargetConstraints(descriptor);
+        if (mref instanceof ModuleReferenceImpl) {
+            ModuleTarget target = ((ModuleReferenceImpl)mref).moduleTarget();
+            if (target != null)
+                checkTargetConstraints(mn, target);
+        }
+
+        nameToReference.put(mn, mref);
     }
 
     /**
@@ -332,58 +323,44 @@ final class Resolver {
      * conflict with the constraints of other modules resolved so far or
      * modules in parent configurations.
      */
-    private void checkTargetConstraints(ModuleDescriptor descriptor) {
-        String value = descriptor.osName().orElse(null);
+    private void checkTargetConstraints(String mn, ModuleTarget target) {
+        String value = target.osName();
         if (value != null) {
             if (osName == null) {
                 osName = value;
             } else {
                 if (!value.equals(osName)) {
-                    failTargetConstraint(descriptor);
+                    failTargetConstraint(mn, target);
                 }
             }
         }
-        value = descriptor.osArch().orElse(null);
+        value = target.osArch();
         if (value != null) {
             if (osArch == null) {
                 osArch = value;
             } else {
                 if (!value.equals(osArch)) {
-                    failTargetConstraint(descriptor);
-                }
-            }
-        }
-        value = descriptor.osVersion().orElse(null);
-        if (value != null) {
-            if (osVersion == null) {
-                osVersion = value;
-            } else {
-                if (!value.equals(osVersion)) {
-                    failTargetConstraint(descriptor);
+                    failTargetConstraint(mn, target);
                 }
             }
         }
     }
 
-    private void failTargetConstraint(ModuleDescriptor md) {
-        String s1 = targetAsString(osName, osArch, osVersion);
-        String s2 = targetAsString(md);
-        findFail("Module %s has constraints on target platform that conflict" +
-                 " with other modules: %s, %s", md.name(), s1, s2);
+    private void failTargetConstraint(String mn, ModuleTarget target) {
+        String s1 = targetAsString(osName, osArch);
+        String s2 = targetAsString(target.osName(), target.osArch());
+        findFail("Module %s has constraints on target platform (%s) that"
+                 + " conflict with other modules: %s", mn, s1, s2);
     }
 
-    private String targetAsString(ModuleDescriptor descriptor) {
-        String osName = descriptor.osName().orElse(null);
-        String osArch = descriptor.osArch().orElse(null);
-        String osVersion = descriptor.osVersion().orElse(null);
-        return targetAsString(osName, osArch, osVersion);
+    private String targetAsString(ModuleTarget target) {
+        return targetAsString(target.osName(), target.osArch());
     }
 
-    private String targetAsString(String osName, String osArch, String osVersion) {
+    private String targetAsString(String osName, String osArch) {
         return new StringJoiner("-")
                 .add(Objects.toString(osName, "*"))
                 .add(Objects.toString(osArch, "*"))
-                .add(Objects.toString(osVersion, "*"))
                 .toString();
     }
 

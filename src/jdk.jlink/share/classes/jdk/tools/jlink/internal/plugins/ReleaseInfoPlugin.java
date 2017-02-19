@@ -136,12 +136,13 @@ public final class ReleaseInfoPlugin implements Plugin {
         Optional<ResourcePoolModule> javaBase = in.moduleView().findModule("java.base");
         javaBase.ifPresent(mod -> {
             // fill release information available from transformed "java.base" module!
+
+            /**
+             * FIXME: Need to obtain values for OS_NAME and OS_ARCH from the
+             * ModuleTarget attribute in java.base
+             */
+
             ModuleDescriptor desc = mod.descriptor();
-            desc.osName().ifPresent(s -> {
-                release.put("OS_NAME", quote(s));
-            });
-            desc.osVersion().ifPresent(s -> release.put("OS_VERSION", quote(s)));
-            desc.osArch().ifPresent(s -> release.put("OS_ARCH", quote(s)));
             desc.version().ifPresent(s -> release.put("JAVA_VERSION",
                     quote(parseVersion(s.toString()))));
             desc.version().ifPresent(s -> release.put("JAVA_FULL_VERSION",

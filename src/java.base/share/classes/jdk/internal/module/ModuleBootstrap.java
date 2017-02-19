@@ -35,6 +35,7 @@ import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
 import java.lang.module.ResolvedModule;
 import java.lang.reflect.Layer;
+import java.lang.reflect.LayerInstantiationException;
 import java.lang.reflect.Module;
 import java.net.URI;
 import java.nio.file.Files;
@@ -335,8 +336,9 @@ public final class ModuleBootstrap {
                 for (String p : descriptor.packages()) {
                     String other = packageToModule.putIfAbsent(p, name);
                     if (other != null) {
-                        fail("Package " + p + " in both module "
-                             + name + " and module " + other);
+                        String msg = "Package " + p + " in both module "
+                                     + name + " and module " + other;
+                        throw new LayerInstantiationException(msg);
                     }
                 }
             }
@@ -679,7 +681,7 @@ public final class ModuleBootstrap {
 
             // value is <module>(,<module>)* or <file>(<pathsep><file>)*
             if (!allowDuplicates && map.containsKey(key))
-                fail(key + " specified more than once in " + option(prefix));
+                fail(key + " specified more than once to " + option(prefix));
             List<String> values = map.computeIfAbsent(key, k -> new ArrayList<>());
             int ntargets = 0;
             for (String s : rhs.split(regex)) {
@@ -752,7 +754,7 @@ public final class ModuleBootstrap {
     }
 
     static void warnUnknownModule(String option, String mn) {
-        warn("Unknown module: " + mn + " specified in " + option);
+        warn("Unknown module: " + mn + " specified to " + option);
     }
 
     static String unableToParse(String option, String text, String value) {

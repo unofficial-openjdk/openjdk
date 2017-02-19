@@ -1922,13 +1922,34 @@ public final class System {
     /*
      * Invoked by VM.  Phase 2 module system initialization.
      * Only classes in java.base can be loaded in this phase.
+     *
+     * @return 0 for success, -1 for failure
      */
-    private static void initPhase2() {
-        // initialize the module system
-        System.bootLayer = ModuleBootstrap.boot();
+    private static int initPhase2() {
+        try {
+            bootLayer = ModuleBootstrap.boot();
+        } catch (Exception | Error e) {
+            // VM prints startup errors to stdout, not stderr
+            out.println("Error occurred during initialization of boot layer");
+            if (System.getProperty("jdk.debugModuleBootstrapFail") != null) {
+                e.printStackTrace(out);
+            } else {
+                out.println(e);
+                for (Throwable suppressed : e.getSuppressed()) {
+                    out.println("Suppressed: " + suppressed);
+                }
+                Throwable cause = e.getCause();
+                if (cause != null) {
+                    out.println("Caused by: " + cause);
+                }
+            }
+            return -1; // JNI_ERR
+        }
 
         // module system initialized
         VM.initLevel(2);
+
+        return 0; // JNI_OK
     }
 
     /*

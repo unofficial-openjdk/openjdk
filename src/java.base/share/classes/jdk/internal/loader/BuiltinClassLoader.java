@@ -60,6 +60,7 @@ import java.util.stream.Stream;
 import jdk.internal.misc.VM;
 import jdk.internal.module.ModulePatcher.PatchedModuleReader;
 import jdk.internal.module.SystemModules;
+import jdk.internal.module.Resources;
 
 
 /**
@@ -248,7 +249,7 @@ public class BuiltinClassLoader
      */
     @Override
     public URL findResource(String name) {
-        String pn = ResourceHelper.getPackageName(name);
+        String pn = Resources.toPackageName(name);
         LoadedModule module = packageToModule.get(pn);
         if (module != null) {
 
@@ -293,7 +294,7 @@ public class BuiltinClassLoader
     public Enumeration<URL> findResources(String name) throws IOException {
         List<URL> checked = new ArrayList<>();  // list of checked URLs
 
-        String pn = ResourceHelper.getPackageName(name);
+        String pn = Resources.toPackageName(name);
         LoadedModule module = packageToModule.get(pn);
         if (module != null) {
 

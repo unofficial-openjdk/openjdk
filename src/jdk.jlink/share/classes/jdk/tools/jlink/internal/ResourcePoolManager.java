@@ -35,7 +35,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import jdk.internal.jimage.decompressor.CompressedResourceHeader;
-import jdk.internal.loader.ResourceHelper;
+import jdk.internal.module.Resources;
 import jdk.tools.jlink.plugin.ResourcePool;
 import jdk.tools.jlink.plugin.ResourcePoolBuilder;
 import jdk.tools.jlink.plugin.ResourcePoolEntry;
@@ -68,7 +68,7 @@ public class ResourcePoolManager {
      */
     public static boolean isNamedPackageResource(String path) {
         return (path.endsWith(".class") && !path.endsWith("module-info.class")) ||
-                !ResourceHelper.isSimpleResource(path);
+                Resources.canEncapsulate(path);
     }
 
     class ResourcePoolModuleImpl implements ResourcePoolModule {
