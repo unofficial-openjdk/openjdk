@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -3409,9 +3409,13 @@ static void call_initPhase2(TRAPS) {
   Klass* k = SystemDictionary::resolve_or_fail(vmSymbols::java_lang_System(), true, CHECK);
   instanceKlassHandle klass (THREAD, k);
 
-  JavaValue result(T_VOID);
+  JavaValue result(T_INT);
   JavaCalls::call_static(&result, klass, vmSymbols::initPhase2_name(),
-                                         vmSymbols::void_method_signature(), CHECK);
+                                         vmSymbols::void_int_signature(), CHECK);
+  if (result.get_jint() != JNI_OK) {
+    vm_exit_during_initialization(); // no message or exception
+  }
+
   universe_post_module_init();
 }
 
