@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1346,7 +1346,7 @@ JVM_ENTRY(jobject, JVM_DoPrivileged(JNIEnv *env, jclass cls, jobject action, job
   Method* m_oop = object->klass()->uncached_lookup_method(
                                            vmSymbols::run_method_name(),
                                            vmSymbols::void_object_signature(),
-                                           Klass::normal);
+                                           Klass::find_overpass);
   methodHandle m (THREAD, m_oop);
   if (m.is_null() || !m->is_method() || !m()->is_public() || m()->is_static()) {
     THROW_MSG_0(vmSymbols::java_lang_InternalError(), "No run method");
@@ -2630,7 +2630,6 @@ JVM_ENTRY(const char*, JVM_GetCPMethodNameUTF(JNIEnv *env, jclass cls, jint cp_i
   switch (cp->tag_at(cp_index).value()) {
     case JVM_CONSTANT_InterfaceMethodref:
     case JVM_CONSTANT_Methodref:
-    case JVM_CONSTANT_NameAndType:  // for invokedynamic
       return cp->uncached_name_ref_at(cp_index)->as_utf8();
     default:
       fatal("JVM_GetCPMethodNameUTF: illegal constant");
@@ -2648,7 +2647,6 @@ JVM_ENTRY(const char*, JVM_GetCPMethodSignatureUTF(JNIEnv *env, jclass cls, jint
   switch (cp->tag_at(cp_index).value()) {
     case JVM_CONSTANT_InterfaceMethodref:
     case JVM_CONSTANT_Methodref:
-    case JVM_CONSTANT_NameAndType:  // for invokedynamic
       return cp->uncached_signature_ref_at(cp_index)->as_utf8();
     default:
       fatal("JVM_GetCPMethodSignatureUTF: illegal constant");
